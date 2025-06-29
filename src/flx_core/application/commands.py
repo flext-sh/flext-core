@@ -1,0 +1,638 @@
+"""Application commands implementing the command pattern - with strict validation."""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, TypeVar
+
+# Pydantic imports for modern validation
+from pydantic import ConfigDict, Field
+
+# Domain value objects - with strict validation
+# Import enterprise domain types for command identification
+from flx_core.commands.pipeline import CreatePipelineCommand, ExecutePipelineCommand
+from flx_core.domain.business_types import Username
+from flx_core.domain.pydantic_base import DomainCommand, DomainQuery
+
+# Type aliases for command identification - using domain types
+type CommandId = str  # Domain type for command identification with UUID format
+type CorrelationId = str  # Domain type for correlation tracking across requests
+type UserId = Username  # Use validated Username domain type
+
+if TYPE_CHECKING:
+    from uuid import UUID
+
+    from flx_core.domain.advanced_types import ConfigurationDict
+    from flx_core.domain.value_objects import PipelineId, PluginId
+
+__all__ = [
+    "AddStepCommand",
+    "Command",
+    "CreatePipelineCommand",
+    "ExecutePipelineCommand",
+    "GetPipelineQuery",
+    "ListPipelinesQuery",
+    "Query",
+]
+
+# === BASE PROTOCOLS ===
+
+
+class Command:
+    """Base class for all command objects in CQRS pattern."""
+
+
+class Query:
+    """Query - Command Object.
+
+    Implementa um objeto de comando seguindo padrões CQRS com validação Pydantic
+    integrada. Encapsula uma operação de negócio específica com parâmetros validados.
+
+    Arquitetura: Command Pattern + CQRS
+    Validação: Pydantic v2 com Python 3.13 type hints
+    Padrões: Immutable objects, validation by construction
+
+    Attributes:
+    ----------
+    Sem atributos públicos documentados.
+
+    Methods:
+    -------
+    Sem métodos públicos.
+
+    Examples:
+    --------
+    Uso típico da classe:
+
+    ```python
+    query = Query(param='value')
+    result = await handler.execute(query)
+    ```
+
+    See Also:
+    --------
+    - [Documentação da Arquitetura](../../docs/architecture/index.md)
+    - [Padrões de Design](../../docs/architecture/001-clean-architecture-ddd.md)
+
+    Note:
+    ----
+    Esta classe segue os padrões CQRS e Command Pattern estabelecidos no projeto.
+
+    """
+
+    """Base class for all query objects in CQRS pattern."""
+
+
+TCommand = TypeVar("TCommand", bound="Command")
+TQuery = TypeVar("TQuery", bound="Query")
+TResult = TypeVar("TResult")
+
+
+class ApplicationCommand:
+    """Command protocol defining the contract for command objects.
+
+    Implements a command object following CQRS patterns with integrated Pydantic validation.
+    Encapsulates a specific business operation with validated parameters, ensuring
+    immutability and validation by construction.
+
+    Architecture:
+        - Command Pattern implementation
+        - CQRS (Command Query Responsibility Segregation)
+        - Pydantic v2 validation with Python 3.13 type hints
+        - Immutable objects with validation by construction
+
+    This protocol defines the interface that all command objects must implement
+    to ensure consistency across the application layer.
+
+    Examples:
+    --------
+        Basic command usage:
+
+        ```python
+        command = CreatePipelineCommand(name="data-pipeline")
+        result = await handler.execute(command)
+        ```
+
+    Note:
+    ----
+        All command implementations must be immutable dataclasses with slots=True
+        for optimal performance and memory usage.
+
+    """
+
+
+class ApplicationQuery:
+    """Query protocol defining the contract for query objects.
+
+    Implements query objects following CQRS patterns for read-only operations.
+    Queries are used to retrieve data without side effects, maintaining clear
+    separation between command and query responsibilities.
+
+    Architecture:
+        - CQRS Query side implementation
+        - Read-only operations with no side effects
+        - Immutable query objects with validation
+        - Optimized for data retrieval scenarios
+
+    All query implementations should be immutable and focus solely on
+    data retrieval without modifying system state.
+
+    Examples:
+    --------
+        Basic query usage:
+
+        ```python
+        query = GetPipelineQuery(pipeline_id=uuid4())
+        result = await handler.execute(query)
+        ```
+
+    Note:
+    ----
+        Queries must not have side effects and should be optimized for
+        read performance with appropriate caching strategies.
+
+    """
+
+
+# === PIPELINE COMMANDS - DOMAIN VALUE OBJECTS ===
+
+
+# CreatePipelineCommand imported at top of file
+
+
+class AddStepCommand(DomainCommand):
+    """Command to add step to pipeline - domain value objects."""
+
+    model_config = ConfigDict(
+        validate_assignment=True,
+        extra="forbid",
+        str_strip_whitespace=True,
+        arbitrary_types_allowed=True,  # Allow custom types like PipelineId
+    )
+
+    pipeline_id: PipelineId
+    step_id: str
+    plugin_id: PluginId
+    order: int
+    configuration: ConfigurationDict = Field(default_factory=dict)
+    depends_on: list[str] = Field(default_factory=list)
+
+
+class RemoveStepCommand(DomainCommand):
+    """Command to remove step from pipeline - domain value objects."""
+
+    pipeline_id: PipelineId
+    step_id: str
+
+
+# Import the canonical UpdatePipelineCommand from the unified commands module
+
+
+class ActivatePipelineCommand(DomainCommand):
+    """Command to activate a pipeline for execution.
+
+    Activates a pipeline, enabling it to be executed by the system.
+    This command transitions the pipeline from inactive to active state,
+    allowing scheduled and manual executions.
+
+    Attributes:
+    ----------
+        pipeline_id: Unique identifier of the pipeline to activate
+
+    Examples:
+    --------
+        Activate a pipeline:
+
+        ```python
+        command = ActivatePipelineCommand(pipeline_id=pipeline_id)
+        result = await handler.execute(command)
+        ```
+
+    Note:
+    ----
+        This command follows CQRS and Command Pattern principles with
+        immutable design and validation by construction.
+
+    """
+
+    pipeline_id: UUID
+
+
+class DeactivatePipelineCommand(DomainCommand):
+    """Command to deactivate a pipeline from execution.
+
+    Deactivates a pipeline, preventing it from being executed by the system.
+    This command transitions the pipeline from active to inactive state,
+    stopping all scheduled executions while preserving configuration.
+
+    Attributes:
+    ----------
+        pipeline_id: Unique identifier of the pipeline to deactivate
+
+    Examples:
+    --------
+        Deactivate a pipeline:
+
+        ```python
+        command = DeactivatePipelineCommand(pipeline_id=pipeline_id)
+        result = await handler.execute(command)
+        ```
+
+    Note:
+    ----
+        This command follows CQRS and Command Pattern principles with
+        immutable design and validation by construction.
+
+    """
+
+    pipeline_id: UUID
+
+
+# ExecutePipelineCommand imported at top of file
+
+# === PLUGIN COMMANDS ===
+
+
+class CreatePluginCommand(DomainCommand):
+    """Command to create a new plugin in the system.
+
+    Creates a new plugin with specified configuration, enabling it to be
+    used in pipeline steps. Supports various plugin types including
+    extractors, loaders, transformers, and utilities.
+
+    Attributes:
+    ----------
+        name: Unique plugin identifier
+        plugin_type: Type of plugin (extractor, loader, transformer, etc.)
+        namespace: Python namespace for the plugin package
+        configuration: Plugin-specific configuration parameters
+        version: Optional version specification for the plugin
+        description: Optional human-readable plugin description
+        pip_url: Optional pip installation URL for the plugin
+
+    Examples:
+    --------
+        Create a new extractor plugin:
+
+        ```python
+        command = CreatePluginCommand(
+            name="tap-postgres",
+            plugin_type="extractor",
+            namespace="tap_postgres",
+            pip_url="tap-postgres==1.0.0"
+        )
+        result = await handler.execute(command)
+        ```
+
+    Note:
+    ----
+        This command follows CQRS and Command Pattern principles with
+        immutable design and validation by construction.
+
+    """
+
+    name: str
+    plugin_type: str
+    namespace: str = "meltano"
+    configuration: ConfigurationDict = Field(default_factory=dict)
+    version: str | None = None
+    description: str | None = None
+    pip_url: str | None = None
+
+
+class UpdatePluginCommand(DomainCommand):
+    """Command to update an existing plugin configuration.
+
+    Updates plugin configuration, version, or description for an installed plugin.
+    This command allows modification of plugin settings without requiring
+    reinstallation, enabling runtime configuration changes.
+
+    Attributes:
+    ----------
+        plugin_id: Unique identifier of the plugin to update
+        configuration: Optional new configuration settings to apply
+        version: Optional version specification to update to
+        description: Optional new description for the plugin
+
+    Examples:
+    --------
+        Update plugin configuration:
+
+        ```python
+        command = UpdatePluginCommand(
+            plugin_id=plugin_id,
+            configuration={"api_key": "new_key", "timeout": 30}
+        )
+        result = await handler.execute(command)
+        ```
+
+    Note:
+    ----
+        This command follows CQRS and Command Pattern principles with
+        immutable design and validation by construction.
+
+    """
+
+    plugin_id: UUID
+    configuration: ConfigurationDict | None = None
+    version: str | None = None
+    description: str | None = None
+
+
+# === EXECUTION COMMANDS ===
+
+
+class CompleteExecutionCommand(DomainCommand):
+    """Command to mark a pipeline execution as successfully completed.
+
+    Marks a pipeline execution as completed, capturing any output data
+    generated during the execution. Updates the execution status and
+    records completion timestamp for monitoring and audit purposes.
+
+    Attributes:
+    ----------
+        execution_id: Unique identifier of the execution to complete
+        output_data: Optional output data produced by the execution
+
+    Examples:
+    --------
+        Complete an execution with output data:
+
+        ```python
+        command = CompleteExecutionCommand(
+            execution_id=execution_id,
+            output_data={"rows_processed": 1000, "output_file": "data.csv"}
+        )
+        result = await handler.execute(command)
+        ```
+
+    Note:
+    ----
+        This command follows CQRS and Command Pattern principles with
+        immutable design and validation by construction.
+
+    """
+
+    execution_id: UUID
+    output_data: ConfigurationDict = Field(default_factory=dict)
+
+
+class FailExecutionCommand(DomainCommand):
+    """Command to mark a pipeline execution as failed.
+
+    Marks a pipeline execution as failed with a specific error message,
+    updating the execution status and recording failure details for
+    monitoring and debugging purposes.
+
+    Attributes:
+    ----------
+        execution_id: Unique identifier of the execution to mark as failed
+        error_message: Description of the error that caused the failure
+
+    Examples:
+    --------
+        Mark execution as failed due to connection error:
+
+        ```python
+        command = FailExecutionCommand(
+            execution_id=execution_id,
+            error_message="Database connection failed: timeout after 30s"
+        )
+        result = await handler.execute(command)
+        ```
+
+    Note:
+    ----
+        This command follows CQRS and Command Pattern principles with
+        immutable design and validation by construction.
+
+    """
+
+    execution_id: UUID
+    error_message: str
+
+
+class CancelExecutionCommand(DomainCommand):
+    """Command to cancel a running pipeline execution.
+
+    Cancels an in-progress pipeline execution, gracefully stopping the process
+    and updating the execution status. This allows for controlled termination
+    of long-running or problematic executions.
+
+    Attributes:
+    ----------
+        execution_id: Unique identifier of the execution to cancel
+
+    Examples:
+    --------
+        Cancel a running execution:
+
+        ```python
+        command = CancelExecutionCommand(execution_id=execution_id)
+        result = await handler.execute(command)
+        ```
+
+    Note:
+    ----
+        This command follows CQRS and Command Pattern principles with
+        immutable design and validation by construction.
+
+    """
+
+    execution_id: UUID
+
+
+# === QUERIES ===
+
+
+class GetPipelineQuery(DomainQuery):
+    """Query to retrieve a specific pipeline by ID.
+
+    Retrieves complete pipeline information including configuration, steps,
+    and metadata for a specific pipeline identifier. Used for pipeline
+    detail views and configuration management.
+
+    Attributes:
+    ----------
+        pipeline_id: Unique identifier of the pipeline to retrieve
+
+    Examples:
+    --------
+        Get pipeline details:
+
+        ```python
+        query = GetPipelineQuery(pipeline_id=pipeline_id)
+        result = await handler.execute(query)
+        ```
+
+    Note:
+    ----
+        This query follows CQRS principles for read-only operations
+        with immutable design and validation by construction.
+
+    """
+
+    pipeline_id: UUID
+
+
+class ListPipelinesQuery(DomainQuery):
+    """Query to retrieve a paginated list of pipelines with optional filtering.
+
+    Retrieves pipelines with support for filtering by active status, text search,
+    and pagination. Used for pipeline listing views and management interfaces.
+
+    Attributes:
+    ----------
+        is_active: Optional filter for active/inactive pipelines
+        search_term: Optional text search in pipeline names and descriptions
+
+    Examples:
+    --------
+        List active pipelines with search:
+
+        ```python
+        query = ListPipelinesQuery(
+            is_active=True,
+            search_term="data-sync",
+            limit=20
+        )
+        result = await handler.execute(query)
+        ```
+
+    Note:
+    ----
+        This query follows CQRS principles for read-only operations
+        with immutable design and validation by construction.
+
+    """
+
+    is_active: bool | None = None
+    search_term: str | None = None
+
+
+class GetExecutionQuery(DomainQuery):
+    """Query to retrieve a specific pipeline execution by ID.
+
+    Retrieves complete execution information including status, timestamps,
+    output data, and error details for a specific execution identifier.
+    Used for execution monitoring and debugging.
+
+    Attributes:
+    ----------
+        execution_id: Unique identifier of the execution to retrieve
+
+    Examples:
+    --------
+        Get execution details:
+
+        ```python
+        query = GetExecutionQuery(execution_id=execution_id)
+        result = await handler.execute(query)
+        ```
+
+    Note:
+    ----
+        This query follows CQRS principles for read-only operations
+        with immutable design and validation by construction.
+
+    """
+
+    execution_id: UUID
+
+
+class ListExecutionsQuery(DomainQuery):
+    """Query to retrieve a paginated list of pipeline executions with filtering.
+
+    Retrieves executions with support for filtering by pipeline, status,
+    and pagination. Used for execution history views and monitoring dashboards.
+
+    Attributes:
+    ----------
+        pipeline_id: Optional filter for specific pipeline executions
+        status: Optional filter by execution status (success, failed, running)
+
+    Examples:
+    --------
+        List failed executions for a pipeline:
+
+        ```python
+        query = ListExecutionsQuery(
+            pipeline_id=pipeline_id,
+            status="failed",
+            limit=10
+        )
+        result = await handler.execute(query)
+        ```
+
+    Note:
+    ----
+        This query follows CQRS principles for read-only operations
+        with immutable design and validation by construction.
+
+    """
+
+    pipeline_id: UUID | None = None
+    status: str | None = None
+
+
+class GetPluginQuery(DomainQuery):
+    """Query to retrieve a specific plugin by ID.
+
+    Retrieves complete plugin information including configuration, version,
+    and metadata for a specific plugin identifier. Used for plugin
+    management and configuration views.
+
+    Attributes:
+    ----------
+        plugin_id: Unique identifier of the plugin to retrieve
+
+    Examples:
+    --------
+        Get plugin details:
+
+        ```python
+        query = GetPluginQuery(plugin_id=plugin_id)
+        result = await handler.execute(query)
+        ```
+
+    Note:
+    ----
+        This query follows CQRS principles for read-only operations
+        with immutable design and validation by construction.
+
+    """
+
+    plugin_id: UUID
+
+
+class ListPluginsQuery(DomainQuery):
+    """Query to retrieve a paginated list of plugins with optional filtering.
+
+    Retrieves plugins with support for filtering by type, namespace,
+    and pagination. Used for plugin discovery and management interfaces.
+
+    Attributes:
+    ----------
+        plugin_type: Optional filter by plugin type (extractor, loader, etc.)
+        namespace: Optional filter by plugin namespace
+
+    Examples:
+    --------
+        List extractor plugins:
+
+        ```python
+        query = ListPluginsQuery(
+            plugin_type="extractor",
+            limit=25
+        )
+        result = await handler.execute(query)
+        ```
+
+    Note:
+    ----
+        This query follows CQRS principles for read-only operations
+        with immutable design and validation by construction.
+
+    """
+
+    plugin_type: str | None = None
+    namespace: str | None = None
