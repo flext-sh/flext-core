@@ -6,11 +6,8 @@ import sys
 from pathlib import Path
 
 
-def test_level1_final():
+def test_level1_final() -> None:
     """Final Level 1 validation."""
-    print("🔥 LEVEL 1 FINAL VALIDATION - ENTERPRISE COMPLIANCE")
-    print("=" * 65)
-
     # Import module directly
     spec = importlib.util.spec_from_file_location(
         "pydantic_base",
@@ -18,8 +15,6 @@ def test_level1_final():
     )
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
-
-    print("✅ MODULE IMPORT: SUCCESS")
 
     # Verify all classes are importable
     classes = [
@@ -39,19 +34,16 @@ def test_level1_final():
     for cls_name in classes:
         cls = getattr(module, cls_name)
         assert cls is not None
-        print(f"✅ {cls_name}: Available")
 
     # Test type aliases
     aliases = ["EntityId", "DomainEventData", "MetadataDict", "ConfigurationValue"]
     for alias in aliases:
         type_alias = getattr(module, alias)
         assert type_alias is not None
-        print(f"✅ {alias}: Available")
 
     # Test __all__ exports
     assert hasattr(module, "__all__")
     assert len(module.__all__) >= 11
-    print(f"✅ __all__ exports: {len(module.__all__)} items")
 
     # Basic class instantiation tests using actual class definitions
     try:
@@ -66,9 +58,7 @@ assert model.name == "test"
 """,
             {"module": module},
         )
-        print("✅ DomainBaseModel instantiation: SUCCESS")
-    except Exception as e:
-        print(f"❌ DomainBaseModel test failed: {e}")
+    except Exception:
         raise
 
     try:
@@ -85,9 +75,7 @@ assert hash(vo1) == hash(vo2)
 """,
             {"module": module},
         )
-        print("✅ DomainValueObject equality: SUCCESS")
-    except Exception as e:
-        print(f"❌ DomainValueObject test failed: {e}")
+    except Exception:
         raise
 
     try:
@@ -104,9 +92,7 @@ assert entity.version == 1
 """,
             {"module": module},
         )
-        print("✅ DomainEntity identity: SUCCESS")
-    except Exception as e:
-        print(f"❌ DomainEntity test failed: {e}")
+    except Exception:
         raise
 
     try:
@@ -123,9 +109,7 @@ assert command.action == "test"
 """,
             {"module": module},
         )
-        print("✅ DomainCommand structure: SUCCESS")
-    except Exception as e:
-        print(f"❌ DomainCommand test failed: {e}")
+    except Exception:
         raise
 
     try:
@@ -142,9 +126,7 @@ assert query.filter_name == "test"
 """,
             {"module": module},
         )
-        print("✅ DomainQuery structure: SUCCESS")
-    except Exception as e:
-        print(f"❌ DomainQuery test failed: {e}")
+    except Exception:
         raise
 
     # Test specification pattern
@@ -163,37 +145,14 @@ assert spec.is_satisfied_by(-3) is False
 """,
             {"module": module},
         )
-        print("✅ DomainSpecification logic: SUCCESS")
-    except Exception as e:
-        print(f"❌ DomainSpecification test failed: {e}")
+    except Exception:
         raise
-
-    print("=" * 65)
-    print("🏆 LEVEL 1 VALIDATION: COMPLETE SUCCESS!")
-    print()
-    print("📋 COMPLIANCE CHECKLIST:")
-    print("   ✅ All 11 base classes implemented and working")
-    print("   ✅ Python 3.13 type system fully utilized")
-    print("   ✅ Pydantic v2 configuration optimized")
-    print("   ✅ Domain patterns correctly implemented")
-    print("   ✅ Specification pattern with composition")
-    print("   ✅ Entity identity vs Value equality")
-    print("   ✅ Command/Query separation")
-    print("   ✅ Type aliases for business domain")
-    print("   ✅ Enterprise-grade validation")
-    print("   ✅ Zero tolerance standards achieved")
-    print()
-    print("🎯 RESULT: LEVEL 1 IS 100% ENTERPRISE READY")
-    print("🚀 STATUS: PRODUCTION DEPLOYMENT APPROVED")
 
 
 if __name__ == "__main__":
     try:
         test_level1_final()
-        print("\n🎉 MISSION ACCOMPLISHED!")
-        print("💎 Level 1 excellence achieved with zero tolerance methodology")
-    except Exception as e:
-        print(f"\n❌ FINAL TEST FAILED: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()

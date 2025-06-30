@@ -6,12 +6,13 @@ Tests for database configuration, session management, and connection handling.
 from __future__ import annotations
 
 import pytest
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from flx_core.infrastructure.persistence.database import (
     DatabaseConfig,
     DatabaseManager,
     get_database_url,
 )
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class TestDatabaseConfig:

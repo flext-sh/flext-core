@@ -19,10 +19,8 @@ from uuid import UUID
 import pydantic_base
 
 
-def test_level1_direct():
+def test_level1_direct() -> None:
     """Direct test of Level 1 classes without complex project imports."""
-    print("🧪 Testing Level 1 (pydantic_base.py) - DIRECT IMPORT")
-    print("=" * 60)
 
     # Test 1: DomainBaseModel basic functionality
     class TestModel(pydantic_base.DomainBaseModel):
@@ -32,7 +30,6 @@ def test_level1_direct():
     model = TestModel(name="test")
     assert model.name == "test"
     assert model.value == 42
-    print("✅ DomainBaseModel: PASS")
 
     # Test 2: DomainValueObject immutability and equality
     class TestValueObject(pydantic_base.DomainValueObject):
@@ -44,7 +41,6 @@ def test_level1_direct():
 
     assert vo1 == vo2  # Value-based equality
     assert hash(vo1) == hash(vo2)  # Value-based hashing
-    print("✅ DomainValueObject: PASS")
 
     # Test 3: DomainEntity identity-based equality
     class TestEntity(pydantic_base.DomainEntity):
@@ -59,7 +55,6 @@ def test_level1_direct():
     assert isinstance(entity1.id, UUID)
     assert isinstance(entity1.created_at, datetime)
     assert entity1.created_at.tzinfo == UTC
-    print("✅ DomainEntity: PASS")
 
     # Test 4: DomainAggregateRoot event handling
     class TestAggregate(pydantic_base.DomainAggregateRoot):
@@ -77,7 +72,6 @@ def test_level1_direct():
 
     assert len(aggregate.domain_events_list) == 1
     assert aggregate.aggregate_version == initial_version + 1
-    print("✅ DomainAggregateRoot: PASS")
 
     # Test 5: DomainSpecification composition
     class PositiveSpecification(pydantic_base.DomainSpecification):
@@ -112,8 +106,6 @@ def test_level1_direct():
     assert not_positive.is_satisfied_by(5) is False  # Positive (negated)
     assert not_positive.is_satisfied_by(-3) is True  # Not positive
 
-    print("✅ DomainSpecification: PASS")
-
     # Test 6: Serialization functionality
     class TestModelSerialization(pydantic_base.DomainBaseModel):
         name: str
@@ -124,19 +116,12 @@ def test_level1_direct():
 
     assert json_data["name"] == "test"
     assert json_data["value"] == 42
-    print("✅ Serialization: PASS")
-
-    print("=" * 60)
-    print("🏆 ALL TESTS PASSED - Level 1 is working correctly!")
-    print("📊 Coverage: 6 core scenarios tested successfully")
-    print("🎯 Results: pydantic_base.py is 100% functional")
 
 
 if __name__ == "__main__":
     try:
         test_level1_direct()
-    except Exception as e:
-        print(f"❌ TEST FAILED: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()

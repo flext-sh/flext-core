@@ -6,6 +6,7 @@ Adapted from flx-meltano-enterprise with focus on Pipeline and Plugin entities.
 from __future__ import annotations
 
 import pytest
+
 from flx_core.domain.entities import (
     Pipeline,
     PipelineExecution,

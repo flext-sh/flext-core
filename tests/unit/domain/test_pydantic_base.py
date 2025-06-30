@@ -23,6 +23,8 @@ from typing import Any
 from uuid import UUID, uuid4
 
 import pytest
+from pydantic import ValidationError
+
 from flx_core.domain.pydantic_base import (
     AndSpecification,
     DomainAggregateRoot,
@@ -36,7 +38,6 @@ from flx_core.domain.pydantic_base import (
     NotSpecification,
     OrSpecification,
 )
-from pydantic import ValidationError
 
 
 class TestDomainBaseModel:
