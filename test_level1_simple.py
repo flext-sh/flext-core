@@ -19,10 +19,8 @@ from uuid import UUID
 import pydantic_base
 
 
-def test_level1_simple():
+def test_level1_simple() -> None:
     """Simple test of Level 1 core classes."""
-    print("🧪 Testing Level 1 (pydantic_base.py) - CORE CLASSES")
-    print("=" * 60)
 
     # Test 1: DomainBaseModel
     class TestModel(pydantic_base.DomainBaseModel):
@@ -37,7 +35,6 @@ def test_level1_simple():
     json_data = model.model_dump_json_safe()
     assert json_data["name"] == "test"
     assert json_data["value"] == 42
-    print("✅ DomainBaseModel: PASS")
 
     # Test 2: DomainValueObject
     class TestValueObject(pydantic_base.DomainValueObject):
@@ -52,7 +49,6 @@ def test_level1_simple():
     assert vo1 == vo2  # Same values
     assert vo1 != vo3  # Different values
     assert hash(vo1) == hash(vo2)  # Same hash for same values
-    print("✅ DomainValueObject: PASS")
 
     # Test 3: DomainEntity
     class TestEntity(pydantic_base.DomainEntity):
@@ -71,7 +67,6 @@ def test_level1_simple():
     assert isinstance(entity1.created_at, datetime)
     assert entity1.created_at.tzinfo == UTC
     assert entity1.version == 1
-    print("✅ DomainEntity: PASS")
 
     # Test 4: DomainCommand
     class TestCommand(pydantic_base.DomainCommand):
@@ -85,7 +80,6 @@ def test_level1_simple():
     assert isinstance(command.command_id, UUID)
     assert isinstance(command.issued_at, datetime)
     assert command.issued_at.tzinfo == UTC
-    print("✅ DomainCommand: PASS")
 
     # Test 5: DomainQuery
     class TestQuery(pydantic_base.DomainQuery):
@@ -98,7 +92,6 @@ def test_level1_simple():
     assert query.offset == 0
     assert isinstance(query.query_id, UUID)
     assert isinstance(query.issued_at, datetime)
-    print("✅ DomainQuery: PASS")
 
     # Test 6: DomainSpecification
     class PositiveSpecification(pydantic_base.DomainSpecification):
@@ -138,22 +131,11 @@ def test_level1_simple():
     assert not_positive.is_satisfied_by(5) is False  # Positive (negated)
     assert not_positive.is_satisfied_by(-3) is True  # Not positive
 
-    print("✅ DomainSpecification: PASS")
-
-    print("=" * 60)
-    print("🏆 ALL CORE TESTS PASSED - Level 1 is working correctly!")
-    print("📊 Coverage: 6 core classes tested successfully")
-    print("🎯 Status: DomainBaseModel, DomainValueObject, DomainEntity,")
-    print("           DomainCommand, DomainQuery, DomainSpecification")
-    print("💡 Note: DomainAggregateRoot and DomainEvent require forward refs")
-
 
 if __name__ == "__main__":
     try:
         test_level1_simple()
-        print("\n🎉 SUCCESS: pydantic_base.py Level 1 core is 100% functional!")
-    except Exception as e:
-        print(f"❌ TEST FAILED: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()

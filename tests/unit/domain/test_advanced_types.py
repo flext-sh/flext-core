@@ -6,6 +6,7 @@ Tests for ServiceResult, ServiceError, and other advanced patterns.
 from __future__ import annotations
 
 import pytest
+
 from flx_core.domain.advanced_types import ServiceError, ServiceResult, ValidationResult
 
 # Python 3.13 type aliases

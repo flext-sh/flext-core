@@ -19,7 +19,7 @@ from flx_core.domain.pydantic_base import (
 )
 
 
-def test_domain_base_model():
+def test_domain_base_model() -> None:
     """Test DomainBaseModel basic functionality."""
 
     class TestModel(DomainBaseModel):
@@ -29,10 +29,9 @@ def test_domain_base_model():
     model = TestModel(name="test")
     assert model.name == "test"
     assert model.value == 42
-    print("✅ DomainBaseModel: PASS")
 
 
-def test_domain_value_object():
+def test_domain_value_object() -> None:
     """Test DomainValueObject immutability and equality."""
 
     class TestValueObject(DomainValueObject):
@@ -44,10 +43,9 @@ def test_domain_value_object():
 
     assert vo1 == vo2  # Value-based equality
     assert hash(vo1) == hash(vo2)  # Value-based hashing
-    print("✅ DomainValueObject: PASS")
 
 
-def test_domain_entity():
+def test_domain_entity() -> None:
     """Test DomainEntity identity-based equality."""
 
     class TestEntity(DomainEntity):
@@ -62,10 +60,9 @@ def test_domain_entity():
     assert isinstance(entity1.id, UUID)
     assert isinstance(entity1.created_at, datetime)
     assert entity1.created_at.tzinfo == UTC
-    print("✅ DomainEntity: PASS")
 
 
-def test_domain_aggregate_root():
+def test_domain_aggregate_root() -> None:
     """Test DomainAggregateRoot event handling."""
 
     class TestAggregate(DomainAggregateRoot):
@@ -85,10 +82,9 @@ def test_domain_aggregate_root():
 
     assert len(aggregate.domain_events_list) == 1
     assert aggregate.aggregate_version == initial_version + 1
-    print("✅ DomainAggregateRoot: PASS")
 
 
-def test_domain_specification():
+def test_domain_specification() -> None:
     """Test DomainSpecification composition."""
 
     class PositiveSpecification(DomainSpecification):
@@ -123,10 +119,8 @@ def test_domain_specification():
     assert not_positive.is_satisfied_by(5) is False  # Positive (negated)
     assert not_positive.is_satisfied_by(-3) is True  # Not positive
 
-    print("✅ DomainSpecification: PASS")
 
-
-def test_serialization():
+def test_serialization() -> None:
     """Test serialization functionality."""
 
     class TestModel(DomainBaseModel):
@@ -138,12 +132,9 @@ def test_serialization():
 
     assert json_data["name"] == "test"
     assert json_data["value"] == 42
-    print("✅ Serialization: PASS")
 
 
 if __name__ == "__main__":
-    print("🧪 Testing Level 1 (pydantic_base.py) - Isolated Tests")
-    print("=" * 60)
 
     try:
         test_domain_base_model()
@@ -153,12 +144,7 @@ if __name__ == "__main__":
         test_domain_specification()
         test_serialization()
 
-        print("=" * 60)
-        print("🏆 ALL TESTS PASSED - Level 1 is working correctly!")
-        print("📊 Coverage: 6 core scenarios tested successfully")
-
-    except Exception as e:
-        print(f"❌ TEST FAILED: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()

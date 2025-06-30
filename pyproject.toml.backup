@@ -1,0 +1,62 @@
+[tool.poetry]
+name = "flext-core"
+version = "0.1.0"
+description = "FLEXT Core - Enterprise Foundation & Transformation Hub"
+authors = ["DataCosmos Team <team@datacosmos.com>"]
+readme = "README.md"
+license = "MIT"
+homepage = "https://github.com/flext-sh/flext-core"
+repository = "https://github.com/flext-sh/flext-core"
+documentation = "https://github.com/flext-sh/flext-core/blob/main/README.md"
+keywords = ["flext", "enterprise", "foundation", "transformation", "core"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
+]
+packages = [{include = "flext_core", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.13"
+pydantic = "^2.9.0"
+sqlalchemy = "^2.0.0"
+redis = "^6.0.0"
+lato = "^0.12.0"
+bcrypt = "^4.1.0"
+pyjwt = "^2.8.0"
+cryptography = "^43.0.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.0"
+pytest-asyncio = "^0.23.5"
+pytest-cov = "^4.1.0"
+mypy = "^1.5.0"
+ruff = "^0.1.0"
+black = "^23.0.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+line-length = 88
+select = ["E", "F", "I", "N", "W", "B", "C90", "D", "UP", "S", "T", "ANN", "SIM", "ARG"]
+ignore = ["D100", "D101", "D102", "D103", "D104", "D105", "D106", "D107"]
+exclude = ["__pycache__", ".venv", ".git", "build", "dist"]
+
+[tool.mypy]
+python_version = "3.13"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = false
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true

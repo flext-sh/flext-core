@@ -6,6 +6,8 @@ Adapted from flx-meltano-enterprise with proper imports.
 from __future__ import annotations
 
 import pytest
+from pydantic import ValidationError
+
 from flx_core.domain.business_types import (
     EmailAddress,
     HostAddress,
@@ -21,7 +23,6 @@ from flx_core.domain.value_objects import (
     PluginId,
     PluginType,
 )
-from pydantic import ValidationError
 
 # Python 3.13 type aliases
 type TestResult = bool

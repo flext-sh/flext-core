@@ -6,6 +6,7 @@ Tests the full pipeline lifecycle from creation to execution.
 from __future__ import annotations
 
 import pytest
+
 from flx_core.application.services import ExecutionService, PipelineService
 from flx_core.domain.value_objects import ExecutionStatus
 from flx_core.events.event_bus import InMemoryEventBus
