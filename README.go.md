@@ -7,6 +7,7 @@ This is the Go conversion of the FLEXT Core module, maintaining the same hexagon
 The Go implementation follows the same architectural principles as the Python version:
 
 ### Domain-Driven Design (DDD)
+
 - **Entities**: Objects with identity (`Pipeline`, `PipelineExecution`)
 - **Value Objects**: Immutable objects (`PipelineID`, `ExecutionStatus`, `Duration`)
 - **Aggregates**: Cluster of entities (`Pipeline` as aggregate root)
@@ -14,6 +15,7 @@ The Go implementation follows the same architectural principles as the Python ve
 - **Specifications**: Encapsulated business rules
 
 ### Hexagonal Architecture (Ports & Adapters)
+
 - **Domain Layer**: Core business logic (`pkg/domain/`)
 - **Application Layer**: Use cases and orchestration (`pkg/application/`)
 - **Infrastructure Layer**: External adapters (`pkg/infrastructure/`)
@@ -55,6 +57,7 @@ flext-core/
 ### Domain Types
 
 #### Base Types
+
 - `EntityID`: Unique identifier for domain entities
 - `DomainEntity`: Base for all entities with identity
 - `DomainValueObject`: Base for immutable value objects
@@ -62,6 +65,7 @@ flext-core/
 - `ServiceResult[T]`: Result type for operations that can fail
 
 #### Pipeline Domain
+
 - `Pipeline`: Main aggregate root representing a data pipeline
 - `PipelineExecution`: Entity representing a pipeline run
 - `PipelineID`, `ExecutionID`: Strongly-typed identifiers
@@ -71,28 +75,33 @@ flext-core/
 ### Application Layer
 
 #### Commands (Write Operations)
+
 - `CreatePipelineCommand`: Create a new pipeline
 - `UpdatePipelineCommand`: Update pipeline properties
 - `ExecutePipelineCommand`: Start pipeline execution
 - `CancelExecutionCommand`: Cancel running execution
 
 #### Queries (Read Operations)
+
 - `GetPipelineQuery`: Retrieve pipeline by ID
 - `ListPipelinesQuery`: List pipelines with filtering
 - `GetExecutionQuery`: Retrieve execution details
 - `ListExecutionsQuery`: List executions with filtering
 
 #### Handlers
+
 - `PipelineCommandHandlers`: Handles pipeline-related commands
 - `PipelineQueryHandlers`: Handles pipeline-related queries
 
 ### Infrastructure Ports
 
 #### Repository Interfaces
+
 - `PipelineRepository`: Pipeline persistence interface
 - `PipelineExecutionRepository`: Execution persistence interface
 
 #### Service Interfaces
+
 - `EventBusPort`: Domain event publishing
 - `LoggingPort`: Structured logging
 - `MetricsPort`: Metrics collection
@@ -116,16 +125,16 @@ import (
 
 func main() {
     ctx := context.Background()
-    
+
     // Create command
     cmd := commands.NewCreatePipelineCommand("my-pipeline", "A sample data pipeline")
     cmd.Tags = []string{"etl", "sample"}
     cmd.SetConfiguration("batch_size", 1000)
-    
+
     // Handle command
     handler := handlers.NewPipelineCommandHandlers(...)
     result := handler.HandleCreatePipeline(ctx, cmd)
-    
+
     if result.IsSuccess() {
         pipeline, _ := result.Value()
         fmt.Printf("Created pipeline: %s\n", pipeline.PipelineID.String())
@@ -186,8 +195,8 @@ result := queryHandler.HandleListPipelines(ctx, query)
 if result.IsSuccess() {
     pipelines, _ := result.Value()
     for _, pipeline := range pipelines {
-        fmt.Printf("Pipeline: %s (%s)\n", 
-            pipeline.Name.Value(), 
+        fmt.Printf("Pipeline: %s (%s)\n",
+            pipeline.Name.Value(),
             pipeline.PipelineID.String())
     }
 }
@@ -250,16 +259,16 @@ func (h *PipelineEventHandler) CanHandle(eventType string) bool {
 func TestCreatePipeline(t *testing.T) {
     // Arrange
     name, _ := valueobjects.NewPipelineName("test-pipeline")
-    
+
     // Act
     pipeline, err := entities.NewPipeline(name, "Test description")
-    
+
     // Assert
     assert.NoError(t, err)
     assert.Equal(t, "test-pipeline", pipeline.Name.Value())
     assert.True(t, pipeline.IsActive)
     assert.Equal(t, 0, len(pipeline.Steps))
-    
+
     // Check domain events
     events := pipeline.DomainEvents()
     assert.Equal(t, 1, len(events))
@@ -274,19 +283,19 @@ func TestPipelineRepository(t *testing.T) {
     // Setup test database
     db := setupTestDB(t)
     repo := NewPipelineRepository(db)
-    
+
     // Create pipeline
     name, _ := valueobjects.NewPipelineName("integration-test")
     pipeline, _ := entities.NewPipeline(name, "Integration test")
-    
+
     // Save and retrieve
     ctx := context.Background()
     saveResult := repo.Save(ctx, pipeline)
     assert.True(t, saveResult.IsSuccess())
-    
+
     findResult := repo.FindByID(ctx, pipeline.PipelineID)
     assert.True(t, findResult.IsSuccess())
-    
+
     found, _ := findResult.Value()
     assert.Equal(t, pipeline.PipelineID, found.PipelineID)
     assert.Equal(t, pipeline.Name.Value(), found.Name.Value())
@@ -346,12 +355,12 @@ type Config struct {
         MaxConnections  int    `json:"max_connections"`
         MaxIdleTime     string `json:"max_idle_time"`
     } `json:"database"`
-    
+
     EventBus struct {
         Provider string `json:"provider"`
         URL      string `json:"url"`
     } `json:"event_bus"`
-    
+
     Logging struct {
         Level  string `json:"level"`
         Format string `json:"format"`
@@ -365,14 +374,14 @@ This Go implementation maintains API compatibility with the Python version:
 
 ### Equivalent Concepts
 
-| Python | Go |
-|--------|-----|
-| `DomainBaseModel` | `DomainBaseModel` |
-| `DomainEntity` | `DomainEntity` |
+| Python              | Go                  |
+| ------------------- | ------------------- |
+| `DomainBaseModel`   | `DomainBaseModel`   |
+| `DomainEntity`      | `DomainEntity`      |
 | `DomainValueObject` | `DomainValueObject` |
-| `ServiceResult[T]` | `ServiceResult[T]` |
-| `PipelineId` | `PipelineID` |
-| `ExecutionStatus` | `ExecutionStatus` |
+| `ServiceResult[T]`  | `ServiceResult[T]`  |
+| `PipelineId`        | `PipelineID`        |
+| `ExecutionStatus`   | `ExecutionStatus`   |
 
 ### Key Differences
 

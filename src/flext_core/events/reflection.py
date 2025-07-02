@@ -12,7 +12,7 @@ import sys
 from collections.abc import Callable
 from datetime import UTC, datetime
 from enum import Enum, auto
-from typing import TYPE_CHECKING, ClassVar, TypeVar
+from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 from uuid import UUID, uuid4
 
 from pydantic import Field
@@ -31,11 +31,13 @@ if TYPE_CHECKING:
     from redis.asyncio import Redis
 
 # Python 3.13 type aliases
-type EventData = dict[str, object]
-type EventHandler[T] = Callable[[T], object]
-type ProjectionState = dict[str, object]
-type StreamPosition = int | str
-type SerializableValue = str | int | float | bool | dict[str, object] | list[object] | None
+EventData = dict[str, object]
+EventHandler = Any
+ProjectionState = dict[str, object]
+StreamPosition = int | str
+SerializableValue = (
+    str | int | float | bool | dict[str, object] | list[object] | None
+)
 
 T = TypeVar("T")
 E = TypeVar("E")
@@ -190,18 +192,17 @@ class ReflectionEvent(DomainValueObject):
         return data
 
     def _serialize_value(self, value: object) -> SerializableValue:
-        """Serialize value based on type using Python 3.13 match statement."""
-        match value:
-            case UUID():
-                return str(value)
-            case datetime():
-                return value.isoformat()
-            case Enum():
-                return value.name
-            case None:
-                return None
-            case _:
-                return self._serialize_complex_value(value)
+        """Serialize value based on type (Python 3.9 compatible)."""
+        if isinstance(value, UUID):
+            return str(value)
+        elif isinstance(value, datetime):
+            return value.isoformat()
+        elif isinstance(value, Enum):
+            return value.name
+        elif value is None:
+            return None
+        else:
+            return self._serialize_complex_value(value)
 
     def _serialize_complex_value(self, value: object) -> SerializableValue:
         """Handle serialization of complex objects."""
@@ -325,7 +326,9 @@ class EventHandlerRegistry(DomainBaseModel):
         return self.projections_registry
 
     def register_handler(
-        self, event_class: type[ReflectionEvent], handler: EventHandler[ReflectionEvent],
+        self,
+        event_class: type[ReflectionEvent],
+        handler: EventHandler[ReflectionEvent],
     ) -> None:
         """Register an event handler.
 
@@ -503,7 +506,10 @@ class EventStore(DomainBaseModel):
         return str(message_id)
 
     async def read_stream(
-        self, stream_name: str, start: StreamPosition = "0", count: int | None = None,
+        self,
+        stream_name: str,
+        start: StreamPosition = "0",
+        count: int | None = None,
     ) -> list[tuple[StreamPosition, ReflectionEvent]]:
         """Read events from stream with automatic deserialization."""
         stream_key = f"{self.stream_prefix}:{stream_name}"
@@ -536,7 +542,10 @@ class EventStore(DomainBaseModel):
         return ReflectionEvent
 
     async def replay(
-        self, stream_name: str, projection: Projection, start: StreamPosition = "0",
+        self,
+        stream_name: str,
+        projection: Projection,
+        start: StreamPosition = "0",
     ) -> None:
         """Replay events to rebuild projection state."""
         projection.reset()

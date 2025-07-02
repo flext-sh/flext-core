@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import contextlib
 from dataclasses import fields, is_dataclass
-from typing import TYPE_CHECKING, ClassVar, TypeVar, get_origin
+from typing import TYPE_CHECKING, Any, ClassVar, TypeVar, get_origin
 from uuid import UUID
 
 # ZERO TOLERANCE: Import specification classes from canonical location
@@ -38,13 +38,13 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
 # Python 3.13 type aliases for enterprise reflection patterns
-type DomainEvent = dict[str, str | int | float | bool | None]
-type EntityIdentity = str | UUID | int
-type ValidationTarget = object
-type ConversionTarget = object
-type ConversionResult = object
-type SpecificationTarget = object
-type DomainObject = object
+DomainEvent = dict[str, str | int | float | bool | None]
+EntityIdentity = str | UUID | int
+ValidationTarget = object
+ConversionTarget = object
+ConversionResult = object
+SpecificationTarget = object
+DomainObject = object
 
 # Generic type variables with proper constraints
 T = TypeVar("T")
@@ -114,7 +114,8 @@ class EnterpriseReflectionRegistry:
 
     @classmethod
     def register_validator(
-        cls, target_type: type,
+        cls,
+        target_type: type,
     ) -> Callable[[ValidatorProtocol], ValidatorProtocol]:
         """Register validator for specific type.
 
@@ -136,7 +137,9 @@ class EnterpriseReflectionRegistry:
 
     @classmethod
     def register_converter(
-        cls, from_type: type, to_type: type,
+        cls,
+        from_type: type,
+        to_type: type,
     ) -> Callable[[ConverterProtocol], ConverterProtocol]:
         """Register converter between types.
 
@@ -258,7 +261,7 @@ class EnterpriseReflectionRegistry:
 # ============================================================================
 
 
-def auto_init[T](cls: type[T]) -> type[T]:
+def auto_init(cls: type[Any]) -> type[Any]:
     """Class decorator that automatically generates __init__ with validation.
 
     Enhanced to work with dataclasses, Pydantic models, and regular classes.
@@ -302,7 +305,9 @@ def auto_init[T](cls: type[T]) -> type[T]:
         if original_init and original_init != object.__init__:
 
             def enhanced_init(
-                self: ValidationTarget, *args: object, **kwargs: object,
+                self: ValidationTarget,
+                *args: object,
+                **kwargs: object,
             ) -> None:
                 # Call original init first
                 original_init(self, *args, **kwargs)
@@ -338,7 +343,7 @@ def auto_init[T](cls: type[T]) -> type[T]:
     return cls
 
 
-def value_object[T](cls: type[T]) -> type[T]:
+def value_object(cls: type[Any]) -> type[Any]:
     """Class decorator for value objects with automatic equality and hashing.
 
     Value objects are immutable objects that are compared by their attributes
@@ -411,7 +416,7 @@ def value_object[T](cls: type[T]) -> type[T]:
     return cls
 
 
-def entity[T](cls: type[T]) -> type[T]:
+def entity(cls: type[Any]) -> type[Any]:
     """Class decorator for domain entities with identity management.
 
     Entities are objects with identity that are compared by their ID
@@ -470,7 +475,7 @@ def entity[T](cls: type[T]) -> type[T]:
     return cls
 
 
-def aggregate_root[T](cls: type[T]) -> type[T]:
+def aggregate_root(cls: type[Any]) -> type[Any]:
     """Class decorator for aggregate root entities with event sourcing.
 
     Aggregate roots are entities that serve as the entry point to an aggregate
@@ -517,7 +522,7 @@ def aggregate_root[T](cls: type[T]) -> type[T]:
     return cls
 
 
-def specification[T](cls: type[T]) -> type[T]:
+def specification(cls: type[Any]) -> type[Any]:
     """Class decorator for specification pattern implementation.
 
     Specifications encapsulate business rules that can be combined using

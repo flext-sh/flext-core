@@ -25,10 +25,10 @@ E = TypeVar("E", bound="DomainEntity")
 V = TypeVar("V", bound="DomainValueObject")
 
 # Python 3.13 Advanced Type Aliases
-type EntityId = UUID
-type DomainEventData = dict[str, Any]
-type MetadataDict = dict[str, str | int | bool | float | None]
-type ConfigurationValue = str | int | float | bool | None | list[Any] | dict[str, Any]
+EntityId = UUID
+DomainEventData = dict[str, Any]
+MetadataDict = dict[str, str | int | bool | float | None]
+ConfigurationValue = str | int | float | bool | None | list[Any] | dict[str, Any]
 
 
 class DomainBaseModel(BaseModel):

@@ -110,15 +110,15 @@ constants = get_domain_constants()
 DEGRADED_SUCCESS_RATE_THRESHOLD = 95
 
 # Python 3.13 type aliases - ZERO TOLERANCE to Any
-type HandlerResult = ServiceResult[object]
-type PipelineResult = ServiceResult[object]
-type ExecutionResult = ServiceResult[object]
-type SerializedPipeline = dict[str, Any]
-type SerializedExecution = dict[str, Any]
-type CommandObject = object
-type E2EStatus = dict[str, object]
-type ClusterStatus = dict[str, object]
-type HealthStatus = dict[str, Any]
+HandlerResult = ServiceResult[object]
+PipelineResult = ServiceResult[object]
+ExecutionResult = ServiceResult[object]
+SerializedPipeline = dict[str, Any]
+SerializedExecution = dict[str, Any]
+CommandObject = object
+E2EStatus = dict[str, object]
+ClusterStatus = dict[str, object]
+HealthStatus = dict[str, Any]
 
 
 class EnterpriseCommandHandlers:
@@ -176,7 +176,8 @@ class EnterpriseCommandHandlers:
     # =========================================================================
 
     async def create_pipeline(  # noqa: PLR0911
-        self, command: CreatePipelineCommand,
+        self,
+        command: CreatePipelineCommand,
     ) -> HandlerResult[dict[str, Any]]:
         """Create new pipeline with enterprise transaction management and event publishing."""
         if not self._unit_of_work:
@@ -258,7 +259,8 @@ class EnterpriseCommandHandlers:
             )
 
     async def update_pipeline(
-        self, command: UpdatePipelineCommand,
+        self,
+        command: UpdatePipelineCommand,
     ) -> HandlerResult[dict[str, Any]]:
         """Update existing pipeline with enterprise change tracking and validation."""
         if not self._unit_of_work:
@@ -329,7 +331,8 @@ class EnterpriseCommandHandlers:
             )
 
     async def execute_pipeline(
-        self, command: ExecutePipelineCommand,
+        self,
+        command: ExecutePipelineCommand,
     ) -> ExecutionResult[SerializedExecution]:
         """Execute pipeline with enterprise execution tracking and monitoring."""
         if not self._unit_of_work or not self._meltano_engine:
@@ -415,7 +418,8 @@ class EnterpriseCommandHandlers:
             )
 
     async def delete_pipeline(
-        self, command: DeletePipelineCommand,
+        self,
+        command: DeletePipelineCommand,
     ) -> PipelineResult[dict[str, str]]:
         """Delete pipeline with enterprise cascade handling and audit trail."""
         if not self._unit_of_work:
@@ -487,7 +491,8 @@ class EnterpriseCommandHandlers:
             )
 
     async def list_pipelines(
-        self, command: ListPipelinesCommand,
+        self,
+        command: ListPipelinesCommand,
     ) -> PipelineResult[list[SerializedPipeline]]:
         """List pipelines with enterprise filtering and pagination."""
         if not self._unit_of_work:
@@ -536,7 +541,8 @@ class EnterpriseCommandHandlers:
             )
 
     async def get_pipeline_status(
-        self, command: GetPipelineStatusCommand,
+        self,
+        command: GetPipelineStatusCommand,
     ) -> PipelineResult[HealthStatus]:
         """Get comprehensive pipeline status with health monitoring and execution history."""
         if not self._unit_of_work:
@@ -627,7 +633,8 @@ class EnterpriseCommandHandlers:
     # =========================================================================
 
     async def run_docker_e2e(
-        self, _command: RunDockerE2ECommand,
+        self,
+        _command: RunDockerE2ECommand,
     ) -> HandlerResult[dict[str, Any]]:
         """Execute E2E tests using Docker environment with enterprise monitoring."""
         try:
@@ -667,7 +674,8 @@ class EnterpriseCommandHandlers:
             )
 
     async def run_kind_e2e(
-        self, _command: RunKindE2ECommand,
+        self,
+        _command: RunKindE2ECommand,
     ) -> HandlerResult[dict[str, Any]]:
         """Execute E2E tests using Kind cluster with enterprise monitoring."""
         try:
@@ -705,7 +713,8 @@ class EnterpriseCommandHandlers:
             )
 
     async def run_full_e2e(
-        self, command: RunFullE2ECommand,
+        self,
+        command: RunFullE2ECommand,
     ) -> HandlerResult[dict[str, Any]]:
         """Execute comprehensive E2E tests with enterprise monitoring and reporting."""
         environment = getattr(command, "environment", "production")
@@ -745,7 +754,8 @@ class EnterpriseCommandHandlers:
             )
 
     async def setup_kind_cluster(
-        self, _command: SetupKindClusterCommand,
+        self,
+        _command: SetupKindClusterCommand,
     ) -> HandlerResult[ClusterStatus]:
         """Set up Kind cluster with enterprise configuration and monitoring."""
         try:
@@ -782,7 +792,8 @@ class EnterpriseCommandHandlers:
             )
 
     async def teardown_kind_cluster(
-        self, _command: TeardownKindClusterCommand,
+        self,
+        _command: TeardownKindClusterCommand,
     ) -> HandlerResult[ClusterStatus]:
         """Tear down Kind cluster with enterprise cleanup and monitoring."""
         try:
@@ -886,7 +897,8 @@ class EnterpriseCommandHandlers:
         return {}
 
     def _validate_pipeline_creation_data(
-        self, command_data: dict[str, Any],
+        self,
+        command_data: dict[str, Any],
     ) -> ServiceResult[None]:
         """Validate pipeline creation data with comprehensive enterprise checks."""
         name_result = EnterpriseValidationPatterns.validate_required_string(
@@ -903,7 +915,9 @@ class EnterpriseCommandHandlers:
         return ServiceResult.ok(data=None)
 
     async def _check_pipeline_name_uniqueness(
-        self, pipeline_repo: RepositoryInterface, name: str,
+        self,
+        pipeline_repo: RepositoryInterface,
+        name: str,
     ) -> ServiceResult[None]:
         """Check pipeline name uniqueness with enterprise error handling."""
         # Cast to concrete repository type to access specialized methods
@@ -975,7 +989,9 @@ class EnterpriseCommandHandlers:
         return ServiceResult.ok(data=None)
 
     async def _publish_pipeline_created_event(
-        self, pipeline: Pipeline, step_count: int,
+        self,
+        pipeline: Pipeline,
+        step_count: int,
     ) -> None:
         """Publish pipeline created event with comprehensive metadata."""
         event = EnterpriseEventPatterns.create_pipeline_event(
@@ -993,7 +1009,9 @@ class EnterpriseCommandHandlers:
         await EnterpriseEventPatterns.publish_event_safely(event_bus, event)
 
     def _apply_pipeline_updates(
-        self, pipeline: Pipeline, command_data: dict[str, Any],
+        self,
+        pipeline: Pipeline,
+        command_data: dict[str, Any],
     ) -> list[str]:
         """Apply pipeline updates with comprehensive change tracking."""
         changes_applied = []
@@ -1023,7 +1041,9 @@ class EnterpriseCommandHandlers:
         return changes_applied
 
     async def _publish_pipeline_updated_event(
-        self, pipeline: Pipeline, changes: list[str],
+        self,
+        pipeline: Pipeline,
+        changes: list[str],
     ) -> None:
         """Publish pipeline updated event with detailed change tracking."""
         if changes:
@@ -1145,7 +1165,9 @@ class EnterpriseCommandHandlers:
         await execution_repo.save(execution)
 
     async def _publish_pipeline_executed_event(
-        self, execution: PipelineExecution, pipeline: Pipeline,
+        self,
+        execution: PipelineExecution,
+        pipeline: Pipeline,
     ) -> None:
         """Publish pipeline executed event with comprehensive execution metadata."""
         event = EnterpriseEventPatterns.create_execution_event(
@@ -1174,7 +1196,8 @@ class EnterpriseCommandHandlers:
         await EnterpriseEventPatterns.publish_event_safely(event_bus, event)
 
     def _serialize_pipeline_with_metadata(
-        self, pipeline: Pipeline,
+        self,
+        pipeline: Pipeline,
     ) -> SerializedPipeline:
         """Serialize pipeline with comprehensive enterprise metadata."""
         return EnterpriseSerializationPatterns.serialize_with_metadata(
@@ -1206,7 +1229,8 @@ class EnterpriseCommandHandlers:
         }
 
     def _serialize_execution_with_metadata(
-        self, execution: PipelineExecution,
+        self,
+        execution: PipelineExecution,
     ) -> SerializedExecution:
         """Serialize pipeline execution with comprehensive enterprise metadata."""
         return EnterpriseSerializationPatterns.serialize_with_metadata(
@@ -1235,7 +1259,9 @@ class EnterpriseCommandHandlers:
         )
 
     def _calculate_comprehensive_pipeline_health(
-        self, _pipeline: Pipeline, recent_executions: list[PipelineExecution],
+        self,
+        _pipeline: Pipeline,
+        recent_executions: list[PipelineExecution],
     ) -> HealthStatus:
         """Calculate comprehensive pipeline health with enterprise metrics."""
         if not recent_executions:
@@ -1301,7 +1327,10 @@ class EnterpriseCommandHandlers:
         }
 
     def _calculate_health_score(
-        self, success_rate: float, last_run_status: str, average_duration: float,
+        self,
+        success_rate: float,
+        last_run_status: str,
+        average_duration: float,
     ) -> int:
         """Calculate enterprise health score with weighted metrics."""
         score = 0
@@ -1331,7 +1360,9 @@ class EnterpriseCommandHandlers:
         return min(100, int(score))
 
     def _determine_health_status(
-        self, success_rate: float, last_run_status: str,
+        self,
+        success_rate: float,
+        last_run_status: str,
     ) -> str:
         """Determine health status with enterprise thresholds."""
         if last_run_status == "failed":
@@ -1343,7 +1374,10 @@ class EnterpriseCommandHandlers:
         return "healthy"
 
     def _generate_health_recommendations(
-        self, success_rate: float, failed_runs: int, average_duration: float,
+        self,
+        success_rate: float,
+        failed_runs: int,
+        average_duration: float,
     ) -> list[str]:
         """Generate enterprise health recommendations."""
         recommendations = []
@@ -1372,7 +1406,9 @@ class EnterpriseCommandHandlers:
         return recommendations
 
     def _enhance_e2e_results(
-        self, results: dict[str, Any], environment: str,
+        self,
+        results: dict[str, Any],
+        environment: str,
     ) -> dict[str, Any]:
         """Enhance E2E results with enterprise metadata and analysis."""
         return {
@@ -1385,7 +1421,9 @@ class EnterpriseCommandHandlers:
         }
 
     def _enhance_cluster_status(
-        self, result: dict[str, Any], operation: str,
+        self,
+        result: dict[str, Any],
+        operation: str,
     ) -> ClusterStatus:
         """Enhance cluster status with enterprise metadata."""
         return {
@@ -1398,7 +1436,8 @@ class EnterpriseCommandHandlers:
         }
 
     def _calculate_comprehensive_e2e_readiness_score(
-        self, status_result: dict[str, object],
+        self,
+        status_result: dict[str, object],
     ) -> int:
         """Calculate comprehensive E2E readiness score with enterprise metrics."""
         components = status_result.get("components", {})
@@ -1418,7 +1457,8 @@ class EnterpriseCommandHandlers:
         return min(constants.E2E_MAX_READINESS_SCORE, base_score)
 
     def _generate_enterprise_e2e_recommendations(
-        self, status_result: dict[str, object],
+        self,
+        status_result: dict[str, object],
     ) -> list[str]:
         """Generate enterprise E2E recommendations with detailed analysis."""
         recommendations = []
@@ -1441,7 +1481,8 @@ class EnterpriseCommandHandlers:
         return recommendations
 
     def _assess_e2e_environment_health(
-        self, status_result: dict[str, object],
+        self,
+        status_result: dict[str, object],
     ) -> dict[str, Any]:
         """Assess E2E environment health with comprehensive analysis."""
         components = status_result.get("components", {})

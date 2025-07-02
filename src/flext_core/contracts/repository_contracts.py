@@ -16,15 +16,15 @@ class EntityInterface(Protocol):
     id: Any
 
 
-class RepositoryInterface[Entity, EntityId](ABC):
+class RepositoryInterface(ABC):
     """Abstract repository interface."""
 
     @abstractmethod
-    async def get_by_id(self, entity_id: EntityId) -> Entity | None:
+    async def get_by_id(self, entity_id: Any) -> Any:
         """Get entity by ID."""
 
     @abstractmethod
-    async def get_all(self) -> list[Entity]:
+    async def get_all(self) -> list[Any]:
         """Get all entities."""
 
     @abstractmethod
@@ -44,11 +44,16 @@ class UnitOfWorkInterface(ABC):
     """Abstract unit of work interface."""
 
     @abstractmethod
-    async def __aenter__(self) -> UnitOfWorkInterface:
+    async def __aenter__(self) -> "UnitOfWorkInterface":
         """Enter async context manager."""
 
     @abstractmethod
-    async def __aexit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: object | None) -> None:
+    async def __aexit__(
+        self,
+        exc_type: Any,
+        exc_val: Any,
+        exc_tb: Any,
+    ) -> None:
         """Exit async context manager."""
 
     @abstractmethod
@@ -60,5 +65,7 @@ class UnitOfWorkInterface(ABC):
         """Rollback transaction."""
 
     @abstractmethod
-    def get_repository(self, entity_class: type[T], model_class: type[Any]) -> RepositoryInterface[T, Any]:
+    def get_repository(
+        self, entity_class: type[Any], model_class: type[Any]
+    ) -> Any:
         """Get repository for entity type."""

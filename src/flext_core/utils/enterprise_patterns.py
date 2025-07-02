@@ -1,13 +1,15 @@
 """Enterprise patterns for FLEXT Core."""
 
-from typing import Any
+from typing import Any, Optional
 
 
 class EnterpriseErrorPatterns:
     """Enterprise error handling patterns."""
 
     @staticmethod
-    def create_error_response(error_code: str, message: str, details: dict[str, Any] | None = None) -> dict[str, Any]:
+    def create_error_response(
+        error_code: str, message: str, details: Optional[dict[str, Any]] = None
+    ) -> dict[str, Any]:
         """Create standardized error response."""
         return {
             "error_code": error_code,
@@ -30,7 +32,9 @@ class EnterpriseEventPatterns:
     """Enterprise event handling patterns."""
 
     @staticmethod
-    def create_domain_event(event_type: str, entity_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+    def create_domain_event(
+        event_type: str, entity_id: str, payload: dict[str, Any]
+    ) -> dict[str, Any]:
         """Create standardized domain event."""
         return {
             "event_type": event_type,
@@ -41,7 +45,9 @@ class EnterpriseEventPatterns:
         }
 
     @staticmethod
-    def create_audit_event(action: str, user_id: str, resource: str, details: dict[str, Any]) -> dict[str, Any]:
+    def create_audit_event(
+        action: str, user_id: str, resource: str, details: dict[str, Any]
+    ) -> dict[str, Any]:
         """Create audit event."""
         return {
             "action": action,
@@ -56,7 +62,9 @@ class EnterpriseInfrastructurePatterns:
     """Enterprise infrastructure patterns."""
 
     @staticmethod
-    def create_health_check_response(service_name: str, status: str, details: dict[str, Any]) -> dict[str, Any]:
+    def create_health_check_response(
+        service_name: str, status: str, details: dict[str, Any]
+    ) -> dict[str, Any]:
         """Create health check response."""
         return {
             "service": service_name,
@@ -67,7 +75,9 @@ class EnterpriseInfrastructurePatterns:
         }
 
     @staticmethod
-    def create_metrics_data(metric_name: str, value: float, labels: dict[str, str]) -> dict[str, Any]:
+    def create_metrics_data(
+        metric_name: str, value: float, labels: dict[str, str]
+    ) -> dict[str, Any]:
         """Create metrics data."""
         return {
             "metric_name": metric_name,
@@ -103,31 +113,49 @@ class EnterpriseValidationPatterns:
     """Enterprise validation patterns."""
 
     @staticmethod
-    def validate_required_fields(data: dict[str, Any], required_fields: list[str]) -> list[str]:
+    def validate_required_fields(
+        data: dict[str, Any], required_fields: list[str]
+    ) -> list[str]:
         """Validate required fields."""
-        return [f"Field '{field}' is required" for field in required_fields if field not in data or data[field] is None]
+        return [
+            f"Field '{field}' is required"
+            for field in required_fields
+            if field not in data or data[field] is None
+        ]
 
     @staticmethod
-    def validate_field_types(data: dict[str, Any], field_types: dict[str, type]) -> list[str]:
+    def validate_field_types(
+        data: dict[str, Any], field_types: dict[str, type]
+    ) -> list[str]:
         """Validate field types."""
         errors = []
         for field, expected_type in field_types.items():
             if field in data and not isinstance(data[field], expected_type):
-                errors.append(f"Field '{field}' must be of type {expected_type.__name__}")
+                errors.append(
+                    f"Field '{field}' must be of type {expected_type.__name__}"
+                )
         return errors
 
     @staticmethod
-    def validate_data(data: dict[str, Any],
-                     required_fields: list[str] | None = None,
-                     field_types: dict[str, type] | None = None) -> dict[str, Any]:
+    def validate_data(
+        data: dict[str, Any],
+        required_fields: Optional[list[str]] = None,
+        field_types: Optional[dict[str, type]] = None,
+    ) -> dict[str, Any]:
         """Comprehensive data validation."""
         errors = []
 
         if required_fields:
-            errors.extend(EnterpriseValidationPatterns.validate_required_fields(data, required_fields))
+            errors.extend(
+                EnterpriseValidationPatterns.validate_required_fields(
+                    data, required_fields
+                )
+            )
 
         if field_types:
-            errors.extend(EnterpriseValidationPatterns.validate_field_types(data, field_types))
+            errors.extend(
+                EnterpriseValidationPatterns.validate_field_types(data, field_types)
+            )
 
         return {
             "is_valid": len(errors) == 0,

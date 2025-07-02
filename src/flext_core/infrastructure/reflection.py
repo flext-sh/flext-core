@@ -6,7 +6,7 @@ providing SINGLE SOURCE OF TRUTH for repository patterns with zero boilerplate.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING, TypeVar, Any
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
@@ -16,11 +16,9 @@ T = TypeVar("T")
 M = TypeVar("M")
 
 
-def create_repository[
-    T, M,
-](
-    entity_class: type[T],
-    model_class: type[M],
+def create_repository(
+    entity_class: type[Any],
+    model_class: type[Any],
     field_mappings: dict[str, str],
     converters: dict[str, object],
     session: AsyncSession,

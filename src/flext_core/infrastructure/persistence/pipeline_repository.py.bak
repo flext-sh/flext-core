@@ -34,6 +34,23 @@ from flext_core.infrastructure.persistence.models import PipelineModel
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
 
+# Import API models with fallback
+try:
+    from flx_api.models.pipeline import (
+        PipelineCreateRequest,
+        PipelineResponse,
+        PipelineStatus,
+        PipelineType,
+        PipelineUpdateRequest,
+    )
+except ImportError:
+    # Fallback types for when API models are not available
+    PipelineCreateRequest = Any
+    PipelineResponse = Any
+    PipelineStatus = Any
+    PipelineType = Any
+    PipelineUpdateRequest = Any
+
 
 class DatabasePipelineRepository:
     """Database-backed repository for pipeline persistence operations.
@@ -85,7 +102,9 @@ class DatabasePipelineRepository:
         self.session = session
 
     async def create_pipeline(
-        self, pipeline_data: PipelineCreateRequest, created_by: str,
+        self,
+        pipeline_data: PipelineCreateRequest,
+        created_by: str,
     ) -> ServiceResult[PipelineResponse]:
         """Create a new pipeline in the database.
 
@@ -173,7 +192,10 @@ class DatabasePipelineRepository:
             )
 
     async def get_pipeline(
-        self, pipeline_id: UUID, user_id: str, user_role: str = "user",
+        self,
+        pipeline_id: UUID,
+        user_id: str,
+        user_role: str = "user",
     ) -> ServiceResult[PipelineResponse]:
         """Retrieve a pipeline by ID with access control.
 
@@ -358,7 +380,10 @@ class DatabasePipelineRepository:
             )
 
     async def delete_pipeline(
-        self, pipeline_id: UUID, user_id: str, user_role: str = "user",
+        self,
+        pipeline_id: UUID,
+        user_id: str,
+        user_role: str = "user",
     ) -> ServiceResult[dict[str, str]]:
         """Delete a pipeline with access control and audit trail.
 
@@ -551,6 +576,25 @@ class DatabasePipelineRepository:
         """
         env_vars = model.environment_variables or {}
 
+        # Get execution statistics from related executions
+        last_execution = None
+        execution_count = len(model.executions)
+        success_count = 0
+
+        if model.executions:
+            # Get the most recent execution
+            last_execution = max(model.executions, key=lambda e: e.created_at)
+
+            # Count successful executions for success rate calculation
+            success_count = len(
+                [e for e in model.executions if e.status == "completed"]
+            )
+
+        # Calculate success rate
+        success_rate = (
+            (success_count / execution_count * 100.0) if execution_count > 0 else 0.0
+        )
+
         return PipelineResponse(
             pipeline_id=model.id,
             name=model.name,
@@ -569,11 +613,11 @@ class DatabasePipelineRepository:
             created_at=model.created_at,
             updated_at=model.updated_at,
             created_by=model.created_by,
-            last_execution_id=None,  # TODO: Add execution tracking
-            last_execution_status=None,  # TODO: Add execution tracking
-            last_execution_at=None,  # TODO: Add execution tracking
-            execution_count=0,  # TODO: Add execution tracking
-            success_rate=0.0,  # TODO: Add execution tracking
+            last_execution_id=last_execution.id if last_execution else None,
+            last_execution_status=last_execution.status if last_execution else None,
+            last_execution_at=last_execution.completed_at if last_execution else None,
+            execution_count=execution_count,
+            success_rate=success_rate,
         )
 
 

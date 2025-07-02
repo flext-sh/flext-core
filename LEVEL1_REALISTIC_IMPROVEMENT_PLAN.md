@@ -1,7 +1,7 @@
 # LEVEL 1 REALISTIC IMPROVEMENT PLAN - TOOL-VERIFIED APPROACH
 
 **Based on**: HONEST STATUS REPORT findings
-**Method**: CLAUDE.* principles - INVESTIGATE DEEP, VERIFY ALWAYS, IMPLEMENT TRUTH
+**Method**: CLAUDE.\* principles - INVESTIGATE DEEP, VERIFY ALWAYS, IMPLEMENT TRUTH
 **Target**: Fix blocking issues and achieve functional Level 1
 **Timeline**: Incremental, verification-based approach
 
@@ -10,12 +10,14 @@
 ## 🎯 CURRENT VERIFIED REALITY
 
 ### **✅ STRENGTHS CONFIRMED BY TOOLS**
+
 - **Ruff compliance**: Perfect (`All checks passed!`)
 - **Code quality**: Professional 404-line implementation
 - **Architecture**: Solid DDD patterns with Pydantic v2
 - **Basic models**: DomainBaseModel works correctly
 
 ### **❌ BLOCKING ISSUES VERIFIED BY TOOLS**
+
 - **Import system**: Circular import prevents normal usage
 - **EntityId resolution**: Pydantic forward reference breaks entities
 - **System integration**: Cannot test full functionality
@@ -27,7 +29,9 @@
 ### **PHASE 1: FIX IMPORT SYSTEM** 🚨 CRITICAL
 
 #### **Step 1.1: Investigate Import Chain**
+
 **Method**: Use Read tool to examine import chain
+
 ```bash
 # MANDATORY VERIFICATION STEPS:
 1. Read /flx_core/__init__.py - find FlxApplication import
@@ -36,12 +40,15 @@
 ```
 
 **Success Criteria**:
+
 - ✅ Identify exact circular import location
 - ✅ Understand dependency relationship
 - ❌ NO GUESSING - only tool-verified findings
 
 #### **Step 1.2: Fix Circular Import**
+
 **Method**: Based on verified findings, apply minimal fix
+
 ```bash
 # POTENTIAL APPROACHES (choose based on investigation):
 A) Remove FlxApplication from main __init__.py
@@ -50,17 +57,21 @@ C) Restructure application module
 ```
 
 **Verification Required**:
+
 ```bash
 python -c "from flx_core.domain.pydantic_base import DomainBaseModel; print('SUCCESS')"
 ```
 
 **Success Criteria**:
+
 - ✅ Import succeeds without circular error
 - ✅ Basic model instantiation works
 - ❌ NO ASSUMPTIONS - test with actual Python
 
 #### **Step 1.3: Validate Import Fix**
+
 **Method**: Systematic testing with Bash tool
+
 ```bash
 # TEST MATRIX (all must pass):
 1. Basic import: from flx_core.domain.pydantic_base import *
@@ -73,7 +84,9 @@ python -c "from flx_core.domain.pydantic_base import DomainBaseModel; print('SUC
 ### **PHASE 2: FIX ENTITYID ISSUE** 🚨 CRITICAL
 
 #### **Step 2.1: Investigate EntityId Problem**
+
 **Method**: Use Read tool + Python debugging
+
 ```bash
 # INVESTIGATION COMMANDS:
 1. Read src/flx_core/domain/pydantic_base.py lines 28-31 (type aliases)
@@ -82,6 +95,7 @@ python -c "from flx_core.domain.pydantic_base import DomainBaseModel; print('SUC
 ```
 
 **Debugging Command**:
+
 ```python
 # MANDATORY TEST:
 python -c "
@@ -93,9 +107,11 @@ print('EntityId works:', entity_id)
 ```
 
 #### **Step 2.2: Fix Type Alias Resolution**
+
 **Based on investigation results, potential fixes**:
 
 **Option A: Traditional Type Alias**
+
 ```python
 from uuid import UUID
 from typing import TypeAlias
@@ -103,6 +119,7 @@ EntityId: TypeAlias = UUID
 ```
 
 **Option B: NewType Pattern**
+
 ```python
 from uuid import UUID
 from typing import NewType
@@ -110,6 +127,7 @@ EntityId = NewType('EntityId', UUID)
 ```
 
 **Option C: Class-based Approach**
+
 ```python
 from uuid import UUID
 class EntityId(UUID):
@@ -117,6 +135,7 @@ class EntityId(UUID):
 ```
 
 **Verification Required**:
+
 ```python
 # MANDATORY TEST:
 class TestEntity(DomainEntity):
@@ -127,7 +146,9 @@ print(f"SUCCESS: Entity ID = {entity.id}")
 ```
 
 #### **Step 2.3: Validate Entity Functionality**
+
 **Method**: Comprehensive entity testing
+
 ```bash
 # FULL ENTITY TEST SUITE:
 1. Basic instantiation
@@ -142,7 +163,9 @@ print(f"SUCCESS: Entity ID = {entity.id}")
 ### **PHASE 3: SYSTEMATIC VALIDATION** 🔧 MEDIUM PRIORITY
 
 #### **Step 3.1: MyPy Strict Compliance Check**
+
 **Method**: Direct tool usage
+
 ```bash
 # MANDATORY MYPY CHECK:
 cd /home/marlonsc/pyauto/flx-core
@@ -150,12 +173,15 @@ mypy src/flx_core/domain/pydantic_base.py --strict
 ```
 
 **Success Criteria**:
+
 - ✅ Zero mypy errors on the specific file
 - ❌ NOT system-wide (too many dependencies)
 - ❌ NO ASSUMPTIONS about success
 
 #### **Step 3.2: Complete Class Testing**
+
 **Method**: Test each class individually
+
 ```python
 # SYSTEMATIC CLASS TESTS:
 1. DomainBaseModel ✅ (already verified working)
@@ -168,12 +194,15 @@ mypy src/flx_core/domain/pydantic_base.py --strict
 ```
 
 **Each test MUST**:
+
 - ✅ Use actual Python execution
 - ✅ Verify expected behavior
 - ✅ Report actual results (not assumed)
 
 #### **Step 3.3: Integration Validation**
+
 **Method**: Test with other flx-core components
+
 ```bash
 # INTEGRATION TESTS:
 1. Import from other flx_core modules
@@ -187,7 +216,9 @@ mypy src/flx_core/domain/pydantic_base.py --strict
 ### **PHASE 4: PERFORMANCE & PRODUCTION READINESS** 📊 LOW PRIORITY
 
 #### **Step 4.1: Performance Baseline**
+
 **Method**: Actual benchmarking
+
 ```python
 # BENCHMARK COMMANDS:
 import time
@@ -196,7 +227,9 @@ model = DomainBaseModel()
 ```
 
 #### **Step 4.2: Memory Usage Analysis**
+
 **Method**: Tool-based measurement
+
 ```bash
 # MEMORY PROFILING:
 python -m memory_profiler test_pydantic_base.py
@@ -208,20 +241,23 @@ python -m memory_profiler test_pydantic_base.py
 
 ### **MANDATORY BEFORE ANY STATUS UPDATE**
 
-#### **For Each Phase**:
+#### **For Each Phase**
+
 1. **✅ Use tools first**: Read, Bash, Python execution
 2. **✅ Document actual results**: Copy-paste tool output
 3. **✅ Admit failures**: If tests fail, report honestly
 4. **❌ No assumptions**: If untested, mark as ❓ UNKNOWN
 
-#### **Status Reporting Rules**:
+#### **Status Reporting Rules**
+
 - ✅ **VERIFIED**: Confirmed by tool execution
 - ❌ **FAILED**: Tool execution showed errors
 - 🔧 **IN PROGRESS**: Currently testing with tools
 - ❓ **UNKNOWN**: Not yet tested
 - ⚠️ **PARTIAL**: Some aspects work, some don't
 
-#### **FORBIDDEN PHRASES**:
+#### **FORBIDDEN PHRASES**
+
 - ❌ "Should work" (test it!)
 - ❌ "Probably fixed" (verify it!)
 - ❌ "Almost ready" (define criteria!)
@@ -232,6 +268,7 @@ python -m memory_profiler test_pydantic_base.py
 ## 🎯 SUCCESS CRITERIA (MEASURABLE)
 
 ### **Phase 1 Success**: Import System Fixed
+
 ```python
 # EXACT TEST THAT MUST PASS:
 from flx_core.domain.pydantic_base import DomainBaseModel, DomainEntity
@@ -241,6 +278,7 @@ print("Phase 1: SUCCESS")
 ```
 
 ### **Phase 2 Success**: Entity System Working
+
 ```python
 # EXACT TEST THAT MUST PASS:
 entity1 = DomainEntity(name="test1")
@@ -251,6 +289,7 @@ print("Phase 2: SUCCESS")
 ```
 
 ### **Phase 3 Success**: All Classes Functional
+
 ```python
 # COMPREHENSIVE TEST THAT MUST PASS:
 # [Detailed test matrix for all 11 classes]
@@ -262,6 +301,7 @@ print("Phase 3: SUCCESS")
 ## 📝 COORDINATION WITH OTHER AGENTS
 
 ### **Token Protocol**
+
 ```bash
 # BEFORE STARTING WORK:
 echo "LEVEL1_IMPORT_FIX_$(whoami)_$(date)" >> /home/marlonsc/pyauto/.token
@@ -271,12 +311,15 @@ echo "LEVEL1_PHASE1_COMPLETE_$(date)" >> /home/marlonsc/pyauto/.token
 ```
 
 ### **Documentation Updates**
+
 - ✅ Update LEVEL1_HONEST_STATUS_REPORT.md after each phase
 - ✅ Use same tool-verified approach
 - ❌ NO STATUS CHANGES without tool verification
 
 ### **Handoff Requirements**
+
 **Next agent MUST**:
+
 1. **Read** LEVEL1_HONEST_STATUS_REPORT.md
 2. **Verify** current status with tools
 3. **Continue** from documented blocking point
@@ -289,6 +332,7 @@ echo "LEVEL1_PHASE1_COMPLETE_$(date)" >> /home/marlonsc/pyauto/.token
 This plan **ONLY** contains actions that can be **TOOL-VERIFIED**.
 
 **No claims will be made without**:
+
 - ✅ Actual tool execution
 - ✅ Documented evidence
 - ✅ Reproducible tests

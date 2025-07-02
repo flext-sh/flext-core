@@ -19,7 +19,7 @@ import structlog
 
 # Strategic imports with type checking for optional enterprise dependencies
 if TYPE_CHECKING:
-    from aio_pika.abc import (
+    from aio_pika.abc import (  # type: ignore[import-not-found]
         AbstractChannel,
         AbstractExchange,
         AbstractIncomingMessage,
@@ -36,8 +36,8 @@ Event = LatoEvent
 # ZERO TOLERANCE: Dynamic import to avoid circular dependencies - domain_config is central
 
 # Python 3.11 compatible type aliases for event handling - with strict validation
-type EventHandler = Callable[[object], Awaitable[None]]  # Generic event handler
-type DomainEventHandler = Callable[[object], Awaitable[None]]  # Domain event handler
+EventHandler = Callable[[object], Awaitable[None]]  # Generic event handler
+DomainEventHandler = Callable[[object], Awaitable[None]]  # Domain event handler
 
 if TYPE_CHECKING:
     from asyncio import Future
@@ -146,8 +146,10 @@ class DomainEvent(LatoEvent):
         return CustomDomainEvent()
 
 
-# EventHandler type alias for modern event handling
-DomainEventHandler: type[Callable[[DomainEvent], Awaitable[None]]] = Callable[[DomainEvent], Awaitable[None]]
+# EventHandler type alias for modern event handling (renamed to avoid redefinition)
+ModernDomainEventHandler: type[Callable[[DomainEvent], Awaitable[None]]] = Callable[
+    [DomainEvent], Awaitable[None]
+]
 
 
 class DomainEventBus:
@@ -200,7 +202,9 @@ class DomainEventBus:
             )
 
     def subscribe(
-        self, event_type: str, handler: Callable[[DomainEvent], Awaitable[None]],
+        self,
+        event_type: str,
+        handler: Callable[[DomainEvent], Awaitable[None]],
     ) -> None:
         """Subscribe to a domain event type.
 
@@ -246,6 +250,7 @@ class HybridEventBus:
         self._channel: AbstractChannel | None = None  # type: ignore[no-any-unimported]
         self._exchange: AbstractExchange | None = None  # type: ignore[no-any-unimported]
         self._queues: dict[str, AbstractQueue] = {}  # type: ignore[no-any-unimported]
+        self._initialized: bool = False
 
         # DDD Event Bus using lato
         self._domain_event_bus = DomainEventBus()
@@ -273,7 +278,11 @@ class HybridEventBus:
         # Convert input to Event object for unified processing
         if isinstance(event, str):
             # String event type with optional data
-            clean_data = {k: v for k, v in (data or {}).items() if isinstance(v, (str, int, bool, float, type(None)))}
+            clean_data = {
+                k: v
+                for k, v in (data or {}).items()
+                if isinstance(v, (str, int, bool, float, type(None)))
+            }
             event_obj = DomainEvent.create(event, clean_data)
         elif isinstance(event, dict):
             # Dictionary with event type and data
@@ -397,7 +406,9 @@ class InMemoryEventBus:
             )
 
     def subscribe(
-        self, event_type: str, handler: Callable[[Event], Awaitable[None]],
+        self,
+        event_type: str,
+        handler: Callable[[Event], Awaitable[None]],
     ) -> None:
         """Subscribe to an event type.
 
@@ -499,7 +510,9 @@ class EventBus(HybridEventBus):
             return
         try:
             # Dynamic import for optional aio_pika dependency
-            from aio_pika import connect_robust  # noqa: PLC0415
+            from aio_pika import (
+                connect_robust,  # type: ignore[import-not-found]  # noqa: PLC0415
+            )
 
             self.logger.info("Connecting to RabbitMQ", url=amqp_url)
 
@@ -623,7 +636,11 @@ class EventBus(HybridEventBus):
         # Convert input to Event object for unified processing
         if isinstance(event, str):
             # String event type with optional data
-            clean_data = {k: v for k, v in (data or {}).items() if isinstance(v, (str, int, bool, float, type(None)))}
+            clean_data = {
+                k: v
+                for k, v in (data or {}).items()
+                if isinstance(v, (str, int, bool, float, type(None)))
+            }
             event_obj = DomainEvent.create(event, clean_data)
         elif isinstance(event, dict):
             # Dictionary with event type and data

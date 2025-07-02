@@ -10,8 +10,8 @@ import pytest
 from flx_core.domain.advanced_types import ServiceError, ServiceResult, ValidationResult
 
 # Python 3.13 type aliases
-type TestValue = int | str | dict[str, str]
-type TestError = ServiceError
+TestValue = int | str | dict[str, str]
+TestError = ServiceError
 
 
 class TestServiceResult:

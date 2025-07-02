@@ -76,12 +76,14 @@ The answer is clear: **`domain/pydantic_base.py`** is the absolute core, with al
 ### 🏆 Level 1: Absolute Core - `pydantic_base.py`
 
 **Why this is most core:**
+
 - Every other component inherits from classes defined here
 - Removing this breaks the entire system
 - Zero dependencies on other FLX components
 - Provides fundamental abstractions for everything else
 
 **Key Components:**
+
 ```python
 DomainBaseModel     # Foundation Pydantic model
 DomainValueObject   # Immutable objects (frozen=True)
@@ -98,12 +100,14 @@ ServiceResult[T]    # Result type for operations
 **Components:** `base.py` + `advanced_types.py`
 
 **Why this level:**
+
 - Builds directly on pydantic_base.py
 - Defines fundamental types used throughout
 - Business-agnostic type definitions
 - Required by all domain models
 
 **Key Types:**
+
 ```python
 DomainId           # Base identifier type
 UserId, TenantId   # Business-specific IDs
@@ -118,12 +122,14 @@ ServiceResult      # Re-exported from base
 **Components:** `entities.py` + `value_objects.py`
 
 **Why this level:**
+
 - Implements actual business concepts
 - Uses foundation types and base classes
 - Defines core aggregates and value objects
 - Business logic starts here
 
 **Key Models:**
+
 ```python
 Pipeline           # Core aggregate root
 PipelineExecution  # Execution tracking
@@ -139,12 +145,14 @@ Duration           # Time value object
 **Component:** `ports.py`
 
 **Why this level:**
+
 - Defines interfaces for Clean Architecture
 - Uses domain models but doesn't implement business logic
 - Separates domain from application/infrastructure
 - Critical for dependency inversion
 
 **Key Interfaces:**
+
 ```python
 PipelineManagementPort  # Primary port
 PluginManagementPort    # Primary port
@@ -159,12 +167,14 @@ EventBusPort           # Event integration
 **Component:** `events/event_bus.py`
 
 **Why this level:**
+
 - Implements event-driven architecture
 - Provides infrastructure for domain events
 - Uses domain models and ports
 - Enables reactive programming
 
 **Key Components:**
+
 ```python
 EventBusProtocol   # Event bus interface
 Lato integration   # DI container events
@@ -178,12 +188,14 @@ Domain event routing # Event distribution
 **Component:** `config/domain_config.py`
 
 **Why this level:**
+
 - Configures behavior of all other components
 - Environment-aware settings
 - Business rule configuration
 - System-wide constants
 
 **Key Features:**
+
 ```python
 Environment config     # Development/production
 Business constants     # Domain parameters
@@ -197,12 +209,14 @@ Type-safe validation   # Configuration validation
 **Components:** `application/*`
 
 **Why this level:**
+
 - Orchestrates domain objects for use cases
 - Implements business workflows
 - Uses all domain components
 - Bridges to external world
 
 **Key Components:**
+
 ```python
 Command handlers       # Business operations
 Domain services        # Complex logic coordination
@@ -217,12 +231,14 @@ CQRS implementation   # Command/Query separation
 **Components:** `infrastructure/*`
 
 **Why this is most external:**
+
 - Adapts to external systems (databases, APIs, etc.)
 - Implements interfaces defined by domain
 - Can be replaced without affecting business logic
 - Highest level of dependencies
 
 **Key Components:**
+
 ```python
 Repository implementations  # Database integration
 SQLAlchemy models          # ORM mapping
@@ -247,16 +263,19 @@ Session management         # Database sessions
 ### Modification Impact Analysis
 
 **Changing `pydantic_base.py`:**
+
 - 🚨 **CRITICAL IMPACT** - Affects everything
 - Requires testing entire system
 - Likely breaking changes across all modules
 
 **Changing `entities.py`:**
+
 - 🔶 **HIGH IMPACT** - Affects business logic
 - Requires testing all use cases
 - May affect API contracts
 
 **Changing `infrastructure/*`:**
+
 - 🟢 **LOW IMPACT** - Isolated to adapters
 - Can be changed without affecting business logic
 - Mainly affects external integrations
@@ -289,6 +308,7 @@ Session management         # Database sessions
 The FLX-Core architecture follows a clear hierarchical structure where **`domain/pydantic_base.py`** forms the absolute foundation. Each layer builds upon the previous ones, creating a stable and maintainable architecture where changes to external layers don't affect the core business logic.
 
 This hierarchy ensures:
+
 - **Stability**: Core business logic is protected from external changes
 - **Testability**: Each layer can be tested independently
 - **Maintainability**: Clear dependencies make refactoring safer

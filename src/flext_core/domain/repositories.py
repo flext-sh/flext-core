@@ -29,12 +29,12 @@ from flext_core.infrastructure.persistence.repositories_core import (
 )
 
 # Python 3.13 Type Aliases for Domain Context - Using new type alias syntax
-type PipelineRepository = DomainRepository[Pipeline, PipelineId]
-type PipelineExecutionRepository = DomainRepository[PipelineExecution, UUID]
-type PluginRepository = DomainRepository[Plugin, PluginId]
+PipelineRepository = DomainRepository
+PipelineExecutionRepository = DomainRepository
+PluginRepository = DomainRepository
 
 
-class DomainPipelineRepository(DomainRepository[Pipeline, PipelineId]):
+class DomainPipelineRepository(DomainRepository):
     """Domain-specific pipeline repository with business methods."""
 
     @abstractmethod
@@ -50,12 +50,14 @@ class DomainPipelineRepository(DomainRepository[Pipeline, PipelineId]):
         """Find pipelines with scheduling enabled - domain business rule."""
 
 
-class DomainExecutionRepository(DomainRepository[PipelineExecution, UUID]):
+class DomainExecutionRepository(DomainRepository):
     """Domain-specific execution repository with business methods."""
 
     @abstractmethod
     async def find_by_pipeline(
-        self, pipeline_id: PipelineId, limit: int = 50,
+        self,
+        pipeline_id: PipelineId,
+        limit: int = 50,
     ) -> list[PipelineExecution]:
         """Find executions by pipeline - domain business rule."""
 
@@ -68,7 +70,7 @@ class DomainExecutionRepository(DomainRepository[PipelineExecution, UUID]):
         """Get next execution number - domain business rule."""
 
 
-class DomainPluginRepository(DomainRepository[Plugin, PluginId]):
+class DomainPluginRepository(DomainRepository):
     """Domain-specific plugin repository with business methods."""
 
     @abstractmethod
@@ -77,7 +79,9 @@ class DomainPluginRepository(DomainRepository[Plugin, PluginId]):
 
     @abstractmethod
     async def search_plugins(
-        self, query: str, plugin_type: str | None = None,
+        self,
+        query: str,
+        plugin_type: str | None = None,
     ) -> list[Plugin]:
         """Search plugins - domain business rule."""
 

@@ -17,7 +17,7 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, TypeVar
 
 if TYPE_CHECKING:
-    from flx_core.entities import Pipeline, PipelineExecution, Plugin
+    from flx_core.domain.entities import Pipeline, PipelineExecution, Plugin
 
 # Python 3.13 generic type parameters
 T = TypeVar("T")
@@ -327,7 +327,7 @@ class ExecutionHasFailedSpecification(CompositeSpecification["PipelineExecution"
 
     def is_satisfied_by(self, execution: PipelineExecution) -> bool:
         """Check if execution has failed status."""
-        from flx_core.value_objects import ExecutionStatus
+        from flx_core.domain.value_objects import ExecutionStatus
 
         return execution.status == ExecutionStatus.FAILED
 

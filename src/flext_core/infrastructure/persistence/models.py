@@ -43,14 +43,18 @@ class UniversalUUID(TypeDecorator[UUID]):
         return dialect.type_descriptor(CHAR(36))
 
     def process_bind_param(
-        self, value: UUID | None, dialect: Dialect,
+        self,
+        value: UUID | None,
+        dialect: Dialect,
     ) -> UUID | str | None:
         if value is None or dialect.name == "postgresql":
             return value
         return str(value)
 
     def process_result_value(
-        self, value: UUID | str | None, _dialect: Dialect,
+        self,
+        value: UUID | str | None,
+        _dialect: Dialect,
     ) -> UUID | None:
         if value is None:
             return value
@@ -529,8 +533,15 @@ class PluginModel(Base):
 
     # Audit fields
     updated_by: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=datetime.now)
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=datetime.now, onupdate=datetime.now)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=datetime.now
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=datetime.now,
+        onupdate=datetime.now,
+    )
 
     # Relationships
     pipeline_steps: Mapped[list[PipelineStepModel]] = relationship(

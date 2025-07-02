@@ -87,7 +87,9 @@ class DatabasePluginRepository:
         self.session = session
 
     async def install_plugin(
-        self, plugin_data: PluginInstallRequest, installed_by: str,
+        self,
+        plugin_data: PluginInstallRequest,
+        installed_by: str,
     ) -> ServiceResult[PluginInstallationResponse]:
         """Install a new plugin with tracking and validation.
 
@@ -227,7 +229,10 @@ class DatabasePluginRepository:
             )
 
     async def get_plugin(
-        self, plugin_name: str, user_id: str, user_role: str = "user",
+        self,
+        plugin_name: str,
+        user_id: str,
+        user_role: str = "user",
     ) -> ServiceResult[PluginResponse]:
         """Retrieve a plugin by name with access control.
 
@@ -369,7 +374,10 @@ class DatabasePluginRepository:
             )
 
     async def uninstall_plugin(
-        self, plugin_name: str, user_id: str, user_role: str = "user",
+        self,
+        plugin_name: str,
+        user_id: str,
+        user_role: str = "user",
     ) -> ServiceResult[dict[str, str]]:
         """Uninstall a plugin with audit trail.
 

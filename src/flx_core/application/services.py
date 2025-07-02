@@ -41,8 +41,8 @@ from flx_core.infrastructure.persistence.models import (
     PluginModel,
 )
 
-type EnvironmentVariables = ConfigurationDict
-type PipelineInputData = ConfigurationDict
+EnvironmentVariables = ConfigurationDict
+PipelineInputData = ConfigurationDict
 
 
 class PipelineStepData(TypedDict):

@@ -12,7 +12,9 @@ class PluginService(ABC):
     """Abstract plugin service."""
 
     @abstractmethod
-    async def install_plugin(self, name: str, version: str, config: dict[str, Any]) -> Plugin:
+    async def install_plugin(
+        self, name: str, version: str, config: dict[str, Any]
+    ) -> Plugin:
         """Install a plugin."""
 
     @abstractmethod
@@ -46,7 +48,9 @@ class DefaultPluginService(PluginService):
     def __init__(self) -> None:
         self._plugins: dict[str, Plugin] = {}
 
-    async def install_plugin(self, name: str, version: str, config: dict[str, Any]) -> Plugin:
+    async def install_plugin(
+        self, name: str, version: str, config: dict[str, Any]
+    ) -> Plugin:
         """Install a plugin."""
         plugin = Plugin(
             id=PluginId(str(uuid4())),

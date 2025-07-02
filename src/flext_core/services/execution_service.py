@@ -12,7 +12,9 @@ class ExecutionService(ABC):
     """Abstract execution service."""
 
     @abstractmethod
-    async def execute_pipeline(self, command: ExecutePipelineCommand) -> PipelineExecution:
+    async def execute_pipeline(
+        self, command: ExecutePipelineCommand
+    ) -> PipelineExecution:
         """Execute a pipeline."""
 
     @abstractmethod
@@ -20,7 +22,9 @@ class ExecutionService(ABC):
         """Get execution by ID."""
 
     @abstractmethod
-    async def list_executions(self, pipeline_id: str | None = None) -> list[PipelineExecution]:
+    async def list_executions(
+        self, pipeline_id: str | None = None
+    ) -> list[PipelineExecution]:
         """List executions."""
 
     @abstractmethod
@@ -34,7 +38,9 @@ class DefaultExecutionService(ExecutionService):
     def __init__(self) -> None:
         self._executions: dict[str, PipelineExecution] = {}
 
-    async def execute_pipeline(self, command: ExecutePipelineCommand) -> PipelineExecution:
+    async def execute_pipeline(
+        self, command: ExecutePipelineCommand
+    ) -> PipelineExecution:
         """Execute a pipeline."""
         execution = PipelineExecution(
             id=ExecutionId(str(uuid4())),
@@ -49,7 +55,9 @@ class DefaultExecutionService(ExecutionService):
         """Get execution by ID."""
         return self._executions.get(execution_id)
 
-    async def list_executions(self, pipeline_id: str | None = None) -> list[PipelineExecution]:
+    async def list_executions(
+        self, pipeline_id: str | None = None
+    ) -> list[PipelineExecution]:
         """List executions."""
         executions = list(self._executions.values())
         if pipeline_id:

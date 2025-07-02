@@ -50,8 +50,8 @@ if TYPE_CHECKING:
 # Python 3.13 type aliases for container - with strict validation
 from flext_core.domain.advanced_types import MetadataDict
 
-type HealthStatus = MetadataDict
-type ServiceFactory = type[object]
+HealthStatus = MetadataDict
+ServiceFactory = type[object]
 
 
 class FlextApplicationContainer:
@@ -497,7 +497,9 @@ class FlextApplicationContainer:
 
     def __repr__(self) -> str:
         """Return string representation of the container."""
-        return f"FlextApplicationContainer(settings={self._settings.__class__.__name__})"
+        return (
+            f"FlextApplicationContainer(settings={self._settings.__class__.__name__})"
+        )
 
 
 # Factory function for easy container creation

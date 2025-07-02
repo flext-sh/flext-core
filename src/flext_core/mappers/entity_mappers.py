@@ -55,7 +55,9 @@ def map_pipeline_execution_model_data(data: dict[str, Any]) -> PipelineExecution
     )
 
 
-def map_pipeline_execution_entity_to_model_data(execution: PipelineExecution) -> dict[str, Any]:
+def map_pipeline_execution_entity_to_model_data(
+    execution: PipelineExecution,
+) -> dict[str, Any]:
     """Map PipelineExecution entity to database model data."""
     return {
         "id": str(execution.id),

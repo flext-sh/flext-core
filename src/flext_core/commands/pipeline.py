@@ -12,7 +12,9 @@ class CreatePipelineCommand(DomainBaseModel):
 
     name: str = Field(..., description="Pipeline name")
     description: str | None = Field(None, description="Pipeline description")
-    config: dict[str, Any] = Field(default_factory=dict, description="Pipeline configuration")
+    config: dict[str, Any] = Field(
+        default_factory=dict, description="Pipeline configuration"
+    )
     tags: dict[str, str] | None = Field(None, description="Pipeline tags")
 
 
@@ -22,7 +24,9 @@ class UpdatePipelineCommand(DomainBaseModel):
     pipeline_id: str = Field(..., description="Pipeline ID to update")
     name: str | None = Field(None, description="New pipeline name")
     description: str | None = Field(None, description="New pipeline description")
-    config: dict[str, Any] | None = Field(None, description="New pipeline configuration")
+    config: dict[str, Any] | None = Field(
+        None, description="New pipeline configuration"
+    )
     tags: dict[str, str] | None = Field(None, description="New pipeline tags")
 
 
@@ -30,5 +34,7 @@ class ExecutePipelineCommand(DomainBaseModel):
     """Command to execute a pipeline."""
 
     pipeline_id: str = Field(..., description="Pipeline ID to execute")
-    parameters: dict[str, Any] = Field(default_factory=dict, description="Execution parameters")
+    parameters: dict[str, Any] = Field(
+        default_factory=dict, description="Execution parameters"
+    )
     async_execution: bool = Field(True, description="Whether to execute asynchronously")

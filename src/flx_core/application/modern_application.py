@@ -56,9 +56,9 @@ if TYPE_CHECKING:
 logger = structlog.get_logger()
 
 # Python 3.13 type aliases for modern application architecture
-type ApplicationConfig = FlxConfiguration
-type ServiceFactory = object  # Service factory callable type
-type ResourceManager = object  # Resource management interface
+ApplicationConfig = FlxConfiguration
+ServiceFactory = object  # Service factory callable type
+ResourceManager = object  # Resource management interface
 
 
 class ModernFlxApplication(Application):

@@ -31,11 +31,11 @@ if TYPE_CHECKING:
     from redis.asyncio import Redis
 
 # Python 3.13 type aliases
-type EventData = dict[str, object]
+EventData = dict[str, object]
 type EventHandler[T] = Callable[[T], object]
-type ProjectionState = dict[str, object]
-type StreamPosition = int | str
-type SerializableValue = (
+ProjectionState = dict[str, object]
+StreamPosition = int | str
+SerializableValue = (
     str | int | float | bool | dict[str, object] | list[object] | None
 )
 

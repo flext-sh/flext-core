@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from datetime import UTC, datetime, timedelta
-from typing import TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from flext_core.domain.value_objects import ExecutionStatus
 
@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 T = TypeVar("T")
 
 
-class CompositeSpecification[T](ABC):
+class CompositeSpecification(ABC):
     """Base specification class enabling business rule composition - ADR-001 DDD Pattern.
 
     Implements the Specification pattern from Domain-Driven Design, allowing complex
@@ -41,7 +41,7 @@ class CompositeSpecification[T](ABC):
     """
 
     @abstractmethod
-    def is_satisfied_by(self, candidate: T) -> bool:
+    def is_satisfied_by(self, candidate: Any) -> bool:
         """Abstract method for specification evaluation.
 
         Each concrete specification must implement this method to define
@@ -57,58 +57,62 @@ class CompositeSpecification[T](ABC):
 
         """
 
-    def __and__(self, other: CompositeSpecification[T]) -> CompositeSpecification[T]:
+    def __and__(self, other: CompositeSpecification) -> CompositeSpecification:
         """Logical AND composition - enables (spec1 & spec2).is_satisfied_by(obj)."""
         return AndSpecification(self, other)
 
-    def __or__(self, other: CompositeSpecification[T]) -> CompositeSpecification[T]:
+    def __or__(self, other: CompositeSpecification) -> CompositeSpecification:
         """Logical OR composition - enables (spec1 | spec2).is_satisfied_by(obj)."""
         return OrSpecification(self, other)
 
-    def __invert__(self) -> CompositeSpecification[T]:
+    def __invert__(self) -> CompositeSpecification:
         """Logical NOT composition - enables (~spec).is_satisfied_by(obj)."""
         return NotSpecification(self)
 
 
-class AndSpecification[T](CompositeSpecification[T]):
+class AndSpecification(CompositeSpecification):
     """Logical AND composition of two specifications."""
 
     def __init__(
-        self, left: CompositeSpecification[T], right: CompositeSpecification[T],
+        self,
+        left: CompositeSpecification,
+        right: CompositeSpecification,
     ) -> None:
         self.left = left
         self.right = right
 
-    def is_satisfied_by(self, candidate: T) -> bool:
+    def is_satisfied_by(self, candidate: Any) -> bool:
         """Both specifications must be satisfied."""
         return self.left.is_satisfied_by(candidate) and self.right.is_satisfied_by(
             candidate,
         )
 
 
-class OrSpecification[T](CompositeSpecification[T]):
+class OrSpecification(CompositeSpecification):
     """Logical OR composition of two specifications."""
 
     def __init__(
-        self, left: CompositeSpecification[T], right: CompositeSpecification[T],
+        self,
+        left: CompositeSpecification,
+        right: CompositeSpecification,
     ) -> None:
         self.left = left
         self.right = right
 
-    def is_satisfied_by(self, candidate: T) -> bool:
+    def is_satisfied_by(self, candidate: Any) -> bool:
         """Either specification must be satisfied."""
         return self.left.is_satisfied_by(candidate) or self.right.is_satisfied_by(
             candidate,
         )
 
 
-class NotSpecification[T](CompositeSpecification[T]):
+class NotSpecification(CompositeSpecification):
     """Logical NOT composition of a specification."""
 
-    def __init__(self, spec: CompositeSpecification[T]) -> None:
+    def __init__(self, spec: CompositeSpecification) -> None:
         self.spec = spec
 
-    def is_satisfied_by(self, candidate: T) -> bool:
+    def is_satisfied_by(self, candidate: Any) -> bool:
         """Specification must NOT be satisfied."""
         return not self.spec.is_satisfied_by(candidate)
 
@@ -116,7 +120,7 @@ class NotSpecification[T](CompositeSpecification[T]):
 # DOMAIN-SPECIFIC BUSINESS RULE SPECIFICATIONS
 
 
-class PipelineCanExecuteSpecification(CompositeSpecification["Pipeline"]):
+class PipelineCanExecuteSpecification(CompositeSpecification):
     """Business rule: Pipeline is ready for execution.
 
     Encapsulates the complex business logic determining whether a pipeline
@@ -146,7 +150,7 @@ class PipelineCanExecuteSpecification(CompositeSpecification["Pipeline"]):
     def _is_not_currently_executing(self, pipeline: Pipeline) -> bool:
         """Business rule: Pipeline cannot be executed if already running."""
         # In real implementation, this would check active executions
-        return not hasattr(pipeline, "_is_executing") or not pipeline._is_executing  # noqa: SLF001
+        return not getattr(pipeline, "_is_executing", False)  # type: ignore[attr-defined]
 
     def _has_required_plugins(self, pipeline: Pipeline) -> bool:
         """Business rule: All required plugins must be available."""
@@ -183,7 +187,7 @@ class PipelineCanExecuteSpecification(CompositeSpecification["Pipeline"]):
         return any(has_cycle(step_id) for step_id in dependencies)
 
 
-class PipelineIsActiveSpecification(CompositeSpecification["Pipeline"]):
+class PipelineIsActiveSpecification(CompositeSpecification):
     """Business rule: Pipeline is in active state."""
 
     def is_satisfied_by(self, pipeline: Pipeline) -> bool:
@@ -195,7 +199,7 @@ class PipelineIsActiveSpecification(CompositeSpecification["Pipeline"]):
         )
 
 
-class PipelineHasValidConfigurationSpecification(CompositeSpecification["Pipeline"]):
+class PipelineHasValidConfigurationSpecification(CompositeSpecification):
     """Business rule: Pipeline configuration is valid."""
 
     def is_satisfied_by(self, pipeline: Pipeline) -> bool:
@@ -228,7 +232,7 @@ class PipelineHasValidConfigurationSpecification(CompositeSpecification["Pipelin
         )
 
 
-class ExecutionCanBeRetriedSpecification(CompositeSpecification["PipelineExecution"]):
+class ExecutionCanBeRetriedSpecification(CompositeSpecification):
     """Business rule: Execution can be retried."""
 
     def is_satisfied_by(self, execution: PipelineExecution) -> bool:
@@ -255,7 +259,7 @@ class ExecutionCanBeRetriedSpecification(CompositeSpecification["PipelineExecuti
         return datetime.now(UTC) - execution.completed_at < retry_window
 
 
-class PluginIsCompatibleSpecification(CompositeSpecification["Plugin"]):
+class PluginIsCompatibleSpecification(CompositeSpecification):
     """Business rule: Plugin is compatible with current system."""
 
     def is_satisfied_by(self, plugin: Plugin) -> bool:
@@ -284,7 +288,7 @@ class PluginIsCompatibleSpecification(CompositeSpecification["Plugin"]):
 # COMPOSITE BUSINESS RULES - DEMONSTRATING SPECIFICATION COMPOSITION
 
 
-class PipelineReadyForProductionSpecification(CompositeSpecification["Pipeline"]):
+class PipelineReadyForProductionSpecification(CompositeSpecification):
     """Complex business rule: Pipeline meets production readiness criteria."""
 
     def is_satisfied_by(self, pipeline: Pipeline) -> bool:
@@ -299,7 +303,7 @@ class PipelineReadyForProductionSpecification(CompositeSpecification["Pipeline"]
         return production_ready_spec.is_satisfied_by(pipeline)
 
 
-class PipelineIsInMaintenanceModeSpecification(CompositeSpecification["Pipeline"]):
+class PipelineIsInMaintenanceModeSpecification(CompositeSpecification):
     """Business rule: Pipeline is in maintenance mode."""
 
     def is_satisfied_by(self, pipeline: Pipeline) -> bool:
@@ -308,7 +312,7 @@ class PipelineIsInMaintenanceModeSpecification(CompositeSpecification["Pipeline"
 
 
 class ExecutionRequiresEscalationSpecification(
-    CompositeSpecification["PipelineExecution"],
+    CompositeSpecification,
 ):
     """Complex business rule: Failed execution requires escalation."""
 
@@ -323,7 +327,7 @@ class ExecutionRequiresEscalationSpecification(
         return escalation_spec.is_satisfied_by(execution)
 
 
-class ExecutionHasFailedSpecification(CompositeSpecification["PipelineExecution"]):
+class ExecutionHasFailedSpecification(CompositeSpecification):
     """Business rule: Execution has failed."""
 
     def is_satisfied_by(self, execution: PipelineExecution) -> bool:
@@ -332,7 +336,7 @@ class ExecutionHasFailedSpecification(CompositeSpecification["PipelineExecution"
 
 
 class ExecutionExceededRetryLimitSpecification(
-    CompositeSpecification["PipelineExecution"],
+    CompositeSpecification,
 ):
     """Business rule: Execution exceeded maximum retry attempts."""
 
@@ -344,7 +348,7 @@ class ExecutionExceededRetryLimitSpecification(
 
 
 class ExecutionHasCriticalErrorSpecification(
-    CompositeSpecification["PipelineExecution"],
+    CompositeSpecification,
 ):
     """Business rule: Execution has critical error requiring immediate attention."""
 
@@ -366,7 +370,7 @@ class ExecutionHasCriticalErrorSpecification(
 
 
 class ExecutionAffectsCriticalPipelineSpecification(
-    CompositeSpecification["PipelineExecution"],
+    CompositeSpecification,
 ):
     """Business rule: Execution belongs to critical pipeline."""
 
@@ -392,7 +396,7 @@ class SpecificationFactory:
         include_execution_check: bool = True,
         include_configuration_check: bool = True,
         include_dependency_check: bool = True,
-    ) -> CompositeSpecification[Pipeline]:
+    ) -> CompositeSpecification:
         """Create pipeline validation specification based on requirements."""
         specs = [PipelineIsActiveSpecification()]
 
@@ -417,7 +421,7 @@ class SpecificationFactory:
     def create_execution_retry_spec(
         max_retries: int = 3,  # noqa: ARG004
         retry_window_hours: int = 24,  # noqa: ARG004
-    ) -> CompositeSpecification[PipelineExecution]:
+    ) -> CompositeSpecification:
         """Create execution retry specification with custom parameters."""
         # In real implementation, this would create parameterized specifications
         # max_retries and retry_window_hours would be used to configure the spec
@@ -426,7 +430,7 @@ class SpecificationFactory:
     @staticmethod
     def create_production_readiness_spec(
         strict_mode: bool = True,
-    ) -> CompositeSpecification[Pipeline]:
+    ) -> CompositeSpecification:
         """Create production readiness specification."""
         if strict_mode:
             return PipelineReadyForProductionSpecification()

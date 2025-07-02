@@ -46,10 +46,10 @@ logger = structlog.get_logger()
 
 
 # Python 3.13 Type Parameters - simplified for Pydantic compatibility
-type EntityId = object  # Generic type simplified
-type Entity = object  # Generic type simplified
-type Model = object  # Generic type simplified
-type QueryResult = object  # Generic type simplified
+EntityId = object  # Generic type simplified
+Entity = object  # Generic type simplified
+Model = object  # Generic type simplified
+QueryResult = object  # Generic type simplified
 
 
 class RepositoryError(Exception):

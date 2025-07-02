@@ -43,64 +43,86 @@ if TYPE_CHECKING:
 T = TypeVar("T")
 E = TypeVar("E", bound="Entity")
 V = TypeVar("V", bound="ValueObject")
-S = TypeVar("S", bound="Specification[object]")
+S = TypeVar("S", bound="Any")
 
 # Python 3.11 Compatible Advanced Type Aliases - ENTERPRISE DOMAIN PATTERNS WITH VALUE OBJECTS
 # Using Python 3.11 TypeAlias for compatibility
 
 # Core Domain Value Object Types - with strict validation
 # Note: Using Python 3.11 TypeAlias syntax for better compatibility
-type UserId = Annotated[UUID, Field(description="User identification value object")]
-type TenantId = Annotated[UUID, Field(description="Multi-tenant identification value object")]
-type CorrelationId = Annotated[UUID, Field(description="Request correlation value object")]
-type TraceId = Annotated[UUID, Field(description="Distributed tracing value object")]
-type CommandId = Annotated[UUID, Field(description="Command identification value object")]
-type QueryId = Annotated[UUID, Field(description="Query identification value object")]
-type EventId = Annotated[UUID, Field(description="Event identification value object")]
+UserId = Annotated[UUID, Field(description="User identification value object")]
+TenantId = Annotated[
+    UUID, Field(description="Multi-tenant identification value object")
+]
+CorrelationId = Annotated[
+    UUID, Field(description="Request correlation value object")
+]
+TraceId = Annotated[UUID, Field(description="Distributed tracing value object")]
+CommandId = Annotated[
+    UUID, Field(description="Command identification value object")
+]
+QueryId = Annotated[UUID, Field(description="Query identification value object")]
+EventId = Annotated[UUID, Field(description="Event identification value object")]
 
 # Business Domain Value Object Types
-type PipelineName = Annotated[str, Field(description="Pipeline name with validation rules")]
-type PluginName = Annotated[str, Field(description="Plugin name with validation rules")]
-type ExecutionNumber = Annotated[int, Field(ge=0, description="Sequential execution number")]
-type RetryCount = Annotated[int, Field(ge=0, le=10, description="Retry attempt counter")]
-type TimeoutSeconds = Annotated[int, Field(gt=0, le=3600, description="Timeout duration value object")]
-type PortNumber = Annotated[int, Field(ge=1, le=65535, description="Network port with validation")]
-type StatusCode = Annotated[int, Field(ge=100, le=599, description="HTTP/gRPC status codes")]
+PipelineName = Annotated[
+    str, Field(description="Pipeline name with validation rules")
+]
+PluginName = Annotated[str, Field(description="Plugin name with validation rules")]
+ExecutionNumber = Annotated[
+    int, Field(ge=0, description="Sequential execution number")
+]
+RetryCount = Annotated[
+    int, Field(ge=0, le=10, description="Retry attempt counter")
+]
+TimeoutSeconds = Annotated[
+    int, Field(gt=0, le=3600, description="Timeout duration value object")
+]
+PortNumber = Annotated[
+    int, Field(ge=1, le=65535, description="Network port with validation")
+]
+StatusCode = Annotated[
+    int, Field(ge=100, le=599, description="HTTP/gRPC status codes")
+]
 
 # Aggregate and Entity Types (These use generics so keep as TypeAlias for now)
-type EntityId = UUID  # Generic type simplified for Pydantic compatibility
-type CommandResult = ServiceResult  # Forward reference - class defined later
-type QueryResult = ServiceResult  # Forward reference - class defined later
-type BusinessRule = object  # Generic type simplified for Pydantic compatibility
-type AggregateVersion = Annotated[int, Field(ge=0, description="Entity version for optimistic locking")]
-type EventVersion = Annotated[int, Field(ge=1, description="Event schema version")]
+EntityId = UUID  # Generic type simplified for Pydantic compatibility
+CommandResult = Any  # Forward reference - class defined later
+QueryResult = Any  # Forward reference - class defined later
+BusinessRule = object  # Generic type simplified for Pydantic compatibility
+AggregateVersion = Annotated[
+    int, Field(ge=0, description="Entity version for optimistic locking")
+]
+EventVersion = Annotated[int, Field(ge=1, description="Event schema version")]
 
 # Configuration and Data Types - with strict validation
 # Using Any to avoid recursive type definition issues in Pydantic
-type ConfigurationValue = str | int | float | bool | None | list[Any] | dict[str, Any]
-type ConfigurationDict = dict[str, ConfigurationValue]  # with strict validation
-type MetadataDict = dict[str, str | int | bool | float | None]  # Simple metadata only
-type ParametersDict = dict[str, ConfigurationValue]  # Parameters can be complex
-type DomainEventData = dict[str, str | int | bool | float | None]  # with strict validation
+ConfigurationValue = Any
+ConfigurationDict = dict[str, Any]  # with strict validation
+MetadataDict = dict[str, Any]  # Simple metadata only
+ParametersDict = dict[str, Any]  # Parameters can be complex
+DomainEventData = dict[str, Any]  # with strict validation
 
 # Service Layer Types
-type ServiceName = Annotated[str, Field(description="Service identification value object")]
-type OperationName = Annotated[str, Field(description="Operation name value object")]
-type ErrorCode = Annotated[str, Field(description="Error classification value object")]
-type ErrorMessage = Annotated[str, Field(description="Error description value object")]
+ServiceName = Annotated[
+    str, Field(description="Service identification value object")
+]
+OperationName = Annotated[str, Field(description="Operation name value object")]
+ErrorCode = Annotated[str, Field(description="Error classification value object")]
+ErrorMessage = Annotated[str, Field(description="Error description value object")]
 
 # Command and Handler Types - with strict validation
-type MeltanoCommandResult = dict[str, str | int | bool | list[str]]
-type PipelineCommand = dict[str, ConfigurationValue]
-type ExecutionCommand = dict[str, ConfigurationValue]
-type PluginCommand = dict[str, ConfigurationValue]
-type QueryParameters = dict[str, str | int | bool]
+MeltanoCommandResult = dict[str, Any]
+PipelineCommand = dict[str, Any]
+ExecutionCommand = dict[str, Any]
+PluginCommand = dict[str, Any]
+QueryParameters = dict[str, Any]
 
 # API and Request Types - with strict validation
-type RequestData = dict[str, ConfigurationValue]
-type ResponseData = dict[str, ConfigurationValue]
-type FormData = dict[str, str | list[str]]
-type QueryParams = dict[str, str | int | bool]
+RequestData = dict[str, Any]
+ResponseData = dict[str, Any]
+FormData = dict[str, Any]
+QueryParams = dict[str, Any]
 
 
 @runtime_checkable
@@ -183,35 +205,35 @@ class AggregateRoot:
 
 
 @runtime_checkable
-class Specification[T](Protocol):
+class Specification(Protocol):
     """Protocol for business rule specifications."""
 
-    def is_satisfied_by(self, obj: T) -> bool:
+    def is_satisfied_by(self, obj: Any) -> bool:
         """Check if the object satisfies this specification."""
         ...
 
-    def __and__(self, other: Specification[T]) -> Specification[T]:
+    def __and__(self, other: Any) -> Any:
         """Combine specifications with logical AND operation."""
         ...
 
-    def __or__(self, other: Specification[T]) -> Specification[T]:
+    def __or__(self, other: Any) -> Any:
         """Combine specifications with logical OR operation."""
         ...
 
-    def __invert__(self) -> Specification[T]:
+    def __invert__(self) -> Any:
         """Invert specification with logical NOT operation."""
         ...
 
 
-class ServiceResult[T]:
+class ServiceResult:
     """Result type for service operations with Python 3.13 patterns - ADR-001 Compliant."""
 
     def __init__(
         self,
         success: bool,
-        data: T | None = None,
-        error: ServiceError | None = None,
-        metadata: MetadataDict | None = None,
+        data: Any = None,
+        error: Any = None,
+        metadata: Any = None,
     ) -> None:
         self.success = success
         self.data = data
@@ -224,7 +246,7 @@ class ServiceResult[T]:
         return self.success
 
     @property
-    def value(self) -> T:
+    def value(self) -> Any:
         """Get the result value (for successful results)."""
         if not self.success or self.data is None:
             msg = "Cannot get value from failed result"
@@ -232,7 +254,7 @@ class ServiceResult[T]:
         return self.data
 
     @classmethod
-    def ok(cls, data: T, metadata: MetadataDict | None = None) -> ServiceResult[T]:
+    def ok(cls, data: Any, metadata: Any = None) -> Any:
         """Create successful result.
 
         Factory method for creating successful service results with data
@@ -258,8 +280,10 @@ class ServiceResult[T]:
 
     @classmethod
     def fail(
-        cls, error: ServiceError, metadata: MetadataDict | None = None,
-    ) -> ServiceResult[T]:
+        cls,
+        error: Any,
+        metadata: Any = None,
+    ) -> Any:
         """Create failed result.
 
         Factory method for creating failed service results with error
@@ -283,6 +307,17 @@ class ServiceResult[T]:
         """
         return cls(success=False, error=error, metadata=metadata or {})
 
+    @classmethod
+    def success(cls, data: T) -> ServiceResult:
+        """Create successful result (alias for ok)."""
+        return cls.ok(data)
+
+    @classmethod
+    def failure(cls, error_message: str) -> ServiceResult:
+        """Create failed result from error message."""
+        error = ServiceError(code="GENERIC_ERROR", message=error_message)
+        return cls.fail(error)
+
     def unwrap(self) -> T:
         """Unwrap result data or raise error."""
         if not self.success or self.data is None:
@@ -293,7 +328,7 @@ class ServiceResult[T]:
         """Check if the result is successful."""
         return self.success
 
-    def map(self, func: Callable[[T], V]) -> ServiceResult[V]:
+    def map(self, func: Any) -> ServiceResult:
         """Map successful result to new type."""
         if self.success and self.data is not None:
             try:
@@ -328,7 +363,10 @@ class ServiceError(Exception):
 
     @classmethod
     def business_rule_error(
-        cls, code: str, message: str, details: MetadataDict | None = None,
+        cls,
+        code: str,
+        message: str,
+        details: MetadataDict | None = None,
     ) -> ServiceError:
         """Create a business rule error."""
         return cls(
@@ -339,7 +377,9 @@ class ServiceError(Exception):
 
     @classmethod
     def validation_error(
-        cls, message: str, details: MetadataDict | None = None,
+        cls,
+        message: str,
+        details: MetadataDict | None = None,
     ) -> ServiceError:
         """Create a validation error.
 
@@ -365,7 +405,9 @@ class ServiceError(Exception):
 
     @classmethod
     def internal_error(
-        cls, message: str, details: MetadataDict | None = None,
+        cls,
+        message: str,
+        details: MetadataDict | None = None,
     ) -> ServiceError:
         """Create an internal error."""
         return cls(
@@ -376,7 +418,9 @@ class ServiceError(Exception):
 
     @classmethod
     def not_found_error(
-        cls, message: str, details: MetadataDict | None = None,
+        cls,
+        message: str,
+        details: MetadataDict | None = None,
     ) -> ServiceError:
         """Create a not found error."""
         return cls(
@@ -400,7 +444,7 @@ class ServiceError(Exception):
 # === PYTHON 3.13 ADVANCED DECORATORS ===
 
 
-def aggregate_root[T](cls: type[T]) -> type[T]:
+def aggregate_root(cls: type[Any]) -> type[Any]:
     """Mark a class as an aggregate root."""
     # Check if class has entity characteristics instead of issubclass
     try:
@@ -466,7 +510,7 @@ def entity(id_field: str = "id") -> Callable[[type[T]], type[T]]:
     return decorator
 
 
-def value_object[T](cls: type[T]) -> type[T]:
+def value_object(cls: type[T]) -> type[T]:
     """Mark a class as a value object with structural equality."""
     # Check if class is frozen (immutable) using proper dataclass introspection
     is_frozen = False
@@ -524,7 +568,7 @@ def value_object[T](cls: type[T]) -> type[T]:
     return cls
 
 
-def specification[T](cls: type[T]) -> type[T]:
+def specification(cls: type[T]) -> type[T]:
     """Mark a class as a business rule specification."""
     # Add logical operators - always override inherited ones from object
 
@@ -532,10 +576,11 @@ def specification[T](cls: type[T]) -> type[T]:
     if "__and__" not in cls.__dict__:
 
         def __and__(  # noqa: N807
-            self: object, other: Specification[object],
-        ) -> CompositeSpecification[object]:
+            self: object,
+            other: Any,
+        ) -> Any:
             # Cast self to proper specification type
-            spec_self = cast("Specification[object]", self)
+            spec_self = cast("Any", self)
             return CompositeSpecification(left=spec_self, right=other, operator="and")
 
         cls.__and__ = __and__  # type: ignore[operator]
@@ -544,10 +589,11 @@ def specification[T](cls: type[T]) -> type[T]:
     if "__or__" not in cls.__dict__:
 
         def __or__(  # noqa: N807
-            self: object, other: Specification[object],
-        ) -> CompositeSpecification[object]:
+            self: object,
+            other: Any,
+        ) -> Any:
             # Cast self to proper specification type
-            spec_self = cast("Specification[object]", self)
+            spec_self = cast("Any", self)
             return CompositeSpecification(left=spec_self, right=other, operator="or")
 
         cls.__or__ = __or__  # type: ignore[method-assign,assignment]
@@ -555,9 +601,9 @@ def specification[T](cls: type[T]) -> type[T]:
     # Check if class has custom __invert__ method (not inherited from object)
     if "__invert__" not in cls.__dict__:
 
-        def __invert__(self: object) -> NotSpecification[object]:  # noqa: N807
+        def __invert__(self: object) -> Any:  # noqa: N807
             # Cast self to proper specification type
-            spec_self = cast("Specification[object]", self)
+            spec_self = cast("Any", self)
             return NotSpecification(spec=spec_self)
 
         cls.__invert__ = __invert__  # type: ignore[operator]
@@ -566,7 +612,7 @@ def specification[T](cls: type[T]) -> type[T]:
     return cls
 
 
-class CompositeSpecification[T]:
+class CompositeSpecification:
     """Composite specification for combining business rules with Pydantic validation.
 
     Provides enterprise-grade specification composition with proper validation,
@@ -585,7 +631,9 @@ class CompositeSpecification[T]:
 
     """
 
-    def __init__(self, left: Specification[T], right: Specification[T], operator: str) -> None:
+    def __init__(
+        self, left: Any, right: Any, operator: str
+    ) -> None:
         # Validate operator at construction time
         if operator not in {"and", "or"}:
             msg = f"Invalid operator '{operator}'. Must be 'and' or 'or'"
@@ -617,7 +665,7 @@ class CompositeSpecification[T]:
         msg = f"Unknown operator: {self.operator}"
         raise ValueError(msg)
 
-    def __and__(self, other: Specification[T]) -> CompositeSpecification[T]:
+    def __and__(self, other: Any) -> Any:
         """Combine with another specification using logical AND.
 
         Args:
@@ -631,7 +679,7 @@ class CompositeSpecification[T]:
         """
         return CompositeSpecification(left=self, right=other, operator="and")
 
-    def __or__(self, other: Specification[T]) -> CompositeSpecification[T]:
+    def __or__(self, other: Any) -> Any:
         """Combine with another specification using logical OR.
 
         Args:
@@ -645,7 +693,7 @@ class CompositeSpecification[T]:
         """
         return CompositeSpecification(left=self, right=other, operator="or")
 
-    def __invert__(self) -> NotSpecification[T]:
+    def __invert__(self) -> Any:
         """Invert this composite specification.
 
         Returns
@@ -656,7 +704,7 @@ class CompositeSpecification[T]:
         return NotSpecification(spec=self)
 
 
-class NotSpecification[T]:
+class NotSpecification:
     """Negation specification with Pydantic validation.
 
     Represents the logical negation of a business rule specification with
@@ -675,7 +723,7 @@ class NotSpecification[T]:
 
     """
 
-    def __init__(self, spec: Specification[T]) -> None:
+    def __init__(self, spec: Any) -> None:
         self.spec = spec
 
     def is_satisfied_by(self, obj: T) -> bool:
@@ -692,7 +740,7 @@ class NotSpecification[T]:
         """
         return not self.spec.is_satisfied_by(obj)
 
-    def __and__(self, other: Specification[T]) -> CompositeSpecification[T]:
+    def __and__(self, other: Any) -> Any:
         """Combine with another specification using logical AND.
 
         Args:
@@ -706,7 +754,7 @@ class NotSpecification[T]:
         """
         return CompositeSpecification(left=self, right=other, operator="and")
 
-    def __or__(self, other: Specification[T]) -> CompositeSpecification[T]:
+    def __or__(self, other: Any) -> Any:
         """Combine with another specification using logical OR.
 
         Args:
@@ -720,7 +768,7 @@ class NotSpecification[T]:
         """
         return CompositeSpecification(left=self, right=other, operator="or")
 
-    def __invert__(self) -> Specification[T]:
+    def __invert__(self) -> Any:
         """Return original specification (double negation cancels out).
 
         Returns
@@ -784,14 +832,14 @@ def is_service_error(obj: object) -> bool:
 # === ENTERPRISE FACTORY PATTERNS ===
 
 
-class DomainFactory[T]:
+class DomainFactory:
     """Factory for creating domain objects with validation."""
 
     def __init__(self, target_class: type[T]) -> None:
         """Initialize domain factory with target class type."""
         self.target_class = target_class
 
-    def create(self, **kwargs: object) -> ServiceResult[T]:
+    def create(self, **kwargs: object) -> ServiceResult:
         """Create domain object with validation."""
         try:
             # Validate required fields

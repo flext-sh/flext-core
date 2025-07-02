@@ -3,7 +3,7 @@
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any
+from typing import Any, Optional
 from uuid import uuid4
 
 
@@ -28,10 +28,12 @@ class SchedulerService(ABC):
     """Abstract scheduler service."""
 
     @abstractmethod
-    async def schedule_pipeline(self,
-                               pipeline_id: str,
-                               schedule_type: ScheduleType,
-                               schedule_config: dict[str, Any]) -> str:
+    async def schedule_pipeline(
+        self,
+        pipeline_id: str,
+        schedule_type: ScheduleType,
+        schedule_config: dict[str, Any],
+    ) -> str:
         """Schedule a pipeline execution."""
 
     @abstractmethod
@@ -39,11 +41,13 @@ class SchedulerService(ABC):
         """Remove a pipeline schedule."""
 
     @abstractmethod
-    async def get_schedule(self, schedule_id: str) -> dict[str, Any] | None:
+    async def get_schedule(self, schedule_id: str) -> Optional[dict[str, Any]]:
         """Get schedule by ID."""
 
     @abstractmethod
-    async def list_schedules(self, pipeline_id: str | None = None) -> list[dict[str, Any]]:
+    async def list_schedules(
+        self, pipeline_id: Optional[str] = None
+    ) -> list[dict[str, Any]]:
         """List schedules."""
 
     @abstractmethod
@@ -61,10 +65,12 @@ class DefaultSchedulerService(SchedulerService):
     def __init__(self) -> None:
         self._schedules: dict[str, dict[str, Any]] = {}
 
-    async def schedule_pipeline(self,
-                               pipeline_id: str,
-                               schedule_type: ScheduleType,
-                               schedule_config: dict[str, Any]) -> str:
+    async def schedule_pipeline(
+        self,
+        pipeline_id: str,
+        schedule_type: ScheduleType,
+        schedule_config: dict[str, Any],
+    ) -> str:
         """Schedule a pipeline execution."""
         schedule_id = str(uuid4())
         schedule = {
@@ -86,11 +92,13 @@ class DefaultSchedulerService(SchedulerService):
             return True
         return False
 
-    async def get_schedule(self, schedule_id: str) -> dict[str, Any] | None:
+    async def get_schedule(self, schedule_id: str) -> Optional[dict[str, Any]]:
         """Get schedule by ID."""
         return self._schedules.get(schedule_id)
 
-    async def list_schedules(self, pipeline_id: str | None = None) -> list[dict[str, Any]]:
+    async def list_schedules(
+        self, pipeline_id: Optional[str] = None
+    ) -> list[dict[str, Any]]:
         """List schedules."""
         schedules = list(self._schedules.values())
         if pipeline_id:
@@ -113,7 +121,9 @@ class DefaultSchedulerService(SchedulerService):
             return True
         return False
 
-    def _calculate_next_run(self, schedule_type: ScheduleType, config: dict[str, Any]) -> datetime | None:
+    def _calculate_next_run(
+        self, schedule_type: ScheduleType, config: dict[str, Any]
+    ) -> Optional[datetime]:
         """Calculate next run time based on schedule configuration."""
         if schedule_type == ScheduleType.ONCE:
             return config.get("run_at")

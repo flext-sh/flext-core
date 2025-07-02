@@ -70,7 +70,10 @@ class BusinessRuleViolationError(DomainServiceError):
     """Exception for business rule violations."""
 
     def __init__(
-        self, rule_name: str, message: str, violated_entity: str | None = None,
+        self,
+        rule_name: str,
+        message: str,
+        violated_entity: str | None = None,
     ) -> None:
         super().__init__(
             message=f"Business rule '{rule_name}' violation: {message}",
@@ -476,7 +479,10 @@ class PipelineManagementService:
         return len(executions) + 1
 
     async def _execute_distributed_pipeline(
-        self, pipeline: Pipeline, execution: PipelineExecution, environment: str | None,
+        self,
+        pipeline: Pipeline,
+        execution: PipelineExecution,
+        environment: str | None,
     ) -> ServiceResult[dict[str, Any]]:
         """Execute pipeline using distributed computing resources."""
         if not self._distributed_execution:
@@ -511,7 +517,10 @@ class PipelineManagementService:
         )
 
     async def _execute_local_pipeline(
-        self, pipeline: Pipeline, execution: PipelineExecution, environment: str | None,
+        self,
+        pipeline: Pipeline,
+        execution: PipelineExecution,
+        environment: str | None,
     ) -> ServiceResult[dict[str, Any]]:
         """Execute pipeline using local resources."""
         # Simplified local execution implementation
@@ -564,7 +573,10 @@ class PipelineManagementService:
         return await handler(pipeline, performed_by, parameters)
 
     async def _activate_pipeline(
-        self, pipeline: Pipeline, performed_by: str, parameters: dict[str, Any],
+        self,
+        pipeline: Pipeline,
+        performed_by: str,
+        parameters: dict[str, Any],
     ) -> bool:
         """Activate pipeline with business validation."""
         # Business rule: Pipeline must be valid for activation
@@ -576,7 +588,10 @@ class PipelineManagementService:
         return True
 
     async def _deactivate_pipeline(
-        self, pipeline: Pipeline, performed_by: str, parameters: dict[str, Any],
+        self,
+        pipeline: Pipeline,
+        performed_by: str,
+        parameters: dict[str, Any],
     ) -> bool:
         """Deactivate pipeline with safety checks."""
         # Business rule: No active executions during deactivation
@@ -594,7 +609,10 @@ class PipelineManagementService:
         return True
 
     async def _archive_pipeline(
-        self, pipeline: Pipeline, performed_by: str, parameters: dict[str, Any],
+        self,
+        pipeline: Pipeline,
+        performed_by: str,
+        parameters: dict[str, Any],
     ) -> bool:
         """Archive pipeline with data retention policies."""
         # Business rule: Pipeline must be inactive for archival
@@ -602,7 +620,10 @@ class PipelineManagementService:
         return True
 
     async def _migrate_pipeline(
-        self, pipeline: Pipeline, performed_by: str, parameters: dict[str, Any],
+        self,
+        pipeline: Pipeline,
+        performed_by: str,
+        parameters: dict[str, Any],
     ) -> bool:
         """Migrate pipeline to new environment or version."""
         target_environment = parameters.get("target_environment")
@@ -638,7 +659,9 @@ class ExecutionManagementService:
         self._external_integration = external_integration
 
     async def monitor_execution_health(
-        self, execution_id: ExecutionId, monitoring_user: str,
+        self,
+        execution_id: ExecutionId,
+        monitoring_user: str,
     ) -> ServiceResult[dict[str, Any]]:
         """Monitor execution health with comprehensive metrics.
 
@@ -796,7 +819,8 @@ class ExecutionManagementService:
         return risk_factors
 
     async def _analyze_performance_trends(
-        self, execution: PipelineExecution,
+        self,
+        execution: PipelineExecution,
     ) -> dict[str, Any]:
         """Analyze execution performance trends."""
         # Get historical executions for the same pipeline
@@ -826,7 +850,9 @@ class ExecutionManagementService:
             trend = (
                 "improving"
                 if recent_avg < older_avg
-                else "degrading" if recent_avg > older_avg else "stable"
+                else "degrading"
+                if recent_avg > older_avg
+                else "stable"
             )
         else:
             trend = "insufficient_data"
@@ -858,7 +884,9 @@ class ExecutionManagementService:
         return await strategy(execution, parameters)
 
     async def _retry_execution(
-        self, execution: PipelineExecution, parameters: dict[str, Any],
+        self,
+        execution: PipelineExecution,
+        parameters: dict[str, Any],
     ) -> bool:
         """Retry failed execution with exponential backoff."""
         retry_count = getattr(execution, "retry_count", 0)
@@ -882,21 +910,27 @@ class ExecutionManagementService:
         return True
 
     async def _resume_execution(
-        self, execution: PipelineExecution, parameters: dict[str, Any],
+        self,
+        execution: PipelineExecution,
+        parameters: dict[str, Any],
     ) -> bool:
         """Resume execution from last successful step."""
         # Implementation would identify last successful step and resume from there
         return True
 
     async def _rollback_execution(
-        self, execution: PipelineExecution, parameters: dict[str, Any],
+        self,
+        execution: PipelineExecution,
+        parameters: dict[str, Any],
     ) -> bool:
         """Rollback execution changes and restore previous state."""
         # Implementation would rollback changes made by the execution
         return True
 
     async def _escalate_execution(
-        self, execution: PipelineExecution, parameters: dict[str, Any],
+        self,
+        execution: PipelineExecution,
+        parameters: dict[str, Any],
     ) -> bool:
         """Escalate execution failure to operations team."""
         if self._external_integration:

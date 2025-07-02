@@ -25,8 +25,8 @@ SECONDS_IN_MINUTE = 60
 SECONDS_IN_HOUR = 3600
 
 # Python 3.11 compatible type aliases
-type StepDependencies = frozenset[str]
-type ConfigDict = ConfigurationDict
+StepDependencies = frozenset[str]
+ConfigDict = ConfigurationDict
 
 
 # ZERO TOLERANCE - Domain defaults for value objects to eliminate circular dependencies
@@ -796,12 +796,18 @@ class PluginConfiguration(DomainValueObject):
     Python 3.13 + Pydantic v2 value object for plugin settings.
     """
 
-    model_config: ClassVar = {"frozen": True, "arbitrary_types_allowed": True, "extra": "allow"}
+    model_config: ClassVar = {
+        "frozen": True,
+        "arbitrary_types_allowed": True,
+        "extra": "allow",
+    }
 
     settings: ConfigurationDict = Field(default_factory=dict)
 
     def __init__(
-        self, settings: ConfigurationDict | None = None, **data: object,
+        self,
+        settings: ConfigurationDict | None = None,
+        **data: object,
     ) -> None:
         """Initialize with direct settings dict or keyword arguments."""
         if settings is not None:
@@ -838,8 +844,8 @@ class PluginConfiguration(DomainValueObject):
                 and isinstance(field_value, int | float)
                 and field_value < 0
             ):
-                    msg = "batch_size must be non-negative"
-                    raise ValueError(msg)
+                msg = "batch_size must be non-negative"
+                raise ValueError(msg)
 
         return self
 
@@ -869,7 +875,9 @@ class PluginConfiguration(DomainValueObject):
         return default
 
     def get_setting(
-        self, key: str, default: ConfigurationValue = None,
+        self,
+        key: str,
+        default: ConfigurationValue = None,
     ) -> ConfigurationValue:
         """Alias for `get`."""
         return self.get(key, default)

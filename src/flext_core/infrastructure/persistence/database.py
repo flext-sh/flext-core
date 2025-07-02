@@ -176,7 +176,8 @@ class DatabaseHealthMonitor:
         self.monitoring_task: asyncio.Task[None] | None = None
 
     async def check_health(
-        self, database_manager: DatabaseManager,
+        self,
+        database_manager: DatabaseManager,
     ) -> DatabaseHealthStatus:
         """Perform a database health check.
 
@@ -256,7 +257,8 @@ class DatabaseHealthMonitor:
             )
 
     async def start_continuous_monitoring(
-        self, database_manager: DatabaseManager,
+        self,
+        database_manager: DatabaseManager,
     ) -> asyncio.Task[None]:
         """Start continuous health monitoring.
 
@@ -1135,7 +1137,9 @@ class AsyncpgDatabaseManager(DatabaseManager):
         raise RuntimeError(msg)
 
     async def execute_with_monitoring(
-        self, query: str, parameters: dict[str, Any] | None = None,
+        self,
+        query: str,
+        parameters: dict[str, Any] | None = None,
     ) -> Any:
         """Execute query with performance monitoring.
 
@@ -1162,7 +1166,9 @@ class AsyncpgDatabaseManager(DatabaseManager):
                 return await session.execute(text(query), parameters or {})
 
     def setup_failover(
-        self, failover_configs: list[DatabaseConfig], failover_threshold: int = 3,
+        self,
+        failover_configs: list[DatabaseConfig],
+        failover_threshold: int = 3,
     ) -> None:
         """Setup connection failover with backup databases.
 

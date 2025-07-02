@@ -11,7 +11,7 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING, ClassVar, Protocol
+from typing import TYPE_CHECKING, Any, ClassVar, Protocol
 from uuid import UUID, uuid4
 
 import orjson
@@ -19,7 +19,7 @@ import structlog
 
 # Strategic imports with type checking for optional enterprise dependencies
 if TYPE_CHECKING:
-    from aio_pika.abc import (
+    from aio_pika.abc import (  # type: ignore[import-not-found]
         AbstractChannel,
         AbstractExchange,
         AbstractIncomingMessage,
@@ -36,8 +36,8 @@ Event = LatoEvent
 # ZERO TOLERANCE: Dynamic import to avoid circular dependencies - domain_config is central
 
 # Python 3.13 type aliases for event handling - with strict validation
-type EventHandler = Callable[[object], Awaitable[None]]  # Generic event handler
-type DomainEventHandler = Callable[[object], Awaitable[None]]  # Domain event handler
+EventHandler = Callable[[object], Awaitable[None]]  # Generic event handler
+DomainEventHandler = Callable[[object], Awaitable[None]]  # Domain event handler
 
 if TYPE_CHECKING:
     from asyncio import Future
@@ -136,7 +136,7 @@ class DomainEvent(LatoEvent):
         class CustomDomainEvent(cls):
             event_type: ClassVar[str] = event_type
 
-            def __init__(self, **kwargs) -> None:
+            def __init__(self, **kwargs: Any) -> None:
                 super().__init__(**kwargs)
                 self._data = data
 
@@ -246,6 +246,7 @@ class HybridEventBus:
         self._channel: AbstractChannel | None = None
         self._exchange: AbstractExchange | None = None
         self._queues: dict[str, AbstractQueue] = {}
+        self._initialized: bool = False
 
         # DDD Event Bus using lato
         self._domain_event_bus = DomainEventBus()
@@ -497,7 +498,7 @@ class EventBus(HybridEventBus):
             return
         try:
             # Dynamic import for optional aio_pika dependency
-            from aio_pika import connect_robust
+            from aio_pika import connect_robust  # type: ignore[import-not-found]
 
             self.logger.info("Connecting to RabbitMQ", url=amqp_url)
 
@@ -519,7 +520,7 @@ class EventBus(HybridEventBus):
             await channel.set_qos(prefetch_count=10)
 
             # Declare exchange - aio_pika is guaranteed to be available
-            from aio_pika import ExchangeType
+            from aio_pika import ExchangeType  # type: ignore[import-not-found]
 
             exchange = await channel.declare_exchange(
                 "flx_core.events",
@@ -642,7 +643,7 @@ class EventBus(HybridEventBus):
         # Publish to AMQP if connected - aio_pika is guaranteed to be available
         if self._exchange:
             try:
-                from aio_pika import Message
+                from aio_pika import Message  # type: ignore[import-not-found]
 
                 message = Message(body=event_obj.to_json().encode())
                 await self._exchange.publish(

@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import contextlib
 from datetime import UTC, datetime, timedelta
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 import structlog
 from pydantic import BaseModel
@@ -47,10 +47,10 @@ logger = structlog.get_logger()
 
 
 # Python 3.13 Type Parameters - simplified for Pydantic compatibility
-type EntityId = object  # Generic type simplified
-type Entity = object  # Generic type simplified
-type Model = object  # Generic type simplified
-type QueryResult = object  # Generic type simplified
+EntityId = object  # Generic type simplified
+Entity = object  # Generic type simplified
+Model = object  # Generic type simplified
+QueryResult = object  # Generic type simplified
 
 
 class RepositoryError(Exception):
@@ -72,7 +72,10 @@ class RepositoryError(Exception):
     """
 
     def __init__(
-        self, message: str, entity_type: type | None = None, entity_id: object = None,
+        self,
+        message: str,
+        entity_type: type = None,
+        entity_id: object = None,
     ) -> None:
         """Initialize RepositoryError with error details.
 
@@ -125,34 +128,34 @@ class EntityNotFoundError(RepositoryError):
 
 
 @runtime_checkable
-class CoreDomainRepository[TEntity, TId](Protocol):
+class CoreDomainRepository(Protocol):
     """Ultimate Domain Repository - with strict validation.
 
     This is the SINGLE repository interface for ALL entities in the system.
     Uses Python 3.13 generic type parameters for complete type safety.
     """
 
-    async def find_by_id(self, entity_id: TId) -> TEntity | None:
+    async def find_by_id(self, entity_id: Any) -> Any:
         """Find entity by ID - with strict validation."""
         ...
 
-    async def get_by_id(self, entity_id: TId) -> TEntity:
+    async def get_by_id(self, entity_id: Any) -> Any:
         """Get entity by ID - raises EntityNotFoundError if not found."""
         ...
 
-    async def find_all(self, limit: int = 100, offset: int = 0) -> Sequence[TEntity]:
+    async def find_all(self, limit: int = 100, offset: int = 0) -> list[Any]:
         """Find all entities with pagination - with strict validation."""
         ...
 
-    async def save(self, entity: TEntity) -> TEntity:
+    async def save(self, entity: Any) -> Any:
         """Save entity - handles both create and update."""
         ...
 
-    async def delete(self, entity_id: TId) -> bool:
+    async def delete(self, entity_id: Any) -> bool:
         """Delete entity by ID - returns True if deleted, False if not found."""
         ...
 
-    async def exists(self, entity_id: TId) -> bool:
+    async def exists(self, entity_id: Any) -> bool:
         """Check if entity exists.
 
         Verifies whether an entity with the specified ID exists in the repository
@@ -175,8 +178,8 @@ class CoreDomainRepository[TEntity, TId](Protocol):
         ...
 
 
-class SqlAlchemyRepository[TEntity: BaseModel, TModel, TId](
-    CoreDomainRepository[TEntity, TId],
+class SqlAlchemyRepository(
+    CoreDomainRepository,
 ):
     """Ultimate SQLAlchemy Repository - with strict validation.
 
@@ -187,8 +190,8 @@ class SqlAlchemyRepository[TEntity: BaseModel, TModel, TId](
     def __init__(
         self,
         session: AsyncSession,
-        entity_class: type[TEntity],
-        model_class: type[TModel],
+        entity_class: type[Any],
+        model_class: type[Any],
         id_field: str = "id",
     ) -> None:
         """Initialize SqlAlchemyRepository with database session and entity mappings.
@@ -208,7 +211,7 @@ class SqlAlchemyRepository[TEntity: BaseModel, TModel, TId](
         # Domain config is required for database configuration
         self._config = get_config()
 
-    async def find_by_id(self, entity_id: TId) -> TEntity | None:
+    async def find_by_id(self, entity_id: Any) -> Any:
         """Find entity by ID with automatic relationship loading."""
         query = select(self.model_class).where(
             getattr(self.model_class, self.id_field) == entity_id,
@@ -222,14 +225,14 @@ class SqlAlchemyRepository[TEntity: BaseModel, TModel, TId](
 
         return self._model_to_entity(model) if model else None
 
-    async def get_by_id(self, entity_id: TId) -> TEntity:
+    async def get_by_id(self, entity_id: Any) -> Any:
         """Get entity by ID - raises EntityNotFoundError if not found."""
         entity = await self.find_by_id(entity_id)
         if entity is None:
             raise EntityNotFoundError(self.entity_class, entity_id)
         return entity
 
-    async def find_all(self, limit: int = 100, offset: int = 0) -> Sequence[TEntity]:
+    async def find_all(self, limit: int = 100, offset: int = 0) -> list[Any]:
         """Find all entities with automatic pagination and relationship loading."""
         limit = min(limit, 1000)
 
@@ -247,7 +250,7 @@ class SqlAlchemyRepository[TEntity: BaseModel, TModel, TId](
 
         return [self._model_to_entity(model) for model in models]
 
-    async def save(self, entity: TEntity) -> TEntity:
+    async def save(self, entity: Any) -> Any:
         """Save entity with automatic create/update detection."""
         entity_id = self._extract_entity_id(entity)
 
@@ -257,7 +260,7 @@ class SqlAlchemyRepository[TEntity: BaseModel, TModel, TId](
         # Create new entity
         return await self._create_entity(entity)
 
-    async def delete(self, entity_id: TId) -> bool:
+    async def delete(self, entity_id: Any) -> bool:
         """Delete entity by ID.
 
         Removes an entity from the repository by its unique identifier.
@@ -284,7 +287,7 @@ class SqlAlchemyRepository[TEntity: BaseModel, TModel, TId](
         )
         return bool(result.rowcount > 0)
 
-    async def exists(self, entity_id: TId) -> bool:
+    async def exists(self, entity_id: Any) -> bool:
         """Check if entity exists by primary key."""
         query = (
             select(func.count())
@@ -328,7 +331,7 @@ class SqlAlchemyRepository[TEntity: BaseModel, TModel, TId](
 
         return query
 
-    def _model_to_entity(self, model: TModel) -> TEntity:
+    def _model_to_entity(self, model: Any) -> Any:
         """Convert SQLAlchemy model to domain entity using Pydantic.
 
         Args:
@@ -337,7 +340,7 @@ class SqlAlchemyRepository[TEntity: BaseModel, TModel, TId](
 
         Returns:
         -------
-            TEntity: The domain entity instance.
+          : The domain entity instance.
 
         """
         if not model:
@@ -355,7 +358,7 @@ class SqlAlchemyRepository[TEntity: BaseModel, TModel, TId](
 
         return self.entity_class.model_validate(model_data)
 
-    def _extract_model_data(self, model: TModel) -> ConfigurationDict:
+    def _extract_model_data(self, model: Any) -> ConfigurationDict:
         """Extract basic data from SQLAlchemy model or mock object.
 
         Args:
@@ -408,7 +411,9 @@ class SqlAlchemyRepository[TEntity: BaseModel, TModel, TId](
         return model_data
 
     def _process_model_relationships(
-        self, model: TModel, model_data: ConfigurationDict,
+        self,
+        model: Any,
+        model_data: ConfigurationDict,
     ) -> None:
         """Process SQLAlchemy model relationships into model data.
 
@@ -445,7 +450,8 @@ class SqlAlchemyRepository[TEntity: BaseModel, TModel, TId](
             )
 
     def _apply_entity_specific_mapping(
-        self, model_data: ConfigurationDict,
+        self,
+        model_data: ConfigurationDict,
     ) -> ConfigurationDict:
         """Apply entity-specific data mapping transformations.
 
@@ -519,7 +525,7 @@ class SqlAlchemyRepository[TEntity: BaseModel, TModel, TId](
 
         return result
 
-    def _entity_to_model_data(self, entity: TEntity) -> ConfigurationDict:
+    def _entity_to_model_data(self, entity: Any) -> ConfigurationDict:
         """Convert Pydantic entity to a dictionary for SQLAlchemy model.
 
         This method now uses a mapping function for each entity type to
@@ -564,7 +570,7 @@ class SqlAlchemyRepository[TEntity: BaseModel, TModel, TId](
         # Return entity data without transformation for recognized but unmapped types
         return entity_data
 
-    def _extract_entity_id(self, entity: TEntity) -> TId | None:
+    def _extract_entity_id(self, entity: Any) -> Any:
         """Extract entity ID.
 
         Retrieves the unique identifier from the given entity instance.
@@ -576,7 +582,7 @@ class SqlAlchemyRepository[TEntity: BaseModel, TModel, TId](
 
         Returns:
         -------
-            The entity's unique identifier, or None if not present.
+            The entity's unique identifier, orAny if not present.
 
         Example:
         -------
@@ -600,7 +606,7 @@ class SqlAlchemyRepository[TEntity: BaseModel, TModel, TId](
 
         return None
 
-    def _extract_id_value(self, id_value: object) -> TId | None:
+    def _extract_id_value(self, id_value: object) -> Any:
         """Extract value from ID objects, supporting value objects."""
         try:
             # Try to access value attribute
@@ -609,7 +615,7 @@ class SqlAlchemyRepository[TEntity: BaseModel, TModel, TId](
             # No value attribute - return the object itself
             return id_value  # type: ignore[no-any-return]
 
-    async def _create_entity(self, entity: TEntity) -> TEntity:
+    async def _create_entity(self, entity: Any) -> Any:
         """Create a new entity in the database."""
         model_data = self._entity_to_model_data(entity)
         new_model = self.model_class(**model_data)
@@ -618,7 +624,7 @@ class SqlAlchemyRepository[TEntity: BaseModel, TModel, TId](
         await self.session.refresh(new_model)
         return self._model_to_entity(new_model)
 
-    async def _update_entity(self, entity: TEntity) -> TEntity:
+    async def _update_entity(self, entity: Any) -> Any:
         """Update an existing entity in the database."""
         entity_id = self._extract_entity_id(entity)
         model_data = self._entity_to_model_data(entity)
@@ -639,7 +645,9 @@ class SqlAlchemyRepository[TEntity: BaseModel, TModel, TId](
         return self._model_to_entity(updated_model)
 
     async def _handle_entity_relationships(
-        self, entity: TEntity, model: TModel,
+        self,
+        entity: Any,
+        model: Any,
     ) -> None:
         """Handle saving relationships of an entity with enterprise-grade relationship management.
 
@@ -666,7 +674,10 @@ class SqlAlchemyRepository[TEntity: BaseModel, TModel, TId](
             self._log_relationship_error(e, entity, model)
 
     def _process_single_relationship(
-        self, entity: TEntity, model: TModel, relationship: object,
+        self,
+        entity: Any,
+        model: Any,
+        relationship: object,
     ) -> None:
         """Process a single relationship between entity and model."""
         relationship_name = getattr(relationship, "key", None)
@@ -694,10 +705,13 @@ class SqlAlchemyRepository[TEntity: BaseModel, TModel, TId](
             self._handle_single_relationship(model, relationship, relationship_value)
 
     def _handle_collection_relationship(
-        self, model: TModel, relationship: object, relationship_value: object,
+        self,
+        model: Any,
+        relationship: object,
+        relationship_value: object,
     ) -> None:
         """Handle collection relationships (one-to-many, many-to-many)."""
-        if not isinstance(relationship_value, list | tuple):
+        if not isinstance(relationship_value, (list, tuple)):
             return
 
         # Clear existing relationships
@@ -725,7 +739,10 @@ class SqlAlchemyRepository[TEntity: BaseModel, TModel, TId](
                 continue
 
     def _handle_single_relationship(
-        self, model: TModel, relationship: object, relationship_value: object,
+        self,
+        model: Any,
+        relationship: object,
+        relationship_value: object,
     ) -> None:
         """Handle single relationships (one-to-one, many-to-one)."""
         # Check if relationship value has model_dump method
@@ -746,7 +763,10 @@ class SqlAlchemyRepository[TEntity: BaseModel, TModel, TId](
             return
 
     def _log_relationship_error(
-        self, error: Exception, _entity: TEntity, model: TModel,
+        self,
+        error: Exception,
+        _entity: Any,
+        model: Any,
     ) -> None:
         """Log relationship handling errors with context."""
         logger.debug(
@@ -757,8 +777,8 @@ class SqlAlchemyRepository[TEntity: BaseModel, TModel, TId](
         )
 
 
-class DomainSpecificRepository[TEntity: BaseModel, TModel, TId](
-    SqlAlchemyRepository[TEntity, TModel, TId],
+class DomainSpecificRepository(
+    SqlAlchemyRepository,
 ):
     """Domain-specific repository with custom query methods.
 
@@ -767,7 +787,7 @@ class DomainSpecificRepository[TEntity: BaseModel, TModel, TId](
     """
 
     # Pipeline-specific methods
-    async def find_by_name(self, name: str | object) -> TEntity | None:
+    async def find_by_name(self, name: Any) -> Any:
         """Find entity by name."""
         query = select(self.model_class).where(
             func.lower(getattr(self.model_class, "name", "")) == str(name).lower(),
@@ -775,10 +795,10 @@ class DomainSpecificRepository[TEntity: BaseModel, TModel, TId](
         query = self._add_relationship_loading(query)
 
         result: Result = await self.session.execute(query)
-        model: TModel | None = result.scalar_one_or_none()
+        model: Any = result.scalar_one_or_none()
         return self._model_to_entity(model) if model else None
 
-    async def find_active_pipelines(self) -> list[TEntity]:
+    async def find_active_pipelines(self) -> list[Any]:
         """Find all active pipelines."""
         # Check if model has is_active attribute
         try:
@@ -793,7 +813,7 @@ class DomainSpecificRepository[TEntity: BaseModel, TModel, TId](
         models = result.scalars().all()
         return [self._model_to_entity(model) for model in models]
 
-    async def find_scheduled_pipelines(self) -> list[TEntity]:
+    async def find_scheduled_pipelines(self) -> list[Any]:
         """Find all scheduled pipelines ready for execution.
 
         Implements enterprise-grade scheduling logic with timezone support,
@@ -854,8 +874,11 @@ class DomainSpecificRepository[TEntity: BaseModel, TModel, TId](
 
     # Execution-specific methods
     async def find_by_pipeline_id(
-        self, pipeline_id: object, limit: int = 50, offset: int = 0,
-    ) -> list[TEntity]:
+        self,
+        pipeline_id: object,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> list[Any]:
         """Find all executions for a given pipeline ID."""
         # Check if model has pipeline_id attribute
         try:
@@ -880,12 +903,15 @@ class DomainSpecificRepository[TEntity: BaseModel, TModel, TId](
         return [self._model_to_entity(model) for model in models]
 
     async def find_by_pipeline(
-        self, pipeline_id: object, limit: int = 50, offset: int = 0,
-    ) -> list[TEntity]:
+        self,
+        pipeline_id: object,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> list[Any]:
         """Find all executions for a given pipeline ID."""
         return await self.find_by_pipeline_id(pipeline_id, limit, offset)
 
-    async def find_latest_by_pipeline_id(self, pipeline_id: object) -> TEntity | None:
+    async def find_latest_by_pipeline_id(self, pipeline_id: object) -> Any:
         """Find the latest execution for a given pipeline ID."""
         # Check if model has required attributes for latest execution query
         try:
@@ -910,8 +936,11 @@ class DomainSpecificRepository[TEntity: BaseModel, TModel, TId](
         return self._model_to_entity(model) if model else None
 
     async def find_by_status(
-        self, status: object, limit: int = 50, offset: int = 0,
-    ) -> list[TEntity]:
+        self,
+        status: object,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> list[Any]:
         """Find all executions with a given status."""
         # Check if model has status attribute
         try:
@@ -935,7 +964,7 @@ class DomainSpecificRepository[TEntity: BaseModel, TModel, TId](
         models = result.scalars().all()
         return [self._model_to_entity(model) for model in models]
 
-    async def find_stuck_executions(self, timeout_minutes: int = 60) -> list[TEntity]:
+    async def find_stuck_executions(self, timeout_minutes: int = 60) -> list[Any]:
         """Find executions that are 'stuck' in a running state."""
         # Check if model has required attributes for stuck executions query
         try:
@@ -958,7 +987,7 @@ class DomainSpecificRepository[TEntity: BaseModel, TModel, TId](
         models = result.scalars().all()
         return [self._model_to_entity(model) for model in models]
 
-    async def find_running_executions(self) -> list[TEntity]:
+    async def find_running_executions(self) -> list[Any]:
         """Find all executions currently in the 'RUNNING' state."""
         # Check if model has status attribute for running executions
         try:
@@ -997,7 +1026,7 @@ class DomainSpecificRepository[TEntity: BaseModel, TModel, TId](
         return (max_execution_number or 0) + 1
 
     # Plugin-specific methods
-    async def find_by_type(self, plugin_type: str) -> list[TEntity]:
+    async def find_by_type(self, plugin_type: str) -> list[Any]:
         """Find plugins by type."""
         # Check if model has plugin_type attribute
         try:
@@ -1015,8 +1044,10 @@ class DomainSpecificRepository[TEntity: BaseModel, TModel, TId](
         return [self._model_to_entity(model) for model in models]
 
     async def search_plugins(
-        self, query: str, plugin_type: str | None = None,
-    ) -> list[TEntity]:
+        self,
+        query: str,
+        plugin_type: str = None,
+    ) -> list[Any]:
         """Search for plugins by name or namespace."""
         # Check if model has required search attributes
         try:
@@ -1045,12 +1076,15 @@ class DomainSpecificRepository[TEntity: BaseModel, TModel, TId](
         return [self._model_to_entity(model) for model in models]
 
     async def search(
-        self, query: str, plugin_type: str | None = None, _limit: int = 50,
-    ) -> list[TEntity]:
+        self,
+        query: str,
+        plugin_type: str = None,
+        _limit: int = 50,
+    ) -> list[Any]:
         """Search for entities using the search_plugins method."""
         return await self.search_plugins(query, plugin_type)
 
-    async def find_by_namespace(self, namespace: str) -> list[TEntity]:
+    async def find_by_namespace(self, namespace: str) -> list[Any]:
         """Find plugins by namespace."""
         # Check if model has namespace attribute
         try:
@@ -1068,7 +1102,7 @@ class DomainSpecificRepository[TEntity: BaseModel, TModel, TId](
         return [self._model_to_entity(model) for model in models]
 
     # Additional pipeline-specific methods for test compatibility
-    async def find_all_active(self) -> list[TEntity]:
+    async def find_all_active(self) -> list[Any]:
         """Find all active entities (e.g., plugins)."""
         # Check if model has is_active attribute for active entities
         try:
@@ -1085,7 +1119,7 @@ class DomainSpecificRepository[TEntity: BaseModel, TModel, TId](
         models = result.scalars().all()
         return [self._model_to_entity(model) for model in models]
 
-    async def exists_by_name(self, name: str | object) -> bool:
+    async def exists_by_name(self, name: Any) -> bool:
         """Check if an entity exists by name."""
         # Check if model has name attribute for existence check
         try:
@@ -1109,11 +1143,11 @@ class DomainSpecificRepository[TEntity: BaseModel, TModel, TId](
         return int(result.scalar_one())
 
     # Alias methods for test compatibility
-    async def get(self, entity_id: TId) -> TEntity | None:
+    async def get(self, entity_id: Any) -> Any:
         """Alias for find_by_id() - for test compatibility."""
         return await self.find_by_id(entity_id)
 
-    async def add(self, entity: TEntity) -> TEntity:
+    async def add(self, entity: Any) -> Any:
         """Alias for save() - for test compatibility."""
         return await self.save(entity)
 

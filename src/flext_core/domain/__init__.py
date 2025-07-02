@@ -1,7 +1,6 @@
 """Domain model for the FLEXT platform."""
 
 from flext_core.domain.entities import (
-    ExecutionId,
     Pipeline,
     PipelineExecution,
     PipelineId,
@@ -10,7 +9,7 @@ from flext_core.domain.entities import (
     Plugin,
     PluginId,
 )
-from flext_core.domain.value_objects import ExecutionStatus
+from flext_core.domain.value_objects import ExecutionId, ExecutionStatus
 
 __all__ = [
     "ExecutionId",

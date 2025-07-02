@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import inspect
 from collections.abc import Callable
-from typing import TYPE_CHECKING, TypeVar, get_type_hints
+from typing import TYPE_CHECKING, Any, TypeVar, get_type_hints
 
 from pydantic import Field
 
@@ -37,11 +37,11 @@ if TYPE_CHECKING:
 # Generic type variables
 T = TypeVar("T")
 
-# Python 3.13 Type Aliases - with strict validation
-type HandlerResult[T] = ServiceResult[T]
-type CommandObject = object
-type HandlerMethod = Callable[[CommandObject], HandlerResult[object]]
-type ProtocolAdapter = Callable[[RequestData], CommandObject]
+# Python 3.9 compatible Type Aliases - with strict validation
+HandlerResult = ServiceResult
+CommandObject = object
+HandlerMethod = Callable[[CommandObject], HandlerResult]
+ProtocolAdapter = Callable[[RequestData], CommandObject]
 
 
 class CommandProtocol:
@@ -144,7 +144,9 @@ class InterfaceBridge:
         return methods
 
     async def execute_command(
-        self, command_name: str, command_data: RequestData | None = None,
+        self,
+        command_name: str,
+        command_data: RequestData | None = None,
     ) -> HandlerResult[object]:
         """Execute command using UNIFIED EXECUTION ARCHITECTURE - with strict validation."""
         try:
@@ -199,7 +201,10 @@ class InterfaceBridge:
     # =========================================================================
 
     async def cli_create_pipeline(
-        self, name: str, description: str = "", steps: list | None = None,
+        self,
+        name: str,
+        description: str = "",
+        steps: list | None = None,
     ) -> HandlerResult[object]:
         """CLI adapter for pipeline creation."""
         return await self.execute_command(
@@ -208,7 +213,9 @@ class InterfaceBridge:
         )
 
     async def cli_execute_pipeline(
-        self, pipeline_id: str, environment: str = "dev",
+        self,
+        pipeline_id: str,
+        environment: str = "dev",
     ) -> HandlerResult[object]:
         """CLI adapter for pipeline execution."""
         return await self.execute_command(
@@ -221,7 +228,10 @@ class InterfaceBridge:
         )
 
     async def cli_list_pipelines(
-        self, *, active_only: bool = False, limit: int = 20,
+        self,
+        *,
+        active_only: bool = False,
+        limit: int = 20,
     ) -> HandlerResult[object]:
         """CLI adapter for pipeline listing."""
         return await self.execute_command(
@@ -256,13 +266,16 @@ class InterfaceBridge:
     # =========================================================================
 
     async def api_create_pipeline(
-        self, request_data: RequestData,
+        self,
+        request_data: RequestData,
     ) -> HandlerResult[object]:
         """Adapt API requests for pipeline creation with request validation."""
         return await self.execute_command("create_pipeline", request_data)
 
     async def api_update_pipeline(
-        self, pipeline_id: str, request_data: RequestData,
+        self,
+        pipeline_id: str,
+        request_data: RequestData,
     ) -> HandlerResult[object]:
         """Adapt API requests for pipeline updates."""
         command_data = request_data.copy()
@@ -270,7 +283,9 @@ class InterfaceBridge:
         return await self.execute_command("update_pipeline", command_data)
 
     async def api_execute_pipeline(
-        self, pipeline_id: str, request_data: RequestData,
+        self,
+        pipeline_id: str,
+        request_data: RequestData,
     ) -> HandlerResult[object]:
         """Adapt API requests for pipeline execution."""
         command_data = request_data.copy()
@@ -286,7 +301,8 @@ class InterfaceBridge:
         )
 
     async def api_list_pipelines(
-        self, query_params: RequestData,
+        self,
+        query_params: RequestData,
     ) -> HandlerResult[object]:
         """Adapt API requests for pipeline listing."""
         return await self.execute_command("list_pipelines", query_params)
@@ -324,7 +340,8 @@ class InterfaceBridge:
         return await self.execute_command("create_pipeline", command_data)
 
     async def grpc_execute_pipeline(
-        self, grpc_request: object,
+        self,
+        grpc_request: object,
     ) -> HandlerResult[object]:
         """Adapt gRPC requests for pipeline execution."""
         command_data = {
@@ -348,13 +365,16 @@ class InterfaceBridge:
     # =========================================================================
 
     async def web_create_pipeline(
-        self, form_data: RequestData,
+        self,
+        form_data: RequestData,
     ) -> HandlerResult[object]:
         """Adapt web form data for pipeline creation."""
         return await self.execute_command("create_pipeline", form_data)
 
     async def web_execute_pipeline(
-        self, pipeline_id: str, form_data: RequestData,
+        self,
+        pipeline_id: str,
+        form_data: RequestData,
     ) -> HandlerResult[object]:
         """Adapt web form data for pipeline execution."""
         command_data = form_data.copy()
@@ -363,7 +383,8 @@ class InterfaceBridge:
         return await self.execute_command("execute_pipeline", command_data)
 
     async def web_pipeline_dashboard(
-        self, query_params: RequestData,
+        self,
+        query_params: RequestData,
     ) -> HandlerResult[object]:
         """Adapt web requests for pipeline dashboard."""
         return await self.execute_command("get_dashboard_data", query_params)
@@ -448,7 +469,9 @@ class InterfaceBridge:
         """Get list of available commands through reflection."""
         return list(self._handler_methods.keys())
 
-    def get_command_signature(self, command_name: str) -> RequestData | None:
+    def get_command_signature(
+        self, command_name: str
+    ) -> dict[str, dict[str, Any]] | None:
         """Get command signature using Python 3.13 reflection.
 
         Args:
@@ -482,7 +505,9 @@ class InterfaceBridge:
     # =========================================================================
 
     async def execute_command_with_validation(
-        self, command_name: str, command_data: RequestData,
+        self,
+        command_name: str,
+        command_data: RequestData,
     ) -> HandlerResult[object]:
         """Execute command with strict validation using UNIFIED VALIDATION ARCHITECTURE.
 

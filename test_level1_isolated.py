@@ -135,7 +135,6 @@ def test_serialization() -> None:
 
 
 if __name__ == "__main__":
-
     try:
         test_domain_base_model()
         test_domain_value_object()

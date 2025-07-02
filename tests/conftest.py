@@ -38,10 +38,10 @@ if TYPE_CHECKING:
     from collections.abc import AsyncIterator, Iterator
 
 # Python 3.13 type aliases
-type TestDatabase = str
-type TestPipeline = Pipeline
-type TestExecution = PipelineExecution
-type TestPlugin = Plugin
+TestDatabase = str
+TestPipeline = Pipeline
+TestExecution = PipelineExecution
+TestPlugin = Plugin
 
 
 # === ENVIRONMENT SETUP ===

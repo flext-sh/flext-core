@@ -8,16 +8,17 @@ throughout the codebase, offering better validation, serialization, and Python
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import Any, TypeVar
+
+# Conditional import to avoid circular dependency - use TYPE_CHECKING instead
+from typing import TYPE_CHECKING, Any, TypeVar
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
 
-# Conditional import to avoid circular dependency
-try:
-    from flext_core.domain.advanced_types import ServiceResult
-except ImportError:
-    ServiceResult: type | None = None  # Will be properly imported when advanced_types is ready
+if TYPE_CHECKING:
+    from flext_core.domain.advanced_types import ServiceResult as ServiceResultType
+else:
+    ServiceResultType = object  # Runtime fallback
 
 # Python 3.13 Type Variables
 T = TypeVar("T")
@@ -25,10 +26,10 @@ E = TypeVar("E", bound="DomainEntity")
 V = TypeVar("V", bound="DomainValueObject")
 
 # Python 3.13 Advanced Type Aliases
-type EntityId = UUID
-type DomainEventData = dict[str, Any]
-type MetadataDict = dict[str, str | int | bool | float | None]
-type ConfigurationValue = str | int | float | bool | None | list[Any] | dict[str, Any]
+EntityId = UUID
+DomainEventData = dict[str, Any]
+MetadataDict = dict[str, str | int | bool | float | None]
+ConfigurationValue = str | int | float | bool | None | list[Any] | dict[str, Any]
 
 
 class DomainBaseModel(BaseModel):
@@ -49,8 +50,8 @@ class DomainBaseModel(BaseModel):
         # Serialization optimization
         arbitrary_types_allowed=True,
         # Performance optimization
-        use_list=True,
-        use_set=True,
+        # use_list=True,  # Not valid in Pydantic v2
+        # use_set=True,   # Not valid in Pydantic v2
         # Validation optimization
         str_to_lower=False,
         str_to_upper=False,
@@ -270,7 +271,6 @@ class DomainEvent(DomainValueObject):
     )
 
     @computed_field
-    @property
     def event_stream_id(self) -> str:
         """Generate event stream identifier."""
         return f"{self.event_type}-{self.aggregate_id}"
@@ -399,5 +399,5 @@ __all__ = [
     "MetadataDict",
     "NotSpecification",
     "OrSpecification",
-    "ServiceResult",
+    # "ServiceResult",  # Moved to advanced_types to avoid circular dependency
 ]

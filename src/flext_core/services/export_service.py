@@ -23,7 +23,9 @@ class ExportService(ABC):
         """Export pipeline configuration."""
 
     @abstractmethod
-    async def export_execution_results(self, execution_id: str, format: ExportFormat) -> bytes:
+    async def export_execution_results(
+        self, execution_id: str, format: ExportFormat
+    ) -> bytes:
         """Export execution results."""
 
     @abstractmethod
@@ -47,7 +49,9 @@ class DefaultExportService(ExportService):
         }
         return json.dumps(data).encode("utf-8")
 
-    async def export_execution_results(self, execution_id: str, format: ExportFormat) -> bytes:
+    async def export_execution_results(
+        self, execution_id: str, format: ExportFormat
+    ) -> bytes:
         """Export execution results."""
         data = {
             "execution_id": execution_id,

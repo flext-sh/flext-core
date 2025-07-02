@@ -12,7 +12,7 @@ This package ELIMINATES ALL configuration duplication across the project:
 
 from __future__ import annotations
 
-from flx_core.domain_config import (  # Unified Configuration Classes
+from flx_core.config.domain_config import (  # Unified Configuration Classes
     HTTP_BAD_REQUEST,
     HTTP_CREATED,
     HTTP_FORBIDDEN,

@@ -21,6 +21,7 @@ def validate_command(args: Any) -> int:
     # Test type creation
     try:
         from uuid import uuid4
+
         UserId(uuid4())
         CorrelationId(uuid4())
         EventId(uuid4())
@@ -30,6 +31,7 @@ def validate_command(args: Any) -> int:
     # Test service result
     try:
         from .domain.advanced_types import ServiceResult
+
         ServiceResult.ok("test data")
     except Exception:
         errors += 1

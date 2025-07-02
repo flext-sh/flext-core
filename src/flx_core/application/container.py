@@ -48,8 +48,8 @@ if TYPE_CHECKING:
 # Python 3.13 type aliases for container - with strict validation
 from flx_core.domain.advanced_types import MetadataDict
 
-type HealthStatus = MetadataDict
-type ServiceFactory = type[object]
+HealthStatus = MetadataDict
+ServiceFactory = type[object]
 
 
 class FlxApplicationContainer:
