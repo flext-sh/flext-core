@@ -9,7 +9,7 @@ from __future__ import annotations
 import re
 from datetime import timedelta
 from enum import Enum, auto
-from typing import TYPE_CHECKING, Self
+from typing import TYPE_CHECKING, ClassVar, Self
 from uuid import UUID, uuid4
 
 from pydantic import Field, field_validator, model_validator
@@ -123,7 +123,7 @@ class ExecutionStatus(Enum):
 class Duration(DomainValueObject):
     """Represents a span of time in seconds, with helpers for conversion."""
 
-    model_config = {"frozen": True}
+    model_config: ClassVar = {"frozen": True}
 
     total_seconds_value: float = Field(
         ge=0,
@@ -546,7 +546,7 @@ class PipelineId(DomainValueObject):
     Python 3.13 + Pydantic v2 value object.
     """
 
-    model_config = {"frozen": True, "arbitrary_types_allowed": True}
+    model_config: ClassVar = {"frozen": True, "arbitrary_types_allowed": True}
 
     value: UUID = Field(default_factory=uuid4)
 
@@ -599,7 +599,7 @@ class PluginId(DomainValueObject):
     Python 3.13 + Pydantic v2 value object.
     """
 
-    model_config = {"frozen": True, "arbitrary_types_allowed": True}
+    model_config: ClassVar = {"frozen": True, "arbitrary_types_allowed": True}
 
     value: UUID = Field(default_factory=uuid4)
 
@@ -666,7 +666,7 @@ class ExecutionId(DomainValueObject):
     Python 3.13 + Pydantic v2 value object.
     """
 
-    model_config = {"frozen": True, "arbitrary_types_allowed": True}
+    model_config: ClassVar = {"frozen": True, "arbitrary_types_allowed": True}
 
     value: UUID = Field(default_factory=uuid4)
 
@@ -734,7 +734,7 @@ class PipelineName(DomainValueObject):
     Python 3.13 + Pydantic v2 value object with validation.
     """
 
-    model_config = {"frozen": True, "str_strip_whitespace": True}
+    model_config: ClassVar = {"frozen": True, "str_strip_whitespace": True}
 
     value: str = Field(min_length=1, max_length=MAX_PIPELINE_NAME_LENGTH)
 
@@ -802,7 +802,7 @@ class PluginConfiguration(DomainValueObject):
     Python 3.13 + Pydantic v2 value object for plugin settings.
     """
 
-    model_config = {"frozen": True, "arbitrary_types_allowed": True, "extra": "allow"}
+    model_config: ClassVar = {"frozen": True, "arbitrary_types_allowed": True, "extra": "allow"}
 
     settings: ConfigurationDict = Field(default_factory=dict)
 
@@ -912,7 +912,7 @@ class PipelineStep(DomainValueObject):
 
     """
 
-    model_config = {
+    model_config: ClassVar = {
         "frozen": True,
         "arbitrary_types_allowed": True,
         "str_strip_whitespace": True,
@@ -959,7 +959,7 @@ class CanExecuteSpecification(DomainValueObject):
     Python 3.13 + Pydantic v2 specification pattern.
     """
 
-    model_config = {"frozen": True}
+    model_config: ClassVar = {"frozen": True}
 
     def is_satisfied_by(self, pipeline: Pipeline) -> bool:
         """Check if pipeline has steps and is active."""
@@ -976,7 +976,7 @@ class HasValidDependenciesSpecification(DomainValueObject):
     Python 3.13 + Pydantic v2 specification pattern.
     """
 
-    model_config = {"frozen": True}
+    model_config: ClassVar = {"frozen": True}
 
     def is_satisfied_by(self, pipeline: Pipeline) -> bool:
         """Check if step dependencies are valid."""
@@ -996,7 +996,7 @@ class AndSpecification(DomainValueObject):
     Python 3.13 + Pydantic v2 composite specification pattern.
     """
 
-    model_config = {"frozen": True}
+    model_config: ClassVar = {"frozen": True}
 
     left: CanExecuteSpecification | HasValidDependenciesSpecification
     right: CanExecuteSpecification | HasValidDependenciesSpecification

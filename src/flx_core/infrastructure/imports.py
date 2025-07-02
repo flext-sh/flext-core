@@ -143,9 +143,6 @@ def import_e2e_test_suite() -> ImportableClass:
     try:
         e2e_module = dynamic_import_from_path(e2e_module_path, "flx_e2e")
         return _get_class_from_module(e2e_module, "FlxE2ETestSuite", e2e_module_path)
-
-    except ArchitecturalImportError:
-        raise
     except (
         ValueError,
         TypeError,
@@ -178,8 +175,6 @@ def import_kind_cluster_setup() -> ImportableClass:
         kind_module = dynamic_import_from_path(kind_module_path, "setup_kind_cluster")
         return _get_class_from_module(kind_module, "KindClusterSetup", kind_module_path)
 
-    except ArchitecturalImportError:
-        raise
     except (
         ValueError,
         TypeError,

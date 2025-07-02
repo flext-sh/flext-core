@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 
 class RefreshMode(Enum):
@@ -25,8 +25,8 @@ class PipelineConfig:
 class PluginFilter:
     """Filter for plugin selection."""
 
-    include: Optional[list[str]] = None
-    exclude: Optional[list[str]] = None
+    include: list[str] | None = None
+    exclude: list[str] | None = None
 
 
 @dataclass

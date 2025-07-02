@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import re
 import warnings
+from typing import ClassVar
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -30,7 +31,7 @@ ConfigurationValue = str | int | bool | float | None
 class NetworkPort(BaseModel):
     """A validated network port number with enterprise constraints."""
 
-    model_config = {"frozen": True, "str_strip_whitespace": True}
+    model_config: ClassVar = {"frozen": True, "str_strip_whitespace": True}
 
     value: int = Field(ge=1, le=65535, description="Valid TCP/UDP port number")
 
@@ -80,7 +81,7 @@ class NetworkPort(BaseModel):
 class HostAddress(BaseModel):
     """A validated hostname or IP address with enterprise constraints."""
 
-    model_config = {"frozen": True, "str_strip_whitespace": True}
+    model_config: ClassVar = {"frozen": True, "str_strip_whitespace": True}
 
     value: str = Field(
         min_length=1,
@@ -147,7 +148,7 @@ class HostAddress(BaseModel):
 class TimeoutSeconds(BaseModel):
     """A validated timeout value in seconds with enterprise constraints."""
 
-    model_config = {"frozen": True}
+    model_config: ClassVar = {"frozen": True}
 
     value: float = Field(
         gt=0,
@@ -195,7 +196,7 @@ class TimeoutSeconds(BaseModel):
 class ConnectionString(BaseModel):
     """A validated connection string with enterprise security constraints."""
 
-    model_config = {"frozen": True, "str_strip_whitespace": True}
+    model_config: ClassVar = {"frozen": True, "str_strip_whitespace": True}
 
     value: str = Field(
         min_length=1,
@@ -259,7 +260,7 @@ class ConnectionString(BaseModel):
 class PluginName(BaseModel):
     """A validated plugin name with enterprise naming conventions."""
 
-    model_config = {"frozen": True, "str_strip_whitespace": True}
+    model_config: ClassVar = {"frozen": True, "str_strip_whitespace": True}
 
     value: str = Field(
         min_length=1,
@@ -316,7 +317,7 @@ class PluginName(BaseModel):
 class EmailAddress(BaseModel):
     """A validated email address with enterprise compliance."""
 
-    model_config = {"frozen": True, "str_strip_whitespace": True}
+    model_config: ClassVar = {"frozen": True, "str_strip_whitespace": True}
 
     value: str = Field(
         min_length=5,
@@ -409,7 +410,7 @@ class EmailAddress(BaseModel):
 class Username(BaseModel):
     """A validated username with enterprise security constraints."""
 
-    model_config = {"frozen": True, "str_strip_whitespace": True}
+    model_config: ClassVar = {"frozen": True, "str_strip_whitespace": True}
 
     value: str = Field(
         min_length=3,
@@ -495,7 +496,7 @@ class Username(BaseModel):
 class ExecutionNumber(BaseModel):
     """A validated execution number with enterprise constraints."""
 
-    model_config = {"frozen": True}
+    model_config: ClassVar = {"frozen": True}
 
     value: int = Field(
         ge=1,
@@ -533,7 +534,7 @@ class ExecutionNumber(BaseModel):
 class RecordCount(BaseModel):
     """A validated record count with enterprise data processing constraints."""
 
-    model_config = {"frozen": True}
+    model_config: ClassVar = {"frozen": True}
 
     value: int = Field(
         ge=0,
@@ -578,7 +579,7 @@ class RecordCount(BaseModel):
 class BatchSize(BaseModel):
     """A validated batch size for data processing with enterprise constraints."""
 
-    model_config = {"frozen": True}
+    model_config: ClassVar = {"frozen": True}
 
     value: int = Field(
         ge=1,
@@ -645,7 +646,7 @@ class BatchSize(BaseModel):
 class ScheduleId(BaseModel):
     """A validated schedule identifier with enterprise constraints."""
 
-    model_config = {"frozen": True, "str_strip_whitespace": True}
+    model_config: ClassVar = {"frozen": True, "str_strip_whitespace": True}
 
     value: str = Field(min_length=1, max_length=255, description="Schedule identifier")
 
@@ -671,7 +672,7 @@ class ScheduleId(BaseModel):
 class CronExpression(BaseModel):
     """A validated cron expression with enterprise constraints."""
 
-    model_config = {"frozen": True, "str_strip_whitespace": True}
+    model_config: ClassVar = {"frozen": True, "str_strip_whitespace": True}
 
     value: str = Field(min_length=9, max_length=100, description="Cron expression")
 
@@ -717,7 +718,7 @@ class CronExpression(BaseModel):
 class Timezone(BaseModel):
     """A validated timezone identifier with enterprise constraints."""
 
-    model_config = {"frozen": True, "str_strip_whitespace": True}
+    model_config: ClassVar = {"frozen": True, "str_strip_whitespace": True}
 
     value: str = Field(min_length=3, max_length=50, description="Timezone identifier")
 

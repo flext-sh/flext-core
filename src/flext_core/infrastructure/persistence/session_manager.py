@@ -233,7 +233,7 @@ async def get_session_manager() -> DatabaseSessionManager:
         Initialized DatabaseSessionManager instance
 
     """
-    global _session_manager  # noqa: PLW0603
+    global _session_manager
 
     if _session_manager is None:
         _session_manager = DatabaseSessionManager()
@@ -275,7 +275,7 @@ async def get_db_session() -> AsyncGenerator[AsyncSession]:
 
 async def close_database_connections() -> None:
     """Close all database connections on application shutdown."""
-    global _session_manager  # noqa: PLW0603
+    global _session_manager
 
     if _session_manager is not None:
         await _session_manager.close()

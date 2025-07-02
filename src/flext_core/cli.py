@@ -38,8 +38,7 @@ def validate_command(args: Any) -> int:
 
     if errors == 0:
         return 0
-    else:
-        return 1
+    return 1
 
 
 def types_command(args: Any) -> int:
@@ -92,9 +91,8 @@ Examples:
     # Execute command
     if hasattr(args, "func"):
         return args.func(args)
-    else:
-        parser.print_help()
-        return 1
+    parser.print_help()
+    return 1
 
 
 if __name__ == "__main__":

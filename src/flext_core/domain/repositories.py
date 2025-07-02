@@ -12,19 +12,21 @@ ARCHITECTURAL PRINCIPLE:
 from __future__ import annotations
 
 from abc import abstractmethod
+from typing import TYPE_CHECKING
 
 # Import UnitOfWork from contracts for compatibility
-from flext_core.domain.entities import (
-    Pipeline,
-    PipelineExecution,
-    PipelineId,
-    Plugin,
-)
-
 # Re-export the ultimate repository from infrastructure for domain use
 from flext_core.infrastructure.persistence.repositories_core import (
     CoreDomainRepository as DomainRepository,
 )
+
+if TYPE_CHECKING:
+    from flext_core.domain.entities import (
+        Pipeline,
+        PipelineExecution,
+        PipelineId,
+        Plugin,
+    )
 
 # Python 3.13 Type Aliases for Domain Context - Using new type alias syntax
 PipelineRepository = DomainRepository

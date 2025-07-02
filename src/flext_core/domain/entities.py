@@ -1,8 +1,14 @@
 """Core domain entities for FLEXT framework."""
 
-from datetime import datetime, timezone
-from enum import Enum
-from typing import Any
+from datetime import datetime
+
+# Python < 3.11 compatibility for datetime.UTC
+try:
+    from datetime import UTC
+except ImportError:
+    UTC = UTC
+from enum import StrEnum
+from typing import Any, ClassVar
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -24,8 +30,9 @@ class PipelineName(BaseModel):
     def validate_name(cls, v: str) -> str:
         """Validate pipeline name format."""
         if not v.replace("-", "").replace("_", "").replace(".", "").isalnum():
+            msg = "Pipeline name must contain only alphanumeric characters, hyphens, underscores, and dots"
             raise ValueError(
-                "Pipeline name must contain only alphanumeric characters, hyphens, underscores, and dots"
+                msg
             )
         return v
 
@@ -36,7 +43,7 @@ class PipelineName(BaseModel):
         return f"PipelineName('{self.value}')"
 
 
-class ExecutionStatus(str, Enum):
+class ExecutionStatus(StrEnum):
     """Pipeline execution status enumeration."""
 
     PENDING = "pending"
@@ -48,11 +55,11 @@ class ExecutionStatus(str, Enum):
 
     def is_terminal(self) -> bool:
         """Check if status is terminal (execution finished)."""
-        return self in [self.SUCCESS, self.FAILED, self.CANCELLED, self.TIMEOUT]
+        return self in {self.SUCCESS, self.FAILED, self.CANCELLED, self.TIMEOUT}
 
     def is_active(self) -> bool:
         """Check if execution is currently active."""
-        return self in [self.PENDING, self.RUNNING]
+        return self in {self.PENDING, self.RUNNING}
 
 
 class Pipeline(BaseModel):
@@ -71,15 +78,15 @@ class Pipeline(BaseModel):
     tags: list[str] = Field(default_factory=list, description="Pipeline tags")
     is_active: bool = Field(default=True, description="Whether pipeline is active")
     created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=lambda: datetime.now(UTC),
         description="Creation timestamp",
     )
     updated_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=lambda: datetime.now(UTC),
         description="Last update timestamp",
     )
 
-    model_config = {
+    model_config: ClassVar = {
         "use_enum_values": True,
         "json_encoders": {
             datetime: lambda v: v.isoformat(),
@@ -90,36 +97,36 @@ class Pipeline(BaseModel):
     def update_configuration(self, config: dict[str, Any]) -> None:
         """Update pipeline configuration."""
         self.configuration.update(config)
-        self.updated_at = datetime.now(timezone.utc)
+        self.updated_at = datetime.now(UTC)
 
     def add_tag(self, tag: str) -> None:
         """Add tag to pipeline."""
         if tag not in self.tags:
             self.tags.append(tag)
-            self.updated_at = datetime.now(timezone.utc)
+            self.updated_at = datetime.now(UTC)
 
     def remove_tag(self, tag: str) -> None:
         """Remove tag from pipeline."""
         if tag in self.tags:
             self.tags.remove(tag)
-            self.updated_at = datetime.now(timezone.utc)
+            self.updated_at = datetime.now(UTC)
 
     def deactivate(self) -> None:
         """Deactivate pipeline."""
         self.is_active = False
-        self.updated_at = datetime.now(timezone.utc)
+        self.updated_at = datetime.now(UTC)
 
     def activate(self) -> None:
         """Activate pipeline."""
         self.is_active = True
-        self.updated_at = datetime.now(timezone.utc)
+        self.updated_at = datetime.now(UTC)
 
 
 class PipelineStep(BaseModel):
     """Pipeline step entity for defining pipeline execution steps."""
 
     id: str = Field(
-        default_factory=lambda: f"step_{datetime.now().timestamp()}",
+        default_factory=lambda: f"step_{datetime.now(UTC).timestamp()}",
         description="Unique step identifier",
     )
     name: str = Field(..., min_length=1, max_length=100, description="Step name")
@@ -138,7 +145,7 @@ class PipelineStep(BaseModel):
     retry_count: int = Field(default=3, description="Number of retries on failure")
     is_enabled: bool = Field(default=True, description="Whether step is enabled")
 
-    model_config = {
+    model_config: ClassVar = {
         "use_enum_values": True,
         "json_encoders": {
             datetime: lambda v: v.isoformat(),
@@ -168,7 +175,7 @@ class PipelineExecution(BaseModel):
     """Pipeline execution entity for tracking execution state and metrics."""
 
     id: str = Field(
-        default_factory=lambda: f"exec_{datetime.now().timestamp()}",
+        default_factory=lambda: f"exec_{datetime.now(UTC).timestamp()}",
         description="Unique execution identifier",
     )
     pipeline_id: PipelineId = Field(..., description="Associated pipeline identifier")
@@ -206,11 +213,11 @@ class PipelineExecution(BaseModel):
 
     # Metadata
     created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=lambda: datetime.now(UTC),
         description="Creation timestamp",
     )
 
-    model_config = {
+    model_config: ClassVar = {
         "use_enum_values": True,
         "json_encoders": {
             datetime: lambda v: v.isoformat(),
@@ -221,13 +228,13 @@ class PipelineExecution(BaseModel):
     def start(self, triggered_by: str | None = None) -> None:
         """Start execution."""
         self.status = ExecutionStatus.RUNNING
-        self.started_at = datetime.now(timezone.utc)
+        self.started_at = datetime.now(UTC)
         self.triggered_by = triggered_by
 
     def complete_success(self, result_data: dict[str, Any] | None = None) -> None:
         """Mark execution as successfully completed."""
         self.status = ExecutionStatus.SUCCESS
-        self.completed_at = datetime.now(timezone.utc)
+        self.completed_at = datetime.now(UTC)
         if result_data:
             self.result_data.update(result_data)
         self._calculate_duration()
@@ -235,19 +242,19 @@ class PipelineExecution(BaseModel):
     def complete_failure(self, error_message: str) -> None:
         """Mark execution as failed."""
         self.status = ExecutionStatus.FAILED
-        self.completed_at = datetime.now(timezone.utc)
+        self.completed_at = datetime.now(UTC)
         self.error_message = error_message
         self._calculate_duration()
 
     def cancel(self) -> None:
         """Cancel execution."""
         self.status = ExecutionStatus.CANCELLED
-        self.completed_at = datetime.now(timezone.utc)
+        self.completed_at = datetime.now(UTC)
         self._calculate_duration()
 
     def add_log(self, message: str) -> None:
         """Add log message to execution."""
-        timestamp = datetime.now(timezone.utc).isoformat()
+        timestamp = datetime.now(UTC).isoformat()
         self.logs.append(f"[{timestamp}] {message}")
 
     def _calculate_duration(self) -> None:
@@ -278,7 +285,7 @@ class Plugin(BaseModel):
 
     id: PluginId = Field(
         default_factory=lambda: create_plugin_id(
-            f"plugin_{datetime.now().timestamp()}"
+            f"plugin_{datetime.now(UTC).timestamp()}"
         ),
         description="Unique plugin identifier",
     )
@@ -313,15 +320,15 @@ class Plugin(BaseModel):
 
     # Timestamps
     created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=lambda: datetime.now(UTC),
         description="Creation timestamp",
     )
     updated_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=lambda: datetime.now(UTC),
         description="Last update timestamp",
     )
 
-    model_config = {
+    model_config: ClassVar = {
         "use_enum_values": True,
         "json_encoders": {
             datetime: lambda v: v.isoformat(),
@@ -333,31 +340,31 @@ class Plugin(BaseModel):
         """Mark plugin as installed."""
         self.is_installed = True
         self.installation_path = installation_path
-        self.updated_at = datetime.now(timezone.utc)
+        self.updated_at = datetime.now(UTC)
 
     def uninstall(self) -> None:
         """Mark plugin as uninstalled."""
         self.is_installed = False
         self.installation_path = None
-        self.updated_at = datetime.now(timezone.utc)
+        self.updated_at = datetime.now(UTC)
 
     def enable(self) -> None:
         """Enable plugin."""
         self.is_enabled = True
-        self.updated_at = datetime.now(timezone.utc)
+        self.updated_at = datetime.now(UTC)
 
     def disable(self) -> None:
         """Disable plugin."""
         self.is_enabled = False
-        self.updated_at = datetime.now(timezone.utc)
+        self.updated_at = datetime.now(UTC)
 
     def update_settings(self, settings: dict[str, Any]) -> None:
         """Update plugin settings."""
         self.settings.update(settings)
-        self.updated_at = datetime.now(timezone.utc)
+        self.updated_at = datetime.now(UTC)
 
     def add_capability(self, capability: str) -> None:
         """Add capability to plugin."""
         if capability not in self.capabilities:
             self.capabilities.append(capability)
-            self.updated_at = datetime.now(timezone.utc)
+            self.updated_at = datetime.now(UTC)

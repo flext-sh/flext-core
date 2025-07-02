@@ -27,15 +27,15 @@ from pathlib import Path
 import structlog
 from pydantic import Field
 
+# Import unified constants - with strict validation
+from flx_core.config.domain_config import get_domain_constants
+from flx_core.domain.pydantic_base import DomainValueObject
+
 # ZERO TOLERANCE - Kubernetes import with graceful degradation for testing
 from flx_core.utils.import_fallback_patterns import get_kubernetes_client
 
 k8s_client, k8s_config = get_kubernetes_client()
 KUBERNETES_AVAILABLE = k8s_client is not None and k8s_config is not None
-
-# Import unified constants - with strict validation
-from flx_core.config.domain_config import get_domain_constants
-from flx_core.domain.pydantic_base import DomainValueObject
 
 # Service-specific constants not in global scope
 DOCKER_SOCKET_PATH = Path("/var/run/docker.sock")

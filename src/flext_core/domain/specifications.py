@@ -14,7 +14,13 @@ ARCHITECTURAL COMPLIANCE:
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta
+
+# Python < 3.11 compatibility for datetime.UTC
+try:
+    from datetime import UTC
+except ImportError:
+    UTC = UTC
 from typing import TYPE_CHECKING, Any, TypeVar
 
 from flext_core.domain.value_objects import ExecutionStatus
@@ -419,8 +425,8 @@ class SpecificationFactory:
 
     @staticmethod
     def create_execution_retry_spec(
-        max_retries: int = 3,  # noqa: ARG004
-        retry_window_hours: int = 24,  # noqa: ARG004
+        max_retries: int = 3,
+        retry_window_hours: int = 24,
     ) -> CompositeSpecification:
         """Create execution retry specification with custom parameters."""
         # In real implementation, this would create parameterized specifications

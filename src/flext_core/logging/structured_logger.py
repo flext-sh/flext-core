@@ -5,9 +5,15 @@ import logging
 import os
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import datetime
+
+# Python < 3.11 compatibility for datetime.UTC
+try:
+    from datetime import UTC
+except ImportError:
+    UTC = UTC
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 
 class StructuredFormatter(logging.Formatter):
@@ -17,7 +23,7 @@ class StructuredFormatter(logging.Formatter):
         """Format log record as structured JSON."""
         # Basic log data
         log_data = {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "level": record.levelname,
             "logger": record.name,
             "message": record.getMessage(),
@@ -145,7 +151,7 @@ class FlextLogger:
         path: str,
         status_code: int,
         duration_ms: float,
-        user_id: Optional[str] = None,
+        user_id: str | None = None,
         **kwargs: Any,
     ) -> None:
         """Log API request with standard fields."""
@@ -192,17 +198,17 @@ class LoggingContextManager:
         self.logger = logger
         self.operation = operation
         self.kwargs = kwargs
-        self.start_time: Optional[float] = None
+        self.start_time: float | None = None
 
     def __enter__(self) -> "LoggingContextManager":
         self.start_time = time.time()
-        self.logger.debug(f"Starting operation: {self.operation}", **self.kwargs)
+        self.logger.debug("Starting operation: %s", self.operation, **self.kwargs)
         return self
 
     def __exit__(
         self,
-        exc_type: Optional[type[BaseException]],
-        exc_val: Optional[BaseException],
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
         exc_tb: object,
     ) -> None:
         duration_ms = (time.time() - (self.start_time or 0)) * 1000
@@ -225,7 +231,7 @@ class LoggingContextManager:
 _loggers: dict[str, FlextLogger] = {}
 
 
-def get_logger(name: str, level: Optional[str] = None) -> FlextLogger:
+def get_logger(name: str, level: str | None = None) -> FlextLogger:
     """Get or create a structured logger for a module."""
     if name not in _loggers:
         # Get log level from environment or default
@@ -237,7 +243,7 @@ def get_logger(name: str, level: Optional[str] = None) -> FlextLogger:
 
 def log_operation(operation: str, **kwargs: Any) -> Any:
     """Decorator for logging function operations."""
-    from typing import Callable
+    from collections.abc import Callable
 
     def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         def wrapper(*args: Any, **func_kwargs: Any) -> Any:
@@ -252,8 +258,7 @@ def log_operation(operation: str, **kwargs: Any) -> Any:
 
 def log_async_operation(operation: str, **kwargs: Any) -> Any:
     """Decorator for logging async function operations."""
-    from collections.abc import Awaitable
-    from typing import Callable
+    from collections.abc import Awaitable, Callable
 
     def decorator(func: Callable[..., Awaitable[Any]]) -> Callable[..., Awaitable[Any]]:
         async def wrapper(*args: Any, **func_kwargs: Any) -> Any:
@@ -282,13 +287,13 @@ observability_logger = get_logger("flext.observability")
 def log_startup(component: str, version: str, **kwargs: Any) -> None:
     """Log component startup."""
     logger = get_logger(f"flext.{component}")
-    logger.info(f"Starting {component}", component=component, version=version, **kwargs)
+    logger.info("Starting %s", component, component=component, version=version, **kwargs)
 
 
 def log_shutdown(component: str, **kwargs: Any) -> None:
     """Log component shutdown."""
     logger = get_logger(f"flext.{component}")
-    logger.info(f"Shutting down {component}", component=component, **kwargs)
+    logger.info("Shutting down %s", component, component=component, **kwargs)
 
 
 def log_performance_metric(
@@ -296,7 +301,8 @@ def log_performance_metric(
 ) -> None:
     """Log performance metric."""
     observability_logger.info(
-        f"Performance metric: {metric_name}",
+        "Performance metric: %s",
+        metric_name,
         metric_name=metric_name,
         value=value,
         unit=unit,
@@ -305,11 +311,12 @@ def log_performance_metric(
 
 
 def log_security_event(
-    event_type: str, severity: str, user_id: Optional[str] = None, **kwargs: Any
+    event_type: str, severity: str, user_id: str | None = None, **kwargs: Any
 ) -> None:
     """Log security-related event."""
     auth_logger.warning(
-        f"Security event: {event_type}",
+        "Security event: %s",
+        event_type,
         event_type=event_type,
         severity=severity,
         user_id=user_id,

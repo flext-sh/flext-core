@@ -18,7 +18,13 @@ import asyncio
 import contextlib
 import json
 import logging
-from datetime import UTC, datetime
+from datetime import datetime
+
+# Python < 3.11 compatibility for datetime.UTC
+try:
+    from datetime import UTC
+except ImportError:
+    UTC = UTC
 from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
@@ -129,7 +135,7 @@ class SqlAlchemyPipelineRepository:
                 },
             )
 
-            return persisted_pipeline  # noqa: TRY300
+            return persisted_pipeline
 
         except IntegrityError as e:
             await self._session.rollback()
@@ -191,7 +197,7 @@ class SqlAlchemyPipelineRepository:
                 )
                 return domain_entity
             logger.debug("Pipeline not found", extra={"pipeline_id": str(pipeline_id)})
-            return None  # noqa: TRY300
+            return None
 
         except Exception as e:
             msg = f"Error retrieving pipeline {pipeline_id}: {e}"
@@ -243,7 +249,7 @@ class SqlAlchemyPipelineRepository:
                 extra={"result_count": len(domain_entities)},
             )
 
-            return domain_entities  # noqa: TRY300
+            return domain_entities
 
         except Exception as e:
             msg = f"Error querying pipelines by specification: {e}"
@@ -287,7 +293,7 @@ class SqlAlchemyPipelineRepository:
                 "Pipeline not found for deletion",
                 extra={"pipeline_id": str(pipeline_id)},
             )
-            return False  # noqa: TRY300
+            return False
 
         except Exception as e:
             await self._session.rollback()
@@ -320,7 +326,7 @@ class SqlAlchemyPipelineRepository:
             result = await self._session.execute(query)
             count = result.scalar()
 
-            return count > 0  # noqa: TRY300
+            return count > 0
 
         except Exception as e:
             msg = f"Error checking pipeline existence {pipeline_id}: {e}"
@@ -362,8 +368,8 @@ class SqlAlchemyPipelineRepository:
         Reconstructs domain entity from persistence model while ensuring
         all domain invariants and business rules are maintained.
         """
-        from flext_core.domain.entities import Pipeline  # noqa: PLC0415
-        from flext_core.domain.value_objects import (  # noqa: PLC0415
+        from flext_core.domain.entities import Pipeline
+        from flext_core.domain.value_objects import (
             PipelineId,
             PipelineName,
         )
@@ -391,7 +397,7 @@ class SqlAlchemyPipelineRepository:
 
     async def _step_model_to_domain(self, step_model: Any) -> Any:
         """Convert step model to domain step value object."""
-        from flext_core.domain.value_objects import PipelineStep  # noqa: PLC0415
+        from flext_core.domain.value_objects import PipelineStep
 
         return PipelineStep(
             step_id=step_model.step_id,
@@ -688,7 +694,7 @@ class RedisEventBusAdapter:
                 payload: dict[str, Any],
             ) -> DomainEvent:
                 # Simplified deserialization - real implementation would use event registry
-                from flext_core.events.event_bus import DomainEvent  # noqa: PLC0415
+                from flext_core.events.event_bus import DomainEvent
 
                 return DomainEvent()  # Placeholder
 
@@ -819,9 +825,11 @@ class ExternalNotificationAdapter:
 
                     return ServiceResult.success(data=sanitized_data)
 
-                except Exception:
+                except Exception as retry_error:
                     if attempt == max_retries - 1:
-                        raise
+                        # Re-raise the final attempt error with context
+                        msg = f"External data fetch failed after {max_retries} attempts: {retry_error}"
+                        raise IntegrationAdapterError(msg, error_code="EXTERNAL_DATA_FETCH_MAX_RETRIES", cause=retry_error) from retry_error
                     await asyncio.sleep(2**attempt)  # Exponential backoff
 
         except Exception as e:

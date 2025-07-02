@@ -81,7 +81,7 @@ class FlxApplicationContainer:
         return self._settings
 
     @asynccontextmanager
-    async def unit_of_work(self) -> AsyncGenerator[UnitOfWorkInterface, None]:
+    async def unit_of_work(self) -> AsyncGenerator[UnitOfWorkInterface]:
         """Create and manage unit of work with proper transaction handling.
 
         Returns

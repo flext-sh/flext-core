@@ -17,7 +17,13 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-from datetime import UTC, datetime
+from datetime import datetime
+
+# Python < 3.11 compatibility for datetime.UTC
+try:
+    from datetime import UTC
+except ImportError:
+    UTC = UTC
 from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
@@ -898,7 +904,7 @@ class ExternalNotificationAdapter:
             return bool(result)
 
         except Exception as e:
-            logger.exception(f"Email sending failed: {e}")
+            logger.exception("Email sending failed: %s", e)
             return False
 
     async def _send_slack(
@@ -933,7 +939,7 @@ class ExternalNotificationAdapter:
             return bool(result)
 
         except Exception as e:
-            logger.exception(f"Slack notification failed: {e}")
+            logger.exception("Slack notification failed: %s", e)
             return False
 
     async def _send_webhook(
@@ -956,7 +962,7 @@ class ExternalNotificationAdapter:
             return result.status_code < 400
 
         except Exception as e:
-            logger.exception(f"Webhook notification failed: {e}")
+            logger.exception("Webhook notification failed: %s", e)
             return False
 
     async def _sanitize_external_data(self, source: str, data: Any) -> dict[str, Any]:

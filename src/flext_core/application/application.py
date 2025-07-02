@@ -76,7 +76,7 @@ from flext_core.infrastructure.containers import (
 
 # Simple error context for missing observability module
 @contextmanager
-def error_context(_message: str, **kwargs: Any) -> Generator[None, None, None]:
+def error_context(_message: str, **kwargs: Any) -> Generator[None]:
     """Simple error context handler."""
     try:
         yield
@@ -563,7 +563,8 @@ class FlextEnterpriseApplication(Application):
         self.logger.debug("Wiring dependency injection for application modules")
 
         try:
-            # Wire dependencies for core application modules using standard dependency-injector method
+            # Wire dependencies for core application modules using standard
+            # dependency-injector method
             core_modules = [
                 "flext_core.application.application",
                 "flext_core.application.handlers",
@@ -603,7 +604,9 @@ class FlextEnterpriseApplication(Application):
                 "Core dependency injection wiring failed",
                 error=str(e),
             )
-            raise
+            # Re-raise with more context for debugging dependency injection issues
+            msg = f"Dependency injection wiring failed: {e}"
+            raise RuntimeError(msg) from e
 
     async def _initialize_interface_bridge(self) -> None:
         """Initialize interface bridge with protocol adapters."""
@@ -631,7 +634,9 @@ class FlextEnterpriseApplication(Application):
                 "Interface bridge initialization failed",
                 error=str(e),
             )
-            raise
+            # Re-raise with more context for debugging interface bridge issues
+            msg = f"Interface bridge initialization failed: {e}"
+            raise RuntimeError(msg) from e
 
     async def _initialize_core_services(self) -> None:
         """Initialize core application services."""
@@ -652,96 +657,66 @@ class FlextEnterpriseApplication(Application):
 
     async def _initialize_database(self) -> None:
         """Initialize database connections and session factory."""
-        try:
-            # Database engine initialization is handled by dependency injection
-            # Test connection by creating a session
-            async with self.get_unit_of_work() as uow:
-                await uow.test_connection()
+        # Database engine initialization is handled by dependency injection
+        # Test connection by creating a session
+        async with self.get_unit_of_work() as uow:
+            await uow.test_connection()
 
-            self.logger.debug("Database initialization completed")
-
-        except (RuntimeError, ValueError, ImportError, ConnectionError, OSError) as e:
-            self.logger.exception("Database initialization failed", error=str(e))
-            raise
+        self.logger.debug("Database initialization completed")
 
     async def _initialize_event_system(self) -> None:
         """Initialize event bus and message handling."""
-        try:
-            event_bus = self.get_event_bus()
-            await event_bus.initialize()
+        event_bus = self.get_event_bus()
+        await event_bus.initialize()
 
-            self.logger.debug("Event system initialization completed")
-
-        except (RuntimeError, ValueError, ImportError, ConnectionError, OSError) as e:
-            self.logger.exception("Event system initialization failed", error=str(e))
-            raise
+        self.logger.debug("Event system initialization completed")
 
     async def _initialize_monitoring(self) -> None:
         """Initialize monitoring and observability systems."""
-        try:
-            # Initialize health checker
-            health_checker = self.get_health_checker()
-            await health_checker.initialize()
+        # Initialize health checker
+        health_checker = self.get_health_checker()
+        await health_checker.initialize()
 
-            # Initialize metrics collector
-            metrics_collector = self.get_metrics_collector()
-            await metrics_collector.start_collection()
+        # Initialize metrics collector
+        metrics_collector = self.get_metrics_collector()
+        await metrics_collector.start_collection()
 
-            self.logger.debug("Monitoring systems initialized successfully")
-
-        except (RuntimeError, ValueError, ImportError, ConnectionError, OSError) as e:
-            self.logger.exception("Monitoring initialization failed", error=str(e))
-            raise
+        self.logger.debug("Monitoring systems initialized successfully")
 
     async def _initialize_meltano(self) -> None:
         """Initialize Meltano engine and integration."""
-        try:
-            meltano_engine = self.get_meltano_engine()
-            await meltano_engine.initialize()
+        meltano_engine = self.get_meltano_engine()
+        await meltano_engine.initialize()
 
-            self.logger.debug("Meltano integration initialized successfully")
-
-        except (RuntimeError, ValueError, ImportError, ConnectionError, OSError) as e:
-            self.logger.exception("Meltano initialization failed", error=str(e))
-            raise
+        self.logger.debug("Meltano integration initialized successfully")
 
     async def _setup_event_subscriptions(self) -> None:
         """Set up application-level event subscriptions."""
-        try:
-            event_bus = self.get_event_bus()
+        event_bus = self.get_event_bus()
 
-            # Subscribe to application lifecycle events
-            event_bus.subscribe("application.startup", self._handle_startup_event)
-            event_bus.subscribe("application.shutdown", self._handle_shutdown_event)
+        # Subscribe to application lifecycle events
+        event_bus.subscribe("application.startup", self._handle_startup_event)
+        event_bus.subscribe("application.shutdown", self._handle_shutdown_event)
 
-            # Subscribe to health monitoring events
-            event_bus.subscribe("health.check.failed", self._handle_health_failure)
+        # Subscribe to health monitoring events
+        event_bus.subscribe("health.check.failed", self._handle_health_failure)
 
-            self.logger.debug("Event subscriptions setup completed")
-
-        except (RuntimeError, ValueError, ImportError, ConnectionError, OSError) as e:
-            self.logger.exception("Event subscription setup failed", error=str(e))
-            raise
+        self.logger.debug("Event subscriptions setup completed")
 
     async def _setup_legacy_compatibility(self) -> None:
         """Set up legacy compatibility layer for existing code."""
+        # Update legacy references to use dependency injection with type safety
+        hybrid_bus = self.get_event_bus()
         try:
-            # Update legacy references to use dependency injection with type safety
-            hybrid_bus = self.get_event_bus()
-            try:
-                self._domain_event_bus = hybrid_bus.domain_bus
-            except AttributeError:
-                self._domain_event_bus = None
-            self._hybrid_event_bus = hybrid_bus
-            self._meltano_engine = self.get_meltano_engine()
-            self._metrics_collector = self.get_metrics_collector()
-            self._health_checker = self.get_health_checker()
+            self._domain_event_bus = hybrid_bus.domain_bus
+        except AttributeError:
+            self._domain_event_bus = None
+        self._hybrid_event_bus = hybrid_bus
+        self._meltano_engine = self.get_meltano_engine()
+        self._metrics_collector = self.get_metrics_collector()
+        self._health_checker = self.get_health_checker()
 
-            self.logger.debug("Legacy compatibility layer setup completed")
-
-        except (RuntimeError, ValueError, ImportError, AttributeError) as e:
-            self.logger.exception("Legacy compatibility setup failed", error=str(e))
-            raise
+        self.logger.debug("Legacy compatibility layer setup completed")
 
     # =========================================================================
     # EVENT HANDLERS - ENTERPRISE PATTERNS

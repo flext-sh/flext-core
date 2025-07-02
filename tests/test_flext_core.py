@@ -35,7 +35,7 @@ class TestFlextcore:
 
 
 @pytest.mark.parametrize(
-    "test_input,expected",
+    ("test_input", "expected"),
     [
         (1, True),
         (2, True),

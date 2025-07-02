@@ -18,7 +18,13 @@ persistent database operations with comprehensive error handling and performance
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import datetime
+
+# Python < 3.11 compatibility for datetime.UTC
+try:
+    from datetime import UTC
+except ImportError:
+    UTC = UTC
 from typing import TYPE_CHECKING, Any
 from uuid import UUID, uuid4
 
@@ -29,7 +35,7 @@ from flx_api.models.pipeline import (
     PipelineType,
     PipelineUpdateRequest,
 )
-from sqlalchemy import delete, or_, select, update
+from sqlalchemy import delete, func, or_, select, update
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from flx_core.domain.advanced_types import ServiceError, ServiceResult
@@ -579,7 +585,3 @@ class DatabasePipelineRepository:
             execution_count=0,  # TODO: Add execution tracking
             success_rate=0.0,  # TODO: Add execution tracking
         )
-
-
-# Import for proper function resolution
-from sqlalchemy import func

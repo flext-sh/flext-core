@@ -165,7 +165,7 @@ class UnitOfWork(UnitOfWorkInterface):
 
         """
         try:
-            from sqlalchemy import text  # noqa: PLC0415
+            from sqlalchemy import text
 
             # Execute a simple query to test connection
             result = await self.session.execute(text("SELECT 1"))

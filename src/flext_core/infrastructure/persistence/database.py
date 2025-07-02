@@ -8,7 +8,13 @@ import operator
 import time
 from collections import defaultdict
 from contextlib import asynccontextmanager, suppress
-from datetime import UTC, datetime
+from datetime import datetime
+
+# Python < 3.11 compatibility for datetime.UTC
+try:
+    from datetime import UTC
+except ImportError:
+    UTC = UTC
 from enum import Enum
 from typing import TYPE_CHECKING, Any
 
@@ -354,7 +360,7 @@ class DatabaseConnectionFailover:
         try:
             manager = DatabaseManager(self.current_config)
             await manager.initialize()
-            return manager  # noqa: TRY300
+            return manager
         except (
             ConnectionError,
             TimeoutError,
@@ -390,7 +396,7 @@ class DatabaseConnectionFailover:
                 self.current_config = failover_config
                 self.is_failed_over = True
                 self.current_failover_index = i
-                return manager  # noqa: TRY300
+                return manager
 
             except (
                 ConnectionError,
@@ -423,7 +429,7 @@ class DatabaseConnectionFailover:
                 # Switch to this failover
                 self.current_config = failover_config
                 self.current_failover_index = config_index
-                return manager  # noqa: TRY300
+                return manager
 
             except (
                 ConnectionError,
@@ -462,7 +468,7 @@ class DatabaseConnectionFailover:
             self.is_failed_over = False
             self.failure_count = 0
             self.current_failover_index = 0
-            return True  # noqa: TRY300
+            return True
 
         except (
             ConnectionError,
@@ -1125,7 +1131,7 @@ class AsyncpgDatabaseManager(DatabaseManager):
         for attempt in range(self.config.max_connection_retries):
             try:
                 await self.initialize()
-                return  # noqa: TRY300
+                return
             except Exception as e:
                 last_error = e
                 if attempt < self.config.max_connection_retries - 1:

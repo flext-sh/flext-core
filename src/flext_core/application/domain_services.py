@@ -15,7 +15,13 @@ ARCHITECTURAL COMPLIANCE:
 from __future__ import annotations
 
 import asyncio
-from datetime import UTC, datetime
+from datetime import datetime
+
+# Python < 3.11 compatibility for datetime.UTC
+try:
+    from datetime import UTC
+except ImportError:
+    UTC = UTC
 from typing import TYPE_CHECKING, Any
 
 from flext_core.domain.advanced_types import (
@@ -580,12 +586,9 @@ class PipelineManagementService:
     ) -> bool:
         """Activate pipeline with business validation."""
         # Business rule: Pipeline must be valid for activation
-        if not PipelineHasValidConfigurationSpecification().is_satisfied_by(pipeline):
-            return False
-
         # Apply activation logic
         # Real implementation would update pipeline state
-        return True
+        return PipelineHasValidConfigurationSpecification().is_satisfied_by(pipeline)
 
     async def _deactivate_pipeline(
         self,
@@ -597,16 +600,13 @@ class PipelineManagementService:
         # Business rule: No active executions during deactivation
         active_executions = await self._execution_repo.find_active_executions()
         pipeline_executions = [
-            exec
-            for exec in active_executions
-            if exec.pipeline_id == pipeline.pipeline_id
+            execution
+            for execution in active_executions
+            if execution.pipeline_id == pipeline.pipeline_id
         ]
 
-        if pipeline_executions and not parameters.get("force"):
-            return False
-
         # Apply deactivation logic
-        return True
+        return not (pipeline_executions and not parameters.get("force"))
 
     async def _archive_pipeline(
         self,

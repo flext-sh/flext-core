@@ -159,7 +159,7 @@ class DatabaseSessionManager:
         return f"postgresql+asyncpg://{username}:{password}@{host}:{port}/{database}"
 
     @asynccontextmanager
-    async def get_session(self) -> AsyncGenerator[AsyncSession, None]:
+    async def get_session(self) -> AsyncGenerator[AsyncSession]:
         """Get database session with automatic cleanup.
 
         Provides an async context manager for database sessions with
@@ -239,7 +239,7 @@ async def get_session_manager() -> DatabaseSessionManager:
     return _session_manager
 
 
-async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
+async def get_db_session() -> AsyncGenerator[AsyncSession]:
     """Get database session for dependency injection.
 
     This function is designed for use with FastAPI dependency injection

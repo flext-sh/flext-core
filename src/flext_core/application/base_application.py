@@ -2,17 +2,13 @@
 
 from __future__ import annotations
 
-from abc import ABC
-from typing import TYPE_CHECKING, Any
+from abc import ABC, abstractmethod
+from typing import Any
 
 import structlog
 
 from flext_core.domain.advanced_types import ServiceError, ServiceResult
 from flext_core.utils.import_fallback_patterns import OptionalDependency
-
-if TYPE_CHECKING:
-    # from flext_observability.monitoring.system_monitor import SystemMonitor  # Circular dependency - moved to flext-observability
-    pass
 
 
 class BaseApplicationMixin(ABC):
@@ -118,18 +114,23 @@ class BaseApplicationMixin(ABC):
         # Placeholder implementation - override in subclasses
         return True
 
+    @abstractmethod
     async def _handle_startup_event(self, event: object) -> None:
         """Handle application startup event."""
 
+    @abstractmethod
     async def _handle_shutdown_event(self, event: object) -> None:
         """Handle application shutdown event."""
 
+    @abstractmethod
     async def _handle_error_event(self, event: object) -> None:
         """Handle application error event."""
 
+    @abstractmethod
     async def _handle_critical_health_event(self, event: object) -> None:
         """Handle critical health event."""
 
+    @abstractmethod
     async def _handle_resource_exhausted_event(self, event: object) -> None:
         """Handle resource exhausted event."""
 

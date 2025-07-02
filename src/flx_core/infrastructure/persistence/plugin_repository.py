@@ -19,7 +19,13 @@ plugin management capabilities and comprehensive lifecycle tracking.
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import datetime
+
+# Python < 3.11 compatibility for datetime.UTC
+try:
+    from datetime import UTC
+except ImportError:
+    UTC = UTC
 from typing import TYPE_CHECKING
 from uuid import uuid4
 
@@ -31,7 +37,7 @@ from flx_api.models.plugin import (
     PluginStatus,
     PluginUpdateRequest,
 )
-from sqlalchemy import and_, delete, or_, select, update
+from sqlalchemy import and_, delete, func, or_, select, update
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from flx_core.domain.advanced_types import ServiceError, ServiceResult
@@ -583,7 +589,3 @@ class DatabasePluginRepository:
             updated_at=model.updated_at,
             installed_by=model.created_by,
         )
-
-
-# Import for proper function resolution
-from sqlalchemy import func

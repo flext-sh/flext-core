@@ -14,14 +14,21 @@ from __future__ import annotations
 
 import hashlib
 import json
-from datetime import datetime, timezone
-from typing import Any, ClassVar
+from datetime import datetime
+
+# Python < 3.11 compatibility for datetime.UTC
+try:
+    from datetime import UTC
+except ImportError:
+    UTC = UTC
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from flx_observability.structured_logging import (
     get_logger,  # type: ignore[import-not-found]
 )
 
-from flx_core.config.domain_config import FlxConfiguration
+if TYPE_CHECKING:
+    from flx_core.config.domain_config import FlxConfiguration
 
 # Zero tolerance constants
 DEFAULT_THRESHOLD = 100
@@ -32,7 +39,6 @@ FIVE = 5
 class ProductionSecurityValidator:
     """Class implementation."""
 
-    pass
     # Known insecure default secrets that should not be used in production
     INSECURE_DEFAULTS: ClassVar[frozenset[str]] = frozenset(
         {
@@ -60,7 +66,6 @@ class ProductionSecurityValidator:
         cls, secret: str, environment: str
     ) -> tuple[bool, str | None]:
         """Method implementation."""
-        pass
         if environment != "production":
             return True, None
         # Check length
@@ -87,7 +92,6 @@ class ProductionSecurityValidator:
         cls, secret: str, environment: str
     ) -> tuple[bool, str | None]:
         """Method implementation."""
-        pass
         if environment != "production":
             return True, None
         # Check length
@@ -111,7 +115,6 @@ class ProductionSecurityValidator:
         cls, url: str, environment: str
     ) -> tuple[bool, str | None]:
         """Method implementation."""
-        pass
         if environment != "production":
             return True, None
         # Check for insecure patterns
@@ -158,8 +161,6 @@ class ProductionSecurityValidator:
 class ConfigurationDriftDetector:
     """Class implementation."""
 
-    pass
-
     def __init__(self, config: FlxConfiguration) -> None:
         """Initialize configuration drift detector.
 
@@ -169,11 +170,10 @@ class ConfigurationDriftDetector:
         """
         self.config = config
         self.baseline_hash = self._calculate_config_hash()
-        self.baseline_timestamp = datetime.now(timezone.utc)
+        self.baseline_timestamp = datetime.now(UTC)
 
     def detect_drift(self) -> tuple[bool, dict[str, Any]]:
         """Method implementation."""
-        pass
         current_hash = self._calculate_config_hash()
         has_drift = current_hash != self.baseline_hash
         drift_details = {
@@ -181,7 +181,7 @@ class ConfigurationDriftDetector:
             "baseline_hash": self.baseline_hash,
             "current_hash": current_hash,
             "baseline_timestamp": self.baseline_timestamp.isoformat(),
-            "check_timestamp": datetime.now(timezone.utc).isoformat(),
+            "check_timestamp": datetime.now(UTC).isoformat(),
             "changed_sections": [],
         }
         if has_drift:
@@ -221,7 +221,6 @@ class ConfigurationDriftDetector:
 
     def _identify_changed_sections(self) -> list[str]:
         """Method implementation."""
-        pass
         # For now, return a general indication
         # In a real implementation, this would compare detailed sections
         return ["configuration_changed"]
@@ -229,8 +228,6 @@ class ConfigurationDriftDetector:
 
 class RuntimeConfigurationValidator:
     """Class implementation."""
-
-    pass
 
     def __init__(self, config: FlxConfiguration) -> None:
         """Initialize runtime configuration validator.
@@ -244,13 +241,12 @@ class RuntimeConfigurationValidator:
 
     def validate_runtime_configuration(self) -> dict[str, Any]:
         """Method implementation."""
-        pass
         results = {
             "is_valid": True,
             "errors": [],
             "warnings": [],
             "environment": self.config.environment,
-            "validation_timestamp": datetime.now(timezone.utc).isoformat(),
+            "validation_timestamp": datetime.now(UTC).isoformat(),
             "checks_performed": [],
         }
         # Validate production secrets
@@ -466,14 +462,13 @@ def _get_security_grade(score: int, max_score: int) -> str:
     percentage = (score / max_score) * DEFAULT_THRESHOLD
     if percentage >= 90:
         return "A"
-    elif percentage >= 80:
+    if percentage >= 80:
         return "B"
-    elif percentage >= 70:
+    if percentage >= 70:
         return "C"
-    elif percentage >= 60:
+    if percentage >= 60:
         return "D"
-    else:
-        return "F"
+    return "F"
 
 
 def _get_security_recommendations(validation_results: dict[str, Any]) -> list[str]:

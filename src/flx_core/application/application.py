@@ -508,7 +508,7 @@ class FlxEnterpriseApplication(Application):
             raise
 
     @asynccontextmanager
-    async def lifespan(self) -> AsyncGenerator[None, None]:
+    async def lifespan(self) -> AsyncGenerator[None]:
         """Application lifespan context manager for web framework integration.
 
         Provides professional application lifecycle management for FastAPI, Django,

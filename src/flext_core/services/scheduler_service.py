@@ -2,8 +2,14 @@
 
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
+
+# Python < 3.11 compatibility for datetime.UTC
+try:
+    from datetime import UTC
+except ImportError:
+    UTC = UTC
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 from uuid import uuid4
 
 
@@ -41,12 +47,12 @@ class SchedulerService(ABC):
         """Remove a pipeline schedule."""
 
     @abstractmethod
-    async def get_schedule(self, schedule_id: str) -> Optional[dict[str, Any]]:
+    async def get_schedule(self, schedule_id: str) -> dict[str, Any] | None:
         """Get schedule by ID."""
 
     @abstractmethod
     async def list_schedules(
-        self, pipeline_id: Optional[str] = None
+        self, pipeline_id: str | None = None
     ) -> list[dict[str, Any]]:
         """List schedules."""
 
@@ -79,7 +85,7 @@ class DefaultSchedulerService(SchedulerService):
             "schedule_type": schedule_type.value,
             "config": schedule_config,
             "status": ScheduleStatus.ACTIVE.value,
-            "created_at": datetime.now(),
+            "created_at": datetime.now(UTC),
             "next_run": self._calculate_next_run(schedule_type, schedule_config),
         }
         self._schedules[schedule_id] = schedule
@@ -92,12 +98,12 @@ class DefaultSchedulerService(SchedulerService):
             return True
         return False
 
-    async def get_schedule(self, schedule_id: str) -> Optional[dict[str, Any]]:
+    async def get_schedule(self, schedule_id: str) -> dict[str, Any] | None:
         """Get schedule by ID."""
         return self._schedules.get(schedule_id)
 
     async def list_schedules(
-        self, pipeline_id: Optional[str] = None
+        self, pipeline_id: str | None = None
     ) -> list[dict[str, Any]]:
         """List schedules."""
         schedules = list(self._schedules.values())
@@ -123,14 +129,14 @@ class DefaultSchedulerService(SchedulerService):
 
     def _calculate_next_run(
         self, schedule_type: ScheduleType, config: dict[str, Any]
-    ) -> Optional[datetime]:
+    ) -> datetime | None:
         """Calculate next run time based on schedule configuration."""
         if schedule_type == ScheduleType.ONCE:
             return config.get("run_at")
         if schedule_type == ScheduleType.RECURRING:
             interval = config.get("interval_minutes", 60)
-            return datetime.now() + timedelta(minutes=interval)
+            return datetime.now(UTC) + timedelta(minutes=interval)
         if schedule_type == ScheduleType.CRON:
             # Would implement cron parsing here
-            return datetime.now() + timedelta(hours=1)  # Placeholder
+            return datetime.now(UTC) + timedelta(hours=1)  # Placeholder
         return None

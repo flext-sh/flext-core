@@ -360,7 +360,7 @@ def value_object(cls: type[Any]) -> type[Any]:
 
     """
 
-    def __eq__(self: DataclassProtocol, other: object) -> bool:  # noqa: N807
+    def __eq__(self: DataclassProtocol, other: object) -> bool:
         if not isinstance(other, cls):
             return False
         self_dc = self
@@ -370,7 +370,7 @@ def value_object(cls: type[Any]) -> type[Any]:
             for field_info in fields(self_dc)
         )
 
-    def __hash__(self: DataclassProtocol) -> int:  # noqa: N807
+    def __hash__(self: DataclassProtocol) -> int:
         return hash(
             tuple(
                 getattr(self, field_info.name)
@@ -379,7 +379,7 @@ def value_object(cls: type[Any]) -> type[Any]:
             ),
         )
 
-    def __str__(self: DataclassProtocol) -> str:  # noqa: N807
+    def __str__(self: DataclassProtocol) -> str:
         try:
             return str(self.value)
         except AttributeError:
@@ -433,12 +433,12 @@ def entity(cls: type[Any]) -> type[Any]:
 
     """
 
-    def __eq__(self: object, other: object) -> bool:  # noqa: N807
+    def __eq__(self: object, other: object) -> bool:
         if not isinstance(other, cls):
             return False
         return getattr(self, "id", None) == getattr(other, "id", None)
 
-    def __hash__(self: object) -> int:  # noqa: N807
+    def __hash__(self: object) -> int:
         entity_id = getattr(self, "id", None)
         if entity_id is None:
             return object.__hash__(self)
@@ -546,13 +546,13 @@ def specification(cls: type[Any]) -> type[Any]:
         )
         raise TypeError(msg)
 
-    def __and__(self: SpecificationBase, other: SpecificationBase) -> AndSpecification:  # noqa: N807
+    def __and__(self: SpecificationBase, other: SpecificationBase) -> AndSpecification:
         return AndSpecification(self, other, "and")
 
-    def __or__(self: SpecificationBase, other: SpecificationBase) -> OrSpecification:  # noqa: N807
+    def __or__(self: SpecificationBase, other: SpecificationBase) -> OrSpecification:
         return OrSpecification(self, other, "or")
 
-    def __invert__(self: SpecificationBase) -> NotSpecification:  # noqa: N807
+    def __invert__(self: SpecificationBase) -> NotSpecification:
         return NotSpecification(self)
 
     # Apply specification patterns using type: ignore for method assignments

@@ -6,7 +6,8 @@ fallback implementations for development and production environments.
 
 import importlib
 import logging
-from typing import Any, Callable, Optional, TypeVar
+from collections.abc import Callable
+from typing import Any, TypeVar
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +22,7 @@ class DependencyFallback:
         self.required = required
         self._module_cache: dict[str, Any] = {}
 
-    def try_import(self, module_path: str, component: Optional[str] = None) -> Any:
+    def try_import(self, module_path: str, component: str | None = None) -> Any:
         """Try to import a module or component with fallback.
 
         Args:
@@ -43,24 +44,27 @@ class DependencyFallback:
             result = getattr(module, component) if component else module
 
             self._module_cache[cache_key] = result
-            logger.debug(f"Successfully imported {cache_key}")
+            logger.debug("Successfully imported %s", cache_key)
             return result
 
         except (ImportError, AttributeError) as e:
             if self.required:
-                logger.error(
-                    f"Required dependency {self.dependency_name} not found: {e}"
+                logger.exception(
+                    "Required dependency %s not found: %s", self.dependency_name, e
                 )
-                raise ImportError(
+                msg = (
                     f"Required dependency '{self.dependency_name}' is not installed. "
                     f"Install it with: pip install {self.dependency_name}"
+                )
+                raise ImportError(
+                    msg
                 ) from e
 
             # Return fallback implementation
             fallback = self._create_fallback(cache_key)
             self._module_cache[cache_key] = fallback
             logger.warning(
-                f"Optional dependency {self.dependency_name} not found, using fallback for {cache_key}"
+                "Optional dependency %s not found, using fallback for %s", self.dependency_name, cache_key
             )
             return fallback
 
@@ -88,8 +92,7 @@ class DependencyFallback:
 
         # Generic fallback - return a no-op function
         def generic_fallback(*args: Any, **kwargs: Any) -> None:
-            logger.warning(f"Using fallback implementation for {cache_key}")
-            return None
+            logger.warning("Using fallback implementation for %s", cache_key)
 
         return generic_fallback
 

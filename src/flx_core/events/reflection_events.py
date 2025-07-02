@@ -10,9 +10,15 @@ import asyncio
 import inspect
 import sys
 from collections.abc import Callable
-from datetime import UTC, datetime
+from datetime import datetime
+
+# Python < 3.11 compatibility for datetime.UTC
+try:
+    from datetime import UTC
+except ImportError:
+    UTC = UTC
 from enum import Enum, auto
-from typing import TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING, ClassVar, TypeVar
 from uuid import UUID, uuid4
 
 from pydantic import Field
@@ -468,7 +474,7 @@ class Projection(DomainBaseModel):
 class EventStore(DomainBaseModel):
     """Event store with automatic serialization and replay."""
 
-    model_config = {"arbitrary_types_allowed": True}
+    model_config: ClassVar = {"arbitrary_types_allowed": True}
 
     redis: Redis[str] = Field(
         description="Redis client for event stream storage and publishing",
