@@ -32,17 +32,25 @@ from flext_core.__version__ import __version__
 
 # Placeholder for now - will be implemented later
 class FlextCore:
-    """Placeholder core class."""
+    """FLEXT core application service manager."""
 
     def __init__(self) -> None:
         """Initialize the FlextCore instance."""
-        self.initialized = True
+        self.initialized = False
 
     async def initialize(self) -> None:
         """Initialize core services."""
+        if self.initialized:
+            return
+        # TODO: Initialize actual services
+        self.initialized = True
 
     async def shutdown(self) -> None:
         """Shutdown core services."""
+        if not self.initialized:
+            return
+        # TODO: Cleanup services
+        self.initialized = False
 
 
 __author__ = "FLEXT Team"

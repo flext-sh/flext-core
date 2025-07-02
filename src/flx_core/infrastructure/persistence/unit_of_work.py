@@ -7,7 +7,7 @@ Dependency Inversion and Single Responsibility Principles.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeVar
 
 # Auth models now unified in models.py
 from flx_auth.models import Role  # Import domain model for typing
@@ -18,6 +18,10 @@ from flx_core.contracts.repository_contracts import (
     RepositoryInterface,
     UnitOfWorkInterface,
 )
+
+# Type variables for generics
+TModel = TypeVar("TModel")
+TEntity = TypeVar("TEntity", bound=EntityInterface)
 from flx_core.domain.entities import Pipeline, PipelineExecution, Plugin
 from flx_core.models import (
     PipelineExecutionModel,
@@ -129,9 +133,9 @@ class UnitOfWork(UnitOfWorkInterface):
         if not self._transaction_managed_externally:
             await self.session.rollback()
 
-    def get_repository[TEntity: EntityInterface, TModel](
+    def get_repository(
         self,
-        entity_class: type[TEntity],
+        entity_class: type[EntityInterface],
         model_class: type[TModel],
         id_field: str = "id",
     ) -> RepositoryInterface[TEntity, EntityId]:

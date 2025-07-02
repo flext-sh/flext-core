@@ -6,7 +6,7 @@ fallback implementations for development and production environments.
 
 import importlib
 import logging
-from typing import Any, Callable, TypeVar, Optional
+from typing import Any, Callable, Optional, TypeVar
 
 logger = logging.getLogger(__name__)
 

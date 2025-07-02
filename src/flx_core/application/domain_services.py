@@ -24,7 +24,12 @@ from flx_core.domain.advanced_types import (
     ServiceError,
     ServiceResult,
 )
-from flx_core.domain.value_objects import ExecutionId, PipelineId, PipelineStep, PluginId
+from flx_core.domain.value_objects import (
+    ExecutionId,
+    PipelineId,
+    PipelineStep,
+    PluginId,
+)
 
 if TYPE_CHECKING:
     from flx_core.domain.entities import Pipeline, PipelineExecution

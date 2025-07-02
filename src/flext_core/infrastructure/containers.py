@@ -33,7 +33,6 @@ PLUGIN SYSTEM INTEGRATION:
 from __future__ import annotations
 
 import functools
-from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
 import structlog
@@ -49,7 +48,6 @@ from flext_core.execution.state_machines import (
 )
 from flext_core.infrastructure.persistence.repositories_core import (
     DomainSpecificRepository,
-    SqlAlchemyRepository,
 )
 from flext_core.infrastructure.persistence.unit_of_work import UnitOfWork
 from flext_core.serialization.msgspec_adapters import (

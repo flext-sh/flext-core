@@ -54,36 +54,24 @@ UserId = Annotated[UUID, Field(description="User identification value object")]
 TenantId = Annotated[
     UUID, Field(description="Multi-tenant identification value object")
 ]
-CorrelationId = Annotated[
-    UUID, Field(description="Request correlation value object")
-]
+CorrelationId = Annotated[UUID, Field(description="Request correlation value object")]
 TraceId = Annotated[UUID, Field(description="Distributed tracing value object")]
-CommandId = Annotated[
-    UUID, Field(description="Command identification value object")
-]
+CommandId = Annotated[UUID, Field(description="Command identification value object")]
 QueryId = Annotated[UUID, Field(description="Query identification value object")]
 EventId = Annotated[UUID, Field(description="Event identification value object")]
 
 # Business Domain Value Object Types
-PipelineName = Annotated[
-    str, Field(description="Pipeline name with validation rules")
-]
+PipelineName = Annotated[str, Field(description="Pipeline name with validation rules")]
 PluginName = Annotated[str, Field(description="Plugin name with validation rules")]
-ExecutionNumber = Annotated[
-    int, Field(ge=0, description="Sequential execution number")
-]
-RetryCount = Annotated[
-    int, Field(ge=0, le=10, description="Retry attempt counter")
-]
+ExecutionNumber = Annotated[int, Field(ge=0, description="Sequential execution number")]
+RetryCount = Annotated[int, Field(ge=0, le=10, description="Retry attempt counter")]
 TimeoutSeconds = Annotated[
     int, Field(gt=0, le=3600, description="Timeout duration value object")
 ]
 PortNumber = Annotated[
     int, Field(ge=1, le=65535, description="Network port with validation")
 ]
-StatusCode = Annotated[
-    int, Field(ge=100, le=599, description="HTTP/gRPC status codes")
-]
+StatusCode = Annotated[int, Field(ge=100, le=599, description="HTTP/gRPC status codes")]
 
 # Aggregate and Entity Types (These use generics so keep as TypeAlias for now)
 EntityId = UUID  # Generic type simplified for Pydantic compatibility
@@ -104,9 +92,7 @@ ParametersDict = dict[str, Any]  # Parameters can be complex
 DomainEventData = dict[str, Any]  # with strict validation
 
 # Service Layer Types
-ServiceName = Annotated[
-    str, Field(description="Service identification value object")
-]
+ServiceName = Annotated[str, Field(description="Service identification value object")]
 OperationName = Annotated[str, Field(description="Operation name value object")]
 ErrorCode = Annotated[str, Field(description="Error classification value object")]
 ErrorMessage = Annotated[str, Field(description="Error description value object")]
@@ -631,9 +617,7 @@ class CompositeSpecification:
 
     """
 
-    def __init__(
-        self, left: Any, right: Any, operator: str
-    ) -> None:
+    def __init__(self, left: Any, right: Any, operator: str) -> None:
         # Validate operator at construction time
         if operator not in {"and", "or"}:
             msg = f"Invalid operator '{operator}'. Must be 'and' or 'or'"

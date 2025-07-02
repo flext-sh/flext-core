@@ -12,7 +12,6 @@ ARCHITECTURAL PRINCIPLE:
 from __future__ import annotations
 
 from abc import abstractmethod
-from uuid import UUID
 
 # Import UnitOfWork from contracts for compatibility
 from flext_core.domain.entities import (
@@ -20,7 +19,6 @@ from flext_core.domain.entities import (
     PipelineExecution,
     PipelineId,
     Plugin,
-    PluginId,
 )
 
 # Re-export the ultimate repository from infrastructure for domain use

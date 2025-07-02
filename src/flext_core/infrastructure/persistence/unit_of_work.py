@@ -16,8 +16,6 @@ if TYPE_CHECKING:
 from flext_auth.models import Role  # Import domain model for typing
 
 from flext_core.contracts.repository_contracts import (
-    EntityId,
-    EntityInterface,
     RepositoryInterface,
     UnitOfWorkInterface,
 )

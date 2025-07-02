@@ -1,1 +1,1 @@
-"""FLX-Core test suite."""
+"""Test package."""
