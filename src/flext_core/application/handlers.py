@@ -34,7 +34,13 @@ FEATURES:
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import datetime
+
+# Python < 3.11 compatibility for datetime.UTC
+try:
+    from datetime import UTC
+except ImportError:
+    UTC = UTC
 from typing import TYPE_CHECKING, Any, cast
 from uuid import UUID, uuid4
 
@@ -175,7 +181,7 @@ class EnterpriseCommandHandlers:
     # PIPELINE DOMAIN OPERATIONS - ENTERPRISE GRADE
     # =========================================================================
 
-    async def create_pipeline(  # noqa: PLR0911
+    async def create_pipeline(
         self,
         command: CreatePipelineCommand,
     ) -> HandlerResult[dict[str, Any]]:

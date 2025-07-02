@@ -1,6 +1,6 @@
 """Enterprise patterns for FLEXT Core."""
 
-from typing import Any, Optional
+from typing import Any
 
 
 class EnterpriseErrorPatterns:
@@ -8,7 +8,7 @@ class EnterpriseErrorPatterns:
 
     @staticmethod
     def create_error_response(
-        error_code: str, message: str, details: Optional[dict[str, Any]] = None
+        error_code: str, message: str, details: dict[str, Any] | None = None
     ) -> dict[str, Any]:
         """Create standardized error response."""
         return {
@@ -139,8 +139,8 @@ class EnterpriseValidationPatterns:
     @staticmethod
     def validate_data(
         data: dict[str, Any],
-        required_fields: Optional[list[str]] = None,
-        field_types: Optional[dict[str, type]] = None,
+        required_fields: list[str] | None = None,
+        field_types: dict[str, type] | None = None,
     ) -> dict[str, Any]:
         """Comprehensive data validation."""
         errors = []

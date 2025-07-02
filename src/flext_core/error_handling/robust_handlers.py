@@ -3,11 +3,17 @@
 import functools
 import time
 import traceback
-from collections.abc import Awaitable
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime
+
+# Python < 3.11 compatibility for datetime.UTC
+try:
+    from datetime import UTC
+except ImportError:
+    UTC = UTC
 from enum import Enum
-from typing import Any, Callable, Optional, TypeVar
+from typing import Any, TypeVar
 
 T = TypeVar("T")
 AsyncT = TypeVar("AsyncT")
@@ -43,10 +49,10 @@ class ErrorContext:
 
     component: str
     operation: str
-    user_id: Optional[str] = None
-    request_id: Optional[str] = None
-    session_id: Optional[str] = None
-    additional_data: Optional[dict[str, Any]] = None
+    user_id: str | None = None
+    request_id: str | None = None
+    session_id: str | None = None
+    additional_data: dict[str, Any] | None = None
 
 
 @dataclass
@@ -73,8 +79,8 @@ class FlextException(Exception):
         message: str,
         category: ErrorCategory = ErrorCategory.UNKNOWN,
         severity: ErrorSeverity = ErrorSeverity.MEDIUM,
-        context: Optional[ErrorContext] = None,
-        cause: Optional[Exception] = None,
+        context: ErrorContext | None = None,
+        cause: Exception | None = None,
     ) -> None:
         super().__init__(message)
         self.message = message
@@ -82,14 +88,14 @@ class FlextException(Exception):
         self.severity = severity
         self.context = context
         self.cause = cause
-        self.timestamp = datetime.now(timezone.utc)
+        self.timestamp = datetime.now(UTC)
 
 
 class ConfigurationError(FlextException):
     """Configuration-related errors."""
 
     def __init__(
-        self, message: str, config_key: Optional[str] = None, **kwargs: Any
+        self, message: str, config_key: str | None = None, **kwargs: Any
     ) -> None:
         super().__init__(message, ErrorCategory.CONFIGURATION, **kwargs)
         self.config_key = config_key
@@ -99,7 +105,7 @@ class DatabaseError(FlextException):
     """Database-related errors."""
 
     def __init__(
-        self, message: str, query: Optional[str] = None, **kwargs: Any
+        self, message: str, query: str | None = None, **kwargs: Any
     ) -> None:
         super().__init__(message, ErrorCategory.DATABASE, **kwargs)
         self.query = query
@@ -118,7 +124,7 @@ class ValidationError(FlextException):
     """Validation-related errors."""
 
     def __init__(
-        self, message: str, field: Optional[str] = None, **kwargs: Any
+        self, message: str, field: str | None = None, **kwargs: Any
     ) -> None:
         super().__init__(message, ErrorCategory.VALIDATION, **kwargs)
         self.field = field
@@ -128,7 +134,7 @@ class PluginError(FlextException):
     """Plugin-related errors."""
 
     def __init__(
-        self, message: str, plugin_name: Optional[str] = None, **kwargs: Any
+        self, message: str, plugin_name: str | None = None, **kwargs: Any
     ) -> None:
         super().__init__(message, ErrorCategory.PLUGIN, **kwargs)
         self.plugin_name = plugin_name
@@ -137,7 +143,7 @@ class PluginError(FlextException):
 class NetworkError(FlextException):
     """Network-related errors."""
 
-    def __init__(self, message: str, url: Optional[str] = None, **kwargs: Any) -> None:
+    def __init__(self, message: str, url: str | None = None, **kwargs: Any) -> None:
         super().__init__(message, ErrorCategory.NETWORK, **kwargs)
         self.url = url
 
@@ -146,7 +152,7 @@ class TimeoutError(FlextException):
     """Timeout-related errors."""
 
     def __init__(
-        self, message: str, timeout_seconds: Optional[float] = None, **kwargs: Any
+        self, message: str, timeout_seconds: float | None = None, **kwargs: Any
     ) -> None:
         super().__init__(message, ErrorCategory.TIMEOUT, **kwargs)
         self.timeout_seconds = timeout_seconds
@@ -156,7 +162,7 @@ class ResourceError(FlextException):
     """Resource-related errors."""
 
     def __init__(
-        self, message: str, resource_type: Optional[str] = None, **kwargs: Any
+        self, message: str, resource_type: str | None = None, **kwargs: Any
     ) -> None:
         super().__init__(message, ErrorCategory.RESOURCE, **kwargs)
         self.resource_type = resource_type
@@ -178,8 +184,8 @@ class RobustErrorHandler:
     def handle_error(
         self,
         exception: Exception,
-        context: Optional[ErrorContext] = None,
-        severity: Optional[ErrorSeverity] = None,
+        context: ErrorContext | None = None,
+        severity: ErrorSeverity | None = None,
     ) -> ErrorReport:
         """Handle an error and create a report."""
         error_id = self.generate_error_id()
@@ -196,7 +202,7 @@ class RobustErrorHandler:
         # Create error report
         report = ErrorReport(
             error_id=error_id,
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             severity=severity,
             category=category,
             message=str(exception),
@@ -221,21 +227,20 @@ class RobustErrorHandler:
             for keyword in ["connection", "network", "timeout"]
         ):
             return ErrorCategory.NETWORK
-        elif any(keyword in exception_name for keyword in ["database", "sql", "query"]):
+        if any(keyword in exception_name for keyword in ["database", "sql", "query"]):
             return ErrorCategory.DATABASE
-        elif any(
+        if any(
             keyword in exception_name
             for keyword in ["auth", "permission", "unauthorized"]
         ):
             return ErrorCategory.AUTHENTICATION
-        elif any(
+        if any(
             keyword in exception_name for keyword in ["validation", "value", "type"]
         ):
             return ErrorCategory.VALIDATION
-        elif "timeout" in exception_name:
+        if "timeout" in exception_name:
             return ErrorCategory.TIMEOUT
-        else:
-            return ErrorCategory.UNKNOWN
+        return ErrorCategory.UNKNOWN
 
     def _log_error(self, report: ErrorReport) -> None:
         """Log error report using structured logging."""
@@ -245,7 +250,8 @@ class RobustErrorHandler:
             logger = get_logger("flext.error_handler")
 
             logger.error(
-                f"Error handled: {report.message}",
+                "Error handled: %s",
+                report.message,
                 error_id=report.error_id,
                 severity=report.severity.value,
                 category=report.category.value,
@@ -259,9 +265,9 @@ class RobustErrorHandler:
             # Fallback to standard logging if structured logging not available
             import logging
 
-            logging.error(f"Error {report.error_id}: {report.message}")
+            logging.exception("Error %s: %s", report.error_id, report.message)
 
-    def get_error_report(self, error_id: str) -> Optional[ErrorReport]:
+    def get_error_report(self, error_id: str) -> ErrorReport | None:
         """Get error report by ID."""
         return self.error_reports.get(error_id)
 
@@ -302,8 +308,8 @@ def get_error_handler() -> RobustErrorHandler:
 
 
 def handle_exceptions(
-    context: Optional[ErrorContext] = None,
-    severity: Optional[ErrorSeverity] = None,
+    context: ErrorContext | None = None,
+    severity: ErrorSeverity | None = None,
     reraise: bool = False,
 ) -> Callable[[Callable[..., T]], Callable[..., T]]:
     """Decorator for handling exceptions in functions."""
@@ -332,8 +338,8 @@ def handle_exceptions(
 
 
 def handle_async_exceptions(
-    context: Optional[ErrorContext] = None,
-    severity: Optional[ErrorSeverity] = None,
+    context: ErrorContext | None = None,
+    severity: ErrorSeverity | None = None,
     reraise: bool = False,
 ) -> Callable[[Callable[..., Awaitable[AsyncT]]], Callable[..., Awaitable[AsyncT]]]:
     """Decorator for handling exceptions in async functions."""
@@ -388,7 +394,10 @@ def retry_on_failure(
 
                             logger = get_logger("flext.retry")
                             logger.warning(
-                                f"Retry attempt {attempt + 1}/{max_retries} for {func.__name__}",
+                                "Retry attempt %s/%s for %s",
+                                attempt + 1,
+                                max_retries,
+                                func.__name__,
                                 function=func.__name__,
                                 attempt=attempt + 1,
                                 max_retries=max_retries,
@@ -419,7 +428,7 @@ def safe_execute(
     func: Callable[..., T],
     *args: Any,
     default: T = None,  # type: ignore[assignment]
-    context: Optional[ErrorContext] = None,
+    context: ErrorContext | None = None,
     **kwargs: Any,
 ) -> T:
     """Safely execute a function with error handling."""
@@ -439,7 +448,7 @@ async def safe_execute_async(
     func: Callable[..., Awaitable[T]],
     *args: Any,
     default: T = None,  # type: ignore[assignment]
-    context: Optional[ErrorContext] = None,
+    context: ErrorContext | None = None,
     **kwargs: Any,
 ) -> T:
     """Safely execute an async function with error handling."""
@@ -468,17 +477,17 @@ class ErrorHandlingContext:
         self.context = context
         self.severity = severity
         self.reraise = reraise
-        self.error_report: Optional[ErrorReport] = None
+        self.error_report: ErrorReport | None = None
 
     def __enter__(self) -> "ErrorHandlingContext":
         return self
 
     def __exit__(
         self,
-        exc_type: Optional[type[BaseException]],
-        exc_val: Optional[BaseException],
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
         exc_tb: object,
-    ) -> Optional[bool]:
+    ) -> bool | None:
         if exc_type is not None and exc_val is not None:
             # Convert BaseException to Exception if needed
             if isinstance(exc_val, Exception):
@@ -505,7 +514,8 @@ def log_error_recovery(operation: str, error_id: str, recovery_action: str) -> N
 
         logger = get_logger("flext.recovery")
         logger.info(
-            f"Error recovery: {operation}",
+            "Error recovery: %s",
+            operation,
             operation=operation,
             error_id=error_id,
             recovery_action=recovery_action,

@@ -10,4 +10,4 @@ from flext_core.utils.import_fallback_patterns import (
     DependencyFallback,
 )
 
-__all__ = ["DependencyFallback", "SQLALCHEMY_DEPENDENCY"]
+__all__ = ["SQLALCHEMY_DEPENDENCY", "DependencyFallback"]

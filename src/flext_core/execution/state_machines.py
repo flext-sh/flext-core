@@ -37,7 +37,7 @@ class JobStateMachine:
     current_state: JobState = JobState.CREATED
     metadata: dict[str, Any] = None
 
-    def __post_init__(self) -> None:
+    def __post_init__(self, /) -> None:
         if self.metadata is None:
             self.metadata = {}
 
@@ -78,7 +78,7 @@ class PipelineExecutionStateMachine:
     execution_id: str | None = None
     metadata: dict[str, Any] = None
 
-    def __post_init__(self) -> None:
+    def __post_init__(self, /) -> None:
         if self.metadata is None:
             self.metadata = {}
 

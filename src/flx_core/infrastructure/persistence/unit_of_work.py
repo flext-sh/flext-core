@@ -18,10 +18,6 @@ from flx_core.contracts.repository_contracts import (
     RepositoryInterface,
     UnitOfWorkInterface,
 )
-
-# Type variables for generics
-TModel = TypeVar("TModel")
-TEntity = TypeVar("TEntity", bound=EntityInterface)
 from flx_core.domain.entities import Pipeline, PipelineExecution, Plugin
 from flx_core.models import (
     PipelineExecutionModel,
@@ -30,6 +26,10 @@ from flx_core.models import (
     RoleModel,  # SQLAlchemy model now unified
 )
 from flx_core.repositories_core import DomainSpecificRepository
+
+# Type variables for generics
+TModel = TypeVar("TModel")
+TEntity = TypeVar("TEntity", bound=EntityInterface)
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
@@ -230,7 +230,7 @@ class UnitOfWorkFactory:
         """Create a UoW instance directly."""
         return UnitOfWork(self._session_factory())
 
-    async def __call__(self) -> AsyncGenerator[UnitOfWork, None]:
+    async def __call__(self) -> AsyncGenerator[UnitOfWork]:
         """Create a UoW instance within an async generator context.
 
         Note: This pattern has limitations with exception handling.

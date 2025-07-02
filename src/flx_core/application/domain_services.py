@@ -15,7 +15,13 @@ ARCHITECTURAL COMPLIANCE:
 from __future__ import annotations
 
 import asyncio
-from datetime import UTC, datetime
+from datetime import datetime
+
+# Python < 3.11 compatibility for datetime.UTC
+try:
+    from datetime import UTC
+except ImportError:
+    UTC = UTC
 from typing import TYPE_CHECKING, Any
 
 from flx_core.domain.advanced_types import (

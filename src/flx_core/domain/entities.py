@@ -13,8 +13,14 @@ ZERO TOLERANCE ARCHITECTURAL CHANGE:
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
-from typing import TYPE_CHECKING, Any
+from datetime import datetime
+
+# Python < 3.11 compatibility for datetime.UTC
+try:
+    from datetime import UTC
+except ImportError:
+    UTC = UTC
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from pydantic import BaseModel, Field
 
@@ -54,7 +60,7 @@ class PipelineExecution(BaseModel):
     Python 3.13 + Pydantic v2 mutable entity.
     """
 
-    model_config = {"arbitrary_types_allowed": True, "validate_assignment": True}
+    model_config: ClassVar = {"arbitrary_types_allowed": True, "validate_assignment": True}
 
     pipeline_id: PipelineId
     execution_id: ExecutionId = Field(default_factory=ExecutionId)
@@ -270,7 +276,7 @@ class Plugin(BaseModel):
     - PluginInterface system (internal Python extensions)
     """
 
-    model_config = {
+    model_config: ClassVar = {
         "arbitrary_types_allowed": True,
         "validate_assignment": True,
         "str_strip_whitespace": True,
@@ -342,7 +348,7 @@ class Pipeline(BaseModel):
     Python 3.13 + Pydantic v2 aggregate root with domain events.
     """
 
-    model_config = {"arbitrary_types_allowed": True, "validate_assignment": True}
+    model_config: ClassVar = {"arbitrary_types_allowed": True, "validate_assignment": True}
 
     name: PipelineName
     pipeline_id: PipelineId = Field(default_factory=PipelineId)
@@ -370,7 +376,7 @@ class Pipeline(BaseModel):
         alias="_uncommitted_events",
     )
 
-    def model_post_init(self, __context) -> None:
+    def model_post_init(self, __context, /) -> None:
         """Post-initialization hook to raise domain events."""
         # Raise pipeline created event
         pipeline_created_event = PipelineCreated(

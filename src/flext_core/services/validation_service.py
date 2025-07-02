@@ -2,7 +2,7 @@
 
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 
 class ValidationLevel(Enum):
@@ -19,8 +19,8 @@ class ValidationResult:
     def __init__(
         self,
         is_valid: bool,
-        errors: Optional[list[str]] = None,
-        warnings: Optional[list[str]] = None,
+        errors: list[str] | None = None,
+        warnings: list[str] | None = None,
     ) -> None:
         self.is_valid = is_valid
         self.errors = errors or []

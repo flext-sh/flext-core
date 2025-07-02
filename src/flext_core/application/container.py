@@ -184,7 +184,7 @@ class FlextApplicationContainer:
         """
         if self._plugin_manager is None:
             # Import here to avoid circular imports with container parameter
-            from flext_core.plugins.manager import PluginManager  # noqa: PLC0415
+            from flext_core.plugins.manager import PluginManager
 
             self._plugin_manager = PluginManager(container=self)
         return self._plugin_manager

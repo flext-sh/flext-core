@@ -7,19 +7,20 @@ import pytest
 
 def test_core_module_imports() -> None:
     """Test that core modules can be imported."""
-    try:
-        import json
-        import os
-        import sys
+    import importlib.util
 
-        assert True
-    except ImportError:
-        pytest.fail("Core module imports failed")
+    # Use find_spec for availability testing
+    if (
+        importlib.util.find_spec("json") is None
+        or importlib.util.find_spec("os") is None
+        or importlib.util.find_spec("sys") is None
+    ):
+        pytest.fail("Standard library module imports failed")
 
 
 def test_pathlib_functionality() -> None:
     """Test pathlib operations."""
-    test_path = Path(".")
+    test_path = Path()
     assert test_path.exists()
     assert test_path.is_dir()
 
@@ -63,13 +64,14 @@ class TestCoreArchitecture:
     def test_error_handling(self) -> None:
         """Test error handling."""
         try:
-            raise ValueError("test error")
+            msg = "test error"
+            raise ValueError(msg)
         except ValueError as e:
             assert str(e) == "test error"
 
 
 @pytest.mark.parametrize(
-    "input_value,expected",
+    ("input_value", "expected"),
     [
         (1, True),
         (0, False),

@@ -334,7 +334,7 @@ class ModernFlxApplication(Application):
             raise
 
     @asynccontextmanager
-    async def lifespan(self) -> AsyncGenerator[None, None]:
+    async def lifespan(self) -> AsyncGenerator[None]:
         """Application lifespan context manager for FastAPI integration.
 
         Provides proper application lifecycle management for web frameworks

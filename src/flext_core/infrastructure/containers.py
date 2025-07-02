@@ -397,7 +397,7 @@ class ApplicationContainer(containers.DeclarativeContainer):
             )
 
         """
-        from flext_core.utils.import_fallback_patterns import (  # noqa: PLC0415
+        from flext_core.utils.import_fallback_patterns import (
             OptionalDependency,
         )
 

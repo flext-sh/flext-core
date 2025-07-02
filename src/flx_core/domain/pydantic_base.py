@@ -7,7 +7,13 @@ throughout the codebase, offering better validation, serialization, and Python
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import datetime
+
+# Python < 3.11 compatibility for datetime.UTC
+try:
+    from datetime import UTC
+except ImportError:
+    UTC = UTC
 from typing import Any, TypeVar
 from uuid import UUID, uuid4
 

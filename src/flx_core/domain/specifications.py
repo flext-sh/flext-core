@@ -245,8 +245,6 @@ class ExecutionCanBeRetriedSpecification(CompositeSpecification["PipelineExecuti
 
     def _is_within_retry_window(self, execution: PipelineExecution) -> bool:
         """Business rule: Retry must be attempted within time window."""
-        from datetime import UTC, datetime, timedelta
-
         if not execution.completed_at:
             return False
 

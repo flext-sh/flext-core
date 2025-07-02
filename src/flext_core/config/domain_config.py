@@ -2046,7 +2046,7 @@ _config_cache: FlextConfiguration | None = None
 
 def get_config() -> FlextConfiguration:
     """Get application configuration instance - SINGLE SOURCE OF TRUTH."""
-    global _config_cache  # noqa: PLW0603
+    global _config_cache
     if _config_cache is None:
         _config_cache = FlextConfiguration()
     return _config_cache
@@ -2054,5 +2054,5 @@ def get_config() -> FlextConfiguration:
 
 def reset_config() -> None:
     """Reset application configuration instance."""
-    global _config_cache  # noqa: PLW0603
+    global _config_cache
     _config_cache = None

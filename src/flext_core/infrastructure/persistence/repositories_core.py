@@ -14,7 +14,13 @@ Features:
 from __future__ import annotations
 
 import contextlib
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta
+
+# Python < 3.11 compatibility for datetime.UTC
+try:
+    from datetime import UTC
+except ImportError:
+    UTC = UTC
 from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 import structlog
@@ -71,7 +77,7 @@ class RepositoryError(Exception):
     def __init__(
         self,
         message: str,
-        entity_type: type = None,
+        entity_type: type | None = None,
         entity_id: object = None,
     ) -> None:
         """Initialize RepositoryError with error details.
@@ -298,7 +304,7 @@ class SqlAlchemyRepository(
     def _add_relationship_loading(self, query: Select) -> Select:
         """Add relationship loading options to the query with enterprise-grade optimization."""
         try:
-            from sqlalchemy.orm import selectinload  # noqa: PLC0415
+            from sqlalchemy.orm import selectinload
 
             # Only process real SQLAlchemy models (not mocks or test objects)
             try:
@@ -708,7 +714,7 @@ class SqlAlchemyRepository(
         relationship_value: object,
     ) -> None:
         """Handle collection relationships (one-to-many, many-to-many)."""
-        if not isinstance(relationship_value, (list, tuple)):
+        if not isinstance(relationship_value, list | tuple):
             return
 
         # Clear existing relationships
@@ -1043,7 +1049,7 @@ class DomainSpecificRepository(
     async def search_plugins(
         self,
         query: str,
-        plugin_type: str = None,
+        plugin_type: str | None = None,
     ) -> list[Any]:
         """Search for plugins by name or namespace."""
         # Check if model has required search attributes
@@ -1075,7 +1081,7 @@ class DomainSpecificRepository(
     async def search(
         self,
         query: str,
-        plugin_type: str = None,
+        plugin_type: str | None = None,
         _limit: int = 50,
     ) -> list[Any]:
         """Search for entities using the search_plugins method."""

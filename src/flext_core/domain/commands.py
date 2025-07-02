@@ -9,7 +9,7 @@ from pydantic import BaseModel
 if TYPE_CHECKING:
     from flext_core.domain.value_objects import PipelineId, PipelineStep
 else:
-    from flext_core.domain.value_objects import PipelineId, PipelineStep
+    pass
 
 # Import the canonical CreatePipelineCommand from the unified commands module
 

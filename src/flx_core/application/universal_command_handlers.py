@@ -16,7 +16,13 @@ Compliance: Zero tolerance to technical debt and incomplete implementations.
 from __future__ import annotations
 
 import asyncio
-from datetime import UTC, datetime
+from datetime import datetime
+
+# Python < 3.11 compatibility for datetime.UTC
+try:
+    from datetime import UTC
+except ImportError:
+    UTC = UTC
 from typing import Any, Protocol, runtime_checkable
 from uuid import uuid4
 
@@ -185,7 +191,7 @@ class BaseCommandHandler:
             # Execute command
             return await self._execute_command(command, context)
         except Exception as e:
-            self.logger.error(f"Command execution failed: {e}", exc_info=True)
+            self.logger.error("Command execution failed: %s", e, exc_info=True)
             return ServiceResult.fail(
                 ServiceError(
                     "COMMAND_EXECUTION_ERROR", f"Command execution failed: {e}"
@@ -233,8 +239,9 @@ class UniversalCommandProcessor:
                 )
             self.handlers[command_type] = handler
         logger.info(
-            f"Registered handler for commands: {supported_commands}",
-            handler_class=handler.__class__.__name__,
+            "Registered handler for commands: %s",
+            supported_commands,
+            extra={"handler_class": handler.__class__.__name__},
         )
 
     def unregister_handler(self, command_type: str) -> None:

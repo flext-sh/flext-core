@@ -9,8 +9,13 @@ from __future__ import annotations
 import asyncio
 import inspect
 import sys
-from collections.abc import Callable
-from datetime import UTC, datetime
+from datetime import datetime
+
+# Python < 3.11 compatibility for datetime.UTC
+try:
+    from datetime import UTC
+except ImportError:
+    UTC = UTC
 from enum import Enum, auto
 from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 from uuid import UUID, uuid4
@@ -26,6 +31,7 @@ from flext_core.events.event_bus import PipelineCreated, PipelineUpdated
 from flext_core.serialization.msgspec_adapters import get_serializer
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from types import ModuleType
 
     from redis.asyncio import Redis
@@ -193,14 +199,13 @@ class ReflectionEvent(DomainValueObject):
         """Serialize value based on type (Python 3.9 compatible)."""
         if isinstance(value, UUID):
             return str(value)
-        elif isinstance(value, datetime):
+        if isinstance(value, datetime):
             return value.isoformat()
-        elif isinstance(value, Enum):
+        if isinstance(value, Enum):
             return value.name
-        elif value is None:
+        if value is None:
             return None
-        else:
-            return self._serialize_complex_value(value)
+        return self._serialize_complex_value(value)
 
     def _serialize_complex_value(self, value: object) -> SerializableValue:
         """Handle serialization of complex objects."""
@@ -400,7 +405,7 @@ class EventHandlerRegistry(DomainBaseModel):
         """Automatically discover event handlers in a module."""
         for _name, obj in inspect.getmembers(module):
             try:
-                handles_events = obj._handles_events  # noqa: SLF001
+                handles_events = obj._handles_events
                 for event_class in handles_events:
                     self.register_handler(event_class, obj)
             except AttributeError:
@@ -412,7 +417,7 @@ def handles(*event_classes: type[ReflectionEvent]) -> Callable[[T], T]:
     """Decorate event handlers with automatic registration."""
 
     def decorator(func: T) -> T:
-        func._handles_events = event_classes  # noqa: SLF001
+        func._handles_events = event_classes
         return func
 
     return decorator

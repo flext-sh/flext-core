@@ -10,7 +10,13 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Awaitable, Callable
-from datetime import UTC, datetime
+from datetime import datetime
+
+# Python < 3.11 compatibility for datetime.UTC
+try:
+    from datetime import UTC
+except ImportError:
+    UTC = UTC
 from typing import TYPE_CHECKING, Any, ClassVar, Protocol
 from uuid import UUID, uuid4
 
@@ -281,7 +287,7 @@ class HybridEventBus:
             clean_data = {
                 k: v
                 for k, v in (data or {}).items()
-                if isinstance(v, (str, int, bool, float, type(None)))
+                if isinstance(v, str | int | bool | float | type(None))
             }
             event_obj = DomainEvent.create(event, clean_data)
         elif isinstance(event, dict):
@@ -511,7 +517,7 @@ class EventBus(HybridEventBus):
         try:
             # Dynamic import for optional aio_pika dependency
             from aio_pika import (
-                connect_robust,  # type: ignore[import-not-found]  # noqa: PLC0415
+                connect_robust,  # type: ignore[import-not-found]
             )
 
             self.logger.info("Connecting to RabbitMQ", url=amqp_url)
@@ -534,7 +540,7 @@ class EventBus(HybridEventBus):
             await channel.set_qos(prefetch_count=10)
 
             # Declare exchange - aio_pika is guaranteed to be available
-            from aio_pika import ExchangeType  # noqa: PLC0415
+            from aio_pika import ExchangeType
 
             exchange = await channel.declare_exchange(
                 "flext_core.events",
@@ -639,7 +645,7 @@ class EventBus(HybridEventBus):
             clean_data = {
                 k: v
                 for k, v in (data or {}).items()
-                if isinstance(v, (str, int, bool, float, type(None)))
+                if isinstance(v, str | int | bool | float | type(None))
             }
             event_obj = DomainEvent.create(event, clean_data)
         elif isinstance(event, dict):
@@ -662,7 +668,7 @@ class EventBus(HybridEventBus):
         # Publish to AMQP if connected - aio_pika is guaranteed to be available
         if self._exchange:
             try:
-                from aio_pika import Message  # noqa: PLC0415
+                from aio_pika import Message
 
                 message = Message(body=orjson.dumps(event_obj.to_dict()))
                 await self._exchange.publish(

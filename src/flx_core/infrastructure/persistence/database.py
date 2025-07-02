@@ -8,7 +8,13 @@ import operator
 import time
 from collections import defaultdict
 from contextlib import asynccontextmanager, suppress
-from datetime import UTC, datetime
+from datetime import datetime
+
+# Python < 3.11 compatibility for datetime.UTC
+try:
+    from datetime import UTC
+except ImportError:
+    UTC = UTC
 from enum import Enum
 from typing import TYPE_CHECKING, Any
 

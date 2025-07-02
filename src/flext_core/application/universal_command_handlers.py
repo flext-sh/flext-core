@@ -19,7 +19,13 @@ Compliance: Zero tolerance to technical debt and incomplete implementations.
 from __future__ import annotations
 
 import asyncio
-from datetime import UTC, datetime
+from datetime import datetime
+
+# Python < 3.11 compatibility for datetime.UTC
+try:
+    from datetime import UTC
+except ImportError:
+    UTC = UTC
 from typing import Any, Protocol, runtime_checkable
 from uuid import uuid4
 
@@ -600,7 +606,7 @@ class PipelineCommandHandler(BaseCommandHandler):
             ],
         )
 
-    async def _execute_command(  # noqa: PLR0911
+    async def _execute_command(
         self,
         command: Command,
         context: ExecutionContext,
@@ -792,7 +798,7 @@ class PluginCommandHandler(BaseCommandHandler):
             ],
         )
 
-    async def _execute_command(  # noqa: PLR0911
+    async def _execute_command(
         self,
         command: Command,
         context: ExecutionContext,

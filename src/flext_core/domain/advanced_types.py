@@ -25,7 +25,7 @@ from pydantic import Field
 # Lazy imports to avoid circular dependencies
 def _get_domain_base_classes() -> tuple[type, type]:
     """Lazy import of domain base classes to avoid circular imports."""
-    from flext_core.domain.pydantic_base import (  # noqa: PLC0415
+    from flext_core.domain.pydantic_base import (
         DomainAggregateRoot,
         DomainValueObject,
     )
@@ -455,7 +455,7 @@ def entity(id_field: str = "id") -> Callable[[type[T]], type[T]]:
     """
 
     def decorator(cls: type[T]) -> type[T]:
-        def __eq__(self: object, other: object) -> bool:  # noqa: N807
+        def __eq__(self: object, other: object) -> bool:
             """Identity-based equality for entities."""
             if not isinstance(other, cls):
                 return False
@@ -463,7 +463,7 @@ def entity(id_field: str = "id") -> Callable[[type[T]], type[T]]:
             other_id = getattr(other, id_field, None)
             return self_id is not None and self_id == other_id
 
-        def __hash__(self: object) -> int:  # noqa: N807
+        def __hash__(self: object) -> int:
             """Hash based on entity ID.
 
             Computes the hash value for an entity based on its unique
@@ -561,7 +561,7 @@ def specification(cls: type[T]) -> type[T]:
     # Check if class has custom __and__ method (not inherited from object)
     if "__and__" not in cls.__dict__:
 
-        def __and__(  # noqa: N807
+        def __and__(
             self: object,
             other: Any,
         ) -> Any:
@@ -574,7 +574,7 @@ def specification(cls: type[T]) -> type[T]:
     # Check if class has custom __or__ method (not inherited from object)
     if "__or__" not in cls.__dict__:
 
-        def __or__(  # noqa: N807
+        def __or__(
             self: object,
             other: Any,
         ) -> Any:
@@ -587,7 +587,7 @@ def specification(cls: type[T]) -> type[T]:
     # Check if class has custom __invert__ method (not inherited from object)
     if "__invert__" not in cls.__dict__:
 
-        def __invert__(self: object) -> Any:  # noqa: N807
+        def __invert__(self: object) -> Any:
             # Cast self to proper specification type
             spec_self = cast("Any", self)
             return NotSpecification(spec=spec_self)
