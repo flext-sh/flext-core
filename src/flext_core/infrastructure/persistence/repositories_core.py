@@ -18,7 +18,6 @@ from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 import structlog
-from pydantic import BaseModel
 from sqlalchemy import delete, desc, func, select, update
 
 from flext_core.config.domain_config import get_config
@@ -34,8 +33,6 @@ from flext_core.mappers.entity_mappers import (  # Inverse mappers for entity to
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
-
     from sqlalchemy.engine import Result
     from sqlalchemy.ext.asyncio import AsyncSession
     from sqlalchemy.sql import Select

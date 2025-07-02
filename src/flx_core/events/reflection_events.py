@@ -35,9 +35,7 @@ EventData = dict[str, object]
 type EventHandler[T] = Callable[[T], object]
 ProjectionState = dict[str, object]
 StreamPosition = int | str
-SerializableValue = (
-    str | int | float | bool | dict[str, object] | list[object] | None
-)
+SerializableValue = str | int | float | bool | dict[str, object] | list[object] | None
 
 T = TypeVar("T")
 E = TypeVar("E")

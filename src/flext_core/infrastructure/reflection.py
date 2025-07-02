@@ -6,7 +6,7 @@ providing SINGLE SOURCE OF TRUTH for repository patterns with zero boilerplate.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, TypeVar, Any
+from typing import TYPE_CHECKING, Any, TypeVar
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession

@@ -6,6 +6,4 @@ the FLEXT framework for common operations and integrations.
 
 from .import_fallback_patterns import SQLALCHEMY_DEPENDENCY
 
-__all__ = [
-    "SQLALCHEMY_DEPENDENCY"
-]
+__all__ = ["SQLALCHEMY_DEPENDENCY"]

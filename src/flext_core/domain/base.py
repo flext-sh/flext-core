@@ -76,6 +76,12 @@ class UserId(ValueObject):
     value: str = Field(description="User unique identifier")
 
 
+class PluginId(ValueObject):
+    """Plugin identifier value object."""
+
+    value: str = Field(description="Plugin unique identifier")
+
+
 def create_pipeline_id(value: str) -> PipelineId:
     """Create a pipeline ID value object."""
     return PipelineId(value=value)
@@ -84,3 +90,8 @@ def create_pipeline_id(value: str) -> PipelineId:
 def create_user_id(value: str) -> UserId:
     """Create a user ID value object."""
     return UserId(value=value)
+
+
+def create_plugin_id(value: str) -> PluginId:
+    """Create a plugin ID value object."""
+    return PluginId(value=value)

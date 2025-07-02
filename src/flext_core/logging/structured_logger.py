@@ -199,7 +199,12 @@ class LoggingContextManager:
         self.logger.debug(f"Starting operation: {self.operation}", **self.kwargs)
         return self
 
-    def __exit__(self, exc_type: Optional[type[BaseException]], exc_val: Optional[BaseException], exc_tb: object) -> None:
+    def __exit__(
+        self,
+        exc_type: Optional[type[BaseException]],
+        exc_val: Optional[BaseException],
+        exc_tb: object,
+    ) -> None:
         duration_ms = (time.time() - (self.start_time or 0)) * 1000
         success = exc_type is None
 

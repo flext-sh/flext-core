@@ -65,7 +65,5 @@ class UnitOfWorkInterface(ABC):
         """Rollback transaction."""
 
     @abstractmethod
-    def get_repository(
-        self, entity_class: type[Any], model_class: type[Any]
-    ) -> Any:
+    def get_repository(self, entity_class: type[Any], model_class: type[Any]) -> Any:
         """Get repository for entity type."""
