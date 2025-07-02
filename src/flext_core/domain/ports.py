@@ -65,7 +65,10 @@ class PipelineManagementPort(ABC):
 
     @abstractmethod
     async def update_pipeline(
-        self, pipeline_id: PipelineId, updates: dict[str, Any], updated_by: str,
+        self,
+        pipeline_id: PipelineId,
+        updates: dict[str, Any],
+        updated_by: str,
     ) -> ServiceResult[Pipeline]:
         """Update existing pipeline with business validation.
 
@@ -83,7 +86,10 @@ class PipelineManagementPort(ABC):
 
     @abstractmethod
     async def delete_pipeline(
-        self, pipeline_id: PipelineId, deleted_by: str, force: bool = False,
+        self,
+        pipeline_id: PipelineId,
+        deleted_by: str,
+        force: bool = False,
     ) -> ServiceResult[bool]:
         """Delete pipeline with safety checks.
 
@@ -165,7 +171,8 @@ class ExecutionMonitoringPort(ABC):
 
     @abstractmethod
     async def get_execution_status(
-        self, execution_id: ExecutionId,
+        self,
+        execution_id: ExecutionId,
     ) -> ServiceResult[PipelineExecution]:
         """Get current execution status and details.
 
@@ -223,7 +230,9 @@ class ExecutionMonitoringPort(ABC):
 
     @abstractmethod
     async def get_execution_logs(
-        self, execution_id: ExecutionId, log_level: str | None = None,
+        self,
+        execution_id: ExecutionId,
+        log_level: str | None = None,
     ) -> ServiceResult[list[str]]:
         """Retrieve execution logs with optional filtering.
 
@@ -292,7 +301,10 @@ class PluginManagementPort(ABC):
 
     @abstractmethod
     async def uninstall_plugin(
-        self, plugin_id: PluginId, uninstalled_by: str, force: bool = False,
+        self,
+        plugin_id: PluginId,
+        uninstalled_by: str,
+        force: bool = False,
     ) -> ServiceResult[bool]:
         """Uninstall plugin with dependency checks.
 
@@ -352,7 +364,8 @@ class PipelineRepositoryPort(ABC):
 
     @abstractmethod
     async def find_by_specification(
-        self, specification: CompositeSpecification[Pipeline],
+        self,
+        specification: CompositeSpecification[Pipeline],
     ) -> list[Pipeline]:
         """Query pipelines using domain specifications.
 
@@ -418,7 +431,8 @@ class ExecutionRepositoryPort(ABC):
 
     @abstractmethod
     async def get_execution_by_id(
-        self, execution_id: ExecutionId,
+        self,
+        execution_id: ExecutionId,
     ) -> PipelineExecution | None:
         """Retrieve execution by unique identifier.
 
@@ -434,7 +448,9 @@ class ExecutionRepositoryPort(ABC):
 
     @abstractmethod
     async def find_executions_by_pipeline(
-        self, pipeline_id: PipelineId, limit: int | None = None,
+        self,
+        pipeline_id: PipelineId,
+        limit: int | None = None,
     ) -> list[PipelineExecution]:
         """Find executions for specific pipeline.
 
@@ -599,7 +615,9 @@ class DistributedExecutionPort(ABC):
 
     @abstractmethod
     async def scale_resources(
-        self, target_nodes: int, resource_type: str = "cpu",
+        self,
+        target_nodes: int,
+        resource_type: str = "cpu",
     ) -> ServiceResult[dict[str, Any]]:
         """Scale distributed computing resources.
 
@@ -657,7 +675,9 @@ class ExternalIntegrationPort(ABC):
 
     @abstractmethod
     async def fetch_external_data(
-        self, source: str, query: QueryParameters,
+        self,
+        source: str,
+        query: QueryParameters,
     ) -> ServiceResult[dict[str, Any]]:
         """Fetch data from external systems.
 
@@ -674,7 +694,9 @@ class ExternalIntegrationPort(ABC):
 
     @abstractmethod
     async def validate_external_resource(
-        self, resource_type: str, resource_identifier: str,
+        self,
+        resource_type: str,
+        resource_identifier: str,
     ) -> ServiceResult[bool]:
         """Validate external resource availability.
 

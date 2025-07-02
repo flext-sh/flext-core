@@ -30,9 +30,9 @@ from flx_core.infrastructure.persistence.repositories_core import (
 )
 
 # Python 3.13 Type Aliases for Domain Context - Using new type alias syntax
-type PipelineRepository = DomainRepository[Pipeline, PipelineId]
-type PipelineExecutionRepository = DomainRepository[PipelineExecution, UUID]
-type PluginRepository = DomainRepository[Plugin, PluginId]
+PipelineRepository = DomainRepository[Pipeline, PipelineId]
+PipelineExecutionRepository = DomainRepository[PipelineExecution, UUID]
+PluginRepository = DomainRepository[Plugin, PluginId]
 
 
 class DomainPipelineRepository(DomainRepository[Pipeline, PipelineId]):

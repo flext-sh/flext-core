@@ -27,20 +27,24 @@ class NotificationService(ABC):
     """Abstract notification service."""
 
     @abstractmethod
-    async def send_notification(self,
-                               channel: NotificationChannel,
-                               recipient: str,
-                               subject: str,
-                               message: str,
-                               priority: NotificationPriority = NotificationPriority.MEDIUM) -> bool:
+    async def send_notification(
+        self,
+        channel: NotificationChannel,
+        recipient: str,
+        subject: str,
+        message: str,
+        priority: NotificationPriority = NotificationPriority.MEDIUM,
+    ) -> bool:
         """Send a notification."""
 
     @abstractmethod
-    async def send_pipeline_notification(self,
-                                       pipeline_id: str,
-                                       event_type: str,
-                                       message: str,
-                                       priority: NotificationPriority = NotificationPriority.MEDIUM) -> bool:
+    async def send_pipeline_notification(
+        self,
+        pipeline_id: str,
+        event_type: str,
+        message: str,
+        priority: NotificationPriority = NotificationPriority.MEDIUM,
+    ) -> bool:
         """Send pipeline-related notification."""
 
     @abstractmethod
@@ -55,12 +59,14 @@ class DefaultNotificationService(NotificationService):
         self._sent_notifications: list[dict[str, Any]] = []
         self._rules: dict[str, Any] = {}
 
-    async def send_notification(self,
-                               channel: NotificationChannel,
-                               recipient: str,
-                               subject: str,
-                               message: str,
-                               priority: NotificationPriority = NotificationPriority.MEDIUM) -> bool:
+    async def send_notification(
+        self,
+        channel: NotificationChannel,
+        recipient: str,
+        subject: str,
+        message: str,
+        priority: NotificationPriority = NotificationPriority.MEDIUM,
+    ) -> bool:
         """Send a notification."""
         notification = {
             "channel": channel.value,
@@ -73,11 +79,13 @@ class DefaultNotificationService(NotificationService):
         self._sent_notifications.append(notification)
         return True
 
-    async def send_pipeline_notification(self,
-                                       pipeline_id: str,
-                                       event_type: str,
-                                       message: str,
-                                       priority: NotificationPriority = NotificationPriority.MEDIUM) -> bool:
+    async def send_pipeline_notification(
+        self,
+        pipeline_id: str,
+        event_type: str,
+        message: str,
+        priority: NotificationPriority = NotificationPriority.MEDIUM,
+    ) -> bool:
         """Send pipeline-related notification."""
         return await self.send_notification(
             channel=NotificationChannel.EMAIL,  # Default channel

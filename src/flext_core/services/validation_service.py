@@ -2,7 +2,7 @@
 
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Any
+from typing import Any, Optional
 
 
 class ValidationLevel(Enum):
@@ -16,7 +16,12 @@ class ValidationLevel(Enum):
 class ValidationResult:
     """Validation result."""
 
-    def __init__(self, is_valid: bool, errors: list[str] | None = None, warnings: list[str] | None = None) -> None:
+    def __init__(
+        self,
+        is_valid: bool,
+        errors: Optional[list[str]] = None,
+        warnings: Optional[list[str]] = None,
+    ) -> None:
         self.is_valid = is_valid
         self.errors = errors or []
         self.warnings = warnings or []
@@ -35,35 +40,39 @@ class ValidationService(ABC):
     """Abstract validation service."""
 
     @abstractmethod
-    async def validate_pipeline_config(self,
-                                     config: dict[str, Any],
-                                     level: ValidationLevel = ValidationLevel.BASIC) -> ValidationResult:
+    async def validate_pipeline_config(
+        self, config: dict[str, Any], level: ValidationLevel = ValidationLevel.BASIC
+    ) -> ValidationResult:
         """Validate pipeline configuration."""
 
     @abstractmethod
-    async def validate_plugin_config(self,
-                                   config: dict[str, Any],
-                                   plugin_name: str,
-                                   level: ValidationLevel = ValidationLevel.BASIC) -> ValidationResult:
+    async def validate_plugin_config(
+        self,
+        config: dict[str, Any],
+        plugin_name: str,
+        level: ValidationLevel = ValidationLevel.BASIC,
+    ) -> ValidationResult:
         """Validate plugin configuration."""
 
     @abstractmethod
-    async def validate_execution_parameters(self,
-                                          parameters: dict[str, Any],
-                                          pipeline_id: str) -> ValidationResult:
+    async def validate_execution_parameters(
+        self, parameters: dict[str, Any], pipeline_id: str
+    ) -> ValidationResult:
         """Validate execution parameters."""
 
     @abstractmethod
-    async def validate_schema(self, data: dict[str, Any], schema: dict[str, Any]) -> ValidationResult:
+    async def validate_schema(
+        self, data: dict[str, Any], schema: dict[str, Any]
+    ) -> ValidationResult:
         """Validate data against schema."""
 
 
 class DefaultValidationService(ValidationService):
     """Default implementation of validation service."""
 
-    async def validate_pipeline_config(self,
-                                     config: dict[str, Any],
-                                     level: ValidationLevel = ValidationLevel.BASIC) -> ValidationResult:
+    async def validate_pipeline_config(
+        self, config: dict[str, Any], level: ValidationLevel = ValidationLevel.BASIC
+    ) -> ValidationResult:
         """Validate pipeline configuration."""
         result = ValidationResult(is_valid=True)
 
@@ -93,10 +102,12 @@ class DefaultValidationService(ValidationService):
 
         return result
 
-    async def validate_plugin_config(self,
-                                   config: dict[str, Any],
-                                   plugin_name: str,
-                                   level: ValidationLevel = ValidationLevel.BASIC) -> ValidationResult:
+    async def validate_plugin_config(
+        self,
+        config: dict[str, Any],
+        plugin_name: str,
+        level: ValidationLevel = ValidationLevel.BASIC,
+    ) -> ValidationResult:
         """Validate plugin configuration."""
         result = ValidationResult(is_valid=True)
 
@@ -110,9 +121,9 @@ class DefaultValidationService(ValidationService):
 
         return result
 
-    async def validate_execution_parameters(self,
-                                          parameters: dict[str, Any],
-                                          pipeline_id: str) -> ValidationResult:
+    async def validate_execution_parameters(
+        self, parameters: dict[str, Any], pipeline_id: str
+    ) -> ValidationResult:
         """Validate execution parameters."""
         result = ValidationResult(is_valid=True)
 
@@ -122,7 +133,9 @@ class DefaultValidationService(ValidationService):
 
         return result
 
-    async def validate_schema(self, data: dict[str, Any], schema: dict[str, Any]) -> ValidationResult:
+    async def validate_schema(
+        self, data: dict[str, Any], schema: dict[str, Any]
+    ) -> ValidationResult:
         """Validate data against schema."""
         result = ValidationResult(is_valid=True)
 

@@ -25,9 +25,9 @@ if TYPE_CHECKING:
     pass
 
 # Python 3.13 type aliases
-type MockUnitOfWork = AsyncMock
-type MockRepository = AsyncMock
-type MockEventBus = AsyncMock
+MockUnitOfWork = AsyncMock
+MockRepository = AsyncMock
+MockEventBus = AsyncMock
 
 
 class TestPipelineService:

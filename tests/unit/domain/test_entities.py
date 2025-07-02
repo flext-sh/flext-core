@@ -21,9 +21,9 @@ from flx_core.domain.entities import (
 from flx_core.domain.value_objects import Duration, ExecutionStatus
 
 # Python 3.13 type aliases
-type TestResult = bool
-type TestPipelineData = dict[str, str | int]
-type TestMetrics = dict[str, int | float]
+TestResult = bool
+TestPipelineData = dict[str, str | int]
+TestMetrics = dict[str, int | float]
 
 # Constants
 MAX_CONCURRENT_EXECUTIONS = 5

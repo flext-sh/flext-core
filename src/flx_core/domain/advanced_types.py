@@ -47,93 +47,93 @@ S = TypeVar("S", bound="Specification[object]")
 
 # Core Domain Value Object Types - with strict validation
 # Note: Using Python 3.13 type alias syntax for better compatibility
-type UserId = Annotated[UUID, Field(description="User identification value object")]
-type TenantId = Annotated[
+UserId = Annotated[UUID, Field(description="User identification value object")]
+TenantId = Annotated[
     UUID,
     Field(description="Multi-tenant identification value object"),
 ]
-type CorrelationId = Annotated[
+CorrelationId = Annotated[
     UUID,
     Field(description="Request correlation value object"),
 ]
-type TraceId = Annotated[UUID, Field(description="Distributed tracing value object")]
-type CommandId = Annotated[
+TraceId = Annotated[UUID, Field(description="Distributed tracing value object")]
+CommandId = Annotated[
     UUID,
     Field(description="Command identification value object"),
 ]
-type QueryId = Annotated[UUID, Field(description="Query identification value object")]
-type EventId = Annotated[UUID, Field(description="Event identification value object")]
+QueryId = Annotated[UUID, Field(description="Query identification value object")]
+EventId = Annotated[UUID, Field(description="Event identification value object")]
 
 # Business Domain Value Object Types
-type PipelineName = Annotated[
+PipelineName = Annotated[
     str,
     Field(description="Pipeline name with validation rules"),
 ]
-type PluginName = Annotated[str, Field(description="Plugin name with validation rules")]
-type ExecutionNumber = Annotated[
+PluginName = Annotated[str, Field(description="Plugin name with validation rules")]
+ExecutionNumber = Annotated[
     int,
     Field(ge=0, description="Sequential execution number"),
 ]
-type RetryCount = Annotated[
+RetryCount = Annotated[
     int,
     Field(ge=0, le=10, description="Retry attempt counter"),
 ]
-type TimeoutSeconds = Annotated[
+TimeoutSeconds = Annotated[
     int,
     Field(gt=0, le=3600, description="Timeout duration value object"),
 ]
-type PortNumber = Annotated[
+PortNumber = Annotated[
     int,
     Field(ge=1, le=65535, description="Network port with validation"),
 ]
-type StatusCode = Annotated[
+StatusCode = Annotated[
     int,
     Field(ge=100, le=599, description="HTTP/gRPC status codes"),
 ]
 
 # Aggregate and Entity Types (These use generics so keep as type statements for now)
-type EntityId = UUID  # Generic type simplified for Pydantic compatibility
-type CommandResult = ServiceResult  # Forward reference - class defined later
-type QueryResult = ServiceResult  # Forward reference - class defined later
-type BusinessRule = object  # Generic type simplified for Pydantic compatibility
-type AggregateVersion = Annotated[
+EntityId = UUID  # Generic type simplified for Pydantic compatibility
+CommandResult = "ServiceResult"  # Forward reference - class defined later
+QueryResult = "ServiceResult"  # Forward reference - class defined later
+BusinessRule = object  # Generic type simplified for Pydantic compatibility
+AggregateVersion = Annotated[
     int,
     Field(ge=0, description="Entity version for optimistic locking"),
 ]
-type EventVersion = Annotated[int, Field(ge=1, description="Event schema version")]
+EventVersion = Annotated[int, Field(ge=1, description="Event schema version")]
 
 # Configuration and Data Types - with strict validation
 # Using Any to avoid recursive type definition issues in Pydantic
-type ConfigurationValue = str | int | float | bool | None | list[Any] | dict[str, Any]
-type ConfigurationDict = dict[str, ConfigurationValue]  # with strict validation
-type MetadataDict = dict[str, str | int | bool | float | None]  # Simple metadata only
-type ParametersDict = dict[str, ConfigurationValue]  # Parameters can be complex
-type DomainEventData = dict[
+ConfigurationValue = str | int | float | bool | None | list[Any] | dict[str, Any]
+ConfigurationDict = dict[str, ConfigurationValue]  # with strict validation
+MetadataDict = dict[str, str | int | bool | float | None]  # Simple metadata only
+ParametersDict = dict[str, ConfigurationValue]  # Parameters can be complex
+DomainEventData = dict[
     str,
     str | int | bool | float | None,
 ]  # with strict validation
 
 # Service Layer Types
-type ServiceName = Annotated[
+ServiceName = Annotated[
     str,
     Field(description="Service identification value object"),
 ]
-type OperationName = Annotated[str, Field(description="Operation name value object")]
-type ErrorCode = Annotated[str, Field(description="Error classification value object")]
-type ErrorMessage = Annotated[str, Field(description="Error description value object")]
+OperationName = Annotated[str, Field(description="Operation name value object")]
+ErrorCode = Annotated[str, Field(description="Error classification value object")]
+ErrorMessage = Annotated[str, Field(description="Error description value object")]
 
 # Command and Handler Types - with strict validation
-type MeltanoCommandResult = dict[str, str | int | bool | list[str]]
-type PipelineCommand = dict[str, ConfigurationValue]
-type ExecutionCommand = dict[str, ConfigurationValue]
-type PluginCommand = dict[str, ConfigurationValue]
-type QueryParameters = dict[str, str | int | bool]
+MeltanoCommandResult = dict[str, str | int | bool | list[str]]
+PipelineCommand = dict[str, ConfigurationValue]
+ExecutionCommand = dict[str, ConfigurationValue]
+PluginCommand = dict[str, ConfigurationValue]
+QueryParameters = dict[str, str | int | bool]
 
 # API and Request Types - with strict validation
-type RequestData = dict[str, ConfigurationValue]
-type ResponseData = dict[str, ConfigurationValue]
-type FormData = dict[str, str | list[str]]
-type QueryParams = dict[str, str | int | bool]
+RequestData = dict[str, ConfigurationValue]
+ResponseData = dict[str, ConfigurationValue]
+FormData = dict[str, str | list[str]]
+QueryParams = dict[str, str | int | bool]
 
 
 @runtime_checkable

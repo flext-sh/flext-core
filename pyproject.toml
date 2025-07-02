@@ -4,7 +4,6 @@ version = "0.1.0"
 description = "FLX Core - Foundation & Transformation Hub"
 authors = ["FLX Team <team@flx.dev>"]
 readme = "README.md"
-python = "^3.13"
 packages = [{include = "flx_core", from = "src"}]
 
 [tool.poetry.dependencies]
@@ -12,11 +11,11 @@ python = "^3.13"
 pydantic = "^2.5.0"
 sqlalchemy = "^2.0.0"
 redis = "^5.0.0"
-lato = "^0.3.0"
 bcrypt = "^4.1.0"
 pyjwt = "^2.8.0"
 cryptography = "^41.0.0"
-asyncio = "^3.4.3"
+dependency-injector = "^4.41.0"
+structlog = "^23.1.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.0"
@@ -32,9 +31,11 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.ruff]
 line-length = 88
+exclude = ["__pycache__", ".venv", ".git", "build", "dist"]
+
+[tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "B", "C90", "D", "UP", "S", "T", "ANN", "SIM", "ARG"]
 ignore = ["D100", "D101", "D102", "D103", "D104", "D105", "D106", "D107"]
-exclude = ["__pycache__", ".venv", ".git", "build", "dist"]
 
 [tool.mypy]
 python_version = "3.13"

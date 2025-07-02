@@ -24,7 +24,7 @@ from flx_core.domain.advanced_types import (
     ServiceError,
     ServiceResult,
 )
-from flx_core.domain.value_objects import ExecutionId, PipelineId, PluginId
+from flx_core.domain.value_objects import ExecutionId, PipelineId, PipelineStep, PluginId
 
 if TYPE_CHECKING:
     from flx_core.domain.entities import Pipeline, PipelineExecution
@@ -462,7 +462,6 @@ class PipelineManagementService:
     async def _create_validated_step(self, step_data: dict[str, Any]) -> PipelineStep:
         """Create pipeline step with comprehensive validation."""
         # Implementation would create PipelineStep value object with validation
-        from flx_core.domain.value_objects import PipelineStep
 
         # Placeholder for comprehensive step creation and validation
         # Real implementation would validate step configuration, dependencies, etc.
@@ -837,7 +836,9 @@ class ExecutionManagementService:
             trend = (
                 "improving"
                 if recent_avg < older_avg
-                else "degrading" if recent_avg > older_avg else "stable"
+                else "degrading"
+                if recent_avg > older_avg
+                else "stable"
             )
         else:
             trend = "insufficient_data"

@@ -82,8 +82,8 @@ if TYPE_CHECKING:
 logger = structlog.get_logger()
 
 # Python 3.13 type aliases for dependency injection
-type DatabaseEngine = object
-type SessionFactory = async_sessionmaker[AsyncSession]
+DatabaseEngine = object
+SessionFactory = async_sessionmaker[AsyncSession]
 type RepositoryFactory[T] = Callable[[], SqlAlchemyRepository[T, object, object]]
 type ServiceFactory[T] = Callable[[], T]
 

@@ -155,7 +155,7 @@ class TestDomainValueObject:
             positive_number: int
 
             @pytest.fixture
-            def validate_positive(cls, v: int) -> int:
+            def validate_positive(self, v: int) -> int:
                 if v <= 0:
                     raise ValueError("Must be positive")
                 return v

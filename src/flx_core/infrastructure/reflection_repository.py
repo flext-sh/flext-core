@@ -16,9 +16,7 @@ T = TypeVar("T")
 M = TypeVar("M")
 
 
-def create_repository[
-    T, M
-](
+def create_repository[T, M](
     entity_class: type[T],
     model_class: type[M],
     field_mappings: dict[str, str],

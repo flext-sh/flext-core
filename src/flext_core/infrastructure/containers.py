@@ -34,7 +34,7 @@ from __future__ import annotations
 
 import functools
 from collections.abc import Callable
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import structlog
 from dependency_injector import containers, providers
@@ -61,7 +61,6 @@ from flext_core.services.export_service import ExportService
 from flext_core.services.notification_service import NotificationService
 from flext_core.services.pipeline_service import PipelineService
 from flext_core.services.plugin_service import PluginService
-from flext_core.services.scheduler_service import SchedulerService
 from flext_core.services.validation_service import ValidationService
 
 if TYPE_CHECKING:
@@ -74,10 +73,10 @@ if TYPE_CHECKING:
 logger = structlog.get_logger()
 
 # Python 3.13 type aliases for dependency injection
-type DatabaseEngine = object
-type SessionFactory = async_sessionmaker[AsyncSession]
-type RepositoryFactory[T] = Callable[[], SqlAlchemyRepository[T, object, object]]
-type ServiceFactory[T] = Callable[[], T]
+DatabaseEngine = object
+SessionFactory = async_sessionmaker[AsyncSession]
+RepositoryFactory = Any
+ServiceFactory = Any
 
 
 class DatabaseContainer(containers.DeclarativeContainer):  # type: ignore[misc]

@@ -22,6 +22,7 @@ var (
 ```
 
 **Improvements**:
+
 - ✅ Structured domain errors with context
 - ✅ Error unwrapping support for `errors.Is()`
 - ✅ Helper functions for error type checking
@@ -32,6 +33,7 @@ var (
 **File**: `pkg/domain/entities/factories.go`
 
 **Key Principles Applied**:
+
 - ✅ **Domain sets defaults**: All entity defaults set in domain layer, not infrastructure/database
 - ✅ **Creation vs Rehydration**: Separate methods for new entities vs loading from storage
 - ✅ **Validation on write**: Validation only applied when creating new entities
@@ -50,7 +52,8 @@ func (f *PipelineFactory) RehydratePipeline(/* all fields */) *Pipeline
 **File**: `pkg/domain/ports/pipeline.go`
 
 **Go-DDD Principles Applied**:
-- ✅ **Find vs Get semantics**: 
+
+- ✅ **Find vs Get semantics**:
   - `find` methods can return nil without error
   - `get` methods must return value or error
 - ✅ **Soft deletion**: All delete operations are soft deletes
@@ -60,7 +63,7 @@ func (f *PipelineFactory) RehydratePipeline(/* all fields */) *Pipeline
 // Get methods - must return value or error
 GetByID(ctx context.Context, id PipelineID) (*Pipeline, error)
 
-// Find methods - can return nil without error  
+// Find methods - can return nil without error
 FindByID(ctx context.Context, id PipelineID) (*Pipeline, error)
 
 // Soft deletion - preserves history
@@ -72,6 +75,7 @@ Delete(ctx context.Context, id PipelineID) error
 **File**: `pkg/domain/valueobjects/pipeline.go`
 
 **Improvements**:
+
 - ✅ **Rich domain validation**: Comprehensive validation rules at creation
 - ✅ **Domain error integration**: Uses structured domain errors
 - ✅ **Business rule enforcement**: Validates business constraints
@@ -80,7 +84,7 @@ Delete(ctx context.Context, id PipelineID) error
 func NewPipelineName(name string) (PipelineName, error) {
     // Validation with structured domain errors
     if len(name) < 3 {
-        return PipelineName{}, domain.NewInvalidInputError("name", name, 
+        return PipelineName{}, domain.NewInvalidInputError("name", name,
             "pipeline name must be at least 3 characters")
     }
     // ... more validation
@@ -92,6 +96,7 @@ func NewPipelineName(name string) (PipelineName, error) {
 **File**: `pkg/domain/entities/pipeline.go`
 
 **Go-DDD Principles Applied**:
+
 - ✅ **Business rules in domain**: All validation and business logic in domain layer
 - ✅ **Structured error responses**: Uses domain error types
 - ✅ **Comprehensive validation**: Validates dependencies, uniqueness, etc.
@@ -113,6 +118,7 @@ func (p *Pipeline) AddStep(step PipelineStep) error {
 **File**: `pkg/application/usecases/create_pipeline.go`
 
 **Go-DDD Principles Applied**:
+
 - ✅ **Application orchestration**: Use cases orchestrate domain and infrastructure
 - ✅ **Don't leak domain objects**: Response DTOs instead of domain entities
 - ✅ **Rich logging and monitoring**: Comprehensive logging throughout
@@ -132,6 +138,7 @@ type CreatePipelineUseCase struct {
 **File**: `pkg/application/handlers/pipeline_command_handlers_improved.go`
 
 **Improvements**:
+
 - ✅ **Simplified error handling**: Direct error returns instead of ServiceResult wrapper
 - ✅ **Factory usage**: Uses domain factories for entity creation
 - ✅ **Business rule validation**: Enforces business rules before operations
@@ -141,19 +148,20 @@ type CreatePipelineUseCase struct {
 
 ### Before vs After Go-DDD Improvements
 
-| Aspect | Before | After (Go-DDD) |
-|--------|---------|----------------|
-| Error Handling | Generic errors | Structured domain errors with context |
-| Entity Creation | Direct constructors | Factory pattern with validation |
-| Repository | ServiceResult wrapper | Direct error returns, find vs get |
-| Validation | Mixed validation | Validation on write only |
-| Deletion | Hard deletion | Soft deletion with history preservation |
-| Defaults | Multiple sources | Domain layer sets all defaults |
-| Historical Data | Validation issues | Rehydration without validation |
+| Aspect          | Before                | After (Go-DDD)                          |
+| --------------- | --------------------- | --------------------------------------- |
+| Error Handling  | Generic errors        | Structured domain errors with context   |
+| Entity Creation | Direct constructors   | Factory pattern with validation         |
+| Repository      | ServiceResult wrapper | Direct error returns, find vs get       |
+| Validation      | Mixed validation      | Validation on write only                |
+| Deletion        | Hard deletion         | Soft deletion with history preservation |
+| Defaults        | Multiple sources      | Domain layer sets all defaults          |
+| Historical Data | Validation issues     | Rehydration without validation          |
 
 ### Key Benefits Achieved
 
 #### 1. **Better Error Handling**
+
 ```go
 // Before
 return fmt.Errorf("pipeline name cannot be empty")
@@ -163,15 +171,17 @@ return domain.NewInvalidInputError("name", name, "pipeline name cannot be empty"
 ```
 
 #### 2. **Proper Factory Pattern**
+
 ```go
 // Before
 pipeline := &Pipeline{/* manual setup */}
 
-// After (Go-DDD)  
+// After (Go-DDD)
 pipeline, err := factory.CreatePipeline(name, description)
 ```
 
 #### 3. **Clear Repository Semantics**
+
 ```go
 // Before
 FindByID(ctx, id) ServiceResult[*Pipeline]
@@ -182,6 +192,7 @@ FindByID(ctx, id) (*Pipeline, error)   // Can be nil
 ```
 
 #### 4. **Historical Data Compatibility**
+
 ```go
 // Creation (with validation)
 pipeline, err := factory.CreatePipeline(name, description)
@@ -224,12 +235,14 @@ pkg/
 ## 🧪 Testing Strategy
 
 ### Domain Layer Tests
+
 - ✅ **Entity behavior**: Business logic validation
 - ✅ **Value object validation**: Input validation rules
 - ✅ **Factory patterns**: Creation vs rehydration
 - ✅ **Error handling**: Domain error types
 
 ### Application Layer Tests
+
 - ✅ **Use case orchestration**: End-to-end workflows
 - ✅ **Error propagation**: Domain errors bubble up correctly
 - ✅ **Event publishing**: Domain events are published
@@ -238,18 +251,21 @@ pkg/
 ## 🚀 Next Steps
 
 ### Infrastructure Layer Implementation
+
 1. **Database Models**: Implement soft deletion with `deleted_at` column
 2. **Repository Implementation**: Follow read-after-write pattern
 3. **Event Bus**: Implement domain event publishing
 4. **Configuration**: Externalize all configuration
 
 ### Application Layer Enhancement
+
 1. **Validation Middleware**: Request validation before use cases
 2. **Transaction Management**: Unit of work pattern
 3. **Retry Logic**: Resilient external service calls
 4. **Circuit Breaker**: Protect against cascade failures
 
 ### Additional Modules
+
 1. **flext-auth**: Apply same Go-DDD principles
 2. **flext-api**: REST endpoints using use cases
 3. **flext-grpc**: gRPC services using use cases
@@ -277,7 +293,7 @@ pkg/
 The FLEXT Core Go implementation now follows **Go-DDD best practices**, providing:
 
 - **🏗️ Clean Architecture**: Clear separation of concerns
-- **🔒 Type Safety**: Comprehensive compile-time validation  
+- **🔒 Type Safety**: Comprehensive compile-time validation
 - **📋 Business Rules**: Domain-driven business logic
 - **🔄 Event Sourcing**: Complete audit trail
 - **🛡️ Error Handling**: Rich, structured error information

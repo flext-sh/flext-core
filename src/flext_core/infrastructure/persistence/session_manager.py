@@ -206,6 +206,7 @@ class DatabaseSessionManager:
         try:
             async with self.engine.begin() as conn:
                 from sqlalchemy import text
+
                 await conn.execute(text("SELECT 1"))
         except Exception:
             return False

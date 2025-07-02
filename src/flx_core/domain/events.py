@@ -13,7 +13,7 @@ from typing import Any
 from flx_core.events.event_bus import DomainEvent
 
 # Python 3.13 type aliases
-type EventData = dict[str, Any]
+EventData = dict[str, Any]
 
 # Export consolidated interface
 __all__ = [

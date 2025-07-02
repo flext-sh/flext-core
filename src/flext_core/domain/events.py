@@ -13,7 +13,7 @@ from typing import Any
 from flext_core.events.event_bus import DomainEvent
 
 # Python 3.11 compatible type aliases
-type EventData = dict[str, Any]
+EventData = dict[str, Any]
 
 # Export consolidated interface
 __all__ = [

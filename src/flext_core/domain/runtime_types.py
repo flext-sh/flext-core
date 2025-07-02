@@ -60,9 +60,15 @@ def EventId(value: UUID | str) -> UUID:
 
 # Type aliases for static analysis
 UserIdType = Annotated[UUID, Field(description="User identification value object")]
-TenantIdType = Annotated[UUID, Field(description="Multi-tenant identification value object")]
-CorrelationIdType = Annotated[UUID, Field(description="Request correlation value object")]
+TenantIdType = Annotated[
+    UUID, Field(description="Multi-tenant identification value object")
+]
+CorrelationIdType = Annotated[
+    UUID, Field(description="Request correlation value object")
+]
 TraceIdType = Annotated[UUID, Field(description="Distributed tracing value object")]
-CommandIdType = Annotated[UUID, Field(description="Command identification value object")]
+CommandIdType = Annotated[
+    UUID, Field(description="Command identification value object")
+]
 QueryIdType = Annotated[UUID, Field(description="Query identification value object")]
 EventIdType = Annotated[UUID, Field(description="Event identification value object")]

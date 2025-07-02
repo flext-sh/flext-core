@@ -54,13 +54,13 @@ from __future__ import annotations
 
 import asyncio
 from contextlib import asynccontextmanager, contextmanager
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, cast
 
 if TYPE_CHECKING:
     from collections.abc import Generator
 
 import structlog
-from dependency_injector.wiring import Provide
+from dependency_injector.wiring import Provide  # type: ignore[import-not-found]
 from dependency_injector.wiring import inject as di_inject
 from lato import Application, DependencyProvider
 
@@ -76,7 +76,7 @@ from flext_core.infrastructure.containers import (
 
 # Simple error context for missing observability module
 @contextmanager
-def error_context(_message: str, **kwargs) -> Generator[None]:
+def error_context(_message: str, **kwargs: Any) -> Generator[None, None, None]:
     """Simple error context handler."""
     try:
         yield
@@ -88,8 +88,12 @@ def error_context(_message: str, **kwargs) -> Generator[None]:
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
 
-    from flext_observability.health import HealthChecker
-    from flext_observability.metrics import MetricsCollector
+    from flext_observability.health import (
+        HealthChecker,  # type: ignore[import-not-found]
+    )
+    from flext_observability.metrics import (
+        MetricsCollector,  # type: ignore[import-not-found]
+    )
 
     from flext_core.engine.meltano_wrapper import MeltanoEngine
     from flext_core.events.event_bus import DomainEventBus, HybridEventBus
@@ -105,10 +109,10 @@ if TYPE_CHECKING:
 
 logger = structlog.get_logger()
 
-# Python 3.13 type aliases for enterprise application architecture
-type ApplicationConfig = FlextConfiguration
-type ServiceFactory = object  # Service factory callable type
-type ResourceManager = object  # Resource management interface
+# Type aliases for enterprise application architecture (Python 3.9 compatible)
+ApplicationConfig = FlextConfiguration
+ServiceFactory = object  # Service factory callable type
+ResourceManager = object  # Resource management interface
 
 
 class FlextEnterpriseApplication(Application):
@@ -239,7 +243,8 @@ class FlextEnterpriseApplication(Application):
 
     @di_inject
     def get_unit_of_work(
-        self, uow: UnitOfWork = Provide[ApplicationContainer.database.unit_of_work],
+        self,
+        uow: UnitOfWork = Provide[ApplicationContainer.database.unit_of_work],
     ) -> UnitOfWork:
         """Get unit of work instance with dependency injection."""
         return uow
@@ -486,7 +491,7 @@ class FlextEnterpriseApplication(Application):
 
             # Shutdown interface bridge if available and shutdownable
             if self._interface_bridge and is_shutdownable(self._interface_bridge):
-                await self._interface_bridge.shutdown()
+                await self._interface_bridge.shutdown()  # type: ignore[attr-defined]
 
             # Shutdown container resources
             self._container.shutdown_resources()
@@ -617,7 +622,7 @@ class FlextEnterpriseApplication(Application):
 
             # Initialize bridge if it implements InitializableProtocol
             if is_initializable(self._interface_bridge):
-                await self._interface_bridge.initialize()
+                await self._interface_bridge.initialize()  # type: ignore[attr-defined]
 
             self.logger.debug("Interface bridge initialization completed")
 
@@ -799,7 +804,7 @@ class FlextEnterpriseApplication(Application):
 
     def get_hybrid_event_bus(self) -> HybridEventBus:
         """Get hybrid event bus for backward compatibility."""
-        return self.get_event_bus()
+        return cast("HybridEventBus", self.get_event_bus())
 
 
 # =========================================================================
@@ -808,7 +813,8 @@ class FlextEnterpriseApplication(Application):
 
 
 def create_application(
-    name: str = "flext-enterprise-platform", config: ApplicationConfig | None = None,
+    name: str = "flext-enterprise-platform",
+    config: ApplicationConfig | None = None,
 ) -> FlextEnterpriseApplication:
     """Create a unified FLEXT enterprise application instance.
 

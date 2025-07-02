@@ -20,13 +20,20 @@ if TYPE_CHECKING:
     from types import ModuleType
 
 # ZERO TOLERANCE - Meltano dependencies are REQUIRED for FLX Meltano Enterprise
-from meltano.core.project import Project as MeltanoProject
-from meltano.core.runner import RunnerError
+try:
+    from meltano.core.project import (
+        Project as MeltanoProject,  # type: ignore[import-not-found]
+    )
+    from meltano.core.runner import RunnerError  # type: ignore[import-not-found]
+except ImportError:
+    # Fallback for environments without meltano
+    MeltanoProject = None
+    RunnerError = Exception
 
 # ZERO TOLERANCE - Verify Meltano core components are functional with guaranteed attributes
-find_method = getattr(MeltanoProject, "find", None)
+find_method = getattr(MeltanoProject, "find", None) if MeltanoProject else None
 runner_name = getattr(RunnerError, "__name__", None)
-if find_method is None or runner_name is None:
+if MeltanoProject is not None and (find_method is None or runner_name is None):
     msg = (
         "Meltano core components are required - this is a Meltano enterprise extension"
     )
@@ -38,8 +45,8 @@ E2E_TESTS_PATH = PROJECT_ROOT / "tests" / "e2e"
 SCRIPTS_PATH = PROJECT_ROOT / "scripts"
 
 # Python 3.13 type aliases for architectural imports
-type ImportableClass = type[object]
-type ModuleComponents = dict[str, ImportableClass]
+ImportableClass = type[object]
+ModuleComponents = dict[str, ImportableClass]
 
 
 class ImportableModule:

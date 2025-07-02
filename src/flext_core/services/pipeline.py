@@ -38,7 +38,9 @@ class PipelineExecutionService(ABC):
     """Abstract service for pipeline execution operations."""
 
     @abstractmethod
-    async def execute_pipeline(self, command: ExecutePipelineCommand) -> PipelineExecution:
+    async def execute_pipeline(
+        self, command: ExecutePipelineCommand
+    ) -> PipelineExecution:
         """Execute a pipeline."""
 
     @abstractmethod
@@ -46,7 +48,9 @@ class PipelineExecutionService(ABC):
         """Get a pipeline execution by ID."""
 
     @abstractmethod
-    async def list_executions(self, pipeline_id: str | None = None) -> list[PipelineExecution]:
+    async def list_executions(
+        self, pipeline_id: str | None = None
+    ) -> list[PipelineExecution]:
         """List pipeline executions."""
 
     @abstractmethod

@@ -67,15 +67,17 @@ PortNumber = Annotated[int, Field(ge=1, le=65535, description="Valid network por
 PositiveInt = Annotated[int, Field(gt=0, description="Positive integer")]
 NonNegativeInt = Annotated[int, Field(ge=0, description="Non-negative integer")]
 TimeoutSeconds = Annotated[
-    float, Field(gt=0, le=3600, description="Timeout in seconds"),
+    float,
+    Field(gt=0, le=3600, description="Timeout in seconds"),
 ]
 PercentageValue = Annotated[
-    float, Field(ge=0.0, le=100.0, description="Percentage value"),
+    float,
+    Field(ge=0.0, le=100.0, description="Percentage value"),
 ]
 FileSizeMB = Annotated[int, Field(gt=0, le=1024, description="File size in MB")]
 ThreadCount = Annotated[int, Field(ge=1, le=100, description="Thread count")]
 RetryCount = Annotated[int, Field(ge=0, le=10, description="Retry attempts")]
-type ConfigurationDict = dict[str, str | int | bool | float | list[str] | None]
+ConfigurationDict = dict[str, str | int | bool | float | list[str] | None]
 
 # =============================================================================
 # UNIFIED CONSTANTS ARCHITECTURE - PYDANTIC INTEGRATION
@@ -153,52 +155,66 @@ class BusinessDomainConstants(BaseModel):
 
     # Network Port Constants
     DEFAULT_API_PORT: int = Field(
-        default=8000, description="Default FastAPI service port",
+        default=8000,
+        description="Default FastAPI service port",
     )
     DEFAULT_WEB_PORT: int = Field(
-        default=8080, description="Default Django web service port",
+        default=8080,
+        description="Default Django web service port",
     )
     DEFAULT_GRPC_PORT: int = Field(
-        default=50051, description="Default gRPC service port",
+        default=50051,
+        description="Default gRPC service port",
     )
     DEFAULT_WEBSOCKET_PORT: int = Field(
-        default=8765, description="Default WebSocket service port",
+        default=8765,
+        description="Default WebSocket service port",
     )
     DEFAULT_DATABASE_PORT: int = Field(
-        default=5432, description="Default database service port",
+        default=5432,
+        description="Default database service port",
     )
     DEFAULT_REDIS_PORT: int = Field(
-        default=6379, description="Default Redis service port",
+        default=6379,
+        description="Default Redis service port",
     )
     DEFAULT_MELTANO_UI_PORT: int = Field(
-        default=5000, description="Default Meltano UI service port",
+        default=5000,
+        description="Default Meltano UI service port",
     )
     DEFAULT_METRICS_PORT: int = Field(
-        default=9090, description="Default metrics/monitoring service port",
+        default=9090,
+        description="Default metrics/monitoring service port",
     )
     MAXIMUM_PORT_NUMBER: int = Field(
-        default=65535, description="Maximum valid port number",
+        default=65535,
+        description="Maximum valid port number",
     )
 
     # HTTP Status Codes
     HTTP_SUCCESS_STATUS: int = Field(
-        default=200, description="HTTP success status code",
+        default=200,
+        description="HTTP success status code",
     )
     HTTP_CREATED: int = Field(default=201, description="HTTP created status code")
     HTTP_BAD_REQUEST: int = Field(
-        default=400, description="HTTP bad request status code",
+        default=400,
+        description="HTTP bad request status code",
     )
     HTTP_UNAUTHORIZED: int = Field(
-        default=401, description="HTTP unauthorized status code",
+        default=401,
+        description="HTTP unauthorized status code",
     )
     HTTP_FORBIDDEN: int = Field(default=403, description="HTTP forbidden status code")
     HTTP_NOT_FOUND: int = Field(default=404, description="HTTP not found status code")
     HTTP_CONFLICT: int = Field(default=409, description="HTTP conflict status code")
     HTTP_INTERNAL_ERROR: int = Field(
-        default=500, description="HTTP internal error status code",
+        default=500,
+        description="HTTP internal error status code",
     )
     HTTP_NOT_IMPLEMENTED: int = Field(
-        default=501, description="HTTP not implemented status code",
+        default=501,
+        description="HTTP not implemented status code",
     )
 
     # Meltano Integration Constants
@@ -207,117 +223,151 @@ class BusinessDomainConstants(BaseModel):
         description="Minimum commands for Meltano ELT (extractor + loader)",
     )
     MELTANO_DEFAULT_TIMEOUT: int = Field(
-        default=3600, description="Default Meltano execution timeout in seconds",
+        default=3600,
+        description="Default Meltano execution timeout in seconds",
     )
 
     # Security Constants
     CSRF_TOKEN_PARTS_COUNT: int = Field(
-        default=3, description="CSRF token parts: timestamp:nonce:signature",
+        default=3,
+        description="CSRF token parts: timestamp:nonce:signature",
     )
     CSRF_NONCE_LENGTH: int = Field(default=16, description="CSRF nonce minimum length")
     JWT_SECRET_MIN_LENGTH: int = Field(
-        default=32, description="Minimum JWT secret key length for security",
+        default=32,
+        description="Minimum JWT secret key length for security",
     )
     MAXIMUM_PASSWORD_LENGTH: int = Field(
-        default=128, description="Maximum password length for security",
+        default=128,
+        description="Maximum password length for security",
     )
     BCRYPT_MIN_ROUNDS: int = Field(
-        default=4, description="BCrypt minimum rounds for password hashing",
+        default=4,
+        description="BCrypt minimum rounds for password hashing",
     )
     BCRYPT_MAX_ROUNDS: int = Field(
-        default=31, description="BCrypt maximum rounds for password hashing",
+        default=31,
+        description="BCrypt maximum rounds for password hashing",
     )
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(
-        default=30, description="JWT access token expiration (minutes)",
+        default=30,
+        description="JWT access token expiration (minutes)",
     )
     JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = Field(
-        default=7, description="JWT refresh token expiration (days)",
+        default=7,
+        description="JWT refresh token expiration (days)",
     )
     CORS_MAX_AGE_SECONDS: int = Field(
-        default=3600, description="CORS preflight cache max age (seconds)",
+        default=3600,
+        description="CORS preflight cache max age (seconds)",
     )
     SESSION_COOKIE_AGE_SECONDS: int = Field(
-        default=1209600, description="Session cookie age (2 weeks in seconds)",
+        default=1209600,
+        description="Session cookie age (2 weeks in seconds)",
     )
     HSTS_MAX_AGE_SECONDS: int = Field(
-        default=31536000, description="HSTS max age in seconds (1 year)",
+        default=31536000,
+        description="HSTS max age in seconds (1 year)",
     )
 
     # Command System Constants
     COMMAND_HANDLER_MIN_PARAMS: int = Field(
-        default=2, description="Command handler minimum parameters (self, command)",
+        default=2,
+        description="Command handler minimum parameters (self, command)",
     )
     OPTIONAL_TYPE_ARGUMENT_COUNT: int = Field(
-        default=2, description="Python X | None type argument count",
+        default=2,
+        description="Python X | None type argument count",
     )
     DICT_TYPE_ARGUMENTS_COUNT: int = Field(
-        default=2, description="Dictionary type arguments: key and value types",
+        default=2,
+        description="Dictionary type arguments: key and value types",
     )
     MAXIMUM_NAME_LENGTH: int = Field(
-        default=255, description="Maximum length for name fields",
+        default=255,
+        description="Maximum length for name fields",
     )
 
     # Pipeline Constants
     PIPELINE_HEALTH_CHECK_WINDOW: int = Field(
-        default=10, description="Pipeline health check window size",
+        default=10,
+        description="Pipeline health check window size",
     )
     PIPELINE_HEALTH_FAILURE_THRESHOLD: int = Field(
-        default=3, description="Pipeline health failure threshold",
+        default=3,
+        description="Pipeline health failure threshold",
     )
     PIPELINE_METRICS_WINDOW: int = Field(
-        default=50, description="Pipeline metrics calculation window",
+        default=50,
+        description="Pipeline metrics calculation window",
     )
     PIPELINE_RECENT_EXECUTIONS_LIMIT: int = Field(
-        default=5, description="Recent pipeline executions limit",
+        default=5,
+        description="Recent pipeline executions limit",
     )
     PIPELINE_STALE_EXECUTION_HOURS: int = Field(
-        default=24, description="Pipeline stale execution threshold in hours",
+        default=24,
+        description="Pipeline stale execution threshold in hours",
     )
     DEFAULT_PIPELINE_LIMIT: int = Field(
-        default=20, description="Default pipeline listing limit",
+        default=20,
+        description="Default pipeline listing limit",
     )
     MAX_PIPELINE_LIMIT: int = Field(
-        default=1000, description="Maximum pipeline listing limit",
+        default=1000,
+        description="Maximum pipeline listing limit",
     )
     MAX_PIPELINE_NAME_LENGTH: int = Field(
-        default=100, description="Maximum pipeline name length",
+        default=100,
+        description="Maximum pipeline name length",
     )
     DEFAULT_EXECUTION_LIMIT: int = Field(
-        default=10, description="Default execution listing limit",
+        default=10,
+        description="Default execution listing limit",
     )
     MAX_EXECUTION_LIMIT: int = Field(
-        default=500, description="Maximum execution listing limit",
+        default=500,
+        description="Maximum execution listing limit",
     )
     DEFAULT_RETRY_DELAY: int = Field(
-        default=30, description="Default retry delay in seconds",
+        default=30,
+        description="Default retry delay in seconds",
     )
 
     # E2E Testing Constants
     E2E_DOCKER_PRIORITY_SCORE: int = Field(
-        default=40, description="E2E Docker availability priority score",
+        default=40,
+        description="E2E Docker availability priority score",
     )
     E2E_KIND_PRIORITY_SCORE: int = Field(
-        default=35, description="E2E Kind availability priority score",
+        default=35,
+        description="E2E Kind availability priority score",
     )
     E2E_MAX_READINESS_SCORE: int = Field(
-        default=100, description="E2E maximum readiness score",
+        default=100,
+        description="E2E maximum readiness score",
     )
     PARTIAL_READINESS_THRESHOLD: int = Field(
-        default=70, description="E2E partial readiness threshold",
+        default=70,
+        description="E2E partial readiness threshold",
     )
 
     # Execution and Processing Constants
     MAX_RECENT_EXECUTIONS_CHECK: int = Field(
-        default=20, description="Maximum recent executions to check",
+        default=20,
+        description="Maximum recent executions to check",
     )
     MAX_RECENT_FAILURES_WARNING: int = Field(
-        default=5, description="Maximum recent failures before warning",
+        default=5,
+        description="Maximum recent failures before warning",
     )
     DEFAULT_PAGINATION_LIMIT: int = Field(
-        default=20, description="Default pagination limit",
+        default=20,
+        description="Default pagination limit",
     )
     MAXIMUM_CONCURRENT_CONNECTIONS: int = Field(
-        default=65535, description="Maximum concurrent connections",
+        default=65535,
+        description="Maximum concurrent connections",
     )
 
     # API Version Constants
@@ -342,10 +392,12 @@ class BusinessDomainConstants(BaseModel):
 
     # Performance Thresholds
     EXCELLENT_PERFORMANCE_THRESHOLD_SECONDS: int = Field(
-        default=60, description="Excellent performance under 1 minute",
+        default=60,
+        description="Excellent performance under 1 minute",
     )
     GOOD_PERFORMANCE_THRESHOLD_SECONDS: int = Field(
-        default=300, description="Good performance under 5 minutes",
+        default=300,
+        description="Good performance under 5 minutes",
     )
     ACCEPTABLE_PERFORMANCE_THRESHOLD_SECONDS: int = Field(
         default=600,
@@ -358,86 +410,109 @@ class BusinessDomainConstants(BaseModel):
 
     # Health Status Thresholds
     EXCELLENT_HEALTH_THRESHOLD: int = Field(
-        default=90, description="Excellent health threshold percentage",
+        default=90,
+        description="Excellent health threshold percentage",
     )
     GOOD_HEALTH_THRESHOLD: int = Field(
-        default=75, description="Good health threshold percentage",
+        default=75,
+        description="Good health threshold percentage",
     )
     DEGRADED_HEALTH_THRESHOLD: int = Field(
-        default=50, description="Degraded health threshold percentage",
+        default=50,
+        description="Degraded health threshold percentage",
     )
     EXCELLENT_SUCCESS_RATE: int = Field(
-        default=95, description="Excellent success rate threshold percentage",
+        default=95,
+        description="Excellent success rate threshold percentage",
     )
 
     # Batch Processing Constants
     SMALL_DATASET_THRESHOLD: int = Field(
-        default=50, description="Small dataset threshold for batch processing",
+        default=50,
+        description="Small dataset threshold for batch processing",
     )
     CACHE_SIZE_LIMIT: int = Field(
-        default=100, description="Cache size limit for LRU eviction",
+        default=100,
+        description="Cache size limit for LRU eviction",
     )
     CACHE_CLEANUP_SIZE: int = Field(
-        default=50, description="Cache cleanup size for LRU",
+        default=50,
+        description="Cache cleanup size for LRU",
     )
     STATS_RETENTION_LIMIT: int = Field(
-        default=1000, description="Statistics retention limit",
+        default=1000,
+        description="Statistics retention limit",
     )
     STATS_CLEANUP_SIZE: int = Field(default=500, description="Statistics cleanup size")
     ALLOCATION_HISTORY_LIMIT: int = Field(
-        default=1000, description="Allocation history retention limit",
+        default=1000,
+        description="Allocation history retention limit",
     )
 
     # Description and Display Constants
     MAX_DESCRIPTION_DISPLAY_LENGTH: int = Field(
-        default=50, description="Maximum description display length",
+        default=50,
+        description="Maximum description display length",
     )
 
     # Database Connection Pool Constants
     DATABASE_POOL_SIZE: int = Field(
-        default=5, description="Database connection pool size",
+        default=5,
+        description="Database connection pool size",
     )
     DATABASE_MAX_OVERFLOW: int = Field(
-        default=10, description="Database connection pool max overflow",
+        default=10,
+        description="Database connection pool max overflow",
     )
     DATABASE_POOL_TIMEOUT_SECONDS: int = Field(
-        default=30, description="Database connection pool timeout",
+        default=30,
+        description="Database connection pool timeout",
     )
     DATABASE_POOL_RECYCLE_SECONDS: int = Field(
-        default=3600, description="Database connection recycle time",
+        default=3600,
+        description="Database connection recycle time",
     )
 
     # UI and Display Constants
     DEFAULT_TABLE_WIDTH: int = Field(
-        default=50, description="Default table column width for display",
+        default=50,
+        description="Default table column width for display",
     )
 
     # E2E and Infrastructure Constants
     MAX_CLUSTER_NAME_LENGTH: int = Field(
-        default=63, description="Maximum cluster name length (Kubernetes limit)",
+        default=63,
+        description="Maximum cluster name length (Kubernetes limit)",
     )
 
     # Time Constants
     DEFAULT_REQUEST_TIMEOUT_SECONDS: float = Field(
-        default=30.0, description="Default HTTP request timeout",
+        default=30.0,
+        description="Default HTTP request timeout",
     )
     DEFAULT_CONNECTION_TIMEOUT_SECONDS: float = Field(
-        default=10.0, description="Default connection timeout",
+        default=10.0,
+        description="Default connection timeout",
     )
     DEFAULT_READ_TIMEOUT_SECONDS: float = Field(
-        default=60.0, description="Default socket read timeout",
+        default=60.0,
+        description="Default socket read timeout",
     )
     DEFAULT_WRITE_TIMEOUT_SECONDS: float = Field(
-        default=30.0, description="Default socket write timeout",
+        default=30.0,
+        description="Default socket write timeout",
     )
     HEALTH_CHECK_TIMEOUT_SECONDS: float = Field(
-        default=5.0, description="Health check timeout",
+        default=5.0,
+        description="Health check timeout",
     )
     STATUS_CHECK_TIMEOUT_SECONDS: float = Field(
-        default=5.0, description="Status check timeout",
+        default=5.0,
+        description="Status check timeout",
     )
     CONNECTION_RETRY_TIMEOUT_SECONDS: float = Field(
-        default=300.0, description="Connection retry timeout",
+        default=300.0,
+        description="Connection retry timeout",
     )
     PERFORMANCE_THRESHOLD_FAST_SECONDS: float = Field(
         default=0.1,
@@ -446,32 +521,40 @@ class BusinessDomainConstants(BaseModel):
 
     # Celery Task Configuration Constants
     CELERY_TASK_RETRY_DELAY_SECONDS: int = Field(
-        default=60, description="Default Celery task retry delay (1 minute)",
+        default=60,
+        description="Default Celery task retry delay (1 minute)",
     )
     CELERY_RESULT_EXPIRES_SECONDS: int = Field(
-        default=3600, description="Celery result expiration time (1 hour)",
+        default=3600,
+        description="Celery result expiration time (1 hour)",
     )
     CELERY_MAX_RETRIES: int = Field(
-        default=3, description="Maximum Celery task retries",
+        default=3,
+        description="Maximum Celery task retries",
     )
 
     # Health Check and Monitoring Constants
     MINIMUM_HEALTH_CHECK_INTERVAL: int = Field(
-        default=10, description="Minimum health check interval in seconds",
+        default=10,
+        description="Minimum health check interval in seconds",
     )
     MINIMUM_METRICS_INTERVAL: int = Field(
-        default=5, description="Minimum metrics collection interval in seconds",
+        default=5,
+        description="Minimum metrics collection interval in seconds",
     )
 
     # File Size Constants
     MAX_REQUEST_SIZE_MB: int = Field(
-        default=50, description="Maximum HTTP request size in MB",
+        default=50,
+        description="Maximum HTTP request size in MB",
     )
     MAX_UPLOAD_SIZE_MB: int = Field(
-        default=100, description="Maximum file upload size in MB",
+        default=100,
+        description="Maximum file upload size in MB",
     )
     GRPC_LARGE_PAYLOAD_THRESHOLD_MB: int = Field(
-        default=10, description="gRPC large payload detection threshold in MB",
+        default=10,
+        description="gRPC large payload detection threshold in MB",
     )
 
     # Cron and Scheduling Constants
@@ -482,170 +565,214 @@ class BusinessDomainConstants(BaseModel):
 
     # Singer SDK Constants
     SINGER_BATCH_SIZE_LIMIT: int = Field(
-        default=1000, description="Maximum batch size for Singer SDK processing",
+        default=1000,
+        description="Maximum batch size for Singer SDK processing",
     )
 
     # Pipeline Execution Constants
     DEFAULT_PIPELINE_TIMEOUT_SECONDS: int = Field(
-        default=3600, description="Default pipeline execution timeout",
+        default=3600,
+        description="Default pipeline execution timeout",
     )
     MAXIMUM_PIPELINE_TIMEOUT_SECONDS: int = Field(
-        default=14400, description="Maximum pipeline execution timeout",
+        default=14400,
+        description="Maximum pipeline execution timeout",
     )
 
     # Infrastructure Status Constants
     DEFAULT_KUBERNETES_PORT: int = Field(
-        default=6443, description="Default Kubernetes API port",
+        default=6443,
+        description="Default Kubernetes API port",
     )
     DEFAULT_DOCKER_PORT: int = Field(
-        default=2375, description="Default Docker daemon port",
+        default=2375,
+        description="Default Docker daemon port",
     )
 
     # Type System and Validation Constants (duplicates removed - already defined above)
 
     # Security and Middleware Constants
     SECURITY_MAX_REQUEST_SIZE_MB: int = Field(
-        default=10, description="Maximum request size for security middleware",
+        default=10,
+        description="Maximum request size for security middleware",
     )
     SECURITY_DEFAULT_REQUEST_SIZE_MB: int = Field(
-        default=1, description="Default request size limit",
+        default=1,
+        description="Default request size limit",
     )
     RSA_KEY_SIZE_BITS: int = Field(
-        default=2048, description="RSA key size in bits for JWT signing",
+        default=2048,
+        description="RSA key size in bits for JWT signing",
     )
 
     # Simulation and Testing Constants
     SIMULATION_DELAY_SECONDS: float = Field(
-        default=0.1, description="Simulation delay for ACL operations",
+        default=0.1,
+        description="Simulation delay for ACL operations",
     )
     MELTANO_OPERATION_DELAY_SECONDS: float = Field(
-        default=2.0, description="Meltano pipeline simulation delay",
+        default=2.0,
+        description="Meltano pipeline simulation delay",
     )
 
     # Heartbeat and Monitoring Configuration
     HEARTBEAT_TIMEOUT_DIVISOR: int = Field(
-        default=30, description="Divisor for heartbeat timeout calculation",
+        default=30,
+        description="Divisor for heartbeat timeout calculation",
     )
     DEFAULT_HEARTBEAT_TIMEOUT_MINUTES: int = Field(
-        default=5, description="Default heartbeat timeout fallback",
+        default=5,
+        description="Default heartbeat timeout fallback",
     )
 
     # Protocol Configuration
     REDIS_PROTOCOL_SCHEME: str = Field(
-        default="redis", description="Redis connection protocol scheme",
+        default="redis",
+        description="Redis connection protocol scheme",
     )
     DEFAULT_FRONTEND_PROTOCOL: str = Field(
-        default="http", description="Default frontend protocol scheme",
+        default="http",
+        description="Default frontend protocol scheme",
     )
 
     # Redis Cache and Rate Limiting Constants
     REDIS_DEFAULT_TTL_SECONDS: int = Field(
-        default=3600, description="Default Redis TTL for cache entries (1 hour)",
+        default=3600,
+        description="Default Redis TTL for cache entries (1 hour)",
     )
     REDIS_RATE_LIMIT_TTL_BUFFER_SECONDS: int = Field(
-        default=60, description="TTL buffer for Redis rate limiting keys",
+        default=60,
+        description="TTL buffer for Redis rate limiting keys",
     )
     REDIS_HEALTH_CHECK_TTL_SECONDS: int = Field(
-        default=10, description="TTL for Redis health check test keys",
+        default=10,
+        description="TTL for Redis health check test keys",
     )
 
     # gRPC Message Configuration
     GRPC_DEFAULT_MAX_MESSAGE_SIZE_MB: int = Field(
-        default=100, description="Default gRPC maximum message size in MB",
+        default=100,
+        description="Default gRPC maximum message size in MB",
     )
 
     # Pagination and Limits
     DEFAULT_PAGINATION_SIZE: int = Field(
-        default=100, description="Default pagination size for listings",
+        default=100,
+        description="Default pagination size for listings",
     )
 
     # Common Magic Number Constants - Eliminate PLR2004 violations
     STANDARD_DUAL_COUNT: int = Field(
-        default=2, description="Standard dual count for pairs, comparisons",
+        default=2,
+        description="Standard dual count for pairs, comparisons",
     )
     STANDARD_TRIPLE_COUNT: int = Field(
-        default=3, description="Standard triple count for triplets, retries",
+        default=3,
+        description="Standard triple count for triplets, retries",
     )
     MINIMUM_CONTENT_LENGTH: int = Field(
-        default=30, description="Minimum meaningful content length",
+        default=30,
+        description="Minimum meaningful content length",
     )
     STANDARD_CONTENT_LENGTH: int = Field(
-        default=50, description="Standard content length threshold",
+        default=50,
+        description="Standard content length threshold",
     )
     PERCENTAGE_THRESHOLD_LOW: int = Field(
-        default=50, description="Low percentage threshold (50%)",
+        default=50,
+        description="Low percentage threshold (50%)",
     )
     PERCENTAGE_THRESHOLD_MID: int = Field(
-        default=75, description="Mid percentage threshold (75%)",
+        default=75,
+        description="Mid percentage threshold (75%)",
     )
     PERCENTAGE_THRESHOLD_HIGH: int = Field(
-        default=85, description="High percentage threshold (85%)",
+        default=85,
+        description="High percentage threshold (85%)",
     )
     PERCENTAGE_COMPLETE: int = Field(
-        default=100, description="Complete percentage (100%)",
+        default=100,
+        description="Complete percentage (100%)",
     )
     MEMORY_UNIT_CONVERSION: float = Field(
-        default=1024.0, description="Memory unit conversion factor (KB/MB/GB)",
+        default=1024.0,
+        description="Memory unit conversion factor (KB/MB/GB)",
     )
     STANDARD_TIMEOUT_SECONDS: int = Field(
-        default=60, description="Standard timeout in seconds",
+        default=60,
+        description="Standard timeout in seconds",
     )
 
     # Development/Production Score Thresholds
     PRODUCTION_SCORE_THRESHOLD: int = Field(
-        default=9500, description="Production readiness score threshold",
+        default=9500,
+        description="Production readiness score threshold",
     )
     DEVELOPMENT_SCORE_THRESHOLD: int = Field(
-        default=8500, description="Development readiness score threshold",
+        default=8500,
+        description="Development readiness score threshold",
     )
 
     # Network Port Constants
     EPHEMERAL_PORT_START: int = Field(
-        default=32768, description="Start of ephemeral port range",
+        default=32768,
+        description="Start of ephemeral port range",
     )
 
     # Plugin Name Constants
     MINIMUM_PLUGIN_NAME_LENGTH: int = Field(
-        default=3, description="Minimum plugin name length",
+        default=3,
+        description="Minimum plugin name length",
     )
 
     # Email Constants
     EMAIL_LOCAL_PART_MAX_LENGTH: int = Field(
-        default=64, description="Maximum email local part length (RFC 5321)",
+        default=64,
+        description="Maximum email local part length (RFC 5321)",
     )
     EMAIL_DOMAIN_MAX_LENGTH: int = Field(
-        default=255, description="Maximum email domain length (RFC 5321)",
+        default=255,
+        description="Maximum email domain length (RFC 5321)",
     )
 
     # Data Processing Constants
     THOUSAND_THRESHOLD: int = Field(
-        default=1000, description="Threshold for thousand formatting",
+        default=1000,
+        description="Threshold for thousand formatting",
     )
     MILLION_THRESHOLD: int = Field(
-        default=1000000, description="Threshold for million formatting",
+        default=1000000,
+        description="Threshold for million formatting",
     )
     BILLION_THRESHOLD: int = Field(
-        default=1000000000, description="Threshold for billion formatting",
+        default=1000000000,
+        description="Threshold for billion formatting",
     )
 
     # Batch Processing Constants
     MIN_BATCH_SIZE: int = Field(
-        default=10, description="Minimum recommended batch size",
+        default=10,
+        description="Minimum recommended batch size",
     )
     MAX_BATCH_SIZE: int = Field(
-        default=5000, description="Maximum recommended batch size",
+        default=5000,
+        description="Maximum recommended batch size",
     )
     OPTIMAL_BATCH_MIN: int = Field(
-        default=100, description="Optimal batch size minimum",
+        default=100,
+        description="Optimal batch size minimum",
     )
     OPTIMAL_BATCH_MAX: int = Field(
-        default=1000, description="Optimal batch size maximum",
+        default=1000,
+        description="Optimal batch size maximum",
     )
     MEDIUM_BATCH_SIZE: int = Field(
-        default=500, description="Medium batch size for processing",
+        default=500,
+        description="Medium batch size for processing",
     )
     LARGE_DATASET_THRESHOLD: int = Field(
-        default=100000, description="Threshold for large dataset processing",
+        default=100000,
+        description="Threshold for large dataset processing",
     )
 
     # Scheduler and Task Constants - ZERO TOLERANCE MAXIMUM STRENGTH
@@ -654,43 +781,54 @@ class BusinessDomainConstants(BaseModel):
         description="Scheduler misfire grace time (5 minutes)",
     )
     CPU_MONITORING_INTERVAL_SECONDS: float = Field(
-        default=1.0, description="CPU usage monitoring interval",
+        default=1.0,
+        description="CPU usage monitoring interval",
     )
     PIPELINE_CANCELLATION_TIMEOUT_SECONDS: float = Field(
-        default=30.0, description="Pipeline cancellation timeout",
+        default=30.0,
+        description="Pipeline cancellation timeout",
     )
     CELERY_TIMEOUT_BUFFER_SECONDS: int = Field(
-        default=60, description="Celery task timeout buffer",
+        default=60,
+        description="Celery task timeout buffer",
     )
     LOGIN_TIMEOUT_SECONDS: float = Field(
-        default=30.0, description="User login operation timeout",
+        default=30.0,
+        description="User login operation timeout",
     )
 
     # E2E Testing and Health Thresholds - MAXIMUM STRICT
     INFRASTRUCTURE_READINESS_THRESHOLD: int = Field(
-        default=5, description="Minimum infrastructure readiness",
+        default=5,
+        description="Minimum infrastructure readiness",
     )
     UNHEALTHY_SUCCESS_RATE_THRESHOLD: int = Field(
-        default=80, description="Unhealthy success rate threshold percentage",
+        default=80,
+        description="Unhealthy success rate threshold percentage",
     )
 
     # Log Processing and Pagination - ZERO TOLERANCE
     MAX_LOG_LINES_PER_PAGE: int = Field(
-        default=50, description="Maximum log lines per page",
+        default=50,
+        description="Maximum log lines per page",
     )
     SCHEDULE_CALCULATION_MULTIPLIER: int = Field(
-        default=2, description="Schedule calculation multiplier",
+        default=2,
+        description="Schedule calculation multiplier",
     )
     DEFAULT_BCRYPT_ROUNDS: int = Field(
-        default=12, description="Default bcrypt hashing rounds",
+        default=12,
+        description="Default bcrypt hashing rounds",
     )
     CELERY_MAX_CONNECTION_RETRIES: int = Field(
-        default=10, description="Maximum Celery broker connection retries",
+        default=10,
+        description="Maximum Celery broker connection retries",
     )
 
     # Security Audit and Compliance - ULTIMATE STRENGTH
     AUDIT_WINDOW_HOURS: int = Field(
-        default=1, description="Security audit window duration in hours",
+        default=1,
+        description="Security audit window duration in hours",
     )
 
 
@@ -727,10 +865,12 @@ class NetworkConfiguration(BaseModel):
         description="gRPC service host address - secure localhost default",
     )
     database_host: str = Field(
-        default="localhost", description="Database service host address",
+        default="localhost",
+        description="Database service host address",
     )
     redis_host: str = Field(
-        default="localhost", description="Redis service host address",
+        default="localhost",
+        description="Redis service host address",
     )
 
     # Service Ports - CONSOLIDATED FROM unified_constants.py with environment override support
@@ -779,13 +919,19 @@ class NetworkConfiguration(BaseModel):
 
     # Redis Configuration - with strict validation
     redis_database_index: NonNegativeInt = Field(
-        default=0, ge=0, description="Default Redis database index",
+        default=0,
+        ge=0,
+        description="Default Redis database index",
     )
     celery_broker_db: NonNegativeInt = Field(
-        default=1, ge=0, description="Celery broker Redis database",
+        default=1,
+        ge=0,
+        description="Celery broker Redis database",
     )
     celery_result_db: NonNegativeInt = Field(
-        default=2, ge=0, description="Celery result Redis database",
+        default=2,
+        ge=0,
+        description="Celery result Redis database",
     )
 
     # Network Limits and Timeouts - CONSOLIDATED FROM unified_constants.py
@@ -829,10 +975,12 @@ class NetworkConfiguration(BaseModel):
         description="Connection retry timeout (CONNECTION_RETRY_TIMEOUT_SECONDS)",
     )
     max_request_size_mb: FileSizeMB = Field(
-        default=50, description="Maximum request size (MAX_REQUEST_SIZE_MB)",
+        default=50,
+        description="Maximum request size (MAX_REQUEST_SIZE_MB)",
     )
     max_upload_size_mb: FileSizeMB = Field(
-        default=100, description="Maximum upload size (MAX_UPLOAD_SIZE_MB)",
+        default=100,
+        description="Maximum upload size (MAX_UPLOAD_SIZE_MB)",
     )
 
     # gRPC Configuration - ZERO TOLERANCE UNIFIED CONFIGURATION
@@ -926,62 +1074,78 @@ class SecurityConfiguration(BaseModel):
     # JWT Configuration
     jwt_algorithm: str = Field(default="HS256", description="JWT signing algorithm")
     jwt_access_token_expire_minutes: PositiveInt = Field(
-        default=30, description="Access token lifetime",
+        default=30,
+        description="Access token lifetime",
     )
     jwt_refresh_token_expire_days: PositiveInt = Field(
-        default=7, description="Refresh token lifetime",
+        default=7,
+        description="Refresh token lifetime",
     )
 
     # Password Policy
     password_min_length: PositiveInt = Field(
-        default=8, description="Minimum password length",
+        default=8,
+        description="Minimum password length",
     )
     password_max_length: PositiveInt = Field(
-        default=128, description="Maximum password length",
+        default=128,
+        description="Maximum password length",
     )
     bcrypt_rounds: PositiveInt = Field(default=12, description="BCrypt hashing rounds")
 
     # Session Management
     session_timeout_minutes: PositiveInt = Field(
-        default=480, description="Session timeout (8 hours)",
+        default=480,
+        description="Session timeout (8 hours)",
     )
     max_login_attempts: PositiveInt = Field(
-        default=5, description="Maximum login attempts",
+        default=5,
+        description="Maximum login attempts",
     )
     account_lockout_minutes: PositiveInt = Field(
-        default=15, description="Account lockout duration",
+        default=15,
+        description="Account lockout duration",
     )
     default_session_timeout_hours: PositiveInt = Field(
-        default=24, description="Default session timeout in hours",
+        default=24,
+        description="Default session timeout in hours",
     )
     maximum_concurrent_sessions: PositiveInt = Field(
-        default=5, description="Maximum concurrent sessions per user",
+        default=5,
+        description="Maximum concurrent sessions per user",
     )
     session_cleanup_interval_minutes: PositiveInt = Field(
-        default=30, description="Session cleanup interval in minutes",
+        default=30,
+        description="Session cleanup interval in minutes",
     )
 
     # API Security
     api_rate_limit_per_minute: PositiveInt = Field(
-        default=100, description="API rate limit",
+        default=100,
+        description="API rate limit",
     )
     api_burst_limit: PositiveInt = Field(default=20, description="API burst limit")
     default_rate_limit: PositiveInt = Field(
-        default=100, description="Default rate limit fallback",
+        default=100,
+        description="Default rate limit fallback",
     )
     default_rate_window: PositiveInt = Field(
-        default=60, description="Default rate window fallback (seconds)",
+        default=60,
+        description="Default rate window fallback (seconds)",
     )
     cors_max_age_seconds: PositiveInt = Field(
-        default=3600, description="CORS preflight cache duration",
+        default=3600,
+        description="CORS preflight cache duration",
     )
 
     # HTTP Security Headers - with strict validation
     hsts_max_age_seconds: PositiveInt = Field(
-        default=31536000, description="HSTS max-age (1 year)",
+        default=31536000,
+        description="HSTS max-age (1 year)",
     )
     hsts_include_subdomains: bool = Field(
-        default=True, description="HSTS include subdomains",
+        default=True,
+        description="HSTS include subdomains",
     )
     hsts_preload: bool = Field(default=True, description="HSTS preload")
 
@@ -1019,27 +1183,33 @@ class DatabaseConfiguration(BaseModel):
 
     # Database Connection - Support both url and database_url for compatibility
     url: str = Field(
-        default="sqlite:///./flext_enterprise.db", description="Database URL",
+        default="sqlite:///./flext_enterprise.db",
+        description="Database URL",
     )
     pool_size: PositiveInt = Field(default=20, description="Connection pool size")
     max_overflow: NonNegativeInt = Field(
-        default=0, description="Pool overflow connections",
+        default=0,
+        description="Pool overflow connections",
     )
     pool_timeout: TimeoutSeconds = Field(
-        default=30.0, description="Pool checkout timeout",
+        default=30.0,
+        description="Pool checkout timeout",
     )
     pool_recycle: PositiveInt = Field(
-        default=3600, description="Connection recycle time",
+        default=3600,
+        description="Connection recycle time",
     )
     echo: bool = Field(default=False, description="Enable SQLAlchemy echo logging")
 
     # Query Configuration
     default_page_size: PositiveInt = Field(
-        default=20, description="Default pagination size",
+        default=20,
+        description="Default pagination size",
     )
     max_page_size: PositiveInt = Field(default=1000, description="Maximum page size")
     query_timeout: TimeoutSeconds = Field(
-        default=30.0, description="Query execution timeout",
+        default=30.0,
+        description="Query execution timeout",
     )
 
     @field_validator("url")
@@ -1087,16 +1257,23 @@ class MeltanoConfiguration(BaseModel):
 
     # Processing Configuration
     processing_mode: Literal[
-        "sequential", "parallel", "distributed", "microservices",
+        "sequential",
+        "parallel",
+        "distributed",
+        "microservices",
     ] = Field(
         default="parallel",
         description="Pipeline processing mode",
     )
     max_workers: PositiveInt = Field(
-        default=4, gt=0, description="Maximum worker processes",
+        default=4,
+        gt=0,
+        description="Maximum worker processes",
     )
     max_concurrent_pipelines: PositiveInt = Field(
-        default=10, gt=0, description="Concurrent pipeline limit",
+        default=10,
+        gt=0,
+        description="Concurrent pipeline limit",
     )
 
     # Timeouts and Limits
@@ -1107,46 +1284,59 @@ class MeltanoConfiguration(BaseModel):
         description="Pipeline execution timeout",
     )
     step_timeout_seconds: TimeoutSeconds = Field(
-        default=1800.0, gt=0, le=3600, description="Step execution timeout",
+        default=1800.0,
+        gt=0,
+        le=3600,
+        description="Step execution timeout",
     )
     health_check_interval: PositiveInt = Field(
-        default=30, description="Health check interval",
+        default=30,
+        description="Health check interval",
     )
 
     # Circuit Breaker
     circuit_breaker_failure_threshold: PositiveInt = Field(
-        default=5, description="Failure threshold",
+        default=5,
+        description="Failure threshold",
     )
     circuit_breaker_timeout_seconds: PositiveInt = Field(
-        default=60, description="Circuit breaker timeout",
+        default=60,
+        description="Circuit breaker timeout",
     )
     max_retry_attempts: PositiveInt = Field(
-        default=3, description="Maximum retry attempts",
+        default=3,
+        description="Maximum retry attempts",
     )
 
     # Kubernetes Configuration (when backend="kubernetes")
     kubernetes_namespace: str | None = Field(
-        default=None, description="Kubernetes namespace",
+        default=None,
+        description="Kubernetes namespace",
     )
     kubernetes_image: str | None = Field(default=None, description="Container image")
     kubernetes_service_account: str | None = Field(
-        default=None, description="Service account",
+        default=None,
+        description="Service account",
     )
 
     # Microservices Configuration
     service_discovery_url: str | None = Field(
-        default=None, description="Service discovery URL",
+        default=None,
+        description="Service discovery URL",
     )
     load_balancer_enabled: bool = Field(
-        default=False, description="Load balancer enabled",
+        default=False,
+        description="Load balancer enabled",
     )
     circuit_breaker_enabled: bool = Field(
-        default=True, description="Circuit breaker enabled",
+        default=True,
+        description="Circuit breaker enabled",
     )
 
     # Celery Configuration - with strict validation
     celery_timeout_minutes: PositiveInt = Field(
-        default=30, description="Celery task timeout in minutes",
+        default=30,
+        description="Celery task timeout in minutes",
     )
 
     @model_validator(mode="after")
@@ -1194,28 +1384,35 @@ class MonitoringConfiguration(BaseModel):
         description="Log format",
     )
     log_file_max_size_mb: PositiveInt = Field(
-        default=100, description="Log file size limit",
+        default=100,
+        description="Log file size limit",
     )
     max_log_file_size_mb: PositiveInt = Field(
-        default=100, description="Maximum log file size (alias)",
+        default=100,
+        description="Maximum log file size (alias)",
     )
     log_file_backup_count: PositiveInt = Field(
-        default=10, description="Number of backup log files",
+        default=10,
+        description="Number of backup log files",
     )
     log_retention_days: PositiveInt = Field(
-        default=30, description="Log retention period",
+        default=30,
+        description="Log retention period",
     )
 
     # Metrics Configuration
     metrics_enabled: bool = Field(default=True, description="Enable metrics collection")
     metrics_interval_seconds: PositiveInt = Field(
-        default=60, description="Metrics collection interval",
+        default=60,
+        description="Metrics collection interval",
     )
     health_check_timeout: TimeoutSeconds = Field(
-        default=5.0, description="Health check timeout",
+        default=5.0,
+        description="Health check timeout",
     )
     heartbeat_interval_seconds: PositiveInt = Field(
-        default=300, description="Health check heartbeat interval",
+        default=300,
+        description="Health check heartbeat interval",
     )
 
     # OpenTelemetry Configuration - with strict validation
@@ -1226,19 +1423,24 @@ class MonitoringConfiguration(BaseModel):
 
     # Performance Monitoring
     max_memory_usage_percent: PercentageValue = Field(
-        default=90.0, description="Memory usage threshold",
+        default=90.0,
+        description="Memory usage threshold",
     )
     max_cpu_usage_percent: PercentageValue = Field(
-        default=90.0, description="CPU usage threshold",
+        default=90.0,
+        description="CPU usage threshold",
     )
     max_disk_usage_percent: PercentageValue = Field(
-        default=90.0, description="Disk usage threshold",
+        default=90.0,
+        description="Disk usage threshold",
     )
     gc_collection_threshold: PositiveInt = Field(
-        default=700, description="GC collection threshold",
+        default=700,
+        description="GC collection threshold",
     )
     profiling_enabled: bool = Field(
-        default=False, description="Enable performance profiling",
+        default=False,
+        description="Enable performance profiling",
     )
 
 
@@ -1281,13 +1483,15 @@ class NotificationConfiguration(BaseModel):
     )
     smtp_from: str | None = Field(
         default_factory=lambda: os.environ.get(
-            "FLX_SMTP_FROM", "noreply@flext-enterprise.com",
+            "FLX_SMTP_FROM",
+            "noreply@flext-enterprise.com",
         ),
         description="Email sender address",
     )
     notification_email: str | None = Field(
         default_factory=lambda: os.environ.get(
-            "FLX_NOTIFICATION_EMAIL", "REDACTED_LDAP_BIND_PASSWORD@flext-enterprise.com",
+            "FLX_NOTIFICATION_EMAIL",
+            "REDACTED_LDAP_BIND_PASSWORD@flext-enterprise.com",
         ),
         description="Default notification recipient email",
     )
@@ -1307,7 +1511,8 @@ class ExternalSystemConfiguration(BaseModel):
     # Oracle OIC Integration
     oracle_oic_host: str = Field(
         default_factory=lambda: os.environ.get(
-            "FLX_ORACLE_OIC_HOST", DEFAULT_ORACLE_HOST,
+            "FLX_ORACLE_OIC_HOST",
+            DEFAULT_ORACLE_HOST,
         ),
         description="Oracle OIC hostname",
     )
@@ -1440,25 +1645,31 @@ class FlextDomainConfiguration(BaseModel):
 
     # Environment Configuration
     environment: EnvironmentType = Field(
-        default="development", description="Application environment",
+        default="development",
+        description="Application environment",
     )
     debug: bool = Field(default=False, description="Debug mode enabled")
     instance_id: str = Field(
-        default_factory=lambda: os.urandom(16).hex(), description="Unique instance ID",
+        default_factory=lambda: os.urandom(16).hex(),
+        description="Unique instance ID",
     )
 
     # Domain Configuration Components
     network: NetworkConfiguration = Field(
-        default_factory=NetworkConfiguration, description="Network configuration",
+        default_factory=NetworkConfiguration,
+        description="Network configuration",
     )
     security: SecurityConfiguration = Field(
-        default_factory=SecurityConfiguration, description="Security configuration",
+        default_factory=SecurityConfiguration,
+        description="Security configuration",
     )
     database: DatabaseConfiguration = Field(
-        default_factory=DatabaseConfiguration, description="Database configuration",
+        default_factory=DatabaseConfiguration,
+        description="Database configuration",
     )
     meltano: MeltanoConfiguration = Field(
-        default_factory=MeltanoConfiguration, description="Meltano configuration",
+        default_factory=MeltanoConfiguration,
+        description="Meltano configuration",
     )
     monitoring: MonitoringConfiguration = Field(
         default_factory=MonitoringConfiguration,
@@ -1544,10 +1755,12 @@ class FlextSecretConfiguration(BaseModel):
     )
     jwt_algorithm: str = Field(default="HS256", description="JWT signing algorithm")
     jwt_access_token_expire_minutes: PositiveInt = Field(
-        default=30, description="Access token lifetime in minutes",
+        default=30,
+        description="Access token lifetime in minutes",
     )
     jwt_refresh_token_expire_days: PositiveInt = Field(
-        default=7, description="Refresh token lifetime in days",
+        default=7,
+        description="Refresh token lifetime in days",
     )
 
     # Application Secret Keys
@@ -1602,25 +1815,31 @@ class FlextConfiguration(BaseSettings):
 
     # Environment Configuration
     environment: EnvironmentType = Field(
-        default="development", description="Application environment",
+        default="development",
+        description="Application environment",
     )
     debug: bool = Field(default=False, description="Debug mode enabled")
     instance_id: str = Field(
-        default_factory=lambda: os.urandom(16).hex(), description="Unique instance ID",
+        default_factory=lambda: os.urandom(16).hex(),
+        description="Unique instance ID",
     )
 
     # Domain Configuration Components - consistent architecture
     network: NetworkConfiguration = Field(
-        default_factory=NetworkConfiguration, description="Network configuration",
+        default_factory=NetworkConfiguration,
+        description="Network configuration",
     )
     security: SecurityConfiguration = Field(
-        default_factory=SecurityConfiguration, description="Security configuration",
+        default_factory=SecurityConfiguration,
+        description="Security configuration",
     )
     database: DatabaseConfiguration = Field(
-        default_factory=DatabaseConfiguration, description="Database configuration",
+        default_factory=DatabaseConfiguration,
+        description="Database configuration",
     )
     meltano: MeltanoConfiguration = Field(
-        default_factory=MeltanoConfiguration, description="Meltano configuration",
+        default_factory=MeltanoConfiguration,
+        description="Meltano configuration",
     )
     monitoring: MonitoringConfiguration = Field(
         default_factory=MonitoringConfiguration,
@@ -1631,7 +1850,8 @@ class FlextConfiguration(BaseSettings):
         description="Notification service configuration",
     )
     secrets: FlextSecretConfiguration = Field(
-        default_factory=FlextSecretConfiguration, description="Secret management",
+        default_factory=FlextSecretConfiguration,
+        description="Secret management",
     )
     business: BusinessDomainConstants = Field(
         default_factory=BusinessDomainConstants,
@@ -1658,7 +1878,8 @@ class FlextConfiguration(BaseSettings):
             or "MELTANO_PROJECT_ROOT" in os.environ
         ):
             meltano_root = os.environ.get(
-                "FLX_MELTANO_PROJECT_ROOT", os.environ.get("MELTANO_PROJECT_ROOT"),
+                "FLX_MELTANO_PROJECT_ROOT",
+                os.environ.get("MELTANO_PROJECT_ROOT"),
             )
             if meltano_root:
                 meltano_config = MeltanoConfiguration(project_root=Path(meltano_root))

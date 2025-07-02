@@ -20,8 +20,8 @@ from flx_core.config.domain_config import get_domain_constants
 _constants = get_domain_constants()
 
 # Python 3.13 type aliases for enterprise domains
-type ConfigurationKey = str
-type ConfigurationValue = str | int | bool | float | None
+ConfigurationKey = str
+ConfigurationValue = str | int | bool | float | None
 
 
 # === NETWORK AND CONNECTION TYPES ===

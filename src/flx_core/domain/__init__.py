@@ -1,6 +1,6 @@
 """Domain model for the FLX platform."""
 
-from flx_core.entities import (
+from flx_core.domain.entities import (
     ExecutionId,
     Pipeline,
     PipelineExecution,
@@ -10,7 +10,7 @@ from flx_core.entities import (
     Plugin,
     PluginId,
 )
-from flx_core.value_objects import ExecutionStatus
+from flx_core.domain.value_objects import ExecutionStatus
 
 __all__ = [
     "ExecutionId",

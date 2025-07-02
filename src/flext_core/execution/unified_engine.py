@@ -15,7 +15,10 @@ from flext_core.domain.entities import PipelineExecution
 from flext_core.domain.value_objects import ExecutionStatus
 
 # Type definitions
-CommandType = TypeVar("CommandType", bound=ExecutePipelineCommand | CreatePipelineCommand | UpdatePipelineCommand)
+CommandType = TypeVar(
+    "CommandType",
+    bound=ExecutePipelineCommand | CreatePipelineCommand | UpdatePipelineCommand,
+)
 
 
 class OutputMode(Enum):

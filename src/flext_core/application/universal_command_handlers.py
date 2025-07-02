@@ -38,10 +38,10 @@ TEN = 10
 
 logger = get_logger(__name__)
 # Python 3.13 type aliases
-type CommandID = str
-type CommandResult = ServiceResult[Any]
-type HandlerResult = ServiceResult[dict[str, Any]]
-type ExecutionContext = dict[str, Any]
+CommandID = str
+CommandResult = ServiceResult[Any]
+HandlerResult = ServiceResult[dict[str, Any]]
+ExecutionContext = dict[str, Any]
 
 
 class CommandMetadata(BaseModel):
@@ -53,7 +53,8 @@ class CommandMetadata(BaseModel):
     timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
     user_id: str | None = Field(default=None, description="User executing command")
     correlation_id: str | None = Field(
-        default=None, description="Correlation ID for tracing",
+        default=None,
+        description="Correlation ID for tracing",
     )
     priority: int = Field(
         default=DEFAULT_THRESHOLD,
@@ -109,7 +110,9 @@ class CommandHandler(Protocol):
     """Protocol for command handlers."""
 
     async def handle(
-        self, command: Command, context: ExecutionContext,
+        self,
+        command: Command,
+        context: ExecutionContext,
     ) -> CommandResult:
         """Method implementation."""
         ...
@@ -162,7 +165,9 @@ class BaseCommandHandler:
         self.logger = get_logger(self.__class__.__name__)
 
     async def handle(
-        self, command: Command, context: ExecutionContext,
+        self,
+        command: Command,
+        context: ExecutionContext,
     ) -> CommandResult:
         """Method implementation."""
         command_type = command.get_command_type()
@@ -189,7 +194,8 @@ class BaseCommandHandler:
             self.logger.exception("Command execution failed")
             return ServiceResult.fail(
                 ServiceError(
-                    "COMMAND_EXECUTION_ERROR", f"Command execution failed: {e}",
+                    "COMMAND_EXECUTION_ERROR",
+                    f"Command execution failed: {e}",
                 ),
             )
 
@@ -203,7 +209,9 @@ class BaseCommandHandler:
         return command.validate()
 
     async def _execute_command(
-        self, command: Command, context: ExecutionContext,
+        self,
+        command: Command,
+        context: ExecutionContext,
     ) -> CommandResult:
         """Method implementation."""
         return ServiceResult.fail(
@@ -254,7 +262,9 @@ class UniversalCommandProcessor:
             )
 
     async def execute_command(
-        self, command: Command, context: ExecutionContext | None = None,
+        self,
+        command: Command,
+        context: ExecutionContext | None = None,
     ) -> CommandExecutionResult:
         """Method implementation."""
         start_time = datetime.now(UTC)
@@ -356,7 +366,9 @@ class UniversalCommandProcessor:
             return execution_result
 
     async def _execute_with_handler(
-        self, command: Command, context: ExecutionContext,
+        self,
+        command: Command,
+        context: ExecutionContext,
     ) -> CommandResult:
         """Method implementation."""
         command_type = command.get_command_type()
@@ -388,7 +400,9 @@ class UniversalCommandProcessor:
         )
 
     def get_command_history(
-        self, limit: int = DEFAULT_THRESHOLD, command_type: str | None = None,
+        self,
+        limit: int = DEFAULT_THRESHOLD,
+        command_type: str | None = None,
     ) -> list[CommandExecutionResult]:
         """Method implementation."""
         history = self.command_history
@@ -587,12 +601,16 @@ class PipelineCommandHandler(BaseCommandHandler):
         )
 
     async def _execute_command(  # noqa: PLR0911
-        self, command: Command, context: ExecutionContext,
+        self,
+        command: Command,
+        context: ExecutionContext,
     ) -> CommandResult:
         """Method implementation."""
         command_type = command.get_command_type()
         command_data = command.get_command_data()
-        self.logger.info("Executing pipeline command", extra={"command_type": command_type})
+        self.logger.info(
+            "Executing pipeline command", extra={"command_type": command_type}
+        )
         try:
             if command_type == "pipeline.create":
                 return await self._create_pipeline(command_data, context)
@@ -618,7 +636,9 @@ class PipelineCommandHandler(BaseCommandHandler):
             )
 
     async def _create_pipeline(
-        self, data: dict[str, Any], context: ExecutionContext,
+        self,
+        data: dict[str, Any],
+        context: ExecutionContext,
     ) -> CommandResult:
         """Method implementation."""
         # Implementation would integrate with actual pipeline service
@@ -634,7 +654,9 @@ class PipelineCommandHandler(BaseCommandHandler):
         return ServiceResult.ok(result)
 
     async def _update_pipeline(
-        self, data: dict[str, Any], context: ExecutionContext,
+        self,
+        data: dict[str, Any],
+        context: ExecutionContext,
     ) -> CommandResult:
         """Method implementation."""
         pipeline_id = data.get("pipeline_id")
@@ -652,7 +674,9 @@ class PipelineCommandHandler(BaseCommandHandler):
         return ServiceResult.ok(result)
 
     async def _delete_pipeline(
-        self, data: dict[str, Any], context: ExecutionContext,
+        self,
+        data: dict[str, Any],
+        context: ExecutionContext,
     ) -> CommandResult:
         """Method implementation."""
         pipeline_id = data.get("pipeline_id")
@@ -669,7 +693,9 @@ class PipelineCommandHandler(BaseCommandHandler):
         return ServiceResult.ok(result)
 
     async def _execute_pipeline(
-        self, data: dict[str, Any], context: ExecutionContext,
+        self,
+        data: dict[str, Any],
+        context: ExecutionContext,
     ) -> CommandResult:
         """Method implementation."""
         pipeline_id = data.get("pipeline_id")
@@ -694,7 +720,9 @@ class PipelineCommandHandler(BaseCommandHandler):
         return ServiceResult.ok(result)
 
     async def _list_pipelines(
-        self, data: dict[str, Any], context: ExecutionContext,
+        self,
+        data: dict[str, Any],
+        context: ExecutionContext,
     ) -> CommandResult:
         """Method implementation."""
         limit = data.get("limit", TEN)
@@ -719,7 +747,9 @@ class PipelineCommandHandler(BaseCommandHandler):
         return ServiceResult.ok(result)
 
     async def _get_pipeline(
-        self, data: dict[str, Any], context: ExecutionContext,
+        self,
+        data: dict[str, Any],
+        context: ExecutionContext,
     ) -> CommandResult:
         """Method implementation."""
         pipeline_id = data.get("pipeline_id")
@@ -763,12 +793,16 @@ class PluginCommandHandler(BaseCommandHandler):
         )
 
     async def _execute_command(  # noqa: PLR0911
-        self, command: Command, context: ExecutionContext,
+        self,
+        command: Command,
+        context: ExecutionContext,
     ) -> CommandResult:
         """Method implementation."""
         command_type = command.get_command_type()
         command_data = command.get_command_data()
-        self.logger.info("Executing plugin command", extra={"command_type": command_type})
+        self.logger.info(
+            "Executing plugin command", extra={"command_type": command_type}
+        )
         try:
             if command_type == "plugin.install":
                 return await self._install_plugin(command_data, context)
@@ -796,14 +830,17 @@ class PluginCommandHandler(BaseCommandHandler):
             )
 
     async def _install_plugin(
-        self, data: dict[str, Any], context: ExecutionContext,
+        self,
+        data: dict[str, Any],
+        context: ExecutionContext,
     ) -> CommandResult:
         """Method implementation."""
         plugin_name = data.get("plugin_name")
         if not plugin_name:
             return ServiceResult.fail(
                 ServiceError(
-                    "INVALID_INPUT", "Plugin name is required for installation",
+                    "INVALID_INPUT",
+                    "Plugin name is required for installation",
                 ),
             )
         # Simulate plugin installation
@@ -819,14 +856,17 @@ class PluginCommandHandler(BaseCommandHandler):
         return ServiceResult.ok(result)
 
     async def _uninstall_plugin(
-        self, data: dict[str, Any], context: ExecutionContext,
+        self,
+        data: dict[str, Any],
+        context: ExecutionContext,
     ) -> CommandResult:
         """Method implementation."""
         plugin_id = data.get("plugin_id")
         if not plugin_id:
             return ServiceResult.fail(
                 ServiceError(
-                    "INVALID_INPUT", "Plugin ID is required for uninstallation",
+                    "INVALID_INPUT",
+                    "Plugin ID is required for uninstallation",
                 ),
             )
         result = {
@@ -838,7 +878,9 @@ class PluginCommandHandler(BaseCommandHandler):
         return ServiceResult.ok(result)
 
     async def _list_plugins(
-        self, data: dict[str, Any], context: ExecutionContext,
+        self,
+        data: dict[str, Any],
+        context: ExecutionContext,
     ) -> CommandResult:
         """Method implementation."""
         # Simulate plugin listing
@@ -860,7 +902,9 @@ class PluginCommandHandler(BaseCommandHandler):
         return ServiceResult.ok(result)
 
     async def _get_plugin(
-        self, data: dict[str, Any], context: ExecutionContext,
+        self,
+        data: dict[str, Any],
+        context: ExecutionContext,
     ) -> CommandResult:
         """Method implementation."""
         plugin_id = data.get("plugin_id")
@@ -885,14 +929,18 @@ class PluginCommandHandler(BaseCommandHandler):
         return ServiceResult.ok(result)
 
     async def _configure_plugin(
-        self, data: dict[str, Any], context: ExecutionContext,
+        self,
+        data: dict[str, Any],
+        context: ExecutionContext,
     ) -> CommandResult:
         """Method implementation."""
         plugin_id = data.get("plugin_id")
         configuration = data.get("configuration", {})
         if not plugin_id:
             return ServiceResult.fail(
-                ServiceError("INVALID_INPUT", "Plugin ID is required for configuration"),
+                ServiceError(
+                    "INVALID_INPUT", "Plugin ID is required for configuration"
+                ),
             )
         result = {
             "plugin_id": plugin_id,
@@ -904,7 +952,9 @@ class PluginCommandHandler(BaseCommandHandler):
         return ServiceResult.ok(result)
 
     async def _enable_plugin(
-        self, data: dict[str, Any], context: ExecutionContext,
+        self,
+        data: dict[str, Any],
+        context: ExecutionContext,
     ) -> CommandResult:
         """Method implementation."""
         plugin_id = data.get("plugin_id")
@@ -921,7 +971,9 @@ class PluginCommandHandler(BaseCommandHandler):
         return ServiceResult.ok(result)
 
     async def _disable_plugin(
-        self, data: dict[str, Any], context: ExecutionContext,
+        self,
+        data: dict[str, Any],
+        context: ExecutionContext,
     ) -> CommandResult:
         """Method implementation."""
         plugin_id = data.get("plugin_id")

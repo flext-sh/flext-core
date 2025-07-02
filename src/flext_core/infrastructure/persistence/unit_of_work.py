@@ -7,7 +7,7 @@ Dependency Inversion and Single Responsibility Principles.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     import types
@@ -61,9 +61,9 @@ class UnitOfWork(UnitOfWorkInterface):
         self._plugins: RepositoryInterface | None = None
         self._roles: RepositoryInterface | None = None
         self._event_bus = None
-        self._entities_with_events: list[object] = (
-            []
-        )  # Track entities with domain events
+        self._entities_with_events: list[
+            object
+        ] = []  # Track entities with domain events
 
     @property
     def pipelines(self) -> RepositoryInterface:
@@ -134,16 +134,14 @@ class UnitOfWork(UnitOfWorkInterface):
         if not self._transaction_managed_externally:
             await self.session.rollback()
 
-    def get_repository[
-        TEntity: EntityInterface, TModel,
-    ](
+    def get_repository(
         self,
-        entity_class: type[TEntity],
-        model_class: type[TModel],
+        entity_class: type[Any],
+        model_class: type[Any],
         id_field: str = "id",
-    ) -> RepositoryInterface[TEntity, EntityId]:
+    ) -> Any:
         """Create and return a domain-specific repository."""
-        repository: RepositoryInterface[TEntity, EntityId] = DomainSpecificRepository(  # type: ignore[type-var,assignment]
+        repository: Any = DomainSpecificRepository(
             session=self.session,
             entity_class=entity_class,  # type: ignore[arg-type]
             model_class=model_class,

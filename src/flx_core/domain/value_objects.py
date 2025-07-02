@@ -14,19 +14,22 @@ from uuid import UUID, uuid4
 
 from pydantic import Field, field_validator, model_validator
 
-from flx_core.advanced_types import ConfigurationDict, ConfigurationValue
-from flx_core.pydantic_base import DomainValueObject
+from flx_core.advanced_types import (  # type: ignore[import-not-found]
+    ConfigurationDict,
+    ConfigurationValue,
+)
+from flx_core.pydantic_base import DomainValueObject  # type: ignore[import-not-found]
 
 if TYPE_CHECKING:
-    from flx_core.entities import Pipeline
+    from flx_core.entities import Pipeline  # type: ignore[import-not-found]
 
 # Constants for time conversion
 SECONDS_IN_MINUTE = 60
 SECONDS_IN_HOUR = 3600
 
 # Python 3.13 type aliases
-type StepDependencies = frozenset[str]
-type ConfigDict = ConfigurationDict
+StepDependencies = frozenset[str]
+ConfigDict = ConfigurationDict
 
 
 # ZERO TOLERANCE - Domain defaults for value objects to eliminate circular dependencies

@@ -12,14 +12,8 @@ sys.path.insert(0, str(Path(__file__).parent / "src"))
 def test_direct() -> None:
     """Direct functionality test."""
     # Test imports work
-    from typing import Any
-    from uuid import UUID
 
     from pydantic import BaseModel, ConfigDict
-
-    # Test Python 3.13 type aliases
-    type EntityId = UUID
-    type DomainEventData = dict[str, Any]
 
     # Test basic Pydantic functionality
     class TestModel(BaseModel):

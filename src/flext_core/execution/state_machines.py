@@ -37,7 +37,7 @@ class JobStateMachine:
     current_state: JobState = JobState.CREATED
     metadata: dict[str, Any] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.metadata is None:
             self.metadata = {}
 
@@ -78,16 +78,27 @@ class PipelineExecutionStateMachine:
     execution_id: str | None = None
     metadata: dict[str, Any] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.metadata is None:
             self.metadata = {}
 
     def transition_to(self, new_state: PipelineState) -> bool:
         """Transition to a new state if valid."""
         valid_transitions = {
-            PipelineState.INITIALIZED: [PipelineState.PREPARING, PipelineState.CANCELLED],
-            PipelineState.PREPARING: [PipelineState.EXECUTING, PipelineState.FAILED, PipelineState.CANCELLED],
-            PipelineState.EXECUTING: [PipelineState.FINALIZING, PipelineState.FAILED, PipelineState.CANCELLED],
+            PipelineState.INITIALIZED: [
+                PipelineState.PREPARING,
+                PipelineState.CANCELLED,
+            ],
+            PipelineState.PREPARING: [
+                PipelineState.EXECUTING,
+                PipelineState.FAILED,
+                PipelineState.CANCELLED,
+            ],
+            PipelineState.EXECUTING: [
+                PipelineState.FINALIZING,
+                PipelineState.FAILED,
+                PipelineState.CANCELLED,
+            ],
             PipelineState.FINALIZING: [PipelineState.COMPLETED, PipelineState.FAILED],
             PipelineState.COMPLETED: [],
             PipelineState.FAILED: [],
@@ -102,9 +113,20 @@ class PipelineExecutionStateMachine:
     def can_transition_to(self, state: PipelineState) -> bool:
         """Check if transition to state is valid."""
         valid_transitions = {
-            PipelineState.INITIALIZED: [PipelineState.PREPARING, PipelineState.CANCELLED],
-            PipelineState.PREPARING: [PipelineState.EXECUTING, PipelineState.FAILED, PipelineState.CANCELLED],
-            PipelineState.EXECUTING: [PipelineState.FINALIZING, PipelineState.FAILED, PipelineState.CANCELLED],
+            PipelineState.INITIALIZED: [
+                PipelineState.PREPARING,
+                PipelineState.CANCELLED,
+            ],
+            PipelineState.PREPARING: [
+                PipelineState.EXECUTING,
+                PipelineState.FAILED,
+                PipelineState.CANCELLED,
+            ],
+            PipelineState.EXECUTING: [
+                PipelineState.FINALIZING,
+                PipelineState.FAILED,
+                PipelineState.CANCELLED,
+            ],
             PipelineState.FINALIZING: [PipelineState.COMPLETED, PipelineState.FAILED],
             PipelineState.COMPLETED: [],
             PipelineState.FAILED: [],

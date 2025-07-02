@@ -110,15 +110,15 @@ constants = get_domain_constants()
 DEGRADED_SUCCESS_RATE_THRESHOLD = 95
 
 # Python 3.13 type aliases - ZERO TOLERANCE to Any
-type HandlerResult = ServiceResult[object]
-type PipelineResult = ServiceResult[object]
-type ExecutionResult = ServiceResult[object]
-type SerializedPipeline = dict[str, Any]
-type SerializedExecution = dict[str, Any]
-type CommandObject = object
-type E2EStatus = dict[str, object]
-type ClusterStatus = dict[str, object]
-type HealthStatus = dict[str, Any]
+HandlerResult = ServiceResult[object]
+PipelineResult = ServiceResult[object]
+ExecutionResult = ServiceResult[object]
+SerializedPipeline = dict[str, Any]
+SerializedExecution = dict[str, Any]
+CommandObject = object
+E2EStatus = dict[str, object]
+ClusterStatus = dict[str, object]
+HealthStatus = dict[str, Any]
 
 
 class EnterpriseCommandHandlers:

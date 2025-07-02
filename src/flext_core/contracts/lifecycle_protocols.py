@@ -1,7 +1,7 @@
 """Lifecycle protocols for FLEXT Core."""
 
 from abc import ABC, abstractmethod
-from typing import Any, Protocol, runtime_checkable
+from typing import Any, Optional, Protocol, runtime_checkable
 
 
 @runtime_checkable
@@ -66,7 +66,12 @@ class AsyncContextManagerProtocol(Protocol):
         """Enter async context."""
         ...
 
-    async def __aexit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: object | None) -> None:
+    async def __aexit__(
+        self,
+        exc_type: Optional[type[BaseException]],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[object],
+    ) -> None:
         """Exit async context."""
         ...
 
@@ -109,7 +114,11 @@ class ServiceLifecycle(ABC):
 
 def is_initializable(obj: Any) -> bool:
     """Check if object has initialization methods."""
-    return hasattr(obj, "start") or hasattr(obj, "initialize") or hasattr(obj, "__aenter__")
+    return (
+        hasattr(obj, "start")
+        or hasattr(obj, "initialize")
+        or hasattr(obj, "__aenter__")
+    )
 
 
 def is_shutdownable(obj: Any) -> bool:

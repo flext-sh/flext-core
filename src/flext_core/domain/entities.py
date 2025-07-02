@@ -17,12 +17,14 @@ class PipelineName(BaseModel):
 
     value: str = Field(..., min_length=1, max_length=100, description="Pipeline name")
 
-    @field_validator('value')
+    @field_validator("value")
     @classmethod
-    def validate_name(cls, v):
+    def validate_name(cls, v: str) -> str:
         """Validate pipeline name format."""
-        if not v.replace('-', '').replace('_', '').replace('.', '').isalnum():
-            raise ValueError('Pipeline name must contain only alphanumeric characters, hyphens, underscores, and dots')
+        if not v.replace("-", "").replace("_", "").replace(".", "").isalnum():
+            raise ValueError(
+                "Pipeline name must contain only alphanumeric characters, hyphens, underscores, and dots"
+            )
         return v
 
     def __str__(self) -> str:
@@ -54,21 +56,33 @@ class ExecutionStatus(str, Enum):
 class Pipeline(BaseModel):
     """Core pipeline entity."""
 
-    id: PipelineId = Field(default_factory=create_pipeline_id, description="Unique pipeline identifier")
+    id: PipelineId = Field(
+        default_factory=create_pipeline_id, description="Unique pipeline identifier"
+    )
     name: PipelineName = Field(..., description="Pipeline name")
-    description: str = Field(default="", max_length=500, description="Pipeline description")
-    configuration: dict[str, Any] = Field(default_factory=dict, description="Pipeline configuration")
+    description: str = Field(
+        default="", max_length=500, description="Pipeline description"
+    )
+    configuration: dict[str, Any] = Field(
+        default_factory=dict, description="Pipeline configuration"
+    )
     tags: list[str] = Field(default_factory=list, description="Pipeline tags")
     is_active: bool = Field(default=True, description="Whether pipeline is active")
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), description="Creation timestamp")
-    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), description="Last update timestamp")
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        description="Creation timestamp",
+    )
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        description="Last update timestamp",
+    )
 
     model_config = {
         "use_enum_values": True,
         "json_encoders": {
             datetime: lambda v: v.isoformat(),
             PipelineId: str,
-        }
+        },
     }
 
     def update_configuration(self, config: dict[str, Any]) -> None:

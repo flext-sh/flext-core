@@ -56,9 +56,9 @@ if TYPE_CHECKING:
 logger = structlog.get_logger()
 
 # Python 3.13 type aliases for modern application architecture
-type ApplicationConfig = FlextConfiguration
-type ServiceFactory = object  # Service factory callable type
-type ResourceManager = object  # Resource management interface
+ApplicationConfig = FlextConfiguration
+ServiceFactory = object  # Service factory callable type
+ResourceManager = object  # Resource management interface
 
 
 class ModernFlxApplication(Application):
@@ -147,7 +147,8 @@ class ModernFlxApplication(Application):
 
     @di_inject
     def get_unit_of_work(
-        self, uow: UnitOfWork = Provide[ApplicationContainer.database.unit_of_work],
+        self,
+        uow: UnitOfWork = Provide[ApplicationContainer.database.unit_of_work],
     ) -> UnitOfWork:
         """Get unit of work instance with dependency injection."""
         return uow
@@ -481,7 +482,8 @@ class ModernFlxApplication(Application):
 
 
 def create_application(
-    name: str = "flext-enterprise-platform", config: ApplicationConfig | None = None,
+    name: str = "flext-enterprise-platform",
+    config: ApplicationConfig | None = None,
 ) -> ModernFlxApplication:
     """Create a modern FLEXT application instance.
 

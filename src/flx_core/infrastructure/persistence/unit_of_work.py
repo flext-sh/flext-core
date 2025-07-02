@@ -56,9 +56,9 @@ class UnitOfWork(UnitOfWorkInterface):
         self._plugins: RepositoryInterface | None = None
         self._roles: RepositoryInterface | None = None
         self._event_bus = None
-        self._entities_with_events: list[object] = (
-            []
-        )  # Track entities with domain events
+        self._entities_with_events: list[
+            object
+        ] = []  # Track entities with domain events
 
     @property
     def pipelines(self) -> RepositoryInterface:
@@ -129,9 +129,7 @@ class UnitOfWork(UnitOfWorkInterface):
         if not self._transaction_managed_externally:
             await self.session.rollback()
 
-    def get_repository[
-        TEntity: EntityInterface, TModel
-    ](
+    def get_repository[TEntity: EntityInterface, TModel](
         self,
         entity_class: type[TEntity],
         model_class: type[TModel],

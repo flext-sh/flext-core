@@ -25,8 +25,8 @@ from flx_core.domain.value_objects import (
 )
 
 # Python 3.13 type aliases
-type TestResult = bool
-type TestMessage = str
+TestResult = bool
+TestMessage = str
 
 # Constants
 SECONDS_IN_MINUTE = 60

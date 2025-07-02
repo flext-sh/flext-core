@@ -39,9 +39,9 @@ T = TypeVar("T")
 
 # Python 3.13 Type Aliases - with strict validation
 type HandlerResult[T] = ServiceResult[T]
-type CommandObject = object
-type HandlerMethod = Callable[[CommandObject], HandlerResult[object]]
-type ProtocolAdapter = Callable[[RequestData], CommandObject]
+CommandObject = object
+HandlerMethod = Callable[[CommandObject], HandlerResult[object]]
+ProtocolAdapter = Callable[[RequestData], CommandObject]
 
 
 class CommandProtocol:

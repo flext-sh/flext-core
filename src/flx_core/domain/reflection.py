@@ -37,13 +37,13 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
 # Python 3.13 type aliases for enterprise reflection patterns
-type DomainEvent = dict[str, str | int | float | bool | None]
-type EntityIdentity = str | UUID | int
-type ValidationTarget = object
-type ConversionTarget = object
-type ConversionResult = object
-type SpecificationTarget = object
-type DomainObject = object
+DomainEvent = dict[str, str | int | float | bool | None]
+EntityIdentity = str | UUID | int
+ValidationTarget = object
+ConversionTarget = object
+ConversionResult = object
+SpecificationTarget = object
+DomainObject = object
 
 # Generic type variables with proper constraints
 T = TypeVar("T")

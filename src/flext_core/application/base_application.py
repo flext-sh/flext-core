@@ -11,7 +11,8 @@ from flext_core.domain.advanced_types import ServiceError, ServiceResult
 from flext_core.utils.import_fallback_patterns import OptionalDependency
 
 if TYPE_CHECKING:
-    from flext_observability.monitoring.system_monitor import SystemMonitor
+    # from flext_observability.monitoring.system_monitor import SystemMonitor  # Circular dependency - moved to flext-observability
+    pass
 
 
 class BaseApplicationMixin(ABC):
@@ -133,7 +134,7 @@ class BaseApplicationMixin(ABC):
         """Handle resource exhausted event."""
 
     # Abstract methods that must be implemented by subclasses
-    def get_system_monitor(self) -> SystemMonitor | None:
+    def get_system_monitor(self) -> Any | None:
         """Get system monitor instance."""
         return getattr(self, "_monitor", None)
 

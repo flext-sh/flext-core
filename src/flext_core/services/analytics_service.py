@@ -12,7 +12,9 @@ class AnalyticsService(ABC):
         """Track an analytics event."""
 
     @abstractmethod
-    async def track_pipeline_execution(self, pipeline_id: str, execution_id: str, properties: dict[str, Any]) -> None:
+    async def track_pipeline_execution(
+        self, pipeline_id: str, execution_id: str, properties: dict[str, Any]
+    ) -> None:
         """Track pipeline execution analytics."""
 
     @abstractmethod
@@ -39,17 +41,26 @@ class DefaultAnalyticsService(AnalyticsService):
         }
         self._events.append(event)
 
-    async def track_pipeline_execution(self, pipeline_id: str, execution_id: str, properties: dict[str, Any]) -> None:
+    async def track_pipeline_execution(
+        self, pipeline_id: str, execution_id: str, properties: dict[str, Any]
+    ) -> None:
         """Track pipeline execution analytics."""
-        await self.track_event("pipeline_execution", {
-            "pipeline_id": pipeline_id,
-            "execution_id": execution_id,
-            **properties,
-        })
+        await self.track_event(
+            "pipeline_execution",
+            {
+                "pipeline_id": pipeline_id,
+                "execution_id": execution_id,
+                **properties,
+            },
+        )
 
     async def get_pipeline_metrics(self, pipeline_id: str) -> dict[str, Any]:
         """Get analytics metrics for a pipeline."""
-        pipeline_events = [e for e in self._events if e.get("properties", {}).get("pipeline_id") == pipeline_id]
+        pipeline_events = [
+            e
+            for e in self._events
+            if e.get("properties", {}).get("pipeline_id") == pipeline_id
+        ]
         return {
             "total_events": len(pipeline_events),
             "event_types": list({e["event_name"] for e in pipeline_events}),

@@ -11,7 +11,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from flx_core.domain_config import get_config, get_domain_constants
+from flx_core.config.domain_config import get_config, get_domain_constants
 
 
 def get_django_database_config() -> dict[str, Any]:

@@ -42,12 +42,14 @@ src/flx_core/
 ### Level 1: ABSOLUTE FOUNDATION - `pydantic_base.py`
 
 **Why this is most core:**
+
 - Every component inherits from classes defined here
 - Zero dependencies on other FLX components
 - Provides fundamental abstractions (DomainBaseModel, ServiceResult, etc.)
 - Removing this breaks the entire system
 
 **Verified Components:**
+
 ```python
 DomainBaseModel     # Foundation Pydantic model with enterprise config
 DomainValueObject   # Immutable value objects (frozen=True)
@@ -62,6 +64,7 @@ ServiceResult[T]    # Result pattern for operations
 **Purpose:** Fundamental types used throughout the system
 
 **Verified Components:**
+
 ```python
 DomainId           # Base identifier type
 UserId, TenantId   # Business-specific typed IDs
@@ -74,6 +77,7 @@ Python 3.13 types # Modern type aliases and protocols
 **Purpose:** Core business concepts and domain rules
 
 **Key Entities (VERIFIED):**
+
 ```python
 Pipeline           # Core aggregate root for pipeline management
 PipelineExecution  # Execution tracking entity
@@ -87,10 +91,12 @@ Duration           # Time value object with validation
 **Purpose:** Clean Architecture interfaces (Primary & Secondary ports)
 
 **Primary Ports (Driving side):**
+
 - PipelineManagementPort
 - PluginManagementPort
 
 **Secondary Ports (Driven side):**
+
 - Repository interfaces
 - EventBusPort
 - External service interfaces
@@ -100,6 +106,7 @@ Duration           # Time value object with validation
 **Purpose:** Event-driven architecture support
 
 **Features (VERIFIED):**
+
 - Lato DI integration
 - Domain event publishing/subscription
 - Async/await throughout
@@ -110,6 +117,7 @@ Duration           # Time value object with validation
 **Purpose:** Centralized, type-safe configuration
 
 **Features:**
+
 - Pydantic Settings for environment awareness
 - Business constants and domain parameters
 - Type-safe validation
@@ -119,6 +127,7 @@ Duration           # Time value object with validation
 **Purpose:** Use case orchestration and business workflows
 
 **Components:**
+
 - Command handlers for business operations
 - Domain services for complex logic
 - Application services for use case orchestration
@@ -129,6 +138,7 @@ Duration           # Time value object with validation
 **Purpose:** External system adapters
 
 **Components:**
+
 - Repository implementations
 - Database models and ORM mapping
 - Unit of work pattern
@@ -140,18 +150,19 @@ Duration           # Time value object with validation
 
 **Location**: `/src/flx_core/domain/`
 
-| File                | Purpose                             | Status         | Key Features |
-| ------------------- | ----------------------------------- | -------------- | ------------ |
-| `pydantic_base.py`  | 🏆 ABSOLUTE FOUNDATION             | ✅ Implemented | All base classes |
-| `base.py`           | Type system foundation              | ✅ Implemented | DomainId, re-exports |
-| `advanced_types.py` | Python 3.13 type system           | ✅ Implemented | ServiceResult, protocols |
-| `entities.py`       | Business entities                   | ✅ Implemented | Pipeline, PipelineExecution |
-| `value_objects.py`  | Immutable value objects            | ✅ Implemented | ExecutionStatus, Duration |
-| `ports.py`          | Clean architecture boundaries       | ✅ Implemented | Primary/secondary ports |
-| `specifications.py` | Business rule specifications        | ✅ Implemented | Domain rule encapsulation |
-| `business_types.py` | Domain-specific types              | ✅ Implemented | Business type aliases |
+| File                | Purpose                       | Status         | Key Features                |
+| ------------------- | ----------------------------- | -------------- | --------------------------- |
+| `pydantic_base.py`  | 🏆 ABSOLUTE FOUNDATION        | ✅ Implemented | All base classes            |
+| `base.py`           | Type system foundation        | ✅ Implemented | DomainId, re-exports        |
+| `advanced_types.py` | Python 3.13 type system       | ✅ Implemented | ServiceResult, protocols    |
+| `entities.py`       | Business entities             | ✅ Implemented | Pipeline, PipelineExecution |
+| `value_objects.py`  | Immutable value objects       | ✅ Implemented | ExecutionStatus, Duration   |
+| `ports.py`          | Clean architecture boundaries | ✅ Implemented | Primary/secondary ports     |
+| `specifications.py` | Business rule specifications  | ✅ Implemented | Domain rule encapsulation   |
+| `business_types.py` | Domain-specific types         | ✅ Implemented | Business type aliases       |
 
 **Architecture Excellence Verified:**
+
 - ✅ Rich domain models with business logic
 - ✅ Complete event sourcing support
 - ✅ Specification pattern implementation

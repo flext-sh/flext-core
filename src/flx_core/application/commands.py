@@ -14,9 +14,9 @@ from flx_core.domain.business_types import Username
 from flx_core.domain.pydantic_base import DomainCommand, DomainQuery
 
 # Type aliases for command identification - using domain types
-type CommandId = str  # Domain type for command identification with UUID format
-type CorrelationId = str  # Domain type for correlation tracking across requests
-type UserId = Username  # Use validated Username domain type
+CommandId = str  # Domain type for command identification with UUID format
+CorrelationId = str  # Domain type for correlation tracking across requests
+UserId = Username  # Use validated Username domain type
 
 if TYPE_CHECKING:
     from uuid import UUID

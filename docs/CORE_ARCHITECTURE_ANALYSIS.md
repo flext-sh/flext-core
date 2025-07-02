@@ -49,6 +49,7 @@ class ServiceResult[T](DomainBaseModel):
 ```
 
 #### Key Features
+
 - **Pydantic v2 Integration**: Full validation and serialization
 - **Python 3.13 Compatibility**: Modern type system support
 - **Enterprise Configuration**: Production-ready settings
@@ -61,6 +62,7 @@ class ServiceResult[T](DomainBaseModel):
 **Purpose**: Provides fundamental types and modern Python type aliases
 
 #### Core Types
+
 ```python
 # Fundamental identifier types
 DomainId = str  # Base identifier type
@@ -74,6 +76,7 @@ Duration = timedelta
 ```
 
 #### Python 3.13 Features
+
 - **Type Aliases**: Modern type definition syntax
 - **Protocols**: Runtime-checkable interfaces
 - **Generic Support**: Full generic type support
@@ -85,6 +88,7 @@ Duration = timedelta
 **Purpose**: Core business concepts and rules
 
 #### Core Entities
+
 ```python
 class Pipeline(DomainAggregateRoot):
     """Core aggregate root for pipeline management"""
@@ -109,6 +113,7 @@ class Plugin(DomainEntity):
 ```
 
 #### Value Objects
+
 ```python
 class ExecutionStatus(Enum):
     """Enumeration of pipeline execution states"""
@@ -128,6 +133,7 @@ class Duration(DomainValueObject):
 **Purpose**: Clean architecture port definitions
 
 #### Primary Ports (Driving Side)
+
 ```python
 class PipelineManagementPort(Protocol):
     """Primary port for pipeline operations"""
@@ -141,6 +147,7 @@ class PluginManagementPort(Protocol):
 ```
 
 #### Secondary Ports (Driven Side)
+
 ```python
 class PipelineRepository(Protocol):
     """Secondary port for pipeline persistence"""
@@ -159,6 +166,7 @@ class EventBusPort(Protocol):
 **Purpose**: Event-driven architecture foundation
 
 #### Key Features
+
 - **Lato Integration**: Dependency injection container with events
 - **Domain Events**: Type-safe event publishing and subscription
 - **Async Support**: Full async/await throughout
@@ -177,6 +185,7 @@ class EventBusProtocol(Protocol):
 **Purpose**: Centralized, type-safe configuration
 
 #### Features
+
 - **Pydantic Settings**: Environment-aware configuration
 - **Business Constants**: Domain-specific parameters
 - **Type Safety**: Full validation and type checking
@@ -188,6 +197,7 @@ class EventBusProtocol(Protocol):
 **Purpose**: Use case orchestration and business workflow
 
 #### Key Components
+
 - **Command Handlers**: Business operation execution
 - **Domain Services**: Complex business logic coordination
 - **Application Services**: Use case orchestration
@@ -199,6 +209,7 @@ class EventBusProtocol(Protocol):
 **Purpose**: External system integration
 
 #### Persistence Layer
+
 - **Repository Implementations**: Database integration
 - **SQLAlchemy Models**: ORM mapping layer
 - **Unit of Work**: Transaction management
@@ -229,6 +240,7 @@ Foundation (pydantic_base.py)
 ## Architectural Patterns Implementation
 
 ### Domain-Driven Design (DDD)
+
 - **✅ Aggregates**: Pipeline as primary aggregate root
 - **✅ Entities**: PipelineExecution, Plugin with identity
 - **✅ Value Objects**: ExecutionStatus, Duration with business rules
@@ -237,6 +249,7 @@ Foundation (pydantic_base.py)
 - **✅ Repositories**: Data access abstraction
 
 ### Clean Architecture (Hexagonal)
+
 - **✅ Primary Ports**: Business logic interfaces (driving side)
 - **✅ Secondary Ports**: Infrastructure interfaces (driven side)
 - **✅ Dependency Inversion**: Infrastructure depends on domain
@@ -244,12 +257,14 @@ Foundation (pydantic_base.py)
 - **✅ Entities**: Core business objects independent of frameworks
 
 ### CQRS (Command Query Responsibility Segregation)
+
 - **✅ Commands**: State-changing operations
 - **✅ Queries**: Data retrieval operations
 - **✅ Command Handlers**: Business operation execution
 - **✅ Query Handlers**: Data access optimization
 
 ### Event Sourcing
+
 - **✅ Domain Events**: Immutable event objects
 - **✅ Event Store**: Audit trail capabilities
 - **✅ Event Bus**: Publish/subscribe mechanism
@@ -258,6 +273,7 @@ Foundation (pydantic_base.py)
 ## Technology Stack Analysis
 
 ### Core Dependencies
+
 ```toml
 python = "^3.13"          # Latest Python with advanced type system
 pydantic = "^2.5.0"       # Validation and serialization foundation
@@ -266,6 +282,7 @@ lato = "^0.3.0"           # Dependency injection container
 ```
 
 ### Architecture Benefits
+
 1. **Type Safety**: Complete static type checking with mypy
 2. **Validation**: Runtime validation via Pydantic
 3. **Modularity**: Clear separation of concerns

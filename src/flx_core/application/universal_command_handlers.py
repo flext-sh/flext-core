@@ -1,8 +1,3 @@
-# Zero tolerance constants
-DEFAULT_THRESHOLD = 100
-# Constants for magic value replacements
-ZERO_VALUE = 0
-DEFAULT_THRESHOLD = DEFAULT_THRESHOLD
 """Universal Command Handlers Implementation - ZERO TOLERANCE APPROACH.
 This module implements completely functional universal command handlers
 following enterprise patterns and eliminating all NotImplementedError instances.
@@ -15,8 +10,9 @@ Implements:
 - Command audit trails and monitoring
 - Transaction management with rollback
 Architecture: Clean Architecture + CQRS + Universal Command Architecture
-Compliance: Zero tolerance to technical debt and incomplete implementations
+Compliance: Zero tolerance to technical debt and incomplete implementations.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -31,10 +27,20 @@ from flx_core.domain.advanced_types import ServiceError, ServiceResult
 
 logger = get_logger(__name__)
 # Python 3.13 type aliases
-type CommandID = str
-type CommandResult = ServiceResult[Any]
-type HandlerResult = ServiceResult[dict[str, Any]]
-type ExecutionContext = dict[str, Any]
+CommandID = str
+CommandResult = ServiceResult[Any]
+HandlerResult = ServiceResult[dict[str, Any]]
+ExecutionContext = dict[str, Any]
+
+# Zero tolerance constants
+DEFAULT_THRESHOLD = 100
+# Constants for magic value replacements
+ZERO_VALUE = 0
+DEFAULT_THRESHOLD = DEFAULT_THRESHOLD
+TWO = 2
+TEN = 10
+FIVE = 5
+DEFAULT_THRESHOLD0 = 0.5
 
 
 class CommandMetadata(BaseModel):

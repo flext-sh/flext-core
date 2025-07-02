@@ -161,11 +161,13 @@ flx-core/
 ### **CARACTERÍSTICAS DO CORE**
 
 #### **🏆 Pydantic-Centric Architecture**
+
 - **100% baseado em Pydantic v2**: Validação e serialização nativas
 - **Python 3.13 compatibility**: Sistema de tipos moderno
 - **Enterprise configuration**: Configuração robusta para produção
 
 #### **🎯 Domain-Driven Design Completo**
+
 - **Aggregates**: Pipeline como aggregate root principal
 - **Entities**: PipelineExecution, Plugin com identidade
 - **Value Objects**: ExecutionStatus, Duration, PipelineName
@@ -173,18 +175,21 @@ flx-core/
 - **Specifications**: Business rules encapsuladas
 
 #### **🔌 Clean Architecture (Hexagonal)**
+
 - **Primary Ports**: PipelineManagementPort, PluginManagementPort
 - **Secondary Ports**: Repository interfaces, EventBusPort
 - **Clear boundaries**: Separation between domain and infrastructure
 - **Dependency inversion**: Infrastructure depends on domain
 
 #### **⚡ Event-Driven Foundation**
+
 - **Lato integration**: DI container com eventos
 - **Domain events**: Pipeline events, execution events
 - **Async support**: Full async/await throughout
 - **Event sourcing**: Complete audit trail
 
 #### **📊 Type Safety & Validation**
+
 - **Strict typing**: mypy --strict compliance
 - **Runtime validation**: Pydantic model validation
 - **Business constraints**: Domain rules in value objects

@@ -41,8 +41,8 @@ from flext_core.infrastructure.persistence.models import (
     PluginModel,
 )
 
-type EnvironmentVariables = ConfigurationDict
-type PipelineInputData = ConfigurationDict
+EnvironmentVariables = ConfigurationDict
+PipelineInputData = ConfigurationDict
 
 
 class PipelineStepData(TypedDict):
@@ -92,14 +92,17 @@ class PipelineManagementService:
     """
 
     def __init__(
-        self, unit_of_work: UnitOfWorkInterface, event_bus: DomainEventBus,
+        self,
+        unit_of_work: UnitOfWorkInterface,
+        event_bus: DomainEventBus,
     ) -> None:
         """Initialize the service with its dependencies."""
         self._uow = unit_of_work
         self._event_bus = event_bus
 
     def _convert_to_configuration_dict(
-        self, data: dict[str, Any] | None,
+        self,
+        data: dict[str, Any] | None,
     ) -> ConfigurationDict:
         """Convert dictionary data to ConfigurationDict with proper type handling.  # noqa: PLR0911 - type conversion requires multiple returns.
 
@@ -125,7 +128,9 @@ class PipelineManagementService:
         return result
 
     async def _create_pipeline_step(
-        self, step_data: dict[str, Any], plugin_repo: Any,
+        self,
+        step_data: dict[str, Any],
+        plugin_repo: Any,
     ) -> PipelineStep:
         """Create a pipeline step from step data.  # noqa: PLR0911 - step creation requires multiple returns.
 
@@ -226,7 +231,9 @@ class PipelineManagementService:
             return pipeline
 
     def _update_pipeline_properties(
-        self, pipeline: Pipeline, command: UpdatePipelineCommand,
+        self,
+        pipeline: Pipeline,
+        command: UpdatePipelineCommand,
     ) -> None:
         """Update basic pipeline properties from command."""
         if command.name is not None:
@@ -292,7 +299,11 @@ class PipelineManagementService:
             return await pipeline_repo.find_by_id(pipeline_id)
 
     async def list_pipelines(
-        self, *, active_only: bool = False, limit: int = 100, offset: int = 0,
+        self,
+        *,
+        active_only: bool = False,
+        limit: int = 100,
+        offset: int = 0,
     ) -> list[Pipeline]:
         """List all available data pipelines."""
         async with self._uow as uow:
@@ -324,7 +335,8 @@ class PipelineExecutionService:
         self._logger = structlog.get_logger(self.__class__.__name__)
 
     def _convert_to_configuration_dict(
-        self, data: dict[str, Any] | None,
+        self,
+        data: dict[str, Any] | None,
     ) -> ConfigurationDict:
         """Convert dictionary data to ConfigurationDict with proper type handling.
 
@@ -350,7 +362,9 @@ class PipelineExecutionService:
         return result
 
     async def _validate_pipeline_for_execution(
-        self, pipeline_id: PipelineId, uow: Any,
+        self,
+        pipeline_id: PipelineId,
+        uow: Any,
     ) -> Pipeline:
         """Validate pipeline exists and can be executed.  # noqa: PLR0911 - validation requires multiple returns.
 
@@ -381,7 +395,9 @@ class PipelineExecutionService:
         return pipeline
 
     async def _check_concurrent_execution_limit(
-        self, pipeline: Pipeline, execution_repo: Any,
+        self,
+        pipeline: Pipeline,
+        execution_repo: Any,
     ) -> None:
         """Check if pipeline can start new execution based on concurrent limits.  # noqa: PLR0911 - limit check requires multiple returns.
 
@@ -425,7 +441,8 @@ class PipelineExecutionService:
             return 1
 
     async def execute_pipeline(
-        self, command: ExecutePipelineCommand,
+        self,
+        command: ExecutePipelineCommand,
     ) -> PipelineExecution:
         """Trigger the execution of a data pipeline."""
         logger = structlog.get_logger(self.__class__.__name__)
@@ -509,7 +526,9 @@ class PipelineExecutionService:
             return list(executions)[:limit]
 
     async def cancel_execution(
-        self, execution_id: UUID, cancelled_by: str,
+        self,
+        execution_id: UUID,
+        cancelled_by: str,
     ) -> PipelineExecution:
         """Cancel a running pipeline execution."""
         async with self._uow as uow:
@@ -524,7 +543,9 @@ class PipelineExecutionService:
             return execution
 
     async def _run_pipeline_with_meltano(
-        self, pipeline: Pipeline, execution: PipelineExecution,
+        self,
+        pipeline: Pipeline,
+        execution: PipelineExecution,
     ) -> None:
         """Run the pipeline using the Meltano anti-corruption layer."""
         if not self._meltano_acl:
