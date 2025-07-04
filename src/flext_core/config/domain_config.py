@@ -28,13 +28,15 @@ from __future__ import annotations
 import functools
 import os
 from pathlib import Path
-from typing import Annotated, Literal
+from typing import TYPE_CHECKING, Annotated, Literal
+
+if TYPE_CHECKING:
+    from pydantic import ValidationInfo
 
 from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
-    ValidationInfo,
     computed_field,
     field_validator,
     model_validator,
@@ -873,7 +875,7 @@ class NetworkConfiguration(BaseModel):
         description="Redis service host address",
     )
 
-    # Service Ports - CONSOLIDATED FROM unified_constants.py with environment override support
+    # Service Ports - CONSOLIDATED FROM unified_constants.py with env override support
     api_port: int = Field(
         default_factory=lambda: int(os.environ.get("FLX_API_PORT", "8000")),
         ge=1024,
@@ -1046,7 +1048,7 @@ class NetworkConfiguration(BaseModel):
 
     @model_validator(mode="after")
     def validate_ssl_configuration(self) -> NetworkConfiguration:
-        """Validate SSL configuration consistency - with test environment flexibility."""
+        """Validate SSL configuration consistency - with test env flexibility."""
         if self.enable_ssl and "PYTEST_CURRENT_TEST" not in os.environ:
             if not self.ssl_cert_file or not self.ssl_key_file:
                 msg = "SSL enabled but certificate or key file not specified"
@@ -1061,7 +1063,7 @@ class NetworkConfiguration(BaseModel):
 
 
 class SecurityConfiguration(BaseModel):
-    """Security configuration with cryptographic validation and strong security enforcement."""
+    """Security configuration with cryptographic validation and strong enforcement."""
 
     model_config = ConfigDict(
         str_strip_whitespace=True,
@@ -2041,18 +2043,32 @@ class FlextConfiguration(BaseSettings):
 
 
 # ZERO TOLERANCE - Modern Python 3.13 singleton pattern with environment awareness
-_config_cache: FlextConfiguration | None = None
+class _ConfigSingleton:
+    """Configuration singleton to avoid global statements."""
+
+    def __init__(self) -> None:
+        """Initialize singleton."""
+        self._cache: FlextConfiguration | None = None
+
+    def get(self) -> FlextConfiguration:
+        """Get application configuration instance - SINGLE SOURCE OF TRUTH."""
+        if self._cache is None:
+            self._cache = FlextConfiguration()
+        return self._cache
+
+    def reset(self) -> None:
+        """Reset application configuration instance."""
+        self._cache = None
+
+
+_config_singleton = _ConfigSingleton()
 
 
 def get_config() -> FlextConfiguration:
     """Get application configuration instance - SINGLE SOURCE OF TRUTH."""
-    global _config_cache
-    if _config_cache is None:
-        _config_cache = FlextConfiguration()
-    return _config_cache
+    return _config_singleton.get()
 
 
 def reset_config() -> None:
     """Reset application configuration instance."""
-    global _config_cache
-    _config_cache = None
+    _config_singleton.reset()

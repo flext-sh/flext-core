@@ -16,11 +16,11 @@ class ResultProtocol(Protocol):
         """Check if result is a failure."""
         ...
 
-    def get_value(self) -> Any:
+    def get_value(self) -> object:
         """Get the result value."""
         ...
 
-    def get_error(self) -> Any:
+    def get_error(self) -> object:
         """Get the error if any."""
         ...
 
@@ -62,7 +62,7 @@ class HealthCheckProtocol(Protocol):
 class AsyncContextManagerProtocol(Protocol):
     """Protocol for async context managers."""
 
-    async def __aenter__(self) -> Any:
+    async def __aenter__(self) -> object:
         """Enter async context."""
         ...
 
@@ -70,8 +70,8 @@ class AsyncContextManagerProtocol(Protocol):
         self,
         exc_type: type[BaseException] | None,
         exc_val: BaseException | None,
-        exc_tb: object | None,
-    ) -> None:
+        exc_tb: object,
+    ) -> bool | None:
         """Exit async context."""
         ...
 
@@ -80,6 +80,7 @@ class ServiceLifecycle(ABC):
     """Abstract base class for service lifecycle management."""
 
     def __init__(self) -> None:
+        """Initialize service lifecycle management."""
         self._running = False
 
     @abstractmethod
@@ -112,7 +113,7 @@ class ServiceLifecycle(ABC):
         return self._running
 
 
-def is_initializable(obj: Any) -> bool:
+def is_initializable(obj: object) -> bool:
     """Check if object has initialization methods."""
     return (
         hasattr(obj, "start")
@@ -121,6 +122,6 @@ def is_initializable(obj: Any) -> bool:
     )
 
 
-def is_shutdownable(obj: Any) -> bool:
+def is_shutdownable(obj: object) -> bool:
     """Check if object has shutdown methods."""
     return hasattr(obj, "stop") or hasattr(obj, "shutdown") or hasattr(obj, "__aexit__")

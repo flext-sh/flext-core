@@ -7,7 +7,8 @@ from datetime import datetime, timedelta
 try:
     from datetime import UTC
 except ImportError:
-    UTC = UTC
+    import datetime as _datetime
+    UTC = _datetime.UTC
 from enum import Enum
 from typing import Any
 from uuid import uuid4
@@ -136,7 +137,10 @@ class DefaultSchedulerService(SchedulerService):
         if schedule_type == ScheduleType.RECURRING:
             interval = config.get("interval_minutes", 60)
             return datetime.now(UTC) + timedelta(minutes=interval)
-        if schedule_type == ScheduleType.CRON:
+        elif schedule_type == ScheduleType.CRON:
             # Would implement cron parsing here
             return datetime.now(UTC) + timedelta(hours=1)  # Placeholder
-        return None
+        else:
+            # This should never happen with current enum values
+            msg = f"Unknown schedule type: {schedule_type}"
+            raise ValueError(msg)

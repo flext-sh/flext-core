@@ -51,7 +51,6 @@ from flext_core.infrastructure.persistence.repositories_core import (
 )
 from flext_core.infrastructure.persistence.unit_of_work import UnitOfWork
 from flext_core.serialization.msgspec_adapters import (
-    HighPerformanceSerializer,
     get_serializer,
 )
 from flext_core.services.analytics_service import AnalyticsService
@@ -66,6 +65,9 @@ if TYPE_CHECKING:
         PipelineExecutionModel,
         PipelineModel,
         PluginModel,
+    )
+    from flext_core.serialization.msgspec_adapters import (
+        HighPerformanceSerializer,
     )
 
 logger = structlog.get_logger()
@@ -476,7 +478,7 @@ class ApplicationContainer(containers.DeclarativeContainer):
 def create_development_container() -> ApplicationContainer:
     """Create dependency injection container for development environment.
 
-    Returns
+    Returns:
     -------
         ApplicationContainer: Configured container for development
 
@@ -496,7 +498,7 @@ def create_development_container() -> ApplicationContainer:
 def create_production_container() -> ApplicationContainer:
     """Create dependency injection container for production environment.
 
-    Returns
+    Returns:
     -------
         ApplicationContainer: Configured container for production
 
@@ -517,7 +519,7 @@ def create_production_container() -> ApplicationContainer:
 def create_testing_container() -> ApplicationContainer:
     """Create dependency injection container for testing environment.
 
-    Returns
+    Returns:
     -------
         ApplicationContainer: Configured container for testing
 

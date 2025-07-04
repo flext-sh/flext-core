@@ -17,6 +17,9 @@ from typing import (
     cast,
     runtime_checkable,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 from uuid import UUID
 
 from pydantic import Field
@@ -25,7 +28,7 @@ from pydantic import Field
 # Lazy imports to avoid circular dependencies
 def _get_domain_base_classes() -> tuple[type, type]:
     """Lazy import of domain base classes to avoid circular imports."""
-    from flext_core.domain.pydantic_base import (
+    from flext_core.domain.pydantic_base import (  # noqa: PLC0415
         DomainAggregateRoot,
         DomainValueObject,
     )
@@ -34,8 +37,6 @@ def _get_domain_base_classes() -> tuple[type, type]:
 
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
-
     from flext_core.events.event_bus import DomainEvent
 
 
@@ -45,7 +46,8 @@ E = TypeVar("E", bound="Entity")
 V = TypeVar("V", bound="ValueObject")
 S = TypeVar("S", bound="Any")
 
-# Python 3.11 Compatible Advanced Type Aliases - ENTERPRISE DOMAIN PATTERNS WITH VALUE OBJECTS
+# Python 3.11 Compatible Advanced Type Aliases
+# ENTERPRISE DOMAIN PATTERNS WITH VALUE OBJECTS
 # Using Python 3.11 TypeAlias for compatibility
 
 # Core Domain Value Object Types - with strict validation
@@ -112,7 +114,6 @@ QueryParams = dict[str, Any]
 
 
 @runtime_checkable
-@runtime_checkable
 class Entity(Protocol):
     """Protocol for domain entities with identity."""
 
@@ -178,6 +179,7 @@ class AggregateRoot:
     """Base class for aggregate roots with event handling."""
 
     def __init__(self) -> None:
+        """Initialize aggregate root with empty event list."""
         self.uncommitted_events: list[DomainEvent] = []
         self.version: AggregateVersion = 0
 
@@ -194,37 +196,47 @@ class AggregateRoot:
 class Specification(Protocol):
     """Protocol for business rule specifications."""
 
-    def is_satisfied_by(self, obj: Any) -> bool:
+    def is_satisfied_by(self, obj: object) -> bool:
         """Check if the object satisfies this specification."""
         ...
 
-    def __and__(self, other: Any) -> Any:
+    def __and__(self, other: object) -> object:
         """Combine specifications with logical AND operation."""
         ...
 
-    def __or__(self, other: Any) -> Any:
+    def __or__(self, other: object) -> object:
         """Combine specifications with logical OR operation."""
         ...
 
-    def __invert__(self) -> Any:
+    def __invert__(self) -> object:
         """Invert specification with logical NOT operation."""
         ...
 
 
 class ServiceResult:
-    """Result type for service operations with Python 3.13 patterns - ADR-001 Compliant."""
+    """Result type for service operations with Python 3.13 patterns - ADR-001."""
 
     def __init__(
         self,
+        *,
         success: bool,
-        data: Any = None,
-        error: Any = None,
-        metadata: Any = None,
+        data: object = None,
+        error: object = None,
+        metadata: dict[str, object] | None = None,
     ) -> None:
-        self.success = success
-        self.data = data
-        self.error = error
-        self.metadata = metadata or {}
+        """Initialize service result with success status and optional data/error.
+
+        Args:
+        ----
+            success: Whether the operation was successful
+            data: Optional result data if successful
+            error: Optional error information if failed
+            metadata: Optional metadata dictionary
+        """
+        self.success: bool = success
+        self.data: object = data
+        self.error: object = error
+        self.metadata: dict[str, object] = metadata or {}
 
     @property
     def is_success(self) -> bool:
@@ -232,7 +244,7 @@ class ServiceResult:
         return self.success
 
     @property
-    def value(self) -> Any:
+    def value(self) -> object:
         """Get the result value (for successful results)."""
         if not self.success or self.data is None:
             msg = "Cannot get value from failed result"
@@ -240,7 +252,7 @@ class ServiceResult:
         return self.data
 
     @classmethod
-    def ok(cls, data: Any, metadata: Any = None) -> Any:
+    def ok(cls, data: object, metadata: dict[str, object] | None = None) -> ServiceResult:
         """Create successful result.
 
         Factory method for creating successful service results with data
@@ -262,14 +274,14 @@ class ServiceResult:
             without exceptions, enabling composable operation chaining.
 
         """
-        return cls(success=True, data=data, metadata=metadata or {})
+        return cls(success=True, data=data, metadata=metadata)
 
     @classmethod
     def fail(
         cls,
-        error: Any,
-        metadata: Any = None,
-    ) -> Any:
+        error: object,
+        metadata: dict[str, object] | None = None,
+    ) -> ServiceResult:
         """Create failed result.
 
         Factory method for creating failed service results with error
@@ -294,7 +306,7 @@ class ServiceResult:
         return cls(success=False, error=error, metadata=metadata or {})
 
     @classmethod
-    def success(cls, data: T) -> ServiceResult:
+    def success(cls, data: object) -> ServiceResult:
         """Create successful result (alias for ok)."""
         return cls.ok(data)
 
@@ -304,17 +316,18 @@ class ServiceResult:
         error = ServiceError(code="GENERIC_ERROR", message=error_message)
         return cls.fail(error)
 
-    def unwrap(self) -> T:
+    def unwrap(self) -> object:
         """Unwrap result data or raise error."""
         if not self.success or self.data is None:
-            raise self.error or ServiceError("UNKNOWN", "No data available")
+            error_to_raise = self.error or ServiceError("UNKNOWN", "No data available")
+            raise error_to_raise
         return self.data
 
     def is_ok(self) -> bool:
         """Check if the result is successful."""
         return self.success
 
-    def map(self, func: Any) -> ServiceResult:
+    def map(self, func: Callable[[Any], Any]) -> ServiceResult:
         """Map successful result to new type."""
         if self.success and self.data is not None:
             try:
@@ -438,9 +451,9 @@ def aggregate_root(cls: type[Any]) -> type[Any]:
         if _ is None:
             msg = "Aggregate root must be an entity with id attribute"
             raise TypeError(msg)
-    except AttributeError:
+    except AttributeError as exc:
         msg = "Aggregate root must be an entity with id attribute"
-        raise TypeError(msg)
+        raise TypeError(msg) from exc
 
     return cls
 
@@ -455,7 +468,7 @@ def entity(id_field: str = "id") -> Callable[[type[T]], type[T]]:
     """
 
     def decorator(cls: type[T]) -> type[T]:
-        def __eq__(self: object, other: object) -> bool:
+        def __eq__(self: object, other: object) -> bool:  # noqa: N807
             """Identity-based equality for entities."""
             if not isinstance(other, cls):
                 return False
@@ -463,7 +476,7 @@ def entity(id_field: str = "id") -> Callable[[type[T]], type[T]]:
             other_id = getattr(other, id_field, None)
             return self_id is not None and self_id == other_id
 
-        def __hash__(self: object) -> int:
+        def __hash__(self: object) -> int:  # noqa: N807
             """Hash based on entity ID.
 
             Computes the hash value for an entity based on its unique
@@ -486,17 +499,17 @@ def entity(id_field: str = "id") -> Callable[[type[T]], type[T]]:
             return hash(entity_id)
 
         # Apply methods using setattr for mypy compliance
-        cls.__eq__ = __eq__  # type: ignore[method-assign]
-        cls.__hash__ = __hash__  # type: ignore[method-assign]
-        cls._is_entity = True  # type: ignore[attr-defined]
-        cls._id_field = id_field  # type: ignore[attr-defined]
+        cls.__eq__ = __eq__
+        cls.__hash__ = __hash__
+        cls._is_entity = True
+        cls._id_field = id_field
 
         return cls
 
     return decorator
 
 
-def value_object(cls: type[T]) -> type[T]:
+def value_object[T](cls: type[T]) -> type[T]:
     """Mark a class as a value object with structural equality."""
     # Check if class is frozen (immutable) using proper dataclass introspection
     is_frozen = False
@@ -550,39 +563,39 @@ def value_object(cls: type[T]) -> type[T]:
         msg = f"Value object {cls.__name__} must be frozen (immutable). Use @dataclass(frozen=True) or equivalent."
         raise ValueError(msg)
 
-    cls._is_value_object = True  # type: ignore[attr-defined]
+    cls._is_value_object = True
     return cls
 
 
-def specification(cls: type[T]) -> type[T]:
+def specification[T](cls: type[T]) -> type[T]:
     """Mark a class as a business rule specification."""
     # Add logical operators - always override inherited ones from object
 
     # Check if class has custom __and__ method (not inherited from object)
     if "__and__" not in cls.__dict__:
 
-        def __and__(
+        def __and__(  # noqa: N807
             self: object,
-            other: Any,
-        ) -> Any:
+            other: object,  # noqa: ANN401
+        ) -> CompositeSpecification:
             # Cast self to proper specification type
             spec_self = cast("Any", self)
             return CompositeSpecification(left=spec_self, right=other, operator="and")
 
-        cls.__and__ = __and__  # type: ignore[operator]
+        cls.__and__ = __and__
 
     # Check if class has custom __or__ method (not inherited from object)
     if "__or__" not in cls.__dict__:
 
-        def __or__(
+        def __or__(  # noqa: N807
             self: object,
-            other: Any,
-        ) -> Any:
+            other: object,  # noqa: ANN401
+        ) -> CompositeSpecification:
             # Cast self to proper specification type
             spec_self = cast("Any", self)
             return CompositeSpecification(left=spec_self, right=other, operator="or")
 
-        cls.__or__ = __or__  # type: ignore[method-assign,assignment]
+        cls.__or__ = __or__
 
     # Check if class has custom __invert__ method (not inherited from object)
     if "__invert__" not in cls.__dict__:
@@ -592,9 +605,9 @@ def specification(cls: type[T]) -> type[T]:
             spec_self = cast("Any", self)
             return NotSpecification(spec=spec_self)
 
-        cls.__invert__ = __invert__  # type: ignore[operator]
+        cls.__invert__ = __invert__
 
-    cls._is_specification = True  # type: ignore[attr-defined]
+    cls._is_specification = True
     return cls
 
 
@@ -626,7 +639,7 @@ class CompositeSpecification:
         self.right = right
         self.operator = operator
 
-    def is_satisfied_by(self, obj: T) -> bool:
+    def is_satisfied_by(self, obj: Any) -> bool:
         """Check if object satisfies the composite specification.
 
         Args:
@@ -680,7 +693,7 @@ class CompositeSpecification:
     def __invert__(self) -> Any:
         """Invert this composite specification.
 
-        Returns
+        Returns:
         -------
             NotSpecification wrapping this composite specification
 
@@ -710,7 +723,7 @@ class NotSpecification:
     def __init__(self, spec: Any) -> None:
         self.spec = spec
 
-    def is_satisfied_by(self, obj: T) -> bool:
+    def is_satisfied_by(self, obj: Any) -> bool:
         """Check if object does NOT satisfy the wrapped specification.
 
         Args:
@@ -755,7 +768,7 @@ class NotSpecification:
     def __invert__(self) -> Any:
         """Return original specification (double negation cancels out).
 
-        Returns
+        Returns:
         -------
             The original specification that was negated
 
@@ -823,7 +836,7 @@ class DomainFactory:
         """Initialize domain factory with target class type."""
         self.target_class = target_class
 
-    def create(self, **kwargs: object) -> ServiceResult:
+    def create(self, **kwargs: Any) -> ServiceResult:
         """Create domain object with validation."""
         try:
             # Validate required fields

@@ -6,8 +6,8 @@ for standardization, validation, and code reduction across the entire domain lay
 
 from __future__ import annotations
 
-from typing import TypeVar
-from uuid import UUID, uuid4
+from typing import TYPE_CHECKING, TypeVar
+from uuid import uuid4
 
 from pydantic import Field
 
@@ -26,6 +26,9 @@ from flext_core.domain.pydantic_base import DomainAggregateRoot as AggregateRoot
 from flext_core.domain.pydantic_base import DomainEntity as Entity
 from flext_core.domain.pydantic_base import DomainSpecification as Specification
 from flext_core.domain.pydantic_base import DomainValueObject as ValueObject
+
+if TYPE_CHECKING:
+    from uuid import UUID
 
 __all__ = [
     "AggregateRoot",

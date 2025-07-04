@@ -30,7 +30,10 @@ import structlog
 from dependency_injector.wiring import Provide
 from dependency_injector.wiring import inject as di_inject
 from flext_observability.monitoring.rich_error_handler import error_context
-from lato import Application, DependencyProvider
+from lato import Application
+
+if TYPE_CHECKING:
+    from lato import DependencyProvider
 
 from flext_core.config.domain_config import FlextConfiguration, get_config
 from flext_core.infrastructure.containers import (

@@ -16,15 +16,18 @@ from datetime import datetime
 try:
     from datetime import UTC
 except ImportError:
-    UTC = UTC
+    import datetime
+    UTC = datetime.UTC
 from typing import TYPE_CHECKING, Any, ClassVar, Protocol
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 import orjson
 import structlog
 
 # Strategic imports with type checking for optional enterprise dependencies
 if TYPE_CHECKING:
+    from uuid import UUID
+
     from aio_pika.abc import (  # type: ignore[import-not-found]
         AbstractChannel,
         AbstractExchange,

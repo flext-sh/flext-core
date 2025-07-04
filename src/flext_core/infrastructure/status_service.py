@@ -1,8 +1,9 @@
 """Infrastructure status service for E2E environment verification.
 
-This module provides comprehensive environment status checking without using subprocess
-calls, following the Zero Tolerance architectural principles. It verifies the availability
-of critical infrastructure components required for E2E testing and deployment.
+This module provides comprehensive environment status checking without using
+subprocess calls, following the Zero Tolerance architectural principles.
+It verifies the availability of critical infrastructure components required
+for E2E testing and deployment.
 
 Key features:
 - Docker daemon availability through socket and TCP port checks
@@ -122,7 +123,7 @@ async def check_docker_availability() -> ServiceStatus:
     1. Unix socket connection (Linux/macOS)
     2. TCP port connection (Windows/remote Docker)
 
-    Returns
+    Returns:
     -------
         ServiceStatus with Docker availability information and connection details
 
@@ -207,7 +208,7 @@ async def check_kubernetes_availability() -> ServiceStatus:
     1. Using the kubernetes Python client if available
     2. Falling back to TCP port check if client is not installed
 
-    Returns
+    Returns:
     -------
         ServiceStatus with Kubernetes availability and cluster information
 
@@ -274,7 +275,7 @@ async def get_kind_clusters() -> list[str]:
     1. Checking kubeconfig contexts for Kind-specific naming patterns
     2. Inspecting well-known configuration file locations
 
-    Returns
+    Returns:
     -------
         List of Kind cluster names found in the environment
 
@@ -304,7 +305,8 @@ async def get_kind_clusters() -> list[str]:
             ImportError,
             k8s_config.ConfigException,
         ) as e:
-            # ZERO TOLERANCE - Kubernetes config issues should fail fast instead of degrading
+            # ZERO TOLERANCE - Kubernetes config issues should fail fast
+            # instead of degrading
             logger.warning("Failed to query kubectl for Kind clusters", error=str(e))
             msg = f"Kind cluster detection failed: {e}"
             raise RuntimeError(msg) from e
@@ -323,7 +325,7 @@ async def get_e2e_environment_status() -> E2EEnvironmentStatus:
     This function orchestrates all infrastructure checks concurrently for optimal
     performance, aggregating results into a complete environment status report.
 
-    Returns
+    Returns:
     -------
         E2EEnvironmentStatus with complete infrastructure health information
 

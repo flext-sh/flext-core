@@ -148,7 +148,7 @@ class InterfaceBridge:
         command_name: str,
         command_data: RequestData | None = None,
     ) -> HandlerResult[object]:
-        """Execute command using UNIFIED EXECUTION ARCHITECTURE - with strict validation."""
+        """Execute command using UNIFIED EXECUTION ARCHITECTURE with validation."""
         try:
             # DIRECT EXECUTION to prevent circular dependency with universe
             # Find the appropriate handler method

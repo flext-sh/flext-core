@@ -1,7 +1,7 @@
 """Repository and Unit of Work contracts for FLEXT Core."""
 
 from abc import ABC, abstractmethod
-from typing import Any, Protocol, TypeVar, runtime_checkable
+from typing import Protocol, TypeVar, runtime_checkable
 
 # Type variables for generic repository pattern
 EntityId = TypeVar("EntityId")
@@ -13,18 +13,18 @@ T = TypeVar("T")
 class EntityInterface(Protocol):
     """Protocol for entities with an ID."""
 
-    id: Any
+    id: object
 
 
 class RepositoryInterface(ABC):
     """Abstract repository interface."""
 
     @abstractmethod
-    async def get_by_id(self, entity_id: Any) -> Any:
+    async def get_by_id(self, entity_id: object) -> object | None:
         """Get entity by ID."""
 
     @abstractmethod
-    async def get_all(self) -> list[Any]:
+    async def get_all(self) -> list[object]:
         """Get all entities."""
 
     @abstractmethod
@@ -50,9 +50,9 @@ class UnitOfWorkInterface(ABC):
     @abstractmethod
     async def __aexit__(
         self,
-        exc_type: Any,
-        exc_val: Any,
-        exc_tb: Any,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: object,
     ) -> None:
         """Exit async context manager."""
 
@@ -65,5 +65,5 @@ class UnitOfWorkInterface(ABC):
         """Rollback transaction."""
 
     @abstractmethod
-    def get_repository(self, entity_class: type[Any], model_class: type[Any]) -> Any:
+    def get_repository(self, entity_class: type[object], model_class: type[object]) -> object:
         """Get repository for entity type."""

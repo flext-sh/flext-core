@@ -4,36 +4,35 @@ from __future__ import annotations
 
 import argparse
 import sys
-from typing import Any
+from uuid import uuid4
 
-from .domain.runtime_types import CorrelationId, EventId, UserId
+from flext_core.domain.advanced_types import ServiceResult
+from flext_core.domain.runtime_types import CorrelationId, EventId, UserId
 
 
-def info_command(args: Any) -> int:
+def info_command(_args: object) -> int:
     """Show FLEXT Core information."""
     return 0
 
 
-def validate_command(args: Any) -> int:
+def validate_command(_args: object) -> int:
     """Validate domain objects and types."""
     errors = 0
 
     # Test type creation
     try:
-        from uuid import uuid4
-
         UserId(uuid4())
         CorrelationId(uuid4())
         EventId(uuid4())
-    except Exception:
+    except (ValueError, TypeError, ImportError, AttributeError) as e:
+        print(f"Type creation validation failed: {e}")
         errors += 1
 
     # Test service result
     try:
-        from .domain.advanced_types import ServiceResult
-
         ServiceResult.ok("test data")
-    except Exception:
+    except (ValueError, TypeError, ImportError, AttributeError) as e:
+        print(f"ServiceResult validation failed: {e}")
         errors += 1
 
     if errors == 0:
@@ -41,7 +40,7 @@ def validate_command(args: Any) -> int:
     return 1
 
 
-def types_command(args: Any) -> int:
+def types_command(_args: object) -> int:
     """Show available domain types."""
     types_info = [
         ("UserId", "User identification value object", "UUID-based"),
@@ -52,8 +51,8 @@ def types_command(args: Any) -> int:
         ("QueryId", "Query identification value object", "UUID-based"),
     ]
 
-    for _type_name, _description, _example in types_info:
-        pass
+    for type_name, description, example in types_info:
+        print(f"{type_name}: {description} ({example})")
 
     return 0
 

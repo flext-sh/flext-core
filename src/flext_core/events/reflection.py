@@ -15,7 +15,8 @@ from datetime import datetime
 try:
     from datetime import UTC
 except ImportError:
-    UTC = UTC
+    import datetime
+    UTC = datetime.UTC
 from enum import Enum, auto
 from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 from uuid import UUID, uuid4
@@ -110,7 +111,7 @@ class EventProtocol:
         Returns the type of domain event for categorization
         and routing purposes in event handling systems.
 
-        Returns
+        Returns:
         -------
             EventType: The category of this domain event
 
@@ -123,7 +124,7 @@ class EventProtocol:
         Returns the unique identifier of the aggregate that
         raised this domain event for event sourcing patterns.
 
-        Returns
+        Returns:
         -------
             UUID: Unique identifier of the source aggregate
 
@@ -136,7 +137,7 @@ class EventProtocol:
         Returns metadata about the event including timestamp,
         correlation ID, and other tracking information.
 
-        Returns
+        Returns:
         -------
             EventMetadata: Event metadata and tracking information
 
@@ -148,7 +149,7 @@ class EventProtocol:
         Converts the event instance to a dictionary representation
         suitable for storage, transmission, or logging.
 
-        Returns
+        Returns:
         -------
             EventData: Dictionary representation of the event
 

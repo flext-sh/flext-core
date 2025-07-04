@@ -11,7 +11,8 @@ from datetime import datetime
 try:
     from datetime import UTC
 except ImportError:
-    UTC = UTC
+    import datetime as _datetime
+    UTC = _datetime.UTC
 from pathlib import Path
 from typing import Any
 
@@ -131,7 +132,7 @@ class FlextLogger:
 
     def exception(self, message: str, **kwargs: Any) -> None:
         """Log exception with traceback."""
-        self.logger.exception(message, extra=kwargs)
+        self.logger.error(message, extra=kwargs)
 
     def log_operation(
         self, operation: str, duration_ms: float, success: bool, **kwargs: Any
@@ -202,7 +203,7 @@ class LoggingContextManager:
 
     def __enter__(self) -> "LoggingContextManager":
         self.start_time = time.time()
-        self.logger.debug("Starting operation: %s", self.operation, **self.kwargs)
+        self.logger.debug(f"Starting operation: {self.operation}")
         return self
 
     def __exit__(
@@ -287,13 +288,13 @@ observability_logger = get_logger("flext.observability")
 def log_startup(component: str, version: str, **kwargs: Any) -> None:
     """Log component startup."""
     logger = get_logger(f"flext.{component}")
-    logger.info("Starting %s", component, component=component, version=version, **kwargs)
+    logger.info(f"Starting {component} (version: {version})")
 
 
 def log_shutdown(component: str, **kwargs: Any) -> None:
     """Log component shutdown."""
     logger = get_logger(f"flext.{component}")
-    logger.info("Shutting down %s", component, component=component, **kwargs)
+    logger.info(f"Shutting down {component}")
 
 
 def log_performance_metric(
@@ -301,12 +302,7 @@ def log_performance_metric(
 ) -> None:
     """Log performance metric."""
     observability_logger.info(
-        "Performance metric: %s",
-        metric_name,
-        metric_name=metric_name,
-        value=value,
-        unit=unit,
-        **kwargs,
+        f"Performance metric: {metric_name} = {value} {unit}"
     )
 
 
@@ -315,10 +311,5 @@ def log_security_event(
 ) -> None:
     """Log security-related event."""
     auth_logger.warning(
-        "Security event: %s",
-        event_type,
-        event_type=event_type,
-        severity=severity,
-        user_id=user_id,
-        **kwargs,
+        f"Security event: {event_type} (severity: {severity}, user: {user_id})"
     )

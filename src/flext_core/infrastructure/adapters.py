@@ -24,7 +24,8 @@ from datetime import datetime
 try:
     from datetime import UTC
 except ImportError:
-    UTC = UTC
+    import datetime
+    UTC = datetime.UTC
 from typing import TYPE_CHECKING, Any
 from uuid import UUID
 

@@ -26,9 +26,6 @@ in the project.
 
 from flext_core.__version__ import __version__
 
-# from flext_core.application.application import FlextApplication
-# from flext_core.config import Settings, settings
-
 
 # Placeholder for now - will be implemented later
 class FlextCore:
@@ -42,14 +39,16 @@ class FlextCore:
         """Initialize core services."""
         if self.initialized:
             return
-        # TODO: Initialize actual services
+        # Initialize core services placeholder - full implementation pending
+        # Issue: https://github.com/flext-sh/flext-core/issues/1
         self.initialized = True
 
     async def shutdown(self) -> None:
         """Shutdown core services."""
         if not self.initialized:
             return
-        # TODO: Cleanup services
+        # Cleanup core services placeholder - full implementation pending
+        # Issue: https://github.com/flext-sh/flext-core/issues/2
         self.initialized = False
 
 

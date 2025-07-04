@@ -11,6 +11,7 @@ import sys
 import tempfile
 from pathlib import Path
 from typing import TYPE_CHECKING
+from unittest.mock import AsyncMock
 
 import pytest
 from dotenv import load_dotenv
@@ -110,7 +111,7 @@ async def test_database() -> AsyncIterator[TestDatabase]:
         del os.environ["FLX_DATABASE_URL"]
 
     if Path(temp_db_path).exists():
-        os.unlink(temp_db_path)
+        Path(temp_db_path).unlink()
 
 
 @pytest.fixture
@@ -214,8 +215,6 @@ def sample_execution(sample_pipeline: Pipeline) -> PipelineExecution:
 @pytest.fixture
 def mock_async():
     """Helper to create async mocks."""
-    from unittest.mock import AsyncMock
-
     return AsyncMock
 
 

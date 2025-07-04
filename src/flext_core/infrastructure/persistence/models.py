@@ -8,7 +8,8 @@ from datetime import datetime
 try:
     from datetime import UTC
 except ImportError:
-    UTC = UTC
+    import datetime as _datetime
+    UTC = _datetime.UTC
 from typing import TYPE_CHECKING, Any
 from uuid import UUID, uuid4
 
@@ -25,11 +26,12 @@ from sqlalchemy import (
     func,
 )
 from sqlalchemy.dialects.postgresql import UUID as POSTGRES_UUID
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy.orm import DeclarativeBase, mapped_column, relationship
 from sqlalchemy.types import CHAR, TypeDecorator
 
 if TYPE_CHECKING:
     from sqlalchemy.engine import Dialect
+    from sqlalchemy.orm import Mapped
     from sqlalchemy.sql.type_api import TypeEngine
 
 
@@ -535,7 +537,7 @@ class PluginModel(Base):
     # Installation and status tracking
     source: Mapped[str | None] = mapped_column(String(100), nullable=True)
     status: Mapped[str] = mapped_column(String(50), nullable=False, default="inactive")
-    metadata: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False, default=dict)
+    plugin_metadata: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False, default=dict)
 
     # Audit fields
     updated_by: Mapped[str | None] = mapped_column(String(255), nullable=True)

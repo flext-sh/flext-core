@@ -90,9 +90,9 @@ TResult = TypeVar("TResult")
 class ApplicationCommand:
     """Command protocol defining the contract for command objects.
 
-    Implements a command object following CQRS patterns with integrated Pydantic validation.
-    Encapsulates a specific business operation with validated parameters, ensuring
-    immutability and validation by construction.
+    Implements a command object following CQRS patterns with Pydantic validation.
+    Encapsulates a specific business operation with validated parameters,
+    ensuring immutability and validation by construction.
 
     Architecture:
         - Command Pattern implementation

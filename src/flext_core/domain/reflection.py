@@ -246,7 +246,7 @@ class EnterpriseReflectionRegistry:
     def clear_domain_events(cls) -> list[DomainEvent]:
         """Clear and return all recorded domain events.
 
-        Returns
+        Returns:
         -------
             List of recorded domain events
 

@@ -54,15 +54,17 @@ from __future__ import annotations
 
 import asyncio
 from contextlib import asynccontextmanager, contextmanager
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, cast
 
 if TYPE_CHECKING:
     from collections.abc import Generator
 
+    from lato import DependencyProvider
+
 import structlog
 from dependency_injector.wiring import Provide  # type: ignore[import-not-found]
 from dependency_injector.wiring import inject as di_inject
-from lato import Application, DependencyProvider
+from lato import Application
 
 from flext_core.application.interface_bridge import InterfaceBridge
 from flext_core.config.domain_config import FlextConfiguration, get_config
@@ -76,7 +78,7 @@ from flext_core.infrastructure.containers import (
 
 # Simple error context for missing observability module
 @contextmanager
-def error_context(_message: str, **kwargs: Any) -> Generator[None]:
+def error_context(_message: str, **kwargs: object) -> Generator[None]:
     """Simple error context handler."""
     try:
         yield
@@ -372,11 +374,11 @@ class FlextEnterpriseApplication(Application):
         Returns the interface bridge that provides universal protocol adapters
         for CLI, API, gRPC, and Web interfaces.
 
-        Returns
+        Returns:
         -------
             InterfaceBridge: Universal interface bridge for all protocols
 
-        Raises
+        Raises:
         ------
             RuntimeError: If application is not initialized
 
@@ -402,7 +404,7 @@ class FlextEnterpriseApplication(Application):
         - Service registration and configuration
         - Legacy compatibility layer setup
 
-        Raises
+        Raises:
         ------
             RuntimeError: If initialization fails or dependencies unavailable
             ConnectionError: If database or external services unavailable
@@ -741,28 +743,21 @@ class FlextEnterpriseApplication(Application):
     def get_settings(self) -> ApplicationConfig:
         """Retrieve the application's configuration settings (legacy compatibility).
 
-        Returns
+        Returns:
         -------
             The FlextConfiguration instance for the application.
 
-        Raises
-        ------
-            RuntimeError: If the settings have not been initialized.
-
         """
-        if self._settings is None:
-            msg = "Settings not initialized"
-            raise RuntimeError(msg)
         return self._settings
 
     def get_domain_event_bus(self) -> DomainEventBus:
         """Retrieve the domain event bus (legacy compatibility).
 
-        Returns
+        Returns:
         -------
             The DomainEventBus instance.
 
-        Raises
+        Raises:
         ------
             RuntimeError: If the domain event bus has not been initialized.
 
@@ -772,9 +767,9 @@ class FlextEnterpriseApplication(Application):
             hybrid_bus = self.get_event_bus()
             try:
                 self._domain_event_bus = hybrid_bus.domain_bus
-            except AttributeError:
+            except AttributeError as e:
                 msg = "Domain event bus not initialized"
-                raise RuntimeError(msg)
+                raise RuntimeError(msg) from e
         return self._domain_event_bus
 
     def get_hybrid_event_bus(self) -> HybridEventBus:

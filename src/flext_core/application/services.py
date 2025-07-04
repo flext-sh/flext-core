@@ -2,7 +2,7 @@
 
 Application Services implementing use cases following ADR-001 Clean Architecture and
 Domain-Driven Design principles. These services orchestrate domain operations while
-maintaining strict architectural boundaries and implementing CLAUDE.md ZERO TOLERANCE standards.
+maintaining strict architectural boundaries and implementing ZERO TOLERANCE standards.
 
 ARCHITECTURAL COMPLIANCE:
 - ADR-001: Application Services as use case coordinators
@@ -29,12 +29,12 @@ import structlog
 # Import from domain types for consistency
 from flext_core.domain.advanced_types import ConfigurationDict
 from flext_core.domain.entities import Pipeline, PipelineExecution, Plugin
-from flext_core.domain.value_objects import (
-    PipelineId,
-    PipelineName,
-    PipelineStep,
-    PluginId,
-)
+from flext_core.domain.value_objects import PipelineName, PipelineStep
+
+if TYPE_CHECKING:
+    from flext_core.domain.value_objects import PipelineId
+
+from flext_core.domain.value_objects import PluginId
 from flext_core.infrastructure.persistence.models import (
     PipelineExecutionModel,
     PipelineModel,
@@ -104,7 +104,7 @@ class PipelineManagementService:
         self,
         data: dict[str, Any] | None,
     ) -> ConfigurationDict:
-        """Convert dictionary data to ConfigurationDict with proper type handling.  # noqa: PLR0911 - type conversion requires multiple returns.
+        """Convert dictionary data to ConfigurationDict with type handling.
 
         Args:
         ----
@@ -130,9 +130,9 @@ class PipelineManagementService:
     async def _create_pipeline_step(
         self,
         step_data: dict[str, Any],
-        plugin_repo: Any,
+        plugin_repo: object,
     ) -> PipelineStep:
-        """Create a pipeline step from step data.  # noqa: PLR0911 - step creation requires multiple returns.
+        """Create a pipeline step from step data.
 
         Args:
         ----
@@ -142,7 +142,6 @@ class PipelineManagementService:
         Returns:
         -------
             Configured PipelineStep instance
-
         """
         plugin_id = PluginId(value=UUID(str(step_data["plugin_id"])))
         plugin = await plugin_repo.find_by_id(plugin_id.value)
@@ -223,7 +222,8 @@ class PipelineManagementService:
             # Update basic pipeline properties
             self._update_pipeline_properties(pipeline, command)
 
-            # Note: Step updates are handled through separate commands to maintain clear responsibilities
+            # Note: Step updates are handled through separate commands to maintain clear
+            # responsibilities
 
             pipeline.updated_by = command.updated_by
             await pipeline_repo.save(pipeline)
@@ -241,7 +241,8 @@ class PipelineManagementService:
         if command.description is not None:
             pipeline.description = command.description
         if command.environment_variables is not None:
-            # Convert environment variables to ConfigurationDict type with proper value conversion
+            # Convert environment variables to ConfigurationDict type with proper value
+            # conversion
             env_vars: ConfigurationDict = {}
             for k, v in command.environment_variables.items():
                 if v is not None:
@@ -364,9 +365,9 @@ class PipelineExecutionService:
     async def _validate_pipeline_for_execution(
         self,
         pipeline_id: PipelineId,
-        uow: Any,
+        uow: object,
     ) -> Pipeline:
-        """Validate pipeline exists and can be executed.  # noqa: PLR0911 - validation requires multiple returns.
+        """Validate pipeline exists and can be executed.
 
         Args:
         ----
@@ -380,7 +381,6 @@ class PipelineExecutionService:
         Raises:
         ------
             ValueError: If pipeline not found or cannot execute
-
         """
         pipeline_repo = uow.get_repository(Pipeline, PipelineModel)
         pipeline = await pipeline_repo.find_by_id(pipeline_id)
@@ -397,9 +397,9 @@ class PipelineExecutionService:
     async def _check_concurrent_execution_limit(
         self,
         pipeline: Pipeline,
-        execution_repo: Any,
+        execution_repo: object,
     ) -> None:
-        """Check if pipeline can start new execution based on concurrent limits.  # noqa: PLR0911 - limit check requires multiple returns.
+        """Check if pipeline can start new execution based on concurrent limits.
 
         Args:
         ----
@@ -409,7 +409,6 @@ class PipelineExecutionService:
         Raises:
         ------
             ValueError: If concurrent execution limit reached
-
         """
         running_executions = await execution_repo.find_by_criteria(
             {
@@ -421,8 +420,8 @@ class PipelineExecutionService:
             msg = f"Maximum concurrent executions ({pipeline.max_concurrent_executions}) reached"
             raise ValueError(msg)
 
-    async def _get_next_execution_number(self, execution_repo: Any) -> int:
-        """Get next execution number for pipeline.  # noqa: PLR0911 - number generation requires multiple returns.
+    async def _get_next_execution_number(self, execution_repo: object) -> int:
+        """Get next execution number for pipeline.
 
         Args:
         ----
@@ -431,7 +430,6 @@ class PipelineExecutionService:
         Returns:
         -------
             Next execution number
-
         """
         try:
             execution_count = await execution_repo.count()
@@ -479,7 +477,7 @@ class PipelineExecutionService:
             pipeline.mark_events_as_committed()
 
             if self._meltano_acl:
-                # ZERO TOLERANCE IMPLEMENTATION: Execute immediately for synchronous operation
+                # Execute immediately for synchronous operation
                 # Background task execution is handled by dependency injection container
                 # EventBus will handle async task distribution to worker pools
                 await self._run_pipeline_with_meltano(pipeline, execution)
@@ -559,7 +557,7 @@ class PipelineExecutionService:
                 repo = uow.get_repository(PipelineExecution, PipelineExecutionModel)
                 await repo.save(execution)
 
-            # ZERO TOLERANCE P1 FIX: Enhanced async/await patterns with ServiceResult handling
+            # Enhanced async/await patterns with ServiceResult handling
             try:
                 service_result = await self._meltano_acl.translate_and_run_pipeline(
                     pipeline,

@@ -11,10 +11,12 @@ from datetime import datetime
 try:
     from datetime import UTC
 except ImportError:
-    UTC = UTC
+    import datetime as _datetime
+    UTC = _datetime.UTC
 from enum import Enum
-from typing import Any, TypeVar
+from typing import Any, ParamSpec, TypeVar
 
+P = ParamSpec("P")
 T = TypeVar("T")
 AsyncT = TypeVar("AsyncT")
 
@@ -250,16 +252,11 @@ class RobustErrorHandler:
             logger = get_logger("flext.error_handler")
 
             logger.error(
-                "Error handled: %s",
-                report.message,
-                error_id=report.error_id,
-                severity=report.severity.value,
-                category=report.category.value,
-                exception_type=report.exception_type,
-                component=report.context.component,
-                operation=report.context.operation,
-                user_id=report.context.user_id,
-                request_id=report.context.request_id,
+                f"Error handled: {report.message} "
+                f"[ID: {report.error_id}, Severity: {report.severity.value}, "
+                f"Category: {report.category.value}, Type: {report.exception_type}, "
+                f"Component: {report.context.component}, Operation: {report.context.operation}, "
+                f"User: {report.context.user_id}, Request: {report.context.request_id}]"
             )
         except ImportError:
             # Fallback to standard logging if structured logging not available
@@ -311,12 +308,12 @@ def handle_exceptions(
     context: ErrorContext | None = None,
     severity: ErrorSeverity | None = None,
     reraise: bool = False,
-) -> Callable[[Callable[..., T]], Callable[..., T]]:
+) -> Callable[[Callable[P, T]], Callable[P, T]]:
     """Decorator for handling exceptions in functions."""
 
-    def decorator(func: Callable[..., T]) -> Callable[..., T]:
+    def decorator(func: Callable[P, T]) -> Callable[P, T]:
         @functools.wraps(func)
-        def wrapper(*args: Any, **kwargs: Any) -> T:
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
             try:
                 return func(*args, **kwargs)
             except Exception as e:
@@ -332,7 +329,7 @@ def handle_exceptions(
                 # Return None for functions that expect a return value
                 return None  # type: ignore[return-value]
 
-        return wrapper  # type: ignore[return-value]
+        return wrapper
 
     return decorator
 
@@ -341,14 +338,14 @@ def handle_async_exceptions(
     context: ErrorContext | None = None,
     severity: ErrorSeverity | None = None,
     reraise: bool = False,
-) -> Callable[[Callable[..., Awaitable[AsyncT]]], Callable[..., Awaitable[AsyncT]]]:
+) -> Callable[[Callable[P, Awaitable[AsyncT]]], Callable[P, Awaitable[AsyncT]]]:
     """Decorator for handling exceptions in async functions."""
 
     def decorator(
-        func: Callable[..., Awaitable[AsyncT]],
-    ) -> Callable[..., Awaitable[AsyncT]]:
+        func: Callable[P, Awaitable[AsyncT]],
+    ) -> Callable[P, Awaitable[AsyncT]]:
         @functools.wraps(func)
-        async def wrapper(*args: Any, **kwargs: Any) -> AsyncT:
+        async def wrapper(*args: P.args, **kwargs: P.kwargs) -> AsyncT:
             try:
                 return await func(*args, **kwargs)
             except Exception as e:
@@ -363,7 +360,7 @@ def handle_async_exceptions(
 
                 return None  # type: ignore[return-value]
 
-        return wrapper  # type: ignore[return-value]
+        return wrapper
 
     return decorator
 
@@ -373,12 +370,12 @@ def retry_on_failure(
     delay: float = 1.0,
     backoff: float = 2.0,
     exceptions: tuple[type[Exception], ...] = (Exception,),
-) -> Callable[[Callable[..., T]], Callable[..., T]]:
+) -> Callable[[Callable[P, T]], Callable[P, T]]:
     """Decorator for retrying functions on failure."""
 
-    def decorator(func: Callable[..., T]) -> Callable[..., T]:
+    def decorator(func: Callable[P, T]) -> Callable[P, T]:
         @functools.wraps(func)
-        def wrapper(*args: Any, **kwargs: Any) -> T:
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
             last_exception = None
 
             for attempt in range(max_retries + 1):
@@ -394,10 +391,7 @@ def retry_on_failure(
 
                             logger = get_logger("flext.retry")
                             logger.warning(
-                                "Retry attempt %s/%s for %s",
-                                attempt + 1,
-                                max_retries,
-                                func.__name__,
+                                f"Retry attempt {attempt + 1}/{max_retries} for {func.__name__}",
                                 function=func.__name__,
                                 attempt=attempt + 1,
                                 max_retries=max_retries,
@@ -419,7 +413,7 @@ def retry_on_failure(
 
             return None  # type: ignore[return-value]  # Should never reach here
 
-        return wrapper  # type: ignore[return-value]
+        return wrapper
 
     return decorator
 
@@ -514,8 +508,7 @@ def log_error_recovery(operation: str, error_id: str, recovery_action: str) -> N
 
         logger = get_logger("flext.recovery")
         logger.info(
-            "Error recovery: %s",
-            operation,
+            f"Error recovery: {operation}",
             operation=operation,
             error_id=error_id,
             recovery_action=recovery_action,

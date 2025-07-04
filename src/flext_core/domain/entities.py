@@ -6,13 +6,14 @@ from datetime import datetime
 try:
     from datetime import UTC
 except ImportError:
-    UTC = UTC
+    import datetime
+    UTC = datetime.UTC
 from enum import StrEnum
 from typing import Any, ClassVar
 
 from pydantic import BaseModel, Field, field_validator
 
-from .base import (
+from flext_core.domain.base import (
     PipelineId,
     PluginId,
     create_pipeline_id,

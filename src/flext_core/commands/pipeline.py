@@ -37,4 +37,4 @@ class ExecutePipelineCommand(DomainBaseModel):
     parameters: dict[str, Any] = Field(
         default_factory=dict, description="Execution parameters"
     )
-    async_execution: bool = Field(True, description="Whether to execute asynchronously")
+    async_execution: bool = Field(default=True, description="Whether to execute asynchronously")

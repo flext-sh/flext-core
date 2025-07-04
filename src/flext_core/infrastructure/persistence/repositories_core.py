@@ -20,7 +20,8 @@ from datetime import datetime, timedelta
 try:
     from datetime import UTC
 except ImportError:
-    UTC = UTC
+    import datetime
+    UTC = datetime.UTC
 from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 import structlog

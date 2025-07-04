@@ -122,7 +122,7 @@ class DefaultValidationService(ValidationService):
         return result
 
     async def validate_execution_parameters(
-        self, parameters: dict[str, Any], pipeline_id: str
+        self, parameters: Any, pipeline_id: str
     ) -> ValidationResult:
         """Validate execution parameters."""
         result = ValidationResult(is_valid=True)
@@ -130,6 +130,11 @@ class DefaultValidationService(ValidationService):
         # Basic parameter validation
         if not isinstance(parameters, dict):
             result.add_error("Execution parameters must be a dictionary")
+            return result
+
+        # Additional validations for valid dict
+        if not parameters:
+            result.add_warning("Execution parameters are empty")
 
         return result
 

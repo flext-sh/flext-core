@@ -469,7 +469,7 @@ class ExecutionRepositoryPort(ABC):
     async def find_active_executions(self) -> list[PipelineExecution]:
         """Find all currently active executions.
 
-        Returns
+        Returns:
         -------
             List of executions with non-terminal status
 
@@ -529,7 +529,7 @@ class PluginRepositoryPort(ABC):
     async def find_available_plugins(self) -> list[Plugin]:
         """Find all available and compatible plugins.
 
-        Returns
+        Returns:
         -------
             List of plugins available for use
 
@@ -636,7 +636,7 @@ class DistributedExecutionPort(ABC):
     async def get_cluster_status(self) -> ServiceResult[dict[str, Any]]:
         """Get current distributed cluster status.
 
-        Returns
+        Returns:
         -------
             ServiceResult containing cluster information
 
