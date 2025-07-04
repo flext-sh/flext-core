@@ -40,9 +40,13 @@ from datetime import datetime
 try:
     from datetime import UTC
 except ImportError:
-    UTC = UTC
+    import datetime
+    UTC = datetime.UTC
 from typing import TYPE_CHECKING, Any, cast
-from uuid import UUID, uuid4
+from uuid import uuid4
+
+if TYPE_CHECKING:
+    from uuid import UUID
 
 import structlog
 from dependency_injector.wiring import Provide, inject
@@ -162,7 +166,7 @@ class EnterpriseCommandHandlers:
             ApplicationContainer.meltano.meltano_engine
         ],
     ) -> None:
-        """Initialize enterprise command handlers with professional dependency injection.
+        """Initialize enterprise command handlers with dependency injection.
 
         Args:
         ----
@@ -185,7 +189,7 @@ class EnterpriseCommandHandlers:
         self,
         command: CreatePipelineCommand,
     ) -> HandlerResult[dict[str, Any]]:
-        """Create new pipeline with enterprise transaction management and event publishing."""
+        """Create new pipeline with transaction management and event publishing."""
         if not self._unit_of_work:
             return ServiceResult.fail(
                 EnterpriseErrorPatterns.storage_unavailable(
@@ -550,7 +554,7 @@ class EnterpriseCommandHandlers:
         self,
         command: GetPipelineStatusCommand,
     ) -> PipelineResult[HealthStatus]:
-        """Get comprehensive pipeline status with health monitoring and execution history."""
+        """Get pipeline status with health monitoring and execution history."""
         if not self._unit_of_work:
             return ServiceResult.fail(
                 EnterpriseErrorPatterns.storage_unavailable(
@@ -1009,7 +1013,7 @@ class EnterpriseCommandHandlers:
                 "created_at": pipeline.created_at.isoformat(),
             },
         )
-        # Use the event bus directly since HybridEventBus is compatible with DomainEventBus protocol
+        # Use event bus directly since HybridEventBus is compatible with DomainEventBus
         # Import DomainEventBus for type annotation
         event_bus = cast("DomainEventBus | None", self._event_bus)
         await EnterpriseEventPatterns.publish_event_safely(event_bus, event)
@@ -1063,7 +1067,7 @@ class EnterpriseCommandHandlers:
                     ),
                 },
             )
-            # Use the event bus directly since HybridEventBus is compatible with DomainEventBus protocol
+        # Use event bus directly since HybridEventBus is compatible with DomainEventBus
         # Import DomainEventBus for type annotation
         event_bus = cast("DomainEventBus | None", self._event_bus)
         await EnterpriseEventPatterns.publish_event_safely(event_bus, event)
@@ -1181,7 +1185,7 @@ class EnterpriseCommandHandlers:
             execution,
             pipeline,
         )
-        # Use the event bus directly since HybridEventBus is compatible with DomainEventBus protocol
+        # Use event bus directly since HybridEventBus is compatible with DomainEventBus
         # Import DomainEventBus for type annotation
         event_bus = cast("DomainEventBus | None", self._event_bus)
         await EnterpriseEventPatterns.publish_event_safely(event_bus, event)
@@ -1196,7 +1200,7 @@ class EnterpriseCommandHandlers:
                 "was_active": pipeline.is_active,
             },
         )
-        # Use the event bus directly since HybridEventBus is compatible with DomainEventBus protocol
+        # Use event bus directly since HybridEventBus is compatible with DomainEventBus
         # Import DomainEventBus for type annotation
         event_bus = cast("DomainEventBus | None", self._event_bus)
         await EnterpriseEventPatterns.publish_event_safely(event_bus, event)
@@ -1352,7 +1356,7 @@ class EnterpriseCommandHandlers:
         else:
             score += int(12.5)  # Unknown or other status
 
-        # Performance contributes 15% of score (faster is better, with reasonable thresholds)
+        # Performance contributes 15% of score (faster is better, with thresholds)
         config = get_config()
         if average_duration < config.business.EXCELLENT_PERFORMANCE_THRESHOLD_SECONDS:
             score += 15

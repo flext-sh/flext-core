@@ -14,10 +14,11 @@ from uuid import UUID, uuid4
 
 from pydantic import Field, field_validator, model_validator
 
-from flext_core.domain.advanced_types import ConfigurationDict, ConfigurationValue
+from flext_core.domain.advanced_types import ConfigurationDict
 from flext_core.domain.pydantic_base import DomainValueObject
 
 if TYPE_CHECKING:
+    from flext_core.domain.advanced_types import ConfigurationValue
     from flext_core.domain.entities import Pipeline
 
 # Constants for time conversion
@@ -906,7 +907,7 @@ class PipelineStep(DomainValueObject):
     and its dependencies on other steps.
     Python 3.13 + Pydantic v2 value object with validation.
 
-    Attributes
+    Attributes:
     ----------
         step_id: A unique identifier for the step within the pipeline.
         plugin_id: The identifier of the plugin to be executed.

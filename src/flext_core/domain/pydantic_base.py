@@ -13,7 +13,8 @@ from datetime import datetime
 try:
     from datetime import UTC
 except ImportError:
-    UTC = UTC
+    import datetime
+    UTC = datetime.UTC
 
 # Conditional import to avoid circular dependency - use TYPE_CHECKING instead
 from typing import TYPE_CHECKING, Any, TypeVar

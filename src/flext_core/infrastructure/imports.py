@@ -21,8 +21,8 @@ if TYPE_CHECKING:
 
 # ZERO TOLERANCE - Meltano dependencies are REQUIRED for FLEXT Meltano Enterprise
 try:
-    from meltano.core.project import (
-        Project as MeltanoProject,  # type: ignore[import-not-found]
+    from meltano.core.project import (  # type: ignore[import-not-found]
+        Project as MeltanoProject,
     )
     from meltano.core.runner import RunnerError  # type: ignore[import-not-found]
 except ImportError:
@@ -131,11 +131,11 @@ def _get_class_from_module(
 def import_e2e_test_suite() -> ImportableClass:
     """Import E2E test suite class - ARCHITECTURAL APPROACH with caching.
 
-    Returns
+    Returns:
     -------
         FlextE2ETestSuite class from tests/e2e/flext_e2e.py
 
-    Raises
+    Raises:
     ------
         ArchitecturalImportError: When E2E module cannot be imported
 
@@ -162,11 +162,11 @@ def import_e2e_test_suite() -> ImportableClass:
 def import_kind_cluster_setup() -> ImportableClass:
     """Import Kind cluster setup class - ARCHITECTURAL APPROACH with caching.
 
-    Returns
+    Returns:
     -------
         KindClusterSetup class from scripts/setup_kind_cluster.py
 
-    Raises
+    Raises:
     ------
         ArchitecturalImportError: When Kind setup module cannot be imported
 
@@ -193,11 +193,11 @@ def import_kind_cluster_setup() -> ImportableClass:
 def import_meltano_components() -> ModuleComponents:
     """Import Meltano components - ARCHITECTURAL APPROACH for distributed processing.
 
-    Returns
+    Returns:
     -------
         Dictionary of Meltano component classes
 
-    Raises
+    Raises:
     ------
         ArchitecturalImportError: When Meltano components cannot be imported
 

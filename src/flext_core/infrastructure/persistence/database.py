@@ -14,7 +14,8 @@ from datetime import datetime
 try:
     from datetime import UTC
 except ImportError:
-    UTC = UTC
+    import datetime
+    UTC = datetime.UTC
 from enum import Enum
 from typing import TYPE_CHECKING, Any
 
@@ -23,7 +24,6 @@ from pydantic import Field
 # ZERO TOLERANCE - SQLAlchemy imports with enterprise compatibility
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import (
-    AsyncEngine,
     AsyncSession,
     async_sessionmaker,
     create_async_engine,
@@ -35,6 +35,10 @@ from flext_core.models import Base
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from sqlalchemy.ext.asyncio import (
+        AsyncEngine,
+    )
+
 
 class DatabaseEchoMode(Enum):
     """Database echo mode for SQLAlchemy logging control.
@@ -43,7 +47,7 @@ class DatabaseEchoMode(Enum):
     boolean echo parameters with explicit mode enum values for
     better type safety and clearer debugging control.
 
-    Attributes
+    Attributes:
     ----------
         SILENT: Disable SQL query logging for production environments.
         VERBOSE: Enable SQL query logging for debugging and development.
@@ -347,11 +351,11 @@ class DatabaseConnectionFailover:
     async def get_connection(self) -> DatabaseManager:
         """Get a working database connection with automatic failover.
 
-        Returns
+        Returns:
         -------
             Database manager with working connection
 
-        Raises
+        Raises:
         ------
             RuntimeError: If all databases are unavailable
 
@@ -450,7 +454,7 @@ class DatabaseConnectionFailover:
     async def check_primary_recovery(self) -> bool:
         """Check if primary database has recovered.
 
-        Returns
+        Returns:
         -------
             True if primary is available and failover can be reverted
 
@@ -485,7 +489,7 @@ class DatabaseConnectionFailover:
     def get_failover_status(self) -> dict[str, Any]:
         """Get current failover status information.
 
-        Returns
+        Returns:
         -------
             Dictionary with failover status details
 
@@ -569,7 +573,7 @@ class DatabasePerformanceMonitor:
     def get_performance_metrics(self) -> dict[str, Any]:
         """Get comprehensive performance metrics.
 
-        Returns
+        Returns:
         -------
             Dictionary with performance metrics
 
@@ -600,7 +604,7 @@ class DatabasePerformanceMonitor:
     def analyze_slow_queries(self) -> dict[str, Any]:
         """Analyze slow query patterns and statistics.
 
-        Returns
+        Returns:
         -------
             Dictionary with slow query analysis
 
@@ -662,7 +666,7 @@ class DatabasePerformanceMonitor:
     def check_performance_alerts(self) -> list[dict[str, Any]]:
         """Check for performance alerts based on thresholds.
 
-        Returns
+        Returns:
         -------
             List of active alerts
 
@@ -769,7 +773,7 @@ class DatabaseManager:
         Returns connection parameters optimized for asyncpg driver performance
         including prepared statements, connection pooling, and query caching.
 
-        Returns
+        Returns:
         -------
             Dictionary of asyncpg optimization parameters
 
@@ -981,7 +985,7 @@ class AsyncpgDatabaseManager(DatabaseManager):
     async def get_connection_info(self) -> dict[str, Any]:
         """Get detailed connection information for monitoring.
 
-        Returns
+        Returns:
         -------
             Dictionary with connection pool status and performance metrics
 
@@ -1071,7 +1075,7 @@ class AsyncpgDatabaseManager(DatabaseManager):
     async def optimize_performance(self) -> dict[str, Any]:
         """Apply runtime performance optimizations.
 
-        Returns
+        Returns:
         -------
             Dictionary with optimization results
 
@@ -1105,7 +1109,7 @@ class AsyncpgDatabaseManager(DatabaseManager):
     async def initialize_with_health_check(self) -> None:
         """Initialize database with automatic health check.
 
-        Raises
+        Raises:
         ------
             RuntimeError: If initialization or health check fails
 
@@ -1121,7 +1125,7 @@ class AsyncpgDatabaseManager(DatabaseManager):
     async def connect_with_retry(self) -> None:
         """Connect to database with automatic retry logic.
 
-        Raises
+        Raises:
         ------
             RuntimeError: If all connection attempts fail
 
@@ -1194,11 +1198,11 @@ class AsyncpgDatabaseManager(DatabaseManager):
     async def get_connection_with_failover(self) -> DatabaseManager:
         """Get database connection with automatic failover.
 
-        Returns
+        Returns:
         -------
             Database manager with working connection
 
-        Raises
+        Raises:
         ------
             RuntimeError: If failover is not configured or all connections fail
 
@@ -1212,7 +1216,7 @@ class AsyncpgDatabaseManager(DatabaseManager):
     def get_comprehensive_status(self) -> dict[str, Any]:
         """Get comprehensive database status information.
 
-        Returns
+        Returns:
         -------
             Dictionary with complete database status
 

@@ -1,4 +1,4 @@
-"""Application container for dependency injection with ZERO boilerplate using Python 3.13.
+"""Application container for dependency injection with Python 3.13.
 
 This module provides the central dependency injection container that manages all
 application services, infrastructure components, and configuration.
@@ -86,7 +86,7 @@ class FlextApplicationContainer:
     async def unit_of_work(self) -> AsyncGenerator[UnitOfWorkInterface]:
         """Create and manage unit of work with proper transaction handling.
 
-        Returns
+        Returns:
         -------
             Async context manager for unit of work
 
@@ -150,7 +150,7 @@ class FlextApplicationContainer:
     def meltano_engine(self) -> MeltanoEngine:
         """Get or create Meltano engine instance.
 
-        Returns
+        Returns:
         -------
             Configured Meltano engine
 
@@ -165,7 +165,7 @@ class FlextApplicationContainer:
     def command_bus(self) -> ReflectionCommandBus:
         """Get or create command bus instance.
 
-        Returns
+        Returns:
         -------
             Command bus instance for command handling
 
@@ -177,14 +177,14 @@ class FlextApplicationContainer:
     def plugin_manager(self) -> PluginManager:
         """Get or create plugin manager instance.
 
-        Returns
+        Returns:
         -------
             Plugin manager instance for plugin management
 
         """
         if self._plugin_manager is None:
             # Import here to avoid circular imports with container parameter
-            from flext_core.plugins.manager import PluginManager
+            from flext_core.plugins.manager import PluginManager  # noqa: PLC0415
 
             self._plugin_manager = PluginManager(container=self)
         return self._plugin_manager
@@ -193,7 +193,7 @@ class FlextApplicationContainer:
     def database_health(self) -> HealthStatus:
         """Check database connectivity health.
 
-        Returns
+        Returns:
         -------
             Database health status
 
@@ -236,7 +236,7 @@ class FlextApplicationContainer:
     def redis_health(self) -> HealthStatus:
         """Check Redis connectivity health.
 
-        Returns
+        Returns:
         -------
             Redis health status
 
@@ -275,7 +275,7 @@ class FlextApplicationContainer:
     def meltano_health(self) -> HealthStatus:
         """Check Meltano system health.
 
-        Returns
+        Returns:
         -------
             Meltano health status
 
@@ -312,7 +312,7 @@ class FlextApplicationContainer:
     def grpc_health(self) -> HealthStatus:
         """Check gRPC server health.
 
-        Returns
+        Returns:
         -------
             gRPC health status
 
@@ -345,7 +345,7 @@ class FlextApplicationContainer:
     def event_bus_health(self) -> HealthStatus:
         """Check event bus health.
 
-        Returns
+        Returns:
         -------
             Event bus health status
 
@@ -376,7 +376,7 @@ class FlextApplicationContainer:
     def plugin_system_health(self) -> HealthStatus:
         """Check plugin system health.
 
-        Returns
+        Returns:
         -------
             Plugin system health status
 
@@ -409,13 +409,13 @@ class FlextApplicationContainer:
     async def _get_session_factory(self) -> async_sessionmaker[AsyncSession]:
         """Get or create async session factory.
 
-        Returns
+        Returns:
         -------
             Async session factory
 
         """
         if self._session_factory is None:
-            # Use domain configuration for all database parameters - with strict validation
+            # Use domain configuration for all database parameters with validation
             engine = create_async_engine(
                 self._settings.database.url,
                 echo=self._settings.debug,
@@ -436,10 +436,9 @@ class FlextApplicationContainer:
     def _get_event_bus(self) -> HybridEventBus:
         """Get or create event bus instance.
 
-        Returns
+        Returns:
         -------
             Event bus instance
-
         """
         if self._event_bus is None:
             # Import at runtime to avoid circular dependency
@@ -497,29 +496,15 @@ class FlextApplicationContainer:
 
     def __repr__(self) -> str:
         """Return string representation of the container."""
-        return (
-            f"FlextApplicationContainer(settings={self._settings.__class__.__name__})"
-        )
+        return f"FlextApplicationContainer(settings={self._settings.__class__.__name__})"
 
 
-# Factory function for easy container creation
 def create_application_container(
     settings: FlextConfiguration | None = None,
 ) -> FlextApplicationContainer:
-    """Create application container with default or provided settings.
-
-    Args:
-    ----
-        settings: Optional settings, will use default if not provided
-
-    Returns:
-    -------
-        Configured application container
-
-    """
+    """Create application container with default or provided settings."""
     if settings is None:
-        # ZERO TOLERANCE - domain_config is REQUIRED and guaranteed in pyproject.toml
+        import importlib  # noqa: PLC0415
         config_module = importlib.import_module("flext_core.config.domain_config")
         settings = config_module.get_config()
-
     return FlextApplicationContainer(settings)

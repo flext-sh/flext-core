@@ -1,5 +1,8 @@
 """Comprehensive tests for flext-core functionality."""
 
+import importlib.util
+import json
+import logging
 from pathlib import Path
 
 import pytest
@@ -7,8 +10,6 @@ import pytest
 
 def test_core_module_imports() -> None:
     """Test that core modules can be imported."""
-    import importlib.util
-
     # Use find_spec for availability testing
     if (
         importlib.util.find_spec("json") is None
@@ -27,8 +28,6 @@ def test_pathlib_functionality() -> None:
 
 def test_json_operations() -> None:
     """Test JSON operations."""
-    import json
-
     test_data = {"test": "value", "number": 42}
     json_str = json.dumps(test_data)
     parsed_data = json.loads(json_str)
@@ -56,18 +55,14 @@ class TestCoreArchitecture:
 
     def test_logging_setup(self) -> None:
         """Test logging setup."""
-        import logging
-
         logger = logging.getLogger("test")
         assert logger is not None
 
     def test_error_handling(self) -> None:
         """Test error handling."""
-        try:
+        with pytest.raises(ValueError, match="test error"):
             msg = "test error"
             raise ValueError(msg)
-        except ValueError as e:
-            assert str(e) == "test error"
 
 
 @pytest.mark.parametrize(

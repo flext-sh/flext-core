@@ -8,8 +8,6 @@ from pydantic import BaseModel
 
 if TYPE_CHECKING:
     from flext_core.domain.value_objects import PipelineId, PipelineStep
-else:
-    pass
 
 # Import the canonical CreatePipelineCommand from the unified commands module
 
@@ -35,7 +33,7 @@ class AddStepToPipelineCommand(BaseModel):
     result = await handler.execute(addsteptopipelinecommand)
     ```
 
-    See Also
+    See Also:
     --------
     - [Documentação da Arquitetura](../../docs/architecture/index.md)
     - [Padrões de Design](../../docs/architecture/001-clean-architecture-ddd.md)
@@ -71,7 +69,7 @@ class UpdatePipelineScheduleCommand(BaseModel):
     result = await handler.execute(updatepipelineschedulecommand)
     ```
 
-    See Also
+    See Also:
     --------
     - [Documentação da Arquitetura](../../docs/architecture/index.md)
     - [Padrões de Design](../../docs/architecture/001-clean-architecture-ddd.md)
@@ -107,7 +105,7 @@ class RunPipelineCommand(BaseModel):
     result = await handler.execute(runpipelinecommand)
     ```
 
-    See Also
+    See Also:
     --------
     - [Documentação da Arquitetura](../../docs/architecture/index.md)
     - [Padrões de Design](../../docs/architecture/001-clean-architecture-ddd.md)

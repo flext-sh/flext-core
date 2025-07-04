@@ -12,11 +12,14 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     import types
 
+    from flext_core.contracts.repository_contracts import (
+        RepositoryInterface,
+    )
+
 # Auth models now unified in models.py
 from flext_auth.models import Role  # Import domain model for typing
 
 from flext_core.contracts.repository_contracts import (
-    RepositoryInterface,
     UnitOfWorkInterface,
 )
 from flext_core.domain.entities import Pipeline, PipelineExecution, Plugin

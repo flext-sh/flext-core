@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any
 
 import structlog
 
@@ -93,7 +92,7 @@ class BaseApplicationMixin(ABC):
             services_healthy = await self._check_services_health()
 
             if container_healthy and services_healthy:
-                return ServiceResult.ok(True)
+                return ServiceResult.ok(data=True)
 
             return ServiceResult.fail(
                 ServiceError(
@@ -101,7 +100,7 @@ class BaseApplicationMixin(ABC):
                     message="Application health check failed",
                 ),
             )
-        except Exception as e:
+        except (RuntimeError, ValueError, TypeError, OSError) as e:
             return ServiceResult.fail(
                 ServiceError(
                     code="HEALTH_CHECK_ERROR",
@@ -135,10 +134,10 @@ class BaseApplicationMixin(ABC):
         """Handle resource exhausted event."""
 
     # Abstract methods that must be implemented by subclasses
-    def get_system_monitor(self) -> Any | None:
+    def get_system_monitor(self) -> object | None:
         """Get system monitor instance."""
         return getattr(self, "_monitor", None)
 
-    def get_event_bus(self) -> Any:
+    def get_event_bus(self) -> object:
         """Get event bus instance."""
         return getattr(self, "_event_bus", None)

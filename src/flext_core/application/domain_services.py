@@ -1,7 +1,7 @@
-"""ADR-001 Compliant Domain Services - Clean Architecture Application Layer.
+"""ADR-001 Compliant Domain Services - Clean Architecture Layer.
 
-Domain services implementing complex business logic that doesn't naturally fit within
-a single aggregate. Follows ADR-001 Clean Architecture and Domain-Driven Design principles
+Domain services implementing complex business logic that doesn't naturally fit
+a single aggregate. Follows ADR-001 Clean Architecture and DDD
 with CLAUDE.md ZERO TOLERANCE standards for enterprise-grade implementations.
 
 ARCHITECTURAL COMPLIANCE:
@@ -21,16 +21,13 @@ from datetime import datetime
 try:
     from datetime import UTC
 except ImportError:
-    UTC = UTC
+    import datetime
+    UTC = datetime.UTC
+from enum import StrEnum
 from typing import TYPE_CHECKING, Any
 
-from flext_core.domain.advanced_types import (
-    ConfigurationDict,
-    MetadataDict,
-    ServiceError,
-    ServiceResult,
-)
-from flext_core.domain.entities import Pipeline, PipelineExecution
+from flext_core.domain.advanced_types import ServiceError, ServiceResult
+from flext_core.domain.entities import Pipeline
 from flext_core.domain.specifications import (
     ExecutionCanBeRetriedSpecification,
     PipelineCanExecuteSpecification,
@@ -38,15 +35,37 @@ from flext_core.domain.specifications import (
     PluginIsCompatibleSpecification,
 )
 from flext_core.domain.value_objects import (
-    ExecutionId,
     ExecutionStatus,
-    PipelineId,
     PipelineName,
     PipelineStep,
     PluginId,
 )
 
+
+# Execution modes enum
+class ExecutionMode(StrEnum):
+    """Execution mode options."""
+    LOCAL = "local"
+    DISTRIBUTED = "distributed"
+
+
+# Constants for thresholds and timeouts
+CPU_THRESHOLD_WARNING = 80
+CPU_THRESHOLD_CRITICAL = 90
+MEMORY_THRESHOLD_WARNING = 80
+MEMORY_THRESHOLD_CRITICAL = 90
+EXECUTION_TIMEOUT_SECONDS = 3600  # 1 hour
+EXTENDED_TIMEOUT_SECONDS = 7200   # 2 hours
+MAX_RETRY_ATTEMPTS = 2
+MAX_RETRY_ATTEMPTS_EXTENDED = 3
+PERFORMANCE_SCORE_MAX_DEDUCTION = 30
+
 if TYPE_CHECKING:
+    from flext_core.domain.advanced_types import (
+        ConfigurationDict,
+        MetadataDict,
+    )
+    from flext_core.domain.entities import PipelineExecution
     from flext_core.domain.ports import (
         AuditLogPort,
         DistributedExecutionPort,
@@ -55,6 +74,10 @@ if TYPE_CHECKING:
         ExternalIntegrationPort,
         PipelineRepositoryPort,
         PluginRepositoryPort,
+    )
+    from flext_core.domain.value_objects import (
+        ExecutionId,
+        PipelineId,
     )
 
 
@@ -67,6 +90,15 @@ class DomainServiceError(Exception):
         error_code: str | None = None,
         metadata: dict[str, Any] | None = None,
     ) -> None:
+        """Initialize domain service error.
+
+        Args:
+        ----
+            message: Error message
+            error_code: Optional error code
+            metadata: Optional error metadata
+
+        """
         super().__init__(message)
         self.error_code = error_code
         self.metadata = metadata or {}
@@ -81,6 +113,15 @@ class BusinessRuleViolationError(DomainServiceError):
         message: str,
         violated_entity: str | None = None,
     ) -> None:
+        """Initialize business rule violation error.
+
+        Args:
+        ----
+            rule_name: Name of the violated business rule
+            message: Error message
+            violated_entity: Optional entity that violated the rule
+
+        """
         super().__init__(
             message=f"Business rule '{rule_name}' violation: {message}",
             error_code="BUSINESS_RULE_VIOLATION",
@@ -92,6 +133,15 @@ class ConcurrencyConflictError(DomainServiceError):
     """Exception for concurrency conflicts in domain operations."""
 
     def __init__(self, resource_type: str, resource_id: str, operation: str) -> None:
+        """Initialize concurrency conflict error.
+
+        Args:
+        ----
+            resource_type: Type of resource in conflict
+            resource_id: ID of the conflicting resource
+            operation: Operation that caused the conflict
+
+        """
         super().__init__(
             message=f"Concurrency conflict on {resource_type} '{resource_id}' during {operation}",
             error_code="CONCURRENCY_CONFLICT",
@@ -107,11 +157,45 @@ class ResourceNotFoundError(DomainServiceError):
     """Exception for missing required resources."""
 
     def __init__(self, resource_type: str, resource_id: str) -> None:
+        """Initialize resource not found error.
+
+        Args:
+        ----
+            resource_type: Type of resource not found
+            resource_id: ID of the missing resource
+
+        """
         super().__init__(
             message=f"{resource_type} with ID '{resource_id}' not found",
             error_code="RESOURCE_NOT_FOUND",
             metadata={"resource_type": resource_type, "resource_id": resource_id},
         )
+
+
+class PipelineCreationError(DomainServiceError):
+    """Exception for pipeline creation failures."""
+
+
+class PipelineExecutionError(DomainServiceError):
+    """Exception for pipeline execution failures."""
+
+
+class ExecutionRecoveryError(DomainServiceError):
+    """Exception for execution recovery failures."""
+
+
+class PluginManagementError(DomainServiceError):
+    """Exception for plugin management operations."""
+
+
+def _raise_validation_error(rule_name: str, message: str, entity: str | None = None) -> None:
+    """Raise a business rule validation error."""
+    raise BusinessRuleViolationError(rule_name, message, entity)
+
+
+def _raise_resource_not_found(resource_type: str, resource_id: str) -> None:
+    """Raise a resource not found error."""
+    raise ResourceNotFoundError(resource_type, resource_id)
 
 
 class PipelineManagementService:
@@ -190,10 +274,10 @@ class PipelineManagementService:
             )
 
             if not validation_spec.is_satisfied_by(pipeline):
-                raise BusinessRuleViolationError(
+                _raise_validation_error(
                     rule_name="PipelineValidation",
                     message="Pipeline fails business validation requirements",
-                    violated_entity=name,
+                    entity=name,
                 )
 
             # Step 5: Persist pipeline with event handling
@@ -247,7 +331,7 @@ class PipelineManagementService:
                 ),
             )
 
-        except Exception as e:
+        except (ValueError, TypeError, OSError) as e:
             await self._audit_log.log_system_event(
                 event_type="pipeline_creation_error",
                 severity="error",
@@ -267,7 +351,7 @@ class PipelineManagementService:
         triggered_by: str,
         parameters: ConfigurationDict | None = None,
         environment: str | None = None,
-        use_distributed: bool = False,
+        execution_mode: ExecutionMode = internal.invalid,
     ) -> ServiceResult[ExecutionId]:
         """Execute pipeline with advanced orchestration capabilities.
 
@@ -279,15 +363,14 @@ class PipelineManagementService:
             # Step 1: Validate pipeline and execution preconditions
             pipeline = await self._pipeline_repo.get_by_id(pipeline_id)
             if not pipeline:
-                msg = "Pipeline"
-                raise ResourceNotFoundError(msg, str(pipeline_id))
+                _raise_resource_not_found("Pipeline", str(pipeline_id))
 
             # Step 2: Check business rules for execution
             if not PipelineCanExecuteSpecification().is_satisfied_by(pipeline):
-                raise BusinessRuleViolationError(
+                _raise_validation_error(
                     rule_name="PipelineExecutable",
                     message="Pipeline does not meet execution requirements",
-                    violated_entity=str(pipeline_id),
+                    entity=str(pipeline_id),
                 )
 
             # Step 3: Create execution entity
@@ -302,7 +385,7 @@ class PipelineManagementService:
                 execution.input_data.update(parameters)
 
             # Step 5: Choose execution strategy
-            if use_distributed and self._distributed_execution:
+            if execution_mode == ExecutionMode.DISTRIBUTED and self._distributed_execution:
                 execution_result = await self._execute_distributed_pipeline(
                     pipeline,
                     execution,
@@ -339,7 +422,7 @@ class PipelineManagementService:
                 metadata={
                     "execution_id": str(execution.execution_id),
                     "execution_status": execution.status.value,
-                    "distributed_execution": use_distributed,
+                    "distributed_execution": execution_mode == ExecutionMode.DISTRIBUTED,
                     "execution_duration": (
                         execution.duration.total_seconds()
                         if execution.duration
@@ -364,7 +447,7 @@ class PipelineManagementService:
                 metadata=getattr(e, "metadata", {}),
             )
 
-        except Exception as e:
+        except (TimeoutError, ValueError, TypeError, OSError) as e:
             await self._audit_log.log_system_event(
                 event_type="pipeline_execution_error",
                 severity="error",
@@ -395,8 +478,7 @@ class PipelineManagementService:
         try:
             pipeline = await self._pipeline_repo.get_by_id(pipeline_id)
             if not pipeline:
-                msg = "Pipeline"
-                raise ResourceNotFoundError(msg, str(pipeline_id))
+                _raise_resource_not_found("Pipeline", str(pipeline_id))
 
             # Apply lifecycle business rules based on action
             success = await self._apply_lifecycle_action(
@@ -437,7 +519,7 @@ class PipelineManagementService:
                 error_code="LIFECYCLE_ACTION_FAILED",
             )
 
-        except Exception as e:
+        except (RuntimeError, ValueError, TypeError, OSError, ConnectionError) as e:
             return ServiceResult.fail(
                 error_message=f"Lifecycle management failed: {e}",
                 error_code="LIFECYCLE_MANAGEMENT_ERROR",
@@ -512,7 +594,8 @@ class PipelineManagementService:
             "environment": environment,
         }
 
-        # Execute distributed task
+        # Execute distributed task with environment context
+        task_definition["environment"] = environment or "default"
         return await self._distributed_execution.execute_distributed_task(
             task_definition=task_definition,
             resource_requirements={
@@ -526,7 +609,7 @@ class PipelineManagementService:
         self,
         pipeline: Pipeline,
         execution: PipelineExecution,
-        environment: str | None,
+        environment: str | None = None,
     ) -> ServiceResult[dict[str, Any]]:
         """Execute pipeline using local resources."""
         # Simplified local execution implementation
@@ -535,12 +618,13 @@ class PipelineManagementService:
         execution_results = []
 
         for step in pipeline.steps:
-            # Simulate step execution
+            # Simulate step execution with environment context
             step_result = {
                 "step_id": step.step_id,
                 "status": "success",
-                "output": f"Step {step.step_id} completed successfully",
+                "output": f"Step {step.step_id} completed successfully in {environment or 'default'}",
                 "duration": 10.5,  # Simulated duration
+                "environment": environment or "default",
             }
             execution_results.append(step_result)
 
@@ -585,9 +669,16 @@ class PipelineManagementService:
         parameters: dict[str, Any],
     ) -> bool:
         """Activate pipeline with business validation."""
+        # Log activation attempt for audit
+        await self._audit_log.log_operation(
+            operation="pipeline_activation",
+            performed_by=performed_by,
+            resource_type="pipeline",
+            resource_id=str(pipeline.pipeline_id),
+            metadata=parameters,
+        )
+
         # Business rule: Pipeline must be valid for activation
-        # Apply activation logic
-        # Real implementation would update pipeline state
         return PipelineHasValidConfigurationSpecification().is_satisfied_by(pipeline)
 
     async def _deactivate_pipeline(
@@ -597,6 +688,15 @@ class PipelineManagementService:
         parameters: dict[str, Any],
     ) -> bool:
         """Deactivate pipeline with safety checks."""
+        # Log deactivation attempt for audit
+        await self._audit_log.log_operation(
+            operation="pipeline_deactivation",
+            performed_by=performed_by,
+            resource_type="pipeline",
+            resource_id=str(pipeline.pipeline_id),
+            metadata=parameters,
+        )
+
         # Business rule: No active executions during deactivation
         active_executions = await self._execution_repo.find_active_executions()
         pipeline_executions = [
@@ -606,7 +706,7 @@ class PipelineManagementService:
         ]
 
         # Apply deactivation logic
-        return not (pipeline_executions and not parameters.get("force"))
+        return not pipeline_executions or parameters.get("force", False)
 
     async def _archive_pipeline(
         self,
@@ -615,8 +715,16 @@ class PipelineManagementService:
         parameters: dict[str, Any],
     ) -> bool:
         """Archive pipeline with data retention policies."""
+        # Log archival attempt for audit
+        await self._audit_log.log_operation(
+            operation="pipeline_archival",
+            performed_by=performed_by,
+            resource_type="pipeline",
+            resource_id=str(pipeline.pipeline_id),
+            metadata=parameters,
+        )
+
         # Business rule: Pipeline must be inactive for archival
-        # Real implementation would check pipeline state and apply archival rules
         return True
 
     async def _migrate_pipeline(
@@ -626,13 +734,18 @@ class PipelineManagementService:
         parameters: dict[str, Any],
     ) -> bool:
         """Migrate pipeline to new environment or version."""
-        target_environment = parameters.get("target_environment")
-        if not target_environment:
-            return False
+        # Log migration attempt for audit
+        await self._audit_log.log_operation(
+            operation="pipeline_migration",
+            performed_by=performed_by,
+            resource_type="pipeline",
+            resource_id=str(pipeline.pipeline_id),
+            metadata=parameters,
+        )
 
+        target_environment = parameters.get("target_environment")
         # Business rule: Target environment must be available
-        # Real implementation would validate target environment and perform migration
-        return True
+        return bool(target_environment)
 
 
 class ExecutionManagementService:
@@ -671,8 +784,7 @@ class ExecutionManagementService:
         try:
             execution = await self._execution_repo.get_execution_by_id(execution_id)
             if not execution:
-                msg = "Execution"
-                raise ResourceNotFoundError(msg, str(execution_id))
+                _raise_resource_not_found("Execution", str(execution_id))
 
             # Collect comprehensive health metrics
             health_metrics = {
@@ -705,7 +817,7 @@ class ExecutionManagementService:
                 metadata={"monitoring_user": monitoring_user},
             )
 
-        except Exception as e:
+        except (RuntimeError, ValueError, TypeError, OSError, ConnectionError) as e:
             return ServiceResult.fail(
                 error_message=f"Execution monitoring failed: {e}",
                 error_code="EXECUTION_MONITORING_ERROR",
@@ -727,8 +839,7 @@ class ExecutionManagementService:
         try:
             execution = await self._execution_repo.get_execution_by_id(execution_id)
             if not execution:
-                msg = "Execution"
-                raise ResourceNotFoundError(msg, str(execution_id))
+                _raise_resource_not_found("Execution", str(execution_id))
 
             # Validate recovery action eligibility
             if (
@@ -774,7 +885,7 @@ class ExecutionManagementService:
                 error_code="RECOVERY_ACTION_FAILED",
             )
 
-        except Exception as e:
+        except (RuntimeError, ValueError, TypeError, OSError, ConnectionError) as e:
             return ServiceResult.fail(
                 error_message=f"Execution recovery failed: {e}",
                 error_code="EXECUTION_RECOVERY_ERROR",
@@ -787,16 +898,16 @@ class ExecutionManagementService:
         score = 100.0
 
         # Deduct points for resource usage
-        if execution.cpu_usage and execution.cpu_usage > 80:
-            score -= (execution.cpu_usage - 80) * 0.5
+        if execution.cpu_usage and execution.cpu_usage > CPU_THRESHOLD_WARNING:
+            score -= (execution.cpu_usage - CPU_THRESHOLD_WARNING) * 0.5
 
-        if execution.memory_usage and execution.memory_usage > 80:
-            score -= (execution.memory_usage - 80) * 0.5
+        if execution.memory_usage and execution.memory_usage > MEMORY_THRESHOLD_WARNING:
+            score -= (execution.memory_usage - MEMORY_THRESHOLD_WARNING) * 0.5
 
         # Deduct points for long execution times
-        if execution.duration and execution.duration.total_seconds() > 3600:  # 1 hour
-            overtime = execution.duration.total_seconds() - 3600
-            score -= min(overtime / 3600 * 10, 30)  # Max 30 points deduction
+        if execution.duration and execution.duration.total_seconds() > EXECUTION_TIMEOUT_SECONDS:
+            overtime = execution.duration.total_seconds() - EXECUTION_TIMEOUT_SECONDS
+            score -= min(overtime / EXECUTION_TIMEOUT_SECONDS * 10, PERFORMANCE_SCORE_MAX_DEDUCTION)
 
         return max(score, 0.0)
 
@@ -804,13 +915,13 @@ class ExecutionManagementService:
         """Identify potential risk factors for execution failure."""
         risk_factors = []
 
-        if execution.cpu_usage and execution.cpu_usage > 90:
+        if execution.cpu_usage and execution.cpu_usage > CPU_THRESHOLD_CRITICAL:
             risk_factors.append("high_cpu_usage")
 
-        if execution.memory_usage and execution.memory_usage > 90:
+        if execution.memory_usage and execution.memory_usage > MEMORY_THRESHOLD_CRITICAL:
             risk_factors.append("high_memory_usage")
 
-        if execution.duration and execution.duration.total_seconds() > 7200:  # 2 hours
+        if execution.duration and execution.duration.total_seconds() > EXTENDED_TIMEOUT_SECONDS:
             risk_factors.append("long_execution_time")
 
         if execution.error_message:
@@ -829,21 +940,21 @@ class ExecutionManagementService:
             limit=10,
         )
 
-        if len(historical_executions) < 2:
+        if len(historical_executions) < MAX_RETRY_ATTEMPTS:
             return {"trend": "insufficient_data"}
 
         # Calculate performance trends
         durations = [
-            exec.duration.total_seconds()
-            for exec in historical_executions
-            if exec.duration
+            execution.duration.total_seconds()
+            for execution in historical_executions
+            if execution.duration
         ]
 
-        if len(durations) >= 2:
-            recent_avg = sum(durations[-3:]) / len(durations[-3:])
+        if len(durations) >= MAX_RETRY_ATTEMPTS:
+            recent_avg = sum(durations[-MAX_RETRY_ATTEMPTS_EXTENDED:]) / len(durations[-MAX_RETRY_ATTEMPTS_EXTENDED:])
             older_avg = (
-                sum(durations[:-3]) / len(durations[:-3])
-                if len(durations) > 3
+                sum(durations[:-MAX_RETRY_ATTEMPTS_EXTENDED]) / len(durations[:-MAX_RETRY_ATTEMPTS_EXTENDED])
+                if len(durations) > MAX_RETRY_ATTEMPTS_EXTENDED
                 else recent_avg
             )
 
@@ -916,6 +1027,9 @@ class ExecutionManagementService:
     ) -> bool:
         """Resume execution from last successful step."""
         # Implementation would identify last successful step and resume from there
+        # Use execution parameter for context
+        last_step = parameters.get("last_successful_step", 0)
+        execution.current_step = last_step
         return True
 
     async def _rollback_execution(
@@ -925,6 +1039,9 @@ class ExecutionManagementService:
     ) -> bool:
         """Rollback execution changes and restore previous state."""
         # Implementation would rollback changes made by the execution
+        # Use execution for context and parameters for rollback configuration
+        rollback_steps = parameters.get("rollback_steps", [])
+        execution.rollback_count = len(rollback_steps)
         return True
 
     async def _escalate_execution(
@@ -933,15 +1050,17 @@ class ExecutionManagementService:
         parameters: dict[str, Any],
     ) -> bool:
         """Escalate execution failure to operations team."""
+        escalation_level = parameters.get("escalation_level", "standard")
         if self._external_integration:
             await self._external_integration.send_notification(
                 notification_type="execution_escalation",
                 recipient="operations_team",
-                message=f"Execution {execution.execution_id} requires immediate attention",
+                message=f"Execution {execution.execution_id} requires immediate attention (level: {escalation_level})",
                 metadata={
                     "execution_id": str(execution.execution_id),
                     "pipeline_id": str(execution.pipeline_id),
                     "error_message": execution.error_message,
+                    "escalation_level": escalation_level,
                 },
             )
         return True

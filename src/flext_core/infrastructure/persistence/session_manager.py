@@ -24,7 +24,6 @@ from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING
 
 from sqlalchemy.ext.asyncio import (
-    AsyncEngine,
     AsyncSession,
     async_sessionmaker,
     create_async_engine,
@@ -35,6 +34,10 @@ from flext_core.infrastructure.persistence.models import Base
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
+
+    from sqlalchemy.ext.asyncio import (
+        AsyncEngine,
+    )
 
 
 class DatabaseSessionManager:
@@ -53,7 +56,7 @@ class DatabaseSessionManager:
     - Context manager support for session lifecycle
     - Development SQLite and production PostgreSQL support
 
-    Examples
+    Examples:
     --------
     ```python
     # Initialize session manager
@@ -127,7 +130,7 @@ class DatabaseSessionManager:
     def _get_database_url(self) -> str:
         """Get database URL based on environment configuration.
 
-        Returns
+        Returns:
         -------
             Database URL for SQLAlchemy engine creation
 
@@ -165,11 +168,11 @@ class DatabaseSessionManager:
         Provides an async context manager for database sessions with
         automatic transaction management and cleanup on exceptions.
 
-        Yields
+        Yields:
         ------
             AsyncSession for database operations
 
-        Examples
+        Examples:
         --------
         ```python
         async with session_manager.get_session() as session:
@@ -195,7 +198,7 @@ class DatabaseSessionManager:
     async def health_check(self) -> bool:
         """Perform database health check.
 
-        Returns
+        Returns:
         -------
             True if database connection is healthy, False otherwise
 
@@ -228,7 +231,7 @@ _session_manager: DatabaseSessionManager | None = None
 async def get_session_manager() -> DatabaseSessionManager:
     """Get global database session manager instance.
 
-    Returns
+    Returns:
     -------
         Initialized DatabaseSessionManager instance
 
@@ -248,11 +251,11 @@ async def get_db_session() -> AsyncGenerator[AsyncSession]:
     This function is designed for use with FastAPI dependency injection
     to provide database sessions to API endpoints.
 
-    Yields
+    Yields:
     ------
         AsyncSession for database operations
 
-    Examples
+    Examples:
     --------
     ```python
     from fastapi import Depends

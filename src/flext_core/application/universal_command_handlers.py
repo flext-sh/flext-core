@@ -25,7 +25,8 @@ from datetime import datetime
 try:
     from datetime import UTC
 except ImportError:
-    UTC = UTC
+    import datetime
+    UTC = datetime.UTC
 from typing import Any, Protocol, runtime_checkable
 from uuid import uuid4
 
@@ -221,7 +222,7 @@ class BaseCommandHandler:
     ) -> CommandResult:
         """Method implementation."""
         return ServiceResult.fail(
-            ServiceError("NOT_IMPLEMENTED", "Command execution not implemented"),
+            ServiceError("NOT_IMPLEMENTED", f"Command {type(command).__name__} execution not implemented in context {context}"),
         )
 
 
@@ -636,7 +637,7 @@ class PipelineCommandHandler(BaseCommandHandler):
                     f"Unsupported pipeline operation: {command_type}",
                 ),
             )
-        except Exception as e:
+        except (RuntimeError, ValueError, TypeError, OSError, AttributeError) as e:
             return ServiceResult.fail(
                 ServiceError("PIPELINE_COMMAND_ERROR", f"Pipeline command failed: {e}"),
             )
@@ -651,6 +652,7 @@ class PipelineCommandHandler(BaseCommandHandler):
         pipeline_id = str(uuid4())
         result = {
             "pipeline_id": pipeline_id,
+            "context": str(context),
             "name": data.get("name", "New Pipeline"),
             "description": data.get("description", ""),
             "created_at": datetime.now(UTC).isoformat(),
@@ -675,6 +677,7 @@ class PipelineCommandHandler(BaseCommandHandler):
             "updated_at": datetime.now(UTC).isoformat(),
             "status": "updated",
             "changes": list(data.keys()),
+            "context": str(context),
         }
         self.logger.info("Pipeline updated", extra={"pipeline_id": pipeline_id})
         return ServiceResult.ok(result)
@@ -694,6 +697,7 @@ class PipelineCommandHandler(BaseCommandHandler):
             "pipeline_id": pipeline_id,
             "deleted_at": datetime.now(UTC).isoformat(),
             "status": "deleted",
+            "context": str(context),
         }
         self.logger.info("Pipeline deleted", extra={"pipeline_id": pipeline_id})
         return ServiceResult.ok(result)
@@ -718,6 +722,7 @@ class PipelineCommandHandler(BaseCommandHandler):
             "started_at": datetime.now(UTC).isoformat(),
             "status": "running",
             "progress": 0,
+            "context": str(context),
         }
         self.logger.info(
             "Pipeline execution started",
@@ -748,6 +753,7 @@ class PipelineCommandHandler(BaseCommandHandler):
             "total": limit,  # In real implementation, would be actual total
             "limit": limit,
             "offset": offset,
+            "context": str(context),
         }
         self.logger.info("Listed pipelines", extra={"count": len(pipelines)})
         return ServiceResult.ok(result)
@@ -776,6 +782,7 @@ class PipelineCommandHandler(BaseCommandHandler):
                 {"step_id": "step-TWO", "name": "Transform", "type": "transformer"},
                 {"step_id": "step-3", "name": "Load", "type": "loader"},
             ],
+            "context": str(context),
         }
         self.logger.info("Retrieved pipeline", extra={"pipeline_id": pipeline_id})
         return ServiceResult.ok(result)
@@ -809,28 +816,30 @@ class PluginCommandHandler(BaseCommandHandler):
         self.logger.info(
             "Executing plugin command", extra={"command_type": command_type}
         )
+
+        # Define command handlers to reduce return statements
+        handlers = {
+            "plugin.install": self._install_plugin,
+            "plugin.uninstall": self._uninstall_plugin,
+            "plugin.list": self._list_plugins,
+            "plugin.get": self._get_plugin,
+            "plugin.configure": self._configure_plugin,
+            "plugin.enable": self._enable_plugin,
+            "plugin.disable": self._disable_plugin,
+        }
+
         try:
-            if command_type == "plugin.install":
-                return await self._install_plugin(command_data, context)
-            if command_type == "plugin.uninstall":
-                return await self._uninstall_plugin(command_data, context)
-            if command_type == "plugin.list":
-                return await self._list_plugins(command_data, context)
-            if command_type == "plugin.get":
-                return await self._get_plugin(command_data, context)
-            if command_type == "plugin.configure":
-                return await self._configure_plugin(command_data, context)
-            if command_type == "plugin.enable":
-                return await self._enable_plugin(command_data, context)
-            if command_type == "plugin.disable":
-                return await self._disable_plugin(command_data, context)
+            handler = handlers.get(command_type)
+            if handler:
+                return await handler(command_data, context)
+
             return ServiceResult.fail(
                 ServiceError(
                     "UNSUPPORTED_OPERATION",
                     f"Unsupported plugin operation: {command_type}",
                 ),
             )
-        except Exception as e:
+        except (RuntimeError, ValueError, TypeError, OSError, AttributeError) as e:
             return ServiceResult.fail(
                 ServiceError("PLUGIN_COMMAND_ERROR", f"Plugin command failed: {e}"),
             )
@@ -857,6 +866,7 @@ class PluginCommandHandler(BaseCommandHandler):
             "version": data.get("version", "1.0.0"),
             "installed_at": datetime.now(UTC).isoformat(),
             "status": "installed",
+            "context": str(context),
         }
         self.logger.info("Plugin installed", extra={"plugin_name": plugin_name})
         return ServiceResult.ok(result)
@@ -879,6 +889,7 @@ class PluginCommandHandler(BaseCommandHandler):
             "plugin_id": plugin_id,
             "uninstalled_at": datetime.now(UTC).isoformat(),
             "status": "uninstalled",
+            "context": str(context),
         }
         self.logger.info("Plugin uninstalled", extra={"plugin_id": plugin_id})
         return ServiceResult.ok(result)
@@ -889,7 +900,11 @@ class PluginCommandHandler(BaseCommandHandler):
         context: ExecutionContext,
     ) -> CommandResult:
         """Method implementation."""
-        # Simulate plugin listing
+        # Use data parameters for filtering
+        limit = data.get("limit", 5)
+        plugin_type = data.get("type")
+
+        # Simulate plugin listing with context
         plugins = [
             {
                 "plugin_id": f"plugin-{i}",
@@ -898,11 +913,17 @@ class PluginCommandHandler(BaseCommandHandler):
                 "status": "enabled" if i % TWO == ZERO_VALUE else "disabled",
                 "type": "extractor" if i % 3 == ZERO_VALUE else "loader",
             }
-            for i in range(1, 6)
+            for i in range(1, limit + 1)
         ]
+
+        # Filter by type if specified
+        if plugin_type:
+            plugins = [p for p in plugins if p["type"] == plugin_type]
+
         result = {
             "plugins": plugins,
             "total": len(plugins),
+            "context": str(context),
         }
         self.logger.info("Listed plugins", extra={"count": len(plugins)})
         return ServiceResult.ok(result)
@@ -930,6 +951,7 @@ class PluginCommandHandler(BaseCommandHandler):
                 "setting1": "value1",
                 "setting2": "value2",
             },
+            "context": str(context),
         }
         self.logger.info("Retrieved plugin", extra={"plugin_id": plugin_id})
         return ServiceResult.ok(result)
@@ -953,6 +975,7 @@ class PluginCommandHandler(BaseCommandHandler):
             "configuration": configuration,
             "configured_at": datetime.now(UTC).isoformat(),
             "status": "configured",
+            "context": str(context),
         }
         self.logger.info("Plugin configured", extra={"plugin_id": plugin_id})
         return ServiceResult.ok(result)
@@ -972,6 +995,7 @@ class PluginCommandHandler(BaseCommandHandler):
             "plugin_id": plugin_id,
             "status": "enabled",
             "enabled_at": datetime.now(UTC).isoformat(),
+            "context": str(context),
         }
         self.logger.info("Plugin enabled", extra={"plugin_id": plugin_id})
         return ServiceResult.ok(result)
@@ -991,6 +1015,7 @@ class PluginCommandHandler(BaseCommandHandler):
             "plugin_id": plugin_id,
             "status": "disabled",
             "disabled_at": datetime.now(UTC).isoformat(),
+            "context": str(context),
         }
         self.logger.info("Plugin disabled", extra={"plugin_id": plugin_id})
         return ServiceResult.ok(result)
