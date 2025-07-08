@@ -1,24 +1,50 @@
-"""Domain model for the FLEXT platform."""
+"""Domain layer - Pure business logic with zero dependencies.
 
-from flext_core.domain.entities import (
+Modern Python 3.13 + Pydantic v2 implementation.
+SOLID principles with maximum performance.
+"""
+
+from __future__ import annotations
+
+# Single imports - no duplicates allowed
+from flext_core.domain.core import (
+    AggregateRoot,
+    DomainError,
+    DomainEvent,
+    Entity,
+    NotFoundError,
+    Repository,
+    RepositoryError,
+    ServiceResult,
+    ValidationError,
+    ValueObject,
+)
+from flext_core.domain.pipeline import (
+    ExecutionStatus,
     Pipeline,
+    PipelineCreated,
+    PipelineExecuted,
     PipelineExecution,
     PipelineId,
     PipelineName,
-    PipelineStep,
-    Plugin,
-    PluginId,
 )
-from flext_core.domain.value_objects import ExecutionId, ExecutionStatus
 
 __all__ = [
-    "ExecutionId",
+    "AggregateRoot",
+    "DomainError",
+    "DomainEvent",
+    "Entity",
     "ExecutionStatus",
+    "NotFoundError",
     "Pipeline",
+    "PipelineCreated",
+    "PipelineExecuted",
     "PipelineExecution",
     "PipelineId",
     "PipelineName",
-    "PipelineStep",
-    "Plugin",
-    "PluginId",
+    "Repository",
+    "RepositoryError",
+    "ServiceResult",
+    "ValidationError",
+    "ValueObject",
 ]
