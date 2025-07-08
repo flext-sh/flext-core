@@ -6,7 +6,7 @@ pydantic==2.5.0
 pydantic-settings==2.1.0
 
 # Database & ORM
-sqlalchemy[asyncio]==2.0.23
+sqlalchemy[asyncio]==2.0.41
 alembic==1.13.0
 
 # Async Support
