@@ -10,7 +10,7 @@ sqlalchemy[asyncio]==2.0.23
 alembic==1.13.0
 
 # Async Support
-asyncio-mqtt==0.16.1
+asyncio-mqtt==0.16.2
 
 # Event System & DI
 lato==0.3.0
