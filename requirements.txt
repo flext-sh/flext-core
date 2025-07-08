@@ -13,7 +13,7 @@ alembic==1.13.0
 asyncio-mqtt==0.16.1
 
 # Event System & DI
-lato==0.3.0
+lato==0.12.0
 
 # UUID & Datetime
 uuid6==2023.5.2
