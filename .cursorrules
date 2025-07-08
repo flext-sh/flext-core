@@ -1,0 +1,207 @@
+# FLEXT Core - Cursor AI Rules
+
+## Project Context
+You are working on FLEXT Core, an enterprise Python 3.13 framework that implements Clean Architecture and Domain-Driven Design principles. The project uses Pydantic for all models and has strict quality requirements.
+
+## Code Standards
+
+### Python Version
+- Target Python 3.13
+- Use latest Python features when beneficial
+- Prefer type hints over comments
+
+### Architecture Rules
+1. **Clean Architecture Layers**:
+   - Domain: Pure business logic, no dependencies
+   - Application: Use cases and orchestration
+   - Infrastructure: External dependencies
+   - Interface: API/CLI/Web adapters
+
+2. **Domain-Driven Design**:
+   - Use Value Objects for concepts without identity
+   - Use Entities for objects with identity
+   - Use Aggregates to group related entities
+   - Use Domain Events for state changes
+   - Use Repositories for data access
+
+### Coding Standards
+1. **Formatting**:
+   - Line length: 100 characters
+   - Use Black formatter settings
+   - Use isort with Black profile
+   - 4 spaces indentation
+
+2. **Naming Conventions**:
+   - Classes: PascalCase
+   - Functions/methods: snake_case
+   - Constants: UPPER_SNAKE_CASE
+   - Private: prefix with underscore
+
+3. **Type Hints**:
+   - ALWAYS use type hints
+   - Use `from __future__ import annotations`
+   - Prefer `Optional[T]` over `T | None`
+   - Use `Protocol` for interfaces
+
+4. **Imports**:
+   - Absolute imports only
+   - Group by: standard lib, third-party, first-party
+   - Sort alphabetically within groups
+
+### Pydantic Models
+```python
+from pydantic import BaseModel, Field, ConfigDict
+from typing import Optional
+from datetime import datetime
+
+class ExampleModel(BaseModel):
+    """Example model with best practices."""
+    
+    model_config = ConfigDict(
+        frozen=True,  # Immutable by default
+        str_strip_whitespace=True,
+        use_enum_values=True,
+        validate_assignment=True,
+    )
+    
+    id: str = Field(..., description="Unique identifier")
+    name: str = Field(..., min_length=1, max_length=100)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+```
+
+### Error Handling
+```python
+from flext_core.domain.advanced_types import ServiceResult
+
+# Use Result pattern
+def process() -> ServiceResult[str]:
+    try:
+        result = do_something()
+        return ServiceResult.success(result)
+    except Exception as e:
+        return ServiceResult.failure(str(e))
+```
+
+### Testing
+```python
+import pytest
+from unittest.mock import Mock, AsyncMock
+
+class TestExample:
+    """Test with Given-When-Then pattern."""
+    
+    async def test_should_process_successfully(self) -> None:
+        """Test successful processing."""
+        # Given
+        mock_repo = Mock()
+        service = Service(mock_repo)
+        
+        # When
+        result = await service.process()
+        
+        # Then
+        assert result.is_success
+        assert result.value == expected
+```
+
+### Documentation
+- Use Google-style docstrings
+- Document all public APIs
+- Include type information in docstrings
+- Add usage examples for complex functions
+
+### Security
+- Never hardcode secrets
+- Use environment variables for config
+- Validate all inputs with Pydantic
+- Use parameterized queries
+
+### Performance
+- Prefer async/await for I/O operations
+- Use generators for large datasets
+- Cache expensive computations
+- Profile before optimizing
+
+## Quality Gates
+All code must pass:
+- `ruff check` - 17 rule categories
+- `mypy --strict` - No type errors
+- `bandit` - No security issues
+- `pytest` - 90%+ coverage
+- `black` - Formatted correctly
+
+## Common Patterns
+
+### Repository Pattern
+```python
+from typing import Protocol, Optional
+
+class UserRepository(Protocol):
+    """User repository interface."""
+    
+    async def get_by_id(self, user_id: str) -> Optional[User]:
+        """Get user by ID."""
+        ...
+    
+    async def save(self, user: User) -> None:
+        """Save user."""
+        ...
+```
+
+### Use Case Pattern
+```python
+class CreateUserUseCase:
+    """Create user use case."""
+    
+    def __init__(self, user_repo: UserRepository) -> None:
+        self._user_repo = user_repo
+    
+    async def execute(self, command: CreateUserCommand) -> ServiceResult[User]:
+        """Execute use case."""
+        # Validate
+        # Create domain object
+        # Save via repository
+        # Return result
+```
+
+### Value Object Pattern
+```python
+class Email(BaseModel):
+    """Email value object."""
+    
+    model_config = ConfigDict(frozen=True)
+    
+    value: str = Field(..., regex=r"^[\w\.-]+@[\w\.-]+\.\w+$")
+    
+    def __str__(self) -> str:
+        return self.value
+```
+
+## Do's and Don'ts
+
+### DO:
+- Write tests first (TDD)
+- Use dependency injection
+- Keep functions small and focused
+- Handle errors explicitly
+- Document complex logic
+- Use type hints everywhere
+
+### DON'T:
+- Use mutable default arguments
+- Catch broad exceptions
+- Use global variables
+- Mix I/O with business logic
+- Ignore linter warnings
+- Skip writing tests
+
+## AI Assistant Guidelines
+When generating code:
+1. Always follow the patterns above
+2. Include proper type hints
+3. Add comprehensive docstrings
+4. Consider edge cases
+5. Suggest tests for new code
+6. Explain architectural decisions
+7. Warn about potential issues
+8. Suggest performance optimizations when relevant

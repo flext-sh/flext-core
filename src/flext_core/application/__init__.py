@@ -1,19 +1,20 @@
-"""Application layer for the FLEXT platform."""
+"""Application layer - Use cases and commands.
 
-# Import commands from their canonical location
-from flext_core.application.application import FlextApplication
-from flext_core.commands.pipeline import (
+Orchestrates domain objects. Zero duplication.
+"""
+
+from __future__ import annotations
+
+from flext_core.application.pipeline import (
     CreatePipelineCommand,
     ExecutePipelineCommand,
-    UpdatePipelineCommand,
+    GetPipelineQuery,
+    PipelineService,
 )
-from flext_core.services import PipelineExecutionService, PipelineManagementService
 
 __all__ = [
     "CreatePipelineCommand",
     "ExecutePipelineCommand",
-    "FlextApplication",
-    "PipelineExecutionService",
-    "PipelineManagementService",
-    "UpdatePipelineCommand",
+    "GetPipelineQuery",
+    "PipelineService",
 ]
