@@ -1,5 +1,13 @@
 # FLext Core - Enterprise Foundation Framework
 
+> **Regras do Projeto**: Consulte `../../.github/instructions/regras.instructions.md` para padrões obrigatórios
+> 
+> **Padrão de documentação**: Veja [../../docs/HOW_TO_DOCUMENT.md](../../docs/HOW_TO_DOCUMENT.md)
+
+## 🧭 Navegação
+
+**🏠 Root**: [Documentação Principal](../../docs/index.md) → **📄 Projeto**: flext-core
+
 **Modern Python 3.13 + Pydantic v2 + Clean Architecture**  
 **Zero tolerance for code duplication and technical debt**
 
@@ -333,3 +341,21 @@ MIT License - Enterprise grade, open source foundation.
 
 **Built with ❤️ and ZERO compromises**  
 **Enterprise Foundation Framework for Modern Python Applications**
+
+## 🔗 Cross-References
+
+### Prerequisites
+- [../../docs/HOW_TO_DOCUMENT.md](../../docs/HOW_TO_DOCUMENT.md) — Guia de padronização de documentação
+- [../../.github/instructions/regras.instructions.md](../../.github/instructions/regras.instructions.md) — Regras obrigatórias do projeto
+
+### Next Steps
+- [../../docs/architecture/index.md](../../docs/architecture/index.md) — Detalhes da arquitetura
+- [../../docs/development/index.md](../../docs/development/index.md) — Padrões de desenvolvimento
+
+### Related Topics
+- [../../docs/STANDARDIZATION_MASTER_PLAN.md](../../docs/STANDARDIZATION_MASTER_PLAN.md) — Estratégia de padronização
+- [../../docs/INCOMPLETE_CODE_REPORT.md](../../docs/INCOMPLETE_CODE_REPORT.md) — Relatório de código incompleto
+
+---
+
+**📂 Projeto**: flext-core | **🏠 Root**: [Documentação Principal](../../docs/index.md) | **Framework**: FLEXT 0.6.0+ | **Updated**: 2025-07-08
