@@ -17,7 +17,7 @@ lato==0.3.0
 
 # UUID & Datetime
 uuid6==2023.5.2
-python-dateutil==2.8.2
+python-dateutil==2.9.0.post0
 
 # Type System & Validation
 typing-extensions==4.8.0
