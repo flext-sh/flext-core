@@ -23,7 +23,7 @@ python-dateutil==2.8.2
 typing-extensions==4.8.0
 
 # Configuration
-python-dotenv==1.0.0
+python-dotenv==1.1.1
 dynaconf==3.2.4
 
 # Logging & Monitoring
