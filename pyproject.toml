@@ -36,7 +36,8 @@ dependencies = [
     "ruff (>=0.12.3,<0.13.0)",
     "structlog (>=25.4.0,<26.0.0)",
     "typing-extensions (>=4.14.1,<5.0.0)",
-    "uuid6 (>=2025.0.1,<2026.0.0)"
+    "uuid6 (>=2025.0.1,<2026.0.0)",
+    "pytest-postgresql (>=7.0.2,<8.0.0)"
 ]
 keywords = [ "flext", "enterprise", "ddd", "clean-architecture", "solid", "modern",]
 classifiers = [ "Development Status :: 5 - Production/Stable", "Intended Audience :: Developers", "License :: OSI Approved :: MIT License", "Operating System :: OS Independent", "Programming Language :: Python :: 3.13", "Programming Language :: Python :: 3 :: Only", "Topic :: Software Development :: Libraries :: Application Frameworks", "Framework :: Pydantic", "Framework :: Pydantic :: 2", "Typing :: Typed",]
