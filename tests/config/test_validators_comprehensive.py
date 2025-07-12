@@ -32,11 +32,11 @@ class TestTypeCheckingCoverage:
         # This test ensures that the TYPE_CHECKING block is covered
         # by importing the module during test execution
         import flext_core.config.validators
-        
+
         # The imports are available during runtime through the module
-        assert hasattr(flext_core.config.validators, 'CommonValidators')
-        assert hasattr(flext_core.config.validators, 'url_validator')
-        assert hasattr(flext_core.config.validators, 'port_validator')
+        assert hasattr(flext_core.config.validators, "CommonValidators")
+        assert hasattr(flext_core.config.validators, "url_validator")
+        assert hasattr(flext_core.config.validators, "port_validator")
 
 
 class TestPrivateHelperFunctions:
@@ -110,7 +110,7 @@ class TestValidateDatabaseUrlErrorPaths:
             mock_result.scheme = ""
             mock_result.netloc = "localhost"
             mock_parse.return_value = mock_result
-            
+
             with pytest.raises(ValueError, match="Database URL must include a scheme"):
                 validate_database_url("postgresql://localhost/db")
 
@@ -123,7 +123,7 @@ class TestValidateDatabaseUrlErrorPaths:
             mock_result.scheme = "postgresql"
             mock_result.netloc = ""
             mock_parse.return_value = mock_result
-            
+
             with pytest.raises(ValueError, match="Database URL must include a host"):
                 validate_database_url("postgresql://localhost/db")
 
@@ -153,7 +153,9 @@ class TestCommonValidatorsFieldValidators:
 
     def test_validate_database_url_field_valid(self) -> None:
         """Test database URL field validator with valid database URL."""
-        result = CommonValidators.validate_database_url_field("postgresql://localhost/db")
+        result = CommonValidators.validate_database_url_field(
+            "postgresql://localhost/db"
+        )
         assert result == "postgresql://localhost/db"
 
     def test_validate_database_url_field_invalid(self) -> None:
@@ -257,7 +259,7 @@ class TestLogLevelValidation:
         """Test all valid log levels."""
         valid_levels = ["debug", "info", "warning", "error", "critical"]
         expected_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
-        
+
         for input_level, expected in zip(valid_levels, expected_levels, strict=False):
             result = CommonValidators.validate_log_level_field(input_level)
             assert result == expected
@@ -265,7 +267,7 @@ class TestLogLevelValidation:
     def test_validate_log_level_field_invalid(self) -> None:
         """Test log level field validator with invalid level."""
         invalid_levels = ["trace", "fatal", "verbose", "invalid", ""]
-        
+
         for level in invalid_levels:
             with pytest.raises(ValueError, match="Invalid log level"):
                 CommonValidators.validate_log_level_field(level)
@@ -278,51 +280,51 @@ class TestValidatorDecorators:
         """Test url_validator decorator function."""
         validator = url_validator()
         # The decorator returns a field_validator wrapped function
-        assert hasattr(validator, '__call__')
+        assert hasattr(validator, "__call__")
 
     def test_url_validator_decorator_with_require_tld_false(self) -> None:
         """Test url_validator decorator with require_tld=False."""
         validator = url_validator(require_tld=False)
-        assert hasattr(validator, '__call__')
+        assert hasattr(validator, "__call__")
 
     def test_port_validator_decorator(self) -> None:
         """Test port_validator decorator function."""
         validator = port_validator()
-        assert hasattr(validator, '__call__')
+        assert hasattr(validator, "__call__")
 
     def test_timeout_validator_decorator(self) -> None:
         """Test timeout_validator decorator function."""
         validator = timeout_validator()
-        assert hasattr(validator, '__call__')
+        assert hasattr(validator, "__call__")
 
     def test_timeout_validator_decorator_with_min_value(self) -> None:
         """Test timeout_validator decorator with custom min_value."""
         validator = timeout_validator(min_value=1.0)
-        assert hasattr(validator, '__call__')
+        assert hasattr(validator, "__call__")
 
     def test_decorator_inner_functions(self) -> None:
         """Test the inner validator functions created by decorators."""
         # Test url_validator inner function manually
         from flext_core.config.validators import url_validator, timeout_validator
-        
+
         # Create the decorators which creates the inner functions
         url_dec = url_validator(require_tld=False)
         timeout_dec = timeout_validator(min_value=1.0)
-        
+
         # Access the inner function by getting the wrapped attribute
         # This simulates what Pydantic does internally
-        if hasattr(url_dec, 'wrapped'):
+        if hasattr(url_dec, "wrapped"):
             inner_url_func = url_dec.wrapped
-            # Test calling the inner function directly  
+            # Test calling the inner function directly
             result = inner_url_func("http://localhost")
             assert result == "http://localhost"
-        
-        if hasattr(timeout_dec, 'wrapped'):
+
+        if hasattr(timeout_dec, "wrapped"):
             inner_timeout_func = timeout_dec.wrapped
             # Test calling the inner function directly
             result = inner_timeout_func(5.0)
             assert result == 5.0
-            
+
             # Test error case
             with pytest.raises(ValueError):
                 inner_timeout_func(0.5)  # Below min_value
@@ -339,7 +341,7 @@ class TestValidationIntegrationScenarios:
             "sqlite:///var/lib/app/production.db",
             "oracle://system:manager@oracle-server:1521/xe",
         ]
-        
+
         for url in production_urls:
             result = validate_database_url(url)
             assert result == url
@@ -352,21 +354,19 @@ class TestValidationIntegrationScenarios:
             "http://dev-server:8080",
             "https://internal.invalid/REDACTED",
         ]
-        
+
         for url in dev_urls:
             result = validate_url(url, require_tld=False)
             assert result == url
 
     def test_common_port_ranges(self) -> None:
         """Test common port number ranges."""
-        common_ports = [
-            80, 443, 8080, 3000, 5432, 3306, 6379, 27017, 9200, 5601
-        ]
-        
+        common_ports = [80, 443, 8080, 3000, 5432, 3306, 6379, 27017, 9200, 5601]
+
         for port in common_ports:
             result = validate_port(port)
             assert result == port
-            
+
             # Test string versions too
             result = validate_port(str(port))
             assert result == port
@@ -374,11 +374,11 @@ class TestValidationIntegrationScenarios:
     def test_realistic_timeout_values(self) -> None:
         """Test realistic timeout values."""
         timeouts = [0.1, 0.5, 1.0, 5.0, 30.0, 60.0, 300.0, 3600.0]
-        
+
         for timeout in timeouts:
             result = validate_timeout(timeout)
             assert result == timeout
-            
+
             # Test string versions
             result = validate_timeout(str(timeout))
             assert result == timeout
@@ -391,10 +391,10 @@ class TestErrorMessageQuality:
         """Test URL validation error messages are descriptive."""
         with pytest.raises(ValueError, match="URL cannot be empty"):
             validate_url("")
-            
+
         with pytest.raises(ValueError, match="Invalid URL format"):
             validate_url("not-a-url")
-            
+
         with pytest.raises(ValueError, match="URL must contain a valid domain"):
             validate_url("http://localhost", require_tld=True)
 
@@ -402,18 +402,21 @@ class TestErrorMessageQuality:
         """Test database URL validation error messages are descriptive."""
         with pytest.raises(ValueError, match="Database URL cannot be empty"):
             validate_database_url("")
-            
-        with pytest.raises(ValueError, match="Invalid database URL. Must start with a valid database scheme"):
+
+        with pytest.raises(
+            ValueError,
+            match="Invalid database URL. Must start with a valid database scheme",
+        ):
             validate_database_url("http://example.com")
 
     def test_port_error_messages(self) -> None:
         """Test port validation error messages are descriptive."""
         with pytest.raises(TypeError, match="Port must be an integer"):
             validate_port("not-a-number")
-            
+
         with pytest.raises(ValueError, match="Port must be between 1 and 65535"):
             validate_port(0)
-            
+
         with pytest.raises(ValueError, match="Port must be between 1 and 65535"):
             validate_port(65536)
 
@@ -421,10 +424,10 @@ class TestErrorMessageQuality:
         """Test timeout validation error messages are descriptive."""
         with pytest.raises(TypeError, match="Timeout must be a number"):
             validate_timeout("not-a-number")
-            
+
         with pytest.raises(ValueError, match="Timeout must be at least 0.0 seconds"):
             validate_timeout(-1.0)
-            
+
         with pytest.raises(ValueError, match="Timeout must be at least 5.0 seconds"):
             validate_timeout(1.0, min_value=5.0)
 

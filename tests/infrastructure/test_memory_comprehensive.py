@@ -22,6 +22,7 @@ class TestHasIdProtocol:
 
     def test_has_id_protocol_runtime_checkable(self) -> None:
         """Test HasId protocol runtime checking."""
+
         # Test with valid entity
         class ValidEntity:
             def __init__(self, entity_id: str):
@@ -40,6 +41,7 @@ class TestHasIdProtocol:
 
     def test_has_id_protocol_with_different_id_types(self) -> None:
         """Test HasId protocol with different ID types."""
+
         # Test with UUID
         class UuidEntity:
             def __init__(self, entity_id: UUID):
@@ -69,10 +71,10 @@ class TestHasIdProtocol:
         from flext_core.infrastructure.memory import HasId
 
         # Verify the protocol has the expected annotation
-        assert hasattr(HasId, '__annotations__')
-        assert 'id' in HasId.__annotations__
+        assert hasattr(HasId, "__annotations__")
+        assert "id" in HasId.__annotations__
         # The annotation is Any, but the exact import path may vary
-        assert str(HasId.__annotations__['id']).endswith('Any')
+        assert str(HasId.__annotations__["id"]).endswith("Any")
 
 
 class TestInMemoryRepositoryEdgeCases:
@@ -80,15 +82,16 @@ class TestInMemoryRepositoryEdgeCases:
 
     class ComplexEntity:
         """Entity with complex ID structure."""
+
         def __init__(self, entity_id: tuple[str, int], data: dict):
             self.id = entity_id
             self.data = data
 
         def __eq__(self, other: object) -> bool:
             return (
-                isinstance(other, self.__class__) and
-                self.id == other.id and
-                self.data == other.data
+                isinstance(other, self.__class__)
+                and self.id == other.id
+                and self.data == other.data
             )
 
     @pytest.fixture
@@ -111,6 +114,7 @@ class TestInMemoryRepositoryEdgeCases:
     @pytest.mark.asyncio
     async def test_save_with_none_id(self, repository: InMemoryRepository) -> None:
         """Test saving entity with None ID."""
+
         class NoneIdEntity:
             def __init__(self):
                 self.id = None
@@ -126,7 +130,9 @@ class TestInMemoryRepositoryEdgeCases:
         assert retrieved == none_entity
 
     @pytest.mark.asyncio
-    async def test_get_with_different_key_types(self, repository: InMemoryRepository) -> None:
+    async def test_get_with_different_key_types(
+        self, repository: InMemoryRepository
+    ) -> None:
         """Test get method with different key types."""
         # Save entities with different ID types
         entities = [
@@ -155,7 +161,9 @@ class TestInMemoryRepositoryEdgeCases:
             assert result is None
 
     @pytest.mark.asyncio
-    async def test_delete_with_complex_ids(self, repository: InMemoryRepository) -> None:
+    async def test_delete_with_complex_ids(
+        self, repository: InMemoryRepository
+    ) -> None:
         """Test delete method with complex ID types."""
         complex_id = ("delete", "me")
         entity = self.ComplexEntity(complex_id, {"status": "to_delete"})
@@ -178,7 +186,9 @@ class TestInMemoryRepositoryEdgeCases:
         assert deleted_again is False
 
     @pytest.mark.asyncio
-    async def test_storage_internal_dict_behavior(self, repository: InMemoryRepository) -> None:
+    async def test_storage_internal_dict_behavior(
+        self, repository: InMemoryRepository
+    ) -> None:
         """Test internal storage dictionary behavior."""
         # Test that the internal storage behaves correctly with various key types
         entities = []
@@ -218,7 +228,7 @@ class TestPipelineRepositorySpecialization:
         # Create pipeline entity
         pipeline = Pipeline(
             pipeline_name=PipelineName(value="Test Pipeline"),
-            pipeline_description="Test description"
+            pipeline_description="Test description",
         )
 
         # Test basic operations with Pipeline entities
@@ -249,7 +259,7 @@ class TestPipelineRepositorySpecialization:
         for i in range(3):
             pipeline = Pipeline(
                 pipeline_name=PipelineName(value=f"Pipeline {i}"),
-                pipeline_description=f"Description {i}"
+                pipeline_description=f"Description {i}",
             )
             pipelines.append(pipeline)
             await pipeline_repo.save(pipeline)
@@ -288,6 +298,7 @@ class TestTypeVariableAndGenericCoverage:
     @pytest.mark.asyncio
     async def test_generic_repository_type_safety(self) -> None:
         """Test generic repository type safety."""
+
         # Test with different entity types
         class EntityA:
             def __init__(self, id: str, type_name: str = "A"):
@@ -334,7 +345,7 @@ class TestModuleExports:
 
         expected_exports = [
             "HasId",
-            "InMemoryRepository", 
+            "InMemoryRepository",
             "PipelineRepository",
         ]
 
@@ -395,6 +406,7 @@ class TestAsyncBehaviorEdgeCases:
     @pytest.mark.asyncio
     async def test_repository_state_consistency(self) -> None:
         """Test repository maintains state consistency."""
+
         class StateEntity:
             def __init__(self, id: str, state: str):
                 self.id = id

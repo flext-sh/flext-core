@@ -143,7 +143,11 @@ class MockEventHandlerBase:
         for event in events:
             await handler.handle(event)
 
-        assert [e.event_type for e in handler.handled_events] == ["event1", "event2", "event3"]
+        assert [e.event_type for e in handler.handled_events] == [
+            "event1",
+            "event2",
+            "event3",
+        ]
 
 
 class TestHandlerImplementations:
@@ -212,7 +216,9 @@ class TestHandlerIntegration:
 
         # Verify flow
         assert command_result.is_success
-        assert any(e.event_type == "command_completed" for e in event_handler.handled_events)
+        assert any(
+            e.event_type == "command_completed" for e in event_handler.handled_events
+        )
         assert query_result.is_success
         assert query_result.value is not None and len(query_result.value) > 0
 

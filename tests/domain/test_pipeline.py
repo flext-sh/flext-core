@@ -20,7 +20,7 @@ def test_pipeline_name_string_conversion() -> None:
 def test_execution_id_string_conversion() -> None:
     """Test ExecutionId __str__ method (line 95)."""
     execution_id = ExecutionId()
-    # Test the __str__ method directly  
+    # Test the __str__ method directly
     str_result = str(execution_id)
     # Should be a valid UUID string
     assert len(str_result) == 36  # UUID format
@@ -34,13 +34,13 @@ def test_pipeline_deactivate_method() -> None:
         pipeline_name=pipeline_name,
         pipeline_description="Test deactivate method",
     )
-    
+
     # Initially active
     assert pipeline.pipeline_is_active is True
-    
+
     # Call deactivate method directly
     pipeline.deactivate()
-    
+
     # Should be deactivated
     assert pipeline.pipeline_is_active is False
     # updated_at should be set
