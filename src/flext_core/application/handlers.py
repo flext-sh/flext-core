@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import TypeVar
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from flext_core.domain.types import ServiceResult
 
 # Type variables for generic handlers

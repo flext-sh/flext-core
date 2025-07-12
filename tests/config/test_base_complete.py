@@ -88,7 +88,7 @@ class TestBaseSettings:
 
     def test_base_settings_creation(self) -> None:
         """Test BaseSettings can be created with defaults."""
-        settings = BaseSettings(_env_file=None)
+        settings = BaseSettings()
 
         assert settings.project_name == "flext"
         assert settings.environment == "development"
@@ -542,7 +542,7 @@ class TestDependencyInjectionIntegration:
         container = DIContainer()
 
         # Register multiple services
-        settings = BaseSettings(_env_file=None)
+        settings = BaseSettings()
         config = BaseConfig()
 
         container.register(BaseSettings, settings)
@@ -573,7 +573,7 @@ class TestDependencyInjectionIntegration:
         assert not has_service(BaseConfig)
 
         # Register a service
-        settings = BaseSettings(_env_file=None)
+        settings = BaseSettings()
         container.register(BaseSettings, settings)
 
         # Should have registered service

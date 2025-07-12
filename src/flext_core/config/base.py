@@ -5,7 +5,9 @@ SPDX-License-Identifier: MIT
 """
 
 import inspect
+import os
 from collections.abc import Callable
+from pathlib import Path
 from typing import Any
 from typing import Self
 from typing import TypeVar
@@ -131,13 +133,38 @@ class BaseSettings(PydanticBaseSettings):
 
         """
         try:
-            # Create instance with defaults from environment
-            # Create instance (env_file is handled through model_config in Pydantic v2)
+            # Create instance with custom env_file if provided
             if env_file:
-                # For now, we'll rely on environment variables and standard .env loading
-                # Pydantic v2 handles .env file loading automatically
-                pass
-            return cls()
+                # Simple manual env file parsing (avoiding python-dotenv dependency)
+                original_env: dict[str, str | None] = {}
+                env_data: dict[str, str] = {}
+
+                # Read and parse the env file manually
+                env_path = Path(env_file)
+                if env_path.exists():
+                    for raw_line in env_path.read_text(encoding="utf-8").splitlines():
+                        env_line = raw_line.strip()
+                        if env_line and not env_line.startswith("#") and "=" in env_line:
+                            key, value = env_line.split("=", 1)
+                            key = key.strip()
+                            value = value.strip().strip('"').strip("'")
+                            env_data[key] = value
+
+                            # Store original value for restoration
+                            original_env[key] = os.environ.get(key)
+                            os.environ[key] = value
+
+                try:
+                    return cls()
+                finally:
+                    # Restore original environment
+                    for key, original_value in original_env.items():
+                        if original_value is None:
+                            os.environ.pop(key, None)
+                        else:
+                            os.environ[key] = original_value
+            else:
+                return cls()
         except ValidationError as e:
             msg = f"Invalid settings: {e}"
             raise ConfigurationError(msg) from e
@@ -201,6 +228,7 @@ class DIContainer:
         self._services: dict[type, object] = {}
         self._factories: dict[type, Callable[[], Any]] = {}
         self._singletons: dict[type, object] = {}
+        self._resolving: set[type] = set()  # Track what we're currently resolving
 
     def register(self, service_type: type[T], instance: T) -> None:
         """Register a service.
@@ -252,6 +280,11 @@ class DIContainer:
             The instance of the service.
 
         """
+        # Check for recursion
+        if service_type in self._resolving:
+            msg = f"Circular dependency detected for {service_type}"
+            raise ConfigurationError(msg)
+
         # Check if already registered
         if service_type in self._services:
             return self._services[service_type]  # type: ignore[return-value]
@@ -263,19 +296,25 @@ class DIContainer:
         ):
             return self._singletons[service_type]  # type: ignore[return-value]
 
-        # Check if factory exists
-        if service_type in self._factories:
-            factory = self._factories[service_type]
-            instance = self._create_with_injection(factory)
+        # Mark as resolving
+        self._resolving.add(service_type)
+        try:
+            # Check if factory exists
+            if service_type in self._factories:
+                factory = self._factories[service_type]
+                instance = self._create_with_injection(factory)
 
-            # Store singleton
-            if service_type in self._singletons:
-                self._singletons[service_type] = instance
+                # Store singleton
+                if service_type in self._singletons:
+                    self._singletons[service_type] = instance
 
-            return instance  # type: ignore[no-any-return]
+                return instance  # type: ignore[no-any-return]
 
-        # Try to create automatically
-        return self._create_with_injection(service_type)
+            # Try to create automatically
+            return self._create_with_injection(service_type)
+        finally:
+            # Remove from resolving set
+            self._resolving.discard(service_type)
 
     def _create_with_injection(self, factory_or_type: type[T] | Callable[..., T]) -> T:
         """Create a service with injection.
@@ -300,19 +339,44 @@ class DIContainer:
                     continue
 
                 if param.annotation != inspect.Parameter.empty:
-                    # Try to resolve the dependency
-                    try:
-                        params[param_name] = self.resolve(param.annotation)
-                    except (TypeError, ValueError, KeyError):
-                        # If can't resolve and has default, use default
-                        if param.default != inspect.Parameter.empty:
-                            params[param_name] = param.default
-                        else:
+                    # Check if we have this dependency registered
+                    if param.annotation in self._services or param.annotation in self._factories:
+                        # Try to resolve the dependency
+                        try:
+                            params[param_name] = self.resolve(param.annotation)
+                        except (TypeError, ValueError, KeyError, RecursionError):
+                            # If can't resolve and has default, use default
+                            if param.default != inspect.Parameter.empty:
+                                params[param_name] = param.default
+                            else:
+                                msg = (
+                                    f"Cannot resolve dependency {param.annotation} "
+                                    f"for {factory_or_type}"
+                                )
+                                raise ConfigurationError(msg) from None
+                    # No registration found, use default if available
+                    elif param.default != inspect.Parameter.empty:
+                        params[param_name] = param.default
+                    else:
+                        # Try to auto-create if it's a class
+                        try:
+                            if inspect.isclass(param.annotation):
+                                params[param_name] = self.resolve(param.annotation)
+                            else:
+                                msg = (
+                                    f"Cannot resolve dependency {param.annotation} "
+                                    f"for {factory_or_type}"
+                                )
+                                raise ConfigurationError(msg) from None
+                        except (TypeError, ValueError, KeyError, RecursionError):
                             msg = (
                                 f"Cannot resolve dependency {param.annotation} "
                                 f"for {factory_or_type}"
                             )
                             raise ConfigurationError(msg) from None
+                # Parameter has no annotation, use default if available
+                elif param.default != inspect.Parameter.empty:
+                    params[param_name] = param.default
 
             instance: T = factory_or_type(**params)
             return instance
@@ -322,16 +386,29 @@ class DIContainer:
 
         for param_name, param in signature.parameters.items():
             if param.annotation != inspect.Parameter.empty:
-                try:
-                    params[param_name] = self.resolve(param.annotation)
-                except (TypeError, ValueError, KeyError):
-                    if param.default != inspect.Parameter.empty:
-                        params[param_name] = param.default
-                    else:
-                        msg = (
-                            f"Cannot resolve dependency {param.annotation} for factory"
-                        )
-                        raise ConfigurationError(msg) from None
+                # Check if we have this dependency registered
+                if param.annotation in self._services or param.annotation in self._factories:
+                    try:
+                        params[param_name] = self.resolve(param.annotation)
+                    except (TypeError, ValueError, KeyError, RecursionError):
+                        if param.default != inspect.Parameter.empty:
+                            params[param_name] = param.default
+                        else:
+                            msg = (
+                                f"Cannot resolve dependency {param.annotation} for factory"
+                            )
+                            raise ConfigurationError(msg) from None
+                # No registration found, use default if available
+                elif param.default != inspect.Parameter.empty:
+                    params[param_name] = param.default
+                else:
+                    msg = (
+                        f"Cannot resolve dependency {param.annotation} for factory"
+                    )
+                    raise ConfigurationError(msg) from None
+            # Parameter has no annotation, use default if available
+            elif param.default != inspect.Parameter.empty:
+                params[param_name] = param.default
 
         result: T = factory_or_type(**params)
         return result

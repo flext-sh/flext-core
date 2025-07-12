@@ -64,7 +64,7 @@ class TestDynaconfBridge:
 
         # Test loading settings
         try:
-            settings = bridge.load_settings()
+            settings: DemoSettings = bridge.load_settings()
             assert isinstance(settings, DemoSettings)
         except Exception:
             # If dynaconf is not properly configured, that's acceptable
@@ -83,7 +83,7 @@ class TestDynaconfBridge:
             bridge = DynaconfBridge(DemoSettings)
 
             try:
-                settings = bridge.load_settings()
+                settings: DemoSettings = bridge.load_settings()
                 assert isinstance(settings, DemoSettings)
                 # If env loading works, check values
                 if hasattr(settings, "test_field"):
@@ -113,7 +113,7 @@ test_flag = true
                 settings_files=[config_file],
             )
 
-            settings = bridge.load_settings()
+            settings: DemoSettings = bridge.load_settings()
             assert isinstance(settings, DemoSettings)
         except Exception:
             # File loading issues are acceptable
@@ -151,7 +151,7 @@ test_flag = true
             )
 
             try:
-                settings = bridge.load_settings()
+                settings: DemoSettings = bridge.load_settings()
                 assert isinstance(settings, DemoSettings)
             except Exception:
                 # Environment switching issues are acceptable
@@ -172,7 +172,7 @@ test_flag = true
             )
 
             try:
-                settings = bridge.load_settings()
+                settings: DemoSettings = bridge.load_settings()
                 assert isinstance(settings, DemoSettings)
             except Exception:
                 # Custom prefix issues are acceptable
@@ -229,7 +229,7 @@ test_number = 500
                 settings_files=config_files,
             )
 
-            settings = bridge.load_settings()
+            settings: DemoSettings = bridge.load_settings()
             assert isinstance(settings, DemoSettings)
         except Exception:
             # Multiple file loading issues are acceptable
@@ -278,7 +278,7 @@ test_number = 500
 
         try:
             # Test with valid data
-            settings = bridge.load_settings()
+            settings: DemoSettings = bridge.load_settings()
 
             # Validate that Pydantic validation works
             if isinstance(settings, DemoSettings):
@@ -316,7 +316,7 @@ test_field = "file_priority"
                     settings_files=[config_file],
                 )
 
-                settings = bridge.load_settings()
+                settings: DemoSettings = bridge.load_settings()
 
                 # Environment should typically take precedence
                 assert isinstance(settings, DemoSettings)
@@ -338,7 +338,7 @@ test_field = "file_priority"
             bridge = DynaconfBridge(DemoSettings)
 
             try:
-                settings = bridge.load_settings()
+                settings: DemoSettings = bridge.load_settings()
 
                 if isinstance(settings, DemoSettings):
                     # Check that types were converted correctly
@@ -377,7 +377,7 @@ test_flag = true
                     environments=True,
                 )
 
-                settings = bridge.load_settings()
+                settings: DemoSettings = bridge.load_settings()
                 assert isinstance(settings, DemoSettings)
         except Exception:
             # Nested configuration issues are acceptable
@@ -391,7 +391,7 @@ test_flag = true
         bridge = DynaconfBridge(DemoSettings, settings_files=[])
 
         try:
-            settings = bridge.load_settings()
+            settings: DemoSettings = bridge.load_settings()
             assert isinstance(settings, DemoSettings)
         except Exception:
             # Edge case handling is acceptable
@@ -455,7 +455,7 @@ test_flag = true
                     env_switcher="FLEXT_ENV",
                 )
 
-                settings = bridge.load_settings()
+                settings: DemoSettings = bridge.load_settings()
 
                 # Verify that configuration loaded successfully
                 assert isinstance(settings, DemoSettings)

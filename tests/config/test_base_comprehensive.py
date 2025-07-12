@@ -9,6 +9,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+from pydantic import Field
 
 from flext_core.config.base import BaseConfig
 from flext_core.config.base import BaseSettings
@@ -26,11 +27,11 @@ class DemoConfig(BaseConfig):
 class DemoSettings(BaseSettings):
     """Demo settings class for testing."""
 
-    project_name: str = "test-project"
-    project_version: str = "1.0.0"
-    environment: str = "development"
-    debug: bool = False
-    api_key: str = "default-key"
+    project_name: str = Field(default="test-project")
+    project_version: str = Field(default="1.0.0")
+    environment: str = Field(default="development")
+    debug: bool = Field(default=False)
+    api_key: str = Field(default="default-key")
 
 
 class TestBaseConfigComprehensive:

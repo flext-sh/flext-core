@@ -15,6 +15,9 @@ from pydantic_settings import SettingsConfigDict
 from flext_core.config.base import BaseConfig
 from flext_core.config.base import BaseSettings
 
+# Development defaults - change in production
+DEV_JWT_SECRET = "development-jwt-secret-change-in-production"  # noqa: S105
+
 
 class FlextDatabaseConfig(BaseConfig):
     """FLEXT database configuration."""
@@ -112,7 +115,7 @@ class FlextSettings(BaseSettings):
     observability: FlextObservabilityConfig = FlextObservabilityConfig()
     security: FlextSecurityConfig = Field(
         default_factory=lambda: FlextSecurityConfig(
-            jwt_secret="change-me-in-production",  # noqa: S106
+            jwt_secret=DEV_JWT_SECRET,
             jwt_algorithm="HS256",
             jwt_expiration=3600,
             bcrypt_rounds=12,
