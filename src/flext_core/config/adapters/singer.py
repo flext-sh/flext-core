@@ -51,13 +51,17 @@ class SingerConfig(BaseConfig):
 
     # Common API settings
     api_url: str | None = Field(default=None, description="Base API URL")
-    timeout: float = Field(default=300.0, description="Request timeout in seconds", gt=0)
+    timeout: float = Field(
+        default=300.0, description="Request timeout in seconds", gt=0
+    )
     retry_count: int = Field(
         default=3,
         description="Number of retries for failed requests",
         ge=0,
     )
-    page_size: int = Field(default=100, description="Page size for paginated requests", gt=0)
+    page_size: int = Field(
+        default=100, description="Page size for paginated requests", gt=0
+    )
 
     @field_validator("api_url")
     @classmethod
@@ -143,7 +147,9 @@ class SingerSettings(BaseSettings):
     refresh_token: str | None = Field(default=None, description="OAuth refresh token")
 
     # Database connections (for database taps/targets)
-    database_url: str | None = Field(default=None, description="Database connection URL")
+    database_url: str | None = Field(
+        default=None, description="Database connection URL"
+    )
 
     @field_validator("api_key", "client_secret", "refresh_token")
     @classmethod

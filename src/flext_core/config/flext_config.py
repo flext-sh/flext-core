@@ -97,7 +97,9 @@ class FlextSecurityConfig(BaseConfig):
 
     rate_limit_enabled: bool = Field(default=True, description="Enable rate limiting")
     rate_limit_requests: int = Field(default=100, description="Requests per window")
-    rate_limit_window: int = Field(default=60, description="Rate limit window in seconds")
+    rate_limit_window: int = Field(
+        default=60, description="Rate limit window in seconds"
+    )
 
 
 class FlextSettings(BaseSettings):

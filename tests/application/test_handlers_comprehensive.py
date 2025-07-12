@@ -14,6 +14,7 @@ if TYPE_CHECKING:
 # Force TYPE_CHECKING import coverage by importing during module loading
 import sys
 import importlib
+
 if "flext_core.application.handlers" in sys.modules:
     # Re-import to ensure TYPE_CHECKING block is executed
     importlib.reload(sys.modules["flext_core.application.handlers"])
@@ -34,15 +35,16 @@ class TestTypeCheckingCoverage:
         # This test ensures that the TYPE_CHECKING block is covered
         # by importing the module during test execution
         import flext_core.application.handlers
-        
+
         # The imports are available during runtime through the module
-        assert hasattr(flext_core.application.handlers, 'CommandHandler')
-        assert hasattr(flext_core.application.handlers, 'QueryHandler')
-        assert hasattr(flext_core.application.handlers, 'EventHandler')
-        
+        assert hasattr(flext_core.application.handlers, "CommandHandler")
+        assert hasattr(flext_core.application.handlers, "QueryHandler")
+        assert hasattr(flext_core.application.handlers, "EventHandler")
+
         # Access the ServiceResult import from TYPE_CHECKING to trigger line 19 coverage
         # This forces the TYPE_CHECKING import to be executed during test discovery
         from flext_core.domain.types import ServiceResult
+
         assert ServiceResult is not None
 
 
@@ -56,6 +58,7 @@ class TestCommandHandler:
 
     def test_command_handler_protocol(self) -> None:
         """Test CommandHandler protocol definition."""
+
         # Create a concrete implementation
         class TestCommand:
             name: str = "test"
@@ -78,6 +81,7 @@ class TestQueryHandler:
 
     def test_query_handler_protocol(self) -> None:
         """Test QueryHandler protocol definition."""
+
         # Create a concrete implementation
         class TestQuery:
             filter: str = "all"
@@ -100,6 +104,7 @@ class TestEventHandler:
 
     def test_event_handler_protocol(self) -> None:
         """Test EventHandler protocol definition."""
+
         # Create a concrete implementation
         class TestEvent:
             data: str = "event_data"
@@ -122,6 +127,7 @@ class TestVoidCommandHandler:
 
     def test_void_command_handler_protocol(self) -> None:
         """Test VoidCommandHandler protocol definition."""
+
         # Create a concrete implementation
         class TestCommand:
             action: str = "delete"
@@ -145,7 +151,7 @@ class TestSimpleQueryHandler:
     def test_simple_query_handler_protocol(self) -> None:
         """Test SimpleQueryHandler protocol definition."""
         from typing import Any
-        
+
         # Create a concrete implementation
         class TestQuery:
             params: dict[str, str] = {"key": "value"}
@@ -164,16 +170,16 @@ class TestModuleExports:
     def test_all_exports(self) -> None:
         """Test that __all__ exports are complete."""
         import flext_core.application.handlers
-        
+
         expected_exports = [
             "CommandHandler",
-            "EventHandler", 
+            "EventHandler",
             "QueryHandler",
             "SimpleQueryHandler",
             "VoidCommandHandler",
         ]
-        
-        assert hasattr(flext_core.application.handlers, '__all__')
+
+        assert hasattr(flext_core.application.handlers, "__all__")
         assert set(flext_core.application.handlers.__all__) == set(expected_exports)
 
     def test_import_all_exports(self) -> None:
@@ -185,7 +191,7 @@ class TestModuleExports:
             SimpleQueryHandler,
             VoidCommandHandler,
         )
-        
+
         # All should be classes
         assert isinstance(CommandHandler, type)
         assert isinstance(EventHandler, type)
@@ -200,17 +206,17 @@ class TestTypeVariables:
     def test_type_variables_definition(self) -> None:
         """Test that type variables are properly defined."""
         import flext_core.application.handlers
-        
+
         # Type variables should be available
-        assert hasattr(flext_core.application.handlers, 'TCommand')
-        assert hasattr(flext_core.application.handlers, 'TQuery')
-        assert hasattr(flext_core.application.handlers, 'TEvent')
-        assert hasattr(flext_core.application.handlers, 'TResult')
+        assert hasattr(flext_core.application.handlers, "TCommand")
+        assert hasattr(flext_core.application.handlers, "TQuery")
+        assert hasattr(flext_core.application.handlers, "TEvent")
+        assert hasattr(flext_core.application.handlers, "TResult")
 
     def test_generic_type_safety(self) -> None:
         """Test generic type safety with different types."""
         from typing import Any
-        
+
         # Test with different command types
         class StringCommand:
             value: str = "test"
@@ -229,7 +235,7 @@ class TestTypeVariables:
         # Handlers should be properly typed
         string_handler = StringCommandHandler()
         int_handler = IntCommandHandler()
-        
+
         assert callable(string_handler.handle)
         assert callable(int_handler.handle)
 
@@ -257,13 +263,13 @@ class TestHandlerIntegrationScenarios:
                 # Simulate user creation
                 if not command.email:
                     return ServiceResult.fail("Email is required")
-                
+
                 user = User(id=1, name=command.name, email=command.email)
                 return ServiceResult.success(user)
 
         handler = CreateUserCommandHandler()
         command = CreateUserCommand(name="John", email="john@example.com")
-        
+
         result = await handler.handle(command)
         assert result.is_success
         user = result.value
@@ -292,11 +298,11 @@ class TestHandlerIntegrationScenarios:
                     User(id=1, name="John"),
                     User(id=2, name="Jane"),
                 ]
-                return ServiceResult.success(users[:query.limit])
+                return ServiceResult.success(users[: query.limit])
 
         handler = GetUsersQueryHandler()
         query = GetUsersQuery(limit=1)
-        
+
         result = await handler.handle(query)
         assert result.is_success
         users = result.value
@@ -317,13 +323,13 @@ class TestHandlerIntegrationScenarios:
                 # Simulate sending notification
                 if event.user_id <= 0:
                     return ServiceResult.fail("Invalid user ID")
-                
+
                 # Simulate successful notification
                 return ServiceResult.success(True)
 
         handler = UserCreatedEventHandler()
         event = UserCreatedEvent(user_id=1, user_name="John")
-        
+
         result = await handler.handle(event)
         assert result.is_success
         assert result.value is True

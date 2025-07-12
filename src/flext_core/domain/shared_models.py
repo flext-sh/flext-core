@@ -152,10 +152,14 @@ class DatabaseConfig(DomainValueObject):
     """Enhanced database connection configuration to eliminate duplications."""
 
     host: str = Field(default="localhost", description="Database host")
-    port: int = Field(default=5432, description="Database port", ge=1, le=65535, repr=False)
+    port: int = Field(
+        default=5432, description="Database port", ge=1, le=65535, repr=False
+    )
     database: str = Field(default="flext", description="Database name")
     username: str = Field(default="user", description="Database username")
-    password: str = Field(default="password", description="Database password", repr=False)
+    password: str = Field(
+        default="password", description="Database password", repr=False
+    )
 
     # Connection pool settings (consolidated from multiple projects)
     pool_size: int = Field(default=20, description="Connection pool size", ge=1, le=100)
@@ -203,7 +207,9 @@ class RedisConfig(DomainValueObject):
 
     # Pool settings (from duplicated configs)
     pool_size: int = Field(default=20, description="Connection pool size", ge=1, le=100)
-    max_connections: int = Field(default=50, description="Maximum connections", ge=1, le=1000)
+    max_connections: int = Field(
+        default=50, description="Maximum connections", ge=1, le=1000
+    )
     retry_on_timeout: bool = Field(default=True, description="Retry on timeout")
 
     # Key management (from auth configs)
@@ -219,15 +225,21 @@ class HTTPConnectionConfig(DomainValueObject):
     """HTTP connection configuration to eliminate Oracle OIC/WMS duplications."""
 
     base_url: str = Field(..., description="Base URL for API endpoints")
-    timeout: int = Field(default=30, description="Request timeout seconds", ge=1, le=300)
-    max_retries: int = Field(default=3, description="Maximum retry attempts", ge=0, le=10)
+    timeout: int = Field(
+        default=30, description="Request timeout seconds", ge=1, le=300
+    )
+    max_retries: int = Field(
+        default=3, description="Maximum retry attempts", ge=0, le=10
+    )
     retry_delay: float = Field(
         default=1.0, description="Delay between retries", ge=0.1, le=60.0
     )
     verify_ssl: bool = Field(default=True, description="Verify SSL certificates")
 
     # Connection pooling
-    pool_connections: int = Field(default=10, description="Pool connections", ge=1, le=100)
+    pool_connections: int = Field(
+        default=10, description="Pool connections", ge=1, le=100
+    )
     pool_maxsize: int = Field(default=20, description="Pool max size", ge=1, le=200)
 
     # Headers and auth
@@ -261,11 +273,15 @@ class SecurityConfig(DomainValueObject):
     )
 
     # Password policies
-    min_password_length: int = Field(default=8, description="Minimum password length", ge=6)
+    min_password_length: int = Field(
+        default=8, description="Minimum password length", ge=6
+    )
     require_special_chars: bool = Field(
         default=True, description="Require special characters"
     )
-    password_history_count: int = Field(default=5, description="Password history", ge=0, le=20)
+    password_history_count: int = Field(
+        default=5, description="Password history", ge=0, le=20
+    )
 
 
 # LDAP Models

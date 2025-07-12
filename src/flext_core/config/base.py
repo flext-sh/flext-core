@@ -144,7 +144,11 @@ class BaseSettings(PydanticBaseSettings):
                 if env_path.exists():
                     for raw_line in env_path.read_text(encoding="utf-8").splitlines():
                         env_line = raw_line.strip()
-                        if env_line and not env_line.startswith("#") and "=" in env_line:
+                        if (
+                            env_line
+                            and not env_line.startswith("#")
+                            and "=" in env_line
+                        ):
                             key, value = env_line.split("=", 1)
                             key = key.strip()
                             value = value.strip().strip('"').strip("'")
@@ -340,7 +344,10 @@ class DIContainer:
 
                 if param.annotation != inspect.Parameter.empty:
                     # Check if we have this dependency registered
-                    if param.annotation in self._services or param.annotation in self._factories:
+                    if (
+                        param.annotation in self._services
+                        or param.annotation in self._factories
+                    ):
                         # Try to resolve the dependency
                         try:
                             params[param_name] = self.resolve(param.annotation)
@@ -387,24 +394,23 @@ class DIContainer:
         for param_name, param in signature.parameters.items():
             if param.annotation != inspect.Parameter.empty:
                 # Check if we have this dependency registered
-                if param.annotation in self._services or param.annotation in self._factories:
+                if (
+                    param.annotation in self._services
+                    or param.annotation in self._factories
+                ):
                     try:
                         params[param_name] = self.resolve(param.annotation)
                     except (TypeError, ValueError, KeyError, RecursionError):
                         if param.default != inspect.Parameter.empty:
                             params[param_name] = param.default
                         else:
-                            msg = (
-                                f"Cannot resolve dependency {param.annotation} for factory"
-                            )
+                            msg = f"Cannot resolve dependency {param.annotation} for factory"
                             raise ConfigurationError(msg) from None
                 # No registration found, use default if available
                 elif param.default != inspect.Parameter.empty:
                     params[param_name] = param.default
                 else:
-                    msg = (
-                        f"Cannot resolve dependency {param.annotation} for factory"
-                    )
+                    msg = f"Cannot resolve dependency {param.annotation} for factory"
                     raise ConfigurationError(msg) from None
             # Parameter has no annotation, use default if available
             elif param.default != inspect.Parameter.empty:
