@@ -1,157 +1,133 @@
-# FLEXT Core - Enterprise Foundation Framework
+# FLEXT Core Documentation
 
-<div align="center">
-  <img src="https://img.shields.io/badge/Python-3.13+-blue.svg" alt="Python">
-  <img src="https://img.shields.io/badge/pydantic-v2.9+-green.svg" alt="Pydantic">
-  <img src="https://img.shields.io/badge/architecture-Clean%2FDDD-purple.svg" alt="Architecture">
-  <img src="https://img.shields.io/badge/coverage-100%25-brightgreen.svg" alt="Coverage">
-  <img src="https://img.shields.io/badge/type_safety-100%25-brightgreen.svg" alt="Type Safety">
-</div>
+**The foundation of the FLEXT Framework ecosystem**
 
-## 🎯 Enterprise Philosophy
+FLEXT Core provides the essential domain models, application services, and infrastructure abstractions that power the entire FLEXT Framework. All other FLEXT modules (flext-api, flext-web, flext-auth, flext-meltano, etc.) build upon Core's foundations.
 
-FLEXT Core is a **ZERO-COMPROMISE** enterprise foundation framework that:
+[![Python](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
+[![Coverage](https://img.shields.io/badge/coverage-94%25-brightgreen.svg)]()
+[![Architecture](https://img.shields.io/badge/architecture-Clean%2FDDD-purple.svg)]()
 
-- **Eliminates code duplication completely** (Single Source of Truth for everything)
-- **Applies modern patterns religiously** (SOLID, KISS, DRY principles)
-- **Maximizes performance without complexity** (Python 3.13 + Pydantic v2)
-- **Enforces strict enterprise standards** (No shortcuts, no technical debt)
+## Overview
 
-## 🚀 Key Features
+FLEXT Core is the **foundational module** that enables the FLEXT Framework's modular architecture. It provides:
 
-### Clean Architecture
+- **Shared Domain Models** used across all FLEXT modules
+- **Configuration Foundation** with workspace-wide settings management  
+- **Application Patterns** (CQRS, Repository, ServiceResult) used throughout FLEXT
+- **Clean Architecture** foundation that other modules extend
 
-- **Domain Layer**: Pure business logic with zero external dependencies
-- **Application Layer**: Use case orchestration via command/query handlers
-- **Infrastructure Layer**: Pluggable adapters for external systems
-- **Dependency Rule**: Dependencies point inward, never outward
+## Quick Links
 
-### Domain-Driven Design
+- [API Reference](API.md) - Complete API documentation for Core components
+- [Usage Examples](examples.md) - How to use Core independently and within FLEXT
+- [Configuration Guide](configuration.md) - Settings management for FLEXT ecosystem
+- [Architecture Guide](ARCHITECTURAL_TRUTH.md) - Design principles and FLEXT integration
 
-- **Entities**: Business objects with identity
-- **Value Objects**: Immutable domain concepts
-- **Aggregates**: Consistency boundaries
-- **Domain Events**: Decoupled communication
-- **Repositories**: Abstract data access
+## Key Features
 
-### Modern Python
+- 🏗️ **FLEXT Foundation** - Core patterns used by all FLEXT modules
+- 🎯 **Domain Models** - Shared entities used across flext-api, flext-web, flext-meltano
+- ⚡ **Modern Python** - Python 3.13 + Pydantic v2 for the entire ecosystem
+- 🔒 **Type Safety** - 100% typed foundation ensures FLEXT-wide reliability
+- 🧪 **Production Proven** - 94% test coverage, powers enterprise FLEXT deployments
+- 🌐 **Framework Agnostic** - Works standalone or as part of FLEXT ecosystem
 
-- **Python 3.13**: Latest features and performance
-- **Type Safety**: 100% type coverage with MyPy strict mode
-- **Async/Await**: First-class async support throughout
-- **Pydantic v2**: High-performance validation and serialization
-
-### Enterprise Standards
-
-- **100% Test Coverage**: Comprehensive unit and integration tests
-- **Zero Code Duplication**: Single source of truth principle
-- **SOLID Principles**: Religiously applied throughout
-- **Security First**: Built-in security scanning and validation
-
-## 📊 Metrics
-
-| Metric                    | Value | Standard |
-| ------------------------- | ----- | -------- |
-| **Test Coverage**         | 100%  | ≥ 95%    |
-| **Type Coverage**         | 100%  | 100%     |
-| **Code Duplication**      | 0%    | < 3%     |
-| **Cyclomatic Complexity** | < 10  | < 10     |
-| **Maintainability Index** | A     | ≥ B      |
-| **Security Issues**       | 0     | 0        |
-| **Docstring Coverage**    | 100%  | ≥ 80%    |
-
-## 🏗️ Architecture Overview
-
-```mermaid
-graph TB
-    subgraph "Domain Layer"
-        E[Entities]
-        VO[Value Objects]
-        DE[Domain Events]
-        DS[Domain Services]
-    end
-
-    subgraph "Application Layer"
-        UC[Use Cases]
-        CH[Command Handlers]
-        QH[Query Handlers]
-        AS[Application Services]
-    end
-
-    subgraph "Infrastructure Layer"
-        DB[Database]
-        API[REST API]
-        GR[gRPC]
-        MQ[Message Queue]
-    end
-
-    UC --> E
-    UC --> DS
-    CH --> UC
-    QH --> UC
-    AS --> CH
-    AS --> QH
-
-    DB --> E
-    API --> AS
-    GR --> AS
-    MQ --> DE
-```
-
-## 🚀 Quick Start
+## Getting Started
 
 ### Installation
 
 ```bash
-pip install flext-core
+# Development installation with Poetry (recommended)
+poetry install --with dev
+
+# Or with pip for basic usage
+pip install -e .
 ```
 
 ### Basic Usage
 
 ```python
-from flext_core import (
-    Pipeline,
-    PipelineName,
-    PipelineService,
-    InMemoryRepository,
-    CreatePipelineCommand
-)
+from flext_core.domain.pipeline import Pipeline, PipelineName
+from flext_core.application.pipeline import PipelineService
+from flext_core.infrastructure.memory import InMemoryRepository
 
 # Setup
-repository = InMemoryRepository[Pipeline]()
-service = PipelineService(repository)
+service = PipelineService(pipeline_repo=InMemoryRepository())
 
-# Create pipeline
+# Create a pipeline
+from flext_core.application.pipeline import CreatePipelineCommand
+
 command = CreatePipelineCommand(
-    name=PipelineName(value="data-processing"),
+    name="data-processing",
     description="Process customer data"
 )
 
 result = await service.create_pipeline(command)
-
-if result.success:
-    pipeline = result.unwrap()
-    print(f"Created pipeline: {pipeline.id}")
+if result.is_success:
+    pipeline = result.value
+    print(f"Created: {pipeline.pipeline_name}")
 ```
 
-## 📚 Documentation Structure
+## FLEXT Ecosystem Role
 
-- **[Getting Started](getting-started/installation.md)**: Installation and quick start guide
-- **[Architecture](architecture/overview.md)**: Deep dive into Clean Architecture implementation
-- **[User Guide](guide/pipelines.md)**: Practical guides for common tasks
-- **[API Reference](api/domain.md)**: Complete API documentation
-- **[Development](development/contributing.md)**: Contributing guidelines and development setup
-- **[Examples](examples/basic.md)**: Real-world usage examples
+### Foundation for All FLEXT Modules
 
-## 🤝 Contributing
+- **flext-api** (Go): Uses Core's domain models via gRPC interfaces
+- **flext-web** (Django): Extends Core entities with web-specific functionality
+- **flext-auth** (Python): Builds authentication on Core's user abstractions
+- **flext-meltano** (Python): Leverages Core's pipeline entities for ETL operations
+- **flext-cli** (Python): Uses Core's application services for command-line tools
 
-We welcome contributions! Please see our [Contributing Guide](development/contributing.md) for details.
+### Shared Patterns Across FLEXT
 
-## 📄 License
+- **ServiceResult** - Type-safe error handling used in all modules
+- **Repository** - Data access abstraction for flext-web, flext-auth storage
+- **BaseSettings** - Configuration foundation inherited by all FLEXT modules
+- **Domain Events** - Inter-module communication within FLEXT ecosystem
+- **Clean Architecture** - Dependency inversion enforced framework-wide
 
-MIT License - Enterprise grade, open source foundation.
+## Documentation Structure
 
----
+```
+docs/
+├── index.md              # FLEXT Core overview and ecosystem role
+├── API.md                # Core components used by all FLEXT modules
+├── examples.md           # Standalone and FLEXT-integrated usage
+├── configuration.md      # FLEXT workspace configuration patterns
+├── ARCHITECTURAL_TRUTH.md # Clean Architecture and FLEXT integration
+└── getting-started/      # Setup within FLEXT workspace
+```
 
-**Built with ❤️ and ZERO compromises**  
-**Enterprise Foundation Framework for Modern Python Applications**
+## FLEXT Workspace Context
+
+```bash
+# FLEXT development workspace
+/home/marlonsc/flext/
+├── flext-core/          # 👑 This module - Foundation
+├── flext-api/           # Go API server using Core models
+├── flext-web/           # Django web interface extending Core
+├── flext-auth/          # Authentication built on Core patterns
+├── flext-meltano/       # ETL framework using Core pipelines
+├── flext-cli/           # CLI tools leveraging Core services
+└── [other modules...]   # All modules depend on flext-core
+```
+
+## Project Status
+
+- **Test Coverage**: 94% (foundation stability for entire FLEXT)
+- **Type Safety**: 100% (mypy strict mode enforced workspace-wide)
+- **FLEXT Integration**: Powers 9 active FLEXT modules
+- **Python Version**: 3.13+ (modern foundation for all FLEXT development)
+- **Production Status**: Deployed in enterprise FLEXT installations
+
+## Contributing
+
+1. Setup development environment: `make setup`
+2. Run all quality checks: `make check`
+3. Run tests with coverage: `make test`
+4. Validate strict compliance: `make validate`
+
+## License
+
+MIT License

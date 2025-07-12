@@ -19,6 +19,9 @@ from pydantic_settings import SettingsConfigDict
 from flext_core.config.base import BaseSettings
 from flext_core.config.validators import validate_database_url
 
+# Development defaults - change in production
+DEV_SECRET_KEY = "development-key-change-in-production"  # noqa: S105
+
 
 class DjangoSettings(BaseSettings):
     """Django settings."""
@@ -188,7 +191,7 @@ def django_settings_adapter(
             project_name="django-app",
             project_version="1.0.0",
             environment="development",
-            secret_key="django-insecure-change-me",  # noqa: S106
+            secret_key=DEV_SECRET_KEY,
         )
     else:
         settings_instance = pydantic_settings
@@ -295,7 +298,7 @@ def create_django_settings_module(
         project_name="django-app",
         project_version="1.0.0",
         environment="development",
-        secret_key="django-insecure-change-me",  # noqa: S106
+        secret_key=DEV_SECRET_KEY,
     )
 
     # Get Django settings

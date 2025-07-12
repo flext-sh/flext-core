@@ -52,32 +52,10 @@ nav:
   - Home: index.md
   - Getting Started:
       - Installation: getting-started/installation.md
-      - Quick Start: getting-started/quickstart.md
-      - Core Concepts: getting-started/concepts.md
-  - Architecture:
-      - Overview: architecture/overview.md
-      - Clean Architecture: architecture/clean.md
-      - Domain Layer: architecture/domain.md
-      - Application Layer: architecture/application.md
-      - Infrastructure Layer: architecture/infrastructure.md
-  - User Guide:
-      - Pipeline Management: guide/pipelines.md
-      - Domain Modeling: guide/domain-modeling.md
-      - Repository Pattern: guide/repositories.md
-      - Service Pattern: guide/services.md
-  - API Reference:
-      - Domain: api/domain.md
-      - Application: api/application.md
-      - Infrastructure: api/infrastructure.md
-  - Development:
-      - Contributing: development/contributing.md
-      - Testing: development/testing.md
-      - Code Style: development/code-style.md
-      - Release Process: development/release.md
-  - Examples:
-      - Basic Usage: examples/basic.md
-      - Advanced Patterns: examples/advanced.md
-      - Integration: examples/integration.md
+  - API Reference: API.md
+  - Examples: examples.md
+  - Configuration: configuration.md
+  - Architecture: ARCHITECTURAL_TRUTH.md
 
 markdown_extensions:
   - admonition

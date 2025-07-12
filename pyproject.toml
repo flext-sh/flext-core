@@ -9,10 +9,8 @@ description = "Enterprise Foundation Framework - Modern Python 3.13 + Clean Arch
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
 dependencies = [
-    # Core workspace dependencies are inherited from workspace level
-    # Only module-specific dependencies are listed here
-    "dynaconf>=3.2.0",
-    "pyyaml>=6.0.0",
+    # Dependencies are managed by Poetry in [tool.poetry.dependencies] section
+    # This section is kept minimal to avoid duplication
 ]
 keywords = [ "flext", "enterprise", "ddd", "clean-architecture", "solid", "modern",]
 classifiers = [ "Development Status :: 5 - Production/Stable", "Intended Audience :: Developers", "License :: OSI Approved :: MIT License", "Operating System :: OS Independent", "Programming Language :: Python :: 3.13", "Programming Language :: Python :: 3 :: Only", "Topic :: Software Development :: Libraries :: Application Frameworks", "Framework :: Pydantic", "Framework :: Pydantic :: 2", "Typing :: Typed",]
@@ -36,6 +34,28 @@ Documentation = "https://github.com/flext-sh/flext/blob/main/README.md"
 flext-core = "flext_core.cli:main"
 
 [tool.poetry]
+name = "flext-core"
+version = "0.7.0"
+description = "Enterprise Foundation Framework - Modern Python 3.13 + Clean Architecture"
+authors = ["FLEXT Team <team@flext.sh>"]
+readme = "README.md"
+license = "MIT"
+homepage = "https://github.com/flext-sh/flext-core"
+repository = "https://github.com/flext-sh/flext-core"
+keywords = ["flext", "enterprise", "ddd", "clean-architecture", "solid", "modern"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+    "Framework :: Pydantic",
+    "Framework :: Pydantic :: 2",
+    "Typing :: Typed",
+]
+
 [[tool.poetry.packages]]
 include = "flext_core"
 from = "src"

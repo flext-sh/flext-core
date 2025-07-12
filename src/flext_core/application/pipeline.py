@@ -22,7 +22,7 @@ from flext_core.domain.pipeline import PipelineName
 from flext_core.domain.pydantic_base import APIRequest
 from flext_core.domain.types import ServiceResult
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from flext_core.domain.pipeline import PipelineExecution
     from flext_core.infrastructure.persistence.base import Repository
 
@@ -108,6 +108,10 @@ class PipelineService:
             return ServiceResult.fail(f"Input error: {e}")
         except OSError as e:
             return ServiceResult.fail(f"Repository error: {e}")
+        except (RuntimeError, AttributeError, ConnectionError) as e:
+            return ServiceResult.fail(f"Repository error: {e}")
+        except Exception as e:  # noqa: BLE001
+            return ServiceResult.fail(f"Repository error: {e}")
 
     async def execute_pipeline(
         self,
@@ -165,6 +169,10 @@ class PipelineService:
             return ServiceResult.fail(f"Input error: {e}")
         except OSError as e:
             return ServiceResult.fail(f"Repository error: {e}")
+        except (RuntimeError, AttributeError, ConnectionError) as e:
+            return ServiceResult.fail(f"Repository error: {e}")
+        except Exception as e:  # noqa: BLE001
+            return ServiceResult.fail(f"Repository error: {e}")
 
     async def deactivate_pipeline(
         self,
@@ -194,6 +202,10 @@ class PipelineService:
         except (ValueError, TypeError) as e:
             return ServiceResult.fail(f"Input error: {e}")
         except OSError as e:
+            return ServiceResult.fail(f"Repository error: {e}")
+        except (RuntimeError, AttributeError, ConnectionError) as e:
+            return ServiceResult.fail(f"Repository error: {e}")
+        except Exception as e:  # noqa: BLE001
             return ServiceResult.fail(f"Repository error: {e}")
 
 

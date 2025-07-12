@@ -6,6 +6,45 @@ from flext_core import Pipeline
 from flext_core import PipelineId
 from flext_core import PipelineName
 from flext_core import ServiceResult
+from flext_core.domain.pipeline import ExecutionId
+
+
+def test_pipeline_name_string_conversion() -> None:
+    """Test PipelineName __str__ method (line 80)."""
+    pipeline_name = PipelineName(value="Test Pipeline String")
+    # Test the __str__ method directly
+    str_result = str(pipeline_name)
+    assert str_result == "Test Pipeline String"
+
+
+def test_execution_id_string_conversion() -> None:
+    """Test ExecutionId __str__ method (line 95)."""
+    execution_id = ExecutionId()
+    # Test the __str__ method directly  
+    str_result = str(execution_id)
+    # Should be a valid UUID string
+    assert len(str_result) == 36  # UUID format
+    assert "-" in str_result
+
+
+def test_pipeline_deactivate_method() -> None:
+    """Test Pipeline deactivate method (lines 165-166)."""
+    pipeline_name = PipelineName(value="Deactivation Test")
+    pipeline = Pipeline(
+        pipeline_name=pipeline_name,
+        pipeline_description="Test deactivate method",
+    )
+    
+    # Initially active
+    assert pipeline.pipeline_is_active is True
+    
+    # Call deactivate method directly
+    pipeline.deactivate()
+    
+    # Should be deactivated
+    assert pipeline.pipeline_is_active is False
+    # updated_at should be set
+    assert pipeline.updated_at is not None
 
 
 def test_pipeline_creation() -> None:

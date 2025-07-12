@@ -100,6 +100,15 @@ __pypackages__/
 *.swo
 *~
 
+# Cursor AI
+.cursor/
+.cursorrules
+
+# Claude AI
+.claude/
+CLAUDE.md
+internal.invalid.md
+
 # ============================================================================
 # OS SPECIFIC FILES
 # ============================================================================
@@ -180,36 +189,39 @@ cache/
 *.bak
 *.tmp
 *.orig
+.dev_deps_backup_*
+*_backup_*
 
 # ============================================================================
-# PROJECT SPECIFIC
+# PROJECT SPECIFIC - FLEXT-CORE
 # ============================================================================
 
 # Archive directory (for moved junk files)
 archive/
 
-# Reports directory (coverage, quality, etc.)
+# Reports directory (for metrics, coverage, etc.)
 reports/
 
-# ============================================================================
-# AI GENERATED CONTENT (ARCHIVED)
-# ============================================================================
-
-# AI assistant files
-.claude/
-.cursor/
-.cursorrules
-CLAUDE*.md
-*_REPORT.md
-DEVELOPMENT_STANDARDS.md
-FLEXT_CORE_PATTERNS.md
-LOGGING_MIGRATION.md
-STRICT_COMPLIANCE.md
+# Old requirements.txt (use pyproject.toml)
+requirements.txt
 
 # Manual fix scripts
 fix_*.py
 *_fix.py
 *_validation.py
+validate_*.py
+
+# AI-generated reports and migration files
+*_REPORT.md
+*_REPORT_*.md
+CONFIG_MIGRATION*.md
+FLEXT_CORE_MIGRATION*.md
+DEVELOPMENT_STANDARDS.md
+FLEXT_CORE_PATTERNS.md
+LOGGING_MIGRATION.md
+STRICT_COMPLIANCE.md
+LEVEL1_*.md
+DUPLICATION_REPORT.md
 
 # ============================================================================
 # ALWAYS INCLUDE EXCEPTIONS
