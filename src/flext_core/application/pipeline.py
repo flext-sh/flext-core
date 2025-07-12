@@ -1,4 +1,7 @@
-"""Pipeline application services - COMPLETE in ONE file.
+"""Pipeline application services.
+
+Copyright (c) 2025 FLEXT Contributors
+SPDX-License-Identifier: MIT
 
 Commands, Queries, and Service all together.
 Zero duplication, maximum cohesion.
@@ -6,68 +9,93 @@ Zero duplication, maximum cohesion.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING
+from uuid import UUID
 
-from flext_core.domain import (
-    NotFoundError,
-    Pipeline,
-    PipelineExecution,
-    PipelineId,
-    PipelineName,
-    Repository,
-    RepositoryError,
-    ServiceResult,
-    ValidationError,
-    ValueObject,
-)
+from pydantic import Field
+from pydantic import ValidationError
+
+# Move imports out of TYPE_CHECKING block since they're used in runtime
+from flext_core.domain.pipeline import Pipeline
+from flext_core.domain.pipeline import PipelineId
+from flext_core.domain.pipeline import PipelineName
+from flext_core.domain.pydantic_base import APIRequest
+from flext_core.domain.types import ServiceResult
+
+if TYPE_CHECKING:
+    from flext_core.domain.pipeline import PipelineExecution
+    from flext_core.infrastructure.persistence.base import Repository
 
 
 # Commands
-class CreatePipelineCommand(ValueObject):
+class CreatePipelineCommand(APIRequest):
     """Create pipeline command."""
 
-    name: PipelineName
-    description: str = ""
+    name: str = Field(..., description="Pipeline name", max_length=100)
+    description: str = Field(
+        default="",
+        description="Pipeline description",
+        max_length=500,
+    )
 
 
-class ExecutePipelineCommand(ValueObject):
+class ExecutePipelineCommand(APIRequest):
     """Execute pipeline command."""
 
-    pipeline_id: PipelineId
+    pipeline_id: str = Field(..., description="Pipeline ID to execute")
 
 
 # Queries
-class GetPipelineQuery(ValueObject):
+class GetPipelineQuery(APIRequest):
     """Get pipeline query."""
 
-    pipeline_id: PipelineId
+    pipeline_id: str = Field(..., description="Pipeline ID to retrieve")
 
 
-class ListPipelinesQuery(ValueObject):
+class ListPipelinesQuery(APIRequest):
     """List pipelines query."""
 
-    limit: int = 100
-    offset: int = 0
-    active_only: bool = True
+    limit: int = Field(
+        100,
+        description="Number of pipelines to return",
+        ge=1,
+        le=1000,
+    )
+    offset: int = Field(default=0, description="Offset for pagination", ge=0)
+    active_only: bool = Field(default=True, description="Return only active pipelines")
 
 
 # Service
 class PipelineService:
     """Pipeline application service - SOLID principles."""
 
-    def __init__(self, pipeline_repo: Repository[Pipeline, Any]) -> None:
-        """Initialize pipeline service with repository."""
+    def __init__(self, pipeline_repo: Repository[Pipeline, object]) -> None:
+        """Initialize pipeline service.
+
+        Args:
+            pipeline_repo: Pipeline repository for data access
+
+        """
         self._repo = pipeline_repo
 
     async def create_pipeline(
         self,
         command: CreatePipelineCommand,
     ) -> ServiceResult[Pipeline]:
-        """Create new pipeline."""
+        """Create a new pipeline.
+
+        Args:
+            command: Create pipeline command
+
+        Returns:
+            Service result with created pipeline
+
+        """
         try:
+            pipeline_name = PipelineName(value=command.name)
             pipeline = Pipeline(
-                name=command.name,
-                description=command.description,
+                pipeline_name=pipeline_name,
+                pipeline_description=command.description,
             )
             pipeline.create()  # Emit domain event
 
@@ -75,49 +103,85 @@ class PipelineService:
             return ServiceResult.ok(saved)
 
         except ValidationError as e:
-            return ServiceResult.fail(f"Validation failed: {e!s}")
-        except RepositoryError as e:
-            return ServiceResult.fail(f"Repository error: {e!s}")
+            return ServiceResult.fail(f"Validation failed: {e}")
+        except (ValueError, TypeError) as e:
+            return ServiceResult.fail(f"Input error: {e}")
+        except OSError as e:
+            return ServiceResult.fail(f"Repository error: {e}")
 
     async def execute_pipeline(
         self,
         command: ExecutePipelineCommand,
     ) -> ServiceResult[PipelineExecution]:
-        """Execute pipeline."""
+        """Execute a pipeline.
+
+        Args:
+            command: Execute pipeline command
+
+        Returns:
+            Service result with pipeline execution
+
+        """
         try:
-            pipeline = await self._repo.get(command.pipeline_id)
+            pipeline_id = PipelineId(value=UUID(command.pipeline_id))
+            pipeline = await self._repo.get_by_id(pipeline_id)
             if not pipeline:
                 return ServiceResult.fail("Pipeline not found")
 
-            if not pipeline.is_active:
+            if not pipeline.pipeline_is_active:
                 return ServiceResult.fail("Pipeline is inactive")
 
             execution = pipeline.execute()  # Emit domain event
             return ServiceResult.ok(execution)
 
-        except NotFoundError:
-            return ServiceResult.fail("Pipeline not found")
-        except RepositoryError as e:
-            return ServiceResult.fail(f"Repository error: {e!s}")
+        except ValidationError as e:
+            return ServiceResult.fail(f"Validation failed: {e}")
+        except (ValueError, TypeError) as e:
+            return ServiceResult.fail(f"Input error: {e}")
+        except OSError as e:
+            return ServiceResult.fail(f"Execution error: {e}")
 
     async def get_pipeline(self, query: GetPipelineQuery) -> ServiceResult[Pipeline]:
-        """Get specific pipeline."""
+        """Get a pipeline by ID.
+
+        Args:
+            query: Get pipeline query
+
+        Returns:
+            Service result with pipeline
+
+        """
         try:
-            pipeline = await self._repo.get(query.pipeline_id)
+            pipeline_id = PipelineId(value=UUID(query.pipeline_id))
+            pipeline = await self._repo.get_by_id(pipeline_id)
             if not pipeline:
                 return ServiceResult.fail("Pipeline not found")
 
             return ServiceResult.ok(pipeline)
 
-        except NotFoundError:
-            return ServiceResult.fail("Pipeline not found")
-        except RepositoryError as e:
-            return ServiceResult.fail(f"Repository error: {e!s}")
+        except ValidationError as e:
+            return ServiceResult.fail(f"Validation failed: {e}")
+        except (ValueError, TypeError) as e:
+            return ServiceResult.fail(f"Input error: {e}")
+        except OSError as e:
+            return ServiceResult.fail(f"Repository error: {e}")
 
-    async def deactivate_pipeline(self, pipeline_id: PipelineId) -> ServiceResult[Pipeline]:
-        """Deactivate pipeline."""
+    async def deactivate_pipeline(
+        self,
+        pipeline_id: str,
+    ) -> ServiceResult[Pipeline]:
+        """Deactivate a pipeline.
+
+        Args:
+            pipeline_id: Pipeline ID to deactivate
+
+        Returns:
+            Service result with deactivated pipeline
+
+        """
         try:
-            pipeline = await self._repo.get(pipeline_id)
+            pid = PipelineId(value=UUID(pipeline_id))
+            pipeline = await self._repo.get_by_id(pid)
             if not pipeline:
                 return ServiceResult.fail("Pipeline not found")
 
@@ -125,7 +189,18 @@ class PipelineService:
             saved = await self._repo.save(pipeline)
             return ServiceResult.ok(saved)
 
-        except NotFoundError:
-            return ServiceResult.fail("Pipeline not found")
-        except RepositoryError as e:
-            return ServiceResult.fail(f"Repository error: {e!s}")
+        except ValidationError as e:
+            return ServiceResult.fail(f"Validation failed: {e}")
+        except (ValueError, TypeError) as e:
+            return ServiceResult.fail(f"Input error: {e}")
+        except OSError as e:
+            return ServiceResult.fail(f"Repository error: {e}")
+
+
+__all__ = [
+    "CreatePipelineCommand",
+    "ExecutePipelineCommand",
+    "GetPipelineQuery",
+    "ListPipelinesQuery",
+    "PipelineService",
+]

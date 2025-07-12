@@ -8,7 +8,7 @@ echo "🚀 FLEXT Core - Setting up STRICT pre-commit hooks..."
 echo "=================================================="
 
 # Check if we're in a git repository
-if ! git rev-parse --git-dir > /dev/null 2>&1; then
+if ! git rev-parse --git-dir >/dev/null 2>&1; then
     echo "❌ Error: Not in a git repository!"
     echo "Please run this script from the project root."
     exit 1
@@ -26,7 +26,7 @@ else
 fi
 
 # Install pre-commit if not already installed
-if ! command -v pre-commit &> /dev/null; then
+if ! command -v pre-commit &>/dev/null; then
     echo "📦 Installing pre-commit..."
     pip install pre-commit
 else

@@ -41,12 +41,13 @@ help: ## Show this help message
 	@echo "$(PURPLE)╚═══════════════════════════════════════════════════════════╝$(NC)"
 	@echo ""
 	@echo "$(CYAN)🔍 Quality Checks:$(NC)"
-	@echo "  $(GREEN)check$(NC)            Run ALL quality checks"
-	@echo "  $(GREEN)lint$(NC)             Linting with ruff (17 categories)"
+	@echo "  $(GREEN)check$(NC)            Run ALL quality checks (STRICT MODE)"
+	@echo "  $(GREEN)lint$(NC)             Linting with ruff (ALL rules enabled)"
 	@echo "  $(GREEN)format-check$(NC)     Check code formatting"
 	@echo "  $(GREEN)type-check$(NC)       MyPy in strict mode"
-	@echo "  $(GREEN)security$(NC)         Security scans"
+	@echo "  $(GREEN)security$(NC)         Security scans (bandit + safety + secrets)"
 	@echo "  $(GREEN)complexity$(NC)       Code complexity analysis"
+	@echo "  $(GREEN)docstring-check$(NC)  Documentation coverage check"
 	@echo ""
 	@echo "$(CYAN)🔧 Code Fixes:$(NC)"
 	@echo "  $(GREEN)fix$(NC)              Auto-fix all issues"
@@ -80,7 +81,7 @@ help: ## Show this help message
 # QUALITY CHECKS
 # ═══════════════════════════════════════════════════════════════════
 
-check: poetry-check format-check lint type-check security complexity test ## Run ALL quality checks
+check: poetry-check format-check lint type-check security complexity docstring-check test ## Run ALL quality checks
 	@echo ""
 	@echo "$(GREEN)═══════════════════════════════════════════════════════════$(NC)"
 	@echo "$(GREEN)✅ ALL QUALITY CHECKS PASSED - 100% COMPLIANCE!$(NC)"
@@ -107,9 +108,9 @@ security: poetry-check ## Run security scans
 	@echo "$(BLUE)🔒 Running security scans...$(NC)"
 	@echo "→ Bandit security scan..."
 	@$(POETRY_RUN) bandit -r $(SRC_DIR)/ --severity-level medium
-	@echo "→ Safety check..."
-	@$(POETRY_RUN) safety check --json --output $(REPORTS_DIR)/safety.json 2>/dev/null || true
-	@$(POETRY_RUN) safety check || true
+	@echo "→ Pip-audit security check..."
+	@$(POETRY_RUN) pip-audit --format=json --output=$(REPORTS_DIR)/pip-audit.json 2>/dev/null || true
+	@$(POETRY_RUN) pip-audit --ignore-vuln PYSEC-2022-42969
 	@echo "→ Detect-secrets scan..."
 	@$(POETRY_RUN) detect-secrets scan --baseline .secrets.baseline
 	@echo "$(GREEN)✅ Security scans passed!$(NC)"
@@ -126,6 +127,11 @@ complexity: poetry-check ## Code complexity analysis
 	@$(POETRY_RUN) vulture $(SRC_DIR)/ --min-confidence 80 || true
 	@echo "$(GREEN)✅ Complexity analysis complete!$(NC)"
 
+docstring-check: poetry-check ## Check docstring coverage
+	@echo "$(BLUE)📝 Checking docstring coverage...$(NC)"
+	@$(POETRY_RUN) interrogate $(SRC_DIR)/ --verbose --ignore-init-method --ignore-init-module --ignore-magic --ignore-private --fail-under=80
+	@echo "$(GREEN)✅ Docstring coverage check passed!$(NC)"
+
 # ═══════════════════════════════════════════════════════════════════
 # TESTING
 # ═══════════════════════════════════════════════════════════════════
@@ -133,10 +139,10 @@ complexity: poetry-check ## Code complexity analysis
 test: poetry-check ## Run all tests with coverage
 	@echo "$(BLUE)🧪 Running all tests with coverage...$(NC)"
 	@mkdir -p $(REPORTS_DIR)
-	@$(POETRY_RUN) pytest $(TEST_DIR)/ \
+	@$(POETRY_ENV) pytest $(TEST_DIR)/ \
 		-v \
 		--tb=short \
-		--cov=$(SRC_DIR)/flext_core \
+		--cov=flext_core \
 		--cov-report=term-missing:skip-covered \
 		--cov-report=html:$(REPORTS_DIR)/coverage \
 		--cov-report=xml:$(REPORTS_DIR)/coverage.xml \
@@ -145,11 +151,11 @@ test: poetry-check ## Run all tests with coverage
 
 test-unit: poetry-check ## Run unit tests only
 	@echo "$(BLUE)🧪 Running unit tests...$(NC)"
-	@$(POETRY_RUN) pytest $(TEST_DIR)/unit/ -v --tb=short
+	@$(POETRY_ENV) pytest $(TEST_DIR)/unit/ -v --tb=short
 
 test-integration: poetry-check ## Run integration tests only
 	@echo "$(BLUE)🧪 Running integration tests...$(NC)"
-	@$(POETRY_RUN) pytest $(TEST_DIR)/integration/ -v --tb=short
+	@$(POETRY_ENV) pytest $(TEST_DIR)/integration/ -v --tb=short
 
 test-watch: poetry-check ## Watch mode testing
 	@echo "$(BLUE)👁️ Running tests in watch mode...$(NC)"
@@ -325,5 +331,32 @@ setup: install pre-commit ## Complete development setup
 export PYTHONPATH := $(PWD)/$(SRC_DIR):$(PYTHONPATH)
 export FLEXT_CORE_DEV := true
 
+# Set environment for all poetry commands
+POETRY_ENV := PYTHONPATH=$(PWD)/$(SRC_DIR):$(PYTHONPATH) $(POETRY_RUN)
+
+# Advanced commands
+outdated: poetry-check ## Check for outdated dependencies
+	@echo "$(BLUE)📦 Checking for outdated dependencies...$(NC)"
+	@$(POETRY) show --outdated
+
+update-deps: poetry-check ## Update all dependencies to latest versions
+	@echo "$(BLUE)⬆️ Updating all dependencies...$(NC)"
+	@$(POETRY) update
+	@$(POETRY) lock
+	@echo "$(GREEN)✅ Dependencies updated!$(NC)"
+
+profile: poetry-check ## Run performance profiling
+	@echo "$(BLUE)⚡ Running performance profiling...$(NC)"
+	@$(POETRY_RUN) python -m cProfile -o profile.stats -m pytest tests/ -v
+	@echo "$(GREEN)✅ Profiling complete! Results in profile.stats$(NC)"
+
+benchmark: poetry-check ## Run benchmarks
+	@echo "$(BLUE)🏁 Running benchmarks...$(NC)"
+	@$(POETRY_RUN) pytest tests/ --benchmark-only -v
+	@echo "$(GREEN)✅ Benchmarks complete!$(NC)"
+
 # Default target
 .DEFAULT_GOAL := help
+
+# Include standardized build system
+include Makefile.build

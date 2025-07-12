@@ -305,7 +305,9 @@ Session management         # Database sessions
 
 ## 🎯 Summary
 
-The FLX-Core architecture follows a clear hierarchical structure where **`domain/pydantic_base.py`** forms the absolute foundation. Each layer builds upon the previous ones, creating a stable and maintainable architecture where changes to external layers don't affect the core business logic.
+The FLX-Core architecture follows a clear hierarchical structure where **`domain/pydantic_base.py`** forms the absolute
+foundation. Each layer builds upon the previous ones, creating a stable and maintainable architecture where changes to
+external layers don't affect the core business logic.
 
 This hierarchy ensures:
 

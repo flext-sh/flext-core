@@ -1,7 +1,7 @@
 # FLext Core - Enterprise Foundation Framework
 
 > **Regras do Projeto**: Consulte `../../.github/instructions/regras.instructions.md` para padrões obrigatórios
-> 
+>
 > **Padrão de documentação**: Veja [../../docs/HOW_TO_DOCUMENT.md](../../docs/HOW_TO_DOCUMENT.md)
 
 ## 🧭 Navegação
@@ -99,17 +99,18 @@ success = await repo.delete(pipeline.id)
 
 ## 📊 **Enterprise Metrics**
 
-| Metric | Old Library | New Library | Improvement |
-|--------|-------------|-------------|-------------|
-| **Files** | 79 | 6 | 92% reduction |
-| **Dependencies** | 15+ | 1 (Pydantic) | 93% reduction |
-| **Code Duplication** | High | ZERO | 100% elimination |
-| **Type Safety** | Partial | 100% | Complete coverage |
-| **Test Coverage** | Missing | 100% | Enterprise standard |
+| Metric               | Old Library | New Library  | Improvement         |
+| -------------------- | ----------- | ------------ | ------------------- |
+| **Files**            | 79          | 6            | 92% reduction       |
+| **Dependencies**     | 15+         | 1 (Pydantic) | 93% reduction       |
+| **Code Duplication** | High        | ZERO         | 100% elimination    |
+| **Type Safety**      | Partial     | 100%         | Complete coverage   |
+| **Test Coverage**    | Missing     | 100%         | Enterprise standard |
 
 ## 🎯 **SOLID Principles Implementation**
 
 ### **S** - Single Responsibility
+
 ```python
 # Each class has ONE reason to change
 class Pipeline(AggregateRoot[PipelineId]):  # Only pipeline business logic
@@ -118,6 +119,7 @@ class InMemoryRepository:                   # Only data persistence
 ```
 
 ### **O** - Open/Closed
+
 ```python
 # Extensible without modification via Protocol
 class Repository(Protocol[T, ID]):
@@ -126,6 +128,7 @@ class Repository(Protocol[T, ID]):
 ```
 
 ### **L** - Liskov Substitution
+
 ```python
 # Any Repository implementation works seamlessly
 def create_service(repo: Repository[Pipeline, PipelineId]) -> PipelineService:
@@ -133,6 +136,7 @@ def create_service(repo: Repository[Pipeline, PipelineId]) -> PipelineService:
 ```
 
 ### **I** - Interface Segregation
+
 ```python
 # Small, focused interfaces
 class EventPublisher(Protocol):
@@ -140,6 +144,7 @@ class EventPublisher(Protocol):
 ```
 
 ### **D** - Dependency Inversion
+
 ```python
 # High-level modules don't depend on low-level modules
 class PipelineService:
@@ -150,6 +155,7 @@ class PipelineService:
 ## 🔥 **Performance Features**
 
 ### **Python 3.13 Modern Syntax**
+
 ```python
 # Type aliases for clarity and performance
 type PipelineId = DomainId[Pipeline]
@@ -160,12 +166,13 @@ async def execute_pipeline(self, command: ExecutePipelineCommand) -> ServiceResu
     pipeline = await self._repo.get(command.pipeline_id)
     if pipeline is None:
         return ServiceResult.fail(f"Pipeline {command.pipeline_id} not found")
-    
+
     execution = PipelineExecution(pipeline_id=pipeline.id)
     return ServiceResult.ok(execution)
 ```
 
 ### **Pydantic v2 Performance**
+
 ```python
 # Zero-copy validation when possible
 class Pipeline(AggregateRoot[PipelineId]):
@@ -186,15 +193,16 @@ pytest tests/ -v --cov=src --cov-report=term-missing
 
 # Quality checks (enterprise standards)
 ruff check src/ tests/           # Code quality
-ruff format src/ tests/          # Consistent formatting  
+ruff format src/ tests/          # Consistent formatting
 mypy src/ --strict              # Type safety validation
 ```
 
 ### **Test Structure**
+
 ```python
 class TestPipelineEnterprise:
     """Enterprise-grade tests with 100% coverage."""
-    
+
     async def test_create_pipeline_success(self) -> None:
         """Test successful pipeline creation with all validations."""
         # Given
@@ -202,10 +210,10 @@ class TestPipelineEnterprise:
             name=PipelineName(value="test-pipeline"),
             description="Test pipeline",
         )
-        
+
         # When
         result = await self.service.create_pipeline(command)
-        
+
         # Then
         assert result.success
         pipeline = result.unwrap()
@@ -232,6 +240,7 @@ make check         # all quality checks
 ## 📦 **Integration Examples**
 
 ### **FastAPI Integration**
+
 ```python
 from fastapi import FastAPI
 from flext_core import PipelineService, InMemoryRepository
@@ -246,6 +255,7 @@ async def create_pipeline(command: CreatePipelineCommand):
 ```
 
 ### **Django Integration**
+
 ```python
 from django.http import JsonResponse
 from flext_core.application.pipeline import PipelineService
@@ -266,7 +276,7 @@ dependencies = [
 ]
 
 # Development tools for quality
-[project.optional-dependencies]  
+[project.optional-dependencies]
 dev = [
     "pytest>=8.0.0",      # Testing framework
     "pytest-asyncio>=0.24.0",  # Async testing
@@ -290,6 +300,7 @@ dev = [
 ## 🚀 **Production Readiness**
 
 ### **Quality Gates**
+
 ```bash
 # All must pass for production deployment
 pytest tests/ --cov=src --cov-fail-under=90  # 90%+ test coverage
@@ -298,6 +309,7 @@ mypy src/ --strict --warn-return-any --warn-unused-configs      # Strict typing
 ```
 
 ### **Performance Benchmarks**
+
 - **Startup time**: < 100ms (minimal dependencies)
 - **Memory usage**: < 50MB base (efficient Pydantic models)
 - **Type checking**: < 5s (modern mypy with incremental)
@@ -345,14 +357,17 @@ MIT License - Enterprise grade, open source foundation.
 ## 🔗 Cross-References
 
 ### Prerequisites
+
 - [../../docs/HOW_TO_DOCUMENT.md](../../docs/HOW_TO_DOCUMENT.md) — Guia de padronização de documentação
 - [../../.github/instructions/regras.instructions.md](../../.github/instructions/regras.instructions.md) — Regras obrigatórias do projeto
 
 ### Next Steps
+
 - [../../docs/architecture/index.md](../../docs/architecture/index.md) — Detalhes da arquitetura
 - [../../docs/development/index.md](../../docs/development/index.md) — Padrões de desenvolvimento
 
 ### Related Topics
+
 - [../../docs/STANDARDIZATION_MASTER_PLAN.md](../../docs/STANDARDIZATION_MASTER_PLAN.md) — Estratégia de padronização
 - [../../docs/INCOMPLETE_CODE_REPORT.md](../../docs/INCOMPLETE_CODE_REPORT.md) — Relatório de código incompleto
 

@@ -254,4 +254,4 @@ python -m flx_core.cli command --debug --verbose
 
 **Mantra**: INVESTIGATE FIRST, IMPLEMENT CORRECTLY, TEST EVERYTHING, DOCUMENT TRUTH
 
-_Última atualização: 2025-06-28 - Após investigação profunda e tentativa de correção_
+> > _Última atualização: 2025-06-28 - Após investigação profunda e tentativa de correção_

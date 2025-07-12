@@ -71,22 +71,22 @@
 
 1. **E501 Line Length (7 violations)**
 
-   - Line 1: Module docstring first line (102 > 88)
-   - Line 3: Module docstring continuation (91 > 88)
-   - Line 4: Module docstring continuation (97 > 88)
-   - Line 299: is_satisfied_by docstring (91 > 88)
-   - Line 311: is_satisfied_by docstring (93 > 88)
-   - Line 314: Comment line (98 > 88)
-   - Line 315: Comment line (103 > 88)
+    - Line 1: Module docstring first line (102 > 88)
+    - Line 3: Module docstring continuation (91 > 88)
+    - Line 4: Module docstring continuation (97 > 88)
+    - Line 299: is_satisfied_by docstring (91 > 88)
+    - Line 311: is_satisfied_by docstring (93 > 88)
+    - Line 314: Comment line (98 > 88)
+    - Line 315: Comment line (103 > 88)
 
 2. **ARG002 Unused Argument**
 
-   - Method: `is_satisfied_by(self, candidate: object)`
-   - Solution: Use `_candidate` or add `# noqa: ARG002` with justification
+    - Method: `is_satisfied_by(self, candidate: object)`
+    - Solution: Use `_candidate` or add `# noqa: ARG002` with justification
 
 3. **E402 Import Position**
-   - Import: `from flx_core.domain.advanced_types import ServiceResult`
-   - Solution: Move to top with conditional import or restructure
+    - Import: `from flx_core.domain.advanced_types import ServiceResult`
+    - Solution: Move to top with conditional import or restructure
 
 ### MyPy Issues Resolution
 
