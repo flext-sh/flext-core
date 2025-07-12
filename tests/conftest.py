@@ -1,49 +1,29 @@
-"""Pytest configuration and shared fixtures.
+"""Pytest configuration and fixtures for flext-core tests."""
 
-Enterprise test configuration for 100% coverage.
-"""
-
-from __future__ import annotations
-
-from typing import TYPE_CHECKING
+from typing import Any
 
 import pytest
-import pytest_asyncio
 
-from flext_core import InMemoryRepository, Pipeline, PipelineService
-
-if TYPE_CHECKING:
-    from collections.abc import AsyncGenerator
+# Basic pytest configuration
+pytest_plugins: list[str] = []
 
 
 @pytest.fixture
-def anyio_backend() -> str:
-    """Use asyncio for async tests."""
-    return "asyncio"
-
-
-@pytest_asyncio.fixture
-async def repository() -> AsyncGenerator[InMemoryRepository[Pipeline]]:
-    """Provide clean repository for each test."""
-    repo = InMemoryRepository[Pipeline]()
-    yield repo
-    # Cleanup if needed
-
-
-@pytest_asyncio.fixture
-async def pipeline_service(
-    repository: InMemoryRepository[Pipeline],
-) -> AsyncGenerator[PipelineService]:
-    """Provide pipeline service with repository."""
-    service = PipelineService(repository)
-    yield service
-    # Cleanup if needed
-
-
-@pytest.fixture
-def mock_pipeline_data() -> dict[str, str]:
-    """Provide mock pipeline data."""
+def sample_config() -> dict[str, Any]:
+    """Sample configuration for testing."""
     return {
-        "name": "test-pipeline",
-        "description": "Test pipeline for unit tests",
+        "environment": "test",
+        "debug": True,
+        "log_level": "DEBUG",
+    }
+
+
+@pytest.fixture
+def sample_pipeline_data() -> dict[str, Any]:
+    """Sample pipeline data for testing."""
+    return {
+        "id": "test-pipeline-001",
+        "name": "Test Pipeline",
+        "description": "A test pipeline for unit tests",
+        "status": "pending",
     }

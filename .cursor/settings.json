@@ -1,208 +1,56 @@
 {
-  // Cursor AI Settings for FLEXT Core
+  // Cursor-specific settings for FLEXT Core
   "cursor.aiEnabled": true,
   "cursor.aiProvider": "anthropic",
-  "cursor.aiModel": "claude-3.5-sonnet",
-  
-  // Code Generation Settings
+  "cursor.aiModel": "claude-3-opus",
+
+  // Code generation preferences
   "cursor.codeGeneration": {
-    "language": "python",
-    "framework": "pydantic",
-    "style": {
-      "naming": "snake_case",
-      "docstrings": "google",
-      "typeHints": "always",
-      "imports": "absolute",
-      "lineLength": 100
-    },
-    "patterns": {
-      "architecture": "clean-architecture",
-      "design": "domain-driven",
-      "testing": "pytest",
-      "async": "asyncio"
-    }
-  },
-  
-  // Context Awareness
-  "cursor.contextFiles": [
-    "pyproject.toml",
-    "README.md",
-    "CLAUDE.md",
-    "CLAUDE.local.md",
-    "src/flext_core/__init__.py",
-    "src/flext_core/domain/pydantic_base.py"
-  ],
-  
-  // AI Instructions
-  "cursor.systemPrompt": "You are working on FLEXT Core, an enterprise Python 3.13 framework following Clean Architecture and Domain-Driven Design principles. Always use Pydantic for models, type hints for all functions, and follow PEP 8 with 100-character line length. The project uses Poetry for dependency management and has strict quality gates (ruff, mypy, bandit).",
-  
-  // Code Review Settings
-  "cursor.codeReview": {
-    "enabled": true,
-    "checkFor": [
-      "type-safety",
-      "security-issues",
-      "performance",
-      "clean-architecture",
-      "solid-principles",
-      "test-coverage"
+    "style": "enterprise",
+    "principles": ["SOLID", "DRY", "KISS", "YAGNI"],
+    "patterns": [
+      "Clean Architecture",
+      "Domain-Driven Design",
+      "Repository Pattern",
+      "Service Pattern"
     ]
   },
-  
-  // Completion Settings
-  "cursor.completion": {
-    "enableAutoImport": true,
-    "enableTypeInference": true,
-    "enableDocstringGeneration": true,
-    "preferredImports": {
-      "pydantic": "from pydantic import BaseModel, Field, ConfigDict",
-      "typing": "from typing import Any, Dict, List, Optional, Union, Type",
-      "pytest": "import pytest",
-      "asyncio": "import asyncio"
-    }
+
+  // Python-specific AI assistance
+  "cursor.python": {
+    "version": "3.13",
+    "typeHints": "always",
+    "docstrings": "google",
+    "testing": "pytest",
+    "async": true,
+    "strictMode": true
   },
-  
-  // Refactoring Settings
-  "cursor.refactoring": {
-    "extractMethod": {
-      "addTypeHints": true,
-      "addDocstring": true,
-      "addTests": true
-    },
-    "extractVariable": {
-      "addTypeHint": true,
-      "preferFinal": false
-    }
+
+  // Project context
+  "cursor.projectContext": {
+    "type": "library",
+    "domain": "enterprise-framework",
+    "architecture": "clean",
+    "dependencies": ["pydantic"],
+    "quality": "production"
   },
-  
-  // Test Generation
-  "cursor.testGeneration": {
-    "framework": "pytest",
-    "style": "given-when-then",
-    "coverage": "comprehensive",
-    "includeEdgeCases": true,
-    "includeErrorCases": true,
-    "mockingLibrary": "pytest-mock",
-    "asyncSupport": true
+
+  // AI behavior
+  "cursor.ai": {
+    "suggestTests": true,
+    "suggestTypes": true,
+    "suggestDocs": true,
+    "explainErrors": true,
+    "refactorSuggestions": true,
+    "securityChecks": true
   },
-  
-  // Documentation Generation
-  "cursor.documentation": {
-    "style": "google",
-    "includeExamples": true,
-    "includeTypes": true,
-    "includeReturns": true,
-    "includeRaises": true,
-    "autoUpdate": true
-  },
-  
-  // Security Settings
-  "cursor.security": {
-    "scanOnSave": true,
-    "banditEnabled": true,
-    "detectSecretsEnabled": true,
-    "warnOnHardcodedSecrets": true
-  },
-  
-  // Performance Settings
-  "cursor.performance": {
-    "suggestOptimizations": true,
-    "warnOnN+1": true,
-    "suggestCaching": true,
-    "preferAsync": true
-  },
-  
-  // Project-Specific Rules
-  "cursor.projectRules": [
-    "Always use Pydantic BaseModel for data classes",
-    "Prefer composition over inheritance",
-    "Use dependency injection via Lato",
-    "Follow repository pattern for data access",
-    "Use value objects for domain concepts",
-    "Implement use cases as command/query handlers",
-    "Keep domain logic pure (no I/O)",
-    "Use Result type for error handling",
-    "Write tests first (TDD)",
-    "Document public APIs"
-  ],
-  
-  // Snippets
-  "cursor.snippets": {
-    "domain-model": {
-      "prefix": "dmodel",
-      "body": [
-        "from pydantic import BaseModel, Field, ConfigDict",
-        "from typing import Optional",
-        "from datetime import datetime",
-        "",
-        "class ${1:ModelName}(BaseModel):",
-        "    \"\"\"${2:Model description}.\"\"\"",
-        "    ",
-        "    model_config = ConfigDict(",
-        "        frozen=True,",
-        "        str_strip_whitespace=True,",
-        "        use_enum_values=True,",
-        "    )",
-        "    ",
-        "    ${3:field_name}: ${4:str} = Field(",
-        "        ...,",
-        "        description=\"${5:Field description}\"",
-        "    )",
-        "    created_at: datetime = Field(",
-        "        default_factory=datetime.utcnow,",
-        "        description=\"Creation timestamp\"",
-        "    )"
-      ]
-    },
-    "use-case": {
-      "prefix": "usecase",
-      "body": [
-        "from typing import Protocol",
-        "from flext_core.domain.advanced_types import ServiceResult",
-        "",
-        "class ${1:UseCaseName}(Protocol):",
-        "    \"\"\"${2:Use case description}.\"\"\"",
-        "    ",
-        "    async def execute(self, ${3:param}: ${4:Type}) -> ServiceResult[${5:ReturnType}]:",
-        "        \"\"\"Execute the use case.",
-        "        ",
-        "        Args:",
-        "            ${3:param}: ${6:Parameter description}",
-        "        ",
-        "        Returns:",
-        "            ServiceResult containing ${5:ReturnType} or error",
-        "        \"\"\"",
-        "        ..."
-      ]
-    },
-    "pytest-test": {
-      "prefix": "ptest",
-      "body": [
-        "import pytest",
-        "from unittest.mock import Mock, AsyncMock",
-        "",
-        "class Test${1:ClassName}:",
-        "    \"\"\"Tests for ${1:ClassName}.\"\"\"",
-        "    ",
-        "    @pytest.fixture",
-        "    def ${2:fixture_name}(self) -> ${3:Type}:",
-        "        \"\"\"${4:Fixture description}.\"\"\"",
-        "        return ${5:value}",
-        "    ",
-        "    async def test_${6:test_name}_should_${7:expected_behavior}(",
-        "        self,",
-        "        ${2:fixture_name}: ${3:Type}",
-        "    ) -> None:",
-        "        \"\"\"Test that ${8:test description}.\"\"\"",
-        "        # Given",
-        "        ${9:setup}",
-        "        ",
-        "        # When",
-        "        ${10:action}",
-        "        ",
-        "        # Then",
-        "        ${11:assertion}"
-      ]
-    }
+
+  // Code review preferences
+  "cursor.codeReview": {
+    "checkComplexity": true,
+    "checkSecurity": true,
+    "checkPerformance": true,
+    "checkBestPractices": true,
+    "strictness": "high"
   }
 }

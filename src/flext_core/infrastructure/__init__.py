@@ -1,5 +1,8 @@
 """Infrastructure layer - Concrete implementations.
 
+Copyright (c) 2024 FLEXT Contributors
+SPDX-License-Identifier: MIT
+
 Adapters for external systems.
 """
 

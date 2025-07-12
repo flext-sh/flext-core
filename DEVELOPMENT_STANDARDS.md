@@ -18,21 +18,21 @@ This project maintains **100% strict compliance** with all Python Enhancement Pr
 
 ### 🛠️ Tool Stack (All Managed by Poetry)
 
-| Tool | Purpose | Configuration |
-|------|---------|---------------|
-| **Poetry** | Dependency & environment management | `pyproject.toml` |
-| **Black** | Code formatting (PEP 8) | Line length: 100 |
-| **Ruff** | Linting (17 rule categories) | Strict mode |
-| **isort** | Import sorting (PEP 8) | Black profile |
-| **MyPy** | Type checking (PEP 484) | --strict mode |
-| **Bandit** | Security scanning | Medium+ severity |
-| **Safety** | Dependency vulnerabilities | All known CVEs |
-| **Vulture** | Dead code detection | 80% confidence |
-| **Radon** | Complexity analysis | CC/MI metrics |
-| **pytest** | Testing framework | 90%+ coverage |
-| **pre-commit** | Git hooks | All tools integrated |
-| **commitizen** | Commit standards | Conventional commits |
-| **MkDocs** | Documentation | Material theme |
+| Tool           | Purpose                             | Configuration        |
+| -------------- | ----------------------------------- | -------------------- |
+| **Poetry**     | Dependency & environment management | `pyproject.toml`     |
+| **Black**      | Code formatting (PEP 8)             | Line length: 100     |
+| **Ruff**       | Linting (17 rule categories)        | Strict mode          |
+| **isort**      | Import sorting (PEP 8)              | Black profile        |
+| **MyPy**       | Type checking (PEP 484)             | --strict mode        |
+| **Bandit**     | Security scanning                   | Medium+ severity     |
+| **Safety**     | Dependency vulnerabilities          | All known CVEs       |
+| **Vulture**    | Dead code detection                 | 80% confidence       |
+| **Radon**      | Complexity analysis                 | CC/MI metrics        |
+| **pytest**     | Testing framework                   | 90%+ coverage        |
+| **pre-commit** | Git hooks                           | All tools integrated |
+| **commitizen** | Commit standards                    | Conventional commits |
+| **MkDocs**     | Documentation                       | Material theme       |
 
 ## 🎯 Development Workflow
 
@@ -85,17 +85,17 @@ git commit -m "feat: add new feature"
 
 ### Makefile Commands
 
-| Command | Description |
-|---------|-------------|
-| `make check` | Run ALL quality checks |
-| `make lint` | Ruff linting (17 categories) |
-| `make format-check` | Black + Ruff formatting |
-| `make type-check` | MyPy strict mode |
-| `make security` | Bandit + Safety + detect-secrets |
-| `make complexity` | Radon CC/MI + Vulture |
-| `make test` | pytest with 90%+ coverage |
-| `make fix` | Auto-fix all issues |
-| `make validate` | Validate 100% compliance |
+| Command             | Description                      |
+| ------------------- | -------------------------------- |
+| `make check`        | Run ALL quality checks           |
+| `make lint`         | Ruff linting (17 categories)     |
+| `make format-check` | Black + Ruff formatting          |
+| `make type-check`   | MyPy strict mode                 |
+| `make security`     | Bandit + Safety + detect-secrets |
+| `make complexity`   | Radon CC/MI + Vulture            |
+| `make test`         | pytest with 90%+ coverage        |
+| `make fix`          | Auto-fix all issues              |
+| `make validate`     | Validate 100% compliance         |
 
 ### CI/CD Pipeline
 
@@ -160,7 +160,7 @@ flext-core/
   Lint violations:  0
   Type errors:      0
   Security issues:  0
-  
+
   All PEP standards: COMPLIANT
   All tools: POETRY-MANAGED
   All checks: AUTOMATED

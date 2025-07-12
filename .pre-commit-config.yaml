@@ -2,9 +2,9 @@
 # Zero tolerance for quality violations
 # All tools managed by Poetry
 
-minimum_pre_commit_version: '3.5.0'
+minimum_pre_commit_version: "3.5.0"
 fail_fast: false
-default_stages: [commit, push]
+default_stages: [pre-commit, pre-push]
 default_language_version:
   python: python3.13
 
@@ -14,7 +14,7 @@ repos:
     rev: v1.4.0
     hooks:
       - id: detect-secrets
-        args: ['--baseline', '.secrets.baseline']
+        args: ["--baseline", ".secrets.baseline"]
         exclude: .*\.lock$|.*\.lockb$
 
   # Poetry-managed tools via local repo
@@ -28,7 +28,7 @@ repos:
         types: [python]
         require_serial: true
         args: [--check, --diff]
-      
+
       # Ruff linting and formatting
       - id: ruff-format
         name: "⚡ Ruff Format"
@@ -37,7 +37,7 @@ repos:
         types: [python]
         require_serial: true
         args: [--check, --diff]
-      
+
       - id: ruff-lint
         name: "🔥 Ruff Lint (17 categories)"
         entry: poetry run ruff check
@@ -45,7 +45,7 @@ repos:
         types: [python]
         require_serial: true
         args: [--fix, --exit-non-zero-on-fix]
-      
+
       # isort import sorting
       - id: isort
         name: "📦 Import Sort"
@@ -54,7 +54,7 @@ repos:
         types: [python]
         require_serial: true
         args: [--check-only, --diff]
-      
+
       # MyPy type checking
       - id: mypy
         name: "🛡️ MyPy Strict"
@@ -64,7 +64,7 @@ repos:
         require_serial: true
         pass_filenames: false
         args: [src/, tests/, --config-file=pyproject.toml]
-      
+
       # Bandit security
       - id: bandit
         name: "🔒 Bandit Security"
@@ -74,7 +74,7 @@ repos:
         require_serial: true
         args: [-r, src/, --severity-level=medium]
         exclude: tests/
-      
+
       # Vulture dead code
       - id: vulture
         name: "🦅 Dead Code Detection"
@@ -83,7 +83,7 @@ repos:
         types: [python]
         pass_filenames: false
         args: [src/, --min-confidence=80]
-      
+
       # Radon complexity
       - id: radon-cc
         name: "📊 Cyclomatic Complexity"
@@ -92,7 +92,7 @@ repos:
         types: [python]
         pass_filenames: false
         args: [src/, -a, -nb, --total-average]
-      
+
       - id: radon-mi
         name: "📊 Maintainability Index"
         entry: poetry run radon mi
@@ -156,11 +156,19 @@ repos:
 
 # CI configuration
 ci:
-  autofix_prs: false  # No automatic fixes - must be intentional
+  autofix_prs: false # No automatic fixes - must be intentional
   autoupdate_schedule: weekly
   skip: [
-    # Local Poetry hooks don't work in CI
-    black, ruff-format, ruff-lint, isort, mypy, 
-    bandit, vulture, radon-cc, radon-mi, commitizen
-  ]
+      # Local Poetry hooks don't work in CI
+      black,
+      ruff-format,
+      ruff-lint,
+      isort,
+      mypy,
+      bandit,
+      vulture,
+      radon-cc,
+      radon-mi,
+      commitizen,
+    ]
   submodules: false

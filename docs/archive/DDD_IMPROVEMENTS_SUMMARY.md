@@ -54,8 +54,8 @@ func (f *PipelineFactory) RehydratePipeline(/* all fields */) *Pipeline
 **Go-DDD Principles Applied**:
 
 - ✅ **Find vs Get semantics**:
-  - `find` methods can return nil without error
-  - `get` methods must return value or error
+    - `find` methods can return nil without error
+    - `get` methods must return value or error
 - ✅ **Soft deletion**: All delete operations are soft deletes
 - ✅ **Read after write**: Repository methods read data after writing to ensure integrity
 
