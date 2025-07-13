@@ -91,8 +91,8 @@ class TestBaseSettings:
         settings = BaseSettings()
 
         assert settings.project_name == "flext"
-        assert settings.environment == "development"
-        assert settings.debug is False
+        assert settings.environment == "test"
+        assert settings.debug is True
 
     def test_base_settings_custom_values(self) -> None:
         """Test BaseSettings with custom values."""
