@@ -1,5 +1,8 @@
 """Simplified tests for flext_core.config.validators module."""
 
+# ruff: noqa: COM812, E501
+# fmt: off
+
 import pytest
 
 from flext_core.config.validators import validate_database_url

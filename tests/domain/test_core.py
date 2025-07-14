@@ -58,7 +58,7 @@ class TestRepositoryInterface:
     def test_repository_is_abstract(self) -> None:
         """Test Repository cannot be instantiated directly."""
         with pytest.raises(TypeError):
-            Repository()  # Should fail because it's abstract
+            Repository()  # type: ignore[abstract]  # Should fail because it's abstract
 
     def test_repository_abstract_methods(self) -> None:
         """Test Repository has the expected abstract methods."""
@@ -71,23 +71,23 @@ class TestRepositoryInterface:
 
         class MockRepository(Repository):
             def __init__(self) -> None:
-                self.storage = {}
+                self.storage: dict[str, object] = {}
 
-            async def save(self, entity):
-                entity_id = getattr(entity, "id", id(entity))
+            async def save(self, entity: object) -> object:  # type: ignore[override]
+                entity_id = str(getattr(entity, "id", id(entity)))
                 self.storage[entity_id] = entity
                 return entity
 
-            async def get(self, entity_id):
+            async def get(self, entity_id: str) -> object | None:
                 return self.storage.get(entity_id)
 
-            async def delete(self, entity_id) -> bool:
+            async def delete(self, entity_id: str) -> bool:
                 if entity_id in self.storage:
                     del self.storage[entity_id]
                     return True
                 return False
 
-            async def find_all(self):
+            async def find_all(self) -> list[object]:
                 return list(self.storage.values())
 
         # Should be able to instantiate concrete implementation

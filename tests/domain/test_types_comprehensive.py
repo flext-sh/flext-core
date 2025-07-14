@@ -503,7 +503,7 @@ class TestServiceResultAdvancedMethodsBranches:
         mapped = result.map(failing_func)
 
         assert not mapped.is_success
-        assert "Function failed" in mapped.error
+        assert mapped.error is not None and "Function failed" in mapped.error
 
     def test_service_result_and_then_success(self) -> None:
         """Test and_then method with successful result (lines 518-520)."""
@@ -533,7 +533,7 @@ class TestServiceResultAdvancedMethodsBranches:
         """Test and_then method with None data (lines 518-520)."""
         result = ServiceResult.ok(None)
 
-        def transform_func(x: str) -> ServiceResult[str]:
+        def transform_func(x: None) -> ServiceResult[str]:
             return ServiceResult.ok("transformed")
 
         chained = result.and_then(transform_func)
@@ -559,7 +559,7 @@ class TestProtocolMethodCoverage:
 
             def __eq__(self, other: object) -> bool:
                 # This implementation triggers line 128 coverage
-                return ...  # This is the ellipsis we need to cover
+                return False  # This implementation triggers line 128 coverage
 
             def __hash__(self) -> int:
                 return hash(self.id)
@@ -586,7 +586,7 @@ class TestProtocolMethodCoverage:
 
             def __hash__(self) -> int:
                 # This implementation triggers line 137 coverage
-                return ...  # This is the ellipsis we need to cover
+                return 0  # This implementation triggers line 137 coverage
 
         # Test that the protocol exists and has the required methods
         assert hasattr(EntityProtocol, "__hash__")

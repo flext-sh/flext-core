@@ -543,4 +543,4 @@ class TestModelValidation:
         """Test required field validation."""
         # UserInfo requires id
         with pytest.raises(Exception):  # Pydantic validation error
-            UserInfo(username="test")  # Missing required id field
+            UserInfo(username="test")  # type: ignore[call-arg]  # Missing required id field (UUID)

@@ -116,7 +116,7 @@ class TestInMemoryRepositoryEdgeCases:
         """Test saving entity with None ID."""
 
         class NoneIdEntity:
-            def __init__(self):
+            def __init__(self) -> None:
                 self.id = None
 
         none_entity = NoneIdEntity()
