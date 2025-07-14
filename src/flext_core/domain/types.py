@@ -391,6 +391,16 @@ class ServiceResult[T]:
         """
         return self._success
 
+    @property
+    def is_failure(self) -> bool:
+        """Check if the result is a failure.
+
+        Returns:
+            True if the result is a failure, False otherwise.
+
+        """
+        return not self._success
+
     # Remove property to avoid conflict with class method
     # @property
     # def success(self) -> bool:

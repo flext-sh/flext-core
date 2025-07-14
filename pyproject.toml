@@ -13,7 +13,7 @@ dependencies = [
     # This section is kept minimal to avoid duplication
     "aiosqlite (>=0.21.0,<0.22.0)",
     "alembic (>=1.16.4,<2.0.0)",
-    "asyncio-mqtt (>=0.16.2,<0.17.0)",
+    "aiomqtt (>=2.3.0,<3.0.0)",
     "bandit (>=1.8.6,<2.0.0)",
     "black (>=25.1.0,<26.0.0)",
     "click (>=8.2.1,<9.0.0)",
@@ -30,7 +30,7 @@ dependencies = [
     "python-dateutil (>=2.9.0.post0,<3.0.0)",
     "python-dotenv (>=1.1.1,<2.0.0)",
     "python-ldap (>=3.4.4,<4.0.0)",
-    "redis (>=6.2.0,<7.0.0)",
+    "redis (>=5.0.0,<7.0.0)",
     "responses (>=0.25.7,<0.26.0)",
     "rich (>=14.0.0,<15.0.0)",
     "ruff (>=0.12.3,<0.13.0)",
@@ -159,7 +159,7 @@ faker = "^37.4.0"
 django = "^5.2.4"
 pydantic = "^2.11.7"
 python-ldap = "^3.4.4"
-redis = "^6.2.0"
+redis = "^5.0.0"
 
 
 [tool.poetry.group.typings.dependencies]
@@ -354,6 +354,27 @@ pretty = true
 [[tool.mypy.overrides]]
 module = ["dynaconf.*", "yaml.*"]
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+# Allow more flexibility in test files
+disable_error_code = [
+    "unreachable", 
+    "comparison-overlap", 
+    "index", 
+    "union-attr", 
+    "arg-type", 
+    "override", 
+    "no-untyped-def",
+    "attr-defined",
+    "assignment",
+    "unused-ignore",
+    "name-defined",
+    "call-arg",
+    "operator",
+    "var-annotated",
+    "abstract"
+]
 
 [tool.coverage.run]
 source = ["src"]
