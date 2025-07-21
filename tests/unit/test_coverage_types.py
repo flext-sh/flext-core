@@ -161,7 +161,7 @@ class TestValidationFunctionsCoverage:
         for name in invalid_names:
             with pytest.raises(
                 ValueError,
-                match="Project name must contain only alphanumeric characters, hyphens, and underscores",
+                match="Project name must be alphanumeric with hyphens/underscores",
             ):
                 validate_project_name(name)
 

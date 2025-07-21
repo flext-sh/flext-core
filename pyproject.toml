@@ -1,5 +1,5 @@
 [build-system]
-requires = [ "poetry-core>=1.9.0",]
+requires = ["poetry-core>=1.9.0"]
 build-backend = "poetry.core.masonry.api"
 
 [project]
@@ -8,17 +8,24 @@ version = "0.7.0"
 description = "Enterprise Foundation Framework - Modern Python 3.13 + Clean Architecture"
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
-keywords = [ "flext", "enterprise", "ddd", "clean-architecture", "solid", "modern",]
-classifiers = [ 
-    "Development Status :: 5 - Production/Stable", 
-    "Intended Audience :: Developers", 
-    "License :: OSI Approved :: MIT License", 
-    "Operating System :: OS Independent", 
-    "Programming Language :: Python :: 3.13", 
-    "Programming Language :: Python :: 3 :: Only", 
-    "Topic :: Software Development :: Libraries :: Application Frameworks", 
-    "Framework :: Pydantic", 
-    "Framework :: Pydantic :: 2", 
+keywords = [
+    "flext",
+    "enterprise",
+    "ddd",
+    "clean-architecture",
+    "solid",
+    "modern",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+    "Framework :: Pydantic",
+    "Framework :: Pydantic :: 2",
     "Typing :: Typed",
 ]
 dependencies = [
@@ -31,6 +38,7 @@ dependencies = [
     "structlog>=25.4.0",
     "rich>=14.0.0",
     "typing-extensions>=4.12.0",
+    "rfc3987 (>=1.3.8,<2.0.0)",
 ]
 
 [[project.authors]]
@@ -51,7 +59,7 @@ flext-core = "flext_core.cli:main"
 
 [tool.poetry]
 # Poetry configuration for development
-packages = [{include = "flext_core", from = "src"}]
+packages = [{ include = "flext_core", from = "src" }]
 
 [tool.poetry.group.dev.dependencies]
 # Development dependencies
@@ -96,6 +104,7 @@ rich-traceback = "^1.0.3"
 # interrogate removed due to security vulnerability in py dependency
 types-protobuf = "^6.30.2.20250703"
 types-grpcio = "^1.0.0.20250703"
+lark-parser = "^0.12.0"
 
 
 [tool.poetry.group.test.dependencies]
@@ -143,65 +152,65 @@ line-length = 88
 src = ["src", "tests"]
 
 [tool.ruff.lint]
-select = [
-    "ALL",
-]
+select = ["ALL"]
 ignore = [
     # Line length and formatting (handled by formatter)
-    "E501",    # line too long
-    "W505",    # doc line too long  
-    "COM812",  # trailing comma missing (conflicts with formatter)
-    "ISC001",  # single line implicit string concatenation
-    
+    "E501",   # line too long
+    "W505",   # doc line too long
+    "COM812", # trailing comma missing (conflicts with formatter)
+    "ISC001", # single line implicit string concatenation
+
     # Import and dependency issues (common in development)
-    "F401",    # unused imports
-    "F403",    # star imports (common in __init__.py)
-    "F405",    # star import usage
-    "F841",    # unused variable (common in development)
-    
+    "F401", # unused imports
+    "F403", # star imports (common in __init__.py)
+    "F405", # star import usage
+    "F841", # unused variable (common in development)
+
     # Documentation style flexibility
-    "D100",    # missing docstring in public module
-    "D101",    # missing docstring in public class
-    "D102",    # missing docstring in public method
-    "D103",    # missing docstring in public function
-    "D104",    # missing docstring in public package
-    "D105",    # missing docstring in magic method
-    "D106",    # missing docstring in public nested class
-    "D107",    # missing docstring in __init__
-    "D203",    # blank line before class docstring (conflicts with D211)
-    "D213",    # multi-line docstring summary second line (conflicts with D212)
-    
+    "D100", # missing docstring in public module
+    "D101", # missing docstring in public class
+    "D102", # missing docstring in public method
+    "D103", # missing docstring in public function
+    "D104", # missing docstring in public package
+    "D105", # missing docstring in magic method
+    "D106", # missing docstring in public nested class
+    "D107", # missing docstring in __init__
+    "D203", # blank line before class docstring (conflicts with D211)
+    "D213", # multi-line docstring summary second line (conflicts with D212)
+
     # Code style flexibility (common patterns)
-    "ERA001",  # commented out code (common during development)
-    "TD002",   # missing author in TODO
-    "TD003",   # missing issue link in TODO  
-    "FIX002",  # line contains TODO
-    "T201",    # print statement (common in scripts/debug)
-    "T203",    # pprint statement
-    
+    "ERA001", # commented out code (common during development)
+    "TD002",  # missing author in TODO
+    "TD003",  # missing issue link in TODO
+    "FIX002", # line contains TODO
+    "T201",   # print statement (common in scripts/debug)
+    "T203",   # pprint statement
+
     # Complexity (handled case by case)
     "C901",    # function too complex
     "PLR0913", # too many arguments
-    "PLR0915", # too many statements  
+    "PLR0915", # too many statements
     "PLR2004", # magic value used in comparison
     "PLR0912", # too many branches
     "PLR0911", # too many return statements
-    
-    # Type checking flexibility  
-    "ANN401",  # any type usage (sometimes necessary)
-    
+
+    # Type checking flexibility
+    "ANN401", # any type usage (sometimes necessary)
+
     # Security exceptions (development context)
-    "S101",    # assert usage (needed for type checking)
-    "S603",    # subprocess call
-    "S607",    # starting process with partial executable path
-    "S608",    # possible SQL injection (handled by ORM)
-    
+    "S101", # assert usage (needed for type checking)
+    "S105", # hardcoded password (development context)
+    "S106", # hardcoded password (development context)
+    "S603", # subprocess call
+    "S607", # starting process with partial executable path
+    "S608", # possible SQL injection (handled by ORM)
+
     # Error handling flexibility
-    "EM101",   # raw string in exception  
-    "EM102",   # f-string in exception
-    "TRY003",  # avoid long exception messages
-    "TRY301",  # raise within try block
-    
+    "EM101",  # raw string in exception
+    "EM102",  # f-string in exception
+    "TRY003", # avoid long exception messages
+    "TRY301", # raise within try block
+
     # Performance (premature optimization)
     "PERF203", # try-except in loop
     "PERF401", # manual list comprehension
@@ -210,45 +219,79 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 # Test files - extremely permissive for all test patterns
 "tests/*" = [
-    "ALL",  # Allow everything in tests
+    "ALL", # Allow everything in tests
 ]
 "tests/**/*.py" = [
-    "ALL",  # Allow everything in tests
+    "ALL", # Allow everything in tests
 ]
 "**/tests/*.py" = [
-    "ALL",  # Allow everything in tests  
+    "ALL", # Allow everything in tests
 ]
 "test_*.py" = [
-    "ALL",  # Allow everything in tests
+    "ALL", # Allow everything in tests
 ]
 "**/test_*.py" = [
-    "ALL",  # Allow everything in tests
+    "ALL", # Allow everything in tests
 ]
 "conftest.py" = [
-    "ALL",  # Allow everything in pytest config
+    "ALL", # Allow everything in pytest config
 ]
 "**/conftest.py" = [
-    "ALL",  # Allow everything in pytest config
+    "ALL", # Allow everything in pytest config
 ]
 
 # Script and CLI files - very permissive
 "scripts/*" = [
-    "ALL",  # Scripts need maximum flexibility
+    "ALL", # Scripts need maximum flexibility
 ]
 "**/scripts/*.py" = [
-    "ALL",  # Scripts need maximum flexibility
+    "ALL", # Scripts need maximum flexibility
 ]
 "cli.py" = [
-    "T201", "T203", "S602", "S603", "S607", "S608", 
-    "PLR0913", "PLR0915", "PLR0912", "PLR0911",
-    "C901", "D100", "D103", "DTZ005", "EM101", "EM102", 
-    "F401", "ERA001", "FIX002", "TD002", "TD003",
+    "T201",
+    "T203",
+    "S602",
+    "S603",
+    "S607",
+    "S608",
+    "PLR0913",
+    "PLR0915",
+    "PLR0912",
+    "PLR0911",
+    "C901",
+    "D100",
+    "D103",
+    "DTZ005",
+    "EM101",
+    "EM102",
+    "F401",
+    "ERA001",
+    "FIX002",
+    "TD002",
+    "TD003",
 ]
 "**/cli.py" = [
-    "T201", "T203", "S602", "S603", "S607", "S608",
-    "PLR0913", "PLR0915", "PLR0912", "PLR0911", 
-    "C901", "D100", "D103", "DTZ005", "EM101", "EM102",
-    "F401", "ERA001", "FIX002", "TD002", "TD003",
+    "T201",
+    "T203",
+    "S602",
+    "S603",
+    "S607",
+    "S608",
+    "PLR0913",
+    "PLR0915",
+    "PLR0912",
+    "PLR0911",
+    "C901",
+    "D100",
+    "D103",
+    "DTZ005",
+    "EM101",
+    "EM102",
+    "F401",
+    "ERA001",
+    "FIX002",
+    "TD002",
+    "TD003",
 ]
 
 # Generated/auto-generated files - exclude ALL linting
@@ -262,33 +305,45 @@ ignore = [
 
 # Example and demo files - very permissive
 "examples/*" = [
-    "D100", "D103", "T201", "F401", "S101", "PLR2004",
-    "C901", "PLR0913", "PLR0915", "EM101", "EM102",
+    "D100",
+    "D103",
+    "T201",
+    "F401",
+    "S101",
+    "PLR2004",
+    "C901",
+    "PLR0913",
+    "PLR0915",
+    "EM101",
+    "EM102",
 ]
 "**/examples/*" = [
-    "D100", "D103", "T201", "F401", "S101", "PLR2004", 
-    "C901", "PLR0913", "PLR0915", "EM101", "EM102",
+    "D100",
+    "D103",
+    "T201",
+    "F401",
+    "S101",
+    "PLR2004",
+    "C901",
+    "PLR0913",
+    "PLR0915",
+    "EM101",
+    "EM102",
 ]
 
 # __init__.py files - common to import and re-export
-"__init__.py" = [
-    "F401", "F403", "F405", "D104", "D100",
-]
-"**/__init__.py" = [
-    "F401", "F403", "F405", "D104", "D100",
-]
+"__init__.py" = ["F401", "F403", "F405", "D104", "D100"]
+"**/__init__.py" = ["F401", "F403", "F405", "D104", "D100"]
 
 # Development and temporary files
 "temp_*.py" = ["ALL"]
 "**/temp_*.py" = ["ALL"]
-"debug_*.py" = ["ALL"] 
+"debug_*.py" = ["ALL"]
 "**/debug_*.py" = ["ALL"]
 "scratch_*.py" = ["ALL"]
 "**/scratch_*.py" = ["ALL"]
 [tool.ruff.lint.isort]
-known-first-party = [
-    "flext_core",
-]
+known-first-party = ["flext_core"]
 force-single-line = true
 
 [tool.mypy]
@@ -316,15 +371,20 @@ ignore_missing_imports = true
 
 
 [[tool.mypy.overrides]]
+module = ["flext_core.config.oracle"]
+# Disable unreachable warnings for oracle config (false positives)
+disable_error_code = ["unreachable"]
+
+[[tool.mypy.overrides]]
 module = "tests.*"
 # Allow more flexibility in test files
 disable_error_code = [
-    "unreachable", 
-    "comparison-overlap", 
-    "index", 
-    "union-attr", 
-    "arg-type", 
-    "override", 
+    "unreachable",
+    "comparison-overlap",
+    "index",
+    "union-attr",
+    "arg-type",
+    "override",
     "no-untyped-def",
     "attr-defined",
     "assignment",
@@ -333,7 +393,7 @@ disable_error_code = [
     "call-arg",
     "operator",
     "var-annotated",
-    "abstract"
+    "abstract",
 ]
 
 [tool.coverage.run]

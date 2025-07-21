@@ -328,7 +328,7 @@ class FlextAuthConfigBuilder(ConfigBuilder):
 
         return FlextAuthConfig(
             project_name="flext-auth",
-            jwt_secret_key="dev-secret-key-change-in-production",  # noqa: S106
+            jwt_secret_key="dev-secret-key-change-in-production",
             database_url="sqlite:///./test.db",
         )
 
@@ -421,7 +421,7 @@ class FlextWebConfigBuilder(ConfigBuilder):
 
         return FlextWebConfig(
             project_name="flext-web",
-            jwt_secret_key="dev-secret-key-change-in-production",  # noqa: S106
+            jwt_secret_key="dev-secret-key-change-in-production",
             database_url="sqlite:///./test.db",
         )
 
@@ -662,20 +662,27 @@ class ConfigFactory:
         cls._builders[name] = builder
 
     @classmethod
+    def get_available_project_types(cls) -> list[str]:
+        """Get list of available project types."""
+        return list(cls._builders.keys())
+
+    @classmethod
+    def get_builder(cls, project_type: str) -> ConfigBuilder:
+        """Get builder for specific project type."""
+        if project_type not in cls._builders:
+            available = cls.get_available_project_types()
+            msg = f"Unknown project type: {project_type}. Available: {available}"
+            raise ValueError(msg)
+        return cls._builders[project_type]
+
+    @classmethod
     def create_config(
         cls,
         project_type: str,
         env_prefix: str | None = None,
     ) -> BaseModel:
         """Create configuration for specific project type."""
-        if project_type not in cls._builders:
-            available = list(cls._builders.keys())
-            msg = f"Unknown project type: {project_type}. Available: {available}"
-            raise ValueError(
-                msg,
-            )
-
-        builder = cls._builders[project_type]
+        builder = cls.get_builder(project_type)
         if env_prefix is None:
             # Let builder use its default prefix
             return builder.build_config()
@@ -686,14 +693,7 @@ class ConfigFactory:
         """Create configuration from environment variable."""
         project_type = os.getenv(env_var, "flext-core")
         # Don't pass env_prefix to let each builder use its default
-        if project_type not in cls._builders:
-            available = list(cls._builders.keys())
-            msg = f"Unknown project type: {project_type}. Available: {available}"
-            raise ValueError(
-                msg,
-            )
-
-        builder = cls._builders[project_type]
+        builder = cls.get_builder(project_type)
         return builder.build_config()
 
 
@@ -721,7 +721,7 @@ class ConfigValidator:
 
         # Check JWT configuration
         if hasattr(config, "jwt_secret_key") and (
-            not config.jwt_secret_key or config.jwt_secret_key == "your-secret-key"  # noqa: S105
+            not config.jwt_secret_key or config.jwt_secret_key == "your-secret-key"
         ):
             issues.append(
                 "JWT secret key must be set to a secure value in production",
@@ -764,15 +764,14 @@ def load_config_from_file(file_path: Path, project_type: str) -> BaseModel:
         file_config = yaml.safe_load(f)
 
     # Get the builder for the project type
-    builders = ConfigFactory._builders  # noqa: SLF001
-    if project_type not in builders:
-        available = list(builders.keys())
+    available = ConfigFactory.get_available_project_types()
+    if project_type not in available:
         msg = f"Unknown project type: {project_type}. Available: {available}"
         raise ValueError(
             msg,
         )
 
-    builder = builders[project_type]
+    builder = ConfigFactory.get_builder(project_type)
 
     # Build config with file values merged with environment
     config_class = type(builder.build_config())

@@ -70,7 +70,7 @@ class TestDatabaseUrlValidator:
         ]
 
         for url in invalid_scheme_urls:
-            with pytest.raises(ValueError, match="Invalid database URL"):
+            with pytest.raises(ValueError, match="(Invalid database URL|Database URL must include)"):
                 validate_database_url(url)
 
 

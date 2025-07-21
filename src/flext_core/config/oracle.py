@@ -131,7 +131,8 @@ class BaseOracleValidator(ABC):
             return ServiceResult.fail(error_msg)
 
     def validate_oracle_connection_config(
-        self, config: dict[str, Any],
+        self,
+        config: dict[str, Any],
     ) -> ServiceResult[None]:
         """Validate Oracle connection configuration.
 
@@ -284,8 +285,11 @@ class OracleWMSValidator(BaseOracleValidator):
                     and not re.match(constraints["pattern"], value)
                 ):
                     errors.append(
-                        f"Field '{field_name}' does not match required pattern "
-                        f"'{constraints['pattern']}': {value}",
+                        "Field '{}' does not match required pattern '{}': {}".format(
+                            field_name,
+                            constraints["pattern"],
+                            value,
+                        ),
                     )
 
         return errors

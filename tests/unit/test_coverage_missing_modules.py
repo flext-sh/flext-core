@@ -97,6 +97,7 @@ class TestDomainCore:
 class TestDomainTesting:
     """Test domain testing utilities missing coverage."""
 
+    @pytest.mark.asyncio
     async def test_mock_repository(self) -> None:
         """Test MockRepository functionality."""
         from flext_core.domain.testing import MockRepository
@@ -109,8 +110,8 @@ class TestDomainTesting:
         saved = await repo.save(entity)
         assert saved == entity
 
-        # Test get method (covers line 52)
-        result = await repo.get("test-id")
+        # Test get_by_id method (covers line 52)
+        result = await repo.get_by_id("test-id")
         assert result is None
 
         # Test delete method (covers lines 64-67)

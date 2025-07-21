@@ -11,10 +11,21 @@ from pydantic import ValidationError
 
 # Clean imports - only what actually exists after corruption cleanup
 from flext_core.config.validators import (
+    CommonValidators,
+    port_validator,
+    timeout_validator,
+    url_validator,
     validate_database_url,
+    validate_database_url_field,
+    validate_email,
+    validate_email_field,
+    validate_log_level,
     validate_port,
+    validate_port_field,
     validate_timeout,
+    validate_timeout_field,
     validate_url,
+    validate_url_field,
 )
 
 
@@ -120,27 +131,27 @@ class TestCommonValidatorsFieldValidators:
 
     def test_validate_url_field_none(self) -> None:
         """Test URL field validator with None value."""
-        result = CommonValidators.validate_url_field(None)
+        result = validate_url_field(None)
         assert result is None
 
     def test_validate_url_field_valid(self) -> None:
         """Test URL field validator with valid URL."""
-        result = CommonValidators.validate_url_field("https://example.com")
+        result = validate_url_field("https://example.com")
         assert result == "https://example.com"
 
     def test_validate_url_field_invalid(self) -> None:
         """Test URL field validator with invalid URL."""
         with pytest.raises(ValueError, match="URL cannot be empty"):
-            CommonValidators.validate_url_field("")
+            validate_url_field("")
 
     def test_validate_database_url_field_none(self) -> None:
         """Test database URL field validator with None value."""
-        result = CommonValidators.validate_database_url_field(None)
+        result = validate_database_url_field(None)
         assert result is None
 
     def test_validate_database_url_field_valid(self) -> None:
         """Test database URL field validator with valid database URL."""
-        result = CommonValidators.validate_database_url_field(
+        result = validate_database_url_field(
             "postgresql://localhost/db"
         )
         assert result == "postgresql://localhost/db"
@@ -148,47 +159,47 @@ class TestCommonValidatorsFieldValidators:
     def test_validate_database_url_field_invalid(self) -> None:
         """Test database URL field validator with invalid database URL."""
         with pytest.raises(ValueError, match="Database URL cannot be empty"):
-            CommonValidators.validate_database_url_field("")
+            validate_database_url_field("")
 
     def test_validate_port_field_none(self) -> None:
         """Test port field validator with None value."""
-        result = CommonValidators.validate_port_field(None)
+        result = validate_port_field(None)
         assert result is None
 
     def test_validate_port_field_valid_int(self) -> None:
         """Test port field validator with valid integer."""
-        result = CommonValidators.validate_port_field(8080)
+        result = validate_port_field(8080)
         assert result == 8080
 
     def test_validate_port_field_valid_string(self) -> None:
         """Test port field validator with valid string."""
-        result = CommonValidators.validate_port_field("8080")
+        result = validate_port_field("8080")
         assert result == 8080
 
     def test_validate_port_field_invalid(self) -> None:
         """Test port field validator with invalid port."""
         with pytest.raises((ValueError, TypeError)):
-            CommonValidators.validate_port_field("invalid")
+            validate_port_field("invalid")
 
     def test_validate_timeout_field_none(self) -> None:
         """Test timeout field validator with None value."""
-        result = CommonValidators.validate_timeout_field(None)
+        result = validate_timeout_field(None)
         assert result is None
 
     def test_validate_timeout_field_valid_float(self) -> None:
         """Test timeout field validator with valid float."""
-        result = CommonValidators.validate_timeout_field(30.5)
+        result = validate_timeout_field(30.5)
         assert result == 30.5
 
     def test_validate_timeout_field_valid_string(self) -> None:
         """Test timeout field validator with valid string."""
-        result = CommonValidators.validate_timeout_field("30.5")
+        result = validate_timeout_field("30.5")
         assert result == 30.5
 
     def test_validate_timeout_field_invalid(self) -> None:
         """Test timeout field validator with invalid timeout."""
         with pytest.raises((ValueError, TypeError)):
-            CommonValidators.validate_timeout_field("invalid")
+            validate_timeout_field("invalid")
 
 
 class TestEmailValidation:
@@ -196,17 +207,17 @@ class TestEmailValidation:
 
     def test_validate_email_field_none(self) -> None:
         """Test email field validator with None value."""
-        result = CommonValidators.validate_email_field(None)
+        result = validate_email_field(None)
         assert result is None
 
     def test_validate_email_field_valid(self) -> None:
         """Test email field validator with valid email."""
-        result = CommonValidators.validate_email_field("test@example.com")
+        result = validate_email_field("test@example.com")
         assert result == "test@example.com"
 
     def test_validate_email_field_uppercase_normalized(self) -> None:
         """Test email field validator normalizes to lowercase."""
-        result = CommonValidators.validate_email_field("TEST@EXAMPLE.COM")
+        result = validate_email_field("TEST@EXAMPLE.COM")
         assert result == "test@example.com"
 
     def test_validate_email_field_invalid(self) -> None:
@@ -221,7 +232,7 @@ class TestEmailValidation:
         ]
         for email in invalid_emails:
             with pytest.raises(ValueError, match="Invalid email format"):
-                CommonValidators.validate_email_field(email)
+                validate_email_field(email)
 
 
 class TestLogLevelValidation:
@@ -229,17 +240,17 @@ class TestLogLevelValidation:
 
     def test_validate_log_level_field_valid_lowercase(self) -> None:
         """Test log level field validator with valid lowercase level."""
-        result = CommonValidators.validate_log_level_field("debug")
+        result = validate_log_level("debug")
         assert result == "DEBUG"
 
     def test_validate_log_level_field_valid_uppercase(self) -> None:
         """Test log level field validator with valid uppercase level."""
-        result = CommonValidators.validate_log_level_field("INFO")
+        result = validate_log_level("INFO")
         assert result == "INFO"
 
     def test_validate_log_level_field_valid_mixed_case(self) -> None:
         """Test log level field validator with mixed case level."""
-        result = CommonValidators.validate_log_level_field("Warning")
+        result = validate_log_level("Warning")
         assert result == "WARNING"
 
     def test_validate_log_level_field_all_valid_levels(self) -> None:
@@ -248,7 +259,7 @@ class TestLogLevelValidation:
         expected_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 
         for input_level, expected in zip(valid_levels, expected_levels, strict=False):
-            result = CommonValidators.validate_log_level_field(input_level)
+            result = validate_log_level(input_level)
             assert result == expected
 
     def test_validate_log_level_field_invalid(self) -> None:
@@ -257,7 +268,7 @@ class TestLogLevelValidation:
 
         for level in invalid_levels:
             with pytest.raises(ValueError, match="Invalid log level"):
-                CommonValidators.validate_log_level_field(level)
+                validate_log_level(level)
 
 
 class TestValidatorDecorators:
@@ -476,4 +487,4 @@ class TestErrorMessageQuality:
     def test_log_level_error_message(self) -> None:
         """Test log level validation error message includes valid options."""
         with pytest.raises(ValueError, match="Invalid log level"):
-            CommonValidators.validate_log_level_field("invalid")
+            validate_log_level("invalid")

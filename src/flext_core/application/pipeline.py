@@ -21,7 +21,14 @@ from uuid import UUID
 from pydantic import Field
 from pydantic import ValidationError
 
+from flext_core.domain.core import DatabaseError
+
 # Move imports out of TYPE_CHECKING block since they're used in runtime
+from flext_core.domain.core import DataError
+from flext_core.domain.core import NotFoundError
+from flext_core.domain.core import RepositoryError
+from flext_core.domain.core import ServiceError
+from flext_core.domain.core import TransformationError
 from flext_core.domain.pipeline import Pipeline
 from flext_core.domain.pipeline import PipelineId
 from flext_core.domain.pipeline import PipelineName
@@ -121,12 +128,8 @@ class PipelineService:
             return ServiceResult.fail(f"Validation failed: {e}")
         except (ValueError, TypeError) as e:
             return ServiceResult.fail(f"Input error: {e}")
-        except OSError as e:
+        except (RepositoryError, DatabaseError, NotFoundError, ServiceError, DataError, TransformationError) as e:
             return ServiceResult.fail(f"Repository error: {e}")
-        except (RuntimeError, AttributeError, ConnectionError) as e:
-            return ServiceResult.fail(f"Repository error: {e}")
-        except (LookupError, MemoryError, RecursionError) as e:
-            return ServiceResult.fail(f"System error: {e}")
 
     async def execute_pipeline(
         self,
@@ -157,7 +160,7 @@ class PipelineService:
             return ServiceResult.fail(f"Validation failed: {e}")
         except (ValueError, TypeError) as e:
             return ServiceResult.fail(f"Input error: {e}")
-        except OSError as e:
+        except (RepositoryError, DatabaseError, NotFoundError, ServiceError, DataError, TransformationError) as e:
             return ServiceResult.fail(f"Execution error: {e}")
 
     async def get_pipeline(self, query: GetPipelineQuery) -> ServiceResult[Pipeline]:
@@ -182,12 +185,8 @@ class PipelineService:
             return ServiceResult.fail(f"Validation failed: {e}")
         except (ValueError, TypeError) as e:
             return ServiceResult.fail(f"Input error: {e}")
-        except OSError as e:
+        except (RepositoryError, DatabaseError, NotFoundError, ServiceError, DataError, TransformationError) as e:
             return ServiceResult.fail(f"Repository error: {e}")
-        except (RuntimeError, AttributeError, ConnectionError) as e:
-            return ServiceResult.fail(f"Repository error: {e}")
-        except (LookupError, MemoryError, RecursionError) as e:
-            return ServiceResult.fail(f"System error: {e}")
 
     async def deactivate_pipeline(
         self,
@@ -216,12 +215,8 @@ class PipelineService:
             return ServiceResult.fail(f"Validation failed: {e}")
         except (ValueError, TypeError) as e:
             return ServiceResult.fail(f"Input error: {e}")
-        except OSError as e:
+        except (RepositoryError, DatabaseError, NotFoundError, ServiceError, DataError, TransformationError) as e:
             return ServiceResult.fail(f"Repository error: {e}")
-        except (RuntimeError, AttributeError, ConnectionError) as e:
-            return ServiceResult.fail(f"Repository error: {e}")
-        except (LookupError, MemoryError, RecursionError) as e:
-            return ServiceResult.fail(f"System error: {e}")
 
 
 __all__ = [

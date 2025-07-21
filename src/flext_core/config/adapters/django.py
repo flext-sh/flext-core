@@ -22,7 +22,7 @@ from flext_core.config.base import BaseSettings
 from flext_core.config.validators import validate_database_url
 
 # Development defaults - change in production
-DEV_SECRET_KEY = "development-key-change-in-production"  # noqa: S105
+DEV_SECRET_KEY = "development-key-change-in-production"
 
 
 class DjangoSettings(BaseSettings):

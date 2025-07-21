@@ -34,6 +34,7 @@ class TestMissingExceptionHandlers:
         """Create pipeline service with mock repository."""
         return PipelineService(pipeline_repo=mock_repository)
 
+    @pytest.mark.asyncio
     async def test_create_pipeline_runtime_error(
         self, service: PipelineService, mock_repository: AsyncMock
     ) -> None:
@@ -48,6 +49,7 @@ class TestMissingExceptionHandlers:
         assert result.error is not None
         assert "Repository error: Runtime error occurred" in result.error
 
+    @pytest.mark.asyncio
     async def test_create_pipeline_attribute_error(
         self, service: PipelineService, mock_repository: AsyncMock
     ) -> None:
@@ -62,6 +64,7 @@ class TestMissingExceptionHandlers:
         assert result.error is not None
         assert "Repository error: Attribute error occurred" in result.error
 
+    @pytest.mark.asyncio
     async def test_create_pipeline_connection_error(
         self, service: PipelineService, mock_repository: AsyncMock
     ) -> None:
@@ -76,6 +79,7 @@ class TestMissingExceptionHandlers:
         assert result.error is not None
         assert "Repository error: Connection error occurred" in result.error
 
+    @pytest.mark.asyncio
     async def test_execute_pipeline_validation_error(
         self, service: PipelineService, mock_repository: AsyncMock
     ) -> None:
@@ -88,6 +92,7 @@ class TestMissingExceptionHandlers:
         assert result.error is not None
         assert "Input error:" in result.error
 
+    @pytest.mark.asyncio
     async def test_get_pipeline_runtime_error(
         self, service: PipelineService, mock_repository: AsyncMock
     ) -> None:
@@ -105,6 +110,7 @@ class TestMissingExceptionHandlers:
         assert result.error is not None
         assert "Repository error: Runtime error in get" in result.error
 
+    @pytest.mark.asyncio
     async def test_get_pipeline_connection_error(
         self, service: PipelineService, mock_repository: AsyncMock
     ) -> None:
@@ -124,6 +130,7 @@ class TestMissingExceptionHandlers:
         assert result.error
         assert "Repository error: Connection failed in get" in result.error
 
+    @pytest.mark.asyncio
     async def test_get_pipeline_general_exception(
         self, service: PipelineService, mock_repository: AsyncMock
     ) -> None:
@@ -141,6 +148,7 @@ class TestMissingExceptionHandlers:
         assert result.error is not None
         assert "Repository error: Generic error in get" in result.error
 
+    @pytest.mark.asyncio
     async def test_deactivate_pipeline_runtime_error(
         self, service: PipelineService, mock_repository: AsyncMock
     ) -> None:
@@ -161,6 +169,7 @@ class TestMissingExceptionHandlers:
         assert result.error is not None
         assert "Repository error: Runtime error in deactivate" in result.error
 
+    @pytest.mark.asyncio
     async def test_deactivate_pipeline_general_exception(
         self, service: PipelineService, mock_repository: AsyncMock
     ) -> None:
@@ -195,6 +204,7 @@ class TestEdgeCaseExceptionPaths:
         """Create pipeline service with mock repository."""
         return PipelineService(pipeline_repo=mock_repository)
 
+    @pytest.mark.asyncio
     async def test_create_pipeline_complex_exception_chain(
         self, service: PipelineService, mock_repository: AsyncMock
     ) -> None:
@@ -209,6 +219,7 @@ class TestEdgeCaseExceptionPaths:
         assert result.error is not None
         assert "Repository error: Test attribute error" in result.error
 
+    @pytest.mark.asyncio
     async def test_execute_pipeline_nested_validation_error(
         self, service: PipelineService, mock_repository: AsyncMock
     ) -> None:
@@ -221,6 +232,7 @@ class TestEdgeCaseExceptionPaths:
         assert result.error is not None
         assert "Input error:" in result.error
 
+    @pytest.mark.asyncio
     async def test_repository_state_consistency_during_exceptions(
         self, service: PipelineService, mock_repository: AsyncMock
     ) -> None:

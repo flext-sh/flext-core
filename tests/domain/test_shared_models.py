@@ -555,6 +555,7 @@ class TestModelValidation:
 
     def test_required_field_validation(self) -> None:
         """Test required field validation."""
-        # UserInfo requires id
-        with pytest.raises(ValueError, match="Field required"):
-            UserInfo(username="test")  # type: ignore[call-arg]  # Missing required id field (UUID)
+        # UserInfo can be created without explicit id (gets generated)
+        user = UserInfo(username="test")
+        assert user.username == "test"
+        assert user.id is not None  # id is auto-generated

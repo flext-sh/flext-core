@@ -15,6 +15,7 @@ from typing import Any
 
 import requests
 from pydantic import BaseModel
+from pydantic import ConfigDict
 from pydantic import Field
 from pydantic import SecretStr
 from requests.adapters import HTTPAdapter
@@ -28,18 +29,19 @@ logger = logging.getLogger(__name__)
 class OICAuthConfig(BaseModel):
     """Oracle Integration Cloud authentication configuration."""
 
+    model_config = ConfigDict(extra="forbid")
+
     oauth_client_id: str = Field(..., description="IDCS OAuth2 client ID")
     oauth_client_secret: SecretStr = Field(..., description="IDCS OAuth2 client secret")
     oauth_token_url: str = Field(..., description="IDCS OAuth2 token endpoint")
     oauth_client_aud: str | None = Field(None, description="OAuth2 audience")
     oauth_scope: str = Field("", description="OAuth2 scope")
 
-    class Config:
-        extra = "forbid"
-
 
 class OICConnectionConfig(BaseModel):
     """Oracle Integration Cloud connection configuration."""
+
+    model_config = ConfigDict(extra="forbid")
 
     base_url: str = Field(..., description="Oracle OIC instance base URL")
     api_version: str = Field("v1", description="OIC API version")
@@ -60,13 +62,11 @@ class OICConnectionConfig(BaseModel):
             ]
         ):
             logger.warning(
-                "Base URL may not be a valid OIC endpoint: %s", self.base_url,
+                "Base URL may not be a valid OIC endpoint: %s",
+                self.base_url,
             )
 
         return ServiceResult.ok(None)
-
-    class Config:
-        extra = "forbid"
 
 
 class BaseOICAuthenticator(ABC):
@@ -382,7 +382,9 @@ class BaseOICClient(ABC):
 
                 # Make request
                 response_result = self.make_request(
-                    "GET", endpoint, params=request_params,
+                    "GET",
+                    endpoint,
+                    params=request_params,
                 )
                 if not response_result.is_success:
                     return ServiceResult.fail(response_result.error or "Request failed")
@@ -414,6 +416,10 @@ class BaseOICClient(ABC):
 class OICTapClient(BaseOICClient):
     """OIC Tap client for data extraction."""
 
+    def get_base_url(self) -> str:
+        """Get OIC API base URL."""
+        return f"{self.connection_config.base_url.rstrip('/')}/ic/api/{self.connection_config.api_version}"
+
     def get_integrations(
         self,
         status_filter: list[str] | None = None,
@@ -435,7 +441,9 @@ class OICTapClient(BaseOICClient):
             params["q"] = f"status in ({','.join(status_filter)})"
 
         return self.paginate_request(
-            "/integrations", page_size=page_size, params=params,
+            "/integrations",
+            page_size=page_size,
+            params=params,
         )
 
     def get_connections(
@@ -488,8 +496,13 @@ class OICTapClient(BaseOICClient):
 class OICTargetClient(BaseOICClient):
     """OIC Target client for data loading."""
 
+    def get_base_url(self) -> str:
+        """Get OIC API base URL."""
+        return f"{self.connection_config.base_url.rstrip('/')}/ic/api/{self.connection_config.api_version}"
+
     def create_integration(
-        self, integration_data: dict[str, Any],
+        self,
+        integration_data: dict[str, Any],
     ) -> ServiceResult[dict[str, Any]]:
         """Create integration in OIC.
 
@@ -521,7 +534,8 @@ class OICTargetClient(BaseOICClient):
         return self.make_request("PUT", endpoint, json=integration_data)
 
     def create_connection(
-        self, connection_data: dict[str, Any],
+        self,
+        connection_data: dict[str, Any],
     ) -> ServiceResult[dict[str, Any]]:
         """Create connection in OIC.
 

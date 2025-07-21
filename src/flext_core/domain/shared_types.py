@@ -430,8 +430,8 @@ class TraceStatus(StrEnum):
 class OracleWMSAuthMethod(StrEnum):
     """Oracle WMS authentication methods."""
 
-    USERNAME_PASSWORD = "username_password"  # noqa: S105
-    TOKEN = "token"  # noqa: S105
+    USERNAME_PASSWORD = "username_password"
+    TOKEN = "token"
     API_KEY = "api_key"
     OAUTH = "oauth"
 
@@ -455,7 +455,7 @@ class OracleWMSPageMode(StrEnum):
     """Oracle WMS pagination modes."""
 
     OFFSET = "offset"
-    TOKEN = "token"  # noqa: S105
+    TOKEN = "token"
     CURSOR = "cursor"
 
 
@@ -535,8 +535,8 @@ class ProjectMixin(BaseModel):
     @classmethod
     def validate_project_name(cls, v: str) -> str:
         """Validate project name format."""
-        if not v or len(v) < 2:
-            msg = "Project name must be at least 2 characters"
+        if not v or len(v) < 2 or len(v) > 50:
+            msg = "Project name must be 2-50 characters"
             raise ValueError(msg)
 
         if not v.replace("-", "").replace("_", "").isalnum():

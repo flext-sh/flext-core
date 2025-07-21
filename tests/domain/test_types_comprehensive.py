@@ -433,7 +433,7 @@ class TestValidationFunctions:
         from flext_core.domain.types import validate_project_name
 
         with pytest.raises(
-            ValueError, match="Project name length must be between 2 and 50 characters"
+            ValueError, match="Project name must be 2-50 characters"
         ):
             validate_project_name("a" * 51)  # Too long (> 50 chars)
 
