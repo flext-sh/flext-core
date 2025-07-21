@@ -7,6 +7,8 @@ This module provides the configuration for the FLEXT Core application.
 It is used to configure the application's settings and dependencies.
 """
 
+from __future__ import annotations
+
 from pathlib import Path
 
 from pydantic import Field
@@ -28,7 +30,9 @@ class FlextDatabaseConfig(BaseConfig):
     )
     pool_size: int = Field(default=20, description="Connection pool size", ge=1, le=100)
     pool_timeout: float = Field(
-        default=30.0, description="Pool timeout in seconds", gt=0
+        default=30.0,
+        description="Pool timeout in seconds",
+        gt=0,
     )
     echo: bool = Field(default=False, description="Echo SQL statements")
 
@@ -82,7 +86,8 @@ class FlextObservabilityConfig(BaseConfig):
 
     logging_level: str = Field(default="INFO", description="Logging level")
     logging_format: str = Field(
-        default="json", description="Logging format (json, text)"
+        default="json",
+        description="Logging format (json, text)",
     )
 
 
@@ -98,7 +103,8 @@ class FlextSecurityConfig(BaseConfig):
     rate_limit_enabled: bool = Field(default=True, description="Enable rate limiting")
     rate_limit_requests: int = Field(default=100, description="Requests per window")
     rate_limit_window: int = Field(
-        default=60, description="Rate limit window in seconds"
+        default=60,
+        description="Rate limit window in seconds",
     )
 
 

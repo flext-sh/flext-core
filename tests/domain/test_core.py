@@ -1,12 +1,23 @@
-"""Tests for flext_core.domain.core module."""
+"""FLEXT Core Tests.
+
+Copyright (c) 2025 Flext. All rights reserved.
+SPDX-License-Identifier: MIT
+
+Test suite for FLEXT Core framework.
+"""
+
+from __future__ import annotations
 
 import pytest
 
-from flext_core.domain.core import DomainError
-from flext_core.domain.core import NotFoundError
-from flext_core.domain.core import Repository
-from flext_core.domain.core import RepositoryError
-from flext_core.domain.core import ValidationError
+from flext_core.domain.core import (
+    DomainError,
+    NotFoundError,
+    Repository,
+    RepositoryError,
+    ValidationError,
+)
+from flext_core.domain.testing import MockRepository
 
 
 class TestDomainExceptions:
@@ -41,15 +52,15 @@ class TestDomainExceptions:
 
     def test_exception_chaining(self) -> None:
         """Test exception chaining works correctly."""
-        try:
-            msg = "Original error"
-            raise ValueError(msg)
-        except ValueError as e:
-            with pytest.raises(DomainError) as exc_info:
-                msg = "Domain error"
-                raise DomainError(msg) from e
-            assert exc_info.value.__cause__ is e
-            assert isinstance(exc_info.value.__cause__, ValueError)
+        original_error = ValueError("Original error")
+
+        # Test that the exception is properly raised with cause
+        with pytest.raises(DomainError) as exc_info:
+            raise DomainError("Domain error") from original_error
+
+        # Verify the exception chain
+        assert exc_info.value.__cause__ is original_error
+        assert isinstance(exc_info.value.__cause__, ValueError)
 
 
 class TestRepositoryInterface:
@@ -68,30 +79,8 @@ class TestRepositoryInterface:
 
     def test_repository_implementation(self) -> None:
         """Test Repository can be properly implemented."""
-
-        class MockRepository(Repository):
-            def __init__(self) -> None:
-                self.storage: dict[str, object] = {}
-
-            async def save(self, entity: object) -> object:  # type: ignore[override]
-                entity_id = str(getattr(entity, "id", id(entity)))
-                self.storage[entity_id] = entity
-                return entity
-
-            async def get(self, entity_id: str) -> object | None:
-                return self.storage.get(entity_id)
-
-            async def delete(self, entity_id: str) -> bool:
-                if entity_id in self.storage:
-                    del self.storage[entity_id]
-                    return True
-                return False
-
-            async def find_all(self) -> list[object]:
-                return list(self.storage.values())
-
         # Should be able to instantiate concrete implementation
-        repo = MockRepository()
+        repo: MockRepository[str, str] = MockRepository()
         assert repo is not None
         assert hasattr(repo, "save")
         assert hasattr(repo, "get")
@@ -132,37 +121,30 @@ class TestExceptionHierarchy:
     def test_exception_raising(self) -> None:
         """Test exceptions can be raised and caught."""
         with pytest.raises(DomainError):
-            msg = "test"
-            raise DomainError(msg)
+            raise DomainError("test")
 
         with pytest.raises(ValidationError):
-            msg = "test"
-            raise ValidationError(msg)
+            raise ValidationError("test")
 
         with pytest.raises(RepositoryError):
-            msg = "test"
-            raise RepositoryError(msg)
+            raise RepositoryError("test")
 
         with pytest.raises(NotFoundError):
-            msg = "test"
-            raise NotFoundError(msg)
+            raise NotFoundError("test")
 
     def test_exception_catching_hierarchy(self) -> None:
         """Test exceptions can be caught by parent classes."""
         # ValidationError should be catchable as DomainError
         with pytest.raises(DomainError):
-            msg = "test"
-            raise ValidationError(msg)
+            raise ValidationError("test")
 
         # RepositoryError should be catchable as DomainError
         with pytest.raises(DomainError):
-            msg = "test"
-            raise RepositoryError(msg)
+            raise RepositoryError("test")
 
         # NotFoundError should be catchable as DomainError
         with pytest.raises(DomainError):
-            msg = "test"
-            raise NotFoundError(msg)
+            raise NotFoundError("test")
 
 
 class TestModuleStructure:

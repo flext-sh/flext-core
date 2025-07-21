@@ -1,30 +1,40 @@
-"""Tests for flext_core.domain.shared_models module."""
+"""FLEXT Core Tests.
 
-from datetime import datetime
+Copyright (c) 2025 Flext. All rights reserved.
+SPDX-License-Identifier: MIT
+
+Test suite for FLEXT Core framework.
+"""
+
+from __future__ import annotations
+
+from datetime import UTC, datetime
 from uuid import uuid4
 
 import pytest
 
-from flext_core.domain.shared_models import AuthToken
-from flext_core.domain.shared_models import ComponentHealth
-from flext_core.domain.shared_models import DatabaseConfig
-from flext_core.domain.shared_models import DataRecord
-from flext_core.domain.shared_models import DataSchema
-from flext_core.domain.shared_models import EntityStatus
-from flext_core.domain.shared_models import ErrorDetail
-from flext_core.domain.shared_models import ErrorResponse
-from flext_core.domain.shared_models import HealthStatus
-from flext_core.domain.shared_models import LDAPEntry
-from flext_core.domain.shared_models import LDAPScope
-from flext_core.domain.shared_models import LogLevel
-from flext_core.domain.shared_models import OperationStatus
-from flext_core.domain.shared_models import PipelineConfig
-from flext_core.domain.shared_models import PipelineRunStatus
-from flext_core.domain.shared_models import PluginMetadata
-from flext_core.domain.shared_models import PluginType
-from flext_core.domain.shared_models import RedisConfig
-from flext_core.domain.shared_models import SystemHealth
-from flext_core.domain.shared_models import UserInfo
+from flext_core.domain.shared_models import (
+    AuthToken,
+    ComponentHealth,
+    DatabaseConfig,
+    DataRecord,
+    DataSchema,
+    EntityStatus,
+    ErrorDetail,
+    ErrorResponse,
+    HealthStatus,
+    LDAPEntry,
+    LDAPScope,
+    LogLevel,
+    OperationStatus,
+    PipelineConfig,
+    PipelineRunStatus,
+    PluginMetadata,
+    PluginType,
+    RedisConfig,
+    SystemHealth,
+    UserInfo,
+)
 
 
 class TestEntityStatus:
@@ -204,7 +214,7 @@ class TestComponentHealth:
 
     def test_component_health_with_checks(self) -> None:
         """Test ComponentHealth with checks."""
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         health = ComponentHealth(
             name="redis",
             status=HealthStatus.DEGRADED,
@@ -299,10 +309,14 @@ class TestDatabaseConfig:
         assert config.port == 3306
 
         # Invalid ports
-        with pytest.raises(ValueError):
+        with pytest.raises(
+            ValueError, match="Input should be greater than or equal to 1"
+        ):
             DatabaseConfig(host="localhost", port=0)
 
-        with pytest.raises(ValueError):
+        with pytest.raises(
+            ValueError, match="Input should be less than or equal to 65535"
+        ):
             DatabaseConfig(host="localhost", port=65536)
 
 
@@ -371,10 +385,10 @@ class TestLDAPEntry:
         assert entry.dn == "cn=test,dc=example,dc=com"  # Should be stripped
 
         # Invalid DNs
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="DN cannot be empty"):
             LDAPEntry(dn="", attributes={})
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="DN cannot be empty"):
             LDAPEntry(dn="   ", attributes={})
 
 
@@ -518,8 +532,8 @@ class TestModelSerialization:
         token = AuthToken(access_token="test", expires_in=3600)
 
         # Should not be able to modify after creation
-        with pytest.raises(Exception):  # Pydantic validation error
-            token.access_token = "modified"
+        with pytest.raises(ValueError, match="Instance is frozen"):
+            token.access_token = "modified"  # type: ignore[misc]
 
 
 class TestModelValidation:
@@ -542,5 +556,5 @@ class TestModelValidation:
     def test_required_field_validation(self) -> None:
         """Test required field validation."""
         # UserInfo requires id
-        with pytest.raises(Exception):  # Pydantic validation error
+        with pytest.raises(ValueError, match="Field required"):
             UserInfo(username="test")  # type: ignore[call-arg]  # Missing required id field (UUID)

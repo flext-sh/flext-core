@@ -1,13 +1,21 @@
-"""Tests for flext_core.infrastructure.persistence.base module."""
+"""Tests for flext_core.infrastructure.persistence.base module.
 
-from uuid import UUID
-from uuid import uuid4
+Copyright (c) 2025 FLEXT Contributors
+SPDX-License-Identifier: MIT
+
+This module provides tests for the flext_core.infrastructure.persistence.base
+module. It includes tests for the Repository abstract base class and the
+InMemoryRepository implementation.
+"""
+
+from __future__ import annotations
+
+from uuid import UUID, uuid4
 
 import pytest
 
 from flext_core.domain.pydantic_base import DomainEntity
-from flext_core.infrastructure.persistence.base import InMemoryRepository
-from flext_core.infrastructure.persistence.base import Repository
+from flext_core.infrastructure.persistence.base import InMemoryRepository, Repository
 
 
 # Test entities for testing repository functionality
@@ -25,7 +33,7 @@ class TestRepository:
 
     def test_repository_is_abstract(self) -> None:
         """Test that Repository is abstract and cannot be instantiated."""
-        with pytest.raises(TypeError):
+        with pytest.raises(TypeError, match="Can't instantiate abstract class"):
             Repository()  # type: ignore[abstract]
 
     def test_repository_interface_methods(self) -> None:
@@ -202,7 +210,8 @@ class TestInMemoryRepository:
         int_repo = InMemoryRepository[IntEntity, int]()
         int_entity = IntEntity(simple_id=123, name="Integer ID")
 
-        # Note: The save method uses getattr(entity, "id") which gets the UUID id, not simple_id
+        # Note: The save method uses getattr(entity, "id") which gets
+        # the UUID id, not simple_id
         # So this test demonstrates the limitation of the current implementation
         await int_repo.save(int_entity)
 
@@ -224,7 +233,7 @@ class TestInMemoryRepository:
             entities.append((entity_id, entity))
 
         # Save all entities
-        for entity_id, entity in entities:
+        for _entity_id, entity in entities:
             await repo.save(entity)
 
         # Verify all entities are stored
@@ -244,11 +253,13 @@ class TestInMemoryRepository:
         # Verify correct entities were deleted
         for i in range(10):
             entity_id, _ = entities[i]
-            entity = await repo.get_by_id(entity_id)
+            retrieved_entity: DemoEntity | None = await repo.get_by_id(entity_id)
             if i % 2 == 0:
-                assert entity is None  # Even indices should be deleted
+                assert retrieved_entity is None  # Even indices should be deleted
             else:
-                assert entity is not None  # Odd indices should remain
+                assert retrieved_entity is not None  # Odd indices should remain
+                assert isinstance(retrieved_entity, DemoEntity)
+                assert retrieved_entity.name == f"Entity {i}"
 
     @pytest.mark.asyncio
     async def test_repository_inheritance_compliance(self) -> None:

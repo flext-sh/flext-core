@@ -4,10 +4,15 @@ Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
 """
 
+from __future__ import annotations
+
 from datetime import UTC
 from datetime import datetime
 from enum import StrEnum
 from typing import Any
+
+# Import UUID for direct use in value objects
+from uuid import UUID
 from uuid import uuid4
 
 from pydantic import Field
@@ -17,7 +22,6 @@ from flext_core.domain.pydantic_base import DomainAggregateRoot
 from flext_core.domain.pydantic_base import DomainEntity
 from flext_core.domain.pydantic_base import DomainEvent
 from flext_core.domain.pydantic_base import DomainValueObject
-from flext_core.domain.types import EntityId
 
 
 class ExecutionStatus(StrEnum):
@@ -33,7 +37,7 @@ class ExecutionStatus(StrEnum):
 class PipelineId(DomainValueObject):
     """Strongly typed pipeline ID."""
 
-    value: EntityId = Field(default_factory=uuid4)
+    value: UUID = Field(default_factory=uuid4)
 
     def __str__(self) -> str:
         """Convert pipeline ID to string.
@@ -66,7 +70,7 @@ class PipelineName(DomainValueObject):
 
         """
         if not v or not v.strip():
-            msg = "Pipeline name cannot be empty"
+            msg = "Pipeline name cannot be empty or whitespace"
             raise ValueError(msg)
         return v.strip()
 
@@ -83,7 +87,7 @@ class PipelineName(DomainValueObject):
 class ExecutionId(DomainValueObject):
     """Strongly typed execution ID."""
 
-    value: EntityId = Field(default_factory=uuid4)
+    value: UUID = Field(default_factory=uuid4)
 
     def __str__(self) -> str:
         """Convert execution ID to string.
@@ -114,7 +118,6 @@ class PipelineExecuted(DomainEvent):
 class PipelineExecution(DomainEntity):
     """Pipeline execution entity."""
 
-    execution_id: ExecutionId = Field(default_factory=ExecutionId)
     pipeline_id: PipelineId
     execution_status: ExecutionStatus = ExecutionStatus.PENDING
     started_at: datetime | None = None
@@ -122,14 +125,24 @@ class PipelineExecution(DomainEntity):
     error_message: str | None = None
     result: dict[str, Any] = Field(default_factory=dict)
 
+    @property
+    def execution_id(self) -> ExecutionId:
+        """Get execution ID as strongly-typed ID (LSP compliance)."""
+        return ExecutionId(value=self.id)
+
 
 class Pipeline(DomainAggregateRoot):
     """Pipeline aggregate root."""
 
-    pipeline_id: PipelineId = Field(default_factory=PipelineId)
     pipeline_name: PipelineName
     pipeline_description: str = ""
     pipeline_is_active: bool = True
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+
+    @property
+    def pipeline_id(self) -> PipelineId:
+        """Get pipeline ID as strongly-typed ID (LSP compliance)."""
+        return PipelineId(value=self.id)
 
     def create(self) -> None:
         """Create pipeline and emit event."""
@@ -166,4 +179,4 @@ class Pipeline(DomainAggregateRoot):
         self.updated_at = datetime.now(UTC)
 
 
-# Models are automatically rebuilt by Pydantic v2
+# Models will be rebuilt automatically by Pydantic as needed

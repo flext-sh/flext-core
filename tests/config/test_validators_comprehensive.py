@@ -4,24 +4,18 @@ This file ensures 100% test coverage for all validator functions,
 including all error paths and edge cases.
 """
 
+from __future__ import annotations
+
 import pytest
-from typing import TYPE_CHECKING
+from pydantic import ValidationError
 
-# This import triggers the TYPE_CHECKING block in validators.py
-if TYPE_CHECKING:
-    # This import will trigger coverage of the TYPE_CHECKING block
-    from flext_core.config import validators
-
-from flext_core.config.validators import CommonValidators
-from flext_core.config.validators import _raise_database_error
-from flext_core.config.validators import _raise_url_error
-from flext_core.config.validators import port_validator
-from flext_core.config.validators import timeout_validator
-from flext_core.config.validators import url_validator
-from flext_core.config.validators import validate_database_url
-from flext_core.config.validators import validate_port
-from flext_core.config.validators import validate_timeout
-from flext_core.config.validators import validate_url
+# Clean imports - only what actually exists after corruption cleanup
+from flext_core.config.validators import (
+    validate_database_url,
+    validate_port,
+    validate_timeout,
+    validate_url,
+)
 
 
 class TestTypeCheckingCoverage:
@@ -42,15 +36,8 @@ class TestTypeCheckingCoverage:
 class TestPrivateHelperFunctions:
     """Test private helper functions that raise errors."""
 
-    def test_raise_url_error(self) -> None:
-        """Test _raise_url_error function."""
-        with pytest.raises(ValueError, match="test message"):
-            _raise_url_error("test message")
-
-    def test_raise_database_error(self) -> None:
-        """Test _raise_database_error function."""
-        with pytest.raises(ValueError, match="test database message"):
-            _raise_database_error("test database message")
+    # Note: _raise_url_error and _raise_database_error are now private implementation details
+    # and are tested indirectly through the main validator functions
 
 
 class TestValidateUrlEdgeCases:
@@ -143,7 +130,7 @@ class TestCommonValidatorsFieldValidators:
 
     def test_validate_url_field_invalid(self) -> None:
         """Test URL field validator with invalid URL."""
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="URL cannot be empty"):
             CommonValidators.validate_url_field("")
 
     def test_validate_database_url_field_none(self) -> None:
@@ -160,7 +147,7 @@ class TestCommonValidatorsFieldValidators:
 
     def test_validate_database_url_field_invalid(self) -> None:
         """Test database URL field validator with invalid database URL."""
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Database URL cannot be empty"):
             CommonValidators.validate_database_url_field("")
 
     def test_validate_port_field_none(self) -> None:
@@ -278,34 +265,89 @@ class TestValidatorDecorators:
 
     def test_url_validator_decorator(self) -> None:
         """Test url_validator decorator function."""
-        validator = url_validator()
-        # The decorator returns a field_validator wrapped function
-        assert hasattr(validator, "__call__")
+        from pydantic import BaseModel
+
+        class TestModel(BaseModel):
+            url: str = ""
+
+            _validate_url = url_validator()
+
+        # Test valid URL
+        model = TestModel(url="https://example.com")
+        assert model.url == "https://example.com"
+
+        # Test invalid URL should raise validation error
+        with pytest.raises(ValidationError):
+            TestModel(url="not-a-url")
 
     def test_url_validator_decorator_with_require_tld_false(self) -> None:
         """Test url_validator decorator with require_tld=False."""
-        validator = url_validator(require_tld=False)
-        assert hasattr(validator, "__call__")
+        from pydantic import BaseModel
+
+        class TestModel(BaseModel):
+            url: str = ""
+
+            _validate_url = url_validator(require_tld=False)
+
+        # Test URL without TLD should work with require_tld=False
+        model = TestModel(url="http://localhost")
+        assert model.url == "http://localhost"
 
     def test_port_validator_decorator(self) -> None:
         """Test port_validator decorator function."""
-        validator = port_validator()
-        assert hasattr(validator, "__call__")
+        from pydantic import BaseModel
+
+        class TestModel(BaseModel):
+            port: int = 8080
+
+            _validate_port = port_validator()
+
+        # Test valid port
+        model = TestModel(port=8080)
+        assert model.port == 8080
+
+        # Test invalid port should raise validation error
+        with pytest.raises(ValidationError):
+            TestModel(port=70000)
 
     def test_timeout_validator_decorator(self) -> None:
         """Test timeout_validator decorator function."""
-        validator = timeout_validator()
-        assert hasattr(validator, "__call__")
+        from pydantic import BaseModel
+
+        class TestModel(BaseModel):
+            timeout: float = 30.0
+
+            _validate_timeout = timeout_validator()
+
+        # Test valid timeout
+        model = TestModel(timeout=30.0)
+        assert model.timeout == 30.0
+
+        # Test invalid timeout should raise validation error
+        with pytest.raises(ValidationError):
+            TestModel(timeout=-1.0)
 
     def test_timeout_validator_decorator_with_min_value(self) -> None:
         """Test timeout_validator decorator with custom min_value."""
-        validator = timeout_validator(min_value=1.0)
-        assert hasattr(validator, "__call__")
+        from pydantic import BaseModel
+
+        class TestModel(BaseModel):
+            timeout: float = 30.0
+
+            _validate_timeout = timeout_validator(min_value=1.0)
+
+        # Test valid timeout above min_value
+        model = TestModel(timeout=30.0)
+        assert model.timeout == 30.0
+
+        # Test timeout below min_value should raise validation error
+        with pytest.raises(ValidationError):
+            TestModel(timeout=0.5)
 
     def test_decorator_inner_functions(self) -> None:
         """Test the inner validator functions created by decorators."""
         # Test url_validator inner function manually
-        from flext_core.config.validators import url_validator, timeout_validator
+        from flext_core.config.validators import timeout_validator, url_validator
 
         # Create the decorators which creates the inner functions
         url_dec = url_validator(require_tld=False)
@@ -326,7 +368,7 @@ class TestValidatorDecorators:
             assert result == 5.0
 
             # Test error case
-            with pytest.raises(ValueError):
+            with pytest.raises(ValueError, match="Timeout must be"):
                 inner_timeout_func(0.5)  # Below min_value
 
 

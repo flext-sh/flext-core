@@ -4,18 +4,21 @@ This file provides additional test coverage to reach 90%+ coverage,
 complementing the existing test_pipeline.py without duplication.
 """
 
-from unittest.mock import AsyncMock
-from unittest.mock import Mock
+from __future__ import annotations
+
+from unittest.mock import AsyncMock, Mock
 from uuid import uuid4
 
 import pytest
 from pydantic import ValidationError
 
-from flext_core.application.pipeline import CreatePipelineCommand
-from flext_core.application.pipeline import ExecutePipelineCommand
-from flext_core.application.pipeline import GetPipelineQuery
-from flext_core.application.pipeline import ListPipelinesQuery
-from flext_core.application.pipeline import PipelineService
+from flext_core.application.pipeline import (
+    CreatePipelineCommand,
+    ExecutePipelineCommand,
+    GetPipelineQuery,
+    ListPipelinesQuery,
+    PipelineService,
+)
 
 
 class TestPipelineServiceErrorPaths:
@@ -43,11 +46,14 @@ class TestPipelineServiceErrorPaths:
         import unittest.mock
 
         # Create a proper ValidationError
-        try:
-            # Force a ValidationError by creating an invalid PipelineName
-            from flext_core.domain.pipeline import PipelineName
+        from flext_core.domain.pipeline import PipelineName
 
+        # Force a ValidationError by creating an invalid PipelineName
+        try:
             PipelineName(value="")  # Empty string should cause validation error
+            # If we get here, the validation didn't work as expected
+            msg = "Empty string should trigger ValidationError"
+            raise AssertionError(msg)
         except ValidationError as validation_error:
             # Use the real validation error
             with unittest.mock.patch(
@@ -61,9 +67,6 @@ class TestPipelineServiceErrorPaths:
                 assert not result.is_success
                 assert result.error is not None
                 assert "Validation failed" in result.error
-        else:
-            # Fallback if empty string doesn't trigger validation error
-            pytest.skip("Cannot create ValidationError for this test")
 
     @pytest.mark.asyncio
     async def test_create_pipeline_value_error(
@@ -336,12 +339,14 @@ class TestCommandQueryValidationEdgeCases:
     def test_execute_command_missing_pipeline_id(self) -> None:
         """Test execute command with missing pipeline ID."""
         with pytest.raises(ValidationError):
-            ExecutePipelineCommand(pipeline_id=None)  # Missing required field
+            # Missing required parameter should fail
+            ExecutePipelineCommand()  # type: ignore[call-arg]
 
     def test_get_query_missing_pipeline_id(self) -> None:
         """Test get query with missing pipeline ID."""
         with pytest.raises(ValidationError):
-            GetPipelineQuery(pipeline_id=None)  # Missing required field
+            # Missing required parameter should fail
+            GetPipelineQuery()  # type: ignore[call-arg]
 
     def test_list_query_limit_too_small(self) -> None:
         """Test list query with limit below minimum."""
@@ -451,15 +456,18 @@ class TestServiceIntegrationScenarios:
             create_cmd = CreatePipelineCommand(name="Error Test")
             create_result = await service.create_pipeline(create_cmd)
             assert not create_result.is_success
+            assert create_result.error is not None
             assert "Repository error" in create_result.error
 
             # Test get_pipeline error handling
             get_query = GetPipelineQuery(pipeline_id=str(uuid4()))
             get_result = await service.get_pipeline(get_query)
             assert not get_result.is_success
+            assert get_result.error is not None
             assert "Repository error" in get_result.error
 
             # Test deactivate_pipeline error handling
             deactivate_result = await service.deactivate_pipeline(str(uuid4()))
             assert not deactivate_result.is_success
+            assert deactivate_result.error is not None
             assert "Repository error" in deactivate_result.error

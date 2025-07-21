@@ -7,15 +7,20 @@ These models are used across multiple FLEXT modules to ensure consistency.
 All modules should import these models instead of creating duplicates.
 """
 
+from __future__ import annotations
+
 from datetime import datetime
 from enum import StrEnum
 from typing import Any
-from uuid import UUID
+
+# Import UUID directly since it's used at runtime
+from uuid import UUID  # noqa: TC003
 
 from pydantic import Field
 from pydantic import field_validator
 
-from flext_core.domain.pydantic_base import APIBaseModel
+from flext_core.domain.pydantic_base import DomainBaseModel
+from flext_core.domain.pydantic_base import DomainEntity
 from flext_core.domain.pydantic_base import DomainValueObject
 
 
@@ -69,10 +74,9 @@ class AuthToken(DomainValueObject):
     scope: str | None = None
 
 
-class UserInfo(APIBaseModel):
+class UserInfo(DomainEntity):
     """Basic user information for API responses."""
 
-    id: UUID
     username: str | None = None
     full_name: str | None = None
     is_active: bool = True
@@ -91,7 +95,7 @@ class PluginType(StrEnum):
     UTILITY = "utility"
 
 
-class PluginMetadata(APIBaseModel):
+class PluginMetadata(DomainBaseModel):
     """Plugin metadata for registration and discovery."""
 
     name: str
@@ -111,7 +115,7 @@ class HealthStatus(StrEnum):
     UNHEALTHY = "unhealthy"
 
 
-class ComponentHealth(APIBaseModel):
+class ComponentHealth(DomainBaseModel):
     """Health status of a system component."""
 
     name: str
@@ -120,7 +124,7 @@ class ComponentHealth(APIBaseModel):
     last_check: datetime | None = None
 
 
-class SystemHealth(APIBaseModel):
+class SystemHealth(DomainBaseModel):
     """System health."""
 
     status: HealthStatus
@@ -130,7 +134,7 @@ class SystemHealth(APIBaseModel):
 
 
 # Error Models
-class ErrorDetail(APIBaseModel):
+class ErrorDetail(DomainBaseModel):
     """Detailed error information."""
 
     code: str
@@ -138,7 +142,7 @@ class ErrorDetail(APIBaseModel):
     details: dict[str, Any] | None = None
 
 
-class ErrorResponse(APIBaseModel):
+class ErrorResponse(DomainBaseModel):
     """Detailed error information."""
 
     success: bool = False
@@ -153,18 +157,27 @@ class DatabaseConfig(DomainValueObject):
 
     host: str = Field(default="localhost", description="Database host")
     port: int = Field(
-        default=5432, description="Database port", ge=1, le=65535, repr=False
+        default=5432,
+        description="Database port",
+        ge=1,
+        le=65535,
+        repr=False,
     )
     database: str = Field(default="flext", description="Database name")
     username: str = Field(default="user", description="Database username")
     password: str = Field(
-        default="password", description="Database password", repr=False
+        default="password",
+        description="Database password",
+        repr=False,
     )
 
     # Connection pool settings (consolidated from multiple projects)
     pool_size: int = Field(default=20, description="Connection pool size", ge=1, le=100)
     max_overflow: int = Field(
-        default=40, description="Maximum overflow connections", ge=0, le=100
+        default=40,
+        description="Maximum overflow connections",
+        ge=0,
+        le=100,
     )
     pool_min_size: int = Field(default=1, description="Minimum pool size", ge=1)
     pool_max_size: int = Field(default=10, description="Maximum pool size", ge=1)
@@ -200,7 +213,8 @@ class RedisConfig(DomainValueObject):
 
     # Connection settings (consolidated from multiple projects)
     decode_responses: bool = Field(
-        default=True, description="Decode responses to strings"
+        default=True,
+        description="Decode responses to strings",
     )
     socket_timeout: int = Field(default=5, description="Socket timeout seconds", ge=1)
     socket_keepalive: bool = Field(default=True, description="Enable socket keepalive")
@@ -208,7 +222,10 @@ class RedisConfig(DomainValueObject):
     # Pool settings (from duplicated configs)
     pool_size: int = Field(default=20, description="Connection pool size", ge=1, le=100)
     max_connections: int = Field(
-        default=50, description="Maximum connections", ge=1, le=1000
+        default=50,
+        description="Maximum connections",
+        ge=1,
+        le=1000,
     )
     retry_on_timeout: bool = Field(default=True, description="Retry on timeout")
 
@@ -226,26 +243,39 @@ class HTTPConnectionConfig(DomainValueObject):
 
     base_url: str = Field(..., description="Base URL for API endpoints")
     timeout: int = Field(
-        default=30, description="Request timeout seconds", ge=1, le=300
+        default=30,
+        description="Request timeout seconds",
+        ge=1,
+        le=300,
     )
     max_retries: int = Field(
-        default=3, description="Maximum retry attempts", ge=0, le=10
+        default=3,
+        description="Maximum retry attempts",
+        ge=0,
+        le=10,
     )
     retry_delay: float = Field(
-        default=1.0, description="Delay between retries", ge=0.1, le=60.0
+        default=1.0,
+        description="Delay between retries",
+        ge=0.1,
+        le=60.0,
     )
     verify_ssl: bool = Field(default=True, description="Verify SSL certificates")
 
     # Connection pooling
     pool_connections: int = Field(
-        default=10, description="Pool connections", ge=1, le=100
+        default=10,
+        description="Pool connections",
+        ge=1,
+        le=100,
     )
     pool_maxsize: int = Field(default=20, description="Pool max size", ge=1, le=200)
 
     # Headers and auth
     user_agent: str = Field(default="FLEXT-Client/1.0", description="User-Agent header")
     additional_headers: dict[str, str] = Field(
-        default_factory=dict, description="Additional headers"
+        default_factory=dict,
+        description="Additional headers",
     )
 
 
@@ -274,13 +304,19 @@ class SecurityConfig(DomainValueObject):
 
     # Password policies
     min_password_length: int = Field(
-        default=8, description="Minimum password length", ge=6
+        default=8,
+        description="Minimum password length",
+        ge=6,
     )
     require_special_chars: bool = Field(
-        default=True, description="Require special characters"
+        default=True,
+        description="Require special characters",
     )
     password_history_count: int = Field(
-        default=5, description="Password history", ge=0, le=20
+        default=5,
+        description="Password history",
+        ge=0,
+        le=20,
     )
 
 
@@ -293,7 +329,7 @@ class LDAPScope(StrEnum):
     SUB = "sub"
 
 
-class LDAPEntry(APIBaseModel):
+class LDAPEntry(DomainBaseModel):
     """LDAP entry representation."""
 
     dn: str
@@ -321,7 +357,7 @@ class LDAPEntry(APIBaseModel):
 
 
 # Pipeline Models (extend from domain)
-class PipelineConfig(APIBaseModel):
+class PipelineConfig(DomainBaseModel):
     """Pipeline configuration for API."""
 
     name: str
@@ -333,7 +369,7 @@ class PipelineConfig(APIBaseModel):
     is_active: bool = True
 
 
-class PipelineRunStatus(APIBaseModel):
+class PipelineRunStatus(DomainBaseModel):
     """Pipeline run status."""
 
     run_id: UUID
@@ -343,7 +379,7 @@ class PipelineRunStatus(APIBaseModel):
 
 
 # Data Models
-class DataSchema(APIBaseModel):
+class DataSchema(DomainBaseModel):
     """Schema definition for data validation."""
 
     fields: dict[str, dict[str, Any]]
@@ -352,7 +388,7 @@ class DataSchema(APIBaseModel):
     indexes: list[str] = Field(default_factory=list)
 
 
-class DataRecord(APIBaseModel):
+class DataRecord(DomainBaseModel):
     """Data record."""
 
     id: UUID | None = None

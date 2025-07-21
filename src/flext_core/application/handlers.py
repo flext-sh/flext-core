@@ -5,10 +5,16 @@ SPDX-License-Identifier: MIT
 
 FLEXT-Core foundation for command and query handlers.
 Uses modern Python 3.13 patterns with ServiceResult.
+
+.. deprecated:: 0.7.0
+   This module has been moved to flext.services.application.handlers.
+   Please use 'from flext.services.application import CommandHandler' instead.
+   This compatibility layer will be removed in v0.8.0.
 """
 
 from __future__ import annotations
 
+import warnings
 from abc import ABC
 from abc import abstractmethod
 from typing import TYPE_CHECKING
@@ -17,6 +23,15 @@ from typing import TypeVar
 
 if TYPE_CHECKING:  # pragma: no cover
     from flext_core.domain.types import ServiceResult
+
+# Issue deprecation warning when module is imported
+warnings.warn(
+    "flext_core.application.handlers is deprecated. "
+    "Use 'from flext.services.application import CommandHandler' instead. "
+    "This module will be removed in v0.8.0.",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 # Type variables for generic handlers
 TCommand = TypeVar("TCommand")
@@ -86,7 +101,7 @@ class EventHandler[TEvent, TResult](ABC):
 
 
 # Convenience type aliases for common patterns
-class VoidCommandHandler(CommandHandler[TCommand, None]):
+class VoidCommandHandler[TCommand](CommandHandler[TCommand, None]):
     """Command handler that returns no data."""
 
     @abstractmethod
@@ -103,7 +118,7 @@ class VoidCommandHandler(CommandHandler[TCommand, None]):
         ...
 
 
-class SimpleQueryHandler(QueryHandler[TQuery, dict[str, Any]]):
+class SimpleQueryHandler[TQuery](QueryHandler[TQuery, dict[str, Any]]):
     """Query handler that returns dict data."""
 
     @abstractmethod

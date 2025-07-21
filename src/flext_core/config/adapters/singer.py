@@ -8,6 +8,8 @@ Base configuration for Singer taps and targets.
 Provides common configuration fields and validation for Singer SDK projects.
 """
 
+from __future__ import annotations
+
 from typing import Any
 
 from pydantic import Field
@@ -52,7 +54,9 @@ class SingerConfig(BaseConfig):
     # Common API settings
     api_url: str | None = Field(default=None, description="Base API URL")
     timeout: float = Field(
-        default=300.0, description="Request timeout in seconds", gt=0
+        default=300.0,
+        description="Request timeout in seconds",
+        gt=0,
     )
     retry_count: int = Field(
         default=3,
@@ -60,7 +64,9 @@ class SingerConfig(BaseConfig):
         ge=0,
     )
     page_size: int = Field(
-        default=100, description="Page size for paginated requests", gt=0
+        default=100,
+        description="Page size for paginated requests",
+        gt=0,
     )
 
     @field_validator("api_url")
@@ -148,7 +154,8 @@ class SingerSettings(BaseSettings):
 
     # Database connections (for database taps/targets)
     database_url: str | None = Field(
-        default=None, description="Database connection URL"
+        default=None,
+        description="Database connection URL",
     )
 
     @field_validator("api_key", "client_secret", "refresh_token")
@@ -170,7 +177,7 @@ class SingerSettings(BaseSettings):
 def singer_config_adapter(
     pydantic_config: type[BaseConfig],
     *,
-    is_target: bool = False,  # noqa: ARG001  # Reserved for future target-specific logic
+    is_target: bool = False,  # Reserved for future target-specific logic  # noqa: ARG001
 ) -> dict[str, Any]:
     """Convert pydantic config to Singer SDK schema format.
 

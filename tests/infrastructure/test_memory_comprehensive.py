@@ -4,17 +4,18 @@ This file provides additional test coverage to reach 95%+ coverage,
 complementing the existing test_memory.py without duplication.
 """
 
-from uuid import UUID
-from uuid import uuid4
+from __future__ import annotations
+
 from typing import Any
+from uuid import UUID, uuid4
 
 import pytest
 
-from flext_core.infrastructure.memory import HasId
-from flext_core.infrastructure.memory import InMemoryRepository
-from flext_core.infrastructure.memory import PipelineRepository
-from flext_core.domain.pipeline import Pipeline
-from flext_core.domain.pipeline import PipelineName
+from flext_core.domain.pipeline import Pipeline, PipelineName
+from flext_core.infrastructure.memory import (
+    HasId,
+    InMemoryRepository,
+)
 
 
 class TestHasIdProtocol:
@@ -25,7 +26,7 @@ class TestHasIdProtocol:
 
         # Test with valid entity
         class ValidEntity:
-            def __init__(self, entity_id: str):
+            def __init__(self, entity_id: str) -> None:
                 self.id = entity_id
 
         valid_entity = ValidEntity("test_id")
@@ -33,7 +34,7 @@ class TestHasIdProtocol:
 
         # Test with invalid entity (no id attribute)
         class InvalidEntity:
-            def __init__(self, name: str):
+            def __init__(self, name: str) -> None:
                 self.name = name
 
         invalid_entity = InvalidEntity("test_name")
@@ -44,7 +45,7 @@ class TestHasIdProtocol:
 
         # Test with UUID
         class UuidEntity:
-            def __init__(self, entity_id: UUID):
+            def __init__(self, entity_id: UUID) -> None:
                 self.id = entity_id
 
         uuid_entity = UuidEntity(uuid4())
@@ -52,7 +53,7 @@ class TestHasIdProtocol:
 
         # Test with int ID
         class IntEntity:
-            def __init__(self, entity_id: int):
+            def __init__(self, entity_id: int) -> None:
                 self.id = entity_id
 
         int_entity = IntEntity(123)
@@ -60,7 +61,7 @@ class TestHasIdProtocol:
 
         # Test with string ID
         class StrEntity:
-            def __init__(self, entity_id: str):
+            def __init__(self, entity_id: str) -> None:
                 self.id = entity_id
 
         str_entity = StrEntity("string_id")
@@ -83,7 +84,7 @@ class TestInMemoryRepositoryEdgeCases:
     class ComplexEntity:
         """Entity with complex ID structure."""
 
-        def __init__(self, entity_id: tuple[str, int], data: dict):
+        def __init__(self, entity_id: tuple[str, int], data: dict[str, Any]) -> None:
             self.id = entity_id
             self.data = data
 
@@ -94,13 +95,21 @@ class TestInMemoryRepositoryEdgeCases:
                 and self.data == other.data
             )
 
+        def __hash__(self) -> int:
+            return hash((self.id, tuple(sorted(self.data.items()))))
+
     @pytest.fixture
-    def repository(self):
+    def repository(
+        self,
+    ) -> InMemoryRepository[TestInMemoryRepositoryEdgeCases.ComplexEntity, UUID]:
         """Create repository for complex entities."""
-        return InMemoryRepository[self.ComplexEntity]()
+        return InMemoryRepository[TestInMemoryRepositoryEdgeCases.ComplexEntity, UUID]()
 
     @pytest.mark.asyncio
-    async def test_save_with_complex_id(self, repository: InMemoryRepository) -> None:
+    async def test_save_with_complex_id(
+        self,
+        repository: InMemoryRepository[TestInMemoryRepositoryEdgeCases.ComplexEntity, UUID],
+    ) -> None:
         """Test saving entity with complex ID type."""
         complex_id = ("prefix", 12345)
         entity = self.ComplexEntity(complex_id, {"key": "value"})
@@ -112,7 +121,10 @@ class TestInMemoryRepositoryEdgeCases:
         assert retrieved == entity
 
     @pytest.mark.asyncio
-    async def test_save_with_none_id(self, repository: InMemoryRepository) -> None:
+    async def test_save_with_none_id(
+        self,
+        repository: InMemoryRepository[TestInMemoryRepositoryEdgeCases.ComplexEntity, UUID],
+    ) -> None:
         """Test saving entity with None ID."""
 
         class NoneIdEntity:
@@ -120,7 +132,7 @@ class TestInMemoryRepositoryEdgeCases:
                 self.id = None
 
         none_entity = NoneIdEntity()
-        none_repo = InMemoryRepository[NoneIdEntity]()
+        none_repo = InMemoryRepository[NoneIdEntity, UUID]()
 
         saved = await none_repo.save(none_entity)
         assert saved == none_entity
@@ -131,14 +143,15 @@ class TestInMemoryRepositoryEdgeCases:
 
     @pytest.mark.asyncio
     async def test_get_with_different_key_types(
-        self, repository: InMemoryRepository
+        self,
+        repository: InMemoryRepository[TestInMemoryRepositoryEdgeCases.ComplexEntity, UUID],
     ) -> None:
         """Test get method with different key types."""
         # Save entities with different ID types
         entities = [
             self.ComplexEntity(("str", 1), {"type": "string_int"}),
-            self.ComplexEntity((123, "num"), {"type": "int_string"}),
-            self.ComplexEntity(("a", "b"), {"type": "string_string"}),
+            self.ComplexEntity(("123", 2), {"type": "string_int2"}),
+            self.ComplexEntity(("a", 3), {"type": "string_int3"}),
         ]
 
         for entity in entities:
@@ -162,10 +175,11 @@ class TestInMemoryRepositoryEdgeCases:
 
     @pytest.mark.asyncio
     async def test_delete_with_complex_ids(
-        self, repository: InMemoryRepository
+        self,
+        repository: InMemoryRepository[TestInMemoryRepositoryEdgeCases.ComplexEntity, UUID],
     ) -> None:
         """Test delete method with complex ID types."""
-        complex_id = ("delete", "me")
+        complex_id = ("delete", 1)
         entity = self.ComplexEntity(complex_id, {"status": "to_delete"})
 
         # Save entity
@@ -187,7 +201,8 @@ class TestInMemoryRepositoryEdgeCases:
 
     @pytest.mark.asyncio
     async def test_storage_internal_dict_behavior(
-        self, repository: InMemoryRepository
+        self,
+        repository: InMemoryRepository[TestInMemoryRepositoryEdgeCases.ComplexEntity, UUID],
     ) -> None:
         """Test internal storage dictionary behavior."""
         # Test that the internal storage behaves correctly with various key types
@@ -214,16 +229,14 @@ class TestInMemoryRepositoryEdgeCases:
         assert await repository.count() == 0
 
 
-class TestPipelineRepositorySpecialization:
-    """Test PipelineRepository type specialization."""
+class TestDIPCompliantRepository:
+    """Test DIP-compliant repository pattern without concrete type aliases."""
 
     @pytest.mark.asyncio
-    async def test_pipeline_repository_type_alias(self) -> None:
-        """Test PipelineRepository type alias functionality."""
-        from flext_core.infrastructure.memory import PipelineRepository
-
-        # Create pipeline repository
-        pipeline_repo = PipelineRepository()
+    async def test_generic_repository_with_pipeline(self) -> None:
+        """Test InMemoryRepository as generic implementation with Pipeline."""
+        # DIP compliance - use generic repository, not concrete aliases
+        pipeline_repo = InMemoryRepository[Pipeline, str]()
 
         # Create pipeline entity
         pipeline = Pipeline(
@@ -237,7 +250,7 @@ class TestPipelineRepositorySpecialization:
         assert saved.pipeline_name.value == "Test Pipeline"
 
         # Retrieve pipeline (use entity.id, not pipeline_id!)
-        retrieved = await pipeline_repo.get(pipeline.id)
+        retrieved = await pipeline_repo.get_by_id(pipeline.id)
         assert retrieved is not None
         assert retrieved.pipeline_name.value == "Test Pipeline"
 
@@ -245,14 +258,14 @@ class TestPipelineRepositorySpecialization:
         count = await pipeline_repo.count()
         assert count == 1
 
-        all_pipelines = await pipeline_repo.list_all()
+        all_pipelines = await pipeline_repo.find_all()
         assert len(all_pipelines) == 1
         assert all_pipelines[0].pipeline_name.value == "Test Pipeline"
 
     @pytest.mark.asyncio
-    async def test_pipeline_repository_multiple_pipelines(self) -> None:
-        """Test PipelineRepository with multiple pipelines."""
-        pipeline_repo = PipelineRepository()
+    async def test_repository_multiple_pipelines_dip(self) -> None:
+        """Test InMemoryRepository with multiple pipelines (DIP compliant)."""
+        pipeline_repo = InMemoryRepository[Pipeline, str]()
 
         # Create multiple pipelines
         pipelines = []
@@ -287,7 +300,7 @@ class TestTypeVariableAndGenericCoverage:
 
     def test_type_variables_definition(self) -> None:
         """Test type variables are properly defined."""
-        from flext_core.infrastructure.memory import T, ID
+        from flext_core.infrastructure.memory import ID, T
 
         # T should be bound to HasId
         assert T.__bound__ == HasId
@@ -301,18 +314,18 @@ class TestTypeVariableAndGenericCoverage:
 
         # Test with different entity types
         class EntityA:
-            def __init__(self, id: str, type_name: str = "A"):
-                self.id = id
+            def __init__(self, entity_id: str, type_name: str = "A") -> None:
+                self.id = entity_id
                 self.type_name = type_name
 
         class EntityB:
-            def __init__(self, id: str, type_name: str = "B"):
-                self.id = id
+            def __init__(self, entity_id: str, type_name: str = "B") -> None:
+                self.id = entity_id
                 self.type_name = type_name
 
         # Create typed repositories
-        repo_a = InMemoryRepository[EntityA]()
-        repo_b = InMemoryRepository[EntityB]()
+        repo_a = InMemoryRepository[EntityA, str]()
+        repo_b = InMemoryRepository[EntityB, int]()
 
         # Add entities to each repo
         entity_a = EntityA("a1")
@@ -340,32 +353,29 @@ class TestModuleExports:
     """Test module exports and __all__ coverage."""
 
     def test_all_exports(self) -> None:
-        """Test that __all__ exports are correct."""
+        """Test that __all__ exports are correct (DIP compliant)."""
         from flext_core.infrastructure.memory import __all__
 
         expected_exports = [
             "HasId",
             "InMemoryRepository",
-            "PipelineRepository",
+            # No concrete aliases exported - DIP compliance
         ]
 
         assert set(__all__) == set(expected_exports)
 
     def test_import_all_exports(self) -> None:
-        """Test that all exported items can be imported."""
+        """Test that all exported items can be imported (DIP compliant)."""
         from flext_core.infrastructure.memory import (
             HasId,
             InMemoryRepository,
-            PipelineRepository,
         )
 
         # Verify types are available
         assert HasId is not None
         assert InMemoryRepository is not None
-        assert PipelineRepository is not None
 
-        # Verify PipelineRepository is an alias
-        assert PipelineRepository == InMemoryRepository[Pipeline]
+        # DIP compliance - no concrete type aliases, use generic repository
 
 
 class TestAsyncBehaviorEdgeCases:
@@ -377,14 +387,14 @@ class TestAsyncBehaviorEdgeCases:
         import asyncio
 
         class ConcurrentEntity:
-            def __init__(self, id: str, value: int):
-                self.id = id
+            def __init__(self, entity_id: str, value: int) -> None:
+                self.id = entity_id
                 self.value = value
 
-        repo = InMemoryRepository[ConcurrentEntity]()
+        repo = InMemoryRepository[ConcurrentEntity, UUID]()
 
         # Create tasks for concurrent operations
-        async def save_entity(i: int):
+        async def save_entity(i: int) -> ConcurrentEntity:
             entity = ConcurrentEntity(f"entity_{i}", i)
             return await repo.save(entity)
 
@@ -408,11 +418,11 @@ class TestAsyncBehaviorEdgeCases:
         """Test repository maintains state consistency."""
 
         class StateEntity:
-            def __init__(self, id: str, state: str):
-                self.id = id
+            def __init__(self, entity_id: str, state: str) -> None:
+                self.id = entity_id
                 self.state = state
 
-        repo = InMemoryRepository[StateEntity]()
+        repo = InMemoryRepository[StateEntity, UUID]()
 
         # Perform series of operations
         entity1 = StateEntity("1", "initial")

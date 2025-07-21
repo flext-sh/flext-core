@@ -6,4 +6,6 @@ SPDX-License-Identifier: MIT
 Scripts for development automation.
 """
 
-__version__ = "0.1.0"
+from __future__ import annotations
+
+__version__ = "0.7.0"

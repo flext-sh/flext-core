@@ -1,12 +1,19 @@
-"""Tests for flext_core.domain.types module."""
+"""FLEXT Core Tests.
 
-import pytest
+Copyright (c) 2025 Flext. All rights reserved.
+SPDX-License-Identifier: MIT
 
-from flext_core.domain.types import EnvironmentLiteral
-from flext_core.domain.types import LogLevel
-from flext_core.domain.types import ProjectName
-from flext_core.domain.types import ServiceResult
-from flext_core.domain.types import Version
+Test suite for FLEXT Core framework.
+"""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from flext_core.domain.types import LogLevel, ServiceResult
+
+if TYPE_CHECKING:
+    from flext_core.domain.types import ProjectName, Version
 
 
 class TestServiceResult:
@@ -18,9 +25,7 @@ class TestServiceResult:
 
         assert result.is_success
         assert result.data == "test_data"
-        assert result.value == "test_data"
         assert result.error is None
-        assert result.error_message is None
 
     def test_service_result_failure(self) -> None:
         """Test failed ServiceResult creation."""
@@ -28,24 +33,22 @@ class TestServiceResult:
 
         assert not result.is_success
         assert result.data is None
-        assert result.value is None
         assert result.error == "test_error"
-        assert result.error_message == "test_error"
 
     def test_service_result_success_method(self) -> None:
         """Test ServiceResult.success method."""
-        result = ServiceResult.success("success_data")
+        result = ServiceResult.ok("success_data")
 
         assert result.is_success
-        assert result.value == "success_data"
+        assert result.data == "success_data"
         assert result.error is None
 
     def test_service_result_failure_method(self) -> None:
         """Test ServiceResult.failure method."""
-        result: ServiceResult[str] = ServiceResult.failure("failure_message")
+        result: ServiceResult[str] = ServiceResult.fail("failure_message")
 
         assert not result.is_success
-        assert result.value is None
+        assert result.data is None
         assert result.error == "failure_message"
 
     def test_service_result_none_data(self) -> None:
@@ -53,7 +56,7 @@ class TestServiceResult:
         result = ServiceResult.ok(None)
 
         assert result.is_success
-        assert result.value is None
+        assert result.data is None
         assert result.error is None
 
     def test_service_result_complex_data(self) -> None:
@@ -62,9 +65,9 @@ class TestServiceResult:
         result = ServiceResult.ok(test_data)
 
         assert result.is_success
-        assert result.value == test_data
-        assert result.value["key"] == "value"
-        assert result.value["list"] == [1, 2, 3]
+        assert result.data == test_data
+        assert result.data["key"] == "value"
+        assert result.data["list"] == [1, 2, 3]
 
     def test_service_result_string_representation(self) -> None:
         """Test ServiceResult string representation."""
@@ -82,10 +85,10 @@ class TestServiceResult:
         result3 = ServiceResult.ok("different")
 
         # Same data should have same properties
-        assert result1.value == result2.value
+        assert result1.data == result2.data
         assert result1.is_success == result2.is_success
         # Different data should have different values
-        assert result1.value != result3.value
+        assert result1.data != result3.data
 
     def test_service_result_boolean_context(self) -> None:
         """Test ServiceResult in boolean context."""
@@ -112,11 +115,11 @@ class TestTypedLiterals:
     def test_log_level_enum(self) -> None:
         """Test LogLevel enum values."""
         # Test enum values are correctly set
-        assert LogLevel.DEBUG.value == "debug"
-        assert LogLevel.INFO.value == "info"
-        assert LogLevel.WARNING.value == "warning"
-        assert LogLevel.ERROR.value == "error"
-        assert LogLevel.CRITICAL.value == "critical"
+        assert LogLevel.DEBUG.value == "DEBUG"
+        assert LogLevel.INFO.value == "INFO"
+        assert LogLevel.WARNING.value == "WARNING"
+        assert LogLevel.ERROR.value == "ERROR"
+        assert LogLevel.CRITICAL.value == "CRITICAL"
 
     def test_log_level_comparison(self) -> None:
         """Test LogLevel comparison operations."""
@@ -128,8 +131,8 @@ class TestTypedLiterals:
         assert debug_level != info_level
 
         # Test string equality
-        assert LogLevel.DEBUG.value == "debug"
-        assert LogLevel.INFO.value == "info"
+        assert LogLevel.DEBUG.value == "DEBUG"
+        assert LogLevel.INFO.value == "INFO"
 
 
 class TestCustomTypes:
@@ -166,15 +169,16 @@ class TestServiceResultAdvanced:
 
         # Test successful chain
         result1 = validate_data("test")
-        if result1.is_success and result1.value is not None:
-            result2 = process_data(result1.value)
+        if result1.is_success and result1.data is not None:
+            result2 = process_data(result1.data)
             assert result2.is_success
-            assert result2.value == "TEST"
+            assert result2.data == "TEST"
 
         # Test failure chain
         result3 = validate_data("hi")
         assert not result3.is_success
-        assert result3.error is not None and "too short" in result3.error
+        assert result3.error is not None
+        assert "too short" in result3.error
 
     def test_service_result_error_handling(self) -> None:
         """Test ServiceResult error handling patterns."""
@@ -187,7 +191,7 @@ class TestServiceResultAdvanced:
         # Test success case
         success = risky_operation(False)
         assert success.is_success
-        assert success.value == 42
+        assert success.data == 42
 
         # Test failure case
         failure = risky_operation(True)
@@ -202,10 +206,10 @@ class TestServiceResultAdvanced:
         list_result = ServiceResult.ok([1, 2, 3])
         dict_result = ServiceResult.ok({"key": "value"})
 
-        assert string_result.value == "string"
-        assert int_result.value == 123
-        assert list_result.value == [1, 2, 3]
-        assert dict_result.value == {"key": "value"}
+        assert string_result.data == "string"
+        assert int_result.data == 123
+        assert list_result.data == [1, 2, 3]
+        assert dict_result.data == {"key": "value"}
 
     def test_service_result_status_property(self) -> None:
         """Test ServiceResult status property."""
@@ -239,8 +243,9 @@ class TestEdgeCases:
         result = ServiceResult.ok(large_data)
 
         assert result.is_success
-        assert result.value is not None and len(result.value) == 10000
-        assert result.value == large_data
+        assert result.data is not None
+        assert len(result.data) == 10000
+        assert result.data == large_data
 
     def test_service_result_nested_results(self) -> None:
         """Test ServiceResult containing other ServiceResults."""
@@ -248,5 +253,7 @@ class TestEdgeCases:
         outer_result = ServiceResult.ok(inner_result)
 
         assert outer_result.is_success
-        assert outer_result.value is not None and outer_result.value.is_success
-        assert outer_result.value is not None and outer_result.value.value == "inner"
+        assert outer_result.data is not None
+        assert outer_result.data.is_success
+        assert outer_result.data is not None
+        assert outer_result.data.data == "inner"

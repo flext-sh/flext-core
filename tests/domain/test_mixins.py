@@ -1,14 +1,16 @@
-"""Tests for flext_core.domain.mixins module."""
+"""FLEXT Core Tests.
 
-from datetime import UTC
-from datetime import datetime
-from datetime import timedelta
-from unittest.mock import Mock
+Copyright (c) 2025 Flext. All rights reserved.
+SPDX-License-Identifier: MIT
 
-import pytest
+Test suite for FLEXT Core framework.
+"""
 
-from flext_core.domain.mixins import StatusMixin
-from flext_core.domain.mixins import TimestampMixin
+from __future__ import annotations
+
+from datetime import UTC, datetime, timedelta
+
+from flext_core.domain.mixins import StatusMixin, TimestampMixin
 from flext_core.domain.types import EntityStatus
 
 

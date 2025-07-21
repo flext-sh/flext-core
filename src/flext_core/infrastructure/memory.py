@@ -1,7 +1,10 @@
-"""In-memory implementations.
+"""In-memory implementations with Dependency Inversion Principle compliance.
 
 Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
+
+DIP-compliant infrastructure implementations that depend on domain abstractions,
+not on concrete infrastructure details.
 """
 
 from __future__ import annotations
@@ -11,7 +14,8 @@ from typing import Protocol
 from typing import TypeVar
 from typing import runtime_checkable
 
-from flext_core.domain.pipeline import Pipeline
+# DIP compliance - depend on domain abstractions, not infrastructure concretions
+from flext_core.domain.core import Repository
 
 
 @runtime_checkable
@@ -25,8 +29,8 @@ T = TypeVar("T", bound=HasId)
 ID = TypeVar("ID")
 
 
-class InMemoryRepository[T: HasId]:
-    """Generic in-memory repository - SOLID principles."""
+class InMemoryRepository[T: HasId, ID](Repository[T, ID]):
+    """Generic in-memory repository - DIP compliant implementation."""
 
     def __init__(self) -> None:
         """Initialize empty repository storage."""
@@ -47,7 +51,7 @@ class InMemoryRepository[T: HasId]:
         self._storage[entity_id] = entity
         return entity
 
-    async def get(self, entity_id: object) -> T | None:
+    async def get_by_id(self, entity_id: ID) -> T | None:
         """Get entity by ID.
 
         Args:
@@ -59,7 +63,7 @@ class InMemoryRepository[T: HasId]:
         """
         return self._storage.get(entity_id)
 
-    async def delete(self, entity_id: object) -> bool:
+    async def delete(self, entity_id: ID) -> bool:
         """Delete entity by ID.
 
         Args:
@@ -74,11 +78,14 @@ class InMemoryRepository[T: HasId]:
             return True
         return False
 
-    async def list_all(self) -> list[T]:
-        """List all entities.
+    async def find_all(self) -> list[T]:
+        """Find all entities.
 
         Returns:
             List of all entities
+
+        Raises:
+            RepositoryError: If find operation fails
 
         """
         return list(self._storage.values())
@@ -89,6 +96,9 @@ class InMemoryRepository[T: HasId]:
         Returns:
             Number of entities
 
+        Raises:
+            RepositoryError: If count operation fails
+
         """
         return len(self._storage)
 
@@ -97,12 +107,11 @@ class InMemoryRepository[T: HasId]:
         self._storage.clear()
 
 
-# Type-specific alias for better type safety
-PipelineRepository = InMemoryRepository[Pipeline]
+# No type-specific aliases - use dependency injection instead
 
 
 __all__ = [
     "HasId",
     "InMemoryRepository",
-    "PipelineRepository",
+    # No concrete aliases exported
 ]

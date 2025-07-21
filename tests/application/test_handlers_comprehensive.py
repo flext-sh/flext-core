@@ -4,26 +4,17 @@ This file ensures 100% test coverage for all handler classes,
 including all TYPE_CHECKING imports and edge cases.
 """
 
+from __future__ import annotations
+
 import pytest
-from typing import TYPE_CHECKING
 
-# This import triggers the TYPE_CHECKING block in handlers.py
-if TYPE_CHECKING:
-    from flext_core.application import handlers
-
-# Force TYPE_CHECKING import coverage by importing during module loading
-import sys
-import importlib
-
-if "flext_core.application.handlers" in sys.modules:
-    # Re-import to ensure TYPE_CHECKING block is executed
-    importlib.reload(sys.modules["flext_core.application.handlers"])
-
-from flext_core.application.handlers import CommandHandler
-from flext_core.application.handlers import EventHandler
-from flext_core.application.handlers import QueryHandler
-from flext_core.application.handlers import SimpleQueryHandler
-from flext_core.application.handlers import VoidCommandHandler
+from flext_core.application.handlers import (
+    CommandHandler,
+    EventHandler,
+    QueryHandler,
+    SimpleQueryHandler,
+    VoidCommandHandler,
+)
 from flext_core.domain.types import ServiceResult
 
 
@@ -65,7 +56,7 @@ class TestCommandHandler:
 
         class ConcreteCommandHandler(CommandHandler[TestCommand, str]):
             async def handle(self, command: TestCommand) -> ServiceResult[str]:
-                return ServiceResult.success(f"Handled: {command.name}")
+                return ServiceResult.ok(f"Handled: {command.name}")
 
         handler = ConcreteCommandHandler()
         assert callable(handler.handle)
@@ -88,7 +79,7 @@ class TestQueryHandler:
 
         class ConcreteQueryHandler(QueryHandler[TestQuery, list[str]]):
             async def handle(self, query: TestQuery) -> ServiceResult[list[str]]:
-                return ServiceResult.success([f"Result for: {query.filter}"])
+                return ServiceResult.ok([f"Result for: {query.filter}"])
 
         handler = ConcreteQueryHandler()
         assert callable(handler.handle)
@@ -111,7 +102,7 @@ class TestEventHandler:
 
         class ConcreteEventHandler(EventHandler[TestEvent, bool]):
             async def handle(self, event: TestEvent) -> ServiceResult[bool]:
-                return ServiceResult.success(True)
+                return ServiceResult.ok(True)
 
         handler = ConcreteEventHandler()
         assert callable(handler.handle)
@@ -123,7 +114,7 @@ class TestVoidCommandHandler:
     def test_void_command_handler_is_abstract(self) -> None:
         """Test that VoidCommandHandler cannot be instantiated directly."""
         with pytest.raises(TypeError):
-            VoidCommandHandler()
+            VoidCommandHandler()  # type: ignore[abstract]
 
     def test_void_command_handler_protocol(self) -> None:
         """Test VoidCommandHandler protocol definition."""
@@ -134,7 +125,7 @@ class TestVoidCommandHandler:
 
         class ConcreteVoidCommandHandler(VoidCommandHandler[TestCommand]):
             async def handle(self, command: TestCommand) -> ServiceResult[None]:
-                return ServiceResult.success(None)
+                return ServiceResult.ok(None)
 
         handler = ConcreteVoidCommandHandler()
         assert callable(handler.handle)
@@ -146,7 +137,7 @@ class TestSimpleQueryHandler:
     def test_simple_query_handler_is_abstract(self) -> None:
         """Test that SimpleQueryHandler cannot be instantiated directly."""
         with pytest.raises(TypeError):
-            SimpleQueryHandler()
+            SimpleQueryHandler()  # type: ignore[abstract]
 
     def test_simple_query_handler_protocol(self) -> None:
         """Test SimpleQueryHandler protocol definition."""
@@ -154,11 +145,12 @@ class TestSimpleQueryHandler:
 
         # Create a concrete implementation
         class TestQuery:
-            params: dict[str, str] = {"key": "value"}
+            def __init__(self) -> None:
+                self.params: dict[str, str] = {"key": "value"}
 
         class ConcreteSimpleQueryHandler(SimpleQueryHandler[TestQuery]):
             async def handle(self, query: TestQuery) -> ServiceResult[dict[str, Any]]:
-                return ServiceResult.success({"result": query.params})
+                return ServiceResult.ok({"result": query.params})
 
         handler = ConcreteSimpleQueryHandler()
         assert callable(handler.handle)
@@ -215,7 +207,6 @@ class TestTypeVariables:
 
     def test_generic_type_safety(self) -> None:
         """Test generic type safety with different types."""
-        from typing import Any
 
         # Test with different command types
         class StringCommand:
@@ -226,11 +217,11 @@ class TestTypeVariables:
 
         class StringCommandHandler(CommandHandler[StringCommand, str]):
             async def handle(self, command: StringCommand) -> ServiceResult[str]:
-                return ServiceResult.success(command.value)
+                return ServiceResult.ok(command.value)
 
         class IntCommandHandler(CommandHandler[IntCommand, int]):
             async def handle(self, command: IntCommand) -> ServiceResult[int]:
-                return ServiceResult.success(command.value)
+                return ServiceResult.ok(command.value)
 
         # Handlers should be properly typed
         string_handler = StringCommandHandler()
@@ -265,21 +256,21 @@ class TestHandlerIntegrationScenarios:
                     return ServiceResult.fail("Email is required")
 
                 user = User(id=1, name=command.name, email=command.email)
-                return ServiceResult.success(user)
+                return ServiceResult.ok(user)
 
         handler = CreateUserCommandHandler()
         command = CreateUserCommand(name="John", email="john@example.com")
 
         result = await handler.handle(command)
         assert result.is_success
-        user = result.value
+        user = result.data
+        assert user is not None
         assert user.name == "John"
         assert user.email == "john@example.com"
 
     async def test_query_handler_integration(self) -> None:
         """Test query handler in realistic scenario."""
         from dataclasses import dataclass
-        from typing import List
 
         @dataclass
         class GetUsersQuery:
@@ -291,21 +282,22 @@ class TestHandlerIntegrationScenarios:
             id: int
             name: str
 
-        class GetUsersQueryHandler(QueryHandler[GetUsersQuery, List[User]]):
-            async def handle(self, query: GetUsersQuery) -> ServiceResult[List[User]]:
+        class GetUsersQueryHandler(QueryHandler[GetUsersQuery, list[User]]):
+            async def handle(self, query: GetUsersQuery) -> ServiceResult[list[User]]:
                 # Simulate database query
                 users = [
                     User(id=1, name="John"),
                     User(id=2, name="Jane"),
                 ]
-                return ServiceResult.success(users[: query.limit])
+                return ServiceResult.ok(users[: query.limit])
 
         handler = GetUsersQueryHandler()
         query = GetUsersQuery(limit=1)
 
         result = await handler.handle(query)
         assert result.is_success
-        users = result.value
+        users = result.data
+        assert users is not None
         assert len(users) == 1
         assert users[0].name == "John"
 
@@ -325,11 +317,11 @@ class TestHandlerIntegrationScenarios:
                     return ServiceResult.fail("Invalid user ID")
 
                 # Simulate successful notification
-                return ServiceResult.success(True)
+                return ServiceResult.ok(True)
 
         handler = UserCreatedEventHandler()
         event = UserCreatedEvent(user_id=1, user_name="John")
 
         result = await handler.handle(event)
         assert result.is_success
-        assert result.value is True
+        assert result.data is True

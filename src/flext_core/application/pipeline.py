@@ -5,10 +5,16 @@ SPDX-License-Identifier: MIT
 
 Commands, Queries, and Service all together.
 Zero duplication, maximum cohesion.
+
+.. deprecated:: 0.7.0
+   This module has been moved to flext.services.application.pipeline.
+   Please use 'from flext.services.application import PipelineService' instead.
+   This compatibility layer will be removed in v0.8.0.
 """
 
 from __future__ import annotations
 
+import warnings
 from typing import TYPE_CHECKING
 from uuid import UUID
 
@@ -19,8 +25,17 @@ from pydantic import ValidationError
 from flext_core.domain.pipeline import Pipeline
 from flext_core.domain.pipeline import PipelineId
 from flext_core.domain.pipeline import PipelineName
-from flext_core.domain.pydantic_base import APIRequest
+from flext_core.domain.pydantic_base import DomainBaseModel
 from flext_core.domain.types import ServiceResult
+
+# Issue deprecation warning when module is imported
+warnings.warn(
+    "flext_core.application.pipeline is deprecated. "
+    "Use 'from flext.services.application import PipelineService' instead. "
+    "This module will be removed in v0.8.0.",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 if TYPE_CHECKING:  # pragma: no cover
     from flext_core.domain.pipeline import PipelineExecution
@@ -28,7 +43,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 # Commands
-class CreatePipelineCommand(APIRequest):
+class CreatePipelineCommand(DomainBaseModel):
     """Create pipeline command."""
 
     name: str = Field(..., description="Pipeline name", max_length=100)
@@ -39,20 +54,20 @@ class CreatePipelineCommand(APIRequest):
     )
 
 
-class ExecutePipelineCommand(APIRequest):
+class ExecutePipelineCommand(DomainBaseModel):
     """Execute pipeline command."""
 
     pipeline_id: str = Field(..., description="Pipeline ID to execute")
 
 
 # Queries
-class GetPipelineQuery(APIRequest):
+class GetPipelineQuery(DomainBaseModel):
     """Get pipeline query."""
 
     pipeline_id: str = Field(..., description="Pipeline ID to retrieve")
 
 
-class ListPipelinesQuery(APIRequest):
+class ListPipelinesQuery(DomainBaseModel):
     """List pipelines query."""
 
     limit: int = Field(
@@ -110,8 +125,8 @@ class PipelineService:
             return ServiceResult.fail(f"Repository error: {e}")
         except (RuntimeError, AttributeError, ConnectionError) as e:
             return ServiceResult.fail(f"Repository error: {e}")
-        except Exception as e:  # noqa: BLE001
-            return ServiceResult.fail(f"Repository error: {e}")
+        except (LookupError, MemoryError, RecursionError) as e:
+            return ServiceResult.fail(f"System error: {e}")
 
     async def execute_pipeline(
         self,
@@ -171,8 +186,8 @@ class PipelineService:
             return ServiceResult.fail(f"Repository error: {e}")
         except (RuntimeError, AttributeError, ConnectionError) as e:
             return ServiceResult.fail(f"Repository error: {e}")
-        except Exception as e:  # noqa: BLE001
-            return ServiceResult.fail(f"Repository error: {e}")
+        except (LookupError, MemoryError, RecursionError) as e:
+            return ServiceResult.fail(f"System error: {e}")
 
     async def deactivate_pipeline(
         self,
@@ -205,8 +220,8 @@ class PipelineService:
             return ServiceResult.fail(f"Repository error: {e}")
         except (RuntimeError, AttributeError, ConnectionError) as e:
             return ServiceResult.fail(f"Repository error: {e}")
-        except Exception as e:  # noqa: BLE001
-            return ServiceResult.fail(f"Repository error: {e}")
+        except (LookupError, MemoryError, RecursionError) as e:
+            return ServiceResult.fail(f"System error: {e}")
 
 
 __all__ = [

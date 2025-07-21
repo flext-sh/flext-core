@@ -1,23 +1,29 @@
-"""Comprehensive tests for flext_core.domain.types module - targeting missing coverage.
+"""FLEXT Core Tests.
+
+Copyright (c) 2025 Flext. All rights reserved.
+SPDX-License-Identifier: MIT
 
 This file provides additional test coverage to reach 95%+ coverage,
 complementing the existing test_types.py without duplication.
 """
 
+from __future__ import annotations
+
+from datetime import UTC
 from uuid import uuid4
 
 import pytest
 
-from flext_core.domain.types import ServiceResult
-from flext_core.domain.types import ResultStatus
-from flext_core.domain.types import EnvironmentLiteral
-from flext_core.domain.types import LogLevel
-from flext_core.domain.types import ProjectName
-from flext_core.domain.types import Version
-from flext_core.domain.types import EntityId
-from flext_core.domain.types import CreatedAt
-from flext_core.domain.types import ConfigDict
-from flext_core.domain.types import EntityDict
+from flext_core.domain.types import (
+    ConfigDict,
+    CreatedAt,
+    EntityDict,
+    EntityId,
+    EnvironmentLiteral,
+    LogLevel,
+    ResultStatus,
+    ServiceResult,
+)
 
 
 class TestServiceResultAdvancedMethods:
@@ -29,8 +35,8 @@ class TestServiceResultAdvancedMethods:
         failure_result: ServiceResult[str] = ServiceResult.fail("error")
 
         # Test is_successful property (different from is_success)
-        assert success_result.is_successful is True
-        assert failure_result.is_successful is False
+        assert success_result._success is True
+        assert failure_result._success is False
 
     def test_service_result_data_property(self) -> None:
         """Test data property access (line 341)."""
@@ -61,28 +67,28 @@ class TestServiceResultAdvancedMethods:
         success_result = ServiceResult.ok("test")
         failure_result: ServiceResult[str] = ServiceResult.fail("test_error")
 
-        assert success_result.error_message is None
-        assert failure_result.error_message == "test_error"
+        assert success_result.error is None
+        assert failure_result.error == "test_error"
 
     def test_service_result_value_property(self) -> None:
         """Test value property alias."""
         result = ServiceResult.ok("test_data")
         failure_result: ServiceResult[str] = ServiceResult.fail("error")
 
-        assert result.value == "test_data"
-        assert failure_result.value is None
+        assert result.data == "test_data"
+        assert failure_result.data is None
 
     def test_service_result_success_alias_method(self) -> None:
         """Test success() alias method (line 438)."""
-        result = ServiceResult.success("test_data")
+        result = ServiceResult.ok("test_data")
 
         assert result.is_success
-        assert result.value == "test_data"
+        assert result.data == "test_data"
         assert result.status == ResultStatus.SUCCESS
 
     def test_service_result_failure_alias_method(self) -> None:
         """Test failure() alias method."""
-        result: ServiceResult[str] = ServiceResult.failure("test_error")
+        result: ServiceResult[str] = ServiceResult.fail("test_error")
 
         assert not result.is_success
         assert result.error == "test_error"
@@ -142,11 +148,10 @@ class TestProtocolsAndAbstractMethods:
     def test_entity_protocol_eq_abstract(self) -> None:
         """Test Entity protocol __eq__ abstract method (line 128)."""
         # This tests that the protocol defines the abstract method
-        from flext_core.domain.types import EntityProtocol
 
         # Create a concrete implementation
         class ConcreteEntity:
-            def __init__(self, entity_id: str):
+            def __init__(self, entity_id: str) -> None:
                 self.id = entity_id
 
             def __eq__(self, other: object) -> bool:
@@ -170,7 +175,7 @@ class TestProtocolsAndAbstractMethods:
 
         # Test that the protocol defines the abstract hash method
         class HashableEntity:
-            def __init__(self, entity_id: str):
+            def __init__(self, entity_id: str) -> None:
                 self.id = entity_id
 
             def __eq__(self, other: object) -> bool:
@@ -200,7 +205,7 @@ class TestTypeLiteralsAndAliases:
 
     def test_created_at_type(self) -> None:
         """Test CreatedAt type alias usage."""
-        from datetime import datetime, UTC
+        from datetime import UTC, datetime
 
         timestamp: CreatedAt = datetime.now(UTC)
         assert isinstance(timestamp, datetime)
@@ -218,10 +223,10 @@ class TestTypeLiteralsAndAliases:
 
     def test_entity_dict_type(self) -> None:
         """Test EntityDict type alias usage."""
-        from datetime import datetime, timezone
+        from datetime import datetime
 
         entity_id = uuid4()
-        created_time = datetime.now(timezone.utc)
+        created_time = datetime.now(UTC)
 
         entity_dict: EntityDict = {
             "id": entity_id,
@@ -331,7 +336,7 @@ class TestServiceResultAdvancedMethods2:
         mapped = result.map(lambda x: x.upper())
 
         assert mapped.is_success
-        assert mapped.value == "TEST"
+        assert mapped.data == "TEST"
 
     def test_service_result_map_failure(self) -> None:
         """Test map method with failed result (lines 500-506)."""
@@ -341,7 +346,7 @@ class TestServiceResultAdvancedMethods2:
 
         assert not mapped.is_success
         assert mapped.error == "error"
-        assert mapped.value is None
+        assert mapped.data is None
 
     def test_service_result_map_none_data(self) -> None:
         """Test map method with None data (lines 500-506)."""
@@ -358,11 +363,11 @@ class TestEnvironmentAndLogLevelEnums:
 
     def test_log_level_enum_values(self) -> None:
         """Test LogLevel enum values."""
-        assert LogLevel.DEBUG.value == "debug"
-        assert LogLevel.INFO.value == "info"
-        assert LogLevel.WARNING.value == "warning"
-        assert LogLevel.ERROR.value == "error"
-        assert LogLevel.CRITICAL.value == "critical"
+        assert LogLevel.DEBUG.value == "DEBUG"
+        assert LogLevel.INFO.value == "INFO"
+        assert LogLevel.WARNING.value == "WARNING"
+        assert LogLevel.ERROR.value == "ERROR"
+        assert LogLevel.CRITICAL.value == "CRITICAL"
 
     def test_environment_literal_values(self) -> None:
         """Test EnvironmentLiteral values."""
@@ -383,8 +388,9 @@ class TestValidationFunctions:
 
     def test_validate_entity_id_with_uuid(self) -> None:
         """Test validate_entity_id with UUID object (lines 627-632)."""
-        from flext_core.domain.types import validate_entity_id
         from uuid import uuid4
+
+        from flext_core.domain.types import validate_entity_id
 
         test_uuid = uuid4()
         result = validate_entity_id(test_uuid)
@@ -392,8 +398,9 @@ class TestValidationFunctions:
 
     def test_validate_entity_id_with_string(self) -> None:
         """Test validate_entity_id with string (lines 627-632)."""
-        from flext_core.domain.types import validate_entity_id
         from uuid import uuid4
+
+        from flext_core.domain.types import validate_entity_id
 
         test_uuid = uuid4()
         result = validate_entity_id(str(test_uuid))
@@ -403,9 +410,8 @@ class TestValidationFunctions:
         """Test validate_entity_id with invalid type (lines 627-632)."""
         from flext_core.domain.types import validate_entity_id
 
-        with pytest.raises(ValueError) as exc_info:
+        with pytest.raises(ValueError, match="Invalid entity ID"):
             validate_entity_id(123)  # Invalid type
-        assert "Invalid entity ID" in str(exc_info.value)
 
     def test_validate_project_name_with_non_string(self) -> None:
         """Test validate_project_name with non-string (lines 649-658)."""
@@ -419,27 +425,27 @@ class TestValidationFunctions:
         """Test validate_project_name with too short name (lines 649-658)."""
         from flext_core.domain.types import validate_project_name
 
-        with pytest.raises(ValueError) as exc_info:
+        with pytest.raises(ValueError, match="Project name must be 2-50 characters"):
             validate_project_name("a")  # Too short (< 2 chars)
-        assert "Project name must be 2-50 characters" in str(exc_info.value)
 
     def test_validate_project_name_too_long(self) -> None:
         """Test validate_project_name with too long name (lines 649-658)."""
         from flext_core.domain.types import validate_project_name
 
-        with pytest.raises(ValueError) as exc_info:
+        with pytest.raises(
+            ValueError, match="Project name length must be between 2 and 50 characters"
+        ):
             validate_project_name("a" * 51)  # Too long (> 50 chars)
-        assert "Project name must be 2-50 characters" in str(exc_info.value)
 
     def test_validate_project_name_invalid_characters(self) -> None:
         """Test validate_project_name with invalid characters (lines 649-658)."""
         from flext_core.domain.types import validate_project_name
 
-        with pytest.raises(ValueError) as exc_info:
+        with pytest.raises(
+            ValueError,
+            match="Project name must be alphanumeric with hyphens/underscores",
+        ):
             validate_project_name("test@project")  # Invalid character @
-        assert "Project name must be alphanumeric with hyphens/underscores" in str(
-            exc_info.value
-        )
 
     def test_validate_project_name_valid(self) -> None:
         """Test validate_project_name with valid name (lines 649-658)."""
@@ -453,11 +459,11 @@ class TestValidationFunctions:
         from flext_core.domain.types import validate_project_name
 
         # The function validates before stripping, so spaces cause failure
-        with pytest.raises(ValueError) as exc_info:
+        with pytest.raises(
+            ValueError,
+            match="Project name must be alphanumeric with hyphens/underscores",
+        ):
             validate_project_name("  valid_name_123  ")
-        assert "Project name must be alphanumeric with hyphens/underscores" in str(
-            exc_info.value
-        )
 
 
 class TestAnnotationHelpers:
@@ -503,7 +509,8 @@ class TestServiceResultAdvancedMethodsBranches:
         mapped = result.map(failing_func)
 
         assert not mapped.is_success
-        assert mapped.error is not None and "Function failed" in mapped.error
+        assert mapped.error is not None
+        assert "Function failed" in mapped.error
 
     def test_service_result_and_then_success(self) -> None:
         """Test and_then method with successful result (lines 518-520)."""
@@ -515,7 +522,7 @@ class TestServiceResultAdvancedMethodsBranches:
         chained = result.and_then(transform_func)
 
         assert chained.is_success
-        assert chained.value == "TEST"
+        assert chained.data == "TEST"
 
     def test_service_result_and_then_failure(self) -> None:
         """Test and_then method with failed result (lines 518-520)."""
@@ -548,11 +555,10 @@ class TestProtocolMethodCoverage:
     def test_entity_protocol_eq_ellipsis(self) -> None:
         """Test EntityProtocol.__eq__ ellipsis (line 128)."""
         from flext_core.domain.types import EntityProtocol
-        import inspect
 
         # Create a mock implementation to trigger the protocol methods
         class MockEntity:
-            def __init__(self, entity_id: str):
+            def __init__(self, entity_id: str) -> None:
                 self.id = entity_id
                 self.created_at = None
                 self.updated_at = None
@@ -576,7 +582,7 @@ class TestProtocolMethodCoverage:
         from flext_core.domain.types import EntityProtocol
 
         class MockEntityWithHash:
-            def __init__(self, entity_id: str):
+            def __init__(self, entity_id: str) -> None:
                 self.id = entity_id
                 self.created_at = None
                 self.updated_at = None
@@ -601,8 +607,9 @@ class TestProtocolEllipsisDirectCoverage:
     def test_direct_protocol_method_coverage(self) -> None:
         """Test to directly cover protocol ellipsis methods."""
         # Import and inspect the protocol to trigger line execution
-        from flext_core.domain.types import EntityProtocol
         import inspect
+
+        from flext_core.domain.types import EntityProtocol
 
         # Get the protocol's method signatures to trigger coverage
         eq_method = getattr(EntityProtocol, "__eq__", None)

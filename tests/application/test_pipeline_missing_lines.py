@@ -3,19 +3,22 @@
 This file targets specific missing exception handlers and edge cases.
 """
 
-from unittest.mock import AsyncMock, Mock, patch
-import pytest
-from pydantic import ValidationError
+from __future__ import annotations
 
-from flext_core.application.pipeline import PipelineService
-from flext_core.application.pipeline import CreatePipelineCommand
-from flext_core.application.pipeline import ExecutePipelineCommand
-from flext_core.application.pipeline import GetPipelineQuery
-from flext_core.application.pipeline import ListPipelinesQuery
+from unittest.mock import AsyncMock
+
+import pytest
+
+from flext_core.application.pipeline import (
+    CreatePipelineCommand,
+    ExecutePipelineCommand,
+    GetPipelineQuery,
+    ListPipelinesQuery,
+    PipelineService,
+)
 
 # DeactivatePipelineCommand doesn't exist in current implementation
-from flext_core.domain.pipeline import Pipeline, PipelineName, PipelineId
-from flext_core.domain.types import ServiceResult
+from flext_core.domain.pipeline import Pipeline, PipelineId, PipelineName
 
 
 class TestMissingExceptionHandlers:
@@ -92,8 +95,10 @@ class TestMissingExceptionHandlers:
         # Make repository.get_by_id raise RuntimeError
         mock_repository.get_by_id.side_effect = RuntimeError("Runtime error in get")
 
-        pipeline_id = PipelineId()
-        command = GetPipelineQuery(pipeline_id=str(pipeline_id.value))
+        from uuid import uuid4
+
+        pipeline_id = uuid4()  # PipelineId is a type alias for UUID
+        command = GetPipelineQuery(pipeline_id=str(pipeline_id))
         result = await service.get_pipeline(command)
 
         assert not result.is_success
@@ -109,11 +114,14 @@ class TestMissingExceptionHandlers:
             "Connection failed in get"
         )
 
-        pipeline_id = PipelineId()
-        command = GetPipelineQuery(pipeline_id=str(pipeline_id.value))
+        from uuid import uuid4
+
+        pipeline_id = uuid4()  # PipelineId is a type alias for UUID
+        command = GetPipelineQuery(pipeline_id=str(pipeline_id))
         result = await service.get_pipeline(command)
 
         assert not result.is_success
+        assert result.error
         assert "Repository error: Connection failed in get" in result.error
 
     async def test_get_pipeline_general_exception(
@@ -123,11 +131,14 @@ class TestMissingExceptionHandlers:
         # Make repository.get_by_id raise a generic Exception
         mock_repository.get_by_id.side_effect = Exception("Generic error in get")
 
-        pipeline_id = PipelineId()
-        command = GetPipelineQuery(pipeline_id=str(pipeline_id.value))
+        from uuid import uuid4
+
+        pipeline_id = uuid4()  # PipelineId is a type alias for UUID
+        command = GetPipelineQuery(pipeline_id=str(pipeline_id))
         result = await service.get_pipeline(command)
 
         assert not result.is_success
+        assert result.error is not None
         assert "Repository error: Generic error in get" in result.error
 
     async def test_deactivate_pipeline_runtime_error(
@@ -147,6 +158,7 @@ class TestMissingExceptionHandlers:
         result = await service.deactivate_pipeline(pipeline_id)
 
         assert not result.is_success
+        assert result.error is not None
         assert "Repository error: Runtime error in deactivate" in result.error
 
     async def test_deactivate_pipeline_general_exception(
@@ -166,6 +178,7 @@ class TestMissingExceptionHandlers:
         result = await service.deactivate_pipeline(pipeline_id)
 
         assert not result.is_success
+        assert result.error is not None
         assert "Repository error: Generic error in deactivate" in result.error
 
 
@@ -193,6 +206,7 @@ class TestEdgeCaseExceptionPaths:
         result = await service.create_pipeline(command)
 
         assert not result.is_success
+        assert result.error is not None
         assert "Repository error: Test attribute error" in result.error
 
     async def test_execute_pipeline_nested_validation_error(
@@ -226,6 +240,7 @@ class TestEdgeCaseExceptionPaths:
 
         # Should handle the error gracefully
         assert not result.is_success
+        assert result.error is not None
         assert "Repository error: Connection lost" in result.error
 
         # Repository get_by_id should have been called
@@ -254,10 +269,10 @@ class TestModuleCompleteness:
         from flext_core.infrastructure.memory import InMemoryRepository
 
         # Test with different repository types
-        repo = InMemoryRepository()
-        service = PipelineService(pipeline_repo=repo)
+        repo: InMemoryRepository[Pipeline, str] = InMemoryRepository()
+        service = PipelineService(pipeline_repo=repo)  # type: ignore[arg-type]
 
-        assert service._repo is repo
+        assert service._repo is repo  # type: ignore[comparison-overlap]
 
     def test_command_query_model_validation(self) -> None:
         """Test command and query model validation completeness."""
@@ -269,13 +284,15 @@ class TestModuleCompleteness:
         assert command.description == ""
 
         # Test ExecutePipelineCommand
-        pipeline_id = PipelineId()
-        execute_cmd = ExecutePipelineCommand(pipeline_id=str(pipeline_id.value))
-        assert execute_cmd.pipeline_id == str(pipeline_id.value)
+        from uuid import uuid4
+
+        pipeline_id = uuid4()  # PipelineId is a type alias for UUID
+        execute_cmd = ExecutePipelineCommand(pipeline_id=str(pipeline_id))
+        assert execute_cmd.pipeline_id == str(pipeline_id)
 
         # Test queries
-        get_query = GetPipelineQuery(pipeline_id=str(pipeline_id.value))
-        assert get_query.pipeline_id == str(pipeline_id.value)
+        get_query = GetPipelineQuery(pipeline_id=str(pipeline_id))
+        assert get_query.pipeline_id == str(pipeline_id)
 
         list_query = ListPipelinesQuery(limit=1, offset=0)
         assert list_query.limit == 1

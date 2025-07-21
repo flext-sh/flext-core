@@ -1,14 +1,18 @@
 """Tests for flext_core.config.adapters module."""
 
+from __future__ import annotations
+
 import pytest
 
-from flext_core.config.adapters import CLIConfig
-from flext_core.config.adapters import CLISettings
-from flext_core.config.adapters import DjangoSettings
-from flext_core.config.adapters import SingerConfig
-from flext_core.config.adapters import cli_config_to_dict
-from flext_core.config.adapters import django_settings_adapter
-from flext_core.config.adapters import singer_config_adapter
+from flext_core.config.adapters import (
+    CLIConfig,
+    CLISettings,
+    DjangoSettings,
+    SingerConfig,
+    cli_config_to_dict,
+    django_settings_adapter,
+    singer_config_adapter,
+)
 
 
 class TestCLIConfig:
@@ -42,7 +46,9 @@ class TestCLIConfig:
             assert config.output_format == fmt
 
         # Invalid format should raise validation error
-        with pytest.raises(Exception):  # pydantic.ValidationError
+        from pydantic import ValidationError
+
+        with pytest.raises(ValidationError, match="String should match pattern"):
             CLIConfig(output_format="invalid")
 
     def test_cli_config_serialization(self) -> None:
@@ -152,7 +158,7 @@ class TestDjangoSettings:
     def test_django_settings_required_fields(self) -> None:
         """Test DjangoSettings required fields validation."""
         # Should raise ValidationError if required fields are missing
-        with pytest.raises(Exception):  # pydantic.ValidationError
+        with pytest.raises(ValueError, match="validation error"):
             DjangoSettings()
 
     def test_django_settings_serialization(self) -> None:
@@ -246,7 +252,7 @@ class TestSingerConfig:
             assert config.api_url == url
 
         # Invalid URLs should raise validation error
-        with pytest.raises(Exception):  # pydantic.ValidationError
+        with pytest.raises(ValueError, match="Invalid.*URL"):
             SingerConfig(api_url="not-a-url")
 
     def test_singer_config_validation_constraints(self) -> None:
@@ -265,16 +271,22 @@ class TestSingerConfig:
         assert config.page_size == 50
 
         # Invalid values should raise validation errors
-        with pytest.raises(Exception):  # max_parallel_streams < 0
+        from pydantic import ValidationError
+
+        with pytest.raises(
+            ValidationError, match="Input should be greater than or equal to 0"
+        ):
             SingerConfig(max_parallel_streams=-1)
 
-        with pytest.raises(Exception):  # timeout <= 0
+        with pytest.raises(ValidationError, match="Input should be greater than 0"):
             SingerConfig(timeout=0.0)
 
-        with pytest.raises(Exception):  # retry_count < 0
+        with pytest.raises(
+            ValidationError, match="Input should be greater than or equal to 0"
+        ):
             SingerConfig(retry_count=-1)
 
-        with pytest.raises(Exception):  # page_size <= 0
+        with pytest.raises(ValidationError, match="Input should be greater than 0"):
             SingerConfig(page_size=0)
 
     def test_singer_config_serialization(self) -> None:
@@ -453,8 +465,7 @@ class TestConfigurationIntegration:
     def test_configuration_inheritance_patterns(self) -> None:
         """Test configuration inheritance and composition patterns."""
         # Test that all configs inherit from proper base classes
-        from flext_core.config.base import BaseConfig
-        from flext_core.config.base import BaseSettings
+        from flext_core.config.base import BaseConfig, BaseSettings
 
         cli_config = CLIConfig()
         cli_settings = CLISettings()

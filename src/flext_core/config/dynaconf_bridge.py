@@ -88,7 +88,6 @@ class DynaconfBridge:
 
         """
         target_class = settings_class or self.settings_class
-
         try:
             # Get all settings from Dynaconf as dict
             dynaconf_data = self.dynaconf.as_dict()
@@ -100,10 +99,13 @@ class DynaconfBridge:
             return target_class(**cleaned_data)  # type: ignore[arg-type,return-value]
 
         except PydanticValidationError as e:
-            msg = f"Validation error: {e}"
+            msg = f"Configuration validation failed: {e}"
+            raise ConfigurationError(msg) from e
+        except DynaconfValidationError as e:
+            msg = f"Dynaconf validation failed: {e}"
             raise ConfigurationError(msg) from e
         except Exception as e:
-            msg = f"Failed to load settings: {e}"
+            msg = f"Unexpected error loading settings: {e}"
             raise ConfigurationError(msg) from e
 
     @staticmethod
@@ -140,11 +142,10 @@ class DynaconfBridge:
             ConfigurationError: If validation fails at any stage
 
         """
-        # First, use Dynaconf validators if any:
         try:
             self.dynaconf.validators.validate()
         except DynaconfValidationError as e:
-            msg = f"Dynaconf validation error: {e}"
+            msg = f"Dynaconf validation failed: {e}"
             raise ConfigurationError(msg) from e
 
         # Then validate with Pydantic
