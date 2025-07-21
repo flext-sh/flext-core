@@ -2,6 +2,10 @@
 
 Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
+
+This module provides base repository interfaces and implementations
+for FLEXT Core.  It includes interfaces for CRUD operations and
+provides an in-memory implementation for testing.
 """
 
 from __future__ import annotations

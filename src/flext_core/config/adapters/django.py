@@ -8,6 +8,8 @@ Base Django settings using Pydantic.
 Provides type-safe Django settings with environment variable support.
 """
 
+from __future__ import annotations
+
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
@@ -113,8 +115,9 @@ class DjangoSettings(BaseSettings):
         debug_field = cls.model_fields.get("debug")
         debug_default = debug_field.default if debug_field else False
         if not v and not debug_default:
-            msg = "ALLOWED_HOSTS cannot be empty in production"
+            msg = "ALLOWED_HOSTS is required in production mode"
             raise ValueError(msg)
+
         return v
 
     def to_django_settings(self) -> dict[str, Any]:

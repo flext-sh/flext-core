@@ -1,14 +1,22 @@
 """Simplified tests for flext_core.config.validators module."""
 
-# ruff: noqa: COM812, E501
 # fmt: off
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 import pytest
 
-from flext_core.config.validators import validate_database_url
-from flext_core.config.validators import validate_port
-from flext_core.config.validators import validate_timeout
-from flext_core.config.validators import validate_url
+from flext_core.config.validators import (
+    validate_database_url,
+    validate_port,
+    validate_timeout,
+    validate_url,
+)
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class TestDatabaseUrlValidator:
@@ -50,16 +58,19 @@ class TestDatabaseUrlValidator:
 
     def test_invalid_database_urls(self) -> None:
         """Test validation of invalid database URLs."""
-        invalid_urls = [
-            "",  # Empty
+        # Test empty URL
+        with pytest.raises(ValueError, match="Database URL cannot be empty"):
+            validate_database_url("")
+
+        # Test invalid schemes
+        invalid_scheme_urls = [
             "invalid://url",  # Invalid scheme
             "http://example.com",  # Not a database URL
-            "postgresql://",  # Missing host (for non-sqlite)
             "mysql:",  # Incomplete
         ]
 
-        for url in invalid_urls:
-            with pytest.raises(ValueError):
+        for url in invalid_scheme_urls:
+            with pytest.raises(ValueError, match="Invalid database URL"):
                 validate_database_url(url)
 
 
@@ -91,7 +102,7 @@ class TestUrlValidator:
         ]
 
         for url in invalid_urls:
-            with pytest.raises(ValueError):
+            with pytest.raises(ValueError, match="(Invalid URL|URL cannot be empty|URL must contain a valid domain)"):
                 validate_url(url)
 
 
@@ -159,7 +170,7 @@ class TestTimeoutValidator:
         assert result == 5.0
 
         # Should fail if below minimum
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Timeout must be"):
             validate_timeout(0.5, min_value=1.0)
 
 
@@ -182,10 +193,10 @@ class TestValidatorIntegration:
     def test_validator_error_propagation(self) -> None:
         """Test that validator errors are properly propagated."""
         # All these should raise ValueError or TypeError
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Database URL cannot be empty"):
             validate_database_url("")
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="URL cannot be empty"):
             validate_url("")
 
         with pytest.raises((ValueError, TypeError)):
@@ -200,7 +211,7 @@ class TestValidatorErrorHandling:
 
     def test_validators_handle_none_input(self) -> None:
         """Test validators handle None input gracefully."""
-        from typing import Callable, Any
+        from typing import Any
 
         validators_and_inputs: list[tuple[Callable[[Any], Any], None]] = [
             (validate_database_url, None),

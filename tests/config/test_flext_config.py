@@ -1,17 +1,21 @@
 """Tests for flext_core.config.flext_config module."""
 
+from __future__ import annotations
+
 import os
 from unittest.mock import patch
 
 import pytest
 
-from flext_core.config.flext_config import FlextAPIConfig
-from flext_core.config.flext_config import FlextCacheConfig
-from flext_core.config.flext_config import FlextDatabaseConfig
-from flext_core.config.flext_config import FlextObservabilityConfig
-from flext_core.config.flext_config import FlextSecurityConfig
-from flext_core.config.flext_config import FlextSettings
-from flext_core.config.flext_config import get_flext_settings
+from flext_core.config.flext_config import (
+    FlextAPIConfig,
+    FlextCacheConfig,
+    FlextDatabaseConfig,
+    FlextObservabilityConfig,
+    FlextSecurityConfig,
+    FlextSettings,
+    get_flext_settings,
+)
 
 
 class TestFlextDatabaseConfig:
@@ -61,14 +65,18 @@ class TestFlextDatabaseConfig:
     def test_database_config_validation(self) -> None:
         """Test FlextDatabaseConfig field validation."""
         # Test pool_size validation
-        with pytest.raises(ValueError):
+        with pytest.raises(
+            ValueError, match="Input should be greater than or equal to 1"
+        ):
             FlextDatabaseConfig(pool_size=0)  # Should be >= 1
 
-        with pytest.raises(ValueError):
+        with pytest.raises(
+            ValueError, match="Input should be less than or equal to 100"
+        ):
             FlextDatabaseConfig(pool_size=101)  # Should be <= 100
 
         # Test pool_timeout validation
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Input should be greater than 0"):
             FlextDatabaseConfig(pool_timeout=0.0)  # Should be > 0
 
 
@@ -486,8 +494,7 @@ class TestConfigurationIntegration:
 
     def test_config_inheritance_chain(self) -> None:
         """Test configuration inheritance chain."""
-        from flext_core.config.base import BaseConfig
-        from flext_core.config.base import BaseSettings
+        from flext_core.config.base import BaseConfig, BaseSettings
 
         # Database and Cache configs should inherit from BaseConfig
         assert issubclass(FlextDatabaseConfig, BaseConfig)
@@ -528,9 +535,9 @@ class TestConfigurationIntegration:
 
             assert settings.database.pool_size == 50
             assert settings.cache.default_ttl == 3600
-        except Exception:
+        except (ValueError, TypeError) as e:
             # If validation is strict, that's acceptable
-            pass
+            pytest.skip(f"Validation strictness issue: {e}")
 
     def test_config_serialization_roundtrip(self) -> None:
         """Test configuration serialization roundtrip."""

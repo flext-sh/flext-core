@@ -1,10 +1,11 @@
 """Tests for flext_core.application.handlers module."""
 
+from __future__ import annotations
+
 import pytest
 
-from flext_core.application.handlers import CommandHandler
-from flext_core.application.handlers import EventHandler
-from flext_core.application.handlers import QueryHandler
+# Use deprecated handlers for backward compatibility testing
+from flext_core.application.handlers import CommandHandler, EventHandler, QueryHandler
 from flext_core.domain.types import ServiceResult
 
 
@@ -12,6 +13,7 @@ class MockCommand:
     """Mock command for testing."""
 
     def __init__(self, data: str) -> None:
+        """Initialize mock command."""
         self.data = data
 
 
@@ -19,6 +21,7 @@ class MockQuery:
     """Mock query for testing."""
 
     def __init__(self, filter_value: str) -> None:
+        """Initialize mock query."""
         self.filter_value = filter_value
 
 
@@ -26,6 +29,7 @@ class MockEvent:
     """Mock event for testing."""
 
     def __init__(self, event_type: str) -> None:
+        """Initialize mock event."""
         self.event_type = event_type
 
 
@@ -35,8 +39,8 @@ class MockCommandHandler(CommandHandler[MockCommand, str]):
     async def handle(self, command: MockCommand) -> ServiceResult[str]:
         """Handle mock command."""
         if command.data == "error":
-            return ServiceResult.failure("Test error")
-        return ServiceResult.success(f"Processed: {command.data}")
+            return ServiceResult.fail("Test error")
+        return ServiceResult.ok(f"Processed: {command.data}")
 
 
 class MockQueryHandler(QueryHandler[MockQuery, list[str]]):
@@ -45,20 +49,21 @@ class MockQueryHandler(QueryHandler[MockQuery, list[str]]):
     async def handle(self, query: MockQuery) -> ServiceResult[list[str]]:
         """Handle mock query."""
         if query.filter_value == "empty":
-            return ServiceResult.success([])
-        return ServiceResult.success([f"Result for: {query.filter_value}"])
+            return ServiceResult.ok([])
+        return ServiceResult.ok([f"Result for: {query.filter_value}"])
 
 
 class MockEventHandler(EventHandler[MockEvent, None]):
     """Mock event handler implementation."""
 
     def __init__(self) -> None:
+        """Initialize mock event handler."""
         self.handled_events: list[MockEvent] = []
 
     async def handle(self, event: MockEvent) -> ServiceResult[None]:
         """Handle mock event."""
         self.handled_events.append(event)
-        return ServiceResult.success(None)
+        return ServiceResult.ok(None)
 
 
 class MockCommandHandlerBase:
@@ -73,7 +78,7 @@ class MockCommandHandlerBase:
         result = await handler.handle(command)
 
         assert result.is_success
-        assert result.value == "Processed: test_data"
+        assert result.data == "Processed: test_data"
         assert result.error is None
 
     @pytest.mark.asyncio
@@ -86,7 +91,7 @@ class MockCommandHandlerBase:
 
         assert not result.is_success
         assert result.error == "Test error"
-        assert result.value is None
+        assert result.data is None
 
 
 class MockQueryHandlerBase:
@@ -101,7 +106,7 @@ class MockQueryHandlerBase:
         result = await handler.handle(query)
 
         assert result.is_success
-        assert result.value == ["Result for: test_filter"]
+        assert result.data == ["Result for: test_filter"]
         assert result.error is None
 
     @pytest.mark.asyncio
@@ -113,7 +118,7 @@ class MockQueryHandlerBase:
         result = await handler.handle(query)
 
         assert result.is_success
-        assert result.value == []
+        assert result.data == []
         assert result.error is None
 
 
@@ -162,7 +167,8 @@ class TestHandlerImplementations:
         success_command = MockCommand("success")
         result = await handler.handle(success_command)
         assert result.is_success
-        assert result.value is not None and "Processed: success" in result.value
+        assert result.data is not None
+        assert "Processed: success" in result.data
 
         # Test error command
         error_command = MockCommand("error")
@@ -178,7 +184,7 @@ class TestHandlerImplementations:
         query = MockQuery("test")
         result = await handler.handle(query)
         assert result.is_success
-        assert isinstance(result.value, list)
+        assert isinstance(result.data, list)
 
     @pytest.mark.asyncio
     async def test_event_handler_concrete_implementation(self) -> None:
@@ -220,7 +226,8 @@ class TestHandlerIntegration:
             e.event_type == "command_completed" for e in event_handler.handled_events
         )
         assert query_result.is_success
-        assert query_result.value is not None and len(query_result.value) > 0
+        assert query_result.data is not None
+        assert len(query_result.data) > 0
 
     @pytest.mark.asyncio
     async def test_error_propagation(self) -> None:
@@ -232,4 +239,4 @@ class TestHandlerIntegration:
 
         assert not result.is_success
         assert result.error is not None
-        assert result.value is None
+        assert result.data is None

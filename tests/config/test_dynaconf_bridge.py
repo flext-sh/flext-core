@@ -1,15 +1,15 @@
 """Tests for flext_core.config.dynaconf_bridge module."""
 
+from __future__ import annotations
+
 import os
 import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
-from flext_core.config.base import BaseSettings
-from flext_core.config.base import ConfigurationError
+from flext_core.config.base import BaseSettings, ConfigurationError
 from flext_core.config.dynaconf_bridge import DynaconfBridge
 
 
@@ -66,9 +66,9 @@ class TestDynaconfBridge:
         try:
             settings: DemoSettings = bridge.load_settings()
             assert isinstance(settings, DemoSettings)
-        except Exception:
+        except (ImportError, ConfigurationError) as e:
             # If dynaconf is not properly configured, that's acceptable
-            pass
+            pytest.skip(f"Dynaconf configuration issue: {e}")
 
     def test_dynaconf_bridge_with_env_vars(self) -> None:
         """Test DynaconfBridge with environment variables."""
@@ -88,9 +88,9 @@ class TestDynaconfBridge:
                 # If env loading works, check values
                 if hasattr(settings, "test_field"):
                     assert settings.test_field in {"env_value", "default_value"}
-            except Exception:
+            except (ImportError, ConfigurationError) as e:
                 # Configuration issues are acceptable in test environment
-                pass
+                pytest.skip(f"Configuration issue: {e}")
 
     def test_dynaconf_bridge_with_config_file(self) -> None:
         """Test DynaconfBridge with configuration file."""
@@ -115,9 +115,9 @@ test_flag = true
 
             settings: DemoSettings = bridge.load_settings()
             assert isinstance(settings, DemoSettings)
-        except Exception:
+        except (ImportError, ConfigurationError) as e:
             # File loading issues are acceptable
-            pass
+            pytest.skip(f"File loading issue: {e}")
         finally:
             Path(config_file).unlink(missing_ok=True)
 
@@ -153,9 +153,9 @@ test_flag = true
             try:
                 settings: DemoSettings = bridge.load_settings()
                 assert isinstance(settings, DemoSettings)
-            except Exception:
+            except (ImportError, ConfigurationError) as e:
                 # Environment switching issues are acceptable
-                pass
+                pytest.skip(f"Environment switching issue: {e}")
 
     def test_dynaconf_bridge_custom_env_prefix(self) -> None:
         """Test DynaconfBridge with custom environment prefix."""
@@ -174,9 +174,9 @@ test_flag = true
             try:
                 settings: DemoSettings = bridge.load_settings()
                 assert isinstance(settings, DemoSettings)
-            except Exception:
+            except (ImportError, ConfigurationError) as e:
                 # Custom prefix issues are acceptable
-                pass
+                pytest.skip(f"Custom prefix issue: {e}")
 
     def test_dynaconf_bridge_validation_error_handling(self) -> None:
         """Test DynaconfBridge handles validation errors."""
@@ -231,9 +231,9 @@ test_number = 500
 
             settings: DemoSettings = bridge.load_settings()
             assert isinstance(settings, DemoSettings)
-        except Exception:
+        except (ImportError, ConfigurationError) as e:
             # Multiple file loading issues are acceptable
-            pass
+            pytest.skip(f"Multiple file loading issue: {e}")
         finally:
             for config_file in config_files:
                 Path(config_file).unlink(missing_ok=True)
@@ -244,7 +244,7 @@ test_number = 500
 
         # Test initial load
         try:
-            settings1 = bridge.load_settings()
+            settings1: DemoSettings = bridge.load_settings()
             assert isinstance(settings1, DemoSettings)
 
             # Test reload
@@ -252,25 +252,31 @@ test_number = 500
             assert isinstance(settings2, DemoSettings)
 
             # Should be equivalent
-            assert type(settings1) == type(settings2)
-        except Exception:
+            assert type(settings1) is type(settings2)
+        except (ImportError, ConfigurationError) as e:
             # Reload functionality issues are acceptable
-            pass
+            pytest.skip(f"Reload functionality issue: {e}")
 
     def test_dynaconf_bridge_get_current_settings(self) -> None:
-        """Test DynaconfBridge get current settings."""
+        """Test DynaconfBridge get method for current settings values."""
         bridge = DynaconfBridge(DemoSettings)
 
         try:
             # Load initial settings
-            bridge.load_settings()
+            settings: DemoSettings = bridge.load_settings()
+            assert isinstance(settings, DemoSettings)
 
-            # Get current settings
-            current = bridge.get_current()
-            assert current is None or isinstance(current, DemoSettings)
-        except Exception:
-            # Current settings issues are acceptable
-            pass
+            # Test get method for configuration values
+            project_name = bridge.get("project_name", default="default_project")
+            assert isinstance(project_name, str)
+
+            # Test default fallback
+            nonexistent = bridge.get("nonexistent_key", default="fallback_value")
+            assert nonexistent == "fallback_value"
+
+        except (ImportError, ConfigurationError) as e:
+            # Configuration access issues are acceptable
+            pytest.skip(f"Configuration access issue: {e}")
 
     def test_dynaconf_bridge_validation_integration(self) -> None:
         """Test DynaconfBridge validation integration."""
@@ -285,9 +291,9 @@ test_number = 500
                 assert hasattr(settings, "test_field")
                 assert hasattr(settings, "test_number")
                 assert hasattr(settings, "test_flag")
-        except Exception:
+        except (ImportError, ConfigurationError) as e:
             # Validation integration issues are acceptable
-            pass
+            pytest.skip(f"Validation integration issue: {e}")
 
     def test_dynaconf_bridge_configuration_sources(self) -> None:
         """Test DynaconfBridge handles multiple configuration sources."""
@@ -320,9 +326,9 @@ test_field = "file_priority"
 
                 # Environment should typically take precedence
                 assert isinstance(settings, DemoSettings)
-        except Exception:
+        except (ImportError, ConfigurationError) as e:
             # Priority handling issues are acceptable
-            pass
+            pytest.skip(f"Priority handling issue: {e}")
         finally:
             Path(config_file).unlink(missing_ok=True)
 
@@ -344,9 +350,9 @@ test_field = "file_priority"
                     # Check that types were converted correctly
                     assert isinstance(settings.test_number, int)
                     assert isinstance(settings.test_flag, bool)
-            except Exception:
+            except (ImportError, ConfigurationError) as e:
                 # Type conversion issues are acceptable
-                pass
+                pytest.skip(f"Type conversion issue: {e}")
 
     def test_dynaconf_bridge_nested_configuration(self) -> None:
         """Test DynaconfBridge with nested configuration."""
@@ -379,9 +385,9 @@ test_flag = true
 
                 settings: DemoSettings = bridge.load_settings()
                 assert isinstance(settings, DemoSettings)
-        except Exception:
+        except (ImportError, ConfigurationError) as e:
             # Nested configuration issues are acceptable
-            pass
+            pytest.skip(f"Nested configuration issue: {e}")
         finally:
             Path(config_file).unlink(missing_ok=True)
 
@@ -393,9 +399,9 @@ test_flag = true
         try:
             settings: DemoSettings = bridge.load_settings()
             assert isinstance(settings, DemoSettings)
-        except Exception:
+        except (ImportError, ConfigurationError) as e:
             # Edge case handling is acceptable
-            pass
+            pytest.skip(f"Edge case handling issue: {e}")
 
     def test_dynaconf_bridge_error_propagation(self) -> None:
         """Test DynaconfBridge proper error propagation."""
@@ -405,7 +411,7 @@ test_flag = true
             with patch("flext_core.config.dynaconf_bridge.Dynaconf") as mock_dynaconf:
                 mock_dynaconf.side_effect = Exception("Dynaconf initialization failed")
 
-                with pytest.raises(Exception):  # Should propagate some form of error
+                with pytest.raises(Exception, match="Dynaconf initialization failed"):
                     DynaconfBridge(DemoSettings)
         except ImportError:
             # Dynaconf not available
@@ -467,8 +473,8 @@ test_flag = true
                     assert isinstance(settings.test_number, int)
                 if hasattr(settings, "test_flag"):
                     assert isinstance(settings.test_flag, bool)
-        except Exception:
+        except (ImportError, ConfigurationError) as e:
             # Comprehensive integration issues are acceptable
-            pass
+            pytest.skip(f"Comprehensive integration issue: {e}")
         finally:
             Path(config_file).unlink(missing_ok=True)

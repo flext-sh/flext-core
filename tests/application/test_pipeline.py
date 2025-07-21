@@ -1,16 +1,19 @@
 """Tests for flext_core.application.pipeline module."""
 
-from unittest.mock import AsyncMock
-from unittest.mock import Mock
+from __future__ import annotations
+
+from unittest.mock import AsyncMock, Mock
 from uuid import uuid4
 
 import pytest
 
-from flext_core.application.pipeline import CreatePipelineCommand
-from flext_core.application.pipeline import ExecutePipelineCommand
-from flext_core.application.pipeline import GetPipelineQuery
-from flext_core.application.pipeline import ListPipelinesQuery
-from flext_core.application.pipeline import PipelineService
+from flext_core.application.pipeline import (
+    CreatePipelineCommand,
+    ExecutePipelineCommand,
+    GetPipelineQuery,
+    ListPipelinesQuery,
+    PipelineService,
+)
 
 
 class TestCreatePipelineCommand:
@@ -33,7 +36,9 @@ class TestCreatePipelineCommand:
 
     def test_create_command_validation_error(self) -> None:
         """Test create command validation."""
-        with pytest.raises(Exception):  # Pydantic validation error
+        with pytest.raises(
+            ValueError, match="String should have at most 100 characters"
+        ):
             CreatePipelineCommand(name="x" * 101)  # Too long
 
 
@@ -122,6 +127,7 @@ class TestPipelineService:
         result = await pipeline_service.create_pipeline(command)
 
         assert not result.is_success
+        assert result.error is not None
         assert "Repository error" in result.error
 
     @pytest.mark.asyncio
@@ -139,7 +145,7 @@ class TestPipelineService:
         result = await pipeline_service.get_pipeline(query)
 
         assert result.is_success
-        assert result.value == mock_pipeline
+        assert result.data == mock_pipeline
         mock_repository.get_by_id.assert_called_once()
 
     @pytest.mark.asyncio
@@ -156,6 +162,7 @@ class TestPipelineService:
         result = await pipeline_service.get_pipeline(query)
 
         assert not result.is_success
+        assert result.error is not None
         assert "Pipeline not found" in result.error
 
     @pytest.mark.asyncio
@@ -191,6 +198,7 @@ class TestPipelineService:
         result = await pipeline_service.execute_pipeline(command)
 
         assert not result.is_success
+        assert result.error is not None
         assert "Pipeline not found" in result.error
 
     @pytest.mark.asyncio
@@ -209,6 +217,7 @@ class TestPipelineService:
         result = await pipeline_service.execute_pipeline(command)
 
         assert not result.is_success
+        assert result.error
         assert "Pipeline is inactive" in result.error
 
     @pytest.mark.asyncio
@@ -242,6 +251,7 @@ class TestPipelineService:
         result = await pipeline_service.deactivate_pipeline(pipeline_id)
 
         assert not result.is_success
+        assert result.error is not None
         assert "Pipeline not found" in result.error
 
 
@@ -269,11 +279,9 @@ class TestPipelineServiceIntegration:
             description="Full flow test",
         )
 
-        mock_pipeline = Mock()
-        mock_pipeline.pipeline_is_active = True
-        mock_pipeline.execute.return_value = Mock()
-        mock_repo.save.return_value = mock_pipeline
-        mock_repo.get_by_id.return_value = mock_pipeline
+        # Configure mocks for successful execution
+        mock_repo.save.return_value = None  # save just needs to not throw exception
+        mock_repo.get_by_id.return_value = Mock(pipeline_is_active=True, execute=Mock())
 
         create_result = await service.create_pipeline(create_command)
         assert create_result.is_success
@@ -300,5 +308,6 @@ class TestPipelineServiceIntegration:
         result = await service.create_pipeline(command)
 
         assert not result.is_success
+        assert result.error is not None
         assert "Repository error" in result.error
         assert "Database connection failed" in result.error

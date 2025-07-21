@@ -3,15 +3,22 @@
 This file tests ConfigSection descriptor and convenience functions.
 """
 
-import pytest
-from unittest.mock import patch
-import os
+from __future__ import annotations
 
-from flext_core.config.base import BaseConfig
-from flext_core.config.base import BaseSettings
-from flext_core.config.base import ConfigSection
-from flext_core.config.base import get_config
-from flext_core.config.base import get_settings
+import os
+from typing import ClassVar
+from unittest.mock import patch
+
+import pytest
+from pydantic import Field
+
+from flext_core.config.base import (
+    BaseConfig,
+    BaseSettings,
+    ConfigSection,
+    get_config,
+    get_settings,
+)
 
 
 class TestConfigSectionDescriptor:
@@ -127,10 +134,8 @@ class TestConfigSectionDescriptor:
         invalid_value = "not_a_config_instance"
 
         # Should raise TypeError for invalid instance
-        with pytest.raises(TypeError) as exc_info:
-            section.__set__(main_config, invalid_value)
-
-        assert "Value must be instance of" in str(exc_info.value)
+        with pytest.raises(TypeError, match="Value must be instance of"):
+            section.__set__(main_config, invalid_value)  # type: ignore[arg-type]
 
     def test_config_section_complex_prefix_matching(self) -> None:
         """Test ConfigSection with complex prefix matching."""
@@ -159,7 +164,6 @@ class TestConfigSectionDescriptor:
 
     def test_config_section_nested_usage(self) -> None:
         """Test ConfigSection in a real nested configuration scenario."""
-        from typing import ClassVar
 
         class ServerConfig(BaseConfig):
             host: str = "localhost"
@@ -249,7 +253,7 @@ class TestConvenienceFunctions:
             value: int = 42
             enabled: bool = True
 
-        data = {"value": 999}  # Only override one field
+        data: dict[str, object] = {"value": 999}  # Only override one field
         config = get_config(TestConfig, data)
 
         assert config.name == "default"  # Default
@@ -357,8 +361,8 @@ class TestBaseConfigMethodsCoverage:
             string_field: str = "text"
             int_field: int = 42
             bool_field: bool = True
-            list_field: list[str] = ["a", "b"]
-            dict_field: dict[str, int] = {"key": 1}
+            list_field: list[str] = Field(default_factory=lambda: ["a", "b"])
+            dict_field: dict[str, int] = Field(default_factory=lambda: {"key": 1})
 
         config = ComplexConfig()
         result = config.to_dict()

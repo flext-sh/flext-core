@@ -8,6 +8,8 @@ It uses pytest and coverage to run the tests and show the coverage report.
 It also checks if the imports work.
 """
 
+from __future__ import annotations
+
 import subprocess
 import sys
 from pathlib import Path

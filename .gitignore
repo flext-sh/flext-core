@@ -1,6 +1,6 @@
 # ============================================================================
-# FLEXT-CORE PROJECT .gitignore
-# Clean Architecture Python 3.13 Foundation Module
+# FLEXT PYTHON PROJECT STANDARD .gitignore TEMPLATE
+# Python 3.13 | Poetry | Testing | Development Tools
 # ============================================================================
 
 # ============================================================================
@@ -38,162 +38,254 @@ MANIFEST
 pip-wheel-metadata/
 *.dist-info/
 
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
 # ============================================================================
-# VIRTUAL ENVIRONMENTS
+# TESTING AND COVERAGE
 # ============================================================================
 
-# Virtual environments (use workspace .venv)
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+.coverage_html/
+junit.xml
+coverage.json
+.benchmarks/
+
+# ============================================================================
+# DEVELOPMENT TOOLS AND CACHE
+# ============================================================================
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Ruff
+.ruff_cache/
+
+# Bandit
+.bandit
+
+# pylint
+.pylint.d/
+
+# ============================================================================
+# VIRTUAL ENVIRONMENTS AND DEPENDENCIES
+# ============================================================================
+
+# virtualenv
 .env
-.venv/
+.venv
 env/
 venv/
 ENV/
 env.bak/
 venv.bak/
 
-# ============================================================================
-# PACKAGE MANAGERS
-# ============================================================================
-
 # Poetry - keep lock file for reproducible builds
-# poetry.lock  # Keep this file
+# poetry.lock  # KEEP THIS FILE COMMENTED OUT
 
-# pip
-pip-wheel-metadata/
+# Pipenv
+Pipfile.lock.bak
 
-# pdm
-pdm.lock
+# PDM
 .pdm.toml
-
-# PEP 582
-__pypackages__/
-
-# ============================================================================
-# ENVIRONMENT AND CONFIGURATION  
-# ============================================================================
-
-# Environment files
-.env
-.env.*
-!.env.example
-.env.local
-.env.*.local
-.env.production
-.env.prod
+.pdm-python
+.pdm-build/
 
 # ============================================================================
-# IDE AND EDITOR FILES
+# IDEs AND EDITORS
 # ============================================================================
 
-# VS Code
+# VSCode
 .vscode/
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
+*.code-workspace
 
-# JetBrains IDEs
+# PyCharm
 .idea/
+*.iml
+*.ipr
+*.iws
 
-# Vim/Neovim
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
 *.swp
 *.swo
 *~
 
-# Cursor AI
-.cursor/
-.cursorrules
-
-# Claude AI
-.claude/
-CLAUDE.md
-CLAUDE.local.md
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
 
 # ============================================================================
-# OS SPECIFIC FILES
+# SYSTEM FILES
 # ============================================================================
-
-# Windows
-Thumbs.db
-Desktop.ini
 
 # macOS
 .DS_Store
+.AppleDouble
+.LSOverride
 ._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
 
 # Linux
 *~
+.fuse_hidden*
+.directory
+.Trash-*
 .nfs*
 
 # ============================================================================
-# DEVELOPMENT TOOLS
-# ============================================================================
-
-# Type checkers
-.mypy_cache/
-.dmypy.json
-dmypy.json
-.pyre/
-.pytype/
-
-# Linting and formatting
-.ruff_cache/
-.black
-
-# Testing frameworks
-.pytest_cache/
-.tox/
-.nox/
-
-# Test coverage
-.coverage
-.coverage.*
-htmlcov/
-coverage.xml
-*.cover
-*.py,cover
-.hypothesis/
-cover/
-
-# ============================================================================
-# DOCUMENTATION
+# DOCUMENTATION AND REPORTS
 # ============================================================================
 
 # Sphinx documentation
 docs/_build/
-_build/
-.sphinx/
+docs/build/
+.buildinfo
 
 # MkDocs
-/site
+site/
+
+# Reports
+reports/
+*.report
+*.json.report
 
 # ============================================================================
-# LOGS AND OUTPUT
+# LOGS AND TEMPORARY FILES
 # ============================================================================
 
-# Log files
-logs/
+# Logs
 *.log
+logs/
+log/
 
-# Runtime data
-runtime/
-cache/
-.cache/
-
-# ============================================================================
-# BACKUP AND TEMPORARY FILES
-# ============================================================================
-
-# Backup files
-*.backup
-*.bak
+# Temporary files
 *.tmp
-*.orig
-.dev_deps_backup_*
-*_backup_*
+*.temp
+*.bak
+*.backup
+*.swp
+*.swo
+.tmp/
+tmp/
 
 # ============================================================================
-# PROJECT SPECIFIC - FLEXT-CORE
+# DATABASE AND DATA FILES
+# ============================================================================
+
+# SQLite
+*.db
+*.sqlite
+*.sqlite3
+*.db3
+
+# Data files
+*.csv.bak
+*.json.bak
+*.xml.bak
+data/
+*.data
+
+# ============================================================================
+# SINGER/MELTANO SPECIFIC
+# ============================================================================
+
+# Meltano
+.meltano/
+.secrets/
+catalog.json
+tap_done
+target_done
+state.json
+output/
+
+# DBT
+target/
+dbt_packages/
+logs/
+
+# ============================================================================
+# DOCKER AND CONTAINERS
+# ============================================================================
+
+# Docker
+.dockerignore.bak
+docker-compose.override.yml
+
+# ============================================================================
+# CONFIGURATION AND SECRETS
+# ============================================================================
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+.envrc
+
+# Secrets and credentials
+.secrets
+*.key
+*.pem
+*.crt
+*.csr
+*_key
+*_secret
+.credentials
+secrets/
+
+# Configuration backups
+*.conf.bak
+*.config.bak
+*.toml.bak
+
+# ============================================================================
+# PROJECT SPECIFIC - FORBID ANTI-PATTERNS
 # ============================================================================
 
 # Archive directory (for moved junk files)
@@ -205,23 +297,64 @@ reports/
 # Old requirements.txt (use pyproject.toml)
 requirements.txt
 
-# Manual fix scripts
+# Manual fix scripts - FORBIDDEN
 fix_*.py
 *_fix.py
 *_validation.py
 validate_*.py
 
-# AI-generated reports and migration files
+# AI-generated reports and migration files - FORBIDDEN
 *_REPORT.md
 *_REPORT_*.md
 CONFIG_MIGRATION*.md
-FLEXT_CORE_MIGRATION*.md
+FLEXT_*_MIGRATION*.md
 DEVELOPMENT_STANDARDS.md
-FLEXT_CORE_PATTERNS.md
+FLEXT_*_PATTERNS.md
 LOGGING_MIGRATION.md
 STRICT_COMPLIANCE.md
 LEVEL1_*.md
 DUPLICATION_REPORT.md
+
+# ============================================================================
+# MISCELLANEOUS
+# ============================================================================
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# PEP 582
+__pypackages__/
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# Custom additions
+*.local
+*.user 
 
 # ============================================================================
 # AI ASSISTANT FILES

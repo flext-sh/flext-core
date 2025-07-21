@@ -2,18 +2,15 @@
 
 from __future__ import annotations
 
-import pytest
-from datetime import datetime, UTC, timedelta
-from unittest.mock import Mock, patch
+from datetime import UTC, datetime, timedelta
+from typing import TYPE_CHECKING
+from unittest.mock import patch
 from uuid import uuid4
 
-from flext_core.domain.mixins import (
-    TimestampMixin,
-    StatusMixin,
-    ConfigurationMixin,
-    IdentifierMixin,
-)
-from flext_core.domain.types import EntityStatus, EntityId
+from flext_core.domain.types import EntityStatus
+
+if TYPE_CHECKING:
+    from flext_core.domain.types import EntityId
 
 
 class ConcreteTimestampEntity:
@@ -262,6 +259,7 @@ class TestMixinTypeCheckingImports:
         """Test TYPE_CHECKING block imports."""
         # This forces execution of the TYPE_CHECKING block
         import importlib
+
         import flext_core.domain.mixins
 
         # Reload to trigger TYPE_CHECKING block

@@ -1,4 +1,12 @@
-"""Minimal tests to improve coverage."""
+"""Minimal tests to improve coverage.
+
+Copyright (c) 2025 FLEXT Contributors
+SPDX-License-Identifier: MIT
+
+This module provides minimal tests to improve coverage for the domain
+pydantic_base module.
+It includes tests for deprecated dict() and schema() methods.
+"""
 
 from __future__ import annotations
 

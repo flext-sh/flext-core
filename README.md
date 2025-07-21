@@ -7,14 +7,15 @@ Modern Python 3.13 • Pydantic v2 • Clean Architecture • Domain-Driven Desi
 > **Part of FLEXT Framework**: The foundational module that powers all other FLEXT components including flext-api, flext-web, flext-auth, and flext-meltano.
 
 [![Python](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
-[![Coverage](https://img.shields.io/badge/coverage-94%25-brightgreen.svg)]()
-[![Architecture](https://img.shields.io/badge/architecture-Clean%2FDDD-purple.svg)]()
+[![Coverage](https://img.shields.io/badge/coverage-94%25-brightgreen.svg)](https://github.com/flext-framework/flext-core/actions/workflows/coverage.yml)
+[![Architecture](https://img.shields.io/badge/architecture-Clean%2FDDD-purple.svg)](https://github.com/flext-framework/flext-core/blob/main/docs/architecture.md)
 
 ## Overview
 
 FLEXT Core is the **foundational module** of the FLEXT Framework ecosystem. It provides the essential domain models, application services, and infrastructure abstractions that power all other FLEXT modules.
 
 **Within FLEXT Framework:**
+
 - **flext-api** (Go) uses Core's domain models via gRPC
 - **flext-web** (Django) extends Core's entities for web interfaces
 - **flext-auth** builds authentication on Core's user abstractions
@@ -22,6 +23,7 @@ FLEXT Core is the **foundational module** of the FLEXT Framework ecosystem. It p
 - **flext-cli** uses Core's application services for command-line tools
 
 **Why FLEXT Core?**
+
 - **Ecosystem foundation** - Shared models used across all FLEXT modules
 - **Type-safe** - Full mypy strict compliance for reliability
 - **Well-tested** - 94% coverage with real-world scenarios
@@ -30,6 +32,7 @@ FLEXT Core is the **foundational module** of the FLEXT Framework ecosystem. It p
 - **Framework agnostic** - Works standalone or with other FLEXT modules
 
 **Core Features:**
+
 - **Domain Foundation** - Rich business models shared across FLEXT
 - **Clean Architecture** - Dependency inversion for all FLEXT modules
 - **Type-Safe Operations** - ServiceResult pattern used framework-wide
@@ -249,6 +252,7 @@ for event in events:
 ### How FLEXT Modules Use Core
 
 **Direct Dependencies (import flext_core):**
+
 - **flext-api** (Go): Implements Core's domain models in protobuf definitions
 - **flext-web** (Django): Extends Core entities with Django model mixins
 - **flext-cli** (Python): Uses Core's application services and commands
@@ -256,6 +260,7 @@ for event in events:
 - **flext-meltano** (Python): Built entirely on Core's pipeline entities
 
 **Indirect Usage (via shared patterns):**
+
 - **flext-grpc**: Implements Core's Repository patterns in gRPC services
 - **flext-plugin**: Uses Core's configuration system for plugin management
 - **flext-observability**: Monitors Core's domain events and ServiceResults
@@ -363,12 +368,14 @@ mkdocs-material = ">=9.5.0"
 ### FLEXT Ecosystem Impact
 
 **When contributing to Core, consider:**
+
 - Changes affect **all FLEXT modules** that import core components
 - Domain model changes require updates in flext-api protobuf definitions
 - Configuration changes impact all modules using BaseSettings
 - Repository pattern changes affect flext-web and flext-auth persistence
 
 **Test Across Ecosystem:**
+
 ```bash
 # Test Core changes don't break dependent modules
 cd ../flext-api && make test

@@ -1,12 +1,58 @@
-"""Domain constants for FLEXT framework.
+"""Domain constants for FLEXT framework with modern Python 3.13 type system.
 
 Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
 
-All constants used across FLEXT projects should be defined here.
+All constants used across FLEXT projects should be defined here using modern
+Python 3.13 type aliases and Final constants for maximum type safety.
 """
 
+from __future__ import annotations
+
 from typing import Final
+from typing import Literal
+
+# ==============================================================================
+# MODERN TYPE DEFINITIONS - PYTHON 3.13 TYPE ALIASES
+# ==============================================================================
+
+# Modern type aliases using Python 3.13 syntax
+type EnvironmentType = Literal["development", "staging", "production", "test"]
+type LogLevelType = Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+type EntityStatusType = Literal[
+    "active",
+    "inactive",
+    "error",
+    "pending",
+    "draft",
+    "archived",
+]
+type ResultStatusType = Literal["success", "error", "pending", "timeout", "cancelled"]
+type PluginTypeAlias = Literal[
+    "tap",
+    "target",
+    "transform",
+    "utility",
+    "dbt",
+    "orchestrator",
+]
+type PipelineStatusType = Literal[
+    "draft",
+    "active",
+    "inactive",
+    "running",
+    "completed",
+    "failed",
+    "cancelled",
+]
+type ExecutionStatusType = Literal[
+    "pending",
+    "running",
+    "completed",
+    "failed",
+    "cancelled",
+    "timeout",
+]
 
 # ==============================================================================
 # FRAMEWORK CONSTANTS
@@ -239,6 +285,7 @@ class RegexPatterns:
 
     # URLs
     HTTP_URL: Final = r"^https?://[^\s/$.?#].[^\s]*$"
+    REDIS_URL: Final = r"^redis://[^\s/$.?#].[^\s]*$"
 
     # Email
     EMAIL: Final = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
@@ -325,26 +372,25 @@ class SuccessMessages:
 # ==============================================================================
 
 __all__ = [
-    # Configuration
     "ConfigDefaults",
-    # Status
+    "EntityStatusType",
     "EntityStatuses",
-    # Environment
+    "EnvironmentType",
     "Environments",
-    # Messages
     "ErrorMessages",
+    "ExecutionStatusType",
     "ExecutionStatuses",
-    # Framework
     "FlextFramework",
-    # HTTP
     "HTTPStatus",
+    "LogLevelType",
     "LogLevels",
     "MediaTypes",
+    "PipelineStatusType",
     "PipelineStatuses",
-    # Plugin
+    "PluginTypeAlias",
     "PluginTypes",
-    # Patterns
     "RegexPatterns",
+    "ResultStatusType",
     "ResultStatuses",
     "SuccessMessages",
 ]

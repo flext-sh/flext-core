@@ -29,6 +29,7 @@ from flext_core.config.base import get_container
 from flext_core.config.base import get_settings
 from flext_core.config.base import injectable
 from flext_core.config.base import singleton
+from flext_core.config.patterns import BaseFlextSettings
 from flext_core.config.validators import validate_database_url
 from flext_core.config.validators import validate_port
 from flext_core.config.validators import validate_timeout
@@ -37,6 +38,7 @@ from flext_core.config.validators import validate_url
 __all__ = [
     # Base classes
     "BaseConfig",
+    "BaseFlextSettings",
     "BaseSettings",
     "ConfigSection",
     "ConfigurationError",

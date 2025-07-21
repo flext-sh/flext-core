@@ -8,6 +8,8 @@ Base configuration model for CLI applications.
 This is a minimal adapter - actual CLI functionality should be in flext-cli.
 """
 
+from __future__ import annotations
+
 from typing import Any
 
 from pydantic import Field

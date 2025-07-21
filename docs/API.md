@@ -16,6 +16,7 @@ pipeline = Pipeline(
 ```
 
 **Methods:**
+
 - `create()` - Initialize pipeline and emit creation event
 - `execute()` - Execute pipeline and return execution entity
 - `deactivate()` - Mark pipeline as inactive
@@ -51,6 +52,7 @@ if result.is_success:
 ```
 
 **Methods:**
+
 - `create_pipeline(command)` - Create new pipeline
 - `execute_pipeline(command)` - Execute existing pipeline
 - `get_pipeline(query)` - Retrieve pipeline by ID
@@ -59,6 +61,7 @@ if result.is_success:
 ### Commands and Queries
 
 **CreatePipelineCommand**
+
 ```python
 command = CreatePipelineCommand(
     name="pipeline-name",
@@ -67,11 +70,13 @@ command = CreatePipelineCommand(
 ```
 
 **ExecutePipelineCommand**
+
 ```python
 command = ExecutePipelineCommand(pipeline_id="uuid-string")
 ```
 
 **GetPipelineQuery**
+
 ```python
 query = GetPipelineQuery(pipeline_id="uuid-string")
 ```
@@ -140,6 +145,7 @@ else:
 ```
 
 **Methods:**
+
 - `is_success` - Check if operation succeeded
 - `value` - Get the successful result value
 - `error` - Get the error message if failed

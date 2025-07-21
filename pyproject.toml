@@ -8,39 +8,31 @@ version = "0.7.0"
 description = "Enterprise Foundation Framework - Modern Python 3.13 + Clean Architecture"
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
-dependencies = [
-    # Dependencies are managed by Poetry in [tool.poetry.dependencies] section
-    # This section is kept minimal to avoid duplication
-    "aiosqlite (>=0.21.0,<0.22.0)",
-    "alembic (>=1.16.4,<2.0.0)",
-    "aiomqtt (>=2.3.0,<3.0.0)",
-    "bandit (>=1.8.6,<2.0.0)",
-    "black (>=25.1.0,<26.0.0)",
-    "click (>=8.2.1,<9.0.0)",
-    "django (>=5.2.4,<6.0.0)",
-    "faker (>=37.4.0,<38.0.0)",
-    "freezegun (>=1.5.3,<2.0.0)",
-    "httpx (>=0.28.1,<0.29.0)",
-    "mock (>=5.2.0,<6.0.0)",
-    "mypy (>=1.16.1,<2.0.0)",
-    "prometheus-client (>=0.22.1,<0.23.0)",
-    "pydantic (>=2.11.7,<3.0.0)",
-    "pydantic-settings (>=2.10.1,<3.0.0)",
-    "pytest (>=8.4.1,<9.0.0)",
-    "python-dateutil (>=2.9.0.post0,<3.0.0)",
-    "python-dotenv (>=1.1.1,<2.0.0)",
-    "python-ldap (>=3.4.4,<4.0.0)",
-    "redis (>=5.0.0,<7.0.0)",
-    "responses (>=0.25.7,<0.26.0)",
-    "rich (>=14.0.0,<15.0.0)",
-    "ruff (>=0.12.3,<0.13.0)",
-    "structlog (>=25.4.0,<26.0.0)",
-    "typing-extensions (>=4.14.1,<5.0.0)",
-    "uuid6 (>=2025.0.1,<2026.0.0)",
-    "pytest-postgresql (>=7.0.2,<8.0.0)"
-]
 keywords = [ "flext", "enterprise", "ddd", "clean-architecture", "solid", "modern",]
-classifiers = [ "Development Status :: 5 - Production/Stable", "Intended Audience :: Developers", "License :: OSI Approved :: MIT License", "Operating System :: OS Independent", "Programming Language :: Python :: 3.13", "Programming Language :: Python :: 3 :: Only", "Topic :: Software Development :: Libraries :: Application Frameworks", "Framework :: Pydantic", "Framework :: Pydantic :: 2", "Typing :: Typed",]
+classifiers = [ 
+    "Development Status :: 5 - Production/Stable", 
+    "Intended Audience :: Developers", 
+    "License :: OSI Approved :: MIT License", 
+    "Operating System :: OS Independent", 
+    "Programming Language :: Python :: 3.13", 
+    "Programming Language :: Python :: 3 :: Only", 
+    "Topic :: Software Development :: Libraries :: Application Frameworks", 
+    "Framework :: Pydantic", 
+    "Framework :: Pydantic :: 2", 
+    "Typing :: Typed",
+]
+dependencies = [
+    # Core module-specific dependencies
+    "dynaconf>=3.2.0",
+    "pyyaml>=6.0.0",
+    "msgspec>=0.18.0",
+    "pydantic>=2.11.7",
+    "pydantic-settings>=2.10.1",
+    "structlog>=25.4.0",
+    "rich>=14.0.0",
+    "typing-extensions>=4.12.0",
+]
+
 [[project.authors]]
 name = "FLEXT Team"
 email = "team@flext.sh"
@@ -48,9 +40,6 @@ email = "team@flext.sh"
 [[project.maintainers]]
 name = "FLEXT Team"
 email = "team@flext.sh"
-
-[project.license]
-text = "MIT"
 
 [project.urls]
 Homepage = "https://github.com/flext-sh/flext"
@@ -61,42 +50,8 @@ Documentation = "https://github.com/flext-sh/flext/blob/main/README.md"
 flext-core = "flext_core.cli:main"
 
 [tool.poetry]
-name = "flext-core"
-version = "0.7.0"
-description = "Enterprise Foundation Framework - Modern Python 3.13 + Clean Architecture"
-authors = ["FLEXT Team <team@flext.sh>"]
-readme = "README.md"
-license = "MIT"
-homepage = "https://github.com/flext-sh/flext-core"
-repository = "https://github.com/flext-sh/flext-core"
-keywords = ["flext", "enterprise", "ddd", "clean-architecture", "solid", "modern"]
-classifiers = [
-    "Development Status :: 5 - Production/Stable",
-    "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3.13",
-    "Programming Language :: Python :: 3 :: Only",
-    "Topic :: Software Development :: Libraries :: Application Frameworks",
-    "Framework :: Pydantic",
-    "Framework :: Pydantic :: 2",
-    "Typing :: Typed",
-]
-
-[[tool.poetry.packages]]
-include = "flext_core"
-from = "src"
-
-[tool.poetry.dependencies]
-python = ">=3.13,<3.14"
-
-# Core module-specific dependencies
-dynaconf = ">=3.2.0"
-pyyaml = ">=6.0.0"
-
-# Workspace-managed dependencies (inherited):
-# pydantic, pydantic-settings, structlog, rich, typing-extensions
-# are all provided at workspace level - no duplication needed
+# Poetry configuration for development
+packages = [{include = "flext_core", from = "src"}]
 
 [tool.poetry.group.dev.dependencies]
 # Development dependencies
@@ -115,6 +70,7 @@ ruff = "^0.12.3"
 mypy = "^1.13.0"
 pre-commit = "^4.0.1"
 bandit = ">=1.8.0"
+detect-secrets = ">=1.5.0"
 
 # Documentation
 mkdocs = "^1.6.1"
@@ -137,6 +93,9 @@ mkdocs-literate-nav = "^0.6.0"
 ipython = "^9.4.0"
 jupyter = "^1.1.1"
 rich-traceback = "^1.0.3"
+# interrogate removed due to security vulnerability in py dependency
+types-protobuf = "^6.30.2.20250703"
+types-grpcio = "^1.0.0.20250703"
 
 
 [tool.poetry.group.test.dependencies]
@@ -170,11 +129,13 @@ types-toml = "^0.10.8.20240310"
 types-requests = "^2.32.4"
 types-redis = "^4.6.0"
 types-psutil = "^7.0.0"
+types-protobuf = "^6.30.2.20250703"
 
 
 [tool.poetry.group.security.dependencies]
 bandit = "^1.8.0"
 pip-audit = "^2.7.3"
+safety = "<3.0.0"
 
 [tool.ruff]
 target-version = "py313"
@@ -226,9 +187,7 @@ ignore = [
     "PLR0912", # too many branches
     "PLR0911", # too many return statements
     
-    # Type checking flexibility
-    "ANN101",  # missing type annotation for self
-    "ANN102",  # missing type annotation for cls
+    # Type checking flexibility  
     "ANN401",  # any type usage (sometimes necessary)
     
     # Security exceptions (development context)
@@ -355,6 +314,7 @@ pretty = true
 module = ["dynaconf.*", "yaml.*"]
 ignore_missing_imports = true
 
+
 [[tool.mypy.overrides]]
 module = "tests.*"
 # Allow more flexibility in test files
@@ -410,6 +370,7 @@ addopts = [
     "--maxfail=1",
     "--tb=short",
 ]
+asyncio_mode = "auto"
 markers = [
     "unit: Unit tests",
     "integration: Integration tests",

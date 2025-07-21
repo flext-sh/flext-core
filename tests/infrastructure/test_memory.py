@@ -1,19 +1,19 @@
 """Tests for flext_core.infrastructure.memory module."""
 
-from uuid import UUID
-from uuid import uuid4
+from __future__ import annotations
+
+from uuid import UUID, uuid4
 
 import pytest
 
-from flext_core.infrastructure.memory import HasId
-from flext_core.infrastructure.memory import InMemoryRepository
+from flext_core.infrastructure.memory import HasId, InMemoryRepository
 
 
 class MockEntity:
     """Mock entity for repository testing."""
 
-    def __init__(self, id: UUID, name: str, value: int = 0) -> None:
-        self.id = id
+    def __init__(self, entity_id: UUID, name: str, value: int = 0) -> None:
+        self.id = entity_id
         self.name = name
         self.value = value
 
@@ -26,18 +26,21 @@ class MockEntity:
             and self.value == other.value
         )
 
+    def __hash__(self) -> int:
+        return hash((self.id, self.name, self.value))
+
 
 class TestInMemoryRepository:
     """Test InMemoryRepository functionality."""
 
     @pytest.fixture
-    def repository(self) -> InMemoryRepository[MockEntity]:
+    def repository(self) -> InMemoryRepository[MockEntity, UUID]:
         """Create InMemoryRepository for testing."""
-        return InMemoryRepository[MockEntity]()
+        return InMemoryRepository[MockEntity, UUID]()
 
     @pytest.mark.asyncio
     async def test_save_entity_success(
-        self, repository: InMemoryRepository[MockEntity]
+        self, repository: InMemoryRepository[MockEntity, UUID]
     ) -> None:
         """Test successful entity save."""
         entity_id = uuid4()
@@ -53,7 +56,7 @@ class TestInMemoryRepository:
 
     @pytest.mark.asyncio
     async def test_save_duplicate_entity_overwrites(
-        self, repository: InMemoryRepository[MockEntity]
+        self, repository: InMemoryRepository[MockEntity, UUID]
     ) -> None:
         """Test saving duplicate entity overwrites existing."""
         entity_id = uuid4()
@@ -69,11 +72,12 @@ class TestInMemoryRepository:
 
         # Verify overwrite
         get_result = await repository.get(entity_id)
+        assert get_result is not None
         assert get_result.name == "entity2"
 
     @pytest.mark.asyncio
     async def test_get_entity_success(
-        self, repository: InMemoryRepository[MockEntity]
+        self, repository: InMemoryRepository[MockEntity, UUID]
     ) -> None:
         """Test successful entity retrieval."""
         entity_id = uuid4()
@@ -86,7 +90,7 @@ class TestInMemoryRepository:
 
     @pytest.mark.asyncio
     async def test_get_entity_not_found(
-        self, repository: InMemoryRepository[MockEntity]
+        self, repository: InMemoryRepository[MockEntity, UUID]
     ) -> None:
         """Test entity retrieval when ID not found."""
         non_existent_id = uuid4()
@@ -97,7 +101,7 @@ class TestInMemoryRepository:
 
     @pytest.mark.asyncio
     async def test_delete_entity_success(
-        self, repository: InMemoryRepository[MockEntity]
+        self, repository: InMemoryRepository[MockEntity, UUID]
     ) -> None:
         """Test successful entity deletion."""
         entity_id = uuid4()
@@ -117,7 +121,7 @@ class TestInMemoryRepository:
 
     @pytest.mark.asyncio
     async def test_delete_non_existent_entity_returns_false(
-        self, repository: InMemoryRepository[MockEntity]
+        self, repository: InMemoryRepository[MockEntity, UUID]
     ) -> None:
         """Test deleting non-existent entity returns False."""
         non_existent_id = uuid4()
@@ -128,7 +132,7 @@ class TestInMemoryRepository:
 
     @pytest.mark.asyncio
     async def test_list_all_entities(
-        self, repository: InMemoryRepository[MockEntity]
+        self, repository: InMemoryRepository[MockEntity, UUID]
     ) -> None:
         """Test listing all entities."""
         entities = [
@@ -152,7 +156,7 @@ class TestInMemoryRepository:
 
     @pytest.mark.asyncio
     async def test_list_all_empty_repository(
-        self, repository: InMemoryRepository[MockEntity]
+        self, repository: InMemoryRepository[MockEntity, UUID]
     ) -> None:
         """Test listing entities from empty repository."""
         result = await repository.list_all()
@@ -161,7 +165,7 @@ class TestInMemoryRepository:
 
     @pytest.mark.asyncio
     async def test_count_entities(
-        self, repository: InMemoryRepository[MockEntity]
+        self, repository: InMemoryRepository[MockEntity, UUID]
     ) -> None:
         """Test counting entities in repository."""
         # Count empty repository
@@ -179,7 +183,7 @@ class TestInMemoryRepository:
 
     @pytest.mark.asyncio
     async def test_clear_repository(
-        self, repository: InMemoryRepository[MockEntity]
+        self, repository: InMemoryRepository[MockEntity, UUID]
     ) -> None:
         """Test clearing repository."""
         # Add entities
@@ -221,7 +225,7 @@ class TestMemoryStorageIntegration:
     @pytest.mark.asyncio
     async def test_repository_storage_integration(self) -> None:
         """Test repository and storage working together."""
-        repository = InMemoryRepository[MockEntity]()
+        repository = InMemoryRepository[MockEntity, UUID]()
 
         # Add multiple entities
         entities = []
@@ -242,7 +246,7 @@ class TestMemoryStorageIntegration:
     @pytest.mark.asyncio
     async def test_repository_persistence_across_operations(self) -> None:
         """Test that repository maintains data across multiple operations."""
-        repository = InMemoryRepository[MockEntity]()
+        repository = InMemoryRepository[MockEntity, UUID]()
 
         entity_id = uuid4()
         original_entity = MockEntity(entity_id, "persistent", 100)
