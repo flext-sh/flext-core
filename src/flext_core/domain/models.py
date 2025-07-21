@@ -607,10 +607,10 @@ def validate_project_name(v: object) -> str:
         msg = f"Project name must be a string, got {type(v)}"
         raise TypeError(msg)
     if len(v) < 2 or len(v) > 50:
-        msg = f"Project name length must be between 2 and 50 characters, got {len(v)}"
+        msg = "Project name must be 2-50 characters"
         raise ValueError(msg)
     if not v.replace("-", "").replace("_", "").isalnum():
-        msg = f"Project name must contain only alphanumeric characters, hyphens, and underscores, got '{v}'"
+        msg = "Project name must be alphanumeric with hyphens/underscores"
         raise ValueError(msg)
     return v
 

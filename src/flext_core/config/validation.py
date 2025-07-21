@@ -23,12 +23,25 @@ class CommonValidators:
 
     @field_validator("port", check_fields=False)
     @classmethod
-    def validate_port(cls: type[Any], v: int) -> int:
+    def validate_port(cls: type[Any], v: Any) -> int:
         """Validate port number range - used in 8+ projects."""
-        if not 1 <= v <= 65535:
+        # Convert string to int if needed
+        if isinstance(v, str):
+            try:
+                port_value = int(v)
+            except ValueError:
+                msg = "Port must be a valid integer"
+                raise ValueError(msg) from None
+        elif isinstance(v, int):
+            port_value = v
+        else:
+            msg = "Port must be an integer"
+            raise TypeError(msg)
+
+        if not 1 <= port_value <= 65535:
             msg = "Port must be between 1 and 65535"
             raise ValueError(msg)
-        return v
+        return port_value
 
     @field_validator("base_url", "url", "server_url", check_fields=False)
     @classmethod
@@ -90,8 +103,7 @@ class CommonValidators:
             raise TypeError(msg)
         email_pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
         if not re.match(email_pattern, v):
-            msg = "Invalid email format"
-            raise ValueError(msg)
+            raise ValueError("Invalid email format")
         return v.lower()
 
     @field_validator("host", "hostname", check_fields=False)
@@ -116,11 +128,13 @@ class CommonValidators:
             r"(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"
         )
 
-        if not (
-            re.match(hostname_pattern, v) or re.match(ip_pattern, v) or v == "localhost"
-        ):
-            msg = "Invalid hostname or IP address format"
-            raise ValueError(msg)
+        # Check individual patterns
+        is_hostname = re.match(hostname_pattern, v) is not None
+        is_ip = re.match(ip_pattern, v) is not None
+        is_localhost = v == "localhost"
+
+        if not (is_hostname or is_ip or is_localhost):
+            raise ValueError("Invalid hostname or IP address format")
         return v
 
     @field_validator("log_level", check_fields=False)
@@ -131,7 +145,7 @@ class CommonValidators:
         if v.upper() not in allowed_levels:
             msg = f"Log level must be one of: {allowed_levels}"
             raise ValueError(msg)
-        return v.upper()
+        return str(v.upper())
 
     @field_validator("environment", "env", check_fields=False)
     @classmethod
@@ -147,10 +161,10 @@ class CommonValidators:
             "production",
             "prod",
         }
-        if v.lower() not in allowed_envs:
+        if str(v).lower() not in allowed_envs:
             msg = f"Environment must be one of: {allowed_envs}"
             raise ValueError(msg)
-        return v.lower()
+        return str(v).lower()
 
     @field_validator("database_url", check_fields=False)
     @classmethod
@@ -259,10 +273,10 @@ class CommonValidators:
             "ES384",
             "ES512",  # ECDSA
         }
-        if v not in allowed_algorithms:
+        if str(v) not in allowed_algorithms:
             msg = f"JWT algorithm must be one of: {allowed_algorithms}"
             raise ValueError(msg)
-        return v
+        return str(v)
 
     @field_validator("encoding", "charset", check_fields=False)
     @classmethod
@@ -282,7 +296,7 @@ class CommonValidators:
         if v.upper() not in allowed_encodings:
             msg = f"Encoding must be one of: {allowed_encodings}"
             raise ValueError(msg)
-        return v.upper()
+        return str(v).upper()
 
 
 def create_choice_validator(

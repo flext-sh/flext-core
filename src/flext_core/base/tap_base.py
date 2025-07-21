@@ -17,6 +17,7 @@ from dataclasses import dataclass
 from dataclasses import field
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import cast
 
 from flext_core.domain.types import ServiceResult
 
@@ -199,7 +200,7 @@ class BaseTap(ABC):
         schema = self._get_schema()
         streams = schema.get("streams", {})
         stream_schema = streams.get(stream_name)
-        return stream_schema if stream_schema is not None else None
+        return cast("dict[str, Any] | None", stream_schema)
 
     def collect_metrics(self) -> dict[str, Any]:
         """Collect performance and execution metrics.

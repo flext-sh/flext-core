@@ -63,7 +63,7 @@ class EnhancedBaseConfig(BaseSettings):
     app_version: str = "1.0.0"
 
     # Security settings
-    secret_key: str = "default-development-key-that-is-long-enough-for-validation"  # noqa: S105
+    secret_key: str = "default-development-key-that-is-long-enough-for-validation"
     allowed_hosts: list[str] = ["localhost", "127.0.0.1"]
 
     # Database settings (optional - projects can override)
@@ -178,7 +178,7 @@ class EnhancedBaseConfig(BaseSettings):
 
             if (
                 self.secret_key
-                == "default-development-key-that-is-long-enough-for-validation"  # noqa: S105
+                == "default-development-key-that-is-long-enough-for-validation"
             ):  # Security check comparison
                 issues.append("Default secret key detected in production")
 
@@ -218,26 +218,19 @@ class EnhancedBaseConfig(BaseSettings):
             msg = f"Configuration file not found: {config_path}"
             raise FileNotFoundError(msg)
 
-        # Load environment variables from the specified file
-        # We'll use os.environ to temporarily override env_file loading
-        original_env = os.environ.copy()
+        # Create a custom settings config to use the specified file
+        class FileBasedConfig(cls):  # type: ignore[misc,valid-type]
+            model_config = SettingsConfigDict(
+                env_file=str(config_path),  # Use the specified file
+                env_file_encoding="utf-8",
+                extra="allow",
+                validate_assignment=True,
+                case_sensitive=False,
+                env_prefix="FLEXT_",
+            )
 
-        try:
-            # Read the file and set environment variables
-            if config_path.suffix in {".env", ".txt"}:
-                with config_path.open("r", encoding="utf-8") as f:
-                    for file_line in f:
-                        line = file_line.strip()
-                        if line and not line.startswith("#") and "=" in line:
-                            key, value = line.split("=", 1)
-                            os.environ[key.strip()] = value.strip()
-
-            # Create instance with current environment
-            return cls()
-        finally:
-            # Restore original environment
-            os.environ.clear()
-            os.environ.update(original_env)
+        # Create instance - it will read from the specified file
+        return FileBasedConfig()
 
 
 class DatabaseConfig(EnhancedBaseConfig):

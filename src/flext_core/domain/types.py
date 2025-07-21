@@ -19,341 +19,119 @@ from flext_core.domain.models import validate_project_name
 from flext_core.domain.models import version_field
 
 # Re-export unified types from shared_types and models
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    URL,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    AlertSeverity,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    ApiKey,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    BaseConfigDict,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    BaseEntityDict,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    BatchSize,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    CommandServiceProtocol,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    ConfigMapping,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    ConfigurableProtocol,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    ConfigurationKey,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    ConfigurationValue,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    CpuPercent,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    CreatedAt,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    DatabaseName,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    DatabaseURL,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    DependencyConfiguratorProtocol,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    DirPath,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    DiskMB,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    DurationSeconds,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    EntityCollection,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    EntityId,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    EntityMixin,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    EntityProtocol,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    EntityStatus,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    Environment,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    EnvironmentLiteral,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    EnvironmentMixin,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    FileName,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    FilePath,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    FileSize,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    HandlerFunction,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    IdentifierMixin,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    IPAddress,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    Json,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    JsonDict,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    JsonList,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    JsonSchema,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    LogLevel,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    LogLevelLiteral,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    MemoryMB,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    MergeableProtocol,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    MetricType,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    NonEmptyStr,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    NonNegativeFloat,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    NonNegativeInt,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    # Oracle database types
-    OracleArraySize,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    OracleFetchSize,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    OracleHost,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    OraclePassword,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    OraclePort,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    OracleQueryTimeout,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    OracleSchema,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    OracleServiceName,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    OracleSID,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    OracleUsername,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    OracleWMSAuthMethod,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    OracleWMSEntityType,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    OracleWMSFilterOperator,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    OracleWMSPageMode,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    OracleWMSWriteMode,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    Password,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    PipelineDict,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    PipelineId,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    PluginDict,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    PluginId,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    PluginType,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    Port,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    PositiveFloat,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    PositiveInt,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    ProjectMixin,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    ProjectName,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    ProjectSettingsProtocol,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    QueryServiceProtocol,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    ResultStatus,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    RetryCount,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    RetryDelay,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    ServiceResult,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    SessionId,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    # Singer protocol types
-    SingerBatchSize,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    SingerBookmark,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    SingerCatalog,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    SingerMaxRecords,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    SingerParallelStreams,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    SingerRecordCount,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    SingerReplicationMethod,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    SingerSchemaName,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    SingerState,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    SingerStateInterval,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    SingerStreamName,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    StatusMixin,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    TimeoutSeconds,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    TimestampISO,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    TimestampMixin,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    Token,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    TraceStatus,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    TransactionId,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    UpdatedAt,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    UserId,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    Username,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    ValidationServiceProtocol,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    Version,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    WMSCompanyCode,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    WMSConnectionInfo,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    WMSEntityInfo,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    WMSEntityName,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    WMSFacilityCode,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    WMSFieldMapping,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    WMSFieldName,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    WMSItemID,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    WMSLocationID,
-)
-from flext_core.domain.shared_types import (  # Typed dicts; Generic types; Entity types; Protocols; Enums; Base types; Result pattern; Singer types; Mixins; WMS types
-    WMSOrderNumber,
-)
+# Categories: Typed dicts, Generic types, Entity types, Protocols, Enums,
+# Base types, Result pattern, Singer types, Mixins, WMS types
+from flext_core.domain.shared_types import URL
+from flext_core.domain.shared_types import AlertSeverity
+from flext_core.domain.shared_types import ApiKey
+from flext_core.domain.shared_types import BaseConfigDict
+from flext_core.domain.shared_types import BaseEntityDict
+from flext_core.domain.shared_types import BatchSize
+from flext_core.domain.shared_types import CommandServiceProtocol
+from flext_core.domain.shared_types import ConfigMapping
+from flext_core.domain.shared_types import ConfigurableProtocol
+from flext_core.domain.shared_types import ConfigurationKey
+from flext_core.domain.shared_types import ConfigurationValue
+from flext_core.domain.shared_types import CpuPercent
+from flext_core.domain.shared_types import CreatedAt
+from flext_core.domain.shared_types import DatabaseName
+from flext_core.domain.shared_types import DatabaseURL
+from flext_core.domain.shared_types import DependencyConfiguratorProtocol
+from flext_core.domain.shared_types import DirPath
+from flext_core.domain.shared_types import DiskMB
+from flext_core.domain.shared_types import DurationSeconds
+from flext_core.domain.shared_types import EntityCollection
+from flext_core.domain.shared_types import EntityId
+from flext_core.domain.shared_types import EntityMixin
+from flext_core.domain.shared_types import EntityProtocol
+from flext_core.domain.shared_types import EntityStatus
+from flext_core.domain.shared_types import Environment
+from flext_core.domain.shared_types import EnvironmentLiteral
+from flext_core.domain.shared_types import EnvironmentMixin
+from flext_core.domain.shared_types import FileName
+from flext_core.domain.shared_types import FilePath
+from flext_core.domain.shared_types import FileSize
+from flext_core.domain.shared_types import HandlerFunction
+from flext_core.domain.shared_types import IdentifierMixin
+from flext_core.domain.shared_types import IPAddress
+from flext_core.domain.shared_types import Json
+from flext_core.domain.shared_types import JsonDict
+from flext_core.domain.shared_types import JsonList
+from flext_core.domain.shared_types import JsonSchema
+from flext_core.domain.shared_types import LogLevel
+from flext_core.domain.shared_types import LogLevelLiteral
+from flext_core.domain.shared_types import MemoryMB
+from flext_core.domain.shared_types import MergeableProtocol
+from flext_core.domain.shared_types import MetricType
+from flext_core.domain.shared_types import NonEmptyStr
+from flext_core.domain.shared_types import NonNegativeFloat
+from flext_core.domain.shared_types import NonNegativeInt
+from flext_core.domain.shared_types import OracleArraySize  # Oracle database types
+from flext_core.domain.shared_types import OracleFetchSize
+from flext_core.domain.shared_types import OracleHost
+from flext_core.domain.shared_types import OraclePassword
+from flext_core.domain.shared_types import OraclePort
+from flext_core.domain.shared_types import OracleQueryTimeout
+from flext_core.domain.shared_types import OracleSchema
+from flext_core.domain.shared_types import OracleServiceName
+from flext_core.domain.shared_types import OracleSID
+from flext_core.domain.shared_types import OracleUsername
+from flext_core.domain.shared_types import OracleWMSAuthMethod
+from flext_core.domain.shared_types import OracleWMSEntityType
+from flext_core.domain.shared_types import OracleWMSFilterOperator
+from flext_core.domain.shared_types import OracleWMSPageMode
+from flext_core.domain.shared_types import OracleWMSWriteMode
+from flext_core.domain.shared_types import Password
+from flext_core.domain.shared_types import PipelineDict
+from flext_core.domain.shared_types import PipelineId
+from flext_core.domain.shared_types import PluginDict
+from flext_core.domain.shared_types import PluginId
+from flext_core.domain.shared_types import PluginType
+from flext_core.domain.shared_types import Port
+from flext_core.domain.shared_types import PositiveFloat
+from flext_core.domain.shared_types import PositiveInt
+from flext_core.domain.shared_types import ProjectMixin
+from flext_core.domain.shared_types import ProjectName
+from flext_core.domain.shared_types import ProjectSettingsProtocol
+from flext_core.domain.shared_types import QueryServiceProtocol
+from flext_core.domain.shared_types import ResultStatus
+from flext_core.domain.shared_types import RetryCount
+from flext_core.domain.shared_types import RetryDelay
+from flext_core.domain.shared_types import ServiceResult
+from flext_core.domain.shared_types import SessionId
+from flext_core.domain.shared_types import SingerBatchSize  # Singer protocol types
+from flext_core.domain.shared_types import SingerBookmark
+from flext_core.domain.shared_types import SingerCatalog
+from flext_core.domain.shared_types import SingerMaxRecords
+from flext_core.domain.shared_types import SingerParallelStreams
+from flext_core.domain.shared_types import SingerRecordCount
+from flext_core.domain.shared_types import SingerReplicationMethod
+from flext_core.domain.shared_types import SingerSchemaName
+from flext_core.domain.shared_types import SingerState
+from flext_core.domain.shared_types import SingerStateInterval
+from flext_core.domain.shared_types import SingerStreamName
+from flext_core.domain.shared_types import StatusMixin
+from flext_core.domain.shared_types import TimeoutSeconds
+from flext_core.domain.shared_types import TimestampISO
+from flext_core.domain.shared_types import TimestampMixin
+from flext_core.domain.shared_types import Token
+from flext_core.domain.shared_types import TraceStatus
+from flext_core.domain.shared_types import TransactionId
+from flext_core.domain.shared_types import UpdatedAt
+from flext_core.domain.shared_types import UserId
+from flext_core.domain.shared_types import Username
+from flext_core.domain.shared_types import ValidationServiceProtocol
+from flext_core.domain.shared_types import Version
+from flext_core.domain.shared_types import WMSCompanyCode
+from flext_core.domain.shared_types import WMSConnectionInfo
+from flext_core.domain.shared_types import WMSEntityInfo
+from flext_core.domain.shared_types import WMSEntityName
+from flext_core.domain.shared_types import WMSFacilityCode
+from flext_core.domain.shared_types import WMSFieldMapping
+from flext_core.domain.shared_types import WMSFieldName
+from flext_core.domain.shared_types import WMSItemID
+from flext_core.domain.shared_types import WMSLocationID
+from flext_core.domain.shared_types import WMSOrderNumber
 
 # Backward compatibility aliases
 ConfigDict = BaseConfigDict

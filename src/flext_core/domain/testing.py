@@ -35,11 +35,13 @@ class MockRepository(Repository[T, ID]):
             The saved entity.
 
         """
-        # For now, just return the entity as-is
-        # In a real implementation, this would assign an ID and store it
+        # Store entity using its ID
+        entity_id = getattr(entity, "id", None)
+        if entity_id is not None:
+            self._storage[entity_id] = entity
         return entity
 
-    async def get(self, entity_id: ID) -> T | None:
+    async def get_by_id(self, entity_id: ID) -> T | None:
         """Get an entity by ID from the mock repository.
 
         Args:
@@ -74,3 +76,12 @@ class MockRepository(Repository[T, ID]):
 
         """
         return list(self._storage.values())
+
+    async def count(self) -> int:
+        """Count entities in the mock repository.
+
+        Returns:
+            Number of entities in the repository.
+
+        """
+        return len(self._storage)

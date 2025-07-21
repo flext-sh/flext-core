@@ -18,7 +18,7 @@ from flext_core.config.base import BaseConfig
 from flext_core.config.base import BaseSettings
 
 # Development defaults - change in production
-DEV_JWT_SECRET = "development-jwt-secret-change-in-production"  # noqa: S105
+DEV_JWT_SECRET = "development-jwt-secret-change-in-production"
 
 
 class FlextDatabaseConfig(BaseConfig):
@@ -163,7 +163,7 @@ def get_flext_settings(*, reload: bool = False) -> FlextSettings:
         FLEXT settings instance
 
     """
-    global _settings  # noqa: PLW0603
+    global _settings  # noqa: PLW0603 - Singleton pattern for global settings
 
     if _settings is None or reload:
         _settings = FlextSettings(

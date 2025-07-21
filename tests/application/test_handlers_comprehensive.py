@@ -234,6 +234,7 @@ class TestTypeVariables:
 class TestHandlerIntegrationScenarios:
     """Test realistic handler integration scenarios."""
 
+    @pytest.mark.asyncio
     async def test_command_handler_integration(self) -> None:
         """Test command handler in realistic scenario."""
         from dataclasses import dataclass
@@ -268,6 +269,7 @@ class TestHandlerIntegrationScenarios:
         assert user.name == "John"
         assert user.email == "john@example.com"
 
+    @pytest.mark.asyncio
     async def test_query_handler_integration(self) -> None:
         """Test query handler in realistic scenario."""
         from dataclasses import dataclass
@@ -301,6 +303,7 @@ class TestHandlerIntegrationScenarios:
         assert len(users) == 1
         assert users[0].name == "John"
 
+    @pytest.mark.asyncio
     async def test_event_handler_integration(self) -> None:
         """Test event handler in realistic scenario."""
         from dataclasses import dataclass

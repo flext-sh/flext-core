@@ -62,6 +62,7 @@ def get_test_environment_fixture() -> Any:
     set_test_environment = get_test_environment_fixture()
     ```
     """
+
     # pytest is imported conditionally above and required for this function
     @pytest.fixture(autouse=True)
     def set_test_environment(
@@ -120,6 +121,7 @@ def get_project_root_fixture() -> Any:
     project_root = get_project_root_fixture()
     ```
     """
+
     # pytest is imported conditionally above and required for this function
     @pytest.fixture(scope="session")
     def project_root() -> Path:

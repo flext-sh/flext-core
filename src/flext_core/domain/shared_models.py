@@ -11,17 +11,19 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import StrEnum
+from typing import TYPE_CHECKING
 from typing import Any
 
 # Import UUID directly since it's used at runtime
-from uuid import UUID  # noqa: TC003
-
 from pydantic import Field
 from pydantic import field_validator
 
 from flext_core.domain.pydantic_base import DomainBaseModel
 from flext_core.domain.pydantic_base import DomainEntity
 from flext_core.domain.pydantic_base import DomainValueObject
+
+if TYPE_CHECKING:
+    from uuid import UUID
 
 
 class EntityStatus(StrEnum):
@@ -68,7 +70,7 @@ class AuthToken(DomainValueObject):
     """Authentication token value object."""
 
     access_token: str
-    token_type: str = "Bearer"  # noqa: S105
+    token_type: str = "Bearer"
     expires_in: int  # seconds
     refresh_token: str | None = None
     scope: str | None = None

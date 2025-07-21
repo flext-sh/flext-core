@@ -584,7 +584,7 @@ def get_container() -> DIContainer:
         The dependency injection container.
 
     """
-    global _container  # noqa: PLW0603
+    global _container  # noqa: PLW0603 - Singleton pattern for DI container
     if _container is None:
         _container = DIContainer()
     return _container
@@ -600,7 +600,7 @@ def configure_container(container: DIContainer | None = None) -> DIContainer:
         The dependency injection container.
 
     """
-    global _container  # noqa: PLW0603
+    global _container  # noqa: PLW0603 - Singleton pattern for DI container
     if container is None:
         container = DIContainer()
     _container = container

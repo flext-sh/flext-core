@@ -108,7 +108,9 @@ class TestInMemoryRepositoryEdgeCases:
     @pytest.mark.asyncio
     async def test_save_with_complex_id(
         self,
-        repository: InMemoryRepository[TestInMemoryRepositoryEdgeCases.ComplexEntity, UUID],
+        repository: InMemoryRepository[
+            TestInMemoryRepositoryEdgeCases.ComplexEntity, UUID
+        ],
     ) -> None:
         """Test saving entity with complex ID type."""
         complex_id = ("prefix", 12345)
@@ -117,13 +119,15 @@ class TestInMemoryRepositoryEdgeCases:
         saved = await repository.save(entity)
         assert saved == entity
 
-        retrieved = await repository.get(complex_id)
+        retrieved = await repository.get_by_id(complex_id)
         assert retrieved == entity
 
     @pytest.mark.asyncio
     async def test_save_with_none_id(
         self,
-        repository: InMemoryRepository[TestInMemoryRepositoryEdgeCases.ComplexEntity, UUID],
+        repository: InMemoryRepository[
+            TestInMemoryRepositoryEdgeCases.ComplexEntity, UUID
+        ],
     ) -> None:
         """Test saving entity with None ID."""
 
@@ -144,7 +148,9 @@ class TestInMemoryRepositoryEdgeCases:
     @pytest.mark.asyncio
     async def test_get_with_different_key_types(
         self,
-        repository: InMemoryRepository[TestInMemoryRepositoryEdgeCases.ComplexEntity, UUID],
+        repository: InMemoryRepository[
+            TestInMemoryRepositoryEdgeCases.ComplexEntity, UUID
+        ],
     ) -> None:
         """Test get method with different key types."""
         # Save entities with different ID types
@@ -159,7 +165,7 @@ class TestInMemoryRepositoryEdgeCases:
 
         # Retrieve each entity
         for entity in entities:
-            retrieved = await repository.get(entity.id)
+            retrieved = await repository.get_by_id(entity.id)
             assert retrieved == entity
 
         # Test with non-existent complex keys
@@ -170,13 +176,15 @@ class TestInMemoryRepositoryEdgeCases:
         ]
 
         for key in non_existent_keys:
-            result = await repository.get(key)
+            result = await repository.get_by_id(key)
             assert result is None
 
     @pytest.mark.asyncio
     async def test_delete_with_complex_ids(
         self,
-        repository: InMemoryRepository[TestInMemoryRepositoryEdgeCases.ComplexEntity, UUID],
+        repository: InMemoryRepository[
+            TestInMemoryRepositoryEdgeCases.ComplexEntity, UUID
+        ],
     ) -> None:
         """Test delete method with complex ID types."""
         complex_id = ("delete", 1)
@@ -186,14 +194,14 @@ class TestInMemoryRepositoryEdgeCases:
         await repository.save(entity)
 
         # Verify it exists
-        assert await repository.get(complex_id) is not None
+        assert await repository.get_by_id(complex_id) is not None
 
         # Delete it
         deleted = await repository.delete(complex_id)
         assert deleted is True
 
         # Verify it's gone
-        assert await repository.get(complex_id) is None
+        assert await repository.get_by_id(complex_id) is None
 
         # Try to delete again (should return False)
         deleted_again = await repository.delete(complex_id)
@@ -202,7 +210,9 @@ class TestInMemoryRepositoryEdgeCases:
     @pytest.mark.asyncio
     async def test_storage_internal_dict_behavior(
         self,
-        repository: InMemoryRepository[TestInMemoryRepositoryEdgeCases.ComplexEntity, UUID],
+        repository: InMemoryRepository[
+            TestInMemoryRepositoryEdgeCases.ComplexEntity, UUID
+        ],
     ) -> None:
         """Test internal storage dictionary behavior."""
         # Test that the internal storage behaves correctly with various key types
