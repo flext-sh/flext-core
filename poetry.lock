@@ -1138,6 +1138,23 @@ testing = ["covdefaults (>=2.3)", "coverage (>=7.6.10)", "diff-cover (>=9.2.1)",
 typing = ["typing-extensions (>=4.12.2) ; python_version < \"3.11\""]
 
 [[package]]
+name = "flext-ldif"
+version = "0.7.0"
+description = "FLEXT LDIF - Enterprise LDIF Processing Library"
+optional = false
+python-versions = ">=3.13,<3.14"
+groups = ["main"]
+files = []
+develop = false
+
+[package.dependencies]
+flext-core = {path = "../flext-core", develop = true}
+
+[package.source]
+type = "directory"
+url = "../flext-ldif"
+
+[[package]]
 name = "fqdn"
 version = "1.5.1"
 description = "Validates fully-qualified domain names against RFC 1123, so that they are acceptable to modern bowsers"
@@ -5166,4 +5183,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.13,<3.14"
-content-hash = "a883157e5577263a478518fed1517ad167e55005c404c9a396471084a1e9920d"
+content-hash = "516f6b65783a88a2da7750fa09d726741808d3ef061216a056292046f217419b"
