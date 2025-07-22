@@ -62,6 +62,8 @@ type UpdatedAt = Annotated[
 
 __all__ = [
     "BatchSize",
+    # Pydantic types
+    "ConfigDict",
     # Timestamp types
     "CreatedAt",
     "DatabaseName",
@@ -78,8 +80,6 @@ __all__ = [
     "UpdatedAt",
     "UserId",
     "Username",
-    # Pydantic types
-    "ConfigDict",
     # Validation functions
     "validate_entity_id",
     "validate_project_name",
