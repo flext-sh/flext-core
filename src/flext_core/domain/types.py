@@ -9,9 +9,11 @@ Redirects to shared_types.py to maintain existing imports while keeping clean ar
 
 from __future__ import annotations
 
+import re
 from datetime import datetime
 from typing import Annotated
 
+from pydantic import ConfigDict
 from pydantic import Field
 
 from flext_core.domain.shared_types import BatchSize
@@ -26,6 +28,26 @@ from flext_core.domain.shared_types import Port
 from flext_core.domain.shared_types import TimeoutSeconds
 from flext_core.domain.shared_types import UserId
 from flext_core.domain.shared_types import Username
+
+
+# Validation functions
+def validate_entity_id(entity_id: str) -> bool:
+    """Validate entity ID format."""
+    if not entity_id or len(entity_id) > 100:
+        return False
+    # Allow letters, numbers, hyphens, underscores
+    pattern = r"^[a-zA-Z0-9_-]+$"
+    return bool(re.match(pattern, entity_id))
+
+
+def validate_project_name(name: str) -> bool:
+    """Validate project name format."""
+    if not name or len(name) > 50:
+        return False
+    # Allow letters, numbers, hyphens, underscores
+    pattern = r"^[a-zA-Z][a-zA-Z0-9_-]*$"
+    return bool(re.match(pattern, name))
+
 
 type CreatedAt = Annotated[
     datetime,
@@ -56,5 +78,10 @@ __all__ = [
     "UpdatedAt",
     "UserId",
     "Username",
+    # Pydantic types
+    "ConfigDict",
+    # Validation functions
+    "validate_entity_id",
+    "validate_project_name",
     # All shared_types exports
 ]
