@@ -15,10 +15,10 @@ from typing import TYPE_CHECKING
 from unittest.mock import patch
 from uuid import uuid4
 
-from flext_core.domain.types import EntityStatus
+from flext_core.domain.shared_types import EntityStatus
 
 if TYPE_CHECKING:
-    from flext_core.domain.types import EntityId
+    from flext_core.domain.shared_types import EntityId
 
 
 class ConcreteTimestampEntity:

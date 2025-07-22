@@ -51,7 +51,7 @@ class TestInMemoryRepository:
         assert result == entity
 
         # Verify entity is stored
-        get_result = await repository.get_by_id(entity_id)
+        get_result = await repository.find_by_id(entity_id)
         assert get_result == entity
 
     @pytest.mark.asyncio
@@ -71,7 +71,7 @@ class TestInMemoryRepository:
         assert result == entity2
 
         # Verify overwrite
-        get_result = await repository.get_by_id(entity_id)
+        get_result = await repository.find_by_id(entity_id)
         assert get_result is not None
         assert get_result.name == "entity2"
 
@@ -84,7 +84,7 @@ class TestInMemoryRepository:
         entity = MockEntity(entity_id, "test_entity")
 
         await repository.save(entity)
-        result = await repository.get_by_id(entity_id)
+        result = await repository.find_by_id(entity_id)
 
         assert result == entity
 
@@ -95,7 +95,7 @@ class TestInMemoryRepository:
         """Test entity retrieval when ID not found."""
         non_existent_id = uuid4()
 
-        result = await repository.get_by_id(non_existent_id)
+        result = await repository.find_by_id(non_existent_id)
 
         assert result is None
 
@@ -116,7 +116,7 @@ class TestInMemoryRepository:
         assert result is True
 
         # Verify entity is deleted
-        get_result = await repository.get_by_id(entity_id)
+        get_result = await repository.find_by_id(entity_id)
         assert get_result is None
 
     @pytest.mark.asyncio
@@ -236,7 +236,7 @@ class TestMemoryStorageIntegration:
 
         # Verify all entities can be retrieved
         for entity in entities:
-            get_result = await repository.get_by_id(entity.id)
+            get_result = await repository.find_by_id(entity.id)
             assert get_result == entity
 
         # Verify list operation
@@ -261,5 +261,5 @@ class TestMemoryStorageIntegration:
         await repository.delete(other_id)
 
         # Verify original entity still exists
-        result = await repository.get_by_id(entity_id)
+        result = await repository.find_by_id(entity_id)
         assert result == original_entity

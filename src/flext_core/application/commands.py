@@ -21,7 +21,7 @@ class Command(ABC):
     """
 
     @abstractmethod
-    def validate(self) -> bool:
+    def validate_command(self) -> bool:
         """Validate command data before execution.
 
         Returns:

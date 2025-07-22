@@ -12,42 +12,25 @@ from __future__ import annotations
 
 from abc import ABC
 from abc import abstractmethod
+from typing import Generic
 from typing import TypeVar
 
-from flext_core.domain.pydantic_base import DomainEntity
+# DIP compliance - use domain repository interface
+from flext_core.domain.core import Repository
 
-EntityType = TypeVar("EntityType", bound=DomainEntity)
+# Type variables for generic repository
+EntityType = TypeVar("EntityType")
 IdType = TypeVar("IdType")
 
 
-class Repository[EntityType, IdType](ABC):
-    """Base repository interface for domain entities."""
-
-    @abstractmethod
-    async def get_by_id(self, entity_id: IdType) -> EntityType | None:
-        """Get entity by ID."""
-
-    @abstractmethod
-    async def save(self, entity: EntityType) -> EntityType:
-        """Save entity."""
-
-    @abstractmethod
-    async def delete(self, entity_id: IdType) -> bool:
-        """Delete entity by ID."""
-
-    @abstractmethod
-    async def list_all(self) -> list[EntityType]:
-        """List all entities."""
-
-
-class InMemoryRepository(Repository[EntityType, IdType]):
+class InMemoryRepository[EntityType, IdType](Repository[EntityType, IdType]):
     """In-memory repository implementation for testing."""
 
     def __init__(self) -> None:
         """Initialize the in-memory repository."""
         self._entities: dict[IdType, EntityType] = {}
 
-    async def get_by_id(self, entity_id: IdType) -> EntityType | None:
+    async def find_by_id(self, entity_id: IdType) -> EntityType | None:
         """Get entity by ID.
 
         Returns:
@@ -80,7 +63,7 @@ class InMemoryRepository(Repository[EntityType, IdType]):
             return True
         return False
 
-    async def list_all(self) -> list[EntityType]:
+    async def find_all(self) -> list[EntityType]:
         """List all entities.
 
         Returns:
@@ -88,3 +71,12 @@ class InMemoryRepository(Repository[EntityType, IdType]):
 
         """
         return list(self._entities.values())
+
+    async def count(self) -> int:
+        """Count total entities.
+
+        Returns:
+            Number of entities.
+
+        """
+        return len(self._entities)

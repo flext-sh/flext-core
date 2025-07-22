@@ -69,12 +69,12 @@ class TestRepositoryInterface:
     def test_repository_is_abstract(self) -> None:
         """Test Repository cannot be instantiated directly."""
         with pytest.raises(TypeError):
-            Repository()  # type: ignore[abstract]  # Should fail because it's abstract
+            Repository()
 
     def test_repository_abstract_methods(self) -> None:
         """Test Repository has the expected abstract methods."""
         abstract_methods = Repository.__abstractmethods__
-        expected_methods = {"save", "get_by_id", "delete", "find_all", "count"}
+        expected_methods = {"save", "find_by_id", "delete", "find_all", "count"}
         assert abstract_methods == expected_methods
 
     def test_repository_implementation(self) -> None:
@@ -83,7 +83,7 @@ class TestRepositoryInterface:
         repo: MockRepository[str, str] = MockRepository()
         assert repo is not None
         assert hasattr(repo, "save")
-        assert hasattr(repo, "get_by_id")
+        assert hasattr(repo, "find_by_id")
         assert hasattr(repo, "delete")
         assert hasattr(repo, "find_all")
         assert hasattr(repo, "count")

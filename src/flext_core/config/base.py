@@ -5,6 +5,7 @@ SPDX-License-Identifier: MIT
 """
 
 import inspect
+import logging
 import os
 from collections.abc import Callable
 from pathlib import Path
@@ -12,6 +13,7 @@ from typing import Any
 from typing import Protocol
 from typing import Self
 from typing import TypeVar
+from typing import cast
 from typing import runtime_checkable
 
 from pydantic import ConfigDict
@@ -24,9 +26,8 @@ from flext_core.domain.constants import ConfigDefaults
 from flext_core.domain.constants import FlextFramework
 from flext_core.domain.core import DomainError
 from flext_core.domain.pydantic_base import DomainBaseModel
-from flext_core.domain.types import EnvironmentLiteral
-from flext_core.domain.types import ProjectName
-from flext_core.domain.types import Version
+from flext_core.domain.shared_types import EnvironmentLiteral
+from flext_core.domain.shared_types import ProjectName
 
 # Type variables
 T = TypeVar("T")
@@ -35,8 +36,6 @@ T = TypeVar("T")
 # ==============================================================================
 # INTERFACE SEGREGATION PRINCIPLE - FOCUSED CONFIGURATION PROTOCOLS
 # ==============================================================================
-
-
 @runtime_checkable
 class ConfigSerializationProtocol(Protocol):
     """Protocol for configuration serialization operations."""
@@ -160,14 +159,12 @@ class BaseSettings(PydanticBaseSettings):
         str_strip_whitespace=True,
         use_enum_values=True,
     )
-
     # Project identification using modern typing
     project_name: ProjectName = Field(default="flext", description="Project name")
-    project_version: Version = Field(
+    project_version: str = Field(
         default=FlextFramework.VERSION,
         description="Project version",
     )
-
     # Environment settings using typed literals
     environment: EnvironmentLiteral = Field(
         default="development",
@@ -205,7 +202,6 @@ class BaseSettings(PydanticBaseSettings):
                 # Simple manual env file parsing (avoiding python-dotenv dependency)
                 original_env: dict[str, str | None] = {}
                 env_data: dict[str, str] = {}
-
                 # Read and parse the env file manually
                 env_path = Path(env_file)
                 if env_path.exists():
@@ -220,11 +216,9 @@ class BaseSettings(PydanticBaseSettings):
                             key = key.strip()
                             value = value.strip().strip('"').strip("'")
                             env_data[key] = value
-
                             # Store original value for restoration
                             original_env[key] = os.environ.get(key)
                             os.environ[key] = value
-
                 try:
                     return cls()
                 finally:
@@ -249,12 +243,10 @@ class BaseSettings(PydanticBaseSettings):
         """
         prefix = self.get_env_prefix()
         env_dict = {}
-
         for field_name, value in self.model_dump().items():
             if value is not None:
                 env_key = f"{prefix}{field_name.upper()}"
                 env_dict[env_key] = str(value)
-
         return env_dict
 
     def to_dict(self) -> dict[str, Any]:
@@ -296,9 +288,9 @@ class DIContainer:
 
     def __init__(self) -> None:
         """Initialize the dependency injection container."""
-        self._services: dict[type, object] = {}
+        self._services: dict[type, Any] = {}
         self._factories: dict[type, Callable[[], Any]] = {}
-        self._singletons: dict[type, object] = {}
+        self._singletons: dict[type, Any] = {}
         self._resolving: set[type] = set()  # Track what we're currently resolving
 
     def register(self, service_type: type[T], instance: T) -> None:
@@ -355,18 +347,15 @@ class DIContainer:
         if service_type in self._resolving:
             msg = f"Circular dependency detected for {service_type}"
             raise ConfigurationError(msg)
-
         # Check if already registered
         if service_type in self._services:
-            return self._services[service_type]  # type: ignore[return-value]
-
+            return cast("T", self._services[service_type])
         # Check if singleton already created
         if (
             service_type in self._singletons
             and self._singletons[service_type] is not None
         ):
-            return self._singletons[service_type]  # type: ignore[return-value]
-
+            return cast("T", self._singletons[service_type])
         # Mark as resolving
         self._resolving.add(service_type)
         try:
@@ -374,13 +363,10 @@ class DIContainer:
             if service_type in self._factories:
                 factory = self._factories[service_type]
                 instance = self._create_with_injection(factory)
-
                 # Store singleton
                 if service_type in self._singletons:
                     self._singletons[service_type] = instance
-
-                return instance  # type: ignore[no-any-return]
-
+                return cast("T", instance)
             # Try to create automatically
             return self._create_with_injection(service_type)
         finally:
@@ -404,11 +390,9 @@ class DIContainer:
             # It's a class, get its __init__ method
             init_signature = inspect.signature(factory_or_type.__init__)
             params = {}
-
             for param_name, param in init_signature.parameters.items():
                 if param_name == "self":
                     continue
-
                 if param.annotation != inspect.Parameter.empty:
                     # Handle string annotations from __future__ import annotations
                     annotation_type = param.annotation
@@ -448,7 +432,6 @@ class DIContainer:
                                             annotation_type = global_ns[annotation_type]
                             finally:
                                 del frame
-
                     # Check if we have this dependency registered
                     if (
                         annotation_type in self._services
@@ -506,7 +489,6 @@ class DIContainer:
                                                 ]
                                 finally:
                                     del frame
-
                             if inspect.isclass(annotation_type):
                                 params[param_name] = self.resolve(annotation_type)
                             else:
@@ -524,13 +506,11 @@ class DIContainer:
                 # Parameter has no annotation, use default if available
                 elif param.default != inspect.Parameter.empty:
                     params[param_name] = param.default
-
             instance: T = factory_or_type(**params)
             return instance
         # It's a factory function
         signature = inspect.signature(factory_or_type)
         params = {}
-
         for param_name, param in signature.parameters.items():
             if param.annotation != inspect.Parameter.empty:
                 # Handle string annotations from __future__ import annotations
@@ -545,7 +525,6 @@ class DIContainer:
                         annotation_type = float
                     elif annotation_type == "bool":
                         annotation_type = bool
-
                 # Check if we have this dependency registered
                 if (
                     annotation_type in self._services
@@ -568,13 +547,72 @@ class DIContainer:
             # Parameter has no annotation, use default if available
             elif param.default != inspect.Parameter.empty:
                 params[param_name] = param.default
-
         result: T = factory_or_type(**params)
         return result
 
+    def get_all(self, service_type: type[T]) -> list[T]:
+        """Get all instances of a service type.
 
-# Global DI container instance
-_container: DIContainer | None = None
+        Args:
+            service_type: The interface type to find implementations for
+        Returns:
+            List of all registered implementations of the service type
+
+        """
+        instances: list[T] = []
+        # Check directly registered services
+        for registered_type, instance in self._services.items():
+            try:
+                if (
+                    inspect.isclass(registered_type)
+                    and issubclass(registered_type, service_type)
+                ) or isinstance(instance, service_type):
+                    instances.append(cast("T", instance))
+            except TypeError:
+                # Skip if type checking fails
+                continue
+        # Check factories
+        for registered_type in self._factories:
+            try:
+                if inspect.isclass(registered_type) and issubclass(
+                    registered_type,
+                    service_type,
+                ):
+                    instance = self.resolve(registered_type)
+                    instances.append(instance)
+            except (TypeError, Exception) as e:
+                # Log exception for debugging and skip if type checking or resolution fails
+                logging.getLogger(__name__).debug(
+                    "Failed to resolve factory %s: %s",
+                    registered_type,
+                    e,
+                )
+                continue
+        return instances
+
+
+class _ContainerSingleton:
+    """Singleton for DI container management."""
+
+    def __init__(self) -> None:
+        self._container: DIContainer | None = None
+
+    def get_container(self) -> DIContainer:
+        """Get the dependency injection container."""
+        if self._container is None:
+            self._container = DIContainer()
+        return self._container
+
+    def configure_container(self, container: DIContainer | None = None) -> DIContainer:
+        """Configure the dependency injection container."""
+        if container is None:
+            container = DIContainer()
+        self._container = container
+        return container
+
+
+# Singleton instance
+_singleton = _ContainerSingleton()
 
 
 def get_container() -> DIContainer:
@@ -584,10 +622,7 @@ def get_container() -> DIContainer:
         The dependency injection container.
 
     """
-    global _container  # noqa: PLW0603 - Singleton pattern for DI container
-    if _container is None:
-        _container = DIContainer()
-    return _container
+    return _singleton.get_container()
 
 
 def configure_container(container: DIContainer | None = None) -> DIContainer:
@@ -600,11 +635,7 @@ def configure_container(container: DIContainer | None = None) -> DIContainer:
         The dependency injection container.
 
     """
-    global _container  # noqa: PLW0603 - Singleton pattern for DI container
-    if container is None:
-        container = DIContainer()
-    _container = container
-    return container
+    return _singleton.configure_container(container)
 
 
 # Decorators for dependency injection
@@ -627,7 +658,6 @@ def injectable(
             container.register_factory(service_type, cls)
         else:
             container.register_factory(cls, cls)
-
         # Add __wrapped__ attribute for testing
         cls.__wrapped__ = cls
         return cls
@@ -689,7 +719,6 @@ class ConfigSection:
         """
         if instance is None:
             return self
-
         # Extract subsection from settings
         subsection_data = instance.get_subsection(self.prefix)
         return self.config_class.model_validate(subsection_data)

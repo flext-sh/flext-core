@@ -70,7 +70,7 @@ class TestDatabaseUrlValidator:
         ]
 
         for url in invalid_scheme_urls:
-            with pytest.raises(ValueError, match="(Invalid database URL|Database URL must include)"):
+            with pytest.raises(ValueError, match="(Database URL must start with supported protocol|Invalid URL format)"):
                 validate_database_url(url)
 
 
@@ -98,12 +98,15 @@ class TestUrlValidator:
             "not-a-url",  # No scheme
             "http://",  # No host
             "https://",  # No host
-            "http://localhost",  # No TLD (by default require_tld=True)
         ]
 
         for url in invalid_urls:
-            with pytest.raises(ValueError, match="(Invalid URL|URL cannot be empty|URL must contain a valid domain)"):
+            with pytest.raises(ValueError, match="(Invalid URL format|URL cannot be empty)"):
                 validate_url(url)
+
+        # localhost is valid as a hostname
+        result = validate_url("http://localhost")
+        assert result == "http://localhost"
 
 
 class TestPortValidator:
@@ -232,4 +235,4 @@ class TestValidatorErrorHandling:
         for validator_func in string_validators:
             for wrong_input in wrong_inputs:
                 with pytest.raises((ValueError, TypeError)):
-                    validator_func(wrong_input)  # type: ignore[operator]
+                    validator_func(wrong_input)

@@ -10,10 +10,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_core.domain.types import LogLevel, ServiceResult
-
+from flext_core.domain.shared_types import LogLevel
+from flext_core.domain.shared_types import ServiceResult
 if TYPE_CHECKING:
-    from flext_core.domain.types import ProjectName, Version
+    from flext_core.domain.shared_types import ProjectName, Version
 
 
 class TestServiceResult:
@@ -23,15 +23,15 @@ class TestServiceResult:
         """Test successful ServiceResult creation."""
         result = ServiceResult.ok("test_data")
 
-        assert result.is_success
+        assert result.success
         assert result.data == "test_data"
         assert result.error is None
 
     def test_service_result_failure(self) -> None:
         """Test failed ServiceResult creation."""
-        result: ServiceResult[str] = ServiceResult.fail("test_error")
+        result = ServiceResult.fail("test_error")
 
-        assert not result.is_success
+        assert not result.success
         assert result.data is None
         assert result.error == "test_error"
 
@@ -39,15 +39,15 @@ class TestServiceResult:
         """Test ServiceResult.success method."""
         result = ServiceResult.ok("success_data")
 
-        assert result.is_success
+        assert result.success
         assert result.data == "success_data"
         assert result.error is None
 
     def test_service_result_failure_method(self) -> None:
         """Test ServiceResult.failure method."""
-        result: ServiceResult[str] = ServiceResult.fail("failure_message")
+        result = ServiceResult.fail("failure_message")
 
-        assert not result.is_success
+        assert not result.success
         assert result.data is None
         assert result.error == "failure_message"
 
@@ -55,7 +55,7 @@ class TestServiceResult:
         """Test ServiceResult with None data."""
         result = ServiceResult.ok(None)
 
-        assert result.is_success
+        assert result.success
         assert result.data is None
         assert result.error is None
 
@@ -64,7 +64,7 @@ class TestServiceResult:
         test_data = {"key": "value", "list": [1, 2, 3]}
         result = ServiceResult.ok(test_data)
 
-        assert result.is_success
+        assert result.success
         assert result.data == test_data
         assert result.data["key"] == "value"
         assert result.data["list"] == [1, 2, 3]
@@ -72,7 +72,7 @@ class TestServiceResult:
     def test_service_result_string_representation(self) -> None:
         """Test ServiceResult string representation."""
         success_result = ServiceResult.ok("test")
-        failure_result: ServiceResult[str] = ServiceResult.fail("error")
+        failure_result = ServiceResult.fail("error")
 
         # Should have meaningful string representations
         assert str(success_result) != ""
@@ -86,19 +86,19 @@ class TestServiceResult:
 
         # Same data should have same properties
         assert result1.data == result2.data
-        assert result1.is_success == result2.is_success
+        assert result1.success == result2.success
         # Different data should have different values
         assert result1.data != result3.data
 
     def test_service_result_boolean_context(self) -> None:
         """Test ServiceResult in boolean context."""
         success_result = ServiceResult.ok("test")
-        failure_result: ServiceResult[str] = ServiceResult.fail("error")
+        failure_result = ServiceResult.fail("error")
 
         # Success should be truthy
-        assert success_result.is_success is True
+        assert success_result.success is True
         # Failure should be falsy
-        assert failure_result.is_success is False
+        assert failure_result.success is False
 
 
 class TestTypedLiterals:
@@ -169,33 +169,33 @@ class TestServiceResultAdvanced:
 
         # Test successful chain
         result1 = validate_data("test")
-        if result1.is_success and result1.data is not None:
+        if result1.success and result1.data is not None:
             result2 = process_data(result1.data)
-            assert result2.is_success
+            assert result2.success
             assert result2.data == "TEST"
 
         # Test failure chain
         result3 = validate_data("hi")
-        assert not result3.is_success
+        assert not result3.success
         assert result3.error is not None
         assert "too short" in result3.error
 
     def test_service_result_error_handling(self) -> None:
         """Test ServiceResult error handling patterns."""
 
-        def risky_operation(should_fail: bool) -> ServiceResult[int]:
+        def risky_operation(should_fail: bool) -> ServiceResult[str]:
             if should_fail:
                 return ServiceResult.fail("Operation failed")
             return ServiceResult.ok(42)
 
         # Test success case
         success = risky_operation(False)
-        assert success.is_success
+        assert success.success
         assert success.data == 42
 
         # Test failure case
         failure = risky_operation(True)
-        assert not failure.is_success
+        assert not failure.success
         assert failure.error == "Operation failed"
 
     def test_service_result_type_safety(self) -> None:
@@ -214,7 +214,7 @@ class TestServiceResultAdvanced:
     def test_service_result_status_property(self) -> None:
         """Test ServiceResult status property."""
         success = ServiceResult.ok("test")
-        failure: ServiceResult[str] = ServiceResult.fail("error")
+        failure = ServiceResult.fail("error")
 
         # Should have status property
         assert hasattr(success, "status")
@@ -226,15 +226,15 @@ class TestEdgeCases:
 
     def test_service_result_empty_error(self) -> None:
         """Test ServiceResult with empty error message."""
-        result: ServiceResult[str] = ServiceResult.fail("")
-        assert not result.is_success
+        result = ServiceResult.fail("")
+        assert not result.success
         assert result.error == ""
 
     def test_service_result_none_error(self) -> None:
         """Test ServiceResult with None error."""
         # This should create a failure with None error
-        result: ServiceResult[str] = ServiceResult(success=False, data=None, error=None)
-        assert not result.is_success
+        result = ServiceResult.fail(None)
+        assert not result.success
         assert result.error is None
 
     def test_service_result_large_data(self) -> None:
@@ -242,7 +242,7 @@ class TestEdgeCases:
         large_data = "x" * 10000  # Large string
         result = ServiceResult.ok(large_data)
 
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         assert len(result.data) == 10000
         assert result.data == large_data
@@ -252,8 +252,8 @@ class TestEdgeCases:
         inner_result = ServiceResult.ok("inner")
         outer_result = ServiceResult.ok(inner_result)
 
-        assert outer_result.is_success
+        assert outer_result.success
         assert outer_result.data is not None
-        assert outer_result.data.is_success
+        assert outer_result.data.success
         assert outer_result.data is not None
         assert outer_result.data.data == "inner"

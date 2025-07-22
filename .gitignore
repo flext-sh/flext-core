@@ -295,7 +295,6 @@ archive/
 reports/
 
 # Old requirements.txt (use pyproject.toml)
-requirements.txt
 
 # Manual fix scripts - FORBIDDEN
 fix_*.py

@@ -35,8 +35,8 @@ class PersistenceProtocol[T, ID](Protocol):
         """Save entity to persistence layer."""
         ...
 
-    async def get_by_id(self, entity_id: ID) -> T | None:
-        """Get entity by ID from persistence layer."""
+    async def find_by_id(self, entity_id: ID) -> T | None:
+        """Find entity by ID from persistence layer."""
         ...
 
     async def delete(self, entity_id: ID) -> bool:

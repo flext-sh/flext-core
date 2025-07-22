@@ -119,7 +119,7 @@ class TestInMemoryRepositoryEdgeCases:
         saved = await repository.save(entity)
         assert saved == entity
 
-        retrieved = await repository.get_by_id(complex_id)
+        retrieved = await repository.find_by_id(complex_id)
         assert retrieved == entity
 
     @pytest.mark.asyncio
@@ -142,7 +142,7 @@ class TestInMemoryRepositoryEdgeCases:
         assert saved == none_entity
 
         # Should be able to retrieve with None key
-        retrieved = await none_repo.get(None)
+        retrieved = await none_repo.find_by_id(None)
         assert retrieved == none_entity
 
     @pytest.mark.asyncio
@@ -165,7 +165,7 @@ class TestInMemoryRepositoryEdgeCases:
 
         # Retrieve each entity
         for entity in entities:
-            retrieved = await repository.get_by_id(entity.id)
+            retrieved = await repository.find_by_id(entity.id)
             assert retrieved == entity
 
         # Test with non-existent complex keys
@@ -176,7 +176,7 @@ class TestInMemoryRepositoryEdgeCases:
         ]
 
         for key in non_existent_keys:
-            result = await repository.get_by_id(key)
+            result = await repository.find_by_id(key)
             assert result is None
 
     @pytest.mark.asyncio
@@ -194,14 +194,14 @@ class TestInMemoryRepositoryEdgeCases:
         await repository.save(entity)
 
         # Verify it exists
-        assert await repository.get_by_id(complex_id) is not None
+        assert await repository.find_by_id(complex_id) is not None
 
         # Delete it
         deleted = await repository.delete(complex_id)
         assert deleted is True
 
         # Verify it's gone
-        assert await repository.get_by_id(complex_id) is None
+        assert await repository.find_by_id(complex_id) is None
 
         # Try to delete again (should return False)
         deleted_again = await repository.delete(complex_id)
@@ -225,8 +225,8 @@ class TestInMemoryRepositoryEdgeCases:
         # Verify internal storage state
         assert len(repository._storage) == 5
 
-        # Test list_all returns all values
-        all_entities = await repository.list_all()
+        # Test find_all returns all values
+        all_entities = await repository.find_all()
         assert len(all_entities) == 5
 
         # Verify count matches storage size
@@ -260,7 +260,7 @@ class TestDIPCompliantRepository:
         assert saved.pipeline_name.value == "Test Pipeline"
 
         # Retrieve pipeline (use entity.id, not pipeline_id!)
-        retrieved = await pipeline_repo.get_by_id(pipeline.id)
+        retrieved = await pipeline_repo.find_by_id(pipeline.id)
         assert retrieved is not None
         assert retrieved.pipeline_name.value == "Test Pipeline"
 
@@ -293,7 +293,7 @@ class TestDIPCompliantRepository:
 
         # Verify each pipeline can be retrieved (use entity.id!)
         for pipeline in pipelines:
-            retrieved = await pipeline_repo.get(pipeline.id)
+            retrieved = await pipeline_repo.find_by_id(pipeline.id)
             assert retrieved is not None
             assert retrieved.pipeline_name.value == pipeline.pipeline_name.value
 
@@ -345,8 +345,8 @@ class TestTypeVariableAndGenericCoverage:
         await repo_b.save(entity_b)
 
         # Verify type separation
-        retrieved_a = await repo_a.get("a1")
-        retrieved_b = await repo_b.get("b1")
+        retrieved_a = await repo_a.find_by_id("a1")
+        retrieved_b = await repo_b.find_by_id("b1")
 
         assert retrieved_a is not None
         assert retrieved_a.type_name == "A"
@@ -355,8 +355,8 @@ class TestTypeVariableAndGenericCoverage:
         assert retrieved_b.type_name == "B"
 
         # Cross-repo access should return None
-        assert await repo_a.get("b1") is None
-        assert await repo_b.get("a1") is None
+        assert await repo_a.find_by_id("b1") is None
+        assert await repo_b.find_by_id("a1") is None
 
 
 class TestModuleExports:
@@ -419,7 +419,7 @@ class TestAsyncBehaviorEdgeCases:
 
         # Verify all entities can be retrieved
         for i in range(10):
-            entity = await repo.get(f"entity_{i}")
+            entity = await repo.find_by_id(f"entity_{i}")
             assert entity is not None
             assert entity.value == i
 
@@ -450,8 +450,8 @@ class TestAsyncBehaviorEdgeCases:
         await repo.delete("1")
 
         # Verify final state
-        assert await repo.get("1") is None
-        retrieved_2 = await repo.get("2")
+        assert await repo.find_by_id("1") is None
+        retrieved_2 = await repo.find_by_id("2")
         assert retrieved_2 is not None
         assert retrieved_2.state == "second"
 

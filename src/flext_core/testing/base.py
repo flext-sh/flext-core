@@ -20,10 +20,8 @@ from uuid import UUID
 if TYPE_CHECKING:
     from pydantic import BaseModel
 else:
-    try:
-        from pydantic import BaseModel
-    except ImportError:
-        BaseModel = None  # type: ignore[assignment,misc]
+    # NO FALLBACKS - SEMPRE usar implementações originais conforme instrução
+    from pydantic import BaseModel
 
 from flext_core.domain.shared_types import ServiceResult
 
@@ -31,10 +29,8 @@ from flext_core.domain.shared_types import ServiceResult
 if TYPE_CHECKING:
     import pytest
 else:
-    try:
-        import pytest
-    except ImportError:
-        pytest = None  # type: ignore[assignment]
+    # NO FALLBACKS - SEMPRE usar implementações originais conforme instrução
+    import pytest
 
 if TYPE_CHECKING:
     from collections.abc import Generator
@@ -70,7 +66,7 @@ class BaseTestCase(unittest.TestCase):
         if not isinstance(result, ServiceResult):
             self.fail(f"Expected ServiceResult, got {type(result)}")
 
-        if not result.is_success:
+        if not result.success:
             self.fail(f"Expected success, got error: {result.error}")
 
         if expected_data is not None and result.data != expected_data:
@@ -85,7 +81,7 @@ class BaseTestCase(unittest.TestCase):
         if not isinstance(result, ServiceResult):
             self.fail(f"Expected ServiceResult, got {type(result)}")
 
-        if not result.is_failure:
+        if result.success:
             self.fail(f"Expected failure, got success: {result.data}")
 
         if expected_error is not None and expected_error not in str(result.error):
@@ -124,21 +120,15 @@ class BaseTestCase(unittest.TestCase):
 
     def assert_config_valid(self, config: Any) -> None:
         """Assert that configuration object is valid."""
+        # NO FALLBACKS - SEMPRE usar implementações originais conforme instrução
+        if not isinstance(config, BaseModel):
+            self.fail(f"Expected Pydantic model, got {type(config)}")
+
+        # Validate by accessing model_fields
         try:
-            if BaseModel is None:
-                self.fail("Pydantic not available for config validation")
-
-            if not isinstance(config, BaseModel):
-                self.fail(f"Expected Pydantic model, got {type(config)}")
-
-            # Validate by accessing model_fields
-            try:
-                _ = config.model_dump()
-            except (ValueError, TypeError, AttributeError) as e:
-                self.fail(f"Configuration validation failed: {e}")
-        except ImportError:
-            # Pydantic not available, skip validation
-            pass
+            _ = config.model_dump()
+        except (ValueError, TypeError, AttributeError) as e:
+            self.fail(f"Configuration validation failed: {e}")
 
 
 class AsyncTestCase(BaseTestCase):

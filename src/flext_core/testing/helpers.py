@@ -32,7 +32,7 @@ def assert_service_result(
     """Assert ServiceResult state and data.
 
     Args:
-        result: ServiceResult to check
+        result: ServiceResult[Any] to check
         expect_success: Whether result should be successful
         expected_data: Expected data (if success)
         expected_error: Expected error message substring (if failure)
@@ -43,7 +43,7 @@ def assert_service_result(
         raise TypeError(msg)
 
     if expect_success:
-        if not result.is_success:
+        if not result.success:
             msg = f"Expected success, got error: {result.error}"
             raise AssertionError(msg)
 
@@ -51,7 +51,7 @@ def assert_service_result(
             msg = f"Expected data {expected_data}, got {result.data}"
             raise AssertionError(msg)
     else:
-        if not result.is_failure:
+        if not result or not result.success:
             msg = f"Expected failure, got success: {result.data}"
             raise AssertionError(msg)
 

@@ -231,7 +231,7 @@ class TestEnhancedBaseTap:
         """Test health check with healthy tap."""
         result = mock_tap.health_check()
 
-        assert result.is_success is True
+        assert result.success is True
         health_info = result.data
         assert health_info is not None
         assert health_info["status"] == "healthy"
@@ -247,7 +247,7 @@ class TestEnhancedBaseTap:
         tap = MockTap(invalid_config)
         result = tap.health_check()
 
-        assert result.is_success is True  # Health check succeeds but reports unhealthy
+        assert result.success is True  # Health check succeeds but reports unhealthy
         health_info = result.data
         assert health_info is not None
         assert health_info["status"] == "unhealthy"
@@ -329,7 +329,7 @@ class TestBaseTapErrorHandling:
         """Test discover method with ValueError."""
         tap = self.ErrorTap({})
         result = tap.discover()
-        assert result.is_success is False
+        assert result.success is False
         assert result.error is not None
         assert "Discovery failed: Schema error" in result.error
 
@@ -338,7 +338,7 @@ class TestBaseTapErrorHandling:
         tap = self.ErrorTap({})
         result = tap.health_check()
 
-        assert result.is_success is True
+        assert result.success is True
         health_info = result.data
         assert health_info is not None
         assert health_info["status"] == "degraded"

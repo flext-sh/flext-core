@@ -95,7 +95,7 @@ class TestBaseConfigComprehensive:
         from pydantic import ValidationError
 
         with pytest.raises(ValidationError, match="Input should be a valid integer"):
-            DemoConfig(value="not-a-number")  # type: ignore[arg-type]
+            DemoConfig(value="not-a-number")
 
     def test_config_assignment_validation(self) -> None:
         """Test assignment validation."""
@@ -109,14 +109,14 @@ class TestBaseConfigComprehensive:
         from pydantic import ValidationError
 
         with pytest.raises((ValueError, ValidationError), match=".*"):
-            config.value = "invalid"  # type: ignore[assignment]
+            config.value = "invalid"
 
     def test_config_extra_fields_forbidden(self) -> None:
         """Test that extra fields are forbidden."""
         from pydantic import ValidationError
 
         with pytest.raises(ValidationError, match="Extra inputs are not permitted"):
-            DemoConfig(extra_field="not-allowed")  # type: ignore[call-arg]
+            DemoConfig(extra_field="not-allowed")
 
     def test_string_strip_whitespace(self) -> None:
         """Test string whitespace stripping."""

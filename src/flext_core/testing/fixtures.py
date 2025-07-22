@@ -25,10 +25,8 @@ if TYPE_CHECKING:
 if TYPE_CHECKING:
     import pytest
 else:
-    try:
-        import pytest
-    except ImportError:
-        pytest = None  # type: ignore[assignment]
+    # NO FALLBACKS - SEMPRE usar implementações originais conforme instrução
+    import pytest
 
 
 # ==============================================================================

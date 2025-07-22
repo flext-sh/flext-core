@@ -6,7 +6,7 @@ import pytest
 
 # Use deprecated handlers for backward compatibility testing
 from flext_core.application.handlers import CommandHandler, EventHandler, QueryHandler
-from flext_core.domain.types import ServiceResult
+from flext_core.domain.shared_types import ServiceResult
 
 
 class MockCommand:
@@ -77,7 +77,7 @@ class MockCommandHandlerBase:
 
         result = await handler.handle(command)
 
-        assert result.is_success
+        assert result.success
         assert result.data == "Processed: test_data"
         assert result.error is None
 
@@ -89,7 +89,7 @@ class MockCommandHandlerBase:
 
         result = await handler.handle(command)
 
-        assert not result.is_success
+        assert not result.success
         assert result.error == "Test error"
         assert result.data is None
 
@@ -105,7 +105,7 @@ class MockQueryHandlerBase:
 
         result = await handler.handle(query)
 
-        assert result.is_success
+        assert result.success
         assert result.data == ["Result for: test_filter"]
         assert result.error is None
 
@@ -117,7 +117,7 @@ class MockQueryHandlerBase:
 
         result = await handler.handle(query)
 
-        assert result.is_success
+        assert result.success
         assert result.data == []
         assert result.error is None
 
@@ -166,14 +166,14 @@ class TestHandlerImplementations:
         # Test successful command
         success_command = MockCommand("success")
         result = await handler.handle(success_command)
-        assert result.is_success
+        assert result.success
         assert result.data is not None
-        assert "Processed: success" in result.data
+        assert result.data["result"] == "Processed: success"
 
         # Test error command
         error_command = MockCommand("error")
         result = await handler.handle(error_command)
-        assert not result.is_success
+        assert not result.success
 
     @pytest.mark.asyncio
     async def test_query_handler_concrete_implementation(self) -> None:
@@ -183,7 +183,7 @@ class TestHandlerImplementations:
         # Test successful query
         query = MockQuery("test")
         result = await handler.handle(query)
-        assert result.is_success
+        assert result.success
         assert isinstance(result.data, list)
 
     @pytest.mark.asyncio
@@ -221,11 +221,11 @@ class TestHandlerIntegration:
         query_result = await query_handler.handle(query)
 
         # Verify flow
-        assert command_result.is_success
+        assert command_result.success
         assert any(
             e.event_type == "command_completed" for e in event_handler.handled_events
         )
-        assert query_result.is_success
+        assert query_result.success
         assert query_result.data is not None
         assert len(query_result.data) > 0
 
@@ -237,6 +237,6 @@ class TestHandlerIntegration:
 
         result = await handler.handle(command)
 
-        assert not result.is_success
+        assert not result.success
         assert result.error is not None
         assert result.data is None

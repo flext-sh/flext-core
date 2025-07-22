@@ -29,7 +29,7 @@ class TestPipelineServiceErrorPaths:
         """Create mock pipeline repository."""
         repo = Mock()
         repo.save = AsyncMock()
-        repo.get_by_id = AsyncMock()
+        repo.find_by_id = AsyncMock()
         return repo
 
     @pytest.fixture
@@ -64,7 +64,7 @@ class TestPipelineServiceErrorPaths:
                 command = CreatePipelineCommand(name="Test Pipeline")
                 result = await pipeline_service.create_pipeline(command)
 
-                assert not result.is_success
+                assert not result.success
                 assert result.error is not None
                 assert "Validation failed" in result.error
 
@@ -84,7 +84,7 @@ class TestPipelineServiceErrorPaths:
             command = CreatePipelineCommand(name="Test Pipeline")
             result = await pipeline_service.create_pipeline(command)
 
-            assert not result.is_success
+            assert not result.success
             assert result.error is not None
             assert "Input error" in result.error
 
@@ -104,7 +104,7 @@ class TestPipelineServiceErrorPaths:
             command = CreatePipelineCommand(name="Test Pipeline")
             result = await pipeline_service.create_pipeline(command)
 
-            assert not result.is_success
+            assert not result.success
             assert result.error is not None
             assert "Input error" in result.error
 
@@ -120,7 +120,7 @@ class TestPipelineServiceErrorPaths:
 
         result = await pipeline_service.create_pipeline(command)
 
-        assert not result.is_success
+        assert not result.success
         assert result.error is not None
         assert "Repository error" in result.error
 
@@ -138,7 +138,7 @@ class TestPipelineServiceErrorPaths:
             command = ExecutePipelineCommand(pipeline_id="invalid-uuid")
             result = await pipeline_service.execute_pipeline(command)
 
-            assert not result.is_success
+            assert not result.success
             assert result.error is not None
             assert "Input error" in result.error
 
@@ -158,7 +158,7 @@ class TestPipelineServiceErrorPaths:
             command = ExecutePipelineCommand(pipeline_id=str(uuid4()))
             result = await pipeline_service.execute_pipeline(command)
 
-            assert not result.is_success
+            assert not result.success
             assert result.error is not None
             assert "Input error" in result.error
 
@@ -171,11 +171,11 @@ class TestPipelineServiceErrorPaths:
         command = ExecutePipelineCommand(pipeline_id=pipeline_id)
 
         # Mock repository to raise OSError
-        mock_repository.get_by_id.side_effect = OSError("Database connection error")
+        mock_repository.find_by_id.side_effect = OSError("Database connection error")
 
         result = await pipeline_service.execute_pipeline(command)
 
-        assert not result.is_success
+        assert not result.success
         assert result.error is not None
         assert "Execution error" in result.error
 
@@ -193,7 +193,7 @@ class TestPipelineServiceErrorPaths:
             query = GetPipelineQuery(pipeline_id="invalid-uuid")
             result = await pipeline_service.get_pipeline(query)
 
-            assert not result.is_success
+            assert not result.success
             assert result.error is not None
             assert "Input error" in result.error
 
@@ -213,7 +213,7 @@ class TestPipelineServiceErrorPaths:
             query = GetPipelineQuery(pipeline_id=str(uuid4()))
             result = await pipeline_service.get_pipeline(query)
 
-            assert not result.is_success
+            assert not result.success
             assert result.error is not None
             assert "Input error" in result.error
 
@@ -226,11 +226,11 @@ class TestPipelineServiceErrorPaths:
         query = GetPipelineQuery(pipeline_id=pipeline_id)
 
         # Mock repository to raise OSError
-        mock_repository.get_by_id.side_effect = OSError("Database error")
+        mock_repository.find_by_id.side_effect = OSError("Database error")
 
         result = await pipeline_service.get_pipeline(query)
 
-        assert not result.is_success
+        assert not result.success
         assert result.error is not None
         assert "Repository error" in result.error
 
@@ -242,12 +242,12 @@ class TestPipelineServiceErrorPaths:
         pipeline_id = str(uuid4())
         query = GetPipelineQuery(pipeline_id=pipeline_id)
 
-        # Mock repository to raise general Exception
-        mock_repository.get_by_id.side_effect = Exception("Unexpected error")
+        # Mock repository to raise RuntimeError (specific exception)
+        mock_repository.find_by_id.side_effect = RuntimeError("Unexpected error")
 
         result = await pipeline_service.get_pipeline(query)
 
-        assert not result.is_success
+        assert not result.success
         assert result.error is not None
         assert "Repository error" in result.error
 
@@ -264,7 +264,7 @@ class TestPipelineServiceErrorPaths:
 
             result = await pipeline_service.deactivate_pipeline("invalid-uuid")
 
-            assert not result.is_success
+            assert not result.success
             assert result.error is not None
             assert "Input error" in result.error
 
@@ -283,7 +283,7 @@ class TestPipelineServiceErrorPaths:
 
             result = await pipeline_service.deactivate_pipeline(str(uuid4()))
 
-            assert not result.is_success
+            assert not result.success
             assert result.error is not None
             assert "Input error" in result.error
 
@@ -295,11 +295,11 @@ class TestPipelineServiceErrorPaths:
         pipeline_id = str(uuid4())
 
         # Mock repository to raise OSError
-        mock_repository.get_by_id.side_effect = OSError("Storage error")
+        mock_repository.find_by_id.side_effect = OSError("Storage error")
 
         result = await pipeline_service.deactivate_pipeline(pipeline_id)
 
-        assert not result.is_success
+        assert not result.success
         assert result.error is not None
         assert "Repository error" in result.error
 
@@ -310,12 +310,12 @@ class TestPipelineServiceErrorPaths:
         """Test deactivate pipeline with general Exception."""
         pipeline_id = str(uuid4())
 
-        # Mock repository to raise general Exception
-        mock_repository.get_by_id.side_effect = Exception("Unexpected error")
+        # Mock repository to raise RuntimeError (specific exception)
+        mock_repository.find_by_id.side_effect = RuntimeError("Unexpected error")
 
         result = await pipeline_service.deactivate_pipeline(pipeline_id)
 
-        assert not result.is_success
+        assert not result.success
         assert result.error is not None
         assert "Repository error" in result.error
 
@@ -340,13 +340,13 @@ class TestCommandQueryValidationEdgeCases:
         """Test execute command with missing pipeline ID."""
         with pytest.raises(ValidationError):
             # Missing required parameter should fail
-            ExecutePipelineCommand()  # type: ignore[call-arg]
+            ExecutePipelineCommand()
 
     def test_get_query_missing_pipeline_id(self) -> None:
         """Test get query with missing pipeline ID."""
         with pytest.raises(ValidationError):
             # Missing required parameter should fail
-            GetPipelineQuery()  # type: ignore[call-arg]
+            GetPipelineQuery()
 
     def test_list_query_limit_too_small(self) -> None:
         """Test list query with limit below minimum."""
@@ -403,7 +403,7 @@ class TestServiceIntegrationScenarios:
         """Create service with mock repository."""
         mock_repo = Mock()
         mock_repo.save = AsyncMock()
-        mock_repo.get_by_id = AsyncMock()
+        mock_repo.find_by_id = AsyncMock()
         return PipelineService(mock_repo), mock_repo
 
     @pytest.mark.asyncio
@@ -422,21 +422,21 @@ class TestServiceIntegrationScenarios:
         deactivated_pipeline.pipeline_is_active = False
 
         mock_repo.save.side_effect = [created_pipeline, deactivated_pipeline]
-        mock_repo.get_by_id.side_effect = [created_pipeline, created_pipeline]
+        mock_repo.find_by_id.side_effect = [created_pipeline, created_pipeline]
 
         # Create pipeline
         create_cmd = CreatePipelineCommand(name="Lifecycle Test")
         create_result = await service.create_pipeline(create_cmd)
-        assert create_result.is_success
+        assert create_result.success
 
         # Execute pipeline
         execute_cmd = ExecutePipelineCommand(pipeline_id=str(uuid4()))
         execute_result = await service.execute_pipeline(execute_cmd)
-        assert execute_result.is_success
+        assert execute_result.success
 
         # Deactivate pipeline
         deactivate_result = await service.deactivate_pipeline(str(uuid4()))
-        assert deactivate_result.is_success
+        assert deactivate_result.success
 
     @pytest.mark.asyncio
     async def test_repository_error_consistency(
@@ -446,28 +446,28 @@ class TestServiceIntegrationScenarios:
         service, mock_repo = service_with_repo
 
         # Test that all service methods handle repository errors consistently
-        error_types = [OSError("Storage error"), Exception("General error")]
+        error_types = [OSError("Storage error"), RuntimeError("General error")]
 
         for error in error_types:
             mock_repo.save.side_effect = error
-            mock_repo.get_by_id.side_effect = error
+            mock_repo.find_by_id.side_effect = error
 
             # Test create_pipeline error handling
             create_cmd = CreatePipelineCommand(name="Error Test")
             create_result = await service.create_pipeline(create_cmd)
-            assert not create_result.is_success
+            assert not create_result.success
             assert create_result.error is not None
             assert "Repository error" in create_result.error
 
             # Test get_pipeline error handling
             get_query = GetPipelineQuery(pipeline_id=str(uuid4()))
             get_result = await service.get_pipeline(get_query)
-            assert not get_result.is_success
+            assert not get_result.success
             assert get_result.error is not None
             assert "Repository error" in get_result.error
 
             # Test deactivate_pipeline error handling
             deactivate_result = await service.deactivate_pipeline(str(uuid4()))
-            assert not deactivate_result.is_success
+            assert not deactivate_result.success
             assert deactivate_result.error is not None
             assert "Repository error" in deactivate_result.error

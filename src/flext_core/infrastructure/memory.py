@@ -51,8 +51,8 @@ class InMemoryRepository[T: HasId, ID](Repository[T, ID]):
         self._storage[entity_id] = entity
         return entity
 
-    async def get_by_id(self, entity_id: ID) -> T | None:
-        """Get entity by ID.
+    async def find_by_id(self, entity_id: ID) -> T | None:
+        """Find an entity by ID.
 
         Args:
             entity_id: ID of entity to retrieve

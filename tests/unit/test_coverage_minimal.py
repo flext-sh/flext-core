@@ -24,7 +24,7 @@ class TestPydanticBaseMethods:
             value: int = 42
 
         model = TestModel()
-        result = model.dict()
+        result = model.model_dump()
         assert result == {"name": "test", "value": 42}
 
     def test_deprecated_schema_method(self) -> None:
@@ -33,7 +33,7 @@ class TestPydanticBaseMethods:
         class TestModel(DomainBaseModel):
             name: str = "test"
 
-        schema = TestModel.schema()
+        schema = TestModel.model_json_schema()
         assert isinstance(schema, dict)
         assert "properties" in schema
 
@@ -44,4 +44,4 @@ class TestPydanticBaseMethods:
             name: str = "test"
 
         # Should not raise exception
-        TestModel.update_forward_refs()
+        TestModel.model_rebuild()

@@ -135,7 +135,7 @@ class TestConfigSectionDescriptor:
 
         # Should raise TypeError for invalid instance
         with pytest.raises(TypeError, match="Value must be instance of"):
-            section.__set__(main_config, invalid_value)  # type: ignore[arg-type]
+            section.__set__(main_config, invalid_value)
 
     def test_config_section_complex_prefix_matching(self) -> None:
         """Test ConfigSection with complex prefix matching."""
@@ -435,7 +435,7 @@ class TestBaseSettingsMethodsCoverage:
         # Should register itself in the container
         settings.configure_dependencies(container)
 
-        # Should be able to resolve the settings from the container
+        # Should be able to resolve the settings from the import container
         resolved = container.resolve(TestSettings)
         assert resolved is settings
 

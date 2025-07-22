@@ -318,7 +318,7 @@ class TestDecoratorFunctions:
     def test_singleton_decorator(self) -> None:
         """Test singleton decorator."""
 
-        @singleton()  # type: ignore[arg-type]
+        @singleton()
         class TestSingleton:
             def __init__(self) -> None:
                 self.value = "singleton"
@@ -410,7 +410,7 @@ FLEXT_DEBUG=false
             env_file = f.name
 
         try:
-            # Test loading from env file
+            # Test loading from env import file
             settings = BaseSettings.from_env(env_file)
 
             # Check if values were loaded
@@ -570,7 +570,7 @@ class TestDependencyInjectionIntegration:
 
         assert retrieved_settings is settings
         assert retrieved_config is config
-        assert retrieved_settings is not retrieved_config  # type: ignore[comparison-overlap]
+        assert retrieved_settings is not retrieved_config
 
     def test_container_has_method(self) -> None:
         """Test container service existence functionality."""
