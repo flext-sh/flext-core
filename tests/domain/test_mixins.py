@@ -11,7 +11,7 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 
 from flext_core.domain.mixins import StatusMixin, TimestampMixin
-from flext_core.domain.types import EntityStatus
+from flext_core.domain.shared_types import EntityStatus
 
 
 class TestTimestampMixin:

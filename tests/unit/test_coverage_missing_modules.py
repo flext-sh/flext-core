@@ -18,7 +18,7 @@ class TestDomainExceptions:
 
     def test_domain_exceptions_imports(self) -> None:
         """Test that all exceptions are importable."""
-        from flext_core.domain.exceptions import (
+        from flext_core.domain.core import (
             DomainError,
             NotFoundError,
             RepositoryError,
@@ -35,7 +35,7 @@ class TestDomainExceptions:
 
     def test_domain_exceptions_creation(self) -> None:
         """Test creating exception instances."""
-        from flext_core.domain.exceptions import (
+        from flext_core.domain.core import (
             DomainError,
             NotFoundError,
             RepositoryError,

@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_core import ServiceResult
+from flext_core.domain.shared_types import ServiceResult
 from flext_core.domain.pipeline import ExecutionId, Pipeline, PipelineId, PipelineName
 
 
@@ -51,7 +51,7 @@ def test_pipeline_deactivate_method() -> None:
     # Should be deactivated
     assert pipeline.pipeline_is_active is False
     # updated_at should be set
-    assert pipeline.updated_at is not None  # type: ignore[unreachable]
+    assert pipeline.updated_at is not None
 
 
 def test_pipeline_creation() -> None:
@@ -129,15 +129,15 @@ def test_service_result_success() -> None:
     """Test ServiceResult success case."""
     result = ServiceResult.ok("Operation completed")
 
-    assert result.is_success
+    assert result.success
     assert result.data == "Operation completed"
     assert result.error is None
 
 
 def test_service_result_failure() -> None:
     """Test ServiceResult failure case."""
-    result: ServiceResult[str] = ServiceResult.fail("Something went wrong")
+    result = ServiceResult.fail("Something went wrong")
 
-    assert not result.is_success
+    assert not result.success
     assert result.data is None
     assert result.error == "Something went wrong"

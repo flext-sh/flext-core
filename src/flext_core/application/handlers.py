@@ -7,14 +7,13 @@ FLEXT-Core foundation for command and query handlers.
 Uses modern Python 3.13 patterns with ServiceResult.
 
 .. deprecated:: 0.7.0
-   This module has been moved to flext.services.application.handlers.
-   Please use 'from flext.services.application import CommandHandler' instead.
-   This compatibility layer will be removed in v0.8.0.
+    This module has been moved to flext.services.application.handlers.
+    Please use 'from flext.services.application import CommandHandler' instead.
+    This compatibility layer will be removed in v0.8.0.
 """
 
 from __future__ import annotations
 
-import warnings
 from abc import ABC
 from abc import abstractmethod
 from typing import TYPE_CHECKING
@@ -22,16 +21,9 @@ from typing import Any
 from typing import TypeVar
 
 if TYPE_CHECKING:  # pragma: no cover
-    from flext_core.domain.types import ServiceResult
-
-# Issue deprecation warning when module is imported
-warnings.warn(
-    "flext_core.application.handlers is deprecated. "
-    "Use 'from flext.services.application import CommandHandler' instead. "
-    "This module will be removed in v0.8.0.",
-    DeprecationWarning,
-    stacklevel=2,
-)
+    from flext_core.domain.shared_types import ServiceResult
+# NOTE: This module is part of flext_core.application layer
+# No deprecation warning needed - this is the correct import path
 
 # Type variables for generic handlers
 TCommand = TypeVar("TCommand")

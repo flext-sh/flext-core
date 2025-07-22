@@ -80,10 +80,10 @@ def test_pydantic_imports() -> None:
 def test_submodule_imports() -> None:
     """Test that submodules can be imported directly."""
     # Test domain types imports
-    from flext_core.domain.types import EntityStatus, ResultStatus, ServiceResult
-
+    from flext_core.domain.shared_types import EntityStatus, ExecutionStatus
+    from flext_core.domain.shared_types import ServiceResult
     assert EntityStatus is not None
-    assert ResultStatus is not None
+    assert ExecutionStatus is not None
     assert ServiceResult is not None
 
     # Test domain constants

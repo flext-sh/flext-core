@@ -393,7 +393,7 @@ class TestDecoratorFunctionality:
 
         call_count = 0
 
-        @singleton()  # type: ignore[arg-type]
+        @singleton()
         class SingletonClass:
             def __init__(self) -> None:
                 nonlocal call_count
@@ -417,7 +417,7 @@ class TestDecoratorFunctionality:
 
         creation_count = 0
 
-        @singleton()  # type: ignore[arg-type]
+        @singleton()
         class ListProvider:
             def __init__(self) -> None:
                 nonlocal creation_count
@@ -441,7 +441,7 @@ class TestDecoratorFunctionality:
         class TestClass:
             pass
 
-        @singleton()  # type: ignore[arg-type]
+        @singleton()
         class AnotherClass:
             pass
 

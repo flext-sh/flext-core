@@ -1,7 +1,12 @@
-"""Core domain abstractions.
+"""Core domain module for FLEXT framework.
 
 Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
+
+This module contains the core domain logic and exceptions that are technology-agnostic
+and serve as the foundation for all FLEXT projects.
+
+ONLY ABSTRACT/GENERIC DOMAIN LOGIC - No technology-specific implementations.
 """
 
 from __future__ import annotations
@@ -11,273 +16,160 @@ from abc import abstractmethod
 from typing import Any
 from typing import TypeVar
 
-# Core domain abstractions - no direct imports from pydantic_base to avoid circular
-# dependencies
-# These are imported by __init__.py to provide the public API
+# Type variables for generic repository interface
+T = TypeVar("T")
+ID = TypeVar("ID")
+
+# ==============================================================================
+# DOMAIN EXCEPTIONS - ABSTRACT AND GENERIC
+# ==============================================================================
 
 
-# Domain Exceptions
 class DomainError(Exception):
-    """Base domain exception."""
+    """Base domain exception for all FLEXT domain errors."""
+
+    def __init__(self, message: str, details: dict[str, Any] | None = None) -> None:
+        super().__init__(message)
+        self.message = message
+        self.details = details or {}
 
 
 class ValidationError(DomainError):
-    """Domain validation error."""
+    """Domain validation error for input validation failures."""
 
 
 class RepositoryError(DomainError):
-    """Repository operation error."""
+    """Repository operation error for data access failures."""
 
 
 class NotFoundError(DomainError):
-    """Entity not found error."""
+    """Entity not found error for missing resources."""
 
 
 class ServiceError(DomainError):
-    """Service layer error."""
+    """Service layer error for business logic failures."""
 
-    def __init__(self, error_code: str, message: str) -> None:
-        """Initialize service error with code and message."""
-        super().__init__(message)
+    def __init__(
+        self,
+        error_code: str,
+        message: str,
+        details: dict[str, Any] | None = None,
+    ) -> None:
+        super().__init__(message, details)
         self.error_code = error_code
-        self.message = message
 
 
-# Configuration and Connection Exceptions
-class ConfigurationError(DomainError):
-    """Configuration error - invalid or missing configuration."""
-
-
-class ConnectionError(DomainError):  # noqa: A001
-    """Connection error - failed to connect to external service."""
+class ServiceConnectionError(DomainError):
+    """Service connection error for external service communication failures."""
 
 
 class DatabaseError(DomainError):
-    """Database operation error."""
+    """Database operation error for database-related failures."""
 
 
 class AuthenticationError(DomainError):
-    """Authentication error - invalid credentials."""
+    """Authentication error for invalid credentials."""
 
 
 class AuthorizationError(DomainError):
-    """Authorization error - insufficient permissions."""
+    """Authorization error for insufficient permissions."""
 
 
-# Data Processing Exceptions
 class DataError(DomainError):
-    """Data processing error."""
+    """Data processing error for data transformation/validation failures."""
+
+
+class TransformationError(DomainError):
+    """Data transformation error for transformation pipeline failures."""
 
 
 class SchemaError(DomainError):
     """Schema validation or compatibility error."""
 
 
-class TransformationError(DomainError):
-    """Data transformation error."""
+class ConfigurationError(DomainError):
+    """Configuration error for invalid or missing configuration."""
 
 
-# Integration Exceptions
 class APIError(DomainError):
-    """API operation error."""
-
-    def __init__(
-        self,
-        status_code: int,
-        message: str,
-        response_data: dict[str, Any] | None = None,
-    ) -> None:
-        """Initialize API error with status code and message."""
-        super().__init__(message)
-        self.status_code = status_code
-        self.response_data = response_data or {}
+    """API error for external API communication failures."""
 
 
 class ExternalServiceError(DomainError):
-    """External service integration error."""
-
-
-class TimeoutError(DomainError):  # noqa: A001
-    """Operation timeout error."""
-
-
-# LDAP Specific Exceptions
-class LDAPError(DomainError):
-    """LDAP operation error."""
-
-
-class LDIFError(DomainError):
-    """LDIF processing error."""
-
-
-# Oracle Specific Exceptions
-class OracleError(DomainError):
-    """Oracle database error."""
-
-
-class OICError(DomainError):
-    """Oracle Integration Cloud error."""
-
-
-class WMSError(DomainError):
-    """WMS (Warehouse Management System) error."""
-
-
-# Singer Protocol Exceptions
-class SingerError(DomainError):
-    """Singer protocol error."""
-
-
-class TapError(DomainError):
-    """Tap (data extraction) error."""
-
-
-class TargetError(DomainError):
-    """Target (data loading) error."""
-
-
-# Meltano Exceptions
-class MeltanoError(DomainError):
-    """Meltano integration error."""
-
-
-class PluginError(DomainError):
-    """Plugin system error."""
-
-
-# Modern type variables
-T = TypeVar("T")
-ID = TypeVar("ID")
-
-
-class Repository[T, ID](ABC):
-    """Repository interface."""
-
-    @abstractmethod
-    async def save(self, entity: T) -> T:
-        """Save entity."""
-        ...
-
-    @abstractmethod
-    async def get_by_id(self, entity_id: ID) -> T | None:
-        """Get entity by ID.
-
-        Args:
-            entity_id: ID of entity to retrieve
-
-        Returns:
-            Entity if found, None otherwise
-
-        Raises:
-            RepositoryError: If get operation fails
-
-        """
-        ...
-
-    @abstractmethod
-    async def delete(self, entity_id: ID) -> bool:
-        """Delete entity by ID."""
-        ...
-
-    @abstractmethod
-    async def find_all(self) -> list[T]:
-        """Find all entities.
-
-        Returns:
-            List of all entities
-
-        Raises:
-            RepositoryError: If find operation fails
-
-        """
-        ...
-
-    @abstractmethod
-    async def count(self) -> int:
-        """Count total entities.
-
-        Returns:
-            Number of entities
-
-        Raises:
-            RepositoryError: If count operation fails
-
-        """
-        ...
+    """External service error for third-party service failures."""
 
 
 # ==============================================================================
-# DOMAIN SERVICE ABSTRACTIONS - DIP COMPLIANCE
+# ABSTRACT DOMAIN SERVICES
 # ==============================================================================
 
 
-class DomainService[T](ABC):
-    """Base domain service interface."""
+class DomainService(ABC):
+    """Abstract base class for domain services."""
 
     @abstractmethod
-    async def validate(self, entity: T) -> bool:
-        """Validate domain entity.
-
-        Args:
-            entity: Entity to validate
-
-        Returns:
-            True if valid, False otherwise
-
-        Raises:
-            ValidationError: If validation logic fails
-
-        """
-        ...
+    def execute(self, *args: Any, **kwargs: Any) -> Any:
+        """Execute the domain service logic."""
 
 
 class EventPublisher(ABC):
-    """Domain event publisher interface."""
+    """Abstract event publisher for domain events."""
 
     @abstractmethod
-    async def publish(self, event: Any) -> None:
-        """Publish domain event.
+    def publish(self, event: Any) -> None:
+        """Publish a domain event."""
 
-        Args:
-            event: Domain event to publish
 
-        Raises:
-            ServiceError: If publish operation fails
+class Repository[T, ID](ABC):
+    """Abstract repository interface for data access."""
 
-        """
-        ...
+    @abstractmethod
+    async def save(self, entity: T) -> T:
+        """Save an entity."""
 
+    @abstractmethod
+    async def find_by_id(self, entity_id: ID) -> T | None:
+        """Find an entity by ID."""
+
+    @abstractmethod
+    async def delete(self, entity_id: ID) -> bool:
+        """Delete an entity by ID."""
+
+    @abstractmethod
+    async def find_all(self) -> list[T]:
+        """Find all entities."""
+
+    @abstractmethod
+    async def count(self) -> int:
+        """Count total entities."""
+
+
+# ==============================================================================
+# EXPORTS - ONLY ABSTRACT/GENERIC DOMAIN ELEMENTS
+# ==============================================================================
 
 __all__ = [
+    # Type variables
+    "ID",
     "APIError",
     "AuthenticationError",
     "AuthorizationError",
     "ConfigurationError",
-    "ConnectionError",
     "DataError",
     "DatabaseError",
     # Domain exceptions
     "DomainError",
+    # Abstract services
     "DomainService",
     "EventPublisher",
     "ExternalServiceError",
-    "LDAPError",
-    "LDIFError",
-    "MeltanoError",
     "NotFoundError",
-    "OICError",
-    "OracleError",
-    "PluginError",
-    # DIP-compliant abstractions
     "Repository",
     "RepositoryError",
     "SchemaError",
+    "ServiceConnectionError",
     "ServiceError",
-    "SingerError",
-    "TapError",
-    "TargetError",
-    "TimeoutError",
+    "T",
     "TransformationError",
     "ValidationError",
-    "WMSError",
 ]

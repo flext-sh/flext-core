@@ -14,6 +14,9 @@ from .base import BaseTestCase
 from .fixtures import DatabaseFixtures
 from .fixtures import MemoryFixtures
 from .fixtures import TestFixtures
+from .fixtures import (
+    TestFixtures as FlextTestFixtures,  # Alias for backward compatibility
+)
 from .fixtures import get_project_root_fixture
 from .fixtures import get_test_environment_fixture
 from .fixtures import setup_flext_test_environment
@@ -25,6 +28,7 @@ __all__ = [
     "AsyncTestCase",
     "BaseTestCase",
     "DatabaseFixtures",
+    "FlextTestFixtures",  # Alias for backward compatibility
     "MemoryFixtures",
     "MockConfig",
     "MockLogger",

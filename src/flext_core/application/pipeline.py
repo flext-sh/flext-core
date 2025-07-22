@@ -7,15 +7,15 @@ Commands, Queries, and Service all together.
 Zero duplication, maximum cohesion.
 
 .. deprecated:: 0.7.0
-   This module has been moved to flext.services.application.pipeline.
-   Please use 'from flext.services.application import PipelineService' instead.
-   This compatibility layer will be removed in v0.8.0.
+    This module has been moved to flext.services.application.pipeline.
+    Please use 'from flext.services.application import PipelineService' instead.
+    This compatibility layer will be removed in v0.8.0.
 """
 
 from __future__ import annotations
 
-import warnings
 from typing import TYPE_CHECKING
+from typing import Any
 from uuid import UUID
 
 from pydantic import Field
@@ -33,20 +33,13 @@ from flext_core.domain.pipeline import Pipeline
 from flext_core.domain.pipeline import PipelineId
 from flext_core.domain.pipeline import PipelineName
 from flext_core.domain.pydantic_base import DomainBaseModel
-from flext_core.domain.types import ServiceResult
+from flext_core.domain.shared_types import ServiceResult
 
-# Issue deprecation warning when module is imported
-warnings.warn(
-    "flext_core.application.pipeline is deprecated. "
-    "Use 'from flext.services.application import PipelineService' instead. "
-    "This module will be removed in v0.8.0.",
-    DeprecationWarning,
-    stacklevel=2,
-)
+# NOTE: This module is part of flext_core.application layer
+# No deprecation warning needed - this is the correct import path
 
 if TYPE_CHECKING:  # pragma: no cover
-    from flext_core.domain.pipeline import PipelineExecution
-    from flext_core.infrastructure.persistence.base import Repository
+    from flext_core.domain.core import Repository
 
 
 # Commands
@@ -103,7 +96,7 @@ class PipelineService:
     async def create_pipeline(
         self,
         command: CreatePipelineCommand,
-    ) -> ServiceResult[Pipeline]:
+    ) -> ServiceResult[dict[str, Any]]:
         """Create a new pipeline.
 
         Args:
@@ -122,19 +115,36 @@ class PipelineService:
             pipeline.create()  # Emit domain event
 
             saved = await self._repo.save(pipeline)
-            return ServiceResult.ok(saved)
+            return ServiceResult.ok(
+                data={
+                    "result": saved.model_dump()
+                    if hasattr(saved, "model_dump")
+                    else str(saved),
+                },
+            )
 
         except ValidationError as e:
             return ServiceResult.fail(f"Validation failed: {e}")
         except (ValueError, TypeError) as e:
             return ServiceResult.fail(f"Input error: {e}")
-        except (RepositoryError, DatabaseError, NotFoundError, ServiceError, DataError, TransformationError) as e:
+        except (
+            RepositoryError,
+            DatabaseError,
+            NotFoundError,
+            ServiceError,
+            DataError,
+            TransformationError,
+            RuntimeError,
+            AttributeError,
+            ConnectionError,
+            OSError,
+        ) as e:
             return ServiceResult.fail(f"Repository error: {e}")
 
     async def execute_pipeline(
         self,
         command: ExecutePipelineCommand,
-    ) -> ServiceResult[PipelineExecution]:
+    ) -> ServiceResult[dict[str, Any]]:
         """Execute a pipeline.
 
         Args:
@@ -146,7 +156,7 @@ class PipelineService:
         """
         try:
             pipeline_id = PipelineId(value=UUID(command.pipeline_id))
-            pipeline = await self._repo.get_by_id(pipeline_id)
+            pipeline = await self._repo.find_by_id(pipeline_id)
             if not pipeline:
                 return ServiceResult.fail("Pipeline not found")
 
@@ -154,16 +164,36 @@ class PipelineService:
                 return ServiceResult.fail("Pipeline is inactive")
 
             execution = pipeline.execute()  # Emit domain event
-            return ServiceResult.ok(execution)
+            return ServiceResult.ok(
+                data={
+                    "result": execution.model_dump()
+                    if hasattr(execution, "model_dump")
+                    else str(execution),
+                },
+            )
 
         except ValidationError as e:
             return ServiceResult.fail(f"Validation failed: {e}")
         except (ValueError, TypeError) as e:
             return ServiceResult.fail(f"Input error: {e}")
-        except (RepositoryError, DatabaseError, NotFoundError, ServiceError, DataError, TransformationError) as e:
+        except (
+            RepositoryError,
+            DatabaseError,
+            NotFoundError,
+            ServiceError,
+            DataError,
+            TransformationError,
+            RuntimeError,
+            AttributeError,
+            ConnectionError,
+            OSError,
+        ) as e:
             return ServiceResult.fail(f"Execution error: {e}")
 
-    async def get_pipeline(self, query: GetPipelineQuery) -> ServiceResult[Pipeline]:
+    async def get_pipeline(
+        self,
+        query: GetPipelineQuery,
+    ) -> ServiceResult[dict[str, Any]]:
         """Get a pipeline by ID.
 
         Args:
@@ -175,23 +205,40 @@ class PipelineService:
         """
         try:
             pipeline_id = PipelineId(value=UUID(query.pipeline_id))
-            pipeline = await self._repo.get_by_id(pipeline_id)
+            pipeline = await self._repo.find_by_id(pipeline_id)
             if not pipeline:
                 return ServiceResult.fail("Pipeline not found")
 
-            return ServiceResult.ok(pipeline)
+            return ServiceResult.ok(
+                data={
+                    "result": pipeline.model_dump()
+                    if hasattr(pipeline, "model_dump")
+                    else str(pipeline),
+                },
+            )
 
         except ValidationError as e:
             return ServiceResult.fail(f"Validation failed: {e}")
         except (ValueError, TypeError) as e:
             return ServiceResult.fail(f"Input error: {e}")
-        except (RepositoryError, DatabaseError, NotFoundError, ServiceError, DataError, TransformationError) as e:
+        except (
+            RepositoryError,
+            DatabaseError,
+            NotFoundError,
+            ServiceError,
+            DataError,
+            TransformationError,
+            RuntimeError,
+            AttributeError,
+            ConnectionError,
+            OSError,
+        ) as e:
             return ServiceResult.fail(f"Repository error: {e}")
 
     async def deactivate_pipeline(
         self,
         pipeline_id: str,
-    ) -> ServiceResult[Pipeline]:
+    ) -> ServiceResult[dict[str, Any]]:
         """Deactivate a pipeline.
 
         Args:
@@ -203,19 +250,36 @@ class PipelineService:
         """
         try:
             pid = PipelineId(value=UUID(pipeline_id))
-            pipeline = await self._repo.get_by_id(pid)
+            pipeline = await self._repo.find_by_id(pid)
             if not pipeline:
                 return ServiceResult.fail("Pipeline not found")
 
             pipeline.deactivate()
             saved = await self._repo.save(pipeline)
-            return ServiceResult.ok(saved)
+            return ServiceResult.ok(
+                data={
+                    "result": saved.model_dump()
+                    if hasattr(saved, "model_dump")
+                    else str(saved),
+                },
+            )
 
         except ValidationError as e:
             return ServiceResult.fail(f"Validation failed: {e}")
         except (ValueError, TypeError) as e:
             return ServiceResult.fail(f"Input error: {e}")
-        except (RepositoryError, DatabaseError, NotFoundError, ServiceError, DataError, TransformationError) as e:
+        except (
+            RepositoryError,
+            DatabaseError,
+            NotFoundError,
+            ServiceError,
+            DataError,
+            TransformationError,
+            RuntimeError,
+            AttributeError,
+            ConnectionError,
+            OSError,
+        ) as e:
             return ServiceResult.fail(f"Repository error: {e}")
 
 

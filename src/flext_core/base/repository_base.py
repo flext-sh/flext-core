@@ -10,24 +10,31 @@ implementations to eliminate duplication.
 from __future__ import annotations
 
 import asyncio
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import TypeVar
 
-from flext_core.infrastructure.persistence.base import Repository
+if TYPE_CHECKING:
+    from flext_core.domain.core import Repository
 
 T = TypeVar("T")
 
 
-class BaseComponentRepository[T](Repository[T, Any]):
+class BaseComponentRepository[T]:
     """Base repository class for FLEXT components.
 
     Provides common repository functionality for taps, targets,
     and other components.
     """
 
-    def __init__(self) -> None:
-        """Initialize repository."""
-        super().__init__()
+    def __init__(self, repository: Repository[T, Any]) -> None:
+        """Initialize repository helper.
+
+        Args:
+            repository: Concrete repository implementation to use
+
+        """
+        self._repository = repository
         self._cache: dict[str, Any] = {}
 
     def get_by_name(self, name: str) -> T | None:
@@ -40,7 +47,7 @@ class BaseComponentRepository[T](Repository[T, Any]):
             Entity or None if not found
 
         """
-        entities = asyncio.run(self.list_all())
+        entities = asyncio.run(self._repository.find_all())
         for entity in entities:
             if hasattr(entity, "name") and entity.name == name:
                 return entity
@@ -56,7 +63,7 @@ class BaseComponentRepository[T](Repository[T, Any]):
             List of entities of the specified type
 
         """
-        all_entities = asyncio.run(self.list_all())
+        all_entities = asyncio.run(self._repository.find_all())
         return [
             entity
             for entity in all_entities
@@ -70,7 +77,7 @@ class BaseComponentRepository[T](Repository[T, Any]):
             List of active entities
 
         """
-        all_entities = asyncio.run(self.list_all())
+        all_entities = asyncio.run(self._repository.find_all())
         return [
             entity
             for entity in all_entities
@@ -84,7 +91,7 @@ class BaseComponentRepository[T](Repository[T, Any]):
             List of inactive entities
 
         """
-        all_entities = asyncio.run(self.list_all())
+        all_entities = asyncio.run(self._repository.find_all())
         return [
             entity
             for entity in all_entities

@@ -34,7 +34,7 @@ class TestRepository:
     def test_repository_is_abstract(self) -> None:
         """Test that Repository is abstract and cannot be instantiated."""
         with pytest.raises(TypeError, match="Can't instantiate abstract class"):
-            Repository()  # type: ignore[abstract]
+            Repository()
 
     def test_repository_interface_methods(self) -> None:
         """Test that Repository defines the required interface methods."""
@@ -42,10 +42,11 @@ class TestRepository:
         abstract_methods = Repository.__abstractmethods__
 
         expected_methods = {
-            "get_by_id",
-            "save",
+            "find_by_id",
+            "save", 
             "delete",
-            "list_all",
+            "find_all",
+            "count",
         }
 
         assert abstract_methods == expected_methods
@@ -57,7 +58,7 @@ class TestRepository:
 
         # Test that we can create typed subclasses
         class TestRepo(Repository[DemoEntity, UUID]):
-            async def get_by_id(self, entity_id: UUID) -> DemoEntity | None:
+            async def find_by_id(self, entity_id: UUID) -> DemoEntity | None:
                 return None
 
             async def save(self, entity: DemoEntity) -> DemoEntity:
@@ -66,8 +67,11 @@ class TestRepository:
             async def delete(self, entity_id: UUID) -> bool:
                 return False
 
-            async def list_all(self) -> list[DemoEntity]:
+            async def find_all(self) -> list[DemoEntity]:
                 return []
+
+            async def count(self) -> int:
+                return 0
 
         # Should be able to instantiate the concrete implementation
         repo = TestRepo()
@@ -99,14 +103,14 @@ class TestInMemoryRepository:
         assert repo._entities[test_id] == entity
 
     @pytest.mark.asyncio
-    async def test_get_by_id_existing(self) -> None:
+    async def test_find_by_id_existing(self) -> None:
         """Test getting existing entity by ID."""
         repo = InMemoryRepository[DemoEntity, UUID]()
         test_id = uuid4()
         entity = DemoEntity(id=test_id, name="Another Entity", value=200)
 
         await repo.save(entity)
-        retrieved_entity = await repo.get_by_id(test_id)
+        retrieved_entity = await repo.find_by_id(test_id)
 
         assert retrieved_entity is not None
         assert retrieved_entity == entity
@@ -115,12 +119,12 @@ class TestInMemoryRepository:
         assert retrieved_entity.value == 200
 
     @pytest.mark.asyncio
-    async def test_get_by_id_non_existing(self) -> None:
+    async def test_find_by_id_non_existing(self) -> None:
         """Test getting non-existing entity by ID."""
         repo = InMemoryRepository[DemoEntity, UUID]()
         non_existing_id = uuid4()
 
-        retrieved_entity = await repo.get_by_id(non_existing_id)
+        retrieved_entity = await repo.find_by_id(non_existing_id)
 
         assert retrieved_entity is None
 
@@ -150,16 +154,16 @@ class TestInMemoryRepository:
         assert result is False
 
     @pytest.mark.asyncio
-    async def test_list_all_empty(self) -> None:
+    async def test_find_all_empty(self) -> None:
         """Test listing all entities from empty repository."""
         repo = InMemoryRepository[DemoEntity, UUID]()
 
-        entities = await repo.list_all()
+        entities = await repo.find_all()
 
         assert entities == []
 
     @pytest.mark.asyncio
-    async def test_list_all_with_entities(self) -> None:
+    async def test_find_all_with_entities(self) -> None:
         """Test listing all entities with multiple entities."""
         repo = InMemoryRepository[DemoEntity, UUID]()
 
@@ -172,7 +176,7 @@ class TestInMemoryRepository:
         await repo.save(entity2)
         await repo.save(entity3)
 
-        entities = await repo.list_all()
+        entities = await repo.find_all()
 
         assert len(entities) == 3
         assert entity1 in entities
@@ -216,7 +220,7 @@ class TestInMemoryRepository:
         await int_repo.save(int_entity)
 
         # Should be stored with UUID id, not simple_id
-        entities = await int_repo.list_all()
+        entities = await int_repo.find_all()
         assert len(entities) == 1
         assert entities[0].name == "Integer ID"
 
@@ -237,7 +241,7 @@ class TestInMemoryRepository:
             await repo.save(entity)
 
         # Verify all entities are stored
-        stored_entities = await repo.list_all()
+        stored_entities = await repo.find_all()
         assert len(stored_entities) == 10
 
         # Delete some entities (even-indexed)
@@ -247,13 +251,13 @@ class TestInMemoryRepository:
             assert result is True
 
         # Verify correct entities remain
-        remaining_entities = await repo.list_all()
+        remaining_entities = await repo.find_all()
         assert len(remaining_entities) == 5
 
         # Verify correct entities were deleted
         for i in range(10):
             entity_id, _ = entities[i]
-            retrieved_entity: DemoEntity | None = await repo.get_by_id(entity_id)
+            retrieved_entity: DemoEntity | None = await repo.find_by_id(entity_id)
             if i % 2 == 0:
                 assert retrieved_entity is None  # Even indices should be deleted
             else:
@@ -270,16 +274,16 @@ class TestInMemoryRepository:
         assert isinstance(repo, Repository)
 
         # Verify all abstract methods are implemented
-        assert hasattr(repo, "get_by_id")
+        assert hasattr(repo, "find_by_id")
         assert hasattr(repo, "save")
         assert hasattr(repo, "delete")
-        assert hasattr(repo, "list_all")
+        assert hasattr(repo, "find_all")
 
         # Verify methods are callable
-        assert callable(repo.get_by_id)
+        assert callable(repo.find_by_id)
         assert callable(repo.save)
         assert callable(repo.delete)
-        assert callable(repo.list_all)
+        assert callable(repo.find_all)
 
     @pytest.mark.asyncio
     async def test_complex_entity_operations(self) -> None:
@@ -298,18 +302,18 @@ class TestInMemoryRepository:
         await repo.save(child2)
 
         # Verify all saved
-        all_entities = await repo.list_all()
+        all_entities = await repo.find_all()
         assert len(all_entities) == 3
 
         # Simulate finding related entities
-        parent_entity = await repo.get_by_id(parent_id)
+        parent_entity = await repo.find_by_id(parent_id)
         assert parent_entity is not None
         assert parent_entity.name == "Parent Entity"
 
         # Simulate bulk operations
         child_ids = [child1_id, child2_id]
         for child_id in child_ids:
-            child = await repo.get_by_id(child_id)
+            child = await repo.find_by_id(child_id)
             assert child is not None
 
             # Update child value
@@ -321,8 +325,8 @@ class TestInMemoryRepository:
             await repo.save(updated_child)
 
         # Verify updates
-        updated_child1 = await repo.get_by_id(child1_id)
-        updated_child2 = await repo.get_by_id(child2_id)
+        updated_child1 = await repo.find_by_id(child1_id)
+        updated_child2 = await repo.find_by_id(child2_id)
 
         assert updated_child1 is not None
         assert updated_child1.value == 200  # 100 * 2
@@ -342,7 +346,7 @@ class TestInMemoryRepository:
         assert saved == entity
 
         # Test retrieving saved entity
-        retrieved = await repo.get_by_id(test_id)
+        retrieved = await repo.find_by_id(test_id)
         assert retrieved == entity
 
     @pytest.mark.asyncio
@@ -358,12 +362,12 @@ class TestInMemoryRepository:
         assert saved == entity
 
         # Should be stored with its UUID id
-        entities = await repo.list_all()
+        entities = await repo.find_all()
         assert len(entities) == 1
         assert entities[0].name == "Normal Entity"
 
         # Can retrieve by its id
-        retrieved = await repo.get_by_id(entity.id)
+        retrieved = await repo.find_by_id(entity.id)
         assert retrieved == entity
 
     @pytest.mark.asyncio
@@ -372,23 +376,23 @@ class TestInMemoryRepository:
         repo = InMemoryRepository[DemoEntity, UUID]()
 
         # Initial state
-        assert len(await repo.list_all()) == 0
+        assert len(await repo.find_all()) == 0
 
         # Add entity
         id1 = uuid4()
         entity1 = DemoEntity(id=id1, name="Persistent 1", value=1111)
         await repo.save(entity1)
-        assert len(await repo.list_all()) == 1
+        assert len(await repo.find_all()) == 1
 
         # Add another entity
         id2 = uuid4()
         entity2 = DemoEntity(id=id2, name="Persistent 2", value=2222)
         await repo.save(entity2)
-        assert len(await repo.list_all()) == 2
+        assert len(await repo.find_all()) == 2
 
         # Delete one entity
         await repo.delete(id1)
-        remaining = await repo.list_all()
+        remaining = await repo.find_all()
         assert len(remaining) == 1
         assert remaining[0].id == id2
 
@@ -396,7 +400,7 @@ class TestInMemoryRepository:
         updated_entity = DemoEntity(id=id2, name="Updated Persistent", value=3333)
         await repo.save(updated_entity)
 
-        final_entities = await repo.list_all()
+        final_entities = await repo.find_all()
         assert len(final_entities) == 1
         assert final_entities[0].name == "Updated Persistent"
         assert final_entities[0].value == 3333
@@ -414,12 +418,12 @@ class TestInMemoryRepository:
         await test_repo.save(test_entity)
 
         # Verify entity is stored
-        test_entities = await test_repo.list_all()
+        test_entities = await test_repo.find_all()
 
         assert len(test_entities) == 1
         assert isinstance(test_entities[0], DemoEntity)
 
         # Test that repositories maintain type safety
-        retrieved = await test_repo.get_by_id(test_entity.id)
+        retrieved = await test_repo.find_by_id(test_entity.id)
         assert retrieved is not None
         assert isinstance(retrieved, DemoEntity)

@@ -12,9 +12,7 @@ from unittest.mock import Mock
 import pytest
 
 from flext_core.base.target_base import BaseTarget
-from flext_core.domain.types import ServiceResult
-
-
+from flext_core.domain.shared_types import ServiceResult
 class MockTarget(BaseTarget):
     """Mock implementation of BaseTarget for testing."""
 
@@ -57,7 +55,7 @@ class TestBaseTarget:
     def test_initialization_invalid_config_type(self) -> None:
         """Test target initialization with invalid configuration type."""
         with pytest.raises(TypeError, match="Config must be a dictionary"):
-            MockTarget("not a dict")  # type: ignore[arg-type]
+            MockTarget("not a dict")
 
     def test_write_batch_success(self) -> None:
         """Test successful batch write."""
@@ -67,7 +65,7 @@ class TestBaseTarget:
 
         result = target.write_batch(records)
 
-        assert result.is_success
+        assert result.success
         assert result.data is None
         assert target.written_records == records
 
@@ -79,7 +77,7 @@ class TestBaseTarget:
 
         result = target.write_batch(records)
 
-        assert result.is_success
+        assert result.success
         assert result.data is None
         assert target.written_records == []
 
@@ -88,7 +86,7 @@ class TestBaseTarget:
         config = {"test": "config"}
         target = MockTarget(config)
 
-        result = target.write_batch("not a list")  # type: ignore[arg-type]
+        result = target.write_batch("not a list")
 
         assert result.is_failure
         assert result.error is not None
@@ -106,9 +104,9 @@ class TestBaseTarget:
             {"id": 3},
         ]  # Invalid record type intentionally
 
-        result = target.write_batch(records)  # type: ignore[arg-type]
+        result = target.write_batch(records)
 
-        assert result.is_failure
+        assert not result.success
         assert result.error is not None
         assert "Write validation failed" in result.error
         assert result.error is not None
@@ -122,7 +120,7 @@ class TestBaseTarget:
 
         result = target.write_batch(records)
 
-        assert result.is_failure
+        assert not result.success
         assert result.error is not None
         assert "Write validation failed" in result.error
         assert "Mock write failure" in result.error
@@ -135,17 +133,17 @@ class TestBaseTarget:
 
         # Mock the _write_records method to raise OSError
         original_write = target._write_records
-        target._write_records = Mock(side_effect=OSError("Disk full"))  # type: ignore[method-assign]
+        target._write_records = Mock(side_effect=OSError("Disk full"))
 
         result = target.write_batch(records)
 
-        assert result.is_failure
+        assert not result.success
         assert result.error is not None
         assert "Write I/O error" in result.error
         assert "Disk full" in result.error
 
         # Restore original method
-        target._write_records = original_write  # type: ignore[method-assign]
+        target._write_records = original_write
 
     def test_write_batch_unexpected_error(self) -> None:
         """Test batch write with unexpected error."""
@@ -154,11 +152,11 @@ class TestBaseTarget:
         records = [{"id": 1, "name": "test"}]
 
         # Mock the _write_records method to raise unexpected error
-        target._write_records = Mock(side_effect=RuntimeError("Unexpected error"))  # type: ignore[method-assign]
+        target._write_records = Mock(side_effect=RuntimeError("Unexpected error"))
 
         result = target.write_batch(records)
 
-        assert result.is_failure
+        assert not result.success
         assert "Unexpected error during write" in result.error
 
     def test_write_record_success(self) -> None:
@@ -169,7 +167,7 @@ class TestBaseTarget:
 
         result = target.write_record(record)
 
-        assert result.is_success
+        assert result.success
         assert result.data is None
         assert target.written_records == [record]
 
@@ -181,7 +179,7 @@ class TestBaseTarget:
 
         result = target.write_record(record)
 
-        assert result.is_failure
+        assert not result.success
         assert result.error is not None
         assert "Write validation failed" in result.error
         assert "Mock write failure" in result.error
@@ -193,7 +191,7 @@ class TestBaseTarget:
 
         result = target.flush()
 
-        assert result.is_success
+        assert result.success
         assert result.data is None
         assert target.flush_called is True
 
@@ -203,11 +201,11 @@ class TestBaseTarget:
         target = MockTarget(config)
 
         # Mock the _flush_buffers method to raise ValueError
-        target._flush_buffers = Mock(side_effect=ValueError("Invalid flush state"))  # type: ignore[method-assign]
+        target._flush_buffers = Mock(side_effect=ValueError("Invalid flush state"))
 
         result = target.flush()
 
-        assert result.is_failure
+        assert not result.success
         assert result.error is not None
         assert "Flush failed" in result.error
         assert "Invalid flush state" in result.error
@@ -219,7 +217,7 @@ class TestBaseTarget:
 
         result = target.flush()
 
-        assert result.is_failure
+        assert not result.success
         assert result.error is not None
         assert "Flush failed" in result.error
         assert "Mock flush failure" in result.error
@@ -230,11 +228,11 @@ class TestBaseTarget:
         target = MockTarget(config)
 
         # Mock the _flush_buffers method to raise unexpected error
-        target._flush_buffers = Mock(side_effect=KeyError("Unexpected key error"))  # type: ignore[method-assign]
+        target._flush_buffers = Mock(side_effect=KeyError("Unexpected key error"))
 
         result = target.flush()
 
-        assert result.is_failure
+        assert not result.success
         assert "Unexpected error during flush" in result.error
 
     def test_get_target_info(self) -> None:
@@ -265,12 +263,12 @@ class TestBaseTarget:
         # This should work - all valid records
         valid_records = [{"id": 1}, {"id": 2}, {"id": 3}]
         result = target.write_batch(valid_records)
-        assert result.is_success
+        assert result.success
 
         # This should fail - mixed types
         invalid_records = [{"id": 1}, None, {"id": 3}]
-        result = target.write_batch(invalid_records)  # type: ignore[arg-type]
-        assert result.is_failure
+        result = target.write_batch(invalid_records)
+        assert not result.success
         assert result.error is not None
         assert "Each record must be a dictionary" in result.error
 
@@ -278,7 +276,7 @@ class TestBaseTarget:
         """Test that abstract methods raise NotImplementedError."""
         # This test verifies the abstract methods themselves
         with pytest.raises(TypeError):
-            BaseTarget({"test": "config"})  # type: ignore[abstract]
+            BaseTarget({"test": "config"})
 
 
 class TestBaseTargetErrorHandling:
@@ -287,7 +285,7 @@ class TestBaseTargetErrorHandling:
     def test_config_validation_preserves_type_error(self) -> None:
         """Test that config validation preserves type error information."""
         with pytest.raises(TypeError, match="Config must be a dictionary"):
-            MockTarget(123)  # type: ignore[arg-type]
+            MockTarget(123)
 
     def test_record_validation_preserves_error_context(self) -> None:
         """Test that record validation preserves error context."""
@@ -295,14 +293,18 @@ class TestBaseTargetErrorHandling:
         target = MockTarget(config)
 
         # Test with non-list input
-        result = target.write_batch({"not": "list"})  # type: ignore[arg-type]
-        assert result.is_failure
+        result = target.write_batch({"not": "list"})
+        assert not result.success
         assert result.error is not None
         assert "Records must be a list" in result.error
 
+        from typing import cast, Any
+
         # Test with invalid record in list
-        result = target.write_batch([123])  # type: ignore[list-item]
-        assert result.is_failure
+        result = target.write_batch(
+            cast("list[dict[str, Any]]", [123])
+        )  # Invalid record type for testing
+        assert not result.success
         assert result.error is not None
         assert "Each record must be a dictionary" in result.error
 
@@ -313,7 +315,7 @@ class TestBaseTargetErrorHandling:
 
         result = target.write_batch([{"test": "record"}])
 
-        assert result.is_failure
+        assert not result.success
         assert result.data is None
         assert result.error is not None
         assert "Mock write failure" in result.error
@@ -324,10 +326,10 @@ class TestBaseTargetErrorHandling:
         target = MockTarget(config)
 
         # Mock to raise a chained exception
-        target._write_records = Mock(side_effect=RuntimeError("Runtime error"))  # type: ignore[method-assign]
+        target._write_records = Mock(side_effect=RuntimeError("Runtime error"))
 
         result = target.write_batch([{"test": "record"}])
 
-        assert result.is_failure
+        assert not result.success
         assert "Unexpected error during write" in result.error
         assert "Runtime error" in result.error

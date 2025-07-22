@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import cast
 
-from flext_core.domain.types import ServiceResult
+from flext_core.domain.shared_types import ServiceResult
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -87,7 +87,7 @@ class BaseTap(ABC):
         """
         try:
             schema = self._get_schema()
-            return ServiceResult.ok(schema)
+            return ServiceResult.ok(data={"result": schema})
         except (ValueError, KeyError, TypeError) as e:
             return ServiceResult.fail(f"Discovery failed: {e!s}")
         except OSError as e:
@@ -142,12 +142,11 @@ class BaseTap(ABC):
         """Validate tap configuration.
 
         Raises:
-            ValueError: If configuration is invalid
+            TypeError: If configuration is not a dictionary
 
         """
         if not isinstance(self.config, dict):
-            msg = "Config must be a dictionary"  # type: ignore[unreachable]
-            raise TypeError(msg)
+            raise TypeError("Config must be a dictionary")
 
     def _validate_sync_config(self, config: dict[str, Any]) -> None:
         """Validate sync configuration.
@@ -156,12 +155,11 @@ class BaseTap(ABC):
             config: Sync configuration to validate
 
         Raises:
-            ValueError: If configuration is invalid
+            TypeError: If configuration is not a dictionary
 
         """
         if not isinstance(config, dict):
-            msg = "Sync config must be a dictionary"  # type: ignore[unreachable]
-            raise TypeError(msg)
+            raise TypeError("Sync config must be a dictionary")
 
     def _transform_record(self, record: dict[str, Any]) -> dict[str, Any]:
         """Transform a record before yielding.
@@ -285,10 +283,13 @@ class BaseTap(ABC):
             # Test schema discovery
             try:
                 schema_result = self.discover()
-                if schema_result.is_success:
+                if schema_result.success:
                     health_info["schema_available"] = True
                     stream_data = schema_result.data or {}
-                    health_info["stream_count"] = len(stream_data.get("streams", {}))
+                    streams = stream_data.get("streams", {})
+                    health_info["stream_count"] = (
+                        len(streams) if isinstance(streams, (list, dict)) else 0
+                    )
                 else:
                     health_info["schema_available"] = False
                     health_info["schema_error"] = schema_result.error
@@ -298,7 +299,7 @@ class BaseTap(ABC):
                 health_info["schema_error"] = str(e)
                 health_info["status"] = "unhealthy"
 
-            return ServiceResult.ok(health_info)
+            return ServiceResult.ok(data={"result": health_info})
 
         except (TypeError, ValueError, AttributeError) as e:
             return ServiceResult.fail(f"Health check failed: {e}")

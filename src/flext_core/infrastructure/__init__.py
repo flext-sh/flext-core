@@ -12,7 +12,8 @@ from __future__ import annotations
 
 from flext_core.infrastructure.adapters import StandardLibraryLoggerAdapter
 from flext_core.infrastructure.adapters import create_logger_adapter
-from flext_core.infrastructure.grpc_base import BaseGrpcService
+
+# gRPC base classes moved to flext-grpc module for better separation
 from flext_core.infrastructure.memory import InMemoryRepository
 from flext_core.infrastructure.protocols import BaseAsyncContextManager
 from flext_core.infrastructure.protocols import BaseInfrastructureService
@@ -26,7 +27,7 @@ from flext_core.infrastructure.protocols import SerializationProtocol
 
 __all__ = [
     "BaseAsyncContextManager",
-    "BaseGrpcService",
+    # gRPC service patterns moved to flext-grpc
     # Abstract base classes
     "BaseInfrastructureService",
     "CacheProtocol",

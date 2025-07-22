@@ -109,7 +109,7 @@ class TestDomainValueObjectCoverage:
         from pydantic import ValidationError
 
         with pytest.raises((AttributeError, ValidationError)):
-            vo.value = "new_value"  # type: ignore[misc] # Should raise due to frozen=True
+            vo.value = "new_value"
 
     def test_value_object_with_complex_types(self) -> None:
         """Test value object with complex types."""
@@ -230,7 +230,7 @@ class TestPydanticBaseCoverageEdgeCases:
         # Test operations that might cause errors but should be handled gracefully
         try:
             # Try to access model fields dynamically
-            field_names = list(entity.model_fields.keys())
+            field_names = list(ErrorProneEntity.model_fields.keys())
             assert len(field_names) > 0
         except Exception as e:
             # Should not raise unhandled exceptions

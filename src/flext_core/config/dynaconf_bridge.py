@@ -10,8 +10,10 @@ and Pydantic's type-safe settings with comprehensive error handling.
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 from typing import ClassVar
 from typing import TypeVar
+from typing import cast
 
 from dynaconf import Dynaconf
 from dynaconf import ValidationError as DynaconfValidationError
@@ -96,7 +98,7 @@ class DynaconfBridge:
             cleaned_data = self._clean_dynaconf_data(dynaconf_data)
 
             # Create Pydantic settings instance
-            return target_class(**cleaned_data)  # type: ignore[arg-type,return-value]
+            return cast("TSettings", target_class(**cleaned_data))
 
         except PydanticValidationError as e:
             msg = f"Configuration validation failed: {e}"
@@ -109,7 +111,7 @@ class DynaconfBridge:
             raise ConfigurationError(msg) from e
 
     @staticmethod
-    def _clean_dynaconf_data(data: dict[str, object]) -> dict[str, object]:
+    def _clean_dynaconf_data(data: dict[str, object]) -> dict[str, Any]:
         """Clean Dynaconf internal data from settings dict.
 
         Args:

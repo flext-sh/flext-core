@@ -7,6 +7,7 @@ including all TYPE_CHECKING imports and edge cases.
 from __future__ import annotations
 
 import pytest
+from typing import Any
 
 from flext_core.application.handlers import (
     CommandHandler,
@@ -15,7 +16,7 @@ from flext_core.application.handlers import (
     SimpleQueryHandler,
     VoidCommandHandler,
 )
-from flext_core.domain.types import ServiceResult
+from flext_core.domain.shared_types import ServiceResult
 
 
 class TestTypeCheckingCoverage:
@@ -34,7 +35,7 @@ class TestTypeCheckingCoverage:
 
         # Access the ServiceResult import from TYPE_CHECKING to trigger line 19 coverage
         # This forces the TYPE_CHECKING import to be executed during test discovery
-        from flext_core.domain.types import ServiceResult
+        from flext_core.domain.shared_types import ServiceResult
 
         assert ServiceResult is not None
 
@@ -45,7 +46,7 @@ class TestCommandHandler:
     def test_command_handler_is_abstract(self) -> None:
         """Test that CommandHandler cannot be instantiated directly."""
         with pytest.raises(TypeError):
-            CommandHandler()  # type: ignore[abstract]
+            CommandHandler()
 
     def test_command_handler_protocol(self) -> None:
         """Test CommandHandler protocol definition."""
@@ -55,7 +56,9 @@ class TestCommandHandler:
             name: str = "test"
 
         class ConcreteCommandHandler(CommandHandler[TestCommand, str]):
-            async def handle(self, command: TestCommand) -> ServiceResult[str]:
+            async def handle(
+                self, command: TestCommand
+            ) -> ServiceResult[dict[str, Any]]:
                 return ServiceResult.ok(f"Handled: {command.name}")
 
         handler = ConcreteCommandHandler()
@@ -68,7 +71,7 @@ class TestQueryHandler:
     def test_query_handler_is_abstract(self) -> None:
         """Test that QueryHandler cannot be instantiated directly."""
         with pytest.raises(TypeError):
-            QueryHandler()  # type: ignore[abstract]
+            QueryHandler()
 
     def test_query_handler_protocol(self) -> None:
         """Test QueryHandler protocol definition."""
@@ -78,7 +81,7 @@ class TestQueryHandler:
             filter: str = "all"
 
         class ConcreteQueryHandler(QueryHandler[TestQuery, list[str]]):
-            async def handle(self, query: TestQuery) -> ServiceResult[list[str]]:
+            async def handle(self, query: TestQuery) -> ServiceResult[dict[str, Any]]:
                 return ServiceResult.ok([f"Result for: {query.filter}"])
 
         handler = ConcreteQueryHandler()
@@ -91,7 +94,7 @@ class TestEventHandler:
     def test_event_handler_is_abstract(self) -> None:
         """Test that EventHandler cannot be instantiated directly."""
         with pytest.raises(TypeError):
-            EventHandler()  # type: ignore[abstract]
+            EventHandler()
 
     def test_event_handler_protocol(self) -> None:
         """Test EventHandler protocol definition."""
@@ -101,7 +104,7 @@ class TestEventHandler:
             data: str = "event_data"
 
         class ConcreteEventHandler(EventHandler[TestEvent, bool]):
-            async def handle(self, event: TestEvent) -> ServiceResult[bool]:
+            async def handle(self, event: TestEvent) -> ServiceResult[dict[str, Any]]:
                 return ServiceResult.ok(True)
 
         handler = ConcreteEventHandler()
@@ -114,7 +117,7 @@ class TestVoidCommandHandler:
     def test_void_command_handler_is_abstract(self) -> None:
         """Test that VoidCommandHandler cannot be instantiated directly."""
         with pytest.raises(TypeError):
-            VoidCommandHandler()  # type: ignore[abstract]
+            VoidCommandHandler()
 
     def test_void_command_handler_protocol(self) -> None:
         """Test VoidCommandHandler protocol definition."""
@@ -124,7 +127,9 @@ class TestVoidCommandHandler:
             action: str = "delete"
 
         class ConcreteVoidCommandHandler(VoidCommandHandler[TestCommand]):
-            async def handle(self, command: TestCommand) -> ServiceResult[None]:
+            async def handle(
+                self, command: TestCommand
+            ) -> ServiceResult[dict[str, Any]]:
                 return ServiceResult.ok(None)
 
         handler = ConcreteVoidCommandHandler()
@@ -137,7 +142,7 @@ class TestSimpleQueryHandler:
     def test_simple_query_handler_is_abstract(self) -> None:
         """Test that SimpleQueryHandler cannot be instantiated directly."""
         with pytest.raises(TypeError):
-            SimpleQueryHandler()  # type: ignore[abstract]
+            SimpleQueryHandler()
 
     def test_simple_query_handler_protocol(self) -> None:
         """Test SimpleQueryHandler protocol definition."""
@@ -217,7 +222,7 @@ class TestTypeVariables:
 
         class StringCommandHandler(CommandHandler[StringCommand, str]):
             async def handle(self, command: StringCommand) -> ServiceResult[str]:
-                return ServiceResult.ok(command.value)
+                return ServiceResult.ok(data=command.value)
 
         class IntCommandHandler(CommandHandler[IntCommand, int]):
             async def handle(self, command: IntCommand) -> ServiceResult[int]:
@@ -257,13 +262,13 @@ class TestHandlerIntegrationScenarios:
                     return ServiceResult.fail("Email is required")
 
                 user = User(id=1, name=command.name, email=command.email)
-                return ServiceResult.ok(user)
+                return ServiceResult.ok(data=user)
 
         handler = CreateUserCommandHandler()
         command = CreateUserCommand(name="John", email="john@example.com")
 
         result = await handler.handle(command)
-        assert result.is_success
+        assert result.success
         user = result.data
         assert user is not None
         assert user.name == "John"
@@ -297,7 +302,7 @@ class TestHandlerIntegrationScenarios:
         query = GetUsersQuery(limit=1)
 
         result = await handler.handle(query)
-        assert result.is_success
+        assert result.success
         users = result.data
         assert users is not None
         assert len(users) == 1
@@ -326,5 +331,5 @@ class TestHandlerIntegrationScenarios:
         event = UserCreatedEvent(user_id=1, user_name="John")
 
         result = await handler.handle(event)
-        assert result.is_success
+        assert result.success
         assert result.data is True

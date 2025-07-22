@@ -88,7 +88,7 @@ class TestPipelineService:
         """Create mock pipeline repository."""
         repo = Mock()
         repo.save = AsyncMock()
-        repo.get_by_id = AsyncMock()
+        repo.find_by_id = AsyncMock()
         return repo
 
     @pytest.fixture
@@ -111,7 +111,7 @@ class TestPipelineService:
 
         result = await pipeline_service.create_pipeline(command)
 
-        assert result.is_success
+        assert result.success
         mock_repository.save.assert_called_once()
 
     @pytest.mark.asyncio
@@ -122,11 +122,11 @@ class TestPipelineService:
         command = CreatePipelineCommand(name="Test Pipeline")
 
         # Mock repository error
-        mock_repository.save.side_effect = Exception("Database error")
+        mock_repository.save.side_effect = RuntimeError("Database error")
 
         result = await pipeline_service.create_pipeline(command)
 
-        assert not result.is_success
+        assert not result.success
         assert result.error is not None
         assert "Repository error" in result.error
 
@@ -140,13 +140,13 @@ class TestPipelineService:
 
         # Mock successful get
         mock_pipeline = Mock()
-        mock_repository.get_by_id.return_value = mock_pipeline
+        mock_repository.find_by_id.return_value = mock_pipeline
 
         result = await pipeline_service.get_pipeline(query)
 
-        assert result.is_success
+        assert result.success
         assert result.data == mock_pipeline
-        mock_repository.get_by_id.assert_called_once()
+        mock_repository.find_by_id.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_get_pipeline_not_found(
@@ -157,11 +157,11 @@ class TestPipelineService:
         query = GetPipelineQuery(pipeline_id=pipeline_id)
 
         # Mock not found
-        mock_repository.get_by_id.return_value = None
+        mock_repository.find_by_id.return_value = None
 
         result = await pipeline_service.get_pipeline(query)
 
-        assert not result.is_success
+        assert not result.success
         assert result.error is not None
         assert "Pipeline not found" in result.error
 
@@ -177,11 +177,11 @@ class TestPipelineService:
         mock_pipeline = Mock()
         mock_pipeline.pipeline_is_active = True
         mock_pipeline.execute.return_value = Mock()  # Mock execution
-        mock_repository.get_by_id.return_value = mock_pipeline
+        mock_repository.find_by_id.return_value = mock_pipeline
 
         result = await pipeline_service.execute_pipeline(command)
 
-        assert result.is_success
+        assert result.success
         mock_pipeline.execute.assert_called_once()
 
     @pytest.mark.asyncio
@@ -193,11 +193,11 @@ class TestPipelineService:
         command = ExecutePipelineCommand(pipeline_id=pipeline_id)
 
         # Mock not found
-        mock_repository.get_by_id.return_value = None
+        mock_repository.find_by_id.return_value = None
 
         result = await pipeline_service.execute_pipeline(command)
 
-        assert not result.is_success
+        assert not result.success
         assert result.error is not None
         assert "Pipeline not found" in result.error
 
@@ -212,11 +212,11 @@ class TestPipelineService:
         # Mock inactive pipeline
         mock_pipeline = Mock()
         mock_pipeline.pipeline_is_active = False
-        mock_repository.get_by_id.return_value = mock_pipeline
+        mock_repository.find_by_id.return_value = mock_pipeline
 
         result = await pipeline_service.execute_pipeline(command)
 
-        assert not result.is_success
+        assert not result.success
         assert result.error
         assert "Pipeline is inactive" in result.error
 
@@ -229,12 +229,12 @@ class TestPipelineService:
 
         # Mock active pipeline
         mock_pipeline = Mock()
-        mock_repository.get_by_id.return_value = mock_pipeline
+        mock_repository.find_by_id.return_value = mock_pipeline
         mock_repository.save.return_value = mock_pipeline
 
         result = await pipeline_service.deactivate_pipeline(pipeline_id)
 
-        assert result.is_success
+        assert result.success
         mock_pipeline.deactivate.assert_called_once()
         mock_repository.save.assert_called_once()
 
@@ -246,11 +246,11 @@ class TestPipelineService:
         pipeline_id = str(uuid4())
 
         # Mock not found
-        mock_repository.get_by_id.return_value = None
+        mock_repository.find_by_id.return_value = None
 
         result = await pipeline_service.deactivate_pipeline(pipeline_id)
 
-        assert not result.is_success
+        assert not result.success
         assert result.error is not None
         assert "Pipeline not found" in result.error
 
@@ -263,7 +263,7 @@ class TestPipelineServiceIntegration:
         """Create pipeline service for integration testing."""
         mock_repo = Mock()
         mock_repo.save = AsyncMock()
-        mock_repo.get_by_id = AsyncMock()
+        mock_repo.find_by_id = AsyncMock()
         return PipelineService(mock_repo), mock_repo
 
     @pytest.mark.asyncio
@@ -281,10 +281,10 @@ class TestPipelineServiceIntegration:
 
         # Configure mocks for successful execution
         mock_repo.save.return_value = None  # save just needs to not throw exception
-        mock_repo.get_by_id.return_value = Mock(pipeline_is_active=True, execute=Mock())
+        mock_repo.find_by_id.return_value = Mock(pipeline_is_active=True, execute=Mock())
 
         create_result = await service.create_pipeline(create_command)
-        assert create_result.is_success
+        assert create_result.success
 
         # Step 2: Execute pipeline
         execute_command = ExecutePipelineCommand(
@@ -292,7 +292,7 @@ class TestPipelineServiceIntegration:
         )
 
         execute_result = await service.execute_pipeline(execute_command)
-        assert execute_result.is_success
+        assert execute_result.success
 
     @pytest.mark.asyncio
     async def test_error_handling_chain(
@@ -302,12 +302,12 @@ class TestPipelineServiceIntegration:
         service, mock_repo = integration_service
 
         # Test repository error propagation
-        mock_repo.save.side_effect = Exception("Database connection failed")
+        mock_repo.save.side_effect = RuntimeError("Database connection failed")
 
         command = CreatePipelineCommand(name="Test Pipeline")
         result = await service.create_pipeline(command)
 
-        assert not result.is_success
+        assert not result.success
         assert result.error is not None
         assert "Repository error" in result.error
         assert "Database connection failed" in result.error

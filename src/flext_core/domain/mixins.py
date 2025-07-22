@@ -20,14 +20,11 @@ from typing import runtime_checkable
 
 from pydantic import computed_field
 
+from flext_core.domain.shared_types import EntityId
+from flext_core.domain.shared_types import EntityStatus
+
 if TYPE_CHECKING:
     from uuid import UUID
-
-    from flext_core.domain.types import CreatedAt
-    from flext_core.domain.types import EntityId
-    from flext_core.domain.types import UpdatedAt
-
-from flext_core.domain.types import EntityStatus
 
 T = TypeVar("T")
 
@@ -36,8 +33,8 @@ T = TypeVar("T")
 class TimestampMixin(Protocol):
     """Mixin for entities with timestamp tracking."""
 
-    created_at: CreatedAt
-    updated_at: UpdatedAt
+    created_at: datetime
+    updated_at: datetime
 
     def mark_updated(self) -> None:
         """Mark entity as updated with current timestamp."""

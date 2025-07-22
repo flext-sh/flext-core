@@ -45,7 +45,7 @@ class TestMissingExceptionHandlers:
         command = CreatePipelineCommand(name="test", description="test")
         result = await service.create_pipeline(command)
 
-        assert not result.is_success
+        assert not result.success
         assert result.error is not None
         assert "Repository error: Runtime error occurred" in result.error
 
@@ -60,7 +60,7 @@ class TestMissingExceptionHandlers:
         command = CreatePipelineCommand(name="test", description="test")
         result = await service.create_pipeline(command)
 
-        assert not result.is_success
+        assert not result.success
         assert result.error is not None
         assert "Repository error: Attribute error occurred" in result.error
 
@@ -75,7 +75,7 @@ class TestMissingExceptionHandlers:
         command = CreatePipelineCommand(name="test", description="test")
         result = await service.create_pipeline(command)
 
-        assert not result.is_success
+        assert not result.success
         assert result.error is not None
         assert "Repository error: Connection error occurred" in result.error
 
@@ -88,7 +88,7 @@ class TestMissingExceptionHandlers:
         command = ExecutePipelineCommand(pipeline_id="invalid-uuid-format")
         result = await service.execute_pipeline(command)
 
-        assert not result.is_success
+        assert not result.success
         assert result.error is not None
         assert "Input error:" in result.error
 
@@ -97,8 +97,8 @@ class TestMissingExceptionHandlers:
         self, service: PipelineService, mock_repository: AsyncMock
     ) -> None:
         """Test get_pipeline RuntimeError handling (line 167)."""
-        # Make repository.get_by_id raise RuntimeError
-        mock_repository.get_by_id.side_effect = RuntimeError("Runtime error in get")
+        # Make repository.find_by_id raise RuntimeError
+        mock_repository.find_by_id.side_effect = RuntimeError("Runtime error in get")
 
         from uuid import uuid4
 
@@ -106,7 +106,7 @@ class TestMissingExceptionHandlers:
         command = GetPipelineQuery(pipeline_id=str(pipeline_id))
         result = await service.get_pipeline(command)
 
-        assert not result.is_success
+        assert not result.success
         assert result.error is not None
         assert "Repository error: Runtime error in get" in result.error
 
@@ -115,8 +115,8 @@ class TestMissingExceptionHandlers:
         self, service: PipelineService, mock_repository: AsyncMock
     ) -> None:
         """Test get_pipeline ConnectionError handling (line 167)."""
-        # Make repository.get_by_id raise ConnectionError
-        mock_repository.get_by_id.side_effect = ConnectionError(
+        # Make repository.find_by_id raise ConnectionError
+        mock_repository.find_by_id.side_effect = ConnectionError(
             "Connection failed in get"
         )
 
@@ -126,7 +126,7 @@ class TestMissingExceptionHandlers:
         command = GetPipelineQuery(pipeline_id=str(pipeline_id))
         result = await service.get_pipeline(command)
 
-        assert not result.is_success
+        assert not result.success
         assert result.error
         assert "Repository error: Connection failed in get" in result.error
 
@@ -135,8 +135,8 @@ class TestMissingExceptionHandlers:
         self, service: PipelineService, mock_repository: AsyncMock
     ) -> None:
         """Test get_pipeline general Exception handling (line 173)."""
-        # Make repository.get_by_id raise a generic Exception
-        mock_repository.get_by_id.side_effect = Exception("Generic error in get")
+        # Make repository.find_by_id raise a generic Exception
+        mock_repository.find_by_id.side_effect = RuntimeError("Generic error in get")
 
         from uuid import uuid4
 
@@ -144,7 +144,7 @@ class TestMissingExceptionHandlers:
         command = GetPipelineQuery(pipeline_id=str(pipeline_id))
         result = await service.get_pipeline(command)
 
-        assert not result.is_success
+        assert not result.success
         assert result.error is not None
         assert "Repository error: Generic error in get" in result.error
 
@@ -153,11 +153,11 @@ class TestMissingExceptionHandlers:
         self, service: PipelineService, mock_repository: AsyncMock
     ) -> None:
         """Test deactivate_pipeline RuntimeError handling (line 201, 207)."""
-        # Setup pipeline first - need to mock get_by_id method
+        # Setup pipeline first - need to mock find_by_id method
         pipeline = Pipeline(
             pipeline_name=PipelineName(value="test"), pipeline_description="test"
         )
-        mock_repository.get_by_id.return_value = pipeline
+        mock_repository.find_by_id.return_value = pipeline
 
         # Make repository.save raise RuntimeError
         mock_repository.save.side_effect = RuntimeError("Runtime error in deactivate")
@@ -165,7 +165,7 @@ class TestMissingExceptionHandlers:
         pipeline_id = str(pipeline.pipeline_id.value)
         result = await service.deactivate_pipeline(pipeline_id)
 
-        assert not result.is_success
+        assert not result.success
         assert result.error is not None
         assert "Repository error: Runtime error in deactivate" in result.error
 
@@ -178,15 +178,15 @@ class TestMissingExceptionHandlers:
         pipeline = Pipeline(
             pipeline_name=PipelineName(value="test"), pipeline_description="test"
         )
-        mock_repository.get_by_id.return_value = pipeline
+        mock_repository.find_by_id.return_value = pipeline
 
         # Make repository.save raise a generic Exception
-        mock_repository.save.side_effect = Exception("Generic error in deactivate")
+        mock_repository.save.side_effect = RuntimeError("Generic error in deactivate")
 
         pipeline_id = str(pipeline.pipeline_id.value)
         result = await service.deactivate_pipeline(pipeline_id)
 
-        assert not result.is_success
+        assert not result.success
         assert result.error is not None
         assert "Repository error: Generic error in deactivate" in result.error
 
@@ -215,7 +215,7 @@ class TestEdgeCaseExceptionPaths:
         command = CreatePipelineCommand(name="test", description="test")
         result = await service.create_pipeline(command)
 
-        assert not result.is_success
+        assert not result.success
         assert result.error is not None
         assert "Repository error: Test attribute error" in result.error
 
@@ -228,7 +228,7 @@ class TestEdgeCaseExceptionPaths:
         command = ExecutePipelineCommand(pipeline_id="not-a-valid-uuid")
         result = await service.execute_pipeline(command)
 
-        assert not result.is_success
+        assert not result.success
         assert result.error is not None
         assert "Input error:" in result.error
 
@@ -243,7 +243,7 @@ class TestEdgeCaseExceptionPaths:
         pipeline = Pipeline(
             pipeline_name=PipelineName(value="test"), pipeline_description="test"
         )
-        mock_repository.get_by_id.return_value = pipeline
+        mock_repository.find_by_id.return_value = pipeline
         mock_repository.save.side_effect = ConnectionError("Connection lost")
 
         # Test deactivate_pipeline method that should have these exception handlers
@@ -251,12 +251,12 @@ class TestEdgeCaseExceptionPaths:
         result = await service.deactivate_pipeline(pipeline_id)
 
         # Should handle the error gracefully
-        assert not result.is_success
+        assert not result.success
         assert result.error is not None
         assert "Repository error: Connection lost" in result.error
 
-        # Repository get_by_id should have been called
-        mock_repository.get_by_id.assert_called_once()
+        # Repository find_by_id should have been called
+        mock_repository.find_by_id.assert_called_once()
         # Repository save should have been attempted
         mock_repository.save.assert_called_once()
 
@@ -282,9 +282,9 @@ class TestModuleCompleteness:
 
         # Test with different repository types
         repo: InMemoryRepository[Pipeline, str] = InMemoryRepository()
-        service = PipelineService(pipeline_repo=repo)  # type: ignore[arg-type]
+        service = PipelineService(pipeline_repo=repo)
 
-        assert service._repo is repo  # type: ignore[comparison-overlap]
+        assert service._repo is repo
 
     def test_command_query_model_validation(self) -> None:
         """Test command and query model validation completeness."""

@@ -5,18 +5,7 @@ Advanced configuration patterns for enterprise applications.
 
 from __future__ import annotations
 
-from flext_core.configuration.enhanced_base_config import APIConfig
-from flext_core.configuration.enhanced_base_config import DatabaseConfig
-from flext_core.configuration.enhanced_base_config import EnhancedBaseConfig
-from flext_core.configuration.enhanced_base_config import Environment
-from flext_core.configuration.enhanced_base_config import LogLevel
-from flext_core.configuration.enhanced_base_config import ObservabilityConfig
+# Enhanced configuration temporarily disabled (missing module)
+# TODO: Restore when enhanced_base_config.py is available
 
-__all__ = [
-    "APIConfig",
-    "DatabaseConfig",
-    "EnhancedBaseConfig",
-    "Environment",
-    "LogLevel",
-    "ObservabilityConfig",
-]
+__all__: list[str] = []

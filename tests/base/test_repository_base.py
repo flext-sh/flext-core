@@ -36,8 +36,8 @@ class MockRepository(BaseComponentRepository[MockEntity]):
         super().__init__()
         self._test_entities = entities or []
 
-    async def get_by_id(self, entity_id: Any) -> MockEntity | None:
-        """Mock implementation of get_by_id."""
+    async def find_by_id(self, entity_id: Any) -> MockEntity | None:
+        """Mock implementation of find_by_id."""
         return None  # Not used in the tests we're focusing on
 
     async def save(self, entity: MockEntity) -> MockEntity:

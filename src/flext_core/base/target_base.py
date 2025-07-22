@@ -14,7 +14,7 @@ from abc import ABC
 from abc import abstractmethod
 from typing import Any
 
-from flext_core.domain.types import ServiceResult
+from flext_core.domain.shared_types import ServiceResult
 
 
 class BaseTarget(ABC):
@@ -34,7 +34,9 @@ class BaseTarget(ABC):
         self.config = config
         self._validate_config()
 
-    def write_batch(self, records: list[dict[str, Any]]) -> ServiceResult[None]:
+    def write_batch(
+        self, records: list[dict[str, Any]],
+    ) -> ServiceResult[dict[str, Any]]:
         """Write a batch of records to the target.
 
         Args:
@@ -47,17 +49,19 @@ class BaseTarget(ABC):
         try:
             self._validate_records(records)
             self._write_records(records)
-            return ServiceResult[None].ok(None)
+            return ServiceResult.ok(data={"result": None})
         except (ValueError, KeyError, TypeError) as e:
-            return ServiceResult[None].fail(f"Write validation failed: {e!s}")
+            return ServiceResult.fail(f"Write validation failed: {e!s}")
         except OSError as e:
-            return ServiceResult[None].fail(f"Write I/O error: {e!s}")
+            return ServiceResult.fail(f"Write I/O error: {e!s}")
         except Exception as e:
             # Log the exception for debugging
             logging.getLogger(__name__).exception("Unexpected error during write")
-            return ServiceResult.fail(f"Unexpected error during write: {e!s}")
+            return ServiceResult.fail(
+                f"Unexpected error during write: {e!s}",
+            )
 
-    def write_record(self, record: dict[str, Any]) -> ServiceResult[None]:
+    def write_record(self, record: dict[str, Any]) -> ServiceResult[dict[str, Any]]:
         """Write a single record to the target.
 
         Args:
@@ -69,7 +73,7 @@ class BaseTarget(ABC):
         """
         return self.write_batch([record])
 
-    def flush(self) -> ServiceResult[None]:
+    def flush(self) -> ServiceResult[dict[str, Any]]:
         """Flush any buffered data to the target.
 
         Returns:
@@ -78,13 +82,15 @@ class BaseTarget(ABC):
         """
         try:
             self._flush_buffers()
-            return ServiceResult[None].ok(None)
+            return ServiceResult.ok(data=None)
         except (ValueError, OSError) as e:
-            return ServiceResult[None].fail(f"Flush failed: {e!s}")
+            return ServiceResult.fail(f"Flush failed: {e!s}")
         except Exception as e:
             # Log the exception for debugging
             logging.getLogger(__name__).exception("Unexpected error during flush")
-            return ServiceResult.fail(f"Unexpected error during flush: {e!s}")
+            return ServiceResult.fail(
+                f"Unexpected error during flush: {e!s}",
+            )
 
     @abstractmethod
     def _write_records(self, records: list[dict[str, Any]]) -> None:

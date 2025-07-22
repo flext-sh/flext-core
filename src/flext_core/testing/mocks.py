@@ -9,16 +9,12 @@ This module provides mock objects and utilities for testing FLEXT components.
 from __future__ import annotations
 
 import json
-from typing import TYPE_CHECKING
 from typing import Any
 from unittest.mock import Mock
 from uuid import UUID
 from uuid import uuid4
 
 from flext_core.domain.shared_types import ServiceResult
-
-if TYPE_CHECKING:
-    from collections.abc import Sequence
 
 
 class MockRepository:
@@ -41,7 +37,7 @@ class MockRepository:
         """Clear call history."""
         self._call_history.clear()
 
-    async def save(self, entity: Any) -> ServiceResult[Any]:
+    async def save(self, entity: Any) -> ServiceResult[dict[str, Any]]:
         """Mock save method."""
         self._record_call("save", entity)
 
@@ -50,42 +46,41 @@ class MockRepository:
             entity.id = uuid4()
 
         self._data[entity.id] = entity
-        return ServiceResult.ok(entity)
+        return ServiceResult.ok(data={"entity": entity})
 
-    async def find_by_id(self, entity_id: UUID) -> ServiceResult[Any]:
+    async def find_by_id(self, entity_id: UUID) -> ServiceResult[dict[str, Any]]:
         """Mock find by ID method."""
         self._record_call("find_by_id", entity_id)
 
         if entity_id in self._data:
-            return ServiceResult.ok(self._data[entity_id])
+            return ServiceResult.ok(data={"entity": self._data[entity_id]})
         return ServiceResult.fail(f"Entity with ID {entity_id} not found")
 
     async def list(
         self,
         limit: int = 100,
         offset: int = 0,
-    ) -> ServiceResult[Sequence[Any]]:
+    ) -> ServiceResult[dict[str, Any]]:
         """Mock list method."""
         self._record_call("list", limit, offset)
 
         all_entities = list(self._data.values())
         paginated = all_entities[offset : offset + limit]
-        return ServiceResult.ok(paginated)
+        return ServiceResult.ok(data={"entities": paginated})
 
-    async def delete(self, entity_id: UUID) -> ServiceResult[bool]:
+    async def delete(self, entity_id: UUID) -> ServiceResult[dict[str, Any]]:
         """Mock delete method."""
         self._record_call("delete", entity_id)
 
         if entity_id in self._data:
             del self._data[entity_id]
-            deleted = True
-            return ServiceResult.ok(deleted)
+            return ServiceResult.ok(data={"deleted": True})
         return ServiceResult.fail(f"Entity with ID {entity_id} not found")
 
-    async def count(self) -> ServiceResult[int]:
+    async def count(self) -> ServiceResult[dict[str, Any]]:
         """Mock count method."""
         self._record_call("count")
-        return ServiceResult.ok(len(self._data))
+        return ServiceResult.ok(data={"count": len(self._data)})
 
     def clear_data(self) -> None:
         """Clear all stored data."""
@@ -214,7 +209,9 @@ class MockService:
         """Record method call for verification."""
         self.call_history.append((method_name, args, kwargs))
 
-    async def create_entity(self, data: dict[str, Any]) -> ServiceResult[Any]:
+    async def create_entity(
+        self, data: dict[str, Any],
+    ) -> ServiceResult[dict[str, Any]]:
         """Mock create entity method."""
         self._record_call("create_entity", data)
 
@@ -226,7 +223,7 @@ class MockService:
 
         return await self.repository.save(entity)
 
-    async def get_entity(self, entity_id: UUID) -> ServiceResult[Any]:
+    async def get_entity(self, entity_id: UUID) -> ServiceResult[dict[str, Any]]:
         """Mock get entity method."""
         self._record_call("get_entity", entity_id)
         return await self.repository.find_by_id(entity_id)
@@ -235,12 +232,12 @@ class MockService:
         self,
         limit: int = 100,
         offset: int = 0,
-    ) -> ServiceResult[Sequence[Any]]:
+    ) -> ServiceResult[dict[str, Any]]:
         """Mock list entities method."""
         self._record_call("list_entities", limit, offset)
         return await self.repository.list(limit, offset)
 
-    async def delete_entity(self, entity_id: UUID) -> ServiceResult[bool]:
+    async def delete_entity(self, entity_id: UUID) -> ServiceResult[dict[str, Any]]:
         """Mock delete entity method."""
         self._record_call("delete_entity", entity_id)
         return await self.repository.delete(entity_id)

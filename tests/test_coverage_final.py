@@ -11,7 +11,7 @@ from uuid import uuid4
 
 from flext_core.application.pipeline import PipelineService
 from flext_core.domain.pydantic_base import DomainAggregateRoot
-from flext_core.domain.types import ServiceResult
+from flext_core.domain.shared_types import ServiceResult
 
 if TYPE_CHECKING:
     from uuid import UUID
@@ -107,11 +107,11 @@ class TestCoverageTargetedLines:
     def test_service_result_coverage_line_156(self) -> None:
         """Test ServiceResult coverage for missing lines."""
         # Test ServiceResult error handling patterns
-        from flext_core.domain.types import ServiceResult
+        from flext_core.domain.shared_types import ServiceResult
 
         # Test success case
         result = ServiceResult.ok("test_data")
-        assert result.is_success
+        assert result.success
         assert result.data == "test_data"
 
         # Test failure case
@@ -163,11 +163,11 @@ class TestCoverageTargetedLines:
         """Test additional ServiceResult methods to ensure complete coverage."""
         # Test various ServiceResult creation methods
         success_result = ServiceResult.ok("test_data")
-        assert success_result.is_success
+        assert success_result.success
         assert success_result.data == "test_data"
 
-        fail_result: ServiceResult[str] = ServiceResult.fail("test_error")
-        assert not fail_result.is_success
+        fail_result = ServiceResult.fail("test_error")
+        assert not fail_result.success
         assert fail_result.error == "test_error"
 
         # Test unwrap and unwrap_or methods
