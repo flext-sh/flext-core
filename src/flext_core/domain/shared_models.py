@@ -74,24 +74,6 @@ class PluginMetadata(BaseModel):
 
 
 # ==============================================================================
-# AUTHENTICATION MODELS - GENERIC
-# ==============================================================================
-
-
-class AuthToken(BaseModel):
-    """Generic authentication token model."""
-
-    token: str = Field(description="Authentication token")
-    token_type: str = Field(default="Bearer", description="Token type")
-    expires_at: str | None = Field(default=None, description="Expiration timestamp")
-    user_id: str | None = Field(default=None, description="User identifier")
-    permissions: list[str] = Field(
-        default_factory=list,
-        description="Token permissions",
-    )
-
-
-# ==============================================================================
 # BASIC RESULT MODELS - GENERIC
 # ==============================================================================
 
@@ -113,7 +95,6 @@ class ValidationResult(BaseModel):
 # ==============================================================================
 
 __all__ = [
-    "AuthToken",
     "ComponentHealth",
     # Health models
     "HealthStatus",
