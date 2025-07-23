@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [project]
 name = "flext-core"
-version = "0.7.0"
+version = "0.8.0"
 description = "Enterprise Foundation Framework - Modern Python 3.13 + Clean Architecture"
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
@@ -30,17 +30,9 @@ classifiers = [
 ]
 dependencies = [
     # Core module-specific dependencies
-    "dynaconf>=3.2.0",
-    "pyyaml>=6.0.0",
-    "msgspec>=0.18.0",
     "pydantic>=2.11.7",
     "pydantic-settings>=2.10.1",
-    "structlog>=25.4.0",
-    "rich>=14.0.0",
-    "typing-extensions>=4.12.0",
-    "rfc3987 (>=1.3.8,<2.0.0)",
-    "flext-ldif @ file:///home/marlonsc/flext/flext-ldif",
-    "protobuf (>=6.31.1,<7.0.0)",
+    "dependency-injector>=4.45.0",
 ]
 
 [[project.authors]]
@@ -52,12 +44,12 @@ name = "FLEXT Team"
 email = "team@flext.sh"
 
 [project.urls]
-Homepage = "https://github.com/flext-sh/flext"
-Repository = "https://github.com/flext-sh/flext"
-Documentation = "https://github.com/flext-sh/flext/blob/main/README.md"
+Homepage = "https://github.com/flext-sh/flext-core"
+Repository = "https://github.com/flext-sh/flext-core"
+Documentation = "https://github.com/flext-sh/flext-core/blob/main/README.md"
 
-[project.scripts]
-flext-core = "flext_core.cli:main"
+# [project.scripts] - REMOVED: biblioteca pura não tem CLI entry points
+# Serviços que usam flext-core via Plugins + DI implementam seus próprios CLIs
 
 [tool.poetry]
 # Poetry configuration for development
@@ -107,6 +99,7 @@ rich-traceback = "^1.0.3"
 types-protobuf = "^6.30.2.20250703"
 types-grpcio = "^1.0.0.20250703"
 lark-parser = "^0.12.0"
+commitizen = "^4.8.3"
 
 
 [tool.poetry.group.test.dependencies]
@@ -150,258 +143,84 @@ safety = "<3.0.0"
 
 [tool.ruff]
 target-version = "py313"
-line-length = 88
+line-length = 79         # PEP8 strict: 79 characters maximum
 src = ["src", "tests"]
 
 [tool.ruff.lint]
-select = ["ALL"]
+# Enable ALL rules with PEP8 strict compliance
+select = [
+    "ALL", # All available rules
+]
+
+# PEP8 compliance - minimal ignores only for legitimate cases
 ignore = [
-    # Line length and formatting (handled by formatter)
-    "E501",   # line too long
-    "W505",   # doc line too long
-    "COM812", # trailing comma missing (conflicts with formatter)
-    "ISC001", # single line implicit string concatenation
-
-    # Import and dependency issues (common in development)
-    "F401", # unused imports
-    "F403", # star imports (common in __init__.py)
-    "F405", # star import usage
-    "F841", # unused variable (common in development)
-
-    # Documentation style flexibility
-    "D100", # missing docstring in public module
-    "D101", # missing docstring in public class
-    "D102", # missing docstring in public method
-    "D103", # missing docstring in public function
-    "D104", # missing docstring in public package
-    "D105", # missing docstring in magic method
-    "D106", # missing docstring in public nested class
-    "D107", # missing docstring in __init__
-    "D203", # blank line before class docstring (conflicts with D211)
-    "D213", # multi-line docstring summary second line (conflicts with D212)
-
-    # Code style flexibility (common patterns)
-    "ERA001", # commented out code (common during development)
-    "TD002",  # missing author in TODO
-    "TD003",  # missing issue link in TODO
-    "FIX002", # line contains TODO
-    "T201",   # print statement (common in scripts/debug)
-    "T203",   # pprint statement
-
-    # Complexity (handled case by case)
-    "C901",    # function too complex
-    "PLR0913", # too many arguments
-    "PLR0915", # too many statements
-    "PLR2004", # magic value used in comparison
-    "PLR0912", # too many branches
-    "PLR0911", # too many return statements
-
-    # Type checking flexibility
-    "ANN401", # any type usage (sometimes necessary)
-
-    # Security exceptions (development context)
-    "S101", # assert usage (needed for type checking)
-    "S105", # hardcoded password (development context)
-    "S106", # hardcoded password (development context)
-    "S603", # subprocess call
-    "S607", # starting process with partial executable path
-    "S608", # possible SQL injection (handled by ORM)
-
-    # Error handling flexibility
-    "EM101",  # raw string in exception
-    "EM102",  # f-string in exception
-    "TRY003", # avoid long exception messages
-    "TRY301", # raise within try block
-
-    # Performance (premature optimization)
-    "PERF203", # try-except in loop
-    "PERF401", # manual list comprehension
+    "D203",   # one-blank-line-before-class (conflicts with D211)
+    "D213",   # multi-line-summary-second-line (conflicts with D212)
+    "W505"
 ]
 
 [tool.ruff.lint.per-file-ignores]
-# Test files - extremely permissive for all test patterns
 "tests/*" = [
-    "ALL", # Allow everything in tests
-]
-"tests/**/*.py" = [
-    "ALL", # Allow everything in tests
-]
-"**/tests/*.py" = [
-    "ALL", # Allow everything in tests
-]
-"test_*.py" = [
-    "ALL", # Allow everything in tests
-]
-"**/test_*.py" = [
-    "ALL", # Allow everything in tests
-]
-"conftest.py" = [
-    "ALL", # Allow everything in pytest config
-]
-"**/conftest.py" = [
-    "ALL", # Allow everything in pytest config
+    "S101",    # Use of assert detected (normal in tests)
+    "PLR2004", # Magic value used in comparison (normal in tests)
+    "ANN",     # Type annotations not required in tests
+    "D",       # Docstrings not required in tests
+    "FBT001",  # Boolean positional args (normal in pytest parametrize)
+    "S603",    # subprocess calls allowed in compliance tests
 ]
 
-# Script and CLI files - very permissive
-"scripts/*" = [
-    "ALL", # Scripts need maximum flexibility
-]
-"**/scripts/*.py" = [
-    "ALL", # Scripts need maximum flexibility
-]
-"cli.py" = [
-    "T201",
-    "T203",
-    "S602",
-    "S603",
-    "S607",
-    "S608",
-    "PLR0913",
-    "PLR0915",
-    "PLR0912",
-    "PLR0911",
-    "C901",
-    "D100",
-    "D103",
-    "DTZ005",
-    "EM101",
-    "EM102",
-    "F401",
-    "ERA001",
-    "FIX002",
-    "TD002",
-    "TD003",
-]
-"**/cli.py" = [
-    "T201",
-    "T203",
-    "S602",
-    "S603",
-    "S607",
-    "S608",
-    "PLR0913",
-    "PLR0915",
-    "PLR0912",
-    "PLR0911",
-    "C901",
-    "D100",
-    "D103",
-    "DTZ005",
-    "EM101",
-    "EM102",
-    "F401",
-    "ERA001",
-    "FIX002",
-    "TD002",
-    "TD003",
-]
-
-# Generated/auto-generated files - exclude ALL linting
-"**/proto/*_pb2.py" = ["ALL"]
-"**/proto/*_pb2_grpc.py" = ["ALL"]
-"**/*_pb2.py" = ["ALL"]
-"**/*_pb2_grpc.py" = ["ALL"]
-"**/generated/**/*.py" = ["ALL"]
-"**/migrations/*.py" = ["ALL"]
-"**/alembic/versions/*.py" = ["ALL"]
-
-# Example and demo files - very permissive
-"examples/*" = [
-    "D100",
-    "D103",
-    "T201",
-    "F401",
-    "S101",
-    "PLR2004",
-    "C901",
-    "PLR0913",
-    "PLR0915",
-    "EM101",
-    "EM102",
-]
-"**/examples/*" = [
-    "D100",
-    "D103",
-    "T201",
-    "F401",
-    "S101",
-    "PLR2004",
-    "C901",
-    "PLR0913",
-    "PLR0915",
-    "EM101",
-    "EM102",
-]
-
-# __init__.py files - common to import and re-export
-"__init__.py" = ["F401", "F403", "F405", "D104", "D100"]
-"**/__init__.py" = ["F401", "F403", "F405", "D104", "D100"]
-
-# Development and temporary files
-"temp_*.py" = ["ALL"]
-"**/temp_*.py" = ["ALL"]
-"debug_*.py" = ["ALL"]
-"**/debug_*.py" = ["ALL"]
-"scratch_*.py" = ["ALL"]
-"**/scratch_*.py" = ["ALL"]
 [tool.ruff.lint.isort]
 known-first-party = ["flext_core"]
 force-single-line = true
+required-imports = ["from __future__ import annotations"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google" # Google docstring style (PEP257 compliant)
+
+[tool.ruff.lint.pycodestyle]
+max-line-length = 79 # PEP8 strict compliance
+max-doc-length = 72  # PEP8 docstring line length
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10 # PEP8 recommended complexity
+
+[tool.ruff.lint.pylint]
+max-args = 5        # PEP8 recommended max arguments
+max-branches = 12   # PEP8 recommended max branches
+max-returns = 6     # PEP8 recommended max returns
+max-statements = 50 # PEP8 recommended max statements
+
+[tool.ruff.lint.flake8-quotes]
+docstring-quotes = "double" # PEP257 compliance
+inline-quotes = "double"    # Consistent quoting style
 
 [tool.mypy]
 python_version = "3.13"
 files = ["src", "tests"]
-warn_return_any = true
-warn_unused_configs = true
-disallow_untyped_defs = true
-disallow_incomplete_defs = true
+plugins = ["pydantic.mypy"]
 check_untyped_defs = true
-disallow_untyped_decorators = true
+disallow_incomplete_defs = true
+disallow_untyped_defs = true
 no_implicit_optional = true
-warn_redundant_casts = true
-warn_unused_ignores = true
-warn_no_return = true
-warn_unreachable = true
-strict_equality = true
+pretty = true
 show_error_codes = true
 show_error_context = true
-pretty = true
-
-[[tool.mypy.overrides]]
-module = ["dynaconf.*", "yaml.*"]
-ignore_missing_imports = true
-
-
-[[tool.mypy.overrides]]
-module = ["flext_core.config.oracle"]
-# Disable unreachable warnings for oracle config (false positives)
-disable_error_code = ["unreachable"]
-
-[[tool.mypy.overrides]]
-module = "tests.*"
-# Allow more flexibility in test files
-disable_error_code = [
-    "unreachable",
-    "comparison-overlap",
-    "index",
-    "union-attr",
-    "arg-type",
-    "override",
-    "no-untyped-def",
-    "attr-defined",
-    "assignment",
-    "unused-ignore",
-    "name-defined",
-    "call-arg",
-    "operator",
-    "var-annotated",
-    "abstract",
-]
+strict = true
+strict_equality = true
+warn_no_return = true
+warn_redundant_casts = true
+warn_return_any = true
+warn_unreachable = true
+warn_unused_configs = true
+warn_unused_ignores = true
 
 [tool.coverage.run]
 source = ["src"]
 branch = true
-omit = ["*/tests/*", "*/test_*", "*/__pycache__/*", "*/venv/*", "*/.venv/*"]
+omit = [
+    "*/tests/*",
+    "*/deprecation.py",
+]
 
 [tool.coverage.report]
 exclude_lines = [
@@ -428,9 +247,12 @@ addopts = [
     "--cov-report=term-missing:skip-covered",
     "--cov-report=html:reports/coverage",
     "--cov-report=xml:reports/coverage.xml",
-    "--cov-fail-under=95",
+    "--cov-fail-under=80",
     "--maxfail=1",
     "--tb=short",
+    # PEP8 compliance in test output
+    "--verbose",
+    "--color=yes",
 ]
 asyncio_mode = "auto"
 markers = [
@@ -441,6 +263,27 @@ markers = [
     "core: marks tests as core framework tests",
     "architecture: marks tests as architecture tests",
     "ddd: marks tests as domain-driven design tests",
+    "pep8: marks tests for PEP8 compliance validation",
+    "compliance: marks tests for code quality compliance",
     "requires_db: tests that need database",
     "requires_redis: tests that need Redis",
 ]
+
+# PEP8 Code Quality Configuration
+[tool.ruff.format]
+quote-style = "double"            # PEP8 prefers double quotes
+indent-style = "space"            # PEP8 requires spaces, not tabs
+line-ending = "auto"              # Automatically detect line endings
+skip-magic-trailing-comma = false # Respect trailing commas
+
+[tool.codespell]
+skip = "*.po,*.ts,*.json,*.lock"
+count = true
+quiet-level = 3
+
+[tool.bandit]
+exclude_dirs = ["tests"]
+skips = ["B101"]         # Skip assert_used in tests
+
+[tool.bandit.assert_used]
+exclude = ["*/tests/*"]

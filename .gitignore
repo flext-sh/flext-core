@@ -353,7 +353,7 @@ celerybeat.pid
 
 # Custom additions
 *.local
-*.user 
+*.user
 
 # ============================================================================
 # AI ASSISTANT FILES
