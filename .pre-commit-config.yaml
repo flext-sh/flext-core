@@ -29,9 +29,9 @@ repos:
         require_serial: true
         args: [--check, --diff]
 
-      # Ruff linting and formatting
+      # Ruff linting and formatting with PEP8 strict
       - id: ruff-format
-        name: "⚡ Ruff Format"
+        name: "⚡ Ruff Format (PEP8 Strict - 79 chars)"
         entry: poetry run ruff format
         language: system
         types: [python]
@@ -39,7 +39,7 @@ repos:
         args: [--check, --diff]
 
       - id: ruff-lint
-        name: "🔥 Ruff Lint (17 categories)"
+        name: "🔥 Ruff Lint (PEP8 + ALL categories)"
         entry: poetry run ruff check
         language: system
         types: [python]
@@ -159,7 +159,7 @@ ci:
   autofix_prs: false # No automatic fixes - must be intentional
   autoupdate_schedule: weekly
   skip: [
-      # Local Poetry hooks don't work in CI
+      # Local Poetry hooks do not work in CI
       black,
       ruff-format,
       ruff-lint,

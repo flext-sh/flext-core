@@ -2,23 +2,44 @@
 
 Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
+
+Version information and utilities for the FLEXT Core library.
 """
 
 from __future__ import annotations
 
-# Version information
-__version__ = "0.8.0"
-__version_info__ = (0, 8, 0)
+from flext_core.constants import FlextConstants
+
+__version__ = FlextConstants.VERSION
 
 
 def get_version() -> str:
-    """Get version string."""
+    """Get the current version string.
+
+    Returns:
+        The current version string
+
+    """
     return __version__
 
 
 def get_version_info() -> tuple[int, int, int]:
-    """Get version info tuple."""
-    return __version_info__
+    """Get version information as a tuple of integers.
+
+    Returns:
+        Tuple of (major, minor, patch) version numbers
+
+    """
+    parts = __version__.split(".")
+    major = int(parts[0])
+    minor = int(parts[1])
+    min_parts_for_patch = 3
+    patch = int(parts[2]) if len(parts) > min_parts_for_patch - 1 else 0
+    return (major, minor, patch)
 
 
-__all__ = ["__version__", "__version_info__", "get_version", "get_version_info"]
+__all__ = [
+    "__version__",
+    "get_version",
+    "get_version_info",
+]

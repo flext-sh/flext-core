@@ -1,94 +1,143 @@
-"""Pytest configuration for flext-core tests.
+"""Pytest configuration and shared fixtures for FLEXT Core tests.
 
-Copyright (c) 2025 FLEXT Contributors
-SPDX-License-Identifier: MIT
+Modern pytest fixtures following best practices for enterprise testing.
 """
 
 from __future__ import annotations
 
 import os
-from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
+from typing import Any
+from unittest.mock import MagicMock
 
 import pytest
 
+from flext_core import FlextContainer
+from flext_core import FlextCoreSettings
+from flext_core import FlextEntityId
+from flext_core import configure_flext_container
+from flext_core.config import configure_settings
+from flext_core.constants import FlextEnvironment
+from flext_core.constants import FlextLogLevel
+
 if TYPE_CHECKING:
     from collections.abc import Generator
-
-# Set test environment
-os.environ["FLEXT_ENV"] = "testing"
-os.environ["FLEXT_DEBUG"] = "true"
-os.environ["FLEXT_ENVIRONMENT"] = "test"
+    from pathlib import Path
 
 
-@pytest.fixture(autouse=True)
-def set_test_environment(
-    request: pytest.FixtureRequest,
-) -> Generator[None]:
-    """Automatically set environment to 'test' for all tests except those testing real defaults.
+@pytest.fixture
+def clean_container() -> Generator[FlextContainer]:
+    """Provide a clean FlextContainer for each test.
 
-    This fixture ensures tests run in test environment unless explicitly testing defaults.
+    Automatically cleans up after test completion.
     """
-    # Skip setting test environment for tests that explicitly test defaults
-    test_name = request.node.name
-    parent_name = request.node.parent.name.lower() if request.node.parent else ""
+    container = FlextContainer()
+    yield container
+    # Cleanup is handled by container.clear() in teardown
+    container.clear()
 
-    # Tests that intentionally test real defaults without interference
-    skip_tests = [
-        ("test_base_settings_creation", "comprehensive"),
-        ("test_base_settings_defaults", ""),  # Any parent name for this test
-        ("test_default_configuration", ""),  # Tests development defaults
-        ("test_load_from_file", ""),  # Tests file-based configuration loading
+
+@pytest.fixture
+def global_container_reset() -> Generator[None]:
+    """Reset global container before and after each test."""
+    # Reset before test
+    configure_flext_container(None)
+    yield
+    # Reset after test
+    configure_flext_container(None)
+
+
+@pytest.fixture
+def sample_settings() -> FlextCoreSettings:
+    """Provide sample FlextCoreSettings for testing."""
+    return FlextCoreSettings(
+        environment=FlextEnvironment.TESTING,
+        log_level=FlextLogLevel.DEBUG,
+        debug=True,
+        service_timeout=10,
+        max_retries=2,
+    )
+
+
+@pytest.fixture
+def temp_config_dir(tmp_path: Path) -> Path:
+    """Provide temporary directory for configuration files."""
+    config_dir = tmp_path / "config"
+    config_dir.mkdir()
+    return config_dir
+
+
+@pytest.fixture
+def sample_entity_ids() -> list[FlextEntityId]:
+    """Provide sample FlextEntityId instances for testing."""
+    return [
+        FlextEntityId("user-123"),
+        FlextEntityId("user-456"),
+        FlextEntityId("order-789"),
+        FlextEntityId("product-abc"),
     ]
 
-    for test_pattern, parent_pattern in skip_tests:
-        if test_pattern in test_name and (
-            not parent_pattern or parent_pattern in parent_name
-        ):
-            yield
-            return
 
-    # Store original value to restore after test
-    original_env = os.environ.get("FLEXT_ENVIRONMENT")
-
-    # Set test environment (using FLEXT_ prefix as defined in ConfigDefaults)
-    os.environ["FLEXT_ENVIRONMENT"] = "test"
-
-    # Yield control back to test
-    yield
-
-    # Restore original environment after test
-    if original_env is not None:
-        os.environ["FLEXT_ENVIRONMENT"] = original_env
-    else:
-        os.environ.pop("FLEXT_ENVIRONMENT", None)
-
-
-@pytest.fixture(scope="session")
-def project_root() -> Path:
-    """Get project root directory."""
-    return Path(__file__).parent.parent
+@pytest.fixture
+def mock_database() -> MagicMock:
+    """Provide mock database service for DI testing."""
+    mock_db = MagicMock()
+    mock_db.get_user.return_value = {"id": "user-123", "name": "Test User"}
+    mock_db.save_user.return_value = True
+    return mock_db
 
 
 @pytest.fixture
-def sample_config() -> dict[str, Any]:
-    """Sample configuration for testing."""
-    return {
-        "environment": "test",
-        "debug": True,
-        "log_level": "DEBUG",
-    }
+def mock_logger() -> MagicMock:
+    """Provide mock logger service for DI testing."""
+    mock_logger = MagicMock()
+    mock_logger.info.return_value = None
+    mock_logger.error.return_value = None
+    mock_logger.debug.return_value = None
+    return mock_logger
+
+
+@pytest.fixture(params=["user-123", "order-456", "product-789"])
+def entity_id_samples(request: pytest.FixtureRequest) -> FlextEntityId:
+    """Parametrized fixture for different entity IDs."""
+    return FlextEntityId(request.param)
+
+
+@pytest.fixture(params=["development", "testing", "staging", "production"])
+def environment_samples(request: pytest.FixtureRequest) -> str:
+    """Parametrized fixture for different environments."""
+    return str(request.param)
+
+
+@pytest.fixture(params=["DEBUG", "INFO", "WARNING", "ERROR"])
+def log_level_samples(request: pytest.FixtureRequest) -> str:
+    """Parametrized fixture for different log levels."""
+    return str(request.param)
+
+
+class MockService:
+    """Mock service class for testing dependency injection."""
+
+    def __init__(self, name: str, database: Any = None) -> None:
+        """Initialize mock service with name and optional database."""
+        self.name = name
+        self.database = database
+        self.call_count = 0
+
+    def process(self, data: str) -> str:
+        """Mock processing method."""
+        self.call_count += 1
+        return f"Processed {data} by {self.name} (call #{self.call_count})"
 
 
 @pytest.fixture
-def sample_pipeline_data() -> dict[str, Any]:
-    """Sample pipeline data for testing."""
-    return {
-        "id": "test-pipeline-001",
-        "name": "Test Pipeline",
-        "description": "A test pipeline for unit tests",
-        "status": "pending",
-    }
+def mock_service_factory() -> Any:
+    """Provide factory function for creating mock services."""
+
+    def create_service(name: str) -> MockService:
+        return MockService(name)
+
+    return create_service
 
 
 # Pytest configuration
@@ -96,35 +145,31 @@ def pytest_configure(config: pytest.Config) -> None:
     """Configure pytest with custom markers."""
     config.addinivalue_line(
         "markers",
-        "unit: mark test as unit test (fast, isolated)",
+        "unit: marks tests as unit tests (deselect with '-m \"not unit\"')",
     )
     config.addinivalue_line(
         "markers",
-        "integration: mark test as integration test (may require external services)",
+        "integration: marks tests as integration tests",
     )
     config.addinivalue_line(
         "markers",
-        "slow: mark test as slow running",
+        "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     )
     config.addinivalue_line(
         "markers",
-        "docker: mark test as requiring Docker",
+        "requires_env: marks tests that require specific environment setup",
     )
 
 
-def pytest_collection_modifyitems(
-    config: pytest.Config,
-    items: list[pytest.Item],
-) -> None:
-    """Modify test collection to add markers based on test location."""
-    for item in items:
-        # Add unit marker to all tests in unit directory
-        if "/unit/" in str(item.fspath):
-            item.add_marker(pytest.mark.unit)
-        # Add integration marker to all tests in integration directory
-        elif "/integration/" in str(item.fspath):
-            item.add_marker(pytest.mark.integration)
-            item.add_marker(pytest.mark.slow)
-        # Add e2e marker to all tests in e2e directory
-        elif "/e2e/" in str(item.fspath):
-            item.add_marker(pytest.mark.slow)
+# Auto-use fixtures for common setup
+@pytest.fixture(autouse=True)
+def reset_singletons(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Auto-reset singletons between tests to prevent test
+    interference."""
+    # Clear any FLEXT environment variables that might interfere
+    for key in list(os.environ.keys()):
+        if key.startswith("FLEXT_"):
+            monkeypatch.delenv(key, raising=False)
+
+    # Reset global state
+    configure_settings(None)
