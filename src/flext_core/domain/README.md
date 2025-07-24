@@ -9,21 +9,25 @@ This module provides the foundation for implementing Domain-Driven Design patter
 ## Components
 
 ### Entity (`entity.py`)
+
 - `FlextEntity` - Base class for domain entities with identity
 - Identity-based equality and lifecycle management
 - Domain event support for change tracking
 
 ### Value Object (`value_object.py`)
+
 - `FlextValueObject` - Base class for immutable value objects
 - Value-based equality and validation
 - Type-safe immutable data structures
 
 ### Aggregate Root (`aggregate_root.py`)
+
 - `FlextAggregateRoot` - Root entity for consistency boundaries
 - Domain event collection and publishing
 - Transaction boundary enforcement
 
 ### Domain Service (`domain_service.py`)
+
 - `FlextDomainService` - Base class for domain services
 - Stateless operations across multiple entities
 - Business logic that doesn't belong to a single entity
@@ -169,24 +173,28 @@ class OrderPricingService(FlextDomainService):
 ## Design Principles
 
 ### Entity Characteristics
+
 - **Identity**: Entities have unique identifiers that persist through changes
 - **Mutability**: Entities can change state while maintaining identity
 - **Lifecycle**: Entities have creation, modification, and deletion phases
 - **Equality**: Based on identity, not attribute values
 
 ### Value Object Characteristics
+
 - **Immutability**: Value objects cannot be modified after creation
 - **Value Equality**: Two value objects are equal if all attributes match
 - **Side-Effect Free**: Operations return new instances rather than modifying existing ones
 - **Validation**: Enforce business rules and invariants at creation time
 
 ### Aggregate Characteristics
+
 - **Consistency Boundary**: Aggregates enforce business rules across related entities
 - **Transaction Boundary**: Changes to an aggregate happen within a single transaction
 - **Root Access**: External objects reference only the aggregate root
 - **Event Publishing**: Domain events communicate changes to other bounded contexts
 
 ### Domain Service Characteristics
+
 - **Stateless**: Domain services don't maintain state between operations
 - **Business Logic**: Contain business logic that doesn't belong to entities or value objects
 - **Coordination**: Orchestrate operations across multiple domain objects

@@ -338,10 +338,7 @@ class FlextStringField(FlextField[str]):
 
     def deserialize_value(self, value: object) -> str:
         """Deserialize string value."""
-        if not isinstance(value, str):
-            msg = f"Cannot deserialize {type(value)} to string"
-            raise TypeError(msg)
-        return value
+        return str(value)
 
 
 class FlextIntegerField(FlextField[int]):

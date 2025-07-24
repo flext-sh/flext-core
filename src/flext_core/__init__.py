@@ -81,6 +81,7 @@ from flext_core.types_system import flext_validate_event_type
 from flext_core.types_system import flext_validate_identifier
 from flext_core.types_system import flext_validate_non_empty_string
 from flext_core.types_system import flext_validate_service_name
+from flext_core.version import get_version
 
 # Public API - Modern Components Only
 __all__ = [
@@ -150,6 +151,7 @@ __all__ = [
     "flext_validate_service_name",
     "get_flext_container",
     "get_settings",
+    "get_version",
 ]
 
 # Library metadata

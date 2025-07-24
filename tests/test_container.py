@@ -295,7 +295,8 @@ class TestFlextContainerSingletonPattern:
 
         # Factory called only once
         assert call_count == 1
-        assert result1.data.name == "Service_1"  # type: ignore[attr-defined]
+        assert isinstance(result1.data, SampleService)
+        assert result1.data.name == "Service_1"
 
     def test_singleton_factory_failure_handling(
         self,
@@ -319,7 +320,9 @@ class TestFlextContainerSingletonPattern:
     ) -> None:
         """Test rejection of non-callable factory."""
         # This would be caught by type system, but test runtime behavior
-        result = clean_container.register_singleton("service", "not_callable")  # type: ignore[arg-type]
+        # We need to bypass type checking for this test case
+        factory: Any = "not_callable"
+        result = clean_container.register_singleton("service", factory)
 
         assert result.is_failure
         assert result.error is not None

@@ -314,6 +314,19 @@ STRICT_COMPLIANCE.md
 LEVEL1_*.md
 DUPLICATION_REPORT.md
 
+# Timestamped backup files - FORBIDDEN
+*_20250*.bak
+*_202507*.bak
+*_202506*.bak
+*.md_20250*
+*_SUMMARY_20250*.bak
+*_COMPLETE_20250*.bak
+*_FINDINGS_20250*.bak
+README_20250*.bak
+CLAUDE*_20250*.bak
+NEW_ARCHITECTURE_*.bak
+SEMANTIC_*.bak
+
 # ============================================================================
 # MISCELLANEOUS
 # ============================================================================

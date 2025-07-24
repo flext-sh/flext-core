@@ -54,7 +54,7 @@ class TestFlextPayloadCreation:
         payload = FlextPayload(user_id="123")
 
         with pytest.raises((ValidationError, AttributeError, TypeError)):
-            payload.user_id = "456"  # type: ignore[attr-defined]
+            payload.user_id = "456"
 
     def test_payload_string_stripping(self) -> None:
         """Test string whitespace preservation in extra fields."""
@@ -309,3 +309,21 @@ class TestFlextPayloadIntegration:
         # Same payload should have same hash
         payload2 = FlextPayload(user_id="123", action="login")
         assert hash(payload) == hash(payload2)
+
+    def test_empty_payload_edge_cases(self) -> None:
+        """Test empty payload edge cases for full coverage."""
+        # Create payload with no extra fields to test __pydantic_extra__ = None
+        payload = FlextPayload()
+
+        # Test get method when __pydantic_extra__ is None (line 116)
+        assert payload.get("missing_field") is None
+        assert payload.get("missing_field", "default") == "default"
+
+        # Test keys method when __pydantic_extra__ is None (line 133)
+        assert payload.keys() == []
+
+        # Test items method when __pydantic_extra__ is None (line 150)
+        assert payload.items() == []
+
+        # Test has method on empty payload
+        assert payload.has("any_field") is False
