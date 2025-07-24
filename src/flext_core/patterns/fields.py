@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from abc import ABC
 from abc import abstractmethod
-from enum import Enum
+from enum import StrEnum
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import TypeVar
@@ -32,7 +32,7 @@ TDefault = TypeVar("TDefault")
 # =============================================================================
 
 
-class FlextFieldType(str, Enum):
+class FlextFieldType(StrEnum):
     """Enumeration of supported field types."""
 
     STRING = "string"
@@ -473,7 +473,7 @@ class FlextBooleanField(FlextField[bool]):
         if isinstance(value, bool):
             return value
         if isinstance(value, str):
-            return value.lower() in ("true", "1", "yes", "on")
+            return value.lower() in {"true", "1", "yes", "on"}
         if isinstance(value, int):
             return bool(value)
 

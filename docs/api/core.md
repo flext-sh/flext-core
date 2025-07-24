@@ -21,7 +21,7 @@ from flext_core import (
 
 # Imports de compatibilidade (legado)
 from flext_core import (
-    ServiceResult,         # ⚠️ Deprecated: use FlextResult
+    FlextResult,         # ⚠️ Deprecated: use FlextResult
     DIContainer,          # ⚠️ Deprecated: use FlextContainer
 )
 ```
@@ -623,14 +623,14 @@ class Order(FlextAggregateRoot[OrderId]):
 
 ## 🔗 Compatibilidade e Migração
 
-### Migração de ServiceResult para FlextResult
+### Migração de FlextResult para FlextResult
 
 ```python
 # Old (deprecated)
-from flext_core import ServiceResult
+from flext_core import FlextResult
 
-def old_function() -> ServiceResult[str]:
-    return ServiceResult.success("data")
+def old_function() -> FlextResult[str]:
+    return FlextResult.success("data")
 
 # New (recommended) 
 from flext_core import FlextResult

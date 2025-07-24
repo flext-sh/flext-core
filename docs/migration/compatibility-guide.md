@@ -491,7 +491,7 @@ FLEXT Core maintains backward compatibility through a compatibility layer:
 ```python
 # Legacy imports still work (with deprecation warnings)
 from flext_core.dependency_injection import DIContainer  # Deprecated but works
-from flext_core.types import ServiceResult  # Deprecated, use FlextResult
+from flext_core.types import FlextResult  # Deprecated, use FlextResult
 
 # Modern imports (recommended)
 from flext_core import FlextResult, FlextContainer
@@ -502,7 +502,7 @@ from flext_core import FlextResult, FlextContainer
 | Component | Deprecated In | Removal Target | Migration Path |
 |-----------|--------------|----------------|----------------|
 | `DIContainer` | v0.8.0 | v1.0.0 | Use `FlextContainer` |
-| `ServiceResult` | v0.8.0 | v1.0.0 | Use `FlextResult` |
+| `FlextResult` | v0.8.0 | v1.0.0 | Use `FlextResult` |
 | `types.py` legacy types | v0.8.0 | v1.0.0 | Use `constants.py` types |
 | Manual config loading | v0.8.0 | v1.0.0 | Use `FlextCoreSettings` |
 

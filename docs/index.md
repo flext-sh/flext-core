@@ -206,7 +206,7 @@ make pre-commit            # Setup pre-commit hooks
 from flext_core import FlextContainer, FlextResult
 
 # ⚠️ Legado (compatibilidade mantida)
-from flext_core import DIContainer, ServiceResult
+from flext_core import DIContainer, FlextResult
 ```
 
 ## 🌟 Casos de Uso

@@ -7,7 +7,7 @@ No backward compatibility layer - direct usage only.
 from __future__ import annotations
 
 import re
-from enum import Enum
+from enum import StrEnum
 from typing import Final
 from typing import NewType
 
@@ -16,7 +16,7 @@ from typing import NewType
 # ==================================================================
 
 
-class FlextEnvironment(str, Enum):
+class FlextEnvironment(StrEnum):
     """Environment types for FLEXT applications."""
 
     DEVELOPMENT = "development"
@@ -25,7 +25,7 @@ class FlextEnvironment(str, Enum):
     PRODUCTION = "production"
 
 
-class FlextLogLevel(str, Enum):
+class FlextLogLevel(StrEnum):
     """Log levels following Python logging standards."""
 
     CRITICAL = "CRITICAL"
@@ -36,7 +36,7 @@ class FlextLogLevel(str, Enum):
     TRACE = "TRACE"
 
 
-class FlextResultStatus(str, Enum):
+class FlextResultStatus(StrEnum):
     """Result status types for FlextResult pattern."""
 
     SUCCESS = "success"

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import math
+
 import pytest
 from pydantic import ValidationError
 
@@ -37,7 +39,7 @@ class TestFlextPayloadCreation:
             string_field="text",
             int_field=42,
             bool_field=True,
-            float_field=3.14,
+            float_field=math.pi,
             list_field=[1, 2, 3],
             dict_field={"nested": "value"},
         )
@@ -45,7 +47,7 @@ class TestFlextPayloadCreation:
         assert payload.string_field == "text"
         assert payload.int_field == 42
         assert payload.bool_field is True
-        assert payload.float_field == 3.14
+        assert payload.float_field == math.pi
         assert payload.list_field == [1, 2, 3]
         assert payload.dict_field == {"nested": "value"}
 
