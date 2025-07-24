@@ -92,8 +92,6 @@ myst-parser = "^4.0.1"
 mkdocstrings = "^0.27.0"
 mkdocs-gen-files = "^0.5.0"
 mkdocs-literate-nav = "^0.6.0"
-ipython = "^9.4.0"
-jupyter = "^1.1.1"
 rich-traceback = "^1.0.3"
 # interrogate removed due to security vulnerability in py dependency
 types-protobuf = "^6.30.2.20250703"
@@ -167,6 +165,7 @@ ignore = [
     "D",       # Docstrings not required in tests
     "FBT001",  # Boolean positional args (normal in pytest parametrize)
     "S603",    # subprocess calls allowed in compliance tests
+    "SLF001",
 ]
 
 [tool.ruff.lint.isort]
@@ -213,6 +212,16 @@ warn_return_any = true
 warn_unreachable = true
 warn_unused_configs = true
 warn_unused_ignores = true
+
+[[tool.mypy.overrides]]
+# Ignore specific test-related type errors that are intentional
+module = "tests.*"
+disable_error_code = [
+    "arg-type",      # Tests intentionally pass None to test validation
+    "attr-defined",  # Tests intentionally access attributes to test immutability
+    "misc",          # Tests intentionally test edge cases
+    "assignment",    # Tests intentionally assign invalid values
+]
 
 [tool.coverage.run]
 source = ["src"]

@@ -226,7 +226,7 @@ class TestServiceContainerConstants:
         """Test RESERVED_SERVICE_NAMES is immutable."""
         # frozenset should be immutable
         with pytest.raises(AttributeError):
-            FlextConstants.RESERVED_SERVICE_NAMES.add("new_name")  # type: ignore[attr-defined]
+            FlextConstants.RESERVED_SERVICE_NAMES.add("new_name")
 
 
 @pytest.mark.unit

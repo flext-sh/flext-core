@@ -9,11 +9,13 @@ This module provides implementation of common enterprise patterns including Comm
 ## Components
 
 ### Commands (`commands.py`)
+
 - `FlextCommand` - Base class for command objects
 - `FlextCommandHandler` - Command processing interface
 - Command validation and execution patterns
 
 ### Handlers (`handlers.py`)
+
 - `FlextHandler` - Base handler with metadata support
 - `FlextMessageHandler` - Generic message processing
 - `FlextEventHandler` - Domain event processing  
@@ -21,21 +23,25 @@ This module provides implementation of common enterprise patterns including Comm
 - `FlextHandlerRegistry` - Central handler management
 
 ### Validation (`validation.py`)
+
 - `FlextValidator` - Data validation interface
 - `FlextBusinessRule` - Business rule specifications
 - `FlextValidationPipeline` - Orchestrated validation
 
 ### Logging (`logging.py`)
+
 - Structured logging patterns
 - Context-aware log handling
 - Performance monitoring integration
 
 ### Type Definitions (`typedefs.py`)
+
 - Type aliases for pattern components
 - NewType definitions for type safety
 - Generic type variables
 
 ### Fields (`fields.py`)
+
 - Custom Pydantic field types
 - Validation helpers
 - Type-safe field definitions

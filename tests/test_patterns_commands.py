@@ -346,7 +346,7 @@ class TestFlextCommandHandler:
         """Test can_handle with non-command object."""
         handler = CreateUserCommandHandler()
 
-        assert handler.can_handle("not_a_command") is False  # type: ignore[arg-type]
+        assert handler.can_handle("not_a_command") is False
 
     def test_handle_command_success(self) -> None:
         """Test successful command handling."""

@@ -262,7 +262,7 @@ class TestFlextIdentifier:
         identifier = FlextIdentifier(value="test-123")
 
         with pytest.raises((ValidationError, AttributeError, TypeError)):
-            identifier.value = "new-value"  # type: ignore[misc]
+            identifier.value = "new-value"
 
     def test_identifier_string_representation(self) -> None:
         """Test string representation methods."""
@@ -313,7 +313,7 @@ class TestFlextPayload:
         payload = FlextPayload(key="value")
 
         with pytest.raises((ValidationError, AttributeError, TypeError)):
-            payload.key = "new_value"  # type: ignore[attr-defined]
+            payload.key = "new_value"
 
     def test_payload_mixed_types(self) -> None:
         """Test payload with various data types."""
@@ -380,7 +380,7 @@ class TestFlextTypedDict:
         data = FlextTypedDict(key="value")
 
         with pytest.raises((ValidationError, AttributeError, TypeError)):
-            data.key = "new_value"  # type: ignore[attr-defined]
+            data.key = "new_value"
 
     def test_typed_dict_empty(self) -> None:
         """Test empty typed dictionary."""

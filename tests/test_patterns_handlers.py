@@ -215,7 +215,7 @@ class TestFlextMessageHandler:
         """Test processing with validation failure."""
         handler = SampleMessageHandler()
 
-        result = handler.process(None)  # type: ignore[arg-type]
+        result = handler.process(None)
         assert result.is_failure is True
         assert result.error is not None
         assert "validation failed" in result.error.lower()
@@ -310,7 +310,7 @@ class TestFlextEventHandler:
         """Test event processing with validation failure."""
         handler = SampleEventHandler()
 
-        result = handler.process_event(None)  # type: ignore[arg-type]
+        result = handler.process_event(None)
         assert result.is_failure is True
         assert result.error is not None
         assert "validation failed" in result.error.lower()
@@ -378,7 +378,7 @@ class TestFlextRequestHandler:
         """Test request processing with validation failure."""
         handler = SampleRequestHandler()
 
-        result = handler.process_request(None)  # type: ignore[arg-type]
+        result = handler.process_request(None)
         assert result.is_failure is True
         assert result.error is not None
         assert "validation failed" in result.error.lower()

@@ -136,7 +136,7 @@ class FlextResult[T](BaseModel):
         if self.success and self.data is not None:
             try:
                 return FlextResult.ok(func(self.data))
-            except (TypeError, AttributeError, ValueError) as e:
+            except (TypeError, AttributeError, ValueError, IndexError) as e:
                 return FlextResult.fail(f"Transformation failed: {e}")
             except Exception as e:  # noqa: BLE001
                 return FlextResult.fail(
@@ -154,7 +154,7 @@ class FlextResult[T](BaseModel):
         if self.success and self.data is not None:
             try:
                 return func(self.data)
-            except (TypeError, AttributeError, ValueError) as e:
+            except (TypeError, AttributeError, ValueError, IndexError) as e:
                 return FlextResult.fail(f"Chained operation failed: {e}")
             except Exception as e:  # noqa: BLE001
                 return FlextResult.fail(f"Unexpected chaining error: {e}")

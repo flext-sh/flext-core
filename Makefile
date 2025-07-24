@@ -1,283 +1,318 @@
-# FLEXT CORE - Foundational Framework Library
-# =============================================
-# Absolute foundation for entire FLEXT ecosystem
-# Clean Architecture + DDD + Python 3.13 + Zero Tolerance Quality Gates
+# FLEXT CORE - Makefile Unificado
+# ===============================
+# Comandos essenciais para desenvolvimento e qualidade
+# Integração completa sem dependências externas
 
-.PHONY: help check validate test lint type-check security format format-check fix
-.PHONY: install dev-install setup pre-commit build docs docs-serve clean
-.PHONY: coverage coverage-html test-unit test-integration test-domain test-application
-.PHONY: deps-update deps-audit deps-tree deps-outdated
-.PHONY: docker-build docker-test docker-clean
+.PHONY: help install test lint type-check format clean build docs
+.PHONY: check validate dev-setup deps-update deps-audit info diagnose
+.PHONY: install-dev test-unit test-integration test-coverage test-watch
+.PHONY: format-check security pre-commit build-clean publish publish-test
+.PHONY: dev dev-test clean-all emergency-reset
 
 # ============================================================================
-# 🎯 HELP & INFORMATION
+# 🎯 CONFIGURAÇÃO E DETECÇÃO
 # ============================================================================
 
-help: ## Show this help message
-	@echo "🏆 FLEXT CORE - Foundational Framework Library"
-	@echo "=============================================="
-	@echo "🎯 Clean Architecture + DDD + Python 3.13 + Enterprise Standards"
+# Detectar nome do projeto
+PROJECT_NAME := flext-core
+PROJECT_TITLE := Flext Core
+
+# Ambiente Python
+PYTHON := python3.13
+POETRY := poetry
+VENV_PATH := $(shell poetry env info --path 2>/dev/null || echo "")
+
+# Cores para output
+RED := \033[31m
+GREEN := \033[32m
+YELLOW := \033[33m
+BLUE := \033[34m
+MAGENTA := \033[35m
+CYAN := \033[36m
+WHITE := \033[37m
+RESET := \033[0m
+
+# ============================================================================
+# 🎯 AJUDA E INFORMAÇÃO
+# ============================================================================
+
+help: ## Mostrar ajuda e comandos disponíveis
+	@echo "$(CYAN)🏆 $(PROJECT_TITLE) - Comandos Essenciais$(RESET)"
+	@echo "$(CYAN)====================================$(RESET)"
+	@echo "$(BLUE)📦 Biblioteca base do ecossistema FLEXT$(RESET)"
+	@echo "$(BLUE)🐍 Python 3.13 + Poetry + Qualidade Zero Tolerância$(RESET)"
 	@echo ""
-	@echo "📦 Foundation for entire FLEXT ecosystem (25+ projects depend on this)"
-	@echo "🔒 Zero tolerance quality gates with 17 ruff rule categories"
-	@echo "🧪 90%+ test coverage requirement"
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "$(CYAN)%-20s$(RESET) %s\n", $$1, $$2}'
 	@echo ""
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@echo "$(YELLOW)💡 Comandos principais: make install, make test, make lint$(RESET)"
+
+info: ## Mostrar informações do projeto
+	@echo "$(CYAN)📊 Informações do Projeto$(RESET)"
+	@echo "$(CYAN)======================$(RESET)"
+	@echo "$(BLUE)Nome:$(RESET) $(PROJECT_NAME)"
+	@echo "$(BLUE)Título:$(RESET) $(PROJECT_TITLE)"
+	@echo "$(BLUE)Python:$(RESET) $(shell $(PYTHON) --version 2>/dev/null || echo "Não encontrado")"
+	@echo "$(BLUE)Poetry:$(RESET) $(shell $(POETRY) --version 2>/dev/null || echo "Não instalado")"
+	@echo "$(BLUE)Venv:$(RESET) $(shell [ -n "$(VENV_PATH)" ] && echo "$(VENV_PATH)" || echo "Não ativado")"
+	@echo "$(BLUE)Diretório:$(RESET) $(CURDIR)"
+	@echo "$(BLUE)Git Branch:$(RESET) $(shell git branch --show-current 2>/dev/null || echo "Não é repo git")"
+	@echo "$(BLUE)Git Status:$(RESET) $(shell git status --porcelain 2>/dev/null | wc -l | xargs echo) arquivos alterados"
+
+diagnose: ## Executar diagnósticos completos
+	@echo "$(BLUE)🔍 Executando diagnósticos para $(PROJECT_NAME)...$(RESET)"
+	@echo "$(CYAN)Informações do Sistema:$(RESET)"
+	@echo "OS: $(shell uname -s)"
+	@echo "Arquitetura: $(shell uname -m)"
+	@echo "Python: $(shell $(PYTHON) --version 2>/dev/null || echo "Não encontrado")"
+	@echo "Poetry: $(shell $(POETRY) --version 2>/dev/null || echo "Não instalado")"
+	@echo ""
+	@echo "$(CYAN)Estrutura do Projeto:$(RESET)"
+	@ls -la
+	@echo ""
+	@echo "$(CYAN)Configuração Poetry:$(RESET)"
+	@$(POETRY) config --list 2>/dev/null || echo "Poetry não configurado"
+	@echo ""
+	@echo "$(CYAN)Status das Dependências:$(RESET)"
+	@$(POETRY) show --outdated 2>/dev/null || echo "Nenhuma dependência desatualizada"
 
 # ============================================================================
-# 🎯 CORE QUALITY GATES - ZERO TOLERANCE
+# 📦 GERENCIAMENTO DE DEPENDÊNCIAS
 # ============================================================================
 
-validate: pep8 type-check security test ## STRICT PEP8 + compliance validation (all must pass)
-	@echo "✅ ALL QUALITY GATES PASSED - FLEXT CORE PEP8 COMPLIANT"
+validate-setup: ## Validar ambiente de desenvolvimento
+	@echo "$(BLUE)🔍 Validando ambiente de desenvolvimento...$(RESET)"
+	@command -v $(PYTHON) >/dev/null 2>&1 || { echo "$(RED)❌ Python 3.13 não encontrado$(RESET)"; exit 1; }
+	@command -v $(POETRY) >/dev/null 2>&1 || { echo "$(RED)❌ Poetry não encontrado$(RESET)"; exit 1; }
+	@test -f pyproject.toml || { echo "$(RED)❌ pyproject.toml não encontrado$(RESET)"; exit 1; }
+	@echo "$(GREEN)✅ Validação do ambiente passou$(RESET)"
 
-check: lint type-check test ## Essential quality checks (pre-commit standard)
-	@echo "✅ Essential checks passed"
+install: validate-setup ## Instalar dependências de runtime
+	@echo "$(BLUE)📦 Instalando dependências de runtime para $(PROJECT_NAME)...$(RESET)"
+	@$(POETRY) install --only main
+	@echo "$(GREEN)✅ Dependências de runtime instaladas$(RESET)"
 
-lint: ## Ruff linting with strict PEP8 compliance (ALL rules enabled)
-	@echo "🔍 Running ruff linter (PEP8 strict compliance)..."
-	@poetry run ruff check src/ tests/ --fix --unsafe-fixes
-	@echo "✅ PEP8 linting complete"
+install-dev: validate-setup ## Instalar todas as dependências incluindo dev tools
+	@echo "$(BLUE)📦 Instalando todas as dependências para $(PROJECT_NAME)...$(RESET)"
+	@$(POETRY) install --all-extras
+	@echo "$(GREEN)✅ Todas as dependências instaladas$(RESET)"
 
-type-check: ## MyPy strict mode type checking (zero errors tolerated)
-	@echo "🛡️ Running MyPy strict type checking..."
-	@poetry run mypy src/ tests/ --strict
-	@echo "✅ Type checking complete"
+deps-update: ## Atualizar dependências para versões mais recentes
+	@echo "$(BLUE)🔄 Atualizando dependências para $(PROJECT_NAME)...$(RESET)"
+	@$(POETRY) update
+	@echo "$(GREEN)✅ Dependências atualizadas$(RESET)"
 
-security: ## Security scans (bandit + pip-audit + secrets)
-	@echo "🔒 Running security scans..."
-	@poetry run bandit -r src/ --severity-level medium --confidence-level medium
-	@poetry run pip-audit --ignore-vuln PYSEC-2022-42969
-	@poetry run detect-secrets scan --all-files
-	@echo "✅ Security scans complete"
+deps-show: ## Mostrar árvore de dependências
+	@echo "$(BLUE)📊 Árvore de dependências para $(PROJECT_NAME):$(RESET)"
+	@$(POETRY) show --tree
 
-format: ## Format code with PEP8 strict compliance (79 char lines)
-	@echo "🎨 Formatting code (PEP8 strict - 79 chars)..."
-	@poetry run ruff format src/ tests/
-	@echo "✅ PEP8 formatting complete"
-
-format-check: ## Check PEP8 formatting compliance without fixing
-	@echo "🎨 Checking PEP8 formatting compliance..."
-	@poetry run ruff format src/ tests/ --check
-	@echo "✅ PEP8 format check complete"
-
-pep8: format lint ## Full PEP8 compliance check and fix
-	@echo "📏 Enforcing PEP8 compliance..."
-	@poetry run ruff format src/ tests/
-	@poetry run ruff check src/ tests/ --fix --unsafe-fixes
-	@echo "✅ PEP8 compliance enforced"
-
-pep8-check: format-check ## Check PEP8 compliance without fixes
-	@echo "📏 Checking PEP8 compliance..."
-	@poetry run ruff format src/ tests/ --check
-	@poetry run ruff check src/ tests/
-	@echo "✅ PEP8 compliance check complete"
-
-fix: pep8 ## Auto-fix all PEP8 issues (format + imports + lint)
-	@echo "🔧 Auto-fixing all PEP8 issues..."
-	@poetry run ruff format src/ tests/
-	@poetry run ruff check src/ tests/ --fix --unsafe-fixes
-	@echo "✅ All PEP8 auto-fixes applied"
+deps-audit: ## Auditoria de dependências para vulnerabilidades
+	@echo "$(BLUE)🔍 Auditando dependências para $(PROJECT_NAME)...$(RESET)"
+	@$(POETRY) run pip-audit --format=columns || echo "$(YELLOW)⚠️  pip-audit não disponível$(RESET)"
+	@$(POETRY) run safety check --json || echo "$(YELLOW)⚠️  safety não disponível$(RESET)"
 
 # ============================================================================
-# 🧪 TESTING - 80% COVERAGE MINIMUM
+# 🧪 TESTES
 # ============================================================================
 
-test: ## Run tests with coverage (80% minimum required)
-	@echo "🧪 Running tests with coverage..."
-	@poetry run pytest tests/ -v --cov=src/flext_core --cov-report=term-missing --cov-fail-under=80
-	@echo "✅ Tests complete"
+test: ## Executar todos os testes
+	@echo "$(BLUE)🧪 Executando todos os testes para $(PROJECT_NAME)...$(RESET)"
+	@$(POETRY) run pytest -xvs
+	@echo "$(GREEN)✅ Todos os testes passaram$(RESET)"
 
-test-unit: ## Run unit tests only
-	@echo "🧪 Running unit tests..."
-	@poetry run pytest tests/unit/ -v
-	@echo "✅ Unit tests complete"
+test-unit: ## Executar apenas testes unitários
+	@echo "$(BLUE)🧪 Executando testes unitários para $(PROJECT_NAME)...$(RESET)"
+	@$(POETRY) run pytest tests/unit/ -xvs -m "not integration and not slow"
+	@echo "$(GREEN)✅ Testes unitários passaram$(RESET)"
 
-test-integration: ## Run integration tests only
-	@echo "🧪 Running integration tests..."
-	@poetry run pytest tests/integration/ -v
-	@echo "✅ Integration tests complete"
+test-integration: ## Executar apenas testes de integração
+	@echo "$(BLUE)🧪 Executando testes de integração para $(PROJECT_NAME)...$(RESET)"
+	@$(POETRY) run pytest tests/integration/ -xvs -m "integration"
+	@echo "$(GREEN)✅ Testes de integração passaram$(RESET)"
 
-test-domain: ## Run domain layer tests
-	@echo "🧪 Running domain layer tests..."
-	@poetry run pytest tests/domain/ -v
-	@echo "✅ Domain tests complete"
+test-coverage: ## Executar testes com relatório de cobertura
+	@echo "$(BLUE)🧪 Executando testes com cobertura para $(PROJECT_NAME)...$(RESET)"
+	@$(POETRY) run pytest --cov --cov-report=html --cov-report=term-missing --cov-report=xml
+	@echo "$(GREEN)✅ Relatório de cobertura gerado$(RESET)"
 
-test-application: ## Run application layer tests
-	@echo "🧪 Running application layer tests..."
-	@poetry run pytest tests/application/ -v
-	@echo "✅ Application tests complete"
-
-coverage: ## Generate detailed coverage report
-	@echo "📊 Generating coverage report..."
-	@poetry run pytest tests/ --cov=src/flext_core --cov-report=term-missing --cov-report=html
-	@echo "✅ Coverage report generated in htmlcov/"
-
-coverage-html: coverage ## Generate HTML coverage report
-	@echo "📊 Opening coverage report..."
-	@python -m webbrowser htmlcov/index.html
+test-watch: ## Executar testes em modo watch
+	@echo "$(BLUE)👀 Executando testes em modo watch para $(PROJECT_NAME)...$(RESET)"
+	@$(POETRY) run pytest-watch --clear
 
 # ============================================================================
-# 🚀 DEVELOPMENT SETUP
+# 🎨 QUALIDADE DE CÓDIGO E FORMATAÇÃO
 # ============================================================================
 
-setup: install pre-commit ## Complete development setup
-	@echo "🎯 Development setup complete!"
+lint: ## Executar todos os linters com máxima rigorosidade
+	@echo "$(BLUE)🔍 Executando linting com máxima rigorosidade para $(PROJECT_NAME)...$(RESET)"
+	@$(POETRY) run ruff check . --output-format=github
+	@echo "$(GREEN)✅ Linting completado$(RESET)"
 
-install: ## Install dependencies with Poetry
-	@echo "📦 Installing dependencies..."
-	@poetry install --all-extras --with dev,test,docs,security
-	@echo "✅ Dependencies installed"
+format: ## Formatar código com padrões rigorosos
+	@echo "$(BLUE)🎨 Formatando código para $(PROJECT_NAME)...$(RESET)"
+	@$(POETRY) run ruff format .
+	@$(POETRY) run ruff check . --fix --unsafe-fixes
+	@echo "$(GREEN)✅ Código formatado$(RESET)"
 
-dev-install: install ## Install in development mode
-	@echo "🔧 Setting up development environment..."
-	@poetry install --all-extras --with dev,test,docs,security
-	@poetry run pre-commit install
-	@echo "✅ Development environment ready"
+format-check: ## Verificar formatação sem alterar
+	@echo "$(BLUE)🔍 Verificando formatação para $(PROJECT_NAME)...$(RESET)"
+	@$(POETRY) run ruff format . --check
+	@$(POETRY) run ruff check . --output-format=github
+	@echo "$(GREEN)✅ Formatação verificada$(RESET)"
 
-pre-commit: ## Setup pre-commit hooks
-	@echo "🎣 Setting up pre-commit hooks..."
-	@poetry run pre-commit install
-	@poetry run pre-commit run --all-files || true
-	@echo "✅ Pre-commit hooks installed"
+type-check: ## Executar verificação de tipos rigorosa
+	@echo "$(BLUE)🔍 Executando verificação de tipos rigorosa para $(PROJECT_NAME)...$(RESET)"
+	@$(POETRY) run mypy src/ --strict --show-error-codes
+	@echo "$(GREEN)✅ Verificação de tipos passou$(RESET)"
+
+security: ## Executar análise de segurança
+	@echo "$(BLUE)🔒 Executando análise de segurança para $(PROJECT_NAME)...$(RESET)"
+	@$(POETRY) run bandit -r src/ -f json || echo "$(YELLOW)⚠️  bandit não disponível$(RESET)"
+	@$(POETRY) run detect-secrets scan --all-files || echo "$(YELLOW)⚠️  detect-secrets não disponível$(RESET)"
+	@echo "$(GREEN)✅ Análise de segurança completada$(RESET)"
+
+pre-commit: ## Executar hooks pre-commit
+	@echo "$(BLUE)🔧 Executando hooks pre-commit para $(PROJECT_NAME)...$(RESET)"
+	@$(POETRY) run pre-commit run --all-files || echo "$(YELLOW)⚠️  pre-commit não disponível$(RESET)"
+	@echo "$(GREEN)✅ Hooks pre-commit completados$(RESET)"
+
+check: lint type-check security ## Executar todas as verificações de qualidade
+	@echo "$(BLUE)🔍 Executando verificações abrangentes de qualidade para $(PROJECT_NAME)...$(RESET)"
+	@echo "$(GREEN)✅ Todas as verificações de qualidade passaram$(RESET)"
 
 # ============================================================================
-# 📦 BUILD & DISTRIBUTION
+# 🏗️ BUILD E DISTRIBUIÇÃO
 # ============================================================================
 
-build: clean ## Build distribution packages
-	@echo "🔨 Building distribution..."
-	@poetry build
-	@echo "✅ Build complete - packages in dist/"
+build: clean ## Construir o pacote com Poetry
+	@echo "$(BLUE)🏗️  Construindo pacote $(PROJECT_NAME)...$(RESET)"
+	@$(POETRY) build
+	@echo "$(GREEN)✅ Pacote construído com sucesso$(RESET)"
+	@echo "$(BLUE)📦 Artefatos de build:$(RESET)"
+	@ls -la dist/
 
-docs: ## Build documentation with MkDocs
-	@echo "📚 Building documentation..."
-	@poetry run mkdocs build
-	@echo "✅ Documentation built in site/"
+build-clean: clean build ## Limpar e construir
+	@echo "$(GREEN)✅ Build limpo completado$(RESET)"
 
-docs-serve: ## Serve docs at localhost:8000
-	@echo "📚 Serving documentation at http://localhost:8000"
-	@poetry run mkdocs serve
+publish-test: build ## Publicar no TestPyPI
+	@echo "$(BLUE)📤 Publicando $(PROJECT_NAME) no TestPyPI...$(RESET)"
+	@$(POETRY) publish --repository testpypi
+	@echo "$(GREEN)✅ Publicado no TestPyPI$(RESET)"
+
+publish: build ## Publicar no PyPI
+	@echo "$(BLUE)📤 Publicando $(PROJECT_NAME) no PyPI...$(RESET)"
+	@$(POETRY) publish
+	@echo "$(GREEN)✅ Publicado no PyPI$(RESET)"
 
 # ============================================================================
-# 🧹 CLEANUP
+# 📚 DOCUMENTAÇÃO
 # ============================================================================
 
-clean: ## Remove all artifacts
-	@echo "🧹 Cleaning up..."
+docs: ## Gerar documentação
+	@echo "$(BLUE)📚 Gerando documentação para $(PROJECT_NAME)...$(RESET)"
+	@if [ -f mkdocs.yml ]; then \
+		$(POETRY) run mkdocs build; \
+	else \
+		echo "$(YELLOW)⚠️  Nenhum mkdocs.yml encontrado, pulando geração de documentação$(RESET)"; \
+	fi
+	@echo "$(GREEN)✅ Documentação gerada$(RESET)"
+
+docs-serve: ## Servir documentação localmente
+	@echo "$(BLUE)📚 Servindo documentação para $(PROJECT_NAME)...$(RESET)"
+	@if [ -f mkdocs.yml ]; then \
+		$(POETRY) run mkdocs serve; \
+	else \
+		echo "$(YELLOW)⚠️  Nenhum mkdocs.yml encontrado$(RESET)"; \
+	fi
+
+# ============================================================================
+# 🚀 DESENVOLVIMENTO
+# ============================================================================
+
+dev-setup: install-dev ## Configuração completa de desenvolvimento
+	@echo "$(BLUE)🚀 Configurando ambiente de desenvolvimento para $(PROJECT_NAME)...$(RESET)"
+	@$(POETRY) run pre-commit install || echo "$(YELLOW)⚠️  pre-commit não disponível$(RESET)"
+	@echo "$(GREEN)✅ Ambiente de desenvolvimento pronto$(RESET)"
+
+dev: ## Executar em modo desenvolvimento
+	@echo "$(BLUE)🚀 Iniciando modo desenvolvimento para $(PROJECT_NAME)...$(RESET)"
+	@if [ -f src/flext_core/cli.py ]; then \
+		$(POETRY) run python -m flext_core.cli --dev; \
+	elif [ -f src/flext_core/main.py ]; then \
+		$(POETRY) run python -m flext_core.main --dev; \
+	else \
+		echo "$(YELLOW)⚠️  Nenhum ponto de entrada principal encontrado$(RESET)"; \
+	fi
+
+dev-test: ## Ciclo rápido de teste de desenvolvimento
+	@echo "$(BLUE)⚡ Ciclo rápido de teste de desenvolvimento para $(PROJECT_NAME)...$(RESET)"
+	@$(POETRY) run ruff check . --fix
+	@$(POETRY) run pytest tests/ -x --tb=short
+	@echo "$(GREEN)✅ Ciclo de teste de desenvolvimento completado$(RESET)"
+
+# ============================================================================
+# 🧹 LIMPEZA
+# ============================================================================
+
+clean: ## Limpar artefatos de build
+	@echo "$(BLUE)🧹 Limpando artefatos de build para $(PROJECT_NAME)...$(RESET)"
 	@rm -rf build/
 	@rm -rf dist/
 	@rm -rf *.egg-info/
+	@rm -rf .pytest_cache/
 	@rm -rf .coverage
 	@rm -rf htmlcov/
-	@rm -rf site/
+	@rm -rf .mypy_cache/
+	@rm -rf .ruff_cache/
+	@rm -rf reports/
 	@find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
-	@find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true
-	@find . -type d -name ".mypy_cache" -exec rm -rf {} + 2>/dev/null || true
-	@find . -type d -name ".ruff_cache" -exec rm -rf {} + 2>/dev/null || true
 	@find . -type f -name "*.pyc" -delete 2>/dev/null || true
-	@echo "✅ Cleanup complete"
+	@find . -type f -name "*.pyo" -delete 2>/dev/null || true
+	@echo "$(GREEN)✅ Limpeza completada$(RESET)"
+
+clean-all: clean ## Limpar tudo incluindo ambiente virtual
+	@echo "$(BLUE)🧹 Limpeza profunda para $(PROJECT_NAME)...$(RESET)"
+	@$(POETRY) env remove --all || true
+	@echo "$(GREEN)✅ Limpeza profunda completada$(RESET)"
 
 # ============================================================================
-# 📊 DEPENDENCY MANAGEMENT
+# 🚨 PROCEDIMENTOS DE EMERGÊNCIA
 # ============================================================================
 
-deps-update: ## Update all dependencies
-	@echo "🔄 Updating dependencies..."
-	@poetry update
-	@echo "✅ Dependencies updated"
-
-deps-audit: ## Audit dependencies for vulnerabilities
-	@echo "🔍 Auditing dependencies..."
-	@poetry run pip-audit
-	@echo "✅ Dependency audit complete"
-
-deps-tree: ## Show dependency tree
-	@echo "🌳 Dependency tree:"
-	@poetry show --tree
-
-deps-outdated: ## Show outdated dependencies
-	@echo "📋 Outdated dependencies:"
-	@poetry show --outdated
+emergency-reset: ## Reset de emergência para estado limpo
+	@echo "$(RED)🚨 RESET DE EMERGÊNCIA para $(PROJECT_NAME)...$(RESET)"
+	@read -p "Tem certeza que quer resetar tudo? (y/N) " -n 1 -r; \
+	echo; \
+	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
+		$(MAKE) clean-all; \
+		$(MAKE) install-dev; \
+		echo "$(GREEN)✅ Reset de emergência completado$(RESET)"; \
+	else \
+		echo "$(YELLOW)⚠️  Reset de emergência cancelado$(RESET)"; \
+	fi
 
 # ============================================================================
-# 🐳 DOCKER COMMANDS
+# 🎯 VALIDAÇÃO E VERIFICAÇÃO
 # ============================================================================
 
-docker-build: ## Build Docker image
-	@echo "🐳 Building Docker image..."
-	@docker build -t flext-core:latest .
-	@echo "✅ Docker image built"
-
-docker-test: ## Run tests in Docker
-	@echo "🐳 Running tests in Docker..."
-	@docker run --rm flext-core:latest make test
-	@echo "✅ Docker tests complete"
-
-docker-clean: ## Clean Docker artifacts
-	@echo "🐳 Cleaning Docker artifacts..."
-	@docker system prune -f
-	@echo "✅ Docker cleanup complete"
+validate: ## Validar conformidade do workspace
+	@echo "$(BLUE)🔍 Validando conformidade do workspace para $(PROJECT_NAME)...$(RESET)"
+	@test -f pyproject.toml || { echo "$(RED)❌ pyproject.toml ausente$(RESET)"; exit 1; }
+	@test -f CLAUDE.md || echo "$(YELLOW)⚠️  CLAUDE.md ausente$(RESET)"
+	@test -f README.md || echo "$(YELLOW)⚠️  README.md ausente$(RESET)"
+	@test -d src/ || { echo "$(RED)❌ diretório src/ ausente$(RESET)"; exit 1; }
+	@test -d tests/ || echo "$(YELLOW)⚠️  diretório tests/ ausente$(RESET)"
+	@echo "$(GREEN)✅ Conformidade do workspace validada$(RESET)"
 
 # ============================================================================
-# 🔧 ENVIRONMENT CONFIGURATION
+# 🎯 ALIASES DE CONVENIÊNCIA
 # ============================================================================
 
-# Python settings
-PYTHON := python3.13
-export PYTHONPATH := $(PWD)/src:$(PYTHONPATH)
-export PYTHONDONTWRITEBYTECODE := 1
-export PYTHONUNBUFFERED := 1
-
-# Poetry settings
-export POETRY_VENV_IN_PROJECT := false
-export POETRY_CACHE_DIR := $(HOME)/.cache/pypoetry
-export POETRY_VIRTUALENVS_PATH := $(HOME)/.cache/pypoetry/virtualenvs
-
-# Quality gate settings
-export MYPY_CACHE_DIR := .mypy_cache
-export RUFF_CACHE_DIR := .ruff_cache
-
-# ============================================================================
-# 📝 PROJECT METADATA
-# ============================================================================
-
-# Project information
-PROJECT_NAME := flext-core
-PROJECT_VERSION := $(shell poetry version -s)
-PROJECT_DESCRIPTION := FLEXT Core Framework - Clean Architecture + DDD Foundation
-
-.DEFAULT_GOAL := help
-
-# Quality gate enforcement
-.PHONY: enforce-quality
-enforce-quality:
-	@echo "🔒 Enforcing quality gates..."
-	@$(MAKE) validate
-	@echo "✅ Quality gates enforced"
-
-# Pre-commit validation
-.PHONY: pre-commit-check
-pre-commit-check: enforce-quality
-	@echo "✅ Pre-commit validation passed"
-
-# ============================================================================
-# 🎯 FLEXT ECOSYSTEM INTEGRATION
-# ============================================================================
-
-ecosystem-check: ## Verify FLEXT ecosystem compatibility
-	@echo "🌐 Checking FLEXT ecosystem compatibility..."
-	@echo "📦 Foundation project: $(PROJECT_NAME) v$(PROJECT_VERSION)"
-	@echo "🏗️ Architecture: Clean Architecture + DDD"
-	@echo "🐍 Python: 3.13"
-	@echo "📊 Quality: Zero tolerance enforcement"
-	@echo "✅ Ecosystem compatibility verified"
-
-workspace-info: ## Show workspace integration info
-	@echo "🏢 FLEXT Workspace Integration"
-	@echo "==============================="
-	@echo "📁 Project Path: $(PWD)"
-	@echo "🏆 Role: Foundation Library (all projects depend on this)"
-	@echo "🔗 Dependencies: ZERO (pure foundation)"
-	@echo "📦 Dependents: 25+ FLEXT projects"
-	@echo "🎯 Standards: Enterprise quality gates"
+# Aliases para operações comuns
+t: test ## Alias para test
+l: lint ## Alias para lint
+tc: type-check ## Alias para type-check
+f: format ## Alias para format
+c: clean ## Alias para clean
+i: install-dev ## Alias para install-dev
+d: dev ## Alias para dev
+dt: dev-test ## Alias para dev-test

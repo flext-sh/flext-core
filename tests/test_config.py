@@ -191,7 +191,7 @@ class TestFlextCoreSettings:
     ) -> None:
         """Test that settings are immutable after creation."""
         with pytest.raises((ValidationError, AttributeError, TypeError)):
-            sample_settings.environment = FlextEnvironment.PRODUCTION  # type: ignore[misc]
+            sample_settings.environment = FlextEnvironment.PRODUCTION
 
 
 @pytest.mark.unit
