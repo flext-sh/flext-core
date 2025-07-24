@@ -223,6 +223,26 @@ disable_error_code = [
     "assignment",    # Tests intentionally assign invalid values
 ]
 
+[[tool.mypy.overrides]]
+# Ignore missing imports for flext modules (installed separately)
+module = [
+    "flext_observability.*",
+    "flext_auth.*",
+    "flext_plugin.*",
+    "flext_ldap.*",
+    "flext_ldif.*",
+    "flext_grpc.*",
+    "flext_web.*",
+    "flext_oracle_wms.*",
+    "flext_oracle_oic_ext.*",
+    "flext_db_oracle.*",
+    "flext_quality.*",
+    "flext_tap_*",
+    "flext_target_*",
+    "flext_dbt_*",
+]
+ignore_missing_imports = true
+
 [tool.coverage.run]
 source = ["src"]
 branch = true

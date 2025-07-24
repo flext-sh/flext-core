@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import operator
+
 import pytest
 from pydantic import ValidationError
 
@@ -234,7 +236,7 @@ class TestFlextResult:
         assert "Transformation failed:" in mapped.error
 
         # Test IndexError
-        mapped = result.map(lambda x: x[100])  # IndexError
+        mapped = result.map(operator.itemgetter(100))  # IndexError
         assert mapped.is_failure
         assert mapped.error is not None
         assert "Transformation failed:" in mapped.error
