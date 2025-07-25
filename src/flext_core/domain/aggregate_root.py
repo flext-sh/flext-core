@@ -62,17 +62,18 @@ class FlextAggregateRoot(FlextEntity):
         ...         self.total_amount += item.price
         ...
         ...         # Publish domain event for external systems
-        ...         self.add_domain_event(OrderItemAdded(
-        ...             order_id=self.id,
-        ...             item=item,
-        ...             new_total=self.total_amount
-        ...         ))
+        ...         self.add_domain_event(
+        ...             OrderItemAdded(
+        ...                 order_id=self.id,
+        ...                 item=item,
+        ...                 new_total=self.total_amount,
+        ...             )
+        ...         )
         ...
         ...     def validate_domain_rules(self) -> None:
         ...         if not self.items:
-        ...             raise ValueError(
-        ...                 "Order must contain at least one item"
-        ...             )
+        ...             msg = "Order must contain at least one item"
+        ...             raise ValueError(msg)
         ...         if self.total_amount <= 0:
         ...             raise ValueError("Order total must be positive")
 
@@ -80,11 +81,7 @@ class FlextAggregateRoot(FlextEntity):
         >>> order = (
             Order(customer_id="cust-123", items=[], status=OrderStatus.DRAFT)
         )
-        >>> item = OrderItem(
-        ...     product_id="prod-456",
-        ...     quantity=2,
-        ...     price=Decimal("19.99")
-        ... )
+        >>> item = OrderItem(product_id="prod-456", quantity=2, price=Decimal("19.99"))
         >>> order.add_item(item)
         >>>
         >>> # Check for unpublished events
@@ -131,11 +128,13 @@ class FlextAggregateRoot(FlextEntity):
         Example:
             >>> order = Order(customer_id="cust-123", items=[])
             >>> order.add_domain_event(OrderCreated(order_id=order.id))
-            >>> order.add_domain_event(OrderStatusChanged(
-            ...     order_id=order.id,
-            ...     old_status=OrderStatus.DRAFT,
-            ...     new_status=OrderStatus.PENDING
-            ... ))
+            >>> order.add_domain_event(
+            ...     OrderStatusChanged(
+            ...         order_id=order.id,
+            ...         old_status=OrderStatus.DRAFT,
+            ...         new_status=OrderStatus.PENDING,
+            ...     )
+            ... )
 
         """
         self.domain_events.append(event)

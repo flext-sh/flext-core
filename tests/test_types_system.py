@@ -93,10 +93,7 @@ class TestValidationFunctions:
         assert flext_validate_config_key("database.host") == "database.host"
         assert flext_validate_config_key("api.timeout") == "api.timeout"
         assert flext_validate_config_key("log-level") == "log-level"
-        assert (
-            flext_validate_config_key("app.db.connection")
-            == "app.db.connection"
-        )
+        assert flext_validate_config_key("app.db.connection") == "app.db.connection"
 
     def test_flext_validate_config_key_invalid(self) -> None:
         """Test config key validation with invalid inputs."""
@@ -115,16 +112,9 @@ class TestValidationFunctions:
     def test_flext_validate_event_type_valid(self) -> None:
         """Test event type validation with valid inputs."""
         assert flext_validate_event_type("user.created") == "user.created"
-        assert (
-            flext_validate_event_type("order.completed") == "order.completed"
-        )
-        assert (
-            flext_validate_event_type("app.domain.event") == "app.domain.event"
-        )
-        assert (
-            flext_validate_event_type("system-v2.started")
-            == "system-v2.started"
-        )
+        assert flext_validate_event_type("order.completed") == "order.completed"
+        assert flext_validate_event_type("app.domain.event") == "app.domain.event"
+        assert flext_validate_event_type("system-v2.started") == "system-v2.started"
 
     def test_flext_validate_event_type_invalid(self) -> None:
         """Test event type validation with invalid inputs."""

@@ -174,6 +174,7 @@ class TestFlextHandler:
 
         assert result.is_failure is True
         assert result.error is not None
+        assert result.error
         assert "message cannot be none" in result.error.lower()
 
     def test_validate_message_valid(self) -> None:
@@ -218,6 +219,7 @@ class TestFlextMessageHandler:
         result = handler.process(None)
         assert result.is_failure is True
         assert result.error is not None
+        assert result.error
         assert "validation failed" in result.error.lower()
 
     def test_process_message_cannot_handle(self) -> None:
@@ -228,6 +230,7 @@ class TestFlextMessageHandler:
         result = handler.process(message)
         assert result.is_failure is True
         assert result.error is not None
+        assert result.error
         assert "cannot process" in result.error.lower()
 
     def test_process_message_handling_exception(self) -> None:
@@ -250,6 +253,7 @@ class TestFlextMessageHandler:
         result = handler.process(message)
         assert result.is_failure is True
         assert result.error is not None
+        assert result.error
         assert "processing failed" in result.error.lower()
 
 
@@ -313,6 +317,7 @@ class TestFlextEventHandler:
         result = handler.process_event(None)
         assert result.is_failure is True
         assert result.error is not None
+        assert result.error
         assert "validation failed" in result.error.lower()
 
     def test_process_event_cannot_handle(self) -> None:
@@ -323,6 +328,7 @@ class TestFlextEventHandler:
         result = handler.process_event(event)
         assert result.is_failure is True
         assert result.error is not None
+        assert result.error
         assert "cannot process" in result.error.lower()
 
 
@@ -381,6 +387,7 @@ class TestFlextRequestHandler:
         result = handler.process_request(None)
         assert result.is_failure is True
         assert result.error is not None
+        assert result.error
         assert "validation failed" in result.error.lower()
 
     def test_process_request_cannot_handle(self) -> None:
@@ -391,6 +398,7 @@ class TestFlextRequestHandler:
         result = handler.process_request(request)
         assert result.is_failure is True
         assert result.error is not None
+        assert result.error
         assert "cannot process" in result.error.lower()
 
 

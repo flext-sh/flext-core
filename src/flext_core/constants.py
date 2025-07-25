@@ -187,11 +187,9 @@ class FlextConstants:
             True if valid, False otherwise
 
         """
-        if not (
-            cls.MIN_SERVICE_NAME_LENGTH
-            <= len(name)
-            <= cls.MAX_SERVICE_NAME_LENGTH
-        ):
+        min_len = cls.MIN_SERVICE_NAME_LENGTH
+        max_len = cls.MAX_SERVICE_NAME_LENGTH
+        if not (min_len <= len(name) <= max_len):
             return False
         if name in cls.RESERVED_SERVICE_NAMES:
             return False
@@ -249,9 +247,7 @@ class FlextConstants:
             TypeError: Always raised to prevent instantiation
 
         """
-        msg = (
-            "FlextConstants should not be instantiated - use class attributes"
-        )
+        msg = "FlextConstants should not be instantiated - use class attrs"
         raise TypeError(msg)
 
 

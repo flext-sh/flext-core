@@ -14,6 +14,7 @@ from flext_core.container import FlextContainer
 from flext_core.container import FlextServiceFactory
 from flext_core.container import configure_flext_container
 from flext_core.container import get_flext_container
+from flext_core.exceptions import FlextError
 
 if TYPE_CHECKING:
     from flext_core.result import FlextResult
@@ -73,7 +74,7 @@ def failing_factory() -> FlextServiceFactory[SampleService]:
 
     def create_failing_service() -> SampleService:
         msg = "Intentional test failure"
-        raise RuntimeError(msg)
+        raise FlextError(msg)
 
     return create_failing_service
 
@@ -130,8 +131,8 @@ class TestFlextContainerBasicOperations:
     @pytest.mark.parametrize(
         ("invalid_name", "expected_error"),
         [
-            ("", "cannot be empty"),
-            ("   ", "cannot be empty"),
+            ("", "Cannot be empty or whitespace-only"),
+            ("   ", "Cannot be empty or whitespace-only"),
             (None, "must be a string"),
             (123, "must be a string"),
             ([], "must be a string"),
@@ -176,6 +177,7 @@ class TestFlextContainerBasicOperations:
 
         assert result.is_failure
         assert result.error is not None
+        assert result.error
         assert "not registered" in result.error
 
     @pytest.mark.parametrize(
@@ -326,6 +328,7 @@ class TestFlextContainerSingletonPattern:
 
         assert result.is_failure
         assert result.error is not None
+        assert result.error
         assert "must be callable" in result.error
 
     @pytest.mark.parametrize("factory_count", [1, 3, 5, 10])
@@ -430,6 +433,7 @@ class TestFlextContainerServiceManagement:
 
         assert result.is_failure
         assert result.error is not None
+        assert result.error
         assert "not registered" in result.error
 
     def test_singleton_removal_clears_cache(

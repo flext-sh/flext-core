@@ -29,17 +29,13 @@ class FlextPayload(BaseModel):
     Examples:
         Basic usage:
         >>> payload = FlextPayload(
-        ...     user_id="123",
-        ...     action="login",
-        ...     timestamp="2025-01-01T00:00:00Z"
+        ...     user_id="123", action="login", timestamp="2025-01-01T00:00:00Z"
         ... )
         >>> assert payload.user_id == "123"
 
         With nested data:
         >>> data = {"name": "Alice", "age": 30}
-        >>> payload = FlextPayload(
-        ...     user_data=data, event_type="user.updated"
-        ... )
+        >>> payload = FlextPayload(user_data=data, event_type="user.updated")
 
         Validation:
         >>> payload = FlextPayload()  # Empty payload is valid

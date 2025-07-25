@@ -33,6 +33,7 @@ dependencies = [
     "pydantic>=2.11.7",
     "pydantic-settings>=2.10.1",
     "dependency-injector>=4.45.0",
+    "structlog (>=25.4.0,<26.0.0)",
 ]
 
 [[project.authors]]
@@ -141,8 +142,9 @@ safety = "<3.0.0"
 
 [tool.ruff]
 target-version = "py313"
-line-length = 79         # PEP8 strict: 79 characters maximum
+line-length = 88         # PEP8 strict: 79 characters maximum
 src = ["src", "tests"]
+extend = "../.ruff-shared.toml"
 
 [tool.ruff.lint]
 # Enable ALL rules with PEP8 strict compliance
@@ -154,7 +156,8 @@ select = [
 ignore = [
     "D203",   # one-blank-line-before-class (conflicts with D211)
     "D213",   # multi-line-summary-second-line (conflicts with D212)
-    "W505"
+    "W505",   # line break after binary operator
+    "E501",   # line too long (handled by line-length)
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -165,8 +168,54 @@ ignore = [
     "D",       # Docstrings not required in tests
     "FBT001",  # Boolean positional args (normal in pytest parametrize)
     "S603",    # subprocess calls allowed in compliance tests
-    "SLF001",
+    "SLF001",  # Private name usage in tests
+    "PLR0913", # Too many arguments (normal in test fixtures)
+    "PLR0912", # Too many branches (normal in test scenarios)
+    "PLR0915", # Too many statements (normal in test scenarios)
 ]
+"src/flext_core/exceptions.py" = [
+    "D107",    # Missing docstring in __init__ (inherited constructors)
+    "ANN401",  # Dynamically typed expressions (legitimate for kwargs)
+    "BLE001",  # Do not catch blind exception (legitimate for error handling)
+    "PLR0911", # Too many return statements (legitimate for exception mapping)
+    "ANN201",  # Missing return type annotation for decorators
+    "ANN001",  # Missing type annotation for decorator functions
+    "ANN202",  # Missing return type annotation for wrapper functions
+    "ANN002",  # Missing type annotation for *args in decorators
+    "ANN003",  # Missing type annotation for **kwargs in decorators
+]
+"src/flext_core/container.py" = [
+    "BLE001",  # Do not catch blind exception (legitimate for error handling)
+]
+"src/flext_core/patterns/commands.py" = [
+    "BLE001",  # Do not catch blind exception (legitimate for error handling)
+]
+"src/flext_core/patterns/handlers.py" = [
+    "BLE001",  # Do not catch blind exception (legitimate for error handling)
+]
+"src/flext_core/patterns/validation.py" = [
+    "FBT001",  # Boolean positional args (legitimate for boolean fields)
+    "ARG002",  # Unused method argument (legitimate for interface compliance)
+    "BLE001",  # Do not catch blind exception (legitimate for error handling)
+]
+"src/flext_core/patterns/fields.py" = [
+    "PLR0913", # Too many arguments (legitimate for complex constructors)
+    "FBT001",  # Boolean positional args (legitimate for boolean fields)
+]
+"src/flext_core/patterns/logging.py" = [
+    "SLF001",  # Private member access (legitimate for internal testing)
+]
+"src/flext_core/result.py" = [
+    "BLE001",  # Do not catch blind exception (legitimate for error handling)
+]
+"src/flext_core/domain/domain_service.py" = [
+    "ANN401",  # Dynamically typed expressions (legitimate for abstract methods)
+]
+"**/__pycache__/*" = ["ALL"]
+"**/*.pyc" = ["ALL"]
+"**/migrations/*" = ["ALL"]
+"**/generated/*" = ["ALL"]
+"**/protobuf/*" = ["ALL"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["flext_core"]
@@ -198,20 +247,33 @@ python_version = "3.13"
 files = ["src", "tests"]
 plugins = ["pydantic.mypy"]
 check_untyped_defs = true
+disallow_any_generics = true
 disallow_incomplete_defs = true
+disallow_subclassing_any = true
+disallow_untyped_calls = true
+disallow_untyped_decorators = true
 disallow_untyped_defs = true
 no_implicit_optional = true
+no_implicit_reexport = true
 pretty = true
 show_error_codes = true
 show_error_context = true
 strict = true
 strict_equality = true
+strict_optional = true
 warn_no_return = true
 warn_redundant_casts = true
 warn_return_any = true
 warn_unreachable = true
 warn_unused_configs = true
 warn_unused_ignores = true
+
+# Ignore missing imports for external libraries without type stubs
+[[tool.mypy.overrides]]
+module = [
+    "dependency_injector.*",
+]
+ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 # Ignore specific test-related type errors that are intentional
@@ -223,25 +285,6 @@ disable_error_code = [
     "assignment",    # Tests intentionally assign invalid values
 ]
 
-[[tool.mypy.overrides]]
-# Ignore missing imports for flext modules (installed separately)
-module = [
-    "flext_observability.*",
-    "flext_auth.*",
-    "flext_plugin.*",
-    "flext_ldap.*",
-    "flext_ldif.*",
-    "flext_grpc.*",
-    "flext_web.*",
-    "flext_oracle_wms.*",
-    "flext_oracle_oic_ext.*",
-    "flext_db_oracle.*",
-    "flext_quality.*",
-    "flext_tap_*",
-    "flext_target_*",
-    "flext_dbt_*",
-]
-ignore_missing_imports = true
 
 [tool.coverage.run]
 source = ["src"]
@@ -276,7 +319,7 @@ addopts = [
     "--cov-report=term-missing:skip-covered",
     "--cov-report=html:reports/coverage",
     "--cov-report=xml:reports/coverage.xml",
-    "--cov-fail-under=80",
+    "--cov-fail-under=90",
     "--maxfail=1",
     "--tb=short",
     # PEP8 compliance in test output

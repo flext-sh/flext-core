@@ -200,8 +200,7 @@ class TestFlextValueObjectStringRepresentation:
             amount=Decimal("10.50"),
             currency="USD",
             description=(
-                "A long description that should be shown in the string "
-                "representation"
+                "A long description that should be shown in the string representation"
             ),
         )
 
@@ -278,7 +277,7 @@ class TestFlextValueObjectPydanticIntegration:
     def test_pydantic_validation_required_fields(self) -> None:
         """Test Pydantic validation for required fields."""
         with pytest.raises(ValidationError):
-            ConcreteValueObject()  # type: ignore[call-arg]  # Missing required 'amount' field
+            ConcreteValueObject()  # Missing required 'amount' field
 
     def test_pydantic_validation_field_types(self) -> None:
         """Test Pydantic validation for field types."""
@@ -333,7 +332,7 @@ class TestFlextValueObjectPydanticIntegration:
             ConcreteValueObject(
                 amount=Decimal("10.50"),
                 currency="USD",
-                extra_field="not allowed",  # type: ignore[call-arg]
+                extra_field="not allowed",
             )
 
 

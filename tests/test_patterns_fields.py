@@ -84,9 +84,7 @@ class TestFlextIntegerField:
 
         result = field.validate_value("not an integer")
         assert not result.is_valid
-        assert (
-            "Value must be an integer" in result.field_errors["test_field"][0]
-        )
+        assert "Value must be an integer" in result.field_errors["test_field"][0]
 
     def test_integer_field_serialize_value(self) -> None:
         """Test integer field serialization."""
@@ -693,7 +691,7 @@ class TestFlextBooleanField:
             field_name="test_field",
         )
 
-        result = field.validate_value(True)  # noqa: FBT003
+        result = field.validate_value(value=True)
         assert result.is_valid
 
     def test_boolean_field_validate_value_with_validator(self) -> None:
@@ -705,7 +703,7 @@ class TestFlextBooleanField:
             validator=validator,
         )
 
-        result = field.validate_value(True)  # noqa: FBT003
+        result = field.validate_value(value=True)
         assert isinstance(result, FlextValidationResult)
 
     def test_boolean_field_validate_non_boolean_type(self) -> None:
@@ -727,7 +725,7 @@ class TestFlextBooleanField:
             field_name="test_field",
         )
 
-        result = field.serialize_value(True)  # noqa: FBT003
+        result = field.serialize_value(value=True)
         assert result is True
 
     def test_boolean_field_deserialize_existing_boolean(self) -> None:
@@ -737,7 +735,7 @@ class TestFlextBooleanField:
             field_name="test_field",
         )
 
-        result = field.deserialize_value(True)  # noqa: FBT003
+        result = field.deserialize_value(value=True)
         assert result is True
 
     def test_boolean_field_deserialize_string_values(self) -> None:

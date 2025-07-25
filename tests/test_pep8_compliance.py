@@ -161,10 +161,7 @@ class TestPEP8Compliance:
         # Allow some docstring violations during migration
         # but fail if there are syntax errors or major issues
         if result.returncode != 0 and "syntax error" in result.stderr.lower():
-            msg = (
-                f"Docstring syntax errors detected:\n{result.stdout}\n"
-                f"{result.stderr}"
-            )
+            msg = f"Docstring syntax errors detected:\n{result.stdout}\n{result.stderr}"
             raise AssertionError(msg)
 
     def test_complexity_compliance(self) -> None:

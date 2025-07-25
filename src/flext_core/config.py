@@ -161,9 +161,10 @@ class _SettingsContainer:
             The configured global settings instance.
 
         """
-        self._settings = (
-            settings if settings is not None else FlextCoreSettings()
-        )
+        if settings is not None:
+            self._settings = settings
+        else:
+            self._settings = FlextCoreSettings()
         return self._settings
 
 

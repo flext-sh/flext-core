@@ -1,318 +1,356 @@
-# FLEXT CORE - Makefile Unificado
-# ===============================
-# Comandos essenciais para desenvolvimento e qualidade
-# Integração completa sem dependências externas
+# =============================================================================
+# FLEXT-CORE - PROJECT MAKEFILE
+# =============================================================================
+# Enterprise Python 3.13+ foundational library
+# Clean Architecture + Domain-Driven Design + Zero Tolerance Quality
+# =============================================================================
 
-.PHONY: help install test lint type-check format clean build docs
-.PHONY: check validate dev-setup deps-update deps-audit info diagnose
-.PHONY: install-dev test-unit test-integration test-coverage test-watch
-.PHONY: format-check security pre-commit build-clean publish publish-test
-.PHONY: dev dev-test clean-all emergency-reset
-
-# ============================================================================
-# 🎯 CONFIGURAÇÃO E DETECÇÃO
-# ============================================================================
-
-# Detectar nome do projeto
+# Project Configuration
 PROJECT_NAME := flext-core
-PROJECT_TITLE := Flext Core
-
-# Ambiente Python
-PYTHON := python3.13
+PROJECT_TYPE := core-library
+PYTHON_VERSION := 3.13
 POETRY := poetry
-VENV_PATH := $(shell poetry env info --path 2>/dev/null || echo "")
+SRC_DIR := src
+TESTS_DIR := tests
+DOCS_DIR := docs
 
-# Cores para output
-RED := \033[31m
-GREEN := \033[32m
-YELLOW := \033[33m
-BLUE := \033[34m
-MAGENTA := \033[35m
-CYAN := \033[36m
-WHITE := \033[37m
-RESET := \033[0m
+# Quality Gates Configuration
+MIN_COVERAGE := 95
+MYPY_STRICT := true
+RUFF_CONFIG := pyproject.toml
+PEP8_LINE_LENGTH := 79
 
-# ============================================================================
-# 🎯 AJUDA E INFORMAÇÃO
-# ============================================================================
+# Export environment variables
+export PYTHON_VERSION
+export MIN_COVERAGE
+export MYPY_STRICT
 
-help: ## Mostrar ajuda e comandos disponíveis
-	@echo "$(CYAN)🏆 $(PROJECT_TITLE) - Comandos Essenciais$(RESET)"
-	@echo "$(CYAN)====================================$(RESET)"
-	@echo "$(BLUE)📦 Biblioteca base do ecossistema FLEXT$(RESET)"
-	@echo "$(BLUE)🐍 Python 3.13 + Poetry + Qualidade Zero Tolerância$(RESET)"
+# =============================================================================
+# HELP & INFORMATION
+# =============================================================================
+
+.PHONY: help
+help: ## Show available commands
+	@echo "$(PROJECT_NAME) - Foundation Library"
+	@echo "===================================="
 	@echo ""
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "$(CYAN)%-20s$(RESET) %s\n", $$1, $$2}'
+	@echo "📋 AVAILABLE COMMANDS:"
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  %-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 	@echo ""
-	@echo "$(YELLOW)💡 Comandos principais: make install, make test, make lint$(RESET)"
+	@echo "🔧 PROJECT INFO:"
+	@echo "  Type: $(PROJECT_TYPE)"
+	@echo "  Python: $(PYTHON_VERSION)"
+	@echo "  Coverage: $(MIN_COVERAGE)%"
+	@echo "  Line Length: $(PEP8_LINE_LENGTH)"
 
-info: ## Mostrar informações do projeto
-	@echo "$(CYAN)📊 Informações do Projeto$(RESET)"
-	@echo "$(CYAN)======================$(RESET)"
-	@echo "$(BLUE)Nome:$(RESET) $(PROJECT_NAME)"
-	@echo "$(BLUE)Título:$(RESET) $(PROJECT_TITLE)"
-	@echo "$(BLUE)Python:$(RESET) $(shell $(PYTHON) --version 2>/dev/null || echo "Não encontrado")"
-	@echo "$(BLUE)Poetry:$(RESET) $(shell $(POETRY) --version 2>/dev/null || echo "Não instalado")"
-	@echo "$(BLUE)Venv:$(RESET) $(shell [ -n "$(VENV_PATH)" ] && echo "$(VENV_PATH)" || echo "Não ativado")"
-	@echo "$(BLUE)Diretório:$(RESET) $(CURDIR)"
-	@echo "$(BLUE)Git Branch:$(RESET) $(shell git branch --show-current 2>/dev/null || echo "Não é repo git")"
-	@echo "$(BLUE)Git Status:$(RESET) $(shell git status --porcelain 2>/dev/null | wc -l | xargs echo) arquivos alterados"
+.PHONY: info
+info: ## Show project information
+	@echo "Project Information"
+	@echo "=================="
+	@echo "Name: $(PROJECT_NAME)"
+	@echo "Type: $(PROJECT_TYPE)"
+	@echo "Python Version: $(PYTHON_VERSION)"
+	@echo "Source Directory: $(SRC_DIR)"
+	@echo "Tests Directory: $(TESTS_DIR)"
+	@echo "Documentation: $(DOCS_DIR)"
+	@echo "Quality Standards: Zero Tolerance"
+	@echo "Architecture: Clean Architecture + DDD"
 
-diagnose: ## Executar diagnósticos completos
-	@echo "$(BLUE)🔍 Executando diagnósticos para $(PROJECT_NAME)...$(RESET)"
-	@echo "$(CYAN)Informações do Sistema:$(RESET)"
-	@echo "OS: $(shell uname -s)"
-	@echo "Arquitetura: $(shell uname -m)"
-	@echo "Python: $(shell $(PYTHON) --version 2>/dev/null || echo "Não encontrado")"
-	@echo "Poetry: $(shell $(POETRY) --version 2>/dev/null || echo "Não instalado")"
-	@echo ""
-	@echo "$(CYAN)Estrutura do Projeto:$(RESET)"
-	@ls -la
-	@echo ""
-	@echo "$(CYAN)Configuração Poetry:$(RESET)"
-	@$(POETRY) config --list 2>/dev/null || echo "Poetry não configurado"
-	@echo ""
-	@echo "$(CYAN)Status das Dependências:$(RESET)"
-	@$(POETRY) show --outdated 2>/dev/null || echo "Nenhuma dependência desatualizada"
+# =============================================================================
+# INSTALLATION & SETUP
+# =============================================================================
 
-# ============================================================================
-# 📦 GERENCIAMENTO DE DEPENDÊNCIAS
-# ============================================================================
+.PHONY: install
+install: ## Install project dependencies
+	@echo "📦 Installing $(PROJECT_NAME) dependencies..."
+	@$(POETRY) install
 
-validate-setup: ## Validar ambiente de desenvolvimento
-	@echo "$(BLUE)🔍 Validando ambiente de desenvolvimento...$(RESET)"
-	@command -v $(PYTHON) >/dev/null 2>&1 || { echo "$(RED)❌ Python 3.13 não encontrado$(RESET)"; exit 1; }
-	@command -v $(POETRY) >/dev/null 2>&1 || { echo "$(RED)❌ Poetry não encontrado$(RESET)"; exit 1; }
-	@test -f pyproject.toml || { echo "$(RED)❌ pyproject.toml não encontrado$(RESET)"; exit 1; }
-	@echo "$(GREEN)✅ Validação do ambiente passou$(RESET)"
+.PHONY: install-dev
+install-dev: ## Install development dependencies
+	@echo "📦 Installing development dependencies..."
+	@$(POETRY) install --with dev,test,docs
 
-install: validate-setup ## Instalar dependências de runtime
-	@echo "$(BLUE)📦 Instalando dependências de runtime para $(PROJECT_NAME)...$(RESET)"
-	@$(POETRY) install --only main
-	@echo "$(GREEN)✅ Dependências de runtime instaladas$(RESET)"
+.PHONY: setup
+setup: ## Complete project setup
+	@echo "🚀 Setting up $(PROJECT_NAME)..."
+	@make install-dev
+	@make pre-commit-install
+	@echo "✅ Setup complete"
 
-install-dev: validate-setup ## Instalar todas as dependências incluindo dev tools
-	@echo "$(BLUE)📦 Instalando todas as dependências para $(PROJECT_NAME)...$(RESET)"
-	@$(POETRY) install --all-extras
-	@echo "$(GREEN)✅ Todas as dependências instaladas$(RESET)"
+.PHONY: pre-commit-install
+pre-commit-install: ## Install pre-commit hooks
+	@echo "🔧 Installing pre-commit hooks..."
+	@$(POETRY) run pre-commit install
+	@$(POETRY) run pre-commit autoupdate
 
-deps-update: ## Atualizar dependências para versões mais recentes
-	@echo "$(BLUE)🔄 Atualizando dependências para $(PROJECT_NAME)...$(RESET)"
+# =============================================================================
+# QUALITY GATES & VALIDATION
+# =============================================================================
+
+.PHONY: validate
+validate: ## Run complete validation (quality gate)
+	@echo "🔍 Running complete validation for $(PROJECT_NAME)..."
+	@make lint
+	@make type-check
+	@make security
+	@make test
+	@make pep8-check
+	@echo "✅ Validation complete"
+
+.PHONY: check
+check: ## Quick health check
+	@echo "🏥 Running health check..."
+	@make lint
+	@make type-check
+	@echo "✅ Health check complete"
+
+.PHONY: lint
+lint: ## Run code linting
+	@echo "🧹 Running linting..."
+	@$(POETRY) run ruff check $(SRC_DIR) $(TESTS_DIR)
+
+.PHONY: format
+format: ## Format code
+	@echo "🎨 Formatting code..."
+	@$(POETRY) run ruff format $(SRC_DIR) $(TESTS_DIR)
+
+.PHONY: format-check
+format-check: ## Check code formatting
+	@echo "🎨 Checking code formatting..."
+	@$(POETRY) run ruff format --check $(SRC_DIR) $(TESTS_DIR)
+
+.PHONY: type-check
+type-check: ## Run type checking
+	@echo "🔍 Running type checking..."
+	@$(POETRY) run mypy $(SRC_DIR) --strict
+
+.PHONY: security
+security: ## Run security scanning
+	@echo "🔒 Running security scanning..."
+	@$(POETRY) run bandit -r $(SRC_DIR)
+	@$(POETRY) run pip-audit
+
+.PHONY: pep8-check
+pep8-check: ## Check PEP8 compliance
+	@echo "📏 Checking PEP8 compliance..."
+	@$(POETRY) run ruff check $(SRC_DIR) $(TESTS_DIR) --select E,W
+	@echo "✅ PEP8 check complete"
+
+.PHONY: fix
+fix: ## Auto-fix code issues
+	@echo "🔧 Auto-fixing code issues..."
+	@$(POETRY) run ruff check $(SRC_DIR) $(TESTS_DIR) --fix
+	@make format
+
+# =============================================================================
+# TESTING
+# =============================================================================
+
+.PHONY: test
+test: ## Run all tests with coverage
+	@echo "🧪 Running tests with coverage..."
+	@$(POETRY) run pytest $(TESTS_DIR) --cov=$(SRC_DIR) --cov-report=term-missing --cov-fail-under=$(MIN_COVERAGE)
+
+.PHONY: test-unit
+test-unit: ## Run unit tests only
+	@echo "🧪 Running unit tests..."
+	@$(POETRY) run pytest $(TESTS_DIR) -m "not integration" -v
+
+.PHONY: test-integration
+test-integration: ## Run integration tests only
+	@echo "🧪 Running integration tests..."
+	@$(POETRY) run pytest $(TESTS_DIR) -m integration -v
+
+.PHONY: test-fast
+test-fast: ## Run tests without coverage
+	@echo "🧪 Running fast tests..."
+	@$(POETRY) run pytest $(TESTS_DIR) -v
+
+.PHONY: test-watch
+test-watch: ## Run tests in watch mode
+	@echo "🧪 Running tests in watch mode..."
+	@$(POETRY) run pytest-watch $(TESTS_DIR)
+
+.PHONY: coverage
+coverage: ## Generate coverage report
+	@echo "📊 Generating coverage report..."
+	@$(POETRY) run pytest $(TESTS_DIR) --cov=$(SRC_DIR) --cov-report=html --cov-report=xml
+
+.PHONY: coverage-html
+coverage-html: ## Generate HTML coverage report
+	@echo "📊 Generating HTML coverage report..."
+	@$(POETRY) run pytest $(TESTS_DIR) --cov=$(SRC_DIR) --cov-report=html
+	@echo "📊 Coverage report: htmlcov/index.html"
+
+# =============================================================================
+# BUILD & DISTRIBUTION
+# =============================================================================
+
+.PHONY: build
+build: ## Build distribution packages
+	@echo "🏗️ Building $(PROJECT_NAME)..."
+	@$(POETRY) build
+
+.PHONY: build-clean
+build-clean: ## Clean build and rebuild
+	@echo "🏗️ Clean build..."
+	@make clean
+	@make build
+
+.PHONY: publish-test
+publish-test: ## Publish to test PyPI
+	@echo "📦 Publishing to test PyPI..."
+	@$(POETRY) publish --repository testpypi
+
+.PHONY: publish
+publish: ## Publish to PyPI
+	@echo "📦 Publishing to PyPI..."
+	@$(POETRY) publish
+
+# =============================================================================
+# DOCUMENTATION
+# =============================================================================
+
+.PHONY: docs
+docs: ## Build documentation
+	@echo "📚 Building documentation..."
+	@$(POETRY) run mkdocs build
+
+.PHONY: docs-serve
+docs-serve: ## Serve documentation locally
+	@echo "📚 Serving documentation..."
+	@$(POETRY) run mkdocs serve
+
+.PHONY: docs-deploy
+docs-deploy: ## Deploy documentation
+	@echo "📚 Deploying documentation..."
+	@$(POETRY) run mkdocs gh-deploy
+
+# =============================================================================
+# DEPENDENCY MANAGEMENT
+# =============================================================================
+
+.PHONY: deps-update
+deps-update: ## Update dependencies
+	@echo "🔄 Updating dependencies..."
 	@$(POETRY) update
-	@echo "$(GREEN)✅ Dependências atualizadas$(RESET)"
 
-deps-show: ## Mostrar árvore de dependências
-	@echo "$(BLUE)📊 Árvore de dependências para $(PROJECT_NAME):$(RESET)"
+.PHONY: deps-show
+deps-show: ## Show dependency tree
+	@echo "📋 Showing dependency tree..."
 	@$(POETRY) show --tree
 
-deps-audit: ## Auditoria de dependências para vulnerabilidades
-	@echo "$(BLUE)🔍 Auditando dependências para $(PROJECT_NAME)...$(RESET)"
-	@$(POETRY) run pip-audit --format=columns || echo "$(YELLOW)⚠️  pip-audit não disponível$(RESET)"
-	@$(POETRY) run safety check --json || echo "$(YELLOW)⚠️  safety não disponível$(RESET)"
+.PHONY: deps-audit
+deps-audit: ## Audit dependencies for security
+	@echo "🔍 Auditing dependencies..."
+	@$(POETRY) run pip-audit
 
-# ============================================================================
-# 🧪 TESTES
-# ============================================================================
+.PHONY: deps-export
+deps-export: ## Export requirements.txt
+	@echo "📄 Exporting requirements..."
+	@$(POETRY) export -f requirements.txt --output requirements.txt
+	@$(POETRY) export -f requirements.txt --dev --output requirements-dev.txt
 
-test: ## Executar todos os testes
-	@echo "$(BLUE)🧪 Executando todos os testes para $(PROJECT_NAME)...$(RESET)"
-	@$(POETRY) run pytest -xvs
-	@echo "$(GREEN)✅ Todos os testes passaram$(RESET)"
+# =============================================================================
+# DEVELOPMENT TOOLS
+# =============================================================================
 
-test-unit: ## Executar apenas testes unitários
-	@echo "$(BLUE)🧪 Executando testes unitários para $(PROJECT_NAME)...$(RESET)"
-	@$(POETRY) run pytest tests/unit/ -xvs -m "not integration and not slow"
-	@echo "$(GREEN)✅ Testes unitários passaram$(RESET)"
+.PHONY: dev
+dev: ## Run in development mode
+	@echo "🔧 Starting development mode..."
+	@$(POETRY) run python -m $(SRC_DIR)
 
-test-integration: ## Executar apenas testes de integração
-	@echo "$(BLUE)🧪 Executando testes de integração para $(PROJECT_NAME)...$(RESET)"
-	@$(POETRY) run pytest tests/integration/ -xvs -m "integration"
-	@echo "$(GREEN)✅ Testes de integração passaram$(RESET)"
+.PHONY: shell
+shell: ## Open Python shell with project loaded
+	@echo "🐍 Opening Python shell..."
+	@$(POETRY) run python
 
-test-coverage: ## Executar testes com relatório de cobertura
-	@echo "$(BLUE)🧪 Executando testes com cobertura para $(PROJECT_NAME)...$(RESET)"
-	@$(POETRY) run pytest --cov --cov-report=html --cov-report=term-missing --cov-report=xml
-	@echo "$(GREEN)✅ Relatório de cobertura gerado$(RESET)"
+.PHONY: notebook
+notebook: ## Start Jupyter notebook
+	@echo "📓 Starting Jupyter notebook..."
+	@$(POETRY) run jupyter lab
 
-test-watch: ## Executar testes em modo watch
-	@echo "$(BLUE)👀 Executando testes em modo watch para $(PROJECT_NAME)...$(RESET)"
-	@$(POETRY) run pytest-watch --clear
+.PHONY: pre-commit
+pre-commit: ## Run pre-commit hooks
+	@echo "🔍 Running pre-commit hooks..."
+	@$(POETRY) run pre-commit run --all-files
 
-# ============================================================================
-# 🎨 QUALIDADE DE CÓDIGO E FORMATAÇÃO
-# ============================================================================
+# =============================================================================
+# MAINTENANCE & CLEANUP
+# =============================================================================
 
-lint: ## Executar todos os linters com máxima rigorosidade
-	@echo "$(BLUE)🔍 Executando linting com máxima rigorosidade para $(PROJECT_NAME)...$(RESET)"
-	@$(POETRY) run ruff check . --output-format=github
-	@echo "$(GREEN)✅ Linting completado$(RESET)"
-
-format: ## Formatar código com padrões rigorosos
-	@echo "$(BLUE)🎨 Formatando código para $(PROJECT_NAME)...$(RESET)"
-	@$(POETRY) run ruff format .
-	@$(POETRY) run ruff check . --fix --unsafe-fixes
-	@echo "$(GREEN)✅ Código formatado$(RESET)"
-
-format-check: ## Verificar formatação sem alterar
-	@echo "$(BLUE)🔍 Verificando formatação para $(PROJECT_NAME)...$(RESET)"
-	@$(POETRY) run ruff format . --check
-	@$(POETRY) run ruff check . --output-format=github
-	@echo "$(GREEN)✅ Formatação verificada$(RESET)"
-
-type-check: ## Executar verificação de tipos rigorosa
-	@echo "$(BLUE)🔍 Executando verificação de tipos rigorosa para $(PROJECT_NAME)...$(RESET)"
-	@$(POETRY) run mypy src/ --strict --show-error-codes
-	@echo "$(GREEN)✅ Verificação de tipos passou$(RESET)"
-
-security: ## Executar análise de segurança
-	@echo "$(BLUE)🔒 Executando análise de segurança para $(PROJECT_NAME)...$(RESET)"
-	@$(POETRY) run bandit -r src/ -f json || echo "$(YELLOW)⚠️  bandit não disponível$(RESET)"
-	@$(POETRY) run detect-secrets scan --all-files || echo "$(YELLOW)⚠️  detect-secrets não disponível$(RESET)"
-	@echo "$(GREEN)✅ Análise de segurança completada$(RESET)"
-
-pre-commit: ## Executar hooks pre-commit
-	@echo "$(BLUE)🔧 Executando hooks pre-commit para $(PROJECT_NAME)...$(RESET)"
-	@$(POETRY) run pre-commit run --all-files || echo "$(YELLOW)⚠️  pre-commit não disponível$(RESET)"
-	@echo "$(GREEN)✅ Hooks pre-commit completados$(RESET)"
-
-check: lint type-check security ## Executar todas as verificações de qualidade
-	@echo "$(BLUE)🔍 Executando verificações abrangentes de qualidade para $(PROJECT_NAME)...$(RESET)"
-	@echo "$(GREEN)✅ Todas as verificações de qualidade passaram$(RESET)"
-
-# ============================================================================
-# 🏗️ BUILD E DISTRIBUIÇÃO
-# ============================================================================
-
-build: clean ## Construir o pacote com Poetry
-	@echo "$(BLUE)🏗️  Construindo pacote $(PROJECT_NAME)...$(RESET)"
-	@$(POETRY) build
-	@echo "$(GREEN)✅ Pacote construído com sucesso$(RESET)"
-	@echo "$(BLUE)📦 Artefatos de build:$(RESET)"
-	@ls -la dist/
-
-build-clean: clean build ## Limpar e construir
-	@echo "$(GREEN)✅ Build limpo completado$(RESET)"
-
-publish-test: build ## Publicar no TestPyPI
-	@echo "$(BLUE)📤 Publicando $(PROJECT_NAME) no TestPyPI...$(RESET)"
-	@$(POETRY) publish --repository testpypi
-	@echo "$(GREEN)✅ Publicado no TestPyPI$(RESET)"
-
-publish: build ## Publicar no PyPI
-	@echo "$(BLUE)📤 Publicando $(PROJECT_NAME) no PyPI...$(RESET)"
-	@$(POETRY) publish
-	@echo "$(GREEN)✅ Publicado no PyPI$(RESET)"
-
-# ============================================================================
-# 📚 DOCUMENTAÇÃO
-# ============================================================================
-
-docs: ## Gerar documentação
-	@echo "$(BLUE)📚 Gerando documentação para $(PROJECT_NAME)...$(RESET)"
-	@if [ -f mkdocs.yml ]; then \
-		$(POETRY) run mkdocs build; \
-	else \
-		echo "$(YELLOW)⚠️  Nenhum mkdocs.yml encontrado, pulando geração de documentação$(RESET)"; \
-	fi
-	@echo "$(GREEN)✅ Documentação gerada$(RESET)"
-
-docs-serve: ## Servir documentação localmente
-	@echo "$(BLUE)📚 Servindo documentação para $(PROJECT_NAME)...$(RESET)"
-	@if [ -f mkdocs.yml ]; then \
-		$(POETRY) run mkdocs serve; \
-	else \
-		echo "$(YELLOW)⚠️  Nenhum mkdocs.yml encontrado$(RESET)"; \
-	fi
-
-# ============================================================================
-# 🚀 DESENVOLVIMENTO
-# ============================================================================
-
-dev-setup: install-dev ## Configuração completa de desenvolvimento
-	@echo "$(BLUE)🚀 Configurando ambiente de desenvolvimento para $(PROJECT_NAME)...$(RESET)"
-	@$(POETRY) run pre-commit install || echo "$(YELLOW)⚠️  pre-commit não disponível$(RESET)"
-	@echo "$(GREEN)✅ Ambiente de desenvolvimento pronto$(RESET)"
-
-dev: ## Executar em modo desenvolvimento
-	@echo "$(BLUE)🚀 Iniciando modo desenvolvimento para $(PROJECT_NAME)...$(RESET)"
-	@if [ -f src/flext_core/cli.py ]; then \
-		$(POETRY) run python -m flext_core.cli --dev; \
-	elif [ -f src/flext_core/main.py ]; then \
-		$(POETRY) run python -m flext_core.main --dev; \
-	else \
-		echo "$(YELLOW)⚠️  Nenhum ponto de entrada principal encontrado$(RESET)"; \
-	fi
-
-dev-test: ## Ciclo rápido de teste de desenvolvimento
-	@echo "$(BLUE)⚡ Ciclo rápido de teste de desenvolvimento para $(PROJECT_NAME)...$(RESET)"
-	@$(POETRY) run ruff check . --fix
-	@$(POETRY) run pytest tests/ -x --tb=short
-	@echo "$(GREEN)✅ Ciclo de teste de desenvolvimento completado$(RESET)"
-
-# ============================================================================
-# 🧹 LIMPEZA
-# ============================================================================
-
-clean: ## Limpar artefatos de build
-	@echo "$(BLUE)🧹 Limpando artefatos de build para $(PROJECT_NAME)...$(RESET)"
+.PHONY: clean
+clean: ## Clean build artifacts and cache
+	@echo "🧹 Cleaning build artifacts..."
 	@rm -rf build/
 	@rm -rf dist/
 	@rm -rf *.egg-info/
 	@rm -rf .pytest_cache/
-	@rm -rf .coverage
 	@rm -rf htmlcov/
+	@rm -rf .coverage
 	@rm -rf .mypy_cache/
 	@rm -rf .ruff_cache/
-	@rm -rf reports/
-	@find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+	@find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 	@find . -type f -name "*.pyc" -delete 2>/dev/null || true
-	@find . -type f -name "*.pyo" -delete 2>/dev/null || true
-	@echo "$(GREEN)✅ Limpeza completada$(RESET)"
 
-clean-all: clean ## Limpar tudo incluindo ambiente virtual
-	@echo "$(BLUE)🧹 Limpeza profunda para $(PROJECT_NAME)...$(RESET)"
-	@$(POETRY) env remove --all || true
-	@echo "$(GREEN)✅ Limpeza profunda completada$(RESET)"
+.PHONY: clean-all
+clean-all: clean ## Deep clean including virtual environment
+	@echo "🧹 Deep cleaning..."
+	@rm -rf .venv/
 
-# ============================================================================
-# 🚨 PROCEDIMENTOS DE EMERGÊNCIA
-# ============================================================================
+.PHONY: reset
+reset: clean-all ## Reset project to clean state
+	@echo "🔄 Resetting project..."
+	@make setup
 
-emergency-reset: ## Reset de emergência para estado limpo
-	@echo "$(RED)🚨 RESET DE EMERGÊNCIA para $(PROJECT_NAME)...$(RESET)"
-	@read -p "Tem certeza que quer resetar tudo? (y/N) " -n 1 -r; \
-	echo; \
-	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
-		$(MAKE) clean-all; \
-		$(MAKE) install-dev; \
-		echo "$(GREEN)✅ Reset de emergência completado$(RESET)"; \
-	else \
-		echo "$(YELLOW)⚠️  Reset de emergência cancelado$(RESET)"; \
-	fi
+# =============================================================================
+# DIAGNOSTICS & TROUBLESHOOTING
+# =============================================================================
 
-# ============================================================================
-# 🎯 VALIDAÇÃO E VERIFICAÇÃO
-# ============================================================================
+.PHONY: diagnose
+diagnose: ## Run project diagnostics
+	@echo "🔬 Running project diagnostics..."
+	@echo "Python version: $$(python --version)"
+	@echo "Poetry version: $$($(POETRY) --version)"
+	@echo "Project info:"
+	@$(POETRY) show --no-dev
+	@echo "Environment status:"
+	@$(POETRY) env info
 
-validate: ## Validar conformidade do workspace
-	@echo "$(BLUE)🔍 Validando conformidade do workspace para $(PROJECT_NAME)...$(RESET)"
-	@test -f pyproject.toml || { echo "$(RED)❌ pyproject.toml ausente$(RESET)"; exit 1; }
-	@test -f CLAUDE.md || echo "$(YELLOW)⚠️  CLAUDE.md ausente$(RESET)"
-	@test -f README.md || echo "$(YELLOW)⚠️  README.md ausente$(RESET)"
-	@test -d src/ || { echo "$(RED)❌ diretório src/ ausente$(RESET)"; exit 1; }
-	@test -d tests/ || echo "$(YELLOW)⚠️  diretório tests/ ausente$(RESET)"
-	@echo "$(GREEN)✅ Conformidade do workspace validada$(RESET)"
+.PHONY: doctor
+doctor: ## Check project health
+	@echo "👩‍⚕️ Checking project health..."
+	@make diagnose
+	@make check
+	@echo "✅ Health check complete"
 
-# ============================================================================
-# 🎯 ALIASES DE CONVENIÊNCIA
-# ============================================================================
+# =============================================================================
+# CONVENIENCE ALIASES
+# =============================================================================
 
-# Aliases para operações comuns
-t: test ## Alias para test
-l: lint ## Alias para lint
-tc: type-check ## Alias para type-check
-f: format ## Alias para format
-c: clean ## Alias para clean
-i: install-dev ## Alias para install-dev
-d: dev ## Alias para dev
-dt: dev-test ## Alias para dev-test
+.PHONY: t
+t: test ## Alias for test
+
+.PHONY: l
+l: lint ## Alias for lint
+
+.PHONY: f
+f: format ## Alias for format
+
+.PHONY: tc
+tc: type-check ## Alias for type-check
+
+.PHONY: c
+c: clean ## Alias for clean
+
+.PHONY: i
+i: install ## Alias for install
+
+.PHONY: v
+v: validate ## Alias for validate
+
+# =============================================================================
+# Default target
+# =============================================================================
+
+.DEFAULT_GOAL := help
