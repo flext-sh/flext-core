@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
+from pydantic import Field
 
 from flext_core.helpers import ContainerMixin
 from flext_core.helpers import LoggerMixin
@@ -356,7 +357,6 @@ class TestQuickDomainObjects:
 
     def test_quick_value_object_from_dict(self) -> None:
         """Test QuickValueObject from_dict method."""
-        from pydantic import Field
 
         class Money(QuickValueObject):
             amount: float = Field(...)

@@ -150,14 +150,14 @@ class FlextSerializationMixin(BaseModel):
         dict_data = config.to_dict_safe().unwrap()
     """
 
-    def to_json_safe(self, **kwargs: dict[str, Any]) -> FlextResult[str]:
+    def to_json_safe(self, **kwargs: Any) -> FlextResult[str]:
         """Safely serialize to JSON string."""
         try:
             return FlextResult.ok(self.model_dump_json(**kwargs))
         except Exception as e:  # noqa: BLE001
             return FlextResult.fail(f"JSON serialization failed: {e}")
 
-    def to_dict_safe(self, **kwargs: dict[str, Any]) -> FlextResult[dict[str, Any]]:
+    def to_dict_safe(self, **kwargs: Any) -> FlextResult[dict[str, Any]]:
         """Safely serialize to dictionary."""
         try:
             return FlextResult.ok(self.model_dump(**kwargs))
@@ -297,7 +297,11 @@ class FlextComparableMixin(BaseModel):
         # Try common ID fields
         for field_name in ["id", "entity_id", "pk", "key"]:
             if hasattr(self, field_name):
-                return getattr(self, field_name)
+                value = getattr(self, field_name)
+                if isinstance(value, str):
+                    return value
+                # Convert other types to string
+                return str(value)
 
         # Fallback to all fields
         return self.model_dump()
@@ -421,7 +425,8 @@ class FlextMetadataMixin(BaseModel):
 
     def remove_metadata(self, key: str) -> object | None:
         """Remove and return metadata value."""
-        return self.metadata.pop(key, None)
+        value: object | None = self.metadata.pop(key, None)
+        return value
 
     def clear_metadata(self) -> None:
         """Clear all metadata."""

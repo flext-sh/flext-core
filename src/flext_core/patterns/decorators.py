@@ -298,7 +298,7 @@ def flext_robust(
     cache: bool = False,
     timing: bool = False,
     safe: bool = True,
-) -> Callable[[Callable[P, T]], Callable[P, FlextResult[T] | T]]:
+) -> Callable[[Callable[P, T]], Callable[P, FlextResult[T]]]:
     """Meta-decorator that combines retry, caching, timing, and safety.
 
     Args:
@@ -308,19 +308,19 @@ def flext_robust(
         safe: Whether to wrap in exception safety
 
     Returns:
-        Decorated function with combined behaviors
+        Decorated function with combined behaviors that always returns FlextResult
 
     Example:
         @flext_robust(max_attempts=3, cache=True, timing=True)
         def api_call() -> FlextResult[Data]:
             return external_api.fetch_data()
     """
-    def decorator(func: Callable[P, T]) -> Callable[P, FlextResult[T] | T]:
-        decorated = func
+    def decorator(func: Callable[P, T]) -> Callable[P, FlextResult[T]]:
+        # Always ensure we return FlextResult by applying safe first
+        decorated_safe = flext_safe_result()(func)
 
-        # Apply decorators in reverse order (innermost first)
-        if safe:
-            decorated = flext_safe_result()(decorated)
+        # Apply other decorators to the safe version
+        decorated: Callable[P, FlextResult[T]] = decorated_safe
 
         if timing:
             decorated = flext_timed()(decorated)
@@ -328,7 +328,7 @@ def flext_robust(
         if cache:
             decorated = flext_cache_result()(decorated)
 
-        if max_attempts > 1 and safe:  # We know it returns FlextResult due to safe=True
+        if max_attempts > 1:
             decorated = flext_retry(max_attempts)(decorated)
 
         return decorated
