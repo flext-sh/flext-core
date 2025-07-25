@@ -60,7 +60,7 @@ class FlextFieldType(StrEnum):
 class FlextFieldMetadata:
     """Comprehensive metadata for field definitions."""
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
         *,
         description: str | None = None,
@@ -169,7 +169,7 @@ class FlextField[TValue](ABC):
     metadata, and type safety.
     """
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
         field_id: FlextFieldId,
         field_name: FlextFieldName,
@@ -273,7 +273,7 @@ class FlextField[TValue](ABC):
 class FlextStringField(FlextField[str]):
     """String field implementation."""
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
         field_id: FlextFieldId,
         field_name: FlextFieldName,
@@ -344,7 +344,7 @@ class FlextStringField(FlextField[str]):
 class FlextIntegerField(FlextField[int]):
     """Integer field implementation."""
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
         field_id: FlextFieldId,
         field_name: FlextFieldName,
@@ -418,7 +418,7 @@ class FlextIntegerField(FlextField[int]):
 class FlextBooleanField(FlextField[bool]):
     """Boolean field implementation."""
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
         field_id: FlextFieldId,
         field_name: FlextFieldName,
@@ -464,7 +464,7 @@ class FlextBooleanField(FlextField[bool]):
 
         return result
 
-    def serialize_value(self, value: bool) -> bool:  # noqa: FBT001
+    def serialize_value(self, value: bool) -> bool:
         """Serialize boolean value."""
         return value
 
@@ -532,9 +532,7 @@ class FlextFieldRegistry:
 
         """
         return [
-            field
-            for field in self._fields.values()
-            if field.field_type == field_type
+            field for field in self._fields.values() if field.field_type == field_type
         ]
 
     def validate_all_fields(

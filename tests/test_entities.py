@@ -427,9 +427,7 @@ class TestFlextAggregateRoot:
         assert len(aggregate.get_domain_events()) == 3
 
         # Check event types
-        event_types = [
-            event.event_type for event in aggregate.get_domain_events()
-        ]
+        event_types = [event.event_type for event in aggregate.get_domain_events()]
         assert "test.created" in event_types
         assert "test.updated" in event_types
         assert "test.activated" in event_types

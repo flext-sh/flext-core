@@ -136,7 +136,7 @@ class FlextMessageHandler[TMessage, TResponse](FlextHandler):
             return FlextResult.fail(
                 f"Message processing failed: {e!s}",
             )
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             return FlextResult.fail(
                 f"Unexpected message processing error: {e!s}",
             )
@@ -202,7 +202,7 @@ class FlextEventHandler[TEvent](FlextHandler):
             return FlextResult.fail(
                 f"Event processing failed: {e!s}",
             )
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             return FlextResult.fail(
                 f"Unexpected event processing error: {e!s}",
             )
@@ -266,7 +266,7 @@ class FlextRequestHandler[TRequest, TResponse](FlextHandler):
             return FlextResult.fail(
                 f"Request processing failed: {e!s}",
             )
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             return FlextResult.fail(
                 f"Unexpected request processing error: {e!s}",
             )
@@ -312,11 +312,7 @@ class FlextHandlerRegistry:
             List of capable handlers
 
         """
-        return [
-            handler
-            for handler in self._handlers
-            if handler.can_handle(message)
-        ]
+        return [handler for handler in self._handlers if handler.can_handle(message)]
 
     def get_handler_by_id(
         self,

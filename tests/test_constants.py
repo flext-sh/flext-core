@@ -386,9 +386,7 @@ class TestFlextConstants:
 
     def test_environment_constants_access(self) -> None:
         """Test environment constants are accessible."""
-        assert (
-            FlextConstants.DEFAULT_ENVIRONMENT == FlextEnvironment.DEVELOPMENT
-        )
+        assert FlextConstants.DEFAULT_ENVIRONMENT == FlextEnvironment.DEVELOPMENT
         assert FlextConstants.ENV_DEVELOPMENT == FlextEnvironment.DEVELOPMENT
         assert FlextConstants.ENV_TESTING == FlextEnvironment.TESTING
         assert FlextConstants.ENV_STAGING == FlextEnvironment.STAGING
@@ -420,13 +418,8 @@ class TestFlextConstants:
 
     def test_pattern_constants_access(self) -> None:
         """Test pattern constants are accessible."""
-        assert (
-            FlextConstants.VALID_IDENTIFIER_PATTERN
-            == r"^[a-zA-Z_][a-zA-Z0-9_]*$"
-        )
-        assert (
-            FlextConstants.VALID_SERVICE_NAME_PATTERN == r"^[a-zA-Z0-9_.-]+$"
-        )
+        assert FlextConstants.VALID_IDENTIFIER_PATTERN == r"^[a-zA-Z_][a-zA-Z0-9_]*$"
+        assert FlextConstants.VALID_SERVICE_NAME_PATTERN == r"^[a-zA-Z0-9_.-]+$"
 
     def test_constants_organization(self) -> None:
         """Test that constants are properly organized."""
@@ -475,13 +468,8 @@ class TestConstantsIntegration:
             assert len(reserved_name) <= FlextConstants.MAX_SERVICE_NAME_LENGTH
 
         # Performance constants should be reasonable
-        assert (
-            FlextConstants.DEFAULT_TIMEOUT < FlextConstants.CACHE_TTL_SECONDS
-        )
-        assert (
-            FlextConstants.DEFAULT_RETRY_COUNT
-            < FlextConstants.MAX_NESTING_DEPTH
-        )
+        assert FlextConstants.DEFAULT_TIMEOUT < FlextConstants.CACHE_TTL_SECONDS
+        assert FlextConstants.DEFAULT_RETRY_COUNT < FlextConstants.MAX_NESTING_DEPTH
 
     def test_type_aliases_with_validation_patterns(self) -> None:
         """Test type aliases work with validation patterns."""

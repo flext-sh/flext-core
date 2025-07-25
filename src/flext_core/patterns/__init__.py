@@ -28,6 +28,8 @@ from flext_core.patterns.logging import FlextLogContext
 from flext_core.patterns.logging import FlextLogger
 from flext_core.patterns.logging import FlextLoggerFactory
 from flext_core.patterns.logging import FlextLogLevel
+from flext_core.patterns.logging import configure_logging
+from flext_core.patterns.logging import get_logger
 
 # Type Definitions
 from flext_core.patterns.typedefs import FlextCommandId
@@ -74,4 +76,6 @@ __all__ = [
     "FlextValidationRule",
     "FlextValidator",
     "FlextValidatorId",
+    "configure_logging",
+    "get_logger",
 ]

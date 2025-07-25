@@ -56,13 +56,12 @@ class FlextDomainService(BaseModel, ABC):
         ...         self,
         ...         from_account: Account,
         ...         to_account: Account,
-        ...         amount: Money
+        ...         amount: Money,
         ...     ) -> FlextResult[None]:
         ...         # Validate business rules
         ...         if from_account.balance < amount:
-        ...             return FlextResult.fail(
-        ...                 "Insufficient funds for transfer"
-        ...             )
+        ...             msg = "Insufficient funds for transfer"
+        ...             return FlextResult.fail(msg)
         ...
         ...         if from_account.is_frozen or to_account.is_frozen:
         ...             msg = "Cannot transfer to/from frozen accounts"
@@ -73,15 +72,9 @@ class FlextDomainService(BaseModel, ABC):
         ...         to_account.credit(amount)
         ...
         ...         # Record domain events
-        ...         event = MoneyDebited(
-        ...             account_id=from_account.id,
-        ...             amount=amount
-        ...         )
+        ...         event = MoneyDebited(account_id=from_account.id, amount=amount)
         ...         from_account.add_domain_event(event)
-        ...         event = MoneyCredited(
-        ...             account_id=to_account.id,
-        ...             amount=amount
-        ...         )
+        ...         event = MoneyCredited(account_id=to_account.id, amount=amount)
         ...         to_account.add_domain_event(event)
         ...
         ...         return FlextResult.ok(None)
@@ -89,9 +82,7 @@ class FlextDomainService(BaseModel, ABC):
         Service usage in application layer:
         >>> transfer_service = TransferService()
         >>> result = transfer_service.execute(
-        ...     source_account,
-        ...     target_account,
-        ...     transfer_amount
+        ...     source_account, target_account, transfer_amount
         ... )
         >>>
         >>> if result.is_success:
@@ -123,14 +114,12 @@ class FlextDomainService(BaseModel, ABC):
         validate_assignment=True,
         # JSON schema generation for API documentation
         json_schema_extra={
-            "description": (
-                "Stateless domain service for cross-entity operations"
-            ),
+            "description": ("Stateless domain service for cross-entity operations"),
         },
     )
 
     @abstractmethod
-    def execute(self) -> Any:  # noqa: ANN401
+    def execute(self) -> Any:
         """Execute the domain service operation with business logic.
 
         This method must be implemented by each concrete domain service

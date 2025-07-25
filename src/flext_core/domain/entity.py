@@ -18,6 +18,7 @@ from abc import ABC
 from abc import abstractmethod
 from datetime import UTC
 from datetime import datetime
+from typing import Any
 from uuid import uuid4
 
 from pydantic import BaseModel
@@ -71,13 +72,13 @@ class FlextEntity(BaseModel, ABC):
         >>> user1 = User(
         ...     name="Alice",
         ...     email="alice@example.com",
-        ...     status=UserStatus.ACTIVE
+        ...     status=UserStatus.ACTIVE,
         ... )
         >>> user2 = User(
         ...     id=user1.id,
         ...     name="Alice Updated",
         ...     email="alice@example.com",
-        ...     status=UserStatus.ACTIVE
+        ...     status=UserStatus.ACTIVE,
         ... )
         >>> # Same ID = same entity regardless of other attributes
         >>> assert user1 == user2
@@ -137,8 +138,7 @@ class FlextEntity(BaseModel, ABC):
 
     version: int = Field(
         default=1,
-        description="Entity version for optimistic locking and conflict "
-        "detection",
+        description=("Entity version for optimistic locking and conflict detection"),
         ge=1,
         frozen=True,
     )
@@ -210,8 +210,8 @@ class FlextEntity(BaseModel, ABC):
             ...         raise ValueError("Age cannot be negative")
             ...     if self.status == Status.ACTIVE and not self.email:
             ...         raise ValueError(
-            ...             "Active users must have email addresses"
-            ...         )
+        ...             "Active users must have email addresses"
+        ...         )
             ...     if self.role == Role.ADMIN and not self.is_verified:
             ...         raise ValueError("Admin users must be verified")
 
@@ -248,6 +248,59 @@ class FlextEntity(BaseModel, ABC):
         entity_data = self.model_dump()
         entity_data["version"] = new_version
         return self.__class__(**entity_data)
+
+    def increment_version(self) -> FlextEntity:
+        """Create a new entity instance with incremented version."""
+        return self.with_version(self.version + 1)
+
+    def copy_with(self, **changes: object) -> FlextEntity:
+        """Create a copy of entity with specified field changes."""
+        entity_data = self.model_dump()
+        entity_data.update(changes)
+
+        # Auto-increment version if changes are provided
+        if changes and "version" not in changes:
+            entity_data["version"] = self.version + 1
+
+        return self.__class__(**entity_data)
+
+    def is_newer_than(self, other: FlextEntity) -> bool:
+        """Check if this entity version is newer than another."""
+        if not isinstance(other, FlextEntity) or self.id != other.id:
+            return False
+        return self.version > other.version
+
+    def is_same_entity(self, other: object) -> bool:
+        """Check if other object represents the same entity (same ID)."""
+        return isinstance(other, FlextEntity) and self.id == other.id
+
+    def age_in_seconds(self) -> float:
+        """Calculate entity age in seconds since creation."""
+        return (datetime.now(UTC) - self.created_at).total_seconds()
+
+    def to_dict_minimal(self) -> dict[str, Any]:
+        """Convert to dictionary with only ID and version."""
+        return {"id": self.id, "version": self.version}
+
+    def to_dict_with_metadata(self) -> dict[str, Any]:
+        """Convert to dictionary including all metadata fields."""
+        data = self.model_dump()
+        data["entity_type"] = self.__class__.__name__
+        data["age_seconds"] = self.age_in_seconds()
+        return data
+
+    @classmethod
+    def create_with_id(cls, entity_id: str, **kwargs: object) -> FlextEntity:
+        """Create entity with specific ID (useful for reconstruction)."""
+        return cls(id=entity_id, **kwargs)
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> FlextEntity:
+        """Create entity from dictionary data."""
+        # Filter out metadata that isn't part of the model
+        entity_fields = set(cls.model_fields.keys())
+        filtered_data = {k: v for k, v in data.items() if k in entity_fields}
+        return cls(**filtered_data)
 
 
 __all__ = ["FlextEntity"]

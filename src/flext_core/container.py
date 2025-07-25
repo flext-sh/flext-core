@@ -49,9 +49,11 @@ from pydantic import Field
 from pydantic import field_validator
 
 from flext_core.result import FlextResult
+from flext_core.types_system import flext_validate_service_name
 
 # Type variables for generic service handling
 T = TypeVar("T")
+U = TypeVar("U")
 FlextServiceFactory = Callable[[], T]
 
 
@@ -338,7 +340,7 @@ class FlextContainer(BaseModel):
             return FlextResult.ok(instance)
         except (TypeError, AttributeError, ValueError) as e:
             return FlextResult.fail(f"Failed to create service '{name}': {e}")
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             return FlextResult.fail(
                 f"Unexpected error creating service '{name}': {e}",
             )
@@ -452,12 +454,7 @@ class FlextContainer(BaseModel):
         return list(self.services.keys())
 
     def _validate_service_name(self, name: object) -> FlextResult[str]:
-        """Validate service identifier.
-
-        Ensures service names meet required criteria:
-        - Must be string type
-        - Must be non-empty after whitespace stripping
-        - Must contain valid characters
+        """Validate service identifier using centralized validation.
 
         Args:
             name: Service identifier to validate
@@ -469,12 +466,101 @@ class FlextContainer(BaseModel):
         if not isinstance(name, str):
             return FlextResult.fail("Service name must be a string type")
 
-        if not name.strip():
+        try:
+            validated_name = flext_validate_service_name(name)
+            return FlextResult.ok(validated_name)
+        except ValueError as e:
+            return FlextResult.fail(str(e))
+
+    def get_or_fail(self, name: str) -> object:
+        """Get service or raise exception if not found or failed."""
+        result = self.get(name)
+        if not result.success:
+            raise ValueError(result.error or f"Service '{name}' not available")
+        return result.data
+
+    def get_or_default(self, name: str, default: object) -> object:
+        """Get service or return default if not found or failed."""
+        result = self.get(name)
+        if result.success and result.data is not None:
+            return result.data
+        return default
+
+    def get_typed(self, name: str, service_type: type[T]) -> FlextResult[T]:
+        """Get service with type checking."""
+        result = self.get(name)
+        if not result.success:
+            return result  # type: ignore[return-value]
+
+        if not isinstance(result.data, service_type):
             return FlextResult.fail(
-                "Service name cannot be empty or whitespace-only",
+                f"Service '{name}' is not of type {service_type.__name__}",
             )
 
-        return FlextResult.ok(name.strip())
+        return FlextResult.ok(result.data)
+
+    def register_multiple(self, **services: object) -> FlextResult[None]:
+        """Register multiple services at once."""
+        for name, service in services.items():
+            result = self.register(name, service)
+            if not result.success:
+                return result
+        return FlextResult.ok(None)
+
+    def register_if_missing(
+        self,
+        name: str,
+        service: object,
+    ) -> FlextResult[bool]:
+        """Register service only if not already registered."""
+        if self.has(name):
+            return FlextResult.ok(False)  # noqa: FBT003
+
+        result = self.register(name, service)
+        return result.map(lambda _: True)
+
+    def try_get(self, name: str) -> FlextResult[T | None]:
+        """Try to get service, returning None instead of error if missing."""
+        if not self.has(name):
+            return FlextResult.ok(None)
+
+        result = self.get(name)
+        if not result.success:
+            return FlextResult.ok(None)
+
+        return FlextResult.ok(result.data)  # type: ignore[arg-type]
+
+    def with_service(
+        self,
+        name: str,
+        func: Callable[[T], U],
+    ) -> FlextResult[U]:
+        """Execute function with service, handling errors gracefully."""
+        result = self.get(name)
+        if not result.success:
+            error_msg = result.error or f"Service '{name}' not available"
+            return FlextResult.fail(error_msg)
+
+        try:
+            return FlextResult.ok(func(result.data))  # type: ignore[arg-type]
+        except Exception as e:
+            return FlextResult.fail(f"Service operation failed: {e}")
+
+    def ensure_services(self, *names: str) -> FlextResult[None]:
+        """Ensure all named services are available."""
+        missing = [name for name in names if not self.has(name)]
+        if missing:
+            return FlextResult.fail(f"Missing services: {', '.join(missing)}")
+
+        # Try to get all services to ensure they can be instantiated
+        for name in names:
+            result = self.get(name)
+            if not result.success:
+                return FlextResult.fail(
+                    f"Service '{name}' failed to initialize: {result.error}",
+                )
+
+        return FlextResult.ok(None)
 
 
 class _ContainerRegistry:
@@ -547,9 +633,10 @@ class _ContainerRegistry:
             >>> configure_flext_container(None)
 
         """
-        self._container = (
-            container if container is not None else FlextContainer()
-        )
+        if container is not None:
+            self._container = container
+        else:
+            self._container = FlextContainer()
         return self._container
 
 

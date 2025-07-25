@@ -58,9 +58,8 @@ class FlextValueObject(BaseModel, ABC):
         ...         if self.amount < 0:
         ...             raise ValueError("Money amount cannot be negative")
         ...         if len(self.currency) != 3:
-        ...             raise ValueError(
-        ...                 "Currency code must be exactly 3 characters"
-        ...             )
+        ...             msg = "Currency code must be exactly 3 characters"
+        ...             raise ValueError(msg)
         ...         if not self.currency.isupper():
         ...             raise ValueError("Currency code must be uppercase")
 
@@ -101,9 +100,7 @@ class FlextValueObject(BaseModel, ABC):
         arbitrary_types_allowed=False,
         # JSON schema generation for API documentation
         json_schema_extra={
-            "description": (
-                "Enterprise value object with attribute-based equality"
-            ),
+            "description": ("Enterprise value object with attribute-based equality"),
         },
     )
 

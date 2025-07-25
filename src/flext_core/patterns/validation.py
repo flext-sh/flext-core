@@ -32,7 +32,7 @@ class FlextValidationResult:
 
     def __init__(
         self,
-        is_valid: bool,  # noqa: FBT001
+        is_valid: bool,
         errors: list[str] | None = None,
         field_errors: dict[str, list[str]] | None = None,
         warnings: list[str] | None = None,
@@ -152,7 +152,7 @@ class FlextValidationRule[TValue](ABC):
     def _get_default_error_message(self) -> str:
         """Get default error message for this rule."""
 
-    def get_error_message(self, value: TValue) -> str:  # noqa: ARG002
+    def get_error_message(self, value: TValue) -> str:
         """Get error message for failed validation."""
         return self.error_message
 
@@ -220,7 +220,7 @@ class FlextFieldValidator:
                         self.field_path,
                         rule.get_error_message(value),
                     )
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 result.add_field_error(
                     self.field_path,
                     f"Validation rule '{rule.rule_name}' failed: {e!s}",

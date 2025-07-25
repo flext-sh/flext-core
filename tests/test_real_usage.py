@@ -98,6 +98,7 @@ class TestRealUsagePatterns:
         # Production error handling pattern
         assert result.is_failure
         assert result.error is not None
+        assert result.error
         assert "not found" in result.error
 
     def test_chained_operations(self) -> None:
@@ -217,9 +218,7 @@ class TestRealUsagePatterns:
         # Service should handle validation (business logic)
         # This is a simplified example - real validation would be more
         # sophisticated
-        assert (
-            result.is_success or result.is_failure
-        )  # Either outcome is valid
+        assert result.is_success or result.is_failure  # Either outcome is valid
 
     def test_service_factory_pattern(self) -> None:
         """Test service factory pattern (enterprise usage)."""

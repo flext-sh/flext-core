@@ -136,15 +136,14 @@ class FlextCommandHandler[TCommand: "FlextCommand", TResult](ABC):
 
         # Check if can handle
         if not self.can_handle(command):
-            return FlextResult.fail(
-                f"Handler cannot process command of type "
-                f"{command.command_type}",
-            )
+            cmd_type = command.command_type
+            msg = f"Handler cannot process command of type {cmd_type}"
+            return FlextResult.fail(msg)
 
         # Handle the command
         try:
             return self.handle(command)  # type: ignore[arg-type]
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             return FlextResult.fail(f"Command processing failed: {e!s}")
 
     def get_handler_info(self) -> dict[str, Any]:
@@ -344,7 +343,7 @@ class FlextCommandBus:
                 command,
                 handler.get_handler_info(),
             )
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             unexpected_error_result: FlextResult[Any] = FlextResult.fail(
                 f"Unexpected command error: {e!s}",
             )

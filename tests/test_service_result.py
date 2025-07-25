@@ -8,6 +8,7 @@ import pytest
 from pydantic import ValidationError
 
 from flext_core import FlextResult
+from flext_core.exceptions import FlextError
 
 
 class TestFlextResult:
@@ -224,7 +225,7 @@ class TestFlextResult:
         result = FlextResult.ok([1, 2, 3])
 
         # Test TypeError
-        mapped = result.map(lambda x: x + "string")  # type: ignore[operator]  # Intentional TypeError
+        mapped = result.map(lambda x: x + "string")  # Intentional TypeError
         assert mapped.is_failure
         assert mapped.error is not None
         assert "Transformation failed:" in mapped.error
@@ -248,7 +249,7 @@ class TestFlextResult:
         def function_with_generic_exception(_: str) -> FlextResult[str]:
             """Function that raises a generic exception."""
             msg = "Generic runtime error"
-            raise RuntimeError(msg)
+            raise FlextError(msg)
 
         chained = result.flat_map(function_with_generic_exception)
         assert chained.is_failure

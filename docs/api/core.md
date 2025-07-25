@@ -75,12 +75,12 @@ result = fetch_user("123")
 
 if result.is_success:
     # result.data é garantidamente não-None quando is_success=True
-    user_data = result.data  # Type: dict
+    user_data = result.datadict
     print(f"User: {user_data['name']}")
 
 if result.is_failure:
     # result.error é garantidamente não-None quando is_failure=True
-    error_msg = result.error  # Type: str
+    error_msg = result.errorstr
     print(f"Error: {error_msg}")
 ```
 
@@ -179,13 +179,13 @@ container.register("cache", RedisCache(), singleton=True)
 # Obter serviço registrado
 db_result = container.get("database")
 if db_result.is_success:
-    database = db_result.data  # Type: DatabaseService
+    database = db_result.dataDatabaseService
     users = database.fetch_users()
 
 # Resolução com type hint
 email_service = container.get_typed("email", EmailService)
 if email_service.is_success:
-    service = email_service.data  # Type: EmailService
+    service = email_service.dataEmailService
     service.send_email("test@example.com", "Hello")
 ```
 
