@@ -51,7 +51,7 @@ class FlextDict:
     # Basic Access Methods
     # -------------------------------------------------------------------------
 
-    def get_raw(self, key: str, default: Any = None) -> Any:
+    def get_raw(self, key: str, default: object = None) -> object:
         """Get raw value without type conversion."""
         return self._data.get(key, default)
 
@@ -59,7 +59,7 @@ class FlextDict:
         """Check if key exists in dictionary."""
         return key in self._data
 
-    def set(self, key: str, value: Any) -> FlextDict:
+    def set(self, key: str, value: object) -> FlextDict:
         """Set value and return self for chaining."""
         self._data[key] = value
         return self
@@ -93,7 +93,7 @@ class FlextDict:
         except Exception as e:  # noqa: BLE001
             return FlextResult.fail(f"Cannot convert '{key}' to string: {e}")
 
-    def get_int(self, key: str, default: int | None = None) -> FlextResult[int]:
+    def get_int(self, key: str, default: int | None = None) -> FlextResult[int]:  # noqa: PLR0911
         """Get integer value with safe conversion."""
         if key not in self._data:
             if default is not None:
@@ -143,7 +143,7 @@ class FlextDict:
         except (ValueError, TypeError) as e:
             return FlextResult.fail(f"Cannot convert '{key}' to float: {e}")
 
-    def get_bool(self, key: str, default: bool | None = None) -> FlextResult[bool]:
+    def get_bool(self, key: str, *, default: bool | None = None) -> FlextResult[bool]:  # noqa: PLR0911
         """Get boolean value with safe conversion."""
         if key not in self._data:
             if default is not None:
@@ -175,7 +175,7 @@ class FlextDict:
 
         return FlextResult.fail(f"Cannot convert {type(value)} to boolean")
 
-    def get_list(self, key: str, default: list[Any] | None = None) -> FlextResult[list[Any]]:
+    def get_list(self, key: str, default: list[object] | None = None) -> FlextResult[list[object]]:  # noqa: PLR0911
         """Get list value with safe conversion."""
         if key not in self._data:
             if default is not None:
@@ -249,7 +249,7 @@ class FlextDict:
 
         return FlextResult.ok(current)
 
-    def set_nested(self, path: str, value: Any, separator: str = ".") -> FlextResult[None]:
+    def set_nested(self, path: str, value: object, separator: str = ".") -> FlextResult[None]:
         """Set nested value using dot notation.
 
         Creates intermediate dictionaries as needed.
@@ -470,7 +470,7 @@ def safe_get[T](
 def safe_set_nested(
     data: dict[str, Any],
     path: str,
-    value: Any,
+    value: object,
     separator: str = ".",
 ) -> FlextResult[None]:
     """Safely set nested value in dictionary.

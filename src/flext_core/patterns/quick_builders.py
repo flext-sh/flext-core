@@ -9,6 +9,9 @@ construction patterns while maintaining type safety and validation.
 
 from __future__ import annotations
 
+import uuid
+from datetime import UTC
+from datetime import datetime
 from typing import TYPE_CHECKING
 from typing import Any
 
@@ -24,7 +27,7 @@ if TYPE_CHECKING:
 # =============================================================================
 
 
-def flext_config(**kwargs: Any) -> FlextDict:
+def flext_config(**kwargs: dict[str, Any]) -> FlextDict:
     """Quick builder for configuration objects.
 
     Args:
@@ -66,7 +69,7 @@ def flext_env_config(
             "port": 8000
         })
     """
-    import os
+    import os  # noqa: PLC0415
 
     config_data = dict(defaults) if defaults else {}
 
@@ -83,7 +86,7 @@ def flext_env_config(
 
 def flext_database_config(
     url: str,
-    **options: Any,
+    **options: dict[str, Any],
 ) -> FlextDict:
     """Build database configuration with common defaults.
 
@@ -124,8 +127,9 @@ def flext_database_config(
 
 
 def flext_api_response(
+    *,
     success: bool = True,
-    data: Any = None,
+    data: object = None,
     error: str | None = None,
     metadata: Mapping[str, Any] | None = None,
 ) -> FlextDict:
@@ -165,11 +169,11 @@ def flext_api_response(
 
 
 def flext_paginated_response(
-    items: list[Any],
+    items: list[object],
     page: int = 1,
     page_size: int = 20,
     total_items: int | None = None,
-    **metadata: Any,
+    **metadata: dict[str, Any],
 ) -> FlextDict:
     """Build paginated API response.
 
@@ -221,10 +225,10 @@ def flext_paginated_response(
 
 def flext_event(
     event_type: str,
-    data: Any = None,
+    data: object = None,
     event_id: str | None = None,
     correlation_id: str | None = None,
-    **metadata: Any,
+    **metadata: dict[str, Any],
 ) -> FlextDict:
     """Build standardized event object.
 
@@ -247,10 +251,6 @@ def flext_event(
             version="1.0"
         )
     """
-    import uuid
-    from datetime import UTC
-    from datetime import datetime
-
     event_data = {
         "event_id": event_id or str(uuid.uuid4()),
         "event_type": event_type,
@@ -268,10 +268,10 @@ def flext_event(
 
 def flext_command(
     command_type: str,
-    data: Any = None,
+    data: object = None,
     command_id: str | None = None,
     user_id: str | None = None,
-    **metadata: Any,
+    **metadata: dict[str, Any],
 ) -> FlextDict:
     """Build standardized command object.
 
@@ -293,10 +293,6 @@ def flext_command(
             priority="high"
         )
     """
-    import uuid
-    from datetime import UTC
-    from datetime import datetime
-
     command_data = {
         "command_id": command_id or str(uuid.uuid4()),
         "command_type": command_type,
@@ -317,7 +313,7 @@ def flext_command(
 # =============================================================================
 
 
-def flext_validation_rules(**rules: Any) -> dict[str, Any]:
+def flext_validation_rules(**rules: dict[str, Any]) -> dict[str, Any]:
     """Build validation rules dictionary.
 
     Args:
@@ -336,7 +332,8 @@ def flext_validation_rules(**rules: Any) -> dict[str, Any]:
     return dict(rules)
 
 
-def flext_field_rule(
+def flext_field_rule(  # noqa: PLR0913
+    *,
     required: bool = False,
     field_type: str | None = None,
     min_length: int | None = None,
@@ -344,8 +341,8 @@ def flext_field_rule(
     min_value: float | None = None,
     max_value: float | None = None,
     pattern: str | None = None,
-    allowed_values: list[Any] | None = None,
-    **custom: Any,
+    allowed_values: list[object] | None = None,
+    **custom: dict[str, Any],
 ) -> dict[str, Any]:
     r"""Build field validation rule.
 
@@ -408,8 +405,8 @@ def flext_field_rule(
 def flext_query_filter(
     field: str,
     operator: str = "eq",
-    value: Any = None,
-    **options: Any,
+    value: object = None,
+    **options: dict[str, Any],
 ) -> FlextDict:
     """Build query filter.
 
@@ -449,7 +446,7 @@ def flext_query_filter(
 def flext_query_sort(
     field: str,
     direction: str = "asc",
-    **options: Any,
+    **options: dict[str, Any],
 ) -> FlextDict:
     """Build query sort specification.
 
@@ -486,7 +483,7 @@ def flext_search_query(
     sorts: list[FlextDict] | None = None,
     page: int = 1,
     page_size: int = 20,
-    **options: Any,
+    **options: dict[str, Any],
 ) -> FlextDict:
     """Build comprehensive search query.
 
@@ -536,10 +533,11 @@ def flext_search_query(
 
 
 def flext_result_builder(
+    *,
     success: bool = True,
-    data: Any = None,
+    data: object = None,
     error: str | None = None,
-) -> FlextResult[Any]:
+) -> FlextResult[object]:
     """Quick builder for FlextResult objects.
 
     Args:

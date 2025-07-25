@@ -16,6 +16,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Protocol
+from typing import Self
 from typing import TypeVar
 
 from flext_core.result import FlextResult
@@ -200,7 +201,7 @@ class Service[T](Protocol):
 class Factory[T](Protocol):
     """Generic factory protocol."""
 
-    def create(self, **kwargs: Any) -> FlextResult[T]:
+    def create(self, **kwargs: object) -> FlextResult[T]:
         """Create new instance."""
         ...
 
