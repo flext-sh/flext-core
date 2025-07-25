@@ -121,7 +121,7 @@ faker = "^37.4.0"
 django = "^5.2.4"
 pydantic = "^2.11.7"
 python-ldap = "^3.4.4"
-redis = "^5.0.0"
+redis = "^6.2.0"
 
 
 [tool.poetry.group.typings.dependencies]
