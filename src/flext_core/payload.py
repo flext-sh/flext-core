@@ -1,167 +1,505 @@
-"""FlextPayload - Validated payload container.
+"""FLEXT Core Payload Module.
+
+Comprehensive type-safe payload system for structured data transport with validation
+and metadata management. Implements consolidated architecture pattern with mixin inheritance.
+
+Architecture:
+    - Type-safe payload containers with generic type support
+    - Pydantic-based validation with strict immutability
+    - Multiple inheritance from specialized mixin base classes
+    - Railway-oriented programming with FlextResult integration
+    - Specialized payload types for common message patterns
+
+Payload System Components:
+    - FlextPayload[T]: Generic payload container with metadata support
+    - FlextMessage: Specialized string message payload with level validation
+    - FlextEvent: Domain event payload with aggregate tracking
+    - Factory methods: Type-safe payload creation with validation
+    - Metadata management: Key-value metadata with type safety
+
+Maintenance Guidelines:
+    - Add new specialized payload types by inheriting from FlextPayload[T]
+    - Use FlextResult pattern for all factory methods that can fail
+    - Maintain immutability through Pydantic frozen configuration
+    - Keep validation logic consistent with base validation patterns
+    - Integrate logging through FlextLoggableMixin for observability
+
+Design Decisions:
+    - Generic type parameter [T] for type-safe data transport
+    - Frozen Pydantic models for immutability and thread safety
+    - Multiple inheritance from mixin classes for behavior composition
+    - Factory method pattern for validated payload creation
+    - Metadata as separate dict for flexible extension
+    - Railway programming pattern for error handling
+
+Transport Features:
+    - Type-safe generic payload container with compile-time type checking
+    - Automatic validation through Pydantic with comprehensive error reporting
+    - Immutable payload objects preventing accidental modification
+    - Rich metadata support for transport context and debugging
+    - Structured logging integration for payload lifecycle tracking
+    - Serialization support through SerializableMixin inheritance
+
+Dependencies:
+    - pydantic: Data validation and immutable model configuration
+    - mixins: Serializable, validatable, and loggable behavior patterns
+    - result: FlextResult pattern for consistent error handling
+    - types: Generic type variables and payload-specific type aliases
+    - validation: Base validation utilities for data integrity
 
 Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
-
-Validated payload container for structured data transfer.
 """
 
 from __future__ import annotations
 
-from pydantic import BaseModel
-from pydantic import ConfigDict
+from collections.abc import Mapping
+
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
+
+from flext_core.mixins import (
+    FlextLoggableMixin,
+    FlextSerializableMixin,
+    FlextValidatableMixin,
+)
+from flext_core.result import FlextResult
+from flext_core.types import FlextTypes
+from flext_core.validation import FlextValidators
+
+# Use FlextTypes for type variables
+T = FlextTypes.T
 
 
-class FlextPayload(BaseModel):
-    """Validated payload container for structured data transfer.
+class FlextPayload[T](
+    BaseModel,
+    FlextSerializableMixin,
+    FlextValidatableMixin,
+    FlextLoggableMixin,
+):
+    """Generic type-safe payload container for structured data transport with validation.
 
-    This class provides a type-safe way to handle data payloads
-    throughout the FLEXT ecosystem with automatic validation and
-    serialization.
+    Comprehensive payload implementation providing immutable data transport with automatic
+    validation, serialization, and metadata management. Combines Pydantic validation
+    with mixin functionality for complete data integrity.
 
-    Features:
-        - Strict validation of all fields
-        - Automatic serialization/deserialization
-        - Immutable after creation (frozen)
-        - Type-safe field access
-        - JSON schema generation
+    Architecture:
+        - Generic type parameter [T] for compile-time type safety
+        - Pydantic BaseModel for automatic validation and serialization
+        - Multiple inheritance from specialized mixin classes
+        - Frozen configuration for immutability and thread safety
+        - Rich metadata support for transport context
 
-    Examples:
-        Basic usage:
-        >>> payload = FlextPayload(
-        ...     user_id="123", action="login", timestamp="2025-01-01T00:00:00Z"
-        ... )
-        >>> assert payload.user_id == "123"
+    Transport Features:
+        - Type-safe data encapsulation with generic constraints
+        - Automatic validation through Pydantic field validation
+        - Immutable payload objects preventing modification after creation
+        - Metadata dictionary for transport context and debugging information
+        - Structured logging integration through FlextLoggableMixin
+        - Serialization support through FlextSerializableMixin
 
-        With nested data:
-        >>> data = {"name": "Alice", "age": 30}
-        >>> payload = FlextPayload(user_data=data, event_type="user.updated")
+    Validation Integration:
+        - Automatic field validation through Pydantic configuration
+        - Custom validation through FlextValidatableMixin methods
+        - Railway-oriented creation through factory methods
+        - Comprehensive error reporting for validation failures
 
-        Validation:
-        >>> payload = FlextPayload()  # Empty payload is valid
-        >>> payload = FlextPayload(key="value", count=42, active=True)
+    Metadata Management:
+        - Key-value metadata storage with type safety
+        - Immutable metadata updates through copy-on-write pattern
+        - Metadata querying and existence checking methods
+        - Integration with logging for observability
 
+    Usage Patterns:
+        # Basic payload creation
+        payload = FlextPayload(data={"user_id": "123"})
+
+        # Type-safe payload
+        user_payload: FlextPayload[User] = FlextPayload(data=user_instance)
+
+        # Payload with metadata
+        order_payload = FlextPayload(
+            data=order_data,
+            metadata={"version": "1.0", "source": "api", "timestamp": time.time()}
+        )
+
+        # Factory method with validation
+        result = FlextPayload.create(
+            data=complex_data,
+            version="2.0",
+            source="batch_processor"
+        )
+        if result.is_success:
+            validated_payload = result.data
+
+        # Metadata operations
+        enhanced_payload = payload.with_metadata(
+            processed_at=time.time(),
+            processor_id="worker_001"
+        )
+
+        if enhanced_payload.has_metadata("version"):
+            version = enhanced_payload.get_metadata("version")
+
+    Type Safety:
+        - Generic type parameter constrains data type at compile time
+        - Type checkers can verify payload content type compatibility
+        - Runtime type validation through Pydantic field constraints
+        - Safe metadata access with default value support
     """
 
     model_config = ConfigDict(
-        # Allow any additional fields (payloads are flexible)
-        extra="allow",
-        # Frozen for immutability
         frozen=True,
-        # Validate on assignment
         validate_assignment=True,
-        # String processing
         str_strip_whitespace=True,
-        # JSON schema generation
+        extra="forbid",
         json_schema_extra={
-            "description": "Flexible payload container for structured data",
+            "description": "Type-safe payload container",
             "examples": [
-                {"user_id": "123", "action": "login"},
-                {
-                    "data": {"key": "value"},
-                    "timestamp": "2025-01-01T00:00:00Z",
-                },
+                {"data": {"id": 1}, "metadata": {"version": "1.0"}},
+                {"data": "simple string", "metadata": {"type": "text"}},
             ],
         },
     )
 
-    def __getattr__(self, name: str) -> object:
-        """Allow dynamic attribute access for payload fields."""
-        extra = self.__pydantic_extra__
-        if extra is not None and name in extra:
-            return extra[name]
-        msg = f"'{self.__class__.__name__}' object has no attribute '{name}'"
-        raise AttributeError(msg)
+    data: T = Field(description="Payload data")
+    metadata: dict[str, object] = Field(
+        default_factory=dict,
+        description="Optional metadata",
+    )
 
-    def has(self, field_name: str) -> bool:
-        """Check if a field exists in the payload.
-
-        Args:
-            field_name: Name of the field to check
-
-        Returns:
-            True if field exists, False otherwise
-
-        Examples:
-            >>> payload = FlextPayload(user_id="123")
-            >>> assert payload.has("user_id")
-            >>> assert not payload.has("missing_field")
-
-        """
-        extra = self.__pydantic_extra__
-        return extra is not None and field_name in extra
-
-    def get(self, field_name: str, default: object = None) -> object:
-        """Get field value with optional default.
+    @classmethod
+    def create(cls, data: T, **metadata: object) -> FlextResult[FlextPayload[T]]:
+        """Create payload with validation.
 
         Args:
-            field_name: Name of the field to get
-            default: Default value if field doesn't exist
+            data: Payload data
+            **metadata: Optional metadata fields
 
         Returns:
-            Field value or default
-
-        Examples:
-            >>> payload = FlextPayload(user_id="123")
-            >>> assert payload.get("user_id") == "123"
-            >>> assert payload.get("missing", "default") == "default"
+            Result containing payload or error
 
         """
-        extra = self.__pydantic_extra__
-        if extra is None:
-            return default
-        return extra.get(field_name, default)
+        # Import logger directly for class methods
+        from flext_core.loggings import FlextLogger  # noqa: PLC0415
 
-    def keys(self) -> list[str]:
-        """Get all field names in the payload.
+        logger = FlextLogger.get_logger(f"{cls.__module__}.{cls.__name__}")
 
-        Returns:
-            List of field names
+        logger.debug(
+            "Creating payload",
+            data_type=type(data).__name__,
+            metadata_keys=list(metadata.keys()),
+        )
 
-        Examples:
-            >>> payload = FlextPayload(user_id="123", action="login")
-            >>> assert "user_id" in payload.keys()
-            >>> assert "action" in payload.keys()
+        try:
+            # Keys in **metadata are always strings, so no validation needed
+            payload = cls(data=data, metadata=metadata)
+            logger.debug("Payload created successfully", payload_id=id(payload))
+            return FlextResult.ok(payload)
+        except (TypeError, ValueError, ValidationError) as e:
+            logger.exception("Failed to create payload")
+            return FlextResult.fail(f"Failed to create payload: {e}")
 
-        """
-        extra = self.__pydantic_extra__
-        if extra is None:
-            return []
-        return list(extra.keys())
-
-    def items(self) -> list[tuple[str, object]]:
-        """Get all field name-value pairs.
-
-        Returns:
-            List of (name, value) tuples
-
-        Examples:
-            >>> payload = FlextPayload(user_id="123", action="login")
-            >>> items = payload.items()
-            >>> assert ("user_id", "123") in items
-
-        """
-        extra = self.__pydantic_extra__
-        if extra is None:
-            return []
-        return list(extra.items())
-
-    def __contains__(self, field_name: str) -> bool:
-        """Support 'in' operator for field existence check.
+    def with_metadata(self, **additional: object) -> FlextPayload[T]:
+        """Create new payload with additional metadata.
 
         Args:
-            field_name: Name of the field to check
+            **additional: Metadata to add/update
 
         Returns:
-            True if field exists, False otherwise
-
-        Examples:
-            >>> payload = FlextPayload(user_id="123")
-            >>> assert "user_id" in payload
-            >>> assert "missing" not in payload
+            New payload with updated metadata
 
         """
-        return self.has(field_name)
+        self.logger.debug(
+            "Adding metadata to payload",
+            additional_keys=list(additional.keys()),
+        )
+
+        # Keys in **additional are always strings, so merge directly
+        new_metadata = {**self.metadata, **additional}
+        return FlextPayload(data=self.data, metadata=new_metadata)
+
+    def get_metadata(self, key: str, default: object | None = None) -> object | None:
+        """Get metadata value by key.
+
+        Args:
+            key: Metadata key
+            default: Default if key not found
+
+        Returns:
+            Metadata value or default
+
+        """
+        return self.metadata.get(key, default)
+
+    def has_metadata(self, key: str) -> bool:
+        """Check if metadata key exists.
+
+        Args:
+            key: Metadata key to check
+
+        Returns:
+            True if key exists
+
+        """
+        return key in self.metadata
+
+    def to_dict(self) -> dict[str, object]:
+        """Convert to dictionary representation.
+
+        Returns:
+            Dictionary with data and metadata
+
+        """
+        return {
+            "data": self.data,
+            "metadata": self.metadata,
+        }
+
+    def __repr__(self) -> str:
+        """Return string representation."""
+        data_repr = repr(self.data)
+        max_repr_length = 50
+        if len(data_repr) > max_repr_length:
+            data_repr = f"{data_repr[:47]}..."
+        meta_count = len(self.metadata)
+        return f"FlextPayload(data={data_repr}, metadata_keys={meta_count})"
 
 
-__all__ = ["FlextPayload"]
+# =============================================================================
+# SPECIALIZED PAYLOAD TYPES - Message and Event patterns
+# =============================================================================
+
+
+class FlextMessage(FlextPayload[str]):
+    """Specialized string message payload with level validation and source tracking.
+
+    Purpose-built payload for text messages with structured metadata including
+    message level classification and source identification. Extends FlextPayload[str]
+    with message-specific validation and factory methods.
+
+    Architecture:
+        - Inherits from FlextPayload[str] for string-specific type safety
+        - Level-based message classification with validation
+        - Source tracking for message origin identification
+        - Factory method pattern for validated message creation
+        - Integration with logging system for message lifecycle tracking
+
+    Message Classification:
+        - Supports standard logging levels: info, warning, error, debug, critical
+        - Automatic level validation with fallback to 'info' for invalid levels
+        - Level-specific metadata enrichment for message categorization
+        - Source attribution for message traceability
+
+    Validation Features:
+        - Non-empty string validation for message content
+        - Level validation against predefined valid values
+        - Source validation when provided (optional parameter)
+        - Comprehensive error reporting through FlextResult pattern
+
+    Usage Patterns:
+        # Basic message creation
+        result = FlextMessage.create_message("User logged in successfully")
+        if result.is_success:
+            message = result.data
+
+        # Message with level and source
+        error_result = FlextMessage.create_message(
+            "Database connection failed",
+            level="error",
+            source="database_service"
+        )
+
+        # Access message properties
+        if message.has_metadata("level"):
+            level = message.get_metadata("level")  # Returns message level
+
+        # Extend with additional metadata
+        enriched_message = message.with_metadata(
+            timestamp=time.time(),
+            user_id="user_123"
+        )
+    """
+
+    @classmethod
+    def create_message(
+        cls,
+        message: str,
+        *,
+        level: str = "info",
+        source: str | None = None,
+    ) -> FlextResult[FlextMessage]:
+        """Create message payload.
+
+        Args:
+            message: Message text
+            level: Message level (info, warning, error)
+            source: Message source
+
+        Returns:
+            Result containing message payload
+
+        """
+        # Import logger directly for class methods
+        from flext_core.loggings import FlextLogger  # noqa: PLC0415
+
+        logger = FlextLogger.get_logger(f"{cls.__module__}.{cls.__name__}")
+
+        # Validate message using FlextValidation
+        if not FlextValidators.is_non_empty_string(message):
+            logger.error("Invalid message - empty or not string")
+            return FlextResult.fail("Message cannot be empty")
+
+        # Validate level
+        valid_levels = ["info", "warning", "error", "debug", "critical"]
+        if level not in valid_levels:
+            logger.warning("Invalid message level, using 'info'", level=level)
+            level = "info"
+
+        metadata: dict[str, object] = {"level": level}
+        if source:
+            metadata["source"] = source
+
+        logger.debug("Creating message payload", level=level, source=source)
+
+        # Create FlextMessage instance directly
+        try:
+            instance = cls(data=message, metadata=metadata)
+            return FlextResult.ok(instance)
+        except (TypeError, ValueError, ValidationError) as e:
+            return FlextResult.fail(f"Failed to create message: {e}")
+
+
+class FlextEvent(FlextPayload[Mapping[str, object]]):
+    """Domain event payload with aggregate tracking and versioning support.
+
+    Specialized payload for domain-driven design events with comprehensive metadata
+    for event sourcing, aggregate identification, and version tracking. Extends
+    FlextPayload[Mapping[str, object]] for structured event data transport.
+
+    Architecture:
+        - Inherits from FlextPayload[Mapping[str, object]] for structured event data
+        - Event type classification with validation requirements
+        - Aggregate identification for domain entity correlation
+        - Version tracking for event ordering and conflict resolution
+        - Factory method pattern for validated event creation
+
+    Event Sourcing Features:
+        - Event type identification for event handler routing
+        - Aggregate ID correlation for entity reconstruction
+        - Version tracking for optimistic concurrency control
+        - Structured event data with key-value mapping constraint
+        - Comprehensive validation for event integrity
+
+    Domain-Driven Design Integration:
+        - Event type naming conventions for domain clarity
+        - Aggregate boundary respect through ID correlation
+        - Event versioning for evolution and backward compatibility
+        - Rich event data structure supporting complex domain information
+        - Metadata enrichment for event processing context
+
+    Validation Requirements:
+        - Non-empty string validation for event type classification
+        - Aggregate ID validation when provided (must be non-empty string)
+        - Version validation ensuring non-negative integer values
+        - Event data structure validation through Mapping constraint
+        - Factory method validation with comprehensive error reporting
+
+    Usage Patterns:
+        # Basic domain event
+        result = FlextEvent.create_event(
+            event_type="UserRegistered",
+            event_data={"user_id": "123", "email": "user@example.com"}
+        )
+
+        # Event with aggregate tracking
+        order_event = FlextEvent.create_event(
+            event_type="OrderCreated",
+            event_data={"order_id": "456", "amount": 100.00, "items": [...]},
+            aggregate_id="order_456",
+            version=1
+        )
+
+        # Access event metadata
+        event_type = event.get_metadata("event_type")
+        aggregate_id = event.get_metadata("aggregate_id")
+        version = event.get_metadata("version")
+
+        # Event data access
+        event_data = event.data  # Returns Mapping[str, object]
+        user_id = event_data.get("user_id")
+
+        # Extend event with processing metadata
+        processed_event = event.with_metadata(
+            processed_at=time.time(),
+            processor_version="1.2.3",
+            correlation_id="req_789"
+        )
+    """
+
+    @classmethod
+    def create_event(
+        cls,
+        event_type: str,
+        event_data: Mapping[str, object],
+        *,
+        aggregate_id: str | None = None,
+        version: int | None = None,
+    ) -> FlextResult[FlextEvent]:
+        """Create event payload.
+
+        Args:
+            event_type: Type of event
+            event_data: Event data
+            aggregate_id: Optional aggregate ID
+            version: Optional event version
+
+        Returns:
+            Result containing event payload
+
+        """
+        # Import logger directly for class methods
+        from flext_core.loggings import FlextLogger  # noqa: PLC0415
+
+        logger = FlextLogger.get_logger(f"{cls.__module__}.{cls.__name__}")
+
+        # Validate event_type using FlextValidation
+        if not FlextValidators.is_non_empty_string(event_type):
+            logger.error("Invalid event type - empty or not string")
+            return FlextResult.fail("Event type cannot be empty")
+
+        # Validate aggregate_id if provided
+        if aggregate_id and not FlextValidators.is_non_empty_string(aggregate_id):
+            logger.error("Invalid aggregate ID - empty or not string")
+            return FlextResult.fail("Invalid aggregate ID")
+
+        # Validate version if provided
+        if version is not None and version < 0:
+            logger.error("Invalid event version", version=version)
+            return FlextResult.fail("Event version must be non-negative")
+
+        metadata: dict[str, object] = {"event_type": event_type}
+        if aggregate_id:
+            metadata["aggregate_id"] = aggregate_id
+        if version is not None:
+            metadata["version"] = version
+
+        logger.debug(
+            "Creating event payload",
+            event_type=event_type,
+            aggregate_id=aggregate_id,
+            version=version,
+        )
+        # Create FlextEvent instance directly for correct return type
+        try:
+            instance = cls(data=dict(event_data), metadata=metadata)
+            return FlextResult.ok(instance)
+        except (TypeError, ValueError, ValidationError) as e:
+            return FlextResult.fail(f"Failed to create event: {e}")
+
+
+# Export API
+__all__ = [
+    "FlextEvent",
+    "FlextMessage",
+    "FlextPayload",
+]

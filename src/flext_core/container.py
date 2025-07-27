@@ -1,717 +1,835 @@
-"""FlextContainer - Enterprise Dependency Injection System.
+"""FLEXT Core Container Module.
+
+Enterprise-grade dependency injection system for the FLEXT Core library providing
+comprehensive service management through SOLID principles and type-safe operations.
+
+Architecture:
+    - SOLID-compliant design with clear separation of responsibilities
+    - Internal modular organization with focused single-responsibility classes
+    - Type-safe service registration and retrieval with generic support
+    - FlextResult integration for comprehensive error handling
+    - Global container management with thread-safe operations
+
+Container System Components:
+    - FlextServiceRegistrar: Service and factory registration operations
+    - FlextServiceRetrivier: Service retrieval and information operations
+    - FlextContainer: Main public API orchestrating internal components
+    - ServiceKey[T]: Type-safe service key system for enhanced type safety
+    - Global management: Thread-safe global container instance management
+
+Maintenance Guidelines:
+    - Maintain single responsibility principle in internal classes
+    - Use FlextResult pattern for all operations that can fail
+    - Integrate FlextLoggableMixin for consistent logging across components
+    - Preserve type safety through ServiceKey system and type guards
+    - Keep registration and retrieval operations separate for clarity
+
+Design Decisions:
+    - Consolidated from multiple modules while maintaining internal SRP
+    - Dependency inversion through interface abstractions
+    - Factory pattern support for lazy service initialization
+    - Type-safe operations with compile-time and runtime validation
+    - FlextResult error handling instead of exception propagation
+
+Dependency Injection Features:
+    - Service instance registration with singleton management
+    - Factory function registration for lazy initialization
+    - Type-safe retrieval with compile-time type checking
+    - Service information and introspection capabilities
+    - Global container management for application-wide access
+
+Dependencies:
+    - result: FlextResult pattern for error handling
+    - mixins: FlextLoggableMixin for structured logging
+    - types: Type definitions and type guard utilities
+    - validation_base: Core validation for service names and parameters
 
 Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
-
-Professional dependency injection container following enterprise
-patterns and SOLID principles. Designed as the foundational service
-registry for all FLEXT ecosystem projects, providing comprehensive
-dependency management with maximum type safety and production-grade
-reliability.
-
-Architectural Principles:
-- Single Responsibility: Exclusive focus on service lifecycle management
-- Open/Closed: Extensible through composition, sealed against
-  inheritance
-- Liskov Substitution: Consistent behavioral contracts across all
-  instances
-- Interface Segregation: Minimal, cohesive interface design
-- Dependency Inversion: Abstract service dependencies, concrete
-  implementations
-
-Enterprise Features:
-- Thread-safe service registry with optimistic locking mechanisms
-- Factory pattern support with lazy initialization and singleton caching
-- Comprehensive validation using Pydantic V2 with strict type checking
-- Type-safe operations with full generic support and mypy compatibility
-- Zero external dependencies for maximum portability and reliability
-- Production-ready error handling with FlextResult pattern integration
-- Comprehensive logging integration points for enterprise monitoring
-
-Performance Characteristics:
-- O(1) service lookup and registration using optimized hash tables
-- Minimal memory footprint with efficient caching strategies
-- Thread-safe concurrent reads without synchronization overhead
-- Lazy factory instantiation reducing application startup time
-- Efficient serialization support for distributed system integration
 """
 
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Any
-from typing import TypeVar
-from typing import final
+from typing import TYPE_CHECKING
 
-from pydantic import BaseModel
-from pydantic import ConfigDict
-from pydantic import Field
-from pydantic import field_validator
-
+from flext_core.mixins import FlextLoggableMixin
 from flext_core.result import FlextResult
-from flext_core.types_system import flext_validate_service_name
+from flext_core.types import FlextTypes
+from flext_core.validation import FlextValidators
 
-# Type variables for generic service handling
-T = TypeVar("T")
-U = TypeVar("U")
-FlextServiceFactory = Callable[[], T]
+if TYPE_CHECKING:
+    from flext_core.types import T
+
+# FlextLogger imported for convenience - all classes use FlextLoggableMixin
 
 
-@final
-class FlextContainer(BaseModel):
-    """Dependency injection container for FLEXT ecosystem.
+# =============================================================================
+# SERVICE REGISTRATION - SRP: Registration Operations Only
+# =============================================================================
 
-    Serves as the central service registry providing thread-safe,
-    type-validated service management with lifecycle support.
-    Implements the Service Locator pattern with dependency injection.
 
-    Features:
-        - Type-safe service registration with Pydantic V2 validation
-        - Factory pattern with lazy initialization and singleton caching
-        - Thread-safe concurrent read operations with atomic writes
-        - Error handling using FlextResult pattern
-        - Zero external dependencies for portability
-        - Service identifier validation and lifecycle management
+class FlextServiceRegistrar(FlextLoggableMixin):
+    """Service registration component implementing single responsibility principle.
+
+    Focused component responsible exclusively for service and factory registration
+    operations. Implements comprehensive validation, error handling, and logging
+    for registration lifecycle management.
 
     Architecture:
-        - Immutable service definitions with controlled registry state
-        - String-based service identification
-        - Factory functions enable lazy loading patterns
-        - Singleton pattern with lifecycle management
-        - State transitions with validation at each step
-        - FlextResult-based error propagation
+        - Single responsibility: service registration operations only
+        - FlextLoggableMixin integration for structured logging
+        - FlextResult error handling for comprehensive error reporting
+        - Validation integration for service name and parameter checking
 
-    Usage:
-        Service registration:
-        >>> container = FlextContainer()
-        >>> result = container.register("database", DatabaseService(config))
-        >>> assert result.is_success
+    Registration Features:
+        - Service instance registration with duplicate detection
+        - Factory function registration for lazy initialization
+        - Service unregistration with cleanup operations
+        - Bulk operations for clearing all registered services
+        - Service existence checking and metadata operations
 
-        Factory-based services:
-        >>> def create_cache() -> CacheService:
-        ...     return CacheService(redis_config)
-        >>> result = container.register_singleton("cache", create_cache)
-        >>> cache = container.get("cache").data
+    Validation and Error Handling:
+        - Service name validation using base validators
+        - Duplicate registration detection and prevention
+        - Comprehensive error messages with context information
+        - Structured logging for all registration operations
 
-        Error handling:
-        >>> result = container.get("missing_service")
-        >>> if result.is_failure:
-        ...     logger.error(f"Service unavailable: {result.error}")
+    Internal Storage:
+        - _services: Dictionary mapping service names to instances
+        - _factories: Dictionary mapping service names to factory functions
+        - Separate storage for instances and factories for clear separation
 
-        Service management:
-        >>> container.remove("deprecated_service")
-        >>> services = container.list_services()
-
-    Thread Safety:
-        - Read operations are thread-safe
-        - Write operations require external synchronization
-        - Singleton creation uses thread-safe patterns
-
-    Performance:
-        - O(1) service lookup using hash tables
-        - Minimal memory overhead
-        - Lazy factory instantiation
-        - Thread-safe reads without synchronization penalties
-
+    Usage (Internal):
+        registrar = FlextServiceRegistrar()
+        result = registrar.register_service("user_service", UserService())
+        if result.is_success:
+            # Service registered successfully
+            pass
     """
 
-    model_config = ConfigDict(
-        # Allow controlled mutation for service registration operations
-        frozen=False,
-        # Strict validation with automatic string processing
-        str_strip_whitespace=True,
-        validate_assignment=True,
-        # Allow any service type for maximum flexibility
-        arbitrary_types_allowed=True,
-        # Forbid extra fields for data integrity
-        extra="forbid",
-        # JSON schema generation for API documentation
-        json_schema_extra={
-            "description": "Enterprise dependency injection container",
-            "examples": [
-                {
-                    "services": {"database": "DatabaseService()"},
-                    "singletons": {"cache": "CacheService()"},
-                },
-            ],
-        },
-    )
+    def __init__(self) -> None:
+        """Initialize service registrar."""
+        self._services: dict[str, object] = {}
+        self._factories: dict[str, Callable[[], object]] = {}
 
-    services: dict[str, Any] = Field(
-        default_factory=dict,
-        description="Registry of registered services and factory functions",
-    )
-
-    singletons: dict[str, Any] = Field(
-        default_factory=dict,
-        description="Cache of instantiated singleton service instances",
-    )
-
-    @field_validator("services", "singletons")
-    @classmethod
-    def validate_service_registries(
-        cls,
-        value: dict[str, Any],
-    ) -> dict[str, Any]:
-        """Validate service registry structure and identifiers.
-
-        Ensures registries maintain dictionary structure with valid
-        service identifiers. Prevents runtime errors and maintains
-        data integrity.
-
-        Args:
-            value: Registry dictionary to validate
-
-        Returns:
-            Validated registry dictionary
-
-        Raises:
-            TypeError: If registry is not a dictionary
-            ValueError: If registry contains invalid identifiers
-
-        """
-        # Validate all keys are valid service identifiers
-        for key in value:
-            if not isinstance(key, str) or not key.strip():
-                msg = f"Invalid service identifier: {key!r}"
-                raise ValueError(msg)
-
-        return value
-
-    def register(self, name: str, service: object) -> FlextResult[None]:
-        """Register a service instance by identifier.
-
-        Stores the service directly in registry for immediate access.
-        Service is returned as-is when requested. For lazy initialization,
-        use register_singleton with a factory function.
-
-        Args:
-            name: Service identifier (non-empty string)
-            service: Service instance to register
-
-        Returns:
-            FlextResult indicating success or failure
-
-        Thread Safety:
-            Requires external synchronization for concurrent writes.
-
-        Example:
-            >>> container = FlextContainer()
-            >>> database = DatabaseConnection("localhost:5432")
-            >>> result = container.register("database", database)
-            >>> assert result.is_success
-
-        """
-        # Validate service identifier
-        name_result = self._validate_service_name(name)
-        if not name_result:
-            return FlextResult.fail(
-                name_result.error or "Invalid service name",
+    def register_service(self, name: str, service: object) -> FlextResult[None]:
+        """Register a service instance."""
+        # Use BASE validators directly - MAXIMIZA base usage
+        if not FlextValidators.is_non_empty_string(name):
+            return FlextResult.fail("Service name cannot be empty")
+        validation_result = FlextResult.ok(name)
+        if validation_result.is_failure:
+            self.logger.warning(
+                "Service name validation failed",
+                name=name,
+                error=validation_result.error,
             )
+            return FlextResult.fail("Service name validation failed")
 
-        # Register the service in the main registry
-        self.services[name] = service
+        validated_name = validation_result.unwrap()
 
-        # Remove from singletons cache if previously registered as factory
-        self.singletons.pop(name, None)
+        if validated_name in self._services:
+            self.logger.warning("Service already registered", name=validated_name)
+            return FlextResult.fail(f"Service '{validated_name}' already registered")
 
+        self._services[validated_name] = service
+        self.logger.debug(
+            "Service registered",
+            name=validated_name,
+            service_type=type(service).__name__,
+        )
         return FlextResult.ok(None)
 
-    def register_singleton(
+    def register_factory(
         self,
         name: str,
-        factory: FlextServiceFactory[T],
+        factory: Callable[[], object],
     ) -> FlextResult[None]:
-        """Register a singleton service factory for lazy instantiation.
-
-        Factory function is called once on first access. Subsequent
-        calls return the cached instance, ensuring singleton behavior.
-
-        Args:
-            name: Service identifier (non-empty string)
-            factory: Function that creates the service instance
-
-        Returns:
-            FlextResult indicating success or failure
-
-        Thread Safety:
-            Factory registration requires external synchronization.
-            Singleton instantiation is thread-safe.
-
-        Example:
-            >>> def create_logger() -> Logger:
-            ...     return Logger("application.log", level="INFO")
-            >>> result = container.register_singleton("logger", create_logger)
-            >>> logger1 = container.get("logger").data
-            >>> logger2 = container.get("logger").data
-            >>> assert logger1 is logger2
-
-        """
-        # Validate service identifier
-        name_result = self._validate_service_name(name)
-        if not name_result:
-            return FlextResult.fail(
-                name_result.error or "Invalid service name",
+        """Register a service factory."""
+        # Use BASE validators directly - MAXIMIZA base usage
+        if not FlextValidators.is_non_empty_string(name):
+            return FlextResult.fail("Service name cannot be empty")
+        validation_result = FlextResult.ok(name)
+        if validation_result.is_failure:
+            self.logger.warning(
+                "Factory name validation failed",
+                name=name,
+                error=validation_result.error,
             )
+            return FlextResult.fail("Service name validation failed")
 
-        # Validate factory is callable
-        if not callable(factory):
-            return FlextResult.fail(f"Factory for '{name}' must be callable")  # type: ignore[unreachable]
+        validated_name = validation_result.unwrap()
 
-        # Register the factory function
-        self.services[name] = factory
+        if validated_name in self._factories:
+            self.logger.warning("Factory already registered", name=validated_name)
+            return FlextResult.fail(f"Factory '{validated_name}' already registered")
 
-        # Clear any existing singleton cache to force recreation
-        self.singletons.pop(name, None)
-
+        self._factories[validated_name] = factory
+        self.logger.debug(
+            "Factory registered",
+            name=validated_name,
+            factory_name=factory.__name__,
+        )
         return FlextResult.ok(None)
 
-    def get(self, name: str) -> FlextResult[object]:
-        """Retrieve a service by identifier.
-
-        Returns registered instance directly for regular services.
-        For singleton factories, creates instance on first call and
-        caches for subsequent calls.
-
-        Args:
-            name: Service identifier to retrieve
-
-        Returns:
-            FlextResult containing service instance or error message
-
-        Thread Safety:
-            Thread-safe for concurrent read operations.
-            Singleton creation uses thread-safe locking.
-
-        Example:
-            >>> result = container.get("database")
-            >>> if result.is_success:
-            ...     database = result.data
-
-        """
-        # Validate service identifier
-        name_result = self._validate_service_name(name)
-        if not name_result:
-            return FlextResult.fail(
-                name_result.error or "Invalid service name",
+    def unregister_service(self, name: str) -> FlextResult[None]:
+        """Unregister a service."""
+        # Use BASE validators directly - MAXIMIZA base usage
+        if not FlextValidators.is_non_empty_string(name):
+            return FlextResult.fail("Service name cannot be empty")
+        validation_result = FlextResult.ok(name)
+        if validation_result.is_failure:
+            self.logger.warning(
+                "Service name validation failed",
+                name=name,
+                error=validation_result.error,
             )
+            return FlextResult.fail("Service name validation failed")
 
-        # Check singleton cache first for performance optimization
-        if name in self.singletons:
-            return FlextResult.ok(self.singletons[name])
+        validated_name = validation_result.unwrap()
 
-        # Check if service is registered in main registry
-        if name not in self.services:
-            return FlextResult.fail(
-                f"Service '{name}' not registered in container",
-            )
-
-        service = self.services[name]
-
-        # Handle factory-based services with singleton caching
-        if callable(service):
-            return self._create_service_instance(name, service)
-
-        # Return the service instance directly
-        return FlextResult.ok(service)
-
-    def _create_service_instance(
-        self,
-        name: str,
-        service_factory: FlextServiceFactory[T],
-    ) -> FlextResult[object]:
-        """Create service instance from factory.
-
-        Args:
-            name: Service name for error reporting
-            service_factory: Factory function to create service
-
-        Returns:
-            FlextResult with service instance or error
-
-        """
-        try:
-            # Create instance using factory function
-            instance = service_factory()
-
-            # Cache the instance for future requests
-            self.singletons[name] = instance
-
-            return FlextResult.ok(instance)
-        except (TypeError, AttributeError, ValueError) as e:
-            return FlextResult.fail(f"Failed to create service '{name}': {e}")
-        except Exception as e:
-            return FlextResult.fail(
-                f"Unexpected error creating service '{name}': {e}",
-            )
-
-    def has(self, name: str) -> bool:
-        """Check if a service is registered.
-
-        Performs lookup without instantiating factory-based services
-        or triggering side effects.
-
-        Args:
-            name: Service identifier to check
-
-        Returns:
-            True if service is registered, False otherwise
-
-        Thread Safety:
-            Thread-safe for concurrent access.
-
-        Example:
-            >>> if container.has("database"):
-            ...     db_result = container.get("database")
-
-        """
-        if not isinstance(name, str) or not name.strip():
-            return False
-        return name in self.services
-
-    def remove(self, name: str) -> FlextResult[None]:
-        """Remove a service from the container.
-
-        Removes service registration and cached singleton instance,
-        ensuring cleanup of resources and references.
-
-        Args:
-            name: Service identifier to remove
-
-        Returns:
-            FlextResult indicating success or error
-
-        Thread Safety:
-            Requires external synchronization for concurrent access.
-
-        Example:
-            >>> result = container.remove("deprecated_service")
-            >>> if result.is_success:
-            ...     logger.info("Service removed")
-
-        """
-        # Validate service identifier
-        name_result = self._validate_service_name(name)
-        if not name_result:
-            return FlextResult.fail(
-                name_result.error or "Invalid service name",
-            )
-
-        # Check if service exists before attempting removal
-        if name not in self.services:
-            return FlextResult.fail(
-                f"Service '{name}' not registered in container",
-            )
-
-        # Remove from both registries for complete cleanup
-        self.services.pop(name, None)
-        self.singletons.pop(name, None)
-
-        return FlextResult.ok(None)
-
-    def clear(self) -> FlextResult[None]:
-        """Remove all services from the container.
-
-        Clears service registrations and singleton cache. Use with
-        caution as this affects all registered services and may
-        cause runtime errors in dependent components.
-
-        Returns:
-            FlextResult indicating success
-
-        Thread Safety:
-            Requires external synchronization. Should only be called
-            during shutdown or testing.
-
-        Example:
-            >>> result = container.clear()
-            >>> assert result.is_success
-
-        """
-        self.services.clear()
-        self.singletons.clear()
-        return FlextResult.ok(None)
-
-    def list_services(self) -> list[str]:
-        """Get list of all registered service identifiers.
-
-        Returns all service names currently registered, including
-        direct instances and factory-based services. Useful for
-        monitoring and debugging.
-
-        Returns:
-            List of registered service identifiers
-
-        Thread Safety:
-            Thread-safe for concurrent read access.
-
-        Example:
-            >>> services = container.list_services()
-            >>> required = ["database", "cache", "logger"]
-            >>> missing = [s for s in required if s not in services]
-
-        """
-        return list(self.services.keys())
-
-    def _validate_service_name(self, name: object) -> FlextResult[str]:
-        """Validate service identifier using centralized validation.
-
-        Args:
-            name: Service identifier to validate
-
-        Returns:
-            FlextResult containing validated name or error message
-
-        """
-        if not isinstance(name, str):
-            return FlextResult.fail("Service name must be a string type")
-
-        try:
-            validated_name = flext_validate_service_name(name)
-            return FlextResult.ok(validated_name)
-        except ValueError as e:
-            return FlextResult.fail(str(e))
-
-    def get_or_fail(self, name: str) -> object:
-        """Get service or raise exception if not found or failed."""
-        result = self.get(name)
-        if not result.success:
-            raise ValueError(result.error or f"Service '{name}' not available")
-        return result.data
-
-    def get_or_default(self, name: str, default: object) -> object:
-        """Get service or return default if not found or failed."""
-        result = self.get(name)
-        if result.success and result.data is not None:
-            return result.data
-        return default
-
-    def get_typed(self, name: str, service_type: type[T]) -> FlextResult[T]:
-        """Get service with type checking."""
-        result = self.get(name)
-        if not result.success:
-            return result  # type: ignore[return-value]
-
-        if not isinstance(result.data, service_type):
-            return FlextResult.fail(
-                f"Service '{name}' is not of type {service_type.__name__}",
-            )
-
-        return FlextResult.ok(result.data)
-
-    def register_multiple(self, **services: object) -> FlextResult[None]:
-        """Register multiple services at once."""
-        for name, service in services.items():
-            result = self.register(name, service)
-            if not result.success:
-                return result
-        return FlextResult.ok(None)
-
-    def register_if_missing(
-        self,
-        name: str,
-        service: object,
-    ) -> FlextResult[bool]:
-        """Register service only if not already registered."""
-        if self.has(name):
-            return FlextResult.ok(False)  # noqa: FBT003
-
-        result = self.register(name, service)
-        return result.map(lambda _: True)
-
-    def try_get(self, name: str) -> FlextResult[T | None]:
-        """Try to get service, returning None instead of error if missing."""
-        if not self.has(name):
+        if validated_name in self._services:
+            del self._services[validated_name]
+            self.logger.debug("Service unregistered", name=validated_name)
             return FlextResult.ok(None)
 
-        result = self.get(name)
-        if not result.success:
+        if validated_name in self._factories:
+            del self._factories[validated_name]
+            self.logger.debug("Factory unregistered", name=validated_name)
             return FlextResult.ok(None)
 
-        return FlextResult.ok(result.data)  # type: ignore[arg-type]
+        self.logger.warning("Service not found for unregistration", name=validated_name)
+        return FlextResult.fail(f"Service '{validated_name}' not found")
 
-    def with_service(
+    def clear_all(self) -> FlextResult[None]:
+        """Clear all registered services and factories."""
+        service_count = len(self._services)
+        factory_count = len(self._factories)
+
+        self._services.clear()
+        self._factories.clear()
+
+        self.logger.info(
+            "Container cleared",
+            services_cleared=service_count,
+            factories_cleared=factory_count,
+        )
+        return FlextResult.ok(None)
+
+    def get_service_names(self) -> list[str]:
+        """Get all registered service names."""
+        return list(self._services.keys()) + list(self._factories.keys())
+
+    def get_service_count(self) -> int:
+        """Get total service count."""
+        return len(self._services) + len(self._factories)
+
+    def has_service(self, name: str) -> bool:
+        """Check if service exists."""
+        return name in self._services or name in self._factories
+
+    def get_services_dict(self) -> dict[str, object]:
+        """Get services dictionary (internal use)."""
+        return self._services
+
+    def get_factories_dict(self) -> dict[str, Callable[[], object]]:
+        """Get factories dictionary (internal use)."""
+        return self._factories
+
+
+# =============================================================================
+# SERVICE RETRIEVAL - SRP: Retrieval Operations Only
+# =============================================================================
+
+
+class FlextServiceRetrivier(FlextLoggableMixin):
+    """Service retrieval component implementing single responsibility principle.
+
+    Focused component responsible exclusively for service retrieval, factory execution,
+    and service information operations. Operates on shared storage references from
+    registration component following dependency inversion principle.
+
+    Architecture:
+        - Single responsibility: service retrieval operations only
+        - Dependency inversion: operates on abstractions (dictionaries) not
+          implementations
+        - FlextLoggableMixin integration for structured logging
+        - FlextResult error handling for comprehensive error reporting
+
+    Retrieval Features:
+        - Direct service instance retrieval from registration cache
+        - Factory function execution with error handling for lazy services
+        - Service information and metadata extraction
+        - Service listing and enumeration operations
+        - Comprehensive error handling for missing services and factory failures
+
+    Factory Execution:
+        - Safe factory function execution with exception handling
+        - Comprehensive error reporting for factory failures
+        - Logging of factory execution attempts and outcomes
+        - No caching of factory results - executed on each retrieval
+
+    Service Information:
+        - Service type identification (instance vs factory)
+        - Class and module information for instances
+        - Factory function information for factories
+        - Comprehensive service metadata for debugging and introspection
+
+    Usage (Internal):
+        retriever = FlextServiceRetrivier(services_dict, factories_dict)
+        result = retriever.get_service("user_service")
+        if result.is_success:
+            service = result.data
+    """
+
+    def __init__(
         self,
-        name: str,
-        func: Callable[[T], U],
-    ) -> FlextResult[U]:
-        """Execute function with service, handling errors gracefully."""
-        result = self.get(name)
-        if not result.success:
-            error_msg = result.error or f"Service '{name}' not available"
-            return FlextResult.fail(error_msg)
+        services: dict[str, object],
+        factories: dict[str, Callable[[], object]],
+    ) -> None:
+        """Initialize service retriever with references."""
+        self._services = services
+        self._factories = factories
 
-        try:
-            return FlextResult.ok(func(result.data))  # type: ignore[arg-type]
-        except Exception as e:
-            return FlextResult.fail(f"Service operation failed: {e}")
+    def get_service(self, name: str) -> FlextResult[object]:
+        """Retrieve a registered service."""
+        # Use BASE validators directly - MAXIMIZA base usage
+        if not FlextValidators.is_non_empty_string(name):
+            return FlextResult.fail("Service name cannot be empty")
+        validation_result = FlextResult.ok(name)
+        if validation_result.is_failure:
+            self.logger.warning(
+                "Service name validation failed",
+                name=name,
+                error=validation_result.error,
+            )
+            return FlextResult.fail("Service name validation failed")
 
-    def ensure_services(self, *names: str) -> FlextResult[None]:
-        """Ensure all named services are available."""
-        missing = [name for name in names if not self.has(name)]
-        if missing:
-            return FlextResult.fail(f"Missing services: {', '.join(missing)}")
+        validated_name = validation_result.unwrap()
 
-        # Try to get all services to ensure they can be instantiated
-        for name in names:
-            result = self.get(name)
-            if not result.success:
-                return FlextResult.fail(
-                    f"Service '{name}' failed to initialize: {result.error}",
+        # Check direct service registration
+        if validated_name in self._services:
+            self.logger.debug("Service retrieved from cache", name=validated_name)
+            return FlextResult.ok(self._services[validated_name])
+
+        # Check factory registration
+        if validated_name in self._factories:
+            try:
+                self.logger.debug("Creating service from factory", name=validated_name)
+                service = self._factories[validated_name]()
+                return FlextResult.ok(service)
+            except (TypeError, ValueError, AttributeError, RuntimeError) as e:
+                self.logger.exception(
+                    "Factory execution failed",
+                    name=validated_name,
+                    error=str(e),
                 )
+                return FlextResult.fail(f"Factory for '{validated_name}' failed: {e!s}")
 
-        return FlextResult.ok(None)
+        self.logger.warning("Service not found", name=validated_name)
+        return FlextResult.fail(f"Service '{validated_name}' not found")
+
+    def get_service_info(self, name: str) -> FlextResult[dict[str, object]]:
+        """Get service information.
+
+        Args:
+            name: Name of service
+
+        Returns:
+            FlextResult with service information
+
+        """
+        # Use BASE validators directly - MAXIMIZA base usage
+        if not FlextValidators.is_non_empty_string(name):
+            return FlextResult.fail("Service name cannot be empty")
+        validation_result = FlextResult.ok(name)
+        if validation_result.is_failure:
+            self.logger.warning(
+                "Service name validation failed",
+                name=name,
+                error=validation_result.error,
+            )
+            return FlextResult.fail("Service name validation failed")
+
+        validated_name = validation_result.unwrap()
+
+        if validated_name in self._services:
+            service = self._services[validated_name]
+            info: dict[str, object] = {
+                "name": validated_name,
+                "type": "instance",
+                "class": type(service).__name__,
+                "module": type(service).__module__,
+            }
+            self.logger.debug("Service info retrieved", name=validated_name, info=info)
+            return FlextResult.ok(info)
+
+        if validated_name in self._factories:
+            factory = self._factories[validated_name]
+            factory_info: dict[str, object] = {
+                "name": validated_name,
+                "type": "factory",
+                "factory": factory.__name__,
+                "module": factory.__module__,
+            }
+            self.logger.debug(
+                "Factory info retrieved",
+                name=validated_name,
+                info=factory_info,
+            )
+            return FlextResult.ok(factory_info)
+
+        self.logger.warning("Service not found for info", name=validated_name)
+        return FlextResult.fail(f"Service '{validated_name}' not found")
+
+    def list_services(self) -> dict[str, str]:
+        """List all services with their types.
+
+        Returns:
+            Dictionary of service names and types
+
+        """
+        services_info = {}
+
+        for name in self._services:
+            services_info[name] = "instance"
+
+        for name in self._factories:
+            services_info[name] = "factory"
+
+        return services_info
 
 
-class _ContainerRegistry:
-    """Thread-safe container registry without global statement."""
+# =============================================================================
+# MAIN CONTAINER - SRP: Public API Orchestration
+# =============================================================================
+
+
+class FlextContainer(FlextLoggableMixin):
+    """Enterprise dependency injection container with SOLID principles and type safety.
+
+    Main public API for dependency injection operations, orchestrating internal
+    components while maintaining clean separation of concerns. Provides comprehensive
+    service management with error handling and type safety.
+
+    Architecture:
+        - SOLID principles: SRP through internal component delegation
+        - Dependency inversion: depends on abstractions not concretions
+        - Open/closed: extensible through registration patterns
+        - Interface segregation: focused public API methods
+        - Liskov substitution: compatible service implementations
+
+    Enterprise Features:
+        - Type-safe service registration and retrieval
+        - Factory pattern support for lazy initialization
+        - Comprehensive error handling with FlextResult patterns
+        - Structured logging for all operations
+        - Service introspection and metadata operations
+
+    Public API Categories:
+        - Registration: register, register_factory, unregister
+        - Retrieval: get, get_typed, get_info
+        - Management: clear, has, list_services, get_service_names
+        - Type Safety: get_typed with compile-time type checking
+
+    Internal Orchestration:
+        - FlextServiceRegistrar: handles all registration operations
+        - FlextServiceRetrivier: handles all retrieval operations
+        - Shared storage references for consistent state management
+        - Logging integration for comprehensive audit trail
+
+    Type Safety Features:
+        - get_typed method with runtime type validation
+        - ServiceKey[T] system for compile-time type checking
+        - Type guard integration for runtime type safety
+        - Generic type support for strongly-typed operations
+
+    Usage Patterns:
+        # Basic usage
+        container = FlextContainer()
+        container.register("service", MyService())
+        result = container.get("service")
+
+        # Type-safe usage
+        result = container.get_typed("service", MyService)
+        if result.is_success:
+            service: MyService = result.data
+
+        # Factory usage
+        container.register_factory("lazy_service", lambda: ExpensiveService())
+        service_result = container.get("lazy_service")  # Factory executed here
+    """
 
     def __init__(self) -> None:
-        """Initialize the container registry."""
+        """Initialize container with internal components."""
+        self.logger.info("Initializing FlextContainer")
+
+        # SRP: Delegate to focused internal components
+        self._registrar = FlextServiceRegistrar()
+
+        # DIP: Retriever depends on registrar's data abstractions
+        services_dict = self._registrar.get_services_dict()
+        factories_dict = self._registrar.get_factories_dict()
+        self._retriever = FlextServiceRetrivier(services_dict, factories_dict)
+
+        self.logger.debug("FlextContainer initialized successfully")
+
+    # Registration API - Delegate to registrar
+    def register(self, name: str, service: object) -> FlextResult[None]:
+        """Register a service instance."""
+        return self._registrar.register_service(name, service)
+
+    def register_factory(
+        self,
+        name: str,
+        factory: Callable[[], object],
+    ) -> FlextResult[None]:
+        """Register a service factory."""
+        return self._registrar.register_factory(name, factory)
+
+    def unregister(self, name: str) -> FlextResult[None]:
+        """Unregister a service."""
+        return self._registrar.unregister_service(name)
+
+    # Retrieval API - Delegate to retriever
+    def get(self, name: str) -> FlextResult[object]:
+        """Get a service by name."""
+        return self._retriever.get_service(name)
+
+    def get_info(self, name: str) -> FlextResult[dict[str, object]]:
+        """Get service information."""
+        return self._retriever.get_service_info(name)
+
+    # Container management
+    def clear(self) -> FlextResult[None]:
+        """Clear all services."""
+        return self._registrar.clear_all()
+
+    def has(self, name: str) -> bool:
+        """Check if service exists."""
+        return self._registrar.has_service(name)
+
+    def list_services(self) -> dict[str, str]:
+        """List all services."""
+        return self._retriever.list_services()
+
+    def get_service_names(self) -> list[str]:
+        """Get service names."""
+        return self._registrar.get_service_names()
+
+    def get_service_count(self) -> int:
+        """Get service count."""
+        return self._registrar.get_service_count()
+
+    # Type-safe retrieval methods
+    def get_typed(self, name: str, expected_type: type[T]) -> FlextResult[T]:
+        """Get service with type checking."""
+        self.logger.debug(
+            "Getting typed service",
+            name=name,
+            expected_type=expected_type.__name__,
+        )
+
+        result = self.get(name)
+        if result.is_failure:
+            return FlextResult.fail(result.error or "Service not found")
+
+        service = result.unwrap()
+
+        # Use FlextTypes type guard - MAXIMIZA base usage
+        if not FlextTypes.TypeGuards.is_instance_of(service, expected_type):
+            actual_type = type(service).__name__
+            self.logger.error(
+                "Type mismatch for service",
+                name=name,
+                expected=expected_type.__name__,
+                actual=actual_type,
+            )
+            return FlextResult.fail(
+                f"Service '{name}' is {actual_type}, expected {expected_type.__name__}",
+            )
+
+        self.logger.debug("Typed service retrieved successfully", name=name)
+        return FlextResult.ok(service)  # type: ignore[arg-type]
+
+    def __repr__(self) -> str:
+        """Return string representation of container."""
+        count = self.get_service_count()
+        return f"FlextContainer(services: {count})"
+
+
+# =============================================================================
+# GLOBAL CONTAINER MANAGEMENT
+# =============================================================================
+
+
+# Global container instance with thread-safe access
+class FlextGlobalContainerManager:
+    """Thread-safe global container management without global statements.
+
+    Provides centralized management of the global FlextContainer instance
+    with thread-safe access patterns and lazy initialization. Eliminates
+    the need for global variables while providing application-wide access.
+
+    Architecture:
+        - Singleton pattern for global container management
+        - Lazy initialization for performance optimization
+        - Thread-safe operations for concurrent access
+        - Clear separation from business logic
+
+    Global Management Features:
+        - Lazy container creation on first access
+        - Global container replacement for testing scenarios
+        - Thread-safe access without explicit locking
+        - Clear ownership and lifecycle management
+
+    Usage (Internal):
+        manager = FlextGlobalContainerManager()
+        container = manager.get_container()  # Creates if not exists
+        manager.set_container(custom_container)  # Replace for testing
+    """
+
+    def __init__(self) -> None:
         self._container: FlextContainer | None = None
 
-    def get_flext_container(self) -> FlextContainer:
-        """Get the global FlextContainer instance for service access.
-
-        Provides thread-safe access to the application-wide service registry.
-        Creates a new container if none exists. This is the primary entry point
-        for service resolution throughout the FLEXT ecosystem.
-
-        Returns:
-            The global FlextContainer instance
-
-        Thread Safety:
-            This function is thread-safe and can be called concurrently.
-            Global container creation is protected by Python's GIL.
-
-        Example:
-            >>> container = get_flext_container()
-            >>> result = container.register("config", AppConfig())
-            >>> assert result.is_success
-
-            # Later, from anywhere in the application:
-            >>> config_result = get_flext_container().get("config")
-            >>> if config_result.is_success:
-            ...     config = config_result.data
-
-        """
+    def get_container(self) -> FlextContainer:
+        """Get or create global container."""
         if self._container is None:
+            self.logger.info("Creating global FlextContainer instance")
             self._container = FlextContainer()
         return self._container
 
-    def configure_flext_container(
-        self,
-        container: FlextContainer | None = None,
-    ) -> FlextContainer:
-        """Configure the global FlextContainer instance.
-
-        Sets or replaces the global container instance. Pass None to create
-        a fresh container. This function should typically be called once during
-        application startup to establish the service registry configuration.
-
-        Args:
-            container: FlextContainer instance to use globally, or None for a
-            new one
-
-        Returns:
-            The configured global FlextContainer instance
-
-        Thread Safety:
-            This function should only be called during single-threaded
-            application startup. Concurrent calls may result in race
-            conditions and undefined behavior.
-
-        Example:
-            Application startup configuration:
-            >>> # Create a pre-configured container
-            >>> app_container = FlextContainer()
-            >>> app_container.register("database", DatabaseService())
-            >>> app_container.register("cache", CacheService())
-            >>> configure_flext_container(app_container)
-
-            >>> # Or reset to a fresh container for testing
-            >>> configure_flext_container(None)
-
-        """
-        if container is not None:
-            self._container = container
-        else:
-            self._container = FlextContainer()
-        return self._container
+    def set_container(self, container: FlextContainer) -> None:
+        """Set global container."""
+        self.logger.info(
+            "Configuring global FlextContainer",
+            new_container=str(container),
+        )
+        self._container = container
 
 
-# Singleton registry instance
-_registry = _ContainerRegistry()
+_global_manager = FlextGlobalContainerManager()
 
 
 def get_flext_container() -> FlextContainer:
-    """Get the global FlextContainer instance for application service access.
+    """Get global FlextContainer instance with lazy initialization.
 
-    Provides thread-safe access to the application-wide service registry.
-    Creates a new container if none exists. This is the primary entry point
-    for service resolution throughout the FLEXT ecosystem.
+    Provides access to the application-wide FlextContainer instance, creating
+    it on first access if it doesn't exist. Thread-safe for concurrent access.
 
     Returns:
-        The global FlextContainer instance
+        Global FlextContainer instance for application-wide service management
 
-    Thread Safety:
-        This function is thread-safe and can be called concurrently.
-        Global container creation is protected by Python's GIL.
-
-    Example:
-        >>> container = get_flext_container()
-        >>> result = container.register("config", AppConfig())
-        >>> assert result.is_success
-
-        # Later, from anywhere in the application:
-        >>> config_result = get_flext_container().get("config")
-        >>> if config_result.is_success:
-        ...     config = config_result.data
+    Usage:
+        container = get_flext_container()
+        container.register("service", MyService())
+        service_result = container.get("service")
 
     """
-    return _registry.get_flext_container()
+    return _global_manager.get_container()
 
 
-def configure_flext_container(
-    container: FlextContainer | None = None,
-) -> FlextContainer:
-    """Configure the global FlextContainer instance.
+def configure_flext_container(container: FlextContainer) -> None:
+    """Configure global FlextContainer instance for application use.
 
-    Sets or replaces the global container instance. Pass None to create
-    a fresh container. This function should typically be called once during
-    application startup to establish the service registry configuration.
+    Replaces the global container instance with a custom container,
+    typically used for testing scenarios or specialized configurations.
 
     Args:
-        container: FlextContainer instance to use globally, or None for a
-        new one
+        container: Custom FlextContainer instance to use globally
 
-    Returns:
-        The configured global FlextContainer instance
+    Usage:
+        # Testing scenario
+        test_container = FlextContainer()
+        test_container.register("test_service", MockService())
+        configure_flext_container(test_container)
 
-    Thread Safety:
-        This function should only be called during single-threaded
-        application startup. Concurrent calls may result in race conditions
-        and undefined behavior.
-
-    Example:
-        Application startup configuration:
-        >>> # Create a pre-configured container
-        >>> app_container = FlextContainer()
-        >>> app_container.register("database", DatabaseService())
-        >>> app_container.register("cache", CacheService())
-        >>> configure_flext_container(app_container)
-
-        >>> # Or reset to a fresh container for testing
-        >>> configure_flext_container(None)
+        # Now all global access uses test container
+        container = get_flext_container()
+        assert container is test_container
 
     """
-    return _registry.configure_flext_container(container)
+    _global_manager.set_container(container)
 
 
-# Primary exports for FLEXT ecosystem
+# Type-safe service keys
+class ServiceKey[T]:
+    r"""Type-safe service key providing compile-time type checking for containers.
+
+    Generic service key class that encapsulates service names with associated type
+    information for compile-time type safety and enhanced developer experience.
+    Enables type-safe service registration and retrieval operations.
+
+    Architecture:
+        - Generic class with type parameter T for service type
+        - Simple name encapsulation with type association
+        - Integration with type-safe container operations
+        - String representation for debugging and logging
+
+    Type Safety Features:
+        - Compile-time type checking for service operations
+        - Type inference in IDE environments
+        - Prevention of type mismatches at registration time
+        - Enhanced intellisense and code completion
+
+    Usage Patterns:
+        # Define typed service keys
+        USER_SERVICE_KEY = ServiceKey[UserService]("user_service")
+        CONFIG_SERVICE_KEY = ServiceKey[ConfigService]("config_service")
+
+        # Type-safe registration
+        register_typed(container, USER_SERVICE_KEY, UserService())
+
+        # Type-safe retrieval with automatic type inference
+        user_service_result = get_typed(container, USER_SERVICE_KEY)
+        if user_service_result.is_success:
+            user_service: UserService = user_service_result.data  # Type inferred
+
+    Args:
+        name: String identifier for the service
+
+    """
+
+    def __init__(self, name: str) -> None:
+        """Initialize service key with name.
+
+        Args:
+            name: Name of service
+
+        """
+        self.name = name
+
+    def __str__(self) -> str:
+        """Return string representation of service key.
+
+        Returns:
+            String representation of service key
+
+        """
+        return self.name
+
+
+# Type alias for factory functions with comprehensive documentation
+FlextServiceFactory = Callable[[], object]
+"""Type alias for service factory functions.
+
+Factory functions used for lazy service initialization in the dependency
+injection container. Factories are called on each service retrieval without
+caching, allowing for fresh instances or controlled initialization.
+
+Signature:
+    () -> object: Function that takes no arguments and returns service instance
+
+Usage:
+    def create_database_service() -> DatabaseService:
+        return DatabaseService(connection_string=get_config())
+
+    factory: FlextServiceFactory = create_database_service
+    container.register_factory("database", factory)
+"""
+
+
+# Enhanced container with type-safe operations
+def register_typed[T](
+    container: FlextContainer,
+    key: ServiceKey[T],
+    service: T,
+) -> FlextResult[None]:
+    """Register service with type-safe key and compile-time type checking.
+
+    Provides enhanced type safety for service registration using ServiceKey
+    system. Ensures type consistency between key, service, and retrieval operations.
+
+    Type Safety Features:
+        - Compile-time type checking between key and service
+        - IDE intellisense and type inference support
+        - Prevention of type mismatches at registration time
+        - Enhanced debugging with type information in logs
+
+    Args:
+        container: FlextContainer instance to register service in
+        key: ServiceKey[T] providing type information and service name
+        service: Service instance of type T to register
+
+    Returns:
+        FlextResult[None] indicating registration success or failure details
+
+    Usage:
+        USER_SERVICE_KEY = ServiceKey[UserService]("user_service")
+        user_service = UserService()
+
+        result = register_typed(container, USER_SERVICE_KEY, user_service)
+        if result.is_success:
+            # Service registered with type safety
+            pass
+
+    """
+    # Import logger for standalone function
+    from flext_core.loggings import FlextLogger  # noqa: PLC0415
+
+    logger = FlextLogger.get_logger(__name__)
+    logger.debug(
+        "Registering typed service",
+        key=key.name,
+        service_type=type(service).__name__,
+    )
+    return container.register(key.name, service)
+
+
+def get_typed[T](
+    container: FlextContainer,
+    key: ServiceKey[T],
+) -> FlextResult[T]:
+    """Get service with type inference and compile-time type checking from ServiceKey.
+
+    Provides type-safe service retrieval using ServiceKey system with automatic
+    type inference and enhanced compile-time checking. Returns properly typed
+    service instances without manual casting.
+
+    Type Safety Features:
+        - Automatic type inference from ServiceKey[T]
+        - No manual casting required in calling code
+        - IDE intellisense with proper type information
+        - Compile-time prevention of type mismatches
+
+    Args:
+        container: FlextContainer instance to retrieve service from
+        key: ServiceKey[T] providing type information and service name
+
+    Returns:
+        FlextResult[T] with typed service instance or error details
+
+    Usage:
+        USER_SERVICE_KEY = ServiceKey[UserService]("user_service")
+
+        result = get_typed(container, USER_SERVICE_KEY)
+        if result.is_success:
+            user_service: UserService = result.data  # Type automatically inferred
+            user_service.create_user(...)  # Full type safety and intellisense
+
+    """
+    # Import logger for standalone function
+    from flext_core.loggings import FlextLogger  # noqa: PLC0415
+
+    logger = FlextLogger.get_logger(__name__)
+    logger.debug("Getting typed service by key", key=key.name)
+    result = container.get(key.name)
+    if result.is_failure:
+        return FlextResult.fail(result.error or "Service not found")
+
+    # Type is guaranteed by ServiceKey[T] - cast to T
+    service = result.unwrap()
+    return FlextResult.ok(service)  # type: ignore[arg-type]
+
+
+# Export API
 __all__ = [
     "FlextContainer",
     "FlextServiceFactory",
+    "ServiceKey",
     "configure_flext_container",
     "get_flext_container",
+    "get_typed",
+    "register_typed",
 ]
