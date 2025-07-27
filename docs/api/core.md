@@ -244,7 +244,7 @@ class FlextContainer:
     def register(
         self, 
         key: str, 
-        instance: Any, 
+        instance: object, 
         singleton: bool = True
     ) -> FlextResult[None]:
         """Register service instance."""

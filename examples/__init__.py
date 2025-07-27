@@ -1,0 +1,1 @@
+"""FLEXT Core examples module."""

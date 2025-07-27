@@ -1,21 +1,19 @@
 [build-system]
-requires = ["poetry-core>=1.9.0"]
 build-backend = "poetry.core.masonry.api"
+requires = ["poetry-core>=1.9.0"]
 
 [project]
-name = "flext-core"
-version = "0.8.0"
+authors = [{ name = "FLEXT Team", email = "team@flext.sh" }]
 description = "Enterprise Foundation Framework - Modern Python 3.13 + Clean Architecture"
+license.text = "MIT"
+maintainers = [{ name = "FLEXT Team", email = "team@flext.sh" }]
+name = "flext-core"
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
-keywords = [
-    "flext",
-    "enterprise",
-    "ddd",
-    "clean-architecture",
-    "solid",
-    "modern",
-]
+version = "0.8.0"
+urls.Homepage = "https://github.com/flext-sh/flext-core"
+urls.Repository = "https://github.com/flext-sh/flext-core"
+urls.Documentation = "https://github.com/flext-sh/flext-core/blob/main/README.md"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
@@ -29,238 +27,119 @@ classifiers = [
     "Typing :: Typed",
 ]
 dependencies = [
-    # Core module-specific dependencies
     "pydantic>=2.11.7",
     "pydantic-settings>=2.10.1",
-    "dependency-injector>=4.45.0",
     "structlog (>=25.4.0,<26.0.0)",
 ]
+keywords = [
+    "clean-architecture",
+    "ddd",
+    "enterprise",
+    "flext",
+    "modern",
+    "solid",
+]
 
-[[project.authors]]
-name = "FLEXT Team"
-email = "team@flext.sh"
-
-[[project.maintainers]]
-name = "FLEXT Team"
-email = "team@flext.sh"
-
-[project.urls]
-Homepage = "https://github.com/flext-sh/flext-core"
-Repository = "https://github.com/flext-sh/flext-core"
-Documentation = "https://github.com/flext-sh/flext-core/blob/main/README.md"
-
-# [project.scripts] - REMOVED: biblioteca pura não tem CLI entry points
-# Serviços que usam flext-core via Plugins + DI implementam seus próprios CLIs
+[project.optional-dependencies]
+dev = [
+    "autoflake>=2.3.1",
+    "black>=25.1.0",
+    "codespell>=2.3.0",
+    "deptry>=0.23.0",
+    "isort>=6.0.1",
+    "mypy>=1.13.0",
+    "pre-commit>=4.0.1",
+    "pylint>=3.3.0",
+    "pyupgrade>=3.19.0",
+    "radon>=6.0.1",
+    "ruff>=0.12.3",
+    "vulture>=2.13",
+]
+test = [
+    "factory-boy>=3.3.1",
+    "faker>=37.4.0",
+    "hypothesis>=6.125.0",
+    "pytest>=8.4.0",
+    "pytest-benchmark>=5.1.0",
+    "pytest-clarity>=1.0.1",
+    "pytest-cov>=6.2.0",
+    "pytest-deadfixtures>=2.2.1",
+    "pytest-env>=1.1.5",
+    "pytest-httpx>=0.35.0",
+    "pytest-mock>=3.14.0",
+    "pytest-randomly>=3.16.0",
+    "pytest-sugar>=1.0.0",
+    "pytest-timeout>=2.4.0",
+    "pytest-xdist>=3.8.0",
+]
+typings = [
+    "django-stubs>=5.2.2",
+    "types-ldap3>=2.9.13.20250622",
+    "types-protobuf>=6.30.2.20250703",
+    "types-psutil>=7.0.0",
+    "types-psycopg2>=2.9.21.20250718",
+    "types-python-dateutil>=2.9.0",
+    "types-pyyaml>=6.0.12",
+    "types-redis>=4.6.0",
+    "types-requests>=2.32.4",
+    "types-setuptools>=80.9.0",
+    "types-toml>=0.10.8.20240310",
+]
+security = ["bandit>=1.8.0", "pip-audit>=2.7.3"]
 
 [tool.poetry]
-# Poetry configuration for development
 packages = [{ include = "flext_core", from = "src" }]
 
-[tool.poetry.group.dev.dependencies]
-# Development dependencies
-pytest = ">=8.0.0"
-pytest-asyncio = ">=0.23.0"
-pytest-cov = ">=4.0.0"
-pytest-mock = ">=3.12.0"
-pytest-xdist = ">=3.6.0"
-pytest-timeout = ">=2.3.1"
-pytest-sugar = ">=1.0.0"
-pytest-clarity = ">=1.0.1"
-pytest-benchmark = ">=4.0.0"
-
-# Code quality
-ruff = "^0.12.3"
-mypy = "^1.13.0"
-pre-commit = "^4.0.1"
-bandit = ">=1.8.0"
-detect-secrets = ">=1.5.0"
-
-# Documentation
-mkdocs = "^1.6.1"
-mkdocs-material = "^9.6.15"
-mkdocs-mermaid2-plugin = ">=1.1.0"
-black = "^25.1.0"
-isort = "^6.0.1"
-pylint = "^3.3.0"
-vulture = "^2.13"
-radon = "^6.0.1"
-codespell = "^2.3.0"
-pyupgrade = "^3.19.0"
-autoflake = "^2.3.1"
-sphinx = "^8.2.3"
-sphinx-rtd-theme = "^3.0.2"
-myst-parser = "^4.0.1"
-mkdocstrings = "^0.27.0"
-mkdocs-gen-files = "^0.5.0"
-mkdocs-literate-nav = "^0.6.0"
-rich-traceback = "^1.0.3"
-# interrogate removed due to security vulnerability in py dependency
-types-protobuf = "^6.30.2.20250703"
-types-grpcio = "^1.0.0.20250703"
-lark-parser = "^0.12.0"
-commitizen = "^4.8.3"
-
-
-[tool.poetry.group.test.dependencies]
-pytest = "^8.4.0"
-pytest-asyncio = "^1.0.0"
-pytest-cov = "^6.2.0"
-pytest-xdist = "^3.8.0"
-pytest-mock = "^3.14.0"
-pytest-timeout = "^2.4.0"
-pytest-benchmark = "^5.1.0"
-pytest-randomly = "^3.16.0"
-pytest-sugar = "^1.0.0"
-pytest-clarity = "^1.0.1"
-pytest-deadfixtures = "^2.2.1"
-pytest-env = "^1.1.5"
-pytest-httpx = "^0.35.0"
-hypothesis = "^6.125.0"
-factory-boy = "^3.3.1"
-faker = "^37.4.0"
-django = "^5.2.4"
-pydantic = "^2.11.7"
-python-ldap = "^3.4.4"
-redis = "^5.0.0"
-
-
 [tool.poetry.group.typings.dependencies]
-types-python-dateutil = "^2.9.0"
-types-pyyaml = "^6.0.12"
-types-setuptools = "^80.9.0"
-types-toml = "^0.10.8.20240310"
-types-requests = "^2.32.4"
-types-redis = "^4.6.0"
-types-psutil = "^7.0.0"
-types-protobuf = "^6.30.2.20250703"
+types-pygments = "^2.19.0.20250715"
+types-colorama = "^0.4.15.20240311"
+types-pexpect = "^4.9.0.20250516"
 
+[tool.bandit]
+extend = "../.bandit-shared.toml"
 
-[tool.poetry.group.security.dependencies]
-bandit = "^1.8.0"
-pip-audit = "^2.7.3"
-safety = "<3.0.0"
+[tool.coverage]
+extend = "../.coverage-shared.toml"
 
-[tool.ruff]
-target-version = "py313"
-line-length = 88         # PEP8 strict: 79 characters maximum
-src = ["src", "tests"]
-extend = "../.ruff-shared.toml"
-
-[tool.ruff.lint]
-# Enable ALL rules with PEP8 strict compliance
-select = [
-    "ALL", # All available rules
+[tool.deptry]
+exclude = [
+    "__pycache__",
+    ".archive",
+    ".git",
+    ".meltano",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".ruff_cache",
+    ".venv",
+    "build",
+    "dist",
+    "htmlcov",
+    "vendor",
+    "node_modules",
+    "reports",
+    "venv",
 ]
-
-# PEP8 compliance - minimal ignores only for legitimate cases
-ignore = [
-    "D203",   # one-blank-line-before-class (conflicts with D211)
-    "D213",   # multi-line-summary-second-line (conflicts with D212)
-    "W505",   # line break after binary operator
-    "E501",   # line too long (handled by line-length)
-]
-
-[tool.ruff.lint.per-file-ignores]
-"tests/*" = [
-    "S101",    # Use of assert detected (normal in tests)
-    "PLR2004", # Magic value used in comparison (normal in tests)
-    "ANN",     # Type annotations not required in tests
-    "D",       # Docstrings not required in tests
-    "FBT001",  # Boolean positional args (normal in pytest parametrize)
-    "S603",    # subprocess calls allowed in compliance tests
-    "SLF001",  # Private name usage in tests
-    "PLR0913", # Too many arguments (normal in test fixtures)
-    "PLR0912", # Too many branches (normal in test scenarios)
-    "PLR0915", # Too many statements (normal in test scenarios)
-]
-"src/flext_core/exceptions.py" = [
-    "D107",    # Missing docstring in __init__ (inherited constructors)
-    "ANN401",  # Dynamically typed expressions (legitimate for kwargs)
-    "BLE001",  # Do not catch blind exception (legitimate for error handling)
-    "PLR0911", # Too many return statements (legitimate for exception mapping)
-    "ANN201",  # Missing return type annotation for decorators
-    "ANN001",  # Missing type annotation for decorator functions
-    "ANN202",  # Missing return type annotation for wrapper functions
-    "ANN002",  # Missing type annotation for *args in decorators
-    "ANN003",  # Missing type annotation for **kwargs in decorators
-]
-"src/flext_core/container.py" = [
-    "BLE001",  # Do not catch blind exception (legitimate for error handling)
-]
-"src/flext_core/patterns/commands.py" = [
-    "BLE001",  # Do not catch blind exception (legitimate for error handling)
-]
-"src/flext_core/patterns/handlers.py" = [
-    "BLE001",  # Do not catch blind exception (legitimate for error handling)
-]
-"src/flext_core/patterns/validation.py" = [
-    "FBT001",  # Boolean positional args (legitimate for boolean fields)
-    "ARG002",  # Unused method argument (legitimate for interface compliance)
-    "BLE001",  # Do not catch blind exception (legitimate for error handling)
-]
-"src/flext_core/patterns/fields.py" = [
-    "PLR0913", # Too many arguments (legitimate for complex constructors)
-    "FBT001",  # Boolean positional args (legitimate for boolean fields)
-]
-"src/flext_core/patterns/logging.py" = [
-    "SLF001",  # Private member access (legitimate for internal testing)
-]
-"src/flext_core/result.py" = [
-    "BLE001",  # Do not catch blind exception (legitimate for error handling)
-]
-"src/flext_core/domain/domain_service.py" = [
-    "ANN401",  # Dynamically typed expressions (legitimate for abstract methods)
-]
-"**/__pycache__/*" = ["ALL"]
-"**/*.pyc" = ["ALL"]
-"**/migrations/*" = ["ALL"]
-"**/generated/*" = ["ALL"]
-"**/protobuf/*" = ["ALL"]
-
-[tool.ruff.lint.isort]
-known-first-party = ["flext_core"]
-force-single-line = true
-required-imports = ["from __future__ import annotations"]
-
-[tool.ruff.lint.pydocstyle]
-convention = "google" # Google docstring style (PEP257 compliant)
-
-[tool.ruff.lint.pycodestyle]
-max-line-length = 79 # PEP8 strict compliance
-max-doc-length = 72  # PEP8 docstring line length
-
-[tool.ruff.lint.mccabe]
-max-complexity = 10 # PEP8 recommended complexity
-
-[tool.ruff.lint.pylint]
-max-args = 5        # PEP8 recommended max arguments
-max-branches = 12   # PEP8 recommended max branches
-max-returns = 6     # PEP8 recommended max returns
-max-statements = 50 # PEP8 recommended max statements
-
-[tool.ruff.lint.flake8-quotes]
-docstring-quotes = "double" # PEP257 compliance
-inline-quotes = "double"    # Consistent quoting style
+known_first_party = ["flext_core"]
+pep621_dev_dependency_groups = ["dev", "security", "test", "typings"]
 
 [tool.mypy]
-python_version = "3.13"
-files = ["src", "tests"]
-plugins = ["pydantic.mypy"]
+# Strict mode - enables all recommended checks
+strict = true
+
+# Additional strict checks beyond default strict mode
 check_untyped_defs = true
+disallow_any_decorated = true
+disallow_any_explicit = true
+disallow_any_expr = false          # Too restrictive for real-world usage
 disallow_any_generics = true
+disallow_any_unimported = true
 disallow_incomplete_defs = true
 disallow_subclassing_any = true
 disallow_untyped_calls = true
 disallow_untyped_decorators = true
 disallow_untyped_defs = true
-no_implicit_optional = true
-no_implicit_reexport = true
-pretty = true
-show_error_codes = true
-show_error_context = true
-strict = true
-strict_equality = true
-strict_optional = true
+
+# Warning controls - maximum safety
 warn_no_return = true
 warn_redundant_casts = true
 warn_return_any = true
@@ -268,94 +147,83 @@ warn_unreachable = true
 warn_unused_configs = true
 warn_unused_ignores = true
 
-# Ignore missing imports for external libraries without type stubs
-[[tool.mypy.overrides]]
-module = [
-    "dependency_injector.*",
-]
-ignore_missing_imports = true
+# Optional type checking
+no_implicit_optional = true
+strict_optional = true
 
-[[tool.mypy.overrides]]
-# Ignore specific test-related type errors that are intentional
-module = "tests.*"
-disable_error_code = [
-    "arg-type",      # Tests intentionally pass None to test validation
-    "attr-defined",  # Tests intentionally access attributes to test immutability
-    "misc",          # Tests intentionally test edge cases
-    "assignment",    # Tests intentionally assign invalid values
+# Import handling
+ignore_missing_imports = false
+follow_imports = "normal"
+follow_imports_for_stubs = false
+
+# Error reporting
+show_error_codes = true
+show_error_context = true
+show_column_numbers = true
+show_traceback = true
+pretty = true
+color_output = true
+error_summary = true
+
+# Python version and execution
+python_version = "3.13"
+platform = "linux"
+
+# Package structure
+explicit_package_bases = true
+namespace_packages = true
+mypy_path = ["src"]
+files = ["src", "tests"]
+
+# Plugins
+plugins = ["pydantic.mypy"]
+
+# Cache
+sqlite_cache = true
+cache_dir = ".mypy_cache"
+
+# Advanced checks
+strict_equality = true
+extra_checks = true
+local_partial_types = true
+no_implicit_reexport = true
+
+# Performance
+incremental = true
+warn_incomplete_stub = true
+
+exclude = [
+    "__pycache__/",
+    ".*/examples/",
+    ".*/generate_config.py",
+    ".*/manage.py",
+    ".*/scripts/",
+    ".*/tests/",
+    ".coverage.*",
+    ".git/",
+    ".mypy_cache/",
+    ".ruff_cache/",
+    ".pytest_cache/",
+    ".venv/",
+    "build/",
+    "dist/",
+    "node_modules/",
+    "vendor/",
 ]
 
-
-[tool.coverage.run]
-source = ["src"]
-branch = true
-omit = [
-    "*/tests/*",
-    "*/deprecation.py",
-]
-
-[tool.coverage.report]
-exclude_lines = [
-    "pragma: no cover",
-    "def __repr__",
-    "if self.debug:",
-    "if settings.DEBUG",
-    "raise AssertionError",
-    "raise NotImplementedError",
-    "if 0:",
-    "if __name__ == .__main__.:",
-    "class .*\\bProtocol\\):",
-    "@(abc\\.)?abstractmethod",
-]
+[tool.pydantic-mypy]
+# Pydantic plugin strict configuration
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
+warn_untyped_fields = true
 
 [tool.pytest.ini_options]
-minversion = "8.0"
-addopts = [
-    "-ra",
-    "--strict-markers",
-    "--strict-config",
-    "--cov=flext_core",
-    "--cov-branch",
-    "--cov-report=term-missing:skip-covered",
-    "--cov-report=html:reports/coverage",
-    "--cov-report=xml:reports/coverage.xml",
-    "--cov-fail-under=90",
-    "--maxfail=1",
-    "--tb=short",
-    # PEP8 compliance in test output
-    "--verbose",
-    "--color=yes",
-]
-asyncio_mode = "auto"
-markers = [
-    "unit: Unit tests",
-    "integration: Integration tests",
-    "slow: Slow tests",
-    "smoke: Smoke tests",
-    "core: marks tests as core framework tests",
-    "architecture: marks tests as architecture tests",
-    "ddd: marks tests as domain-driven design tests",
-    "pep8: marks tests for PEP8 compliance validation",
-    "compliance: marks tests for code quality compliance",
-    "requires_db: tests that need database",
-    "requires_redis: tests that need Redis",
-]
+extend = "../.pytest-ini-options-shared.toml"
 
-# PEP8 Code Quality Configuration
-[tool.ruff.format]
-quote-style = "double"            # PEP8 prefers double quotes
-indent-style = "space"            # PEP8 requires spaces, not tabs
-line-ending = "auto"              # Automatically detect line endings
-skip-magic-trailing-comma = false # Respect trailing commas
+[tool.ruff]
+extend = "../.ruff-shared.toml"
+lint.isort.known-first-party = ["flext_core"]
 
-[tool.codespell]
-skip = "*.po,*.ts,*.json,*.lock"
-count = true
-quiet-level = 3
-
-[tool.bandit]
-exclude_dirs = ["tests"]
-skips = ["B101"]         # Skip assert_used in tests
-
-[tool.bandit.assert_used]
-exclude = ["*/tests/*"]
+[tool.vulture]
+extend = "../.vulture-shared.toml"

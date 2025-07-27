@@ -1,0 +1,684 @@
+"""Unit tests for FlextContainer - Modern pytest patterns.
+
+Tests for the enterprise dependency injection container system.
+"""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
+
+import pytest
+
+from flext_core.container import (
+    FlextContainer,
+    FlextServiceFactory,
+    configure_flext_container,
+    get_flext_container,
+)
+from flext_core.exceptions import FlextError
+
+if TYPE_CHECKING:
+    from flext_core.result import FlextResult
+
+
+class SampleService:
+    """Mock service class for testing dependency injection."""
+
+    def __init__(
+        self,
+        name: str,
+        config: dict[str, Any] | None = None,
+    ) -> None:
+        """Initialize test service with name and optional config."""
+        self.name = name
+        self.config = config or {}
+        self.initialized = True
+
+    def process(self, data: str) -> str:
+        """Mock processing method."""
+        return f"Processed {data} by {self.name}"
+
+
+@pytest.fixture
+def sample_services() -> dict[str, Any]:
+    """Provide sample services for testing."""
+    return {
+        "database": SampleService("DatabaseService"),
+        "logger": SampleService("LoggerService"),
+        "cache": SampleService("CacheService", {"ttl": 3600}),
+    }
+
+
+@pytest.fixture
+def service_factories() -> dict[str, FlextServiceFactory[SampleService]]:
+    """Provide service factory functions for testing."""
+
+    def create_database() -> SampleService:
+        return SampleService("DatabaseService", {"host": "localhost"})
+
+    def create_logger() -> SampleService:
+        return SampleService("LoggerService", {"level": "INFO"})
+
+    def create_cache() -> SampleService:
+        return SampleService("CacheService", {"size": 1000})
+
+    return {
+        "database": create_database,
+        "logger": create_logger,
+        "cache": create_cache,
+    }
+
+
+@pytest.fixture
+def failing_factory() -> FlextServiceFactory[SampleService]:
+    """Provide a factory that raises an exception."""
+
+    def create_failing_service() -> SampleService:
+        msg = "Intentional test failure"
+        raise FlextError(msg)
+
+    return create_failing_service
+
+
+@pytest.mark.unit
+class TestFlextContainerBasicOperations:
+    """Unit tests for basic FlextContainer operations."""
+
+    def test_container_initialization(
+        self,
+        clean_container: FlextContainer,
+    ) -> None:
+        """Test FlextContainer initializes with empty state."""
+        assert len(clean_container.list_services()) == 0
+        assert clean_container.services == {}
+        assert clean_container.singletons == {}
+
+    def test_service_registration_success(
+        self,
+        clean_container: FlextContainer,
+        sample_services: dict[str, SampleService],
+    ) -> None:
+        """Test successful service registration."""
+        service = sample_services["database"]
+        result = clean_container.register("database", service)
+
+        assert result.is_success
+        assert result.data is None
+        assert clean_container.has("database")
+        assert "database" in clean_container.list_services()
+
+    @pytest.mark.parametrize(
+        "service_name",
+        [
+            "database",
+            "logger",
+            "cache",
+            "user_service",
+            "api_client",
+        ],
+    )
+    def test_service_registration_various_names(
+        self,
+        clean_container: FlextContainer,
+        service_name: str,
+    ) -> None:
+        """Test service registration with various valid names."""
+        service = SampleService(service_name)
+        result = clean_container.register(service_name, service)
+
+        assert result.is_success
+        assert clean_container.has(service_name)
+
+    @pytest.mark.parametrize(
+        ("invalid_name", "expected_error"),
+        [
+            ("", "Cannot be empty or whitespace-only"),
+            ("   ", "Cannot be empty or whitespace-only"),
+            (None, "must be a string"),
+            (123, "must be a string"),
+            ([], "must be a string"),
+        ],
+    )
+    def test_service_registration_invalid_names(
+        self,
+        clean_container: FlextContainer,
+        invalid_name: object,
+        expected_error: str,
+    ) -> None:
+        """Test service registration with invalid names."""
+        service = SampleService("test")
+        result = clean_container.register(invalid_name, service)
+
+        assert result.is_failure
+        assert result.error is not None
+        assert expected_error in result.error
+
+    def test_service_retrieval_success(
+        self,
+        clean_container: FlextContainer,
+        sample_services: dict[str, SampleService],
+    ) -> None:
+        """Test successful service retrieval."""
+        service = sample_services["database"]
+        clean_container.register("database", service)
+
+        result = clean_container.get("database")
+
+        assert result.is_success
+        assert result.data is service
+        assert isinstance(result.data, SampleService)
+        assert result.data.name == "DatabaseService"
+
+    def test_service_retrieval_not_found(
+        self,
+        clean_container: FlextContainer,
+    ) -> None:
+        """Test service retrieval for non-existent service."""
+        result = clean_container.get("nonexistent")
+
+        assert result.is_failure
+        assert result.error is not None
+        assert result.error
+        assert "not registered" in result.error
+
+    @pytest.mark.parametrize(
+        "service_names",
+        [
+            ["database"],
+            ["database", "logger"],
+            ["database", "logger", "cache"],
+            ["service1", "service2", "service3", "service4"],
+        ],
+    )
+    def test_multiple_service_registration(
+        self,
+        clean_container: FlextContainer,
+        service_names: list[str],
+    ) -> None:
+        """Test registering multiple services."""
+        # Register all services
+        for name in service_names:
+            service = SampleService(name)
+            result = clean_container.register(name, service)
+            assert result.is_success
+
+        # Verify all services are registered
+        registered_services = clean_container.list_services()
+        assert len(registered_services) == len(service_names)
+
+        for name in service_names:
+            assert name in registered_services
+            assert clean_container.has(name)
+
+    def test_service_overwriting(
+        self,
+        clean_container: FlextContainer,
+    ) -> None:
+        """Test service overwriting with new instance."""
+        # Register initial service
+        service1 = SampleService("Original")
+        result1 = clean_container.register("service", service1)
+        assert result1.is_success
+
+        # Verify initial service
+        get_result1 = clean_container.get("service")
+        assert get_result1.is_success
+        assert get_result1.data is service1
+
+        # Register replacement service
+        service2 = SampleService("Replacement")
+        result2 = clean_container.register("service", service2)
+        assert result2.is_success
+
+        # Verify replacement service
+        get_result2 = clean_container.get("service")
+        assert get_result2.is_success
+        assert get_result2.data is service2
+        assert get_result2.data is not service1
+
+
+@pytest.mark.unit
+class TestFlextContainerSingletonPattern:
+    """Unit tests for singleton factory pattern."""
+
+    def test_singleton_factory_registration(
+        self,
+        clean_container: FlextContainer,
+        service_factories: dict[str, FlextServiceFactory[SampleService]],
+    ) -> None:
+        """Test successful singleton factory registration."""
+        factory = service_factories["database"]
+        result = clean_container.register_singleton("database", factory)
+
+        assert result.is_success
+        assert result.data is None
+        assert clean_container.has("database")
+
+    def test_singleton_factory_creation(
+        self,
+        clean_container: FlextContainer,
+        service_factories: dict[str, FlextServiceFactory[SampleService]],
+    ) -> None:
+        """Test singleton factory creates instance on first access."""
+        factory = service_factories["database"]
+        clean_container.register_singleton("database", factory)
+
+        # First access creates instance
+        result1 = clean_container.get("database")
+        assert result1.is_success
+        assert isinstance(result1.data, SampleService)
+        assert result1.data.name == "DatabaseService"
+
+    def test_singleton_factory_caching(
+        self,
+        clean_container: FlextContainer,
+    ) -> None:
+        """Test singleton factory caches instances."""
+        call_count = 0
+
+        def create_service() -> SampleService:
+            nonlocal call_count
+            call_count += 1
+            return SampleService(f"Service_{call_count}")
+
+        clean_container.register_singleton("service", create_service)
+
+        # Multiple accesses should return same instance
+        result1 = clean_container.get("service")
+        result2 = clean_container.get("service")
+        result3 = clean_container.get("service")
+
+        assert result1.is_success
+        assert result2.is_success
+        assert result3.is_success
+
+        # Same instance returned
+        assert result1.data is result2.data
+        assert result2.data is result3.data
+
+        # Factory called only once
+        assert call_count == 1
+        assert isinstance(result1.data, SampleService)
+        assert result1.data.name == "Service_1"
+
+    def test_singleton_factory_failure_handling(
+        self,
+        clean_container: FlextContainer,
+        failing_factory: FlextServiceFactory[SampleService],
+    ) -> None:
+        """Test singleton factory failure handling."""
+        result = clean_container.register_singleton("failing", failing_factory)
+        assert result.is_success
+
+        # Factory failure should be handled gracefully
+        get_result = clean_container.get("failing")
+        assert get_result.is_failure
+        assert get_result.error is not None
+        assert "error creating service 'failing'" in get_result.error
+        assert "Intentional test failure" in get_result.error
+
+    def test_non_callable_factory_rejection(
+        self,
+        clean_container: FlextContainer,
+    ) -> None:
+        """Test rejection of non-callable factory."""
+        # This would be caught by type system, but test runtime behavior
+        # We need to bypass type checking for this test case
+        factory: Any = "not_callable"
+        result = clean_container.register_singleton("service", factory)
+
+        assert result.is_failure
+        assert result.error is not None
+        assert result.error
+        assert "must be callable" in result.error
+
+    @pytest.mark.parametrize("factory_count", [1, 3, 5, 10])
+    def test_multiple_singleton_factories(
+        self,
+        clean_container: FlextContainer,
+        factory_count: int,
+    ) -> None:
+        """Test multiple singleton factories work independently."""
+        factories = {}
+
+        # Register multiple factories
+        for i in range(factory_count):
+            service_name = f"service_{i}"
+
+            def create_service(name: str = service_name) -> SampleService:
+                return SampleService(name)
+
+            factories[service_name] = create_service
+            result = clean_container.register_singleton(
+                service_name,
+                create_service,
+            )
+            assert result.is_success
+
+        # Verify all services work independently
+        for i in range(factory_count):
+            service_name = f"service_{i}"
+            get_result: FlextResult[object] = clean_container.get(service_name)
+            assert get_result.is_success
+            assert isinstance(get_result.data, SampleService)
+            service_instance = get_result.data
+            assert service_instance.name == service_name
+
+
+@pytest.mark.unit
+class TestFlextContainerServiceManagement:
+    """Unit tests for service lifecycle management."""
+
+    def test_service_existence_check(
+        self,
+        clean_container: FlextContainer,
+        sample_services: dict[str, SampleService],
+    ) -> None:
+        """Test service existence checking."""
+        # Non-existent service
+        assert not clean_container.has("nonexistent")
+
+        # Register and check
+        service = sample_services["database"]
+        clean_container.register("database", service)
+        assert clean_container.has("database")
+
+    @pytest.mark.parametrize(
+        ("name", "expected"),
+        [
+            ("valid_service", False),  # Not registered
+            ("", False),  # Invalid name
+            ("   ", False),  # Whitespace name
+            (None, False),  # None name
+            (123, False),  # Non-string name
+        ],
+    )
+    def test_service_existence_edge_cases(
+        self,
+        clean_container: FlextContainer,
+        name: object,
+        *,
+        expected: bool,
+    ) -> None:
+        """Test service existence checking with edge cases."""
+        result = clean_container.has(name)
+        assert result is expected
+
+    def test_service_removal_success(
+        self,
+        clean_container: FlextContainer,
+        sample_services: dict[str, SampleService],
+    ) -> None:
+        """Test successful service removal."""
+        service = sample_services["database"]
+        clean_container.register("database", service)
+
+        # Verify service exists
+        assert clean_container.has("database")
+
+        # Remove service
+        result = clean_container.remove("database")
+        assert result.is_success
+        assert result.data is None
+
+        # Verify service is gone
+        assert not clean_container.has("database")
+        assert "database" not in clean_container.list_services()
+
+    def test_service_removal_not_found(
+        self,
+        clean_container: FlextContainer,
+    ) -> None:
+        """Test removal of non-existent service."""
+        result = clean_container.remove("nonexistent")
+
+        assert result.is_failure
+        assert result.error is not None
+        assert result.error
+        assert "not registered" in result.error
+
+    def test_singleton_removal_clears_cache(
+        self,
+        clean_container: FlextContainer,
+        service_factories: dict[str, FlextServiceFactory[SampleService]],
+    ) -> None:
+        """Test singleton removal clears both registry and cache."""
+        factory = service_factories["database"]
+        clean_container.register_singleton("database", factory)
+
+        # Create instance (populates cache)
+        result1 = clean_container.get("database")
+        assert result1.is_success
+
+        # Remove service
+        remove_result = clean_container.remove("database")
+        assert remove_result.is_success
+
+        # Verify complete removal
+        assert not clean_container.has("database")
+        assert len(clean_container.singletons) == 0
+
+    def test_container_clear_operation(
+        self,
+        clean_container: FlextContainer,
+        sample_services: dict[str, SampleService],
+    ) -> None:
+        """Test clearing all services from container."""
+        # Register multiple services
+        for name, service in sample_services.items():
+            clean_container.register(name, service)
+
+        assert len(clean_container.list_services()) == len(sample_services)
+
+        # Clear container
+        result = clean_container.clear()
+        assert result.is_success
+        assert result.data is None
+
+        # Verify empty state
+        assert len(clean_container.list_services()) == 0
+        assert len(clean_container.services) == 0
+        assert len(clean_container.singletons) == 0
+
+    def test_service_listing_accuracy(
+        self,
+        clean_container: FlextContainer,
+        sample_services: dict[str, SampleService],
+    ) -> None:
+        """Test service listing returns accurate results."""
+        # Initially empty
+        services = clean_container.list_services()
+        assert services == []
+
+        # Add services incrementally
+        expected_services = []
+        for name, service in sample_services.items():
+            clean_container.register(name, service)
+            expected_services.append(name)
+
+            current_services = clean_container.list_services()
+            assert len(current_services) == len(expected_services)
+            assert set(current_services) == set(expected_services)
+
+
+@pytest.mark.unit
+class TestFlextContainerGlobalManagement:
+    """Unit tests for global container management."""
+
+    def test_get_global_container_singleton(self) -> None:
+        """Test global container returns same instance."""
+        container1 = get_flext_container()
+        container2 = get_flext_container()
+
+        assert container1 is container2
+        assert isinstance(container1, FlextContainer)
+
+    def test_configure_global_container_with_instance(
+        self,
+        sample_services: dict[str, SampleService],
+    ) -> None:
+        """Test configuring global container with custom instance."""
+        # Create pre-configured container
+        custom_container = FlextContainer()
+        service = sample_services["database"]
+        custom_container.register("database", service)
+
+        # Configure as global
+        result = configure_flext_container(custom_container)
+
+        assert result is custom_container
+        assert get_flext_container() is custom_container
+        assert get_flext_container().has("database")
+
+    def test_configure_global_container_with_none(self) -> None:
+        """Test configuring global container with None creates new instance.
+
+        Resets to new container when None is passed.
+        """
+        # Ensure we have an existing container with data
+        existing_container = get_flext_container()
+        existing_container.register("test_service", "test_data")
+
+        # Reset to new container
+        new_container = configure_flext_container(None)
+
+        assert new_container is not existing_container
+        assert isinstance(new_container, FlextContainer)
+        assert get_flext_container() is new_container
+        assert not new_container.has("test_service")
+
+    def test_global_container_persistence(
+        self,
+        sample_services: dict[str, SampleService],
+    ) -> None:
+        """Test global container maintains state across calls."""
+        container = get_flext_container()
+        service = sample_services["logger"]
+        container.register("logger", service)
+
+        # Verify persistence across multiple calls
+        container2 = get_flext_container()
+        assert container2.has("logger")
+
+        result = container2.get("logger")
+        assert result.is_success
+        assert result.data is service
+
+
+@pytest.mark.integration
+class TestFlextContainerIntegration:
+    """Integration tests for FlextContainer with complex scenarios."""
+
+    def test_mixed_service_types_integration(
+        self,
+        clean_container: FlextContainer,
+        sample_services: dict[str, SampleService],
+        service_factories: dict[str, FlextServiceFactory[SampleService]],
+    ) -> None:
+        """Test integration of regular services and singleton factories.
+
+        Tests mixing direct services with factory patterns.
+        """
+        # Register mix of direct services and factories
+        database_service = sample_services["database"]
+        logger_factory = service_factories["logger"]
+
+        clean_container.register("database", database_service)
+        clean_container.register_singleton("logger", logger_factory)
+
+        # Verify both work correctly
+        db_result = clean_container.get("database")
+        logger_result = clean_container.get("logger")
+
+        assert db_result.is_success
+        assert logger_result.is_success
+
+        assert db_result.data is database_service
+        assert isinstance(logger_result.data, SampleService)
+        assert logger_result.data.name == "LoggerService"
+
+    def test_service_replacement_scenarios(
+        self,
+        clean_container: FlextContainer,
+        sample_services: dict[str, SampleService],
+        service_factories: dict[str, FlextServiceFactory[SampleService]],
+    ) -> None:
+        """Test various service replacement scenarios."""
+        # Start with direct service
+        original_service = sample_services["cache"]
+        clean_container.register("cache", original_service)
+
+        result1 = clean_container.get("cache")
+        assert result1.data is original_service
+
+        # Replace with factory
+        cache_factory = service_factories["cache"]
+        clean_container.register_singleton("cache", cache_factory)
+
+        result2 = clean_container.get("cache")
+        assert result2.is_success
+        assert result2.data is not original_service
+        assert isinstance(result2.data, SampleService)
+
+        # Replace factory with another direct service
+        new_service = SampleService("NewCacheService")
+        clean_container.register("cache", new_service)
+
+        result3 = clean_container.get("cache")
+        assert result3.data is new_service
+
+    def test_container_state_consistency(
+        self,
+        clean_container: FlextContainer,
+        sample_services: dict[str, SampleService],
+    ) -> None:
+        """Test container maintains consistent state during operations.
+
+        Validates state consistency during incremental operations.
+        """
+        services_to_register = {
+            "service1": sample_services["database"],
+            "service2": sample_services["logger"],
+            "service3": sample_services["cache"],
+        }
+
+        # Register services incrementally and verify state
+        for i, (name, service) in enumerate(services_to_register.items(), 1):
+            clean_container.register(name, service)
+
+            # Verify container state is consistent
+            service_list = clean_container.list_services()
+            assert len(service_list) == i
+            assert name in service_list
+            assert clean_container.has(name)
+
+            # Verify all previously registered services still work
+            for registered_name in service_list:
+                result = clean_container.get(registered_name)
+                assert result.is_success
+
+    def test_factory_error_isolation(
+        self,
+        clean_container: FlextContainer,
+        service_factories: dict[str, FlextServiceFactory[SampleService]],
+        failing_factory: FlextServiceFactory[SampleService],
+    ) -> None:
+        """Test that failing factories don't affect other services."""
+        # Register working factory and failing factory
+        working_factory = service_factories["database"]
+        clean_container.register_singleton("working", working_factory)
+        clean_container.register_singleton("failing", failing_factory)
+
+        # Working service should still work
+        working_result = clean_container.get("working")
+        assert working_result.is_success
+        assert isinstance(working_result.data, SampleService)
+
+        # Failing service should fail gracefully
+        failing_result = clean_container.get("failing")
+        assert failing_result.is_failure
+
+        # Container should remain functional
+        assert clean_container.has("working")
+        assert clean_container.has("failing")  # Registration still exists
+        assert len(clean_container.list_services()) == 2

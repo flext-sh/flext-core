@@ -76,7 +76,7 @@ class User(FlextEntity[UserId]):
         self._status = UserStatus.ACTIVE
         self._created_at = datetime.now()
         self._last_login: Optional[datetime] = None
-        self._failed_login_attempts = 0
+        self.failed_login_attempts = 0
     
     @property
     def email(self) -> Email:
@@ -100,7 +100,7 @@ class User(FlextEntity[UserId]):
     
     @property
     def is_locked(self) -> bool:
-        return self._failed_login_attempts >= 5
+        return self.failed_login_attempts >= 5
     
     def change_email(self, new_email: Email) -> FlextResult[None]:
         """Change user email with business validation."""
@@ -119,7 +119,7 @@ class User(FlextEntity[UserId]):
             return FlextResult.fail("New password must be different")
         
         self._password_hash = new_password_hash
-        self._failed_login_attempts = 0  # Reset on password change
+        self.failed_login_attempts = 0  # Reset on password change
         return FlextResult.ok(None)
     
     def authenticate(self, password_hash: HashedPassword) -> FlextResult[None]:
@@ -131,12 +131,12 @@ class User(FlextEntity[UserId]):
             return FlextResult.fail("Account is locked due to failed login attempts")
         
         if self._password_hash != password_hash:
-            self._failed_login_attempts += 1
+            self.failed_login_attempts += 1
             return FlextResult.fail("Invalid credentials")
         
         # Success
         self._last_login = datetime.now()
-        self._failed_login_attempts = 0
+        self.failed_login_attempts = 0
         return FlextResult.ok(None)
     
     def suspend(self, reason: str) -> FlextResult[None]:
@@ -153,7 +153,7 @@ class User(FlextEntity[UserId]):
             return FlextResult.fail("User is already active")
         
         self._status = UserStatus.ACTIVE
-        self._failed_login_attempts = 0
+        self.failed_login_attempts = 0
         return FlextResult.ok(None)
     
     @classmethod
