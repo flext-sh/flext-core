@@ -133,7 +133,7 @@ class FlextDecorators(
 
     @classmethod
     def safe_result(cls, func: F) -> F:
-        """Execute function safely with automatic exception handling and FlextResult return.
+        """Execute function safely with automatic exception handling and Result return.
 
         Complex orchestration pattern combining inherited error handling capabilities
         with FlextResult patterns for comprehensive safe execution. Automatically
@@ -243,14 +243,14 @@ class FlextDecorators(
 
         def decorator(func: F) -> F:
             # Use inherited performance methods
-            cached_func = cls.create_cache_decorator(max_size)(func)
+            cached_func = cls.create_cache_decorator(max_size)(func)  # type: ignore[arg-type]
             return cls.get_timing_decorator()(cached_func)  # type: ignore[return-value]
 
         return decorator
 
     @classmethod
     def safe_cached(cls, max_size: int = 128) -> Callable[[F], F]:
-        """Combine safe execution with caching using inherited error handling and performance methods.
+        """Combine safe execution with caching using inherited error handling methods.
 
         Complex orchestration pattern that provides both exception safety and
         performance optimization by combining inherited capabilities from multiple
@@ -272,7 +272,7 @@ class FlextDecorators(
             max_size: Maximum number of results to cache (default: 128)
 
         Returns:
-            Decorator function that applies safe execution and caching to target function
+            Decorator function that applies safe execution and caching to function
 
         Usage:
             @FlextDecorators.safe_cached(max_size=64)
@@ -287,7 +287,7 @@ class FlextDecorators(
 
         def decorator(func: F) -> F:
             # Use inherited error handling + performance methods
-            safe_func = cls.get_safe_decorator()(func)
+            safe_func = cls.get_safe_decorator()(func)  # type: ignore[arg-type]
             return cls.create_cache_decorator(max_size)(safe_func)  # type: ignore[return-value]
 
         return decorator
@@ -298,7 +298,7 @@ class FlextDecorators(
         model_class: type[BaseModel],
         max_size: int = 128,
     ) -> Callable[[F], F]:
-        """Combine validation, caching, and safe execution using multiple inherited methods.
+        """Combine validation, caching, and safe execution using inherited methods.
 
         Most comprehensive orchestration pattern combining validation, performance
         optimization, and error handling through complex layering of inherited
@@ -345,7 +345,7 @@ class FlextDecorators(
         def decorator(func: F) -> F:
             # Combine validation + performance + error handling
             validated_func = cls.validated_with_result(model_class)(func)
-            return cls.create_cache_decorator(max_size)(validated_func)  # type: ignore[return-value]
+            return cls.create_cache_decorator(max_size)(validated_func)  # type: ignore[return-value, arg-type]
 
         return decorator
 
@@ -358,10 +358,11 @@ class FlextDecorators(
         with_timing: bool = False,
         with_logging: bool = False,
     ) -> Callable[[F], F]:
-        """Complete decorator orchestrating all inherited base methods for maximum functionality.
+        """Complete decorator orchestrating all inherited base methods.
 
-        Ultimate orchestration pattern that combines all available decorator capabilities
-        from six different base classes in optimal layering order. Provides comprehensive
+        Ultimate orchestration pattern that combines all available decorator
+        capabilities from six different base classes in optimal layering order.
+        Provides comprehensive
         function enhancement impossible to achieve with single inheritance.
 
         Architecture:
@@ -412,14 +413,14 @@ class FlextDecorators(
         """
 
         def decorator(func: F) -> F:
-            current_func = func
+            current_func: object = func
 
             # Apply validation if model provided
             if model_class:
                 current_func = cls.validated_with_result(model_class)(current_func)
 
             # Apply safe execution (inherited)
-            current_func = cls.get_safe_decorator()(current_func)
+            current_func = cls.get_safe_decorator()(current_func)  # type: ignore[arg-type]
 
             # Apply caching (inherited)
             current_func = cls.create_cache_decorator(cache_size)(current_func)
@@ -470,6 +471,42 @@ def safe_call(func: F) -> F:
     return FlextDecorators.safe_result(func)
 
 
+def cache_decorator(max_size: int = 128) -> object:
+    """Cache decorator for function results.
+    
+    Args:
+        max_size: Maximum cache size
+        
+    Returns:
+        Decorator function
+
+    """
+    return FlextDecorators.create_cache_decorator(max_size)
+
+
+def safe_decorator() -> object:
+    """Safe execution decorator.
+    
+    Returns:
+        Decorator function
+
+    """
+    return FlextDecorators.get_safe_decorator()
+
+
+def timing_decorator(func: object) -> object:
+    """Timing decorator for performance measurement.
+    
+    Args:
+        func: Function to wrap with timing
+        
+    Returns:
+        Wrapped function with timing
+
+    """
+    return FlextDecorators.get_timing_decorator()(func)
+
+
 # =============================================================================
 # EXPORTS - Clean public API seguindo diretrizes
 # =============================================================================
@@ -484,6 +521,9 @@ __all__ = [
     "FlextPerformanceDecorators",
     # Direct base exports (no inheritance overhead)
     "FlextValidationDecorators",
-    # Essential compatibility function
+    # Essential compatibility functions
     "safe_call",
+    "cache_decorator",
+    "safe_decorator",
+    "timing_decorator",
 ]

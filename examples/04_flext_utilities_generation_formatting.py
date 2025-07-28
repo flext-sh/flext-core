@@ -18,6 +18,7 @@ Features demonstrated:
 from __future__ import annotations
 
 import json
+import math
 import time
 from typing import Any
 
@@ -185,7 +186,7 @@ def demonstrate_type_checking() -> None:
     test_values = [
         ("string", "hello"),
         ("integer", 42),
-        ("float", 3.14),
+        ("float", math.pi),
         ("boolean", True),
         ("list", [1, 2, 3]),
         ("dict", {"key": "value"}),
@@ -366,7 +367,7 @@ def demonstrate_config_utilities() -> None:
 
         # Simple bool parsing
         as_bool = FlextUtilities.safe_call(
-            lambda: value.lower() in ("true", "1", "yes", "on")
+            lambda: value.lower() in {"true", "1", "yes", "on"}
             if isinstance(value, str)
             else bool(value),
         )
@@ -619,7 +620,7 @@ def demonstrate_performance_benchmarks() -> None:
 # =============================================================================
 
 
-def main() -> None:  # noqa: PLR0915
+def main() -> None:
     """Run comprehensive FlextUtilities demonstration."""
     print("=" * 80)
     print("🔧 FLEXT UTILITIES - GENERATION, FORMATTING & VALIDATION DEMONSTRATION")

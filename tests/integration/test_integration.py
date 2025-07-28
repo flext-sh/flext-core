@@ -2,15 +2,19 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 
 from flext_core import (
     FlextContainer,
-    FlextEntityId,
     FlextResult,
     __version__,
     get_flext_container,
 )
+
+if TYPE_CHECKING:
+    from flext_core.types import FlextEntityId
 
 pytestmark = [pytest.mark.integration]
 
@@ -48,7 +52,7 @@ class TestLibraryIntegration:
         def create_result() -> FlextResult[str]:
             return FlextResult.ok("container_result")
 
-        register_result = container.register_singleton(
+        register_result = container.register_factory(
             "result_factory",
             create_result,
         )

@@ -102,23 +102,24 @@ class ValidatableConfiguration(FlextValidatableMixin):
 
     def validate_configuration(self) -> bool:
         """Validate configuration settings."""
-        self.clear_validation_errors()
+        self._clear_validation_errors()
 
         # Required settings validation
         required_keys = ["database_url", "api_key", "timeout"]
         for key in required_keys:
             if key not in self.settings:
-                self.add_validation_error(f"Missing required setting: {key}")
+                self._add_validation_error(f"Missing required setting: {key}")
 
         # Value validation
         if "timeout" in self.settings:
             timeout = self.settings["timeout"]
             if not isinstance(timeout, (int, float)) or timeout <= 0:
-                self.add_validation_error("Timeout must be a positive number")
+                self._add_validation_error("Timeout must be a positive number")
 
         # Set validation status
-        is_valid = len(self.get_validation_errors()) == 0
-        self.set_validation_status(is_valid)
+        is_valid = len(self.validation_errors) == 0
+        if is_valid:
+            self._mark_valid()
 
         return is_valid
 
@@ -126,7 +127,7 @@ class ValidatableConfiguration(FlextValidatableMixin):
         """Apply configuration if valid."""
         if not self.validate_configuration():
             print(f"❌ Configuration '{self.config_name}' validation failed:")
-            for error in self.get_validation_errors():
+            for error in self.validation_errors:
                 print(f"   - {error}")
             return False
 
@@ -135,7 +136,7 @@ class ValidatableConfiguration(FlextValidatableMixin):
 
     def __str__(self) -> str:
         """Strings representation with validation status."""
-        status = "Valid" if self.is_validation_valid() else "Invalid"
+        status = "Valid" if self.is_valid else "Invalid"
         return f"Config({self.config_name}, {status})"
 
 
@@ -148,7 +149,7 @@ class LoggableService(FlextLoggableMixin):
 
     def process_request(self, request_id: str, data: dict[str, Any]) -> dict[str, Any]:
         """Process request with comprehensive logging."""
-        self.log_info(f"Processing request {request_id}", request_id=request_id)
+        self.logger.info(f"Processing request {request_id}", request_id=request_id)
 
         try:
             # Simulate processing
@@ -161,11 +162,11 @@ class LoggableService(FlextLoggableMixin):
                 "service": self.service_name,
             }
 
-            self.log_info(f"Request {request_id} completed successfully", **result)
+            self.logger.info(f"Request {request_id} completed successfully", **result)
             return result
 
         except Exception as e:
-            self.log_error(
+            self.logger.exception(
                 f"Request {request_id} failed",
                 error=str(e),
                 request_id=request_id,
@@ -178,7 +179,7 @@ class LoggableService(FlextLoggableMixin):
 
     def health_check(self) -> dict[str, Any]:
         """Perform health check with logging."""
-        self.log_debug("Performing health check")
+        self.logger.debug("Performing health check")
 
         health_status = {
             "service": self.service_name,
@@ -186,7 +187,7 @@ class LoggableService(FlextLoggableMixin):
             "timestamp": FlextUtilities.generate_iso_timestamp(),
         }
 
-        self.log_info("Health check completed", **health_status)
+        self.logger.info("Health check completed", **health_status)
         return health_status
 
 
@@ -201,14 +202,14 @@ class TimedOperation(FlextTimingMixin):
         """Execute operation with timing measurement."""
         print(f"⏱️ Starting operation: {self.operation_name}")
 
-        self.start_timing()
+        start_time = self._start_timing()
 
         # Simulate operation complexity
         total = 0
         for i in range(complexity):
             total += i * 2
 
-        execution_time = self.stop_timing()
+        execution_time = self._get_execution_time_seconds(start_time)
 
         result = {
             "operation": self.operation_name,
@@ -233,8 +234,8 @@ class CacheableCalculator(FlextCacheableMixin):
         cache_key = f"fib_{n}"
 
         # Check cache first
-        if self.has_cached(cache_key):
-            cached_result = self.get_cached(cache_key)
+        cached_result = self._cache_get(cache_key)
+        if cached_result is not None:
             print(f"💰 Cache hit for fib({n}): {cached_result}")
             return cached_result
 
@@ -245,7 +246,7 @@ class CacheableCalculator(FlextCacheableMixin):
         result = n if n <= 1 else self.fibonacci(n - 1) + self.fibonacci(n - 2)
 
         # Cache the result
-        self.set_cached(cache_key, result)
+        self._cache_set(cache_key, result)
         return result
 
     def get_stats(self) -> dict[str, Any]:
@@ -280,7 +281,7 @@ class AdvancedUser(
         self._initialize_timestamps()
         self._initialize_validation()
 
-        self.log_info(
+        self.logger.info(
             f"Advanced user created: {username}",
             username=username,
             role=role,
@@ -288,30 +289,31 @@ class AdvancedUser(
 
     def validate_user(self) -> bool:
         """Comprehensive user validation."""
-        self.clear_validation_errors()
+        self._clear_validation_errors()
 
         # Username validation
         if not self.username or len(self.username) < 3:
-            self.add_validation_error("Username must be at least 3 characters")
+            self._add_validation_error("Username must be at least 3 characters")
 
         # Email validation
         if not self.email or "@" not in self.email:
-            self.add_validation_error("Invalid email format")
+            self._add_validation_error("Invalid email format")
 
         # Role validation
         valid_roles = ["user", "admin", "moderator"]
         if self.role not in valid_roles:
-            self.add_validation_error(f"Invalid role. Must be one of: {valid_roles}")
+            self._add_validation_error(f"Invalid role. Must be one of: {valid_roles}")
 
-        is_valid = len(self.get_validation_errors()) == 0
-        self.set_validation_status(is_valid)
+        is_valid = len(self.validation_errors) == 0
+        if is_valid:
+            self._mark_valid()
 
         if is_valid:
-            self.log_info(f"User validation successful: {self.username}")
+            self.logger.info(f"User validation successful: {self.username}")
         else:
-            self.log_warning(
+            self.logger.warning(
                 f"User validation failed: {self.username}",
-                errors=self.get_validation_errors(),
+                errors=self.validation_errors,
             )
 
         return is_valid
@@ -319,18 +321,18 @@ class AdvancedUser(
     def promote_to_admin(self) -> bool:
         """Promote user to admin with validation and logging."""
         if not self.validate_user():
-            self.log_error("Cannot promote invalid user to admin")
+            self.logger.error("Cannot promote invalid user to admin")
             return False
 
         if self.role == "admin":
-            self.log_warning(f"User {self.username} is already admin")
+            self.logger.warning(f"User {self.username} is already admin")
             return False
 
         old_role = self.role
         self.role = "admin"
         self._update_timestamp()
 
-        self.log_info(
+        self.logger.info(
             f"User promoted: {self.username}",
             old_role=old_role,
             new_role="admin",
@@ -350,8 +352,8 @@ class AdvancedUser(
             "created_at": self.created_at,
             "updated_at": self.updated_at,
             "age_seconds": age_seconds,
-            "is_valid": self.is_validation_valid(),
-            "validation_errors": self.get_validation_errors(),
+            "is_valid": self.is_valid,
+            "validation_errors": self.validation_errors,
         }
 
 
@@ -378,8 +380,8 @@ class SmartDocument(
         cache_key = f"view_{self.title}"
 
         # Check if view is cached
-        if self.has_cached(cache_key):
-            cached_view = self.get_cached(cache_key)
+        cached_view = self._cache_get(cache_key)
+        if cached_view is not None:
             print(f"📄 Cached view for: {self.title}")
             self.view_count += 1
             return cached_view
@@ -396,8 +398,8 @@ class SmartDocument(
             "character_count": len(self.content),
         }
 
-        # Cache the view for 5 seconds
-        self.set_cached(cache_key, view_data, ttl=5)
+        # Cache the view
+        self._cache_set(cache_key, view_data)
         self.view_count += 1
 
         print(f"📄 Generated view for: {self.title}")
@@ -410,8 +412,9 @@ class SmartDocument(
 
         # Clear cached views
         cache_key = f"view_{self.title}"
-        if self.has_cached(cache_key):
-            self.remove_cached(cache_key)
+        cached_view = self._cache_get(cache_key)
+        if cached_view is not None:
+            self._cache_remove(cache_key)
 
         print(f"📝 Content updated for: {self.title}")
 
@@ -420,15 +423,13 @@ class SmartDocument(
         if not isinstance(other, SmartDocument):
             return {"error": "Can only compare with other SmartDocument instances"}
 
-        comparison = {
+        return {
             "title_match": self.title == other.title,
             "category_match": self.category == other.category,
             "content_length_diff": len(self.content) - len(other.content),
             "age_diff_seconds": (self.created_at or 0) - (other.created_at or 0),
             "view_count_diff": self.view_count - other.view_count,
         }
-
-        return comparison
 
     def to_dict(self) -> dict[str, Any]:
         """Serialize document to dictionary."""
@@ -462,46 +463,47 @@ class EnterpriseService(
         self._initialize_id()
         self._initialize_validation()
 
-        self.log_info(f"Enterprise service initialized: {service_name}")
+        self.logger.info(f"Enterprise service initialized: {service_name}")
 
     def validate_service(self) -> bool:
         """Validate service configuration."""
-        self.clear_validation_errors()
+        self._clear_validation_errors()
 
         required_config = ["host", "port", "timeout"]
         for key in required_config:
             if key not in self.config:
-                self.add_validation_error(f"Missing required config: {key}")
+                self._add_validation_error(f"Missing required config: {key}")
 
         if "timeout" in self.config:
             timeout = self.config["timeout"]
             if not isinstance(timeout, (int, float)) or timeout <= 0:
-                self.add_validation_error("Timeout must be positive number")
+                self._add_validation_error("Timeout must be positive number")
 
-        is_valid = len(self.get_validation_errors()) == 0
-        self.set_validation_status(is_valid)
+        is_valid = len(self.validation_errors) == 0
+        if is_valid:
+            self._mark_valid()
 
         return is_valid
 
     def process_request(self, request_id: str, data: dict[str, Any]) -> dict[str, Any]:
         """Process request with comprehensive monitoring."""
-        self.log_info(f"Processing request: {request_id}")
+        self.logger.info(f"Processing request: {request_id}")
 
         # Validate service first
         if not self.validate_service():
             self.error_count += 1
-            self.log_error("Service validation failed", request_id=request_id)
+            self.logger.error("Service validation failed", request_id=request_id)
             return {"error": "Service not properly configured"}
 
         # Check cache
         cache_key = f"request_{request_id}"
-        if self.has_cached(cache_key):
-            cached_result = self.get_cached(cache_key)
-            self.log_info(f"Cache hit for request: {request_id}")
+        cached_result = self._cache_get(cache_key)
+        if cached_result is not None:
+            self.logger.info(f"Cache hit for request: {request_id}")
             return cached_result
 
         # Time the operation
-        self.start_timing()
+        start_time = self._start_timing()
 
         try:
             # Simulate processing
@@ -515,14 +517,14 @@ class EnterpriseService(
                 "processed_at": FlextUtilities.generate_iso_timestamp(),
             }
 
-            execution_time = self.stop_timing()
+            execution_time = self._get_execution_time_seconds(start_time)
             result["execution_time"] = execution_time
 
             # Cache successful results
-            self.set_cached(cache_key, result, ttl=10)
+            self._cache_set(cache_key, result)
 
             self.request_count += 1
-            self.log_info(
+            self.logger.info(
                 f"Request completed: {request_id}",
                 execution_time=execution_time,
             )
@@ -530,9 +532,9 @@ class EnterpriseService(
             return result
 
         except Exception as e:
-            execution_time = self.stop_timing()
+            execution_time = self._get_execution_time_seconds(start_time)
             self.error_count += 1
-            self.log_error(
+            self.logger.exception(
                 f"Request failed: {request_id}",
                 error=str(e),
                 execution_time=execution_time,
@@ -553,8 +555,8 @@ class EnterpriseService(
             "request_count": self.request_count,
             "error_count": self.error_count,
             "error_rate": self.error_count / max(self.request_count, 1),
-            "is_valid": self.is_validation_valid(),
-            "validation_errors": self.get_validation_errors(),
+            "is_valid": self.is_valid,
+            "validation_errors": self.validation_errors,
             "cache_size": len(self._cache) if hasattr(self, "_cache") else 0,
         }
 
@@ -602,16 +604,17 @@ class ValueObjectExample(FlextValueObjectMixin):
 
     def validate_value(self) -> bool:
         """Validate value object."""
-        self.clear_validation_errors()
+        self._clear_validation_errors()
 
         if not self.name:
-            self.add_validation_error("Name cannot be empty")
+            self._add_validation_error("Name cannot be empty")
 
         if self.value is None:
-            self.add_validation_error("Value cannot be None")
+            self._add_validation_error("Value cannot be None")
 
-        is_valid = len(self.get_validation_errors()) == 0
-        self.set_validation_status(is_valid)
+        is_valid = len(self.validation_errors) == 0
+        if is_valid:
+            self._mark_valid()
 
         return is_valid
 
@@ -621,7 +624,7 @@ class ValueObjectExample(FlextValueObjectMixin):
             "name": self.name,
             "value": self.value,
             "unit": self.unit,
-            "is_valid": self.is_validation_valid(),
+            "is_valid": self.is_valid,
         }
 
     def __str__(self) -> str:
@@ -734,7 +737,7 @@ def demonstrate_multiple_inheritance() -> None:
     view1 = doc1.view_document()
     print(f"  📄 Document 1 word count: {view1['word_count']}")
 
-    view1_cached = doc1.view_document()  # Should hit cache
+    doc1.view_document()  # Should hit cache
 
     # Compare documents
     comparison = doc1.compare_with(doc2)
@@ -808,7 +811,7 @@ def demonstrate_composite_mixins() -> None:
     invalid_value = ValueObjectExample("", None)
     is_invalid = invalid_value.validate_value()
     print(f"  ❌ Invalid value object - Valid: {is_invalid}")
-    print(f"     Errors: {invalid_value.get_validation_errors()}")
+    print(f"     Errors: {invalid_value.validation_errors}")
 
     # Serialization demo
     price_dict = price.to_dict()
@@ -833,24 +836,25 @@ def demonstrate_method_resolution_order() -> None:
             self.name = name
             self._initialize_id()
             self._initialize_validation()
-            self.log_info(f"Complex class initialized: {name}")
+            self.logger.info(f"Complex class initialized: {name}")
 
         def perform_operation(self) -> dict[str, Any]:
             """Operation using multiple mixin capabilities."""
-            self.start_timing()
+            start_time = self._start_timing()
 
             # Validate state
-            self.clear_validation_errors()
+            self._clear_validation_errors()
             if not self.name:
-                self.add_validation_error("Name cannot be empty")
+                self._add_validation_error("Name cannot be empty")
 
-            is_valid = len(self.get_validation_errors()) == 0
-            self.set_validation_status(is_valid)
+            is_valid = len(self.validation_errors) == 0
+            if is_valid:
+                self._mark_valid()
 
             # Simulate work
             time.sleep(0.001)
 
-            execution_time = self.stop_timing()
+            execution_time = self._get_execution_time_seconds(start_time)
 
             result = {
                 "id": self.id,
@@ -860,7 +864,7 @@ def demonstrate_method_resolution_order() -> None:
                 "mro_length": len(self.__class__.__mro__),
             }
 
-            self.log_info(f"Operation completed for {self.name}", **result)
+            self.logger.info(f"Operation completed for {self.name}", **result)
             return result
 
     # Demonstrate MRO
@@ -977,39 +981,42 @@ def demonstrate_enterprise_patterns() -> None:
 
         def save_user(self, user_id: str, user_data: dict[str, Any]) -> bool:
             """Save user with caching and logging."""
-            self.start_timing()
+            start_time = self._start_timing()
 
             try:
                 self.users[user_id] = user_data
                 self.set_cached(f"user_{user_id}", user_data, ttl=60)
 
-                execution_time = self.stop_timing()
-                self.log_info(f"User saved: {user_id}", execution_time=execution_time)
+                execution_time = self._get_execution_time_seconds(start_time)
+                self.logger.info(
+                    f"User saved: {user_id}",
+                    execution_time=execution_time,
+                )
 
                 return True
 
             except Exception as e:
-                execution_time = self.stop_timing()
-                self.log_error(f"Failed to save user: {user_id}", error=str(e))
+                execution_time = self._get_execution_time_seconds(start_time)
+                self.logger.exception(f"Failed to save user: {user_id}", error=str(e))
                 return False
 
         def find_user(self, user_id: str) -> dict[str, Any] | None:
             """Find user with caching."""
             # Check cache first
             cache_key = f"user_{user_id}"
-            if self.has_cached(cache_key):
-                cached_user = self.get_cached(cache_key)
-                self.log_info(f"Cache hit for user: {user_id}")
+            cached_user = self._cache_get(cache_key)
+            if cached_user is not None:
+                self.logger.info(f"Cache hit for user: {user_id}")
                 return cached_user
 
             # Check storage
             if user_id in self.users:
                 user_data = self.users[user_id]
-                self.set_cached(cache_key, user_data, ttl=60)
-                self.log_info(f"User found in storage: {user_id}")
+                self._cache_set(cache_key, user_data)
+                self.logger.info(f"User found in storage: {user_id}")
                 return user_data
 
-            self.log_warning(f"User not found: {user_id}")
+            self.logger.warning(f"User not found: {user_id}")
             return None
 
     # Domain service pattern
@@ -1034,28 +1041,28 @@ def demonstrate_enterprise_patterns() -> None:
             items: list[dict[str, Any]],
         ) -> dict[str, Any] | None:
             """Create order with validation and logging."""
-            self.start_timing()
-            self.log_info(f"Creating order for user: {user_id}")
+            start_time = self._start_timing()
+            self.logger.info(f"Creating order for user: {user_id}")
 
             # Validate user exists
             user = self.user_repo.find_user(user_id)
             if not user:
-                self.log_error(f"Cannot create order: User not found: {user_id}")
+                self.logger.error(f"Cannot create order: User not found: {user_id}")
                 return None
 
             # Validate items
-            self.clear_validation_errors()
+            self._clear_validation_errors()
             if not items:
-                self.add_validation_error("Order must have at least one item")
+                self._add_validation_error("Order must have at least one item")
 
             for item in items:
                 if "product_id" not in item or "quantity" not in item:
-                    self.add_validation_error("Invalid item format")
+                    self._add_validation_error("Invalid item format")
 
-            if not self.is_validation_valid():
-                self.log_error(
+            if not self.is_valid:
+                self.logger.error(
                     "Order validation failed",
-                    errors=self.get_validation_errors(),
+                    errors=self.validation_errors,
                 )
                 return None
 
@@ -1071,8 +1078,11 @@ def demonstrate_enterprise_patterns() -> None:
 
             self.orders[order_id] = order
 
-            execution_time = self.stop_timing()
-            self.log_info(f"Order created: {order_id}", execution_time=execution_time)
+            execution_time = self._get_execution_time_seconds(start_time)
+            self.logger.info(
+                f"Order created: {order_id}",
+                execution_time=execution_time,
+            )
 
             return order
 
@@ -1086,7 +1096,7 @@ def demonstrate_enterprise_patterns() -> None:
 
     # Find users (cache demo)
     user1 = user_repo.find_user("user_001")  # From storage
-    user1_cached = user_repo.find_user("user_001")  # From cache
+    user_repo.find_user("user_001")  # From cache
     print(f"  👤 Found user: {user1['name'] if user1 else 'None'}")
 
     print("\n📋 Enterprise Service Pattern:")

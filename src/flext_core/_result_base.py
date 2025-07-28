@@ -63,12 +63,20 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import contextlib
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeVar
+
+# Define T and U locally for runtime use
+T = TypeVar("T")
+U = TypeVar("U")
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from flext_core.types import T, TErrorCode, TErrorMessage, U
+    from flext_core.types import TErrorCode, TErrorMessage
+else:
+    # Runtime type aliases
+    TErrorCode = str
+    TErrorMessage = str
 
 
 # =============================================================================
@@ -77,9 +85,9 @@ if TYPE_CHECKING:
 
 
 class _BaseResultFactory:
-    """Comprehensive factory for result creation providing standardized result instantiation.
+    """Comprehensive factory for result creation providing standardized instantiation.
 
-    Factory implementation providing multiple creation patterns for _BaseResult instances
+    Factory implementation providing multiple creation patterns for _BaseResult
     with consistent error handling, validation, and exception safety. Eliminates code
     duplication by consolidating all result creation logic in a single location.
 
@@ -357,7 +365,7 @@ class _BaseResultOperations:
         converter: Callable[[object], T],
         error_message: str = "Validation failed",
     ) -> _BaseResult[T]:
-        """Validate and convert value in atomic operation with comprehensive error handling.
+        """Validate and convert value in atomic operation with error handling.
 
         Performs validation and conversion as a single atomic operation,
         ensuring data integrity through predicate validation followed by
@@ -431,10 +439,10 @@ class _BaseResultOperations:
 
 
 class _BaseResult[T]:
-    """Comprehensive railway-oriented programming implementation with monadic operations.
+    """Comprehensive railway-oriented programming implementation with monadic ops.
 
-    Core result implementation providing type-safe error handling through railway-oriented
-    programming patterns. Supports functional composition, error recovery, and side effect
+    Core result implementation providing type-safe error handling through railway
+    programming patterns. Supports functional composition, error recovery, and effects
     management with immutable state and comprehensive error context preservation.
 
     Architecture:
@@ -542,6 +550,48 @@ class _BaseResult[T]:
     def is_failure(self) -> bool:
         """Check if result is failure."""
         return self._error is not None
+
+    def __bool__(self) -> bool:
+        """Boolean conversion returns success status."""
+        return self.is_success
+
+    def __eq__(self, other: object) -> bool:
+        """Check equality based on success state and data/error."""
+        if not isinstance(other, _BaseResult):
+            return False
+        if self.is_success != other.is_success:
+            return False
+        if self.is_success:
+            return self.data == other.data
+        return (
+            self.error == other.error
+            and self.error_code == other.error_code
+            and self.error_data == other.error_data
+        )
+
+    def __hash__(self) -> int:
+        """Hash based on result state and data/error."""
+        if self.is_success:
+            return hash((True, self.data))
+        return hash(
+            (
+                False,
+                self.error,
+                self.error_code,
+                tuple(sorted(self.error_data.items())),
+            ),
+        )
+
+    def __repr__(self) -> str:
+        """Return string representation showing result state."""
+        if self.is_success:
+            return f"_BaseResult(data={self.data!r}, is_success=True)"
+        error_parts = [f"error={self.error!r}", "is_success=False"]
+        if self.error_code:
+            error_parts.append(f"error_code={self.error_code!r}")
+        if self.error_data:
+            error_parts.append(f"error_data={self.error_data!r}")
+        return f"_BaseResult({', '.join(error_parts)})"
 
     @classmethod
     def ok(cls, data: T) -> _BaseResult[T]:

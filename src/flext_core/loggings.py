@@ -84,6 +84,9 @@ import time
 import traceback
 from typing import TYPE_CHECKING, ClassVar
 
+import structlog
+from structlog.typing import EventDict
+
 from flext_core.constants import LOG_LEVELS, FlextLogLevel
 from flext_core.validation import FlextValidators
 
@@ -97,6 +100,62 @@ if TYPE_CHECKING:
 # Global log store consolidado - elimina duplicação
 _log_store: list[dict[str, object]] = []
 
+# =============================================================================
+# STRUCTLOG CONFIGURATION
+# =============================================================================
+
+def _add_to_log_store(
+    logger: object, method_name: str, event_dict: EventDict,
+) -> EventDict:
+    """Processor to add log entries to the global store."""
+    # Convert structlog event_dict to our format
+    log_entry = {
+        "timestamp": event_dict.get("timestamp", time.time()),
+        "level": str(event_dict.get("level", "INFO")).upper(),
+        "logger": str(event_dict.get("logger", "unknown")),
+        "message": str(event_dict.get("event", "")),
+        "context": {k: v for k, v in event_dict.items()
+                   if k not in ("timestamp", "level", "logger", "event")},
+    }
+    _log_store.append(log_entry)
+    return event_dict
+
+def _console_renderer(
+    logger: object, method_name: str, event_dict: EventDict,
+) -> str:
+    """Custom console renderer matching original format."""
+    level = str(event_dict.get("level", "INFO")).upper()
+    logger_name = str(event_dict.get("logger", "unknown"))
+    message = str(event_dict.get("event", ""))
+    return f"[{level}] {logger_name}: {message}"
+
+# Configure structlog with console output
+structlog.configure(
+    processors=[
+        structlog.stdlib.add_logger_name,
+        structlog.stdlib.add_log_level,
+        structlog.stdlib.PositionalArgumentsFormatter(),
+        structlog.processors.TimeStamper(fmt="unix"),
+        structlog.processors.StackInfoRenderer(),
+        structlog.processors.format_exc_info,
+        _add_to_log_store,
+        structlog.dev.ConsoleRenderer(),
+    ],
+    context_class=dict,
+    logger_factory=structlog.stdlib.LoggerFactory(),
+    wrapper_class=structlog.stdlib.BoundLogger,
+    cache_logger_on_first_use=True,
+)
+
+# Configure console output to stderr to match original behavior
+import logging
+
+logging.basicConfig(
+    format="%(message)s",
+    stream=sys.stderr,
+    level=logging.DEBUG,
+)
+
 
 # =============================================================================
 # FLEXT LOGGER - Consolidado eliminando _BaseLogger
@@ -104,12 +163,12 @@ _log_store: list[dict[str, object]] = []
 
 
 class FlextLogger:
-    """Enterprise-grade structured logger with comprehensive context management and level filtering.
+    """Structured logger with comprehensive context management and level filtering.
 
-    Core logging implementation providing production-ready structured logging capabilities
-    with automatic context management, performance-optimized level filtering, and rich
-    message formatting. Designed for high-throughput enterprise applications with
-    observability and debugging requirements.
+    Core logging implementation providing production-ready structured logging
+    capabilities with automatic context management, performance-optimized level
+    filtering, and rich message formatting. Designed for high-throughput enterprise
+    applications with observability and debugging requirements.
 
     Architecture:
         - Performance-optimized level-based filtering with early exit patterns
@@ -198,41 +257,51 @@ class FlextLogger:
         self._level_value = LOG_LEVELS.get(self._level, LOG_LEVELS["INFO"])
         self._context: TContextDict = {}
 
+        # Create structlog logger with the name
+        self._structlog_logger = structlog.get_logger(name)
+
     def _should_log(self, level: str) -> bool:
         """Check if message should be logged based on level."""
         level_value = LOG_LEVELS.get(level.upper(), LOG_LEVELS["INFO"])
         return level_value >= self._level_value
 
-    def _create_log_entry(
+    def _log_with_structlog(
         self,
         level: str,
         message: TLogMessage,
         context: TContextDict | None = None,
-    ) -> dict[str, object]:
-        """Create structured log entry."""
+    ) -> None:
+        """Log using structlog with context merging."""
+        if not self._should_log(level):
+            return
+
+        # Merge instance context with method context
         merged_context = {**self._context}
         if context:
             merged_context.update(context)
 
-        return {
-            "timestamp": time.time(),
-            "level": level.upper(),
+        # Add our standard fields
+        log_data = {
             "logger": self._name,
-            "message": message,
-            "context": merged_context,
+            **merged_context,
         }
 
-    def _write_log(self, entry: dict[str, object]) -> None:
-        """Write log entry to store and stdout."""
-        _log_store.append(entry)
+        # Map our levels to standard logging levels for structlog
+        level_mapping = {
+            "TRACE": "debug",  # Structlog doesn't have trace, use debug
+            "DEBUG": "debug",
+            "INFO": "info",
+            "WARNING": "warning",
+            "ERROR": "error",
+            "CRITICAL": "critical",
+        }
 
-        # Simple console output for debugging
-        level = entry["level"]
-        logger = entry["logger"]
-        message = entry["message"]
+        # Get the appropriate structlog method
+        structlog_level = level_mapping.get(level.upper(), "info")
+        log_method = getattr(self._structlog_logger, structlog_level)
 
-        # Format: [LEVEL] logger: message
-        print(f"[{level}] {logger}: {message}", file=sys.stderr)  # noqa: T201
+        # Log with structlog
+        log_method(str(message), **log_data)
 
     def set_level(self, level: str) -> None:
         """Set logger level."""
@@ -255,44 +324,32 @@ class FlextLogger:
 
     def trace(self, message: TLogMessage, **context: object) -> None:
         """Log trace message."""
-        if self._should_log(FlextLogLevel.TRACE):
-            entry = self._create_log_entry(FlextLogLevel.TRACE, message, context)
-            self._write_log(entry)
+        self._log_with_structlog(FlextLogLevel.TRACE, message, context)
 
     def debug(self, message: TLogMessage, **context: object) -> None:
         """Log debug message."""
-        if self._should_log(FlextLogLevel.DEBUG):
-            entry = self._create_log_entry(FlextLogLevel.DEBUG, message, context)
-            self._write_log(entry)
+        self._log_with_structlog(FlextLogLevel.DEBUG, message, context)
 
     def info(self, message: TLogMessage, **context: object) -> None:
         """Log info message."""
-        if self._should_log(FlextLogLevel.INFO):
-            entry = self._create_log_entry(FlextLogLevel.INFO, message, context)
-            self._write_log(entry)
+        self._log_with_structlog(FlextLogLevel.INFO, message, context)
 
     def warning(self, message: TLogMessage, **context: object) -> None:
         """Log warning message."""
-        if self._should_log(FlextLogLevel.WARNING):
-            entry = self._create_log_entry(FlextLogLevel.WARNING, message, context)
-            self._write_log(entry)
+        self._log_with_structlog(FlextLogLevel.WARNING, message, context)
 
     def error(self, message: TLogMessage, **context: object) -> None:
         """Log error message."""
-        if self._should_log(FlextLogLevel.ERROR):
-            entry = self._create_log_entry(FlextLogLevel.ERROR, message, context)
-            self._write_log(entry)
+        self._log_with_structlog(FlextLogLevel.ERROR, message, context)
 
     def critical(self, message: TLogMessage, **context: object) -> None:
         """Log critical message."""
-        if self._should_log(FlextLogLevel.CRITICAL):
-            entry = self._create_log_entry(FlextLogLevel.CRITICAL, message, context)
-            self._write_log(entry)
+        self._log_with_structlog(FlextLogLevel.CRITICAL, message, context)
 
     def exception(self, message: TLogMessage, **context: object) -> None:
         """Log exception with traceback context."""
         context["traceback"] = traceback.format_exc()
-        self.error(message, **context)
+        self._log_with_structlog(FlextLogLevel.ERROR, message, context)
 
 
 # =============================================================================
@@ -563,10 +620,10 @@ def create_log_context(logger: FlextLogger, **context: object) -> FlextLogContex
     return FlextLogging.create_context(logger, **context)
 
 
-# Backward compatibility aliases
-FlextLogger.get_logger = FlextLoggerFactory.get_logger
-FlextLogger.set_global_level = FlextLoggerFactory.set_global_level
-FlextLogger.clear_loggers = FlextLoggerFactory.clear_loggers
+# Backward compatibility: use FlextLoggerFactory directly for class-level operations
+# FlextLoggerFactory.get_logger -> FlextLoggerFactory.get_logger
+# FlextLogger.set_global_level -> FlextLoggerFactory.set_global_level
+# FlextLogger.clear_loggers -> FlextLoggerFactory.clear_loggers
 
 
 # =============================================================================

@@ -335,7 +335,7 @@ class FlextPredicates:
 # =============================================================================
 
 
-def validate_required_field(
+def flext_validate_required_field(
     value: object,
     field_name: str,
 ) -> FlextValidationResult:
@@ -355,7 +355,7 @@ def validate_required_field(
     return FlextValidationResult.success()
 
 
-def validate_string_field(
+def flext_validate_string_field(
     value: object,
     field_name: str,
     min_length: int = 0,
@@ -395,7 +395,7 @@ def validate_string_field(
     return FlextValidationResult.success()
 
 
-def validate_numeric_field(
+def flext_validate_numeric_field(
     value: object,
     field_name: str,
     min_val: float | None = None,
@@ -432,7 +432,7 @@ def validate_numeric_field(
     return FlextValidationResult.success()
 
 
-def validate_email_field(
+def flext_validate_email_field(
     value: object,
     field_name: str,
 ) -> FlextValidationResult:
@@ -457,12 +457,12 @@ def validate_email_field(
 # =============================================================================
 
 
-def validate_entity_id(entity_id: object) -> bool:
+def flext_validate_entity_id(entity_id: object) -> bool:
     """Validate entity ID is valid."""
     return FlextValidators.is_non_empty_string(entity_id)
 
 
-def validate_non_empty_string(value: object) -> bool:
+def flext_validate_non_empty_string(value: object) -> bool:
     """Validate value is non-empty string."""
     return FlextValidators.is_non_empty_string(value)
 
@@ -519,8 +519,8 @@ class FlextValidation(FlextValidators):
     # All basic validation methods are now available without explicit delegation
 
     # Entity validation functions
-    validate_entity_id = validate_entity_id
-    validate_non_empty_string = validate_non_empty_string
+    flext_validate_entity_id = flext_validate_entity_id
+    flext_validate_non_empty_string = flext_validate_non_empty_string
 
     @staticmethod
     def chain(*validators: Callable[[object], bool]) -> Callable[[object], bool]:
@@ -557,10 +557,10 @@ class FlextValidation(FlextValidators):
         return any_validator
 
     # Field validation functions
-    validate_required_field = validate_required_field
-    validate_string_field = validate_string_field
-    validate_numeric_field = validate_numeric_field
-    validate_email_field = validate_email_field
+    flext_validate_required_field = flext_validate_required_field
+    flext_validate_string_field = flext_validate_string_field
+    flext_validate_numeric_field = flext_validate_numeric_field
+    flext_validate_email_field = flext_validate_email_field
 
     @staticmethod
     def create_validation_config(
@@ -620,16 +620,15 @@ class FlextValidation(FlextValidators):
 # FlextValidationResult class already defined above with consolidated implementation
 # This maintains backward compatibility through class re-exposure
 
-# Create aliases for backward compatibility
-ValidationResultFactory = FlextValidationResult
+# No legacy aliases - only Flext prefixed classes
 
 
 # =============================================================================
-# CONVENIENCE FUNCTIONS - High-level validation helpers
+# CONVENIENCE FUNCTIONS - High-level validation helpers with Flext prefix
 # =============================================================================
 
 
-def validate_required(
+def flext_validate_required(
     value: object,
     field_name: str = "field",
 ) -> FlextValidationResult:
@@ -651,10 +650,10 @@ def validate_required(
             return error_response(result.error_message)
 
     """
-    return validate_required_field(value, field_name)
+    return flext_validate_required_field(value, field_name)
 
 
-def validate_string(
+def flext_validate_string(
     value: object,
     field_name: str = "field",
     min_length: int = 0,
@@ -680,10 +679,10 @@ def validate_string(
             store_password(password)
 
     """
-    return validate_string_field(value, field_name, min_length, max_length)
+    return flext_validate_string_field(value, field_name, min_length, max_length)
 
 
-def validate_numeric(
+def flext_validate_numeric(
     value: object,
     field_name: str = "field",
     min_val: float | None = None,
@@ -709,10 +708,10 @@ def validate_numeric(
             process_age(age)
 
     """
-    return validate_numeric_field(value, field_name, min_val, max_val)
+    return flext_validate_numeric_field(value, field_name, min_val, max_val)
 
 
-def validate_email(value: object, field_name: str = "field") -> FlextValidationResult:
+def flext_validate_email(value: object, field_name: str = "field") -> FlextValidationResult:
     """Validate email field with format and structure checking.
 
     Performs comprehensive email validation including format checking,
@@ -733,16 +732,7 @@ def validate_email(value: object, field_name: str = "field") -> FlextValidationR
             show_error("Invalid email format")
 
     """
-    return validate_email_field(value, field_name)
-
-
-# =============================================================================
-# ESSENTIAL ALIASES - apenas os necessários para funcionamento interno
-# =============================================================================
-
-# Aliases essenciais para funcionamento de outros módulos
-_BaseValidators = FlextValidators
-_BasePredicates = FlextPredicates
+    return flext_validate_email_field(value, field_name)
 
 
 # =============================================================================
@@ -756,22 +746,15 @@ __all__ = [
     "FlextValidationConfig",
     "FlextValidationResult",
     "FlextValidators",
-    # Essential internal aliases
-    "_BasePredicates",
-    "_BaseValidators",
-    # Essential legacy aliases
-    "ValidationResultFactory",
-    # Convenience functions
-    "validate_email",
-    "validate_email_field",
-    # Entity validation functions
-    "validate_entity_id",
-    "validate_non_empty_string",
-    "validate_numeric",
-    "validate_numeric_field",
-    "validate_required",
-    # Field validation functions - objetos sem underscore
-    "validate_required_field",
-    "validate_string",
-    "validate_string_field",
+    # Convenience functions with flext_ prefix
+    "flext_validate_email",
+    "flext_validate_email_field",
+    "flext_validate_entity_id",
+    "flext_validate_non_empty_string",
+    "flext_validate_numeric",
+    "flext_validate_numeric_field",
+    "flext_validate_required",
+    "flext_validate_required_field",
+    "flext_validate_string",
+    "flext_validate_string_field",
 ]

@@ -1,7 +1,8 @@
 """FLEXT Core Payload Module.
 
 Comprehensive type-safe payload system for structured data transport with validation
-and metadata management. Implements consolidated architecture pattern with mixin inheritance.
+and metadata management. Implements consolidated architecture pattern with mixin
+inheritance.
 
 Architecture:
     - Type-safe payload containers with generic type support
@@ -57,6 +58,7 @@ from collections.abc import Mapping
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
+from flext_core.loggings import FlextLoggerFactory
 from flext_core.mixins import (
     FlextLoggableMixin,
     FlextSerializableMixin,
@@ -76,11 +78,11 @@ class FlextPayload[T](
     FlextValidatableMixin,
     FlextLoggableMixin,
 ):
-    """Generic type-safe payload container for structured data transport with validation.
+    """Generic type-safe payload container for structured data transport and validation.
 
-    Comprehensive payload implementation providing immutable data transport with automatic
-    validation, serialization, and metadata management. Combines Pydantic validation
-    with mixin functionality for complete data integrity.
+    Comprehensive payload implementation providing immutable data transport with
+    automatic validation, serialization, and metadata management. Combines Pydantic
+    validation with mixin functionality for complete data integrity.
 
     Architecture:
         - Generic type parameter [T] for compile-time type safety
@@ -180,9 +182,8 @@ class FlextPayload[T](
 
         """
         # Import logger directly for class methods
-        from flext_core.loggings import FlextLogger  # noqa: PLC0415
 
-        logger = FlextLogger.get_logger(f"{cls.__module__}.{cls.__name__}")
+        logger = FlextLoggerFactory.get_logger(f"{cls.__module__}.{cls.__name__}")
 
         logger.debug(
             "Creating payload",
@@ -340,9 +341,8 @@ class FlextMessage(FlextPayload[str]):
 
         """
         # Import logger directly for class methods
-        from flext_core.loggings import FlextLogger  # noqa: PLC0415
 
-        logger = FlextLogger.get_logger(f"{cls.__module__}.{cls.__name__}")
+        logger = FlextLoggerFactory.get_logger(f"{cls.__module__}.{cls.__name__}")
 
         # Validate message using FlextValidation
         if not FlextValidators.is_non_empty_string(message):
@@ -458,9 +458,8 @@ class FlextEvent(FlextPayload[Mapping[str, object]]):
 
         """
         # Import logger directly for class methods
-        from flext_core.loggings import FlextLogger  # noqa: PLC0415
 
-        logger = FlextLogger.get_logger(f"{cls.__module__}.{cls.__name__}")
+        logger = FlextLoggerFactory.get_logger(f"{cls.__module__}.{cls.__name__}")
 
         # Validate event_type using FlextValidation
         if not FlextValidators.is_non_empty_string(event_type):

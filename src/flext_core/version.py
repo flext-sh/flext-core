@@ -5,80 +5,21 @@ standardized versioning information, compatibility checking, and version-depende
 feature availability detection.
 
 Architecture:
-    - Semantic versioning compliance (MAJOR.MINOR.PATCH) following SemVer 2.0.0
-    - Single source of truth for version information across the FLEXT ecosystem
-    - Version comparison utilities for compatibility validation
-    - Feature availability detection based on version constraints
-    - Build metadata and pre-release identifier support
-    - Integration with package management and distribution systems
+    - Semantic versioning compliance with SemVer 2.0.0 specification
+    - Single source of truth for version information across FLEXT ecosystem
+    - Version comparison utilities and feature availability detection
+    - Python compatibility validation with structured error reporting
+    - Build metadata and release information management
 
-Version Information Components:
-    - Primary version: Standard semantic version string (MAJOR.MINOR.PATCH)
-    - Version tuple: Structured version components for programmatic access
-    - Version metadata: Build information, release date, and compatibility data
-    - Feature flags: Version-dependent functionality availability
-    - Compatibility matrix: Supported Python versions and dependency ranges
-    - Release information: Change log references and migration guidance
-
-Maintenance Guidelines:
-    - Follow Semantic Versioning 2.0.0 specification strictly
-    - Update version information in single location only
-    - Maintain backward compatibility within MINOR version increments
-    - Document breaking changes requiring MAJOR version increments
-    - Update compatibility information with each release
-    - Validate version format and component ranges
-
-Design Decisions:
-    - Single source of truth pattern preventing version inconsistencies
-    - Semantic versioning for clear compatibility communication
-    - Programmatic access through structured version components
-    - Integration with Python packaging standards (PEP 440)
-    - Feature availability detection for graceful degradation
-    - Build metadata support for development and CI/CD workflows
-
-Version Format Compliance:
-    - SemVer 2.0.0: MAJOR.MINOR.PATCH format with optional pre-release and build metadata
-    - PEP 440: Python-specific version identification and comparison
-    - FLEXT conventions: Ecosystem-wide version coordination and compatibility
-    - Release cycles: Regular release schedule with predictable version increments
-
-Version Usage Patterns:
-    - Package distribution: Version information for PyPI and package managers
-    - API compatibility: Version-based feature detection and graceful degradation
-    - Dependency management: Version constraints for compatible package ranges
-    - Runtime validation: Version compatibility checking during initialization
-    - Documentation: Version-specific documentation and migration guides
-
-Compatibility Management:
-    - Python version compatibility: Minimum and maximum supported Python versions
-    - Dependency compatibility: Compatible ranges for required and optional dependencies
-    - API compatibility: Breaking change tracking and migration paths
-    - Feature deprecation: Version-based deprecation warnings and removal schedules
-    - Cross-package compatibility: Version coordination across FLEXT ecosystem
-
-Usage Patterns:
-    # Basic version access
-    from flext_core.version import __version__
-    print(f"FLEXT Core v{__version__}")
-
-    # Programmatic version handling
-    version_tuple = get_version_tuple()
-    if version_tuple >= (1, 0, 0):
-        use_stable_api()
-
-    # Feature availability checking
-    if is_feature_available("advanced_validation"):
-        enable_advanced_features()
-
-    # Compatibility validation
-    compatibility = check_python_compatibility()
-    if not compatibility.is_compatible:
-        raise RuntimeError(compatibility.error_message)
+Version Components:
+    - __version__: Primary semantic version string (MAJOR.MINOR.PATCH)
+    - Version metadata: Release name, date, and build type information
+    - Compatibility matrix: Python version ranges and feature availability
+    - Utility functions: Version comparison and format validation
 
 Dependencies:
-    - Standard library: sys for Python version detection
-    - typing: Type annotations and version comparison utilities
-    - No external runtime dependencies for version management
+    - Standard library only: sys, typing for minimal footprint
+    - No external runtime dependencies
 
 Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
@@ -99,6 +40,9 @@ __version__ = "0.8.0"
 VERSION_MAJOR = 0
 VERSION_MINOR = 8
 VERSION_PATCH = 0
+
+# Semantic version format constants
+SEMVER_PARTS_COUNT = 3  # major.minor.patch
 
 # Release information
 RELEASE_NAME = "Foundation"
@@ -131,7 +75,7 @@ AVAILABLE_FEATURES = {
 # =============================================================================
 
 
-class VersionInfo(NamedTuple):
+class FlextVersionInfo(NamedTuple):
     """Structured version information for programmatic access.
 
     Provides structured access to version components enabling version
@@ -147,7 +91,7 @@ class VersionInfo(NamedTuple):
         build_type: Build type (stable, beta, alpha, dev)
 
     Usage:
-        version = get_version_info()
+        version = flext_get_version_info()
         if version.major >= 1:
             print("Using stable API")
 
@@ -163,7 +107,7 @@ class VersionInfo(NamedTuple):
     build_type: str
 
 
-class CompatibilityResult(NamedTuple):
+class FlextCompatibilityResult(NamedTuple):
     """Result of compatibility checking operations.
 
     Provides structured result for compatibility validation enabling
@@ -201,7 +145,7 @@ def get_version_tuple() -> tuple[int, int, int]:
         Tuple containing (major, minor, patch) version components
 
     Usage:
-        version = get_version_tuple()
+        version = flext_get_version_tuple()
         if version >= (1, 0, 0):
             use_stable_api()
         elif version >= (0, 8, 0):
@@ -211,7 +155,7 @@ def get_version_tuple() -> tuple[int, int, int]:
     return (VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH)
 
 
-def get_version_info() -> VersionInfo:
+def get_version_info() -> FlextVersionInfo:
     """Get comprehensive version information.
 
     Returns complete version information including metadata enabling
@@ -228,7 +172,7 @@ def get_version_info() -> VersionInfo:
         print(f"Build: {info.build_type}")
 
     """
-    return VersionInfo(
+    return FlextVersionInfo(
         major=VERSION_MAJOR,
         minor=VERSION_MINOR,
         patch=VERSION_PATCH,
@@ -257,7 +201,7 @@ def get_version_string() -> str:
     return f"{__version__} ({info.release_name})"
 
 
-def check_python_compatibility() -> CompatibilityResult:
+def check_python_compatibility() -> FlextCompatibilityResult:
     """Check Python version compatibility.
 
     Validates current Python version against FLEXT Core requirements
@@ -265,18 +209,21 @@ def check_python_compatibility() -> CompatibilityResult:
     recommendations for resolution.
 
     Returns:
-        CompatibilityResult with compatibility status and recommendations
+        FlextCompatibilityResult with compatibility status and recommendations
 
     Usage:
         compatibility = check_python_compatibility()
         if not compatibility.is_compatible:
-            raise RuntimeError(f"Python compatibility error: {compatibility.error_message}")
+            raise RuntimeError(
+                "Python compatibility error:"
+                f" {compatibility.error_message}"
+            )
 
     """
     current_version = sys.version_info[:3]
 
     if current_version < MIN_PYTHON_VERSION:
-        return CompatibilityResult(
+        return FlextCompatibilityResult(
             is_compatible=False,
             current_version=current_version,
             required_version=MIN_PYTHON_VERSION,
@@ -292,7 +239,7 @@ def check_python_compatibility() -> CompatibilityResult:
         )
 
     if current_version >= MAX_PYTHON_VERSION:
-        return CompatibilityResult(
+        return FlextCompatibilityResult(
             is_compatible=False,
             current_version=current_version,
             required_version=MAX_PYTHON_VERSION,
@@ -301,13 +248,14 @@ def check_python_compatibility() -> CompatibilityResult:
                 f"Maximum supported: {'.'.join(map(str, MAX_PYTHON_VERSION))}"
             ),
             recommendations=[
-                f"Use Python {'.'.join(map(str, MIN_PYTHON_VERSION))} to {'.'.join(map(str, MAX_PYTHON_VERSION))}",
+                f"Use Python {'.'.join(map(str, MIN_PYTHON_VERSION))}"
+                f" to {'.'.join(map(str, MAX_PYTHON_VERSION))}",
                 "Check for newer FLEXT Core version with broader Python support",
                 "Use pyenv or conda to install compatible Python version",
             ],
         )
 
-    return CompatibilityResult(
+    return FlextCompatibilityResult(
         is_compatible=True,
         current_version=current_version,
         required_version=MIN_PYTHON_VERSION,
@@ -412,7 +360,7 @@ def validate_version_format(version: str) -> bool:
     """
     try:
         parts = version.split(".")
-        if len(parts) != 3:
+        if len(parts) != SEMVER_PARTS_COUNT:
             return False
 
         for part in parts:
@@ -427,31 +375,27 @@ def validate_version_format(version: str) -> bool:
 
 
 # =============================================================================
-# EXPORTS - Clean public API for version information
+# EXPORTS - Clean public API
 # =============================================================================
 
 __all__ = [
     "AVAILABLE_FEATURES",
     "BUILD_TYPE",
     "MAX_PYTHON_VERSION",
-    # Compatibility information
     "MIN_PYTHON_VERSION",
     "RELEASE_DATE",
     "RELEASE_NAME",
     "VERSION_MAJOR",
     "VERSION_MINOR",
     "VERSION_PATCH",
-    "CompatibilityResult",
-    # Version data structures
-    "VersionInfo",
-    # Version constants
+    "FlextCompatibilityResult",
+    "FlextVersionInfo",
     "__version__",
     "check_python_compatibility",
     "compare_versions",
     "get_available_features",
     "get_version_info",
     "get_version_string",
-    # Version utilities
     "get_version_tuple",
     "is_feature_available",
     "validate_version_format",

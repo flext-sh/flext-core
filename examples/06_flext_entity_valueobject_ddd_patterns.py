@@ -800,7 +800,7 @@ class Order(FlextEntity):
 
     def cancel_order(self, reason: str) -> FlextResult[Order]:
         """Cancel the order."""
-        if self.status in ["delivered", "cancelled"]:
+        if self.status in {"delivered", "cancelled"}:
             return FlextResult.fail(f"Cannot cancel order with status: {self.status}")
 
         if not reason or len(reason.strip()) < 10:
@@ -1240,7 +1240,7 @@ def demonstrate_value_objects() -> None:
     # Multiplication
     doubled_result = usd_10.multiply(2.0)
     if doubled_result.is_success:
-        print(f"  ✅ {usd_10} × 2 = {doubled_result.data}")  # noqa: RUF001
+        print(f"  ✅ {usd_10} × 2 = {doubled_result.data}")
 
     # Address value objects
     print("\n📋 Address Value Objects:")

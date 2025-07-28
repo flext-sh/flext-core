@@ -609,7 +609,7 @@ class UserManagementApplicationService:
 # =============================================================================
 
 
-def main() -> None:  # noqa: PLR0912, PLR0915
+def main() -> None:
     """Run comprehensive FlextCommands CQRS demonstration."""
     print("=" * 80)
     print("🚌 FLEXT COMMANDS - CQRS PATTERN DEMONSTRATION")

@@ -53,6 +53,8 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
+from flext_core.exceptions import FlextError
+from flext_core.loggings import FlextLoggerFactory
 from flext_core.mixins import FlextLoggableMixin
 from flext_core.result import FlextResult
 from flext_core.types import FlextTypes
@@ -130,8 +132,10 @@ class FlextServiceRegistrar(FlextLoggableMixin):
         validated_name = validation_result.unwrap()
 
         if validated_name in self._services:
-            self.logger.warning("Service already registered", name=validated_name)
-            return FlextResult.fail(f"Service '{validated_name}' already registered")
+            self.logger.warning(
+                "Service already registered, replacing",
+                name=validated_name,
+            )
 
         self._services[validated_name] = service
         self.logger.debug(
@@ -150,26 +154,29 @@ class FlextServiceRegistrar(FlextLoggableMixin):
         # Use BASE validators directly - MAXIMIZA base usage
         if not FlextValidators.is_non_empty_string(name):
             return FlextResult.fail("Service name cannot be empty")
-        validation_result = FlextResult.ok(name)
-        if validation_result.is_failure:
-            self.logger.warning(
-                "Factory name validation failed",
-                name=name,
-                error=validation_result.error,
-            )
-            return FlextResult.fail("Service name validation failed")
 
-        validated_name = validation_result.unwrap()
+        validated_name = name
+
+        # Remove existing service if registering factory with same name
+        if validated_name in self._services:
+            self.logger.debug(
+                "Removing existing service for factory registration",
+                name=validated_name,
+            )
+            del self._services[validated_name]
 
         if validated_name in self._factories:
-            self.logger.warning("Factory already registered", name=validated_name)
-            return FlextResult.fail(f"Factory '{validated_name}' already registered")
+            self.logger.warning(
+                "Factory already registered, replacing",
+                name=validated_name,
+            )
 
         self._factories[validated_name] = factory
+        factory_name = getattr(factory, "__name__", str(factory))
         self.logger.debug(
             "Factory registered",
             name=validated_name,
-            factory_name=factory.__name__,
+            factory_name=factory_name,
         )
         return FlextResult.ok(None)
 
@@ -318,8 +325,18 @@ class FlextServiceRetrivier(FlextLoggableMixin):
             try:
                 self.logger.debug("Creating service from factory", name=validated_name)
                 service = self._factories[validated_name]()
+                # Cache the factory result as a service for singleton behavior
+                self._services[validated_name] = service
+                # Remove from factories since it's now cached as a service
+                del self._factories[validated_name]
                 return FlextResult.ok(service)
-            except (TypeError, ValueError, AttributeError, RuntimeError) as e:
+            except (
+                TypeError,
+                ValueError,
+                AttributeError,
+                RuntimeError,
+                FlextError,
+            ) as e:
                 self.logger.exception(
                     "Factory execution failed",
                     name=validated_name,
@@ -551,7 +568,7 @@ class FlextContainer(FlextLoggableMixin):
             )
 
         self.logger.debug("Typed service retrieved successfully", name=name)
-        return FlextResult.ok(service)  # type: ignore[arg-type]
+        return FlextResult.ok(service)
 
     def __repr__(self) -> str:
         """Return string representation of container."""
@@ -565,7 +582,7 @@ class FlextContainer(FlextLoggableMixin):
 
 
 # Global container instance with thread-safe access
-class FlextGlobalContainerManager:
+class FlextGlobalContainerManager(FlextLoggableMixin):
     """Thread-safe global container management without global statements.
 
     Provides centralized management of the global FlextContainer instance
@@ -591,6 +608,7 @@ class FlextGlobalContainerManager:
     """
 
     def __init__(self) -> None:
+        super().__init__()
         self._container: FlextContainer | None = None
 
     def get_container(self) -> FlextContainer:
@@ -630,27 +648,37 @@ def get_flext_container() -> FlextContainer:
     return _global_manager.get_container()
 
 
-def configure_flext_container(container: FlextContainer) -> None:
+def configure_flext_container(container: FlextContainer | None) -> FlextContainer:
     """Configure global FlextContainer instance for application use.
 
     Replaces the global container instance with a custom container,
     typically used for testing scenarios or specialized configurations.
 
     Args:
-        container: Custom FlextContainer instance to use globally
+        container: Custom FlextContainer instance to use globally, or None to create new
+
+    Returns:
+        The container that was set as global (either provided or newly created)
 
     Usage:
         # Testing scenario
         test_container = FlextContainer()
         test_container.register("test_service", MockService())
-        configure_flext_container(test_container)
+        result = configure_flext_container(test_container)
 
         # Now all global access uses test container
-        container = get_flext_container()
-        assert container is test_container
+        assert get_flext_container() is test_container
+        assert result is test_container
+
+        # Reset to new container
+        new_container = configure_flext_container(None)
+        assert new_container is not test_container
 
     """
+    if container is None:
+        container = FlextContainer()
     _global_manager.set_container(container)
+    return container
 
 
 # Type-safe service keys
@@ -766,9 +794,8 @@ def register_typed[T](
 
     """
     # Import logger for standalone function
-    from flext_core.loggings import FlextLogger  # noqa: PLC0415
 
-    logger = FlextLogger.get_logger(__name__)
+    logger = FlextLoggerFactory.get_logger(__name__)
     logger.debug(
         "Registering typed service",
         key=key.name,
@@ -810,9 +837,8 @@ def get_typed[T](
 
     """
     # Import logger for standalone function
-    from flext_core.loggings import FlextLogger  # noqa: PLC0415
 
-    logger = FlextLogger.get_logger(__name__)
+    logger = FlextLoggerFactory.get_logger(__name__)
     logger.debug("Getting typed service by key", key=key.name)
     result = container.get(key.name)
     if result.is_failure:
@@ -820,7 +846,7 @@ def get_typed[T](
 
     # Type is guaranteed by ServiceKey[T] - cast to T
     service = result.unwrap()
-    return FlextResult.ok(service)  # type: ignore[arg-type]
+    return FlextResult.ok(service)
 
 
 # Export API

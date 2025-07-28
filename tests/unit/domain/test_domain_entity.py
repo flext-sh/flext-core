@@ -11,7 +11,7 @@ from datetime import UTC, datetime
 import pytest
 from pydantic import ValidationError
 
-from flext_core.domain import FlextEntity
+from flext_core.entities import FlextEntity
 
 
 class ConcreteFlextEntity(FlextEntity):

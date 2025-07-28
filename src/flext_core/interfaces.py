@@ -217,7 +217,10 @@ class FlextValidationRule(ABC):
                 return f"Age must be between {self.min_age} and {self.max_age}"
 
         # Using rules in validation logic
-        def validate_with_rule(rule: FlextValidationRule, value: object) -> FlextResult[object]:
+        def validate_with_rule(
+            rule: FlextValidationRule,
+            value: object
+        ) -> FlextResult[object]:
             if rule.check(value):
                 return FlextResult.ok(value)
             return FlextResult.fail(rule.error_message())

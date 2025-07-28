@@ -1,7 +1,7 @@
 """FLEXT Core Entities Module.
 
 Comprehensive Domain-Driven Design (DDD) entity implementation with identity management,
-version tracking, and domain event integration. Implements consolidated architecture with
+version tracking, and domain event integration. Implements consolidated architecture
 Pydantic validation, mixin inheritance, and type-safe operations.
 
 Architecture:
@@ -64,14 +64,14 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Self
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
-# Removed FlextEntityMixin import since we define fields explicitly
-
 if TYPE_CHECKING:
     from flext_core.types import TAnyDict
+# Removed FlextTimestampMixin to avoid field conflicts - using Pydantic fields directly
 from flext_core.payload import FlextEvent
 from flext_core.result import FlextResult
 
@@ -81,10 +81,10 @@ from flext_core.result import FlextResult
 
 
 class FlextEntity(BaseModel, ABC):
-    """Abstract Domain-Driven Design entity with identity, versioning, and event sourcing capabilities.
+    """Abstract Domain-Driven Design entity with identity, versioning, and events.
 
-    Comprehensive entity implementation providing identity-based equality, version tracking for
-    optimistic locking, and domain event collection for event sourcing patterns. Combines
+    Comprehensive entity implementation providing identity-based equality, version
+    tracking for optimistic locking, and domain event collection. Combines
     Pydantic validation with DDD principles and concurrency control.
 
     Architecture:
@@ -189,12 +189,32 @@ class FlextEntity(BaseModel, ABC):
         ge=1,
     )
 
+    # Timestamp fields for entity lifecycle tracking
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+        description="Entity creation timestamp",
+    )
+
     # Domain events collected during operations
     domain_events: list[FlextEvent] = Field(default_factory=list)
 
-    # ID validation provided by FlextEntityMixin
+    def __eq__(self, other: object) -> bool:
+        """Check equality based on entity ID."""
+        if not isinstance(other, FlextEntity):
+            return False
+        return self.id == other.id
 
-    # __eq__, __hash__, __str__ provided by FlextEntityMixin
+    def __hash__(self) -> int:
+        """Generate hash based on entity ID."""
+        return hash(self.id)
+
+    def __str__(self) -> str:
+        """Return string representation."""
+        return f"{self.__class__.__name__}(id={self.id})"
+
+    def __repr__(self) -> str:
+        """Return detailed representation."""
+        return f"{self.__class__.__name__}(id={self.id}, version={self.version})"
 
     @abstractmethod
     def validate_domain_rules(self) -> FlextResult[None]:
@@ -301,10 +321,10 @@ class FlextEntity(BaseModel, ABC):
 
 
 class FlextEntityFactory:
-    """Enterprise factory pattern for type-safe entity creation with validation and default values.
+    """Enterprise factory pattern for type-safe entity creation with validation.
 
-    Comprehensive factory implementation providing type-safe entity creation with automatic
-    ID generation, default value management, and domain validation. Implements factory pattern
+    Comprehensive factory implementation providing type-safe entity creation with
+    automatic ID generation, default values, and validation. Implements factory
     with FlextResult integration for consistent error handling and reliability.
 
     Architecture:
@@ -393,7 +413,7 @@ class FlextEntityFactory:
             **kwargs: object,
         ) -> FlextResult[FlextEntity]:
             try:
-                from flext_core.utilities import FlextGenerators  # noqa: PLC0415
+                from flext_core.utilities import FlextGenerators
 
                 data = {**(defaults or {}), **kwargs}
 
@@ -404,7 +424,7 @@ class FlextEntityFactory:
                 # Set default version if not provided
                 if "version" not in data:
                     data["version"] = 1
-                instance = entity_class(**data)
+                instance = entity_class.model_validate(data)
                 validation_result = instance.validate_domain_rules()
                 if validation_result.is_failure:
                     return FlextResult.fail(

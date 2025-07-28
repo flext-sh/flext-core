@@ -1,45 +1,78 @@
 """FLEXT Core Exceptions Module.
 
-Comprehensive exception hierarchy for the FLEXT Core library with integrated
-observability and metrics tracking. Implements consolidated architecture pattern.
+Comprehensive exception hierarchy for the FLEXT Core library implementing
+enterprise-grade error handling with integrated observability, metrics tracking, and
+structured context management. Provides unified exception patterns with automatic
+categorization.
 
 Architecture:
-    - Single source of truth for all exception functionality
-    - Consolidated from _exceptions_base.py elimination
-    - Hierarchical exception design with base FlextError
-    - Integrated metrics tracking for observability
-    - No underscore prefixes on public objects
+    - Single source of truth pattern for all exception functionality across the system
+    - Consolidated architecture eliminating _exceptions_base.py module duplication
+    - Hierarchical exception design with base FlextError providing common functionality
+    - Integrated metrics tracking for operational observability and incident analysis
+    - No underscore prefixes on public objects for clean API access
+    - Rich context enhancement for debugging and error resolution
 
 Exception Hierarchy:
-    - FlextError: Base exception with context and metrics
-    - FlextValidationError: Field validation failures
-    - FlextTypeError: Type mismatch and conversion errors
-    - FlextOperationError: Operation and process failures
-    - Specific errors: Configuration, connection, authentication, etc.
+    - FlextError: Base exception with context management and automatic metrics tracking
+    - FlextValidationError: Field validation failures with detailed validation context
+    - FlextTypeError: Type mismatch and conversion errors with type information
+    - FlextOperationError: Operation and process failures with stage tracking
+    - Specific domain errors: Configuration, connection, authentication, permissions
+    - Critical system errors: High-priority errors requiring immediate attention
 
 Maintenance Guidelines:
-    - Add new exception types by inheriting from appropriate base
-    - Include error codes from constants.py for categorization
-    - Maintain context information for debugging and monitoring
-    - Use factory methods in FlextExceptions for consistency
-    - Track metrics automatically for operational insights
+    - Add new exception types by inheriting from appropriate base exception classes
+    - Include error codes from constants.py for consistent categorization and handling
+    - Maintain context information for debugging, monitoring, and incident resolution
+    - Use factory methods in FlextExceptions class for consistency and standardization
+    - Track metrics automatically for operational insights and system monitoring
+    - Follow naming conventions with Flext prefix for namespace consistency
+    - Ensure backward compatibility through legacy exception aliases
 
 Design Decisions:
-    - Eliminated _exceptions_base.py to reduce code duplication
-    - Built-in metrics tracking for exception observability
-    - Rich context information with automatic enhancement
-    - Structured error codes for operational categorization
-    - Serialization support for logging and transport
+    - Eliminated _exceptions_base.py following "deliver more with much less" principle
+    - Built-in metrics tracking for exception observability without dependencies
+    - Rich context information with automatic enhancement and safe value truncation
+    - Structured error codes for operational categorization and programmatic handling
+    - Serialization support for logging, transport, and external system integration
+    - Immutable error context preventing accidental modification after creation
+
+Enterprise Error Management:
+    - Comprehensive error categorization supporting operational monitoring and alerting
+    - Structured context capture for debugging with automatic field enhancement
+    - Metrics integration providing insights into error patterns and frequency
+    - Temporal tracking for incident correlation and pattern analysis
+    - Security-conscious context handling preventing sensitive information leakage
+    - Serialization support for error transport across service boundaries
 
 Observability Features:
-    - Automatic exception counting by type and error code
-    - Last seen timestamp tracking for temporal analysis
-    - Error code distribution for pattern recognition
-    - Metrics clearing for testing scenarios
+    - Automatic exception counting by type and error code for pattern analysis
+    - Last seen timestamp tracking for temporal analysis and incident correlation
+    - Error code distribution tracking for pattern recognition and system health
+    - Metrics clearing for testing scenarios and clean state management
+    - Exception frequency analysis for identifying system issues and bottlenecks
+    - Rich debugging context with stack trace capture and enhanced error information
+
+Context Management:
+    - Automatic context enhancement with field-specific information for validation
+    - Type information capture for debugging type-related errors and conversions
+    - Operation and stage tracking for complex process debugging and monitoring
+    - Safe value truncation preventing log pollution and security information leakage
+    - Structured context dictionaries supporting JSON serialization and transport
+    - Enhanced context merging preserving both base and specialized error information
+
+Error Code Integration:
+    - Standardized error codes from constants module for consistent categorization
+    - Automatic error code assignment for simplified exception creation
+    - Error code distribution tracking for operational monitoring and alerting
+    - Programmatic error handling support through structured error code patterns
+    - Integration with logging systems for automated error classification
 
 Dependencies:
-    - constants: Error codes and categorization
-    - Standard library: time, traceback for error context
+    - constants: Structured error codes and categorization for consistent handling
+    - time: Timestamp generation for temporal analysis and incident correlation
+    - traceback: Stack trace capture for development debugging and error resolution
 
 Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
@@ -236,29 +269,29 @@ class FlextValidationError(FlextError):
         )
     """
 
-    def __init__(
+    def __init__(  # Validation errors need detailed context
         self,
         message: str = "Validation failed",
         *,
-        field: str | None = None,
-        value: object = None,
-        rules: list[str] | None = None,
+        validation_details: dict[str, object] | None = None,
         error_code: str | None = None,
         context: dict[str, object] | None = None,
     ) -> None:
-        """Initialize validation error with field and rules."""
-        self.field = field
-        self.value = value
-        self.rules = rules or []
+        """Initialize validation error with validation details."""
+        # Extract validation details
+        details = validation_details or {}
+        self.field = details.get("field")
+        self.value = details.get("value")
+        self.rules = details.get("rules", [])
 
         # Build enhanced context
         enhanced_context = context or {}
-        if field is not None:
-            enhanced_context["field"] = field
-        if value is not None:
-            enhanced_context["value"] = str(value)[:100]  # Limit value length
-        if rules:
-            enhanced_context["failed_rules"] = rules
+        if self.field is not None:
+            enhanced_context["field"] = self.field
+        if self.value is not None:
+            enhanced_context["value"] = str(self.value)[:100]  # Limit value length
+        if self.rules:
+            enhanced_context["failed_rules"] = self.rules
 
         super().__init__(
             message=message,
@@ -574,9 +607,11 @@ class FlextExceptions:
         """Create validation error."""
         return FlextValidationError(
             message=message,
-            field=field,
-            value=value,
-            rules=rules,
+            validation_details={
+                "field": field,
+                "value": value,
+                "rules": rules or [],
+            },
         )
 
     @staticmethod

@@ -255,10 +255,10 @@ class FlextConstants:
         - ERROR_CODES: Standardized error classification codes for exception handling
         - MESSAGES: Default error and status messages for user communication
         - STATUS_CODES: Operation and process status indicators for workflow management
-        - LOG_LEVELS: Logging level definitions with numeric values for priority ordering
+        - LOG_LEVELS: Logging level definitions with numeric values for priority
         - VALIDATION_RULES: Field validation rule identifiers for data integrity
         - Regex patterns: Common validation patterns for data format verification
-        - Default values: System defaults for timeouts, sizes, and configuration settings
+        - Default values: System defaults for timeouts, sizes, and configuration
         - Project metadata: Version, name, and project information for identification
 
     Nested Classes:
