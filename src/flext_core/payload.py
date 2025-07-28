@@ -121,7 +121,7 @@ class FlextPayload[T](
         # Payload with metadata
         order_payload = FlextPayload(
             data=order_data,
-            metadata={"version": "1.0", "source": "api", "timestamp": time.time()}
+            metadata={"version": "1.0", "source": "api", "timestamp": _BaseGenerators.generate_timestamp()}
         )
 
         # Factory method with validation
@@ -135,7 +135,7 @@ class FlextPayload[T](
 
         # Metadata operations
         enhanced_payload = payload.with_metadata(
-            processed_at=time.time(),
+            processed_at=_BaseGenerators.generate_timestamp(),
             processor_id="worker_001"
         )
 
@@ -316,7 +316,7 @@ class FlextMessage(FlextPayload[str]):
 
         # Extend with additional metadata
         enriched_message = message.with_metadata(
-            timestamp=time.time(),
+            timestamp=_BaseGenerators.generate_timestamp(),
             user_id="user_123"
         )
     """
@@ -430,7 +430,7 @@ class FlextEvent(FlextPayload[Mapping[str, object]]):
 
         # Extend event with processing metadata
         processed_event = event.with_metadata(
-            processed_at=time.time(),
+            processed_at=_BaseGenerators.generate_timestamp(),
             processor_version="1.2.3",
             correlation_id="req_789"
         )

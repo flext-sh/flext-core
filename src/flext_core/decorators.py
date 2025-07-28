@@ -60,6 +60,7 @@ from flext_core._decorators_base import (
     _BaseLoggingDecorators,
     _BasePerformanceDecorators,
     _BaseValidationDecorators,
+    _DecoratedFunction,
 )
 from flext_core.result import FlextResult, safe_call
 
@@ -276,13 +277,15 @@ class FlextDecorators:
         """
 
         def decorator(func: F) -> F:
-            # Use composition to access base functionality - cast types for compatibility
-            from flext_core._decorators_base import _DecoratedFunction
-            safe_func = _BaseErrorHandlingDecorators.get_safe_decorator()(cast(_DecoratedFunction, func))
+            # Use composition to access base functionality - cast types for
+            # compatibility
+            safe_func = _BaseErrorHandlingDecorators.get_safe_decorator()(
+                cast("_DecoratedFunction", func),
+            )
             cached_func = _BasePerformanceDecorators.create_cache_decorator(
                 max_size,
             )(safe_func)
-            return cast(F, cached_func)
+            return cast("F", cached_func)
 
         return decorator
 
@@ -337,13 +340,13 @@ class FlextDecorators:
         """
 
         def decorator(func: F) -> F:
-            # Combine validation + performance using composition - cast types for compatibility
-            from flext_core._decorators_base import _DecoratedFunction
+            # Combine validation + performance using composition - cast types for
+            # compatibility
             validated_func = cls.validated_with_result(model_class)(func)
             cached_func = _BasePerformanceDecorators.create_cache_decorator(
                 max_size,
-            )(cast(_DecoratedFunction, validated_func))
-            return cast(F, cached_func)
+            )(validated_func)
+            return cast("F", cached_func)
 
         return decorator
 
@@ -412,13 +415,14 @@ class FlextDecorators:
 
         def decorator(func: F) -> F:
             # Cast types for compatibility with base decorators
-            from flext_core._decorators_base import _DecoratedFunction
-            current_func: _DecoratedFunction = cast(_DecoratedFunction, func)
+            current_func: _DecoratedFunction = cast("_DecoratedFunction", func)
 
             # Apply validation if model provided
             if model_class:
-                validated_func = cls.validated_with_result(model_class)(cast(F, current_func))
-                current_func = cast(_DecoratedFunction, validated_func)
+                validated_func = cls.validated_with_result(model_class)(
+                    cast("F", current_func),
+                )
+                current_func = cast("_DecoratedFunction", validated_func)
 
             # Apply safe execution using composition
             current_func = _BaseErrorHandlingDecorators.get_safe_decorator()(
@@ -440,7 +444,7 @@ class FlextDecorators:
             if with_logging:
                 current_func = _BaseLoggingDecorators.log_calls_decorator(current_func)
 
-            return cast(F, current_func)
+            return cast("F", current_func)
 
         return decorator
 

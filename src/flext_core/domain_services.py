@@ -69,7 +69,6 @@ from typing import TYPE_CHECKING
 from pydantic import BaseModel, ConfigDict
 
 from flext_core._mixins_base import _BaseSerializableMixin, _BaseValidatableMixin
-from flext_core.mixins import FlextSerializableMixin, FlextValidatableMixin
 
 if TYPE_CHECKING:
     from flext_core.result import FlextResult

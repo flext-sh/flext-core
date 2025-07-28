@@ -173,7 +173,7 @@ class FlextLogLevel(Enum):
     INFO = "INFO"
     DEBUG = "DEBUG"
     TRACE = "TRACE"
-    
+
     def __eq__(self, other: object) -> bool:
         """Support comparison with string values for test compatibility."""
         if isinstance(other, str):

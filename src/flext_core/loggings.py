@@ -783,7 +783,6 @@ def _add_missing_logger_methods() -> None:
     @classmethod
     def clear_context(cls) -> None:
         """Clear global context variables."""
-        pass
 
     @classmethod
     def with_performance_tracking(cls, name: str) -> object:
