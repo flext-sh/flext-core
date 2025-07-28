@@ -255,7 +255,8 @@ class FlextDomainService(BaseModel, ABC):
         return _BaseValidatableMixin.has_validation_errors(self)
 
     # =========================================================================
-    # SERIALIZATION FUNCTIONALITY - Composition-based delegation to _BaseSerializableMixin
+    # SERIALIZATION FUNCTIONALITY - Composition-based delegation to
+    # _BaseSerializableMixin
     # =========================================================================
 
     def to_dict_basic(self) -> dict[str, object]:

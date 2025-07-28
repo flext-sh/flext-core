@@ -81,12 +81,12 @@ from __future__ import annotations
 
 import logging
 import sys
-import time
 import traceback
 from typing import TYPE_CHECKING, ClassVar, TypedDict
 
 import structlog
 
+from flext_core._utilities_base import _BaseGenerators
 from flext_core.constants import FlextLogLevel
 from flext_core.validation import FlextValidators
 
@@ -182,7 +182,7 @@ def _add_to_log_store(
     logger_name = str(event_dict.get("logger", getattr(logger, "name", "unknown")))
 
     log_entry = {
-        "timestamp": event_dict.get("timestamp", time.time()),
+        "timestamp": event_dict.get("timestamp", _BaseGenerators.generate_timestamp()),
         "level": str(event_dict.get("level", "INFO")).upper(),
         "logger": logger_name,
         "message": str(event_dict.get("event", "")),
@@ -756,49 +756,93 @@ def create_log_context(
 
 
 # Add missing interface methods to FlextLogger class that tests expect
+class _ContextManagerLogger(structlog.BoundLogger):
+    """Wrapper for structlog.BoundLogger to provide context manager functionality."""
+
+    def __init__(self, logger: structlog.BoundLogger) -> None:
+        self._logger = logger
+
+    def __enter__(self) -> structlog.BoundLogger:
+        return self._logger
+
+    def __exit__(self, exc_type: object, exc_val: object, exc_tb: object) -> None:
+        pass
+
+
 def _add_missing_logger_methods() -> None:
     """Add missing static methods to FlextLogger class that tests expect."""
 
     @classmethod
     def configure(
-        cls,
+        cls: type[FlextLogger],
+        *,
         log_level: FlextLogLevel = FlextLogLevel.INFO,
         json_output: bool = False,
         add_timestamp: bool = True,
         add_caller: bool = False,
     ) -> None:
         """Configure the logging system."""
+        # Use parameters to configure logging
+        if json_output:
+            structlog.configure(processors=[structlog.processors.JSONRenderer()])
+        if add_timestamp:
+            structlog.configure(processors=[structlog.processors.TimeStamper()])
+        if add_caller:
+            structlog.configure(
+                processors=[structlog.processors.CallsiteParameterAdder()]
+            )
+
         cls._configured = True
 
     @classmethod
-    def get_base_logger(cls, name: str, level: str = "INFO") -> object:
+    def get_logger_with_auto_config(
+        cls: type[FlextLogger],
+        name: str,
+        *,
+        level: str = "INFO",
+    ) -> object:
+        """Get logger with auto-configuration."""
+        if not cls._configured:
+            cls.configure()
+        return structlog.get_logger(name)
+
+    @classmethod
+    def get_base_logger(
+        cls: type[FlextLogger],
+        name: str,
+        *,
+        level: str = "INFO",
+    ) -> object:
         """Get base logger with observability."""
         return structlog.get_logger(name)
 
     @classmethod
-    def bind_context(cls, **context: object) -> object:
+    def bind_context(cls: type[FlextLogger], **context: object) -> object:
         """Create logger with bound context."""
         return structlog.get_logger("context").bind(**context)
 
     @classmethod
-    def clear_context(cls) -> None:
+    def clear_context(cls: type[FlextLogger]) -> None:
         """Clear global context variables."""
+        structlog.contextvars.clear_contextvars()
 
     @classmethod
-    def with_performance_tracking(cls, name: str) -> object:
+    def with_performance_tracking(cls: type[FlextLogger], name: str) -> object:
         """Get logger with performance tracking."""
         return structlog.get_logger(name)
 
     @classmethod
-    def flext_get_logger(cls, name: str) -> object:
+    def flext_get_logger(cls: type[FlextLogger], name: str) -> object:
         """Backward compatibility logger creation."""
         return structlog.get_logger(name)
 
-    # Add class variable
+    # Add class variables
     FlextLogger._configured = False
+    FlextLogger._loggers = {}
 
     # Add methods to class
     FlextLogger.configure = configure
+    FlextLogger.get_logger = get_logger_with_auto_config  # Override with auto-config
     FlextLogger.get_base_logger = get_base_logger
     FlextLogger.bind_context = bind_context
     FlextLogger.clear_context = clear_context

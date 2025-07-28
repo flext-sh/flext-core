@@ -411,7 +411,7 @@ def validate_product_complete(product_data: dict[str, Any]) -> FlextResult[Produ
         return FlextResult.fail("Product name must be at least 3 characters")
 
     # Validate price
-    if not isinstance(price, (int, float)):
+    if not isinstance(price, int | float):
         return FlextResult.fail("Price must be a number")
 
     if price <= 0:

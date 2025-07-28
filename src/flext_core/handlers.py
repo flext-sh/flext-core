@@ -68,7 +68,8 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Generic, cast
 
-from flext_core.mixins import FlextLoggableMixin, FlextTimingMixin
+from flext_core._mixins_base import _BaseTimingMixin
+from flext_core.loggings import FlextLoggerFactory
 from flext_core.result import FlextResult
 from flext_core.types import (
     R,
@@ -161,7 +162,7 @@ class FlextHandlers:
     # BASE HANDLER - Foundation for all handlers
     # =============================================================================
 
-    class Handler(ABC, FlextLoggableMixin, FlextTimingMixin, Generic[T, R]):
+    class Handler(ABC, Generic[T, R]):
         """Generic base handler interface for type-safe message processing.
 
         Abstract foundation class providing comprehensive handler functionality
@@ -229,9 +230,10 @@ class FlextHandlers:
         """
 
         def __init__(self, handler_name: TServiceName | None = None) -> None:
-            """Initialize handler with logging and metrics."""
+            """Initialize handler with logging and metrics through composition."""
             self._handler_name = handler_name or self.__class__.__name__
-            # Logger now provided by FlextLoggableMixin - DRY principle applied
+            # Initialize mixin functionality through composition
+            self._logger_name = f"{self.__class__.__module__}.{self.__class__.__name__}"
             self._metrics = {
                 "messages_handled": 0,
                 "successes": 0,
@@ -242,6 +244,49 @@ class FlextHandlers:
             self.logger.debug(
                 "Handler initialized",
                 handler_name=self._handler_name,
+            )
+
+        # =====================================================================
+        # LOGGING FUNCTIONALITY - Composition-based delegation
+        # =====================================================================
+
+        def _get_logger(self) -> object:
+            """Get logger instance (lazy initialization)."""
+            if not hasattr(self, "_logger"):
+                self._logger = FlextLoggerFactory.get_logger(self._logger_name)
+            return self._logger
+
+        @property
+        def logger(self) -> object:
+            """Access to logger instance."""
+            return self._get_logger()
+
+        # =====================================================================
+        # TIMING FUNCTIONALITY - Composition-based delegation
+        # =====================================================================
+
+        def _start_timing(self) -> float:
+            """Start timing and return start timestamp."""
+            return _BaseTimingMixin._start_timing(self)
+
+        def _get_execution_time_seconds(self, start_time: float) -> float:
+            """Get execution time in seconds from start timestamp."""
+            return _BaseTimingMixin._get_execution_time_seconds(self, start_time)
+
+        def _get_execution_time_ms(self, start_time: float) -> float:
+            """Get execution time in milliseconds from start timestamp."""
+            return _BaseTimingMixin._get_execution_time_ms(self, start_time)
+
+        def _get_execution_time_ms_rounded(
+            self,
+            start_time: float,
+            digits: int = 2,
+        ) -> float:
+            """Get rounded execution time in milliseconds from start timestamp."""
+            return _BaseTimingMixin._get_execution_time_ms_rounded(
+                self,
+                start_time,
+                digits,
             )
 
         @abstractmethod

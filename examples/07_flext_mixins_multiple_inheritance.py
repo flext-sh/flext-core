@@ -135,7 +135,7 @@ class ValidatableConfiguration(FlextValidatableMixin):
         # Value validation
         if "timeout" in self.settings:
             timeout = self.settings["timeout"]
-            if not isinstance(timeout, (int, float)) or timeout <= 0:
+            if not isinstance(timeout, int | float) or timeout <= 0:
                 self._add_validation_error("Timeout must be a positive number")
 
         # Set validation status
@@ -528,7 +528,7 @@ class EnterpriseService(
 
         if "timeout" in self.config:
             timeout = self.config["timeout"]
-            if not isinstance(timeout, (int, float)) or timeout <= 0:
+            if not isinstance(timeout, int | float) or timeout <= 0:
                 self._add_validation_error("Timeout must be positive number")
 
         is_valid = len(self.validation_errors) == 0

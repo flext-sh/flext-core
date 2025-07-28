@@ -278,7 +278,7 @@ class FlextDecorators:
 
         def decorator(func: F) -> F:
             # Use composition to access base functionality - cast types for
-            # compatibility
+            # compatibility between F and _DecoratedFunction protocols
             safe_func = _BaseErrorHandlingDecorators.get_safe_decorator()(
                 cast("_DecoratedFunction", func),
             )
@@ -341,11 +341,11 @@ class FlextDecorators:
 
         def decorator(func: F) -> F:
             # Combine validation + performance using composition - cast types for
-            # compatibility
+            # compatibility between F and _DecoratedFunction protocols
             validated_func = cls.validated_with_result(model_class)(func)
             cached_func = _BasePerformanceDecorators.create_cache_decorator(
                 max_size,
-            )(validated_func)
+            )(cast("_DecoratedFunction", validated_func))
             return cast("F", cached_func)
 
         return decorator

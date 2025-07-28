@@ -75,6 +75,7 @@ if TYPE_CHECKING:
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from flext_core._mixins_base import _BaseSerializableMixin, _BaseValidatableMixin
 from flext_core.loggings import FlextLoggerFactory
 from flext_core.mixins import (
     FlextLoggableMixin,
@@ -693,34 +694,28 @@ class FlextCommands:
 
         def _add_validation_error(self, error: str) -> None:
             """Add validation error (delegates to base)."""
-            from flext_core._mixins_base import _BaseValidatableMixin
             return _BaseValidatableMixin._add_validation_error(self, error)
 
         def _clear_validation_errors(self) -> None:
             """Clear all validation errors (delegates to base)."""
-            from flext_core._mixins_base import _BaseValidatableMixin
             return _BaseValidatableMixin._clear_validation_errors(self)
 
         def _mark_valid(self) -> None:
             """Mark as valid and clear errors (delegates to base)."""
-            from flext_core._mixins_base import _BaseValidatableMixin
             return _BaseValidatableMixin._mark_valid(self)
 
         @property
         def validation_errors(self) -> list[str]:
             """Get validation errors (delegates to base)."""
-            from flext_core._mixins_base import _BaseValidatableMixin
             return _BaseValidatableMixin.validation_errors.fget(self)  # type: ignore[misc]
 
         @property
         def is_valid(self) -> bool:
             """Check if object is valid (delegates to base)."""
-            from flext_core._mixins_base import _BaseValidatableMixin
             return _BaseValidatableMixin.is_valid.fget(self)  # type: ignore[misc]
 
         def has_validation_errors(self) -> bool:
             """Check if object has validation errors (delegates to base)."""
-            from flext_core._mixins_base import _BaseValidatableMixin
             return _BaseValidatableMixin.has_validation_errors(self)
 
         # =====================================================================
@@ -729,12 +724,10 @@ class FlextCommands:
 
         def to_dict_basic(self) -> dict[str, object]:
             """Convert to basic dictionary representation (delegates to base)."""
-            from flext_core._mixins_base import _BaseSerializableMixin
             return _BaseSerializableMixin.to_dict_basic(self)
 
         def _serialize_value(self, value: object) -> object | None:
             """Serialize a single value for dict conversion (delegates to base)."""
-            from flext_core._mixins_base import _BaseSerializableMixin
             return _BaseSerializableMixin._serialize_value(self, value)
 
         def _serialize_collection(
@@ -742,12 +735,10 @@ class FlextCommands:
             collection: list[object] | tuple[object, ...],
         ) -> list[object]:
             """Serialize list or tuple values (delegates to base)."""
-            from flext_core._mixins_base import _BaseSerializableMixin
             return _BaseSerializableMixin._serialize_collection(self, collection)
 
         def _serialize_dict(self, dict_value: dict[str, object]) -> dict[str, object]:
             """Serialize dictionary values (delegates to base)."""
-            from flext_core._mixins_base import _BaseSerializableMixin
             return _BaseSerializableMixin._serialize_dict(self, dict_value)
 
     class QueryHandler(ABC, Generic[T, R]):

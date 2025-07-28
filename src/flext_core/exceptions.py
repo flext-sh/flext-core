@@ -82,12 +82,12 @@ from __future__ import annotations
 
 import inspect
 import threading
-import time
 import traceback
 from functools import wraps
 
 from pydantic import BaseModel, ConfigDict
 
+from flext_core._utilities_base import _BaseGenerators
 from flext_core.constants import ERROR_CODES
 
 # =============================================================================
@@ -197,13 +197,13 @@ def get_enhanced_traceback() -> dict[str, object]:
             if _debug_config["enable_stack_trace"]
             else "",
             "frame_info": frame_info,
-            "timestamp": time.time(),
+            "timestamp": _BaseGenerators.generate_timestamp(),
         }
     except (AttributeError, TypeError, ValueError, OSError):
         # Fallback to minimal info if frame inspection fails
         return {
             "thread_id": threading.current_thread().ident,
-            "timestamp": time.time(),
+            "timestamp": _BaseGenerators.generate_timestamp(),
             "fallback_mode": True,
         }
 
@@ -363,7 +363,7 @@ def _track_exception(exception_class: str, error_code: str | None) -> None:
         # Track thread information and update timestamp
         thread_id = threading.current_thread().ident
         thread_name = threading.current_thread().name
-        current_time = time.time()
+        current_time = _BaseGenerators.generate_timestamp()
         thread_info = metrics.get("thread_info", {})
         if isinstance(thread_info, dict):
             thread_info[thread_id] = {
@@ -461,7 +461,7 @@ class FlextError(Exception):
         self.message = message
         self.error_code = error_code or ERROR_CODES["GENERIC_ERROR"]
         self.context = context or {}
-        self.timestamp = time.time()
+        self.timestamp = _BaseGenerators.generate_timestamp()
         self.stack_trace = traceback.format_stack()
 
         # Enhanced debugging information
