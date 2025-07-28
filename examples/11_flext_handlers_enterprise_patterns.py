@@ -28,6 +28,7 @@ demonstrating the power and flexibility of the FlextHandlers system.
 """
 
 import time
+import traceback
 from dataclasses import dataclass
 from typing import Any
 
@@ -173,6 +174,7 @@ class CreateUserHandler(FlextHandlers.CommandHandler[CreateUserCommand, User]):
     """Handler for creating users with validation."""
 
     def __init__(self) -> None:
+        """Initialize CreateUserHandler."""
         super().__init__("CreateUserHandler")
         # Simulate user storage
         self._users: dict[str, User] = {}
@@ -214,6 +216,12 @@ class UpdateUserHandler(FlextHandlers.CommandHandler[UpdateUserCommand, User]):
     """Handler for updating users."""
 
     def __init__(self, user_storage: dict[str, User]) -> None:
+        """Initialize UpdateUserHandler.
+
+        Args:
+            user_storage: User storage dictionary
+
+        """
         super().__init__("UpdateUserHandler")
         self._users = user_storage
 
@@ -251,6 +259,12 @@ class GetUserHandler(FlextHandlers.QueryHandler[GetUserQuery, User]):
     """Handler for retrieving individual users."""
 
     def __init__(self, user_storage: dict[str, User]) -> None:
+        """Initialize GetUserHandler.
+
+        Args:
+            user_storage: User storage dictionary
+
+        """
         super().__init__("GetUserHandler")
         self._users = user_storage
 
@@ -285,6 +299,12 @@ class ListUsersHandler(FlextHandlers.QueryHandler[ListUsersQuery, list[User]]):
     """Handler for listing users with filtering."""
 
     def __init__(self, user_storage: dict[str, User]) -> None:
+        """Initialize ListUsersHandler.
+
+        Args:
+            user_storage: User storage dictionary
+
+        """
         super().__init__("ListUsersHandler")
         self._users = user_storage
 
@@ -320,6 +340,7 @@ class UserCreatedEventHandler(FlextHandlers.EventHandler[UserCreatedEvent]):
     """Handler for user created events."""
 
     def __init__(self) -> None:
+        """Initialize UserCreatedEventHandler."""
         super().__init__("UserCreatedEventHandler")
         self._notifications_sent = 0
 
@@ -353,6 +374,7 @@ class UserUpdatedEventHandler(FlextHandlers.EventHandler[UserUpdatedEvent]):
     """Handler for user updated events."""
 
     def __init__(self) -> None:
+        """Initialize UserUpdatedEventHandler."""
         super().__init__("UserUpdatedEventHandler")
 
     def process_event(self, event: UserUpdatedEvent) -> None:
@@ -382,6 +404,7 @@ class OrderCreatedEventHandler(FlextHandlers.EventHandler[OrderCreatedEvent]):
     """Handler for order created events."""
 
     def __init__(self) -> None:
+        """Initialize OrderCreatedEventHandler."""
         super().__init__("OrderCreatedEventHandler")
         self._orders_processed = 0
 
@@ -994,8 +1017,6 @@ def main() -> None:
 
     except Exception as e:
         print(f"\n❌ Error during FlextHandlers demonstration: {e}")
-        import traceback
-
         traceback.print_exc()
 
 

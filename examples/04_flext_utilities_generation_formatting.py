@@ -204,7 +204,8 @@ def demonstrate_type_checking() -> None:
 
         print(f"  🔹 {name} ({type(value).__name__}):")
         print(
-            f"     String: {is_string}, Int: {is_int}, List: {is_list}, Dict: {is_dict}, Not None: {is_not_none}",
+            f"     String: {is_string}, Int: {is_int}, List: {is_list}, "
+            f"Dict: {is_dict}, Not None: {is_not_none}",
         )
 
 
@@ -576,7 +577,8 @@ def demonstrate_performance_benchmarks() -> None:
     uuid_time = time.time() - start_time
 
     print(
-        f"  🔹 {operations} Entity IDs: {entity_time:.4f}s ({operations / entity_time:.0f}/s)",
+        f"  🔹 {operations} Entity IDs: {entity_time:.4f}s "
+        f"({operations / entity_time:.0f}/s)",
     )
     print(f"  🔹 {operations} UUIDs: {uuid_time:.4f}s ({operations / uuid_time:.0f}/s)")
 
@@ -595,10 +597,12 @@ def demonstrate_performance_benchmarks() -> None:
     uuid_hash_time = time.time() - start_time
 
     print(
-        f"  🔹 {operations} Hash IDs: {hash_time:.4f}s ({operations / hash_time:.0f}/s)",
+        f"  🔹 {operations} Hash IDs: {hash_time:.4f}s "
+        f"({operations / hash_time:.0f}/s)",
     )
     print(
-        f"  🔹 {operations} UUID hashes: {uuid_hash_time:.4f}s ({operations / uuid_hash_time:.0f}/s)",
+        f"  🔹 {operations} UUID hashes: {uuid_hash_time:.4f}s "
+        f"({operations / uuid_hash_time:.0f}/s)",
     )
 
     # Validation performance
@@ -611,7 +615,8 @@ def demonstrate_performance_benchmarks() -> None:
     email_time = time.time() - start_time
 
     print(
-        f"  🔹 {operations} Email validations: {email_time:.4f}s ({operations / email_time:.0f}/s)",
+        f"  🔹 {operations} Email validations: {email_time:.4f}s "
+        f"({operations / email_time:.0f}/s)",
     )
 
 

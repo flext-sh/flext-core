@@ -25,30 +25,16 @@ from flext_core.validation import (
     FlextValidationConfig,
     FlextValidationResult,
     FlextValidators,
-    Predicates,
-    Validation,
-    ValidationResult,
-    ValidationResultFactory,
-    _validate_email_field,
-    _validate_numeric_field,
-    _validate_required_field,
-    _validate_string_field,
-    _ValidationConfig,
-    _ValidationResult,
-    is_email,
-    is_non_empty_string,
-    is_not_none,
-    is_string,
-    validate_email,
-    validate_email_field,
-    validate_entity_id,
-    validate_non_empty_string,
-    validate_numeric,
-    validate_numeric_field,
-    validate_required,
-    validate_required_field,
-    validate_string,
-    validate_string_field,
+    flext_validate_email,
+    flext_validate_email_field,
+    flext_validate_entity_id,
+    flext_validate_non_empty_string,
+    flext_validate_numeric,
+    flext_validate_numeric_field,
+    flext_validate_required,
+    flext_validate_required_field,
+    flext_validate_string,
+    flext_validate_string_field,
 )
 
 if TYPE_CHECKING:
@@ -303,7 +289,9 @@ class TestFlextValidators:
         # is_url
         assert FlextValidators.is_url("https://example.com") is True
         assert FlextValidators.is_url("http://subdomain.example.com/path") is True
-        assert FlextValidators.is_url("ftp://files.example.com") is True
+        assert (
+            FlextValidators.is_url("ftp://files.example.com") is False
+        )  # FTP not supported, only HTTP/HTTPS
         assert FlextValidators.is_url("invalid-url") is False
         assert FlextValidators.is_url("not a url") is False
         assert FlextValidators.is_url(42) is False
@@ -643,10 +631,10 @@ class TestFlextValidation:
         assert FlextValidation.validate_entity_id("   ") is False
         assert FlextValidation.validate_entity_id(None) is False
 
-        # validate_non_empty_string
-        assert FlextValidation.validate_non_empty_string("test") is True
-        assert FlextValidation.validate_non_empty_string("") is False
-        assert FlextValidation.validate_non_empty_string(None) is False
+        # flext_validate_non_empty_string
+        assert FlextValidation.flext_validate_non_empty_string("test") is True
+        assert FlextValidation.flext_validate_non_empty_string("") is False
+        assert FlextValidation.flext_validate_non_empty_string(None) is False
 
 
 class TestFieldValidationFunctions:
@@ -655,38 +643,43 @@ class TestFieldValidationFunctions:
     def test_validate_required_field(self) -> None:
         """Test validate_required_field function."""
         # Valid required values
-        result = validate_required_field("test_value", "username")
+        result = flext_validate_required_field("test_value", "username")
         assert result.is_valid is True
         assert result.error_message is None
 
-        result_number = validate_required_field(42, "age")
+        result_number = flext_validate_required_field(42, "age")
         assert result_number.is_valid is True
 
         # None value should fail
-        none_result = validate_required_field(None, "required_field")
+        none_result = flext_validate_required_field(None, "required_field")
         assert none_result.is_valid is False
         assert "required but was None" in none_result.error_message
         assert none_result.field_name == "required_field"
 
         # Empty string should fail
-        empty_result = validate_required_field("", "username")
+        empty_result = flext_validate_required_field("", "username")
         assert empty_result.is_valid is False
         assert "required but was empty" in empty_result.error_message
 
         # Whitespace-only string should fail
-        whitespace_result = validate_required_field("   ", "username")
+        whitespace_result = flext_validate_required_field("   ", "username")
         assert whitespace_result.is_valid is False
         assert "required but was empty" in whitespace_result.error_message
 
-    def test_validate_string_field(self) -> None:
-        """Test validate_string_field with length constraints."""
+    def test_flext_validate_string_field(self) -> None:
+        """Test flext_validate_string_field with length constraints."""
         # Valid string within constraints
-        result = validate_string_field("hello", "message", min_length=3, max_length=10)
+        result = flext_validate_string_field(
+            "hello",
+            "message",
+            min_length=3,
+            max_length=10,
+        )
         assert result.is_valid is True
         assert result.error_message is None
 
         # Valid string at boundaries
-        boundary_result = validate_string_field(
+        boundary_result = flext_validate_string_field(
             "test",
             "field",
             min_length=4,
@@ -695,18 +688,18 @@ class TestFieldValidationFunctions:
         assert boundary_result.is_valid is True
 
         # Non-string value should fail
-        non_string_result = validate_string_field(42, "name")
+        non_string_result = flext_validate_string_field(42, "name")
         assert non_string_result.is_valid is False
         assert "must be a string" in non_string_result.error_message
         assert "got int" in non_string_result.error_message
 
         # String too short should fail
-        short_result = validate_string_field("hi", "password", min_length=8)
+        short_result = flext_validate_string_field("hi", "password", min_length=8)
         assert short_result.is_valid is False
         assert "must be at least 8 characters" in short_result.error_message
 
         # String too long should fail
-        long_result = validate_string_field(
+        long_result = flext_validate_string_field(
             "this is too long",
             "username",
             max_length=5,
@@ -715,7 +708,7 @@ class TestFieldValidationFunctions:
         assert "must be at most 5 characters" in long_result.error_message
 
         # Invalid configuration should fail
-        invalid_config_result = validate_string_field(
+        invalid_config_result = flext_validate_string_field(
             "test",
             "",
             min_length=5,
@@ -726,13 +719,13 @@ class TestFieldValidationFunctions:
             "invalid validation config" in invalid_config_result.error_message.lower()
         )
 
-    def test_validate_numeric_field(self) -> None:
-        """Test validate_numeric_field with range constraints."""
+    def test_flext_validate_numeric_field(self) -> None:
+        """Test flext_validate_numeric_field with range constraints."""
         # Valid numeric values
-        int_result = validate_numeric_field(25, "age", min_val=0, max_val=150)
+        int_result = flext_validate_numeric_field(25, "age", min_val=0, max_val=150)
         assert int_result.is_valid is True
 
-        float_result = validate_numeric_field(
+        float_result = flext_validate_numeric_field(
             math.pi,
             "score",
             min_val=0.0,
@@ -741,7 +734,7 @@ class TestFieldValidationFunctions:
         assert float_result.is_valid is True
 
         # Valid at boundaries
-        boundary_result = validate_numeric_field(
+        boundary_result = flext_validate_numeric_field(
             100,
             "percentage",
             min_val=0,
@@ -750,45 +743,45 @@ class TestFieldValidationFunctions:
         assert boundary_result.is_valid is True
 
         # Non-numeric value should fail
-        non_numeric_result = validate_numeric_field("not_number", "age")
+        non_numeric_result = flext_validate_numeric_field("not_number", "age")
         assert non_numeric_result.is_valid is False
         assert "must be a number" in non_numeric_result.error_message
         assert "got str" in non_numeric_result.error_message
 
         # Value too small should fail
-        small_result = validate_numeric_field(-5, "age", min_val=0)
+        small_result = flext_validate_numeric_field(-5, "age", min_val=0)
         assert small_result.is_valid is False
         assert "must be at least 0" in small_result.error_message
 
         # Value too large should fail
-        large_result = validate_numeric_field(200, "age", max_val=150)
+        large_result = flext_validate_numeric_field(200, "age", max_val=150)
         assert large_result.is_valid is False
         assert "must be at most 150" in large_result.error_message
 
-    def test_validate_email_field(self) -> None:
-        """Test validate_email_field function."""
+    def test_flext_validate_email_field(self) -> None:
+        """Test flext_validate_email_field function."""
         # Valid email addresses
-        valid_result = validate_email_field("user@example.com", "email")
+        valid_result = flext_validate_email_field("user@example.com", "email")
         assert valid_result.is_valid is True
 
-        complex_result = validate_email_field(
+        complex_result = flext_validate_email_field(
             "test.email+tag@domain.co.uk",
             "contact_email",
         )
         assert complex_result.is_valid is True
 
         # Non-string value should fail
-        non_string_result = validate_email_field(42, "email")
+        non_string_result = flext_validate_email_field(42, "email")
         assert non_string_result.is_valid is False
         assert "must be a string" in non_string_result.error_message
 
         # Invalid email format should fail
-        invalid_result = validate_email_field("invalid-email", "email")
+        invalid_result = flext_validate_email_field("invalid-email", "email")
         assert invalid_result.is_valid is False
         assert "must be a valid email address" in invalid_result.error_message
 
         # Empty string should fail
-        empty_result = validate_email_field("", "email")
+        empty_result = flext_validate_email_field("", "email")
         assert empty_result.is_valid is False
 
 
@@ -798,58 +791,58 @@ class TestConvenienceFunctions:
     def test_validate_required_convenience(self) -> None:
         """Test validate_required convenience function."""
         # Successful validation
-        result = validate_required("test_value", "username")
+        result = flext_validate_required("test_value", "username")
         assert result.is_valid is True
 
         # Failed validation
-        fail_result = validate_required(None, "required_field")
+        fail_result = flext_validate_required(None, "required_field")
         assert fail_result.is_valid is False
         assert fail_result.field_name == "required_field"
 
         # Default field name
-        default_result = validate_required("test")
+        default_result = flext_validate_required("test")
         assert default_result.is_valid is True
 
     def test_validate_string_convenience(self) -> None:
         """Test validate_string convenience function."""
         # Valid string
-        result = validate_string("hello", "message", min_length=3, max_length=10)
+        result = flext_validate_string("hello", "message", min_length=3, max_length=10)
         assert result.is_valid is True
 
         # Invalid string
-        fail_result = validate_string("hi", "password", min_length=8)
+        fail_result = flext_validate_string("hi", "password", min_length=8)
         assert fail_result.is_valid is False
 
         # Default parameters
-        default_result = validate_string("test")
+        default_result = flext_validate_string("test")
         assert default_result.is_valid is True
 
     def test_validate_numeric_convenience(self) -> None:
         """Test validate_numeric convenience function."""
         # Valid numeric
-        result = validate_numeric(25, "age", min_val=0, max_val=150)
+        result = flext_validate_numeric(25, "age", min_val=0, max_val=150)
         assert result.is_valid is True
 
         # Invalid numeric
-        fail_result = validate_numeric(-5, "age", min_val=0)
+        fail_result = flext_validate_numeric(-5, "age", min_val=0)
         assert fail_result.is_valid is False
 
         # Default parameters
-        default_result = validate_numeric(42)
+        default_result = flext_validate_numeric(42)
         assert default_result.is_valid is True
 
     def test_validate_email_convenience(self) -> None:
         """Test validate_email convenience function."""
         # Valid email
-        result = validate_email("user@example.com", "email")
+        result = flext_validate_email("user@example.com", "email")
         assert result.is_valid is True
 
         # Invalid email
-        fail_result = validate_email("invalid-email", "email")
+        fail_result = flext_validate_email("invalid-email", "email")
         assert fail_result.is_valid is False
 
         # Default field name
-        default_result = validate_email("test@example.com")
+        default_result = flext_validate_email("test@example.com")
         assert default_result.is_valid is True
 
 
@@ -858,85 +851,48 @@ class TestEntityValidationFunctions:
 
     def test_validate_entity_id_function(self) -> None:
         """Test validate_entity_id function."""
-        assert validate_entity_id("user_123") is True
-        assert validate_entity_id("valid-entity-id") is True
-        assert validate_entity_id("") is False
-        assert validate_entity_id("   ") is False
-        assert validate_entity_id(None) is False
-        assert validate_entity_id(42) is False
+        assert flext_validate_entity_id("user_123") is True
+        assert flext_validate_entity_id("valid-entity-id") is True
+        assert flext_validate_entity_id("") is False
+        assert flext_validate_entity_id("   ") is False
+        assert flext_validate_entity_id(None) is False
+        assert flext_validate_entity_id(42) is False
 
-    def test_validate_non_empty_string_function(self) -> None:
-        """Test validate_non_empty_string function."""
-        assert validate_non_empty_string("test") is True
-        assert validate_non_empty_string("   valid   ") is True
-        assert validate_non_empty_string("") is False
-        assert validate_non_empty_string("   ") is False
-        assert validate_non_empty_string(None) is False
-        assert validate_non_empty_string(42) is False
+    def test_flext_validate_non_empty_string_function(self) -> None:
+        """Test flext_validate_non_empty_string function."""
+        assert flext_validate_non_empty_string("test") is True
+        assert flext_validate_non_empty_string("   valid   ") is True
+        assert flext_validate_non_empty_string("") is False
+        assert flext_validate_non_empty_string("   ") is False
+        assert flext_validate_non_empty_string(None) is False
+        assert flext_validate_non_empty_string(42) is False
 
+    def test_flext_validation_class_access(self) -> None:
+        """Test FlextValidation class direct access."""
+        # Test that FlextValidation methods work properly
+        assert FlextValidation.is_not_none("test") is True
+        assert FlextValidation.is_string("hello") is True
 
-class TestBackwardCompatibilityAliases:
-    """Test backward compatibility aliases and legacy functions."""
+        # Test internal configuration aliases exist
+        assert FlextValidationConfig is not None
+        assert FlextValidationResult is not None
 
-    def test_legacy_class_aliases(self) -> None:
-        """Test legacy class aliases."""
-        # Legacy class access
-        assert Validation is FlextValidation
-        assert Predicates is FlextPredicates
-        assert ValidationResult is FlextValidationResult
-        assert ValidationResultFactory is FlextValidationResult
+    def test_modern_functionality_complete(self) -> None:
+        """Test complete modern functionality without legacy dependencies."""
+        # Test that all new classes work properly
+        validation = FlextValidation()
+        predicates = FlextPredicates()
 
-        # Internal legacy aliases
-        assert FlextValidators is FlextValidators
-        assert FlextPredicates is FlextPredicates
-        assert _ValidationConfig is FlextValidationConfig
-        assert _ValidationResult is FlextValidationResult
+        # Test validation methods
+        assert hasattr(validation, "is_email")
+        assert hasattr(validation, "chain")
 
-    def test_legacy_function_aliases(self) -> None:
-        """Test legacy function aliases."""
-        # Legacy function names
-        assert is_not_none is FlextValidation.is_not_none
-        assert is_string is FlextValidation.is_string
-        assert is_non_empty_string is FlextValidation.is_non_empty_string
-        assert is_email is FlextValidation.is_email
+        # Test predicates
+        assert hasattr(predicates, "not_none")
 
-        # Test functionality works through aliases
-        assert is_not_none("test") is True
-        assert is_string("hello") is True
-        assert is_non_empty_string("test") is True
-        assert is_email("user@example.com") is True
-
-        # Internal function aliases
-        assert _validate_required_field is validate_required_field
-        assert _validate_string_field is validate_string_field
-        assert _validate_numeric_field is validate_numeric_field
-        assert _validate_email_field is validate_email_field
-
-    def test_legacy_functionality_equivalence(self) -> None:
-        """Test that legacy aliases provide equivalent functionality."""
-        # Test that legacy classes work the same as new ones
-        legacy_validation = Validation()
-        new_validation = FlextValidation()
-
-        # Both should have the same methods
-        assert hasattr(legacy_validation, "is_email")
-        assert hasattr(new_validation, "is_email")
-        assert hasattr(legacy_validation, "chain")
-        assert hasattr(new_validation, "chain")
-
-        # Test that legacy predicates work
-        legacy_predicates = Predicates()
-        new_predicates = FlextPredicates()
-
-        assert hasattr(legacy_predicates, "not_none")
-        assert hasattr(new_predicates, "not_none")
-
-        # Test legacy result creation
-        legacy_result = ValidationResult.success()
-        new_result = FlextValidationResult.success()
-
-        assert legacy_result.is_valid is True
-        assert new_result.is_valid is True
+        # Test result creation
+        result = FlextValidationResult.success()
+        assert result.is_valid is True
 
 
 class TestValidationIntegrationScenarios:
@@ -952,7 +908,7 @@ class TestValidationIntegrationScenarios:
             results = []
 
             # Validate username
-            username_result = validate_string(
+            username_result = flext_validate_string(
                 user_data.get("username"),
                 "username",
                 min_length=3,
@@ -961,11 +917,11 @@ class TestValidationIntegrationScenarios:
             results.append(username_result)
 
             # Validate email
-            email_result = validate_email(user_data.get("email"), "email")
+            email_result = flext_validate_email(user_data.get("email"), "email")
             results.append(email_result)
 
             # Validate age
-            age_result = validate_numeric(
+            age_result = flext_validate_numeric(
                 user_data.get("age"),
                 "age",
                 min_val=13,

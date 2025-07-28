@@ -69,11 +69,13 @@ from typing import TYPE_CHECKING, Self
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
+from flext_core.payload import FlextEvent
+from flext_core.result import FlextResult
+from flext_core.utilities import FlextGenerators
+
 if TYPE_CHECKING:
     from flext_core.types import TAnyDict
 # Removed FlextTimestampMixin to avoid field conflicts - using Pydantic fields directly
-from flext_core.payload import FlextEvent
-from flext_core.result import FlextResult
 
 # =============================================================================
 # ENTITIES - Domain Objects with Identity
@@ -196,7 +198,7 @@ class FlextEntity(BaseModel, ABC):
     )
 
     # Domain events collected during operations
-    domain_events: list[FlextEvent] = Field(default_factory=list)
+    domain_events: list[FlextEvent] = Field(default_factory=list, exclude=True)
 
     def __eq__(self, other: object) -> bool:
         """Check equality based on entity ID."""
@@ -413,7 +415,10 @@ class FlextEntityFactory:
             **kwargs: object,
         ) -> FlextResult[FlextEntity]:
             try:
-                from flext_core.utilities import FlextGenerators
+                if FlextGenerators is None:
+                    # Fallback if FlextGenerators is not available
+                    error_msg = "FlextGenerators not available due to circular imports"
+                    raise ImportError(error_msg)
 
                 data = {**(defaults or {}), **kwargs}
 
@@ -431,7 +436,7 @@ class FlextEntityFactory:
                         validation_result.error or "Validation failed",
                     )
                 return FlextResult.ok(instance)
-            except (TypeError, ValueError) as e:
+            except (TypeError, ValueError, ImportError) as e:
                 return FlextResult.fail(
                     f"Failed to create {entity_class.__name__}: {e}",
                 )

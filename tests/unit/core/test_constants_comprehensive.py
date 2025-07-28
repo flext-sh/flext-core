@@ -20,7 +20,6 @@ from flext_core.constants import (
     EMAIL_PATTERN,
     ERROR_CODES,
     IDENTIFIER_PATTERN,
-    LOG_LEVELS,
     MESSAGES,
     NAME,
     SERVICE_NAME_PATTERN,
@@ -49,7 +48,7 @@ class TestFlextConstantsStructure:
         assert hasattr(FlextConstants, "ERROR_CODES")
         assert hasattr(FlextConstants, "MESSAGES")
         assert hasattr(FlextConstants, "STATUS_CODES")
-        assert hasattr(FlextConstants, "LOG_LEVELS")
+        # LOG_LEVELS removed - use FlextLogLevel.get_numeric_levels() instead
         assert hasattr(FlextConstants, "VALIDATION_RULES")
 
         # Regex patterns
@@ -72,7 +71,7 @@ class TestFlextConstantsStructure:
     def test_flext_constants_nested_classes(self) -> None:
         """Test that FlextConstants has all required nested classes."""
         assert hasattr(FlextConstants, "Prefixes")
-        assert hasattr(FlextConstants, "LogLevels")
+        # LogLevels class removed - use FlextLogLevel enum instead
         assert hasattr(FlextConstants, "Performance")
         assert hasattr(FlextConstants, "Defaults")
         assert hasattr(FlextConstants, "Limits")
@@ -97,7 +96,8 @@ class TestFlextConstantsStructure:
         assert isinstance(FlextConstants.ERROR_CODES, dict)
         assert isinstance(FlextConstants.MESSAGES, dict)
         assert isinstance(FlextConstants.STATUS_CODES, dict)
-        assert isinstance(FlextConstants.LOG_LEVELS, dict)
+        # LOG_LEVELS removed - testing FlextLogLevel.get_numeric_levels() instead
+        assert isinstance(FlextLogLevel.get_numeric_levels(), dict)
         assert isinstance(FlextConstants.VALIDATION_RULES, dict)
 
         # Test default values have reasonable types and values
@@ -200,9 +200,10 @@ class TestCoreDictionaries:
             assert STATUS_CODES[status] == status  # Values should match keys
 
     def test_log_levels_dictionary(self) -> None:
-        """Test LOG_LEVELS dictionary structure and content."""
-        assert isinstance(LOG_LEVELS, dict)
-        assert len(LOG_LEVELS) > 0
+        """Test FlextLogLevel.get_numeric_levels() method structure and content."""
+        log_levels = FlextLogLevel.get_numeric_levels()
+        assert isinstance(log_levels, dict)
+        assert len(log_levels) > 0
 
         # Test required log levels exist with correct numeric values
         expected_levels = {
@@ -215,15 +216,15 @@ class TestCoreDictionaries:
         }
 
         for level, expected_value in expected_levels.items():
-            assert level in LOG_LEVELS
-            assert LOG_LEVELS[level] == expected_value
+            assert level in log_levels
+            assert log_levels[level] == expected_value
 
         # Test that levels are properly ordered
-        assert LOG_LEVELS["CRITICAL"] > LOG_LEVELS["ERROR"]
-        assert LOG_LEVELS["ERROR"] > LOG_LEVELS["WARNING"]
-        assert LOG_LEVELS["WARNING"] > LOG_LEVELS["INFO"]
-        assert LOG_LEVELS["INFO"] > LOG_LEVELS["DEBUG"]
-        assert LOG_LEVELS["DEBUG"] > LOG_LEVELS["TRACE"]
+        assert log_levels["CRITICAL"] > log_levels["ERROR"]
+        assert log_levels["ERROR"] > log_levels["WARNING"]
+        assert log_levels["WARNING"] > log_levels["INFO"]
+        assert log_levels["INFO"] > log_levels["DEBUG"]
+        assert log_levels["DEBUG"] > log_levels["TRACE"]
 
     def test_validation_rules_dictionary(self) -> None:
         """Test VALIDATION_RULES dictionary structure and content."""
@@ -257,21 +258,20 @@ class TestEnumClasses:
         assert hasattr(FlextLogLevel, "DEBUG")
         assert hasattr(FlextLogLevel, "TRACE")
 
-        # Test values are strings
-        assert isinstance(FlextLogLevel.CRITICAL, str)
-        assert isinstance(FlextLogLevel.ERROR, str)
-        assert isinstance(FlextLogLevel.WARNING, str)
-        assert isinstance(FlextLogLevel.INFO, str)
-        assert isinstance(FlextLogLevel.DEBUG, str)
-        assert isinstance(FlextLogLevel.TRACE, str)
+        # Test values are enum members with string values
+        assert FlextLogLevel.CRITICAL.value == "CRITICAL"
+        assert FlextLogLevel.ERROR.value == "ERROR"
+        assert FlextLogLevel.WARNING.value == "WARNING"
+        assert FlextLogLevel.INFO.value == "INFO"
+        assert FlextLogLevel.DEBUG.value == "DEBUG"
+        assert FlextLogLevel.TRACE.value == "TRACE"
 
-        # Test values match expected strings
-        assert FlextLogLevel.CRITICAL == "CRITICAL"
-        assert FlextLogLevel.ERROR == "ERROR"
-        assert FlextLogLevel.WARNING == "WARNING"
-        assert FlextLogLevel.INFO == "INFO"
-        assert FlextLogLevel.DEBUG == "DEBUG"
-        assert FlextLogLevel.TRACE == "TRACE"
+        # Test enum members have correct type
+        from enum import Enum
+
+        assert isinstance(FlextLogLevel.CRITICAL, Enum)
+        assert isinstance(FlextLogLevel.ERROR, Enum)
+        assert isinstance(FlextLogLevel.INFO, Enum)
 
     def test_flext_environment_class(self) -> None:
         """Test FlextEnvironment enum-like class."""
@@ -281,17 +281,18 @@ class TestEnumClasses:
         assert hasattr(FlextEnvironment, "STAGING")
         assert hasattr(FlextEnvironment, "TESTING")
 
-        # Test values are strings
-        assert isinstance(FlextEnvironment.DEVELOPMENT, str)
-        assert isinstance(FlextEnvironment.PRODUCTION, str)
-        assert isinstance(FlextEnvironment.STAGING, str)
-        assert isinstance(FlextEnvironment.TESTING, str)
+        # Test values are enum members with string values
+        assert FlextEnvironment.DEVELOPMENT.value == "development"
+        assert FlextEnvironment.PRODUCTION.value == "production"
+        assert FlextEnvironment.STAGING.value == "staging"
+        assert FlextEnvironment.TESTING.value == "testing"
 
-        # Test values match expected strings
-        assert FlextEnvironment.DEVELOPMENT == "development"
-        assert FlextEnvironment.PRODUCTION == "production"
-        assert FlextEnvironment.STAGING == "staging"
-        assert FlextEnvironment.TESTING == "testing"
+        # Test enum members have correct type
+        from enum import Enum
+
+        assert isinstance(FlextEnvironment.DEVELOPMENT, Enum)
+        assert isinstance(FlextEnvironment.PRODUCTION, Enum)
+        assert isinstance(FlextEnvironment.STAGING, Enum)
 
     def test_flext_field_type_class(self) -> None:
         """Test FlextFieldType enum-like class."""
@@ -305,25 +306,22 @@ class TestEnumClasses:
         assert hasattr(FlextFieldType, "UUID")
         assert hasattr(FlextFieldType, "EMAIL")
 
-        # Test values are strings
-        assert isinstance(FlextFieldType.STRING, str)
-        assert isinstance(FlextFieldType.INTEGER, str)
-        assert isinstance(FlextFieldType.FLOAT, str)
-        assert isinstance(FlextFieldType.BOOLEAN, str)
-        assert isinstance(FlextFieldType.DATE, str)
-        assert isinstance(FlextFieldType.DATETIME, str)
-        assert isinstance(FlextFieldType.UUID, str)
-        assert isinstance(FlextFieldType.EMAIL, str)
+        # Test values are enum members with string values
+        assert FlextFieldType.STRING.value == "string"
+        assert FlextFieldType.INTEGER.value == "integer"
+        assert FlextFieldType.FLOAT.value == "float"
+        assert FlextFieldType.BOOLEAN.value == "boolean"
+        assert FlextFieldType.DATE.value == "date"
+        assert FlextFieldType.DATETIME.value == "datetime"
+        assert FlextFieldType.UUID.value == "uuid"
+        assert FlextFieldType.EMAIL.value == "email"
 
-        # Test values match expected strings
-        assert FlextFieldType.STRING == "string"
-        assert FlextFieldType.INTEGER == "integer"
-        assert FlextFieldType.FLOAT == "float"
-        assert FlextFieldType.BOOLEAN == "boolean"
-        assert FlextFieldType.DATE == "date"
-        assert FlextFieldType.DATETIME == "datetime"
-        assert FlextFieldType.UUID == "uuid"
-        assert FlextFieldType.EMAIL == "email"
+        # Test enum members have correct type
+        from enum import Enum
+
+        assert isinstance(FlextFieldType.STRING, Enum)
+        assert isinstance(FlextFieldType.INTEGER, Enum)
+        assert isinstance(FlextFieldType.BOOLEAN, Enum)
 
 
 class TestDirectAccessConstants:
@@ -550,21 +548,19 @@ class TestNestedClassesDetailed:
         assert FlextConstants.Prefixes.INTERNAL_PREFIX == "__"
         assert FlextConstants.Prefixes.PUBLIC_PREFIX == ""
 
-    def test_log_levels_class(self) -> None:
-        """Test FlextConstants.LogLevels nested class."""
-        # Test attributes exist
-        assert hasattr(FlextConstants.LogLevels, "DEBUG")
-        assert hasattr(FlextConstants.LogLevels, "INFO")
-        assert hasattr(FlextConstants.LogLevels, "WARNING")
-        assert hasattr(FlextConstants.LogLevels, "ERROR")
-        assert hasattr(FlextConstants.LogLevels, "CRITICAL")
+    def test_flext_log_level_enum_methods(self) -> None:
+        """Test FlextLogLevel enum methods work correctly."""
+        # Test get_numeric_levels method
+        log_levels = FlextLogLevel.get_numeric_levels()
+        assert isinstance(log_levels, dict)
+        assert len(log_levels) >= 5
 
-        # Test values match expected strings
-        assert FlextConstants.LogLevels.DEBUG == "DEBUG"
-        assert FlextConstants.LogLevels.INFO == "INFO"
-        assert FlextConstants.LogLevels.WARNING == "WARNING"
-        assert FlextConstants.LogLevels.ERROR == "ERROR"
-        assert FlextConstants.LogLevels.CRITICAL == "CRITICAL"
+        # Test get_numeric_value instance method
+        assert FlextLogLevel.DEBUG.get_numeric_value() == 10
+        assert FlextLogLevel.INFO.get_numeric_value() == 20
+        assert FlextLogLevel.WARNING.get_numeric_value() == 30
+        assert FlextLogLevel.ERROR.get_numeric_value() == 40
+        assert FlextLogLevel.CRITICAL.get_numeric_value() == 50
 
     def test_performance_class(self) -> None:
         """Test FlextConstants.Performance nested class."""
@@ -730,16 +726,17 @@ class TestConstantsIntegrationScenarios:
     def test_logging_scenario(self) -> None:
         """Test using constants for logging scenarios."""
         # Test using log levels for level comparison
-        debug_level = LOG_LEVELS["DEBUG"]
-        info_level = LOG_LEVELS["INFO"]
-        error_level = LOG_LEVELS["ERROR"]
+        log_levels = FlextLogLevel.get_numeric_levels()
+        debug_level = log_levels["DEBUG"]
+        info_level = log_levels["INFO"]
+        error_level = log_levels["ERROR"]
 
         assert debug_level < info_level < error_level
 
-        # Test using FlextLogLevel for string comparisons
-        assert FlextLogLevel.DEBUG == "DEBUG"
-        assert FlextLogLevel.INFO == "INFO"
-        assert FlextLogLevel.ERROR == "ERROR"
+        # Test using FlextLogLevel for string comparisons (using .value)
+        assert FlextLogLevel.DEBUG.value == "DEBUG"
+        assert FlextLogLevel.INFO.value == "INFO"
+        assert FlextLogLevel.ERROR.value == "ERROR"
 
     def test_validation_scenario(self) -> None:
         """Test using constants for validation scenarios."""
@@ -757,7 +754,10 @@ class TestConstantsIntegrationScenarios:
     def test_configuration_scenario(self) -> None:
         """Test using constants for configuration scenarios."""
         # Test environment-specific configuration
-        if Environment.PRODUCTION == "production":
+        if Environment.PRODUCTION.value == "production":
+            timeout = DEFAULT_TIMEOUT
+            retries = DEFAULT_RETRIES
+        else:
             timeout = DEFAULT_TIMEOUT
             retries = DEFAULT_RETRIES
 
@@ -774,8 +774,8 @@ class TestConstantsIntegrationScenarios:
         email_field_type = FlextFieldType.EMAIL
         string_field_type = FlextFieldType.STRING
 
-        assert email_field_type == "email"
-        assert string_field_type == "string"
+        assert email_field_type.value == "email"
+        assert string_field_type.value == "string"
 
         # Test pattern usage with field types
         if email_field_type == FlextFieldType.EMAIL:
@@ -873,8 +873,8 @@ class TestConstantsEdgeCases:
         # Test STATUS_CODES has basic statuses
         assert len(STATUS_CODES) >= 3
 
-        # Test LOG_LEVELS has standard levels
-        assert len(LOG_LEVELS) >= 5
+        # Test FlextLogLevel.get_numeric_levels() has standard levels
+        assert len(FlextLogLevel.get_numeric_levels()) >= 5
 
         # Test VALIDATION_RULES has basic rules
         assert len(VALIDATION_RULES) >= 3
@@ -910,9 +910,9 @@ class TestConstantsDocumentationAndUsage:
         assert Patterns.EMAIL == EMAIL_PATTERN
         assert Environment.PRODUCTION == FlextEnvironment.PRODUCTION
 
-        # Test enum-like access
-        assert FlextLogLevel.INFO == "INFO"
-        assert FlextFieldType.EMAIL == "email"
+        # Test enum-like access (value comparison)
+        assert FlextLogLevel.INFO.value == "INFO"
+        assert FlextFieldType.EMAIL.value == "email"
 
     def test_constants_type_consistency(self) -> None:
         """Test that constants maintain type consistency across access patterns."""

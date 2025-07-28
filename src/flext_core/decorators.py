@@ -1,14 +1,14 @@
 """FLEXT Core Decorators Module.
 
 Comprehensive decorator system for the FLEXT Core library providing consolidated
-functionality through multiple inheritance patterns and orchestration.
+functionality through single inheritance and direct delegation patterns.
 
 Architecture:
-    - Multiple inheritance from specialized decorator base classes
-    - Complex orchestration patterns combining multiple decorator types
-    - Direct base exposure eliminating nested class overhead
-    - FlextResult integration for error handling patterns
-    - No underscore prefixes on public objects
+    - Single source of truth pattern eliminating multiple inheritance complexity
+    - Direct base class exposure for specialized decorator functionality
+    - Orchestration methods combining base functionality through composition
+    - FlextResult integration for consistent error handling patterns
+    - Performance-optimized delegation patterns with minimal overhead
 
 Decorator Categories:
     - Validation decorators: Pydantic-based input validation
@@ -19,18 +19,18 @@ Decorator Categories:
     - Functional decorators: Pure function and composition patterns
 
 Maintenance Guidelines:
-    - Add new decorator types to appropriate base classes first
-    - Use multiple inheritance for decorator combination patterns
-    - Maintain backward compatibility through function aliases
-    - Implement complex orchestration in FlextDecorators main class
+    - Add new decorator types by exposing them directly from _decorators_base
+    - Use composition and delegation instead of multiple inheritance
+    - Maintain orchestration methods in main FlextDecorators class
     - Keep individual decorators focused and composable
+    - Preserve backward compatibility through function aliases
 
 Design Decisions:
-    - Multiple inheritance pattern for maximum functionality reuse
-    - Complex orchestration methods combining multiple decorator types
-    - Direct base exposure for specialized use cases
+    - Single inheritance pattern eliminating method resolution overhead
+    - Composition-based orchestration combining multiple decorator types
+    - Direct base class exposure for specialized use cases
     - FlextResult integration for consistent error handling
-    - Function aliases for backward compatibility
+    - Clean API design following "deliver more with much less" principle
 
 Orchestration Patterns:
     - safe_result: Exception handling with FlextResult returns
@@ -49,7 +49,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from pydantic import BaseModel, ValidationError
 
@@ -61,7 +61,7 @@ from flext_core._decorators_base import (
     _BasePerformanceDecorators,
     _BaseValidationDecorators,
 )
-from flext_core.result import FlextResult
+from flext_core.result import FlextResult, safe_call
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -73,27 +73,21 @@ if TYPE_CHECKING:
 # =============================================================================
 
 
-class FlextDecorators(
-    _BaseValidationDecorators,
-    _BaseErrorHandlingDecorators,
-    _BasePerformanceDecorators,
-    _BaseLoggingDecorators,
-    _BaseImmutabilityDecorators,
-    _BaseFunctionalDecorators,
-):
-    """Consolidated decorators with multiple inheritance and orchestration capabilities.
+class FlextDecorators:
+    """Consolidated decorators with composition-based orchestration capabilities.
 
-    Provides comprehensive decorator functionality through multiple inheritance from
-    six specialized base classes, adding complex orchestration patterns impossible
-    with single inheritance.
+    Provides comprehensive decorator functionality through composition and delegation
+    to specialized base classes, offering orchestration patterns that combine
+    multiple decorator types without multiple inheritance complexity.
 
     Architecture:
-        - Multiple inheritance from six specialized decorator bases
-        - Complex orchestration methods combining multiple decorator types
-        - FlextResult integration for consistent error handling
-        - Pydantic validation integration for input validation
+        - Composition-based delegation to specialized decorator bases
+        - Orchestration methods combining multiple decorator types through composition
+        - FlextResult integration for consistent error handling patterns
+        - Performance-optimized delegation with minimal overhead
+        - Clean separation between orchestration and base functionality
 
-    Inherited Decorator Categories:
+    Decorator Categories (accessed through composition):
         - Validation: Input validation, type checking, constraint validation
         - Error Handling: Exception capture, safe execution, error recovery
         - Performance: Caching, timing, optimization, profiling
@@ -135,21 +129,15 @@ class FlextDecorators(
     def safe_result(cls, func: F) -> F:
         """Execute function safely with automatic exception handling and Result return.
 
-        Complex orchestration pattern combining inherited error handling capabilities
-        with FlextResult patterns for comprehensive safe execution. Automatically
-        captures common exceptions and converts them to FlextResult failures.
+        Delegates to the single source of truth safe_call implementation from result.py
+        eliminating code duplication following DRY principles and architectural
+        guidelines.
 
         Architecture:
-            - Uses inherited error handling patterns from _BaseErrorHandlingDecorators
+            - Delegates to result.py safe_call for single source of truth pattern
+            - Maintains decorator interface while eliminating implementation duplication
             - Integrates FlextResult for consistent error handling across the system
-            - Captures specific exception types relevant to business logic
-            - Preserves original function signature while changing return type
-
-        Exception Handling:
-            - TypeError: Invalid argument types or incompatible operations
-            - ValueError: Invalid argument values or constraints
-            - AttributeError: Missing object attributes or methods
-            - RuntimeError: General runtime failures and state errors
+            - Follows "deliver more with much less" by reusing existing implementations
 
         Args:
             func: Function to wrap with safe execution and FlextResult return
@@ -169,13 +157,13 @@ class FlextDecorators(
                 error_message = result.error
 
         """
+        # Delegate to result.py single source of truth - eliminates duplication
 
         def wrapper(*args: object, **kwargs: object) -> object:
-            try:
-                result = func(*args, **kwargs)  # type: ignore[operator]
-                return FlextResult.ok(result)
-            except (TypeError, ValueError, AttributeError, RuntimeError) as e:
-                return FlextResult.fail(str(e))
+            def call_func() -> object:
+                return func(*args, **kwargs)  # type: ignore[operator]
+
+            return safe_call(call_func)
 
         return wrapper  # type: ignore[return-value]
 
@@ -242,9 +230,11 @@ class FlextDecorators(
         """
 
         def decorator(func: F) -> F:
-            # Use inherited performance methods
-            cached_func = cls.create_cache_decorator(max_size)(func)  # type: ignore[arg-type]
-            return cls.get_timing_decorator()(cached_func)  # type: ignore[return-value]
+            # Use composition to access base functionality
+            cached_func = _BasePerformanceDecorators.create_cache_decorator(
+                max_size,
+            )(func)  # type: ignore[arg-type]
+            return _BasePerformanceDecorators.get_timing_decorator()(cached_func)  # type: ignore[return-value]
 
         return decorator
 
@@ -286,9 +276,13 @@ class FlextDecorators(
         """
 
         def decorator(func: F) -> F:
-            # Use inherited error handling + performance methods
-            safe_func = cls.get_safe_decorator()(func)  # type: ignore[arg-type]
-            return cls.create_cache_decorator(max_size)(safe_func)  # type: ignore[return-value]
+            # Use composition to access base functionality - cast types for compatibility
+            from flext_core._decorators_base import _DecoratedFunction
+            safe_func = _BaseErrorHandlingDecorators.get_safe_decorator()(cast(_DecoratedFunction, func))
+            cached_func = _BasePerformanceDecorators.create_cache_decorator(
+                max_size,
+            )(safe_func)
+            return cast(F, cached_func)
 
         return decorator
 
@@ -343,9 +337,13 @@ class FlextDecorators(
         """
 
         def decorator(func: F) -> F:
-            # Combine validation + performance + error handling
+            # Combine validation + performance using composition - cast types for compatibility
+            from flext_core._decorators_base import _DecoratedFunction
             validated_func = cls.validated_with_result(model_class)(func)
-            return cls.create_cache_decorator(max_size)(validated_func)  # type: ignore[return-value, arg-type]
+            cached_func = _BasePerformanceDecorators.create_cache_decorator(
+                max_size,
+            )(cast(_DecoratedFunction, validated_func))
+            return cast(F, cached_func)
 
         return decorator
 
@@ -413,27 +411,36 @@ class FlextDecorators(
         """
 
         def decorator(func: F) -> F:
-            current_func: object = func
+            # Cast types for compatibility with base decorators
+            from flext_core._decorators_base import _DecoratedFunction
+            current_func: _DecoratedFunction = cast(_DecoratedFunction, func)
 
             # Apply validation if model provided
             if model_class:
-                current_func = cls.validated_with_result(model_class)(current_func)
+                validated_func = cls.validated_with_result(model_class)(cast(F, current_func))
+                current_func = cast(_DecoratedFunction, validated_func)
 
-            # Apply safe execution (inherited)
-            current_func = cls.get_safe_decorator()(current_func)  # type: ignore[arg-type]
+            # Apply safe execution using composition
+            current_func = _BaseErrorHandlingDecorators.get_safe_decorator()(
+                current_func,
+            )
 
-            # Apply caching (inherited)
-            current_func = cls.create_cache_decorator(cache_size)(current_func)
+            # Apply caching using composition
+            current_func = _BasePerformanceDecorators.create_cache_decorator(
+                cache_size,
+            )(current_func)
 
-            # Apply timing if requested (inherited)
+            # Apply timing if requested using composition
             if with_timing:
-                current_func = cls.get_timing_decorator()(current_func)
+                current_func = _BasePerformanceDecorators.get_timing_decorator()(
+                    current_func,
+                )
 
-            # Apply logging if requested (inherited)
+            # Apply logging if requested using composition
             if with_logging:
-                current_func = cls.log_calls_decorator(current_func)
+                current_func = _BaseLoggingDecorators.log_calls_decorator(current_func)
 
-            return current_func  # type: ignore[return-value]
+            return cast(F, current_func)
 
         return decorator
 
@@ -442,7 +449,7 @@ class FlextDecorators(
 # EXPOSIÇÃO DIRETA DAS BASES ÚTEIS (aliases limpos sem herança vazia)
 # =============================================================================
 
-# Expose useful base classes directly with clean names
+# Direct exposure with clean names - eliminates inheritance overhead
 FlextValidationDecorators = _BaseValidationDecorators
 FlextErrorHandlingDecorators = _BaseErrorHandlingDecorators
 FlextPerformanceDecorators = _BasePerformanceDecorators
@@ -456,7 +463,7 @@ FlextFunctionalDecorators = _BaseFunctionalDecorators
 
 
 # Mantém apenas safe_call como função essencial mais usada
-def safe_call(func: F) -> F:
+def flext_safe_call(func: F) -> F:
     """Safely call function with FlextResult return pattern.
 
     Essential function providing direct access to safe execution.
@@ -471,40 +478,40 @@ def safe_call(func: F) -> F:
     return FlextDecorators.safe_result(func)
 
 
-def cache_decorator(max_size: int = 128) -> object:
+def flext_cache_decorator(max_size: int = 128) -> object:
     """Cache decorator for function results.
-    
+
     Args:
         max_size: Maximum cache size
-        
+
     Returns:
         Decorator function
 
     """
-    return FlextDecorators.create_cache_decorator(max_size)
+    return _BasePerformanceDecorators.create_cache_decorator(max_size)
 
 
-def safe_decorator() -> object:
+def flext_safe_decorator() -> object:
     """Safe execution decorator.
-    
+
     Returns:
         Decorator function
 
     """
-    return FlextDecorators.get_safe_decorator()
+    return _BaseErrorHandlingDecorators.get_safe_decorator()
 
 
-def timing_decorator(func: object) -> object:
-    """Timing decorator for performance measurement.
-    
+def flext_timing_decorator(func: object) -> object:
+    """Apply timing decorator for performance measurement.
+
     Args:
         func: Function to wrap with timing
-        
+
     Returns:
         Wrapped function with timing
 
     """
-    return FlextDecorators.get_timing_decorator()(func)
+    return _BasePerformanceDecorators.get_timing_decorator()(func)
 
 
 # =============================================================================
@@ -512,18 +519,15 @@ def timing_decorator(func: object) -> object:
 # =============================================================================
 
 __all__ = [
-    # Main consolidated class with multiple inheritance
     "FlextDecorators",
     "FlextErrorHandlingDecorators",
     "FlextFunctionalDecorators",
     "FlextImmutabilityDecorators",
     "FlextLoggingDecorators",
     "FlextPerformanceDecorators",
-    # Direct base exports (no inheritance overhead)
     "FlextValidationDecorators",
-    # Essential compatibility functions
-    "safe_call",
-    "cache_decorator",
-    "safe_decorator",
-    "timing_decorator",
+    "flext_cache_decorator",
+    "flext_safe_call",
+    "flext_safe_decorator",
+    "flext_timing_decorator",
 ]

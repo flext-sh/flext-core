@@ -24,19 +24,33 @@ if TYPE_CHECKING:
 class CreateUserCommand(FlextCommand):
     """Test command for creating users."""
 
+    username: str
+    email: str
+
     def __init__(
         self,
         username: str,
         email: str,
         command_id: FlextCommandId | None = None,
+        **kwargs: object,
     ) -> None:
         """Initialize create user command with user details."""
-        super().__init__(
-            command_id=command_id,
-            command_type="create_user",
-        )
-        self.username = username
-        self.email = email
+        # Only pass command_id if it's provided, let default factory work otherwise
+        if command_id is not None:
+            super().__init__(
+                command_id=command_id,
+                command_type="create_user",
+                username=username,
+                email=email,
+                **kwargs,
+            )
+        else:
+            super().__init__(
+                command_type="create_user",
+                username=username,
+                email=email,
+                **kwargs,
+            )
 
     def get_payload(self) -> dict[str, Any]:
         """Get command payload."""

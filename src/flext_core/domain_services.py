@@ -68,6 +68,7 @@ from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, ConfigDict
 
+from flext_core._mixins_base import _BaseSerializableMixin, _BaseValidatableMixin
 from flext_core.mixins import FlextSerializableMixin, FlextValidatableMixin
 
 if TYPE_CHECKING:
@@ -78,7 +79,7 @@ if TYPE_CHECKING:
 # =============================================================================
 
 
-class FlextDomainService(BaseModel, FlextValidatableMixin, FlextSerializableMixin, ABC):
+class FlextDomainService(BaseModel, ABC):
     """Abstract Domain-Driven Design service for stateless cross-entity operations.
 
     Comprehensive domain service implementation providing stateless business logic that
@@ -88,7 +89,7 @@ class FlextDomainService(BaseModel, FlextValidatableMixin, FlextSerializableMixi
     Architecture:
         - Abstract base class enforcing execute method implementation
         - Pydantic BaseModel for automatic validation and serialization
-        - Multiple inheritance from validation and serialization mixins
+        - Composition-based delegation to validation and serialization mixins
         - Frozen configuration for immutability and thread safety
         - Stateless design for scalable and thread-safe operations
 
@@ -216,6 +217,71 @@ class FlextDomainService(BaseModel, FlextValidatableMixin, FlextSerializableMixi
         validate_assignment=True,
         extra="forbid",
     )
+
+    def __init__(self, **data: object) -> None:
+        """Initialize domain service with mixin functionality through composition."""
+        super().__init__(**data)
+        # Initialize mixin functionality through composition
+        self._validation_errors: list[str] = []
+        self._is_valid: bool | None = None
+
+    # =========================================================================
+    # VALIDATION FUNCTIONALITY - Composition-based delegation to _BaseValidatableMixin
+    # =========================================================================
+
+    def _add_validation_error(self, error: str) -> None:
+        """Add validation error (delegates to base)."""
+        return _BaseValidatableMixin._add_validation_error(self, error)
+
+    def _clear_validation_errors(self) -> None:
+        """Clear all validation errors (delegates to base)."""
+        return _BaseValidatableMixin._clear_validation_errors(self)
+
+    def _mark_valid(self) -> None:
+        """Mark as valid and clear errors (delegates to base)."""
+        return _BaseValidatableMixin._mark_valid(self)
+
+    @property
+    def validation_errors(self) -> list[str]:
+        """Get validation errors (delegates to base)."""
+        return _BaseValidatableMixin.validation_errors.fget(self)  # type: ignore[misc]
+
+    @property
+    def is_valid(self) -> bool:
+        """Check if object is valid (delegates to base)."""
+        return _BaseValidatableMixin.is_valid.fget(self)  # type: ignore[misc]
+
+    def has_validation_errors(self) -> bool:
+        """Check if object has validation errors (delegates to base)."""
+        return _BaseValidatableMixin.has_validation_errors(self)
+
+    # =========================================================================
+    # SERIALIZATION FUNCTIONALITY - Composition-based delegation to _BaseSerializableMixin
+    # =========================================================================
+
+    def to_dict_basic(self) -> dict[str, object]:
+        """Convert to basic dictionary representation (delegates to base)."""
+        return _BaseSerializableMixin.to_dict_basic(self)
+
+    def _serialize_value(self, value: object) -> object | None:
+        """Serialize a single value for dict conversion (delegates to base)."""
+        return _BaseSerializableMixin._serialize_value(self, value)
+
+    def _serialize_collection(
+        self,
+        collection: list[object] | tuple[object, ...],
+    ) -> list[object]:
+        """Serialize list or tuple values (delegates to base)."""
+        return _BaseSerializableMixin._serialize_collection(self, collection)
+
+    def _serialize_dict(self, dict_value: dict[str, object]) -> dict[str, object]:
+        """Serialize dictionary values (delegates to base)."""
+        return _BaseSerializableMixin._serialize_dict(self, dict_value)
+
+    def _from_dict_basic(self, data: dict[str, object]) -> FlextDomainService:
+        """Create instance from dictionary (delegates to base)."""
+        _BaseSerializableMixin._from_dict_basic(self, data)
+        return self
 
     @abstractmethod
     def execute(self) -> FlextResult[object]:

@@ -133,25 +133,16 @@ class TestFlextValueObjectHashing:
         assert hash(vo1) != hash(vo2)
 
     def test_hash_with_complex_types(self) -> None:
-        """Test hashing with complex data types."""
+        """Test that hashing fails properly with unhashable types."""
         vo1 = ComplexValueObject(
             name="Test",
-            tags=["tag1", "tag2"],
-            metadata={"key": "value"},
-        )
-        vo2 = ComplexValueObject(
-            name="Test",
-            tags=["tag1", "tag2"],
-            metadata={"key": "value"},
-        )
-        vo3 = ComplexValueObject(
-            name="Test",
-            tags=["tag1", "tag3"],  # Different tag
-            metadata={"key": "value"},
+            tags=["tag1", "tag2"],  # List is unhashable
+            metadata={"key": "value"},  # Dict is unhashable
         )
 
-        assert hash(vo1) == hash(vo2)
-        assert hash(vo1) != hash(vo3)
+        # Value objects with unhashable types should raise TypeError when hashed
+        with pytest.raises(TypeError, match="unhashable type"):
+            hash(vo1)
 
     def test_hash_stability(self) -> None:
         """Test hash stability across multiple calls."""

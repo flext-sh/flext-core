@@ -640,7 +640,7 @@ class TestFlextValueObjectMixin:
 
         # Test string-based comparison
         assert point1 <= point2  # Same values
-        assert point1 < point3   # Different values
+        assert point1 < point3  # Different values
 
     def test_value_object_validation_pattern(self) -> None:
         """Test value object validation pattern."""

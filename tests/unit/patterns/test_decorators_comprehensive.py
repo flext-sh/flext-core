@@ -29,10 +29,10 @@ from flext_core.decorators import (
     FlextLoggingDecorators,
     FlextPerformanceDecorators,
     FlextValidationDecorators,
-    cache_decorator,
-    safe_call,
-    safe_decorator,
-    timing_decorator,
+    flext_cache_decorator,
+    flext_safe_call,
+    flext_safe_decorator,
+    flext_timing_decorator,
 )
 
 pytestmark = [pytest.mark.unit, pytest.mark.patterns]
@@ -467,7 +467,7 @@ class TestBackwardCompatibilityFunctions:
     """Test backward compatibility function wrappers."""
 
     def test_safe_call_compatibility_wrapper(self) -> None:
-        """Test safe_call() backward compatibility wrapper."""
+        """Test flext_safe_call() backward compatibility wrapper."""
 
         def successful_func(x: int) -> int:
             return x * 2
@@ -477,22 +477,22 @@ class TestBackwardCompatibilityFunctions:
             raise ValueError(msg)
 
         # Test successful operation
-        success_wrapped = safe_call(successful_func)
+        success_wrapped = flext_safe_call(successful_func)
         result = success_wrapped(5)
         assert result.is_success
         assert result.data == 10
 
         # Test failing operation
-        fail_wrapped = safe_call(failing_func)
+        fail_wrapped = flext_safe_call(failing_func)
         result = fail_wrapped()
         assert result.is_failure
         assert "test error" in result.error.lower()
 
     def test_timing_decorator_compatibility_wrapper(self) -> None:
-        """Test timing_decorator() backward compatibility wrapper."""
+        """Test flext_timing_decorator() backward compatibility wrapper."""
         call_executed = False
 
-        @timing_decorator
+        @flext_timing_decorator
         def timed_function(x: int) -> int:
             nonlocal call_executed
             call_executed = True
@@ -504,10 +504,10 @@ class TestBackwardCompatibilityFunctions:
         assert call_executed
 
     def test_cache_decorator_compatibility_wrapper(self) -> None:
-        """Test cache_decorator() backward compatibility wrapper."""
+        """Test flext_cache_decorator() backward compatibility wrapper."""
         call_count = 0
 
-        @cache_decorator(max_size=5)
+        @flext_cache_decorator(max_size=5)
         def cached_function(x: int) -> int:
             nonlocal call_count
             call_count += 1
@@ -529,9 +529,9 @@ class TestBackwardCompatibilityFunctions:
         assert call_count == 2
 
     def test_safe_decorator_compatibility_wrapper(self) -> None:
-        """Test safe_decorator() backward compatibility wrapper."""
+        """Test flext_safe_decorator() backward compatibility wrapper."""
 
-        @safe_decorator()
+        @flext_safe_decorator()
         def safe_function(x: int) -> int:
             if x < 0:
                 msg = "Negative input"

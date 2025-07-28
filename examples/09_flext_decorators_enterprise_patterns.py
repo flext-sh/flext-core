@@ -28,6 +28,7 @@ demonstrating the power and flexibility of the FlextDecorators system.
 """
 
 import time
+import traceback
 from typing import Any
 
 from flext_core.decorators import (
@@ -669,7 +670,6 @@ def main() -> None:
 
     except Exception as e:
         print(f"\n❌ Error during FlextDecorators demonstration: {e}")
-        import traceback
 
         traceback.print_exc()
 

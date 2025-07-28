@@ -7,7 +7,7 @@ Implements consolidated architecture pattern eliminating base module duplication
 Architecture:
     - Single source of truth for all constant definitions across the system
     - Consolidated architecture eliminating _constants_base.py duplication
-    - Hierarchical organization with nested classes for logical grouping
+    - Hierarchical organization with Enum classes for type safety
     - No underscore prefixes on public objects for clean API access
     - Multiple access patterns supporting both direct and nested access
     - Enterprise-grade constant management with validation and type safety
@@ -23,7 +23,7 @@ Constant Categories:
     - Project metadata: Version information and project identification
 
 Maintenance Guidelines:
-    - Add new constants to appropriate logical sections and nested classes
+    - Add new constants to appropriate Enum classes for type safety
     - Use FlextConstants class for complex constants requiring documentation
     - Maintain ERROR_CODES dictionary consistency with exception hierarchy
     - Keep LOG_LEVELS synchronized with logging implementation and numeric values
@@ -34,7 +34,7 @@ Maintenance Guidelines:
 Design Decisions:
     - Eliminated _constants_base.py following "deliver more with much less" principle
     - Direct dictionary access patterns optimized for runtime performance
-    - Enum-like classes providing type safety and IDE autocomplete support
+    - Enum classes providing type safety and IDE autocomplete support
     - Legacy class wrappers maintaining backward compatibility without breaking changes
     - Nested class organization for logical grouping without namespace pollution
     - Multiple access patterns supporting different coding styles and preferences
@@ -63,6 +63,8 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
+
+from enum import Enum
 
 # =============================================================================
 # ERROR CODES - sem underscore conforme diretrizes
@@ -101,6 +103,13 @@ MESSAGES = {
     "NULL_DATA": "Result data is None",
     "INVALID_INPUT": "Invalid input provided",
     "TYPE_MISMATCH": "Type mismatch error",
+    # Consolidated empty validation messages
+    "ENTITY_ID_EMPTY": "Entity ID cannot be empty",
+    "SERVICE_NAME_EMPTY": "Service name cannot be empty",
+    "NAME_EMPTY": "Name cannot be empty",
+    "MESSAGE_EMPTY": "Message cannot be empty",
+    "EVENT_TYPE_EMPTY": "Event type cannot be empty",
+    "VALUE_EMPTY": "Value cannot be empty",
 }
 
 # =============================================================================
@@ -116,17 +125,10 @@ STATUS_CODES = {
 }
 
 # =============================================================================
-# LOG LEVELS - sem underscore conforme diretrizes
+# LOG LEVELS - eliminado para usar apenas FlextLogLevel Enum
 # =============================================================================
 
-LOG_LEVELS = {
-    "CRITICAL": 50,
-    "ERROR": 40,
-    "WARNING": 30,
-    "INFO": 20,
-    "DEBUG": 10,
-    "TRACE": 5,
-}
+# LOG_LEVELS removido - usar FlextLogLevel.get_numeric_levels() para compatibilidade
 
 # =============================================================================
 # VALIDATION RULES - sem underscore conforme diretrizes
@@ -144,7 +146,7 @@ VALIDATION_RULES = {
 # =============================================================================
 
 
-class FlextLogLevel:
+class FlextLogLevel(Enum):
     """Log level constants for structured logging system.
 
     Provides standard log level constants for use throughout the FLEXT Core
@@ -171,9 +173,41 @@ class FlextLogLevel:
     INFO = "INFO"
     DEBUG = "DEBUG"
     TRACE = "TRACE"
+    
+    def __eq__(self, other: object) -> bool:
+        """Support comparison with string values for test compatibility."""
+        if isinstance(other, str):
+            return self.value == other
+        return super().__eq__(other)
+
+    @classmethod
+    def get_numeric_levels(cls) -> dict[str, int]:
+        """Get numeric level values for logging compatibility.
+
+        Returns:
+            Dictionary mapping level names to numeric values
+
+        """
+        return {
+            "CRITICAL": 50,
+            "ERROR": 40,
+            "WARNING": 30,
+            "INFO": 20,
+            "DEBUG": 10,
+            "TRACE": 5,
+        }
+
+    def get_numeric_value(self) -> int:
+        """Get numeric value for this log level.
+
+        Returns:
+            Numeric priority value for this level
+
+        """
+        return self.get_numeric_levels()[self.value]
 
 
-class FlextEnvironment:
+class FlextEnvironment(Enum):
     """Environment constants for application deployment contexts.
 
     Defines standard environment types for application configuration and
@@ -197,7 +231,7 @@ class FlextEnvironment:
     TESTING = "testing"
 
 
-class FlextFieldType:
+class FlextFieldType(Enum):
     """Field type constants for data validation and field definitions.
 
     Defines standard field types for validation, schema definition, and
@@ -302,7 +336,6 @@ class FlextConstants:
     ERROR_CODES = ERROR_CODES
     MESSAGES = MESSAGES
     STATUS_CODES = STATUS_CODES
-    LOG_LEVELS = LOG_LEVELS
     VALIDATION_RULES = VALIDATION_RULES
 
     # Regex patterns
@@ -329,14 +362,7 @@ class FlextConstants:
         INTERNAL_PREFIX = "__"
         PUBLIC_PREFIX = ""
 
-    class LogLevels:
-        """Logging levels for legacy access."""
-
-        DEBUG = "DEBUG"
-        INFO = "INFO"
-        WARNING = "WARNING"
-        ERROR = "ERROR"
-        CRITICAL = "CRITICAL"
+    # LogLevels class removida - usar FlextLogLevel Enum diretamente
 
     class Performance:
         """Performance-related constants."""
@@ -468,7 +494,6 @@ __all__ = [
     "EMAIL_PATTERN",
     "ERROR_CODES",
     "IDENTIFIER_PATTERN",
-    "LOG_LEVELS",
     "MESSAGES",
     "NAME",
     "SERVICE_NAME_PATTERN",

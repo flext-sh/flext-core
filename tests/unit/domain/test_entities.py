@@ -4,18 +4,22 @@ from __future__ import annotations
 
 import time
 from datetime import UTC, datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pytest
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
 from flext_core.aggregate_root import FlextAggregateRoot
 from flext_core.entities import FlextEntity, FlextEntityFactory
+from flext_core.payload import FlextEvent
 from flext_core.value_objects import FlextValueObject
 
+if TYPE_CHECKING:
+    from flext_core.result import FlextResult
 
-def create_test_entity(entity_class: type, **kwargs) -> object:
-    """Helper function to create test entities using factory."""
+
+def create_test_entity(entity_class: type, **kwargs: object) -> object:
+    """Create test entities using factory."""
     # For aggregate roots, use custom factory to avoid ID conflicts
     if issubclass(entity_class, FlextAggregateRoot):
         # Create aggregate root directly, avoiding factory ID generation
@@ -24,10 +28,13 @@ def create_test_entity(entity_class: type, **kwargs) -> object:
             instance = entity_class(**kwargs)
             validation_result = instance.validate_domain_rules()
             if validation_result.is_failure:
-                raise ValueError(f"Validation failed: {validation_result.error}")
+                msg = f"Validation failed: {validation_result.error}"
+                raise ValueError(msg)  # noqa: TRY301
+        except (ValueError, TypeError, AttributeError) as e:
+            msg = f"Failed to create entity: {e}"
+            raise AssertionError(msg) from e
+        else:
             return instance
-        except Exception as e:
-            raise AssertionError(f"Failed to create entity: {e}")
     else:
         factory = FlextEntityFactory.create_entity_factory(entity_class)
         result = factory(**kwargs)
@@ -88,6 +95,7 @@ class SampleEntity(FlextEntity):
     def validate_domain_rules(self) -> FlextResult[None]:
         """Validate test entity domain rules."""
         from flext_core.result import FlextResult
+
         if not self.name.strip():
             return FlextResult.fail("Entity name cannot be empty")
         return FlextResult.ok(None)
@@ -102,6 +110,7 @@ class SampleValueObject(FlextValueObject):
     def validate_domain_rules(self) -> FlextResult[None]:
         """Validate test value object domain rules."""
         from flext_core.result import FlextResult
+
         if self.amount < 0:
             return FlextResult.fail("Amount cannot be negative")
         return FlextResult.ok(None)
@@ -116,6 +125,7 @@ class SampleAggregateRoot(FlextAggregateRoot):
     def validate_domain_rules(self) -> FlextResult[None]:
         """Validate test aggregate root domain rules."""
         from flext_core.result import FlextResult
+
         if not self.title.strip():
             return FlextResult.fail("Aggregate title cannot be empty")
         return FlextResult.ok(None)
@@ -130,7 +140,8 @@ class SampleAggregateRoot(FlextAggregateRoot):
         }
         result = self.add_domain_event(event_type, event_data)
         if result.is_failure:
-            raise ValueError(f"Failed to add domain event: {result.error}")
+            msg = f"Failed to add domain event: {result.error}"
+            raise ValueError(msg)
 
 
 class TestFlextEntity:
@@ -224,8 +235,9 @@ class TestFlextEntity:
 
     def test_entity_validation_error(self) -> None:
         """Test entity validation with invalid data."""
-        # Test validation error via factory
-        result = create_test_entity(SampleEntity)  # Missing required 'name' field
+        # Test validation error via factory directly
+        factory = FlextEntityFactory.create_entity_factory(SampleEntity)
+        result = factory()  # Missing required 'name' field
         assert result.is_failure
 
 
@@ -454,7 +466,9 @@ class TestFlextAggregateRoot:
         assert len(aggregate.get_domain_events()) == 3
 
         # Check event types
-        event_types = [event.get_metadata("event_type") for event in aggregate.get_domain_events()]
+        event_types = [
+            event.get_metadata("event_type") for event in aggregate.get_domain_events()
+        ]
         assert "test.created" in event_types
         assert "test.updated" in event_types
         assert "test.activated" in event_types
@@ -491,8 +505,7 @@ class TestFlextAggregateRoot:
         assert hasattr(aggregate, "created_at")
 
         # Should support entity equality
-        same_id_aggregate = create_test_entity(
-            SampleAggregateRoot,
+        same_id_aggregate = SampleAggregateRoot(
             id=aggregate.id,
             title="Different Title",
         )

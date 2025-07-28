@@ -29,6 +29,8 @@ This example shows real-world enterprise architecture scenarios
 demonstrating the power and flexibility of the FlextInterfaces system.
 """
 
+import time
+import traceback
 from collections.abc import Mapping
 from dataclasses import dataclass
 
@@ -143,6 +145,13 @@ class AgeRangeRule(FlextValidationRule):
     """Age validation rule demonstrating FlextValidationRule."""
 
     def __init__(self, min_age: int = 18, max_age: int = 120) -> None:
+        """Initialize AgeRangeRule.
+
+        Args:
+            min_age: Minimum age
+            max_age: Maximum age
+
+        """
         self.min_age = min_age
         self.max_age = max_age
 
@@ -190,6 +199,7 @@ class UserService(FlextService):
     """User service demonstrating FlextService lifecycle management."""
 
     def __init__(self) -> None:
+        """Initialize UserService."""
         self._users: dict[str, User] = {}
         self._is_running = False
         self._next_id = 1
@@ -223,7 +233,10 @@ class UserService(FlextService):
         return FlextResult.ok(health_status)
 
     def create_user(
-        self, name: str, email: str, age: int | None = None
+        self,
+        name: str,
+        email: str,
+        age: int | None = None,
     ) -> FlextResult[User]:
         """Create new user."""
         if not self._is_running:
@@ -252,6 +265,7 @@ class ConfigurableEmailService:
     """Email service demonstrating FlextConfigurable protocol."""
 
     def __init__(self) -> None:
+        """Initialize ConfigurableEmailService."""
         self._smtp_host = "localhost"
         self._smtp_port = 587
         self._username = ""
@@ -303,12 +317,18 @@ class UserCommandHandler(FlextHandler):
     """User command handler demonstrating FlextHandler."""
 
     def __init__(self, user_service: UserService) -> None:
+        """Initialize UserCommandHandler.
+
+        Args:
+            user_service: User service instance
+
+        """
         self._user_service = user_service
 
     def can_handle(self, message: object) -> bool:
         """Check if can handle user-related messages."""
         return hasattr(message, "type") and str(
-            getattr(message, "type", "")
+            getattr(message, "type", ""),
         ).startswith("user")
 
     def handle(self, message: object) -> FlextResult[object]:
@@ -336,7 +356,9 @@ class LoggingMiddleware(FlextMiddleware):
     """Logging middleware demonstrating FlextMiddleware."""
 
     def process(
-        self, message: object, next_handler: FlextHandler
+        self,
+        message: object,
+        next_handler: FlextHandler,
     ) -> FlextResult[object]:
         """Process message with logging."""
         message_type = getattr(message, "type", "unknown")
@@ -357,6 +379,7 @@ class ValidationMiddleware(FlextMiddleware):
     """Validation middleware with rule-based validation."""
 
     def __init__(self) -> None:
+        """Initialize ValidationMiddleware."""
         self._validators: dict[str, list[FlextValidationRule]] = {
             "user_create": [
                 NonEmptyStringRule(),  # For name and email
@@ -365,7 +388,9 @@ class ValidationMiddleware(FlextMiddleware):
         }
 
     def process(
-        self, message: object, next_handler: FlextHandler
+        self,
+        message: object,
+        next_handler: FlextHandler,
     ) -> FlextResult[object]:
         """Process message with validation."""
         message_type = getattr(message, "type", "unknown")
@@ -380,14 +405,14 @@ class ValidationMiddleware(FlextMiddleware):
             name_rule = NonEmptyStringRule()
             if not name_rule.check(name):
                 return FlextResult.fail(
-                    f"Name validation failed: {name_rule.error_message()}"
+                    f"Name validation failed: {name_rule.error_message()}",
                 )
 
             # Validate email
             email_rule = NonEmptyStringRule()
             if not email_rule.check(email):
                 return FlextResult.fail(
-                    f"Email validation failed: {email_rule.error_message()}"
+                    f"Email validation failed: {email_rule.error_message()}",
                 )
 
             # Validate age if provided
@@ -395,7 +420,7 @@ class ValidationMiddleware(FlextMiddleware):
                 age_rule = AgeRangeRule()
                 if not age_rule.check(age):
                     return FlextResult.fail(
-                        f"Age validation failed: {age_rule.error_message()}"
+                        f"Age validation failed: {age_rule.error_message()}",
                     )
 
         # Continue to next handler
@@ -411,6 +436,7 @@ class UserRepository(FlextRepository):
     """User repository demonstrating FlextRepository."""
 
     def __init__(self) -> None:
+        """Initialize UserRepository."""
         self._users: dict[str, User] = {}
         self._deleted_ids: set[str] = set()
 
@@ -451,6 +477,12 @@ class DatabaseUnitOfWork(FlextUnitOfWork):
     """Database unit of work demonstrating FlextUnitOfWork."""
 
     def __init__(self, user_repo: UserRepository) -> None:
+        """Initialize DatabaseUnitOfWork.
+
+        Args:
+            user_repo: User repository instance
+
+        """
         self._user_repo = user_repo
         self._committed = False
         self._rolled_back = False
@@ -512,6 +544,12 @@ class SimplePluginContext:
     """Simple plugin context demonstrating FlextPluginContext protocol."""
 
     def __init__(self, config: dict[str, object] | None = None) -> None:
+        """Initialize SimplePluginContext.
+
+        Args:
+            config: Plugin configuration
+
+        """
         self._config = config or {}
         self._services: dict[str, object] = {}
 
@@ -541,6 +579,7 @@ class EmailNotificationPlugin(FlextPlugin):
     """Email notification plugin demonstrating FlextPlugin."""
 
     def __init__(self) -> None:
+        """Initialize EmailNotificationPlugin."""
         self._email_service: ConfigurableEmailService | None = None
         self._initialized = False
 
@@ -604,6 +643,7 @@ class AuditLogPlugin(FlextPlugin):
     """Audit log plugin demonstrating FlextPlugin."""
 
     def __init__(self) -> None:
+        """Initialize AuditLogPlugin."""
         self._audit_log: list[dict[str, object]] = []
         self._initialized = False
 
@@ -632,13 +672,13 @@ class AuditLogPlugin(FlextPlugin):
         return FlextResult.ok(None)
 
     def log_event(
-        self, event_type: str, details: dict[str, object]
+        self,
+        event_type: str,
+        details: dict[str, object],
     ) -> FlextResult[None]:
         """Log audit event."""
         if not self._initialized:
             return FlextResult.fail("Plugin not initialized")
-
-        import time
 
         audit_entry = {
             "timestamp": time.time(),
@@ -660,6 +700,7 @@ class SimpleEventPublisher(FlextEventPublisher):
     """Simple event publisher demonstrating FlextEventPublisher."""
 
     def __init__(self) -> None:
+        """Initialize SimpleEventPublisher."""
         self._subscribers: dict[type[object], list[FlextHandler]] = {}
 
     def publish(self, event: object) -> FlextResult[None]:
@@ -678,12 +719,12 @@ class SimpleEventPublisher(FlextEventPublisher):
                 result = handler.handle(event)
                 if result.is_failure:
                     failed_handlers.append(
-                        f"{handler.__class__.__name__}: {result.error}"
+                        f"{handler.__class__.__name__}: {result.error}",
                     )
 
         if failed_handlers:
             return FlextResult.fail(
-                f"Some handlers failed: {'; '.join(failed_handlers)}"
+                f"Some handlers failed: {'; '.join(failed_handlers)}",
             )
 
         print(f"Event {event_type.__name__} published to {len(handlers)} handlers")
@@ -700,11 +741,14 @@ class SimpleEventSubscriber(FlextEventSubscriber):
     """Simple event subscriber demonstrating FlextEventSubscriber."""
 
     def __init__(self, publisher: SimpleEventPublisher) -> None:
+        """Initialize SimpleEventSubscriber."""
         self._publisher = publisher
         self._subscriptions: dict[type[object], list[FlextHandler]] = {}
 
     def subscribe(
-        self, event_type: type[object], handler: FlextHandler
+        self,
+        event_type: type[object],
+        handler: FlextHandler,
     ) -> FlextResult[None]:
         """Subscribe to event type."""
         try:
@@ -715,7 +759,7 @@ class SimpleEventSubscriber(FlextEventSubscriber):
             self._subscriptions[event_type].append(handler)
 
             print(
-                f"Handler {handler.__class__.__name__} subscribed to {event_type.__name__}"
+                f"Handler {handler.__class__.__name__} subscribed to {event_type.__name__}",
             )
             return FlextResult.ok(None)
 
@@ -723,7 +767,9 @@ class SimpleEventSubscriber(FlextEventSubscriber):
             return FlextResult.fail(f"Subscription failed: {e}")
 
     def unsubscribe(
-        self, event_type: type[object], handler: FlextHandler
+        self,
+        event_type: type[object],
+        handler: FlextHandler,
     ) -> FlextResult[None]:
         """Unsubscribe from event type."""
         try:
@@ -731,7 +777,7 @@ class SimpleEventSubscriber(FlextEventSubscriber):
                 if handler in self._subscriptions[event_type]:
                     self._subscriptions[event_type].remove(handler)
                     print(
-                        f"Handler {handler.__class__.__name__} unsubscribed from {event_type.__name__}"
+                        f"Handler {handler.__class__.__name__} unsubscribed from {event_type.__name__}",
                     )
 
             return FlextResult.ok(None)
@@ -744,6 +790,7 @@ class UserEventHandler(FlextHandler):
     """User event handler for event system demonstration."""
 
     def __init__(self, audit_plugin: AuditLogPlugin) -> None:
+        """Initialize UserEventHandler."""
         self._audit_plugin = audit_plugin
 
     def can_handle(self, message: object) -> bool:
@@ -807,7 +854,7 @@ def demonstrate_validation_interfaces() -> None:
 
     # Runtime type checking
     print(
-        f"   Email validator is FlextValidator: {isinstance(email_validator, FlextValidator)}"
+        f"   Email validator is FlextValidator: {isinstance(email_validator, FlextValidator)}",
     )
 
     # 2. Rule-based validation
@@ -904,7 +951,9 @@ def demonstrate_service_interfaces() -> None:
 
     # Test after configuration
     result = email_service.send_email(
-        "user@example.com", "Welcome!", "Welcome to our service!"
+        "user@example.com",
+        "Welcome!",
+        "Welcome to our service!",
     )
     if result.is_success:
         print("   ✅ Email sent successfully")
@@ -913,7 +962,7 @@ def demonstrate_service_interfaces() -> None:
 
     # Test runtime protocol checking
     print(
-        f"   Email service is configurable: {isinstance(email_service, FlextConfigurable)}"
+        f"   Email service is configurable: {isinstance(email_service, FlextConfigurable)}",
     )
 
     print("✅ Service interfaces demonstration completed")
@@ -935,7 +984,7 @@ def demonstrate_handler_interfaces() -> None:
 
     # Create mock message objects
     class MockMessage:
-        def __init__(self, **kwargs):
+        def __init__(self, **kwargs: object) -> None:
             for key, value in kwargs.items():
                 setattr(self, key, value)
 
@@ -1074,7 +1123,8 @@ def demonstrate_repository_interfaces() -> None:
             uow.add_change("save", failing_user)
 
             # Simulate error by raising exception
-            raise ValueError("Simulated transaction error")
+            msg = "Simulated transaction error"
+            raise ValueError(msg)
     except ValueError as e:
         print(f"   ❌ Transaction failed (expected): {e}")
 
@@ -1101,7 +1151,7 @@ def demonstrate_plugin_interfaces() -> None:
             "smtp_host": "mail.example.com",
             "smtp_port": 587,
             "from_email": "plugins@example.com",
-        }
+        },
     )
 
     # Register services in context
@@ -1205,8 +1255,6 @@ def demonstrate_event_interfaces() -> None:
     print("\n3. Event publishing:")
 
     # Publish user created event
-    import time
-
     user_event = UserCreatedEvent(
         user_id="event_user_1",
         name="Event User",
@@ -1291,12 +1339,11 @@ def main() -> None:
         print("   📡 Event interfaces with publish-subscribe patterns")
         print("\n💡 FlextInterfaces provides enterprise-grade architecture patterns")
         print(
-            "   with Clean Architecture, DDD, and extensibility through protocols and ABCs!"
+            "   with Clean Architecture, DDD, and extensibility through protocols and ABCs!",
         )
 
     except Exception as e:
         print(f"\n❌ Error during FlextInterfaces demonstration: {e}")
-        import traceback
 
         traceback.print_exc()
 

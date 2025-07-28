@@ -6,7 +6,6 @@ from typing import Any
 
 from flext_core.handlers import FlextHandlers
 from flext_core.result import FlextResult
-from flext_core.types import FlextMessageType
 
 # Extract classes from FlextHandlers - mapping to available classes
 FlextMessageHandler = FlextHandlers.Handler  # Base handler - will need adaptation
@@ -90,9 +89,9 @@ class SampleEventHandler(FlextEventHandler[SampleEvent]):
         super().__init__()
         self.event_type_value = event_type
 
-    def get_event_type(self) -> FlextMessageType:
+    def get_event_type(self) -> str:
         """Get event type this handler processes."""
-        return FlextMessageType(self.event_type_value)
+        return str(self.event_type_value)
 
     def can_handle(self, message: object) -> bool:
         """Check if handler can process the given message."""

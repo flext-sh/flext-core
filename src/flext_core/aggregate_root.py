@@ -187,10 +187,9 @@ class FlextAggregateRoot(FlextEntity):
         **data: object,
     ) -> None:
         """Initialize with empty event list."""
-        # Handle None id by generating UUID
-        actual_id = (
-            entity_id if entity_id is not None else FlextGenerators.generate_uuid()
-        )
+        # Handle id from data or entity_id parameter
+        provided_id = data.pop("id", None)
+        actual_id = provided_id or entity_id or FlextGenerators.generate_uuid()
 
         # Initialize domain events list
         domain_events_raw = data.pop("domain_events", [])
