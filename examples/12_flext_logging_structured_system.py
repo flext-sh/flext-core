@@ -26,6 +26,8 @@ demonstrating the power and flexibility of the FlextLogging system.
 """
 
 import time
+import traceback
+from types import TracebackType
 from typing import Any
 
 from flext_core.loggings import (
@@ -36,6 +38,39 @@ from flext_core.loggings import (
     create_log_context,
     get_logger,
 )
+
+# Constants for magic numbers
+MAX_PAYMENT_AMOUNT = 10000
+MAX_STATEMENTS_THRESHOLD = 50
+MAX_VALUE_DISPLAY_LENGTH = 50
+
+
+def _raise_validation_error(message: str) -> None:
+    """Raise validation error with proper message handling."""
+    raise ValueError(message)
+
+
+def _raise_gateway_error(message: str) -> None:
+    """Raise gateway error with proper message handling."""
+    raise ConnectionError(message)
+
+
+def _raise_amount_error() -> None:
+    """Raise amount validation error."""
+    msg = "Payment amount must be positive"
+    raise ValueError(msg)
+
+
+def _raise_method_error(payment_method: str) -> None:
+    """Raise payment method error."""
+    error_msg = f"Unsupported payment method: {payment_method}"
+    raise ValueError(error_msg)
+
+
+def _raise_timeout_error() -> None:
+    """Raise payment gateway timeout error."""
+    msg = "Payment gateway timeout"
+    raise ConnectionError(msg)
 
 
 def demonstrate_basic_logging() -> None:
@@ -81,11 +116,13 @@ def demonstrate_basic_logging() -> None:
             "user_id": "user_123",
             "session_id": "sess_abc",
             "request_id": "req_456",
-        }
+        },
     )
 
     context_logger.info(
-        "User authentication successful", method="oauth", provider="google"
+        "User authentication successful",
+        method="oauth",
+        provider="google",
     )
     context_logger.info("User profile loaded", profile_size_kb=45, cache_hit=True)
     context_logger.warning("Rate limit approaching", requests_remaining=5)
@@ -175,7 +212,9 @@ def demonstrate_context_management() -> None:
         # Nested context
         print("   Adding nested operation context:")
         with FlextLogContext(
-            base_logger, operation="profile_enrichment", source="external_api"
+            base_logger,
+            operation="profile_enrichment",
+            source="external_api",
         ):
             base_logger.info("Enriching profile data", api_endpoint="/api/v1/profiles")
             base_logger.warning("API response delayed", expected_ms=100, actual_ms=250)
@@ -213,7 +252,9 @@ def demonstrate_context_management() -> None:
     convenience_logger.set_context({"application": "ecommerce"})
 
     with create_log_context(
-        convenience_logger, order_id="order_789", customer_id="cust_123"
+        convenience_logger,
+        order_id="order_789",
+        customer_id="cust_123",
     ):
         convenience_logger.info("Order processing started")
         convenience_logger.info("Payment validation", payment_method="credit_card")
@@ -295,14 +336,14 @@ def demonstrate_exception_logging() -> None:
                 contextual_logger.info("Payment processing started")
 
                 if amount <= 0:
-                    raise ValueError("Payment amount must be positive")
+                    _raise_amount_error()
 
                 if payment_method not in ["credit_card", "debit_card", "paypal"]:
-                    raise ValueError(f"Unsupported payment method: {payment_method}")
+                    _raise_method_error(payment_method)
 
                 # Simulate payment processing
-                if amount > 10000:
-                    raise ConnectionError("Payment gateway timeout")
+                if amount > MAX_PAYMENT_AMOUNT:
+                    _raise_timeout_error()
 
                 contextual_logger.info("Payment authorization successful")
                 return {"status": "success", "transaction_id": f"tx_{int(time.time())}"}
@@ -321,7 +362,7 @@ def demonstrate_exception_logging() -> None:
                     error_details=str(e),
                 )
                 raise
-            except Exception as e:
+            except (OSError, RuntimeError) as e:
                 contextual_logger.exception(
                     "Unexpected payment error",
                     error_type="unknown_error",
@@ -342,7 +383,7 @@ def demonstrate_exception_logging() -> None:
         try:
             result = process_payment(test_case["amount"], test_case["method"])
             print(f"     Success: {result}")
-        except Exception as e:
+        except (ValueError, ConnectionError, OSError, RuntimeError) as e:
             print(f"     Expected error: {type(e).__name__}: {e}")
 
     print("✅ Contextual exception logging completed")
@@ -394,10 +435,14 @@ def demonstrate_unified_api() -> None:
         observability_logger.info("Session started", user_agent="Mozilla/5.0")
         observability_logger.info("Page viewed", page="/dashboard", load_time_ms=245)
         observability_logger.warning(
-            "Slow query detected", query_time_ms=1500, table="analytics"
+            "Slow query detected",
+            query_time_ms=1500,
+            table="analytics",
         )
         observability_logger.error(
-            "Cache miss", cache_key="user_preferences", fallback="database"
+            "Cache miss",
+            cache_key="user_preferences",
+            fallback="database",
         )
 
     # Retrieve and analyze log store
@@ -432,11 +477,13 @@ def demonstrate_unified_api() -> None:
         for key, value in sample_entry.items():
             if key == "context" and isinstance(value, dict) and value:
                 print(
-                    f"     {key}: {dict(list(value.items())[:3])}..."
+                    f"     {key}: {dict(list(value.items())[:3])}...",
                 )  # Show first 3 context items
             else:
                 value_str = (
-                    str(value)[:50] + "..." if len(str(value)) > 50 else str(value)
+                    str(value)[:MAX_VALUE_DISPLAY_LENGTH] + "..."
+                    if len(str(value)) > MAX_VALUE_DISPLAY_LENGTH
+                    else str(value)
                 )
                 print(f"     {key}: {value_str}")
 
@@ -477,7 +524,9 @@ def demonstrate_enterprise_patterns() -> None:
     print("\n1. Request correlation and distributed tracing:")
 
     def process_user_request(
-        user_id: str, request_id: str, operation: str
+        user_id: str,
+        request_id: str,
+        operation: str,
     ) -> dict[str, Any]:
         """Simulate enterprise request processing with correlation."""
         # Create service-specific loggers
@@ -497,7 +546,9 @@ def demonstrate_enterprise_patterns() -> None:
         try:
             # API Gateway
             with create_log_context(
-                gateway_logger, **correlation_context, service="api_gateway"
+                gateway_logger,
+                **correlation_context,
+                service="api_gateway",
             ):
                 gateway_logger.info(
                     "Request received",
@@ -508,7 +559,9 @@ def demonstrate_enterprise_patterns() -> None:
 
                 # Authentication Service
                 with create_log_context(
-                    auth_logger, **correlation_context, service="auth"
+                    auth_logger,
+                    **correlation_context,
+                    service="auth",
                 ):
                     auth_logger.info("Authentication started", auth_method="jwt")
                     time.sleep(0.01)  # Simulate processing
@@ -516,24 +569,33 @@ def demonstrate_enterprise_patterns() -> None:
 
                 # User Service
                 with create_log_context(
-                    user_logger, **correlation_context, service="user"
+                    user_logger,
+                    **correlation_context,
+                    service="user",
                 ):
                     user_logger.info("User service processing started")
 
                     # Database operations
                     with create_log_context(
-                        db_logger, **correlation_context, service="database"
+                        db_logger,
+                        **correlation_context,
+                        service="database",
                     ):
                         db_logger.info(
-                            "Database query started", table="users", query_type="SELECT"
+                            "Database query started",
+                            table="users",
+                            query_type="SELECT",
                         )
                         time.sleep(0.005)  # Simulate query
                         db_logger.info(
-                            "Database query completed", rows_returned=1, duration_ms=5
+                            "Database query completed",
+                            rows_returned=1,
+                            duration_ms=5,
                         )
 
                     user_logger.info(
-                        "User service processing completed", result_size_kb=2.5
+                        "User service processing completed",
+                        result_size_kb=2.5,
                     )
 
                 gateway_logger.info(
@@ -567,7 +629,7 @@ def demonstrate_enterprise_patterns() -> None:
         try:
             result = process_user_request(**request)
             print(f"   Request {request['request_id']}: {result['status']}")
-        except Exception as e:
+        except (ValueError, OSError, RuntimeError) as e:
             print(f"   Request {request['request_id']}: Failed - {e}")
 
     print("✅ Request correlation completed - check logs for trace correlation")
@@ -580,7 +642,12 @@ def demonstrate_enterprise_patterns() -> None:
     class PerformanceMonitor:
         """Context manager for performance monitoring."""
 
-        def __init__(self, logger: FlextLogger, operation: str, **context: Any):
+        def __init__(
+            self,
+            logger: FlextLogger,
+            operation: str,
+            **context: object,
+        ) -> None:
             self.logger = logger
             self.operation = operation
             self.context = context
@@ -589,11 +656,18 @@ def demonstrate_enterprise_patterns() -> None:
         def __enter__(self) -> "PerformanceMonitor":
             self.start_time = time.time()
             self.logger.info(
-                "Operation started", operation=self.operation, **self.context
+                "Operation started",
+                operation=self.operation,
+                **self.context,
             )
             return self
 
-        def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        def __exit__(
+            self,
+            exc_type: type[BaseException] | None,
+            exc_val: BaseException | None,
+            exc_tb: TracebackType | None,
+        ) -> None:
             duration_ms = (time.time() - self.start_time) * 1000
 
             if exc_type is None:
@@ -675,8 +749,9 @@ def demonstrate_enterprise_patterns() -> None:
 
     for event in business_events:
         event_type = event.pop("event")
+        message = f"Business event: {event_type}"
         business_logger.info(
-            f"Business event: {event_type}",
+            message,
             event_type=event_type,
             timestamp=time.time(),
             **event,
@@ -710,17 +785,15 @@ def main() -> None:
         print("   🏢 Enterprise patterns for distributed tracing and monitoring")
         print("\n💡 FlextLogging provides enterprise-grade structured logging")
         print(
-            "   with context management, observability, and performance optimization!"
+            "   with context management, observability, and performance optimization!",
         )
 
         # Final log store summary
         final_logs = FlextLogging.get_log_store()
         print(f"\n📈 Total log entries generated during demo: {len(final_logs)}")
 
-    except Exception as e:
+    except (OSError, RuntimeError, ValueError) as e:
         print(f"\n❌ Error during FlextLogging demonstration: {e}")
-        import traceback
-
         traceback.print_exc()
 
 
