@@ -11,6 +11,7 @@ Tests all consolidated features following "entregar mais com muito menos" approa
 
 from __future__ import annotations
 
+import math
 import re
 import time
 
@@ -67,7 +68,7 @@ class TestFlextTypeGuards:
         # Basic types
         assert FlextTypeGuards.is_instance_of("test", str)
         assert FlextTypeGuards.is_instance_of(42, int)
-        assert FlextTypeGuards.is_instance_of(3.14, float)
+        assert FlextTypeGuards.is_instance_of(math.pi, float)
         assert FlextTypeGuards.is_instance_of([1, 2, 3], list)
         assert FlextTypeGuards.is_instance_of({"key": "value"}, dict)
 
@@ -135,7 +136,9 @@ class TestFlextTypeGuards:
         )  # return_type is for docs only
 
         # Lambda functions
-        lambda_func = lambda x: x * 2
+        def lambda_func(x: int) -> int:
+            return x * 2
+
         assert FlextTypeGuards.is_callable_with_return(lambda_func, int)
 
         # Built-in functions
@@ -550,7 +553,7 @@ class TestFlextUtilitiesOrchestration:
         assert "invalid literal" in value_error_result.error.lower()
 
         # TypeError
-        type_error_result = FlextUtilities.safe_call(lambda: "test" + 42)  # type: ignore[operator]
+        type_error_result = FlextUtilities.safe_call(lambda: "test" + 42)
         assert type_error_result.is_failure
         assert (
             "unsupported operand" in type_error_result.error.lower()
@@ -558,10 +561,10 @@ class TestFlextUtilitiesOrchestration:
         )
 
         # AttributeError
-        attr_error_result = FlextUtilities.safe_call(lambda: None.invalid_method())  # type: ignore[attr-defined]
+        attr_error_result = FlextUtilities.safe_call(lambda: None.invalid_method)
         assert attr_error_result.is_failure
         assert (
-            "attributeerror" in type(attr_error_result.error).__name__.lower()
+            "attributeerror" in attr_error_result.error.lower()
             or "none" in attr_error_result.error.lower()
         )
 
@@ -583,7 +586,9 @@ class TestFlextUtilitiesOrchestration:
         assert FlextUtilities.is_not_none_guard(42)
         assert FlextUtilities.is_not_none_guard([])
         assert FlextUtilities.is_not_none_guard({})
-        assert FlextUtilities.is_not_none_guard(False)  # False is not None
+        # False is not None
+        false_value = False
+        assert FlextUtilities.is_not_none_guard(false_value)
         assert FlextUtilities.is_not_none_guard(0)  # 0 is not None
 
     def test_safe_parse_int_validation(self) -> None:
@@ -621,7 +626,7 @@ class TestFlextUtilitiesOrchestration:
         assert empty_result.is_failure
 
     def test_validate_entity_complete_orchestration(self) -> None:
-        """Test validate_entity_complete() orchestration with multiple inherited methods."""
+        """Test validate_entity_complete() orchestration with inherited methods."""
         # Valid entity
         valid_entity_data = {"name": "John", "version": 1, "active": True}
         result = FlextUtilities.validate_entity_complete("user_123", valid_entity_data)
@@ -643,7 +648,7 @@ class TestFlextUtilitiesOrchestration:
         invalid_data_result = FlextUtilities.validate_entity_complete(
             "user_123",
             "not_a_dict",
-        )  # type: ignore[arg-type]
+        )
         assert invalid_data_result.is_failure
         assert "must be a dictionary" in invalid_data_result.error.lower()
 
@@ -918,7 +923,7 @@ class TestDelegationMixin:
         )
 
         # Test delegation
-        result = delegated(5, 3)  # type: ignore[operator]
+        result = delegated(5, 3)
         assert result == 8
 
     def test_delegate_all_static_methods_batch(self) -> None:
@@ -947,10 +952,10 @@ class TestDelegationMixin:
         assert "_private_method" not in delegated_methods
 
         # Test delegated functionality
-        result_one = delegated_methods["method_one"]()  # type: ignore[operator]
+        result_one = delegated_methods["method_one"]()
         assert result_one == "one"
 
-        result_two = delegated_methods["method_two"]()  # type: ignore[operator]
+        result_two = delegated_methods["method_two"]()
         assert result_two == "two"
 
 

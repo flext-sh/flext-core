@@ -56,6 +56,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+if TYPE_CHECKING:
+    from pathlib import Path
+
 from pydantic_settings import BaseSettings as PydanticBaseSettings, SettingsConfigDict
 
 from flext_core._config_base import (
@@ -187,7 +190,7 @@ class FlextConfig(
                     "timeout": 30,
                     "port": 8000,
                 }
-                defaults_result = cls.apply_defaults(final_config, default_values)
+                defaults_result = cls.apply_defaults(final_config, dict(default_values))
                 if defaults_result.is_failure:
                     return FlextResult.fail(
                         f"Applying defaults failed: {defaults_result.error}",
@@ -210,7 +213,7 @@ class FlextConfig(
         # Use inherited file loading
         load_result = cls.safe_load_json_file(file_path)
         if load_result.is_failure:
-            return load_result
+            return FlextResult.fail(load_result.error or "JSON file loading failed")
 
         config_data = load_result.unwrap()
 
@@ -280,7 +283,9 @@ class FlextConfig(
         # Use inherited env access
         env_result = cls.safe_get_env_var(var_name, default, required=required)
         if env_result.is_failure:
-            return FlextResult.fail(env_result.error)
+            return FlextResult.fail(
+                env_result.error or "Environment variable access failed",
+            )
 
         value = env_result.unwrap()
 
@@ -365,7 +370,7 @@ class FlextBaseSettings(PydanticBaseSettings):
         """Create settings with Pydantic validation."""
         try:
             # Let Pydantic handle validation directly
-            instance = cls(**overrides)  # type: ignore[arg-type]
+            instance = cls(**overrides)
             return FlextResult.ok(instance)
 
         except (TypeError, ValueError, AttributeError) as e:
@@ -402,6 +407,32 @@ def merge_configs(base: TAnyDict, override: TAnyDict) -> TAnyDict:
     """
     merge_result = FlextConfig.merge_configs(base, override)
     return merge_result.unwrap() if merge_result.is_success else {}
+
+
+# =============================================================================
+# MODULE-LEVEL WRAPPER FUNCTIONS for test compatibility
+# =============================================================================
+
+
+def safe_get_env_var(
+    var_name: str,
+    default: str | None = None,
+    *,
+    required: bool = False,
+) -> FlextResult[str]:
+    """Module-level wrapper for safe environment variable access."""
+    result = FlextConfig.safe_get_env_var(var_name, default, required=required)
+    if result.is_failure:
+        return FlextResult.fail(result.error or "Environment variable access failed")
+    return FlextResult.ok(result.unwrap())
+
+
+def safe_load_json_file(file_path: str | Path) -> FlextResult[dict[str, object]]:
+    """Module-level wrapper for safe JSON file loading."""
+    result = FlextConfig.safe_load_json_file(file_path)
+    if result.is_failure:
+        return FlextResult.fail(result.error or "JSON file loading failed")
+    return FlextResult.ok(result.unwrap())
 
 
 # =============================================================================

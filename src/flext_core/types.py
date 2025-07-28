@@ -1,37 +1,79 @@
 """FLEXT Core Type System Module.
 
-Comprehensive type definitions for the FLEXT Core library implementing strict
-type safety and protocol-based design patterns.
+Comprehensive type definitions for the FLEXT Core library implementing enterprise-grade
+type safety, protocol-based design patterns, and structural typing for maximum
+flexibility and compile-time verification.
 
 Architecture:
-    - Protocol-based design for structural typing
-    - TypeVar definitions for generic programming
-    - Domain-specific type aliases for clarity
-    - No underscore prefixes on public types
+    - Protocol-based design for structural typing and duck typing support
+    - Generic TypeVar definitions for type-safe generic programming patterns
+    - Domain-specific type aliases for business clarity and semantic meaning
+    - Consolidated type system eliminating base module duplication
+    - No underscore prefixes on public types for clean API access
+    - Runtime type checking integration with static analysis support
 
-Type Categories:
-    - Core type variables (T, U, V, R, E, P, F)
-    - Domain type variables (TEntity, TValue, TService, etc.)
-    - Protocol definitions for structural typing
-    - Specific type aliases for common patterns
+Type System Components:
+    - Core type variables: T, U, V, R, E, P, F for generic programming foundations
+    - Domain type variables: TEntity, TValue, TService for business logic typing
+    - CQRS type variables: TCommand, TQuery, TEvent for architectural patterns
+    - Protocol definitions: Structural typing interfaces for flexible duck typing
+    - Functional type aliases: TPredicate, TTransformer, THandler for function
+      signatures
+    - Business type aliases: TEntityId, TBusinessCode, TCorrelationId for domain clarity
 
 Maintenance Guidelines:
-    - Add new protocols to support duck typing
-    - Keep type aliases descriptive and specific
-    - Use TypeVar bounds for constraint specification
-    - Document protocol methods with proper signatures
-    - Group related types in logical sections
+    - Add new protocols to support duck typing and structural interfaces
+    - Keep type aliases descriptive and semantically meaningful for business domains
+    - Use TypeVar bounds for constraint specification and type safety
+    - Document protocol methods with proper signatures and usage examples
+    - Group related types in logical sections for maintainability and discovery
+    - Maintain backward compatibility through legacy type aliases
+    - Follow naming conventions with T prefix for type aliases
 
 Design Decisions:
-    - Protocol over ABC for structural typing
-    - Generic TypeVars for maximum flexibility
-    - Domain-specific aliases for business clarity
-    - Eliminated _types_base.py consolidation
-    - Runtime type checking support
+    - Protocol over ABC for structural typing and maximum flexibility
+    - Generic TypeVars for maximum type safety and reusability
+    - Domain-specific aliases for business clarity and semantic understanding
+    - Eliminated _types_base.py following "deliver more with much less" principle
+    - Runtime type checking support through integration with utilities module
+    - Extensive type coverage for all system domains and architectural patterns
+
+Enterprise Features:
+    - Comprehensive protocol definitions for structural typing across system components
+    - Type-safe functional programming support through typed callable aliases
+    - Domain-driven design support through business-specific type definitions
+    - CQRS pattern support through command, query, and event type variables
+    - Extensive business domain coverage including security, networking, and database
+      types
+    - Legacy compatibility through backward-compatible type aliases
+    - Integration with static type checkers for compile-time verification
+
+Protocol-Based Design:
+    - FlextValidatable: Objects supporting validation operations with status reporting
+    - FlextSerializable: Objects supporting dictionary serialization for transport
+    - FlextIdentifiable: Objects with unique identification for tracking and lookup
+    - FlextTimestamped: Objects with timestamp tracking for audit and temporal queries
+    - FlextCacheable: Objects supporting caching operations for performance optimization
+    - FlextConfigurable: Objects supporting configuration management for dependency
+      injection
+
+Type Safety Features:
+    - Generic type variables with proper bounds for constraint enforcement
+    - Protocol-based interfaces for structural typing without inheritance requirements
+    - Domain-specific type aliases preventing type confusion and enhancing readability
+    - Runtime type checking integration for dynamic validation scenarios
+    - Static analysis support through TypeGuard patterns and proper type annotations
+    - Comprehensive type coverage eliminating Any usage throughout the system
+
+Dependencies:
+    - typing: Core typing infrastructure and generic programming support
+    - collections.abc: Abstract base classes for collection and callable interfaces
+    - datetime: Time-related type definitions for temporal data management
+    - flext_core.result: FlextResult type integration for error handling patterns
 
 Warning:
-    This module shares name with Python stdlib 'types'.
-    Import explicitly to avoid conflicts.
+    This module shares name with Python stdlib 'types' module.
+    Always use explicit imports to avoid namespace conflicts and import errors.
 
 Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
@@ -42,10 +84,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
-from typing import TYPE_CHECKING, Protocol, TypeVar
-
-if TYPE_CHECKING:
-    from flext_core.result import FlextResult
+from typing import Protocol, TypeVar
 
 # =============================================================================
 # CORE TYPE VARIABLES - sem underscore conforme diretrizes
@@ -411,7 +450,7 @@ class Comparable(Protocol):
 # =============================================================================
 
 # Type checking specific aliases (quando TYPE_CHECKING)
-FlextResult = "FlextResult[T]"
+# FlextResult is defined in result.py module
 
 # =============================================================================
 # MAIN TYPES CLASS - consolidado sem base
@@ -490,7 +529,7 @@ class FlextTypes:
         @staticmethod
         def is_instance_of(obj: object, target_type: type) -> bool:
             """Check if object is instance of target type."""
-            from flext_core.utilities import FlextTypeGuards  # noqa: PLC0415
+            from flext_core.utilities import FlextTypeGuards
 
             return FlextTypeGuards.is_instance_of(obj, target_type)
 
@@ -601,6 +640,7 @@ FlextEntityId = TEntityId
 FlextUserId = TUserId
 FlextErrorCode = TErrorCode
 FlextErrorMessage = TErrorMessage
+FlextMessageType = TMessage
 
 # Protocol aliases for legacy compatibility
 Identifiable = FlextIdentifiable
@@ -624,6 +664,7 @@ __all__ = [
     "FlextExecutable",
     "FlextHandler",
     "FlextIdentifiable",
+    "FlextMessageType",
     "FlextSerializable",
     "FlextTimestamped",
     "FlextTransformer",

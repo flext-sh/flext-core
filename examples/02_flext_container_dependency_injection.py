@@ -95,7 +95,7 @@ class PostgreSQLConnection(DatabaseConnection):
         print(f"🔌 Connecting to PostgreSQL at {self.host}:{self.port}/{self.database}")
 
         # Simulate connection with potential failure
-        if random.random() < 0.1:  # 10% failure rate  # noqa: S311
+        if random.random() < 0.1:  # 10% failure rate
             return FlextResult.fail(f"Connection failed to {self.host}")
 
         self.connected = True
@@ -626,7 +626,7 @@ def check_container_health(container: FlextContainer) -> FlextResult[dict[str, A
 # =============================================================================
 
 
-def main() -> None:  # noqa: PLR0912, PLR0915
+def main() -> None:
     """Run comprehensive FlextContainer demonstration."""
     print("=" * 80)
     print("🏗️ FLEXT CONTAINER - DEPENDENCY INJECTION DEMONSTRATION")

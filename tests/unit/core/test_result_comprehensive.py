@@ -11,6 +11,8 @@ Tests all consolidated features following "entregar mais com muito menos" approa
 
 from __future__ import annotations
 
+import operator
+
 import pytest
 
 from flext_core import FlextResult
@@ -125,7 +127,7 @@ class TestFlextResultFactoryMethods:
 
         # Function that raises TypeError
         def type_error_function() -> str:
-            return "test" + 42  # type: ignore[operator]
+            return "test" + 42
 
         type_result = FlextResult.from_callable(type_error_function)
         assert type_result.is_failure
@@ -233,9 +235,7 @@ class TestFlextResultTransformations:
 
         # Chained maps on failure
         chained_failed = (
-            failed_result.map(lambda x: x * 2)
-            .map(lambda x: str(x))
-            .map(lambda x: x.upper())
+            failed_result.map(lambda x: x * 2).map(str).map(lambda x: x.upper())
         )
         assert chained_failed.is_failure
         assert chained_failed.error == "Original error"
@@ -501,7 +501,7 @@ class TestFlextResultCombinations:
         sum_result = FlextResult.combine(
             num1_result,
             num2_result,
-            lambda a, b: a + b,
+            operator.add,
         )
         assert sum_result.is_success
         assert sum_result.data == 30
@@ -658,6 +658,6 @@ class TestFlextResultEdgeCases:
         assert transformed.error_data["field"] == "email"
 
         # Error should be preserved through chains
-        chained = complex_error.chain(lambda x: FlextResult.ok(x))
+        chained = complex_error.chain(FlextResult.ok)
         assert chained.is_failure
         assert chained.error_code == "VALIDATION_001"

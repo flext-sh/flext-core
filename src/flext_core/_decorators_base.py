@@ -1,9 +1,80 @@
-"""FLEXT Decorators Base - Type-safe decorator patterns.
+"""FLEXT Core Decorators Base Module.
+
+Comprehensive decorator foundation implementing enterprise-grade function enhancement
+with type safety, performance optimization, and cross-cutting concerns. Provides
+single source of truth for decorator implementations across the FLEXT ecosystem.
+
+Architecture:
+    - Base implementation pattern providing foundation for public decorator APIs
+    - Type-safe decorator patterns with Protocol-based function interfaces
+    - Consolidated decorator categories organized by functional domain
+    - Multiple inheritance support for complex decorator composition patterns
+    - Metadata preservation ensuring decorated function introspection capabilities
+    - Performance-optimized implementations with minimal runtime overhead
+
+Decorator Categories:
+    - Validation decorators: Input validation and constraint enforcement patterns
+    - Error handling decorators: Safe execution and exception management patterns
+    - Performance decorators: Caching, memoization, and timing measurement patterns
+    - Logging decorators: Function call tracing and exception logging patterns
+    - Immutability decorators: Data protection and argument freezing patterns
+    - Functional decorators: Currying, composition, and functional programming patterns
+
+Maintenance Guidelines:
+    - Add new decorator patterns to appropriate base category classes
+    - Maintain type safety through Protocol interfaces and proper type annotations
+    - Preserve function metadata using _BaseDecoratorUtils.preserve_metadata method
+    - Follow single source of truth principle for each decorator category
+    - Implement factory methods for configurable decorator creation patterns
+    - Keep base implementations simple and focused on core functionality
+    - Ensure decorator composition compatibility through consistent interfaces
+
+Design Decisions:
+    - Base module pattern providing foundation for public decorator exposure
+    - Protocol-based interfaces for maximum type safety and flexibility
+    - Category-based organization for logical grouping and maintainability
+    - Factory pattern for configurable decorator creation with parameters
+    - Metadata preservation for debugging and introspection capabilities
+    - Closure-based state management for decorator-specific data storage
+
+Enterprise Decorator Features:
+    - Type-safe function decoration with compile-time verification support
+    - Performance optimization through caching and memoization patterns
+    - Error handling and recovery through safe execution decorators
+    - Observability integration through timing and logging decorators
+    - Data protection through immutability enforcement decorators
+    - Functional programming support through composition and currying patterns
+
+Base Implementation Pattern:
+    - _BaseValidationDecorators: Input validation and constraint checking decorators
+    - _BaseErrorHandlingDecorators: Exception handling and safe execution decorators
+    - _BasePerformanceDecorators: Caching, timing, and optimization decorators
+    - _BaseLoggingDecorators: Function call tracing and exception logging decorators
+    - _BaseImmutabilityDecorators: Data protection and argument freezing decorators
+    - _BaseFunctionalDecorators: Functional programming pattern decorators
+
+Type Safety Features:
+    - Protocol-based function interfaces ensuring type compatibility
+    - Generic type preservation through proper wrapper implementation
+    - Metadata preservation maintaining function introspection capabilities
+    - Type-safe error handling with exception type constraints
+    - Compile-time verification through proper type annotations
+
+Performance Optimization:
+    - Minimal runtime overhead through efficient decorator implementation
+    - Closure-based state management avoiding global state pollution
+    - Efficient caching algorithms with size limits and eviction policies
+    - Timing measurement using high-resolution performance counters
+    - Memory-efficient decorator composition patterns
+
+Dependencies:
+    - functools: Function wrapping and metadata preservation utilities
+    - time: High-resolution timing measurement for performance decorators
+    - typing: Type annotation infrastructure and Protocol definitions
+    - flext_core.types: Domain-specific type aliases and function signatures
 
 Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
-
-Foundation decorator patterns with strict typing support.
 """
 
 from __future__ import annotations
@@ -112,13 +183,81 @@ class _BaseLoggingDecorators:
 
     @staticmethod
     def log_calls_decorator(func: _DecoratedFunction) -> _DecoratedFunction:
-        """Log function calls."""
-        return func
+        """Log function calls with arguments and execution time."""
+        @functools.wraps(func)
+        def wrapper(*args: object, **kwargs: object) -> object:
+            # Import here to avoid circular dependencies
+            from flext_core.loggings import get_logger
+            
+            logger = get_logger(f"{func.__module__}.{func.__qualname__}")
+            
+            # Log function entry
+            logger.debug(
+                f"Calling {func.__name__}",
+                function=func.__name__,
+                module=func.__module__,
+                args_count=len(args),
+                kwargs_keys=list(kwargs.keys()),
+            )
+            
+            import time
+            start_time = time.time()
+            
+            try:
+                result = func(*args, **kwargs)
+                execution_time_ms = (time.time() - start_time) * 1000
+                
+                # Log successful completion
+                logger.debug(
+                    f"{func.__name__} completed successfully",
+                    function=func.__name__,
+                    execution_time_ms=round(execution_time_ms, 2),
+                    success=True,
+                )
+                
+                return result
+            except Exception as e:
+                execution_time_ms = (time.time() - start_time) * 1000
+                
+                # Log exception
+                logger.error(
+                    f"{func.__name__} failed with exception",
+                    function=func.__name__,
+                    execution_time_ms=round(execution_time_ms, 2),
+                    exception_type=type(e).__name__,
+                    exception_message=str(e),
+                    success=False,
+                )
+                raise
+                
+        return wrapper
 
     @staticmethod
     def log_exceptions_decorator(func: _DecoratedFunction) -> _DecoratedFunction:
-        """Log function exceptions."""
-        return func
+        """Log function exceptions with full traceback."""
+        @functools.wraps(func)
+        def wrapper(*args: object, **kwargs: object) -> object:
+            # Import here to avoid circular dependencies
+            from flext_core.loggings import get_logger
+            
+            logger = get_logger(f"{func.__module__}.{func.__qualname__}")
+            
+            try:
+                return func(*args, **kwargs)
+            except Exception as e:
+                # Log exception with full context
+                logger.exception(
+                    f"Exception in {func.__name__}",
+                    function=func.__name__,
+                    module=func.__module__,
+                    exception_type=type(e).__name__,
+                    exception_message=str(e),
+                    args_count=len(args),
+                    kwargs_keys=list(kwargs.keys()),
+                )
+                raise
+                
+        return wrapper
 
 
 class _BaseImmutabilityDecorators:

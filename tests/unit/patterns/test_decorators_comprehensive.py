@@ -13,6 +13,7 @@ Tests all consolidated features following "entregar mais com muito menos" approa
 
 from __future__ import annotations
 
+import contextlib
 import time
 from typing import Any
 
@@ -39,6 +40,8 @@ pytestmark = [pytest.mark.unit, pytest.mark.patterns]
 
 # Test models for validation decorators
 class UserModel(BaseModel):
+    """User model for decorator validation tests."""
+
     name: str
     email: str
     age: int
@@ -49,6 +52,8 @@ class UserModel(BaseModel):
 
 
 class ProductModel(BaseModel):
+    """Product model for decorator validation tests."""
+
     name: str
     price: float
     category: str
@@ -70,11 +75,11 @@ class TestFlextDecoratorsOrchestration:
 
         @FlextDecorators.safe_result
         def type_error_operation() -> str:
-            return "test" + 42  # type: ignore[operator]
+            return "test" + 42
 
         @FlextDecorators.safe_result
         def attribute_error_operation() -> str:
-            return None.invalid_method()  # type: ignore[attr-defined]
+            return None.invalid_method()
 
         @FlextDecorators.safe_result
         def runtime_error_operation() -> str:
@@ -116,11 +121,11 @@ class TestFlextDecoratorsOrchestration:
         """Test validated_with_result() with Pydantic validation."""
 
         @FlextDecorators.validated_with_result(UserModel)
-        def create_user(**kwargs: Any) -> dict[str, Any]:
+        def create_user(**kwargs: object) -> dict[str, object]:
             return {"user_created": True, **kwargs}
 
         @FlextDecorators.validated_with_result(ProductModel)
-        def create_product(**kwargs: Any) -> dict[str, Any]:
+        def create_product(**kwargs: object) -> dict[str, object]:
             return {"product_id": "123", **kwargs}
 
         # Test successful validation
@@ -255,7 +260,7 @@ class TestFlextDecoratorsOrchestration:
         call_count = 0
 
         @FlextDecorators.validated_cached(UserModel, max_size=2)
-        def process_user(**user_data: Any) -> FlextResult[dict[str, Any]]:
+        def process_user(**user_data: object) -> FlextResult[dict[str, object]]:
             nonlocal call_count
             call_count += 1
             # Simulate some processing
@@ -323,7 +328,7 @@ class TestFlextDecoratorsOrchestration:
             with_timing=True,
             with_logging=True,
         )
-        def complex_user_operation(**user_data: Any) -> dict[str, Any]:
+        def complex_user_operation(**user_data: object) -> dict[str, object]:
             nonlocal call_count
             call_count += 1
             # Simulate complex processing
@@ -362,13 +367,11 @@ class TestFlextDecoratorsOrchestration:
         assert call_count == 1  # Should not increment
 
         # Test validation failure
-        try:
+        with contextlib.suppress(Exception):
             complex_user_operation(
                 name="Alice",
                 email="alice@example.com",
-            )  # missing age
-        except Exception:
-            pass  # Expected to fail validation
+            )  # missing age - expected to fail validation
 
         assert call_count == 1  # Should not increment due to validation failure
 
@@ -562,7 +565,7 @@ class TestDecoratorEdgeCases:
         """Test validation decorators with edge case inputs."""
 
         @FlextDecorators.validated_with_result(UserModel)
-        def process_empty_user(**kwargs: Any) -> str:
+        def process_empty_user(**kwargs: object) -> str:
             return "processed"
 
         # Test with completely empty kwargs
@@ -652,7 +655,7 @@ class TestDecoratorEdgeCases:
             active: bool = True
 
         @FlextDecorators.validated_with_result(ExtendedUserModel)
-        def create_extended_user(**kwargs: Any) -> dict[str, Any]:
+        def create_extended_user(**kwargs: object) -> dict[str, object]:
             return {"created": True, **kwargs}
 
         # Test with all required fields

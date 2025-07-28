@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from flext_core import __version__
-from flext_core.version import flext_get_version_info as get_version_info, get_version
+from flext_core.version import flext_get_version_info, get_version_string
 
 
 class TestVersion:
@@ -25,14 +25,17 @@ class TestVersion:
         assert parts[1].isdigit()
 
     def test_get_version_function(self) -> None:
-        """Test get_version function."""
-        version = get_version()
-        assert version == __version__
+        """Test get_version_string function."""
+        version = get_version_string()
+        assert __version__ in version  # Version string contains the version
         assert isinstance(version, str)
 
-    def test_get_version_info_function(self) -> None:
-        """Test get_version_info function."""
-        version_info = get_version_info()
-        assert isinstance(version_info, tuple)
-        assert len(version_info) == 3
-        assert all(isinstance(x, int) for x in version_info)
+    def test_flext_get_version_info_function(self) -> None:
+        """Test flext_get_version_info function."""
+        version_info = flext_get_version_info()
+        assert hasattr(version_info, "major")
+        assert hasattr(version_info, "minor")
+        assert hasattr(version_info, "patch")
+        assert isinstance(version_info.major, int)
+        assert isinstance(version_info.minor, int)
+        assert isinstance(version_info.patch, int)

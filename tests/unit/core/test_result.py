@@ -224,7 +224,7 @@ class TestTapFunction:
         side_effects = []
 
         # FlextCore.tap creates a function that executes side effects
-        tap_func = FlextCore.tap(lambda x: side_effects.append(x))
+        tap_func = FlextCore.tap(side_effects.append)
         result = tap_func("test_data")
 
         assert result.is_success is True
@@ -241,7 +241,7 @@ class TestTapFunction:
         def failing_func(x: str) -> FlextResult[str]:
             return FlextResult.fail("error")
 
-        tap_func = FlextCore.tap(lambda x: side_effects.append(x))
+        tap_func = FlextCore.tap(side_effects.append)
         pipeline = FlextCore.pipe(failing_func, tap_func)
         result = pipeline("test")
 

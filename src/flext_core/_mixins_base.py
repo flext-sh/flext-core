@@ -1,53 +1,93 @@
 """FLEXT Core Mixins Base Module.
 
-Foundation mixin patterns providing common behaviors without external dependencies.
-Serves as the implementation layer for public mixin interfaces.
+Comprehensive mixin foundation implementing enterprise-grade behavioral patterns with
+automatic initialization, type safety, and cross-cutting concerns. Provides source of
+truth for mixin implementations across the FLEXT ecosystem.
 
 Architecture:
-    - Foundation layer for all mixin functionality
-    - No external dependencies beyond core modules
-    - Self-contained implementations for maximum portability
-    - Automatic initialization patterns for seamless integration
+    - Foundation layer pattern providing base implementations for public mixin APIs
+    - Zero external dependencies beyond core validation utilities for portability
+    - Self-contained implementations with comprehensive functionality coverage
+    - Automatic initialization patterns through __init_subclass__ hooks for integration
+    - Property-based access patterns ensuring consistency and encapsulation
+    - Internal state management with underscore prefixes for proper encapsulation
 
 Mixin Implementation Strategy:
-    - __init_subclass__ hooks for automatic setup
-    - Lazy initialization to minimize overhead
-    - Property-based access patterns for consistency
-    - Internal state management with underscore prefixes
+    - __init_subclass__ hooks for automatic setup and configuration management
+    - Lazy initialization patterns to minimize overhead and improve performance
+    - Property-based access patterns for consistency and data validation
+    - Internal state management with underscore prefixes for encapsulation and safety
+    - Composite mixin patterns for common architectural use cases
+    - Type-safe implementations with proper error handling and validation
 
 Base Mixin Categories:
-    - _BaseTimestampMixin: Creation and update timestamp tracking
-    - _BaseIdentifiableMixin: Unique identifier management
-    - _BaseValidatableMixin: Validation state and error tracking
-    - _BaseSerializableMixin: Dictionary conversion and serialization
-    - _BaseLoggableMixin: Structured logging integration
-    - _BaseComparableMixin: Comparison operator implementations
-    - _BaseTimingMixin: Execution timing and measurement
-    - _BaseCacheableMixin: Key-value caching with expiration
-
-Composite Mixins:
-    - _BaseEntityMixin: Complete entity pattern (ID + timestamps + validation)
-    - _BaseValueObjectMixin: Value object pattern
-      (validation + serialization + comparison)
+    - _BaseTimestampMixin: Creation and update timestamp tracking with age calculation
+    - _BaseIdentifiableMixin: Unique identifier management with validation
+    - _BaseValidatableMixin: Validation state and error tracking with reporting
+    - _BaseSerializableMixin: Dictionary conversion and serialization with type safety
+    - _BaseLoggableMixin: Structured logging integration with automatic logger creation
+    - _BaseComparableMixin: Comparison operator implementations with flexible logic
+    - _BaseTimingMixin: Execution timing and measurement with multiple time formats
+    - _BaseCacheableMixin: Key-value caching with expiration policies and size mgmt
 
 Maintenance Guidelines:
-    - Keep implementations dependency-free for maximum portability
-    - Use __init_subclass__ for automatic setup when possible
-    - Implement lazy initialization for performance
-    - Maintain consistent property naming patterns
-    - Document mixin interaction patterns and conflicts
+    - Keep implementations dependency-free for maximum portability and reusability
+    - Use __init_subclass__ for automatic setup when possible to reduce boilerplate
+    - Implement lazy initialization for performance optimization and resource efficiency
+    - Maintain consistent property naming patterns for API consistency and predict
+    - Document mixin interaction patterns and potential conflicts for safe composition
+    - Follow single responsibility principle for each mixin category
+    - Ensure backward compatibility through careful API evolution
 
 Design Decisions:
-    - No external dependencies beyond core validation utilities
-    - Automatic initialization through __init_subclass__ hooks
-    - Property-based access for consistency and validation
-    - Internal state with underscore prefixes for encapsulation
-    - Composite mixins for common architectural patterns
+    - No external dependencies beyond core validation utilities for portability
+    - Automatic initialization through __init_subclass__ hooks for developer convenience
+    - Property-based access for consistency, validation, and encapsulation
+    - Internal state with underscore prefixes for proper encapsulation and safety
+    - Composite mixins for common architectural patterns and reduced boilerplate
+    - Type-safe implementations with proper error handling and graceful degradation
+
+Enterprise Mixin Features:
+    - Comprehensive timestamp tracking for audit trails and temporal queries
+    - Unique identifier management with validation and automatic generation
+    - Validation state tracking with error collection and reporting capabilities
+    - Serialization support with type safety and recursive object handling
+    - Structured logging integration with automatic logger configuration
+    - Performance timing measurement with multiple precision options
+    - Caching capabilities with expiration policies and memory management
+
+Composite Mixin Patterns:
+    - _BaseEntityMixin: Complete entity pattern combining ID, timestamps, and validation
+    - _BaseValueObjectMixin: Value object pattern (validation + serialization)
+    - Factory functions for dynamic mixin creation and configuration
+    - Multiple inheritance composition for complex behavioral requirements
+
+Automatic Initialization Features:
+    - __init_subclass__ hooks for seamless mixin integration without manual setup
+    - Lazy initialization patterns for optimal performance and resource utilization
+    - Property-based access ensuring consistent behavior and data validation
+    - Internal state management preventing external interference and data corruption
+    - Graceful degradation for missing dependencies and configuration errors
+
+Type Safety and Validation:
+    - Type annotations for all methods and properties ensuring compile-time verification
+    - Integration with core validation utilities for data integrity
+    - Graceful error handling with fallback behaviors for robustness
+    - Property-based access with validation and type checking
+    - Safe serialization with type preservation and error handling
+
+Performance Optimization:
+    - Lazy initialization to minimize overhead and improve startup performance
+    - Efficient caching algorithms with size limits and expiration policies
+    - High-resolution timing measurement using performance counters
+    - Memory-efficient data structures for internal state management
+    - Optimized property access patterns for minimal runtime overhead
 
 Dependencies:
-    - validation: Core validation utilities
-    - types: Type definitions (TYPE_CHECKING only)
-    - Standard library: time for timestamps, logging integration
+    - flext_core.validation: Core validation utilities for data integrity and typing
+    - flext_core.types: Type definitions for TYPE_CHECKING static analysis only
+    - flext_core.loggings: Structured logging utilities with lazy initialization
+    - Standard library time: Timestamp generation and timing measurement utilities
 
 Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
@@ -61,6 +101,7 @@ from typing import TYPE_CHECKING
 from flext_core.validation import FlextValidators
 
 if TYPE_CHECKING:
+    from flext_core.loggings import FlextLogger
     from flext_core.types import TEntityId
 
 
@@ -294,6 +335,9 @@ class _BaseSerializableMixin:
 class _BaseLoggableMixin:
     """Foundation logging pattern without external dependencies."""
 
+    # Class-level attribute for logger name
+    _logger_name: str
+
     def __init_subclass__(cls, **kwargs: object) -> None:
         """Initialize logger for subclass automatically."""
         super().__init_subclass__(**kwargs)
@@ -302,10 +346,10 @@ class _BaseLoggableMixin:
         if not hasattr(cls, "_logger_name"):
             cls._logger_name = f"{cls.__module__}.{cls.__name__}"
 
-    def _get_logger(self) -> object:
+    def _get_logger(self) -> FlextLogger:
         """Get logger instance (lazy initialization)."""
         # Import here to avoid circular dependency
-        from flext_core.loggings import FlextLogger  # noqa: PLC0415
+        from flext_core.loggings import FlextLoggerFactory
 
         if not hasattr(self, "_logger"):
             logger_name = getattr(
@@ -313,12 +357,12 @@ class _BaseLoggableMixin:
                 "_logger_name",
                 self.__class__.__name__,
             )
-            self._logger = FlextLogger.get_logger(logger_name)
+            self._logger = FlextLoggerFactory.get_logger(logger_name)
 
         return self._logger
 
     @property
-    def logger(self) -> object:
+    def logger(self) -> FlextLogger:
         """Access to logger instance."""
         return self._get_logger()
 

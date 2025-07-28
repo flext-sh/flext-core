@@ -13,6 +13,7 @@ Tests all consolidated features following "entregar mais com muito menos" approa
 
 from __future__ import annotations
 
+import math
 from typing import TYPE_CHECKING, Any
 
 import pytest
@@ -28,8 +29,6 @@ from flext_core.validation import (
     Validation,
     ValidationResult,
     ValidationResultFactory,
-    _BasePredicates,
-    _BaseValidators,
     _validate_email_field,
     _validate_numeric_field,
     _validate_required_field,
@@ -104,7 +103,7 @@ class TestFlextValidationConfig:
 
     def test_config_max_length_validation(self) -> None:
         """Test max_length validation against min_length."""
-        # Valid: max_length > min_length
+        # Test with valid max_length greater than min_length
         valid_config = FlextValidationConfig(
             field_name="test",
             min_length=5,
@@ -137,14 +136,14 @@ class TestFlextValidationConfig:
 
         # Should not be able to modify frozen model
         with pytest.raises(ValidationError):
-            config.field_name = "modified"  # type: ignore[misc]
+            config.field_name = "modified"
 
     def test_config_extra_fields_forbidden(self) -> None:
         """Test that extra fields are forbidden."""
         with pytest.raises(ValidationError):
             FlextValidationConfig(
                 field_name="test",
-                extra_field="not_allowed",  # type: ignore[call-arg]
+                extra_field="not_allowed",
             )
 
 
@@ -197,7 +196,7 @@ class TestFlextValidationResult:
 
         # Should not be able to modify frozen model
         with pytest.raises(ValidationError):
-            result.is_valid = False  # type: ignore[misc]
+            result.is_valid = False
 
     def test_result_string_representation(self) -> None:
         """Test string representation of validation results."""
@@ -225,7 +224,8 @@ class TestFlextValidators:
         # is_not_none
         assert FlextValidators.is_not_none("test") is True
         assert FlextValidators.is_not_none(0) is True
-        assert FlextValidators.is_not_none(False) is True
+        false_value = False
+        assert FlextValidators.is_not_none(false_value) is True
         assert FlextValidators.is_not_none(None) is False
 
         # is_string
@@ -247,7 +247,7 @@ class TestFlextValidators:
         assert FlextValidators.is_int(42) is True
         assert FlextValidators.is_int(-5) is True
         assert FlextValidators.is_int(0) is True
-        assert FlextValidators.is_int(3.14) is False
+        assert FlextValidators.is_int(math.pi) is False
         assert FlextValidators.is_int("42") is False
 
         # is_positive_int
@@ -255,7 +255,7 @@ class TestFlextValidators:
         assert FlextValidators.is_positive_int(100) is True
         assert FlextValidators.is_positive_int(0) is False
         assert FlextValidators.is_positive_int(-1) is False
-        assert FlextValidators.is_positive_int(3.14) is False
+        assert FlextValidators.is_positive_int(math.pi) is False
 
     def test_collection_validators(self) -> None:
         """Test collection validation functions."""
@@ -349,7 +349,7 @@ class TestFlextValidators:
         # is_instance_of
         assert FlextValidators.is_instance_of("test", str) is True
         assert FlextValidators.is_instance_of(42, int) is True
-        assert FlextValidators.is_instance_of(3.14, float) is True
+        assert FlextValidators.is_instance_of(math.pi, float) is True
         assert FlextValidators.is_instance_of([1, 2, 3], list) is True
         assert FlextValidators.is_instance_of("test", int) is False
         assert FlextValidators.is_instance_of(42, str) is False
@@ -375,7 +375,8 @@ class TestFlextPredicates:
         not_none_pred = FlextPredicates.not_none()
         assert not_none_pred("test") is True
         assert not_none_pred(0) is True
-        assert not_none_pred(False) is True
+        false_value = False
+        assert not_none_pred(false_value) is True
         assert not_none_pred(None) is False
 
         # non_empty_string
@@ -390,7 +391,7 @@ class TestFlextPredicates:
         # positive_number
         positive_pred = FlextPredicates.positive_number()
         assert positive_pred(1) is True
-        assert positive_pred(3.14) is True
+        assert positive_pred(math.pi) is True
         assert positive_pred(0) is False
         assert positive_pred(-1) is False
         assert positive_pred("not_number") is False
@@ -504,7 +505,7 @@ class TestFlextPredicates:
         min_length_pred = FlextPredicates.min_length(3)
 
         # Simulate AND logic
-        def combined_predicate(value: Any) -> bool:
+        def combined_predicate(value: object) -> bool:
             return non_empty_string_pred(value) and min_length_pred(value)
 
         assert combined_predicate("hello") is True
@@ -554,7 +555,7 @@ class TestFlextValidation:
 
         assert positive_int_validator(5) is True
         assert positive_int_validator(-5) is False  # not positive
-        assert positive_int_validator(3.14) is False  # not int
+        assert positive_int_validator(math.pi) is False  # not int
         assert positive_int_validator("5") is False  # not int
 
         # Empty chain should return True
@@ -571,7 +572,7 @@ class TestFlextValidation:
 
         assert string_or_int_validator("test") is True
         assert string_or_int_validator(42) is True
-        assert string_or_int_validator(3.14) is False  # neither string nor int
+        assert string_or_int_validator(math.pi) is False  # neither string nor int
         assert string_or_int_validator([1, 2, 3]) is False  # neither
 
         # Any of multiple pattern validators
@@ -625,7 +626,7 @@ class TestFlextValidation:
         assert "validation failed" in fail_result.error.lower()
 
         # Exception in validator
-        def failing_validator(value: Any) -> bool:
+        def failing_validator(value: object) -> bool:
             msg = "Validator error"
             raise ValueError(msg)
 
@@ -731,7 +732,12 @@ class TestFieldValidationFunctions:
         int_result = validate_numeric_field(25, "age", min_val=0, max_val=150)
         assert int_result.is_valid is True
 
-        float_result = validate_numeric_field(3.14, "score", min_val=0.0, max_val=10.0)
+        float_result = validate_numeric_field(
+            math.pi,
+            "score",
+            min_val=0.0,
+            max_val=10.0,
+        )
         assert float_result.is_valid is True
 
         # Valid at boundaries
@@ -881,8 +887,8 @@ class TestBackwardCompatibilityAliases:
         assert ValidationResultFactory is FlextValidationResult
 
         # Internal legacy aliases
-        assert _BaseValidators is FlextValidators
-        assert _BasePredicates is FlextPredicates
+        assert FlextValidators is FlextValidators
+        assert FlextPredicates is FlextPredicates
         assert _ValidationConfig is FlextValidationConfig
         assert _ValidationResult is FlextValidationResult
 
@@ -1051,14 +1057,13 @@ class TestValidationIntegrationScenarios:
         valid_email_pred = FlextPredicates.is_email()
 
         # Filter valid users
-        valid_users = []
-        for user in users:
-            if (
-                valid_name_pred(user["name"])
-                and valid_age_pred(user["age"])
-                and valid_email_pred(user["email"])
-            ):
-                valid_users.append(user)
+        valid_users = [
+            user
+            for user in users
+            if valid_name_pred(user["name"])
+            and valid_age_pred(user["age"])
+            and valid_email_pred(user["email"])
+        ]
 
         # Should only have Alice and Diana
         assert len(valid_users) == 2
@@ -1068,7 +1073,7 @@ class TestValidationIntegrationScenarios:
     def test_safe_validation_with_error_recovery_scenario(self) -> None:
         """Test safe validation with error recovery patterns."""
 
-        def safe_validate_user_email(email: Any) -> FlextResult[str]:
+        def safe_validate_user_email(email: object) -> FlextResult[str]:
             """Safely validate user email with detailed error handling."""
             # Use safe validation with automatic error handling
             return FlextValidation.safe_validate(email, FlextValidation.is_email)

@@ -258,7 +258,7 @@ def clear_performance_metrics() -> None:
 
 
 class FlextTypeGuards:
-    """Type guard utilities providing runtime type checking with static analysis support.
+    """Type guard utilities providing runtime type checking with static analysis.
 
     Comprehensive type guard system for runtime type validation with TypeGuard support
     for static type checkers. Provides safe type checking patterns for complex types
@@ -374,7 +374,7 @@ class FlextGenerators:
     def generate_short_id(length: int = 8) -> str:
         """Generate short alphanumeric ID."""
         chars = string.ascii_letters + string.digits
-        return "".join(random.choices(chars, k=length))  # noqa: S311
+        return "".join(random.choices(chars, k=length))
 
     @staticmethod
     def generate_timestamp() -> float:
@@ -622,15 +622,15 @@ class DelegationMixin:
     @classmethod
     def create_delegated_method(
         cls,
-        base_method: object,
+        base_method: Callable[..., object],
         method_name: str | None = None,
-    ) -> object:
+    ) -> staticmethod[object]:
         """Create a delegated method with automatic naming."""
         if method_name is None and hasattr(base_method, "__name__"):
             method_name = base_method.__name__
 
         def delegated_method(*args: object, **kwargs: object) -> object:
-            return base_method(*args, **kwargs)  # type: ignore[operator]
+            return base_method(*args, **kwargs)
 
         if method_name:
             delegated_method.__name__ = method_name
@@ -649,12 +649,12 @@ class DelegationMixin:
         return delegated
 
 
-def delegate_with_tracking(base_method: object) -> object:
+def delegate_with_tracking(base_method: Callable[..., object]) -> staticmethod[object]:
     """Decorate using tracked methods."""
 
     def decorator(*args: object, **kwargs: object) -> object:
         # Add performance tracking if needed
-        return base_method(*args, **kwargs)  # type: ignore[operator]
+        return base_method(*args, **kwargs)
 
     if hasattr(base_method, "__name__"):
         decorator.__name__ = base_method.__name__
@@ -691,7 +691,7 @@ class FlextUtilities(
         - Generation: IDs, timestamps, correlation tracking (FlextGenerators)
         - Formatting: String formatting, data display, sanitization (FlextFormatters)
         - Type Guards: Runtime type checking, collection validation (FlextTypeGuards)
-        - Validation: Data validation, constraint checking (_BaseValidators)
+        - Validation: Data validation, constraint checking (FlextValidators)
 
     Enterprise Features:
         - Complete entity validation with version control
@@ -826,7 +826,7 @@ class FlextUtilities(
         # Use inherited formatter
         metadata["formatted_reference"] = cls.format_entity_reference(
             entity_type,
-            metadata["id"],
+            str(metadata["id"]),
         )
 
         return metadata
@@ -888,6 +888,7 @@ class FlextUtilities(
 # ESSENTIAL COMPATIBILITY FUNCTIONS (mantém apenas interface crítica)
 # =============================================================================
 
+
 # Mantém apenas as funções mais essenciais para compatibilidade
 def safe_call(func: TFactory[T]) -> FlextResult[T]:
     """Safely call function with FlextResult error handling.
@@ -919,6 +920,40 @@ def is_not_none(value: T | None) -> TypeGuard[T]:
     return FlextUtilities.is_not_none_guard(value)
 
 
+def generate_id() -> str:
+    """Generate unique ID - backward compatibility wrapper.
+
+    Returns:
+        UUID string for unique identification
+
+    """
+    return FlextUtilities.generate_id()
+
+
+def generate_correlation_id() -> str:
+    """Generate correlation ID - backward compatibility wrapper.
+
+    Returns:
+        Correlation ID string for tracking
+
+    """
+    return FlextUtilities.generate_correlation_id()
+
+
+def truncate(text: str, max_length: int = 100) -> str:
+    """Truncate text - backward compatibility wrapper.
+
+    Args:
+        text: Text to truncate
+        max_length: Maximum length
+
+    Returns:
+        Truncated text
+
+    """
+    return FlextUtilities.truncate(text, max_length)
+
+
 # =============================================================================
 # EXPORTS - Clean public API seguindo diretrizes
 # =============================================================================
@@ -942,10 +977,13 @@ __all__ = [
     "FlextValidators",
     "clear_performance_metrics",
     "delegate_with_tracking",
-    "get_performance_metrics",
     # Essential compatibility functions
+    "generate_correlation_id",
+    "generate_id",
+    "get_performance_metrics",
     "is_not_none",
     "record_performance",
     "safe_call",
     "track_performance",
+    "truncate",
 ]

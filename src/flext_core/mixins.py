@@ -145,38 +145,38 @@ from flext_core._mixins_base import (
 
 # Temporal mixins for time-related functionality
 FlextTimestampMixin = _BaseTimestampMixin  # Creation and update timestamps
-FlextTimingMixin = _BaseTimingMixin        # Execution timing and measurement
+FlextTimingMixin = _BaseTimingMixin  # Execution timing and measurement
 
 # Identity and behavior mixins
-FlextIdentifiableMixin = _BaseIdentifiableMixin    # Unique ID management
-FlextLoggableMixin = _BaseLoggableMixin            # Structured logging capabilities
-FlextValidatableMixin = _BaseValidatableMixin      # Validation state management
-FlextSerializableMixin = _BaseSerializableMixin    # Dictionary serialization
-FlextComparableMixin = _BaseComparableMixin        # Comparison operations
-FlextCacheableMixin = _BaseCacheableMixin          # Caching functionality
+FlextIdentifiableMixin = _BaseIdentifiableMixin  # Unique ID management
+FlextLoggableMixin = _BaseLoggableMixin  # Structured logging capabilities
+FlextValidatableMixin = _BaseValidatableMixin  # Validation state management
+FlextSerializableMixin = _BaseSerializableMixin  # Dictionary serialization
+FlextComparableMixin = _BaseComparableMixin  # Comparison operations
+FlextCacheableMixin = _BaseCacheableMixin  # Caching functionality
 
 # Composite mixins for common patterns
-FlextEntityMixin = _BaseEntityMixin                # ID + timestamps + validation
-FlextValueObjectMixin = _BaseValueObjectMixin      # Validation + serialization
-                                                        # + comparison
+FlextEntityMixin = _BaseEntityMixin  # ID + timestamps + validation
+FlextValueObjectMixin = _BaseValueObjectMixin  # Validation + serialization
+# + comparison
 
 # =============================================================================
 # EXPORTS - Clean public API
 # =============================================================================
 
 __all__ = [
-    "FlextCacheableMixin",     # Caching functionality
-    "FlextComparableMixin",    # Comparison operations
+    "FlextCacheableMixin",  # Caching functionality
+    "FlextComparableMixin",  # Comparison operations
     # Composite mixins - common patterns
-    "FlextEntityMixin",        # ID + timestamps + validation (entity pattern)
+    "FlextEntityMixin",  # ID + timestamps + validation (entity pattern)
     # Identity and behavior mixins - core behaviors
     "FlextIdentifiableMixin",  # Unique ID management
-    "FlextLoggableMixin",      # Structured logging capabilities
+    "FlextLoggableMixin",  # Structured logging capabilities
     "FlextSerializableMixin",  # Dictionary serialization
     # Temporal mixins - time-related functionality
-    "FlextTimestampMixin",     # Creation and update timestamps
-    "FlextTimingMixin",        # Execution timing and measurement
-    "FlextValidatableMixin",   # Validation state management
-    "FlextValueObjectMixin",   # Validation + serialization + comparison
-                                # (value object pattern)
+    "FlextTimestampMixin",  # Creation and update timestamps
+    "FlextTimingMixin",  # Execution timing and measurement
+    "FlextValidatableMixin",  # Validation state management
+    "FlextValueObjectMixin",  # Validation + serialization + comparison
+    # (value object pattern)
 ]

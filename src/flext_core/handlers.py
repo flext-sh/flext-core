@@ -161,7 +161,7 @@ class FlextHandlers:
     # BASE HANDLER - Foundation for all handlers
     # =============================================================================
 
-    class Handler(ABC, Generic[T, R], FlextLoggableMixin, FlextTimingMixin):
+    class Handler(ABC, FlextLoggableMixin, FlextTimingMixin, Generic[T, R]):
         """Generic base handler interface for type-safe message processing.
 
         Abstract foundation class providing comprehensive handler functionality
@@ -644,8 +644,8 @@ class FlextHandlers:
                 result = handler_func(message)
                 # Ensure we return FlextResult[R]
                 if hasattr(result, "is_success"):
-                    return result  # type: ignore[return-value]
-                return FlextResult.ok(result)  # type: ignore[arg-type]
+                    return result
+                return FlextResult.ok(result)
 
         return FunctionHandler()
 

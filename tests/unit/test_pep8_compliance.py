@@ -20,7 +20,7 @@ class TestPEP8Compliance:
 
     def test_ruff_formatting_compliance(self) -> None:
         """Test that all Python files are properly formatted (PEP8)."""
-        result = subprocess.run(  # noqa: S603
+        result = subprocess.run(
             [
                 sys.executable,
                 "-m",
@@ -44,7 +44,7 @@ class TestPEP8Compliance:
 
     def test_ruff_linting_compliance(self) -> None:
         """Test that all Python files pass PEP8 linting rules."""
-        result = subprocess.run(  # noqa: S603
+        result = subprocess.run(
             [
                 sys.executable,
                 "-m",
@@ -68,7 +68,7 @@ class TestPEP8Compliance:
     def test_line_length_compliance(self) -> None:
         """Test that all Python files respect line length via ruff."""
         # Use ruff directly since it has the correct configuration
-        result = subprocess.run(  # noqa: S603
+        result = subprocess.run(
             [
                 sys.executable,
                 "-m",
@@ -99,7 +99,7 @@ class TestPEP8Compliance:
 
     def test_import_organization(self) -> None:
         """Test that imports are organized according to PEP8."""
-        result = subprocess.run(  # noqa: S603
+        result = subprocess.run(
             [
                 sys.executable,
                 "-m",
@@ -123,7 +123,7 @@ class TestPEP8Compliance:
 
     def test_naming_conventions(self) -> None:
         """Test that naming follows PEP8 conventions."""
-        result = subprocess.run(  # noqa: S603
+        result = subprocess.run(
             [
                 sys.executable,
                 "-m",
@@ -147,7 +147,7 @@ class TestPEP8Compliance:
 
     def test_docstring_compliance(self) -> None:
         """Test that docstrings follow PEP257/PEP8 standards."""
-        result = subprocess.run(  # noqa: S603
+        result = subprocess.run(
             [
                 sys.executable,
                 "-m",
@@ -170,7 +170,7 @@ class TestPEP8Compliance:
 
     def test_complexity_compliance(self) -> None:
         """Test that code complexity follows PEP8 recommendations."""
-        result = subprocess.run(  # noqa: S603
+        result = subprocess.run(
             [
                 sys.executable,
                 "-m",

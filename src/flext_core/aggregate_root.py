@@ -64,9 +64,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from pydantic import Field
-
 from flext_core.entities import FlextEntity
+from flext_core.payload import FlextEvent
 from flext_core.result import FlextResult
 from flext_core.utilities import FlextGenerators
 
@@ -179,8 +178,7 @@ class FlextAggregateRoot(FlextEntity):
         - Cross-aggregate eventual consistency through events
     """
 
-    # Domain events - excluded from serialization but tracked internally
-    events: list[object] = Field(default_factory=list, exclude=True, alias="_events")
+    # Domain events inherited from FlextEntity: list[FlextEvent]
 
     def __init__(
         self,
@@ -194,11 +192,18 @@ class FlextAggregateRoot(FlextEntity):
             entity_id if entity_id is not None else FlextGenerators.generate_uuid()
         )
 
+        # Initialize domain events list
+        domain_events_raw = data.pop("domain_events", [])
+        # Ensure domain_events is properly typed as list[FlextEvent]
+        domain_events = domain_events_raw if isinstance(domain_events_raw, list) else []
+
         # Pydantic handles initialization with explicit parameters
-        super().__init__(id=actual_id, version=version, **data)
-        # Ensure events list is properly initialized
-        if not hasattr(self, "_events"):
-            object.__setattr__(self, "_events", [])
+        super().__init__(
+            id=actual_id,
+            version=version,
+            domain_events=domain_events,
+            **data,
+        )
 
     def add_domain_event(
         self,
@@ -216,37 +221,45 @@ class FlextAggregateRoot(FlextEntity):
 
         """
         try:
-            event = {"type": event_type, "data": event_data}
-            self._events.append(event)
+            event_result = FlextEvent.create_event(
+                event_type=event_type,
+                event_data=event_data,
+                aggregate_id=self.id,
+                version=self.version,
+            )
+            if event_result.is_failure:
+                return FlextResult.fail(f"Failed to create event: {event_result.error}")
+
+            self.domain_events.append(event_result.unwrap())
             return FlextResult.ok(None)
         except (TypeError, ValueError, AttributeError) as e:
             return FlextResult.fail(f"Failed to add domain event: {e}")
 
-    def add_event_object(self, event: object) -> None:
+    def add_event_object(self, event: FlextEvent) -> None:
         """Add domain event object directly (convenience method).
 
         Args:
             event: Domain event object to add
 
         """
-        self._events.append(event)
+        self.domain_events.append(event)
 
-    def get_domain_events(self) -> list[object]:
+    def get_domain_events(self) -> list[FlextEvent]:
         """Get all unpublished domain events.
 
         Returns:
             List of domain events
 
         """
-        return list(self._events)
+        return list(self.domain_events)
 
     def clear_domain_events(self) -> None:
         """Clear all domain events after publishing."""
-        self._events.clear()
+        self.domain_events.clear()
 
     def has_domain_events(self) -> bool:
         """Check if aggregate has unpublished events."""
-        return bool(self._events)
+        return bool(self.domain_events)
 
 
 # Export API

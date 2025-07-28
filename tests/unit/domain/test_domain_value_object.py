@@ -12,7 +12,7 @@ from typing import Any
 import pytest
 from pydantic import ValidationError
 
-from flext_core.domain import FlextValueObject
+from flext_core.value_objects import FlextValueObject
 
 
 class ConcreteValueObject(FlextValueObject):

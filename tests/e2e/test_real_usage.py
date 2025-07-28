@@ -159,7 +159,7 @@ class TestRealUsagePatterns:
             assert isinstance(db_result.data, MockDatabase)
             return UserService(db_result.data)
 
-        register_service_result = container.register_singleton(
+        register_service_result = container.register_factory(
             "user_service",
             create_user_service,
         )
@@ -235,7 +235,7 @@ class TestRealUsagePatterns:
             # setup, etc.
             return UserService(database)
 
-        register_result = container.register_singleton(
+        register_result = container.register_factory(
             "complex_service",
             create_complex_service,
         )

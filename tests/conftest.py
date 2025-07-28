@@ -4,10 +4,13 @@ Provides shared fixtures and configuration for all test types:
 unit, integration, and e2e tests.
 """
 
+import math
 import os
 from typing import Any
 
 import pytest
+
+from flext_core.container import FlextContainer
 
 
 # Pytest configuration for test markers
@@ -62,7 +65,7 @@ def sample_data() -> dict[str, Any]:
     return {
         "string": "test_string",
         "integer": 42,
-        "float": 3.14,
+        "float": math.pi,
         "boolean": True,
         "list": [1, 2, 3],
         "dict": {"key": "value"},
@@ -90,3 +93,9 @@ def error_context() -> dict[str, Any]:
         "component": "test_module",
         "user_id": "test_user",
     }
+
+
+@pytest.fixture
+def clean_container() -> FlextContainer:
+    """Provide a clean FlextContainer instance for each test."""
+    return FlextContainer()

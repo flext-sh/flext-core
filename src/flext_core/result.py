@@ -212,7 +212,9 @@ class FlextResult(_BaseResult[T]):
 
         """
         # Use inherited factory with direct instantiation
-        return _BaseResultFactory.create_from_callable(func, error_message)
+        return FlextResult._from_base(
+            _BaseResultFactory.create_from_callable(func, error_message),
+        )
 
     @classmethod
     def conditional(
@@ -255,11 +257,13 @@ class FlextResult(_BaseResult[T]):
 
         """
         # Use inherited factory with direct instantiation
-        return _BaseResultFactory.create_conditional(
-            condition=condition,
-            success_data=success_data,
-            failure_message=failure_message,
-            failure_code=failure_code,
+        return FlextResult._from_base(
+            _BaseResultFactory.create_conditional(
+                condition=condition,
+                success_data=success_data,
+                failure_message=failure_message,
+                failure_code=failure_code,
+            ),
         )
 
     # =========================================================================
@@ -396,7 +400,7 @@ class FlextResult(_BaseResult[T]):
 
     def recover(
         self,
-        recovery_func: Callable[[str], FlextResult[T]],
+        recovery_func: Callable[[str], _BaseResult[T]],
     ) -> FlextResult[T]:
         """Recover from failure with alternative success path.
 
@@ -422,7 +426,7 @@ class FlextResult(_BaseResult[T]):
             return self
 
         try:
-            return recovery_func(self.error or "Unknown error")
+            return FlextResult._from_base(recovery_func(self.error or "Unknown error"))
         except (TypeError, ValueError, AttributeError, RuntimeError) as e:
             return FlextResult.fail(f"Recovery failed: {e}")
 
@@ -464,8 +468,8 @@ class FlextResult(_BaseResult[T]):
 
     @staticmethod
     def combine(
-        result1: FlextResult[T],
-        result2: FlextResult[U],
+        result1: _BaseResult[T],
+        result2: _BaseResult[U],
         combiner: Callable[[T, U], object],
     ) -> FlextResult[object]:
         """Combine two results with combiner function if both are successful.

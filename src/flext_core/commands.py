@@ -75,7 +75,7 @@ if TYPE_CHECKING:
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from flext_core.loggings import FlextLogger
+from flext_core.loggings import FlextLoggerFactory
 from flext_core.mixins import (
     FlextLoggableMixin,
     FlextSerializableMixin,
@@ -217,7 +217,7 @@ class FlextCommands:
 
         # Use FlextUtilities for ID generation
         command_id: TEntityId = Field(
-            default_factory=lambda: FlextGenerators.generate_uuid(),
+            default_factory=FlextGenerators.generate_uuid,
             description="Unique command identifier",
         )
 
@@ -237,7 +237,7 @@ class FlextCommands:
         )
 
         correlation_id: TCorrelationId = Field(
-            default_factory=lambda: FlextGenerators.generate_uuid(),
+            default_factory=FlextGenerators.generate_uuid,
             description="Correlation ID for tracking",
         )
 
@@ -274,7 +274,7 @@ class FlextCommands:
         ) -> FlextResult[Self]:
             """Create command from FlextPayload with validation."""
             # Use FlextLogger directly for class methods
-            logger = FlextLogger.get_logger(f"{cls.__module__}.{cls.__name__}")
+            logger = FlextLoggerFactory.get_logger(f"{cls.__module__}.{cls.__name__}")
             logger.debug(
                 "Creating command from payload",
                 payload_type=payload.metadata.get("type", "unknown"),
@@ -369,9 +369,9 @@ class FlextCommands:
 
     class Handler(
         ABC,
-        Generic[TCommand, TResult],
         FlextLoggableMixin,
         FlextTimingMixin,
+        Generic[TCommand, TResult],
     ):
         """Base command handler interface.
 
@@ -645,12 +645,12 @@ class FlextCommands:
                     def handle(self, command: object) -> FlextResult[object]:
                         result = func(command)
                         if hasattr(result, "is_success"):
-                            return result  # type: ignore[return-value]
+                            return result
                         return FlextResult.ok(result)
 
                 # Store metadata for automatic registration (dynamic attributes)
-                setattr(func, "command_type", command_type)  # noqa: B010
-                setattr(func, "handler_instance", FunctionHandler())  # noqa: B010
+                func.command_type = command_type
+                func.handler_instance = FunctionHandler()
 
                 return func
 
@@ -714,7 +714,7 @@ class FlextCommands:
             def handle(self, command: object) -> FlextResult[object]:
                 result = handler_func(command)
                 if hasattr(result, "is_success"):
-                    return result  # type: ignore[return-value]
+                    return result
                 return FlextResult.ok(result)
 
         return SimpleHandler()

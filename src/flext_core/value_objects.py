@@ -68,7 +68,7 @@ from typing import TYPE_CHECKING, Self
 
 from pydantic import BaseModel, ConfigDict
 
-from flext_core.loggings import FlextLogger
+from flext_core.loggings import FlextLoggerFactory
 from flext_core.mixins import FlextLoggableMixin, FlextValueObjectMixin
 from flext_core.payload import FlextPayload
 from flext_core.result import FlextResult
@@ -203,7 +203,7 @@ class FlextValueObject(
         """
         super().__init_subclass__()
         # Use FlextLogger directly for class methods
-        logger = FlextLogger.get_logger(f"{cls.__module__}.{cls.__name__}")
+        logger = FlextLoggerFactory.get_logger(f"{cls.__module__}.{cls.__name__}")
         logger.debug(
             "ValueObject subclass created",
             class_name=cls.__name__,

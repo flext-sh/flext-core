@@ -90,8 +90,8 @@ class TestFlextContainerBasicOperations:
     ) -> None:
         """Test FlextContainer initializes with empty state."""
         assert len(clean_container.list_services()) == 0
-        assert clean_container.services == {}
-        assert clean_container.singletons == {}
+        assert clean_container.get_service_count() == 0
+        assert clean_container.get_service_names() == []
 
     def test_service_registration_success(
         self,
@@ -132,11 +132,11 @@ class TestFlextContainerBasicOperations:
     @pytest.mark.parametrize(
         ("invalid_name", "expected_error"),
         [
-            ("", "Cannot be empty or whitespace-only"),
-            ("   ", "Cannot be empty or whitespace-only"),
-            (None, "must be a string"),
-            (123, "must be a string"),
-            ([], "must be a string"),
+            ("", "Service name cannot be empty"),
+            ("   ", "Service name cannot be empty"),
+            (None, "Service name cannot be empty"),
+            (123, "Service name cannot be empty"),
+            ([], "Service name cannot be empty"),
         ],
     )
     def test_service_registration_invalid_names(
@@ -179,7 +179,7 @@ class TestFlextContainerBasicOperations:
         assert result.is_failure
         assert result.error is not None
         assert result.error
-        assert "not registered" in result.error
+        assert "not found" in result.error
 
     @pytest.mark.parametrize(
         "service_names",
@@ -248,7 +248,7 @@ class TestFlextContainerSingletonPattern:
     ) -> None:
         """Test successful singleton factory registration."""
         factory = service_factories["database"]
-        result = clean_container.register_singleton("database", factory)
+        result = clean_container.register_factory("database", factory)
 
         assert result.is_success
         assert result.data is None
@@ -261,7 +261,7 @@ class TestFlextContainerSingletonPattern:
     ) -> None:
         """Test singleton factory creates instance on first access."""
         factory = service_factories["database"]
-        clean_container.register_singleton("database", factory)
+        clean_container.register_factory("database", factory)
 
         # First access creates instance
         result1 = clean_container.get("database")
@@ -281,7 +281,7 @@ class TestFlextContainerSingletonPattern:
             call_count += 1
             return SampleService(f"Service_{call_count}")
 
-        clean_container.register_singleton("service", create_service)
+        clean_container.register_factory("service", create_service)
 
         # Multiple accesses should return same instance
         result1 = clean_container.get("service")
@@ -307,14 +307,14 @@ class TestFlextContainerSingletonPattern:
         failing_factory: FlextServiceFactory[SampleService],
     ) -> None:
         """Test singleton factory failure handling."""
-        result = clean_container.register_singleton("failing", failing_factory)
+        result = clean_container.register_factory("failing", failing_factory)
         assert result.is_success
 
         # Factory failure should be handled gracefully
         get_result = clean_container.get("failing")
         assert get_result.is_failure
         assert get_result.error is not None
-        assert "error creating service 'failing'" in get_result.error
+        assert "Factory for 'failing' failed" in get_result.error
         assert "Intentional test failure" in get_result.error
 
     def test_non_callable_factory_rejection(
@@ -325,7 +325,7 @@ class TestFlextContainerSingletonPattern:
         # This would be caught by type system, but test runtime behavior
         # We need to bypass type checking for this test case
         factory: Any = "not_callable"
-        result = clean_container.register_singleton("service", factory)
+        result = clean_container.register_factory("service", factory)
 
         assert result.is_failure
         assert result.error is not None
@@ -349,7 +349,7 @@ class TestFlextContainerSingletonPattern:
                 return SampleService(name)
 
             factories[service_name] = create_service
-            result = clean_container.register_singleton(
+            result = clean_container.register_factory(
                 service_name,
                 create_service,
             )
@@ -417,7 +417,7 @@ class TestFlextContainerServiceManagement:
         assert clean_container.has("database")
 
         # Remove service
-        result = clean_container.remove("database")
+        result = clean_container.unregister("database")
         assert result.is_success
         assert result.data is None
 
@@ -430,12 +430,12 @@ class TestFlextContainerServiceManagement:
         clean_container: FlextContainer,
     ) -> None:
         """Test removal of non-existent service."""
-        result = clean_container.remove("nonexistent")
+        result = clean_container.unregister("nonexistent")
 
         assert result.is_failure
         assert result.error is not None
         assert result.error
-        assert "not registered" in result.error
+        assert "not found" in result.error
 
     def test_singleton_removal_clears_cache(
         self,
@@ -444,19 +444,19 @@ class TestFlextContainerServiceManagement:
     ) -> None:
         """Test singleton removal clears both registry and cache."""
         factory = service_factories["database"]
-        clean_container.register_singleton("database", factory)
+        clean_container.register_factory("database", factory)
 
         # Create instance (populates cache)
         result1 = clean_container.get("database")
         assert result1.is_success
 
         # Remove service
-        remove_result = clean_container.remove("database")
+        remove_result = clean_container.unregister("database")
         assert remove_result.is_success
 
         # Verify complete removal
         assert not clean_container.has("database")
-        assert len(clean_container.singletons) == 0
+        assert clean_container.get_service_count() == 0
 
     def test_container_clear_operation(
         self,
@@ -477,8 +477,8 @@ class TestFlextContainerServiceManagement:
 
         # Verify empty state
         assert len(clean_container.list_services()) == 0
-        assert len(clean_container.services) == 0
-        assert len(clean_container.singletons) == 0
+        assert clean_container.get_service_count() == 0
+        assert clean_container.get_service_names() == []
 
     def test_service_listing_accuracy(
         self,
@@ -487,7 +487,7 @@ class TestFlextContainerServiceManagement:
     ) -> None:
         """Test service listing returns accurate results."""
         # Initially empty
-        services = clean_container.list_services()
+        services = clean_container.get_service_names()
         assert services == []
 
         # Add services incrementally
@@ -496,7 +496,7 @@ class TestFlextContainerServiceManagement:
             clean_container.register(name, service)
             expected_services.append(name)
 
-            current_services = clean_container.list_services()
+            current_services = clean_container.get_service_names()
             assert len(current_services) == len(expected_services)
             assert set(current_services) == set(expected_services)
 
@@ -584,7 +584,7 @@ class TestFlextContainerIntegration:
         logger_factory = service_factories["logger"]
 
         clean_container.register("database", database_service)
-        clean_container.register_singleton("logger", logger_factory)
+        clean_container.register_factory("logger", logger_factory)
 
         # Verify both work correctly
         db_result = clean_container.get("database")
@@ -613,7 +613,7 @@ class TestFlextContainerIntegration:
 
         # Replace with factory
         cache_factory = service_factories["cache"]
-        clean_container.register_singleton("cache", cache_factory)
+        clean_container.register_factory("cache", cache_factory)
 
         result2 = clean_container.get("cache")
         assert result2.is_success
@@ -666,8 +666,8 @@ class TestFlextContainerIntegration:
         """Test that failing factories don't affect other services."""
         # Register working factory and failing factory
         working_factory = service_factories["database"]
-        clean_container.register_singleton("working", working_factory)
-        clean_container.register_singleton("failing", failing_factory)
+        clean_container.register_factory("working", working_factory)
+        clean_container.register_factory("failing", failing_factory)
 
         # Working service should still work
         working_result = clean_container.get("working")

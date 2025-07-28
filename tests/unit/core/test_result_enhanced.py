@@ -6,6 +6,8 @@ error handling and functional programming patterns.
 
 from __future__ import annotations
 
+import operator
+
 import pytest
 
 from flext_core import FlextResult
@@ -198,7 +200,7 @@ class TestFlextResultEnhanced:
         result1 = FlextResult.ok(5)
         result2 = FlextResult.ok(3)
 
-        combined = result1.zip_with(result2, lambda x, y: x + y)
+        combined = result1.zip_with(result2, operator.add)
         assert combined.is_success
         assert combined.data == 8
 
@@ -207,7 +209,7 @@ class TestFlextResultEnhanced:
         result1 = FlextResult.fail("first error")
         result2 = FlextResult.ok(3)
 
-        combined = result1.zip_with(result2, lambda x, y: x + y)
+        combined = result1.zip_with(result2, operator.add)
         assert combined.is_failure
         assert combined.error == "first error"
 
@@ -216,7 +218,7 @@ class TestFlextResultEnhanced:
         result1 = FlextResult.ok(5)
         result2 = FlextResult.fail("second error")
 
-        combined = result1.zip_with(result2, lambda x, y: x + y)
+        combined = result1.zip_with(result2, operator.add)
         assert combined.is_failure
         assert combined.error == "second error"
 

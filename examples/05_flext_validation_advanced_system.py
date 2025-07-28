@@ -16,6 +16,7 @@ Features demonstrated:
 
 from __future__ import annotations
 
+import math
 import time
 from typing import Any
 
@@ -107,7 +108,7 @@ def demonstrate_basic_validations() -> None:
     test_values = [
         ("string_value", "Hello World"),
         ("integer_value", 42),
-        ("float_value", 3.14),
+        ("float_value", math.pi),
         ("boolean_value", True),
         ("none_value", None),
         ("list_value", [1, 2, 3]),
@@ -203,7 +204,7 @@ def demonstrate_functional_predicates() -> None:
     print("📋 Basic Predicates:")
     test_data = [
         ("not_none_test", [None, "value", 0, False, []]),
-        ("positive_numbers", [-5, 0, 1, 42, 3.14, -1.5]),
+        ("positive_numbers", [-5, 0, 1, 42, math.pi, -1.5]),
         ("min_length_strings", ["", "hi", "hello", "world", "a"]),
     ]
 
