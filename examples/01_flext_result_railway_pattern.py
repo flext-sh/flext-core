@@ -16,6 +16,7 @@ Features demonstrated:
 from __future__ import annotations
 
 import json
+import random
 from typing import Any
 
 from flext_core import FlextResult
@@ -99,8 +100,6 @@ def save_user_to_database(user: User) -> FlextResult[str]:
     user_id = FlextUtilities.generate_entity_id()
 
     # Simulate occasional database failure
-    import random
-
     if random.random() < 0.2:  # 20% chance of failure
         return FlextResult.fail("Database connection timeout")
 

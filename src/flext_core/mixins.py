@@ -157,26 +157,21 @@ FlextCacheableMixin = _BaseCacheableMixin  # Caching functionality
 
 # Composite mixins for common patterns
 FlextEntityMixin = _BaseEntityMixin  # ID + timestamps + validation
-FlextValueObjectMixin = _BaseValueObjectMixin  # Validation + serialization
-# + comparison
+FlextValueObjectMixin = _BaseValueObjectMixin  # Validation + serialization + comparison
 
 # =============================================================================
 # EXPORTS - Clean public API
 # =============================================================================
 
 __all__ = [
-    "FlextCacheableMixin",  # Caching functionality
-    "FlextComparableMixin",  # Comparison operations
-    # Composite mixins - common patterns
-    "FlextEntityMixin",  # ID + timestamps + validation (entity pattern)
-    # Identity and behavior mixins - core behaviors
-    "FlextIdentifiableMixin",  # Unique ID management
-    "FlextLoggableMixin",  # Structured logging capabilities
-    "FlextSerializableMixin",  # Dictionary serialization
-    # Temporal mixins - time-related functionality
-    "FlextTimestampMixin",  # Creation and update timestamps
-    "FlextTimingMixin",  # Execution timing and measurement
-    "FlextValidatableMixin",  # Validation state management
-    "FlextValueObjectMixin",  # Validation + serialization + comparison
-    # (value object pattern)
+    "FlextCacheableMixin",
+    "FlextComparableMixin",
+    "FlextEntityMixin",
+    "FlextIdentifiableMixin",
+    "FlextLoggableMixin",
+    "FlextSerializableMixin",
+    "FlextTimestampMixin",
+    "FlextTimingMixin",
+    "FlextValidatableMixin",
+    "FlextValueObjectMixin",
 ]

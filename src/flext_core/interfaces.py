@@ -117,10 +117,10 @@ class FlextValidator(Protocol):
         # Protocol-compliant validator implementation
         class EmailValidator:
             def validate(self, value: object) -> FlextResult[object]:
-                if not isinstance(value, str):
+                if not _BaseValidators.is_string(value):
                     return FlextResult.fail("Email must be a string")
 
-                if "@" not in value:
+                if not _BaseValidators.is_email(value):
                     return FlextResult.fail("Invalid email format")
 
                 return FlextResult.ok(value.lower().strip())
@@ -195,9 +195,7 @@ class FlextValidationRule(ABC):
         # Email format validation rule
         class EmailFormatRule(FlextValidationRule):
             def check(self, value: object) -> bool:
-                if not isinstance(value, str):
-                    return False
-                return "@" in value and "." in value.split("@")[-1]
+                return _BaseValidators.is_email(value)
 
             def error_message(self) -> str:
                 return "Invalid email format"

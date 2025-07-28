@@ -15,25 +15,76 @@ import pytest
 pytestmark = [pytest.mark.unit, pytest.mark.pep8]
 
 
+def _run_ruff_command(command_args: list[str]) -> subprocess.CompletedProcess[str]:
+    """Safely execute ruff commands with validated arguments.
+
+    Args:
+        command_args: List of ruff command arguments (validated)
+
+    Returns:
+        CompletedProcess result
+
+    Security:
+        - Only allows known safe ruff commands
+        - Uses hardcoded python executable path
+        - Validates all arguments are strings
+        - Sets secure working directory
+
+    """
+    # Validate input arguments
+    if not isinstance(command_args, list):
+        msg = "Command arguments must be a list"
+        raise TypeError(msg)
+
+    if not all(isinstance(arg, str) for arg in command_args):
+        msg = "All command arguments must be strings"
+        raise TypeError(msg)
+
+    # Allowlist of safe ruff commands and arguments
+    allowed_commands = {
+        "format",
+        "check",
+        "--select=E501",
+        "--select=I",
+        "--select=N",
+        "--select=D",
+        "--select=C901",
+        "--check",
+    }
+    allowed_paths = {"src/", "tests/"}
+
+    # Validate that all arguments are in our allowlist
+    for arg in command_args:
+        if arg not in allowed_commands and arg not in allowed_paths:
+            msg = f"Argument '{arg}' not in allowlist"
+            raise ValueError(msg)
+
+    # Construct safe command with hardcoded python executable
+    safe_command = [sys.executable, "-m", "ruff", *command_args]
+
+    # Execute with safe parameters - subprocess call is secure due to input validation
+    return subprocess.run(  # noqa: S603
+        safe_command,
+        check=False,
+        capture_output=True,
+        text=True,
+        cwd=Path.cwd(),
+        timeout=60,  # Prevent hanging
+    )
+
+
 class TestPEP8Compliance:
     """Test suite for PEP8 compliance validation."""
 
     def test_ruff_formatting_compliance(self) -> None:
         """Test that all Python files are properly formatted (PEP8)."""
-        result = subprocess.run(
+        result = _run_ruff_command(
             [
-                sys.executable,
-                "-m",
-                "ruff",
                 "format",
                 "--check",
                 "src/",
                 "tests/",
             ],
-            check=False,
-            capture_output=True,
-            text=True,
-            cwd=Path.cwd(),
         )
 
         assert result.returncode == 0, (
@@ -44,19 +95,12 @@ class TestPEP8Compliance:
 
     def test_ruff_linting_compliance(self) -> None:
         """Test that all Python files pass PEP8 linting rules."""
-        result = subprocess.run(
+        result = _run_ruff_command(
             [
-                sys.executable,
-                "-m",
-                "ruff",
                 "check",
                 "src/",
                 "tests/",
             ],
-            check=False,
-            capture_output=True,
-            text=True,
-            cwd=Path.cwd(),
         )
 
         assert result.returncode == 0, (
@@ -68,19 +112,12 @@ class TestPEP8Compliance:
     def test_line_length_compliance(self) -> None:
         """Test that all Python files respect line length via ruff."""
         # Use ruff directly since it has the correct configuration
-        result = subprocess.run(
+        result = _run_ruff_command(
             [
-                sys.executable,
-                "-m",
-                "ruff",
                 "check",
                 "--select=E501",  # Line length rule only
                 "src/",
             ],
-            check=False,
-            capture_output=True,
-            text=True,
-            cwd=Path.cwd(),
         )
 
         # Since ruff configuration allows reasonable line lengths for
@@ -99,20 +136,13 @@ class TestPEP8Compliance:
 
     def test_import_organization(self) -> None:
         """Test that imports are organized according to PEP8."""
-        result = subprocess.run(
+        result = _run_ruff_command(
             [
-                sys.executable,
-                "-m",
-                "ruff",
                 "check",
                 "--select=I",  # Only import-related rules
                 "src/",
                 "tests/",
             ],
-            check=False,
-            capture_output=True,
-            text=True,
-            cwd=Path.cwd(),
         )
 
         assert result.returncode == 0, (
@@ -123,20 +153,13 @@ class TestPEP8Compliance:
 
     def test_naming_conventions(self) -> None:
         """Test that naming follows PEP8 conventions."""
-        result = subprocess.run(
+        result = _run_ruff_command(
             [
-                sys.executable,
-                "-m",
-                "ruff",
                 "check",
                 "--select=N",  # Only naming convention rules
                 "src/",
                 "tests/",
             ],
-            check=False,
-            capture_output=True,
-            text=True,
-            cwd=Path.cwd(),
         )
 
         assert result.returncode == 0, (
@@ -147,20 +170,13 @@ class TestPEP8Compliance:
 
     def test_docstring_compliance(self) -> None:
         """Test that docstrings follow PEP257/PEP8 standards."""
-        result = subprocess.run(
+        result = _run_ruff_command(
             [
-                sys.executable,
-                "-m",
-                "ruff",
                 "check",
                 "--select=D",  # Only docstring rules
                 "src/",
-            ],  # Only check src/, not tests (relaxed rules)
-            check=False,
-            capture_output=True,
-            text=True,
-            cwd=Path.cwd(),
-        )
+            ],
+        )  # Only check src/, not tests (relaxed rules)
 
         # Allow some docstring violations during migration
         # but fail if there are syntax errors or major issues
@@ -170,20 +186,13 @@ class TestPEP8Compliance:
 
     def test_complexity_compliance(self) -> None:
         """Test that code complexity follows PEP8 recommendations."""
-        result = subprocess.run(
+        result = _run_ruff_command(
             [
-                sys.executable,
-                "-m",
-                "ruff",
                 "check",
                 "--select=C901",  # Complexity rules
                 "src/",
                 "tests/",
             ],
-            check=False,
-            capture_output=True,
-            text=True,
-            cwd=Path.cwd(),
         )
 
         assert result.returncode == 0, (

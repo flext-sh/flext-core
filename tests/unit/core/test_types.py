@@ -60,23 +60,25 @@ class TestTypeAliases:
     def test_payload_basic_usage(self) -> None:
         """Test FlextPayload type alias for data payloads."""
         # FlextPayload is a Pydantic BaseModel for structured data
-        user_payload: FlextPayload = FlextPayload(
-            id="123",
-            name="John Doe",
-            email="john@example.com",
-        )
+        user_data = {
+            "id": "123",
+            "name": "John Doe",
+            "email": "john@example.com",
+        }
+        user_payload: FlextPayload = FlextPayload(data=user_data)
 
-        event_payload: FlextPayload = FlextPayload(
-            event_type="user.created",
-            timestamp="2025-01-01T00:00:00Z",
-        )
+        event_data = {
+            "event_type": "user.created",
+            "timestamp": "2025-01-01T00:00:00Z",
+        }
+        event_payload: FlextPayload = FlextPayload(data=event_data)
 
         # Verify payload structure
         def process_payload(payload: FlextPayload) -> str:
             data_dict = payload.model_dump()
             return f"Processing: {len(data_dict)} fields"
 
-        assert user_payload.get("id") == "123"
-        assert user_payload.has("name")
-        assert process_payload(user_payload) == "Processing: 3 fields"
+        assert user_payload.data["id"] == "123"  # type: ignore[index]
+        assert "name" in user_payload.data  # type: ignore[operator]
+        assert process_payload(user_payload) == "Processing: 2 fields"
         assert process_payload(event_payload) == "Processing: 2 fields"

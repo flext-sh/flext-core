@@ -25,6 +25,7 @@ This example shows real-world enterprise configuration scenarios
 demonstrating the power and flexibility of the FlextConfig system.
 """
 
+import json
 import os
 import tempfile
 import traceback
@@ -268,7 +269,6 @@ def demonstrate_file_configuration() -> None:
         }
 
         json_file = config_dir / "config.json"
-        import json
 
         with open(json_file, "w", encoding="utf-8") as f:
             json.dump(json_config, f, indent=2)
@@ -461,7 +461,6 @@ def demonstrate_advanced_configuration_patterns() -> None:
 
     # 3. Configuration serialization and export
     print("\n3. Configuration serialization:")
-    import json
 
     serialized = json.dumps(resolved_config, indent=2)
     print(f"📤 Serialized config: {serialized}")

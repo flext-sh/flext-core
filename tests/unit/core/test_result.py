@@ -127,11 +127,10 @@ class TestComposeFunction:
         result1 = FlextResult.ok("data1")
         result2 = FlextResult.ok("data2")
 
-        # FlextCore.compose is for function composition, not result combination
-        # Use _combine_results for combining results
-        from flext_core._result_base import _combine_results
+        # Use _BaseResultOperations.chain_results for combining results into a list
+        from flext_core._result_base import _BaseResultOperations
 
-        composed = _combine_results(result1, result2)
+        composed = _BaseResultOperations.chain_results(result1, result2)
         assert composed.is_success is True
         assert composed.data == ["data1", "data2"]
 
@@ -141,21 +140,19 @@ class TestComposeFunction:
         result2 = FlextResult.fail("error")
         result3 = FlextResult.ok("data3")
 
-        # FlextCore.compose is for function composition, not result combination
-        # Use _combine_results for combining results
-        from flext_core._result_base import _combine_results
+        # Use _BaseResultOperations.chain_results for combining results
+        from flext_core._result_base import _BaseResultOperations
 
-        composed = _combine_results(result1, result2, result3)
+        composed = _BaseResultOperations.chain_results(result1, result2, result3)
         assert composed.is_failure is True
         assert composed.error == "error"
 
     def test_compose_empty_list(self) -> None:
         """Test composing empty list."""
-        # FlextCore.compose is for function composition, not result combination
-        # Use _combine_results for combining results
-        from flext_core._result_base import _combine_results
+        # Use _BaseResultOperations.chain_results for combining results
+        from flext_core._result_base import _BaseResultOperations
 
-        composed = _combine_results()
+        composed = _BaseResultOperations.chain_results()
         assert composed.is_success is True
         assert composed.data == []
 

@@ -43,6 +43,13 @@ class TimestampedDocument(FlextTimestampMixin):
     """Document with automatic timestamp tracking."""
 
     def __init__(self, title: str, content: str) -> None:
+        """Initialize TimestampedDocument.
+
+        Args:
+            title: Document title
+            content: Document content
+
+        """
         super().__init__()
         self.title = title
         self.content = content
@@ -70,6 +77,14 @@ class IdentifiableUser(FlextIdentifiableMixin):
     """User with unique identification."""
 
     def __init__(self, username: str, email: str, user_id: str | None = None) -> None:
+        """Initialize IdentifiableUser.
+
+        Args:
+            username: User username
+            email: User email
+            user_id: User ID
+
+        """
         super().__init__()
         self.username = username
         self.email = email
@@ -95,6 +110,13 @@ class ValidatableConfiguration(FlextValidatableMixin):
     """Configuration with validation state tracking."""
 
     def __init__(self, config_name: str, settings: dict[str, Any]) -> None:
+        """Initialize ValidatableConfiguration.
+
+        Args:
+            config_name: Configuration name
+            settings: Configuration settings
+
+        """
         super().__init__()
         self.config_name = config_name
         self.settings = settings
@@ -144,12 +166,18 @@ class LoggableService(FlextLoggableMixin):
     """Service with structured logging capabilities."""
 
     def __init__(self, service_name: str) -> None:
+        """Initialize LoggableService.
+
+        Args:
+            service_name: Service name
+
+        """
         super().__init__()
         self.service_name = service_name
 
     def process_request(self, request_id: str, data: dict[str, Any]) -> dict[str, Any]:
         """Process request with comprehensive logging."""
-        self.logger.info(f"Processing request {request_id}", request_id=request_id)
+        self.logger.info("Processing request %s , request_id=request_id", request_id)
 
         try:
             # Simulate processing
@@ -195,6 +223,12 @@ class TimedOperation(FlextTimingMixin):
     """Operation with execution timing."""
 
     def __init__(self, operation_name: str) -> None:
+        """Initialize TimedOperation.
+
+        Args:
+            operation_name: Operation name
+
+        """
         super().__init__()
         self.operation_name = operation_name
 
@@ -226,6 +260,7 @@ class CacheableCalculator(FlextCacheableMixin):
     """Calculator with result caching."""
 
     def __init__(self) -> None:
+        """Initialize CacheableCalculator."""
         super().__init__()
         self.calculation_count = 0
 
@@ -271,6 +306,14 @@ class AdvancedUser(
     """User with multiple behavioral mixins."""
 
     def __init__(self, username: str, email: str, role: str = "user") -> None:
+        """Initialize AdvancedUser.
+
+        Args:
+            username: User username
+            email: User email
+            role: User role
+
+        """
         super().__init__()
         self.username = username
         self.email = email
@@ -309,10 +352,11 @@ class AdvancedUser(
             self._mark_valid()
 
         if is_valid:
-            self.logger.info(f"User validation successful: {self.username}")
+            self.logger.info("User validation successful: %s", self.username)
         else:
             self.logger.warning(
-                f"User validation failed: {self.username}",
+                "User validation failed: %s",
+                self.username,
                 errors=self.validation_errors,
             )
 
@@ -366,6 +410,14 @@ class SmartDocument(
     """Document with smart features through mixin composition."""
 
     def __init__(self, title: str, content: str, category: str = "general") -> None:
+        """Initialize SmartDocument.
+
+        Args:
+            title: Document title
+            content: Document content
+            category: Document category
+
+        """
         super().__init__()
         self.title = title
         self.content = content
@@ -884,8 +936,6 @@ def demonstrate_performance_characteristics() -> None:
     """Demonstrate performance characteristics of mixins."""
     print("\n⚡ Performance Characteristics Demonstration")
     print("=" * 50)
-
-    import time
 
     # Simple class without mixins
     class SimpleClass:

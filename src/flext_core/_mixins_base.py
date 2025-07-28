@@ -98,6 +98,7 @@ from __future__ import annotations
 import time
 from typing import TYPE_CHECKING
 
+from flext_core.loggings import FlextLoggerFactory
 from flext_core.validation import FlextValidators
 
 if TYPE_CHECKING:
@@ -275,11 +276,11 @@ class _BaseSerializableMixin:
     def _serialize_value(self, value: object) -> object | None:
         """Serialize a single value for dict conversion."""
         # Simple types
-        if isinstance(value, (str, int, float, bool, type(None))):
+        if isinstance(value, str | int | float | bool | type(None)):
             return value
 
         # Collections
-        if isinstance(value, (list, tuple)):
+        if isinstance(value, list | tuple):
             return self._serialize_collection(value)
 
         if isinstance(value, dict):
@@ -301,7 +302,7 @@ class _BaseSerializableMixin:
         """Serialize list or tuple values."""
         serialized_list: list[object] = []
         for item in collection:
-            if isinstance(item, (str, int, float, bool, type(None))):
+            if isinstance(item, str | int | float | bool | type(None)):
                 serialized_list.append(item)
             elif hasattr(item, "to_dict_basic"):
                 to_dict_method = item.to_dict_basic
@@ -315,7 +316,7 @@ class _BaseSerializableMixin:
         """Serialize dictionary values."""
         serialized_dict: dict[str, object] = {}
         for k, v in dict_value.items():
-            if isinstance(v, (str, int, float, bool, type(None))):
+            if isinstance(v, str | int | float | bool | type(None)):
                 serialized_dict[str(k)] = v
         return serialized_dict
 
@@ -348,9 +349,6 @@ class _BaseLoggableMixin:
 
     def _get_logger(self) -> FlextLogger:
         """Get logger instance (lazy initialization)."""
-        # Import here to avoid circular dependency
-        from flext_core.loggings import FlextLoggerFactory
-
         if not hasattr(self, "_logger"):
             logger_name = getattr(
                 self.__class__,
@@ -518,8 +516,9 @@ class _BaseEntityMixin(
     _BaseIdentifiableMixin,
     _BaseTimestampMixin,
     _BaseValidatableMixin,
+    _BaseLoggableMixin,
 ):
-    """Combined mixin for entities - ID + timestamps + validation."""
+    """Combined mixin for entities - ID + timestamps + validation + logging."""
 
     def __init__(self, entity_id: TEntityId | None = None, **kwargs: object) -> None:
         """Initialize entity with combined mixins."""

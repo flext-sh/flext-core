@@ -1,40 +1,40 @@
 """FLEXT Core Validation Module.
 
 Comprehensive validation system for the FLEXT Core library providing consolidated
-functionality through multiple inheritance patterns and specialized validation classes.
+functionality through inheritance from specialized validation base classes.
 
 Architecture:
-    - Multiple inheritance combining specialized validation base classes
-    - Pydantic-based validation models with extensive configuration support
-    - Functional programming patterns with predicates and validators
-    - Railway-oriented validation with structured FlextResult integration
-    - No underscore prefixes on public objects
+    - Inheritance from specialized validation base classes (_BaseValidators,
+    _BasePredicates)
+    - Direct base exposure eliminating nested class overhead
+    - Single source of truth pattern with _validation_base.py as internal definitions
+    - FlextResult integration for consistent error handling across the system
+    - No underscore prefixes on public objects for clean API
 
 Validation System Components:
-    - FlextValidation: Main validation class with comprehensive method inheritance
-    - FlextPredicates: Functional predicates for filtering and validation patterns
+    - FlextValidators: Core validation functions inherited from _BaseValidators
+    - FlextPredicates: Functional predicates inherited from _BasePredicates
+    - FlextValidation: Main validation class with composition and orchestration
     - FlextValidationResult: Structured validation results with success/failure handling
     - FlextValidationConfig: Pydantic-based configuration for validation parameters
     - Convenience functions: High-level validation helpers with FlextResult integration
-    - Validator composition: Chain and combine validators with complex orchestration
 
 Maintenance Guidelines:
-    - Add new validator types to appropriate specialized classes first
-    - Use multiple inheritance for validator combination patterns
+    - Add new validator types to _validation_base.py first
+    - Use inheritance from base classes for consistent functionality
     - Maintain functional programming patterns with pure functions
     - Integrate FlextResult pattern for all operations that can fail
     - Keep validator composition patterns for complex validation scenarios
 
 Design Decisions:
-    - Multiple inheritance pattern for maximum validation functionality reuse
-    - Pydantic extensive usage for validation configuration and results
-    - Functional patterns with validator chaining and composition
-    - FlextResult integration for consistent error handling across the system
-    - Clean separation between predicates (bool) and validators (FlextResult)
-    - Backward compatibility through function aliases and legacy patterns
+    - Single source of truth with _validation_base.py for internal definitions
+    - Direct inheritance from base classes eliminating code duplication
+    - Clean public API with Flext* prefixed classes
+    - FlextResult integration for consistent error handling
+    - Backward compatibility through function aliases
 
 Validation Patterns:
-    - Simple validation: FlextValidation.is_string(value)
+    - Simple validation: FlextValidators.is_string(value)
     - Structured validation: validate_string(value, "email", min_length=5)
     - Composed validation: FlextValidation.chain(validator1, validator2)
     - Predicate filtering: FlextPredicates.non_empty_string()(value)
@@ -42,10 +42,9 @@ Validation Patterns:
     - Result-based: All validators return FlextResult for safe error handling
 
 Dependencies:
-    - pydantic: Validation models and configuration management
+    - _validation_base: Foundation validation implementations
     - result: FlextResult pattern for consistent error handling
     - constants: Core regex patterns and validation constants
-    - Standard library: re, collections.abc for pattern matching
 
 Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
@@ -53,422 +52,67 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import re
 from typing import TYPE_CHECKING
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
-
-from flext_core.constants import FlextConstants
+from flext_core._validation_base import (
+    _BasePredicates,
+    _BaseValidators,
+    _validate_email_field,
+    _validate_entity_id,
+    _validate_non_empty_string,
+    _validate_numeric_field,
+    _validate_required_field,
+    _validate_string_field,
+    _ValidationConfig,
+    _ValidationResult,
+)
 from flext_core.result import FlextResult
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-# Regex patterns from constants - sem underscore conforme diretrizes
-EMAIL_PATTERN = FlextConstants.EMAIL_PATTERN
-UUID_PATTERN = FlextConstants.UUID_PATTERN
-URL_PATTERN = FlextConstants.URL_PATTERN
-
-
 # =============================================================================
-# PYDANTIC-BASED VALIDATION MODELS - sem underscore conforme diretrizes
+# FLEXT VALIDATION MODELS - Direct exposure from base with clean names
 # =============================================================================
 
-
-class FlextValidationConfig(BaseModel):
-    """Pydantic config for validation parameters."""
-
-    model_config = ConfigDict(frozen=True, extra="forbid")
-
-    field_name: str = Field(..., min_length=1)
-    min_length: int = Field(default=0, ge=0)
-    max_length: int | None = Field(default=None, ge=1)
-    min_val: float | None = Field(default=None)
-    max_val: float | None = Field(default=None)
-    pattern: str | None = Field(default=None)
-
-    @field_validator("max_length")
-    @classmethod
-    def validate_max_length(cls, v: int | None, info: object) -> int | None:
-        """Validate max_length is greater than min_length."""
-        if v is not None and hasattr(info, "data") and "min_length" in info.data:
-            min_length = info.data["min_length"]
-            if v <= min_length:
-                error_msg = "max_length must be greater than min_length"
-                raise ValueError(error_msg)
-        return v
-
-
-class FlextValidationResult(BaseModel):
-    """Pydantic model for validation results."""
-
-    model_config = ConfigDict(frozen=True)
-
-    is_valid: bool
-    error_message: str | None = None
-    field_name: str | None = None
-
-    @classmethod
-    def success(cls) -> FlextValidationResult:
-        """Create successful validation result."""
-        return cls(is_valid=True)
-
-    @classmethod
-    def failure(
-        cls,
-        message: str,
-        field_name: str | None = None,
-    ) -> FlextValidationResult:
-        """Create failed validation result."""
-        return cls(is_valid=False, error_message=message, field_name=field_name)
-
+# Direct exposure eliminating inheritance overhead
+FlextValidationConfig = _ValidationConfig
+FlextValidationResult = _ValidationResult
 
 # =============================================================================
-# CONSOLIDATED VALIDATORS - sem underscore conforme diretrizes
+# FLEXT VALIDATORS - Direct exposure eliminating inheritance overhead
 # =============================================================================
 
-
-class FlextValidators:
-    """Consolidated validation functions using Pydantic extensively.
-
-    Base class designed for extension by FlextValidation.
-    Single source of truth for all validation - no duplication.
-    """
-
-    # Basic type checks
-    @staticmethod
-    def is_callable(obj: object) -> bool:
-        """Check if object is callable."""
-        return callable(obj)
-
-    @staticmethod
-    def is_not_none(value: object) -> bool:
-        """Check if value is not None."""
-        return value is not None
-
-    @staticmethod
-    def is_string(value: object) -> bool:
-        """Check if value is a string."""
-        return isinstance(value, str)
-
-    @staticmethod
-    def is_non_empty_string(value: object) -> bool:
-        """Check if value is a non-empty string."""
-        return isinstance(value, str) and len(value.strip()) > 0
-
-    @staticmethod
-    def is_int(value: object) -> bool:
-        """Check if value is an integer."""
-        return isinstance(value, int)
-
-    @staticmethod
-    def is_positive_int(value: object) -> bool:
-        """Check if value is a positive integer."""
-        return isinstance(value, int) and value > 0
-
-    @staticmethod
-    def is_list(value: object) -> bool:
-        """Check if value is a list."""
-        return isinstance(value, list)
-
-    @staticmethod
-    def is_non_empty_list(value: object) -> bool:
-        """Check if value is a non-empty list."""
-        return isinstance(value, list) and len(value) > 0
-
-    @staticmethod
-    def is_dict(value: object) -> bool:
-        """Check if value is a dictionary."""
-        return isinstance(value, dict)
-
-    @staticmethod
-    def is_non_empty_dict(value: object) -> bool:
-        """Check if value is a non-empty dictionary."""
-        return isinstance(value, dict) and len(value) > 0
-
-    # Advanced pattern matching
-    @staticmethod
-    def is_email(value: object) -> bool:
-        """Check if value is a valid email using regex."""
-        if not isinstance(value, str):
-            return False
-        return bool(re.match(EMAIL_PATTERN, value))
-
-    @staticmethod
-    def is_uuid(value: object) -> bool:
-        """Check if value is a valid UUID using regex."""
-        if not isinstance(value, str):
-            return False
-        return bool(re.match(UUID_PATTERN, value.lower()))
-
-    @staticmethod
-    def is_url(value: object) -> bool:
-        """Check if value is a valid URL using regex."""
-        if not isinstance(value, str):
-            return False
-        return bool(re.match(URL_PATTERN, value))
-
-    @staticmethod
-    def matches_pattern(value: object, pattern: str) -> bool:
-        """Check if string value matches regex pattern."""
-        if not isinstance(value, str):
-            return False
-        try:
-            return bool(re.match(pattern, value))
-        except re.error:
-            return False
-
-    # Numeric and range validation
-    @staticmethod
-    def is_in_range(value: object, min_val: float, max_val: float) -> bool:
-        """Check if numeric value is in range."""
-        if not isinstance(value, (int, float)):
-            return False
-        return min_val <= value <= max_val
-
-    @staticmethod
-    def has_min_length(value: object, min_length: int) -> bool:
-        """Check if value has minimum length."""
-        if not hasattr(value, "__len__"):
-            return False
-        return len(value) >= min_length
-
-    @staticmethod
-    def has_max_length(value: object, max_length: int) -> bool:
-        """Check if value has maximum length."""
-        if not hasattr(value, "__len__"):
-            return False
-        return len(value) <= max_length
-
-    @staticmethod
-    def is_instance_of(value: object, type_class: type[object]) -> bool:
-        """Check if value is instance of given type."""
-        return isinstance(value, type_class)
-
-    # From utilities_base - useful methods to preserve
-    @staticmethod
-    def is_valid_identifier(name: str) -> bool:
-        """Check if string is a valid Python identifier."""
-        return isinstance(name, str) and name.isidentifier()
-
+# Direct exposure with clean names - completely eliminates empty inheritance
+FlextValidators = _BaseValidators
 
 # =============================================================================
-# FUNCTIONAL PREDICATES - sem underscore conforme diretrizes
+# FLEXT PREDICATES - Direct exposure eliminating inheritance overhead
 # =============================================================================
 
-
-class FlextPredicates:
-    """Functional predicates with Pydantic-based configuration.
-
-    Base class designed for extension by FlextPredicates.
-    """
-
-    @staticmethod
-    def not_none() -> Callable[[object], bool]:
-        """Predicate that checks if value is not None."""
-        return lambda x: x is not None
-
-    @staticmethod
-    def non_empty_string() -> Callable[[object], bool]:
-        """Predicate that checks if value is non-empty string."""
-        return lambda x: isinstance(x, str) and len(x.strip()) > 0
-
-    @staticmethod
-    def positive_number() -> Callable[[object], bool]:
-        """Predicate that checks if value is positive number."""
-        return lambda x: isinstance(x, (int, float)) and x > 0
-
-    @staticmethod
-    def min_length(length: int) -> Callable[[object], bool]:
-        """Predicate that checks minimum length."""
-        return lambda x: hasattr(x, "__len__") and len(x) >= length
-
-    @staticmethod
-    def max_length(length: int) -> Callable[[object], bool]:
-        """Predicate that checks maximum length."""
-        return lambda x: hasattr(x, "__len__") and len(x) <= length
-
-    @staticmethod
-    def matches_regex(pattern: str) -> Callable[[object], bool]:
-        """Predicate that checks regex match."""
-        compiled_pattern = re.compile(pattern)
-        return lambda x: isinstance(x, str) and bool(compiled_pattern.match(x))
-
-    @staticmethod
-    def is_email() -> Callable[[object], bool]:
-        """Predicate that checks if value is valid email."""
-        return FlextPredicates.matches_regex(EMAIL_PATTERN)
-
-    @staticmethod
-    def is_uuid() -> Callable[[object], bool]:
-        """Predicate that checks if value is valid UUID."""
-        return FlextPredicates.matches_regex(UUID_PATTERN)
-
-    @staticmethod
-    def is_url() -> Callable[[object], bool]:
-        """Predicate that checks if value is valid URL."""
-        return FlextPredicates.matches_regex(URL_PATTERN)
-
-    @staticmethod
-    def in_range(min_val: float, max_val: float) -> Callable[[object], bool]:
-        """Predicate that checks if value is in numeric range."""
-        return lambda x: isinstance(x, (int, float)) and min_val <= x <= max_val
-
-    @staticmethod
-    def contains(item: object) -> Callable[[object], bool]:
-        """Predicate that checks if container contains item."""
-        return lambda x: hasattr(x, "__contains__") and item in x
-
-    @staticmethod
-    def starts_with(prefix: str) -> Callable[[object], bool]:
-        """Predicate that checks if string starts with prefix."""
-        return lambda x: isinstance(x, str) and x.startswith(prefix)
-
-    @staticmethod
-    def ends_with(suffix: str) -> Callable[[object], bool]:
-        """Predicate that checks if string ends with suffix."""
-        return lambda x: isinstance(x, str) and x.endswith(suffix)
-
+# Direct exposure with clean names - completely eliminates empty inheritance
+FlextPredicates = _BasePredicates
 
 # =============================================================================
-# PYDANTIC-ENHANCED FIELD VALIDATORS - sem underscore conforme diretrizes
+# FIELD VALIDATORS - Direct function exposure eliminating wrapper overhead
 # =============================================================================
 
-
-def flext_validate_required_field(
-    value: object,
-    field_name: str,
-) -> FlextValidationResult:
-    """Validate required field using Pydantic result model."""
-    if value is None:
-        return FlextValidationResult.failure(
-            f"Field '{field_name}' is required but was None",
-            field_name,
-        )
-
-    if isinstance(value, str) and not value.strip():
-        return FlextValidationResult.failure(
-            f"Field '{field_name}' is required but was empty",
-            field_name,
-        )
-
-    return FlextValidationResult.success()
-
-
-def flext_validate_string_field(
-    value: object,
-    field_name: str,
-    min_length: int = 0,
-    max_length: int | None = None,
-) -> FlextValidationResult:
-    """Validate string field with Pydantic configuration."""
-    try:
-        # Use Pydantic to validate configuration
-        config = FlextValidationConfig(
-            field_name=field_name,
-            min_length=min_length,
-            max_length=max_length,
-        )
-    except (TypeError, ValueError, AttributeError) as e:
-        return FlextValidationResult.failure(f"Invalid validation config: {e}")
-
-    if not isinstance(value, str):
-        return FlextValidationResult.failure(
-            f"Field '{config.field_name}' must be a string, got {type(value).__name__}",
-            config.field_name,
-        )
-
-    if len(value) < config.min_length:
-        return FlextValidationResult.failure(
-            f"Field '{config.field_name}' must be at least "
-            f"{config.min_length} characters",
-            config.field_name,
-        )
-
-    if config.max_length is not None and len(value) > config.max_length:
-        return FlextValidationResult.failure(
-            f"Field '{config.field_name}' must be at most "
-            f"{config.max_length} characters",
-            config.field_name,
-        )
-
-    return FlextValidationResult.success()
-
-
-def flext_validate_numeric_field(
-    value: object,
-    field_name: str,
-    min_val: float | None = None,
-    max_val: float | None = None,
-) -> FlextValidationResult:
-    """Validate numeric field with Pydantic configuration."""
-    try:
-        config = FlextValidationConfig(
-            field_name=field_name,
-            min_val=min_val,
-            max_val=max_val,
-        )
-    except (TypeError, ValueError, AttributeError) as e:
-        return FlextValidationResult.failure(f"Invalid validation config: {e}")
-
-    if not isinstance(value, (int, float)):
-        return FlextValidationResult.failure(
-            f"Field '{config.field_name}' must be a number, got {type(value).__name__}",
-            config.field_name,
-        )
-
-    if config.min_val is not None and value < config.min_val:
-        return FlextValidationResult.failure(
-            f"Field '{config.field_name}' must be at least {config.min_val}",
-            config.field_name,
-        )
-
-    if config.max_val is not None and value > config.max_val:
-        return FlextValidationResult.failure(
-            f"Field '{config.field_name}' must be at most {config.max_val}",
-            config.field_name,
-        )
-
-    return FlextValidationResult.success()
-
-
-def flext_validate_email_field(
-    value: object,
-    field_name: str,
-) -> FlextValidationResult:
-    """Validate email field."""
-    if not isinstance(value, str):
-        return FlextValidationResult.failure(
-            f"Field '{field_name}' must be a string",
-            field_name,
-        )
-
-    if not FlextValidators.is_email(value):
-        return FlextValidationResult.failure(
-            f"Field '{field_name}' must be a valid email address",
-            field_name,
-        )
-
-    return FlextValidationResult.success()
-
+# Direct exposure of field validation functions with clean names
+flext_validate_required_field = _validate_required_field
+flext_validate_string_field = _validate_string_field
+flext_validate_numeric_field = _validate_numeric_field
+flext_validate_email_field = _validate_email_field
 
 # =============================================================================
-# ENTITY VALIDATION FUNCTIONS - sem underscore conforme diretrizes
+# ENTITY VALIDATION FUNCTIONS - Direct function exposure
 # =============================================================================
 
-
-def flext_validate_entity_id(entity_id: object) -> bool:
-    """Validate entity ID is valid."""
-    return FlextValidators.is_non_empty_string(entity_id)
-
-
-def flext_validate_non_empty_string(value: object) -> bool:
-    """Validate value is non-empty string."""
-    return FlextValidators.is_non_empty_string(value)
-
+# Direct exposure of entity validation functions with clean names
+flext_validate_entity_id = _validate_entity_id
+flext_validate_non_empty_string = _validate_non_empty_string
 
 # =============================================================================
-# FLEXT VALIDATION - Consolidados com herança múltipla + funcionalidades específicas
+# FLEXT VALIDATION - Main validation interface inheriting from base
 # =============================================================================
 
 
@@ -476,18 +120,18 @@ class FlextValidation(FlextValidators):
     """Main validation interface providing comprehensive validation capabilities.
 
     Serves as the primary external API for all validation operations, inheriting
-    complete functionality from consolidated base implementation while adding
+    complete functionality from FlextValidators (which is _BaseValidators) while adding
     composition and high-level validation patterns.
 
     Architecture:
-        - Inherits all basic validation methods from FlextValidators
+        - Inherits all basic validation methods from FlextValidators (_BaseValidators)
         - Adds validator composition methods for complex scenarios
         - Provides validation configuration creation
         - Maintains clean separation between predicates and validators
 
     Inherited Validation Methods:
         - is_not_none, is_string, is_non_empty_string: Basic type checks
-        - is_email, is_numeric, is_boolean: Type-specific validations
+        - is_email, is_uuid, is_url: Pattern-specific validations
         - has_min_length, has_max_length: String length validations
         - matches_pattern: Regular expression pattern matching
 
@@ -495,9 +139,10 @@ class FlextValidation(FlextValidators):
         - chain: AND logic for multiple validators
         - any_of: OR logic for alternative validators
         - create_validation_config: Pydantic-based configuration
+        - safe_validate: FlextResult integration for error handling
 
     Usage:
-        # Basic validation
+        # Basic validation (inherited methods)
         if FlextValidation.is_email("user@example.com"):
             process_email()
 
@@ -513,14 +158,22 @@ class FlextValidation(FlextValidators):
             min_length=8,
             max_length=128
         )
+
+        # Safe validation with FlextResult
+        result = FlextValidation.safe_validate(data, FlextValidation.is_email)
     """
 
-    # Inherited from FlextValidators automatically via class inheritance
-    # All basic validation methods are now available without explicit delegation
+    # All basic validation methods inherited from FlextValidators (_BaseValidators)
+    # No explicit delegation needed due to class inheritance
 
-    # Entity validation functions
+    # Direct access to validators and functions
+    Validators = FlextValidators
     flext_validate_entity_id = flext_validate_entity_id
     flext_validate_non_empty_string = flext_validate_non_empty_string
+    flext_validate_required_field = flext_validate_required_field
+    flext_validate_string_field = flext_validate_string_field
+    flext_validate_numeric_field = flext_validate_numeric_field
+    flext_validate_email_field = flext_validate_email_field
 
     @staticmethod
     def chain(*validators: Callable[[object], bool]) -> Callable[[object], bool]:
@@ -555,12 +208,6 @@ class FlextValidation(FlextValidators):
             return any(validator(value) for validator in validators)
 
         return any_validator
-
-    # Field validation functions
-    flext_validate_required_field = flext_validate_required_field
-    flext_validate_string_field = flext_validate_string_field
-    flext_validate_numeric_field = flext_validate_numeric_field
-    flext_validate_email_field = flext_validate_email_field
 
     @staticmethod
     def create_validation_config(
@@ -613,15 +260,13 @@ class FlextValidation(FlextValidators):
             return FlextResult.fail(f"Validation error: {e}")
 
 
-# Re-expose FlextPredicates class (already defined above)
-# This maintains the original API while using the consolidated implementation
+# =============================================================================
+# API RE-EXPOSURE - FlextPredicates and FlextValidationResult already defined above
+# =============================================================================
 
-
-# FlextValidationResult class already defined above with consolidated implementation
-# This maintains backward compatibility through class re-exposure
-
-# No legacy aliases - only Flext prefixed classes
-
+# FlextPredicates = _BasePredicates (already defined above)
+# FlextValidationResult = _ValidationResult (already defined above)
+# All functionality properly exposed through direct assignment
 
 # =============================================================================
 # CONVENIENCE FUNCTIONS - High-level validation helpers with Flext prefix
@@ -711,7 +356,10 @@ def flext_validate_numeric(
     return flext_validate_numeric_field(value, field_name, min_val, max_val)
 
 
-def flext_validate_email(value: object, field_name: str = "field") -> FlextValidationResult:
+def flext_validate_email(
+    value: object,
+    field_name: str = "field",
+) -> FlextValidationResult:
     """Validate email field with format and structure checking.
 
     Performs comprehensive email validation including format checking,

@@ -626,7 +626,7 @@ class FlextHandlers:
     # =============================================================================
 
     @staticmethod
-    def create_function_handler(
+    def flext_create_function_handler(
         handler_func: THandler,
     ) -> FlextHandlers.Handler[T, R]:
         """Create handler from function.
@@ -644,18 +644,18 @@ class FlextHandlers:
                 result = handler_func(message)
                 # Ensure we return FlextResult[R]
                 if hasattr(result, "is_success"):
-                    return result
-                return FlextResult.ok(result)
+                    return cast("FlextResult[R]", result)
+                return FlextResult.ok(cast("R", result))
 
         return FunctionHandler()
 
     @staticmethod
-    def create_registry() -> FlextHandlers.Registry:
+    def flext_create_registry() -> FlextHandlers.Registry:
         """Create new handler registry."""
         return FlextHandlers.Registry()
 
     @staticmethod
-    def create_chain() -> FlextHandlers.Chain:
+    def flext_create_chain() -> FlextHandlers.Chain:
         """Create new handler chain."""
         return FlextHandlers.Chain()
 

@@ -26,6 +26,7 @@ demonstrating the power and flexibility of the FlextPayload system.
 """
 
 import time
+import traceback
 
 from flext_core.payload import FlextEvent, FlextMessage, FlextPayload
 
@@ -846,7 +847,6 @@ def main() -> None:
 
     except Exception as e:
         print(f"\n❌ Error during FlextPayload demonstration: {e}")
-        import traceback
 
         traceback.print_exc()
 

@@ -74,6 +74,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
+from typing import cast
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -226,11 +227,11 @@ class FlextFieldCore(BaseModel, _BaseSerializableMixin, _BaseValidatableMixin):
             return True, None
 
         # Type-specific validation
-        if self.field_type == FlextFieldType.STRING:
+        if self.field_type == FlextFieldType.STRING.value:
             return self._validate_string_value(value)
-        if self.field_type == FlextFieldType.INTEGER:
+        if self.field_type == FlextFieldType.INTEGER.value:
             return self._validate_integer_value(value)
-        if self.field_type == FlextFieldType.BOOLEAN:
+        if self.field_type == FlextFieldType.BOOLEAN.value:
             return self._validate_boolean_value(value)
 
         return True, None
@@ -321,28 +322,28 @@ class FlextFieldCore(BaseModel, _BaseSerializableMixin, _BaseValidatableMixin):
 
 class FlextFieldMetadata(BaseModel):
     """Field metadata wrapper providing standardized access to field information.
-    
+
     Consolidated metadata container for field properties, validation rules,
     and descriptive information. Serves as a standardized interface for
     field introspection and documentation.
-    
+
     Architecture:
         - Immutable metadata container with Pydantic validation
         - Direct mapping from FlextFieldCore properties
         - Standardized access patterns for field information
         - JSON-serializable structure for API and documentation
-    
+
     Metadata Categories:
         - Core identification: field_id, field_name, field_type
         - Behavior settings: required, default_value
         - Validation constraints: min/max values, length, pattern, allowed_values
         - Documentation: description, example, tags
         - System flags: deprecated, sensitive, indexed
-    
+
     Usage:
         field = FlextFieldCore(...)
         metadata = FlextFieldMetadata.from_field(field)
-        
+
         # Access metadata properties
         assert metadata.field_name == "user_email"
         assert metadata.required is True
@@ -381,10 +382,10 @@ class FlextFieldMetadata(BaseModel):
     @classmethod
     def from_field(cls, field: FlextFieldCore) -> FlextFieldMetadata:
         """Create metadata from field instance.
-        
+
         Args:
             field: FlextFieldCore instance to extract metadata from
-            
+
         Returns:
             FlextFieldMetadata with all field properties
 
@@ -601,19 +602,19 @@ class FlextFields:
         return FlextFieldCore(
             field_id=field_id,
             field_name=field_name,
-            field_type=FlextFieldType.STRING,
+            field_type=FlextFieldType.STRING.value,
             required=bool(field_config.get("required", True)),
             default_value=field_config.get("default_value"),
-            min_length=int(field_config.get("min_length"))
-            if field_config.get("min_length") is not None
+            min_length=int(cast("int", min_length_val))
+            if (min_length_val := field_config.get("min_length")) is not None
             else None,
-            max_length=int(field_config.get("max_length"))
-            if field_config.get("max_length") is not None
+            max_length=int(cast("int", max_length_val))
+            if (max_length_val := field_config.get("max_length")) is not None
             else None,
             pattern=str(field_config.get("pattern"))
             if field_config.get("pattern") is not None
             else None,
-            allowed_values=list(field_config.get("allowed_values", [])),
+            allowed_values=cast("list[object]", field_config.get("allowed_values", [])),
             description=str(field_config.get("description"))
             if field_config.get("description") is not None
             else None,
@@ -621,7 +622,7 @@ class FlextFields:
             deprecated=bool(field_config.get("deprecated", False)),
             sensitive=bool(field_config.get("sensitive", False)),
             indexed=bool(field_config.get("indexed", False)),
-            tags=list(field_config.get("tags", [])),
+            tags=cast("list[str]", field_config.get("tags", [])),
         )
 
     @classmethod
@@ -635,14 +636,14 @@ class FlextFields:
         return FlextFieldCore(
             field_id=field_id,
             field_name=field_name,
-            field_type=FlextFieldType.INTEGER,
+            field_type=FlextFieldType.INTEGER.value,
             required=bool(field_config.get("required", True)),
             default_value=field_config.get("default_value"),
-            min_value=float(field_config.get("min_value"))
-            if field_config.get("min_value") is not None
+            min_value=float(cast("float", min_value_val))
+            if (min_value_val := field_config.get("min_value")) is not None
             else None,
-            max_value=float(field_config.get("max_value"))
-            if field_config.get("max_value") is not None
+            max_value=float(cast("float", max_value_val))
+            if (max_value_val := field_config.get("max_value")) is not None
             else None,
             description=str(field_config.get("description"))
             if field_config.get("description") is not None
@@ -651,7 +652,7 @@ class FlextFields:
             deprecated=bool(field_config.get("deprecated", False)),
             sensitive=bool(field_config.get("sensitive", False)),
             indexed=bool(field_config.get("indexed", False)),
-            tags=list(field_config.get("tags", [])),
+            tags=cast("list[str]", field_config.get("tags", [])),
         )
 
     @classmethod
@@ -665,7 +666,7 @@ class FlextFields:
         return FlextFieldCore(
             field_id=field_id,
             field_name=field_name,
-            field_type=FlextFieldType.BOOLEAN,
+            field_type=FlextFieldType.BOOLEAN.value,
             required=bool(field_config.get("required", True)),
             default_value=field_config.get("default_value"),
             description=str(field_config.get("description"))
@@ -675,7 +676,7 @@ class FlextFields:
             deprecated=bool(field_config.get("deprecated", False)),
             sensitive=bool(field_config.get("sensitive", False)),
             indexed=bool(field_config.get("indexed", False)),
-            tags=list(field_config.get("tags", [])),
+            tags=cast("list[str]", field_config.get("tags", [])),
         )
 
     @classmethod
@@ -717,6 +718,7 @@ class FlextFields:
 # =============================================================================
 
 # No legacy aliases - only Flext prefixed classes
+
 
 # Convenience functions with automatic registration and flext_ prefix
 def flext_create_string_field(
@@ -807,22 +809,35 @@ def flext_create_boolean_field(
 
 
 # =============================================================================
+# CONVENIENCE FIELD CLASSES REMOVED - DRY principle (use factory methods)
+# =============================================================================
+
+# Removed FlextStringField, FlextIntegerField, FlextBooleanField classes
+# to eliminate duplication. Use FlextFields.create_string_field() instead
+# or flext_create_string_field() helper function.
+
+
+# =============================================================================
+# BACKWARD COMPATIBILITY ALIASES - Essential for existing tests
+# =============================================================================
+
+# Backward compatibility for renamed classes
+FlextFieldCoreMetadata = FlextFieldMetadata
+
+# =============================================================================
 # EXPORTS - Clean public API seguindo diretrizes
 # =============================================================================
 
 __all__ = [
-    # Core classes sem underscore
     "FlextFieldCore",
-    "FlextFieldMetadata",
-    "FlextFieldRegistry",
-    "FlextFields",
-    # Type aliases sem underscore
+    "FlextFieldCoreMetadata",  # Backward compatibility alias
     "FlextFieldId",
+    "FlextFieldMetadata",
     "FlextFieldName",
+    "FlextFieldRegistry",
     "FlextFieldTypeStr",
-    # External dependencies
+    "FlextFields",
     "FlextValidator",
-    # Convenience functions with flext_ prefix
     "flext_create_boolean_field",
     "flext_create_integer_field",
     "flext_create_string_field",

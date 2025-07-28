@@ -23,10 +23,10 @@ from flext_core.utilities import (
     FlextGenerators,
     FlextTypeGuards,
     FlextUtilities,
-    clear_performance_metrics,
-    get_performance_metrics,
-    record_performance,
-    track_performance,
+    flext_clear_performance_metrics,
+    flext_get_performance_metrics,
+    flext_record_performance,
+    flext_track_performance,
 )
 
 pytestmark = [pytest.mark.unit, pytest.mark.patterns]
@@ -807,14 +807,14 @@ class TestPerformanceTracking:
 
     def setup_method(self) -> None:
         """Clear metrics before each test."""
-        clear_performance_metrics()
+        flext_clear_performance_metrics()
 
     def test_record_performance_metrics_storage(self) -> None:
-        """Test record_performance() metrics storage."""
+        """Test flext_record_performance() metrics storage."""
         # Record successful operation
-        record_performance("database", "get_user", 0.1, success=True)
+        flext_record_performance("database", "get_user", 0.1, success=True)
 
-        metrics = get_performance_metrics()
+        metrics = flext_get_performance_metrics()
         assert "database" in metrics
 
         db_metrics = metrics["database"]
@@ -835,10 +835,10 @@ class TestPerformanceTracking:
         assert func_metrics["max_time"] == 0.1
 
     def test_record_performance_failure_tracking(self) -> None:
-        """Test record_performance() failure tracking."""
-        record_performance("api", "call_service", 0.5, success=False)
+        """Test flext_record_performance() failure tracking."""
+        flext_record_performance("api", "call_service", 0.5, success=False)
 
-        metrics = get_performance_metrics()
+        metrics = flext_get_performance_metrics()
         api_metrics = metrics["api"]
 
         assert api_metrics["total_calls"] == 1
@@ -849,7 +849,7 @@ class TestPerformanceTracking:
     def test_track_performance_decorator(self) -> None:
         """Test track_performance() decorator functionality."""
 
-        @track_performance("computation")
+        @flext_track_performance("computation")
         def test_function(x: int) -> int:
             time.sleep(0.001)  # Small delay
             return x * 2
@@ -859,7 +859,7 @@ class TestPerformanceTracking:
         assert result == 10
 
         # Check metrics
-        metrics = get_performance_metrics()
+        metrics = flext_get_performance_metrics()
         assert "computation" in metrics
 
         comp_metrics = metrics["computation"]
@@ -875,7 +875,7 @@ class TestPerformanceTracking:
     def test_track_performance_decorator_exception_handling(self) -> None:
         """Test track_performance() decorator with exceptions."""
 
-        @track_performance("validation")
+        @flext_track_performance("validation")
         def failing_function() -> str:
             msg = "Test error"
             raise ValueError(msg)
@@ -885,7 +885,7 @@ class TestPerformanceTracking:
             failing_function()
 
         # Check metrics recorded failure
-        metrics = get_performance_metrics()
+        metrics = flext_get_performance_metrics()
         validation_metrics = metrics["validation"]
 
         assert validation_metrics["total_calls"] == 1
@@ -893,17 +893,17 @@ class TestPerformanceTracking:
         assert validation_metrics["failed_calls"] == 1
 
     def test_clear_performance_metrics(self) -> None:
-        """Test clear_performance_metrics() functionality."""
+        """Test flext_clear_performance_metrics() functionality."""
         # Add some metrics
-        record_performance("test", "function", 0.1, success=True)
+        flext_record_performance("test", "function", 0.1, success=True)
 
-        metrics_before = get_performance_metrics()
+        metrics_before = flext_get_performance_metrics()
         assert len(metrics_before) > 0
 
         # Clear metrics
-        clear_performance_metrics()
+        flext_clear_performance_metrics()
 
-        metrics_after = get_performance_metrics()
+        metrics_after = flext_get_performance_metrics()
         assert len(metrics_after) == 0
 
 

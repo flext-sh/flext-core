@@ -80,17 +80,250 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import inspect
+import threading
 import time
 import traceback
+from functools import wraps
+
+from pydantic import BaseModel, ConfigDict
 
 from flext_core.constants import ERROR_CODES
 
 # =============================================================================
-# GLOBAL EXCEPTION METRICS - Private para observabilidade
+# THREAD-SAFE DEBUGGING AND FALLBACK SYSTEM
 # =============================================================================
+
+# Thread-safe locks for concurrent access
+_metrics_lock = threading.RLock()
+_debug_lock = threading.RLock()
 
 # Global exception metrics consolidado - elimina duplicação
 _exception_metrics: dict[str, dict[str, object]] = {}
+
+# Centralized debug configuration
+_debug_config = {
+    "enabled": True,
+    "trace_level": "ERROR",  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+    "max_context_size": 1000,
+    "enable_stack_trace": True,
+    "enable_frame_inspection": True,
+    "fallback_enabled": True,
+}
+
+# Fallback registry for resilient error handling
+_fallback_registry: dict[str, object] = {}
+
+
+class FlextDebugConfig(BaseModel):
+    """Configuration for FLEXT debug system."""
+
+    model_config = ConfigDict(frozen=True)
+
+    enabled: bool = True
+    trace_level: str = "ERROR"
+    max_context_size: int = 1000
+    enable_stack_trace: bool = True
+    enable_frame_inspection: bool = True
+    fallback_enabled: bool = True
+
+
+def configure_debug_system(
+    config: FlextDebugConfig | None = None,
+) -> None:
+    """Configure the centralized debug system.
+
+    Thread-safe configuration for debugging and error handling.
+
+    Args:
+        config: Debug configuration object
+
+    """
+    if config is None:
+        config = FlextDebugConfig()
+
+    with _debug_lock:
+        _debug_config.update(
+            {
+                "enabled": config.enabled,
+                "trace_level": config.trace_level,
+                "max_context_size": config.max_context_size,
+                "enable_stack_trace": config.enable_stack_trace,
+                "enable_frame_inspection": config.enable_frame_inspection,
+                "fallback_enabled": config.fallback_enabled,
+            },
+        )
+
+
+def register_fallback(
+    operation_name: str,
+    fallback_func: object,
+) -> None:
+    """Register a fallback function for resilient error handling.
+
+    Thread-safe registration of fallback functions.
+    """
+    with _debug_lock:
+        _fallback_registry[operation_name] = fallback_func
+
+
+def get_enhanced_traceback() -> dict[str, object]:
+    """Get enhanced traceback with frame inspection.
+
+    Returns detailed traceback information for debugging.
+    """
+    if not _debug_config["enabled"]:
+        return {}
+
+    try:
+        frame_info: list[dict[str, object]] = []
+        if _debug_config["enable_frame_inspection"]:
+            frame_info.extend(
+                {
+                    "filename": frame_record.filename,
+                    "lineno": frame_record.lineno,
+                    "function": frame_record.function,
+                    "code_context": frame_record.code_context[0].strip()
+                    if frame_record.code_context
+                    else "",
+                }
+                for frame_record in inspect.stack()[1:]  # Skip current frame
+            )
+
+        return {
+            "thread_id": threading.current_thread().ident,
+            "thread_name": threading.current_thread().name,
+            "stack_trace": traceback.format_exc()
+            if _debug_config["enable_stack_trace"]
+            else "",
+            "frame_info": frame_info,
+            "timestamp": time.time(),
+        }
+    except (AttributeError, TypeError, ValueError, OSError):
+        # Fallback to minimal info if frame inspection fails
+        return {
+            "thread_id": threading.current_thread().ident,
+            "timestamp": time.time(),
+            "fallback_mode": True,
+        }
+
+
+def safe_fallback(operation_name: str, *args: object, **kwargs: object) -> object:
+    """Execute fallback function safely with error isolation.
+
+    Thread-safe fallback execution with comprehensive error handling.
+    """
+    if not _debug_config["fallback_enabled"]:
+        error_msg = f"Fallback disabled for operation: {operation_name}"
+        raise FlextOperationError(error_msg)
+
+    with _debug_lock:
+        fallback_func = _fallback_registry.get(operation_name)
+
+    if not fallback_func:
+        error_msg = f"No fallback registered for operation: {operation_name}"
+        raise FlextOperationError(error_msg)
+
+    try:
+        if callable(fallback_func):
+            return fallback_func(*args, **kwargs)
+    except (
+        TypeError,
+        ValueError,
+        AttributeError,
+        RuntimeError,
+        OSError,
+        KeyError,
+    ) as e:
+        # Even fallbacks can fail - provide ultimate fallback
+        enhanced_trace = get_enhanced_traceback()
+        error_msg = f"Fallback failed for operation '{operation_name}': {e}"
+        raise FlextCriticalError(
+            error_msg,
+            error_code="FALLBACK_FAILURE",
+            context={
+                "original_args": args,
+                "original_kwargs": kwargs,
+                "enhanced_trace": enhanced_trace,
+            },
+        ) from e
+    else:
+        return fallback_func
+
+
+def resilient_operation(
+    operation_name: str,
+) -> object:
+    """Create decorator for resilient operations with automatic fallback.
+
+    Provides thread-safe operation execution with automatic fallback on failure.
+    """
+
+    def decorator(func: object) -> object:
+        if not callable(func):
+            return func
+
+        @wraps(func)
+        def wrapper(*args: object, **kwargs: object) -> object:
+            try:
+                return func(*args, **kwargs)
+            except (
+                TypeError,
+                ValueError,
+                AttributeError,
+                RuntimeError,
+                OSError,
+                KeyError,
+            ) as e:
+                # Enhanced error information
+                enhanced_trace = get_enhanced_traceback()
+
+                # Try fallback if available
+                if (
+                    _debug_config["fallback_enabled"]
+                    and operation_name in _fallback_registry
+                ):
+                    try:
+                        return safe_fallback(operation_name, *args, **kwargs)
+                    except (
+                        TypeError,
+                        ValueError,
+                        AttributeError,
+                        RuntimeError,
+                        OSError,
+                        KeyError,
+                    ) as fallback_error:
+                        # Both primary and fallback failed
+                        error_msg = (
+                            f"Operation '{operation_name}' and its fallback both "
+                            f"failed. Primary: {e}, Fallback: {fallback_error}"
+                        )
+                        raise FlextCriticalError(
+                            error_msg,
+                            error_code="OPERATION_AND_FALLBACK_FAILURE",
+                            context={
+                                "primary_error": str(e),
+                                "fallback_error": str(fallback_error),
+                                "enhanced_trace": enhanced_trace,
+                                "operation_name": operation_name,
+                            },
+                        ) from fallback_error
+                else:
+                    # No fallback available
+                    error_msg = f"Operation '{operation_name}' failed: {e}"
+                    raise FlextOperationError(
+                        error_msg,
+                        error_code="OPERATION_FAILURE",
+                        context={
+                            "original_error": str(e),
+                            "enhanced_trace": enhanced_trace,
+                            "operation_name": operation_name,
+                        },
+                    ) from e
+
+        return wrapper
+
+    return decorator
 
 
 def _track_exception(exception_class: str, error_code: str | None) -> None:
@@ -99,29 +332,46 @@ def _track_exception(exception_class: str, error_code: str | None) -> None:
     Records exception occurrences with count, error code distribution,
     and temporal information for operational insights.
 
+    Thread-safe implementation with proper locking.
+
     Args:
         exception_class: Name of the exception class
         error_code: Associated error code for categorization
 
     """
-    if exception_class not in _exception_metrics:
-        _exception_metrics[exception_class] = {
-            "count": 0,
-            "error_codes": set(),
-            "last_seen": 0.0,
-        }
+    with _metrics_lock:
+        if exception_class not in _exception_metrics:
+            _exception_metrics[exception_class] = {
+                "count": 0,
+                "error_codes": set(),
+                "last_seen": 0.0,
+                "thread_info": {},
+            }
 
-    metrics = _exception_metrics[exception_class]
-    current_count = metrics["count"]
-    if isinstance(current_count, int):
-        metrics["count"] = current_count + 1
-    else:
-        metrics["count"] = 1
-    if error_code:
-        error_codes_set = metrics["error_codes"]
-        if isinstance(error_codes_set, set):
-            error_codes_set.add(error_code)
-    metrics["last_seen"] = time.time()
+        metrics = _exception_metrics[exception_class]
+        current_count = metrics["count"]
+        if isinstance(current_count, int):
+            metrics["count"] = current_count + 1
+        else:
+            metrics["count"] = 1
+
+        if error_code:
+            error_codes_set = metrics["error_codes"]
+            if isinstance(error_codes_set, set):
+                error_codes_set.add(error_code)
+
+        # Track thread information and update timestamp
+        thread_id = threading.current_thread().ident
+        thread_name = threading.current_thread().name
+        current_time = time.time()
+        thread_info = metrics.get("thread_info", {})
+        if isinstance(thread_info, dict):
+            thread_info[thread_id] = {
+                "name": thread_name,
+                "last_exception": current_time,
+            }
+            metrics["thread_info"] = thread_info
+        metrics["last_seen"] = current_time
 
 
 def get_exception_metrics() -> dict[str, dict[str, object]]:
@@ -129,12 +379,14 @@ def get_exception_metrics() -> dict[str, dict[str, object]]:
 
     Returns comprehensive metrics including occurrence counts,
     error code distributions, and temporal information.
+    Thread-safe implementation.
 
     Returns:
         Dictionary containing metrics for each exception type
 
     """
-    return dict(_exception_metrics)
+    with _metrics_lock:
+        return dict(_exception_metrics)
 
 
 def clear_exception_metrics() -> None:
@@ -142,8 +394,10 @@ def clear_exception_metrics() -> None:
 
     Removes all accumulated exception metrics to provide
     clean slate for test isolation.
+    Thread-safe implementation.
     """
-    _exception_metrics.clear()
+    with _metrics_lock:
+        _exception_metrics.clear()
 
 
 # =============================================================================
@@ -195,7 +449,7 @@ class FlextError(Exception):
         error_code: str | None = None,
         context: dict[str, object] | None = None,
     ) -> None:
-        """Initialize error with metrics tracking.
+        """Initialize error with enhanced debugging and metrics tracking.
 
         Args:
             message: Error message
@@ -210,7 +464,22 @@ class FlextError(Exception):
         self.timestamp = time.time()
         self.stack_trace = traceback.format_stack()
 
-        # Track exception metrics
+        # Enhanced debugging information
+        self.enhanced_trace = get_enhanced_traceback()
+
+        # Safely limit context size to prevent memory issues
+        max_size = _debug_config.get("max_context_size", 1000)
+        if (
+            self.context
+            and isinstance(max_size, int)
+            and len(str(self.context)) > max_size
+        ):
+            self.context = {
+                "_truncated": True,
+                "_original_size": len(str(self.context)),
+            }
+
+        # Track exception metrics with enhanced information
         _track_exception(self.__class__.__name__, self.error_code)
 
     def __str__(self) -> str:
@@ -667,17 +936,14 @@ FlextSchemaError = FlextValidationError
 # =============================================================================
 
 __all__ = [
-    # Specific exceptions
+    # Core exceptions
     "FlextAlreadyExistsError",
     "FlextAuthenticationError",
-    # Legacy aliases
     "FlextConfigError",
     "FlextConfigurationError",
     "FlextConnectionError",
     "FlextCriticalError",
-    # Core exceptions
     "FlextError",
-    # Main consolidated class
     "FlextExceptions",
     "FlextMigrationError",
     "FlextNotFoundError",
@@ -688,7 +954,12 @@ __all__ = [
     "FlextTimeoutError",
     "FlextTypeError",
     "FlextValidationError",
-    # Observability functions
+    # Debugging and observability functions
     "clear_exception_metrics",
+    "configure_debug_system",
+    "get_enhanced_traceback",
     "get_exception_metrics",
+    "register_fallback",
+    "resilient_operation",
+    "safe_fallback",
 ]

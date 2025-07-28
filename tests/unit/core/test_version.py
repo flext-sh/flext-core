@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from flext_core import __version__
-from flext_core.version import flext_get_version_info, get_version_string
+from flext_core.version import get_version_info, get_version_string
 
 
 class TestVersion:
@@ -30,9 +30,9 @@ class TestVersion:
         assert __version__ in version  # Version string contains the version
         assert isinstance(version, str)
 
-    def test_flext_get_version_info_function(self) -> None:
-        """Test flext_get_version_info function."""
-        version_info = flext_get_version_info()
+    def test_get_version_info_function(self) -> None:
+        """Test get_version_info function."""
+        version_info = get_version_info()
         assert hasattr(version_info, "major")
         assert hasattr(version_info, "minor")
         assert hasattr(version_info, "patch")

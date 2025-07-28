@@ -7,14 +7,13 @@ import pytest
 from flext_core.constants import FlextFieldType
 from flext_core.fields import (
     FlextFieldCore,
-    FlextFieldMetadata,
+    FlextFieldCoreMetadata,
     FlextFieldRegistry,
-    FlextFields,
 )
 from flext_core.result import FlextResult
 
 
-class TestFlextFieldCore:
+class TestFlextFieldCoreInteger:
     """Test FlextFieldCore integer type."""
 
     def test_integer_field_creation_minimal(self) -> None:
@@ -144,7 +143,7 @@ class TestFlextFieldType:
     def test_field_type_membership(self) -> None:
         """Test field type membership."""
         assert FlextFieldType.STRING in FlextFieldType
-        assert "invalid_type" not in [t for t in FlextFieldType]
+        assert "invalid_type" not in list(FlextFieldType)
 
     def test_field_type_iteration(self) -> None:
         """Test field type iteration."""
@@ -304,7 +303,7 @@ class ConcreteFlextFieldCore(FlextFieldCore):
         return str(value)
 
 
-class TestFlextFieldCore:
+class TestFlextFieldCoreBase:
     """Test FlextFieldCore base class."""
 
     def test_field_creation_minimal(self) -> None:
@@ -510,8 +509,8 @@ class TestFlextFieldCore:
         assert result == "test_value"
 
 
-class TestFlextFieldCore:
-    """Test FlextFieldCore concrete implementation."""
+class TestFlextFieldCoreString:
+    """Test FlextFieldCore string implementation."""
 
     def test_string_field_creation_minimal(self) -> None:
         """Test string field creation with minimal parameters."""
@@ -651,8 +650,8 @@ class TestFlextFieldCore:
         assert field.metadata is metadata
 
 
-class TestFlextFieldCore:
-    """Test FlextFieldCore class."""
+class TestFlextFieldCoreBoolean:
+    """Test FlextFieldCore boolean implementation."""
 
     def test_boolean_field_creation_minimal(self) -> None:
         """Test boolean field creation with minimal parameters."""
@@ -760,12 +759,12 @@ class TestFlextFieldCoreRegistry:
 
     def test_registry_creation(self) -> None:
         """Test registry creation."""
-        registry = FlextFieldCoreRegistry()
+        registry = FlextFieldRegistry()
         assert registry._fields == {}
 
     def test_register_field(self) -> None:
         """Test registering a field."""
-        registry = FlextFieldCoreRegistry()
+        registry = FlextFieldRegistry()
         field = FlextFieldCore(
             field_id="test_id",
             field_name="test_field",
@@ -776,7 +775,7 @@ class TestFlextFieldCoreRegistry:
 
     def test_get_field_existing(self) -> None:
         """Test getting an existing field."""
-        registry = FlextFieldCoreRegistry()
+        registry = FlextFieldRegistry()
         field = FlextFieldCore(
             field_id="test_id",
             field_name="test_field",
@@ -788,21 +787,21 @@ class TestFlextFieldCoreRegistry:
 
     def test_get_field_non_existent(self) -> None:
         """Test getting a non-existent field."""
-        registry = FlextFieldCoreRegistry()
+        registry = FlextFieldRegistry()
 
         result = registry.get_field("non_existent")
         assert result is None
 
     def test_get_all_fields_empty(self) -> None:
         """Test getting all fields when empty."""
-        registry = FlextFieldCoreRegistry()
+        registry = FlextFieldRegistry()
 
         result = registry.get_all_fields()
         assert result == {}
 
     def test_get_all_fields_with_fields(self) -> None:
         """Test getting all fields when registry has fields."""
-        registry = FlextFieldCoreRegistry()
+        registry = FlextFieldRegistry()
         field1 = FlextFieldCore(field_id="field1", field_name="test1")
         field2 = FlextFieldCore(field_id="field2", field_name="test2")
 
@@ -816,7 +815,7 @@ class TestFlextFieldCoreRegistry:
 
     def test_get_fields_by_type_with_matches(self) -> None:
         """Test getting fields by type with matches."""
-        registry = FlextFieldCoreRegistry()
+        registry = FlextFieldRegistry()
         string_field1 = FlextFieldCore(field_id="str1", field_name="test1")
         string_field2 = FlextFieldCore(field_id="str2", field_name="test2")
         int_field = FlextFieldCore(field_id="int1", field_name="test3")
@@ -833,7 +832,7 @@ class TestFlextFieldCoreRegistry:
 
     def test_validate_all_fields_success(self) -> None:
         """Test validating all fields with valid data."""
-        registry = FlextFieldCoreRegistry()
+        registry = FlextFieldRegistry()
         field = FlextFieldCore(field_id="test_id", field_name="test_field")
         registry.register_field(field)
 
@@ -843,7 +842,7 @@ class TestFlextFieldCoreRegistry:
 
     def test_validate_all_fields_required_missing(self) -> None:
         """Test validating all fields with required field missing."""
-        registry = FlextFieldCoreRegistry()
+        registry = FlextFieldRegistry()
         field = FlextFieldCore(
             field_id="test_id",
             field_name="test_field",
@@ -858,7 +857,7 @@ class TestFlextFieldCoreRegistry:
 
     def test_validate_all_fields_validation_error(self) -> None:
         """Test validating all fields with validation error."""
-        registry = FlextFieldCoreRegistry()
+        registry = FlextFieldRegistry()
         field = FlextFieldCore(field_id="test_id", field_name="test_field")
         registry.register_field(field)
 

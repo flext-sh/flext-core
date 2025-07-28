@@ -51,8 +51,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
+from flext_core.constants import MESSAGES
 from flext_core.exceptions import FlextError
 from flext_core.loggings import FlextLoggerFactory
 from flext_core.mixins import FlextLoggableMixin
@@ -115,19 +116,21 @@ class FlextServiceRegistrar(FlextLoggableMixin):
         self._services: dict[str, object] = {}
         self._factories: dict[str, Callable[[], object]] = {}
 
+    def _validate_service_name(self, name: str) -> FlextResult[str]:
+        """Validate service name - single source of truth for validation.
+
+        Eliminates code duplication across all service methods.
+        """
+        if not FlextValidators.is_non_empty_string(name):
+            return FlextResult.fail(MESSAGES["SERVICE_NAME_EMPTY"])
+        return FlextResult.ok(name)
+
     def register_service(self, name: str, service: object) -> FlextResult[None]:
         """Register a service instance."""
-        # Use BASE validators directly - MAXIMIZA base usage
-        if not FlextValidators.is_non_empty_string(name):
-            return FlextResult.fail("Service name cannot be empty")
-        validation_result = FlextResult.ok(name)
+        # Use centralized validation - eliminates duplication
+        validation_result = self._validate_service_name(name)
         if validation_result.is_failure:
-            self.logger.warning(
-                "Service name validation failed",
-                name=name,
-                error=validation_result.error,
-            )
-            return FlextResult.fail("Service name validation failed")
+            return validation_result.map(lambda _: None)  # Convert type, preserve error
 
         validated_name = validation_result.unwrap()
 
@@ -151,11 +154,16 @@ class FlextServiceRegistrar(FlextLoggableMixin):
         factory: Callable[[], object],
     ) -> FlextResult[None]:
         """Register a service factory."""
-        # Use BASE validators directly - MAXIMIZA base usage
-        if not FlextValidators.is_non_empty_string(name):
-            return FlextResult.fail("Service name cannot be empty")
+        # Use centralized validation - eliminates duplication
+        validation_result = self._validate_service_name(name)
+        if validation_result.is_failure:
+            return validation_result.map(lambda _: None)  # Convert type, preserve error
 
-        validated_name = name
+        validated_name = validation_result.unwrap()
+
+        # Validate factory is callable
+        if not callable(factory):
+            return FlextResult.fail("Factory must be callable")
 
         # Remove existing service if registering factory with same name
         if validated_name in self._services:
@@ -182,17 +190,10 @@ class FlextServiceRegistrar(FlextLoggableMixin):
 
     def unregister_service(self, name: str) -> FlextResult[None]:
         """Unregister a service."""
-        # Use BASE validators directly - MAXIMIZA base usage
-        if not FlextValidators.is_non_empty_string(name):
-            return FlextResult.fail("Service name cannot be empty")
-        validation_result = FlextResult.ok(name)
+        # Use centralized validation - eliminates duplication
+        validation_result = self._validate_service_name(name)
         if validation_result.is_failure:
-            self.logger.warning(
-                "Service name validation failed",
-                name=name,
-                error=validation_result.error,
-            )
-            return FlextResult.fail("Service name validation failed")
+            return validation_result.map(lambda _: None)  # Convert type, preserve error
 
         validated_name = validation_result.unwrap()
 
@@ -299,19 +300,23 @@ class FlextServiceRetrivier(FlextLoggableMixin):
         self._services = services
         self._factories = factories
 
+    def _validate_service_name(self, name: str) -> FlextResult[str]:
+        """Validate service name - single source of truth for validation.
+
+        Eliminates code duplication across all retrieval methods.
+        """
+        if not FlextValidators.is_non_empty_string(name):
+            return FlextResult.fail(MESSAGES["SERVICE_NAME_EMPTY"])
+        return FlextResult.ok(name)
+
     def get_service(self, name: str) -> FlextResult[object]:
         """Retrieve a registered service."""
-        # Use BASE validators directly - MAXIMIZA base usage
-        if not FlextValidators.is_non_empty_string(name):
-            return FlextResult.fail("Service name cannot be empty")
-        validation_result = FlextResult.ok(name)
+        # Use centralized validation - eliminates duplication
+        validation_result = self._validate_service_name(name)
         if validation_result.is_failure:
-            self.logger.warning(
-                "Service name validation failed",
-                name=name,
-                error=validation_result.error,
-            )
-            return FlextResult.fail("Service name validation failed")
+            return validation_result.map(
+                lambda _: object(),
+            )  # Convert type, preserve error
 
         validated_name = validation_result.unwrap()
 
@@ -357,17 +362,10 @@ class FlextServiceRetrivier(FlextLoggableMixin):
             FlextResult with service information
 
         """
-        # Use BASE validators directly - MAXIMIZA base usage
-        if not FlextValidators.is_non_empty_string(name):
-            return FlextResult.fail("Service name cannot be empty")
-        validation_result = FlextResult.ok(name)
+        # Use centralized validation - eliminates duplication
+        validation_result = self._validate_service_name(name)
         if validation_result.is_failure:
-            self.logger.warning(
-                "Service name validation failed",
-                name=name,
-                error=validation_result.error,
-            )
-            return FlextResult.fail("Service name validation failed")
+            return validation_result.map(lambda _: {})  # Convert type, preserve error
 
         validated_name = validation_result.unwrap()
 
@@ -568,7 +566,7 @@ class FlextContainer(FlextLoggableMixin):
             )
 
         self.logger.debug("Typed service retrieved successfully", name=name)
-        return FlextResult.ok(service)
+        return FlextResult.ok(cast("T", service))
 
     def __repr__(self) -> str:
         """Return string representation of container."""
@@ -846,7 +844,7 @@ def get_typed[T](
 
     # Type is guaranteed by ServiceKey[T] - cast to T
     service = result.unwrap()
-    return FlextResult.ok(service)
+    return FlextResult.ok(cast("T", service))
 
 
 # Export API

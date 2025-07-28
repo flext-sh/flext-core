@@ -83,6 +83,9 @@ import functools
 import time
 from typing import TYPE_CHECKING, Protocol
 
+from flext_core.loggings import get_logger
+from flext_core.result import safe_call
+
 if TYPE_CHECKING:
     from collections.abc import Callable
 
@@ -184,79 +187,82 @@ class _BaseLoggingDecorators:
     @staticmethod
     def log_calls_decorator(func: _DecoratedFunction) -> _DecoratedFunction:
         """Log function calls with arguments and execution time."""
+
         @functools.wraps(func)
         def wrapper(*args: object, **kwargs: object) -> object:
-            # Import here to avoid circular dependencies
-            from flext_core.loggings import get_logger
-            
-            logger = get_logger(f"{func.__module__}.{func.__qualname__}")
-            
+            logger = get_logger(f"{func.__module__}.{func.__name__}")
+
             # Log function entry
             logger.debug(
-                f"Calling {func.__name__}",
-                function=func.__name__,
-                module=func.__module__,
-                args_count=len(args),
-                kwargs_keys=list(kwargs.keys()),
+                "Calling function",
+                extra={
+                    "function": func.__name__,
+                    "func_module": func.__module__,
+                    "args_count": len(args),
+                    "kwargs_keys": list(kwargs.keys()),
+                },
             )
-            
-            import time
+
             start_time = time.time()
-            
+
             try:
                 result = func(*args, **kwargs)
                 execution_time_ms = (time.time() - start_time) * 1000
-                
+
                 # Log successful completion
                 logger.debug(
-                    f"{func.__name__} completed successfully",
-                    function=func.__name__,
-                    execution_time_ms=round(execution_time_ms, 2),
-                    success=True,
+                    "Function completed successfully",
+                    extra={
+                        "function": func.__name__,
+                        "execution_time_ms": round(execution_time_ms, 2),
+                        "success": True,
+                    },
                 )
-                
-                return result
             except Exception as e:
                 execution_time_ms = (time.time() - start_time) * 1000
-                
-                # Log exception
-                logger.error(
-                    f"{func.__name__} failed with exception",
-                    function=func.__name__,
-                    execution_time_ms=round(execution_time_ms, 2),
-                    exception_type=type(e).__name__,
-                    exception_message=str(e),
-                    success=False,
+
+                # Log exception with proper exception logging
+                logger.exception(
+                    "Function failed with exception",
+                    extra={
+                        "function": func.__name__,
+                        "execution_time_ms": round(execution_time_ms, 2),
+                        "exception_type": type(e).__name__,
+                        "exception_message": str(e),
+                        "success": False,
+                    },
                 )
                 raise
-                
+            else:
+                return result
+
         return wrapper
 
     @staticmethod
     def log_exceptions_decorator(func: _DecoratedFunction) -> _DecoratedFunction:
         """Log function exceptions with full traceback."""
+
         @functools.wraps(func)
         def wrapper(*args: object, **kwargs: object) -> object:
-            # Import here to avoid circular dependencies
-            from flext_core.loggings import get_logger
-            
-            logger = get_logger(f"{func.__module__}.{func.__qualname__}")
-            
+            logger = get_logger(f"{func.__module__}.{func.__name__}")
+
             try:
                 return func(*args, **kwargs)
             except Exception as e:
                 # Log exception with full context
                 logger.exception(
-                    f"Exception in {func.__name__}",
-                    function=func.__name__,
-                    module=func.__module__,
-                    exception_type=type(e).__name__,
-                    exception_message=str(e),
-                    args_count=len(args),
-                    kwargs_keys=list(kwargs.keys()),
+                    "Exception in function",
+                    extra={
+                        "function": func.__name__,
+                        "func_module": func.__module__,
+                        "exception_type": type(e).__name__,
+                        "exception_message": str(e),
+                        "args_count": len(args),
+                        "kwargs_keys": list(kwargs.keys()),
+                    },
                 )
                 raise
-                
+
         return wrapper
 
 
@@ -293,6 +299,9 @@ def _safe_call_decorator(
 ) -> Callable[[_DecoratedFunction], _DecoratedFunction]:
     """Create decorator for safe function execution with error handling.
 
+    Delegates to result.py safe_call implementation for single source of truth
+    eliminating code duplication following DRY principles.
+
     Args:
         error_handler: Optional error handler function
 
@@ -300,16 +309,23 @@ def _safe_call_decorator(
         Decorator function
 
     """
+    # Delegate to result.py single source of truth - eliminates duplication
 
     def decorator(func: _DecoratedFunction) -> _DecoratedFunction:
         @functools.wraps(func)
         def wrapper(*args: object, **kwargs: object) -> object:
-            try:
+            def call_func() -> object:
                 return func(*args, **kwargs)
-            except (TypeError, ValueError, AttributeError, RuntimeError) as e:
-                if error_handler and callable(error_handler):
-                    return error_handler(e)
-                return None
+
+            result = safe_call(call_func)
+
+            # Handle error_handler if provided
+            if result.is_failure and error_handler and callable(error_handler):
+                error_value = Exception(result.error or "Unknown error")
+                return error_handler(error_value)
+
+            # Return unwrapped result for backward compatibility
+            return result.unwrap_or(None)
 
         return _BaseDecoratorUtils.preserve_metadata(func, wrapper)
 

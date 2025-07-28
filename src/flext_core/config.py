@@ -1,11 +1,10 @@
 """FLEXT Core Configuration Module.
 
 Comprehensive configuration management system for the FLEXT Core library providing
-consolidated functionality through multiple inheritance patterns and Pydantic
-integration.
+consolidated functionality through composition patterns and Pydantic integration.
 
 Architecture:
-    - Multiple inheritance from specialized configuration base classes
+    - Composition-based delegation to specialized configuration base classes
     - Pydantic BaseSettings integration for automatic environment loading
     - Configuration validation with comprehensive error handling
     - File-based configuration loading with JSON support
@@ -21,14 +20,14 @@ Configuration Categories:
     - Pydantic integration: Automatic settings with model validation
 
 Maintenance Guidelines:
-    - Add new configuration types to appropriate specialized base classes first
-    - Use multiple inheritance for configuration capability combination
+    - Add new configuration types to appropriate base classes first
+    - Use composition for configuration capability combination
     - Integrate FlextResult pattern for all operations that can fail
     - Maintain backward compatibility through function aliases
     - Keep configuration operations stateless when possible
 
 Design Decisions:
-    - Multiple inheritance pattern for maximum configuration capability reuse
+    - Composition pattern for configuration capability reuse without overhead
     - Pydantic BaseSettings integration for automatic environment handling
     - FlextResult integration for consistent error handling patterns
     - File-based configuration with JSON format support
@@ -62,7 +61,6 @@ if TYPE_CHECKING:
 from pydantic_settings import BaseSettings as PydanticBaseSettings, SettingsConfigDict
 
 from flext_core._config_base import (
-    _BaseConfig,
     _BaseConfigDefaults,
     _BaseConfigOps,
     _BaseConfigValidation,
@@ -77,28 +75,21 @@ if TYPE_CHECKING:
 # =============================================================================
 
 
-class FlextConfig(
-    _BaseConfig,
-    _BaseConfigDefaults,
-    _BaseConfigOps,
-    _BaseConfigValidation,
-):
-    """Consolidated configuration management with multiple inheritance.
+class FlextConfig:
+    """Consolidated configuration management with composition-based orchestration.
 
-    Ultimate configuration orchestration class combining four specialized
-    configuration bases through multiple inheritance, adding complex functionality
-    impossible to achieve
-    with single inheritance patterns. Provides comprehensive configuration operations
+    Configuration orchestration class combining four specialized configuration bases
+    through composition and delegation, providing comprehensive configuration operations
     with FlextResult integration for enterprise error handling.
 
     Architecture:
-        - Multiple inheritance from four specialized configuration base classes
-        - Complex orchestration methods combining multiple configuration types
+        - Composition-based delegation to specialized configuration base classes
+        - Orchestration methods combining configuration types through composition
         - FlextResult integration for all operations that can fail
         - Enterprise-grade configuration validation and error handling
         - File-based configuration loading with comprehensive validation
 
-    Inherited Configuration Categories:
+    Configuration Categories (accessed through composition):
         - Base Configuration: Core loading and management (_BaseConfig)
         - Configuration Defaults: Default value management (_BaseConfigDefaults)
         - Configuration Operations: Merging and transformation (_BaseConfigOps)
@@ -159,11 +150,11 @@ class FlextConfig(
     ) -> FlextResult[TAnyDict]:
         """Create complete configuration orchestrating multiple inherited bases."""
         try:
-            # Use inherited validation methods directly
+            # Use composition to access validation methods
             if validate_all:
                 for key, value in config_data.items():
                     # Use basic validation - non-None check
-                    validation_result = cls.validate_config_value(
+                    validation_result = _BaseConfigValidation.validate_config_value(
                         value,
                         lambda x: x is not None,
                         f"Config value for '{key}' cannot be None",
@@ -175,14 +166,14 @@ class FlextConfig(
                         )
                         return FlextResult.fail(error_msg)
 
-            # Use inherited operations
-            load_result = cls.safe_load_from_dict(config_data)
+            # Use composition to access config operations
+            load_result = _BaseConfigOps.safe_load_from_dict(config_data)
             if load_result.is_failure:
                 return FlextResult.fail(f"Config load failed: {load_result.error}")
 
             final_config = load_result.unwrap()
 
-            # Apply defaults using inherited method
+            # Apply defaults using composition
             if apply_defaults:
                 # Use basic defaults for common configuration keys
                 default_values = {
@@ -190,7 +181,10 @@ class FlextConfig(
                     "timeout": 30,
                     "port": 8000,
                 }
-                defaults_result = cls.apply_defaults(final_config, dict(default_values))
+                defaults_result = _BaseConfigDefaults.apply_defaults(
+                    final_config,
+                    dict(default_values),
+                )
                 if defaults_result.is_failure:
                     return FlextResult.fail(
                         f"Applying defaults failed: {defaults_result.error}",
@@ -210,21 +204,21 @@ class FlextConfig(
         required_keys: list[str] | None = None,
     ) -> FlextResult[TAnyDict]:
         """Load and validate config from file using inherited methods."""
-        # Use inherited file loading
-        load_result = cls.safe_load_json_file(file_path)
+        # Use composition for file loading
+        load_result = _BaseConfigOps.safe_load_json_file(file_path)
         if load_result.is_failure:
             return FlextResult.fail(load_result.error or "JSON file loading failed")
 
         config_data = load_result.unwrap()
 
-        # Validate required keys using inherited validation
+        # Validate required keys using composition
         if required_keys:
             for key in required_keys:
                 if key not in config_data:
                     return FlextResult.fail(f"Required config key '{key}' not found")
 
-                # Use inherited validation
-                validation_result = cls.validate_config_value(
+                # Use composition for validation
+                validation_result = _BaseConfigValidation.validate_config_value(
                     config_data[key],
                     lambda x: x is not None,
                     f"Config value for '{key}' cannot be None",
@@ -244,16 +238,19 @@ class FlextConfig(
     ) -> FlextResult[TAnyDict]:
         """Merge configs and validate using inherited methods."""
         try:
-            # Use inherited merge
-            merge_result = cls.merge_configs(base_config, override_config)
+            # Use composition for merging
+            merge_result = _BaseConfigDefaults.merge_configs(
+                base_config,
+                override_config,
+            )
             if merge_result.is_failure:
                 return FlextResult.fail(f"Config merge failed: {merge_result.error}")
 
             merged = merge_result.unwrap()
 
-            # Validate merged result using inherited validation
+            # Validate merged result using composition
             for key, value in merged.items():
-                validation_result = cls.validate_config_value(
+                validation_result = _BaseConfigValidation.validate_config_value(
                     value,
                     lambda x: x is not None,
                     f"Merged config value for '{key}' cannot be None",
@@ -280,8 +277,12 @@ class FlextConfig(
         validate_type: type | None = None,
     ) -> FlextResult[str]:
         """Get environment variable with validation using inherited methods."""
-        # Use inherited env access
-        env_result = cls.safe_get_env_var(var_name, default, required=required)
+        # Use composition for env access
+        env_result = _BaseConfigOps.safe_get_env_var(
+            var_name,
+            default,
+            required=required,
+        )
         if env_result.is_failure:
             return FlextResult.fail(
                 env_result.error or "Environment variable access failed",
@@ -289,9 +290,13 @@ class FlextConfig(
 
         value = env_result.unwrap()
 
-        # Validate type using inherited validation if specified
+        # Validate type using composition if specified
         if validate_type:
-            type_validation = cls.validate_config_type(value, validate_type, var_name)
+            type_validation = _BaseConfigValidation.validate_config_type(
+                value,
+                validate_type,
+                var_name,
+            )
             if type_validation.is_failure:
                 error_msg = (
                     f"Environment variable '{var_name}' type validation failed: "
@@ -381,7 +386,7 @@ class FlextBaseSettings(PydanticBaseSettings):
 # EXPOSIÇÃO DIRETA DAS BASES ÚTEIS (aliases limpos sem herança vazia)
 # =============================================================================
 
-# Expose useful base classes directly with clean names
+# Direct exposure with clean names - eliminates inheritance overhead
 FlextConfigOps = _BaseConfigOps
 FlextConfigDefaults = _BaseConfigDefaults
 FlextConfigValidation = _BaseConfigValidation
@@ -405,7 +410,7 @@ def merge_configs(base: TAnyDict, override: TAnyDict) -> TAnyDict:
         Merged configuration dictionary
 
     """
-    merge_result = FlextConfig.merge_configs(base, override)
+    merge_result = _BaseConfigDefaults.merge_configs(base, override)
     return merge_result.unwrap() if merge_result.is_success else {}
 
 
@@ -421,7 +426,7 @@ def safe_get_env_var(
     required: bool = False,
 ) -> FlextResult[str]:
     """Module-level wrapper for safe environment variable access."""
-    result = FlextConfig.safe_get_env_var(var_name, default, required=required)
+    result = _BaseConfigOps.safe_get_env_var(var_name, default, required=required)
     if result.is_failure:
         return FlextResult.fail(result.error or "Environment variable access failed")
     return FlextResult.ok(result.unwrap())
@@ -429,7 +434,7 @@ def safe_get_env_var(
 
 def safe_load_json_file(file_path: str | Path) -> FlextResult[dict[str, object]]:
     """Module-level wrapper for safe JSON file loading."""
-    result = FlextConfig.safe_load_json_file(file_path)
+    result = _BaseConfigOps.safe_load_json_file(file_path)
     if result.is_failure:
         return FlextResult.fail(result.error or "JSON file loading failed")
     return FlextResult.ok(result.unwrap())

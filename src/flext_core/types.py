@@ -529,9 +529,7 @@ class FlextTypes:
         @staticmethod
         def is_instance_of(obj: object, target_type: type) -> bool:
             """Check if object is instance of target type."""
-            from flext_core.utilities import FlextTypeGuards
-
-            return FlextTypeGuards.is_instance_of(obj, target_type)
+            return isinstance(obj, target_type)
 
     # Type variables
     T = T
@@ -640,7 +638,7 @@ FlextEntityId = TEntityId
 FlextUserId = TUserId
 FlextErrorCode = TErrorCode
 FlextErrorMessage = TErrorMessage
-FlextMessageType = TMessage
+# FlextMessageType - use TMessage TypeVar directly (cannot alias TypeVars)
 
 # Protocol aliases for legacy compatibility
 Identifiable = FlextIdentifiable
@@ -664,7 +662,6 @@ __all__ = [
     "FlextExecutable",
     "FlextHandler",
     "FlextIdentifiable",
-    "FlextMessageType",
     "FlextSerializable",
     "FlextTimestamped",
     "FlextTransformer",
