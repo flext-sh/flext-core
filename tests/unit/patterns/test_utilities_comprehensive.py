@@ -687,7 +687,7 @@ class TestFlextUtilitiesOrchestration:
         assert metadata["version"] == 1
         assert isinstance(metadata["id"], str)
         assert metadata["id"].startswith("FLEXT_")
-        assert isinstance(metadata["created_at"], (int, float))
+        assert isinstance(metadata["created_at"], int | float)
         assert isinstance(metadata["timestamp_iso"], str)
         assert "T" in metadata["timestamp_iso"]  # ISO format
 
@@ -727,7 +727,7 @@ class TestFlextUtilitiesOrchestration:
         assert isinstance(system_info["python_version"], str)
         assert "3." in system_info["python_version"]  # Python 3.x
         assert isinstance(system_info["platform"], str)
-        assert isinstance(system_info["timestamp"], (int, float))
+        assert isinstance(system_info["timestamp"], int | float)
         assert isinstance(system_info["correlation_id"], str)
 
     def test_safe_increment_overflow_protection(self) -> None:

@@ -74,8 +74,8 @@ from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, ValidationError
 
+from flext_core._mixins_base import _BaseSerializableMixin, _BaseValidatableMixin
 from flext_core.decorators import FlextDecorators
-from flext_core.mixins import FlextSerializableMixin, FlextValidatableMixin
 from flext_core.result import FlextResult
 from flext_core.utilities import FlextTypeGuards, FlextUtilities
 from flext_core.validation import FlextValidators
@@ -127,7 +127,7 @@ def pure(func: object) -> object:
 # =============================================================================
 
 
-class ValidatedModel(BaseModel, FlextSerializableMixin, FlextValidatableMixin):
+class ValidatedModel(BaseModel):
     """Automatic validation model providing enterprise-grade safety for object creation.
 
     Backward compatibility class that bridges Pydantic validation with FLEXT patterns,
@@ -196,9 +196,12 @@ class ValidatedModel(BaseModel, FlextSerializableMixin, FlextValidatableMixin):
     """
 
     def __init__(self, **data: object) -> None:
-        """Initialize with automatic validation."""
+        """Initialize with validation and mixin functionality through composition."""
         try:
             super().__init__(**data)
+            # Initialize mixin functionality through composition
+            self._validation_errors: list[str] = []
+            self._is_valid: bool | None = None
         except ValidationError as e:
             # Convert Pydantic errors to user-friendly format
             errors = []
@@ -208,6 +211,59 @@ class ValidatedModel(BaseModel, FlextSerializableMixin, FlextValidatableMixin):
                 errors.append(f"{loc}: {msg}")
             error_msg = f"Invalid data: {'; '.join(errors)}"
             raise ValueError(error_msg) from e
+
+    # =========================================================================
+    # VALIDATION FUNCTIONALITY - Composition-based delegation
+    # =========================================================================
+
+    def _add_validation_error(self, error: str) -> None:
+        """Add validation error (delegates to base)."""
+        return _BaseValidatableMixin._add_validation_error(self, error)
+
+    def _clear_validation_errors(self) -> None:
+        """Clear all validation errors (delegates to base)."""
+        return _BaseValidatableMixin._clear_validation_errors(self)
+
+    def _mark_valid(self) -> None:
+        """Mark as valid and clear errors (delegates to base)."""
+        return _BaseValidatableMixin._mark_valid(self)
+
+    @property
+    def validation_errors(self) -> list[str]:
+        """Get validation errors (delegates to base)."""
+        return _BaseValidatableMixin.validation_errors.fget(self)  # type: ignore[misc]
+
+    @property
+    def is_valid(self) -> bool:
+        """Check if object is valid (delegates to base)."""
+        return _BaseValidatableMixin.is_valid.fget(self)  # type: ignore[misc]
+
+    def has_validation_errors(self) -> bool:
+        """Check if object has validation errors (delegates to base)."""
+        return _BaseValidatableMixin.has_validation_errors(self)
+
+    # =========================================================================
+    # SERIALIZATION FUNCTIONALITY - Composition-based delegation
+    # =========================================================================
+
+    def to_dict_basic(self) -> dict[str, object]:
+        """Convert to basic dictionary representation (delegates to base)."""
+        return _BaseSerializableMixin.to_dict_basic(self)
+
+    def _serialize_value(self, value: object) -> object | None:
+        """Serialize a single value for dict conversion (delegates to base)."""
+        return _BaseSerializableMixin._serialize_value(self, value)
+
+    def _serialize_collection(
+        self,
+        collection: list[object] | tuple[object, ...],
+    ) -> list[object]:
+        """Serialize list or tuple values (delegates to base)."""
+        return _BaseSerializableMixin._serialize_collection(self, collection)
+
+    def _serialize_dict(self, dict_value: dict[str, object]) -> dict[str, object]:
+        """Serialize dictionary values (delegates to base)."""
+        return _BaseSerializableMixin._serialize_dict(self, dict_value)
 
     @classmethod
     def create(cls, **data: object) -> FlextResult[ValidatedModel]:

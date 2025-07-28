@@ -203,11 +203,11 @@ class _BaseLoggingDecorators:
                 },
             )
 
-            start_time = time.time()
+            start_time = time.perf_counter()
 
             try:
                 result = func(*args, **kwargs)
-                execution_time_ms = (time.time() - start_time) * 1000
+                execution_time_ms = (time.perf_counter() - start_time) * 1000
 
                 # Log successful completion
                 logger.debug(
@@ -219,7 +219,7 @@ class _BaseLoggingDecorators:
                     },
                 )
             except Exception as e:
-                execution_time_ms = (time.time() - start_time) * 1000
+                execution_time_ms = (time.perf_counter() - start_time) * 1000
 
                 # Log exception with proper exception logging
                 logger.exception(

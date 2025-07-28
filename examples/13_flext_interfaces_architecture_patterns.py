@@ -183,7 +183,7 @@ class PositiveNumberRule(FlextValidationRule):
 
     def check(self, value: object) -> bool:
         """Check if value is positive number."""
-        return isinstance(value, (int, float)) and value > 0
+        return isinstance(value, int | float) and value > 0
 
     def error_message(self) -> str:
         """Get positive number error message."""
@@ -795,7 +795,7 @@ class UserEventHandler(FlextHandler):
 
     def can_handle(self, message: object) -> bool:
         """Check if can handle user events."""
-        return isinstance(message, (UserCreatedEvent, OrderPlacedEvent))
+        return isinstance(message, UserCreatedEvent | OrderPlacedEvent)
 
     def handle(self, message: object) -> FlextResult[object]:
         """Handle user events."""

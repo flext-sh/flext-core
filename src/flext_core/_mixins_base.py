@@ -98,6 +98,7 @@ from __future__ import annotations
 import time
 from typing import TYPE_CHECKING
 
+from flext_core._utilities_base import _BaseGenerators
 from flext_core.loggings import FlextLoggerFactory
 from flext_core.validation import FlextValidators
 
@@ -125,7 +126,7 @@ class _BaseTimestampMixin:
 
     def _initialize_timestamps(self) -> None:
         """Initialize timestamp fields."""
-        current_time = time.time()
+        current_time = _BaseGenerators.generate_timestamp()
         if (
             not hasattr(self, "_created_at")
             or getattr(self, "_created_at", None) is None
@@ -135,7 +136,7 @@ class _BaseTimestampMixin:
 
     def _update_timestamp(self) -> None:
         """Update the updated_at timestamp."""
-        self._updated_at = time.time()
+        self._updated_at = _BaseGenerators.generate_timestamp()
 
     @property
     def created_at(self) -> float | None:
@@ -152,7 +153,7 @@ class _BaseTimestampMixin:
         created_at = getattr(self, "_created_at", None)
         if created_at is None:
             return 0.0
-        return time.time() - float(created_at)
+        return _BaseGenerators.generate_timestamp() - float(created_at)
 
 
 class _BaseIdentifiableMixin:
@@ -176,10 +177,10 @@ class _BaseIdentifiableMixin:
                 self._id = entity_id
             else:
                 # Generate simple ID if invalid
-                self._id = f"entity_{int(time.time() * 1000000)}"
+                self._id = _BaseGenerators.generate_entity_id()
         else:
             # Generate simple ID
-            self._id = f"entity_{int(time.time() * 1000000)}"
+            self._id = _BaseGenerators.generate_entity_id()
 
     @property
     def id(self) -> TEntityId | None:
@@ -429,15 +430,15 @@ class _BaseTimingMixin:
 
     def _start_timing(self) -> float:
         """Start timing and return start timestamp."""
-        return time.time()
+        return time.perf_counter()
 
     def _get_execution_time_seconds(self, start_time: float) -> float:
         """Get execution time in seconds from start timestamp."""
-        return time.time() - start_time
+        return time.perf_counter() - start_time
 
     def _get_execution_time_ms(self, start_time: float) -> float:
         """Get execution time in milliseconds from start timestamp."""
-        return (time.time() - start_time) * 1000
+        return (time.perf_counter() - start_time) * 1000
 
     def _get_execution_time_ms_rounded(
         self,
@@ -482,7 +483,7 @@ class _BaseCacheableMixin:
         # Check expiration
         cache_timestamps: dict[str, float] = getattr(self, "_cache_timestamps", {})
         timestamp = cache_timestamps.get(key, 0.0)
-        if time.time() - timestamp > max_age_seconds:
+        if _BaseGenerators.generate_timestamp() - timestamp > max_age_seconds:
             self._cache_remove(key)
             return None
 
@@ -494,7 +495,7 @@ class _BaseCacheableMixin:
             return
 
         self._cache[key] = value
-        self._cache_timestamps[key] = time.time()
+        self._cache_timestamps[key] = _BaseGenerators.generate_timestamp()
 
     def _cache_remove(self, key: str) -> None:
         """Remove cached value."""

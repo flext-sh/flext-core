@@ -121,7 +121,11 @@ class FlextPayload[T](
         # Payload with metadata
         order_payload = FlextPayload(
             data=order_data,
-            metadata={"version": "1.0", "source": "api", "timestamp": _BaseGenerators.generate_timestamp()}
+            metadata={
+                "version": "1.0",
+                "source": "api",
+                "timestamp": _BaseGenerators.generate_timestamp(),
+            },
         )
 
         # Factory method with validation
