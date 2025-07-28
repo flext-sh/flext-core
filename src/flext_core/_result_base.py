@@ -65,13 +65,14 @@ from __future__ import annotations
 import contextlib
 from typing import TYPE_CHECKING, TypeVar
 
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
 # Define T and U locally for runtime use
 T = TypeVar("T")
 U = TypeVar("U")
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
-
     from flext_core.types import TErrorCode, TErrorMessage
 else:
     # Runtime type aliases
