@@ -167,12 +167,15 @@ class FlextLogLevel(Enum):
             handle_error()
     """
 
-    CRITICAL = "CRITICAL"
-    ERROR = "ERROR"
-    WARNING = "WARNING"
-    INFO = "INFO"
     DEBUG = "DEBUG"
-    TRACE = "TRACE"
+    INFO = "INFO"
+    WARNING = "WARNING"
+    ERROR = "ERROR"
+    CRITICAL = "CRITICAL"
+
+    def __hash__(self) -> int:
+        """Hash based on enum value."""
+        return hash(self.value)
 
     def __eq__(self, other: object) -> bool:
         """Support comparison with string values for test compatibility."""
