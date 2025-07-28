@@ -68,7 +68,7 @@ from flext_core._config_base import (
 from flext_core.result import FlextResult
 
 if TYPE_CHECKING:
-    from flext_core.types import TAnyDict
+    from flext_core.flext_types import TAnyDict
 
 # =============================================================================
 # FLEXT CONFIG - Consolidado com herança múltipla + funcionalidades específicas
@@ -370,12 +370,25 @@ class FlextBaseSettings(PydanticBaseSettings):
     @classmethod
     def create_with_validation(
         cls,
-        **overrides: object,
+        overrides: dict[str, object] | None = None,
     ) -> FlextResult[FlextBaseSettings]:
-        """Create settings with Pydantic validation."""
+        """Create settings with Pydantic validation.
+
+        Args:
+            overrides: Optional dictionary of configuration overrides
+
+        Returns:
+            FlextResult containing the validated settings instance
+
+        """
         try:
             # Let Pydantic handle validation directly
-            instance = cls(**overrides)
+            if overrides:
+                # MyPy can't understand that dict[str, object] maps to Pydantic fields
+                # but this is safe because Pydantic will validate at runtime
+                instance = cls(**overrides)  # type: ignore[arg-type]
+            else:
+                instance = cls()
             return FlextResult.ok(instance)
 
         except (TypeError, ValueError, AttributeError) as e:

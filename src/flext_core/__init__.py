@@ -112,30 +112,7 @@ from flext_core.exceptions import (
     get_exception_metrics,
 )
 from flext_core.fields import FlextFieldCore, FlextFields
-from flext_core.handlers import FlextHandlers
-from flext_core.loggings import (
-    FlextLogContext,
-    FlextLogger,
-    FlextLoggerFactory,
-    FlextLogging,
-    create_log_context,
-    get_logger,
-)
-from flext_core.mixins import (
-    FlextCacheableMixin,
-    FlextComparableMixin,
-    FlextEntityMixin,
-    FlextIdentifiableMixin,
-    FlextLoggableMixin,
-    FlextSerializableMixin,
-    FlextTimestampMixin,
-    FlextTimingMixin,
-    FlextValidatableMixin,
-    FlextValueObjectMixin,
-)
-from flext_core.payload import FlextEvent, FlextMessage, FlextPayload
-from flext_core.result import FlextResult
-from flext_core.types import (
+from flext_core.flext_types import (
     Comparable,
     E,
     FlextEntityId,
@@ -169,6 +146,29 @@ from flext_core.types import (
     V,
     Validatable,
 )
+from flext_core.handlers import FlextHandlers
+from flext_core.loggings import (
+    FlextLogContext,
+    FlextLogger,
+    FlextLoggerFactory,
+    FlextLogging,
+    create_log_context,
+    get_logger,
+)
+from flext_core.mixins import (
+    FlextCacheableMixin,
+    FlextComparableMixin,
+    FlextEntityMixin,
+    FlextIdentifiableMixin,
+    FlextLoggableMixin,
+    FlextSerializableMixin,
+    FlextTimestampMixin,
+    FlextTimingMixin,
+    FlextValidatableMixin,
+    FlextValueObjectMixin,
+)
+from flext_core.payload import FlextEvent, FlextMessage, FlextPayload
+from flext_core.result import FlextResult
 from flext_core.utilities import FlextUtilities
 from flext_core.validation import FlextValidation, FlextValidators
 from flext_core.value_objects import FlextValueObject, FlextValueObjectFactory

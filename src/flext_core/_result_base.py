@@ -73,7 +73,7 @@ T = TypeVar("T")
 U = TypeVar("U")
 
 if TYPE_CHECKING:
-    from flext_core.types import TErrorCode, TErrorMessage
+    from flext_core.flext_types import TErrorCode, TErrorMessage
 else:
     # Runtime type aliases
     TErrorCode = str
