@@ -62,6 +62,7 @@ from flext_core._validation_base import (
     _validate_non_empty_string,
     _validate_numeric_field,
     _validate_required_field,
+    _validate_service_name,
     _validate_string_field,
     _ValidationConfig,
     _ValidationResult,
@@ -383,6 +384,28 @@ def flext_validate_email(
     return flext_validate_email_field(value, field_name)
 
 
+def flext_validate_service_name(name: str) -> bool:
+    """Validate service name for container operations.
+
+    Validates service names used in dependency injection container operations
+    ensuring they meet basic requirements for service identification.
+
+    Args:
+        name: Service name to validate
+
+    Returns:
+        True if valid service name, False otherwise
+
+    Usage:
+        if flext_validate_service_name(service_name):
+            container.register(service_name, service_instance)
+        else:
+            raise ValueError("Invalid service name")
+
+    """
+    return _validate_service_name(name)
+
+
 # =============================================================================
 # EXPORTS - Clean public API
 # =============================================================================
@@ -403,6 +426,7 @@ __all__ = [
     "flext_validate_numeric_field",
     "flext_validate_required",
     "flext_validate_required_field",
+    "flext_validate_service_name",
     "flext_validate_string",
     "flext_validate_string_field",
 ]

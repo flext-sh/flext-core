@@ -789,7 +789,7 @@ def _add_missing_logger_methods() -> None:
             structlog.configure(processors=[structlog.processors.TimeStamper()])
         if add_caller:
             structlog.configure(
-                processors=[structlog.processors.CallsiteParameterAdder()]
+                processors=[structlog.processors.CallsiteParameterAdder()],
             )
 
         cls._configured = True

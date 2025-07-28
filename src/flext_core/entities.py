@@ -69,13 +69,14 @@ from typing import TYPE_CHECKING, Self
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
+from flext_core.flext_types import TAnyDict
 from flext_core.payload import FlextEvent
 from flext_core.result import FlextResult
 from flext_core.utilities import FlextGenerators
 
 if TYPE_CHECKING:
     from flext_core.types import TAnyDict
-# Removed FlextTimestampMixin to avoid field conflicts - using Pydantic fields directly
+
 
 # =============================================================================
 # ENTITIES - Domain Objects with Identity
@@ -414,15 +415,11 @@ class FlextEntityFactory:
         def factory(
             **kwargs: object,
         ) -> FlextResult[FlextEntity]:
-            def _raise_import_error() -> None:
-                """Raise import error for FlextGenerators."""
-                error_msg = "FlextGenerators not available due to circular imports"
-                raise ImportError(error_msg)
-
             try:
                 if FlextGenerators is None:
                     # Fallback if FlextGenerators is not available
-                    _raise_import_error()
+                    error_msg = "FlextGenerators not available due to circular imports"
+                    raise ImportError(error_msg)
 
                 data = {**(defaults or {}), **kwargs}
 
@@ -436,14 +433,12 @@ class FlextEntityFactory:
                 instance = entity_class.model_validate(data)
                 validation_result = instance.validate_domain_rules()
                 if validation_result.is_failure:
-                    return FlextResult.fail(
-                        validation_result.error or "Validation failed",
-                    )
+                    return validation_result
                 return FlextResult.ok(instance)
-            except (TypeError, ValueError, ImportError) as e:
-                return FlextResult.fail(
-                    f"Failed to create {entity_class.__name__}: {e}",
-                )
+            except (TypeError, ValueError, AttributeError, RuntimeError) as e:
+                return FlextResult.fail(f"Entity creation failed: {e}")
+            except ImportError as e:
+                return FlextResult.fail(f"Import error: {e}")
 
         return factory
 

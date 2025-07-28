@@ -65,13 +65,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
-from typing import Generic, cast
+from abc import abstractmethod
+from typing import cast
 
-from flext_core._mixins_base import _BaseTimingMixin
-from flext_core.loggings import FlextLoggerFactory
-from flext_core.result import FlextResult
-from flext_core.types import (
+from flext_core._handlers_base import (
+    _BaseHandler,
+)
+from flext_core.flext_types import (
     R,
     T,
     TAnyDict,
@@ -79,7 +79,7 @@ from flext_core.types import (
     TServiceKey,
     TServiceName,
 )
-from flext_core.utilities import FlextTypeGuards
+from flext_core.result import FlextResult
 
 # FlextLogger imported for convenience - all handlers use FlextLoggableMixin
 
@@ -162,21 +162,18 @@ class FlextHandlers:
     # BASE HANDLER - Foundation for all handlers
     # =============================================================================
 
-    class Handler(ABC, Generic[T, R]):
-        """Generic base handler interface for type-safe message processing.
+    class Handler(Generic[T, R]):
+        """Generic handler interface using composition-based delegation.
 
-        Abstract foundation class providing comprehensive handler functionality
-        including lifecycle management, validation, metrics collection, and structured
-        logging. Combines multiple inheritance patterns with generic type constraints
-        for maximum type safety and reusability.
+        Comprehensive handler functionality through composition and delegation
+        to specialized base classes, following the architectural guidelines of
+        single internal definition (_handlers_base.py) with external exposure.
 
         Architecture:
-            - Abstract base class pattern enforcing handler interface contracts
-            - Generic type parameters [T, R] for input message and result type safety
-            - Multiple inheritance from specialized mixin classes for behavior
-              composition
-            - Template method pattern with customizable lifecycle hooks
-            - Comprehensive metrics collection and performance monitoring
+            - Composition-based delegation to _BaseHandler for core functionality
+            - Eliminates multiple inheritance complexity following DRY principles
+            - Type-safe message processing through delegation patterns
+            - Comprehensive lifecycle management with performance monitoring
 
         Lifecycle Management:
             - can_handle: Type-based message compatibility verification
@@ -230,76 +227,43 @@ class FlextHandlers:
         """
 
         def __init__(self, handler_name: TServiceName | None = None) -> None:
-            """Initialize handler with logging and metrics through composition."""
-            self._handler_name = handler_name or self.__class__.__name__
-            # Initialize mixin functionality through composition
-            self._logger_name = f"{self.__class__.__module__}.{self.__class__.__name__}"
-            self._metrics = {
-                "messages_handled": 0,
-                "successes": 0,
-                "failures": 0,
-                "total_processing_time_ms": 0.0,
-            }
-
-            self.logger.debug(
-                "Handler initialized",
-                handler_name=self._handler_name,
-            )
+            """Initialize handler with composition-based delegation."""
+            # Create base handler instance for delegation
+            self._base_handler = _BaseHandler[object, object](handler_name)
 
         # =====================================================================
-        # LOGGING FUNCTIONALITY - Composition-based delegation
+        # DELEGATION METHODS - Direct delegation to base handler
         # =====================================================================
 
-        def _get_logger(self) -> object:
-            """Get logger instance (lazy initialization)."""
-            if not hasattr(self, "_logger"):
-                self._logger = FlextLoggerFactory.get_logger(self._logger_name)
-            return self._logger
+        def handle(self, message: object) -> FlextResult[object]:
+            """Handle message - delegates to base handler."""
+            return self._base_handler.handle(message)
+
+        def can_handle(self, message: object) -> bool:
+            """Check if handler can process message - delegates to base."""
+            return self._base_handler.can_handle(message)
+
+        def pre_handle(self, message: object) -> FlextResult[object]:
+            """Pre-processing hook - delegates to base."""
+            return self._base_handler.pre_handle(message)
+
+        def post_handle(self, result: FlextResult[object]) -> FlextResult[object]:
+            """Post-processing hook - delegates to base."""
+            return self._base_handler.post_handle(result)
+
+        def handle_with_hooks(self, message: object) -> FlextResult[object]:
+            """Handle with lifecycle hooks - delegates to base."""
+            return self._base_handler.handle_with_hooks(message)
+
+        def get_metrics(self) -> TAnyDict:
+            """Get handler metrics - delegates to base."""
+            return self._base_handler.get_metrics()
 
         @property
         def logger(self) -> object:
-            """Access to logger instance."""
-            return self._get_logger()
+            """Access logger - delegates to base."""
+            return self._base_handler.logger
 
-        # =====================================================================
-        # TIMING FUNCTIONALITY - Composition-based delegation
-        # =====================================================================
-
-        def _start_timing(self) -> float:
-            """Start timing and return start timestamp."""
-            return _BaseTimingMixin._start_timing(self)
-
-        def _get_execution_time_seconds(self, start_time: float) -> float:
-            """Get execution time in seconds from start timestamp."""
-            return _BaseTimingMixin._get_execution_time_seconds(self, start_time)
-
-        def _get_execution_time_ms(self, start_time: float) -> float:
-            """Get execution time in milliseconds from start timestamp."""
-            return _BaseTimingMixin._get_execution_time_ms(self, start_time)
-
-        def _get_execution_time_ms_rounded(
-            self,
-            start_time: float,
-            digits: int = 2,
-        ) -> float:
-            """Get rounded execution time in milliseconds from start timestamp."""
-            return _BaseTimingMixin._get_execution_time_ms_rounded(
-                self,
-                start_time,
-                digits,
-            )
-
-        @abstractmethod
-        def handle(self, message: T) -> FlextResult[R]:
-            """Handle the message and return result.
-
-            Args:
-                message: Message to handle
-
-            Returns:
-                FlextResult with processing result or error
-
-            """
 
         def can_handle(self, message: object) -> bool:
             """Check if handler can process this message.

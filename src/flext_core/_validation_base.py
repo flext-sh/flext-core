@@ -423,6 +423,15 @@ def _validate_non_empty_string(value: object) -> bool:
     return _BaseValidators.is_non_empty_string(value)
 
 
+def _validate_service_name(name: str) -> bool:
+    """Validate service name - single source of truth for service validation.
+
+    Eliminates code duplication across service registration and retrieval.
+    Used by container classes for consistent service name validation.
+    """
+    return _BaseValidators.is_non_empty_string(name)
+
+
 # =============================================================================
 # EXPORTS - Clean API surface
 # =============================================================================
@@ -437,5 +446,6 @@ __all__ = [
     "_validate_non_empty_string",
     "_validate_numeric_field",
     "_validate_required_field",
+    "_validate_service_name",
     "_validate_string_field",
 ]

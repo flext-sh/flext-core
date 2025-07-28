@@ -58,6 +58,7 @@ from collections.abc import Mapping
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
+from flext_core.flext_types import FlextTypes
 from flext_core.loggings import FlextLoggerFactory
 from flext_core.mixins import (
     FlextLoggableMixin,
@@ -65,7 +66,6 @@ from flext_core.mixins import (
     FlextValidatableMixin,
 )
 from flext_core.result import FlextResult
-from flext_core.types import FlextTypes
 from flext_core.validation import FlextValidators
 
 # Use FlextTypes for type variables

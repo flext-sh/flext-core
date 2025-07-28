@@ -172,6 +172,7 @@ class FlextLogLevel(Enum):
     WARNING = "WARNING"
     ERROR = "ERROR"
     CRITICAL = "CRITICAL"
+    TRACE = "TRACE"
 
     def __hash__(self) -> int:
         """Hash based on enum value."""

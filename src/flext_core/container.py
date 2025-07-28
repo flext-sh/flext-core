@@ -55,14 +55,14 @@ from typing import TYPE_CHECKING, cast
 
 from flext_core.constants import MESSAGES
 from flext_core.exceptions import FlextError
+from flext_core.flext_types import FlextTypes
 from flext_core.loggings import FlextLoggerFactory
 from flext_core.mixins import FlextLoggableMixin
 from flext_core.result import FlextResult
-from flext_core.types import FlextTypes
-from flext_core.validation import FlextValidators
+from flext_core.validation import flext_validate_service_name
 
 if TYPE_CHECKING:
-    from flext_core.types import T
+    from flext_core.flext_types import T
 
 # FlextLogger imported for convenience - all classes use FlextLoggableMixin
 
@@ -117,11 +117,12 @@ class FlextServiceRegistrar(FlextLoggableMixin):
         self._factories: dict[str, Callable[[], object]] = {}
 
     def _validate_service_name(self, name: str) -> FlextResult[str]:
-        """Validate service name - single source of truth for validation.
+        """Validate service name - delegates to centralized validation.
 
-        Eliminates code duplication across all service methods.
+        Eliminates code duplication by using single source of truth from
+        validation module.
         """
-        if not FlextValidators.is_non_empty_string(name):
+        if not flext_validate_service_name(name):
             return FlextResult.fail(MESSAGES["SERVICE_NAME_EMPTY"])
         return FlextResult.ok(name)
 
@@ -152,7 +153,7 @@ class FlextServiceRegistrar(FlextLoggableMixin):
         self,
         name: str,
         factory: Callable[[], object],
-    ) -> FlextResult[None]:
+    ) -> FlextResult[str]:
         """Register a service factory."""
         # Use centralized validation - eliminates duplication
         validation_result = self._validate_service_name(name)
@@ -165,28 +166,9 @@ class FlextServiceRegistrar(FlextLoggableMixin):
         if not callable(factory):
             return FlextResult.fail("Factory must be callable")
 
-        # Remove existing service if registering factory with same name
-        if validated_name in self._services:
-            self.logger.debug(
-                "Removing existing service for factory registration",
-                name=validated_name,
-            )
-            del self._services[validated_name]
-
-        if validated_name in self._factories:
-            self.logger.warning(
-                "Factory already registered, replacing",
-                name=validated_name,
-            )
-
+        # Register factory with validated name
         self._factories[validated_name] = factory
-        factory_name = getattr(factory, "__name__", str(factory))
-        self.logger.debug(
-            "Factory registered",
-            name=validated_name,
-            factory_name=factory_name,
-        )
-        return FlextResult.ok(None)
+        return FlextResult.ok(validated_name)
 
     def unregister_service(self, name: str) -> FlextResult[None]:
         """Unregister a service."""
@@ -301,11 +283,12 @@ class FlextServiceRetrivier(FlextLoggableMixin):
         self._factories = factories
 
     def _validate_service_name(self, name: str) -> FlextResult[str]:
-        """Validate service name - single source of truth for validation.
+        """Validate service name - delegates to centralized validation.
 
-        Eliminates code duplication across all retrieval methods.
+        Eliminates code duplication by using single source of truth from
+        validation module.
         """
-        if not FlextValidators.is_non_empty_string(name):
+        if not flext_validate_service_name(name):
             return FlextResult.fail(MESSAGES["SERVICE_NAME_EMPTY"])
         return FlextResult.ok(name)
 
@@ -499,7 +482,7 @@ class FlextContainer(FlextLoggableMixin):
         self,
         name: str,
         factory: Callable[[], object],
-    ) -> FlextResult[None]:
+    ) -> FlextResult[str]:
         """Register a service factory."""
         return self._registrar.register_factory(name, factory)
 

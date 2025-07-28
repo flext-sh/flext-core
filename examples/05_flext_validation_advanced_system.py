@@ -641,7 +641,8 @@ def demonstrate_validation_performance() -> None:
     email_time = time.time() - start_time
 
     print(
-        f"  🔹 {operations} Email validations: {email_time:.4f}s ({operations / email_time:.0f}/s)",
+        f"  🔹 {operations} Email validations: {email_time:.4f}s "
+        f"({operations / email_time:.0f}/s)",
     )
 
     # String validation performance
@@ -654,7 +655,8 @@ def demonstrate_validation_performance() -> None:
     string_time = time.time() - start_time
 
     print(
-        f"  🔹 {operations} String validations: {email_time:.4f}s ({operations / string_time:.0f}/s)",
+        f"  🔹 {operations} String validations: {email_time:.4f}s "
+        f"({operations / string_time:.0f}/s)",
     )
 
     # Predicate performance
@@ -668,7 +670,8 @@ def demonstrate_validation_performance() -> None:
     predicate_time = time.time() - start_time
 
     print(
-        f"  🔹 {operations} Predicate validations: {predicate_time:.4f}s ({operations / predicate_time:.0f}/s)",
+        f"  🔹 {operations} Predicate validations: {predicate_time:.4f}s "
+        f"({operations / predicate_time:.0f}/s)",
     )
 
     # Complex validation performance
@@ -686,7 +689,8 @@ def demonstrate_validation_performance() -> None:
     complex_time = time.time() - start_time
 
     print(
-        f"  🔹 100 Complex validations: {complex_time:.4f}s ({100 / complex_time:.0f}/s)",
+        f"  🔹 100 Complex validations: {complex_time:.4f}s "
+        f"({100 / complex_time:.0f}/s)",
     )
 
 

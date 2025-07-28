@@ -62,12 +62,11 @@ from flext_core._decorators_base import (
     _BaseValidationDecorators,
     _DecoratedFunction,
 )
+from flext_core.flext_types import F
 from flext_core.result import FlextResult, safe_call
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-
-    from flext_core.types import F
 
 # =============================================================================
 # FLEXT DECORATORS - Consolidados com herança múltipla + funcionalidades específicas
