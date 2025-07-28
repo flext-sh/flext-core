@@ -433,9 +433,10 @@ class _PerformanceTracker:
                 try:
                     result = func(*args, **kwargs)
                     success = True
-                    return result
                 except (TypeError, ValueError, AttributeError, RuntimeError):
                     raise
+                else:
+                    return result
                 finally:
                     execution_time = time.perf_counter() - start_time
                     self.record_performance(

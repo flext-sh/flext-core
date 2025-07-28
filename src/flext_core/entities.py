@@ -414,11 +414,15 @@ class FlextEntityFactory:
         def factory(
             **kwargs: object,
         ) -> FlextResult[FlextEntity]:
+            def _raise_import_error() -> None:
+                """Raise import error for FlextGenerators."""
+                error_msg = "FlextGenerators not available due to circular imports"
+                raise ImportError(error_msg)
+
             try:
                 if FlextGenerators is None:
                     # Fallback if FlextGenerators is not available
-                    error_msg = "FlextGenerators not available due to circular imports"
-                    raise ImportError(error_msg)
+                    _raise_import_error()
 
                 data = {**(defaults or {}), **kwargs}
 

@@ -178,7 +178,7 @@ class _BaseValidators:
     @staticmethod
     def is_in_range(value: object, min_val: float, max_val: float) -> bool:
         """Check if numeric value is in range."""
-        if not isinstance(value, (int, float)):
+        if not isinstance(value, int | float):
             return False
         return min_val <= value <= max_val
 
@@ -232,7 +232,7 @@ class _BasePredicates:
     @staticmethod
     def positive_number() -> Callable[[object], bool]:
         """Predicate that checks if value is positive number."""
-        return lambda x: isinstance(x, (int, float)) and x > 0
+        return lambda x: isinstance(x, int | float) and x > 0
 
     @staticmethod
     def min_length(length: int) -> Callable[[object], bool]:
@@ -268,7 +268,7 @@ class _BasePredicates:
     @staticmethod
     def in_range(min_val: float, max_val: float) -> Callable[[object], bool]:
         """Predicate that checks if value is in numeric range."""
-        return lambda x: isinstance(x, (int, float)) and min_val <= x <= max_val
+        return lambda x: isinstance(x, int | float) and min_val <= x <= max_val
 
     @staticmethod
     def contains(item: object) -> Callable[[object], bool]:
@@ -367,7 +367,7 @@ def _validate_numeric_field(
     except (TypeError, ValueError, AttributeError) as e:
         return _ValidationResult.failure(f"Invalid validation config: {e}")
 
-    if not isinstance(value, (int, float)):
+    if not isinstance(value, int | float):
         return _ValidationResult.failure(
             f"Field '{config.field_name}' must be a number, got {type(value).__name__}",
             config.field_name,
