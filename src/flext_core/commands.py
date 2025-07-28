@@ -76,16 +76,7 @@ if TYPE_CHECKING:
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from flext_core._mixins_base import _BaseSerializableMixin, _BaseValidatableMixin
-from flext_core.loggings import FlextLoggerFactory
-from flext_core.mixins import (
-    FlextLoggableMixin,
-    FlextSerializableMixin,
-    FlextTimingMixin,
-    FlextValidatableMixin,
-)
-from flext_core.payload import FlextPayload
-from flext_core.result import FlextResult
-from flext_core.types import (
+from flext_core.flext_types import (
     R,
     T,
     TAnyDict,
@@ -96,6 +87,15 @@ from flext_core.types import (
     TServiceName,
     TUserId,
 )
+from flext_core.loggings import FlextLoggerFactory
+from flext_core.mixins import (
+    FlextLoggableMixin,
+    FlextSerializableMixin,
+    FlextTimingMixin,
+    FlextValidatableMixin,
+)
+from flext_core.payload import FlextPayload
+from flext_core.result import FlextResult
 from flext_core.utilities import FlextGenerators, FlextTypeGuards
 from flext_core.validation import FlextValidators
 

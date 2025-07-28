@@ -776,7 +776,7 @@ def _add_missing_logger_methods() -> None:
     def configure(
         cls: type[FlextLogger],
         *,
-        log_level: FlextLogLevel = FlextLogLevel.INFO,
+        _log_level: FlextLogLevel = FlextLogLevel.INFO,
         json_output: bool = False,
         add_timestamp: bool = True,
         add_caller: bool = False,
@@ -799,7 +799,7 @@ def _add_missing_logger_methods() -> None:
         cls: type[FlextLogger],
         name: str,
         *,
-        level: str = "INFO",
+        _level: str = "INFO",
     ) -> object:
         """Get logger with auto-configuration."""
         if not cls._configured:
@@ -808,31 +808,31 @@ def _add_missing_logger_methods() -> None:
 
     @classmethod
     def get_base_logger(
-        cls: type[FlextLogger],
+        _cls: type[FlextLogger],
         name: str,
         *,
-        level: str = "INFO",
+        _level: str = "INFO",
     ) -> object:
         """Get base logger with observability."""
         return structlog.get_logger(name)
 
     @classmethod
-    def bind_context(cls: type[FlextLogger], **context: object) -> object:
+    def bind_context(_cls: type[FlextLogger], **context: object) -> object:
         """Create logger with bound context."""
         return structlog.get_logger("context").bind(**context)
 
     @classmethod
-    def clear_context(cls: type[FlextLogger]) -> None:
+    def clear_context(_cls: type[FlextLogger]) -> None:
         """Clear global context variables."""
         structlog.contextvars.clear_contextvars()
 
     @classmethod
-    def with_performance_tracking(cls: type[FlextLogger], name: str) -> object:
+    def with_performance_tracking(_cls: type[FlextLogger], name: str) -> object:
         """Get logger with performance tracking."""
         return structlog.get_logger(name)
 
     @classmethod
-    def flext_get_logger(cls: type[FlextLogger], name: str) -> object:
+    def flext_get_logger(_cls: type[FlextLogger], name: str) -> object:
         """Backward compatibility logger creation."""
         return structlog.get_logger(name)
 
