@@ -31,7 +31,7 @@ class TestLibraryIntegration:
         # Test FlextEntityId
         entity_id: FlextEntityId = "entity-123"
         if entity_id != "entity-123":
-            msg = f"Expected {"entity-123"}, got {entity_id}"
+            msg = f"Expected {'entity-123'}, got {entity_id}"
             raise AssertionError(msg)
 
         # Test FlextContainer
@@ -42,7 +42,7 @@ class TestLibraryIntegration:
         service_result = container.get("service")
         assert service_result.is_success
         if service_result.data != "value":
-            msg = f"Expected {"value"}, got {service_result.data}"
+            msg = f"Expected {'value'}, got {service_result.data}"
             raise AssertionError(msg)
 
         # Test global container
@@ -69,7 +69,7 @@ class TestLibraryIntegration:
         result = factory_result.data
         assert isinstance(result, FlextResult)
         if result.data != "container_result":
-            msg = f"Expected {"container_result"}, got {result.data}"
+            msg = f"Expected {'container_result'}, got {result.data}"
             raise AssertionError(msg)
 
     def test_entity_id_in_flext_result(self) -> None:
@@ -79,7 +79,7 @@ class TestLibraryIntegration:
 
         assert result.is_success
         if result.data != "user-456":
-            msg = f"Expected {"user-456"}, got {result.data}"
+            msg = f"Expected {'user-456'}, got {result.data}"
             raise AssertionError(msg)
         assert isinstance(result.data, str)
 

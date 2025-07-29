@@ -115,13 +115,13 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_valida
 
 from flext_core.exceptions import FlextValidationError
 from flext_core.fields import FlextFields
+from flext_core.flext_types import TAnyDict
 from flext_core.payload import FlextEvent
 from flext_core.result import FlextResult
-from flext_core.types import TAnyDict
 from flext_core.utilities import FlextGenerators
 
 if TYPE_CHECKING:
-    from flext_core.types import TAnyDict
+    from flext_core.flext_types import TAnyDict
 
 # =============================================================================
 # DOMAIN-SPECIFIC TYPES - Entity Pattern Specializations
@@ -432,7 +432,7 @@ class FlextEntity(BaseModel, ABC):
 
         """
         try:
-            # Try to get field definition from registry
+            # Get field definition from registry
             field_result = FlextFields.get_field_by_name(field_name)
             if field_result.is_success:
                 field_def = field_result.unwrap()
@@ -445,7 +445,7 @@ class FlextEntity(BaseModel, ABC):
 
             # If no field definition found, return success (allow other validation)
             return FlextResult.ok(None)
-        except (ImportError, AttributeError, ValueError) as e:
+        except (AttributeError, RuntimeError) as e:
             return FlextResult.fail(f"Field validation error: {e}")
 
     def validate_all_fields(self) -> FlextResult[None]:
@@ -641,10 +641,14 @@ class FlextEntityFactory:
                         validation_result.error or "Domain validation failed",
                     )
                 return FlextResult.ok(instance)
-            except (TypeError, ValueError, AttributeError, RuntimeError) as e:
+            except (
+                TypeError,
+                ValueError,
+                AttributeError,
+                RuntimeError,
+                ImportError,
+            ) as e:
                 return FlextResult.fail(f"Entity creation failed: {e}")
-            except ImportError as e:
-                return FlextResult.fail(f"Import error: {e}")
 
         return factory
 

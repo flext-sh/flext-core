@@ -68,7 +68,7 @@ from flext_core._config_base import (
 from flext_core.result import FlextResult
 
 if TYPE_CHECKING:
-    from flext_core.types import TAnyDict
+    from flext_core.flext_types import TAnyDict
 
 # =============================================================================
 # DOMAIN-SPECIFIC TYPES - Configuration Pattern Specializations

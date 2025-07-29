@@ -1012,9 +1012,9 @@ class TestHandlerChain:
         # Should get results from Handler1 and Handler2, not Handler3
         if len(results) != EXPECTED_BULK_SIZE:
             raise AssertionError(f"Expected {2}, got {len(results)}")
-        if all(result.is_success for result in results):
+        if not all(result.is_success for result in results):
             raise AssertionError(
-                f"Expected {all(result.is_success for result in results)} in {results}"
+                f"Expected all results to be successful, got {results}"
             )
         if results[0].data != "Handler1 result":
             raise AssertionError(f"Expected {'Handler1 result'}, got {results[0].data}")
@@ -1228,9 +1228,9 @@ class TestHandlerEdgeCases:
             results.append(result)
 
         # All should succeed
-        if all(result.is_success for result in results):
+        if not all(result.is_success for result in results):
             raise AssertionError(
-                f"Expected {all(result.is_success for result in results)} in {results}"
+                f"Expected all results to be successful, got {results}"
             )
         if len(results) != 10:
             raise AssertionError(f"Expected {10}, got {len(results)}")

@@ -74,7 +74,7 @@ from flext_core.utilities import FlextGenerators
 if TYPE_CHECKING:
     from datetime import datetime
 
-    from flext_core.types import TAnyDict
+    from flext_core.flext_types import TAnyDict
 
 
 class FlextAggregateRoot(FlextEntity):

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_core.types import FlextTypes
+from flext_core.flext_types import FlextTypes
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 

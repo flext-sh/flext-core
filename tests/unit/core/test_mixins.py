@@ -170,10 +170,7 @@ class TestBasicMixins:
         assert isinstance(model1 < model2, bool)
         assert isinstance(model2 > model1, bool)
         assert isinstance(model1 <= model2, bool)
-        if isinstance(model2 < model1, bool):
-            raise AssertionError(
-                f"Expected {isinstance(model2, bool)} >= {model1, bool}"
-            )
+        assert isinstance(model2 >= model1, bool)
 
         # Test basic comparison method - uses string comparison
         result1 = model1._compare_basic(model2)
@@ -539,9 +536,9 @@ class TestMixinEdgeCases:
             raise AssertionError(f"Expected {'complex_value'} in {data}")
         assert isinstance(data["complex_value"], dict)
         # none_value is not serialized if it's None
-        if "none_value" not in data or data.get("none_value") is None:
+        if "none_value" in data:
             raise AssertionError(
-                f"Expected {'none_value'} not in {data or data.get('none_value') is None}"
+                f"Expected none_value not in {data}, but found: {data.get('none_value')}"
             )
 
     def test_mixin_performance_characteristics(self) -> None:

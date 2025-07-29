@@ -17,7 +17,7 @@ from flext_core.result import FlextResult, safe_call
 from flext_core.validation import FlextValidators
 
 if TYPE_CHECKING:
-    from flext_core.types import T, TAnyDict, TFactory, TTransformer
+    from flext_core.flext_types import T, TAnyDict, TFactory, TTransformer
 
 # =============================================================================
 # CONSTANTS

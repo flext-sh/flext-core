@@ -453,9 +453,9 @@ class TestFlextContainerServiceManagement:
 
         # Verify service is gone
         assert not clean_container.has("database")
-        if "database" not in clean_container.list_services():
+        if "database" in clean_container.list_services():
             raise AssertionError(
-                f"Expected {'database'} not in {clean_container.list_services()}"
+                f"Expected 'database' to be removed from services, but found it in {clean_container.list_services()}"
             )
 
     def test_service_removal_not_found(

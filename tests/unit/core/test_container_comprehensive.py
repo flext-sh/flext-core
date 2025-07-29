@@ -137,9 +137,9 @@ class TestFlextServiceRegistrar:
         assert result.is_success
 
         # Service should be removed, factory should be present
-        if "test" not in registrar.get_services_dict():
+        if "test" in registrar.get_services_dict():
             raise AssertionError(
-                f"Expected {'test'} in {registrar.get_services_dict()}"
+                f"Expected 'test' to be removed from services, but found it in {registrar.get_services_dict()}"
             )
         assert "test" in registrar.get_factories_dict()
 
@@ -163,9 +163,9 @@ class TestFlextServiceRegistrar:
         registrar.register_service("test", service)
         result = registrar.unregister_service("test")
         assert result.is_success
-        if "test" not in registrar.get_services_dict():
+        if "test" in registrar.get_services_dict():
             raise AssertionError(
-                f"Expected {'test'} in {registrar.get_services_dict()}"
+                f"Expected 'test' to be removed from services, but found it in {registrar.get_services_dict()}"
             )
 
     def test_unregister_factory_success(self) -> None:
@@ -179,9 +179,9 @@ class TestFlextServiceRegistrar:
         registrar.register_factory("test", factory)
         result = registrar.unregister_service("test")
         assert result.is_success
-        if "test" not in registrar.get_factories_dict():
+        if "test" in registrar.get_factories_dict():
             raise AssertionError(
-                f"Expected {'test'} in {registrar.get_factories_dict()}"
+                f"Expected 'test' to be removed from factories, but found it in {registrar.get_factories_dict()}"
             )
 
     def test_unregister_nonexistent_service(self) -> None:

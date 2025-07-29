@@ -84,8 +84,8 @@ if TYPE_CHECKING:
 
     from structlog.stdlib import BoundLogger
 
+    from flext_core.flext_types import TAnyDict
     from flext_core.result import FlextResult
-    from flext_core.types import TAnyDict
 
 # =============================================================================
 # VALIDATION INTERFACES

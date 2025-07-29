@@ -107,7 +107,7 @@ from flext_core.exceptions import FlextOperationError
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from flext_core.types import TFactory
+    from flext_core.flext_types import TFactory
 
 # Import for runtime use
 import contextlib
@@ -220,6 +220,13 @@ class FlextResult[T]:
                 error_code=ERROR_CODES["MAP_ERROR"],
                 error_data={"exception_type": type(e).__name__, "exception": str(e)},
             )
+        except Exception as e:
+            # Catch-all for unexpected exceptions
+            return FlextResult.fail(
+                f"Unexpected transformation error: {e}",
+                error_code=ERROR_CODES["EXCEPTION_ERROR"],
+                error_data={"exception_type": type(e).__name__, "exception": str(e)},
+            )
 
     def flat_map(self, func: Callable[[T], FlextResult[U]]) -> FlextResult[U]:
         """Flat map for chaining results."""
@@ -238,6 +245,13 @@ class FlextResult[T]:
             return FlextResult.fail(
                 f"Chained operation failed: {e}",
                 error_code=ERROR_CODES["BIND_ERROR"],
+                error_data={"exception_type": type(e).__name__, "exception": str(e)},
+            )
+        except Exception as e:
+            # Catch-all for unexpected exceptions
+            return FlextResult.fail(
+                f"Unexpected chaining error: {e}",
+                error_code=ERROR_CODES["CHAIN_ERROR"],
                 error_data={"exception_type": type(e).__name__, "exception": str(e)},
             )
 

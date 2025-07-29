@@ -18,51 +18,46 @@ class TestFlextResult:
     def test_success_creation(self) -> None:
         """Test creating success result."""
         result = FlextResult.ok("test_data")
-        if not (result.is_success):
-            raise AssertionError(f"Expected True, got {result.is_success}")
-        if result.data != "test_data":
-            raise AssertionError(f"Expected {'test_data'}, got {result.data}")
+        assert result.is_success, f"Expected True, got {result.is_success}"
+        assert result.data == "test_data", f"Expected {'test_data'}, got {result.data}"
         assert result.error is None
 
     def test_failure_creation(self) -> None:
         """Test creating failure result."""
         result: FlextResult[str] = FlextResult.fail("test_error")
-        if not (result.is_failure):
-            raise AssertionError(f"Expected True, got {result.is_failure}")
+        assert result.is_failure, f"Expected True, got {result.is_failure}"
         assert result.data is None
-        if result.error != "test_error":
-            raise AssertionError(f"Expected {'test_error'}, got {result.error}")
+        assert result.error == "test_error", (
+            f"Expected {'test_error'}, got {result.error}"
+        )
 
     def test_success_with_metadata(self) -> None:
         """Test creating success result with metadata."""
         # Metadata not supported in current FlextResult implementation
         result = FlextResult.ok("test_data")
-        if result.data != "test_data":
-            raise AssertionError(f"Expected {'test_data'}, got {result.data}")
+        assert result.data == "test_data", f"Expected {'test_data'}, got {result.data}"
 
     def test_failure_with_metadata(self) -> None:
         """Test creating failure result with metadata."""
         # Metadata not supported in current FlextResult implementation
         result: FlextResult[str] = FlextResult.fail("test_error")
-        if result.error != "test_error":
-            raise AssertionError(f"Expected {'test_error'}, got {result.error}")
+        assert result.error == "test_error", (
+            f"Expected {'test_error'}, got {result.error}"
+        )
 
     def test_boolean_conversion(self) -> None:
         """Test boolean conversion."""
         success_result = FlextResult.ok("data")
         failure_result: FlextResult[str] = FlextResult.fail("error")
 
-        if not (bool(success_result)):
-            raise AssertionError(f"Expected True, got {bool(success_result)}")
-        if bool(failure_result):
-            raise AssertionError(f"Expected False, got {bool(failure_result)}")
+        assert bool(success_result), f"Expected True, got {bool(success_result)}"
+        assert not bool(failure_result), f"Expected False, got {bool(failure_result)}"
 
     def test_unwrap_success(self) -> None:
         """Test unwrapping success result."""
         data = "test_data"
         result = FlextResult.ok(data)
-        if result.unwrap() != data:
-            raise AssertionError(f"Expected {data}, got {result.unwrap()}")
+        assert result.unwrap() == data, f"Expected {data}, got {result.unwrap()}"
 
     def test_unwrap_failure_raises(self) -> None:
         """Test unwrapping failure result raises exception."""
@@ -75,25 +70,23 @@ class TestFlextResult:
         """Test unwrap_or with success result."""
         data = "test_data"
         result = FlextResult.ok(data)
-        if result.unwrap_or("default") != data:
-            raise AssertionError(f"Expected {data}, got {result.unwrap_or('default')}")
+        assert result.unwrap_or("default") == data, (
+            f"Expected {data}, got {result.unwrap_or('default')}"
+        )
 
     def test_unwrap_or_failure(self) -> None:
         """Test unwrap_or with failure result."""
         result: FlextResult[str] = FlextResult.fail("error")
-        if result.unwrap_or("default") != "default":
-            raise AssertionError(
-                f"Expected {'default'}, got {result.unwrap_or('default')}"
-            )
+        assert result.unwrap_or("default") == "default", (
+            f"Expected {'default'}, got {result.unwrap_or('default')}"
+        )
 
     def test_map_success(self) -> None:
         """Test map with success result."""
         result = FlextResult.ok("hello")
         mapped = result.map(lambda x: x.upper())
-        if not (mapped.is_success):
-            raise AssertionError(f"Expected True, got {mapped.is_success}")
-        if mapped.data != "HELLO":
-            raise AssertionError(f"Expected {'HELLO'}, got {mapped.data}")
+        assert mapped.is_success, f"Expected True, got {mapped.is_success}"
+        assert mapped.data == "HELLO", f"Expected {'HELLO'}, got {mapped.data}"
 
     def test_map_failure(self) -> None:
         """Test map with failure result."""

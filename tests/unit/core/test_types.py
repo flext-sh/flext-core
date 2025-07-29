@@ -24,8 +24,7 @@ class TestTypeAliases:
         # FlextEntityId is just a string with better typing
         assert isinstance(user_id, str)
         assert isinstance(order_id, str)
-        if user_id != "user-123":
-            raise AssertionError(f"Expected {'user-123'}, got {user_id}")
+        assert user_id == "user-123", f"Expected {'user-123'}, got {user_id}"
         assert order_id == "order-456"
 
     def test_service_name_basic_usage(self) -> None:
@@ -36,8 +35,9 @@ class TestTypeAliases:
         # FlextServiceName provides type safety for service registration
         assert isinstance(database_service, str)
         assert isinstance(logger_service, str)
-        if database_service != "database":
-            raise AssertionError(f"Expected {'database'}, got {database_service}")
+        assert database_service == "database", (
+            f"Expected {'database'}, got {database_service}"
+        )
         assert logger_service == "logger"
 
     def test_config_key_basic_usage(self) -> None:
@@ -48,8 +48,9 @@ class TestTypeAliases:
         # FlextConfigKey helps with configuration key management
         assert isinstance(db_host_key, str)
         assert isinstance(api_key, str)
-        if db_host_key != "database.host":
-            raise AssertionError(f"Expected {'database.host'}, got {db_host_key}")
+        assert db_host_key == "database.host", (
+            f"Expected {'database.host'}, got {db_host_key}"
+        )
         assert api_key == "api.key"
 
     def test_event_type_basic_usage(self) -> None:
@@ -60,8 +61,9 @@ class TestTypeAliases:
         # FlextEventType provides type safety for event handling
         assert isinstance(user_created, str)
         assert isinstance(order_placed, str)
-        if user_created != "user.created":
-            raise AssertionError(f"Expected {'user.created'}, got {user_created}")
+        assert user_created == "user.created", (
+            f"Expected {'user.created'}, got {user_created}"
+        )
         assert order_placed == "order.placed"
 
     def test_payload_basic_usage(self) -> None:
@@ -85,16 +87,13 @@ class TestTypeAliases:
             data_dict = payload.model_dump()
             return f"Processing: {len(data_dict)} fields"
 
-        if user_payload.data["id"] != "123":  # type: ignore[index]
-            raise AssertionError(
-                f"Expected {'123'} # type: ignore[index], got {user_payload.data['id']}"
-            )
-        if "name" not in user_payload.data:  # type: ignore[operator]
-            raise AssertionError(
-                f"Expected {'name'} in {user_payload.data} # type: ignore[operator]"
-            )
-        if process_payload(user_payload) != "Processing: 2 fields":
-            raise AssertionError(
-                f"Expected {'Processing: 2 fields'}, got {process_payload(user_payload)}"
-            )
+        assert user_payload.data["id"] == "123", (  # type: ignore[index]
+            f"Expected {'123'} # type: ignore[index], got {user_payload.data['id']}"
+        )
+        assert "name" in user_payload.data, (  # type: ignore[operator]
+            f"Expected {'name'} in {user_payload.data} # type: ignore[operator]"
+        )
+        assert process_payload(user_payload) == "Processing: 2 fields", (
+            f"Expected {'Processing: 2 fields'}, got {process_payload(user_payload)}"
+        )
         assert process_payload(event_payload) == "Processing: 2 fields"

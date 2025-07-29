@@ -566,14 +566,9 @@ class TestBaseBuilder:
         errors.append("Modified error")
 
         # Original errors should be unchanged
-        if builder.error_count != 1:
-            msg = f"Expected {1}, got {builder.error_count}"
-            raise AssertionError(msg)
-        if "Modified error" not in builder._get_errors():
-            msg = f"Expected {'Modified error'} in {builder._get_errors()}"
-            raise AssertionError(
-                msg,
-            )
+        assert builder.error_count == 1
+        assert "Modified error" not in builder._get_errors()
+        assert "Original error" in builder._get_errors()
 
     def test_reset(self) -> None:
         """Test resetting builder state."""
@@ -928,17 +923,13 @@ class TestBuilderEdgeCases:
             builder.error_count == EXPECTED_DATA_COUNT
         )  # Only required validations and custom error add errors
         errors = builder._get_errors()
-        if any("missing1" in error for error in errors):
-            msg = f"Expected {any('missing1' in error for error in errors)} in {errors}"
-            raise AssertionError(msg)
+        assert any("missing1" in error for error in errors)
         assert any("missing2" in error for error in errors)
-        if "Custom error" not in errors:
-            msg = f"Expected {'Custom error'} in {errors}"
-            raise AssertionError(msg)
+        assert "Custom error" in errors
 
     def test_property_with_complex_values(self) -> None:
         """Test storing complex property values."""
-        builder = _BaseBuilder
+        builder = _BaseBuilder()
         complex_value = {
             "nested": {"list": [1, 2, 3], "dict": {"a": "b"}},
             "function": lambda x: x * 2,

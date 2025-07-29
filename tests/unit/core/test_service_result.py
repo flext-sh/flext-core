@@ -18,8 +18,7 @@ class TestFlextResult:
 
         assert result.is_success
         assert not result.is_failure
-        if result.data != "test data":
-            raise AssertionError(f"Expected {'test data'}, got {result.data}")
+        assert result.data == "test data", f"Expected {'test data'}, got {result.data}"
 
     def test_failure_creation(self) -> None:
         """Test creating failed FlextResult."""
@@ -27,8 +26,9 @@ class TestFlextResult:
 
         assert result.is_failure
         assert not result.is_success
-        if result.error != "error message":
-            raise AssertionError(f"Expected {'error message'}, got {result.error}")
+        assert result.error == "error message", (
+            f"Expected {'error message'}, got {result.error}"
+        )
 
     def test_with_none_data(self) -> None:
         """Test FlextResult with None data (common pattern for void operations).
@@ -47,8 +47,7 @@ class TestFlextResult:
         result3 = FlextResult.ok("different")
         failure: FlextResult[str] = FlextResult.fail("error")
 
-        if result1 != result2:
-            raise AssertionError(f"Expected {result2}, got {result1}")
+        assert result1 == result2, f"Expected {result2}, got {result1}"
         assert result1 != result3
         assert result1 != failure
 
@@ -57,10 +56,8 @@ class TestFlextResult:
         success = FlextResult.ok("data")
         failure: FlextResult[str] = FlextResult.fail("error")
 
-        if not (bool(success)):
-            raise AssertionError(f"Expected True, got {bool(success)}")
-        if bool(failure):
-            raise AssertionError(f"Expected False, got {bool(failure)}")
+        assert bool(success), f"Expected True, got {bool(success)}"
+        assert not bool(failure), f"Expected False, got {bool(failure)}"
 
     def test_immutability(self) -> None:
         """Test that FlextResult is immutable."""
@@ -69,16 +66,16 @@ class TestFlextResult:
         # FlextResult should be frozen/immutable
         try:
             result.data = "changed"  # This should fail
-            msg = "FlextResult should be immutable"
-            raise AssertionError(msg)
+            pytest.fail("FlextResult should be immutable")
         except (AttributeError, TypeError, ValidationError):
             pass  # Expected - frozen pydantic model
 
     def test_unwrap_success(self) -> None:
         """Test unwrapping successful result."""
         result = FlextResult.ok("test data")
-        if result.unwrap() != "test data":
-            raise AssertionError(f"Expected {'test data'}, got {result.unwrap()}")
+        assert result.unwrap() == "test data", (
+            f"Expected {'test data'}, got {result.unwrap()}"
+        )
 
     def test_unwrap_failure_raises(self) -> None:
         """Test unwrapping failure result raises FlextOperationError."""
@@ -90,18 +87,16 @@ class TestFlextResult:
     def test_unwrap_or_success(self) -> None:
         """Test unwrap_or with successful result."""
         result = FlextResult.ok("test data")
-        if result.unwrap_or("default") != "test data":
-            raise AssertionError(
-                f"Expected {'test data'}, got {result.unwrap_or('default')}"
-            )
+        assert result.unwrap_or("default") == "test data", (
+            f"Expected {'test data'}, got {result.unwrap_or('default')}"
+        )
 
     def test_unwrap_or_failure(self) -> None:
         """Test unwrap_or with failure result."""
         result: FlextResult[str] = FlextResult.fail("error")
-        if result.unwrap_or("default") != "default":
-            raise AssertionError(
-                f"Expected {'default'}, got {result.unwrap_or('default')}"
-            )
+        assert result.unwrap_or("default") == "default", (
+            f"Expected {'default'}, got {result.unwrap_or('default')}"
+        )
 
     def test_map_success(self) -> None:
         """Test mapping successful result."""

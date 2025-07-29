@@ -530,7 +530,10 @@ class TestFlextFieldCore:
             raise AssertionError(
                 f"Expected {math.pi}, got {float_field.deserialize_value(math.pi)}"
             )
-        assert float_field.deserialize_value("3.14") == EXPECTED_DATA_COUNT
+        if float_field.deserialize_value("3.14") != 3.14:
+            raise AssertionError(
+                f"Expected {3.14}, got {float_field.deserialize_value('3.14')}"
+            )
         if float_field.deserialize_value(42) != 42.0:
             raise AssertionError(
                 f"Expected {42.0}, got {float_field.deserialize_value(42)}"
@@ -971,7 +974,7 @@ class TestFlextFieldRegistry:
             raise AssertionError(f"Expected True, got {removed}")
         if registry.get_field_count() != 1:
             raise AssertionError(f"Expected {1}, got {registry.get_field_count()}")
-        if "mgmt1" not in registry.fields_dict:
+        if "mgmt1" in registry.fields_dict:
             raise AssertionError(f"Expected {'mgmt1'} not in {registry.fields_dict}")
         assert "mgmt_name1" not in registry.field_names_dict
 

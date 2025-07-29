@@ -56,14 +56,14 @@ from typing import TYPE_CHECKING, cast
 
 from flext_core.constants import MESSAGES
 from flext_core.exceptions import FlextError
+from flext_core.flext_types import FlextTypes, TAnyDict
 from flext_core.loggings import FlextLoggerFactory
 from flext_core.mixins import FlextLoggableMixin
 from flext_core.result import FlextResult
-from flext_core.types import FlextTypes, TAnyDict
 from flext_core.validation import flext_validate_service_name
 
 if TYPE_CHECKING:
-    from flext_core.types import T
+    from flext_core.flext_types import T
 
 # FlextLogger imported for convenience - all classes use FlextLoggableMixin
 

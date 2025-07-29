@@ -76,9 +76,9 @@ class TestFlextValueObject:
         """Test creating valid email value object."""
         email = EmailAddress(email="test@example.com")
 
-        if email.email != "test@example.com":
-            msg = f"Expected {'test@example.com'}, got {email.email}"
-            raise AssertionError(msg)
+        assert email.email == "test@example.com", (
+            f"Expected {'test@example.com'}, got {email.email}"
+        )
         assert isinstance(email, EmailAddress)
 
         # Test validation
@@ -103,12 +103,9 @@ class TestFlextValueObject:
             email = EmailAddress(email="test@invalid")
             validation_result = email.validate_domain_rules()
             assert validation_result.is_failure
-            if "domain must contain a dot" not in validation_result.error:
-                msg = (
-                    f"Expected {'domain must contain a dot'},"
-                    f" got {validation_result.error}",
-                )
-                raise AssertionError(msg)
+            assert "domain must contain a dot" in validation_result.error, (
+                f"Expected {'domain must contain a dot'}, got {validation_result.error}"
+            )
         except (ValidationError, ValueError):
             # If Pydantic validation prevents creation, that's also valid
             pytest.skip("Pydantic validation prevents object creation")
@@ -119,9 +116,7 @@ class TestFlextValueObject:
         money2 = Money(amount=50.0, currency="USD")
 
         # Test basic properties
-        if money1.amount != 100.0:
-            msg = f"Expected {100.0}, got {money1.amount}"
-            raise AssertionError(msg)
+        assert money1.amount == 100.0, f"Expected {100.0}, got {money1.amount}"
         assert money1.currency == "USD"
 
         # Test domain validation
@@ -132,9 +127,9 @@ class TestFlextValueObject:
         add_result = money1.add(money2)
         assert add_result.is_success
         result_money = add_result.data
-        if result_money.amount != 150.0:
-            msg = f"Expected {150.0}, got {result_money.amount}"
-            raise AssertionError(msg)
+        assert result_money.amount == 150.0, (
+            f"Expected {150.0}, got {result_money.amount}"
+        )
         assert result_money.currency == "USD"
 
     def test_money_value_object_currency_mismatch(self) -> None:
@@ -144,9 +139,9 @@ class TestFlextValueObject:
 
         add_result = money_usd.add(money_eur)
         assert add_result.is_failure
-        if "different currencies" not in add_result.error:
-            msg = f"Expected {'different currencies'} in {add_result.error}"
-            raise AssertionError(msg)
+        assert "different currencies" in add_result.error, (
+            f"Expected {'different currencies'} in {add_result.error}"
+        )
 
     def test_value_object_equality(self) -> None:
         """Test value object equality based on attributes."""
@@ -155,15 +150,13 @@ class TestFlextValueObject:
         email3 = EmailAddress(email="other@example.com")
 
         # Value objects should be equal based on content
-        if email1 != email2:
-            msg = f"Expected {email2}, got {email1}"
-            raise AssertionError(msg)
+        assert email1 == email2, f"Expected {email2}, got {email1}"
         assert email1 != email3
 
         # Test hash consistency
-        if hash(email1) != hash(email2):
-            msg = f"Expected {hash(email2)}, got {hash(email1)}"
-            raise AssertionError(msg)
+        assert hash(email1) == hash(email2), (
+            f"Expected {hash(email2)}, got {hash(email1)}"
+        )
         assert hash(email1) != hash(email3)
 
     def test_value_object_string_representation(self) -> None:
@@ -171,9 +164,7 @@ class TestFlextValueObject:
         email = EmailAddress(email="test@example.com")
         str_repr = str(email)
 
-        if "EmailAddress" not in str_repr:
-            msg = f"Expected {'EmailAddress'} in {str_repr}"
-            raise AssertionError(msg)
+        assert "EmailAddress" in str_repr, f"Expected {'EmailAddress'} in {str_repr}"
         assert "test@example.com" in str_repr
 
     def test_value_object_logging_capability(self) -> None:
@@ -215,23 +206,21 @@ class TestFlextValueObject:
         assert payload is not None
 
         payload_data = payload.data
-        if "value_object_data" not in payload_data:
-            msg = f"Expected {'value_object_data'} in {payload_data}"
-            raise AssertionError(msg)
+        assert "value_object_data" in payload_data, (
+            f"Expected {'value_object_data'} in {payload_data}"
+        )
         assert "metadata" in payload_data
-        if "class_info" not in payload_data:
-            msg = f"Expected {'class_info'} in {payload_data}"
-            raise AssertionError(msg)
+        assert "class_info" in payload_data, (
+            f"Expected {'class_info'} in {payload_data}"
+        )
 
         # Check metadata
         metadata = payload_data["metadata"]
-        if "type" not in metadata:
-            msg = f"Expected {'type'} in {metadata}"
-            raise AssertionError(msg)
+        assert "type" in metadata, f"Expected {'type'} in {metadata}"
         assert "timestamp" in metadata
-        if "correlation_id" not in metadata:
-            msg = f"Expected {'correlation_id'} in {metadata}"
-            raise AssertionError(msg)
+        assert "correlation_id" in metadata, (
+            f"Expected {'correlation_id'} in {metadata}"
+        )
         assert "validated" in metadata
 
     def test_value_object_field_validation(self) -> None:
@@ -254,9 +243,9 @@ class TestFlextValueObject:
         # Domain validation should fail
         validation_result = invalid_obj.validate_domain_rules()
         assert validation_result.is_failure
-        if "always invalid" not in validation_result.error:
-            msg = f"Expected {'always invalid'} in {validation_result.error}"
-            raise AssertionError(msg)
+        assert "always invalid" in validation_result.error, (
+            f"Expected {'always invalid'} in {validation_result.error}"
+        )
 
         # Validate_flext should also reflect this
         flext_validation = invalid_obj.validate_flext()
@@ -269,15 +258,13 @@ class TestFlextValueObject:
         # Test model dump
         data = email.model_dump()
         assert isinstance(data, dict)
-        if data["email"] != "test@example.com":
-            msg = f"Expected {'test@example.com'}, got {data['email']}"
-            raise AssertionError(msg)
+        assert data["email"] == "test@example.com", (
+            f"Expected {'test@example.com'}, got {data['email']}"
+        )
 
         # Test model copy (should work for value objects)
         email_copy = email.model_copy()
-        if email_copy != email:
-            msg = f"Expected {email}, got {email_copy}"
-            raise AssertionError(msg)
+        assert email_copy == email, f"Expected {email}, got {email_copy}"
         assert email_copy is not email  # Different instances
 
     def test_value_object_inheritance_behavior(self) -> None:
@@ -304,9 +291,9 @@ class TestFlextValueObjectFactory:
 
         if email_result.is_success:
             email = email_result.data
-            if email.email != "test@example.com":
-                msg = f"Expected {'test@example.com'}, got {email.email}"
-                raise AssertionError(msg)
+            assert email.email == "test@example.com", (
+                f"Expected {'test@example.com'}, got {email.email}"
+            )
         else:
             # Factory might not be fully implemented
             assert email_result.is_failure
@@ -328,9 +315,7 @@ class TestFlextValueObjectFactory:
 
         if money_result.is_success:
             money = money_result.data
-            if money.amount != 100.0:
-                msg = f"Expected {100.0}, got {money.amount}"
-                raise AssertionError(msg)
+            assert money.amount == 100.0, f"Expected {100.0}, got {money.amount}"
             assert money.currency == "USD"
         else:
             # Factory might not be fully implemented
@@ -367,9 +352,9 @@ class TestValueObjectEdgeCases:
             items=["item1", "item2"],
         )
 
-        if complex_obj.data["key"] != "value":
-            msg = f"Expected {'value'}, got {complex_obj.data['key']}"
-            raise AssertionError(msg)
+        assert complex_obj.data["key"] == "value", (
+            f"Expected {'value'}, got {complex_obj.data['key']}"
+        )
         assert len(complex_obj.items) == EXPECTED_BULK_SIZE
 
         validation_result = complex_obj.validate_domain_rules()
@@ -382,9 +367,9 @@ class TestValueObjectEdgeCases:
         # Test JSON serialization
         json_str = email.model_dump_json()
         assert isinstance(json_str, str)
-        if "test@example.com" not in json_str:
-            msg = f"Expected {'test@example.com'} in {json_str}"
-            raise AssertionError(msg)
+        assert "test@example.com" in json_str, (
+            f"Expected {'test@example.com'} in {json_str}"
+        )
 
     def test_value_object_validation_chaining(self) -> None:
         """Test chaining multiple validation methods."""
@@ -420,9 +405,7 @@ class TestValueObjectEdgeCases:
             email = EmailAddress(email=f"user{i}@example.com")
             emails.append(email)
 
-        if len(emails) != 100:
-            msg = f"Expected {100}, got {len(emails)}"
-            raise AssertionError(msg)
+        assert len(emails) == 100, f"Expected {100}, got {len(emails)}"
 
         # Test that they all validate correctly
         for email in emails[:10]:  # Test subset for performance
@@ -436,9 +419,7 @@ class TestValueObjectEdgeCases:
 
         # They should all be equal
         for i in range(1, len(emails)):
-            if emails[0] != emails[i]:
-                msg = f"Expected {emails[i]}, got {emails[0]}"
-                raise AssertionError(msg)
+            assert emails[0] == emails[i], f"Expected {emails[i]}, got {emails[0]}"
             assert hash(emails[0]) == hash(emails[i])
 
     def test_value_object_thread_safety(self) -> None:
@@ -450,8 +431,8 @@ class TestValueObjectEdgeCases:
 
         # Multiple access should be consistent
         for _ in range(10):
-            if email.email != original_email:
-                msg = f"Expected {original_email}, got {email.email}"
-                raise AssertionError(msg)
+            assert email.email == original_email, (
+                f"Expected {original_email}, got {email.email}"
+            )
             validation_result = email.validate_domain_rules()
             assert validation_result.is_success

@@ -57,8 +57,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import time
 import traceback
-from datetime import UTC, datetime
 
 from flext_core.constants import ERROR_CODES
 
@@ -112,7 +112,7 @@ class FlextError(Exception):
         self.message = message
         self.error_code = error_code or ERROR_CODES["GENERIC_ERROR"]
         self.context = context or {}
-        self.timestamp = datetime.now(UTC).isoformat()
+        self.timestamp = time.time()
         self.stack_trace = traceback.format_stack()
 
         # Safely limit context size to prevent memory issues

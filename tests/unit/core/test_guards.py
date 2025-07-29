@@ -787,9 +787,11 @@ class TestIntegrationAndComposition:
 
         # Test invalid data
         assert validate_list_of_positive_ints([1, -2, 3]) is False  # Negative number
-        if validate_list_of_positive_ints([1, "2", 3]) is False:  # String not in list
+        if (
+            validate_list_of_positive_ints([1, "2", 3]) is not False
+        ):  # String not in list
             raise AssertionError(
-                f"Expected {validate_list_of_positive_ints([1, '2', 3]) is False} in {list}"
+                f"Expected {validate_list_of_positive_ints([1, '2', 3])} to be False"
             )
         assert validate_list_of_positive_ints("not a list") is False  # Not a list
         assert validate_list_of_positive_ints(None) is False  # None
@@ -833,7 +835,7 @@ class TestPerformanceAndScalability:
         objects = [factory(i) for i in range(100)]
         if len(objects) != 100:
             raise AssertionError(f"Expected {100}, got {len(objects)}")
-        if all(obj.value == i for i, obj in enumerate(objects)):
+        if not all(obj.value == i for i, obj in enumerate(objects)):
             raise AssertionError(
-                f"Expected {all(obj.value == i for i, obj in enumerate(objects))}"
+                f"Expected all objects to have matching values but got {[(i, obj.value) for i, obj in enumerate(objects[:5])]}"
             )

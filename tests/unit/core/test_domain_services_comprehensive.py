@@ -730,13 +730,13 @@ class TestDomainServiceTypes:
         service = SampleCalculationService(value=10.0, multiplier=2.5)
         if service.value != 10.0:
             raise AssertionError(f"Expected {10.0}, got {service.value}")
-        assert service.multiplier == EXPECTED_BULK_SIZE
+        assert service.multiplier == 2.5
 
         # Test with integer (should be coerced to float)
         service = SampleCalculationService(value=10, multiplier=2)  # type: ignore[arg-type]
         if service.value != 10.0:
             raise AssertionError(f"Expected {10.0}, got {service.value}")
-        assert service.multiplier == EXPECTED_BULK_SIZE
+        assert service.multiplier == 2.0
 
     def test_service_validation_with_string_field(self) -> None:
         """Test service with string field validation."""

@@ -357,7 +357,7 @@ class TestFlextResultEnhanced:
         if not (FlextResult.all_success(*results)):
             raise AssertionError(
                 f"Expected True, got {FlextResult.all_success(*results)}"
-            )  # noqa: E501
+            )
 
     def test_all_success_false(self) -> None:
         """Test all_success with one failed result."""
@@ -370,7 +370,7 @@ class TestFlextResultEnhanced:
         if FlextResult.all_success(*results):
             raise AssertionError(
                 f"Expected False, got {FlextResult.all_success(*results)}"
-            )  # noqa: E501
+            )
 
     def test_any_success_true(self) -> None:
         """Test any_success with at least one successful result."""
@@ -383,7 +383,7 @@ class TestFlextResultEnhanced:
         if not (FlextResult.any_success(*results)):
             raise AssertionError(
                 f"Expected True, got {FlextResult.any_success(*results)}"
-            )  # noqa: E501
+            )
 
     def test_any_success_false(self) -> None:
         """Test any_success with all failed results."""
@@ -396,7 +396,7 @@ class TestFlextResultEnhanced:
         if FlextResult.any_success(*results):
             raise AssertionError(
                 f"Expected False, got {FlextResult.any_success(*results)}"
-            )  # noqa: E501
+            )
 
     def test_first_success_found(self) -> None:
         """Test first_success with successful result found."""

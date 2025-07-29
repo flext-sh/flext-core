@@ -87,7 +87,7 @@ class TestRealUsagePatterns:
         user = result.data
         assert user is not None
         if user.name != "John Doe":
-            msg = f"Expected {"John Doe"}, got {user.name}"
+            msg = f"Expected {'John Doe'}, got {user.name}"
             raise AssertionError(msg)
         assert user.id == "user-123"
 
@@ -104,7 +104,7 @@ class TestRealUsagePatterns:
         assert result.error is not None
         assert result.error
         if "not found" not in result.error:
-            msg = f"Expected {"not found"} in {result.error}"
+            msg = f"Expected {'not found'} in {result.error}"
             raise AssertionError(msg)
 
     def test_chained_operations(self) -> None:
@@ -123,7 +123,7 @@ class TestRealUsagePatterns:
         assert fetch_result.is_success
         assert fetch_result.data is not None
         if fetch_result.data.name != "New User":
-            msg = f"Expected {"New User"}, got {fetch_result.data.name}"
+            msg = f"Expected {'New User'}, got {fetch_result.data.name}"
             raise AssertionError(msg)
 
     def test_error_handling_patterns(self) -> None:
@@ -139,7 +139,7 @@ class TestRealUsagePatterns:
         assert duplicate_result.is_failure
         assert duplicate_result.error is not None
         if "already exists" not in duplicate_result.error:
-            msg = f"Expected {"already exists"} in {duplicate_result.error}"
+            msg = f"Expected {'already exists'} in {duplicate_result.error}"
             raise AssertionError(msg)
 
         # Original user should be unchanged
@@ -147,7 +147,7 @@ class TestRealUsagePatterns:
         assert original_result.is_success
         assert original_result.data is not None
         if original_result.data.name != "John Doe":
-            msg = f"Expected {"John Doe"}, got {original_result.data.name}"
+            msg = f"Expected {'John Doe'}, got {original_result.data.name}"
             raise AssertionError(msg)
 
     def test_dependency_injection_basic_usage(self) -> None:
@@ -185,7 +185,7 @@ class TestRealUsagePatterns:
         assert user_result.is_success
         assert user_result.data is not None
         if user_result.data.name != "John Doe":
-            msg = f"Expected {"John Doe"}, got {user_result.data.name}"
+            msg = f"Expected {'John Doe'}, got {user_result.data.name}"
             raise AssertionError(msg)
 
     def test_global_container_usage(self) -> None:

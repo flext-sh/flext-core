@@ -71,8 +71,7 @@ from typing import cast
 from flext_core._handlers_base import (
     _BaseHandler,
 )
-from flext_core.result import FlextResult
-from flext_core.types import (
+from flext_core.flext_types import (
     R,
     T,
     TAnyDict,
@@ -80,6 +79,7 @@ from flext_core.types import (
     TServiceKey,
     TServiceName,
 )
+from flext_core.result import FlextResult
 
 # FlextLogger imported for convenience - all handlers use FlextLoggableMixin
 

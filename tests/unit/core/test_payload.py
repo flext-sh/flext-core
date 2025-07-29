@@ -279,8 +279,9 @@ class TestFlextPayload:
         if "key1" not in payload:
             raise AssertionError(f"Expected {'key1'} in {payload}")
         assert "key2" in payload
-        if "nonexistent" not in payload:
-            raise AssertionError(f"Expected {'nonexistent'} in {payload}")
+        if "nonexistent" in payload:
+            raise AssertionError(f"Expected {'nonexistent'} NOT in {payload}")
+        assert "nonexistent" not in payload
 
     def test_payload_hash(self) -> None:
         """Test payload hashing."""

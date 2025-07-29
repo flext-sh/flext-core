@@ -82,7 +82,7 @@ from flext_core.utilities import FlextTypeGuards, FlextUtilities
 from flext_core.validation import FlextValidators
 
 if TYPE_CHECKING:
-    from flext_core.types import TFactory
+    from flext_core.flext_types import TFactory
 
 # =============================================================================
 # TYPE GUARDS - Re-exported from FlextUtilities for backward compatibility

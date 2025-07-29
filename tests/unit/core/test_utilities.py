@@ -551,7 +551,7 @@ class TestPerformanceTracking:
             raise AssertionError(
                 f"Expected {1.5}, got {stored_metrics['test.function1']}"
             )
-        assert stored_metrics["test.function2"] == EXPECTED_BULK_SIZE
+        assert stored_metrics["test.function2"] == 2.3
 
     def test_flext_clear_performance_metrics(self) -> None:
         """Test clearing performance metrics."""

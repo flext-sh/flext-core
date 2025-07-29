@@ -31,7 +31,7 @@ import sys
 from typing import TYPE_CHECKING, NamedTuple
 
 if TYPE_CHECKING:
-    from flext_core.types import TAnyList
+    from flext_core.flext_types import TAnyList
 
 # =============================================================================
 # VERSION INFORMATION - Single source of truth for FLEXT Core version
