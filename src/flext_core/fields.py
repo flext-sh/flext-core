@@ -82,9 +82,9 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from flext_core.constants import FlextFieldType
 from flext_core.exceptions import FlextTypeError, FlextValidationError
+from flext_core.flext_types import FlextValidator, TAnyDict, TEntityId
 from flext_core.mixins import FlextSerializableMixin, FlextValidatableMixin
 from flext_core.result import FlextResult
-from flext_core.types import FlextValidator, TAnyDict, TEntityId
 from flext_core.validation import FlextValidators
 
 # =============================================================================

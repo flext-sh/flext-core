@@ -66,7 +66,7 @@ class TestFlextResultFactoryMethods:
 
     def test_fail_with_whitespace_error(self) -> None:
         """Test fail method with whitespace-only error."""
-        result = FlextResult.fail("   ")
+        result: FlextResult[None] = FlextResult.fail("   ")
         if result.error != "Unknown error occurred":
             msg = f"Expected {'Unknown error occurred'}, got {result.error}"
             raise AssertionError(msg)
@@ -101,7 +101,7 @@ class TestFlextResultUnwrap:
 
     def test_unwrap_failure_raises_with_error_code(self) -> None:
         """Test unwrap failure raises FlextOperationError with error code."""
-        result = FlextResult.fail("Test error", error_code="E001")
+        result: FlextResult[None] = FlextResult.fail("Test error", error_code="E001")
 
         with pytest.raises(FlextOperationError) as exc_info:
             result.unwrap()
@@ -118,7 +118,9 @@ class TestFlextResultUnwrap:
     def test_unwrap_failure_raises_with_error_data(self) -> None:
         """Test unwrap failure raises FlextOperationError with error data."""
         error_data = {"field": "test", "value": 123}
-        result = FlextResult.fail("Test error", error_data=error_data)
+        result: FlextResult[None] = FlextResult.fail(
+            "Test error", error_data=error_data
+        )
 
         with pytest.raises(FlextOperationError) as exc_info:
             result.unwrap()
@@ -152,7 +154,7 @@ class TestFlextResultMapExceptions:
 
         mapped = result.map(failing_func)
         assert mapped.is_failure
-        if "Transformation failed" not in mapped.error:
+        if mapped.error is None or "Transformation failed" not in mapped.error:
             msg = f"Expected {'Transformation failed'} in {mapped.error}"
             raise AssertionError(msg)
         if mapped.error_code != "MAP_ERROR":
@@ -169,10 +171,11 @@ class TestFlextResultMapExceptions:
 
         mapped = result.map(failing_func)
         assert mapped.is_failure
-        if "Transformation failed" not in mapped.error:
+        if mapped.error is None or "Transformation failed" not in mapped.error:
             msg = f"Expected {'Transformation failed'} in {mapped.error}"
             raise AssertionError(msg)
-        assert "invalid literal" in mapped.error
+        if mapped.error is not None:
+            assert "invalid literal" in mapped.error
 
     def test_map_runtime_error_exception(self) -> None:
         """Test map method with RuntimeError exception."""
@@ -184,10 +187,11 @@ class TestFlextResultMapExceptions:
 
         mapped = result.map(failing_func)
         assert mapped.is_failure
-        if "Transformation failed" not in mapped.error:
+        if mapped.error is None or "Transformation failed" not in mapped.error:
             msg = f"Expected {'Transformation failed'} in {mapped.error}"
             raise AssertionError(msg)
-        assert "Custom runtime error" in mapped.error
+        if mapped.error is not None:
+            assert "Custom runtime error" in mapped.error
 
     def test_map_unexpected_exception(self) -> None:
         """Test map method with unexpected exception type."""
@@ -199,7 +203,10 @@ class TestFlextResultMapExceptions:
 
         mapped = result.map(failing_func)
         assert mapped.is_failure
-        if "Unexpected transformation error" not in mapped.error:
+        if (
+            mapped.error is None
+            or "Unexpected transformation error" not in mapped.error
+        ):
             msg = f"Expected {'Unexpected transformation error'} in {mapped.error}"
             raise AssertionError(msg)
         if mapped.error_code != "EXCEPTION_ERROR":
@@ -230,11 +237,12 @@ class TestFlextResultFlatMapExceptions:
 
         def failing_func(x: str) -> FlextResult[int]:
             # This will raise TypeError when accessing non-existent method
-            return x.non_existent_method()  # type: ignore[attr-defined]
+            x.non_existent_method()  # type: ignore[attr-defined,no-any-return]
+            return FlextResult.ok(42)  # Never reached
 
         mapped = result.flat_map(failing_func)
         assert mapped.is_failure
-        if "Chained operation failed" not in mapped.error:
+        if mapped.error is None or "Chained operation failed" not in mapped.error:
             msg = f"Expected {'Chained operation failed'} in {mapped.error}"
             raise AssertionError(msg)
         if mapped.error_code != "BIND_ERROR":
@@ -250,7 +258,7 @@ class TestFlextResultFlatMapExceptions:
 
         mapped = result.flat_map(failing_func)
         assert mapped.is_failure
-        if "Chained operation failed" not in mapped.error:
+        if mapped.error is None or "Chained operation failed" not in mapped.error:
             msg = f"Expected {'Chained operation failed'} in {mapped.error}"
             raise AssertionError(msg)
 
@@ -263,7 +271,7 @@ class TestFlextResultFlatMapExceptions:
 
         mapped = result.flat_map(failing_func)
         assert mapped.is_failure
-        if "Chained operation failed" not in mapped.error:
+        if mapped.error is None or "Chained operation failed" not in mapped.error:
             msg = f"Expected {'Chained operation failed'} in {mapped.error}"
             raise AssertionError(msg)
 

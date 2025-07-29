@@ -170,7 +170,7 @@ class TestBaseBuilder:
         # Try to modify
         builder._set_property("after_built", "should_fail")
 
-        if "after_built" not in builder._properties:
+        if "after_built" in builder._properties:
             raise AssertionError(
                 f"Expected {'after_built'} not in {builder._properties}"
             )

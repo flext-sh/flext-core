@@ -585,7 +585,7 @@ class TestFlextAggregateRoot:
             raise AssertionError(f"Expected {'id'} in {data}")
         assert "version" in data
         # Domain events are excluded from serialization
-        if "domain_events" not in data:
+        if "domain_events" in data:
             raise AssertionError(f"Expected {'domain_events'} not in {data}")
         # But we can verify events exist through the method
         if len(aggregate.get_domain_events()) != 1:

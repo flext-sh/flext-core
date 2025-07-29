@@ -104,8 +104,8 @@ from flext_core.utilities import FlextGenerators
 from flext_core.validation import FlextValidators
 
 if TYPE_CHECKING:
+    from flext_core.flext_types import TAnyDict, TEntityId
     from flext_core.loggings import FlextLogger
-    from flext_core.types import TAnyDict, TEntityId
 
 
 class _BaseTimestampMixin:

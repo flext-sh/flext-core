@@ -18,8 +18,7 @@ class TestVersion:
     def test_version_format(self) -> None:
         """Test version follows semantic versioning."""
         parts = __version__.split(".")
-        if len(parts) < 2:  # At least major.minor:
-            raise AssertionError(f"Expected {len(parts)} >= {2} # At least major.minor")
+        assert len(parts) >= 2, f"Expected {len(parts)} >= {2} # At least major.minor"
 
         # First two parts should be numeric
         assert parts[0].isdigit()
@@ -28,10 +27,9 @@ class TestVersion:
     def test_get_version_function(self) -> None:
         """Test get_version_string function."""
         version = get_version_string()
-        if __version__ not in version:  # Version string contains the version:
-            raise AssertionError(
-                f"Expected {__version__} in {version} # Version string contains the version"
-            )
+        assert __version__ in version, (
+            f"Expected {__version__} in {version} # Version string contains the version"
+        )
         assert isinstance(version, str)
 
     def test_get_version_info_function(self) -> None:

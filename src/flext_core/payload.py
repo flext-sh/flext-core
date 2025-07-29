@@ -55,11 +55,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
-from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from flext_core.exceptions import FlextAttributeError, FlextValidationError
+from flext_core.flext_types import T, TAnyDict  # noqa: TC001
 from flext_core.loggings import FlextLoggerFactory
 from flext_core.mixins import (
     FlextLoggableMixin,
@@ -68,27 +68,6 @@ from flext_core.mixins import (
 )
 from flext_core.result import FlextResult
 from flext_core.validation import FlextValidators
-
-if TYPE_CHECKING:
-    from flext_core.types import T, TAnyDict
-else:
-    # Import TAnyDict for runtime use (Pydantic needs it)
-    try:
-        from flext_core.types import TAnyDict
-    except ImportError:
-        # Fallback for circular import cases
-        TAnyDict: type[dict[str, object]] = dict[str, object]
-
-    # Import T for runtime use
-    try:
-        from flext_core.types import T
-    except ImportError:
-        # Fallback for circular import cases
-        from typing import TypeVar
-
-        T = TypeVar("T")
-
-# T imported directly from types module
 
 
 class FlextPayload[T](
@@ -254,7 +233,7 @@ class FlextPayload[T](
     @classmethod
     def from_dict(
         cls,
-        data_dict: dict[str, object],
+        data_dict: object,
     ) -> FlextResult[FlextPayload[object]]:
         """Create payload from dictionary.
 
@@ -265,15 +244,21 @@ class FlextPayload[T](
             FlextResult containing new payload instance
 
         """
+        # Validate input is actually a dictionary first
+        if not isinstance(data_dict, dict):
+            return FlextResult.fail(
+                "Failed to create payload from dict: Input is not a dictionary"
+            )
+
         try:
             payload_data = data_dict.get("data")
             payload_metadata = data_dict.get("metadata", {})
             if not isinstance(payload_metadata, dict):
                 payload_metadata = {}
             # Cast to proper type for the generic class
-            payload = cls(data=payload_data, metadata=payload_metadata)  # type: ignore[arg-type]
+            payload = cls(data=payload_data, metadata=payload_metadata)
             return FlextResult.ok(payload)
-        except (RuntimeError, ValueError, TypeError) as e:
+        except (RuntimeError, ValueError, TypeError, AttributeError) as e:
             # Broad exception handling for API contract safety in payload creation
             return FlextResult.fail(f"Failed to create payload from dict: {e}")
 

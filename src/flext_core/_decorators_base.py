@@ -90,7 +90,7 @@ from flext_core.result import safe_call
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from flext_core.types import TAnyDict, TErrorHandler, TValidator
+    from flext_core.flext_types import TAnyDict, TErrorHandler, TValidator
 
 
 class _DecoratedFunction(Protocol):

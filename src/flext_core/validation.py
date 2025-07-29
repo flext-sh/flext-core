@@ -28,7 +28,6 @@ Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
 """
 
-
 from __future__ import annotations
 
 import re
@@ -40,7 +39,7 @@ from pydantic import BaseModel, ConfigDict
 from flext_core.result import FlextResult
 
 if TYPE_CHECKING:
-    from flext_core.types import TPredicate
+    from flext_core.flext_types import TPredicate
 
 # =============================================================================
 # BASIC VALIDATION CLASSES

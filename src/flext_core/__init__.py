@@ -123,6 +123,46 @@ from flext_core.exceptions import (
     FlextValidationError,
 )
 from flext_core.fields import FlextFieldCore, FlextFields
+
+# Smart core removed - experimental features
+# Smart validation removed - experimental features
+from flext_core.flext_types import (
+    Comparable,
+    E,
+    FlextEntityId,
+    FlextTypes,
+    P,
+    R,
+    Serializable,
+    T,
+    TAnyDict,
+    TAnyList,
+    TAnyObject,
+    TCommand,
+    TConfigDict,
+    TData,
+    TEntity,
+    TEntityId,
+    TErrorCode,
+    TErrorMessage,
+    TEvent,
+    Timestamped,
+    TLogMessage,
+    TMessage,
+    TPredicate,
+    TQuery,
+    TRequest,
+    TRequestId,
+    TResponse,
+    TResult,
+    TService,
+    TTransformer,
+    TUserData,
+    TValue,
+    U,
+    V,
+    Validatable,
+)
 from flext_core.guards import (
     ValidatedModel,
     immutable,
@@ -171,46 +211,6 @@ from flext_core.mixins import (
 )
 from flext_core.payload import FlextEvent, FlextMessage, FlextPayload
 from flext_core.result import FlextResult, chain, safe_call
-
-# Smart core removed - experimental features
-# Smart validation removed - experimental features
-from flext_core.types import (
-    Comparable,
-    E,
-    FlextEntityId,
-    FlextTypes,
-    P,
-    R,
-    Serializable,
-    T,
-    TAnyDict,
-    TAnyList,
-    TAnyObject,
-    TCommand,
-    TConfigDict,
-    TData,
-    TEntity,
-    TEntityId,
-    TErrorCode,
-    TErrorMessage,
-    TEvent,
-    Timestamped,
-    TLogMessage,
-    TMessage,
-    TPredicate,
-    TQuery,
-    TRequest,
-    TRequestId,
-    TResponse,
-    TResult,
-    TService,
-    TTransformer,
-    TUserData,
-    TValue,
-    U,
-    V,
-    Validatable,
-)
 from flext_core.utilities import FlextUtilities
 from flext_core.validation import FlextPredicates, FlextValidation, FlextValidators
 from flext_core.value_objects import FlextValueObject, FlextValueObjectFactory

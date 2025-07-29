@@ -650,8 +650,8 @@ class TestBaseConfigDefaults:
         assert result.is_success
         # Modify original - should not affect result
         config["key3"] = "new_value"
-        if "key3" not in result.data:
-            msg = f"Expected {'key3'} in {result.data}"
+        if "key3" in result.data:
+            msg = f"Expected {'key3'} not in {result.data}"
             raise AssertionError(msg)
 
     def test_apply_defaults_exception(self) -> None:
@@ -1026,8 +1026,8 @@ class TestConfigBaseIntegration:
         if final_config["timeout"] != 30:
             msg = f"Expected {30}, got {final_config['timeout']}"
             raise AssertionError(msg)
-        if "debug" not in final_config:
-            msg = f"Expected {'debug'} in {final_config}"
+        if "debug" in final_config:
+            msg = f"Expected {'debug'} not in {final_config}"
             raise AssertionError(msg)
 
     def test_config_validation_chain(self) -> None:

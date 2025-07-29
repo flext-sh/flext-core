@@ -92,7 +92,7 @@ from flext_core.utilities import FlextGenerators
 if TYPE_CHECKING:
     from structlog.typing import EventDict
 
-    from flext_core.types import TAnyDict, TAnyList, TContextDict, TLogMessage
+    from flext_core.flext_types import TAnyDict, TAnyList, TContextDict, TLogMessage
 else:
     # Runtime aliases for when TYPE_CHECKING is False
     TAnyDict = dict[str, object]

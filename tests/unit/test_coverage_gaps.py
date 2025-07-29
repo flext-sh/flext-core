@@ -46,7 +46,7 @@ class TestCoverageGaps:
         assert FlextConstants.DEFAULT_TIMEOUT > 0
         assert FlextConstants.VERSION is not None
         if FlextEnvironment.PRODUCTION.value != "production":
-            msg = f"Expected {"production"}, got {FlextEnvironment.PRODUCTION.value}"
+            msg = f"Expected {'production'}, got {FlextEnvironment.PRODUCTION.value}"
             raise AssertionError(msg)
         assert FlextLogLevel.INFO.value == "INFO"
 
@@ -67,12 +67,12 @@ class TestCoverageGaps:
         payload = FlextPayload()
         result = payload.get("missing", "default")
         if result != "default":
-            msg = f"Expected {"default"}, got {result}"
+            msg = f"Expected {'default'}, got {result}"
             raise AssertionError(msg)
 
         payload_with_data = FlextPayload(key="value")
         if payload_with_data.get("key") != "value":
-            msg = f"Expected {"value"}, got {payload_with_data.get("key")}"
+            msg = f"Expected {'value'}, got {payload_with_data.get('key')}"
             raise AssertionError(msg)
 
     def test_result_edge_cases(self) -> None:

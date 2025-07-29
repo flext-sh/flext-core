@@ -80,7 +80,7 @@ from flext_core.validation import FlextValidators
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from flext_core.types import TAnyDict
+    from flext_core.flext_types import TAnyDict
 
 
 # =============================================================================

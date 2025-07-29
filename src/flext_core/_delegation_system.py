@@ -31,7 +31,7 @@ from typing import TYPE_CHECKING, ClassVar
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from flext_core.types import TAnyDict
+    from flext_core.flext_types import TAnyDict
 
 from flext_core._mixins_base import (
     _BaseSerializableMixin,

@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 from flext_core.validation import FlextValidators
 
 if TYPE_CHECKING:
-    from flext_core.types import TAnyDict
+    from flext_core.flext_types import TAnyDict
 
 
 class _BaseBuilder:

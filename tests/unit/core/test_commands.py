@@ -357,8 +357,8 @@ class TestFlextCommandsCommand:
         )
         result2 = command2.validate_command()
         assert result2.is_failure
-        msg = f"Expected {'Invalid email format'} in {result2.error}"
-        raise AssertionError(msg)
+        if "Invalid email format" not in result2.error:
+            raise AssertionError(f"Expected 'Invalid email format' in {result2.error}")
 
         # Test require_min_length failure
         command3 = SampleComplexCommand(
@@ -368,8 +368,10 @@ class TestFlextCommandsCommand:
         )
         result3 = command3.validate_command()
         assert result3.is_failure
-        msg = f"Expected {'password must be at least 8 characters'} in {result3.error}"
-        raise AssertionError(msg)
+        if "password must be at least 8 characters" not in result3.error:
+            raise AssertionError(
+                f"Expected 'password must be at least 8 characters' in {result3.error}"
+            )
 
     def test_command_require_field_custom_error(self) -> None:
         """Test require_field with custom error message."""
@@ -381,8 +383,8 @@ class TestFlextCommandsCommand:
 
         result = command.require_field("email", "", "Custom email error")
         assert result.is_failure
-        msg = f"Expected {'Custom email error'} in {result.error}"
-        raise AssertionError(msg)
+        if "Custom email error" not in result.error:
+            raise AssertionError(f"Expected 'Custom email error' in {result.error}")
 
     def test_command_require_email_with_field_name(self) -> None:
         """Test require_email with custom field name."""
@@ -394,8 +396,10 @@ class TestFlextCommandsCommand:
 
         result = command.require_email("invalid", "contact_email")
         assert result.is_failure
-        msg = f"Expected {'Invalid contact_email format'} in {result.error}"
-        raise AssertionError(msg)
+        if "Invalid contact_email format" not in result.error:
+            raise AssertionError(
+                f"Expected 'Invalid contact_email format' in {result.error}"
+            )
 
     def test_command_get_metadata(self) -> None:
         """Test command metadata extraction."""
@@ -848,10 +852,10 @@ class TestFlextCommandsBus:
         bus.register_handler(SampleComplexCommand, handler2)
 
         all_handlers = bus.get_all_handlers()
-        msg = f"Expected {2}, got {len(all_handlers)}"
-        raise AssertionError(msg)
-        msg = f"Expected {handler1} in {all_handlers}"
-        raise AssertionError(msg)
+        if len(all_handlers) != 2:
+            raise AssertionError(f"Expected 2 handlers, got {len(all_handlers)}")
+        if handler1 not in all_handlers:
+            raise AssertionError(f"Expected {handler1} in {all_handlers}")
         assert handler2 in all_handlers
 
     def test_bus_execute_handler_with_execute_method(self) -> None:

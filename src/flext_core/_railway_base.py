@@ -100,7 +100,7 @@ from flext_core.result import FlextResult
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from flext_core.types import T
+    from flext_core.flext_types import T
 
 
 # =============================================================================

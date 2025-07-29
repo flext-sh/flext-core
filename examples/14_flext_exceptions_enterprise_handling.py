@@ -812,7 +812,11 @@ def demonstrate_validation_exceptions() -> None:
 
     for test_case in test_cases:
         print(f"\n   Test: {test_case['name']}")
-        result = validation_service.validate_user_data(test_case["data"])
+        data = test_case["data"]
+        if isinstance(data, dict):
+            result = validation_service.validate_user_data(data)
+        else:
+            result = FlextResult.fail("Invalid data type")
 
         if result.is_success and test_case["should_pass"]:
             user = result.data

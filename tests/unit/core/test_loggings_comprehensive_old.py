@@ -304,8 +304,9 @@ class TestFlextLogger:
     def test_should_log_unknown_level(self, logger_instance: FlextLogger) -> None:
         """Test _should_log with unknown level defaults to INFO."""
         result = logger_instance._should_log("UNKNOWN_LEVEL")
-        if result is True:  # Unknown level defaults to INFO (30) < DEBUG (20):
-            msg = f"Expected {result is True} >= {DEBUG(20)}"
+        # Unknown level defaults to INFO, which should be logged when logger is at DEBUG level
+        if not result:
+            msg = f"Expected True (INFO should be logged at DEBUG level), got {result}"
             raise AssertionError(msg)
 
     def test_info_logging(

@@ -13,9 +13,9 @@ from abc import ABC, abstractmethod
 from typing import Protocol
 
 from flext_core._mixins_base import _BaseTimingMixin
+from flext_core.flext_types import FlextTypes, R, T, TAnyDict, TServiceName
 from flext_core.loggings import FlextLoggerFactory
 from flext_core.result import FlextResult
-from flext_core.types import FlextTypes, R, T, TAnyDict, TServiceName
 
 
 class _LoggerProtocol(Protocol):

@@ -886,7 +886,8 @@ class TestDomainFactory:
                     f"Entity validation failed: {validation_result.error}",
                 )
             return FlextResult.ok(entity)
-        except (RuntimeError, ValueError, TypeError) as e:  # Test factory needs to handle any exception
+        # Test factory needs exceptions handling
+        except (RuntimeError, ValueError, TypeError) as e:
             return FlextResult.fail(f"Failed to create test entity: {e}")
 
     @staticmethod
@@ -900,7 +901,8 @@ class TestDomainFactory:
             vo = ConcreteValueObject(amount=amount, currency=currency, **kwargs)
             vo.validate_domain_rules()  # May raise ValueError
             return FlextResult.ok(vo)
-        except (RuntimeError, ValueError, TypeError) as e:  # Test factory needs to handle any exception
+        # Test factory needs exceptions handling
+        except (RuntimeError, ValueError, TypeError) as e:
             return FlextResult.fail(f"Failed to create test value object: {e}")
 
     @staticmethod
@@ -914,5 +916,6 @@ class TestDomainFactory:
             vo = ComplexValueObject(name=name, tags=tags, metadata=metadata)
             vo.validate_domain_rules()  # May raise ValueError
             return FlextResult.ok(vo)
-        except (RuntimeError, ValueError, TypeError) as e:  # Test factory needs to handle any exception
+        # Test factory needs exceptions handling
+        except (RuntimeError, ValueError, TypeError) as e:
             return FlextResult.fail(f"Failed to create complex value object: {e}")

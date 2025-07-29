@@ -12,8 +12,8 @@ from unittest.mock import patch
 
 import pytest
 
+from flext_core.flext_types import TPredicate  # This should hit line 42
 from flext_core.result import FlextResult
-from flext_core.types import TPredicate  # This should hit line 42
 from flext_core.validation import (
     FlextPredicates,
     FlextValidation,
@@ -46,9 +46,7 @@ class TestBaseValidators:
         """Test is_not_none with non-None values."""
         if not (FlextValidators.is_not_none(value="string")):
             msg = f"Expected True, got {FlextValidators.is_not_none(value='string')}"
-            raise AssertionError(
-                msg
-            )
+            raise AssertionError(msg)
         assert FlextValidators.is_not_none(value=42) is True
         if not (FlextValidators.is_not_none(value=[])):
             raise AssertionError(
