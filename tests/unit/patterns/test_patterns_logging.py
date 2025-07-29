@@ -1,21 +1,19 @@
 """Comprehensive tests for FLEXT patterns logging module."""
 
-from flext_core.loggings import flext_get_logger
-import time
-
-
 from __future__ import annotations
 
+import time
 from unittest.mock import MagicMock, patch
 
 from flext_core.loggings import (
-# Constants
-EXPECTED_BULK_SIZE = 2
-
     FlextLogContext,
     FlextLogger,
     FlextLogLevel,
+    flext_get_logger,
 )
+
+# Constants
+EXPECTED_BULK_SIZE = 2
 
 
 class TestFlextLogContext:
@@ -39,11 +37,10 @@ class TestFlextLogContext:
         }
 
         if context["user_id"] != "123":
-
-            raise AssertionError(f"Expected {"123"}, got {context["user_id"]}")
+            raise AssertionError(f"Expected {'123'}, got {context['user_id']}")
         assert context["request_id"] == "req-456"
         if context["operation"] != "login":
-            raise AssertionError(f"Expected {"login"}, got {context["operation"]}")
+            raise AssertionError(f"Expected {'login'}, got {context['operation']}")
         assert context["duration_ms"] == 150.5
 
     def test_context_optional_fields(self) -> None:
@@ -54,8 +51,7 @@ class TestFlextLogContext:
         }
 
         if context["user_id"] != "123":
-
-            raise AssertionError(f"Expected {"123"}, got {context["user_id"]}")
+            raise AssertionError(f"Expected {'123'}, got {context['user_id']}")
         # Other fields are optional and not present
 
     def test_context_enterprise_fields(self) -> None:
@@ -69,14 +65,15 @@ class TestFlextLogContext:
         }
 
         if context["tenant_id"] != "tenant-123":
-
-            raise AssertionError(f"Expected {"tenant-123"}, got {context["tenant_id"]}")
+            raise AssertionError(f"Expected {'tenant-123'}, got {context['tenant_id']}")
         assert context["session_id"] == "session-456"
         if context["transaction_id"] != "tx-789":
-            raise AssertionError(f"Expected {"tx-789"}, got {context["transaction_id"]}")
+            raise AssertionError(
+                f"Expected {'tx-789'}, got {context['transaction_id']}"
+            )
         assert context["customer_id"] == "customer-abc"
         if context["order_id"] != "order-def":
-            raise AssertionError(f"Expected {"order-def"}, got {context["order_id"]}")
+            raise AssertionError(f"Expected {'order-def'}, got {context['order_id']}")
 
     def test_context_performance_fields(self) -> None:
         """Test performance-related context fields."""
@@ -87,11 +84,10 @@ class TestFlextLogContext:
         }
 
         if context["duration_ms"] != 250.0:
-
-            raise AssertionError(f"Expected {250.0}, got {context["duration_ms"]}")
+            raise AssertionError(f"Expected {250.0}, got {context['duration_ms']}")
         assert context["memory_mb"] == 128.5
         if context["cpu_percent"] != 75.2:
-            raise AssertionError(f"Expected {75.2}, got {context["cpu_percent"]}")
+            raise AssertionError(f"Expected {75.2}, got {context['cpu_percent']}")
 
     def test_context_error_fields(self) -> None:
         """Test error-related context fields."""
@@ -102,11 +98,12 @@ class TestFlextLogContext:
         }
 
         if context["error_code"] != "E001":
-
-            raise AssertionError(f"Expected {"E001"}, got {context["error_code"]}")
+            raise AssertionError(f"Expected {'E001'}, got {context['error_code']}")
         assert context["error_type"] == "ValidationError"
         if context["stack_trace"] != "Traceback...":
-            raise AssertionError(f"Expected {"Traceback..."}, got {context["stack_trace"]}")
+            raise AssertionError(
+                f"Expected {'Traceback...'}, got {context['stack_trace']}"
+            )
 
 
 class TestFlextLogLevel:
@@ -115,13 +112,13 @@ class TestFlextLogLevel:
     def test_log_level_values(self) -> None:
         """Test that log levels have correct string values."""
         if FlextLogLevel.TRACE != "TRACE":
-            raise AssertionError(f"Expected {"TRACE"}, got {FlextLogLevel.TRACE}")
+            raise AssertionError(f"Expected {'TRACE'}, got {FlextLogLevel.TRACE}")
         assert FlextLogLevel.DEBUG == "DEBUG"
         if FlextLogLevel.INFO != "INFO":
-            raise AssertionError(f"Expected {"INFO"}, got {FlextLogLevel.INFO}")
+            raise AssertionError(f"Expected {'INFO'}, got {FlextLogLevel.INFO}")
         assert FlextLogLevel.WARNING == "WARNING"
         if FlextLogLevel.ERROR != "ERROR":
-            raise AssertionError(f"Expected {"ERROR"}, got {FlextLogLevel.ERROR}")
+            raise AssertionError(f"Expected {'ERROR'}, got {FlextLogLevel.ERROR}")
         assert FlextLogLevel.CRITICAL == "CRITICAL"
 
     def test_log_level_membership(self) -> None:
@@ -137,7 +134,9 @@ class TestFlextLogLevel:
 
         for level in all_levels:
             if level not in FlextLogLevel.__dict__.values():
-                raise AssertionError(f"Expected {level} in {FlextLogLevel.__dict__.values()}")
+                raise AssertionError(
+                    f"Expected {level} in {FlextLogLevel.__dict__.values()}"
+                )
 
 
 class TestFlextLogger:
@@ -152,7 +151,6 @@ class TestFlextLogger:
         logger = FlextLogger.get_logger("test")
 
         if not (FlextLogger._configured):
-
             raise AssertionError(f"Expected True, got {FlextLogger._configured}")
         assert logger is not None
 
@@ -194,7 +192,6 @@ class TestFlextLogger:
         FlextLogger.configure()
 
         if not (FlextLogger._configured):
-
             raise AssertionError(f"Expected True, got {FlextLogger._configured}")
 
     def test_configure_with_custom_settings(self) -> None:
@@ -210,7 +207,6 @@ class TestFlextLogger:
         )
 
         if not (FlextLogger._configured):
-
             raise AssertionError(f"Expected True, got {FlextLogger._configured}")
 
     def test_configure_idempotent(self) -> None:
@@ -272,7 +268,6 @@ class TestFlextLogger:
 
     def test_module_level_function(self) -> None:
         """Test module-level backward compatibility function."""
-
 
         logger = flext_get_logger("module_test")
 
@@ -421,7 +416,6 @@ class TestFlextLoggerIntegration:
 
     def test_performance_logging_integration(self) -> None:
         """Test performance logging integration."""
-
 
         logger = FlextLogger("perf_integration_test", "DEBUG")
 

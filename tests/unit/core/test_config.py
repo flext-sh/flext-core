@@ -1,15 +1,13 @@
 """Comprehensive tests for FlextConfig and configuration functionality."""
 
-from pydantic_settings import SettingsConfigDict
-from pydantic_settings import SettingsConfigDict
-
-
 from __future__ import annotations
 
 import json
 import tempfile
 from pathlib import Path
 from typing import TYPE_CHECKING
+
+from pydantic_settings import SettingsConfigDict
 
 from flext_core.config import (
     FlextBaseSettings,
@@ -37,7 +35,7 @@ class TestFlextConfig:
 
         assert result.is_success
         if result.data["app_name"] != "test":
-            raise AssertionError(f"Expected {"test"}, got {result.data["app_name"]}")
+            raise AssertionError(f"Expected {'test'}, got {result.data['app_name']}")
         assert result.data["custom_setting"] == "value"
 
     def test_create_complete_config_with_defaults(self) -> None:
@@ -51,7 +49,7 @@ class TestFlextConfig:
 
         assert result.is_success
         if result.data["app_name"] != "test":
-            raise AssertionError(f"Expected {"test"}, got {result.data["app_name"]}")
+            raise AssertionError(f"Expected {'test'}, got {result.data['app_name']}")
         # Check that defaults were applied
         assert (
             "debug" in result.data or "timeout" in result.data or "port" in result.data
@@ -68,7 +66,7 @@ class TestFlextConfig:
 
         assert result.is_success
         if result.data["app_name"] != "test":
-            raise AssertionError(f"Expected {"test"}, got {result.data["app_name"]}")
+            raise AssertionError(f"Expected {'test'}, got {result.data['app_name']}")
 
     def test_create_complete_config_validation_failure(self) -> None:
         """Test complete configuration creation with validation failure."""
@@ -82,7 +80,9 @@ class TestFlextConfig:
         # Should fail because of None value when validation is enabled
         assert result.is_failure
         if "Config validation failed" not in result.error:
-            raise AssertionError(f"Expected {"Config validation failed"} in {result.error}")
+            raise AssertionError(
+                f"Expected {'Config validation failed'} in {result.error}"
+            )
 
     def test_load_and_validate_from_file_success(self) -> None:
         """Test successful file loading and validation."""
@@ -102,7 +102,9 @@ class TestFlextConfig:
 
             assert result.is_success
             if result.data["app_name"] != "test":
-                raise AssertionError(f"Expected {"test"}, got {result.data["app_name"]}")
+                raise AssertionError(
+                    f"Expected {'test'}, got {result.data['app_name']}"
+                )
         finally:
             Path(config_path).unlink()
 
@@ -112,7 +114,9 @@ class TestFlextConfig:
 
         assert result.is_failure
         if "Configuration file not found" not in result.error:
-            raise AssertionError(f"Expected {"Configuration file not found"} in {result.error}")
+            raise AssertionError(
+                f"Expected {'Configuration file not found'} in {result.error}"
+            )
 
     def test_merge_and_validate_configs(self) -> None:
         """Test configuration merging and validation."""
@@ -123,10 +127,12 @@ class TestFlextConfig:
 
         assert result.is_success
         if result.data["app_name"] != "test":
-            raise AssertionError(f"Expected {"test"}, got {result.data["app_name"]}")
+            raise AssertionError(f"Expected {'test'}, got {result.data['app_name']}")
         assert result.data["debug"] is True  # config2 overrides config1
         if result.data["database_host"] != "localhost":
-            raise AssertionError(f"Expected {"localhost"}, got {result.data["database_host"]}")
+            raise AssertionError(
+                f"Expected {'localhost'}, got {result.data['database_host']}"
+            )
 
     def test_get_env_with_validation_exists(
         self,
@@ -139,7 +145,7 @@ class TestFlextConfig:
 
         assert result.is_success
         if result.data != "test_value":
-            raise AssertionError(f"Expected {"test_value"}, got {result.data}")
+            raise AssertionError(f"Expected {'test_value'}, got {result.data}")
 
     def test_get_env_with_validation_not_found(self) -> None:
         """Test environment variable retrieval when not found."""
@@ -147,7 +153,9 @@ class TestFlextConfig:
 
         assert result.is_failure
         if "Environment variable 'NON_EXISTENT_VAR' not found" not in result.error:
-            raise AssertionError(f"Expected {"Environment variable 'NON_EXISTENT_VAR' not found"} in {result.error}")
+            raise AssertionError(
+                f"Expected {"Environment variable 'NON_EXISTENT_VAR' not found"} in {result.error}"
+            )
 
 
 class TestFlextConfigDefaults:
@@ -163,7 +171,9 @@ class TestFlextConfigDefaults:
         assert result.is_success
         merged_config = result.data
         if merged_config["app"]["name"] != "test":
-            raise AssertionError(f"Expected {"test"}, got {merged_config["app"]["name"]}")
+            raise AssertionError(
+                f"Expected {'test'}, got {merged_config['app']['name']}"
+            )
 
     def test_merge_configs_basic(self) -> None:
         """Test basic config merging."""
@@ -174,7 +184,7 @@ class TestFlextConfigDefaults:
 
         assert result.is_success
         if result.data["existing"] != "value":
-            raise AssertionError(f"Expected {"value"}, got {result.data["existing"]}")
+            raise AssertionError(f"Expected {'value'}, got {result.data['existing']}")
         assert result.data["new"] == "default"
 
 
@@ -225,7 +235,7 @@ class TestFlextConfigValidation:
 
         assert result.is_failure
         if "Value must be string" not in result.error:
-            raise AssertionError(f"Expected {"Value must be string"} in {result.error}")
+            raise AssertionError(f"Expected {'Value must be string'} in {result.error}")
 
 
 class TestFlextBaseSettings:
@@ -233,7 +243,6 @@ class TestFlextBaseSettings:
 
     def test_base_settings_creation(self) -> None:
         """Test FlextBaseSettings creation."""
-
 
         class TestSettings(FlextBaseSettings):
             model_config = SettingsConfigDict(
@@ -248,12 +257,12 @@ class TestFlextBaseSettings:
 
         settings = TestSettings()
         if settings.app_name != "test":
-            raise AssertionError(f"Expected {"test"}, got {settings.app_name}")
+            raise AssertionError(f"Expected {'test'}, got {settings.app_name}")
         if settings.debug:
-            raise AssertionError(f"Expected False, got {settings.debug}")\ n
+            raise AssertionError(f"Expected False, got {settings.debug}")
+
     def test_base_settings_with_values(self) -> None:
         """Test FlextBaseSettings with explicit values."""
-
 
         class TestSettings(FlextBaseSettings):
             model_config = SettingsConfigDict(
@@ -268,7 +277,7 @@ class TestFlextBaseSettings:
 
         settings = TestSettings(app_name="custom", port=9000)
         if settings.app_name != "custom":
-            raise AssertionError(f"Expected {"custom"}, got {settings.app_name}")
+            raise AssertionError(f"Expected {'custom'}, got {settings.app_name}")
         assert settings.port == 9000
 
 
@@ -285,11 +294,13 @@ class TestStandaloneFunctions:
         # This returns a dict, not FlextResult
         assert isinstance(result, dict)
         if result["app_name"] != "test":
-            raise AssertionError(f"Expected {"test"}, got {result["app_name"]}")
+            raise AssertionError(f"Expected {'test'}, got {result['app_name']}")
         if not (result["app_debug"]):
-            raise AssertionError(f"Expected True, got {result["app_debug"]}")
+            raise AssertionError(f"Expected True, got {result['app_debug']}")
         if result["database_host"] != "localhost":
-            raise AssertionError(f"Expected {"localhost"}, got {result["database_host"]}")
+            raise AssertionError(
+                f"Expected {'localhost'}, got {result['database_host']}"
+            )
         assert result["database_port"] == 5432
 
     def test_safe_get_env_var_exists(self, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -300,7 +311,7 @@ class TestStandaloneFunctions:
 
         assert result.is_success
         if result.data != "test_value":
-            raise AssertionError(f"Expected {"test_value"}, got {result.data}")
+            raise AssertionError(f"Expected {'test_value'}, got {result.data}")
 
     def test_safe_get_env_var_not_found(self) -> None:
         """Test safe environment variable retrieval when not found."""
@@ -320,7 +331,7 @@ class TestStandaloneFunctions:
 
         assert result.is_success
         if result.data != "default_value":
-            raise AssertionError(f"Expected {"default_value"}, got {result.data}")
+            raise AssertionError(f"Expected {'default_value'}, got {result.data}")
 
     def test_safe_load_json_file_success(self) -> None:
         """Test successful JSON file loading."""
@@ -406,7 +417,9 @@ class TestConfigurationIntegration:
 
             # Validate final configuration
             if final_config["app"]["name"] != "test_app":
-                raise AssertionError(f"Expected {"test_app"}, got {final_config["app"]["name"]}")
+                raise AssertionError(
+                    f"Expected {'test_app'}, got {final_config['app']['name']}"
+                )
             assert final_config["database"]["host"] == "localhost"
 
         finally:

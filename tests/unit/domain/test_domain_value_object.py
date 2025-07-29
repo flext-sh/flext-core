@@ -1,8 +1,5 @@
 """Comprehensive tests for FlextValueObject domain value object base class.
 
-# Constants
-EXPECTED_BULK_SIZE = 2
-
 This module provides complete test coverage for the FlextValueObject class,
 focusing on missing test cases to achieve 80%+ coverage.
 """
@@ -23,6 +20,9 @@ from tests.shared_test_domain import (
     TestDomainFactory,
 )
 
+# Constants
+EXPECTED_BULK_SIZE = 2
+
 
 class TestFlextValueObjectEquality:
     """Test FlextValueObject equality behavior."""
@@ -42,7 +42,6 @@ class TestFlextValueObjectEquality:
         vo1, vo2 = vo1_result.data, vo2_result.data
 
         if vo1 != vo2:
-
             raise AssertionError(f"Expected {vo2}, got {vo1}")
         assert vo2 == vo1
 
@@ -95,9 +94,10 @@ class TestFlextValueObjectEquality:
             description="Test",
         )
 
-        if vo1 != vo2  # Empty description = default empty description:
-
-            raise AssertionError(f"Expected {vo2  # Empty description = default empty description}, got {vo1}")
+        if vo1 != vo2:  # Empty description = default empty description:
+            raise AssertionError(
+                f"Expected {vo2} # Empty description = default empty description, got {vo1}"
+            )
         assert vo1 != vo3  # Different description values
         assert vo2 != vo3
 
@@ -111,7 +111,6 @@ class TestFlextValueObjectHashing:
         vo2 = ConcreteValueObject(amount=Decimal("10.50"), currency="USD")
 
         if hash(vo1) != hash(vo2):
-
             raise AssertionError(f"Expected {hash(vo2)}, got {hash(vo1)}")
 
     def test_hash_different_values(self) -> None:
@@ -148,7 +147,6 @@ class TestFlextValueObjectHashing:
         hash3 = hash(vo)
 
         if hash1 == hash2 != hash3:
-
             raise AssertionError(f"Expected {hash3}, got {hash1 == hash2}")
 
     def test_hash_in_collections(self) -> None:
@@ -169,7 +167,7 @@ class TestFlextValueObjectHashing:
             raise AssertionError(f"Expected {2}, got {len(vo_dict)}")
         # vo2 overwrote vo1's value
         if vo_dict[vo1] != "second":
-            raise AssertionError(f"Expected {"second"}, got {vo_dict[vo1]}")
+            raise AssertionError(f"Expected {'second'}, got {vo_dict[vo1]}")
 
 
 class TestFlextValueObjectStringRepresentation:
@@ -182,11 +180,10 @@ class TestFlextValueObjectStringRepresentation:
         str_repr = str(vo)
 
         if "ConcreteValueObject" not in str_repr:
-
-            raise AssertionError(f"Expected {"ConcreteValueObject"} in {str_repr}")
+            raise AssertionError(f"Expected {'ConcreteValueObject'} in {str_repr}")
         assert "10.50" in str_repr
         if "USD" not in str_repr:
-            raise AssertionError(f"Expected {"USD"} in {str_repr}")
+            raise AssertionError(f"Expected {'USD'} in {str_repr}")
 
     def test_str_representation_with_many_fields(self) -> None:
         """Test string representation with many fields shows ellipsis."""
@@ -201,8 +198,7 @@ class TestFlextValueObjectStringRepresentation:
         str_repr = str(vo)
 
         if "ConcreteValueObject" not in str_repr:
-
-            raise AssertionError(f"Expected {"ConcreteValueObject"} in {str_repr}")
+            raise AssertionError(f"Expected {'ConcreteValueObject'} in {str_repr}")
         # Should show first 3 fields with ellipsis if there are more
         field_count = str_repr.count("=")
         assert field_count <= 3
@@ -218,8 +214,7 @@ class TestFlextValueObjectStringRepresentation:
         str_repr = str(vo)
 
         if "ComplexValueObject" not in str_repr:
-
-            raise AssertionError(f"Expected {"ComplexValueObject"} in {str_repr}")
+            raise AssertionError(f"Expected {'ComplexValueObject'} in {str_repr}")
         assert "Test Object" in str_repr
 
 
@@ -294,10 +289,12 @@ class TestFlextValueObjectPydanticIntegration:
 
         assert isinstance(data, dict)
         if data["amount"] != Decimal("10.50"):
-            raise AssertionError(f"Expected {Decimal("10.50")}, got {data["amount"]}")
+            raise AssertionError(f"Expected {Decimal('10.50')}, got {data['amount']}")
         assert data["currency"] == "USD"
         if data["description"] != "Test description":
-            raise AssertionError(f"Expected {"Test description"}, got {data["description"]}")
+            raise AssertionError(
+                f"Expected {'Test description'}, got {data['description']}"
+            )
 
     def test_pydantic_immutability(self) -> None:
         """Test that value objects are immutable."""
@@ -313,9 +310,8 @@ class TestFlextValueObjectPydanticIntegration:
         """Test Pydantic default values work correctly."""
         vo = ConcreteValueObject(amount=Decimal("10.50"))
 
-        if vo.currency != "USD"  # Default value:
-
-            raise AssertionError(f"Expected {"USD"  # Default value}, got {vo.currency}")
+        if vo.currency != "USD":  # Default value:
+            raise AssertionError(f"Expected {'USD'} # Default value, got {vo.currency}")
         assert vo.description == ""  # Default value
 
     def test_pydantic_string_stripping(self) -> None:
@@ -326,9 +322,10 @@ class TestFlextValueObjectPydanticIntegration:
             description="  Test description  ",
         )
 
-        if vo.description != "Test description"  # Whitespace stripped:
-
-            raise AssertionError(f"Expected {"Test description"  # Whitespace stripped}, got {vo.description}")
+        if vo.description != "Test description":  # Whitespace stripped:
+            raise AssertionError(
+                f"Expected {'Test description'} # Whitespace stripped, got {vo.description}"
+            )
 
     def test_pydantic_extra_fields_forbidden(self) -> None:
         """Test that extra fields are forbidden."""
@@ -348,8 +345,7 @@ class TestFlextValueObjectEdgeCases:
         vo = ComplexValueObject(name="Test", tags=[], metadata={})
 
         if vo.name != "Test":
-
-            raise AssertionError(f"Expected {"Test"}, got {vo.name}")
+            raise AssertionError(f"Expected {'Test'}, got {vo.name}")
         assert vo.tags == []
         if vo.metadata != {}:
             raise AssertionError(f"Expected {{}}, got {vo.metadata}")
@@ -373,7 +369,6 @@ class TestFlextValueObjectEdgeCases:
         )
 
         if vo1 != vo2:
-
             raise AssertionError(f"Expected {vo2}, got {vo1}")
         assert hash(vo1) == hash(vo2)
 
@@ -389,7 +384,6 @@ class TestFlextValueObjectEdgeCases:
         )
 
         if len(vo.tags) != 100:
-
             raise AssertionError(f"Expected {100}, got {len(vo.tags)}")
         assert len(vo.metadata) == 50
 
@@ -406,11 +400,12 @@ class TestFlextValueObjectEdgeCases:
         )
 
         if "üñïçödé" not in vo.name:
-
-            raise AssertionError(f"Expected {"üñïçödé"} in {vo.name}")
+            raise AssertionError(f"Expected {'üñïçödé'} in {vo.name}")
         assert "tag-with-dashes" in vo.tags
         if vo.metadata["key with spaces"] != "value with spaces":
-            raise AssertionError(f"Expected {"value with spaces"}, got {vo.metadata["key with spaces"]}")
+            raise AssertionError(
+                f"Expected {'value with spaces'}, got {vo.metadata['key with spaces']}"
+            )
 
     def test_decimal_precision_equality(self) -> None:
         """Test decimal precision in equality comparisons."""
@@ -434,7 +429,9 @@ class TestFlextValueObjectEdgeCases:
         assert isinstance(data["tags"], list)
         assert isinstance(data["metadata"], dict)
         if data["metadata"]["nested"]["key"] != "value":
-            raise AssertionError(f"Expected {"value"}, got {data["metadata"]["nested"]["key"]}")
+            raise AssertionError(
+                f"Expected {'value'}, got {data['metadata']['nested']['key']}"
+            )
 
 
 class TestFlextValueObjectInheritance:
@@ -452,7 +449,7 @@ class TestFlextValueObjectInheritance:
         assert isinstance(vo, ConcreteValueObject)
         assert isinstance(vo, FlextValueObject)
         if vo.special_field != "special":
-            raise AssertionError(f"Expected {"special"}, got {vo.special_field}")
+            raise AssertionError(f"Expected {'special'}, got {vo.special_field}")
 
     def test_multiple_inheritance_behavior(self) -> None:
         """Test value object behavior with multiple inheritance patterns."""
@@ -467,8 +464,7 @@ class TestFlextValueObjectInheritance:
         vo = MixedValue(amount=Decimal("10.50"), currency="USD")
 
         if vo.get_info() != "mixin method":
-
-            raise AssertionError(f"Expected {"mixin method"}, got {vo.get_info()}")
+            raise AssertionError(f"Expected {'mixin method'}, got {vo.get_info()}")
         assert isinstance(vo, FlextValueObject)
 
     def test_polymorphic_equality(self) -> None:

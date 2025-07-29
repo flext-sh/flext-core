@@ -10,10 +10,6 @@ import pytest
 
 from flext_core.result import FlextResult
 from flext_core.utilities import (
-# Constants
-EXPECTED_BULK_SIZE = 2
-EXPECTED_DATA_COUNT = 3
-
     BYTES_PER_KB,
     PERFORMANCE_METRICS,
     SECONDS_PER_HOUR,
@@ -38,6 +34,10 @@ EXPECTED_DATA_COUNT = 3
     is_not_none,
     truncate,
 )
+
+# Constants
+EXPECTED_BULK_SIZE = 2
+EXPECTED_DATA_COUNT = 3
 
 
 class TestConstants:
@@ -70,7 +70,9 @@ class TestDecoratedFunctionProtocol:
         assert hasattr(sample_function, "__name__")
         assert callable(sample_function)
         if sample_function.__name__ != "sample_function":
-            raise AssertionError(f"Expected {"sample_function"}, got {sample_function.__name__}")
+            raise AssertionError(
+                f"Expected {'sample_function'}, got {sample_function.__name__}"
+            )
 
         # Test function execution
         result = sample_function(2, 3)
@@ -84,7 +86,9 @@ class TestFlextUtilities:
     def test_class_constants(self) -> None:
         """Test FlextUtilities class constants."""
         if FlextUtilities.SECONDS_PER_MINUTE != 60:
-            raise AssertionError(f"Expected {60}, got {FlextUtilities.SECONDS_PER_MINUTE}")
+            raise AssertionError(
+                f"Expected {60}, got {FlextUtilities.SECONDS_PER_MINUTE}"
+            )
         assert FlextUtilities.SECONDS_PER_HOUR == 3600
 
     def test_generate_uuid(self) -> None:
@@ -96,8 +100,8 @@ class TestFlextUtilities:
         assert isinstance(uuid1, str)
         assert isinstance(uuid2, str)
         assert uuid1 != uuid2
-        if len(uuid1) != 36  # Standard UUID length:
-            raise AssertionError(f"Expected {36  # Standard UUID length}, got {len(uuid1)}")
+        if len(uuid1) != 36:  # Standard UUID length
+            raise AssertionError(f"Expected {36}, got {len(uuid1)}")
 
         # Test UUID format (8-4-4-4-12)
         uuid_pattern = re.compile(
@@ -114,8 +118,8 @@ class TestFlextUtilities:
         assert isinstance(id2, str)
         assert id1 != id2
         assert id1.startswith("id_")
-        if len(id1) != 11  # "id_" + 8 hex chars:
-            raise AssertionError(f"Expected {11  # "id_" + 8 hex chars}, got {len(id1)}")
+        if len(id1) != 11:  # "id_" + 8 hex chars
+            raise AssertionError(f"Expected {11}, got {len(id1)}")
 
     def test_generate_timestamp(self) -> None:
         """Test timestamp generation."""
@@ -134,7 +138,7 @@ class TestFlextUtilities:
         assert isinstance(iso_timestamp, str)
         # Should contain date and time components
         if "T" not in iso_timestamp:
-            raise AssertionError(f"Expected {"T"} in {iso_timestamp}")
+            raise AssertionError(f"Expected {'T'} in {iso_timestamp}")
         assert ":" in iso_timestamp
 
         # Test ISO format pattern
@@ -150,8 +154,8 @@ class TestFlextUtilities:
         assert isinstance(corr_id2, str)
         assert corr_id1 != corr_id2
         assert corr_id1.startswith("corr_")
-        if len(corr_id1) != 17  # "corr_" + 12 hex chars:
-            raise AssertionError(f"Expected {17  # "corr_" + 12 hex chars}, got {len(corr_id1)}")
+        if len(corr_id1) != 17:  # "corr_" + 12 hex chars
+            raise AssertionError(f"Expected {17}, got {len(corr_id1)}")
 
     def test_generate_entity_id(self) -> None:
         """Test entity ID generation."""
@@ -162,9 +166,8 @@ class TestFlextUtilities:
         assert isinstance(entity_id2, str)
         assert entity_id1 != entity_id2
         assert entity_id1.startswith("entity_")
-        if len(entity_id1) != 17  # "entity_" + 10 hex chars:
-            raise AssertionError(f"Expected
-            {17  # "entity_" + 10 hex chars}, got {len(entity_id1)}")
+        if len(entity_id1) != 17:  # "entity_" + 10 hex chars
+            raise AssertionError(f"Expected {17}, got {len(entity_id1)}")
 
     def test_generate_session_id(self) -> None:
         """Test session ID generation."""
@@ -175,16 +178,17 @@ class TestFlextUtilities:
         assert isinstance(session_id2, str)
         assert session_id1 != session_id2
         assert session_id1.startswith("session_")
-        if len(session_id1) != 20  # "session_" + 12 hex chars:
-            raise AssertionError(f"Expected
-            {20  # "session_" + 12 hex chars}, got {len(session_id1)}")
+        if len(session_id1) != 20:  # "session_" + 12 hex chars
+            raise AssertionError(f"Expected {20}, got {len(session_id1)}")
 
     def test_truncate(self) -> None:
         """Test text truncation."""
         # Test short text (no truncation)
         short_text = "Hello"
         if FlextUtilities.truncate(short_text, 10) != "Hello":
-            raise AssertionError(f"Expected {"Hello"}, got {FlextUtilities.truncate(short_text, 10)}")
+            raise AssertionError(
+                f"Expected {'Hello'}, got {FlextUtilities.truncate(short_text, 10)}"
+            )
 
         # Test long text (with truncation)
         long_text = "This is a very long text that should be truncated"
@@ -193,7 +197,7 @@ class TestFlextUtilities:
             raise AssertionError(f"Expected {20}, got {len(truncated)}")
         assert truncated.endswith("...")
         if truncated != "This is a very lo...":
-            raise AssertionError(f"Expected {"This is a very lo..."}, got {truncated}")
+            raise AssertionError(f"Expected {'This is a very lo...'}, got {truncated}")
 
         # Test custom suffix
         custom_truncated = FlextUtilities.truncate(long_text, 20, suffix="[more]")
@@ -206,30 +210,30 @@ class TestFlextUtilities:
         # Test milliseconds
         ms_duration = FlextUtilities.format_duration(0.5)
         if "ms" not in ms_duration:
-            raise AssertionError(f"Expected {"ms"} in {ms_duration}")
+            raise AssertionError(f"Expected {'ms'} in {ms_duration}")
         if ms_duration != "500.0ms":
-            raise AssertionError(f"Expected {"500.0ms"}, got {ms_duration}")
+            raise AssertionError(f"Expected {'500.0ms'}, got {ms_duration}")
 
         # Test seconds
         sec_duration = FlextUtilities.format_duration(30.5)
         if "s" not in sec_duration:
-            raise AssertionError(f"Expected {"s"} in {sec_duration}")
+            raise AssertionError(f"Expected {'s'} in {sec_duration}")
         if sec_duration != "30.5s":
-            raise AssertionError(f"Expected {"30.5s"}, got {sec_duration}")
+            raise AssertionError(f"Expected {'30.5s'}, got {sec_duration}")
 
         # Test minutes
         min_duration = FlextUtilities.format_duration(150)  # 2.5 minutes
         if "m" not in min_duration:
-            raise AssertionError(f"Expected {"m"} in {min_duration}")
+            raise AssertionError(f"Expected {'m'} in {min_duration}")
         if min_duration != "2.5m":
-            raise AssertionError(f"Expected {"2.5m"}, got {min_duration}")
+            raise AssertionError(f"Expected {'2.5m'}, got {min_duration}")
 
         # Test hours
         hour_duration = FlextUtilities.format_duration(7200)  # 2 hours
         if "h" not in hour_duration:
-            raise AssertionError(f"Expected {"h"} in {hour_duration}")
+            raise AssertionError(f"Expected {'h'} in {hour_duration}")
         if hour_duration != "2.0h":
-            raise AssertionError(f"Expected {"2.0h"}, got {hour_duration}")
+            raise AssertionError(f"Expected {'2.0h'}, got {hour_duration}")
 
     def test_has_attribute(self) -> None:
         """Test attribute checking."""
@@ -241,26 +245,41 @@ class TestFlextUtilities:
         obj = TestObject()
 
         if not (FlextUtilities.has_attribute(obj, "existing_attr")):
-
-            raise AssertionError(f"Expected True, got {FlextUtilities.has_attribute(obj, "existing_attr")}")
+            raise AssertionError(
+                f"Expected True, got {FlextUtilities.has_attribute(obj, 'existing_attr')}"
+            )
         if FlextUtilities.has_attribute(obj, "non_existing_attr"):
-            raise AssertionError(f"Expected False, got {FlextUtilities.has_attribute(obj, "non_existing_attr")}")\ n        if not (FlextUtilities.has_attribute(obj, "__init__")):
-            raise AssertionError(f"Expected True, got {FlextUtilities.has_attribute(obj, "__init__")}")
+            raise AssertionError(
+                f"Expected False, got {FlextUtilities.has_attribute(obj, 'non_existing_attr')}"
+            )
+        if not (FlextUtilities.has_attribute(obj, "__init__")):
+            raise AssertionError(
+                f"Expected True, got {FlextUtilities.has_attribute(obj, '__init__')}"
+            )
 
     def test_is_instance_of(self) -> None:
         """Test instance type checking."""
         if not (FlextUtilities.is_instance_of("string", str)):
-            raise AssertionError(f"Expected True, got {FlextUtilities.is_instance_of("string", str)}")
+            raise AssertionError(
+                f"Expected True, got {FlextUtilities.is_instance_of('string', str)}"
+            )
         assert FlextUtilities.is_instance_of(42, int) is True
         if not (FlextUtilities.is_instance_of(math.pi, float)):
-            raise AssertionError(f"Expected True, got {FlextUtilities.is_instance_of(math.pi, float)}")
+            raise AssertionError(
+                f"Expected True, got {FlextUtilities.is_instance_of(math.pi, float)}"
+            )
         assert FlextUtilities.is_instance_of([], list) is True
         if not (FlextUtilities.is_instance_of({}, dict)):
-            raise AssertionError(f"Expected True, got {FlextUtilities.is_instance_of({}, dict)}")
+            raise AssertionError(
+                f"Expected True, got {FlextUtilities.is_instance_of({}, dict)}"
+            )
 
         # Test negative cases
         if FlextUtilities.is_instance_of("string", int):
-            raise AssertionError(f"Expected False, got {FlextUtilities.is_instance_of("string", int)}")\ n        assert FlextUtilities.is_instance_of(42, str) is False
+            raise AssertionError(
+                f"Expected False, got {FlextUtilities.is_instance_of('string', int)}"
+            )
+        assert FlextUtilities.is_instance_of(42, str) is False
 
     def test_safe_call(self) -> None:
         """Test safe function calling."""
@@ -273,7 +292,7 @@ class TestFlextUtilities:
         assert isinstance(result, FlextResult)
         assert result.is_success
         if result.data != "success":
-            raise AssertionError(f"Expected {"success"}, got {result.data}")
+            raise AssertionError(f"Expected {'success'}, got {result.data}")
 
         # Test failing call
         def failing_function() -> str:
@@ -285,21 +304,28 @@ class TestFlextUtilities:
         assert result.is_failure
         assert result.error is not None
         if "Test error" not in result.error:
-            raise AssertionError(f"Expected {"Test error"} in {result.error}")
+            raise AssertionError(f"Expected {'Test error'} in {result.error}")
 
     def test_is_not_none_guard(self) -> None:
         """Test not-None type guard."""
         # Test with non-None values
         if not (FlextUtilities.is_not_none_guard("string")):
-            raise AssertionError(f"Expected True, got {FlextUtilities.is_not_none_guard("string")}")
+            raise AssertionError(
+                f"Expected True, got {FlextUtilities.is_not_none_guard('string')}"
+            )
         assert FlextUtilities.is_not_none_guard(42) is True
         if not (FlextUtilities.is_not_none_guard([])):
-            raise AssertionError(f"Expected True, got {FlextUtilities.is_not_none_guard([])}")
+            raise AssertionError(
+                f"Expected True, got {FlextUtilities.is_not_none_guard([])}"
+            )
         assert FlextUtilities.is_not_none_guard({}) is True
 
         # Test with None
         if FlextUtilities.is_not_none_guard(None):
-            raise AssertionError(f"Expected False, got {FlextUtilities.is_not_none_guard(None)}")\ n
+            raise AssertionError(
+                f"Expected False, got {FlextUtilities.is_not_none_guard(None)}"
+            )
+
 
 class TestFlextGenerators:
     """Test FlextGenerators utility class."""
@@ -307,7 +333,9 @@ class TestFlextGenerators:
     def test_class_constants(self) -> None:
         """Test FlextGenerators class constants."""
         if FlextGenerators.SECONDS_PER_MINUTE != 60:
-            raise AssertionError(f"Expected {60}, got {FlextGenerators.SECONDS_PER_MINUTE}")
+            raise AssertionError(
+                f"Expected {60}, got {FlextGenerators.SECONDS_PER_MINUTE}"
+            )
         assert FlextGenerators.SECONDS_PER_HOUR == 3600
 
     def test_generate_uuid(self) -> None:
@@ -346,7 +374,7 @@ class TestFlextGenerators:
 
         assert isinstance(iso_timestamp, str)
         if "T" not in iso_timestamp:
-            raise AssertionError(f"Expected {"T"} in {iso_timestamp}")
+            raise AssertionError(f"Expected {'T'} in {iso_timestamp}")
 
     def test_generate_correlation_id(self) -> None:
         """Test correlation ID generation."""
@@ -378,7 +406,9 @@ class TestFlextFormatters:
         # Test short text
         short_text = "Hello"
         if FlextFormatters.truncate(short_text, 10) != "Hello":
-            raise AssertionError(f"Expected {"Hello"}, got {FlextFormatters.truncate(short_text, 10)}")
+            raise AssertionError(
+                f"Expected {'Hello'}, got {FlextFormatters.truncate(short_text, 10)}"
+            )
 
         # Test long text
         long_text = "This is a very long text that should be truncated"
@@ -390,33 +420,47 @@ class TestFlextFormatters:
         # Test exact length
         exact_text = "Exactly20Characters!"
         if FlextFormatters.truncate(exact_text, 20) != exact_text:
-            raise AssertionError(f"Expected {exact_text}, got {FlextFormatters.truncate(exact_text, 20)}")
+            raise AssertionError(
+                f"Expected {exact_text}, got {FlextFormatters.truncate(exact_text, 20)}"
+            )
 
     def test_format_duration(self) -> None:
         """Test duration formatting."""
         # Test milliseconds
         if FlextFormatters.format_duration(0.5) != "500.0ms":
-            raise AssertionError(f"Expected {"500.0ms"}, got {FlextFormatters.format_duration(0.5)}")
+            raise AssertionError(
+                f"Expected {'500.0ms'}, got {FlextFormatters.format_duration(0.5)}"
+            )
 
         # Test seconds
         if FlextFormatters.format_duration(30) != "30.0s":
-            raise AssertionError(f"Expected {"30.0s"}, got {FlextFormatters.format_duration(30)}")
+            raise AssertionError(
+                f"Expected {'30.0s'}, got {FlextFormatters.format_duration(30)}"
+            )
 
         # Test minutes
         if FlextFormatters.format_duration(120) != "2.0m":
-            raise AssertionError(f"Expected {"2.0m"}, got {FlextFormatters.format_duration(120)}")
+            raise AssertionError(
+                f"Expected {'2.0m'}, got {FlextFormatters.format_duration(120)}"
+            )
 
         # Test hours
         if FlextFormatters.format_duration(3600) != "1.0h":
-            raise AssertionError(f"Expected {"1.0h"}, got {FlextFormatters.format_duration(3600)}")
+            raise AssertionError(
+                f"Expected {'1.0h'}, got {FlextFormatters.format_duration(3600)}"
+            )
 
         # Test edge cases
         if FlextFormatters.format_duration(0) != "0.0ms":
-            raise AssertionError(f"Expected {"0.0ms"}, got {FlextFormatters.format_duration(0)}")
+            raise AssertionError(
+                f"Expected {'0.0ms'}, got {FlextFormatters.format_duration(0)}"
+            )
         assert FlextFormatters.format_duration(59) == "59.0s"
         # 3599 seconds / 60 = 59.983... which rounds to 60.0
         if FlextFormatters.format_duration(3599) != "60.0m":
-            raise AssertionError(f"Expected {"60.0m"}, got {FlextFormatters.format_duration(3599)}")
+            raise AssertionError(
+                f"Expected {'60.0m'}, got {FlextFormatters.format_duration(3599)}"
+            )
 
 
 class TestFlextTypeGuards:
@@ -432,34 +476,54 @@ class TestFlextTypeGuards:
         obj = TestObject()
 
         if not (FlextTypeGuards.has_attribute(obj, "attr")):
-
-            raise AssertionError(f"Expected True, got {FlextTypeGuards.has_attribute(obj, "attr")}")
+            raise AssertionError(
+                f"Expected True, got {FlextTypeGuards.has_attribute(obj, 'attr')}"
+            )
         if FlextTypeGuards.has_attribute(obj, "missing"):
-            raise AssertionError(f"Expected False, got {FlextTypeGuards.has_attribute(obj, "missing")}")\ n
+            raise AssertionError(
+                f"Expected False, got {FlextTypeGuards.has_attribute(obj, 'missing')}"
+            )
+
     def test_is_instance_of(self) -> None:
         """Test instance type checking."""
         if not (FlextTypeGuards.is_instance_of("string", str)):
-            raise AssertionError(f"Expected True, got {FlextTypeGuards.is_instance_of("string", str)}")
+            raise AssertionError(
+                f"Expected True, got {FlextTypeGuards.is_instance_of('string', str)}"
+            )
         assert FlextTypeGuards.is_instance_of(42, int) is True
         if FlextTypeGuards.is_instance_of("string", int):
-            raise AssertionError(f"Expected False, got {FlextTypeGuards.is_instance_of("string", int)}")\ n
+            raise AssertionError(
+                f"Expected False, got {FlextTypeGuards.is_instance_of('string', int)}"
+            )
+
     def test_is_list_of(self) -> None:
         """Test list type checking."""
         # Test valid lists
         if not (FlextTypeGuards.is_list_of([1, 2, 3], int)):
-            raise AssertionError(f"Expected True, got {FlextTypeGuards.is_list_of([1, 2, 3], int)}")
+            raise AssertionError(
+                f"Expected True, got {FlextTypeGuards.is_list_of([1, 2, 3], int)}"
+            )
         assert FlextTypeGuards.is_list_of(["a", "b"], str) is True
         assert FlextTypeGuards.is_list_of([], int) is True  # Empty list is valid
 
         # Test invalid lists
         if FlextTypeGuards.is_list_of([1, "2", 3], int):
-            raise AssertionError(f"Expected False, got {FlextTypeGuards.is_list_of([1, "2", 3], int)}")\ n        assert FlextTypeGuards.is_list_of(["a", 2], str) is False
+            raise AssertionError(
+                f"Expected False, got {FlextTypeGuards.is_list_of([1, '2', 3], int)}"
+            )
+        assert FlextTypeGuards.is_list_of(["a", 2], str) is False
 
         # Test non-lists
         if FlextTypeGuards.is_list_of("string", str):
-            raise AssertionError(f"Expected False, got {FlextTypeGuards.is_list_of("string", str)}")\ n        assert FlextTypeGuards.is_list_of(42, int) is False
+            raise AssertionError(
+                f"Expected False, got {FlextTypeGuards.is_list_of('string', str)}"
+            )
+        assert FlextTypeGuards.is_list_of(42, int) is False
         if FlextTypeGuards.is_list_of({}, dict):
-            raise AssertionError(f"Expected False, got {FlextTypeGuards.is_list_of({}, dict)}")\ n
+            raise AssertionError(
+                f"Expected False, got {FlextTypeGuards.is_list_of({}, dict)}"
+            )
+
 
 class TestPerformanceTracking:
     """Test performance tracking functionality."""
@@ -477,15 +541,17 @@ class TestPerformanceTracking:
         metrics = flext_get_performance_metrics()
         assert isinstance(metrics, dict)
         if "metrics" not in metrics:
-            raise AssertionError(f"Expected {"metrics"} in {metrics}")
+            raise AssertionError(f"Expected {'metrics'} in {metrics}")
 
         stored_metrics = metrics["metrics"]
         if "test.function1" not in stored_metrics:
-            raise AssertionError(f"Expected {"test.function1"} in {stored_metrics}")
+            raise AssertionError(f"Expected {'test.function1'} in {stored_metrics}")
         assert "test.function2" in stored_metrics
         if stored_metrics["test.function1"] != 1.5:
-            raise AssertionError(f"Expected {1.5}, got {stored_metrics["test.function1"]}")
-        assert stored_metrics["test.function2"] == EXPECTED_BULK_SIZE.3
+            raise AssertionError(
+                f"Expected {1.5}, got {stored_metrics['test.function1']}"
+            )
+        assert stored_metrics["test.function2"] == EXPECTED_BULK_SIZE
 
     def test_flext_clear_performance_metrics(self) -> None:
         """Test clearing performance metrics."""
@@ -502,7 +568,7 @@ class TestPerformanceTracking:
         # Verify metrics are cleared
         metrics = flext_get_performance_metrics()
         if len(metrics["metrics"]) != 0:
-            raise AssertionError(f"Expected {0}, got {len(metrics["metrics"])}")
+            raise AssertionError(f"Expected {0}, got {len(metrics['metrics'])}")
 
     def test_flext_track_performance_decorator(self) -> None:
         """Test performance tracking decorator."""
@@ -524,7 +590,9 @@ class TestPerformanceTracking:
         stored_metrics = metrics["metrics"]
         assert isinstance(stored_metrics, dict)
         if "test_category.test_function" not in stored_metrics:
-            raise AssertionError(f"Expected {"test_category.test_function"} in {stored_metrics}")
+            raise AssertionError(
+                f"Expected {'test_category.test_function'} in {stored_metrics}"
+            )
         metric_value = stored_metrics["test_category.test_function"]
         assert isinstance(metric_value, (int, float))
         assert metric_value > 0
@@ -549,7 +617,9 @@ class TestPerformanceTracking:
         stored_metrics = metrics["metrics"]
         assert isinstance(stored_metrics, dict)
         if "error_category.failing_function" not in stored_metrics:
-            raise AssertionError(f"Expected {"error_category.failing_function"} in {stored_metrics}")
+            raise AssertionError(
+                f"Expected {'error_category.failing_function'} in {stored_metrics}"
+            )
         metric_value = stored_metrics["error_category.failing_function"]
         assert isinstance(metric_value, (int, float))
         assert metric_value > 0
@@ -581,7 +651,6 @@ class TestPublicAPIFunctions:
         truncated = flext_truncate(long_text, 10)
 
         if len(truncated) != 10:
-
             raise AssertionError(f"Expected {10}, got {len(truncated)}")
         assert truncated.endswith("...")
 
@@ -595,15 +664,16 @@ class TestPublicAPIFunctions:
         assert isinstance(result, FlextResult)
         assert result.is_success
         if result.data != "success":
-            raise AssertionError(f"Expected {"success"}, got {result.data}")
+            raise AssertionError(f"Expected {'success'}, got {result.data}")
 
     def test_flext_is_not_none(self) -> None:
         """Test flext_is_not_none function."""
         if not (flext_is_not_none("value")):
-            raise AssertionError(f"Expected True, got {flext_is_not_none("value")}")
+            raise AssertionError(f"Expected True, got {flext_is_not_none('value')}")
         assert flext_is_not_none(42) is True
         if flext_is_not_none(None):
-            raise AssertionError(f"Expected False, got {flext_is_not_none(None)}")\ n
+            raise AssertionError(f"Expected False, got {flext_is_not_none(None)}")
+
 
 class TestBackwardCompatibilityFunctions:
     """Test backward compatibility functions."""
@@ -614,7 +684,6 @@ class TestBackwardCompatibilityFunctions:
         truncated = truncate(long_text, 15)
 
         if len(truncated) != 15:
-
             raise AssertionError(f"Expected {15}, got {len(truncated)}")
         assert truncated.endswith("...")
 
@@ -649,15 +718,16 @@ class TestBackwardCompatibilityFunctions:
 
         assert isinstance(iso_timestamp, str)
         if "T" not in iso_timestamp:
-            raise AssertionError(f"Expected {"T"} in {iso_timestamp}")
+            raise AssertionError(f"Expected {'T'} in {iso_timestamp}")
 
     def test_is_not_none_backward_compatibility(self) -> None:
         """Test backward compatible is_not_none function."""
         if not (is_not_none("value")):
-            raise AssertionError(f"Expected True, got {is_not_none("value")}")
+            raise AssertionError(f"Expected True, got {is_not_none('value')}")
         assert is_not_none(42) is True
         if is_not_none(None):
-            raise AssertionError(f"Expected False, got {is_not_none(None)}")\ n
+            raise AssertionError(f"Expected False, got {is_not_none(None)}")
+
 
 class TestEdgeCases:
     """Test edge cases and error conditions."""
@@ -666,68 +736,85 @@ class TestEdgeCases:
         """Test truncation edge cases."""
         # Test empty string
         if FlextUtilities.truncate("", 10) != "":
-            raise AssertionError(f"Expected {""}, got {FlextUtilities.truncate("", 10)}")
+            raise AssertionError(
+                f"Expected {''}, got {FlextUtilities.truncate('', 10)}"
+            )
 
         # Test max_length of 0 - the current implementation has edge case behavior
         result = FlextUtilities.truncate("text", 0)
         # With max_length=0 and default suffix "...", it becomes
         # text[:0-3] + "..." = text[-3:] + "..." = "t..."
-        if result != "t..."  # Actual behavior:
-            raise AssertionError(f"Expected {"t..."  # Actual behavior}, got {result}")
+        if result != "t...":  # Actual behavior
+            raise AssertionError(f"Expected {'t...'}, got {result}")
 
         # Test max_length smaller than suffix - the function doesn't handle this well
         result = FlextUtilities.truncate("long text", 2, suffix="...")
         # With max_length=2 and suffix="...", it becomes
         # text[:2-3] + "..." = text[:-1] + "..." = "long tex..."
-        if result != "long tex..."  # Actual behavior - doesn't respect max_length:
-            raise AssertionError(f"Expected {"long tex..."  # Actual behavior - doesn't respect max_length}, got {result}")
+        if result != "long tex...":  # Actual behavior - doesn't respect max_length
+            raise AssertionError(f"Expected {'long tex...'}, got {result}")
 
     def test_format_duration_edge_cases(self) -> None:
         """Test duration formatting edge cases."""
         # Test negative duration
         if FlextUtilities.format_duration(-1) != "-1000.0ms":
-            raise AssertionError(f"Expected {"-1000.0ms"}, got {FlextUtilities.format_duration(-1)}")
+            raise AssertionError(
+                f"Expected {'-1000.0ms'}, got {FlextUtilities.format_duration(-1)}"
+            )
 
         # Test very small duration
         if FlextUtilities.format_duration(0.0001) != "0.1ms":
-            raise AssertionError(f"Expected {"0.1ms"}, got {FlextUtilities.format_duration(0.0001)}")
+            raise AssertionError(
+                f"Expected {'0.1ms'}, got {FlextUtilities.format_duration(0.0001)}"
+            )
 
         # Test very large duration
         large_duration = 3600 * 24  # 24 hours
         result = FlextUtilities.format_duration(large_duration)
         if "h" not in result:
-            raise AssertionError(f"Expected {"h"} in {result}")
+            raise AssertionError(f"Expected {'h'} in {result}")
 
     def test_type_guards_edge_cases(self) -> None:
         """Test type guard edge cases."""
         # Test with None
         if FlextTypeGuards.has_attribute(None, "attr"):
-            raise AssertionError(f"Expected False, got {FlextTypeGuards.has_attribute(None, "attr")}")\ n
+            raise AssertionError(
+                f"Expected False, got {FlextTypeGuards.has_attribute(None, 'attr')}"
+            )
+
         # Test is_list_of with complex types
         class CustomClass:
             pass
 
         objects = [CustomClass(), CustomClass()]
         if not (FlextTypeGuards.is_list_of(objects, CustomClass)):
-            raise AssertionError(f"Expected True, got {FlextTypeGuards.is_list_of(objects, CustomClass)}")
+            raise AssertionError(
+                f"Expected True, got {FlextTypeGuards.is_list_of(objects, CustomClass)}"
+            )
 
         mixed_objects = [CustomClass(), "string"]
         if FlextTypeGuards.is_list_of(mixed_objects, CustomClass):
-            raise AssertionError(f"Expected False, got {FlextTypeGuards.is_list_of(mixed_objects, CustomClass)}")\ n
+            raise AssertionError(
+                f"Expected False, got {FlextTypeGuards.is_list_of(mixed_objects, CustomClass)}"
+            )
+
     def test_performance_tracking_edge_cases(self) -> None:
         """Test performance tracking edge cases."""
         # Test with empty category/function names
         flext_record_performance("", "", 1.0, success=True)
         metrics = flext_get_performance_metrics()
-        if "." not in metrics["metrics"]  # Empty category + empty function = ".":
-            raise AssertionError(f"Expected {"."}
-            in {metrics["metrics"]  # Empty category + empty function = "."}")
+        if "." not in metrics["metrics"]:  # Empty category + empty function = "."
+            raise AssertionError(
+                f"Expected {'.'} in {metrics['metrics']}"
+            )  # Empty category + empty function = "."
 
         # Test with special characters
         flext_record_performance("cat@gory", "func-tion", 2.0, success=True)
         metrics = flext_get_performance_metrics()
         if "cat@gory.func-tion" not in metrics["metrics"]:
-            raise AssertionError(f"Expected {"cat@gory.func-tion"} in {metrics["metrics"]}")
+            raise AssertionError(
+                f"Expected {'cat@gory.func-tion'} in {metrics['metrics']}"
+            )
 
     def test_thread_safety_basic(self) -> None:
         """Test basic thread safety considerations."""
@@ -805,10 +892,10 @@ class TestIntegrationAndComposition:
         ids = result.data
         assert isinstance(ids, dict)
         if "entity" not in ids:
-            raise AssertionError(f"Expected {"entity"} in {ids}")
+            raise AssertionError(f"Expected {'entity'} in {ids}")
         assert "session" in ids
         if "correlation" not in ids:
-            raise AssertionError(f"Expected {"correlation"} in {ids}")
+            raise AssertionError(f"Expected {'correlation'} in {ids}")
         assert ids["entity"].startswith("entity_")
         assert ids["session"].startswith("session_")
         assert ids["correlation"].startswith("corr_")
@@ -829,16 +916,18 @@ class TestIntegrationAndComposition:
         if len(results) != 4:
             raise AssertionError(f"Expected {4}, got {len(results)}")
         if "ms" not in results[0]:
-            raise AssertionError(f"Expected {"ms"} in {results[0]}")
+            raise AssertionError(f"Expected {'ms'} in {results[0]}")
         assert "s" in results[1]
         if "m" not in results[2]:
-            raise AssertionError(f"Expected {"m"} in {results[2]}")
+            raise AssertionError(f"Expected {'m'} in {results[2]}")
         assert "h" in results[3]
 
         # Check performance was tracked
         metrics = flext_get_performance_metrics()
         if "format_category.format_multiple_durations" not in metrics["metrics"]:
-            raise AssertionError(f"Expected {"format_category.format_multiple_durations"} in {metrics["metrics"]}")
+            raise AssertionError(
+                f"Expected {'format_category.format_multiple_durations'} in {metrics['metrics']}"
+            )
 
     def test_type_guards_with_generators(self) -> None:
         """Test type guards with generated data."""

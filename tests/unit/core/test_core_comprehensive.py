@@ -1,9 +1,5 @@
 """Comprehensive tests for core.py module.
 
-# Constants
-EXPECTED_TOTAL_PAGES = 8
-EXPECTED_DATA_COUNT = 3
-
 This test suite provides complete coverage of the FlextCore system,
 testing all aspects including singleton pattern, facade functionality,
 dependency injection, logging, railway programming utilities, and
@@ -24,6 +20,11 @@ from flext_core.loggings import FlextLogger
 from flext_core.result import FlextResult
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
+
+
+# Constants
+EXPECTED_TOTAL_PAGES = 8
+EXPECTED_DATA_COUNT = 3
 
 
 # Test data fixtures
@@ -164,7 +165,9 @@ class TestFlextCoreContainerIntegration:
         retrieved_service = retrieval_result.data
         assert isinstance(retrieved_service, UserService)
         if retrieved_service.name != "prod_user_service":
-            raise AssertionError(f"Expected {"prod_user_service"}, got {retrieved_service.name}")
+            raise AssertionError(
+                f"Expected {'prod_user_service'}, got {retrieved_service.name}"
+            )
 
     def test_get_service_success(
         self,
@@ -192,7 +195,7 @@ class TestFlextCoreContainerIntegration:
 
         assert result.is_failure
         if "not found" not in result.error.lower():
-            raise AssertionError(f"Expected {"not found"} in {result.error.lower()}")
+            raise AssertionError(f"Expected {'not found'} in {result.error.lower()}")
 
     def test_multiple_services_registration(self, clean_flext_core: FlextCore) -> None:
         """Test registration of multiple different services."""
@@ -234,7 +237,9 @@ class TestFlextCoreContainerIntegration:
 
             assert result.is_failure
             if "Registration failed" not in result.error:
-                raise AssertionError(f"Expected {"Registration failed"} in {result.error}")
+                raise AssertionError(
+                    f"Expected {'Registration failed'} in {result.error}"
+                )
 
 
 @pytest.mark.unit
@@ -256,8 +261,7 @@ class TestFlextCoreLogging:
         logger2 = clean_flext_core.get_logger("module2")
 
         if logger1._name != "module1":
-
-            raise AssertionError(f"Expected {"module1"}, got {logger1._name}")
+            raise AssertionError(f"Expected {'module1'}, got {logger1._name}")
         assert logger2._name == "module2"
         # Should be different logger instances for different names
         assert logger1._name != logger2._name
@@ -270,7 +274,9 @@ class TestFlextCoreLogging:
 
         # FlextLoggerFactory should return the same instance for same name
         if logger1._name == logger2._name != logger_name:
-            raise AssertionError(f"Expected {logger_name}, got {logger1._name == logger2._name}")
+            raise AssertionError(
+                f"Expected {logger_name}, got {logger1._name == logger2._name}"
+            )
 
     def test_configure_logging_default_settings(
         self,
@@ -314,7 +320,9 @@ class TestFlextCoreLogging:
 
         # Logger should still work
         if logger._name != "service.integration":
-            raise AssertionError(f"Expected {"service.integration"}, got {logger._name}")
+            raise AssertionError(
+                f"Expected {'service.integration'}, got {logger._name}"
+            )
 
 
 @pytest.mark.unit
@@ -328,7 +336,7 @@ class TestFlextCoreResultPatterns:
         assert isinstance(result, FlextResult)
         assert result.is_success
         if result.data != "success_value":
-            raise AssertionError(f"Expected {"success_value"}, got {result.data}")
+            raise AssertionError(f"Expected {'success_value'}, got {result.data}")
 
     def test_ok_with_different_types(self, clean_flext_core: FlextCore) -> None:
         """Test ok method with different data types."""
@@ -336,7 +344,7 @@ class TestFlextCoreResultPatterns:
         str_result = clean_flext_core.ok("test")
         assert str_result.is_success
         if str_result.data != "test":
-            raise AssertionError(f"Expected {"test"}, got {str_result.data}")
+            raise AssertionError(f"Expected {'test'}, got {str_result.data}")
 
         # Integer
         int_result = clean_flext_core.ok(42)
@@ -354,7 +362,7 @@ class TestFlextCoreResultPatterns:
         dict_result = clean_flext_core.ok({"key": "value"})
         assert dict_result.is_success
         if dict_result.data != {"key": "value"}:
-            raise AssertionError(f"Expected {{"key": "value"}}, got {dict_result.data}")
+            raise AssertionError(f'Expected {{"key": "value"}}, got {dict_result.data}')
 
     def test_fail_static_method(self, clean_flext_core: FlextCore) -> None:
         """Test fail static method."""
@@ -363,26 +371,30 @@ class TestFlextCoreResultPatterns:
         assert isinstance(result, FlextResult)
         assert result.is_failure
         if result.error != "error_message":
-            raise AssertionError(f"Expected {"error_message"}, got {result.error}")
+            raise AssertionError(f"Expected {'error_message'}, got {result.error}")
 
     def test_fail_with_different_messages(self, clean_flext_core: FlextCore) -> None:
         """Test fail method with different error messages."""
         error1 = clean_flext_core.fail("Simple error")
         assert error1.is_failure
         if error1.error != "Simple error":
-            raise AssertionError(f"Expected {"Simple error"}, got {error1.error}")
+            raise AssertionError(f"Expected {'Simple error'}, got {error1.error}")
 
         error2 = clean_flext_core.fail("Complex error with details")
         assert error2.is_failure
         if error2.error != "Complex error with details":
-            raise AssertionError(f"Expected {"Complex error with details"}, got {error2.error}")
+            raise AssertionError(
+                f"Expected {'Complex error with details'}, got {error2.error}"
+            )
 
         # Empty error should be handled
         error3 = clean_flext_core.fail("")
         assert error3.is_failure
         # FlextResult handles empty errors
         if error3.error != "Unknown error occurred":
-            raise AssertionError(f"Expected {"Unknown error occurred"}, got {error3.error}")
+            raise AssertionError(
+                f"Expected {'Unknown error occurred'}, got {error3.error}"
+            )
 
     def test_result_pattern_integration(self, clean_flext_core: FlextCore) -> None:
         """Test result pattern integration."""
@@ -394,13 +406,17 @@ class TestFlextCoreResultPatterns:
         chained_success = success.map(lambda x: f"processed {x}")
         assert chained_success.is_success
         if chained_success.data != "processed initial":
-            raise AssertionError(f"Expected {"processed initial"}, got {chained_success.data}")
+            raise AssertionError(
+                f"Expected {'processed initial'}, got {chained_success.data}"
+            )
 
         # Failure should propagate
         chained_failure = failure.map(lambda x: f"processed {x}")
         assert chained_failure.is_failure
         if chained_failure.error != "failed operation":
-            raise AssertionError(f"Expected {"failed operation"}, got {chained_failure.error}")
+            raise AssertionError(
+                f"Expected {'failed operation'}, got {chained_failure.error}"
+            )
 
 
 @pytest.mark.unit
@@ -423,8 +439,8 @@ class TestFlextCoreRailwayProgramming:
         result = pipeline(5)
 
         assert result.is_success
-        if result.data != "12"  # (5 + 1) * 2 = 12:
-            raise AssertionError(f"Expected {"12"  # (5 + 1) * 2 = 12}, got {result.data}")
+        if result.data != "12":  # (5 + 1) * 2 = 12
+            raise AssertionError(f"Expected {'12'}, got {result.data}")
 
     def test_pipe_failure_propagation(self, clean_flext_core: FlextCore) -> None:
         """Test pipe with failure propagation."""
@@ -443,7 +459,7 @@ class TestFlextCoreRailwayProgramming:
 
         assert result.is_failure
         if result.error != "Pipeline failed":
-            raise AssertionError(f"Expected {"Pipeline failed"}, got {result.error}")
+            raise AssertionError(f"Expected {'Pipeline failed'}, got {result.error}")
 
     def test_pipe_empty_pipeline(self, clean_flext_core: FlextCore) -> None:
         """Test pipe with empty pipeline."""
@@ -452,7 +468,7 @@ class TestFlextCoreRailwayProgramming:
 
         assert result.is_success
         if result.data != "test_value":
-            raise AssertionError(f"Expected {"test_value"}, got {result.data}")
+            raise AssertionError(f"Expected {'test_value'}, got {result.data}")
 
     def test_pipe_single_function(self, clean_flext_core: FlextCore) -> None:
         """Test pipe with single function."""
@@ -465,7 +481,7 @@ class TestFlextCoreRailwayProgramming:
 
         assert result.is_success
         if result.data != "transformed_input":
-            raise AssertionError(f"Expected {"transformed_input"}, got {result.data}")
+            raise AssertionError(f"Expected {'transformed_input'}, got {result.data}")
 
     def test_compose_right_to_left(self, clean_flext_core: FlextCore) -> None:
         """Test compose function (right to left execution)."""
@@ -483,7 +499,9 @@ class TestFlextCoreRailwayProgramming:
         assert result.is_success
         # Right to left: add_suffix first, then add_prefix
         if result.data != "prefix_middle_suffix":
-            raise AssertionError(f"Expected {"prefix_middle_suffix"}, got {result.data}")
+            raise AssertionError(
+                f"Expected {'prefix_middle_suffix'}, got {result.data}"
+            )
 
     def test_when_predicate_true(self, clean_flext_core: FlextCore) -> None:
         """Test when with true predicate."""
@@ -501,8 +519,8 @@ class TestFlextCoreRailwayProgramming:
         result = conditional(5)
 
         assert result.is_success
-        if result.data != 10  # Positive, so doubled:
-            raise AssertionError(f"Expected {10  # Positive, so doubled}, got {result.data}")
+        if result.data != 10:  # Positive, so doubled
+            raise AssertionError(f"Expected {10}, got {result.data}")
 
     def test_when_predicate_false_with_else(self, clean_flext_core: FlextCore) -> None:
         """Test when with false predicate and else function."""
@@ -520,8 +538,8 @@ class TestFlextCoreRailwayProgramming:
         result = conditional(-3)
 
         assert result.is_success
-        if result.data != EXPECTED_DATA_COUNT  # Negative, so negated (becomes positive):
-            raise AssertionError(f"Expected {3  # Negative, so negated (becomes positive)}, got {result.data}")
+        if result.data != 3:  # Negative, so negated (becomes positive)
+            raise AssertionError(f"Expected {3}, got {result.data}")
 
     def test_when_predicate_false_no_else(self, clean_flext_core: FlextCore) -> None:
         """Test when with false predicate and no else function."""
@@ -536,9 +554,39 @@ class TestFlextCoreRailwayProgramming:
         result = conditional(-3)
 
         assert result.is_success
-        if result.data != -3  # Unchanged when predicate false and no else:
-            raise AssertionError(f"Expected {-3  # Unchanged when predicate false and (
-                no else}, got {result.data}"))
+        if result.data != -3:  # Unchanged when predicate false and no else
+            raise AssertionError(f"Expected {-3}, got {result.data}")
+
+    def test_when_predicate_false_no_else_2(self, clean_flext_core: FlextCore) -> None:
+        """Test when with false predicate and no else function."""
+
+        # Unchanged when predicate false and no else
+        def is_positive(x: int) -> bool:
+            return x > 0
+
+        def double_value(x: int) -> FlextResult[int]:
+            return FlextResult.ok(x * 2)
+
+        conditional = clean_flext_core.when(is_positive, double_value)
+        result = conditional(-3)
+
+        assert result.is_success
+        if result.data != -3:  # Unchanged when predicate false and no else
+            raise AssertionError(f"Expected {-3}, got {result.data}")
+
+        # Unchanged when predicate false and no else
+        def is_positive(x: int) -> bool:
+            return x > 0
+
+        def double_value(x: int) -> FlextResult[int]:
+            return FlextResult.ok(x * 2)
+
+        conditional = clean_flext_core.when(is_positive, double_value)
+        result = conditional(-3)
+
+        assert result.is_success
+        if result.data != -3:  # Unchanged when predicate false and no else
+            raise AssertionError(f"Expected {-3}, got {result.data}")
 
     def test_when_exception_handling(self, clean_flext_core: FlextCore) -> None:
         """Test when with exception in predicate."""
@@ -569,7 +617,7 @@ class TestFlextCoreRailwayProgramming:
 
         assert result.is_success
         if result.data != "test_value":
-            raise AssertionError(f"Expected {"test_value"}, got {result.data}")
+            raise AssertionError(f"Expected {'test_value'}, got {result.data}")
         assert side_effect_calls == ["test_value"]
 
     def test_tap_in_pipeline(self, clean_flext_core: FlextCore) -> None:
@@ -599,8 +647,8 @@ class TestFlextCoreRailwayProgramming:
         result = pipeline(5)
 
         assert result.is_success
-        if result.data != 45  # (5 + 10) * 3:
-            raise AssertionError(f"Expected {45  # (5 + 10) * 3}, got {result.data}")
+        if result.data != 45:  # (5 + 10) * 3
+            raise AssertionError(f"Expected {45}, got {result.data}")
         assert side_effects == [
             "start: 5",
             "after_add: 15",
@@ -635,25 +683,24 @@ class TestFlextCoreRailwayProgramming:
         # Test with even positive number
         result1 = pipeline(4)
         assert result1.is_success
-        if result1.data != EXPECTED_TOTAL_PAGES  # 4 * 2:
-            raise AssertionError(f"Expected {8  # 4 * 2}, got {result1.data}")
+        if result1.data != EXPECTED_TOTAL_PAGES:  # 4 * 2
+            raise AssertionError(f"Expected {8}, got {result1.data}")
 
         # Test with odd positive number
         result2 = pipeline(3)
         assert result2.is_success
-        if result2.data != EXPECTED_DATA_COUNT  # unchanged:
-            raise AssertionError(f"Expected {3  # unchanged}, got {result2.data}")
+        if result2.data != EXPECTED_DATA_COUNT:  # unchanged
+            raise AssertionError(f"Expected {3}, got {result2.data}")
 
         # Test with negative number
         result3 = pipeline(-1)
         assert result3.is_failure
         if "positive" not in result3.error:
-            raise AssertionError(f"Expected {"positive"} in {result3.error}")
+            raise AssertionError(f"Expected {'positive'} in {result3.error}")
 
         # Check logged values
-        if logged_values != [4, 8, 3, 3]  # Before and after doubling:
-            raise AssertionError(f"Expected {[4, 8, 3, 3]  # Before and (
-                after doubling}, got {logged_values}"))
+        if logged_values != [4, 8, 3, 3]:  # Before and after doubling
+            raise AssertionError(f"Expected {[4, 8, 3, 3]}, got {logged_values}")
 
 
 @pytest.mark.unit
@@ -684,7 +731,7 @@ class TestFlextCoreConfiguration:
         assert isinstance(settings, UserService)
         assert hasattr(settings, "name")
         if settings.name != "test_user_service":
-            raise AssertionError(f"Expected {"test_user_service"}, got {settings.name}")
+            raise AssertionError(f"Expected {'test_user_service'}, got {settings.name}")
 
     def test_settings_cache_persistence(self, clean_flext_core: FlextCore) -> None:
         """Test settings cache persistence."""
@@ -697,7 +744,7 @@ class TestFlextCoreConfiguration:
         # Get again - should be same modified instance
         settings2 = clean_flext_core.get_settings(UserService)
         if settings2.name != "modified_name":
-            raise AssertionError(f"Expected {"modified_name"}, got {settings2.name}")
+            raise AssertionError(f"Expected {'modified_name'}, got {settings2.name}")
         assert settings1 is settings2
 
     def test_constants_property_access(self, clean_flext_core: FlextCore) -> None:
@@ -725,8 +772,7 @@ class TestFlextCoreRepresentation:
         repr_str = repr(clean_flext_core)
 
         if "FlextCore" not in repr_str:
-
-            raise AssertionError(f"Expected {"FlextCore"} in {repr_str}")
+            raise AssertionError(f"Expected {'FlextCore'} in {repr_str}")
         assert "services=" in repr_str
 
     def test_repr_with_services(self, clean_flext_core: FlextCore) -> None:
@@ -744,8 +790,7 @@ class TestFlextCoreRepresentation:
         repr_str = repr(clean_flext_core)
 
         if "FlextCore" not in repr_str:
-
-            raise AssertionError(f"Expected {"FlextCore"} in {repr_str}")
+            raise AssertionError(f"Expected {'FlextCore'} in {repr_str}")
         assert "services=" in repr_str
 
     def test_repr_format_consistency(self, clean_flext_core: FlextCore) -> None:
@@ -756,7 +801,7 @@ class TestFlextCoreRepresentation:
         assert repr_str.startswith("FlextCore(")
         assert repr_str.endswith(")")
         if "services=" not in repr_str:
-            raise AssertionError(f"Expected {"services="} in {repr_str}")
+            raise AssertionError(f"Expected {'services='} in {repr_str}")
 
 
 @pytest.mark.unit
@@ -782,7 +827,7 @@ class TestFlextCoreConvenienceFunction:
 
         assert result.is_success
         if result.data != "processed_test":
-            raise AssertionError(f"Expected {"processed_test"}, got {result.data}")
+            raise AssertionError(f"Expected {'processed_test'}, got {result.data}")
 
     def test_convenience_function_service_operations(self) -> None:
         """Test convenience function with service operations."""
@@ -797,7 +842,9 @@ class TestFlextCoreConvenienceFunction:
         get_result = flext_core().get_service(service_key)
         assert get_result.is_success
         if get_result.data.name != "convenience_test":
-            raise AssertionError(f"Expected {"convenience_test"}, got {get_result.data.name}")
+            raise AssertionError(
+                f"Expected {'convenience_test'}, got {get_result.data.name}"
+            )
 
     def test_convenience_function_logging_access(self) -> None:
         """Test convenience function logging access."""
@@ -805,14 +852,14 @@ class TestFlextCoreConvenienceFunction:
 
         assert isinstance(logger, FlextLogger)
         if logger._name != "convenience.test":
-            raise AssertionError(f"Expected {"convenience.test"}, got {logger._name}")
+            raise AssertionError(f"Expected {'convenience.test'}, got {logger._name}")
 
 
 @pytest.mark.unit
 class TestFlextCoreIntegration:
     """Test FlextCore integration scenarios."""
 
-    def test_full_workflow_integration(self, clean_flext_core: FlextCore) -> None:
+    def test_full_workflow_integration(self, clean_flext_core: FlextCore) -> None:  # noqa: C901
         """Test complete workflow integration."""
         # 1. Configure logging
         clean_flext_core.configure_logging(log_level="INFO")
@@ -875,10 +922,10 @@ class TestFlextCoreIntegration:
         if len(logged_steps) != EXPECTED_DATA_COUNT:
             raise AssertionError(f"Expected {3}, got {len(logged_steps)}")
         if "input: user123" not in logged_steps:
-            raise AssertionError(f"Expected {"input: user123"} in {logged_steps}")
+            raise AssertionError(f"Expected {'input: user123'} in {logged_steps}")
         assert "user_data: User user123" in logged_steps
         if "saved: True" not in logged_steps:
-            raise AssertionError(f"Expected {"saved: True"} in {logged_steps}")
+            raise AssertionError(f"Expected {'saved: True'} in {logged_steps}")
 
     def test_error_handling_integration(self, clean_flext_core: FlextCore) -> None:
         """Test error handling integration."""
@@ -903,18 +950,22 @@ class TestFlextCoreIntegration:
         success_result = pipeline("valid_input")
         assert success_result.is_success
         if success_result.data != "saved_processed_valid_input":
-            raise AssertionError(f"Expected {"saved_processed_valid_input"}, got {success_result.data}")
+            raise AssertionError(
+                f"Expected {'saved_processed_valid_input'}, got {success_result.data}"
+            )
 
         # Test failure cases
         empty_result = pipeline("")
         assert empty_result.is_failure
         if "Empty input" not in empty_result.error:
-            raise AssertionError(f"Expected {"Empty input"} in {empty_result.error}")
+            raise AssertionError(f"Expected {'Empty input'} in {empty_result.error}")
 
         fail_result = pipeline("fail")
         assert fail_result.is_failure
         if "Processing failed" not in fail_result.error:
-            raise AssertionError(f"Expected {"Processing failed"} in {fail_result.error}")
+            raise AssertionError(
+                f"Expected {'Processing failed'} in {fail_result.error}"
+            )
 
     def test_settings_and_services_integration(
         self,
@@ -1008,14 +1059,14 @@ class TestFlextCoreEdgeCases:
         result1 = true_condition("test")
         assert result1.is_success
         if result1.data != "success_test":
-            raise AssertionError(f"Expected {"success_test"}, got {result1.data}")
+            raise AssertionError(f"Expected {'success_test'}, got {result1.data}")
 
         # Always false with no else
         false_condition = clean_flext_core.when(always_false, success_func)
         result2 = false_condition("test")
         assert result2.is_success
-        if result2.data != "test"  # Unchanged:
-            raise AssertionError(f"Expected {"test"  # Unchanged}, got {result2.data}")
+        if result2.data != "test":  # Unchanged
+            raise AssertionError(f"Expected {'test'}, got {result2.data}")
 
     def test_tap_side_effect_exceptions(self, clean_flext_core: FlextCore) -> None:
         """Test tap with side effect exceptions."""
@@ -1050,9 +1101,9 @@ class TestFlextCoreEdgeCases:
             mock_container.get_service_count.return_value = 0
             repr_str = repr(clean_flext_core)
             if "services=0" not in repr_str:
-                raise AssertionError(f"Expected {"services=0"} in {repr_str}")
+                raise AssertionError(f"Expected {'services=0'} in {repr_str}")
 
             mock_container.get_service_count.return_value = 100
             repr_str = repr(clean_flext_core)
             if "services=100" not in repr_str:
-                raise AssertionError(f"Expected {"services=100"} in {repr_str}")
+                raise AssertionError(f"Expected {'services=100'} in {repr_str}")

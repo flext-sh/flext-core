@@ -477,7 +477,7 @@ class TestFlextFieldCore:
                 f"Expected False, got {bool_field.serialize_value('no')}"
             )
 
-    def test_field_deserialization(self) -> None:  # noqa: C901, PLR0912
+    def test_field_deserialization(self) -> None:  # noqa: C901
         """Test field value deserialization."""
         # String deserialization
         string_field = FlextFieldCore(

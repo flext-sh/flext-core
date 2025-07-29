@@ -1,8 +1,5 @@
 """Comprehensive tests for FlextMixinDelegator and delegation system.
 
-# Constants
-EXPECTED_BULK_SIZE = 2
-
 This test suite provides complete coverage of the delegation system,
 testing all aspects of mixin delegation, automatic method discovery,
 property delegation, and validation.
@@ -15,6 +12,10 @@ import pytest
 from flext_core._delegation_system import (
     FlextMixinDelegator,
 )
+
+# Constants
+EXPECTED_BULK_SIZE = 2
+EXPECTED_MIXIN_METHOD_COUNT = 2
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 
@@ -186,7 +187,9 @@ class TestFlextMixinDelegator:
         if len(delegator._mixin_instances) != 1:
             raise AssertionError(f"Expected {1}, got {len(delegator._mixin_instances)}")
         if MockMixin not in delegator._mixin_instances:
-            raise AssertionError(f"Expected {MockMixin} in {delegator._mixin_instances}")
+            raise AssertionError(
+                f"Expected {MockMixin} in {delegator._mixin_instances}"
+            )
 
     def test_get_mixin_instance_success(self) -> None:
         """Test successful mixin instance retrieval."""
@@ -203,11 +206,12 @@ class TestFlextMixinDelegator:
         host = HostInstance()
         delegator = FlextMixinDelegator(host, MockMixin, AnotherMixin)
 
-        if len(delegator._mixin_instances) != EXPECTED_BULK_SIZE:
-
+        if len(delegator._mixin_instances) != 2:
             raise AssertionError(f"Expected {2}, got {len(delegator._mixin_instances)}")
         if MockMixin not in delegator._mixin_instances:
-            raise AssertionError(f"Expected {MockMixin} in {delegator._mixin_instances}")
+            raise AssertionError(
+                f"Expected {MockMixin} in {delegator._mixin_instances}"
+            )
         assert AnotherMixin in delegator._mixin_instances
 
     def test_delegated_methods_created(self) -> None:
@@ -217,7 +221,9 @@ class TestFlextMixinDelegator:
 
         assert len(delegator._delegated_methods) > 0
         if "mixin_method" not in delegator._delegated_methods:
-            raise AssertionError(f"Expected {"mixin_method"} in {delegator._delegated_methods}")
+            raise AssertionError(
+                f"Expected {'mixin_method'} in {delegator._delegated_methods}"
+            )
 
     def test_method_delegation_through_host(self) -> None:
         """Test method delegation through host instance."""
@@ -231,7 +237,7 @@ class TestFlextMixinDelegator:
         if hasattr(host, "mixin_method"):
             result = host.mixin_method()  # type: ignore[attr-defined]
             if result != "mixin_method_called":
-                raise AssertionError(f"Expected {"mixin_method_called"}, got {result}")
+                raise AssertionError(f"Expected {'mixin_method_called'}, got {result}")
 
     def test_method_delegation_with_args(self) -> None:
         """Test method delegation with arguments."""
@@ -245,7 +251,9 @@ class TestFlextMixinDelegator:
         if hasattr(host, "mixin_method_with_args"):
             result = host.mixin_method_with_args("test", arg2=20)  # type: ignore[attr-defined]
             if result != "mixin_method_with_args: test, 20":
-                raise AssertionError(f"Expected {"mixin_method_with_args: test, 20"}, got {result}")
+                raise AssertionError(
+                    f"Expected {'mixin_method_with_args: test, 20'}, got {result}"
+                )
 
     def test_validation_system(self) -> None:
         """Test delegation validation system."""
@@ -262,10 +270,10 @@ class TestFlextMixinDelegator:
 
         info = delegator.get_delegation_info()
         if "registered_mixins" not in info:
-            raise AssertionError(f"Expected {"registered_mixins"} in {info}")
+            raise AssertionError(f"Expected {'registered_mixins'} in {info}")
         assert "delegated_methods" in info
         if "initialization_log" not in info:
-            raise AssertionError(f"Expected {"initialization_log"} in {info}")
+            raise AssertionError(f"Expected {'initialization_log'} in {info}")
         assert "validation_result" in info
 
     def test_mixin_registry_functionality(self) -> None:
@@ -278,7 +286,9 @@ class TestFlextMixinDelegator:
 
         # Check that mixin was registered globally
         if "MockMixin" not in FlextMixinDelegator._MIXIN_REGISTRY:
-            raise AssertionError(f"Expected {"MockMixin"} in {FlextMixinDelegator._MIXIN_REGISTRY}")
+            raise AssertionError(
+                f"Expected {'MockMixin'} in {FlextMixinDelegator._MIXIN_REGISTRY}"
+            )
 
     def test_initialization_log_tracking(self) -> None:
         """Test initialization log tracking."""
@@ -287,7 +297,9 @@ class TestFlextMixinDelegator:
 
         # Check that initialization was logged
         if len(delegator._initialization_log) < 0:
-            raise AssertionError(f"Expected {len(delegator._initialization_log)} >= {0}")
+            raise AssertionError(
+                f"Expected {len(delegator._initialization_log)} >= {0}"
+            )
         assert isinstance(delegator._initialization_log, list)
 
     def test_empty_delegation_validation(self) -> None:
@@ -298,7 +310,9 @@ class TestFlextMixinDelegator:
         validation_result = delegator._validate_delegation()
         assert validation_result.is_failure
         if "No mixins were successfully registered" not in validation_result.error:
-            raise AssertionError(f"Expected {"No mixins were successfully registered"} in {validation_result.error}")
+            raise AssertionError(
+                f"Expected {'No mixins were successfully registered'} in {validation_result.error}"
+            )
 
     def test_multiple_mixin_method_delegation(self) -> None:
         """Test delegation with multiple mixins."""
@@ -325,7 +339,7 @@ class TestFlextMixinDelegator:
         # Test calling method directly on instance
         result = mixin_instance.mixin_method()  # type: ignore[union-attr]
         if result != "mixin_method_called":
-            raise AssertionError(f"Expected {"mixin_method_called"}, got {result}")
+            raise AssertionError(f"Expected {'mixin_method_called'}, got {result}")
 
     def test_method_resolution_order(self) -> None:
         """Test method resolution order with multiple mixins."""
@@ -345,7 +359,7 @@ class TestFlextMixinDelegator:
         # Test through delegation info
         info = delegator.get_delegation_info()
         if not (info["validation_result"]):
-            raise AssertionError(f"Expected True, got {info["validation_result"]}")
+            raise AssertionError(f"Expected True, got {info['validation_result']}")
 
     def test_delegation_error_handling(self) -> None:
         """Test error handling in delegation system."""
@@ -388,5 +402,7 @@ class TestFlextMixinDelegator:
         mixin_instance.mixin_state = "modified"  # type: ignore[union-attr]
 
         # State should be preserved
-        if mixin_instance.mixin_state != "modified"  # type: ignore[union-attr]:
-            raise AssertionError(f"Expected {"modified"  # type: ignore[union-attr]}, got {mixin_instance.mixin_state}")
+        if mixin_instance.mixin_state != "modified":  # type: ignore[union-attr]
+            raise AssertionError(
+                f"Expected {'modified'}, got {mixin_instance.mixin_state}"
+            )
