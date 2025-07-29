@@ -445,7 +445,7 @@ class FlextEntity(BaseModel, ABC):
 
             # If no field definition found, return success (allow other validation)
             return FlextResult.ok(None)
-        except (AttributeError, RuntimeError) as e:
+        except (AttributeError, RuntimeError, ImportError) as e:
             return FlextResult.fail(f"Field validation error: {e}")
 
     def validate_all_fields(self) -> FlextResult[None]:

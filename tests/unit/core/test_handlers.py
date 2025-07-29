@@ -5,6 +5,12 @@ from __future__ import annotations
 # Use flext-core modern type definitions
 from typing import TYPE_CHECKING
 
+from flext_core._handlers_base import (
+    _BaseCommandHandler,
+    _BaseEventHandler,
+    _BaseHandler,
+    _BaseQueryHandler,
+)
 from flext_core.handlers import FlextHandlers
 from flext_core.result import FlextResult
 
@@ -1234,3 +1240,290 @@ class TestHandlerEdgeCases:
             )
         if len(results) != 10:
             raise AssertionError(f"Expected {10}, got {len(results)}")
+
+
+class TestBaseHandlerClasses:
+    """Test base handler classes for better coverage."""
+
+    def test_base_handler_abstract_methods(self) -> None:
+        """Test that base handler is abstract and cannot be instantiated."""
+        # _BaseHandler is abstract and should not be instantiated directly
+        try:
+            _BaseHandler()  # type: ignore[misc]
+            # If we get here, the handler was instantiated (shouldn't happen)
+            msg = "Abstract handler should not be instantiable"
+            raise AssertionError(msg)
+        except TypeError:
+            # This is expected - abstract class cannot be instantiated
+            pass
+
+    def test_concrete_handler_implementations(self) -> None:
+        """Test concrete handler implementations."""
+
+        # Create concrete implementations to test the base classes
+        class TestCommandHandler(_BaseCommandHandler[str, str]):
+            def handle(self, command: str) -> FlextResult[str]:
+                return FlextResult.ok(f"Handled command: {command}")
+
+        class TestEventHandler(_BaseEventHandler[str]):
+            def handle(self, event: str) -> FlextResult[None]:
+                # Event handlers return None
+                return FlextResult.ok(None)
+
+            def process_event(self, event: str) -> None:
+                # Process the event (abstract method implementation)
+                pass
+
+        class TestQueryHandler(_BaseQueryHandler[str, str]):
+            def handle(self, query: str) -> FlextResult[str]:
+                return FlextResult.ok(f"Query result: {query}")
+
+        # Test command handler
+        cmd_handler = TestCommandHandler()
+        cmd_result = cmd_handler.handle("test_command")
+        assert cmd_result.is_success
+        assert cmd_result.data == "Handled command: test_command"
+
+        # Test event handler
+        event_handler = TestEventHandler()
+        event_result = event_handler.handle("test_event")
+        assert event_result.is_success
+        assert event_result.data is None
+
+        # Test query handler
+        query_handler = TestQueryHandler()
+        query_result = query_handler.handle("test_query")
+        assert query_result.is_success
+        assert query_result.data == "Query result: test_query"
+
+    def test_handler_timing_mixin(self) -> None:
+        """Test timing functionality from base handler mixin."""
+
+        class TimedCommandHandler(_BaseCommandHandler[str, str]):
+            def handle(self, command: str) -> FlextResult[str]:
+                return FlextResult.ok(f"Timed: {command}")
+
+        handler = TimedCommandHandler()
+
+        # The handler should have timing capabilities from the mixin
+        # Test that we can call handle and get timing information
+        result = handler.handle("timing_test")
+        assert result.is_success
+        assert "Timed: timing_test" in result.data
+
+
+class TestHandlerBaseCoverage:
+    """Test cases specifically for improving coverage of _handlers_base.py module."""
+
+    def test_handler_can_handle_fallback_path(self) -> None:
+        """Test can_handle method fallback behavior (line 141)."""
+
+        class SimpleHandler(_BaseCommandHandler[str, str]):
+            def handle(self, command: str) -> FlextResult[str]:
+                return FlextResult.ok(f"Handled: {command}")
+
+        handler = SimpleHandler("simple_handler")
+
+        # Test fallback when type checking fails - should return True
+        result = handler.can_handle("any_message")
+        assert result is True
+
+    def test_handler_pre_handle_with_validation_failure(self) -> None:
+        """Test pre_handle with message validation failure (lines 152-163)."""
+
+        # Use base handler directly since command handler overrides pre_handle
+        class ValidatingHandler(_BaseHandler[object, str]):
+            def handle(self, command: object) -> FlextResult[str]:
+                return FlextResult.ok("handled")
+
+        handler = ValidatingHandler("validating_handler")
+
+        # Create a message with a failing validate method
+        class InvalidMessage:
+            def __init__(self) -> None:
+                self.validate_called = False
+
+            def validate(self) -> FlextResult[None]:
+                self.validate_called = True
+                failed_result = FlextResult.fail("Message validation failed")
+                # Verify our test setup is correct
+                assert failed_result.is_failure
+                assert hasattr(failed_result, "is_failure")
+                return failed_result
+
+        invalid_msg = InvalidMessage()
+        result = handler.pre_handle(invalid_msg)
+
+        # Debug: Check if validate was called
+        assert invalid_msg.validate_called, "validate() method should have been called"
+
+        assert result.is_failure
+        if "Message validation failed" not in result.error:
+            raise AssertionError(
+                f"Expected 'Message validation failed' in {result.error}"
+            )
+
+    def test_handler_post_handle_failure_tracking(self) -> None:
+        """Test post_handle method with failure tracking (lines 177-178)."""
+
+        class FailureHandler(_BaseCommandHandler[str, str]):
+            def handle(self, command: str) -> FlextResult[str]:
+                return FlextResult.ok("success")
+
+        handler = FailureHandler("failure_handler")
+
+        # Test post_handle with failure result
+        failure_result = FlextResult.fail("Test failure")
+        processed_result = handler.post_handle(failure_result)
+
+        assert processed_result.is_failure
+        if processed_result.error != "Test failure":
+            raise AssertionError(
+                f"Expected 'Test failure', got {processed_result.error}"
+            )
+
+        # Check metrics updated
+        metrics = handler.get_metrics()
+        if metrics["failures"] != 1:
+            raise AssertionError(f"Expected 1 failure, got {metrics['failures']}")
+
+    def test_handler_cannot_handle_error_path(self) -> None:
+        """Test handle_with_hooks when handler cannot handle message (lines 198-200)."""
+
+        class RestrictiveHandler(_BaseCommandHandler[str, str]):
+            def handle(self, command: str) -> FlextResult[str]:
+                return FlextResult.ok("handled")
+
+            def can_handle(self, message: object) -> bool:
+                return False  # Always reject
+
+        handler = RestrictiveHandler("restrictive_handler")
+
+        result = handler.handle_with_hooks("test_message")
+        assert result.is_failure
+        if "cannot handle" not in result.error:
+            raise AssertionError(f"Expected 'cannot handle' in {result.error}")
+
+    def test_handler_pre_processing_failure_path(self) -> None:
+        """Test handle_with_hooks when pre-processing fails (lines 205-209)."""
+
+        class PreFailHandler(_BaseCommandHandler[str, str]):
+            def handle(self, command: str) -> FlextResult[str]:
+                return FlextResult.ok("handled")
+
+            def pre_handle(self, message: str) -> FlextResult[str]:
+                return FlextResult.fail("Pre-processing failed")
+
+        handler = PreFailHandler("pre_fail_handler")
+
+        result = handler.handle_with_hooks("test_message")
+        assert result.is_failure
+        if "Pre-processing failed" not in result.error:
+            raise AssertionError(f"Expected 'Pre-processing failed' in {result.error}")
+
+    def test_command_handler_validate_command_override(self) -> None:
+        """Test command handler validate_command method override (lines 255-256)."""
+
+        class ValidatingCommandHandler(_BaseCommandHandler[str, str]):
+            def handle(self, command: str) -> FlextResult[str]:
+                return FlextResult.ok(f"Handled: {command}")
+
+            def validate_command(self, command: str) -> FlextResult[None]:
+                if len(command) < 3:
+                    return FlextResult.fail("Command too short")
+                return FlextResult.ok(None)
+
+        handler = ValidatingCommandHandler("validating_cmd_handler")
+
+        # Test with invalid command
+        result = handler.pre_handle("hi")
+        assert result.is_failure
+        if "Command too short" not in result.error:
+            raise AssertionError(f"Expected 'Command too short' in {result.error}")
+
+        # Test with valid command
+        result = handler.pre_handle("hello")
+        assert result.is_success
+        if result.data != "hello":
+            raise AssertionError(f"Expected 'hello', got {result.data}")
+
+    def test_command_handler_pre_handle_validation_failure(self) -> None:
+        """Test command handler pre_handle with validation failure (lines 260-265)."""
+
+        class FailingValidationHandler(_BaseCommandHandler[str, str]):
+            def handle(self, command: str) -> FlextResult[str]:
+                return FlextResult.ok("handled")
+
+            def validate_command(self, command: str) -> FlextResult[None]:
+                return FlextResult.fail("Always fails validation")
+
+        handler = FailingValidationHandler("failing_validation_handler")
+
+        result = handler.pre_handle("test")
+        assert result.is_failure
+        if "Always fails validation" not in result.error:
+            raise AssertionError(
+                f"Expected 'Always fails validation' in {result.error}"
+            )
+
+    def test_event_handler_process_event_call(self) -> None:
+        """Test event handler process_event method call (lines 273-274)."""
+
+        class ProcessingEventHandler(_BaseEventHandler[str]):
+            def __init__(self, name: str | None = None) -> None:
+                super().__init__(name)
+                self.processed_events: list[str] = []
+
+            def process_event(self, event: str) -> None:
+                self.processed_events.append(event)
+
+        handler = ProcessingEventHandler("processing_event_handler")
+
+        result = handler.handle("test_event")
+        assert result.is_success
+        assert result.data is None
+        if "test_event" not in handler.processed_events:
+            raise AssertionError(f"Expected 'test_event' in {handler.processed_events}")
+
+    def test_query_handler_authorize_query_override(self) -> None:
+        """Test query handler authorize_query method override (lines 286-287)."""
+
+        class AuthorizingQueryHandler(_BaseQueryHandler[str, str]):
+            def handle(self, query: str) -> FlextResult[str]:
+                return FlextResult.ok(f"Result: {query}")
+
+            def authorize_query(self, query: str) -> FlextResult[None]:
+                if query.startswith("secret"):
+                    return FlextResult.fail("Unauthorized")
+                return FlextResult.ok(None)
+
+        handler = AuthorizingQueryHandler("authorizing_query_handler")
+
+        # Test unauthorized query
+        result = handler.pre_handle("secret_data")
+        assert result.is_failure
+        if "Unauthorized" not in result.error:
+            raise AssertionError(f"Expected 'Unauthorized' in {result.error}")
+
+        # Test authorized query
+        result = handler.pre_handle("public_data")
+        assert result.is_success
+        if result.data != "public_data":
+            raise AssertionError(f"Expected 'public_data', got {result.data}")
+
+    def test_query_handler_pre_handle_authorization_failure(self) -> None:
+        """Test query handler pre_handle with authorization failure (lines 291-296)."""
+
+        class FailingAuthHandler(_BaseQueryHandler[str, str]):
+            def handle(self, query: str) -> FlextResult[str]:
+                return FlextResult.ok("handled")
+
+            def authorize_query(self, query: str) -> FlextResult[None]:
+                return FlextResult.fail("Authorization failed")
+
+        handler = FailingAuthHandler("failing_auth_handler")
+
+        result = handler.pre_handle("test")
+        assert result.is_failure
+        if "Authorization failed" not in result.error:
+            raise AssertionError(f"Expected 'Authorization failed' in {result.error}")
