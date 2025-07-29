@@ -85,6 +85,7 @@ if TYPE_CHECKING:
     from structlog.stdlib import BoundLogger
 
     from flext_core.result import FlextResult
+    from flext_core.types import TAnyDict
 
 # =============================================================================
 # VALIDATION INTERFACES
@@ -129,7 +130,11 @@ class FlextValidator(Protocol):
         def use_validator(validator: FlextValidator, data: object):
             if isinstance(validator, FlextValidator):
                 return validator.validate(data)
-            raise TypeError("Expected FlextValidator protocol")
+            raise FlextTypeError(
+                "Expected FlextValidator protocol",
+                expected_type="FlextValidator",
+                actual_type=type(validator)
+            )
 
         # Structural typing usage
         email_validator = EmailValidator()
@@ -298,7 +303,7 @@ class FlextService(ABC):
         ...
 
     @abstractmethod
-    def health_check(self) -> FlextResult[dict[str, object]]:
+    def health_check(self) -> FlextResult[TAnyDict]:
         """Check service health.
 
         Returns:

@@ -11,6 +11,7 @@ import operator
 import pytest
 
 from flext_core import FlextResult
+from flext_core.exceptions import FlextOperationError
 
 
 class TestFlextResultEnhanced:
@@ -250,8 +251,8 @@ class TestFlextResultEnhanced:
         result = FlextResult.fail("error message")
         exception = result.to_exception()
 
-        assert isinstance(exception, ValueError)
-        assert str(exception) == "error message"
+        assert isinstance(exception, FlextOperationError)
+        assert str(exception) == "[OPERATION_ERROR] error message"
 
     def test_from_exception_success(self) -> None:
         """Test from_exception with successful function."""

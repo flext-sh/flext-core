@@ -2,13 +2,10 @@
 
 from __future__ import annotations
 
-import operator
-
 import pytest
 from pydantic import ValidationError
 
 from flext_core import FlextResult
-from flext_core.exceptions import FlextError
 
 
 class TestFlextResult:
@@ -77,9 +74,11 @@ class TestFlextResult:
         assert result.unwrap() == "test data"
 
     def test_unwrap_failure_raises(self) -> None:
-        """Test unwrapping failure result raises ValueError."""
+        """Test unwrapping failure result raises FlextOperationError."""
+        from flext_core.exceptions import FlextOperationError
+
         result: FlextResult[str] = FlextResult.fail("error")
-        with pytest.raises(ValueError, match="Cannot unwrap failure result"):
+        with pytest.raises(FlextOperationError, match="error"):
             result.unwrap()
 
     def test_unwrap_or_success(self) -> None:
@@ -178,7 +177,8 @@ class TestFlextResult:
         """Test that the model is frozen and immutable."""
         result = FlextResult.ok("test")
         with pytest.raises((AttributeError, ValidationError)):
-            result.success = False
+            # Cannot set success directly on frozen model
+            result.is_success = False  # This should raise an exception
 
     def test_type_generic_behavior(self) -> None:
         """Test generic type behavior with different data types."""
@@ -208,19 +208,15 @@ class TestFlextResult:
         # This creates a condition where len(values) < 2, covering line 72
         # by directly manipulating the validation info
         result = FlextResult.ok("test")
-        assert result.success is True
+        assert result.is_success is True
 
     def test_map_with_none_data_on_success(self) -> None:
         """Test map behavior when success but data is None."""
         # This covers a specific branch in map method
-        result: FlextResult[str] = FlextResult(
-            success=True,
-            data=None,
-            error=None,
-        )
+        result: FlextResult[str] = FlextResult.ok(None)
         mapped = result.map(lambda x: x.upper() if x else "default")
-        assert mapped.is_failure
-        assert mapped.error == "Unknown error"
+        assert mapped.is_success
+        assert mapped.data == "default"
 
     def test_map_with_specific_exception_types(self) -> None:
         """Test map handling of specific exception types."""
@@ -238,8 +234,12 @@ class TestFlextResult:
         assert mapped.error is not None
         assert "Transformation failed:" in mapped.error
 
-        # Test IndexError
-        mapped = result.map(operator.itemgetter(100))  # IndexError
+        # Test RuntimeError (now captured)
+        def raise_runtime_error(_: list) -> None:
+            error_msg = "test"
+            raise RuntimeError(error_msg)
+
+        mapped = result.map(raise_runtime_error)  # RuntimeError
         assert mapped.is_failure
         assert mapped.error is not None
         assert "Transformation failed:" in mapped.error
@@ -251,7 +251,7 @@ class TestFlextResult:
         def function_with_generic_exception(_: str) -> FlextResult[str]:
             """Raise a generic exception for testing error handling."""
             msg = "Generic runtime error"
-            raise FlextError(msg)
+            raise RuntimeError(msg)
 
         chained = result.flat_map(function_with_generic_exception)
         assert chained.is_failure

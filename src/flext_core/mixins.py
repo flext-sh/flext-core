@@ -160,16 +160,190 @@ FlextEntityMixin = _BaseEntityMixin  # ID + timestamps + validation
 FlextValueObjectMixin = _BaseValueObjectMixin  # Validation + serialization + comparison
 
 # =============================================================================
+# SMART COMPOSITIONS - Intelligent mixin combinations
+# =============================================================================
+
+
+class FlextServiceMixin(
+    FlextLoggableMixin,
+    FlextTimingMixin,
+    FlextValidatableMixin,
+    FlextIdentifiableMixin,
+):
+    """Smart composition for service classes.
+
+    Combines logging, timing, validation, and identification
+    in a single mixin optimized for service layer components.
+
+    Features:
+    - Structured logging with service context
+    - Execution timing for performance monitoring
+    - Validation state management for input checking
+    - Unique identification for service tracking
+
+    Usage:
+        class UserService(FlextServiceMixin):
+            def __init__(self):
+                super().__init__()
+                self.service_name = "UserService"
+    """
+
+    def __init__(self, service_name: str | None = None) -> None:
+        """Initialize service with smart defaults."""
+        super().__init__()
+        if service_name:
+            self.set_id(service_name)
+        self._service_initialized = True
+
+
+class FlextCommandMixin(
+    FlextValidatableMixin,
+    FlextTimestampMixin,
+    FlextSerializableMixin,
+    FlextIdentifiableMixin,
+):
+    """Smart composition for command classes.
+
+    Combines validation, timestamps, serialization, and ID
+    optimized for CQRS command patterns.
+
+    Features:
+    - Command validation with business rules
+    - Creation and update timestamps
+    - Serialization for transport and persistence
+    - Command identification for tracking
+
+    Usage:
+        class CreateUserCommand(FlextCommandMixin):
+            def __init__(self, **kwargs):
+                super().__init__()
+                self.validate_and_set(**kwargs)
+    """
+
+    def validate_and_set(self, **kwargs: object) -> None:
+        """Validate and set command data in one operation."""
+        # Clear previous validation errors
+        self.clear_validation_errors()
+
+        # Set attributes from kwargs
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+
+        # Update timestamp
+        self._update_timestamp()
+
+
+class FlextDataMixin(
+    FlextSerializableMixin,
+    FlextValidatableMixin,
+    FlextComparableMixin,
+    FlextCacheableMixin,
+):
+    """Smart composition for data classes.
+
+    Combines serialization, validation, comparison, and caching
+    optimized for data transfer and value objects.
+
+    Features:
+    - Dictionary serialization with type conversion
+    - Data validation with error collection
+    - Value-based comparison operations
+    - Intelligent caching for performance
+
+    Usage:
+        class UserData(FlextDataMixin):
+            def __init__(self, name: str, email: str):
+                super().__init__()
+                self.name = name
+                self.email = email
+                self.validate_data()
+    """
+
+    def validate_data(self) -> bool:
+        """Validate all data and cache result."""
+        cache_key = f"validation_{hash(str(self.to_dict_basic()))}"
+
+        # Check cache first
+        cached_result = self.cache_get(cache_key)
+        if cached_result is not None:
+            return bool(cached_result)
+
+        # Perform validation
+        self.clear_validation_errors()
+        is_valid = self._perform_validation()
+
+        # Cache result
+        self.cache_set(cache_key, is_valid)
+        return is_valid
+
+    def _perform_validation(self) -> bool:
+        """Override in subclasses for specific validation logic."""
+        return not self.has_validation_errors()
+
+
+class FlextFullMixin(
+    FlextLoggableMixin,
+    FlextTimingMixin,
+    FlextValidatableMixin,
+    FlextSerializableMixin,
+    FlextTimestampMixin,
+    FlextIdentifiableMixin,
+    FlextComparableMixin,
+    FlextCacheableMixin,
+):
+    """Complete mixin composition with all capabilities.
+
+    Combines all available mixins for maximum functionality
+    in enterprise components that need comprehensive features.
+
+    Features:
+    - Complete logging, timing, and monitoring
+    - Full validation and serialization
+    - Timestamps and identification
+    - Comparison and caching operations
+
+    Usage:
+        class EnterpriseEntity(FlextFullMixin):
+            def __init__(self, **kwargs):
+                super().__init__()
+                self.configure_enterprise_features(**kwargs)
+    """
+
+    def configure_enterprise_features(self, **kwargs: object) -> None:
+        """Configure all enterprise features in one operation."""
+        # Set ID if provided
+        entity_id = kwargs.get("id")
+        if entity_id:
+            self.set_id(str(entity_id))
+
+        # Initialize timestamps
+        self._update_timestamp()
+
+        # Configure logging context
+        entity_name = kwargs.get("entity_name", self.__class__.__name__)
+        self.logger.info("Enterprise entity configured", entity_name=entity_name)
+
+        # Clear validation state
+        self.clear_validation_errors()
+
+
+# =============================================================================
 # EXPORTS - Clean public API
 # =============================================================================
 
+
 __all__ = [
     "FlextCacheableMixin",
+    "FlextCommandMixin",
     "FlextComparableMixin",
+    "FlextDataMixin",
     "FlextEntityMixin",
+    "FlextFullMixin",
     "FlextIdentifiableMixin",
     "FlextLoggableMixin",
     "FlextSerializableMixin",
+    "FlextServiceMixin",
     "FlextTimestampMixin",
     "FlextTimingMixin",
     "FlextValidatableMixin",

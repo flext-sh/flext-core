@@ -200,7 +200,7 @@ class TestFlextLogger:
 
     def test_get_base_logger_with_level(self) -> None:
         """Test getting base logger with specific level."""
-        base_logger = FlextLogger.get_base_logger("level_test", "DEBUG")
+        base_logger = FlextLogger.get_base_logger("level_test", _level="DEBUG")
 
         assert base_logger is not None
 
@@ -248,18 +248,19 @@ class TestFlextLoggerUsage:
 
     def test_basic_logging(self) -> None:
         """Test basic logging functionality."""
-        logger = FlextLogger.get_logger("usage_test")
+        # Use FlextLogger constructor directly, not get_logger()
+        logger = FlextLogger("usage_test", "DEBUG")
 
         # These should not raise errors
-        logger.info("Test info message")
-        logger.debug("Test debug message")
-        logger.warning("Test warning message")
-        logger.error("Test error message")
-        logger.critical("Test critical message")
+        logger.info("Test info message", test=True)
+        logger.debug("Test debug message", test=True)
+        logger.warning("Test warning message", test=True)
+        logger.error("Test error message", test=True)
+        logger.critical("Test critical message", test=True)
 
     def test_logging_with_context(self) -> None:
         """Test logging with context data."""
-        logger = FlextLogger.get_logger("context_test")
+        logger = FlextLogger("context_test", "DEBUG")
 
         # These should not raise errors
         logger.info("User action", user_id="123", action="login")
@@ -267,7 +268,7 @@ class TestFlextLoggerUsage:
 
     def test_bound_logger_usage(self) -> None:
         """Test using bound logger."""
-        logger = FlextLogger.get_logger("bound_test")
+        logger = FlextLogger("bound_test", "DEBUG")
         bound_logger = logger.bind(request_id="req-123", user_id="user-456")
 
         # Context should be automatically included in these logs
@@ -276,20 +277,22 @@ class TestFlextLoggerUsage:
 
     def test_context_manager_style(self) -> None:
         """Test context manager style usage."""
-        logger = FlextLogger.get_logger("context_mgr_test")
+        logger = FlextLogger("context_mgr_test", "DEBUG")
 
         # Bind context for a series of operations
-        with logger.bind(operation="batch_process", batch_id="batch-123"):
-            logger.info("Starting batch process")
-            logger.info("Processing item 1")
-            logger.info("Processing item 2")
-            logger.info("Batch process completed")
+        bound_logger = logger.bind(operation="batch_process", batch_id="batch-123")
+        bound_logger.info("Starting batch process")
+        bound_logger.info("Processing item 1")
+        bound_logger.info("Processing item 2")
+        bound_logger.info("Batch process completed")
 
     def test_performance_logging(self) -> None:
         """Test performance-focused logging."""
         perf_logger = FlextLogger.with_performance_tracking("performance_test")
 
         # Performance loggers should support similar operations
+        # Type check to ensure we have a logger-like object
+        assert hasattr(perf_logger, "info")
         perf_logger.info("Performance test message")
 
     @patch("structlog.get_logger")
@@ -337,25 +340,28 @@ class TestFlextLoggerIntegration:
 
     def test_complex_logging_scenario(self) -> None:
         """Test complex logging scenario with multiple contexts."""
-        logger = FlextLogger.get_logger("complex_test")
+        logger = FlextLogger("complex_test", "DEBUG")
 
         # Simulate a complex operation with nested contexts
-        with logger.bind(operation="user_registration", request_id="req-789"):
-            logger.info("Starting user registration")
+        bound_logger = logger.bind(operation="user_registration", request_id="req-789")
+        bound_logger.info("Starting user registration")
 
-            with logger.bind(step="validation", user_email="test@example.com"):
-                logger.debug("Validating user input")
-                logger.info("User input validation passed")
+        validation_logger = bound_logger.bind(
+            step="validation",
+            user_email="test@example.com",
+        )
+        validation_logger.debug("Validating user input")
+        validation_logger.info("User input validation passed")
 
-            with logger.bind(step="database", table="users"):
-                logger.debug("Saving user to database")
-                logger.info("User saved successfully", user_id="user-456")
+        database_logger = bound_logger.bind(step="database", table="users")
+        database_logger.debug("Saving user to database")
+        database_logger.info("User saved successfully", user_id="user-456")
 
-            logger.info("User registration completed")
+        bound_logger.info("User registration completed")
 
     def test_error_logging_with_context(self) -> None:
         """Test error logging with rich context."""
-        logger = FlextLogger.get_logger("error_test")
+        logger = FlextLogger("error_test", "DEBUG")
 
         def _raise_test_error() -> None:
             """Raise test error for exception logging tests."""
@@ -379,7 +385,7 @@ class TestFlextLoggerIntegration:
         """Test performance logging integration."""
         import time
 
-        logger = FlextLogger.get_logger("perf_integration_test")
+        logger = FlextLogger("perf_integration_test", "DEBUG")
 
         start_time = time.time()
 

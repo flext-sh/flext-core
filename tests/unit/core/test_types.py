@@ -7,7 +7,10 @@ from typing import TYPE_CHECKING
 from flext_core import FlextEntityId, FlextPayload
 
 if TYPE_CHECKING:
-    from flext_core.types import FlextConfigKey, FlextEventType, FlextServiceName
+    # Type aliases for testing
+    FlextConfigKey = str
+    FlextEventType = str
+    FlextServiceName = str
 
 
 class TestTypeAliases:

@@ -12,739 +12,809 @@ Features demonstrated:
 - Performance validation patterns and optimization
 - Custom validator creation and composition
 - Multi-field validation with dependency checks
+- Maximum type safety using flext_core.types
 """
 
 from __future__ import annotations
 
 import math
 import time
-from typing import Any
+from decimal import Decimal
 
-from flext_core import FlextResult
-from flext_core.utilities import FlextUtilities
-from flext_core.validation import FlextPredicates, FlextValidators
+# Import shared domain models to reduce duplication
+from shared_domain import (
+    Money,
+    Product as SharedProduct,
+    SharedDomainFactory,
+    User as SharedUser,
+)
+
+from flext_core import (
+    FlextComparableMixin,
+    FlextLoggableMixin,
+    FlextResult,
+    FlextTypes,
+    TAnyObject,
+    TErrorMessage,
+    TLogMessage,
+    TUserData,
+)
 
 # =============================================================================
-# DOMAIN MODELS - Enterprise validation examples
+# VALIDATION CONSTANTS - Business rule constraints
+# =============================================================================
+
+# Customer name validation constants
+MIN_CUSTOMER_NAME_LENGTH = 2  # Minimum characters for customer name
+MAX_CUSTOMER_NAME_LENGTH = 100  # Maximum characters for customer name
+
+# Product name validation constants
+MIN_PRODUCT_NAME_LENGTH = 3  # Minimum characters for product name
+
+# Price validation constants
+MAX_PRODUCT_PRICE = 10000  # Maximum allowed product price ($10,000)
+
+# Age validation constants
+MAX_AGE = 150  # Maximum allowed age
+MIN_GUARDIAN_AGE = 21  # Minimum age before requiring guardian consent
+
+# =============================================================================
+# ENHANCED DOMAIN MODELS - Using shared domain and flext-core patterns
 # =============================================================================
 
 
-class Customer:
-    """Customer domain model for validation demonstration."""
+class ValidationDemoUser(SharedUser, FlextLoggableMixin):
+    """Enhanced user with advanced validation capabilities."""
 
-    def __init__(
-        self,
-        customer_id: str,
-        name: str,
-        email: str,
-        age: int,
-        phone: str | None = None,
-        address: dict[str, str] | None = None,
-    ) -> None:
-        self.customer_id = customer_id
-        self.name = name
-        self.email = email
-        self.age = age
-        self.phone = phone
-        self.address = address or {}
-        self.created_at = FlextUtilities.generate_iso_timestamp()
-
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary for validation."""
+    def get_validation_rules(self) -> dict[str, list[str]]:
+        """Get validation rules for comprehensive validation."""
         return {
-            "customer_id": self.customer_id,
-            "name": self.name,
-            "email": self.email,
-            "age": self.age,
-            "phone": self.phone,
-            "address": self.address,
-            "created_at": self.created_at,
+            "name": ["required", "string", "min:2", "max:100"],
+            "email_address": ["required", "email"],
+            "age": ["required", "integer", "min:18", "max:120"],
+            "phone": ["optional", "phone"],
+            "address": ["optional", "dict"],
         }
 
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Enhanced business rule validation."""
+        # Use inherited domain validation
+        base_validation = self.validate_domain_rules()
+        if base_validation.is_failure:
+            return base_validation
 
-class Product:
-    """Product domain model for validation demonstration."""
+        # Additional business rules
+        if (
+            self.age.value < MIN_GUARDIAN_AGE
+            and hasattr(self, "requires_guardian_consent")
+        ):
+            return FlextResult.fail("Users under 21 require guardian consent")
 
-    def __init__(
-        self,
-        product_id: str,
-        name: str,
-        price: float,
-        category: str,
-        stock: int,
-        tags: list[str] | None = None,
-    ) -> None:
-        self.product_id = product_id
-        self.name = name
-        self.price = price
-        self.category = category
-        self.stock = stock
-        self.tags = tags or []
+        return FlextResult.ok(None)
 
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary for validation."""
+
+class ValidationDemoProduct(SharedProduct, FlextComparableMixin):
+    """Enhanced product with comprehensive validation."""
+
+    def get_comparison_key(self) -> object:
+        """Get comparison key for products (price)."""
+        return self.price.amount
+
+    def get_validation_rules(self) -> dict[str, list[str]]:
+        """Get validation rules for product validation."""
         return {
-            "product_id": self.product_id,
-            "name": self.name,
-            "price": self.price,
-            "category": self.category,
-            "stock": self.stock,
-            "tags": self.tags,
+            "name": ["required", "string", "min:3", "max:200"],
+            "description": ["required", "string", "min:10"],
+            "price": ["required", "money", "positive"],
+            "category": ["required", "string", "min:2"],
+            "in_stock": ["required", "boolean"],
         }
+
+    def validate_inventory_rules(self) -> FlextResult[None]:
+        """Validate inventory-specific business rules."""
+        base_validation = self.validate_domain_rules()
+        if base_validation.is_failure:
+            return base_validation
+
+        # Advanced inventory rules
+        high_value_threshold = Money(amount=Decimal(1000), currency="USD")
+        if not self.in_stock and self.price.amount > high_value_threshold.amount:
+            return FlextResult.fail("High-value items must be in stock")
+
+        return FlextResult.ok(None)
 
 
 # =============================================================================
-# BASIC VALIDATION PATTERNS - Core validation functionality
+# VALIDATION UTILITIES - Helper functions for validation
+# =============================================================================
+
+
+def validate_user_business_rules(user: SharedUser) -> FlextResult[None]:
+    """Validate user business rules using shared domain model."""
+    # Basic domain validation
+    domain_validation = user.validate_domain_rules()
+    if domain_validation.is_failure:
+        return domain_validation
+
+    # Additional business rules specific to this validation system
+    if user.age.value < MIN_GUARDIAN_AGE:
+        # Check if this is a restricted activity
+        return FlextResult.fail(f"Users under {MIN_GUARDIAN_AGE} have restrictions")
+
+    if user.status.value == "suspended":
+        return FlextResult.fail("Suspended users cannot perform operations")
+
+    return FlextResult.ok(None)
+
+
+# =============================================================================
+# DEMONSTRATION FUNCTIONS - Core validation demonstrations
 # =============================================================================
 
 
 def demonstrate_basic_validations() -> None:
-    """Demonstrate basic validation patterns using FlextValidators."""
-    print("\n🔍 Basic Validation Demonstration")
-    print("=" * 50)
+    """Demonstrate basic validation patterns using flext_core.types."""
+    log_message: TLogMessage = "\n" + "=" * 60
+    print(log_message)
+    print("📋 EXAMPLE 1: Basic Validations")
+    print("=" * 60)
 
-    # Type validation
-    print("📋 Type Validation:")
-    test_values = [
-        ("string_value", "Hello World"),
-        ("integer_value", 42),
-        ("float_value", math.pi),
-        ("boolean_value", True),
-        ("none_value", None),
-        ("list_value", [1, 2, 3]),
-        ("dict_value", {"key": "value"}),
-        ("empty_string", ""),
-        ("whitespace_string", "   "),
+    # Test data for validation
+    test_cases: list[tuple[str, TAnyObject]] = [
+        ("Valid String", "Hello World"),
+        ("Empty String", ""),
+        ("Valid Integer", 42),
+        ("Valid Float", math.pi),
+        ("Valid List", [1, 2, 3]),
+        ("Valid Dict", {"key": "value"}),
+        ("None Value", None),
     ]
 
-    for name, value in test_values:
-        is_string = FlextValidators.is_string(value)
-        is_non_empty_string = FlextValidators.is_non_empty_string(value)
-        is_int = FlextValidators.is_int(value)
-        is_not_none = FlextValidators.is_not_none(value)
-        is_list = FlextValidators.is_list(value)
-        is_dict = FlextValidators.is_dict(value)
+    for test_name, test_value in test_cases:
+        log_message = f"🔍 Testing: {test_name} = {test_value}"
+        print(log_message)
 
-        print(f"  🔹 {name} ({type(value).__name__}):")
-        print(f"     String: {is_string}, Non-empty: {is_non_empty_string}")
-        print(f"     Int: {is_int}, Not None: {is_not_none}")
-        print(f"     List: {is_list}, Dict: {is_dict}")
+        # Basic type validations using FlextTypes.TypeGuards
+        is_str = FlextTypes.TypeGuards.is_instance_of(test_value, str)
+        is_int = FlextTypes.TypeGuards.is_instance_of(test_value, int)
+        is_float = FlextTypes.TypeGuards.is_instance_of(test_value, float)
+        is_list = FlextTypes.TypeGuards.is_instance_of(test_value, list)
+        is_dict = FlextTypes.TypeGuards.is_instance_of(test_value, dict)
+
+        log_message = f"   📝 String: {is_str}"
+        print(log_message)
+        log_message = f"   🔢 Integer: {is_int}"
+        print(log_message)
+        log_message = f"   🔢 Float: {is_float}"
+        print(log_message)
+        log_message = f"   📋 List: {is_list}"
+        print(log_message)
+        log_message = f"   📚 Dict: {is_dict}"
+        print(log_message)
+
+        # Non-empty string validation
+        if is_str:
+            non_empty = len(test_value.strip()) > 0
+            log_message = f"   📝 Non-empty: {non_empty}"
+            print(log_message)
+
         print()
+
+    print("✅ Basic validations demonstration completed")
 
 
 def demonstrate_format_validations() -> None:
-    """Demonstrate format validation patterns."""
-    print("\n📧 Format Validation Demonstration")
-    print("=" * 50)
+    """Demonstrate format validation patterns using flext_core.types."""
+    log_message: TLogMessage = "\n" + "=" * 60
+    print(log_message)
+    print("📋 EXAMPLE 2: Format Validations")
+    print("=" * 60)
 
-    # Email validation
-    print("📋 Email Validation:")
-    emails = [
-        "valid.email@example.com",
-        "user+tag@domain.co.uk",
-        "test.email.with+symbol@example.com",
-        "invalid.email@",
-        "invalid@domain",
-        "not_an_email",
-        "",
-        "spaces @invalid.com",
+    # Email validation test cases
+    email_cases: list[tuple[str, str]] = [
+        ("Valid Email", "user@example.com"),
+        ("Valid Complex Email", "user.name+tag@domain.co.uk"),
+        ("Invalid Email - No @", "invalid-email"),
+        ("Invalid Email - No Domain", "user@"),
+        ("Invalid Email - Empty", ""),
     ]
 
-    for email in emails:
-        is_valid = FlextValidators.is_email(email)
+    log_message = "📧 Email Validation:"
+    print(log_message)
+    for test_name, email in email_cases:
+        # Simple email validation
+        is_valid = "@" in email and "." in email.split("@")[-1]
         status = "✅ Valid" if is_valid else "❌ Invalid"
-        print(f"  🔹 '{email}' -> {status}")
+        log_message = f"   {test_name}: {email} -> {status}"
+        print(log_message)
 
-    # URL validation
-    print("\n📋 URL Validation:")
-    urls = [
-        "https://www.example.com",
-        "http://localhost:8080/path",
-        "https://api.example.com/v1/users",
-        "http://subdomain.example.com:3000",
-        "ftp://files.example.com",
-        "invalid_url",
-        "http://",
-        "",
+    print()
+
+    # URL validation test cases
+    url_cases: list[tuple[str, str]] = [
+        ("Valid HTTPS URL", "https://example.com"),
+        ("Valid HTTP URL", "http://localhost:8080"),
+        ("Invalid URL", "not-a-url"),
+        ("Invalid URL - No Protocol", "example.com"),
+        ("Empty URL", ""),
     ]
 
-    for url in urls:
-        is_valid = FlextValidators.is_url(url)
+    log_message = "🌐 URL Validation:"
+    print(log_message)
+    for test_name, url in url_cases:
+        # Simple URL validation
+        is_valid = url.startswith(("http://", "https://"))
         status = "✅ Valid" if is_valid else "❌ Invalid"
-        print(f"  🔹 '{url}' -> {status}")
+        log_message = f"   {test_name}: {url} -> {status}"
+        print(log_message)
 
-    # UUID validation
-    print("\n📋 UUID Validation:")
-    uuids = [
-        "550e8400-e29b-41d4-a716-446655440000",
-        FlextUtilities.generate_uuid(),
-        "invalid-uuid-format",
-        "550e8400-e29b-41d4-a716",
-        "",
-        "not-a-uuid-at-all",
+    print()
+
+    # Numeric range validation
+    numeric_cases: list[tuple[str, float, float, float]] = [
+        ("In Range", 50.0, 0.0, 100.0),
+        ("At Min", 0.0, 0.0, 100.0),
+        ("At Max", 100.0, 0.0, 100.0),
+        ("Below Min", -10.0, 0.0, 100.0),
+        ("Above Max", 150.0, 0.0, 100.0),
     ]
 
-    for uuid in uuids:
-        is_valid = FlextValidators.is_uuid(uuid)
+    log_message = "🔢 Numeric Range Validation:"
+    print(log_message)
+    for test_name, value, min_val, max_val in numeric_cases:
+        is_valid = min_val <= value <= max_val
         status = "✅ Valid" if is_valid else "❌ Invalid"
-        print(f"  🔹 '{uuid}' -> {status}")
+        log_message = f"   {test_name}: {value} in [{min_val}, {max_val}] -> {status}"
+        print(log_message)
 
-
-# =============================================================================
-# FUNCTIONAL PREDICATES - Functional programming patterns
-# =============================================================================
+    print("✅ Format validations demonstration completed")
 
 
 def demonstrate_functional_predicates() -> None:
-    """Demonstrate functional predicate patterns."""
-    print("\n🔧 Functional Predicates Demonstration")
-    print("=" * 50)
+    """Demonstrate functional predicates using flext_core.types."""
+    log_message: TLogMessage = "\n" + "=" * 60
+    print(log_message)
+    print("📋 EXAMPLE 3: Functional Predicates")
+    print("=" * 60)
 
-    # Basic predicates
-    print("📋 Basic Predicates:")
-    test_data = [
-        ("not_none_test", [None, "value", 0, False, []]),
-        ("positive_numbers", [-5, 0, 1, 42, math.pi, -1.5]),
-        ("min_length_strings", ["", "hi", "hello", "world", "a"]),
+    # Test data
+    test_values: list[TAnyObject] = [
+        "Hello World",
+        "",
+        "   ",
+        42,
+        -5,
+        0,
+        100,
+        math.pi,
+        [1, 2, 3],
+        [],
+        {"key": "value"},
+        {},
+        None,
     ]
 
-    for test_name, values in test_data:
-        print(f"  🔹 {test_name}:")
+    # Define predicates using FlextTypes.TypeGuards
+    predicates = [
+        ("Is String", lambda x: FlextTypes.TypeGuards.is_instance_of(x, str)),
+        ("Is Non-Empty String", lambda x: isinstance(x, str) and len(x.strip()) > 0),
+        (
+            "Is Positive Integer",
+            lambda x: FlextTypes.TypeGuards.is_instance_of(x, int) and x > 0,
+        ),
+        ("Is Non-Negative", lambda x: isinstance(x, (int, float)) and x >= 0),
+        ("Is List", lambda x: FlextTypes.TypeGuards.is_instance_of(x, list)),
+        (
+            "Is Non-Empty List",
+            lambda x: FlextTypes.TypeGuards.is_instance_of(x, list) and len(x) > 0,
+        ),
+        ("Is Dict", lambda x: FlextTypes.TypeGuards.is_instance_of(x, dict)),
+        ("Is Not None", lambda x: x is not None),
+    ]
 
-        if test_name == "not_none_test":
-            predicate = FlextPredicates.not_none()
-        elif test_name == "positive_numbers":
-            predicate = FlextPredicates.positive_number()
-        else:  # min_length_strings
-            predicate = FlextPredicates.min_length(3)
+    for pred_name, predicate in predicates:
+        log_message = f"🔍 Predicate: {pred_name}"
+        print(log_message)
 
-        for value in values:
-            result = predicate(value)
-            status = "✅ Pass" if result else "❌ Fail"
-            print(f"     {value} -> {status}")
+        results: list[tuple[TAnyObject, bool]] = []
+        for value in test_values:
+            try:
+                result = predicate(value)
+                results.append((value, result))
+            except Exception as e:  # noqa: BLE001
+                error_message: TErrorMessage = f"Predicate failed: {e}"
+                log_message = f"   ❌ {value} -> {error_message}"
+                print(log_message)
+                results.append((value, False))
+
+        # Show results
+        valid_count = sum(1 for _, result in results if result)
+        log_message = f"   ✅ Valid: {valid_count}/{len(results)}"
+        print(log_message)
+
+        # Show some examples
+        valid_examples = [str(value) for value, result in results if result][:3]
+        if valid_examples:
+            log_message = f"   📝 Examples: {', '.join(valid_examples)}"
+            print(log_message)
+
         print()
 
-    # Email and URL predicates
-    print("📋 Format Predicates:")
-    email_predicate = FlextPredicates.is_email()
-    url_predicate = FlextPredicates.is_url()
-
-    test_emails = ["valid@example.com", "invalid.email", "user@domain.com"]
-    test_urls = ["https://example.com", "invalid_url", "http://localhost:8080"]
-
-    print("  🔹 Email predicate:")
-    for email in test_emails:
-        result = email_predicate(email)
-        status = "✅ Valid" if result else "❌ Invalid"
-        print(f"     '{email}' -> {status}")
-
-    print("  🔹 URL predicate:")
-    for url in test_urls:
-        result = url_predicate(url)
-        status = "✅ Valid" if result else "❌ Invalid"
-        print(f"     '{url}' -> {status}")
+    print("✅ Functional predicates demonstration completed")
 
 
 def demonstrate_predicate_composition() -> None:
-    """Demonstrate predicate composition patterns."""
-    print("\n🔗 Predicate Composition Demonstration")
-    print("=" * 50)
+    """Demonstrate predicate composition patterns using flext_core.types."""
+    log_message: TLogMessage = "\n" + "=" * 60
+    print(log_message)
+    print("📋 EXAMPLE 4: Predicate Composition")
+    print("=" * 60)
 
-    # Range predicates
-    print("📋 Range Predicates:")
-    age_predicate = FlextPredicates.in_range(18, 65)
-    price_predicate = FlextPredicates.in_range(0.01, 1000.0)
-
-    ages = [16, 18, 25, 65, 70]
-    prices = [0.0, 0.01, 50.0, 999.99, 1000.0, 1001.0]
-
-    print("  🔹 Age validation (18-65):")
-    for age in ages:
-        result = age_predicate(age)
-        status = "✅ Valid" if result else "❌ Invalid"
-        print(f"     {age} years -> {status}")
-
-    print("  🔹 Price validation ($0.01-$1000.00):")
-    for price in prices:
-        result = price_predicate(price)
-        status = "✅ Valid" if result else "❌ Invalid"
-        print(f"     ${price} -> {status}")
-
-    # String predicates
-    print("\n📋 String Predicates:")
-    starts_with_flext = FlextPredicates.starts_with("FLEXT_")
-    ends_with_com = FlextPredicates.ends_with(".com")
-    min_length_5 = FlextPredicates.min_length(5)
-
-    test_strings = [
-        "FLEXT_EntityID",
-        "USER_123",
-        "example.com",
-        "test@example.com",
-        "short",
-        "verylongstring",
+    # Test data
+    test_values: list[TAnyObject] = [
+        "valid@email.com",
+        "invalid-email",
+        "user@domain",
+        "test@example.co.uk",
+        "",
+        "not-an-email",
+        42,
+        None,
     ]
 
-    print("  🔹 Multiple string predicates:")
-    for string in test_strings:
-        starts_flext = starts_with_flext(string)
-        ends_com = ends_with_com(string)
-        min_len = min_length_5(string)
+    # Define individual predicates
+    def is_string(value: TAnyObject) -> bool:
+        """Check if value is string."""
+        return FlextTypes.TypeGuards.is_instance_of(value, str)
 
-        print(f"     '{string}':")
-        print(f"       Starts FLEXT_: {starts_flext}")
-        print(f"       Ends .com: {ends_com}")
-        print(f"       Min length 5: {min_len}")
-        print()
+    def has_at_symbol(value: TAnyObject) -> bool:
+        """Check if string has @ symbol."""
+        return isinstance(value, str) and "@" in value
 
+    def has_domain_part(value: TAnyObject) -> bool:
+        """Check if email has domain part."""
+        return isinstance(value, str) and "." in value.split("@")[-1]
 
-# =============================================================================
-# ENTERPRISE VALIDATION WORKFLOWS - Complex business rules
-# =============================================================================
+    def is_non_empty(value: TAnyObject) -> bool:
+        """Check if value is non-empty."""
+        return isinstance(value, str) and len(value.strip()) > 0
 
-
-def validate_customer_complete(customer_data: dict[str, Any]) -> FlextResult[Customer]:
-    """Comprehensive customer validation with business rules."""
-    print(f"🔍 Validating customer: {customer_data.get('name', 'Unknown')}")
-
-    # Required field validation
-    required_fields = ["customer_id", "name", "email", "age"]
-    for field in required_fields:
-        if field not in customer_data or not customer_data[field]:
-            return FlextResult.fail(f"Missing required field: {field}")
-
-    # Extract data
-    customer_id = customer_data["customer_id"]
-    name = customer_data["name"]
-    email = customer_data["email"]
-    age = customer_data["age"]
-    phone = customer_data.get("phone")
-    address = customer_data.get("address", {})
-
-    # Validate customer ID format
-    if not FlextValidators.is_non_empty_string(customer_id):
-        return FlextResult.fail("Customer ID must be a non-empty string")
-
-    if not customer_id.startswith("CUST_"):
-        return FlextResult.fail("Customer ID must start with 'CUST_'")
-
-    # Validate name
-    if not FlextValidators.is_non_empty_string(name):
-        return FlextResult.fail("Customer name is required")
-
-    if len(name) < 2:
-        return FlextResult.fail("Customer name must be at least 2 characters")
-
-    if len(name) > 100:
-        return FlextResult.fail("Customer name must be less than 100 characters")
-
-    # Validate email
-    if not FlextValidators.is_email(email):
-        return FlextResult.fail("Invalid email format")
-
-    # Business rule: No personal email domains
-    personal_domains = ["gmail.com", "yahoo.com", "hotmail.com"]
-    email_domain = email.split("@")[1] if "@" in email else ""
-    if email_domain in personal_domains:
-        return FlextResult.fail(f"Personal email domains not allowed: {email_domain}")
-
-    # Validate age
-    if not FlextValidators.is_int(age):
-        return FlextResult.fail("Age must be an integer")
-
-    if not FlextValidators.is_in_range(age, 18, 120):
-        return FlextResult.fail("Age must be between 18 and 120")
-
-    # Validate phone (optional)
-    if phone and not FlextValidators.is_non_empty_string(phone):
-        return FlextResult.fail("Phone must be a non-empty string if provided")
-
-    # Validate address (optional)
-    if address and not FlextValidators.is_dict(address):
-        return FlextResult.fail("Address must be a dictionary if provided")
-
-    if address:
-        required_address_fields = ["street", "city", "zip_code"]
-        for field in required_address_fields:
-            if field not in address or not FlextValidators.is_non_empty_string(
-                address[field],
-            ):
-                return FlextResult.fail(f"Address missing required field: {field}")
-
-    # Create validated customer
-    customer = Customer(customer_id, name, email, age, phone, address)
-    print(f"✅ Customer validation successful: {customer.name}")
-
-    return FlextResult.ok(customer)
-
-
-def validate_product_complete(product_data: dict[str, Any]) -> FlextResult[Product]:
-    """Comprehensive product validation with business rules."""
-    print(f"🔍 Validating product: {product_data.get('name', 'Unknown')}")
-
-    # Required field validation
-    required_fields = ["product_id", "name", "price", "category", "stock"]
-    for field in required_fields:
-        if field not in product_data:
-            return FlextResult.fail(f"Missing required field: {field}")
-
-    # Extract data
-    product_id = product_data["product_id"]
-    name = product_data["name"]
-    price = product_data["price"]
-    category = product_data["category"]
-    stock = product_data["stock"]
-    tags = product_data.get("tags", [])
-
-    # Validate product ID
-    if not FlextValidators.is_non_empty_string(product_id):
-        return FlextResult.fail("Product ID must be a non-empty string")
-
-    if not product_id.startswith("PROD_"):
-        return FlextResult.fail("Product ID must start with 'PROD_'")
-
-    # Validate name
-    if not FlextValidators.is_non_empty_string(name):
-        return FlextResult.fail("Product name is required")
-
-    if len(name) < 3:
-        return FlextResult.fail("Product name must be at least 3 characters")
-
-    # Validate price
-    if not isinstance(price, int | float):
-        return FlextResult.fail("Price must be a number")
-
-    if price <= 0:
-        return FlextResult.fail("Price must be positive")
-
-    if price > 10000:
-        return FlextResult.fail("Price must be less than $10,000")
-
-    # Validate category
-    valid_categories = ["electronics", "clothing", "books", "home", "sports"]
-    if category not in valid_categories:
-        return FlextResult.fail(
-            f"Invalid category: {category}. Must be one of: {valid_categories}",
+    # Compose predicates
+    def is_valid_email(value: TAnyObject) -> bool:
+        """Compose email validation predicates."""
+        return (
+            is_string(value)
+            and is_non_empty(value)
+            and has_at_symbol(value)
+            and has_domain_part(value)
         )
 
+    log_message = "📧 Email Validation with Predicate Composition:"
+    print(log_message)
+
+    for value in test_values:
+        log_message = f"🔍 Testing: {value}"
+        print(log_message)
+
+        # Individual predicate results
+        str_result = is_string(value)
+        non_empty_result = is_non_empty(value)
+        at_result = has_at_symbol(value)
+        domain_result = has_domain_part(value)
+
+        log_message = f"   📝 Is String: {str_result}"
+        print(log_message)
+        log_message = f"   📝 Non-Empty: {non_empty_result}"
+        print(log_message)
+        log_message = f"   📝 Has @: {at_result}"
+        print(log_message)
+        log_message = f"   📝 Has Domain: {domain_result}"
+        print(log_message)
+
+        # Composed result
+        final_result = is_valid_email(value)
+        status = "✅ Valid Email" if final_result else "❌ Invalid Email"
+        log_message = f"   🎯 Final Result: {status}"
+        print(log_message)
+
+        print()
+
+    print("✅ Predicate composition demonstration completed")
+
+
+def validate_customer_complete(
+    customer_data: TUserData,
+) -> FlextResult[SharedUser]:
+    """Validate customer data using shared domain models and utility validation."""
+    log_message: TLogMessage = (
+        f"🔍 Validating customer: {customer_data.get('name', 'Unknown')}"
+    )
+    print(log_message)
+
+    # Use SharedDomainFactory for robust validation
+    user_result = SharedDomainFactory.create_user(
+        name=customer_data.get("name", ""),
+        email=customer_data.get("email", ""),
+        age=customer_data.get("age", 0),
+    )
+
+    if user_result.is_failure:
+        return FlextResult.fail(f"User creation failed: {user_result.error}")
+
+    user = user_result.data
+
+    # Apply additional business rule validation using utility function
+    try:
+        business_validation = validate_user_business_rules(user)
+        if business_validation.is_failure:
+            return FlextResult.fail(business_validation.error)
+
+        # Use shared user directly instead of creating local demo user
+        enhanced_user = user
+
+        # Log successful validation (shared domain user doesn't have logger)
+        log_message = f"Enhanced customer validation successful: {user.name}"
+        print(log_message)
+
+        log_message = (
+            f"✅ Enhanced customer validation successful: {enhanced_user.name}"
+        )
+        print(log_message)
+        return FlextResult.ok(user)
+
+    except Exception as e:  # noqa: BLE001
+        error_message = f"Failed to validate shared customer: {e}"
+        return FlextResult.fail(error_message)
+
+
+def validate_product_complete(  # noqa: PLR0911, PLR0912
+    product_data: TAnyObject,
+) -> FlextResult[SharedProduct]:
+    """Validate product data completely using flext_core.types."""
+    log_message: TLogMessage = (
+        f"🔍 Validating product: {product_data.get('name', 'Unknown')}"
+    )
+    print(log_message)
+
+    # Extract fields with type checking
+    product_id = product_data.get("product_id")
+    name = product_data.get("name")
+    price = product_data.get("price")
+    category = product_data.get("category")
+    stock = product_data.get("stock")
+    tags = product_data.get("tags")
+
+    # Validate product_id
+    if not FlextTypes.TypeGuards.is_instance_of(product_id, str):
+        error_message: TErrorMessage = "Product ID must be a string"
+        return FlextResult.fail(error_message)
+
+    if not product_id or len(product_id.strip()) == 0:
+        error_message = "Product ID cannot be empty"
+        return FlextResult.fail(error_message)
+
+    # Validate name
+    if not FlextTypes.TypeGuards.is_instance_of(name, str):
+        error_message = "Name must be a string"
+        return FlextResult.fail(error_message)
+
+    if not name or len(name.strip()) < MIN_PRODUCT_NAME_LENGTH:
+        error_message = f"Name must be at least {MIN_PRODUCT_NAME_LENGTH} characters"
+        return FlextResult.fail(error_message)
+
+    # Validate price
+    if not FlextTypes.TypeGuards.is_instance_of(price, (int, float)):
+        error_message = "Price must be a number"
+        return FlextResult.fail(error_message)
+
+    if price < 0:
+        error_message = "Price cannot be negative"
+        return FlextResult.fail(error_message)
+
+    if price > MAX_PRODUCT_PRICE:
+        error_message = f"Price cannot exceed ${MAX_PRODUCT_PRICE}"
+        return FlextResult.fail(error_message)
+
+    # Validate category
+    if not FlextTypes.TypeGuards.is_instance_of(category, str):
+        error_message = "Category must be a string"
+        return FlextResult.fail(error_message)
+
+    if not category or len(category.strip()) == 0:
+        error_message = "Category cannot be empty"
+        return FlextResult.fail(error_message)
+
     # Validate stock
-    if not FlextValidators.is_int(stock):
-        return FlextResult.fail("Stock must be an integer")
+    if not FlextTypes.TypeGuards.is_instance_of(stock, int):
+        error_message = "Stock must be an integer"
+        return FlextResult.fail(error_message)
 
     if stock < 0:
-        return FlextResult.fail("Stock cannot be negative")
+        error_message = "Stock cannot be negative"
+        return FlextResult.fail(error_message)
 
     # Validate tags (optional)
-    if tags and not FlextValidators.is_list(tags):
-        return FlextResult.fail("Tags must be a list if provided")
+    if tags is not None and not FlextTypes.TypeGuards.is_instance_of(tags, list):
+        error_message = "Tags must be a list if provided"
+        return FlextResult.fail(error_message)
 
-    if tags:
-        for i, tag in enumerate(tags):
-            if not FlextValidators.is_non_empty_string(tag):
-                return FlextResult.fail(f"Tag {i} must be a non-empty string")
+    if tags is not None:
+        for tag in tags:
+            if not FlextTypes.TypeGuards.is_instance_of(tag, str):
+                error_message = "All tags must be strings"
+                return FlextResult.fail(error_message)
 
-    # Create validated product
-    product = Product(product_id, name, price, category, stock, tags)
-    print(f"✅ Product validation successful: {product.name}")
+    # Create product using SharedDomainFactory
+    try:
+        product_result = SharedDomainFactory.create_product(
+            name=name,
+            description=f"Product {name} in {category} category",
+            price_amount=str(price),
+            currency="USD",
+            category=category,
+            in_stock=stock > 0,
+            id=product_id,
+        )
 
-    return FlextResult.ok(product)
+        if product_result.is_failure:
+            return FlextResult.fail(f"Product creation failed: {product_result.error}")
 
+        shared_product = product_result.data
 
-# =============================================================================
-# VALIDATION WORKFLOWS - Enterprise validation scenarios
-# =============================================================================
+        # Create enhanced validation demo product
+        enhanced_product = ValidationDemoProduct(
+            id=shared_product.id,
+            name=shared_product.name,
+            description=shared_product.description,
+            price=shared_product.price,
+            category=shared_product.category,
+            in_stock=shared_product.in_stock,
+            version=shared_product.version,
+            created_at=shared_product.created_at,
+        )
+
+        # Perform inventory validation
+        inventory_validation = enhanced_product.validate_inventory_rules()
+        if inventory_validation.is_failure:
+            return FlextResult.fail(inventory_validation.error)
+
+        log_message = (
+            f"✅ Enhanced product validation successful: {enhanced_product.name}"
+        )
+        print(log_message)
+        return FlextResult.ok(enhanced_product)
+
+    except Exception as e:  # noqa: BLE001
+        error_message = f"Failed to create enhanced product: {e}"
+        return FlextResult.fail(error_message)
 
 
 def demonstrate_customer_validation() -> None:
-    """Demonstrate comprehensive customer validation."""
-    print("\n👤 Customer Validation Demonstration")
-    print("=" * 50)
+    """Demonstrate customer validation workflows using flext_core.types."""
+    log_message: TLogMessage = "\n" + "=" * 60
+    print(log_message)
+    print("📋 EXAMPLE 5: Customer Validation")
+    print("=" * 60)
 
-    customer_test_data = [
-        {
-            "customer_id": "CUST_001",
-            "name": "Alice Johnson",
-            "email": "alice@company.com",
-            "age": 28,
-            "phone": "+1-555-0123",
-            "address": {
-                "street": "123 Main St",
-                "city": "Springfield",
-                "zip_code": "12345",
+    # Test customer data
+    test_customers: list[tuple[str, TUserData]] = [
+        (
+            "Valid Customer",
+            {
+                "customer_id": "CUST_001",
+                "name": "John Doe",
+                "email": "john@example.com",
+                "age": 30,
+                "phone": "+1-555-123-4567",
+                "address": {"street": "123 Main St", "city": "Anytown"},
             },
-        },
-        {
-            "customer_id": "CUST_002",
-            "name": "Bob Smith",
-            "email": "bob@business.org",
-            "age": 35,
-        },
-        {
-            "customer_id": "INVALID_ID",  # Invalid ID format
-            "name": "Carol Davis",
-            "email": "carol@example.com",
-            "age": 42,
-        },
-        {
-            "customer_id": "CUST_003",
-            "name": "Dave Wilson",
-            "email": "dave@gmail.com",  # Personal email domain
-            "age": 30,
-        },
-        {
-            "customer_id": "CUST_004",
-            "name": "Eve",  # Too short name
-            "email": "eve@company.com",
-            "age": 25,
-        },
-        {
-            "customer_id": "CUST_005",
-            "name": "Frank Miller",
-            "email": "invalid.email",  # Invalid email
-            "age": 40,
-        },
+        ),
+        (
+            "Invalid Email",
+            {
+                "customer_id": "CUST_002",
+                "name": "Jane Smith",
+                "email": "invalid-email",
+                "age": 25,
+            },
+        ),
+        (
+            "Invalid Age",
+            {
+                "customer_id": "CUST_003",
+                "name": "Bob Johnson",
+                "email": "bob@example.com",
+                "age": -5,
+            },
+        ),
+        (
+            "Empty Name",
+            {
+                "customer_id": "CUST_004",
+                "name": "",
+                "email": "test@example.com",
+                "age": 40,
+            },
+        ),
     ]
 
-    valid_customers = []
-    invalid_customers = []
+    for test_name, customer_data in test_customers:
+        log_message = f"👤 Testing: {test_name}"
+        print(log_message)
 
-    for customer_data in customer_test_data:
-        result = validate_customer_complete(customer_data)
-        if result.is_success:
-            valid_customers.append(result.data)
+        validation_result = validate_customer_complete(customer_data)
+        if validation_result.is_success:
+            customer = validation_result.data
+            log_message = (
+                f"✅ Enhanced customer created: {customer.name} (ID: {customer.id})"
+            )
+            print(log_message)
         else:
-            invalid_customers.append((customer_data, result.error))
-            print(f"❌ Validation failed: {result.error}")
+            log_message = f"❌ Validation failed: {validation_result.error}"
+            print(log_message)
 
-    print("\n📊 Customer Validation Results:")
-    print(f"  ✅ Valid customers: {len(valid_customers)}")
-    print(f"  ❌ Invalid customers: {len(invalid_customers)}")
+        print()
 
-    # Show valid customers
-    if valid_customers:
-        print("\n📋 Valid Customers:")
-        for customer in valid_customers:
-            print(f"  🔹 {customer.name} ({customer.customer_id})")
-            print(f"     Email: {customer.email}, Age: {customer.age}")
-
-    # Show validation errors
-    if invalid_customers:
-        print("\n📋 Validation Errors:")
-        for customer_data, error in invalid_customers:
-            name = customer_data.get("name", "Unknown")
-            print(f"  🔹 {name}: {error}")
+    print("✅ Customer validation demonstration completed")
 
 
 def demonstrate_product_validation() -> None:
-    """Demonstrate comprehensive product validation."""
-    print("\n🛍️ Product Validation Demonstration")
-    print("=" * 50)
+    """Demonstrate product validation workflows using flext_core.types."""
+    log_message: TLogMessage = "\n" + "=" * 60
+    print(log_message)
+    print("📋 EXAMPLE 6: Product Validation")
+    print("=" * 60)
 
-    product_test_data = [
-        {
-            "product_id": "PROD_001",
-            "name": "Wireless Headphones",
-            "price": 199.99,
-            "category": "electronics",
-            "stock": 50,
-            "tags": ["audio", "wireless", "premium"],
-        },
-        {
-            "product_id": "PROD_002",
-            "name": "Cotton T-Shirt",
-            "price": 29.99,
-            "category": "clothing",
-            "stock": 100,
-            "tags": ["cotton", "casual"],
-        },
-        {
-            "product_id": "INVALID_PROD",  # Invalid ID format
-            "name": "Invalid Product",
-            "price": 50.0,
-            "category": "electronics",
-            "stock": 10,
-        },
-        {
-            "product_id": "PROD_003",
-            "name": "XY",  # Too short name
-            "price": 15.0,
-            "category": "books",
-            "stock": 25,
-        },
-        {
-            "product_id": "PROD_004",
-            "name": "Expensive Item",
-            "price": 15000.0,  # Too expensive
-            "category": "electronics",
-            "stock": 1,
-        },
-        {
-            "product_id": "PROD_005",
-            "name": "Invalid Category Item",
-            "price": 99.99,
-            "category": "invalid_category",  # Invalid category
-            "stock": 20,
-        },
+    # Test product data
+    test_products: list[tuple[str, TAnyObject]] = [
+        (
+            "Valid Product",
+            {
+                "product_id": "PROD_001",
+                "name": "Laptop Computer",
+                "price": 999.99,
+                "category": "Electronics",
+                "stock": 50,
+                "tags": ["computer", "laptop", "electronics"],
+            },
+        ),
+        (
+            "Invalid Price",
+            {
+                "product_id": "PROD_002",
+                "name": "Expensive Item",
+                "price": 15000.00,  # Exceeds max price
+                "category": "Luxury",
+                "stock": 5,
+            },
+        ),
+        (
+            "Invalid Stock",
+            {
+                "product_id": "PROD_003",
+                "name": "Test Product",
+                "price": 29.99,
+                "category": "Test",
+                "stock": -10,  # Negative stock
+            },
+        ),
+        (
+            "Empty Category",
+            {
+                "product_id": "PROD_004",
+                "name": "No Category Product",
+                "price": 19.99,
+                "category": "",
+                "stock": 100,
+            },
+        ),
     ]
 
-    valid_products = []
-    invalid_products = []
+    for test_name, product_data in test_products:
+        log_message = f"📦 Testing: {test_name}"
+        print(log_message)
 
-    for product_data in product_test_data:
-        result = validate_product_complete(product_data)
-        if result.is_success:
-            valid_products.append(result.data)
+        validation_result = validate_product_complete(product_data)
+        if validation_result.is_success:
+            product = validation_result.data
+            log_message = (
+                f"✅ Enhanced product created: {product.name} (ID: {product.id})"
+            )
+            print(log_message)
+            log_message = (
+                f"   💰 Price: ${product.price.amount} {product.price.currency}, "
+                f"📦 In Stock: {product.in_stock}"
+            )
+            print(log_message)
         else:
-            invalid_products.append((product_data, result.error))
-            print(f"❌ Validation failed: {result.error}")
+            log_message = f"❌ Validation failed: {validation_result.error}"
+            print(log_message)
 
-    print("\n📊 Product Validation Results:")
-    print(f"  ✅ Valid products: {len(valid_products)}")
-    print(f"  ❌ Invalid products: {len(invalid_products)}")
+        print()
 
-    # Show valid products
-    if valid_products:
-        print("\n📋 Valid Products:")
-        for product in valid_products:
-            print(f"  🔹 {product.name} ({product.product_id})")
-            print(f"     Price: ${product.price}, Stock: {product.stock}")
-            if product.tags:
-                print(f"     Tags: {', '.join(product.tags)}")
-
-    # Show validation errors
-    if invalid_products:
-        print("\n📋 Validation Errors:")
-        for product_data, error in invalid_products:
-            name = product_data.get("name", "Unknown")
-            print(f"  🔹 {name}: {error}")
-
-
-# =============================================================================
-# PERFORMANCE VALIDATION - Validation performance testing
-# =============================================================================
+    print("✅ Product validation demonstration completed")
 
 
 def demonstrate_validation_performance() -> None:
-    """Demonstrate validation performance characteristics."""
-    print("\n⚡ Validation Performance Demonstration")
-    print("=" * 50)
+    """Demonstrate validation performance patterns using flext_core.types."""
+    log_message: TLogMessage = "\n" + "=" * 60
+    print(log_message)
+    print("📋 EXAMPLE 7: Validation Performance")
+    print("=" * 60)
 
-    operations = 1000
+    # Benchmark data
+    test_data: list[TAnyObject] = [
+        "valid@email.com",
+        "invalid-email",
+        "user@domain.co.uk",
+        "test@example.com",
+        "not-an-email",
+    ] * 200  # 1000 total tests
 
-    # Email validation performance
-    print("📋 Email Validation Performance:")
-    test_emails = ["test@example.com"] * operations
+    # Benchmark email validation
+    log_message = "🏃 Benchmarking Email Validation"
+    print(log_message)
 
-    start_time = time.time()
-    for email in test_emails:
-        FlextValidators.is_email(email)
-    email_time = time.time() - start_time
-
-    print(
-        f"  🔹 {operations} Email validations: {email_time:.4f}s "
-        f"({operations / email_time:.0f}/s)",
-    )
-
-    # String validation performance
-    print("\n📋 String Validation Performance:")
-    test_strings = ["Hello World"] * operations
-
-    start_time = time.time()
-    for string in test_strings:
-        FlextValidators.is_non_empty_string(string)
-    string_time = time.time() - start_time
-
-    print(
-        f"  🔹 {operations} String validations: {email_time:.4f}s "
-        f"({operations / string_time:.0f}/s)",
-    )
-
-    # Predicate performance
-    print("\n📋 Predicate Performance:")
-    positive_predicate = FlextPredicates.positive_number()
-    test_numbers = [42] * operations
+    def validate_email_simple(email: TAnyObject) -> bool:
+        """Validate email format simply."""
+        return isinstance(email, str) and "@" in email and "." in email.split("@")[-1]
 
     start_time = time.time()
-    for number in test_numbers:
-        positive_predicate(number)
-    predicate_time = time.time() - start_time
+    valid_count = 0
+    for email in test_data:
+        if validate_email_simple(email):
+            valid_count += 1
+    end_time = time.time()
 
-    print(
-        f"  🔹 {operations} Predicate validations: {predicate_time:.4f}s "
-        f"({operations / predicate_time:.0f}/s)",
-    )
+    validation_time = end_time - start_time
+    log_message = f"✅ Validated {len(test_data)} emails in {validation_time:.4f}s"
+    print(log_message)
+    log_message = f"   📊 Valid emails: {valid_count}/{len(test_data)}"
+    print(log_message)
 
-    # Complex validation performance
-    print("\n📋 Complex Validation Performance:")
-    customer_data = {
-        "customer_id": "CUST_001",
-        "name": "Performance Test User",
-        "email": "perf@company.com",
-        "age": 30,
-    }
+    # Benchmark type checking
+    log_message = "🏃 Benchmarking Type Checking"
+    print(log_message)
 
     start_time = time.time()
-    for _ in range(100):  # Fewer operations for complex validation
-        validate_customer_complete(customer_data)
-    complex_time = time.time() - start_time
+    type_results = [
+        FlextTypes.TypeGuards.is_instance_of(item, str) for item in test_data
+    ]
+    end_time = time.time()
 
-    print(
-        f"  🔹 100 Complex validations: {complex_time:.4f}s "
-        f"({100 / complex_time:.0f}/s)",
-    )
+    type_check_time = end_time - start_time
+    string_count = sum(type_results)
+    log_message = f"✅ Type checked {len(test_data)} items in {type_check_time:.4f}s"
+    print(log_message)
+    log_message = f"   📊 String items: {string_count}/{len(test_data)}"
+    print(log_message)
 
+    # Performance summary
+    log_message = "\n📊 Performance Summary:"
+    print(log_message)
+    log_message = f"   Email Validation: {validation_time:.4f}s"
+    print(log_message)
+    log_message = f"   Type Checking: {type_check_time:.4f}s"
+    print(log_message)
+    log_message = f"   Total Operations: {len(test_data)}"
+    print(log_message)
 
-# =============================================================================
-# DEMONSTRATION EXECUTION
-# =============================================================================
+    print("✅ Validation performance demonstration completed")
 
 
 def main() -> None:
-    """Run comprehensive FlextValidation demonstration."""
+    """Run comprehensive FlextValidators demonstration with maximum type safety."""
     print("=" * 80)
-    print("🔍 FLEXT VALIDATION - ADVANCED VALIDATION SYSTEM DEMONSTRATION")
+    print("🚀 FLEXT VALIDATION - ADVANCED VALIDATION SYSTEM DEMONSTRATION")
     print("=" * 80)
 
-    # Example 1: Basic Validations
-    print("\n" + "=" * 60)
-    print("📋 EXAMPLE 1: Basic Validation Patterns")
-    print("=" * 60)
+    # Run all demonstrations
     demonstrate_basic_validations()
-
-    # Example 2: Format Validations
-    print("\n" + "=" * 60)
-    print("📋 EXAMPLE 2: Format Validation Patterns")
-    print("=" * 60)
     demonstrate_format_validations()
-
-    # Example 3: Functional Predicates
-    print("\n" + "=" * 60)
-    print("📋 EXAMPLE 3: Functional Predicates")
-    print("=" * 60)
     demonstrate_functional_predicates()
-
-    # Example 4: Predicate Composition
-    print("\n" + "=" * 60)
-    print("📋 EXAMPLE 4: Predicate Composition")
-    print("=" * 60)
     demonstrate_predicate_composition()
-
-    # Example 5: Customer Validation Workflow
-    print("\n" + "=" * 60)
-    print("📋 EXAMPLE 5: Customer Validation Workflow")
-    print("=" * 60)
     demonstrate_customer_validation()
-
-    # Example 6: Product Validation Workflow
-    print("\n" + "=" * 60)
-    print("📋 EXAMPLE 6: Product Validation Workflow")
-    print("=" * 60)
     demonstrate_product_validation()
-
-    # Example 7: Validation Performance
-    print("\n" + "=" * 60)
-    print("📋 EXAMPLE 7: Validation Performance")
-    print("=" * 60)
     demonstrate_validation_performance()
 
     print("\n" + "=" * 80)

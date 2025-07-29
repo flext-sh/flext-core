@@ -88,6 +88,37 @@ ERROR_CODES = {
     "CHAIN_ERROR": "CHAIN_ERROR",
     "MAP_ERROR": "MAP_ERROR",
     "BIND_ERROR": "BIND_ERROR",
+    # New specialized error codes
+    "BUSINESS_RULE_ERROR": "BUSINESS_RULE_ERROR",
+    "RETRY_ERROR": "RETRY_ERROR",
+    "CIRCUIT_BREAKER_ERROR": "CIRCUIT_BREAKER_ERROR",
+    "CONCURRENCY_ERROR": "CONCURRENCY_ERROR",
+    "RESOURCE_ERROR": "RESOURCE_ERROR",
+    "SERIALIZATION_ERROR": "SERIALIZATION_ERROR",
+    "DATABASE_ERROR": "DATABASE_ERROR",
+    "API_ERROR": "API_ERROR",
+    "EVENT_ERROR": "EVENT_ERROR",
+    "TIMEOUT_ERROR": "TIMEOUT_ERROR",
+    "SECURITY_ERROR": "SECURITY_ERROR",
+    "CONFIGURATION_ERROR": "CONFIGURATION_ERROR",
+    # Additional error codes used in exceptions module
+    "AUTH_ERROR": "AUTH_ERROR",
+    "CONNECTION_ERROR": "CONNECTION_ERROR",
+    "CRITICAL_ERROR": "CRITICAL_ERROR",
+    "EXTERNAL_ERROR": "EXTERNAL_ERROR",
+    "MIGRATION_ERROR": "MIGRATION_ERROR",
+    "PERMISSION_ERROR": "PERMISSION_ERROR",
+    "PROCESSING_ERROR": "PROCESSING_ERROR",
+    "CHAINED_ERROR": "CHAINED_ERROR",
+    "RETRYABLE_ERROR": "RETRYABLE_ERROR",
+    "UNKNOWN_ERROR": "UNKNOWN_ERROR",
+    # Operation-specific error codes
+    "FALLBACK_FAILURE": "FALLBACK_FAILURE",
+    "OPERATION_AND_FALLBACK_FAILURE": "OPERATION_AND_FALLBACK_FAILURE",
+    "OPERATION_FAILURE": "OPERATION_FAILURE",
+    "NOT_FOUND": "NOT_FOUND",
+    "ALREADY_EXISTS": "ALREADY_EXISTS",
+    "CONFIG_ERROR": "CONFIG_ERROR",
 }
 
 # =============================================================================
@@ -110,6 +141,19 @@ MESSAGES = {
     "MESSAGE_EMPTY": "Message cannot be empty",
     "EVENT_TYPE_EMPTY": "Event type cannot be empty",
     "VALUE_EMPTY": "Value cannot be empty",
+    # New specialized error messages
+    "BUSINESS_RULE_VIOLATED": "Business rule violated",
+    "RETRY_EXHAUSTED": "Retry attempts exhausted",
+    "CIRCUIT_BREAKER_OPEN": "Circuit breaker is open",
+    "CONCURRENT_MODIFICATION": "Concurrent modification detected",
+    "RESOURCE_UNAVAILABLE": "Resource is unavailable",
+    "SERIALIZATION_FAILED": "Serialization failed",
+    "DATABASE_CONNECTION_FAILED": "Database connection failed",
+    "API_CALL_FAILED": "API call failed",
+    "EVENT_PROCESSING_FAILED": "Event processing failed",
+    "OPERATION_TIMEOUT": "Operation timed out",
+    "SECURITY_VIOLATION": "Security violation detected",
+    "CONFIGURATION_INVALID": "Configuration is invalid",
 }
 
 # =============================================================================

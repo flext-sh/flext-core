@@ -54,11 +54,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
+from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
-from flext_core.flext_types import FlextTypes
+from flext_core.exceptions import FlextAttributeError, FlextValidationError
 from flext_core.loggings import FlextLoggerFactory
 from flext_core.mixins import (
     FlextLoggableMixin,
@@ -68,8 +69,26 @@ from flext_core.mixins import (
 from flext_core.result import FlextResult
 from flext_core.validation import FlextValidators
 
-# Use FlextTypes for type variables
-T = FlextTypes.T
+if TYPE_CHECKING:
+    from flext_core.types import T, TAnyDict
+else:
+    # Import TAnyDict for runtime use (Pydantic needs it)
+    try:
+        from flext_core.types import TAnyDict
+    except ImportError:
+        # Fallback for circular import cases
+        TAnyDict: type[dict[str, object]] = dict[str, object]
+
+    # Import T for runtime use
+    try:
+        from flext_core.types import T
+    except ImportError:
+        # Fallback for circular import cases
+        from typing import TypeVar
+
+        T = TypeVar("T")
+
+# T imported directly from types module
 
 
 class FlextPayload[T](
@@ -124,7 +143,7 @@ class FlextPayload[T](
             metadata={
                 "version": "1.0",
                 "source": "api",
-                "timestamp": _BaseGenerators.generate_timestamp(),
+                "timestamp": time.time(),
             },
         )
 
@@ -139,7 +158,7 @@ class FlextPayload[T](
 
         # Metadata operations
         enhanced_payload = payload.with_metadata(
-            processed_at=_BaseGenerators.generate_timestamp(),
+            processed_at=time.time(),
             processor_id="worker_001"
         )
 
@@ -156,8 +175,8 @@ class FlextPayload[T](
     model_config = ConfigDict(
         frozen=True,
         validate_assignment=True,
-        str_strip_whitespace=True,
-        extra="forbid",
+        str_strip_whitespace=False,  # Preserve whitespace in extra fields
+        extra="allow",  # Allow arbitrary extra fields
         json_schema_extra={
             "description": "Type-safe payload container",
             "examples": [
@@ -167,8 +186,8 @@ class FlextPayload[T](
         },
     )
 
-    data: T = Field(description="Payload data")
-    metadata: dict[str, object] = Field(
+    data: T | None = Field(default=None, description="Payload data")
+    metadata: TAnyDict = Field(
         default_factory=dict,
         description="Optional metadata",
     )
@@ -200,7 +219,7 @@ class FlextPayload[T](
             payload = cls(data=data, metadata=metadata)
             logger.debug("Payload created successfully", payload_id=id(payload))
             return FlextResult.ok(payload)
-        except (TypeError, ValueError, ValidationError) as e:
+        except (ValidationError, FlextValidationError) as e:
             logger.exception("Failed to create payload")
             return FlextResult.fail(f"Failed to create payload: {e}")
 
@@ -214,14 +233,73 @@ class FlextPayload[T](
             New payload with updated metadata
 
         """
-        self.logger.debug(
-            "Adding metadata to payload",
-            additional_keys=list(additional.keys()),
-        )
-
         # Keys in **additional are always strings, so merge directly
         new_metadata = {**self.metadata, **additional}
         return FlextPayload(data=self.data, metadata=new_metadata)
+
+    def enrich_metadata(self, additional: dict[str, object]) -> FlextPayload[T]:
+        """Create new payload with enriched metadata from dictionary.
+
+        Args:
+            additional: Dictionary of metadata to add/update
+
+        Returns:
+            New payload with updated metadata
+
+        """
+        # Merge existing metadata with additional metadata
+        new_metadata = {**self.metadata, **additional}
+        return FlextPayload(data=self.data, metadata=new_metadata)
+
+    @classmethod
+    def from_dict(
+        cls,
+        data_dict: dict[str, object],
+    ) -> FlextResult[FlextPayload[object]]:
+        """Create payload from dictionary.
+
+        Args:
+            data_dict: Dictionary containing data and metadata keys
+
+        Returns:
+            FlextResult containing new payload instance
+
+        """
+        try:
+            payload_data = data_dict.get("data")
+            payload_metadata = data_dict.get("metadata", {})
+            if not isinstance(payload_metadata, dict):
+                payload_metadata = {}
+            # Cast to proper type for the generic class
+            payload = cls(data=payload_data, metadata=payload_metadata)  # type: ignore[arg-type]
+            return FlextResult.ok(payload)
+        except Exception as e:  # noqa: BLE001
+            # Broad exception handling for API contract safety in payload creation
+            return FlextResult.fail(f"Failed to create payload from dict: {e}")
+
+    def transform_data(
+        self,
+        transformer: Callable[[T], object],
+    ) -> FlextResult[FlextPayload[object]]:
+        """Transform payload data using a function.
+
+        Args:
+            transformer: Function to transform the data
+
+        Returns:
+            FlextResult containing new payload with transformed data
+
+        """
+        if self.data is None:
+            return FlextResult.fail("Cannot transform None data")
+
+        try:
+            transformed_data = transformer(self.data)
+            new_payload = FlextPayload(data=transformed_data, metadata=self.metadata)
+            return FlextResult.ok(new_payload)
+        except Exception as e:  # noqa: BLE001
+            # Broad exception handling for transformer function safety
+            return FlextResult.fail(f"Data transformation failed: {e}")
 
     def get_metadata(self, key: str, default: object | None = None) -> object | None:
         """Get metadata value by key.
@@ -248,7 +326,7 @@ class FlextPayload[T](
         """
         return key in self.metadata
 
-    def to_dict(self) -> dict[str, object]:
+    def to_dict(self) -> TAnyDict:
         """Convert to dictionary representation.
 
         Returns:
@@ -268,6 +346,144 @@ class FlextPayload[T](
             data_repr = f"{data_repr[:47]}..."
         meta_count = len(self.metadata)
         return f"FlextPayload(data={data_repr}, metadata_keys={meta_count})"
+
+    def __getattr__(self, name: str) -> object:
+        """Get attribute from extra fields.
+
+        Args:
+            name: Field name to get
+
+        Returns:
+            Field value
+
+        Raises:
+            AttributeError: If field doesn't exist
+
+        """
+        if (
+            hasattr(self, "__pydantic_extra__")
+            and self.__pydantic_extra__
+            and name in self.__pydantic_extra__
+        ):
+            return self.__pydantic_extra__[name]
+        error_msg = f"'{self.__class__.__name__}' object has no attribute '{name}'"
+        available_fields = (
+            list(self.__pydantic_extra__.keys())
+            if hasattr(self, "__pydantic_extra__") and self.__pydantic_extra__
+            else []
+        )
+        raise FlextAttributeError(
+            error_msg,
+            attribute_context={
+                "class_name": self.__class__.__name__,
+                "attribute_name": name,
+                "available_extra_fields": available_fields,
+            },
+        )
+
+    def __contains__(self, key: str) -> bool:
+        """Check if key exists in extra fields.
+
+        Args:
+            key: Key to check
+
+        Returns:
+            True if key exists
+
+        """
+        return self.has(key)
+
+    def __hash__(self) -> int:
+        """Create hash from payload data and extra fields.
+
+        Returns:
+            Hash value based on data and extra fields
+
+        """
+        # Create hash from data field if it exists and is hashable
+        data_hash = 0
+        if self.data is not None:
+            try:
+                data_hash = hash(self.data)
+            except TypeError:
+                # If data is not hashable, use its string representation
+                data_hash = hash(str(self.data))
+
+        # Create hash from extra fields by converting to sorted tuple
+        extra_hash = 0
+        if hasattr(self, "__pydantic_extra__") and self.__pydantic_extra__:
+            # Sort items to ensure consistent hash for same content
+            sorted_items = tuple(sorted(self.__pydantic_extra__.items()))
+            try:
+                extra_hash = hash(sorted_items)
+            except TypeError:
+                # If some values are not hashable, use string representation
+                str_items = tuple((k, str(v)) for k, v in sorted_items)
+                extra_hash = hash(str_items)
+
+        # Create hash from metadata
+        metadata_hash = 0
+        if self.metadata:
+            sorted_metadata = tuple(sorted(self.metadata.items()))
+            try:
+                metadata_hash = hash(sorted_metadata)
+            except TypeError:
+                str_metadata = tuple((k, str(v)) for k, v in sorted_metadata)
+                metadata_hash = hash(str_metadata)
+
+        # Combine all hashes
+        return hash((data_hash, extra_hash, metadata_hash))
+
+    def has(self, key: str) -> bool:
+        """Check if field exists in extra fields.
+
+        Args:
+            key: Field name to check
+
+        Returns:
+            True if field exists
+
+        """
+        if hasattr(self, "__pydantic_extra__") and self.__pydantic_extra__:
+            return key in self.__pydantic_extra__
+        return False
+
+    def get(self, key: str, default: object | None = None) -> object | None:
+        """Get field value from extra fields with default.
+
+        Args:
+            key: Field name to get
+            default: Default value if key not found
+
+        Returns:
+            Field value or default
+
+        """
+        if hasattr(self, "__pydantic_extra__") and self.__pydantic_extra__:
+            return self.__pydantic_extra__.get(key, default)
+        return default
+
+    def keys(self) -> list[str]:
+        """Get list of extra field names.
+
+        Returns:
+            List of field names
+
+        """
+        if hasattr(self, "__pydantic_extra__") and self.__pydantic_extra__:
+            return list(self.__pydantic_extra__.keys())
+        return []
+
+    def items(self) -> list[tuple[str, object]]:
+        """Get list of (key, value) pairs from extra fields.
+
+        Returns:
+            List of (key, value) tuples
+
+        """
+        if hasattr(self, "__pydantic_extra__") and self.__pydantic_extra__:
+            return list(self.__pydantic_extra__.items())
+        return []
 
 
 # =============================================================================
@@ -320,7 +536,7 @@ class FlextMessage(FlextPayload[str]):
 
         # Extend with additional metadata
         enriched_message = message.with_metadata(
-            timestamp=_BaseGenerators.generate_timestamp(),
+            timestamp=time.time(),
             user_id="user_123"
         )
     """
@@ -359,7 +575,7 @@ class FlextMessage(FlextPayload[str]):
             logger.warning("Invalid message level, using 'info'", level=level)
             level = "info"
 
-        metadata: dict[str, object] = {"level": level}
+        metadata: TAnyDict = {"level": level}
         if source:
             metadata["source"] = source
 
@@ -369,8 +585,31 @@ class FlextMessage(FlextPayload[str]):
         try:
             instance = cls(data=message, metadata=metadata)
             return FlextResult.ok(instance)
-        except (TypeError, ValueError, ValidationError) as e:
+        except (ValidationError, FlextValidationError) as e:
             return FlextResult.fail(f"Failed to create message: {e}")
+
+    @property
+    def level(self) -> str:
+        """Get message level."""
+        level = self.get_metadata("level", "info")
+        return str(level) if level is not None else "info"
+
+    @property
+    def source(self) -> str | None:
+        """Get message source."""
+        source = self.get_metadata("source")
+        return str(source) if source is not None else None
+
+    @property
+    def correlation_id(self) -> str | None:
+        """Get message correlation ID."""
+        corr_id = self.get_metadata("correlation_id")
+        return str(corr_id) if corr_id is not None else None
+
+    @property
+    def text(self) -> str | None:
+        """Get message text."""
+        return self.data
 
 
 class FlextEvent(FlextPayload[Mapping[str, object]]):
@@ -434,7 +673,7 @@ class FlextEvent(FlextPayload[Mapping[str, object]]):
 
         # Extend event with processing metadata
         processed_event = event.with_metadata(
-            processed_at=_BaseGenerators.generate_timestamp(),
+            processed_at=time.time(),
             processor_version="1.2.3",
             correlation_id="req_789"
         )
@@ -480,7 +719,7 @@ class FlextEvent(FlextPayload[Mapping[str, object]]):
             logger.error("Invalid event version", version=version)
             return FlextResult.fail("Event version must be non-negative")
 
-        metadata: dict[str, object] = {"event_type": event_type}
+        metadata: TAnyDict = {"event_type": event_type}
         if aggregate_id:
             metadata["aggregate_id"] = aggregate_id
         if version is not None:
@@ -496,8 +735,43 @@ class FlextEvent(FlextPayload[Mapping[str, object]]):
         try:
             instance = cls(data=dict(event_data), metadata=metadata)
             return FlextResult.ok(instance)
-        except (TypeError, ValueError, ValidationError) as e:
+        except (ValidationError, FlextValidationError) as e:
             return FlextResult.fail(f"Failed to create event: {e}")
+
+    @property
+    def event_type(self) -> str | None:
+        """Get event type."""
+        event_type = self.get_metadata("event_type")
+        return str(event_type) if event_type is not None else None
+
+    @property
+    def aggregate_id(self) -> str | None:
+        """Get aggregate ID."""
+        agg_id = self.get_metadata("aggregate_id")
+        return str(agg_id) if agg_id is not None else None
+
+    @property
+    def aggregate_type(self) -> str | None:
+        """Get aggregate type."""
+        agg_type = self.get_metadata("aggregate_type")
+        return str(agg_type) if agg_type is not None else None
+
+    @property
+    def version(self) -> int | None:
+        """Get event version."""
+        version = self.get_metadata("version")
+        if version is None:
+            return None
+        try:
+            return int(str(version))
+        except (ValueError, TypeError):
+            return None
+
+    @property
+    def correlation_id(self) -> str | None:
+        """Get event correlation ID."""
+        corr_id = self.get_metadata("correlation_id")
+        return str(corr_id) if corr_id is not None else None
 
 
 # Export API

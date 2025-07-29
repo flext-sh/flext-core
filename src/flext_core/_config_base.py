@@ -74,11 +74,13 @@ import os
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from flext_core._result_base import _BaseResult
+from flext_core.result import FlextResult
 from flext_core.validation import FlextValidators
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+    from flext_core.types import TAnyDict
 
 
 # =============================================================================
@@ -91,9 +93,9 @@ class _BaseConfigOps:
 
     @staticmethod
     def safe_load_from_dict(
-        config_dict: dict[str, object],
+        config_dict: TAnyDict,
         required_keys: list[str] | None = None,
-    ) -> _BaseResult[dict[str, object]]:
+    ) -> FlextResult[TAnyDict]:
         """Safely load configuration from dictionary.
 
         Args:
@@ -105,25 +107,25 @@ class _BaseConfigOps:
 
         """
         if not FlextValidators.is_dict(config_dict):
-            return _BaseResult.fail("Configuration must be a dictionary")
+            return FlextResult.fail("Configuration must be a dictionary")
 
         # Validate required keys if provided
         if required_keys:
             if not FlextValidators.is_list(required_keys):
-                return _BaseResult.fail("Required keys must be a list")
+                return FlextResult.fail("Required keys must be a list")
 
             missing_keys = [key for key in required_keys if key not in config_dict]
             if missing_keys:
-                return _BaseResult.fail(
+                return FlextResult.fail(
                     f"Missing required configuration keys: {', '.join(missing_keys)}",
                 )
 
         # Create clean copy
         try:
             clean_config = dict(config_dict)
-            return _BaseResult.ok(clean_config)
+            return FlextResult.ok(clean_config)
         except (TypeError, ValueError) as e:
-            return _BaseResult.fail(f"Configuration loading failed: {e}")
+            return FlextResult.fail(f"Configuration loading failed: {e}")
 
     @staticmethod
     def safe_get_env_var(
@@ -131,7 +133,7 @@ class _BaseConfigOps:
         default: str | None = None,
         *,
         required: bool = False,
-    ) -> _BaseResult[str]:
+    ) -> FlextResult[str]:
         """Safely get environment variable.
 
         Args:
@@ -144,7 +146,7 @@ class _BaseConfigOps:
 
         """
         if not FlextValidators.is_non_empty_string(var_name):
-            return _BaseResult.fail("Variable name must be non-empty string")
+            return FlextResult.fail("Variable name must be non-empty string")
 
         try:
             value = os.environ.get(var_name)
@@ -152,18 +154,18 @@ class _BaseConfigOps:
             if value is None:
                 if required:
                     error_msg = f"Required environment variable '{var_name}' not found"
-                    return _BaseResult.fail(error_msg)
+                    return FlextResult.fail(error_msg)
                 if default is not None:
-                    return _BaseResult.ok(default)
+                    return FlextResult.ok(default)
                 error_msg = f"Environment variable '{var_name}' not found"
-                return _BaseResult.fail(error_msg)
+                return FlextResult.fail(error_msg)
 
-            return _BaseResult.ok(value)
+            return FlextResult.ok(value)
         except (TypeError, OSError) as e:
-            return _BaseResult.fail(f"Environment variable access failed: {e}")
+            return FlextResult.fail(f"Environment variable access failed: {e}")
 
     @staticmethod
-    def safe_load_json_file(file_path: str | Path) -> _BaseResult[dict[str, object]]:
+    def safe_load_json_file(file_path: str | Path) -> FlextResult[TAnyDict]:
         """Safely load JSON configuration file.
 
         Args:
@@ -177,28 +179,28 @@ class _BaseConfigOps:
             path = Path(file_path)
 
             if not path.exists():
-                return _BaseResult.fail(f"Configuration file not found: {path}")
+                return FlextResult.fail(f"Configuration file not found: {path}")
 
             if not path.is_file():
-                return _BaseResult.fail(f"Path is not a file: {path}")
+                return FlextResult.fail(f"Path is not a file: {path}")
 
             with path.open("r", encoding="utf-8") as f:
                 data = json.load(f)
 
             if not isinstance(data, dict):
-                return _BaseResult.fail("JSON file must contain a dictionary")
+                return FlextResult.fail("JSON file must contain a dictionary")
 
-            return _BaseResult.ok(data)
+            return FlextResult.ok(data)
         except (json.JSONDecodeError, OSError, TypeError, ValueError) as e:
-            return _BaseResult.fail(f"JSON file loading failed: {e}")
+            return FlextResult.fail(f"JSON file loading failed: {e}")
 
     @staticmethod
     def safe_save_json_file(
-        data: dict[str, object],
+        data: TAnyDict,
         file_path: str | Path,
         *,
         create_dirs: bool = True,
-    ) -> _BaseResult[None]:
+    ) -> FlextResult[None]:
         """Safely save configuration to JSON file.
 
         Args:
@@ -211,7 +213,7 @@ class _BaseConfigOps:
 
         """
         if not FlextValidators.is_dict(data):
-            return _BaseResult.fail("Data must be a dictionary")
+            return FlextResult.fail("Data must be a dictionary")
 
         try:
             path = Path(file_path)
@@ -222,9 +224,9 @@ class _BaseConfigOps:
             with path.open("w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)
 
-            return _BaseResult.ok(None)
+            return FlextResult.ok(None)
         except (OSError, TypeError, ValueError) as e:
-            return _BaseResult.fail(f"JSON file saving failed: {e}")
+            return FlextResult.fail(f"JSON file saving failed: {e}")
 
 
 # =============================================================================
@@ -240,7 +242,7 @@ class _BaseConfigValidation:
         value: object,
         validator: Callable[[object], bool],
         error_message: str = "Configuration value validation failed",
-    ) -> _BaseResult[object]:
+    ) -> FlextResult[object]:
         """Validate configuration value with custom validator.
 
         Args:
@@ -253,21 +255,21 @@ class _BaseConfigValidation:
 
         """
         if not FlextValidators.is_callable(validator):
-            return _BaseResult.fail("Validator must be callable")
+            return FlextResult.fail("Validator must be callable")
 
         try:
             if callable(validator) and validator(value):
-                return _BaseResult.ok(value)
-            return _BaseResult.fail(error_message)
+                return FlextResult.ok(value)
+            return FlextResult.fail(error_message)
         except (TypeError, ValueError, AttributeError) as e:
-            return _BaseResult.fail(f"Validation failed: {e}")
+            return FlextResult.fail(f"Validation failed: {e}")
 
     @staticmethod
     def validate_config_type(
         value: object,
         expected_type: type,
         key_name: str = "value",
-    ) -> _BaseResult[object]:
+    ) -> FlextResult[object]:
         """Validate configuration value type.
 
         Args:
@@ -281,13 +283,13 @@ class _BaseConfigValidation:
         """
         try:
             if isinstance(value, expected_type):
-                return _BaseResult.ok(value)
-            return _BaseResult.fail(
+                return FlextResult.ok(value)
+            return FlextResult.fail(
                 f"Configuration '{key_name}' must be {expected_type.__name__}, "
                 f"got {type(value).__name__}",
             )
         except (TypeError, AttributeError) as e:
-            return _BaseResult.fail(f"Type validation failed: {e}")
+            return FlextResult.fail(f"Type validation failed: {e}")
 
     @staticmethod
     def validate_config_range(
@@ -295,7 +297,7 @@ class _BaseConfigValidation:
         min_value: float | None = None,
         max_value: float | None = None,
         key_name: str = "value",
-    ) -> _BaseResult[int | float]:
+    ) -> FlextResult[int | float]:
         """Validate numeric configuration value range.
 
         Args:
@@ -310,18 +312,18 @@ class _BaseConfigValidation:
         """
         try:
             if min_value is not None and value < min_value:
-                return _BaseResult.fail(
+                return FlextResult.fail(
                     f"Configuration '{key_name}' must be >= {min_value}, got {value}",
                 )
 
             if max_value is not None and value > max_value:
-                return _BaseResult.fail(
+                return FlextResult.fail(
                     f"Configuration '{key_name}' must be <= {max_value}, got {value}",
                 )
 
-            return _BaseResult.ok(value)
+            return FlextResult.ok(value)
         except (TypeError, ValueError) as e:
-            return _BaseResult.fail(f"Range validation failed: {e}")
+            return FlextResult.fail(f"Range validation failed: {e}")
 
 
 # =============================================================================
@@ -334,9 +336,9 @@ class _BaseConfigDefaults:
 
     @staticmethod
     def apply_defaults(
-        config: dict[str, object],
-        defaults: dict[str, object],
-    ) -> _BaseResult[dict[str, object]]:
+        config: TAnyDict,
+        defaults: TAnyDict,
+    ) -> FlextResult[TAnyDict]:
         """Apply default values to configuration.
 
         Args:
@@ -348,10 +350,10 @@ class _BaseConfigDefaults:
 
         """
         if not FlextValidators.is_dict(config):
-            return _BaseResult.fail("Configuration must be a dictionary")
+            return FlextResult.fail("Configuration must be a dictionary")
 
         if not FlextValidators.is_dict(defaults):
-            return _BaseResult.fail("Defaults must be a dictionary")
+            return FlextResult.fail("Defaults must be a dictionary")
 
         try:
             # Create copy to avoid mutation
@@ -362,14 +364,14 @@ class _BaseConfigDefaults:
                 if key not in result_config:
                     result_config[key] = default_value
 
-            return _BaseResult.ok(result_config)
+            return FlextResult.ok(result_config)
         except (TypeError, ValueError) as e:
-            return _BaseResult.fail(f"Applying defaults failed: {e}")
+            return FlextResult.fail(f"Applying defaults failed: {e}")
 
     @staticmethod
     def merge_configs(
-        *configs: dict[str, object],
-    ) -> _BaseResult[dict[str, object]]:
+        *configs: TAnyDict,
+    ) -> FlextResult[TAnyDict]:
         """Merge multiple configuration dictionaries.
 
         Args:
@@ -380,27 +382,27 @@ class _BaseConfigDefaults:
 
         """
         if not configs:
-            return _BaseResult.ok({})
+            return FlextResult.ok({})
 
         try:
-            merged: dict[str, object] = {}
+            merged: TAnyDict = {}
 
             for i, config in enumerate(configs):
                 if not FlextValidators.is_dict(config):
-                    return _BaseResult.fail(f"Configuration {i} must be a dictionary")
+                    return FlextResult.fail(f"Configuration {i} must be a dictionary")
 
                 # Update with each config (later configs override earlier ones)
                 merged.update(config)
 
-            return _BaseResult.ok(merged)
+            return FlextResult.ok(merged)
         except (TypeError, ValueError, AttributeError) as e:
-            return _BaseResult.fail(f"Configuration merging failed: {e}")
+            return FlextResult.fail(f"Configuration merging failed: {e}")
 
     @staticmethod
     def filter_config_keys(
-        config: dict[str, object],
+        config: TAnyDict,
         allowed_keys: list[str],
-    ) -> _BaseResult[dict[str, object]]:
+    ) -> FlextResult[TAnyDict]:
         """Filter configuration to only include allowed keys.
 
         Args:
@@ -412,19 +414,19 @@ class _BaseConfigDefaults:
 
         """
         if not FlextValidators.is_dict(config):
-            return _BaseResult.fail("Configuration must be a dictionary")
+            return FlextResult.fail("Configuration must be a dictionary")
 
         if not FlextValidators.is_list(allowed_keys):
-            return _BaseResult.fail("Allowed keys must be a list")
+            return FlextResult.fail("Allowed keys must be a list")
 
         try:
             filtered = {
                 key: value for key, value in config.items() if key in allowed_keys
             }
 
-            return _BaseResult.ok(filtered)
+            return FlextResult.ok(filtered)
         except (TypeError, ValueError, AttributeError) as e:
-            return _BaseResult.fail(f"Configuration filtering failed: {e}")
+            return FlextResult.fail(f"Configuration filtering failed: {e}")
 
 
 # =============================================================================
@@ -436,10 +438,16 @@ class _PerformanceConfig:
     """Performance configuration constants."""
 
     DEFAULT_CACHE_SIZE = 1000
-    DEFAULT_TIMEOUT = 30
-    DEFAULT_BATCH_SIZE = 100
+    # Import constants from central location to avoid duplication
+    from flext_core.constants import (  # noqa: PLC0415
+        DEFAULT_PAGE_SIZE,
+        DEFAULT_RETRIES,
+        DEFAULT_TIMEOUT,
+    )
+
+    DEFAULT_BATCH_SIZE = DEFAULT_PAGE_SIZE  # Reuse page size for batch size
     DEFAULT_POOL_SIZE = 10
-    DEFAULT_MAX_RETRIES = 3
+    DEFAULT_MAX_RETRIES = DEFAULT_RETRIES
 
 
 class _ObservabilityConfig:
@@ -463,7 +471,7 @@ class _BaseConfig:
         extra: str = "forbid",
         validate_assignment: bool = True,
         use_enum_values: bool = True,
-    ) -> dict[str, object]:
+    ) -> TAnyDict:
         """Get standardized model configuration."""
         return {
             "description": description,

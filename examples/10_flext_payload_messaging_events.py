@@ -2,7 +2,8 @@
 """FLEXT Payload Messaging and Events Example.
 
 Comprehensive demonstration of FlextPayload system showing enterprise-grade
-message and event patterns for structured data transport, validation, and metadata management.
+message and event patterns for structured data transport, validation, and
+metadata management.
 
 Features demonstrated:
     - Generic payload containers with type safety
@@ -12,6 +13,7 @@ Features demonstrated:
     - Payload validation and error handling
     - Enterprise messaging patterns for distributed systems
     - Event sourcing foundations for domain-driven design
+    - Maximum type safety using flext_core.types
 
 Key Components:
     - FlextPayload[T]: Generic type-safe payload container
@@ -26,28 +28,51 @@ demonstrating the power and flexibility of the FlextPayload system.
 """
 
 import time
-import traceback
 
-from flext_core.payload import FlextEvent, FlextMessage, FlextPayload
+from flext_core import (
+    FlextEvent,
+    FlextMessage,
+    FlextPayload,
+    FlextTypes,
+    TErrorMessage,
+    TLogMessage,
+    TUserData,
+)
+
+# =============================================================================
+# MESSAGING CONSTANTS - Event and messaging constraints
+# =============================================================================
+
+# Stock alert constants
+LOW_STOCK_THRESHOLD = 10  # Minimum quantity before low stock alert
 
 
-def demonstrate_generic_payloads() -> None:
+def demonstrate_generic_payloads() -> None:  # noqa: PLR0915
     """Demonstrate generic payload containers with type safety."""
-    print("\n" + "=" * 80)
+    log_message: TLogMessage = "\n" + "=" * 80
+    print(log_message)
     print("📦 GENERIC PAYLOAD CONTAINERS")
     print("=" * 80)
 
     # 1. Basic payload creation
-    print("\n1. Basic payload creation:")
+    log_message = "\n1. Basic payload creation:"
+    print(log_message)
 
     # Simple string payload
     text_payload = FlextPayload(data="Hello, World!")
-    print(f"✅ Text payload: {text_payload}")
-    print(f"   Data: {text_payload.data}")
-    print(f"   Metadata: {text_payload.metadata}")
+    log_message = f"✅ Text payload: {text_payload}"
+    print(log_message)
+    log_message = f"   Data: {text_payload.data}"
+    print(log_message)
+    log_message = f"   Metadata: {text_payload.metadata}"
+    print(log_message)
 
     # Dictionary payload with metadata
-    user_data = {"id": "user123", "name": "John Doe", "email": "john@example.com"}
+    user_data: TUserData = {
+        "id": "user123",
+        "name": "John Doe",
+        "email": "john@example.com",
+    }
     user_payload = FlextPayload(
         data=user_data,
         metadata={
@@ -56,13 +81,15 @@ def demonstrate_generic_payloads() -> None:
             "timestamp": time.time(),
         },
     )
-    print(f"✅ User payload: {user_payload}")
+    log_message = f"✅ User payload: {user_payload}"
+    print(log_message)
 
     # 2. Type-safe payload creation with factory method
-    print("\n2. Type-safe payload creation:")
+    log_message = "\n2. Type-safe payload creation:"
+    print(log_message)
 
     # Create payload with validation
-    order_data = {
+    order_data: TUserData = {
         "order_id": "ORD001",
         "customer_id": "CUST123",
         "items": [
@@ -81,774 +108,894 @@ def demonstrate_generic_payloads() -> None:
 
     if order_result.is_success:
         order_payload = order_result.data
-        print(f"✅ Order payload created: {order_payload}")
-        print(f"   Order ID: {order_payload.data.get('order_id')}")
-        print(f"   Total: ${order_payload.data.get('total')}")
-        print(f"   Source: {order_payload.get_metadata('source')}")
+        if order_payload is not None:
+            log_message = f"✅ Order payload created: {order_payload}"
+            print(log_message)
+            order_id = (
+                order_payload.data.get("order_id") if order_payload.data else None
+            )
+            log_message = f"   Order ID: {order_id}"
+            print(log_message)
+            total = order_payload.data.get("total") if order_payload.data else None
+            log_message = f"   Total: ${total}"
+            print(log_message)
     else:
-        print(f"❌ Order payload creation failed: {order_result.error}")
-
-    # 3. Payload metadata operations
-    print("\n3. Payload metadata operations:")
-
-    if order_result.is_success:
-        order_payload = order_result.data
-
-        # Add processing metadata
-        enriched_payload = order_payload.with_metadata(
-            processed_at=time.time(),
-            processor_id="worker_001",
-            validation_status="passed",
-            estimated_delivery="2025-01-30",
+        error_message: TErrorMessage = (
+            f"Order payload creation failed: {order_result.error}"
         )
+        print(f"❌ {error_message}")
 
-        print("📋 Enhanced payload metadata:")
-        for key in ["source", "processed_at", "processor_id", "validation_status"]:
-            value = enriched_payload.get_metadata(key)
-            print(f"   {key}: {value}")
+    # 3. Payload validation and error handling
+    log_message = "\n3. Payload validation and error handling:"
+    print(log_message)
 
-        # Check metadata existence
-        has_correlation = enriched_payload.has_metadata("correlation_id")
-        has_delivery = enriched_payload.has_metadata("estimated_delivery")
-        print(f"   Has correlation ID: {has_correlation}")
-        print(f"   Has delivery estimate: {has_delivery}")
-
-    # 4. Complex payload with nested data
-    print("\n4. Complex payload with nested data:")
-
-    analytics_data = {
-        "event_type": "user_action",
-        "session": {
-            "id": "sess_789",
-            "user_id": "user123",
-            "start_time": time.time() - 3600,
-            "current_page": "/dashboard",
-        },
-        "action": {
-            "type": "button_click",
-            "element_id": "export_button",
-            "coordinates": {"x": 150, "y": 300},
-            "timestamp": time.time(),
-        },
-        "context": {
-            "browser": "Chrome",
-            "platform": "macOS",
-            "screen_resolution": "1920x1080",
-            "referrer": "/reports",
-        },
-    }
-
-    analytics_result = FlextPayload.create(
-        analytics_data,
-        tenant_id="tenant_001",
-        service="analytics_collector",
-        version="2.1.0",
-        batch_id="batch_456",
+    # Test invalid payload (None data)
+    invalid_result = FlextPayload.create(
+        None,
+        source="test_service",
     )
 
-    if analytics_result.is_success:
-        analytics_payload = analytics_result.data
-        print("✅ Analytics payload created successfully")
-        print(f"   Event type: {analytics_payload.data.get('event_type')}")
-        print(f"   User: {analytics_payload.data.get('session', {}).get('user_id')}")
-        print(f"   Action: {analytics_payload.data.get('action', {}).get('type')}")
-        print(f"   Service: {analytics_payload.get_metadata('service')}")
+    if invalid_result.is_success:
+        log_message = f"✅ Invalid payload created: {invalid_result.data}"
+        print(log_message)
     else:
-        print(f"❌ Analytics payload failed: {analytics_result.error}")
+        error_message = f"Invalid payload rejected (expected): {invalid_result.error}"
+        print(f"❌ {error_message}")
+
+    # 4. Metadata enrichment
+    log_message = "\n4. Metadata enrichment:"
+    print(log_message)
+
+    base_payload = FlextPayload(
+        data={"message": "Hello from service"},
+        metadata={"source": "base_service"},
+    )
+
+    # Enrich with additional metadata
+    enriched_payload = base_payload.enrich_metadata(
+        {
+            "timestamp": time.time(),
+            "version": "2.0",
+            "environment": "production",
+        },
+    )
+
+    log_message = f"✅ Enriched payload: {enriched_payload}"
+    print(log_message)
+    log_message = f"   Metadata keys: {list(enriched_payload.metadata.keys())}"
+    print(log_message)
+
+    # 5. Payload transformation
+    log_message = "\n5. Payload transformation:"
+    print(log_message)
+
+    # Transform payload data
+    transform_result = base_payload.transform_data(
+        lambda data: {"transformed_message": f"TRANSFORMED: {data.get('message', '')}"},
+    )
+
+    if transform_result.is_success:
+        transformed_payload = transform_result.data
+        if transformed_payload is not None:
+            log_message = f"✅ Transformed payload: {transformed_payload}"
+            print(log_message)
+    else:
+        error_message = f"Payload transformation failed: {transform_result.error}"
+        print(f"❌ {error_message}")
 
 
-def demonstrate_message_payloads() -> None:
-    """Demonstrate specialized message payloads with level validation."""
-    print("\n" + "=" * 80)
-    print("💬 MESSAGE PAYLOADS WITH LEVEL VALIDATION")
+def demonstrate_message_payloads() -> None:  # noqa: PLR0912, PLR0915
+    """Demonstrate message payloads with level validation using flext_core.types."""
+    log_message: TLogMessage = "\n" + "=" * 80
+    print(log_message)
+    print("💬 MESSAGE PAYLOADS")
     print("=" * 80)
 
     # 1. Basic message creation
-    print("\n1. Basic message creation:")
+    log_message = "\n1. Basic message creation:"
+    print(log_message)
 
-    # Info message
-    info_result = FlextMessage.create_message("System startup completed successfully")
-    if info_result.is_success:
-        info_msg = info_result.data
-        print(f"✅ Info message: {info_msg.data}")
-        print(f"   Level: {info_msg.get_metadata('level')}")
-    else:
-        print(f"❌ Info message failed: {info_result.error}")
+    # Create different message levels
+    info_message = FlextMessage.create(
+        "User login successful",
+        level="info",
+        source="auth_service",
+    )
 
-    # Warning message with source
-    warning_result = FlextMessage.create_message(
-        "Database connection pool approaching capacity",
+    warning_message = FlextMessage.create(
+        "Database connection slow",
         level="warning",
         source="database_service",
     )
-    if warning_result.is_success:
-        warning_msg = warning_result.data
-        print(f"⚠️ Warning message: {warning_msg.data}")
-        print(f"   Level: {warning_msg.get_metadata('level')}")
-        print(f"   Source: {warning_msg.get_metadata('source')}")
-    else:
-        print(f"❌ Warning message failed: {warning_result.error}")
 
-    # 2. Error messages with detailed context
-    print("\n2. Error messages with detailed context:")
-
-    error_result = FlextMessage.create_message(
-        "Payment processing failed: Invalid credit card number",
+    error_message = FlextMessage.create(
+        "Payment processing failed",
         level="error",
-        source="payment_gateway",
+        source="payment_service",
     )
-    if error_result.is_success:
-        error_msg = error_result.data
 
-        # Add detailed error context
-        detailed_error = error_msg.with_metadata(
-            error_code="PAY_001",
-            transaction_id="txn_789",
-            customer_id="cust_456",
-            retry_count=3,
-            timestamp=time.time(),
-        )
+    if info_message.is_success:
+        info_payload = info_message.data
+        if info_payload is not None:
+            log_message = f"✅ Info message: {info_payload}"
+            print(log_message)
+            log_message = f"   Level: {info_payload.level}"
+            print(log_message)
+            log_message = f"   Source: {info_payload.source}"
+            print(log_message)
 
-        print(f"❌ Error message: {detailed_error.data}")
-        print(f"   Error code: {detailed_error.get_metadata('error_code')}")
-        print(f"   Transaction: {detailed_error.get_metadata('transaction_id')}")
-        print(f"   Customer: {detailed_error.get_metadata('customer_id')}")
-        print(f"   Retries: {detailed_error.get_metadata('retry_count')}")
-    else:
-        print(f"❌ Error message creation failed: {error_result.error}")
+    if warning_message.is_success:
+        warning_payload = warning_message.data
+        if warning_payload is not None:
+            log_message = f"✅ Warning message: {warning_payload}"
+            print(log_message)
 
-    # 3. Debug messages for development
-    print("\n3. Debug messages for development:")
+    if error_message.is_success:
+        error_payload = error_message.data
+        if error_payload is not None:
+            log_message = f"✅ Error message: {error_payload}"
+            print(log_message)
 
-    debug_result = FlextMessage.create_message(
-        "Cache hit ratio: 85%, average response time: 45ms",
-        level="debug",
-        source="cache_monitor",
-    )
-    if debug_result.is_success:
-        debug_msg = debug_result.data
+    # 2. Message validation
+    log_message = "\n2. Message validation:"
+    print(log_message)
 
-        # Add performance metrics
-        perf_debug = debug_msg.with_metadata(
-            cache_hits=8500,
-            cache_misses=1500,
-            avg_response_ms=45,
-            memory_usage_mb=256,
-            uptime_hours=72,
-        )
-
-        print(f"🔍 Debug message: {perf_debug.data}")
-        print(f"   Cache hits: {perf_debug.get_metadata('cache_hits')}")
-        print(f"   Avg response: {perf_debug.get_metadata('avg_response_ms')}ms")
-        print(f"   Memory: {perf_debug.get_metadata('memory_usage_mb')}MB")
-    else:
-        print(f"❌ Debug message failed: {debug_result.error}")
-
-    # 4. Critical messages requiring immediate attention
-    print("\n4. Critical messages:")
-
-    critical_result = FlextMessage.create_message(
-        "Primary database server is down, failover initiated",
-        level="critical",
-        source="health_monitor",
-    )
-    if critical_result.is_success:
-        critical_msg = critical_result.data
-
-        # Add incident context
-        incident_msg = critical_msg.with_metadata(
-            incident_id="INC_001",
-            severity="P1",
-            affected_services=["user_service", "order_service", "payment_service"],
-            failover_time_seconds=15,
-            estimated_recovery="30 minutes",
-            escalated_to="on_call_engineer",
-        )
-
-        print(f"🚨 Critical message: {incident_msg.data}")
-        print(f"   Incident ID: {incident_msg.get_metadata('incident_id')}")
-        print(f"   Severity: {incident_msg.get_metadata('severity')}")
-        print(
-            f"   Affected services: {len(incident_msg.get_metadata('affected_services', []))} services",
-        )
-        print(
-            f"   Recovery estimate: {incident_msg.get_metadata('estimated_recovery')}",
-        )
-    else:
-        print(f"❌ Critical message failed: {critical_result.error}")
-
-    # 5. Message validation and error handling
-    print("\n5. Message validation:")
-
-    # Test empty message (should fail)
-    empty_result = FlextMessage.create_message("")
-    if empty_result.is_success:
-        print("⚠️ Empty message was created (unexpected)")
-    else:
-        print(f"✅ Empty message rejected: {empty_result.error}")
-
-    # Test invalid level (should use default)
-    invalid_level_result = FlextMessage.create_message(
-        "Test message with invalid level",
+    # Test invalid message level
+    invalid_level_result = FlextMessage.create(
+        "Test message",
         level="invalid_level",
+        source="test_service",
     )
+
     if invalid_level_result.is_success:
-        msg = invalid_level_result.data
-        print(f"✅ Invalid level handled, used: {msg.get_metadata('level')}")
+        invalid_payload = invalid_level_result.data
+        if invalid_payload is not None:
+            log_message = f"✅ Invalid level message: {invalid_payload}"
+            print(log_message)
     else:
-        print(f"❌ Message with invalid level failed: {invalid_level_result.error}")
+        error_message = (
+            f"Invalid level rejected (expected): {invalid_level_result.error}"
+        )
+        print(f"❌ {error_message}")
+
+    # 3. Message enrichment
+    log_message = "\n3. Message enrichment:"
+    print(log_message)
+
+    base_message_result = FlextMessage.create(
+        "Base message",
+        level="info",
+        source="base_service",
+    )
+
+    if base_message_result.is_success:
+        base_message = base_message_result.data
+        if base_message is not None:
+            # Enrich with additional context
+            enriched_message = base_message.enrich_metadata(
+                {
+                    "user_id": "user_123",
+                    "session_id": "sess_456",
+                    "request_id": "req_789",
+                },
+            )
+
+            log_message = f"✅ Enriched message: {enriched_message}"
+            print(log_message)
+            log_message = f"   User ID: {enriched_message.metadata.get('user_id')}"
+            print(log_message)
+
+    # 4. Message filtering and processing
+    log_message = "\n4. Message filtering and processing:"
+    print(log_message)
+
+    # Create multiple messages for processing
+    messages_data: list[TUserData] = [
+        {"text": "System startup", "level": "info", "source": "system"},
+        {"text": "Low memory warning", "level": "warning", "source": "monitoring"},
+        {"text": "Database connection lost", "level": "error", "source": "database"},
+        {"text": "User action completed", "level": "info", "source": "user_service"},
+    ]
+
+    created_messages = []
+
+    for msg_data in messages_data:
+        message_result = FlextMessage.create(
+            msg_data["text"],
+            level=msg_data["level"],
+            source=msg_data["source"],
+        )
+        if message_result.is_success:
+            message = message_result.data
+            if message is not None:
+                created_messages.append(message)
+
+    log_message = f"✅ Created {len(created_messages)} messages"
+    print(log_message)
+
+    # Filter error messages
+    error_messages = [msg for msg in created_messages if msg.level == "error"]
+    log_message = f"   Error messages: {len(error_messages)}"
+    print(log_message)
+
+    # Filter warning messages
+    warning_messages = [msg for msg in created_messages if msg.level == "warning"]
+    log_message = f"   Warning messages: {len(warning_messages)}"
+    print(log_message)
+
+    # 5. Message correlation
+    log_message = "\n5. Message correlation:"
+    print(log_message)
+
+    # Create correlated messages
+    correlation_id = "corr_123"
+
+    request_message_result = FlextMessage.create(
+        "Processing user request",
+        level="info",
+        source="api_gateway",
+        correlation_id=correlation_id,
+    )
+
+    response_message_result = FlextMessage.create(
+        "Request completed successfully",
+        level="info",
+        source="api_gateway",
+        correlation_id=correlation_id,
+    )
+
+    if request_message_result.is_success and response_message_result.is_success:
+        request_msg = request_message_result.data
+        response_msg = response_message_result.data
+        if request_msg is not None and response_msg is not None:
+            log_message = f"✅ Request message: {request_msg.correlation_id}"
+            print(log_message)
+            log_message = f"✅ Response message: {response_msg.correlation_id}"
+            print(log_message)
+            log_message = f"   Correlation match: {request_msg.correlation_id == response_msg.correlation_id}"  # noqa: E501
+            print(log_message)
 
 
-def demonstrate_domain_events() -> None:
-    """Demonstrate domain event payloads with aggregate tracking."""
-    print("\n" + "=" * 80)
-    print("🎯 DOMAIN EVENT PAYLOADS FOR EVENT SOURCING")
+def demonstrate_domain_events() -> None:  # noqa: PLR0912, PLR0915
+    """Demonstrate domain events with aggregate tracking using flext_core.types."""
+    log_message: TLogMessage = "\n" + "=" * 80
+    print(log_message)
+    print("🎯 DOMAIN EVENTS")
     print("=" * 80)
 
-    # 1. User registration event
-    print("\n1. User registration domain event:")
+    # 1. Basic domain event creation
+    log_message = "\n1. Basic domain event creation:"
+    print(log_message)
 
-    user_registered_data = {
-        "user_id": "user_123",
+    # Create user registration event
+    user_registration_data: TUserData = {
+        "user_id": "user_456",
         "email": "alice@example.com",
-        "first_name": "Alice",
-        "last_name": "Johnson",
-        "registration_method": "email",
-        "terms_accepted": True,
-        "marketing_consent": False,
+        "registration_date": "2024-01-15T10:30:00Z",
+        "source": "web_registration",
     }
 
-    user_event_result = FlextEvent.create_event(
+    user_registration_event = FlextEvent.create(
         event_type="UserRegistered",
-        event_data=user_registered_data,
-        aggregate_id="user_123",
-        version=1,
+        aggregate_id="user_456",
+        aggregate_type="User",
+        data=user_registration_data,
+        source="user_service",
     )
 
-    if user_event_result.is_success:
-        user_event = user_event_result.data
-        print("✅ User registration event created")
-        print(f"   Event type: {user_event.get_metadata('event_type')}")
-        print(f"   User ID: {user_event.data.get('user_id')}")
-        print(f"   Email: {user_event.data.get('email')}")
-        print(f"   Aggregate: {user_event.get_metadata('aggregate_id')}")
-        print(f"   Version: {user_event.get_metadata('version')}")
-    else:
-        print(f"❌ User event creation failed: {user_event_result.error}")
+    if user_registration_event.is_success:
+        event = user_registration_event.data
+        if event is not None:
+            log_message = f"✅ User registration event: {event}"
+            print(log_message)
+            log_message = f"   Event type: {event.event_type}"
+            print(log_message)
+            log_message = f"   Aggregate ID: {event.aggregate_id}"
+            print(log_message)
+            log_message = f"   Aggregate type: {event.aggregate_type}"
+            print(log_message)
 
-    # 2. Order processing events with enrichment
-    print("\n2. Order processing event chain:")
+    # 2. Order lifecycle events
+    log_message = "\n2. Order lifecycle events:"
+    print(log_message)
+
+    order_id = "order_789"
 
     # Order created event
-    order_created_data = {
-        "order_id": "order_456",
-        "customer_id": "user_123",
+    order_created_data: TUserData = {
+        "order_id": order_id,
+        "customer_id": "customer_123",
         "items": [
-            {"sku": "LAPTOP_001", "quantity": 1, "unit_price": 999.99},
-            {"sku": "MOUSE_002", "quantity": 1, "unit_price": 29.99},
+            {"product_id": "prod_1", "quantity": 2, "price": 29.99},
+            {"product_id": "prod_2", "quantity": 1, "price": 99.99},
         ],
-        "subtotal": 1029.98,
-        "tax": 82.40,
-        "total": 1112.38,
-        "currency": "USD",
+        "total_amount": 159.97,
+        "created_at": "2024-01-15T14:20:00Z",
     }
 
-    order_created_result = FlextEvent.create_event(
+    order_created_event = FlextEvent.create(
         event_type="OrderCreated",
-        event_data=order_created_data,
-        aggregate_id="order_456",
+        aggregate_id=order_id,
+        aggregate_type="Order",
+        data=order_created_data,
+        source="order_service",
         version=1,
     )
 
-    if order_created_result.is_success:
-        order_event = order_created_result.data
-
-        # Enrich with processing metadata
-        enriched_order_event = order_event.with_metadata(
-            created_by="customer",
-            channel="web",
-            session_id="sess_789",
-            ip_address="192.168.1.100",
-            user_agent="Mozilla/5.0 Chrome/91.0",
-            correlation_id="req_12345",
-            processing_timestamp=time.time(),
-        )
-
-        print("✅ Order created event:")
-        print(f"   Order ID: {enriched_order_event.data.get('order_id')}")
-        print(f"   Customer: {enriched_order_event.data.get('customer_id')}")
-        print(f"   Total: ${enriched_order_event.data.get('total')}")
-        print(f"   Channel: {enriched_order_event.get_metadata('channel')}")
-        print(f"   Correlation: {enriched_order_event.get_metadata('correlation_id')}")
-    else:
-        print(f"❌ Order event creation failed: {order_created_result.error}")
-
-    # Order paid event (version 2)
-    payment_data = {
-        "order_id": "order_456",
+    # Order confirmed event
+    order_confirmed_data: TUserData = {
+        "order_id": order_id,
+        "confirmed_at": "2024-01-15T14:25:00Z",
         "payment_method": "credit_card",
-        "card_last_four": "1234",
-        "amount_charged": 1112.38,
-        "currency": "USD",
-        "transaction_id": "txn_789",
-        "payment_gateway": "stripe",
-        "authorization_code": "AUTH123456",
+        "payment_id": "pay_456",
     }
 
-    order_paid_result = FlextEvent.create_event(
-        event_type="OrderPaid",
-        event_data=payment_data,
-        aggregate_id="order_456",
+    order_confirmed_event = FlextEvent.create(
+        event_type="OrderConfirmed",
+        aggregate_id=order_id,
+        aggregate_type="Order",
+        data=order_confirmed_data,
+        source="order_service",
         version=2,
     )
 
-    if order_paid_result.is_success:
-        payment_event = order_paid_result.data
-        print("✅ Order payment event:")
-        print(f"   Transaction: {payment_event.data.get('transaction_id')}")
-        print(f"   Amount: ${payment_event.data.get('amount_charged')}")
-        print(f"   Method: {payment_event.data.get('payment_method')}")
-        print(f"   Version: {payment_event.get_metadata('version')}")
-    else:
-        print(f"❌ Payment event creation failed: {order_paid_result.error}")
+    if order_created_event.is_success and order_confirmed_event.is_success:
+        created_event = order_created_event.data
+        confirmed_event = order_confirmed_event.data
+        if created_event is not None and confirmed_event is not None:
+            log_message = (
+                f"✅ Order created event (v{created_event.version}): "
+                f"{created_event.event_type}"
+            )
+            print(log_message)
+            log_message = (
+                f"✅ Order confirmed event (v{confirmed_event.version}): "
+                f"{confirmed_event.event_type}"
+            )
+            print(log_message)
 
-    # 3. Inventory events for stock management
-    print("\n3. Inventory management events:")
+    # 3. Inventory management events
+    log_message = "\n3. Inventory management events:"
+    print(log_message)
 
-    inventory_updated_data = {
-        "sku": "LAPTOP_001",
-        "previous_quantity": 50,
-        "new_quantity": 49,
-        "change_quantity": -1,
-        "change_reason": "sale",
-        "warehouse_id": "WH_001",
-        "location": "A-15-3",
-        "reserved_quantity": 5,
-        "available_quantity": 44,
+    product_id = "product_123"
+
+    # Stock updated event
+    stock_updated_data: TUserData = {
+        "product_id": product_id,
+        "old_quantity": 50,
+        "new_quantity": 35,
+        "change_reason": "order_fulfillment",
+        "updated_at": "2024-01-15T15:00:00Z",
     }
 
-    inventory_result = FlextEvent.create_event(
-        event_type="InventoryUpdated",
-        event_data=inventory_updated_data,
-        aggregate_id="inventory_LAPTOP_001",
-        version=147,  # High version number indicating many updates
+    stock_updated_event = FlextEvent.create(
+        event_type="StockUpdated",
+        aggregate_id=product_id,
+        aggregate_type="Product",
+        data=stock_updated_data,
+        source="inventory_service",
+        version=1,
     )
 
-    if inventory_result.is_success:
-        inventory_event = inventory_result.data
+    # Low stock alert event
+    if stock_updated_event.is_success:
+        stock_event = stock_updated_event.data
+        if stock_event is not None:
+            new_quantity = stock_event.data.get("new_quantity", 0)
+            if (
+                FlextTypes.TypeGuards.is_instance_of(new_quantity, int)
+                and new_quantity <= LOW_STOCK_THRESHOLD
+            ):
+                low_stock_data: TUserData = {
+                    "product_id": product_id,
+                    "current_quantity": new_quantity,
+                    "threshold": LOW_STOCK_THRESHOLD,
+                    "alert_level": "warning",
+                    "alerted_at": "2024-01-15T15:00:00Z",
+                }
 
-        # Add operational context
-        ops_inventory_event = inventory_event.with_metadata(
-            triggered_by="order_fulfillment",
-            operator_id="system",
-            batch_operation=False,
-            audit_trail_id="audit_789",
-            low_stock_alert=inventory_event.data.get("available_quantity", 0) < 10,
-        )
+                low_stock_event = FlextEvent.create(
+                    event_type="LowStockAlert",
+                    aggregate_id=product_id,
+                    aggregate_type="Product",
+                    data=low_stock_data,
+                    source="inventory_service",
+                    version=2,
+                )
 
-        print("✅ Inventory update event:")
-        print(f"   SKU: {ops_inventory_event.data.get('sku')}")
-        print(f"   Change: {ops_inventory_event.data.get('change_quantity')}")
-        print(f"   Available: {ops_inventory_event.data.get('available_quantity')}")
-        print(f"   Version: {ops_inventory_event.get_metadata('version')}")
-        print(
-            f"   Low stock alert: {ops_inventory_event.get_metadata('low_stock_alert')}",
-        )
-    else:
-        print(f"❌ Inventory event creation failed: {inventory_result.error}")
+                if low_stock_event.is_success:
+                    alert_event = low_stock_event.data
+                    if alert_event is not None:
+                        log_message = (
+                            f"✅ Low stock alert event: {alert_event.event_type}"
+                        )
+                        print(log_message)
+                        log_message = (
+                            f"   Current quantity: "
+                            f"{alert_event.data.get('current_quantity')}"
+                        )
+                        print(log_message)
 
-    # 4. Event validation and error handling
-    print("\n4. Event validation:")
+    # 4. Event correlation and tracing
+    log_message = "\n4. Event correlation and tracing:"
+    print(log_message)
 
-    # Test invalid event type
-    invalid_event_result = FlextEvent.create_event(
+    # Create correlated events for a business process
+    process_id = "process_123"
+
+    # Process started event
+    process_started_event = FlextEvent.create(
+        event_type="ProcessStarted",
+        aggregate_id=process_id,
+        aggregate_type="BusinessProcess",
+        data={"process_id": process_id, "started_at": "2024-01-15T16:00:00Z"},
+        source="workflow_service",
+        correlation_id=process_id,
+    )
+
+    # Process step completed event
+    step_completed_event = FlextEvent.create(
+        event_type="ProcessStepCompleted",
+        aggregate_id=process_id,
+        aggregate_type="BusinessProcess",
+        data={
+            "process_id": process_id,
+            "step_name": "data_validation",
+            "step_result": "success",
+            "completed_at": "2024-01-15T16:05:00Z",
+        },
+        source="workflow_service",
+        correlation_id=process_id,
+    )
+
+    if process_started_event.is_success and step_completed_event.is_success:
+        started_event = process_started_event.data
+        completed_event = step_completed_event.data
+        if started_event is not None and completed_event is not None:
+            log_message = f"✅ Process started: {started_event.correlation_id}"
+            print(log_message)
+            log_message = f"✅ Step completed: {completed_event.correlation_id}"
+            print(log_message)
+            log_message = (
+                f"   Correlation match: "
+                f"{started_event.correlation_id == completed_event.correlation_id}"
+            )
+            print(log_message)
+
+    # 5. Event validation and error handling
+    log_message = "\n5. Event validation and error handling:"
+    print(log_message)
+
+    # Test invalid event (missing required fields)
+    invalid_event_result = FlextEvent.create(
         event_type="",  # Empty event type
-        event_data={"test": "data"},
-    )
-    if invalid_event_result.is_success:
-        print("⚠️ Invalid event type was accepted (unexpected)")
-    else:
-        print(f"✅ Empty event type rejected: {invalid_event_result.error}")
-
-    # Test invalid aggregate ID
-    invalid_aggregate_result = FlextEvent.create_event(
-        event_type="TestEvent",
-        event_data={"test": "data"},
         aggregate_id="",  # Empty aggregate ID
+        aggregate_type="",  # Empty aggregate type
+        data={},
+        source="test_service",
     )
-    if invalid_aggregate_result.is_success:
-        print("⚠️ Invalid aggregate ID was accepted (unexpected)")
+
+    if invalid_event_result.is_success:
+        invalid_event = invalid_event_result.data
+        if invalid_event is not None:
+            log_message = f"✅ Invalid event created: {invalid_event}"
+            print(log_message)
     else:
-        print(f"✅ Empty aggregate ID rejected: {invalid_aggregate_result.error}")
-
-    # Test negative version
-    negative_version_result = FlextEvent.create_event(
-        event_type="TestEvent",
-        event_data={"test": "data"},
-        version=-1,  # Negative version
-    )
-    if negative_version_result.is_success:
-        print("⚠️ Negative version was accepted (unexpected)")
-    else:
-        print(f"✅ Negative version rejected: {negative_version_result.error}")
+        error_message = (
+            f"Invalid event rejected (expected): {invalid_event_result.error}"
+        )
+        print(f"❌ {error_message}")
 
 
-def demonstrate_payload_serialization() -> None:
-    """Demonstrate payload serialization for cross-service communication."""
-    print("\n" + "=" * 80)
-    print("📡 PAYLOAD SERIALIZATION FOR CROSS-SERVICE COMMUNICATION")
+def demonstrate_payload_serialization() -> None:  # noqa: PLR0915
+    """Demonstrate payload serialization for cross-service communication.
+
+    Using flext_core.types for type safety.
+    """
+    log_message: TLogMessage = "\n" + "=" * 80
+    print(log_message)
+    print("🔄 PAYLOAD SERIALIZATION")
     print("=" * 80)
 
-    # 1. Basic payload serialization
-    print("\n1. Basic payload serialization:")
+    # 1. Basic serialization
+    log_message = "\n1. Basic serialization:"
+    print(log_message)
 
-    service_request = {
-        "request_id": "req_12345",
-        "service": "user_profile",
-        "operation": "get_profile",
-        "parameters": {"user_id": "user_123", "include_preferences": True},
-        "timeout_ms": 5000,
+    # Create payload for serialization
+    serialization_data: TUserData = {
+        "user_id": "user_789",
+        "action": "profile_update",
+        "changes": {
+            "name": "Jane Smith",
+            "email": "jane.smith@example.com",
+        },
+        "timestamp": "2024-01-15T17:00:00Z",
     }
 
-    request_payload_result = FlextPayload.create(
-        service_request,
-        source_service="api_gateway",
-        target_service="user_service",
-        trace_id="trace_456",
-        span_id="span_789",
+    payload = FlextPayload(
+        data=serialization_data,
+        metadata={
+            "source": "user_service",
+            "version": "1.0",
+            "correlation_id": "corr_789",
+        },
     )
 
-    if request_payload_result.is_success:
-        request_payload = request_payload_result.data
+    # Serialize to dictionary
+    serialized_dict = payload.to_dict()
+    log_message = f"✅ Serialized to dict: {serialized_dict}"
+    print(log_message)
 
-        # Serialize to dictionary
-        serialized = request_payload.to_dict()
-        print("✅ Serialized payload:")
-        print(f"   Data keys: {list(serialized['data'].keys())}")
-        print(f"   Metadata keys: {list(serialized['metadata'].keys())}")
-        print(f"   Request ID: {serialized['data']['request_id']}")
-        print(f"   Source: {serialized['metadata']['source_service']}")
-    else:
-        print(f"❌ Request payload creation failed: {request_payload_result.error}")
+    # 2. Message serialization
+    log_message = "\n2. Message serialization:"
+    print(log_message)
 
-    # 2. Message serialization for logging
-    print("\n2. Message serialization for logging:")
-
-    audit_message_result = FlextMessage.create_message(
-        "User profile accessed by REDACTED_LDAP_BIND_PASSWORDistrator",
+    message_result = FlextMessage.create(
+        "User profile updated successfully",
         level="info",
-        source="audit_service",
+        source="user_service",
+        correlation_id="corr_789",
     )
 
-    if audit_message_result.is_success:
-        audit_message = audit_message_result.data
+    if message_result.is_success:
+        message = message_result.data
+        if message is not None:
+            message_dict = message.to_dict()
+            log_message = f"✅ Message serialized: {message_dict}"
+            print(log_message)
 
-        # Add audit context
-        audit_with_context = audit_message.with_metadata(
-            audit_id="audit_001",
-            REDACTED_LDAP_BIND_PASSWORD_user_id="REDACTED_LDAP_BIND_PASSWORD_456",
-            target_user_id="user_123",
-            action="profile_view",
-            ip_address="10.0.1.50",
-            session_duration_minutes=15,
-            compliance_category="data_access",
-        )
+    # 3. Event serialization
+    log_message = "\n3. Event serialization:"
+    print(log_message)
 
-        # Serialize for structured logging
-        log_data = audit_with_context.to_dict()
-        print("✅ Audit log serialization:")
-        print(f"   Message: {log_data['data']}")
-        print(f"   Audit ID: {log_data['metadata']['audit_id']}")
-        print(f"   Admin: {log_data['metadata']['REDACTED_LDAP_BIND_PASSWORD_user_id']}")
-        print(f"   Action: {log_data['metadata']['action']}")
+    event_result = FlextEvent.create(
+        event_type="UserProfileUpdated",
+        aggregate_id="user_789",
+        aggregate_type="User",
+        data=serialization_data,
+        source="user_service",
+        version=1,
+        correlation_id="corr_789",
+    )
+
+    if event_result.is_success:
+        event = event_result.data
+        if event is not None:
+            event_dict = event.to_dict()
+            log_message = f"✅ Event serialized: {event_dict}"
+            print(log_message)
+
+    # 4. Cross-service payload transport
+    log_message = "\n4. Cross-service payload transport:"
+    print(log_message)
+
+    # Simulate payload transport between services
+    service_a_payload = FlextPayload(
+        data={"request_id": "req_123", "user_id": "user_456"},
+        metadata={"source": "service_a", "timestamp": time.time()},
+    )
+
+    # Serialize for transport
+    transport_data = service_a_payload.to_dict()
+    log_message = f"✅ Transport data: {transport_data}"
+    print(log_message)
+
+    # Simulate receiving service
+    received_payload = FlextPayload.from_dict(transport_data)
+    if received_payload.is_success:
+        payload = received_payload.data
+        if payload is not None:
+            log_message = f"✅ Received payload: {payload}"
+            print(log_message)
+            log_message = f"   Source: {payload.metadata.get('source')}"
+            print(log_message)
     else:
-        print(f"❌ Audit message creation failed: {audit_message_result.error}")
+        error_message = f"Payload deserialization failed: {received_payload.error}"
+        print(f"❌ {error_message}")
 
-    # 3. Event serialization for event store
-    print("\n3. Event serialization for event store:")
+    # 5. Payload validation during serialization
+    log_message = "\n5. Payload validation during serialization:"
+    print(log_message)
 
-    customer_updated_data = {
-        "customer_id": "cust_789",
-        "changes": {
-            "email": {"old": "old@example.com", "new": "new@example.com"},
-            "phone": {"old": "+1-555-0100", "new": "+1-555-0200"},
-            "address": {
-                "old": {"street": "123 Old St", "city": "Old City"},
-                "new": {"street": "456 New Ave", "city": "New City"},
+    # Test serialization with complex data
+    complex_data: TUserData = {
+        "nested_object": {
+            "level1": {
+                "level2": {
+                    "level3": "deep_value",
+                },
             },
         },
-        "change_reason": "customer_request",
-        "verified": True,
+        "array_data": [1, 2, 3, {"nested": "value"}],
+        "boolean_flags": [True, False, True],
     }
 
-    customer_event_result = FlextEvent.create_event(
-        event_type="CustomerUpdated",
-        event_data=customer_updated_data,
-        aggregate_id="customer_789",
-        version=5,
+    complex_payload = FlextPayload(
+        data=complex_data,
+        metadata={"complexity": "high", "validation": "passed"},
     )
 
-    if customer_event_result.is_success:
-        customer_event = customer_event_result.data
-
-        # Add event store metadata
-        event_store_ready = customer_event.with_metadata(
-            stream_name="customer_789",
-            expected_version=4,
-            causation_id="cmd_123",
-            correlation_id="process_456",
-            event_store_timestamp=time.time(),
-            checkpoint_position=10047,
-        )
-
-        # Serialize for event store persistence
-        event_store_data = event_store_ready.to_dict()
-        print("✅ Event store serialization:")
-        print(f"   Event type: {event_store_data['metadata']['event_type']}")
-        print(f"   Stream: {event_store_data['metadata']['stream_name']}")
-        print(f"   Version: {event_store_data['metadata']['version']}")
-        print(f"   Changes: {len(event_store_data['data']['changes'])} fields")
-        print(f"   Checkpoint: {event_store_data['metadata']['checkpoint_position']}")
-    else:
-        print(f"❌ Customer event creation failed: {customer_event_result.error}")
+    try:
+        complex_dict = complex_payload.to_dict()
+        log_message = "✅ Complex payload serialized successfully"
+        print(log_message)
+        log_message = f"   Keys: {list(complex_dict.keys())}"
+        print(log_message)
+    except Exception as e:  # noqa: BLE001
+        error_message = f"Complex serialization failed: {e}"
+        print(f"❌ {error_message}")
 
 
-def demonstrate_enterprise_messaging_patterns() -> None:
-    """Demonstrate enterprise messaging patterns and best practices."""
-    print("\n" + "=" * 80)
-    print("🏢 ENTERPRISE MESSAGING PATTERNS AND BEST PRACTICES")
+def demonstrate_enterprise_messaging_patterns() -> None:  # noqa: PLR0912, PLR0915
+    """Demonstrate enterprise messaging patterns using flext_core.types."""
+    log_message: TLogMessage = "\n" + "=" * 80
+    print(log_message)
+    print("🏭 ENTERPRISE MESSAGING PATTERNS")
     print("=" * 80)
 
     # 1. Request-Response pattern
-    print("\n1. Request-Response messaging pattern:")
+    log_message = "\n1. Request-Response pattern:"
+    print(log_message)
 
-    # Service request
-    calculation_request = {
-        "operation": "risk_assessment",
-        "parameters": {
-            "customer_id": "cust_123",
-            "loan_amount": 250000,
-            "loan_term_years": 30,
-            "down_payment": 50000,
-            "credit_score": 750,
-            "annual_income": 85000,
+    # Create request payload
+    request_data: TUserData = {
+        "request_id": "req_456",
+        "user_id": "user_123",
+        "action": "get_user_profile",
+        "parameters": {"include_preferences": True, "include_history": False},
+    }
+
+    request_payload = FlextPayload(
+        data=request_data,
+        metadata={
+            "source": "api_gateway",
+            "destination": "user_service",
+            "request_type": "query",
+            "timestamp": time.time(),
         },
-    }
-
-    request_result = FlextPayload.create(
-        calculation_request,
-        message_type="request",
-        service="risk_engine",
-        version="2.1.0",
-        timeout_seconds=30,
-        reply_to="risk_responses",
-        request_id="risk_req_001",
     )
 
-    if request_result.is_success:
-        request = request_result.data
-        print("📤 Risk assessment request:")
-        print(f"   Customer: {request.data['parameters']['customer_id']}")
-        print(f"   Loan amount: ${request.data['parameters']['loan_amount']:,}")
-        print(f"   Request ID: {request.get_metadata('request_id')}")
-        print(f"   Reply to: {request.get_metadata('reply_to')}")
-    else:
-        print(f"❌ Request creation failed: {request_result.error}")
-
-    # Service response
-    risk_response = {
-        "request_id": "risk_req_001",
-        "status": "completed",
-        "result": {
-            "risk_level": "low",
-            "approval_probability": 0.92,
-            "recommended_rate": 3.25,
-            "conditions": ["income_verification", "appraisal"],
-            "max_approved_amount": 300000,
+    # Simulate response
+    response_data: TUserData = {
+        "request_id": "req_456",
+        "user_profile": {
+            "user_id": "user_123",
+            "name": "John Doe",
+            "email": "john.doe@example.com",
+            "preferences": {"theme": "dark", "language": "en"},
         },
-        "processing_time_ms": 1250,
+        "status": "success",
+        "processing_time_ms": 45,
     }
 
-    response_result = FlextPayload.create(
-        risk_response,
-        message_type="response",
-        service="risk_engine",
-        correlation_id="risk_req_001",
-        processing_node="risk_node_03",
-        cache_hit=False,
+    response_payload = FlextPayload(
+        data=response_data,
+        metadata={
+            "source": "user_service",
+            "destination": "api_gateway",
+            "response_type": "success",
+            "timestamp": time.time(),
+        },
     )
 
-    if response_result.is_success:
-        response = response_result.data
-        print("📥 Risk assessment response:")
-        print(f"   Risk level: {response.data['result']['risk_level']}")
-        print(
-            f"   Approval probability: {response.data['result']['approval_probability']:.0%}",
-        )
-        print(f"   Processing time: {response.data['processing_time_ms']}ms")
-        print(f"   Node: {response.get_metadata('processing_node')}")
-    else:
-        print(f"❌ Response creation failed: {response_result.error}")
+    log_message = f"✅ Request payload: {request_payload.data.get('request_id')}"
+    print(log_message)
+    log_message = f"✅ Response payload: {response_payload.data.get('request_id')}"
+    print(log_message)
 
-    # 2. Event streaming pattern
-    print("\n2. Event streaming pattern:")
+    # 2. Event-driven pattern
+    log_message = "\n2. Event-driven pattern:"
+    print(log_message)
 
-    # Real-time transaction event
-    transaction_event_data = {
-        "transaction_id": "txn_001",
-        "account_id": "acc_456",
-        "amount": -125.50,
-        "merchant": "Coffee Shop Downtown",
-        "category": "food_beverage",
-        "location": {"lat": 40.7128, "lng": -74.0060},
-        "card_present": True,
-        "authorization_code": "AUTH789",
-    }
+    # Create domain events for order processing
+    order_id = "order_999"
 
-    transaction_event_result = FlextEvent.create_event(
-        event_type="TransactionAuthorized",
-        event_data=transaction_event_data,
-        aggregate_id="acc_456",
-        version=1047,
+    # Order placed event
+    order_placed_event = FlextEvent.create(
+        event_type="OrderPlaced",
+        aggregate_id=order_id,
+        aggregate_type="Order",
+        data={
+            "order_id": order_id,
+            "customer_id": "customer_456",
+            "items": [{"product_id": "prod_1", "quantity": 1}],
+            "total": 99.99,
+        },
+        source="order_service",
+        version=1,
     )
 
-    if transaction_event_result.is_success:
-        transaction_event = transaction_event_result.data
-
-        # Add streaming metadata
-        stream_event = transaction_event.with_metadata(
-            stream="transactions",
-            partition_key="acc_456",
-            sequence_number=10047891,
-            producer_id="pos_terminal_001",
-            timestamp=time.time(),
-            headers={"content-type": "application/json", "schema-version": "1.0"},
-        )
-
-        print("🌊 Transaction stream event:")
-        print(f"   Transaction: {stream_event.data['transaction_id']}")
-        print(f"   Amount: ${abs(stream_event.data['amount'])}")
-        print(f"   Merchant: {stream_event.data['merchant']}")
-        print(f"   Partition: {stream_event.get_metadata('partition_key')}")
-        print(f"   Sequence: {stream_event.get_metadata('sequence_number')}")
-    else:
-        print(f"❌ Transaction event creation failed: {transaction_event_result.error}")
-
-    # 3. Command pattern for CQRS
-    print("\n3. Command pattern for CQRS:")
-
-    create_account_command = {
-        "command_id": "cmd_create_account_001",
-        "customer_id": "cust_789",
-        "account_type": "checking",
-        "initial_deposit": 1000.00,
-        "overdraft_protection": True,
-        "statements_electronic": True,
-        "beneficiary": "Jane Doe",
-    }
-
-    command_result = FlextPayload.create(
-        create_account_command,
-        message_type="command",
-        command_type="CreateAccount",
-        aggregate_type="Account",
-        expected_version=0,
-        idempotency_key="idem_001",
-        user_id="user_789",
-        role="customer",
+    # Inventory reserved event
+    inventory_reserved_event = FlextEvent.create(
+        event_type="InventoryReserved",
+        aggregate_id=order_id,
+        aggregate_type="Order",
+        data={
+            "order_id": order_id,
+            "reserved_items": [{"product_id": "prod_1", "quantity": 1}],
+            "reservation_id": "res_789",
+        },
+        source="inventory_service",
+        version=2,
     )
 
-    if command_result.is_success:
-        command = command_result.data
+    # Payment processed event
+    payment_processed_event = FlextEvent.create(
+        event_type="PaymentProcessed",
+        aggregate_id=order_id,
+        aggregate_type="Order",
+        data={
+            "order_id": order_id,
+            "payment_id": "pay_123",
+            "amount": 99.99,
+            "status": "completed",
+        },
+        source="payment_service",
+        version=3,
+    )
 
-        # Add command execution metadata
-        executable_command = command.with_metadata(
-            handler="AccountCommandHandler",
-            validation_rules=["min_deposit", "customer_verification", "account_limits"],
-            execution_priority="normal",
-            max_retry_attempts=3,
-            timeout_seconds=60,
-        )
+    events = []
+    for event_result in [
+        order_placed_event,
+        inventory_reserved_event,
+        payment_processed_event,
+    ]:
+        if event_result.is_success:
+            event = event_result.data
+            if event is not None:
+                events.append(event)
 
-        print("⚡ Account creation command:")
-        print(f"   Command: {executable_command.data['command_id']}")
-        print(f"   Customer: {executable_command.data['customer_id']}")
-        print(f"   Deposit: ${executable_command.data['initial_deposit']}")
-        print(f"   Handler: {executable_command.get_metadata('handler')}")
-        print(f"   Idempotency: {executable_command.get_metadata('idempotency_key')}")
-    else:
-        print(f"❌ Command creation failed: {command_result.error}")
+    log_message = f"✅ Created {len(events)} events for order {order_id}"
+    print(log_message)
+    for event in events:
+        log_message = f"   - {event.event_type} (v{event.version})"
+        print(log_message)
 
-    # 4. Error handling in messaging
-    print("\n4. Error handling in messaging:")
+    # 3. Message routing pattern
+    log_message = "\n3. Message routing pattern:"
+    print(log_message)
 
-    # Failed processing notification
-    error_notification_result = FlextMessage.create_message(
-        "Payment processing failed due to insufficient funds",
+    # Create messages for different routing scenarios
+    routing_messages = []
+
+    # High priority message
+    high_priority_result = FlextMessage.create(
+        "Critical system alert",
         level="error",
-        source="payment_processor",
+        source="monitoring_service",
+        metadata={"priority": "high", "route_to": "REDACTED_LDAP_BIND_PASSWORD_team"},
     )
 
-    if error_notification_result.is_success:
-        error_msg = error_notification_result.data
+    # Normal priority message
+    normal_priority_result = FlextMessage.create(
+        "User login successful",
+        level="info",
+        source="auth_service",
+        metadata={"priority": "normal", "route_to": "log_aggregator"},
+    )
 
-        # Add comprehensive error context
-        detailed_error = error_msg.with_metadata(
-            error_code="INSUFFICIENT_FUNDS",
-            transaction_id="txn_failed_001",
-            customer_id="cust_123",
-            account_balance=45.50,
-            attempted_amount=125.00,
-            retry_strategy="none",
-            customer_notified=True,
-            fraud_check_passed=True,
-        )
+    # Low priority message
+    low_priority_result = FlextMessage.create(
+        "Debug information",
+        level="debug",
+        source="debug_service",
+        metadata={"priority": "low", "route_to": "debug_logs"},
+    )
 
-        print("💥 Payment failure notification:")
-        print(f"   Error: {detailed_error.get_metadata('error_code')}")
-        print(f"   Transaction: {detailed_error.get_metadata('transaction_id')}")
-        print(f"   Balance: ${detailed_error.get_metadata('account_balance')}")
-        print(f"   Attempted: ${detailed_error.get_metadata('attempted_amount')}")
-        print(
-            f"   Customer notified: {detailed_error.get_metadata('customer_notified')}",
-        )
-    else:
-        print(
-            f"❌ Error notification creation failed: {error_notification_result.error}",
-        )
+    for msg_result in [
+        high_priority_result,
+        normal_priority_result,
+        low_priority_result,
+    ]:
+        if msg_result.is_success:
+            message = msg_result.data
+            if message is not None:
+                routing_messages.append(message)
+
+    log_message = f"✅ Created {len(routing_messages)} routing messages"
+    print(log_message)
+
+    # Route messages based on priority
+    for message in routing_messages:
+        priority = message.metadata.get("priority", "normal")
+        route_to = message.metadata.get("route_to", "default")
+        log_message = f"   {priority} priority -> {route_to}: {message.text[:30]}..."
+        print(log_message)
+
+    # 4. Message correlation and tracing
+    log_message = "\n4. Message correlation and tracing:"
+    print(log_message)
+
+    # Create correlated messages for a business transaction
+    transaction_id = "txn_123"
+
+    # Transaction start
+    start_message = FlextMessage.create(
+        "Transaction started",
+        level="info",
+        source="transaction_service",
+        correlation_id=transaction_id,
+        metadata={"step": "start", "transaction_type": "payment"},
+    )
+
+    # Transaction validation
+    validation_message = FlextMessage.create(
+        "Transaction validated",
+        level="info",
+        source="transaction_service",
+        correlation_id=transaction_id,
+        metadata={"step": "validation", "validation_result": "success"},
+    )
+
+    # Transaction completion
+    completion_message = FlextMessage.create(
+        "Transaction completed",
+        level="info",
+        source="transaction_service",
+        correlation_id=transaction_id,
+        metadata={"step": "completion", "final_status": "success"},
+    )
+
+    correlated_messages = []
+    for msg_result in [start_message, validation_message, completion_message]:
+        if msg_result.is_success:
+            message = msg_result.data
+            if message is not None:
+                correlated_messages.append(message)
+
+    log_message = f"✅ Created {len(correlated_messages)} correlated messages"
+    print(log_message)
+    log_message = f"   Transaction ID: {transaction_id}"
+    print(log_message)
+
+    # 5. Error handling and dead letter queues
+    log_message = "\n5. Error handling and dead letter queues:"
+    print(log_message)
+
+    # Create problematic message
+    problematic_message_result = FlextMessage.create(
+        "Message with invalid data",
+        level="error",
+        source="problematic_service",
+        metadata={"retry_count": 3, "max_retries": 3, "dead_letter": True},
+    )
+
+    if problematic_message_result.is_success:
+        problematic_message = problematic_message_result.data
+        if problematic_message is not None:
+            retry_count = problematic_message.metadata.get("retry_count", 0)
+            max_retries = problematic_message.metadata.get("max_retries", 0)
+            dead_letter = problematic_message.metadata.get("dead_letter", False)
+
+            log_message = "✅ Problematic message created"
+            print(log_message)
+            log_message = f"   Retry count: {retry_count}/{max_retries}"
+            print(log_message)
+            log_message = f"   Dead letter: {dead_letter}"
+            print(log_message)
+
+            if retry_count >= max_retries and dead_letter:
+                log_message = "   → Routing to dead letter queue"
+                print(log_message)
 
 
 def main() -> None:
-    """Execute all FlextPayload demonstrations."""
-    print("🚀 FLEXT PAYLOAD - MESSAGING AND EVENTS EXAMPLE")
-    print("Demonstrating comprehensive payload patterns for enterprise messaging")
+    """Run comprehensive FlextPayload demonstration with maximum type safety."""
+    print("=" * 80)
+    print("🚀 FLEXT PAYLOAD - MESSAGING AND EVENTS DEMONSTRATION")
+    print("=" * 80)
 
-    try:
-        demonstrate_generic_payloads()
-        demonstrate_message_payloads()
-        demonstrate_domain_events()
-        demonstrate_payload_serialization()
-        demonstrate_enterprise_messaging_patterns()
+    # Run all demonstrations
+    demonstrate_generic_payloads()
+    demonstrate_message_payloads()
+    demonstrate_domain_events()
+    demonstrate_payload_serialization()
+    demonstrate_enterprise_messaging_patterns()
 
-        print("\n" + "=" * 80)
-        print("✅ ALL FLEXT PAYLOAD DEMONSTRATIONS COMPLETED SUCCESSFULLY!")
-        print("=" * 80)
-        print("\n📊 Summary of patterns demonstrated:")
-        print("   📦 Generic payload containers with type safety and metadata")
-        print("   💬 Message payloads with level validation and source tracking")
-        print("   🎯 Domain event payloads for event sourcing and DDD")
-        print("   📡 Payload serialization for cross-service communication")
-        print("   🏢 Enterprise messaging patterns (request-response, streaming, CQRS)")
-        print("   💥 Comprehensive error handling and validation")
-        print("\n💡 FlextPayload provides enterprise-grade messaging infrastructure")
-        print(
-            "   with type safety, validation, metadata management, and serialization!",
-        )
-
-    except Exception as e:
-        print(f"\n❌ Error during FlextPayload demonstration: {e}")
-
-        traceback.print_exc()
+    print("\n" + "=" * 80)
+    print("🎉 FLEXT PAYLOAD DEMONSTRATION COMPLETED")
+    print("=" * 80)
 
 
 if __name__ == "__main__":

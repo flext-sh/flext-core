@@ -20,130 +20,65 @@ Features demonstrated:
 from __future__ import annotations
 
 import time
+from decimal import Decimal
+from typing import TYPE_CHECKING, Any
 
-from flext_core import FlextResult
-from flext_core.entities import FlextEntity, FlextEntityFactory
-from flext_core.utilities import FlextUtilities
-from flext_core.value_objects import FlextValueObject
+# Import shared domain models to eliminate duplication
+from shared_domain import (
+    Address,
+    EmailAddress as Email,
+    Money,
+    Order,
+    OrderItem,
+    User as SharedUser,
+    UserStatus,
+)
+
+from flext_core import (
+    FlextEntity,
+    FlextEntityFactory,
+    FlextLoggableMixin,
+    FlextResult,
+    FlextUtilities,
+)
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 # =============================================================================
-# VALUE OBJECTS - Immutable domain concepts
+# DDD VALIDATION CONSTANTS - Domain validation constraints
 # =============================================================================
 
+# Currency and address validation constants
+CURRENCY_CODE_LENGTH = 3  # Standard ISO 4217 currency code length
+MIN_STREET_ADDRESS_LENGTH = 5  # Minimum characters for street address
+MIN_CITY_NAME_LENGTH = 2  # Minimum characters for city name
+MIN_POSTAL_CODE_LENGTH = 3  # Minimum characters for postal code
+MIN_COUNTRY_NAME_LENGTH = 2  # Minimum characters for country name
 
-class Money(FlextValueObject):
-    """Value object representing monetary amount with currency."""
+# Email validation constants
+EMAIL_PARTS_COUNT = 2  # Number of parts in email (local@domain)
 
-    amount: float
-    currency: str
+# Name validation constants
+MIN_NAME_LENGTH = 2  # Minimum characters for names
+MAX_CUSTOMER_NAME_LENGTH = 100  # Maximum characters for customer name
+MAX_COMPANY_NAME_LENGTH = 200  # Maximum characters for company name
 
-    def validate_domain_rules(self) -> FlextResult[None]:
-        """Validate money domain rules."""
-        if self.amount < 0:
-            return FlextResult.fail("Money amount cannot be negative")
+# Reason validation constants
+MIN_REASON_LENGTH = 5  # Minimum characters for general reasons
+MIN_STATUS_CHANGE_REASON_LENGTH = 10  # Minimum characters for status change reasons
+MIN_CANCELLATION_REASON_LENGTH = 10  # Minimum characters for cancellation reasons
 
-        if not self.currency or len(self.currency) != 3:
-            return FlextResult.fail("Currency must be 3-letter code")
+# Tracking validation constants
+MIN_TRACKING_NUMBER_LENGTH = 5  # Minimum characters for tracking number
 
-        return FlextResult.ok(None)
+# Financial validation constants
+MAX_CREDIT_LIMIT = 100000  # Maximum credit limit amount
+CURRENCY_PRECISION_TOLERANCE = 0.01  # Tolerance for currency amount comparisons
 
-    def add(self, other: Money) -> FlextResult[Money]:
-        """Add money values (same currency only)."""
-        if self.currency != other.currency:
-            return FlextResult.fail(
-                f"Cannot add different currencies: {self.currency} + {other.currency}",
-            )
-
-        result = Money(amount=self.amount + other.amount, currency=self.currency)
-        validation = result.validate_domain_rules()
-        if validation.is_failure:
-            return FlextResult.fail(validation.error or "Invalid money calculation")
-
-        return FlextResult.ok(result)
-
-    def multiply(self, factor: float) -> FlextResult[Money]:
-        """Multiply money by factor."""
-        if factor < 0:
-            return FlextResult.fail("Cannot multiply money by negative factor")
-
-        result = Money(amount=self.amount * factor, currency=self.currency)
-        validation = result.validate_domain_rules()
-        if validation.is_failure:
-            return FlextResult.fail(validation.error or "Invalid money calculation")
-
-        return FlextResult.ok(result)
-
-    def __str__(self) -> str:
-        """Strings representation of money."""
-        return f"{self.amount:.2f} {self.currency}"
-
-
-class Address(FlextValueObject):
-    """Value object representing a physical address."""
-
-    street: str
-    city: str
-    postal_code: str
-    country: str
-
-    def validate_domain_rules(self) -> FlextResult[None]:
-        """Validate address domain rules."""
-        if not self.street or len(self.street.strip()) < 5:
-            return FlextResult.fail("Street address must be at least 5 characters")
-
-        if not self.city or len(self.city.strip()) < 2:
-            return FlextResult.fail("City must be at least 2 characters")
-
-        if not self.postal_code or len(self.postal_code.strip()) < 3:
-            return FlextResult.fail("Postal code must be at least 3 characters")
-
-        if not self.country or len(self.country.strip()) < 2:
-            return FlextResult.fail("Country must be at least 2 characters")
-
-        return FlextResult.ok(None)
-
-    def is_same_city(self, other: Address) -> bool:
-        """Check if addresses are in the same city."""
-        return (
-            self.city.lower() == other.city.lower()
-            and self.country.lower() == other.country.lower()
-        )
-
-    def __str__(self) -> str:
-        """String representation of address."""
-        return f"{self.street}, {self.city}, {self.postal_code}, {self.country}"
-
-
-class Email(FlextValueObject):
-    """Value object representing an email address."""
-
-    value: str
-
-    def validate_domain_rules(self) -> FlextResult[None]:
-        """Validate email domain rules."""
-        if not self.value or "@" not in self.value:
-            return FlextResult.fail("Invalid email format")
-
-        parts = self.value.split("@")
-        if len(parts) != 2:
-            return FlextResult.fail("Email must have exactly one @ symbol")
-
-        local, domain = parts
-        if not local or not domain:
-            return FlextResult.fail("Email local and domain parts cannot be empty")
-
-        if "." not in domain:
-            return FlextResult.fail("Email domain must contain at least one dot")
-
-        return FlextResult.ok(None)
-
-    def get_domain(self) -> str:
-        """Extract domain from email."""
-        return self.value.split("@")[1] if "@" in self.value else ""
-
-    def __str__(self) -> str:
-        """Strings representation of email."""
-        return self.value
+# =============================================================================
+# ENHANCED DOMAIN MODELS - Using shared domain with DDD patterns
+# =============================================================================
 
 
 # =============================================================================
@@ -151,38 +86,19 @@ class Email(FlextValueObject):
 # =============================================================================
 
 
-class Customer(FlextEntity):
-    """Customer entity with comprehensive business rules."""
+class Customer(SharedUser, FlextLoggableMixin):
+    """Enhanced customer entity using shared domain models."""
 
-    name: str
-    email: Email
-    address: Address
     registration_date: str
-    is_active: bool = True
     credit_limit: Money
     total_orders: int = 0
 
     def validate_domain_rules(self) -> FlextResult[None]:
         """Validate customer domain rules."""
-        if not self.name or len(self.name.strip()) < 2:
-            return FlextResult.fail("Customer name must be at least 2 characters")
-
-        if len(self.name) > 100:
-            return FlextResult.fail("Customer name cannot exceed 100 characters")
-
-        # Validate email
-        email_validation = self.email.validate_domain_rules()
-        if email_validation.is_failure:
-            return FlextResult.fail(
-                f"Email validation failed: {email_validation.error}",
-            )
-
-        # Validate address
-        address_validation = self.address.validate_domain_rules()
-        if address_validation.is_failure:
-            return FlextResult.fail(
-                f"Address validation failed: {address_validation.error}",
-            )
+        # First validate the inherited shared domain rules
+        base_validation = super().validate_domain_rules()
+        if base_validation.is_failure:
+            return base_validation
 
         # Validate credit limit
         credit_validation = self.credit_limit.validate_domain_rules()
@@ -192,7 +108,7 @@ class Customer(FlextEntity):
             )
 
         # Business rule: Credit limit must be reasonable
-        if self.credit_limit.amount > 100000:
+        if self.credit_limit.amount > MAX_CREDIT_LIMIT:
             return FlextResult.fail("Credit limit cannot exceed 100,000")
 
         # Business rule: Total orders cannot be negative
@@ -201,17 +117,24 @@ class Customer(FlextEntity):
 
         return FlextResult.ok(None)
 
+    @property
+    def is_active(self) -> bool:
+        """Check if customer is active based on status."""
+        return self.status == UserStatus.ACTIVE
+
     def activate(self) -> FlextResult[Customer]:
         """Activate customer account."""
         if self.is_active:
             return FlextResult.fail("Customer is already active")
 
         # Create new version with activation
-        result = self.copy_with(is_active=True)
+        result = self.copy_with(status=UserStatus.ACTIVE)
         if result.is_failure:
             return result
 
         activated_customer = result.data
+        if activated_customer is None:
+            return FlextResult.fail("Failed to create activated customer")
 
         # Add domain event
         event_result = activated_customer.add_domain_event(
@@ -235,17 +158,19 @@ class Customer(FlextEntity):
         if not self.is_active:
             return FlextResult.fail("Customer is already inactive")
 
-        if not reason or len(reason.strip()) < 10:
+        if not reason or len(reason.strip()) < MIN_STATUS_CHANGE_REASON_LENGTH:
             return FlextResult.fail(
                 "Deactivation reason must be at least 10 characters",
             )
 
         # Create new version with deactivation
-        result = self.copy_with(is_active=False)
+        result = self.copy_with(status=UserStatus.INACTIVE)
         if result.is_failure:
             return result
 
         deactivated_customer = result.data
+        if deactivated_customer is None:
+            return FlextResult.fail("Failed to create deactivated customer")
 
         # Add domain event
         event_result = deactivated_customer.add_domain_event(
@@ -283,6 +208,8 @@ class Customer(FlextEntity):
             return result
 
         updated_customer = result.data
+        if updated_customer is None:
+            return FlextResult.fail("Failed to create updated customer")
 
         # Add domain event
         event_result = updated_customer.add_domain_event(
@@ -302,7 +229,7 @@ class Customer(FlextEntity):
 
         return FlextResult.ok(updated_customer)
 
-    def increase_credit_limit(self, amount: Money) -> FlextResult[Customer]:
+    def increase_credit_limit(self, amount: Money) -> FlextResult[Customer]:  # noqa: PLR0911
         """Increase customer credit limit."""
         if not self.is_active:
             return FlextResult.fail(
@@ -323,9 +250,11 @@ class Customer(FlextEntity):
             )
 
         new_limit = new_limit_result.data
+        if new_limit is None:
+            return FlextResult.fail("Failed to calculate new credit limit")
 
         # Business rule: Total credit limit cannot exceed 100,000
-        if new_limit.amount > 100000:
+        if new_limit.amount > MAX_CREDIT_LIMIT:
             return FlextResult.fail(
                 "Credit limit increase would exceed maximum of 100,000",
             )
@@ -336,6 +265,8 @@ class Customer(FlextEntity):
             return result
 
         updated_customer = result.data
+        if updated_customer is None:
+            return FlextResult.fail("Failed to create updated customer")
 
         # Add domain event
         event_result = updated_customer.add_domain_event(
@@ -367,6 +298,8 @@ class Customer(FlextEntity):
             return result
 
         updated_customer = result.data
+        if updated_customer is None:
+            return FlextResult.fail("Failed to create updated customer")
 
         # Add domain event
         event_result = updated_customer.add_domain_event(
@@ -397,12 +330,12 @@ class Product(FlextEntity):
     is_available: bool = True
     minimum_stock: int = 10
 
-    def validate_domain_rules(self) -> FlextResult[None]:
+    def validate_domain_rules(self) -> FlextResult[None]:  # noqa: PLR0911
         """Validate product domain rules."""
-        if not self.name or len(self.name.strip()) < 2:
+        if not self.name or len(self.name.strip()) < MIN_NAME_LENGTH:
             return FlextResult.fail("Product name must be at least 2 characters")
 
-        if len(self.name) > 200:
+        if len(self.name) > MAX_COMPANY_NAME_LENGTH:
             return FlextResult.fail("Product name cannot exceed 200 characters")
 
         # Validate price
@@ -440,7 +373,7 @@ class Product(FlextEntity):
         """Check if product is out of stock."""
         return self.stock_quantity == 0
 
-    def update_price(self, new_price: Money) -> FlextResult[Product]:
+    def update_price(self, new_price: Money) -> FlextResult[Product]:  # noqa: PLR0911
         """Update product price."""
         if not self.is_available:
             return FlextResult.fail("Cannot update price for unavailable product")
@@ -465,6 +398,8 @@ class Product(FlextEntity):
             return result
 
         updated_product = result.data
+        if updated_product is None:
+            return FlextResult.fail("Failed to create updated product")
 
         # Add domain event
         event_result = updated_product.add_domain_event(
@@ -486,7 +421,7 @@ class Product(FlextEntity):
 
     def adjust_stock(self, quantity_change: int, reason: str) -> FlextResult[Product]:
         """Adjust stock quantity with reason."""
-        if not reason or len(reason.strip()) < 5:
+        if not reason or len(reason.strip()) < MIN_REASON_LENGTH:
             return FlextResult.fail(
                 "Stock adjustment reason must be at least 5 characters",
             )
@@ -494,7 +429,8 @@ class Product(FlextEntity):
         new_stock = self.stock_quantity + quantity_change
         if new_stock < 0:
             return FlextResult.fail(
-                f"Insufficient stock. Current: {self.stock_quantity}, Requested: {abs(quantity_change)}",
+                f"Insufficient stock. Current: {self.stock_quantity}, "
+                f"Requested: {abs(quantity_change)}",
             )
 
         # Create new version with adjusted stock
@@ -503,6 +439,8 @@ class Product(FlextEntity):
             return result
 
         updated_product = result.data
+        if updated_product is None:
+            return FlextResult.fail("Failed to create updated product")
 
         # Determine event type
         event_type = (
@@ -536,7 +474,7 @@ class Product(FlextEntity):
         if not self.is_available:
             return FlextResult.fail("Product is already unavailable")
 
-        if not reason or len(reason.strip()) < 10:
+        if not reason or len(reason.strip()) < MIN_STATUS_CHANGE_REASON_LENGTH:
             return FlextResult.fail(
                 "Unavailability reason must be at least 10 characters",
             )
@@ -547,6 +485,8 @@ class Product(FlextEntity):
             return result
 
         unavailable_product = result.data
+        if unavailable_product is None:
+            return FlextResult.fail("Failed to create unavailable product")
 
         # Add domain event
         event_result = unavailable_product.add_domain_event(
@@ -572,269 +512,6 @@ class Product(FlextEntity):
 # =============================================================================
 
 
-class OrderItem(FlextValueObject):
-    """Order item value object."""
-
-    product_id: str
-    product_name: str
-    unit_price: Money
-    quantity: int
-
-    def validate_domain_rules(self) -> FlextResult[None]:
-        """Validate order item rules."""
-        if not self.product_id:
-            return FlextResult.fail("Product ID is required")
-
-        if not self.product_name or len(self.product_name.strip()) < 2:
-            return FlextResult.fail("Product name must be at least 2 characters")
-
-        # Validate unit price
-        price_validation = self.unit_price.validate_domain_rules()
-        if price_validation.is_failure:
-            return FlextResult.fail(
-                f"Unit price validation failed: {price_validation.error}",
-            )
-
-        if self.unit_price.amount <= 0:
-            return FlextResult.fail("Unit price must be positive")
-
-        if self.quantity <= 0:
-            return FlextResult.fail("Quantity must be positive")
-
-        return FlextResult.ok(None)
-
-    def calculate_total(self) -> FlextResult[Money]:
-        """Calculate total price for this item."""
-        return self.unit_price.multiply(float(self.quantity))
-
-    def __str__(self) -> str:
-        """Strings representation of order item."""
-        total_result = self.calculate_total()
-        total_str = str(total_result.data) if total_result.is_success else "ERROR"
-        return f"{self.quantity}x {self.product_name} @ {self.unit_price} = {total_str}"
-
-
-class Order(FlextEntity):
-    """Order aggregate root managing the complete order lifecycle."""
-
-    customer_id: str
-    order_date: str
-    items: list[OrderItem]
-    status: str = "pending"
-    shipping_address: Address
-    total_amount: Money
-
-    def validate_domain_rules(self) -> FlextResult[None]:
-        """Validate order domain rules."""
-        if not self.customer_id:
-            return FlextResult.fail("Customer ID is required")
-
-        if not self.items:
-            return FlextResult.fail("Order must have at least one item")
-
-        # Validate all items
-        for i, item in enumerate(self.items):
-            item_validation = item.validate_domain_rules()
-            if item_validation.is_failure:
-                return FlextResult.fail(
-                    f"Item {i} validation failed: {item_validation.error}",
-                )
-
-        # Validate shipping address
-        address_validation = self.shipping_address.validate_domain_rules()
-        if address_validation.is_failure:
-            return FlextResult.fail(
-                f"Shipping address validation failed: {address_validation.error}",
-            )
-
-        # Validate total amount
-        total_validation = self.total_amount.validate_domain_rules()
-        if total_validation.is_failure:
-            return FlextResult.fail(
-                f"Total amount validation failed: {total_validation.error}",
-            )
-
-        # Business rule: Valid order statuses
-        valid_statuses = ["pending", "confirmed", "shipped", "delivered", "cancelled"]
-        if self.status not in valid_statuses:
-            return FlextResult.fail(
-                f"Invalid order status. Must be one of: {valid_statuses}",
-            )
-
-        # Business rule: Verify calculated total matches
-        calculated_total = self.calculate_total()
-        if calculated_total.is_success:
-            if abs(calculated_total.data.amount - self.total_amount.amount) > 0.01:
-                return FlextResult.fail(
-                    "Order total amount does not match calculated total",
-                )
-
-        return FlextResult.ok(None)
-
-    def calculate_total(self) -> FlextResult[Money]:
-        """Calculate total order amount."""
-        if not self.items:
-            return FlextResult.fail("Cannot calculate total for empty order")
-
-        # Start with first item total
-        first_item = self.items[0]
-        first_total_result = first_item.calculate_total()
-        if first_total_result.is_failure:
-            return FlextResult.fail(
-                f"Failed to calculate first item total: {first_total_result.error}",
-            )
-
-        total = first_total_result.data
-
-        # Add remaining items
-        for item in self.items[1:]:
-            item_total_result = item.calculate_total()
-            if item_total_result.is_failure:
-                return FlextResult.fail(
-                    f"Failed to calculate item total: {item_total_result.error}",
-                )
-
-            total_result = total.add(item_total_result.data)
-            if total_result.is_failure:
-                return FlextResult.fail(
-                    f"Failed to add item total: {total_result.error}",
-                )
-
-            total = total_result.data
-
-        return FlextResult.ok(total)
-
-    def confirm_order(self) -> FlextResult[Order]:
-        """Confirm the order."""
-        if self.status != "pending":
-            return FlextResult.fail(f"Cannot confirm order with status: {self.status}")
-
-        # Create new version with confirmed status
-        result = self.copy_with(status="confirmed")
-        if result.is_failure:
-            return result
-
-        confirmed_order = result.data
-
-        # Add domain event
-        event_result = confirmed_order.add_domain_event(
-            "OrderConfirmed",
-            {
-                "order_id": self.id,
-                "customer_id": self.customer_id,
-                "total_amount": str(self.total_amount),
-                "item_count": len(self.items),
-                "confirmation_date": FlextUtilities.generate_iso_timestamp(),
-            },
-        )
-
-        if event_result.is_failure:
-            return FlextResult.fail(
-                f"Failed to add confirmation event: {event_result.error}",
-            )
-
-        return FlextResult.ok(confirmed_order)
-
-    def ship_order(self, tracking_number: str) -> FlextResult[Order]:
-        """Ship the order."""
-        if self.status != "confirmed":
-            return FlextResult.fail(f"Cannot ship order with status: {self.status}")
-
-        if not tracking_number or len(tracking_number.strip()) < 5:
-            return FlextResult.fail("Tracking number must be at least 5 characters")
-
-        # Create new version with shipped status
-        result = self.copy_with(status="shipped")
-        if result.is_failure:
-            return result
-
-        shipped_order = result.data
-
-        # Add domain event
-        event_result = shipped_order.add_domain_event(
-            "OrderShipped",
-            {
-                "order_id": self.id,
-                "customer_id": self.customer_id,
-                "tracking_number": tracking_number,
-                "shipping_address": str(self.shipping_address),
-                "ship_date": FlextUtilities.generate_iso_timestamp(),
-            },
-        )
-
-        if event_result.is_failure:
-            return FlextResult.fail(
-                f"Failed to add shipping event: {event_result.error}",
-            )
-
-        return FlextResult.ok(shipped_order)
-
-    def deliver_order(self) -> FlextResult[Order]:
-        """Mark order as delivered."""
-        if self.status != "shipped":
-            return FlextResult.fail(f"Cannot deliver order with status: {self.status}")
-
-        # Create new version with delivered status
-        result = self.copy_with(status="delivered")
-        if result.is_failure:
-            return result
-
-        delivered_order = result.data
-
-        # Add domain event
-        event_result = delivered_order.add_domain_event(
-            "OrderDelivered",
-            {
-                "order_id": self.id,
-                "customer_id": self.customer_id,
-                "delivery_date": FlextUtilities.generate_iso_timestamp(),
-            },
-        )
-
-        if event_result.is_failure:
-            return FlextResult.fail(
-                f"Failed to add delivery event: {event_result.error}",
-            )
-
-        return FlextResult.ok(delivered_order)
-
-    def cancel_order(self, reason: str) -> FlextResult[Order]:
-        """Cancel the order."""
-        if self.status in {"delivered", "cancelled"}:
-            return FlextResult.fail(f"Cannot cancel order with status: {self.status}")
-
-        if not reason or len(reason.strip()) < 10:
-            return FlextResult.fail(
-                "Cancellation reason must be at least 10 characters",
-            )
-
-        # Create new version with cancelled status
-        result = self.copy_with(status="cancelled")
-        if result.is_failure:
-            return result
-
-        cancelled_order = result.data
-
-        # Add domain event
-        event_result = cancelled_order.add_domain_event(
-            "OrderCancelled",
-            {
-                "order_id": self.id,
-                "customer_id": self.customer_id,
-                "previous_status": self.status,
-                "reason": reason,
-                "cancellation_date": FlextUtilities.generate_iso_timestamp(),
-            },
-        )
-
-        if event_result.is_failure:
-            return FlextResult.fail(
-                f"Failed to add cancellation event: {event_result.error}",
-            )
-
-        return FlextResult.ok(cancelled_order)
-
-
 # =============================================================================
 # REPOSITORY PATTERNS - Data persistence simulation
 # =============================================================================
@@ -844,13 +521,15 @@ class CustomerRepository:
     """Repository pattern for customer persistence."""
 
     def __init__(self) -> None:
+        """Initialize CustomerRepository with empty storage."""
         self.customers: dict[str, Customer] = {}
 
     def save(self, customer: Customer) -> FlextResult[str]:
         """Save customer to repository."""
         self.customers[customer.id] = customer
         print(
-            f"💾 Customer saved: {customer.name} (ID: {customer.id}, Version: {customer.version})",
+            f"💾 Customer saved: {customer.name} "
+            f"(ID: {customer.id}, Version: {customer.version})",
         )
         return FlextResult.ok(customer.id)
 
@@ -887,13 +566,15 @@ class ProductRepository:
     """Repository pattern for product persistence."""
 
     def __init__(self) -> None:
+        """Initialize ProductRepository with empty storage."""
         self.products: dict[str, Product] = {}
 
     def save(self, product: Product) -> FlextResult[str]:
         """Save product to repository."""
         self.products[product.id] = product
         print(
-            f"💾 Product saved: {product.name} (ID: {product.id}, Version: {product.version})",
+            f"💾 Product saved: {product.name} "
+            f"(ID: {product.id}, Version: {product.version})",
         )
         return FlextResult.ok(product.id)
 
@@ -927,13 +608,15 @@ class OrderRepository:
     """Repository pattern for order persistence."""
 
     def __init__(self) -> None:
+        """Initialize OrderRepository with empty storage."""
         self.orders: dict[str, Order] = {}
 
     def save(self, order: Order) -> FlextResult[str]:
         """Save order to repository."""
         self.orders[order.id] = order
         print(
-            f"💾 Order saved: {order.id} (Status: {order.status}, Version: {order.version})",
+            f"💾 Order saved: {order.id} "
+            f"(Status: {order.status}, Version: {order.version})",
         )
         return FlextResult.ok(order.id)
 
@@ -979,11 +662,19 @@ class OrderDomainService:
         product_repo: ProductRepository,
         order_repo: OrderRepository,
     ) -> None:
+        """Initialize OrderDomainService with repository dependencies.
+
+        Args:
+            customer_repo: Customer repository for customer operations
+            product_repo: Product repository for inventory operations
+            order_repo: Order repository for order persistence
+
+        """
         self.customer_repo = customer_repo
         self.product_repo = product_repo
         self.order_repo = order_repo
 
-    def create_order(
+    def create_order(  # noqa: PLR0911, PLR0912
         self,
         customer_id: str,
         product_orders: list[tuple[str, int]],  # (product_id, quantity)
@@ -1012,7 +703,7 @@ class OrderDomainService:
 
         # Create order items and validate stock
         order_items = []
-        total_amount = Money(amount=0.0, currency="USD")
+        total_amount = Money(amount=Decimal("0.0"), currency="USD")
 
         for product_id, quantity in product_orders:
             # Find product
@@ -1029,7 +720,8 @@ class OrderDomainService:
             # Validate stock
             if product.stock_quantity < quantity:
                 return FlextResult.fail(
-                    f"Insufficient stock for {product.name}. Available: {product.stock_quantity}, Requested: {quantity}",
+                    f"Insufficient stock for {product.name}. "
+                    f"Available: {product.stock_quantity}, Requested: {quantity}",
                 )
 
             # Create order item
@@ -1168,20 +860,20 @@ class OrderDomainService:
 # =============================================================================
 
 
-def create_customer_factory() -> object:
+def create_customer_factory() -> Callable[..., Any]:
     """Create factory for customers with defaults."""
     return FlextEntityFactory.create_entity_factory(
         Customer,
         defaults={
             "registration_date": FlextUtilities.generate_iso_timestamp(),
             "is_active": True,
-            "credit_limit": Money(amount=5000.0, currency="USD"),
+            "credit_limit": Money(amount=Decimal("5000.0"), currency="USD"),
             "total_orders": 0,
         },
     )
 
 
-def create_product_factory() -> object:
+def create_product_factory() -> Callable[..., Any]:
     """Create factory for products with defaults."""
     return FlextEntityFactory.create_entity_factory(
         Product,
@@ -1193,7 +885,7 @@ def create_product_factory() -> object:
     )
 
 
-def create_order_factory() -> object:
+def create_order_factory() -> Callable[..., Any]:
     """Create factory for orders with defaults."""
     return FlextEntityFactory.create_entity_factory(
         Order,
@@ -1216,9 +908,9 @@ def demonstrate_value_objects() -> None:
 
     # Money value objects
     print("📋 Money Value Objects:")
-    usd_10 = Money(amount=10.50, currency="USD")
-    usd_20 = Money(amount=20.00, currency="USD")
-    eur_15 = Money(amount=15.75, currency="EUR")
+    usd_10 = Money(amount=Decimal("10.50"), currency="USD")
+    usd_20 = Money(amount=Decimal("20.00"), currency="USD")
+    eur_15 = Money(amount=Decimal("15.75"), currency="EUR")
 
     print(f"  💵 USD Amount 1: {usd_10}")
     print(f"  💵 USD Amount 2: {usd_20}")
@@ -1238,9 +930,9 @@ def demonstrate_value_objects() -> None:
         print(f"  ❌ {usd_10} + {eur_15} failed: {invalid_sum.error}")
 
     # Multiplication
-    doubled_result = usd_10.multiply(2.0)
+    doubled_result = usd_10.multiply(Decimal("2.0"))
     if doubled_result.is_success:
-        print(f"  ✅ {usd_10} × 2 = {doubled_result.data}")
+        print(f"  ✅ {usd_10} × 2 = {doubled_result.data}")  # noqa: RUF001
 
     # Address value objects
     print("\n📋 Address Value Objects:")
@@ -1264,10 +956,10 @@ def demonstrate_value_objects() -> None:
 
     # Email value objects
     print("\n📋 Email Value Objects:")
-    email1 = Email(value="john@example.com")
-    email2 = Email(value="invalid-email")
+    email1 = Email(email="john@example.com")
+    email2 = Email(email="invalid-email")
 
-    print(f"  📧 Valid Email: {email1} (Domain: {email1.get_domain()})")
+    print(f"  📧 Valid Email: {email1}")
 
     # Validate invalid email
     validation = email2.validate_domain_rules()
@@ -1287,7 +979,7 @@ def demonstrate_entity_lifecycle() -> None:
     print("📋 Customer Creation:")
     customer_data = {
         "name": "Alice Johnson",
-        "email": Email(value="alice@company.com"),
+        "email_address": Email(email="alice@company.com"),
         "address": Address(
             street="123 Business Ave",
             city="Enterprise City",
@@ -1303,7 +995,8 @@ def demonstrate_entity_lifecycle() -> None:
 
     customer = customer_result.data
     print(
-        f"✅ Customer created: {customer.name} (ID: {customer.id}, Version: {customer.version})",
+        f"✅ Customer created: {customer.name} "
+        f"(ID: {customer.id}, Version: {customer.version})",
     )
 
     # Customer operations
@@ -1324,12 +1017,13 @@ def demonstrate_entity_lifecycle() -> None:
         customer = updated_customer
 
     # Increase credit limit
-    credit_increase = Money(amount=2000.0, currency="USD")
+    credit_increase = Money(amount=Decimal("2000.0"), currency="USD")
     credit_result = customer.increase_credit_limit(credit_increase)
     if credit_result.is_success:
         credit_customer = credit_result.data
         print(
-            f"✅ Credit limit increased to {credit_customer.credit_limit} (Version: {credit_customer.version})",
+            f"✅ Credit limit increased to {credit_customer.credit_limit} "
+            f"(Version: {credit_customer.version})",
         )
         customer = credit_customer
 
@@ -1338,7 +1032,8 @@ def demonstrate_entity_lifecycle() -> None:
     if order_result.is_success:
         order_customer = order_result.data
         print(
-            f"✅ Order count incremented to {order_customer.total_orders} (Version: {order_customer.version})",
+            f"✅ Order count incremented to {order_customer.total_orders} "
+            f"(Version: {order_customer.version})",
         )
         customer = order_customer
 
@@ -1351,7 +1046,7 @@ def demonstrate_entity_lifecycle() -> None:
         print(f"     Data: {event.data}")
 
 
-def demonstrate_aggregate_patterns() -> None:
+def demonstrate_aggregate_patterns() -> None:  # noqa: PLR0915
     """Demonstrate aggregate patterns with orders."""
     print("\n🏢 Aggregate Patterns Demonstration")
     print("=" * 50)
@@ -1368,7 +1063,7 @@ def demonstrate_aggregate_patterns() -> None:
     customer_factory = create_customer_factory()
     customer_result = customer_factory(
         name="Bob Smith",
-        email=Email(value="bob@company.com"),
+        email_address=Email(email="bob@company.com"),
         address=Address(
             street="789 Customer Lane",
             city="Shopping City",
@@ -1390,13 +1085,13 @@ def demonstrate_aggregate_patterns() -> None:
     products_data = [
         {
             "name": "Wireless Headphones",
-            "price": Money(amount=199.99, currency="USD"),
+            "price": Money(amount=Decimal("199.99"), currency="USD"),
             "category": "electronics",
             "stock_quantity": 50,
         },
         {
             "name": "USB Cable",
-            "price": Money(amount=19.99, currency="USD"),
+            "price": Money(amount=Decimal("19.99"), currency="USD"),
             "category": "electronics",
             "stock_quantity": 100,
         },
@@ -1439,6 +1134,9 @@ def demonstrate_aggregate_patterns() -> None:
         return
 
     order = order_result.data
+    if order is None:
+        print("❌ Order creation returned None")
+        return
     print(f"✅ Order created: {order.id} (Total: {order.total_amount})")
 
     # Order lifecycle
@@ -1449,12 +1147,18 @@ def demonstrate_aggregate_patterns() -> None:
     fulfill_result = order_service.fulfill_order(order.id, tracking_number)
     if fulfill_result.is_success:
         fulfilled_order = fulfill_result.data
+        if fulfilled_order is None:
+            print("❌ Order fulfillment returned None")
+            return
         print(f"✅ Order fulfilled: Status {fulfilled_order.status}")
 
         # Deliver order
         deliver_result = fulfilled_order.deliver_order()
         if deliver_result.is_success:
             delivered_order = deliver_result.data
+            if delivered_order is None:
+                print("❌ Order delivery returned None")
+                return
             order_repo.save(delivered_order)
             print(f"✅ Order delivered: Status {delivered_order.status}")
 
@@ -1464,6 +1168,9 @@ def demonstrate_aggregate_patterns() -> None:
         updated_result = product_repo.find_by_id(product.id)
         if updated_result.is_success:
             updated_product = updated_result.data
+            if updated_product is None:
+                print(f"  📦 Product {product.id}: Not found")
+                continue
             print(
                 f"  📦 {updated_product.name}: Stock {updated_product.stock_quantity}",
             )
@@ -1485,7 +1192,7 @@ def demonstrate_repository_patterns() -> None:
     customers_data = [
         {
             "name": "Alice Smith",
-            "email": Email(value="alice@example.com"),
+            "email_address": Email(email="alice@example.com"),
             "address": Address(
                 street="123 Main St",
                 city="City1",
@@ -1495,7 +1202,7 @@ def demonstrate_repository_patterns() -> None:
         },
         {
             "name": "Bob Johnson",
-            "email": Email(value="bob@example.com"),
+            "email_address": Email(email="bob@example.com"),
             "address": Address(
                 street="456 Oak Ave",
                 city="City2",
@@ -1520,7 +1227,10 @@ def demonstrate_repository_patterns() -> None:
     email_result = customer_repo.find_by_email("alice@example.com")
     if email_result.is_success:
         found_customer = email_result.data
-        print(f"  🔍 Found customer by email: {found_customer.name}")
+        if found_customer is None:
+            print("  🔍 Customer not found by email")
+        else:
+            print(f"  🔍 Found customer by email: {found_customer.name}")
 
     # Find active customers
     active_customers = customer_repo.find_active_customers()
@@ -1547,13 +1257,13 @@ def demonstrate_repository_patterns() -> None:
     products_data = [
         {
             "name": "Laptop",
-            "price": Money(amount=999.99, currency="USD"),
+            "price": Money(amount=Decimal("999.99"), currency="USD"),
             "category": "electronics",
             "stock_quantity": 5,  # Low stock
         },
         {
             "name": "Book",
-            "price": Money(amount=29.99, currency="USD"),
+            "price": Money(amount=Decimal("29.99"), currency="USD"),
             "category": "books",
             "stock_quantity": 0,  # Out of stock
         },
@@ -1580,7 +1290,7 @@ def demonstrate_version_management() -> None:
     product_factory = create_product_factory()
     product_result = product_factory(
         name="Test Product",
-        price=Money(amount=100.0, currency="USD"),
+        price=Money(amount=Decimal("100.0"), currency="USD"),
         category="electronics",
     )
 
@@ -1595,11 +1305,13 @@ def demonstrate_version_management() -> None:
     print("\n📋 Concurrent Modification Simulation:")
 
     # First modification: Update price
-    price_update_result = product.update_price(Money(amount=120.0, currency="USD"))
+    new_price = Money(amount=Decimal("120.0"), currency="USD")
+    price_update_result = product.update_price(new_price)
     if price_update_result.is_success:
         updated_product_1 = price_update_result.data
         print(
-            f"  💰 Price updated: {updated_product_1.price} (Version: {updated_product_1.version})",
+            f"  💰 Price updated: {updated_product_1.price} "
+            f"(Version: {updated_product_1.version})",
         )
 
         # Second modification: Adjust stock
@@ -1607,7 +1319,8 @@ def demonstrate_version_management() -> None:
         if stock_update_result.is_success:
             updated_product_2 = stock_update_result.data
             print(
-                f"  📦 Stock adjusted: {updated_product_2.stock_quantity} (Version: {updated_product_2.version})",
+                f"  📦 Stock adjusted: {updated_product_2.stock_quantity} "
+                f"(Version: {updated_product_2.version})",
             )
 
             # Show version progression
@@ -1632,7 +1345,7 @@ def demonstrate_performance_characteristics() -> None:
     for i in range(operations):
         customer_factory(
             name=f"Customer {i}",
-            email=Email(value=f"customer{i}@example.com"),
+            email_address=Email(email=f"customer{i}@example.com"),
             address=Address(
                 street=f"{i} Test Street",
                 city="Test City",
@@ -1643,7 +1356,8 @@ def demonstrate_performance_characteristics() -> None:
 
     creation_time = time.time() - start_time
     print(
-        f"  🔹 {operations} Customer creations: {creation_time:.4f}s ({operations / creation_time:.0f}/s)",
+        f"  🔹 {operations} Customer creations: {creation_time:.4f}s "
+        f"({operations / creation_time:.0f}/s)",
     )
 
     # Entity operation performance
@@ -1652,7 +1366,7 @@ def demonstrate_performance_characteristics() -> None:
     # Create a customer for operations
     customer_result = customer_factory(
         name="Performance Test Customer",
-        email=Email(value="perf@example.com"),
+        email_address=Email(email="perf@example.com"),
         address=Address(
             street="123 Perf St",
             city="Perf City",
@@ -1668,25 +1382,27 @@ def demonstrate_performance_characteristics() -> None:
         start_time = time.time()
         current_customer = customer
 
-        for i in range(100):
+        for _i in range(100):
             result = current_customer.increment_order_count()
             if result.is_success:
                 current_customer = result.data
 
         operation_time = time.time() - start_time
         print(
-            f"  🔹 100 Entity operations: {operation_time:.4f}s ({100 / operation_time:.0f}/s)",
+            f"  🔹 100 Entity operations: {operation_time:.4f}s "
+            f"({100 / operation_time:.0f}/s)",
         )
 
         # Final state
         print(
-            f"  📊 Final state: Version {current_customer.version}, Orders {current_customer.total_orders}",
+            f"  📊 Final state: Version {current_customer.version}, "
+            f"Orders {current_customer.total_orders}",
         )
 
     # Value object operation performance
     print("\n📋 Value Object Performance:")
-    money1 = Money(amount=100.0, currency="USD")
-    money2 = Money(amount=50.0, currency="USD")
+    money1 = Money(amount=Decimal("100.0"), currency="USD")
+    money2 = Money(amount=Decimal("50.0"), currency="USD")
 
     start_time = time.time()
     for _ in range(operations):
@@ -1694,7 +1410,8 @@ def demonstrate_performance_characteristics() -> None:
 
     value_time = time.time() - start_time
     print(
-        f"  🔹 {operations} Money additions: {value_time:.4f}s ({operations / value_time:.0f}/s)",
+        f"  🔹 {operations} Money additions: {value_time:.4f}s "
+        f"({operations / value_time:.0f}/s)",
     )
 
 

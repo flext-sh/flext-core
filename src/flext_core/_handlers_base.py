@@ -10,16 +10,43 @@ Single internal definition following 'entregar mais como muito menos' principle.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Generic
+from typing import Protocol
 
 from flext_core._mixins_base import _BaseTimingMixin
-from flext_core.flext_types import R, T, TAnyDict, TServiceName
 from flext_core.loggings import FlextLoggerFactory
 from flext_core.result import FlextResult
-from flext_core.utilities import FlextTypeGuards
+from flext_core.types import FlextTypes, R, T, TAnyDict, TServiceName
 
 
-class _BaseHandler(ABC, Generic[T, R]):
+class _LoggerProtocol(Protocol):
+    """Protocol for logger objects with standard logging methods."""
+
+    def debug(self, message: str, **kwargs: object) -> None:
+        """Log debug message."""
+        ...
+
+    def info(self, message: str, **kwargs: object) -> None:
+        """Log info message."""
+        ...
+
+    def warning(self, message: str, **kwargs: object) -> None:
+        """Log warning message."""
+        ...
+
+    def error(self, message: str, **kwargs: object) -> None:
+        """Log error message."""
+        ...
+
+    def critical(self, message: str, **kwargs: object) -> None:
+        """Log critical message."""
+        ...
+
+    def exception(self, message: str, **kwargs: object) -> None:
+        """Log exception message."""
+        ...
+
+
+class _BaseHandler[T, R](_BaseTimingMixin, ABC):
     """Base handler interface for type-safe message processing.
 
     Foundation class providing comprehensive handler functionality
@@ -54,44 +81,20 @@ class _BaseHandler(ABC, Generic[T, R]):
     # LOGGING FUNCTIONALITY - Composition-based delegation
     # =========================================================================
 
-    def _get_logger(self) -> object:
+    def _get_logger(self) -> _LoggerProtocol:
         """Get logger instance (lazy initialization)."""
         if not hasattr(self, "_logger"):
             self._logger = FlextLoggerFactory.get_logger(self._logger_name)
         return self._logger
 
     @property
-    def logger(self) -> object:
+    def logger(self) -> _LoggerProtocol:
         """Access to logger instance."""
         return self._get_logger()
 
     # =========================================================================
     # TIMING FUNCTIONALITY - Composition-based delegation
     # =========================================================================
-
-    def _start_timing(self) -> float:
-        """Start timing and return start timestamp."""
-        return _BaseTimingMixin._start_timing(self)
-
-    def _get_execution_time_seconds(self, start_time: float) -> float:
-        """Get execution time in seconds from start timestamp."""
-        return _BaseTimingMixin._get_execution_time_seconds(self, start_time)
-
-    def _get_execution_time_ms(self, start_time: float) -> float:
-        """Get execution time in milliseconds from start timestamp."""
-        return _BaseTimingMixin._get_execution_time_ms(self, start_time)
-
-    def _get_execution_time_ms_rounded(
-        self,
-        start_time: float,
-        digits: int = 2,
-    ) -> float:
-        """Get rounded execution time in milliseconds from start timestamp."""
-        return _BaseTimingMixin._get_execution_time_ms_rounded(
-            self,
-            start_time,
-            digits,
-        )
 
     @abstractmethod
     def handle(self, message: T) -> FlextResult[R]:
@@ -118,7 +121,7 @@ class _BaseHandler(ABC, Generic[T, R]):
                 if hasattr(base, "__args__") and len(base.__args__) >= 1:
                     expected_type = base.__args__[0]
                     # Use FlextTypeGuards for validation
-                    can_handle = FlextTypeGuards.is_instance_of(
+                    can_handle = FlextTypes.TypeGuards.is_instance_of(
                         message,
                         expected_type,
                     )
@@ -192,9 +195,7 @@ class _BaseHandler(ABC, Generic[T, R]):
 
         # Check if can handle
         if not self.can_handle(message):
-            error_msg = (
-                f"{self._handler_name} cannot handle {type(message).__name__}"
-            )
+            error_msg = f"{self._handler_name} cannot handle {type(message).__name__}"
             self.logger.error(error_msg)
             return FlextResult.fail(error_msg)
 

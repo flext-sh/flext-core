@@ -28,7 +28,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import sys
-from typing import NamedTuple
+from typing import TYPE_CHECKING, NamedTuple
+
+if TYPE_CHECKING:
+    from flext_core.types import TAnyList
 
 # =============================================================================
 # VERSION INFORMATION - Single source of truth for FLEXT Core version
@@ -132,7 +135,7 @@ class FlextCompatibilityResult(NamedTuple):
     current_version: tuple[int, ...]
     required_version: tuple[int, ...]
     error_message: str
-    recommendations: list[str]
+    recommendations: TAnyList
 
 
 def get_version_tuple() -> tuple[int, int, int]:
@@ -214,9 +217,13 @@ def check_python_compatibility() -> FlextCompatibilityResult:
     Usage:
         compatibility = check_python_compatibility()
         if not compatibility.is_compatible:
-            raise RuntimeError(
-                "Python compatibility error:"
-                f" {compatibility.error_message}"
+            raise FlextOperationError(
+                "Python compatibility error",
+                operation_context={
+                    "error_message": compatibility.error_message,
+                    "current_python": str(sys.version_info[:3]),
+                    "required_python": "3.13+",
+                },
             )
 
     """
@@ -286,7 +293,7 @@ def is_feature_available(feature_name: str) -> bool:
     return AVAILABLE_FEATURES.get(feature_name, False)
 
 
-def get_available_features() -> list[str]:
+def get_available_features() -> TAnyList:
     """Get list of available features in current version.
 
     Returns list of feature names available in current version enabling
@@ -355,7 +362,15 @@ def validate_version_format(version: str) -> bool:
         if validate_version_format("1.2.3"):
             process_version("1.2.3")
         else:
-            raise ValueError("Invalid version format")
+            raise FlextValidationError(
+                "Invalid version format",
+                validation_details={
+                    "field": "version",
+                    "value": version,
+                    "rules": ["semver_format"],
+                    "expected_format": "MAJOR.MINOR.PATCH (e.g., 1.2.3)",
+                },
+            )
 
     """
     try:

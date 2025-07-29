@@ -2,15 +2,14 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from flext_core.handlers import FlextHandlers
 from flext_core.result import FlextResult
 
 # Extract classes from FlextHandlers - mapping to available classes
 FlextMessageHandler = FlextHandlers.Handler  # Base handler - will need adaptation
 FlextEventHandler = FlextHandlers.EventHandler
-FlextRequestHandler = FlextHandlers.Handler  # Base handler - will need adaptation
+#  QueryHandler has process_request method
+FlextRequestHandler = FlextHandlers.QueryHandler
 FlextHandlerRegistry = FlextHandlers.Registry
 
 # ===================================================================
@@ -29,7 +28,7 @@ class SampleMessage:
 class SampleEvent:
     """Test event for handler testing."""
 
-    def __init__(self, event_type: str, data: dict[str, Any]) -> None:
+    def __init__(self, event_type: str, data: dict[str, object]) -> None:
         """Initialize test event with type and data."""
         self.event_type = event_type
         self.data = data
@@ -38,7 +37,7 @@ class SampleEvent:
 class SampleRequest:
     """Test request for handler testing."""
 
-    def __init__(self, action: str, params: dict[str, Any]) -> None:
+    def __init__(self, action: str, params: dict[str, object]) -> None:
         """Initialize test request with action and parameters."""
         self.action = action
         self.params = params
@@ -50,7 +49,7 @@ class SampleResponse:
     def __init__(
         self,
         result: str,
-        data: dict[str, Any] | None = None,
+        data: dict[str, object] | None = None,
     ) -> None:
         """Initialize test response with result and optional data."""
         self.result = result
@@ -76,8 +75,10 @@ class SampleMessageHandler(FlextMessageHandler[SampleMessage, str]):
             return False
         return message.content == self.handled_content
 
-    def handle_message(self, message: SampleMessage) -> FlextResult[str]:
+    def handle_message(self, message: object) -> FlextResult[str]:
         """Handle the message."""
+        if not isinstance(message, SampleMessage):
+            return FlextResult.fail("Invalid message type")
         return FlextResult.ok(f"Handled: {message.content}")
 
 
@@ -99,8 +100,16 @@ class SampleEventHandler(FlextEventHandler[SampleEvent]):
             return False
         return message.event_type == self.event_type_value
 
-    def handle_event(self, event: SampleEvent) -> FlextResult[None]:
+    def handle_event(self, event: object) -> FlextResult[None]:
         """Handle the event."""
+        if not isinstance(event, SampleEvent):
+            return FlextResult.fail("Invalid event type")
+        if event.data.get("should_fail"):
+            return FlextResult.fail("Event processing failed")
+        return FlextResult.ok(None)
+
+    def process_event_impl(self, event: SampleEvent) -> FlextResult[None]:
+        """Process the event implementation."""
         if event.data.get("should_fail"):
             return FlextResult.fail("Event processing failed")
         return FlextResult.ok(None)
@@ -126,9 +135,11 @@ class SampleRequestHandler(FlextRequestHandler[SampleRequest, SampleResponse]):
 
     def handle_request(
         self,
-        request: SampleRequest,
+        request: object,
     ) -> FlextResult[SampleResponse]:
         """Handle the request."""
+        if not isinstance(request, SampleRequest):
+            return FlextResult.fail("Invalid request type")
         if request.action != self.handled_action:
             return FlextResult.fail(f"Cannot handle action: {request.action}")
 
@@ -251,7 +262,7 @@ class TestFlextMessageHandler:
                 message: SampleMessage,
             ) -> FlextResult[str]:
                 msg = "Handler failed"
-                raise ValueError(msg)
+                raise RuntimeError(msg)
 
         handler = FailingHandler()
         message = SampleMessage("test")
@@ -600,6 +611,7 @@ class TestHandlerPatternIntegration:
         result = request_handler.process_request(create_request)
         assert result.is_success is True
         assert result.data is not None
+        assert isinstance(result.data, SampleResponse)
         assert result.data.result == "success"
 
         # Process update profile request

@@ -50,19 +50,20 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import inspect
 from collections.abc import Callable
 from typing import TYPE_CHECKING, cast
 
 from flext_core.constants import MESSAGES
 from flext_core.exceptions import FlextError
-from flext_core.flext_types import FlextTypes
 from flext_core.loggings import FlextLoggerFactory
 from flext_core.mixins import FlextLoggableMixin
 from flext_core.result import FlextResult
+from flext_core.types import FlextTypes, TAnyDict
 from flext_core.validation import flext_validate_service_name
 
 if TYPE_CHECKING:
-    from flext_core.flext_types import T
+    from flext_core.types import T
 
 # FlextLogger imported for convenience - all classes use FlextLoggableMixin
 
@@ -113,7 +114,7 @@ class FlextServiceRegistrar(FlextLoggableMixin):
 
     def __init__(self) -> None:
         """Initialize service registrar."""
-        self._services: dict[str, object] = {}
+        self._services: TAnyDict = {}
         self._factories: dict[str, Callable[[], object]] = {}
 
     def _validate_service_name(self, name: str) -> FlextResult[str]:
@@ -152,8 +153,8 @@ class FlextServiceRegistrar(FlextLoggableMixin):
     def register_factory(
         self,
         name: str,
-        factory: Callable[[], object],
-    ) -> FlextResult[str]:
+        factory: object,
+    ) -> FlextResult[None]:
         """Register a service factory."""
         # Use centralized validation - eliminates duplication
         validation_result = self._validate_service_name(name)
@@ -166,9 +167,14 @@ class FlextServiceRegistrar(FlextLoggableMixin):
         if not callable(factory):
             return FlextResult.fail("Factory must be callable")
 
-        # Register factory with validated name
-        self._factories[validated_name] = factory
-        return FlextResult.ok(validated_name)
+        # Remove existing service if present to force factory usage
+        if validated_name in self._services:
+            del self._services[validated_name]
+
+        # Register factory with validated name - cast to correct type after validation
+        factory_callable = cast("Callable[[], object]", factory)
+        self._factories[validated_name] = factory_callable
+        return FlextResult.ok(None)
 
     def unregister_service(self, name: str) -> FlextResult[None]:
         """Unregister a service."""
@@ -219,7 +225,7 @@ class FlextServiceRegistrar(FlextLoggableMixin):
         """Check if service exists."""
         return name in self._services or name in self._factories
 
-    def get_services_dict(self) -> dict[str, object]:
+    def get_services_dict(self) -> TAnyDict:
         """Get services dictionary (internal use)."""
         return self._services
 
@@ -275,7 +281,7 @@ class FlextServiceRetrivier(FlextLoggableMixin):
 
     def __init__(
         self,
-        services: dict[str, object],
+        services: TAnyDict,
         factories: dict[str, Callable[[], object]],
     ) -> None:
         """Initialize service retriever with references."""
@@ -335,7 +341,7 @@ class FlextServiceRetrivier(FlextLoggableMixin):
         self.logger.warning("Service not found", name=validated_name)
         return FlextResult.fail(f"Service '{validated_name}' not found")
 
-    def get_service_info(self, name: str) -> FlextResult[dict[str, object]]:
+    def get_service_info(self, name: str) -> FlextResult[TAnyDict]:
         """Get service information.
 
         Args:
@@ -354,7 +360,7 @@ class FlextServiceRetrivier(FlextLoggableMixin):
 
         if validated_name in self._services:
             service = self._services[validated_name]
-            info: dict[str, object] = {
+            info: TAnyDict = {
                 "name": validated_name,
                 "type": "instance",
                 "class": type(service).__name__,
@@ -365,7 +371,7 @@ class FlextServiceRetrivier(FlextLoggableMixin):
 
         if validated_name in self._factories:
             factory = self._factories[validated_name]
-            factory_info: dict[str, object] = {
+            factory_info: TAnyDict = {
                 "name": validated_name,
                 "type": "factory",
                 "factory": factory.__name__,
@@ -482,7 +488,7 @@ class FlextContainer(FlextLoggableMixin):
         self,
         name: str,
         factory: Callable[[], object],
-    ) -> FlextResult[str]:
+    ) -> FlextResult[None]:
         """Register a service factory."""
         return self._registrar.register_factory(name, factory)
 
@@ -495,7 +501,7 @@ class FlextContainer(FlextLoggableMixin):
         """Get a service by name."""
         return self._retriever.get_service(name)
 
-    def get_info(self, name: str) -> FlextResult[dict[str, object]]:
+    def get_info(self, name: str) -> FlextResult[TAnyDict]:
         """Get service information."""
         return self._retriever.get_service_info(name)
 
@@ -550,6 +556,142 @@ class FlextContainer(FlextLoggableMixin):
 
         self.logger.debug("Typed service retrieved successfully", name=name)
         return FlextResult.ok(cast("T", service))
+
+    def auto_wire(
+        self,
+        service_class: type[T],
+        name: str | None = None,
+    ) -> FlextResult[T]:
+        """Auto-wire a service class with automatic dependency injection.
+
+        Automatically creates an instance of the service class by injecting
+        registered dependencies based on constructor parameters.
+
+        Args:
+            service_class: Class to instantiate with auto-wiring
+            name: Optional service name (defaults to class name)
+
+        Returns:
+            FlextResult containing the auto-wired service instance
+
+        """
+        service_name = name or service_class.__name__
+        self.logger.debug("Auto-wiring service", service_name=service_name)
+
+        try:
+            # Get constructor signature
+            sig = inspect.signature(service_class.__init__)
+            kwargs = {}
+
+            # Resolve dependencies for each parameter (skip 'self')
+            for param_name, param in sig.parameters.items():
+                if param_name == "self":
+                    continue
+
+                # Try to get service by parameter name
+                dep_result = self.get(param_name)
+                if dep_result.is_success:
+                    kwargs[param_name] = dep_result.data
+                elif param.default == inspect.Parameter.empty:
+                    # Required parameter not found
+                    error_msg = (
+                        f"Required dependency '{param_name}' not found for "
+                        f"{service_name}"
+                    )
+                    return FlextResult.fail(error_msg)
+
+            # Create instance with injected dependencies
+            instance = service_class(**kwargs)
+
+            # Register the auto-wired instance
+            register_result = self.register(service_name, instance)
+            if register_result.is_failure:
+                error_msg = (
+                    f"Failed to register auto-wired service: {register_result.error}"
+                )
+                return FlextResult.fail(error_msg)
+
+            self.logger.info(
+                "Service auto-wired successfully",
+                service_name=service_name,
+            )
+            return FlextResult.ok(instance)
+
+        except (TypeError, ValueError, AttributeError, RuntimeError) as e:
+            return FlextResult.fail(f"Auto-wiring failed for {service_name}: {e}")
+
+    def get_or_create(
+        self,
+        name: str,
+        factory: Callable[[], T],
+    ) -> FlextResult[T]:
+        """Get service or create it using provided factory if not found.
+
+        Combines retrieval and lazy creation in a single operation to reduce
+        boilerplate for optional service creation patterns.
+
+        Args:
+            name: Service name to retrieve or create
+            factory: Factory function to create service if not found
+
+        Returns:
+            FlextResult containing existing or newly created service
+
+        """
+        # Try to get existing service first
+        result = self.get(name)
+        if result.is_success:
+            self.logger.debug("Service found", name=name)
+            return FlextResult.ok(cast("T", result.data))
+
+        # Service not found, create using factory
+        self.logger.debug("Service not found, creating with factory", name=name)
+        try:
+            service = factory()
+            register_result = self.register(name, service)
+            if register_result.is_failure:
+                error_msg = (
+                    f"Failed to register created service: {register_result.error}"
+                )
+                return FlextResult.fail(error_msg)
+
+            self.logger.info("Service created and registered", name=name)
+            return FlextResult.ok(service)
+
+        except (TypeError, ValueError, AttributeError, RuntimeError) as e:
+            return FlextResult.fail(f"Factory failed for service '{name}': {e}")
+
+    def batch_register(
+        self,
+        services: dict[str, object],
+    ) -> FlextResult[list[str]]:
+        """Register multiple services in a single operation.
+
+        Reduces boilerplate when registering multiple related services
+        by handling them as a batch with rollback on partial failure.
+
+        Args:
+            services: Dictionary mapping service names to instances
+
+        Returns:
+            FlextResult containing list of successfully registered service names
+
+        """
+        registered_names: list[str] = []
+
+        for name, service in services.items():
+            result = self.register(name, service)
+            if result.is_failure:
+                # Rollback previously registered services from this batch
+                for registered_name in registered_names:
+                    self.unregister(registered_name)
+                error_msg = f"Batch registration failed at '{name}': {result.error}"
+                return FlextResult.fail(error_msg)
+
+            registered_names.append(name)
+
+        self.logger.info("Batch registration completed", count=len(registered_names))
+        return FlextResult.ok(registered_names)
 
     def __repr__(self) -> str:
         """Return string representation of container."""

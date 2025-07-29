@@ -48,7 +48,7 @@ Design Decisions:
     - Type-safe error propagation through monadic bind operations
     - Automatic failure short-circuiting for efficient error handling
     - Composable primitives for building complex workflows
-    - Integration with _BaseResult for consistent error handling patterns
+    - Integration with FlextResult for consistent error handling patterns
 
 Enterprise Railway Features:
     - Type-safe function composition with compile-time verification
@@ -95,7 +95,7 @@ from __future__ import annotations
 import contextlib
 from typing import TYPE_CHECKING
 
-from flext_core._result_base import _BaseResult
+from flext_core.result import FlextResult
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -135,7 +135,7 @@ class _BaseRailway:
         - Automatic failure propagation through railway failure track
         - Short-circuit evaluation for early failure detection and performance
         - Comprehensive exception handling with graceful degradation patterns
-        - Type-safe error representation through _BaseResult integration
+        - Type-safe error representation through FlextResult integration
         - Pure functional error handling eliminating exception-based patterns
 
     Composition Patterns:
@@ -188,9 +188,9 @@ class _BaseRailway:
 
     @staticmethod
     def bind(
-        result: _BaseResult[T],
-        func: Callable[[T], _BaseResult[object]],
-    ) -> _BaseResult[object]:
+        result: FlextResult[T],
+        func: Callable[[T], FlextResult[object]],
+    ) -> FlextResult[object]:
         """Execute monadic bind operation for railway chaining with errors.
 
         Core railway programming operation implementing the bind operator (>>=) for
@@ -214,7 +214,7 @@ class _BaseRailway:
             func: Railway function to bind that transforms success data to new result
 
         Returns:
-            _BaseResult[object] with function output on success or propagated failure
+            FlextResult[object] with function output on success or propagated failure
 
         Usage:
             # Basic bind operation
@@ -245,7 +245,7 @@ class _BaseRailway:
 
         """
         if not result.is_success:
-            return _BaseResult.fail(
+            return FlextResult.fail(
                 result.error or "Previous operation failed",
                 result.error_code,
                 result.error_data,
@@ -255,15 +255,15 @@ class _BaseRailway:
             # In success case, data should be available
             data = result.data
             if data is None:
-                return _BaseResult.fail("Cannot bind with None data")
+                return FlextResult.fail("Cannot bind with None data")
             return func(data)
         except (TypeError, ValueError, AttributeError) as e:
-            return _BaseResult.fail(f"Bind operation failed: {e}")
+            return FlextResult.fail(f"Bind operation failed: {e}")
 
     @staticmethod
     def compose_functions(
-        *functions: Callable[[object], _BaseResult[object]],
-    ) -> Callable[[object], _BaseResult[object]]:
+        *functions: Callable[[object], FlextResult[object]],
+    ) -> Callable[[object], FlextResult[object]]:
         """Compose multiple railway functions into single workflow.
 
         Creates a composite function that applies multiple railway functions
@@ -286,7 +286,7 @@ class _BaseRailway:
             *functions: Railway functions to compose in left-to-right order
 
         Returns:
-            Callable[[object], _BaseResult[object]] composed workflow function
+            Callable[[object], FlextResult[object]] composed workflow function
 
         Usage:
             # Simple three-step workflow
@@ -324,8 +324,8 @@ class _BaseRailway:
 
         """
 
-        def composed(value: object) -> _BaseResult[object]:
-            result = _BaseResult.ok(value)
+        def composed(value: object) -> FlextResult[object]:
+            result = FlextResult.ok(value)
             for func in functions:
                 if not result.is_success:
                     break
@@ -337,9 +337,9 @@ class _BaseRailway:
     @staticmethod
     def switch(
         condition: Callable[[T], bool],
-        success_func: Callable[[T], _BaseResult[object]],
-        failure_func: Callable[[T], _BaseResult[object]],
-    ) -> Callable[[T], _BaseResult[object]]:
+        success_func: Callable[[T], FlextResult[object]],
+        failure_func: Callable[[T], FlextResult[object]],
+    ) -> Callable[[T], FlextResult[object]]:
         """Railway switch based on condition.
 
         Args:
@@ -352,21 +352,21 @@ class _BaseRailway:
 
         """
 
-        def switch_func(value: T) -> _BaseResult[object]:
+        def switch_func(value: T) -> FlextResult[object]:
             try:
                 if condition(value):
                     return success_func(value)
                 return failure_func(value)
             except (TypeError, ValueError, AttributeError) as e:
-                return _BaseResult.fail(f"Switch evaluation failed: {e}")
+                return FlextResult.fail(f"Switch evaluation failed: {e}")
 
         return switch_func
 
     @staticmethod
     def tee(
-        main_func: Callable[[T], _BaseResult[object]],
-        side_func: Callable[[T], _BaseResult[object]],
-    ) -> Callable[[T], _BaseResult[object]]:
+        main_func: Callable[[T], FlextResult[object]],
+        side_func: Callable[[T], FlextResult[object]],
+    ) -> Callable[[T], FlextResult[object]]:
         """Railway tee - execute both functions, return main result.
 
         Args:
@@ -378,7 +378,7 @@ class _BaseRailway:
 
         """
 
-        def tee_func(value: T) -> _BaseResult[object]:
+        def tee_func(value: T) -> FlextResult[object]:
             # Execute side function but ignore result
             with contextlib.suppress(TypeError, ValueError, AttributeError):
                 side_func(value)
@@ -391,7 +391,7 @@ class _BaseRailway:
     @staticmethod
     def dead_end(
         func: Callable[[T], None],
-    ) -> Callable[[T], _BaseResult[T]]:
+    ) -> Callable[[T], FlextResult[T]]:
         """Convert void function to railway function.
 
         Args:
@@ -402,20 +402,20 @@ class _BaseRailway:
 
         """
 
-        def railway_func(value: T) -> _BaseResult[T]:
+        def railway_func(value: T) -> FlextResult[T]:
             try:
                 func(value)
-                return _BaseResult.ok(value)
+                return FlextResult.ok(value)
             except (TypeError, ValueError, AttributeError) as e:
-                return _BaseResult.fail(f"Dead end function failed: {e}")
+                return FlextResult.fail(f"Dead end function failed: {e}")
 
         return railway_func
 
     @staticmethod
     def plus(
-        func1: Callable[[T], _BaseResult[object]],
-        func2: Callable[[T], _BaseResult[object]],
-    ) -> Callable[[T], _BaseResult[list[object]]]:
+        func1: Callable[[T], FlextResult[object]],
+        func2: Callable[[T], FlextResult[object]],
+    ) -> Callable[[T], FlextResult[list[object]]]:
         """Railway plus - execute both functions and collect results.
 
         Args:
@@ -427,12 +427,12 @@ class _BaseRailway:
 
         """
 
-        def plus_func(value: T) -> _BaseResult[list[object]]:
+        def plus_func(value: T) -> FlextResult[list[object]]:
             result1 = func1(value)
             result2 = func2(value)
 
             if result1.is_success and result2.is_success:
-                return _BaseResult.ok([result1.data, result2.data])
+                return FlextResult.ok([result1.data, result2.data])
 
             # Collect errors
             errors = []
@@ -441,7 +441,7 @@ class _BaseRailway:
             if not result2.is_success:
                 errors.append(result2.error or "Function 2 failed")
 
-            return _BaseResult.fail(f"Plus operation failed: {'; '.join(errors)}")
+            return FlextResult.fail(f"Plus operation failed: {'; '.join(errors)}")
 
         return plus_func
 
@@ -482,18 +482,18 @@ class _BaseRailwayUtils:
         # Convert regular function to railway function
         regular_func = lambda x: x.upper()
         railway_func = _BaseRailwayUtils.lift(regular_func)
-        result = railway_func("hello")  # Returns _BaseResult.ok("HELLO")
+        result = railway_func("hello")  # Returns FlextResult.ok("HELLO")
 
         # Create ignore function for side effects
         ignore_func = _BaseRailwayUtils.ignore()
-        result = ignore_func(any_input)  # Returns _BaseResult.ok(None)
+        result = ignore_func(any_input)  # Returns FlextResult.ok(None)
 
         # Create pass-through function for identity operations
         pass_func = _BaseRailwayUtils.pass_through()
-        result = pass_func(value)  # Returns _BaseResult.ok(value)
+        result = pass_func(value)  # Returns FlextResult.ok(value)
 
     Function Transformation:
-        - Regular to railway: lift() converts functions to return _BaseResult
+        - Regular to railway: lift() converts functions to return FlextResult
         - Exception handling: Automatic conversion of exceptions to failure results
         - Type safety: Preserved through generic type parameters
         - Performance: Minimal wrapping overhead for efficient execution
@@ -502,7 +502,7 @@ class _BaseRailwayUtils:
     @staticmethod
     def lift(
         func: Callable[[T], object],
-    ) -> Callable[[T], _BaseResult[object]]:
+    ) -> Callable[[T], FlextResult[object]]:
         """Lift regular function to railway function.
 
         Args:
@@ -513,17 +513,17 @@ class _BaseRailwayUtils:
 
         """
 
-        def lifted_func(value: T) -> _BaseResult[object]:
+        def lifted_func(value: T) -> FlextResult[object]:
             try:
                 result = func(value)
-                return _BaseResult.ok(result)
+                return FlextResult.ok(result)
             except (TypeError, ValueError, AttributeError) as e:
-                return _BaseResult.fail(f"Lifted function failed: {e}")
+                return FlextResult.fail(f"Lifted function failed: {e}")
 
         return lifted_func
 
     @staticmethod
-    def ignore() -> Callable[[object], _BaseResult[None]]:
+    def ignore() -> Callable[[object], FlextResult[None]]:
         """Railway function that ignores input and returns success.
 
         Returns:
@@ -531,13 +531,13 @@ class _BaseRailwayUtils:
 
         """
 
-        def ignore_func(_value: object) -> _BaseResult[None]:
-            return _BaseResult.ok(None)
+        def ignore_func(_value: object) -> FlextResult[None]:
+            return FlextResult.ok(None)
 
         return ignore_func
 
     @staticmethod
-    def pass_through() -> Callable[[T], _BaseResult[T]]:
+    def pass_through() -> Callable[[T], FlextResult[T]]:
         """Railway function that passes value through unchanged.
 
         Returns:
@@ -545,8 +545,8 @@ class _BaseRailwayUtils:
 
         """
 
-        def pass_func(value: T) -> _BaseResult[T]:
-            return _BaseResult.ok(value)
+        def pass_func(value: T) -> FlextResult[T]:
+            return FlextResult.ok(value)
 
         return pass_func
 

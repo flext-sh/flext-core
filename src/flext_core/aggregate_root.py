@@ -64,10 +64,17 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, cast
+
 from flext_core.entities import FlextEntity
 from flext_core.payload import FlextEvent
 from flext_core.result import FlextResult
 from flext_core.utilities import FlextGenerators
+
+if TYPE_CHECKING:
+    from datetime import datetime
+
+    from flext_core.types import TAnyDict
 
 
 class FlextAggregateRoot(FlextEntity):
@@ -189,25 +196,45 @@ class FlextAggregateRoot(FlextEntity):
         """Initialize with empty event list."""
         # Handle id from data or entity_id parameter
         provided_id = data.pop("id", None)
-        actual_id = provided_id or entity_id or FlextGenerators.generate_uuid()
+        # Ensure actual_id is a string
+        if provided_id is not None and isinstance(provided_id, str):
+            actual_id = provided_id
+        elif entity_id is not None:
+            actual_id = entity_id
+        else:
+            actual_id = FlextGenerators.generate_uuid()
 
         # Initialize domain events list
         domain_events_raw = data.pop("domain_events", [])
         # Ensure domain_events is properly typed as list[FlextEvent]
         domain_events = domain_events_raw if isinstance(domain_events_raw, list) else []
 
-        # Pydantic handles initialization with explicit parameters
-        super().__init__(
-            id=actual_id,
-            version=version,
-            domain_events=domain_events,
-            **data,
-        )
+        # Only add created_at if it's a proper datetime
+        created_at = None
+        if "created_at" in data and hasattr(data["created_at"], "year"):
+            created_at = cast("datetime", data["created_at"])
+
+        # Remove created_at from data to avoid duplicate argument
+        entity_data = {k: v for k, v in data.items() if k != "created_at"}
+
+        # Pydantic handles initialization with explicit arguments and remaining data
+        init_data = {
+            "id": actual_id,
+            "version": version,
+            "domain_events": domain_events,
+            **entity_data,  # Pass remaining entity-specific fields
+        }
+
+        if created_at is not None:
+            init_data["created_at"] = created_at
+
+        # Use type: ignore for complex init data passing to Pydantic BaseModel
+        super().__init__(**init_data)  # type: ignore[arg-type]
 
     def add_domain_event(
         self,
         event_type: str,
-        event_data: dict[str, object],
+        event_data: TAnyDict,
     ) -> FlextResult[None]:
         """Add domain event to be published after persistence.
 

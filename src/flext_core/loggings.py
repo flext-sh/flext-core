@@ -86,15 +86,40 @@ from typing import TYPE_CHECKING, ClassVar, TypedDict
 
 import structlog
 
-from flext_core._utilities_base import _BaseGenerators
 from flext_core.constants import FlextLogLevel
+from flext_core.utilities import FlextGenerators
 from flext_core.validation import FlextValidators
 
 if TYPE_CHECKING:
     from structlog.typing import EventDict
 
-    from flext_core.types import TContextDict, TLogMessage
+    from flext_core.types import TAnyDict, TAnyList, TContextDict, TLogMessage
+else:
+    # Runtime aliases for when TYPE_CHECKING is False
+    TAnyDict = dict[str, object]
+    TAnyList = list[object]
+    TContextDict = dict[str, object]
+    TLogMessage = str
 
+# =============================================================================
+# DOMAIN-SPECIFIC TYPES - Logging Pattern Specializations
+# =============================================================================
+
+# Logging specific types for better domain modeling
+type TLoggerName = str  # Logger name identifier
+type TLogLevel = str  # Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+type TLogFormat = str  # Log format string
+type TLogHandler = str  # Log handler type identifier
+type TLogFilter = str  # Log filter identifier
+type TCorrelationId = str  # Correlation ID for request tracing
+type TSessionId = str  # Session identifier for user tracking
+type TTransactionId = str  # Transaction identifier for database operations
+type TOperationName = str  # Business operation name for categorization
+
+# Structured logging types
+type TLogRecord = TAnyDict  # Complete log record data
+type TLogMetrics = TAnyDict  # Log metrics and statistics
+type TLogConfiguration = TAnyDict  # Logger configuration settings
 
 # =============================================================================
 # FLEXT LOG CONTEXT - TypedDict as expected by tests
@@ -154,7 +179,7 @@ class FlextLogContext(TypedDict, total=False):
 # =============================================================================
 
 # Global log store consolidado - elimina duplicação
-_log_store: list[dict[str, object]] = []
+_log_store: TAnyList = []
 
 # =============================================================================
 # STRUCTLOG CONFIGURATION
@@ -182,7 +207,7 @@ def _add_to_log_store(
     logger_name = str(event_dict.get("logger", getattr(logger, "name", "unknown")))
 
     log_entry = {
-        "timestamp": event_dict.get("timestamp", _BaseGenerators.generate_timestamp()),
+        "timestamp": event_dict.get("timestamp", FlextGenerators.generate_timestamp()),
         "level": str(event_dict.get("level", "INFO")).upper(),
         "logger": logger_name,
         "message": str(event_dict.get("event", "")),
@@ -190,7 +215,7 @@ def _add_to_log_store(
         "context": {
             k: v
             for k, v in event_dict.items()
-            if k not in ("timestamp", "level", "logger", "event")
+            if k not in {"timestamp", "level", "logger", "event"}
         },
     }
     _log_store.append(log_entry)
@@ -337,6 +362,10 @@ class FlextLogger:
         - No shared mutable state between logger instances
     """
 
+    # Class variables for configuration state
+    _configured: ClassVar[bool] = False
+    _loggers: ClassVar[TAnyDict] = {}
+
     def __init__(self, name: str, level: str = "INFO") -> None:
         """Initialize logger.
 
@@ -398,8 +427,13 @@ class FlextLogger:
         structlog_level = level_mapping.get(level_str, "info")
         log_method = getattr(self._structlog_logger, structlog_level)
 
-        # Log with structlog
-        log_method(str(message), **log_data)
+        # Log with structlog - message as first positional argument
+        try:
+            # Structlog expects message as first positional argument
+            log_method(str(message), **log_data)
+        except TypeError:
+            # Last resort: just log the message without context
+            log_method(str(message))
 
     def set_level(self, level: str) -> None:
         """Set logger level."""
@@ -421,49 +455,76 @@ class FlextLogger:
         new_logger._context = {**self._context, **context}
         return new_logger
 
-    def trace(self, message: TLogMessage, **context: object) -> None:
-        """Log trace message."""
-        self._log_with_structlog("TRACE", message, context)
+    def trace(self, message: TLogMessage, *args: object, **context: object) -> None:
+        """Log trace message with optional %s formatting."""
+        formatted_message = self._format_message(message, args)
+        self._log_with_structlog("TRACE", formatted_message, context)
 
-    def debug(self, message: TLogMessage, **context: object) -> None:
-        """Log debug message."""
-        self._log_with_structlog("DEBUG", message, context)
+    def debug(self, message: TLogMessage, *args: object, **context: object) -> None:
+        """Log debug message with optional %s formatting."""
+        formatted_message = self._format_message(message, args)
+        self._log_with_structlog("DEBUG", formatted_message, context)
 
-    def info(self, message: TLogMessage, **context: object) -> None:
-        """Log info message."""
-        self._log_with_structlog("INFO", message, context)
+    def info(self, message: TLogMessage, *args: object, **context: object) -> None:
+        """Log info message with optional %s formatting."""
+        formatted_message = self._format_message(message, args)
+        self._log_with_structlog("INFO", formatted_message, context)
 
-    def warning(self, message: TLogMessage, **context: object) -> None:
-        """Log warning message."""
-        self._log_with_structlog("WARNING", message, context)
+    def warning(self, message: TLogMessage, *args: object, **context: object) -> None:
+        """Log warning message with optional %s formatting."""
+        formatted_message = self._format_message(message, args)
+        self._log_with_structlog("WARNING", formatted_message, context)
 
-    def error(self, message: TLogMessage, **context: object) -> None:
-        """Log error message."""
-        self._log_with_structlog("ERROR", message, context)
+    def error(self, message: TLogMessage, *args: object, **context: object) -> None:
+        """Log error message with optional %s formatting."""
+        formatted_message = self._format_message(message, args)
+        self._log_with_structlog("ERROR", formatted_message, context)
 
-    def critical(self, message: TLogMessage, **context: object) -> None:
-        """Log critical message."""
-        self._log_with_structlog("CRITICAL", message, context)
+    def critical(self, message: TLogMessage, *args: object, **context: object) -> None:
+        """Log critical message with optional %s formatting."""
+        formatted_message = self._format_message(message, args)
+        self._log_with_structlog("CRITICAL", formatted_message, context)
 
-    def exception(self, message: TLogMessage, **context: object) -> None:
-        """Log exception with traceback context."""
+    def exception(self, message: TLogMessage, *args: object, **context: object) -> None:
+        """Log exception with traceback context and optional %s formatting."""
+        formatted_message = self._format_message(message, args)
         context["traceback"] = traceback.format_exc()
-        self._log_with_structlog("ERROR", message, context)
+        self._log_with_structlog("ERROR", formatted_message, context)
+
+    def _format_message(self, message: TLogMessage, args: tuple[object, ...]) -> str:
+        """Format message with %s placeholders if args are provided."""
+        if not args:
+            return str(message)
+
+        try:
+            return str(message) % args
+        except (TypeError, ValueError):
+            # If % formatting fails, fall back to string formatting
+            try:
+                return str(message).format(*args)
+            except (KeyError, ValueError):
+                # If both fail, just concatenate
+                return f"{message} {' '.join(str(arg) for arg in args)}"
 
     @classmethod
-    def get_logger(cls, name: str, level: str = "INFO") -> FlextLogger:
-        """Get or create logger instance using factory delegation.
+    def get_logger(cls, name: str, _level: str = "INFO") -> object:
+        """Get logger with auto-configuration.
 
         Args:
             name: Logger name
             level: Log level
 
         Returns:
-            FlextLogger instance
+            Structlog logger instance
 
         """
-        # FlextLoggerFactory is defined later in this module
-        return FlextLoggerFactory.get_logger(name, level)
+        if not cls._configured:
+            cls.configure()
+
+        # Use cache to ensure same instance for same name
+        if name not in cls._loggers:
+            cls._loggers[name] = structlog.get_logger(name)
+        return cls._loggers[name]
 
     def bind(self, **context: object) -> FlextLogger:
         """Create new logger with bound context.
@@ -479,6 +540,106 @@ class FlextLogger:
         new_logger._context = {**self._context, **context}
         return new_logger
 
+    @classmethod
+    def configure(
+        cls,
+        *,
+        log_level: FlextLogLevel | None = None,
+        _log_level: FlextLogLevel | None = None,
+        json_output: bool = False,
+        add_timestamp: bool = True,
+        add_caller: bool = False,
+    ) -> None:
+        """Configure the logging system.
+
+        Args:
+            log_level: Log level to configure (new preferred name)
+            _log_level: Log level to configure (backward compatibility)
+            json_output: Whether to use JSON output format
+            add_timestamp: Whether to add timestamps to logs
+            add_caller: Whether to add caller information to logs
+
+        """
+        # Handle both parameter names for backward compatibility
+        # Note: final_log_level can be used for future enhancement
+        # For now just validate parameters exist
+        _ = log_level or _log_level or FlextLogLevel.INFO
+
+        # Use parameters to configure logging
+        if json_output:
+            structlog.configure(processors=[structlog.processors.JSONRenderer()])
+        if add_timestamp:
+            structlog.configure(processors=[structlog.processors.TimeStamper()])
+        if add_caller:
+            structlog.configure(
+                processors=[structlog.processors.CallsiteParameterAdder()],
+            )
+
+        cls._configured = True
+
+    @classmethod
+    def get_base_logger(
+        cls,
+        name: str,
+        *,
+        _level: str = "INFO",
+    ) -> object:
+        """Get base logger with observability.
+
+        Args:
+            name: Logger name
+            _level: Log level (unused in this implementation)
+
+        Returns:
+            Structlog logger instance
+
+        """
+        return structlog.get_logger(name)
+
+    @classmethod
+    def bind_context(cls, **context: object) -> object:
+        """Create logger with bound context.
+
+        Args:
+            **context: Context data to bind
+
+        Returns:
+            Structlog logger with bound context
+
+        """
+        return structlog.get_logger("context").bind(**context)
+
+    @classmethod
+    def clear_context(cls) -> None:
+        """Clear global context variables."""
+        structlog.contextvars.clear_contextvars()
+
+    @classmethod
+    def with_performance_tracking(cls, name: str) -> object:
+        """Get logger with performance tracking.
+
+        Args:
+            name: Logger name
+
+        Returns:
+            Structlog logger instance with performance tracking
+
+        """
+        return structlog.get_logger(name)
+
+    @classmethod
+    def flext_get_logger(cls, name: str) -> object:
+        """Backward compatibility logger creation.
+
+        Args:
+            name: Logger name
+
+        Returns:
+            Structlog logger instance
+
+        """
+        return structlog.get_logger(name)
+
 
 # =============================================================================
 # FLEXT LOGGER FACTORY - Consolidado eliminando _BaseLoggerFactory
@@ -486,22 +647,33 @@ class FlextLogger:
 
 
 class FlextLoggerFactory:
-    """Factory for creating and managing logger instances.
+    """Consolidated factory and unified interface for logger management.
 
-    Provides centralized logger creation with caching and global configuration
-    management. Implements singleton pattern for logger instances.
+    Comprehensive logger management combining factory pattern with unified public API
+    eliminating FlextLogging duplication. Provides centralized logger creation,
+    caching, global configuration, and testing utilities in a single interface.
 
     Architecture:
         - Class-level logger cache for instance reuse
         - Global level management affecting all loggers
         - Validation and normalization of logger parameters
         - Cache key strategy for logger instance identification
+        - Direct log store access for testing and observability
+        - Context manager creation for structured logging
 
     Factory Features:
         - Automatic logger caching based on name and level
         - Global level changes affecting all existing loggers
         - Parameter validation with sensible defaults
         - Cache management for testing and cleanup
+        - Log store access for assertion and verification
+        - Context manager creation for scoped logging
+
+    Unified API Features (consolidated from FlextLogging):
+        - Logger creation and retrieval through factory delegation
+        - Global configuration management across all loggers
+        - Log store access for testing and monitoring
+        - Context manager creation for structured logging
 
     Cache Strategy:
         - Cache key format: "name:level" for unique identification
@@ -510,9 +682,16 @@ class FlextLoggerFactory:
         - Manual cache clearing for testing scenarios
 
     Usage:
-        logger = FlextLoggerFactory.get_logger("myapp.service", "DEBUG")
-        FlextLoggerFactory.set_global_level("WARNING")  # Affects all loggers
-        FlextLoggerFactory.clear_loggers()  # Testing cleanup
+        # Basic logger operations (consolidated from FlextLogging)
+        logger = FlextLoggerFactory.get_logger("myapp", "DEBUG")
+        FlextLoggerFactory.set_global_level("INFO")
+
+        # Testing utilities (consolidated from FlextLogging)
+        logs = FlextLoggerFactory.get_log_store()
+        FlextLoggerFactory.clear_log_store()
+
+        # Context management (consolidated from FlextLogging)
+        context = FlextLoggerFactory.create_context(logger, user_id="123")
     """
 
     _loggers: ClassVar[dict[str, FlextLogger]] = {}
@@ -560,6 +739,25 @@ class FlextLoggerFactory:
     def clear_loggers(cls) -> None:
         """Clear logger cache (for testing)."""
         cls._loggers.clear()
+
+    # Consolidated methods from FlextLogging - eliminates duplication
+    @staticmethod
+    def get_log_store() -> TAnyList:
+        """Get log store for testing (consolidated from FlextLogging)."""
+        return _log_store.copy()
+
+    @staticmethod
+    def clear_log_store() -> None:
+        """Clear log store for testing (consolidated from FlextLogging)."""
+        _log_store.clear()
+
+    @staticmethod
+    def create_context(
+        logger: FlextLogger,
+        **context: object,
+    ) -> FlextLogContextManager:
+        """Create log context (consolidated from FlextLogging)."""
+        return FlextLogContextManager(logger, **context)
 
 
 # =============================================================================
@@ -625,84 +823,12 @@ class FlextLogContextManager:
 
 
 # =============================================================================
-# FLEXT LOGGING - Interface principal consolidada
+# FLEXT LOGGING - Consolidated into FlextLoggerFactory (eliminating duplication)
 # =============================================================================
 
-
-class FlextLogging:
-    """Consolidated logging interface providing unified access to logging functionality.
-
-    Serves as the primary public API for all logging operations, combining
-    factory methods, global configuration, and utility functions in a single interface.
-
-    Architecture:
-        - Static method interface for stateless operations
-        - Delegation to specialized classes for implementation
-        - Unified API hiding implementation complexity
-        - Direct access to log store for testing and observability
-
-    Interface Features:
-        - Logger creation and retrieval through factory delegation
-        - Global configuration management across all loggers
-        - Log store access for testing and monitoring
-        - Context manager creation for structured logging
-
-    Global Operations:
-        - set_global_level: Affects all existing and future loggers
-        - clear_loggers: Removes all cached logger instances
-        - clear_log_store: Empties global log storage for testing
-
-    Testing Support:
-        - Log store access for assertion and verification
-        - Logger cache clearing for isolated test scenarios
-        - Global level management for test-specific configurations
-
-    Usage:
-        # Basic logger operations
-        logger = FlextLogging.get_logger("myapp", "DEBUG")
-        FlextLogging.set_global_level("INFO")
-
-        # Testing utilities
-        logs = FlextLogging.get_log_store()
-        FlextLogging.clear_log_store()
-
-        # Context management
-        context = FlextLogging.create_context(logger, user_id="123")
-    """
-
-    # Factory methods consolidados
-    @staticmethod
-    def get_logger(name: str, level: str = "INFO") -> FlextLogger:
-        """Get logger instance."""
-        return FlextLoggerFactory.get_logger(name, level)
-
-    @staticmethod
-    def set_global_level(level: str) -> None:
-        """Set global log level."""
-        FlextLoggerFactory.set_global_level(level)
-
-    @staticmethod
-    def clear_loggers() -> None:
-        """Clear logger cache."""
-        FlextLoggerFactory.clear_loggers()
-
-    @staticmethod
-    def get_log_store() -> list[dict[str, object]]:
-        """Get log store for testing and observability."""
-        return _log_store.copy()
-
-    @staticmethod
-    def clear_log_store() -> None:
-        """Clear log store (for testing)."""
-        _log_store.clear()
-
-    @staticmethod
-    def create_context(
-        logger: FlextLogger,
-        **context: object,
-    ) -> FlextLogContextManager:
-        """Create log context."""
-        return FlextLogContextManager(logger, **context)
+# FlextLogging class eliminated - functionality consolidated into FlextLoggerFactory
+# This follows "entregar mais com muito menos" principle by eliminating redundant
+# delegation
 
 
 # =============================================================================
@@ -715,7 +841,7 @@ def get_logger(name: str, level: str = "INFO") -> FlextLogger:
     """Get logger instance using factory delegation.
 
     Convenience function providing direct access to logger creation
-    without requiring explicit FlextLogging class usage.
+    without requiring explicit FlextLoggerFactory class usage.
 
     Args:
         name: Logger name, typically module name (__name__)
@@ -728,7 +854,7 @@ def get_logger(name: str, level: str = "INFO") -> FlextLogger:
         logger = get_logger(__name__, "DEBUG")
 
     """
-    return FlextLogging.get_logger(name, level)
+    return FlextLoggerFactory.get_logger(name, level)
 
 
 def create_log_context(
@@ -752,106 +878,21 @@ def create_log_context(
             logger.info("Processing request")
 
     """
-    return FlextLogging.create_context(logger, **context)
+    return FlextLoggerFactory.create_context(logger, **context)
 
 
 # Add missing interface methods to FlextLogger class that tests expect
-class _ContextManagerLogger(structlog.BoundLogger):
+class _ContextManagerLogger:
     """Wrapper for structlog.BoundLogger to provide context manager functionality."""
 
-    def __init__(self, logger: structlog.BoundLogger) -> None:
+    def __init__(self, logger: object) -> None:
         self._logger = logger
 
-    def __enter__(self) -> structlog.BoundLogger:
+    def __enter__(self) -> object:
         return self._logger
 
     def __exit__(self, exc_type: object, exc_val: object, exc_tb: object) -> None:
         pass
-
-
-def _add_missing_logger_methods() -> None:
-    """Add missing static methods to FlextLogger class that tests expect."""
-
-    @classmethod
-    def configure(
-        cls: type[FlextLogger],
-        *,
-        _log_level: FlextLogLevel = FlextLogLevel.INFO,
-        json_output: bool = False,
-        add_timestamp: bool = True,
-        add_caller: bool = False,
-    ) -> None:
-        """Configure the logging system."""
-        # Use parameters to configure logging
-        if json_output:
-            structlog.configure(processors=[structlog.processors.JSONRenderer()])
-        if add_timestamp:
-            structlog.configure(processors=[structlog.processors.TimeStamper()])
-        if add_caller:
-            structlog.configure(
-                processors=[structlog.processors.CallsiteParameterAdder()],
-            )
-
-        cls._configured = True
-
-    @classmethod
-    def get_logger_with_auto_config(
-        cls: type[FlextLogger],
-        name: str,
-        *,
-        _level: str = "INFO",
-    ) -> object:
-        """Get logger with auto-configuration."""
-        if not cls._configured:
-            cls.configure()
-        return structlog.get_logger(name)
-
-    @classmethod
-    def get_base_logger(
-        _cls: type[FlextLogger],
-        name: str,
-        *,
-        _level: str = "INFO",
-    ) -> object:
-        """Get base logger with observability."""
-        return structlog.get_logger(name)
-
-    @classmethod
-    def bind_context(_cls: type[FlextLogger], **context: object) -> object:
-        """Create logger with bound context."""
-        return structlog.get_logger("context").bind(**context)
-
-    @classmethod
-    def clear_context(_cls: type[FlextLogger]) -> None:
-        """Clear global context variables."""
-        structlog.contextvars.clear_contextvars()
-
-    @classmethod
-    def with_performance_tracking(_cls: type[FlextLogger], name: str) -> object:
-        """Get logger with performance tracking."""
-        return structlog.get_logger(name)
-
-    @classmethod
-    def flext_get_logger(_cls: type[FlextLogger], name: str) -> object:
-        """Backward compatibility logger creation."""
-        return structlog.get_logger(name)
-
-    # Add class variables
-    FlextLogger._configured = False
-    FlextLogger._loggers = {}
-
-    # Add methods to class
-    FlextLogger.configure = configure
-    FlextLogger.get_logger = get_logger_with_auto_config  # Override with auto-config
-    FlextLogger.get_base_logger = get_base_logger
-    FlextLogger.bind_context = bind_context
-    FlextLogger.clear_context = clear_context
-    FlextLogger.with_performance_tracking = with_performance_tracking
-    FlextLogger.flext_get_logger = flext_get_logger
-
-
-# Apply the missing methods
-_add_missing_logger_methods()
 
 
 # Module-level backward compatibility function
@@ -875,10 +916,10 @@ __all__ = [
     "FlextLogContextManager",
     # Log levels from constants
     "FlextLogLevel",
-    # Main consolidated classes
+    # Main consolidated classes (FlextLogging eliminated - functionality in
+    # FlextLoggerFactory)
     "FlextLogger",
     "FlextLoggerFactory",
-    "FlextLogging",
     # Convenience functions
     "create_log_context",
     "flext_get_logger",

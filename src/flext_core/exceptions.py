@@ -1,78 +1,55 @@
 """FLEXT Core Exceptions Module.
 
-Comprehensive exception hierarchy for the FLEXT Core library implementing
-enterprise-grade error handling with integrated observability, metrics tracking, and
-structured context management. Provides unified exception patterns with automatic
-categorization.
+Basic exception hierarchy for the FLEXT Core library implementing
+enterprise-grade error handling with structured context management.
 
 Architecture:
-    - Single source of truth pattern for all exception functionality across the system
-    - Consolidated architecture eliminating _exceptions_base.py module duplication
-    - Hierarchical exception design with base FlextError providing common functionality
-    - Integrated metrics tracking for operational observability and incident analysis
-    - No underscore prefixes on public objects for clean API access
+    - Single source of truth pattern for all exception functionality
+    - Hierarchical exception design with base FlextError
     - Rich context enhancement for debugging and error resolution
+    - No underscore prefixes on public objects for clean API access
 
 Exception Hierarchy:
-    - FlextError: Base exception with context management and automatic metrics tracking
-    - FlextValidationError: Field validation failures with detailed validation context
-    - FlextTypeError: Type mismatch and conversion errors with type information
-    - FlextOperationError: Operation and process failures with stage tracking
+    - FlextError: Base exception with context management
+    - FlextValidationError: Field validation failures
+    - FlextTypeError: Type mismatch and conversion errors
+    - FlextOperationError: Operation and process failures
     - Specific domain errors: Configuration, connection, authentication, permissions
-    - Critical system errors: High-priority errors requiring immediate attention
 
 Maintenance Guidelines:
     - Add new exception types by inheriting from appropriate base exception classes
-    - Include error codes from constants.py for consistent categorization and handling
-    - Maintain context information for debugging, monitoring, and incident resolution
-    - Use factory methods in FlextExceptions class for consistency and standardization
-    - Track metrics automatically for operational insights and system monitoring
+    - Include error codes from constants.py for consistent categorization
+    - Maintain context information for debugging and monitoring
     - Follow naming conventions with Flext prefix for namespace consistency
-    - Ensure backward compatibility through legacy exception aliases
 
 Design Decisions:
-    - Eliminated _exceptions_base.py following "deliver more with much less" principle
-    - Built-in metrics tracking for exception observability without dependencies
-    - Rich context information with automatic enhancement and safe value truncation
-    - Structured error codes for operational categorization and programmatic handling
-    - Serialization support for logging, transport, and external system integration
-    - Immutable error context preventing accidental modification after creation
+    - Built-in context information with automatic enhancement
+    - Structured error codes for operational categorization
+    - Serialization support for logging and transport
+    - Immutable error context preventing accidental modification
 
 Enterprise Error Management:
-    - Comprehensive error categorization supporting operational monitoring and alerting
+    - Comprehensive error categorization supporting operational monitoring
     - Structured context capture for debugging with automatic field enhancement
-    - Metrics integration providing insights into error patterns and frequency
-    - Temporal tracking for incident correlation and pattern analysis
     - Security-conscious context handling preventing sensitive information leakage
     - Serialization support for error transport across service boundaries
 
-Observability Features:
-    - Automatic exception counting by type and error code for pattern analysis
-    - Last seen timestamp tracking for temporal analysis and incident correlation
-    - Error code distribution tracking for pattern recognition and system health
-    - Metrics clearing for testing scenarios and clean state management
-    - Exception frequency analysis for identifying system issues and bottlenecks
-    - Rich debugging context with stack trace capture and enhanced error information
-
 Context Management:
-    - Automatic context enhancement with field-specific information for validation
-    - Type information capture for debugging type-related errors and conversions
-    - Operation and stage tracking for complex process debugging and monitoring
-    - Safe value truncation preventing log pollution and security information leakage
-    - Structured context dictionaries supporting JSON serialization and transport
-    - Enhanced context merging preserving both base and specialized error information
+    - Automatic context enhancement with field-specific information
+    - Type information capture for debugging type-related errors
+    - Operation and stage tracking for complex process debugging
+    - Safe value truncation preventing log pollution
+    - Structured context dictionaries supporting JSON serialization
 
 Error Code Integration:
     - Standardized error codes from constants module for consistent categorization
     - Automatic error code assignment for simplified exception creation
-    - Error code distribution tracking for operational monitoring and alerting
     - Programmatic error handling support through structured error code patterns
-    - Integration with logging systems for automated error classification
 
 Dependencies:
     - constants: Structured error codes and categorization for consistent handling
-    - time: Timestamp generation for temporal analysis and incident correlation
-    - traceback: Stack trace capture for development debugging and error resolution
+    - time: Timestamp generation for temporal analysis
+    - traceback: Stack trace capture for development debugging
 
 Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
@@ -80,340 +57,20 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import inspect
-import threading
 import traceback
-from functools import wraps
 
-from pydantic import BaseModel, ConfigDict
-
-from flext_core._utilities_base import _BaseGenerators
 from flext_core.constants import ERROR_CODES
-
-# =============================================================================
-# THREAD-SAFE DEBUGGING AND FALLBACK SYSTEM
-# =============================================================================
-
-# Thread-safe locks for concurrent access
-_metrics_lock = threading.RLock()
-_debug_lock = threading.RLock()
-
-# Global exception metrics consolidado - elimina duplicação
-_exception_metrics: dict[str, dict[str, object]] = {}
-
-# Centralized debug configuration
-_debug_config = {
-    "enabled": True,
-    "trace_level": "ERROR",  # DEBUG, INFO, WARNING, ERROR, CRITICAL
-    "max_context_size": 1000,
-    "enable_stack_trace": True,
-    "enable_frame_inspection": True,
-    "fallback_enabled": True,
-}
-
-# Fallback registry for resilient error handling
-_fallback_registry: dict[str, object] = {}
-
-
-class FlextDebugConfig(BaseModel):
-    """Configuration for FLEXT debug system."""
-
-    model_config = ConfigDict(frozen=True)
-
-    enabled: bool = True
-    trace_level: str = "ERROR"
-    max_context_size: int = 1000
-    enable_stack_trace: bool = True
-    enable_frame_inspection: bool = True
-    fallback_enabled: bool = True
-
-
-def configure_debug_system(
-    config: FlextDebugConfig | None = None,
-) -> None:
-    """Configure the centralized debug system.
-
-    Thread-safe configuration for debugging and error handling.
-
-    Args:
-        config: Debug configuration object
-
-    """
-    if config is None:
-        config = FlextDebugConfig()
-
-    with _debug_lock:
-        _debug_config.update(
-            {
-                "enabled": config.enabled,
-                "trace_level": config.trace_level,
-                "max_context_size": config.max_context_size,
-                "enable_stack_trace": config.enable_stack_trace,
-                "enable_frame_inspection": config.enable_frame_inspection,
-                "fallback_enabled": config.fallback_enabled,
-            },
-        )
-
-
-def register_fallback(
-    operation_name: str,
-    fallback_func: object,
-) -> None:
-    """Register a fallback function for resilient error handling.
-
-    Thread-safe registration of fallback functions.
-    """
-    with _debug_lock:
-        _fallback_registry[operation_name] = fallback_func
-
-
-def get_enhanced_traceback() -> dict[str, object]:
-    """Get enhanced traceback with frame inspection.
-
-    Returns detailed traceback information for debugging.
-    """
-    if not _debug_config["enabled"]:
-        return {}
-
-    try:
-        frame_info: list[dict[str, object]] = []
-        if _debug_config["enable_frame_inspection"]:
-            frame_info.extend(
-                {
-                    "filename": frame_record.filename,
-                    "lineno": frame_record.lineno,
-                    "function": frame_record.function,
-                    "code_context": frame_record.code_context[0].strip()
-                    if frame_record.code_context
-                    else "",
-                }
-                for frame_record in inspect.stack()[1:]  # Skip current frame
-            )
-
-        return {
-            "thread_id": threading.current_thread().ident,
-            "thread_name": threading.current_thread().name,
-            "stack_trace": traceback.format_exc()
-            if _debug_config["enable_stack_trace"]
-            else "",
-            "frame_info": frame_info,
-            "timestamp": _BaseGenerators.generate_timestamp(),
-        }
-    except (AttributeError, TypeError, ValueError, OSError):
-        # Fallback to minimal info if frame inspection fails
-        return {
-            "thread_id": threading.current_thread().ident,
-            "timestamp": _BaseGenerators.generate_timestamp(),
-            "fallback_mode": True,
-        }
-
-
-def safe_fallback(operation_name: str, *args: object, **kwargs: object) -> object:
-    """Execute fallback function safely with error isolation.
-
-    Thread-safe fallback execution with comprehensive error handling.
-    """
-    if not _debug_config["fallback_enabled"]:
-        error_msg = f"Fallback disabled for operation: {operation_name}"
-        raise FlextOperationError(error_msg)
-
-    with _debug_lock:
-        fallback_func = _fallback_registry.get(operation_name)
-
-    if not fallback_func:
-        error_msg = f"No fallback registered for operation: {operation_name}"
-        raise FlextOperationError(error_msg)
-
-    try:
-        if callable(fallback_func):
-            return fallback_func(*args, **kwargs)
-    except (
-        TypeError,
-        ValueError,
-        AttributeError,
-        RuntimeError,
-        OSError,
-        KeyError,
-    ) as e:
-        # Even fallbacks can fail - provide ultimate fallback
-        enhanced_trace = get_enhanced_traceback()
-        error_msg = f"Fallback failed for operation '{operation_name}': {e}"
-        raise FlextCriticalError(
-            error_msg,
-            error_code="FALLBACK_FAILURE",
-            context={
-                "original_args": args,
-                "original_kwargs": kwargs,
-                "enhanced_trace": enhanced_trace,
-            },
-        ) from e
-    else:
-        return fallback_func
-
-
-def resilient_operation(
-    operation_name: str,
-) -> object:
-    """Create decorator for resilient operations with automatic fallback.
-
-    Provides thread-safe operation execution with automatic fallback on failure.
-    """
-
-    def decorator(func: object) -> object:
-        if not callable(func):
-            return func
-
-        @wraps(func)
-        def wrapper(*args: object, **kwargs: object) -> object:
-            try:
-                return func(*args, **kwargs)
-            except (
-                TypeError,
-                ValueError,
-                AttributeError,
-                RuntimeError,
-                OSError,
-                KeyError,
-            ) as e:
-                # Enhanced error information
-                enhanced_trace = get_enhanced_traceback()
-
-                # Try fallback if available
-                if (
-                    _debug_config["fallback_enabled"]
-                    and operation_name in _fallback_registry
-                ):
-                    try:
-                        return safe_fallback(operation_name, *args, **kwargs)
-                    except (
-                        TypeError,
-                        ValueError,
-                        AttributeError,
-                        RuntimeError,
-                        OSError,
-                        KeyError,
-                    ) as fallback_error:
-                        # Both primary and fallback failed
-                        error_msg = (
-                            f"Operation '{operation_name}' and its fallback both "
-                            f"failed. Primary: {e}, Fallback: {fallback_error}"
-                        )
-                        raise FlextCriticalError(
-                            error_msg,
-                            error_code="OPERATION_AND_FALLBACK_FAILURE",
-                            context={
-                                "primary_error": str(e),
-                                "fallback_error": str(fallback_error),
-                                "enhanced_trace": enhanced_trace,
-                                "operation_name": operation_name,
-                            },
-                        ) from fallback_error
-                else:
-                    # No fallback available
-                    error_msg = f"Operation '{operation_name}' failed: {e}"
-                    raise FlextOperationError(
-                        error_msg,
-                        error_code="OPERATION_FAILURE",
-                        context={
-                            "original_error": str(e),
-                            "enhanced_trace": enhanced_trace,
-                            "operation_name": operation_name,
-                        },
-                    ) from e
-
-        return wrapper
-
-    return decorator
-
-
-def _track_exception(exception_class: str, error_code: str | None) -> None:
-    """Track exception metrics for observability and monitoring.
-
-    Records exception occurrences with count, error code distribution,
-    and temporal information for operational insights.
-
-    Thread-safe implementation with proper locking.
-
-    Args:
-        exception_class: Name of the exception class
-        error_code: Associated error code for categorization
-
-    """
-    with _metrics_lock:
-        if exception_class not in _exception_metrics:
-            _exception_metrics[exception_class] = {
-                "count": 0,
-                "error_codes": set(),
-                "last_seen": 0.0,
-                "thread_info": {},
-            }
-
-        metrics = _exception_metrics[exception_class]
-        current_count = metrics["count"]
-        if isinstance(current_count, int):
-            metrics["count"] = current_count + 1
-        else:
-            metrics["count"] = 1
-
-        if error_code:
-            error_codes_set = metrics["error_codes"]
-            if isinstance(error_codes_set, set):
-                error_codes_set.add(error_code)
-
-        # Track thread information and update timestamp
-        thread_id = threading.current_thread().ident
-        thread_name = threading.current_thread().name
-        current_time = _BaseGenerators.generate_timestamp()
-        thread_info = metrics.get("thread_info", {})
-        if isinstance(thread_info, dict):
-            thread_info[thread_id] = {
-                "name": thread_name,
-                "last_exception": current_time,
-            }
-            metrics["thread_info"] = thread_info
-        metrics["last_seen"] = current_time
-
-
-def get_exception_metrics() -> dict[str, dict[str, object]]:
-    """Get exception metrics for observability and monitoring.
-
-    Returns comprehensive metrics including occurrence counts,
-    error code distributions, and temporal information.
-    Thread-safe implementation.
-
-    Returns:
-        Dictionary containing metrics for each exception type
-
-    """
-    with _metrics_lock:
-        return dict(_exception_metrics)
-
-
-def clear_exception_metrics() -> None:
-    """Clear exception metrics for testing scenarios.
-
-    Removes all accumulated exception metrics to provide
-    clean slate for test isolation.
-    Thread-safe implementation.
-    """
-    with _metrics_lock:
-        _exception_metrics.clear()
-
-
-# =============================================================================
-# FLEXT BASE ERROR - Consolidado eliminando _FlextBaseError
-# =============================================================================
+from flext_core.utilities import FlextGenerators
 
 
 class FlextError(Exception):
-    """Base exception for all FLEXT Core errors with observability integration.
+    """Base exception for all FLEXT Core errors.
 
-    Foundational exception class providing structured error information,
-    automatic metrics tracking, and rich context for debugging and monitoring.
+    Foundational exception class providing structured error information
+    and rich context for debugging and monitoring.
 
     Architecture:
         - Standard Exception inheritance for compatibility
-        - Automatic metrics tracking on instantiation
         - Rich context information with timestamps
         - Structured error codes for categorization
         - Stack trace capture for debugging
@@ -425,12 +82,6 @@ class FlextError(Exception):
         - Timestamp for temporal analysis and correlation
         - Stack trace for development and debugging
 
-    Observability Integration:
-        - Automatic metrics tracking on creation
-        - Error code distribution tracking
-        - Exception type counting for pattern analysis
-        - Temporal information for incident correlation
-
     Usage:
         # Basic usage
         raise FlextError("Something went wrong")
@@ -438,7 +89,7 @@ class FlextError(Exception):
         # With error code and context
         raise FlextError(
             "Validation failed",
-            error_code="VALIDATION_ERROR",
+            error_code=ERROR_CODES["VALIDATION_ERROR"],
             context={"field": "email", "value": "invalid"}
         )
     """
@@ -449,7 +100,7 @@ class FlextError(Exception):
         error_code: str | None = None,
         context: dict[str, object] | None = None,
     ) -> None:
-        """Initialize error with enhanced debugging and metrics tracking.
+        """Initialize error with enhanced debugging.
 
         Args:
             message: Error message
@@ -461,26 +112,16 @@ class FlextError(Exception):
         self.message = message
         self.error_code = error_code or ERROR_CODES["GENERIC_ERROR"]
         self.context = context or {}
-        self.timestamp = _BaseGenerators.generate_timestamp()
+        self.timestamp = FlextGenerators.generate_timestamp()
         self.stack_trace = traceback.format_stack()
 
-        # Enhanced debugging information
-        self.enhanced_trace = get_enhanced_traceback()
-
         # Safely limit context size to prevent memory issues
-        max_size = _debug_config.get("max_context_size", 1000)
-        if (
-            self.context
-            and isinstance(max_size, int)
-            and len(str(self.context)) > max_size
-        ):
+        max_size = 1000
+        if self.context and len(str(self.context)) > max_size:
             self.context = {
                 "_truncated": True,
                 "_original_size": len(str(self.context)),
             }
-
-        # Track exception metrics with enhanced information
-        _track_exception(self.__class__.__name__, self.error_code)
 
     def __str__(self) -> str:
         """Return formatted error string."""
@@ -504,11 +145,6 @@ class FlextError(Exception):
             "context": self.context,
             "timestamp": self.timestamp,
         }
-
-
-# =============================================================================
-# FLEXT VALIDATION ERROR - Consolidado eliminando _FlextValidationBaseError
-# =============================================================================
 
 
 class FlextValidationError(FlextError):
@@ -538,7 +174,7 @@ class FlextValidationError(FlextError):
         )
     """
 
-    def __init__(  # Validation errors need detailed context
+    def __init__(
         self,
         message: str = "Validation failed",
         *,
@@ -567,11 +203,6 @@ class FlextValidationError(FlextError):
             error_code=error_code or ERROR_CODES["VALIDATION_ERROR"],
             context=enhanced_context,
         )
-
-
-# =============================================================================
-# FLEXT TYPE ERROR - Consolidado eliminando _FlextTypeBaseError
-# =============================================================================
 
 
 class FlextTypeError(FlextError):
@@ -627,9 +258,54 @@ class FlextTypeError(FlextError):
         )
 
 
-# =============================================================================
-# FLEXT OPERATION ERROR - Consolidado eliminando _FlextOperationBaseError
-# =============================================================================
+class FlextAttributeError(FlextError):
+    """Attribute access exception with attribute context information.
+
+    Specialized exception for attribute-related errors providing clear information
+    about missing attributes and available alternatives for debugging.
+
+    Architecture:
+        - Inherits from FlextError for base functionality
+        - Attribute context enhancement for debugging
+        - Available attribute suggestions for resolution
+        - Clear attribute access messaging
+
+    Attribute Context:
+        - Class name for context identification
+        - Attribute name that was attempted
+        - Available attributes for suggestions
+        - Enhanced error reporting
+
+    Usage:
+        raise FlextAttributeError(
+            "Object has no attribute 'missing_attr'",
+            attribute_context={
+                "class_name": "MyClass",
+                "attribute_name": "missing_attr",
+                "available_extra_fields": ["field1", "field2"]
+            }
+        )
+    """
+
+    def __init__(
+        self,
+        message: str = "Attribute error occurred",
+        *,
+        attribute_context: dict[str, object] | None = None,
+        error_code: str | None = None,
+        context: dict[str, object] | None = None,
+    ) -> None:
+        """Initialize attribute error with attribute context."""
+        # Build enhanced context
+        enhanced_context = context or {}
+        if attribute_context:
+            enhanced_context.update(attribute_context)
+
+        super().__init__(
+            message=message,
+            error_code=error_code or ERROR_CODES["TYPE_ERROR"],
+            context=enhanced_context,
+        )
 
 
 class FlextOperationError(FlextError):
@@ -686,7 +362,7 @@ class FlextOperationError(FlextError):
 
 
 # =============================================================================
-# SPECIFIC ERROR TYPES - Consolidados
+# SPECIFIC ERROR TYPES
 # =============================================================================
 
 
@@ -701,7 +377,11 @@ class FlextConfigurationError(FlextError):
             **kwargs: Additional context information
 
         """
-        super().__init__(message, error_code="CONFIG_ERROR", context=kwargs)
+        super().__init__(
+            message,
+            error_code=ERROR_CODES["CONFIG_ERROR"],
+            context=kwargs,
+        )
 
 
 class FlextConnectionError(FlextError):
@@ -715,7 +395,11 @@ class FlextConnectionError(FlextError):
             **kwargs: Additional context information (host, port, etc.)
 
         """
-        super().__init__(message, error_code="CONNECTION_ERROR", context=kwargs)
+        super().__init__(
+            message,
+            error_code=ERROR_CODES["CONNECTION_ERROR"],
+            context=kwargs,
+        )
 
 
 class FlextAuthenticationError(FlextError):
@@ -733,7 +417,7 @@ class FlextAuthenticationError(FlextError):
             **kwargs: Additional context information (user, method, etc.)
 
         """
-        super().__init__(message, error_code="AUTH_ERROR", context=kwargs)
+        super().__init__(message, error_code=ERROR_CODES["AUTH_ERROR"], context=kwargs)
 
 
 class FlextPermissionError(FlextError):
@@ -747,7 +431,11 @@ class FlextPermissionError(FlextError):
             **kwargs: Additional context information (resource, action, etc.)
 
         """
-        super().__init__(message, error_code="PERMISSION_ERROR", context=kwargs)
+        super().__init__(
+            message,
+            error_code=ERROR_CODES["PERMISSION_ERROR"],
+            context=kwargs,
+        )
 
 
 class FlextNotFoundError(FlextError):
@@ -761,7 +449,7 @@ class FlextNotFoundError(FlextError):
             **kwargs: Additional context information (resource_id, type, etc.)
 
         """
-        super().__init__(message, error_code="NOT_FOUND", context=kwargs)
+        super().__init__(message, error_code=ERROR_CODES["NOT_FOUND"], context=kwargs)
 
 
 class FlextAlreadyExistsError(FlextError):
@@ -779,7 +467,11 @@ class FlextAlreadyExistsError(FlextError):
             **kwargs: Additional context information (resource_id, type, etc.)
 
         """
-        super().__init__(message, error_code="ALREADY_EXISTS", context=kwargs)
+        super().__init__(
+            message,
+            error_code=ERROR_CODES["ALREADY_EXISTS"],
+            context=kwargs,
+        )
 
 
 class FlextTimeoutError(FlextError):
@@ -793,7 +485,11 @@ class FlextTimeoutError(FlextError):
             **kwargs: Additional context information (timeout, duration, etc.)
 
         """
-        super().__init__(message, error_code="TIMEOUT_ERROR", context=kwargs)
+        super().__init__(
+            message,
+            error_code=ERROR_CODES["TIMEOUT_ERROR"],
+            context=kwargs,
+        )
 
 
 class FlextProcessingError(FlextError):
@@ -807,7 +503,11 @@ class FlextProcessingError(FlextError):
             **kwargs: Additional context information (data, stage, etc.)
 
         """
-        super().__init__(message, error_code="PROCESSING_ERROR", context=kwargs)
+        super().__init__(
+            message,
+            error_code=ERROR_CODES["PROCESSING_ERROR"],
+            context=kwargs,
+        )
 
 
 class FlextCriticalError(FlextError):
@@ -821,104 +521,11 @@ class FlextCriticalError(FlextError):
             **kwargs: Additional context information (system, component, etc.)
 
         """
-        super().__init__(message, error_code="CRITICAL_ERROR", context=kwargs)
-
-
-# =============================================================================
-# FLEXT EXCEPTIONS - Interface principal consolidada
-# =============================================================================
-
-
-class FlextExceptions:
-    """Consolidated exceptions interface providing unified exception management.
-
-    Serves as the primary public API for exception creation, metrics access,
-    and observability functions. Combines factory methods with utility operations.
-
-    Architecture:
-        - Static method interface for stateless operations
-        - Factory methods for consistent exception creation
-        - Observability integration for metrics access
-        - Unified API hiding implementation complexity
-
-    Factory Features:
-        - Type-safe exception creation methods
-        - Consistent parameter patterns across exception types
-        - Enhanced context building for debugging
-        - Standardized error categorization
-
-    Observability Integration:
-        - Exception metrics access for monitoring
-        - Metrics clearing for testing scenarios
-        - Aggregated statistics for operational insights
-
-    Usage:
-        # Factory methods
-        error = FlextExceptions.create_validation_error(
-            "Invalid email format",
-            field="email",
-            value="invalid-email"
+        super().__init__(
+            message,
+            error_code=ERROR_CODES["CRITICAL_ERROR"],
+            context=kwargs,
         )
-
-        # Observability
-        metrics = FlextExceptions.get_metrics()
-        FlextExceptions.clear_metrics()
-    """
-
-    # Exception factory methods
-    @staticmethod
-    def create_validation_error(
-        message: str,
-        field: str | None = None,
-        value: object = None,
-        rules: list[str] | None = None,
-    ) -> FlextValidationError:
-        """Create validation error."""
-        return FlextValidationError(
-            message=message,
-            validation_details={
-                "field": field,
-                "value": value,
-                "rules": rules or [],
-            },
-        )
-
-    @staticmethod
-    def create_type_error(
-        message: str,
-        expected_type: type | str | None = None,
-        actual_type: type | str | None = None,
-    ) -> FlextTypeError:
-        """Create type error."""
-        return FlextTypeError(
-            message=message,
-            expected_type=expected_type,
-            actual_type=actual_type,
-        )
-
-    @staticmethod
-    def create_operation_error(
-        message: str,
-        operation: str | None = None,
-        stage: str | None = None,
-    ) -> FlextOperationError:
-        """Create operation error."""
-        return FlextOperationError(
-            message=message,
-            operation=operation,
-            stage=stage,
-        )
-
-    # Observability methods
-    @staticmethod
-    def get_metrics() -> dict[str, dict[str, object]]:
-        """Get exception metrics."""
-        return get_exception_metrics()
-
-    @staticmethod
-    def clear_metrics() -> None:
-        """Clear exception metrics."""
-        clear_exception_metrics()
 
 
 # =============================================================================
@@ -927,17 +534,144 @@ class FlextExceptions:
 
 # Legacy aliases mantendo compatibilidade
 FlextConfigError = FlextConfigurationError
-FlextMigrationError = FlextOperationError
 FlextSchemaError = FlextValidationError
 
 
 # =============================================================================
-# EXPORTS - Clean public API seguindo diretrizes
+# EXCEPTION METRICS - Monitoring and observability
+# =============================================================================
+
+# Global exception metrics dictionary
+_EXCEPTION_METRICS: dict[str, int] = {}
+
+
+def get_exception_metrics() -> dict[str, int]:
+    """Get current exception metrics.
+
+    Returns:
+        Dictionary of exception type counts
+
+    """
+    return _EXCEPTION_METRICS.copy()
+
+
+def clear_exception_metrics() -> None:
+    """Clear all exception metrics."""
+    _EXCEPTION_METRICS.clear()
+
+
+def _record_exception(exception_type: str) -> None:
+    """Record exception occurrence for metrics."""
+    _EXCEPTION_METRICS[exception_type] = _EXCEPTION_METRICS.get(exception_type, 0) + 1
+
+
+# =============================================================================
+# EXCEPTION FACTORY - Unified exception creation interface
+# =============================================================================
+
+
+class FlextExceptions:
+    """Unified factory interface for creating FLEXT exceptions.
+
+    Provides convenient factory methods for creating all types of FLEXT exceptions
+    with appropriate default context and error codes.
+    """
+
+    @staticmethod
+    def create_validation_error(
+        message: str,
+        *,
+        field: str | None = None,
+        value: object = None,
+        rules: list[str] | None = None,
+        context: dict[str, object] | None = None,
+    ) -> FlextValidationError:
+        """Create validation error with field context."""
+        validation_details: dict[str, object] = {}
+        if field is not None:
+            validation_details["field"] = field
+        if value is not None:
+            validation_details["value"] = str(value)
+        if rules is not None:
+            validation_details["rules"] = str(rules)
+        return FlextValidationError(
+            message,
+            validation_details=validation_details,
+            context=context,
+        )
+
+    @staticmethod
+    def create_type_error(
+        message: str,
+        *,
+        expected_type: type | None = None,
+        actual_type: type | None = None,
+        context: dict[str, object] | None = None,
+    ) -> FlextTypeError:
+        """Create type error with type context."""
+        return FlextTypeError(
+            message,
+            expected_type=expected_type,
+            actual_type=actual_type,
+            context=context,
+        )
+
+    @staticmethod
+    def create_operation_error(
+        message: str,
+        *,
+        operation_name: str | None = None,
+        context: dict[str, object] | None = None,
+    ) -> FlextOperationError:
+        """Create operation error with operation context."""
+        return FlextOperationError(
+            message,
+            operation=operation_name,
+            context=context,
+        )
+
+    @staticmethod
+    def create_configuration_error(
+        message: str,
+        *,
+        config_key: str | None = None,
+        context: dict[str, object] | None = None,
+    ) -> FlextConfigurationError:
+        """Create configuration error with config context."""
+        config_context = {}
+        if config_key is not None:
+            config_context["config_key"] = config_key
+        return FlextConfigurationError(
+            message,
+            config_context=config_context,
+            context=context,
+        )
+
+    @staticmethod
+    def create_connection_error(
+        message: str,
+        *,
+        endpoint: str | None = None,
+        context: dict[str, object] | None = None,
+    ) -> FlextConnectionError:
+        """Create connection error with connection context."""
+        connection_context = {}
+        if endpoint is not None:
+            connection_context["endpoint"] = endpoint
+        return FlextConnectionError(
+            message,
+            connection_context=connection_context,
+            context=context,
+        )
+
+
+# =============================================================================
+# EXPORTS - Clean public API
 # =============================================================================
 
 __all__ = [
-    # Core exceptions
     "FlextAlreadyExistsError",
+    "FlextAttributeError",
     "FlextAuthenticationError",
     "FlextConfigError",
     "FlextConfigurationError",
@@ -945,7 +679,6 @@ __all__ = [
     "FlextCriticalError",
     "FlextError",
     "FlextExceptions",
-    "FlextMigrationError",
     "FlextNotFoundError",
     "FlextOperationError",
     "FlextPermissionError",
@@ -954,12 +687,6 @@ __all__ = [
     "FlextTimeoutError",
     "FlextTypeError",
     "FlextValidationError",
-    # Debugging and observability functions
     "clear_exception_metrics",
-    "configure_debug_system",
-    "get_enhanced_traceback",
     "get_exception_metrics",
-    "register_fallback",
-    "resilient_operation",
-    "safe_fallback",
 ]
