@@ -98,165 +98,144 @@ from __future__ import annotations
 import time
 from typing import TYPE_CHECKING
 
-from flext_core._utilities_base import _BaseGenerators
+from flext_core.exceptions import FlextValidationError
 from flext_core.loggings import FlextLoggerFactory
+from flext_core.utilities import FlextGenerators
 from flext_core.validation import FlextValidators
 
 if TYPE_CHECKING:
     from flext_core.loggings import FlextLogger
-    from flext_core.types import TEntityId
+    from flext_core.types import TAnyDict, TEntityId
 
 
 class _BaseTimestampMixin:
-    """Foundation timestamp tracking without external dependencies."""
+    """Foundation timestamp tracking without external dependencies.
 
-    # Class-level type annotations for MyPy
-    _created_at: float | None
-    _updated_at: float | None
+    This is a proper mixin that doesn't implement __init__ to avoid MRO conflicts.
+    Initialization happens automatically via property access (lazy initialization).
+    """
 
-    def __init_subclass__(cls, **kwargs: object) -> None:
-        """Ensure timestamp fields are added to subclasses."""
-        super().__init_subclass__(**kwargs)
-
-        # Initialize timestamp attributes if not present
-        if not hasattr(cls, "_created_at"):
-            cls._created_at = None
-        if not hasattr(cls, "_updated_at"):
-            cls._updated_at = None
-
-    def _initialize_timestamps(self) -> None:
-        """Initialize timestamp fields."""
-        current_time = _BaseGenerators.generate_timestamp()
-        if (
-            not hasattr(self, "_created_at")
-            or getattr(self, "_created_at", None) is None
-        ):
+    def __ensure_timestamp_state(self) -> None:
+        """Ensure timestamp state is initialized (lazy initialization)."""
+        if not hasattr(self, "_timestamp_initialized"):
+            current_time = FlextGenerators.generate_timestamp()
             self._created_at = current_time
-        self._updated_at = current_time
+            self._updated_at = current_time
+            self._timestamp_initialized = True
 
     def _update_timestamp(self) -> None:
         """Update the updated_at timestamp."""
-        self._updated_at = _BaseGenerators.generate_timestamp()
+        self.__ensure_timestamp_state()
+        self._updated_at = FlextGenerators.generate_timestamp()
 
     @property
-    def created_at(self) -> float | None:
+    def created_at(self) -> float:
         """Get creation timestamp."""
-        return getattr(self, "_created_at", None)
+        self.__ensure_timestamp_state()
+        return self._created_at
 
     @property
-    def updated_at(self) -> float | None:
+    def updated_at(self) -> float:
         """Get last update timestamp."""
-        return getattr(self, "_updated_at", None)
+        self.__ensure_timestamp_state()
+        return self._updated_at
 
     def get_age_seconds(self) -> float:
         """Get age in seconds since creation."""
-        created_at = getattr(self, "_created_at", None)
-        if created_at is None:
-            return 0.0
-        return _BaseGenerators.generate_timestamp() - float(created_at)
+        self.__ensure_timestamp_state()
+        return FlextGenerators.generate_timestamp() - self._created_at
 
 
 class _BaseIdentifiableMixin:
-    """Foundation identification pattern without external dependencies."""
+    """Foundation identification pattern without external dependencies.
 
-    # Class-level type annotations for MyPy
-    _id: TEntityId | None
+    Proper mixin that provides ID management without __init__ conflicts.
+    Uses lazy initialization and explicit ID setting.
+    """
 
-    def __init_subclass__(cls, **kwargs: object) -> None:
-        """Ensure ID field is added to subclasses."""
-        super().__init_subclass__(**kwargs)
-
-        # Initialize ID attribute if not present
-        if not hasattr(cls, "_id"):
-            cls._id = None
-
-    def _initialize_id(self, entity_id: TEntityId | None = None) -> None:
-        """Initialize entity ID."""
-        if entity_id is not None:
-            if FlextValidators.is_non_empty_string(entity_id):
-                self._id = entity_id
-            else:
-                # Generate simple ID if invalid
-                self._id = _BaseGenerators.generate_entity_id()
+    def set_id(self, entity_id: TEntityId) -> None:
+        """Set entity ID with validation."""
+        if FlextValidators.is_non_empty_string(entity_id):
+            self._id = entity_id
         else:
-            # Generate simple ID
-            self._id = _BaseGenerators.generate_entity_id()
+            msg = f"Invalid entity ID: {entity_id}"
+            raise FlextValidationError(
+                msg,
+                validation_details={"field": "entity_id", "value": entity_id},
+            )
+
+    def generate_id(self) -> TEntityId:
+        """Generate and set a new ID."""
+        self._id = FlextGenerators.generate_entity_id()
+        return self._id
 
     @property
-    def id(self) -> TEntityId | None:
-        """Get entity ID."""
-        return getattr(self, "_id", None)
+    def id(self) -> TEntityId:
+        """Get entity ID, generating one if not set."""
+        if not hasattr(self, "_id"):
+            self.generate_id()
+        return self._id
 
     def has_id(self) -> bool:
         """Check if entity has valid ID."""
-        entity_id = getattr(self, "_id", None)
-        return entity_id is not None and FlextValidators.is_non_empty_string(entity_id)
+        return hasattr(self, "_id") and FlextValidators.is_non_empty_string(self._id)
 
 
 class _BaseValidatableMixin:
-    """Foundation validation pattern without external dependencies."""
+    """Foundation validation pattern without external dependencies.
 
-    # Class-level type annotations for MyPy
-    _validation_errors: list[str]
-    _is_valid: bool | None
+    Proper mixin with lazy initialization and thread-safe state management.
+    """
 
-    def __init_subclass__(cls, **kwargs: object) -> None:
-        """Ensure validation state is added to subclasses."""
-        super().__init_subclass__(**kwargs)
+    def __ensure_validation_state(self) -> None:
+        """Ensure validation state is initialized (lazy initialization)."""
+        if not hasattr(self, "_validation_errors"):
+            self._validation_errors: list[str] = []
+            self._is_valid: bool | None = None
 
-        # Initialize validation attributes if not present
-        if not hasattr(cls, "_validation_errors"):
-            cls._validation_errors = []
-        if not hasattr(cls, "_is_valid"):
-            cls._is_valid = None
-
-    def _initialize_validation(self) -> None:
-        """Initialize validation state."""
-        self._validation_errors = []
-        self._is_valid = None
-
-    def _add_validation_error(self, error: str) -> None:
+    def add_validation_error(self, error: str) -> None:
         """Add validation error."""
         if FlextValidators.is_non_empty_string(error):
-            validation_errors = getattr(self, "_validation_errors", [])
-            validation_errors.append(error)
-            self._validation_errors = validation_errors
+            self.__ensure_validation_state()
+            self._validation_errors.append(error)
             self._is_valid = False
 
-    def _clear_validation_errors(self) -> None:
+    def clear_validation_errors(self) -> None:
         """Clear all validation errors."""
-        validation_errors = getattr(self, "_validation_errors", [])
-        validation_errors.clear()
+        self.__ensure_validation_state()
+        self._validation_errors.clear()
         self._is_valid = None
 
-    def _mark_valid(self) -> None:
+    def mark_valid(self) -> None:
         """Mark as valid and clear errors."""
-        validation_errors = getattr(self, "_validation_errors", [])
-        validation_errors.clear()
+        self.__ensure_validation_state()
+        self._validation_errors.clear()
         self._is_valid = True
 
     @property
     def validation_errors(self) -> list[str]:
         """Get validation errors."""
-        return getattr(self, "_validation_errors", []).copy()
+        self.__ensure_validation_state()
+        return self._validation_errors.copy()
 
     @property
     def is_valid(self) -> bool:
         """Check if object is valid."""
-        return getattr(self, "_is_valid", False) is True
+        self.__ensure_validation_state()
+        return self._is_valid is True
 
     def has_validation_errors(self) -> bool:
         """Check if object has validation errors."""
-        errors = getattr(self, "_validation_errors", [])
-        return len(errors) > 0
+        self.__ensure_validation_state()
+        return len(self._validation_errors) > 0
 
 
 class _BaseSerializableMixin:
     """Foundation serialization pattern without external dependencies."""
 
-    def to_dict_basic(self) -> dict[str, object]:
+    def to_dict_basic(self) -> TAnyDict:
         """Convert to basic dictionary representation."""
-        result: dict[str, object] = {}
+        result: TAnyDict = {}
 
         # Get all attributes that don't start with __
         for attr_name in dir(self):
@@ -313,15 +292,15 @@ class _BaseSerializableMixin:
                         serialized_list.append(result)
         return serialized_list
 
-    def _serialize_dict(self, dict_value: dict[str, object]) -> dict[str, object]:
+    def _serialize_dict(self, dict_value: TAnyDict) -> TAnyDict:
         """Serialize dictionary values."""
-        serialized_dict: dict[str, object] = {}
+        serialized_dict: TAnyDict = {}
         for k, v in dict_value.items():
             if isinstance(v, str | int | float | bool | type(None)):
                 serialized_dict[str(k)] = v
         return serialized_dict
 
-    def _from_dict_basic(self, data: dict[str, object]) -> _BaseSerializableMixin:
+    def _from_dict_basic(self, data: TAnyDict) -> _BaseSerializableMixin:
         """Create instance from dictionary (basic implementation)."""
         # This is a basic implementation - subclasses should override
         for key, value in data.items():
@@ -335,35 +314,18 @@ class _BaseSerializableMixin:
 
 
 class _BaseLoggableMixin:
-    """Foundation logging pattern without external dependencies."""
+    """Foundation logging pattern without external dependencies.
 
-    # Class-level attribute for logger name
-    _logger_name: str
-
-    def __init_subclass__(cls, **kwargs: object) -> None:
-        """Initialize logger for subclass automatically."""
-        super().__init_subclass__(**kwargs)
-
-        # Add logger to class if not present
-        if not hasattr(cls, "_logger_name"):
-            cls._logger_name = f"{cls.__module__}.{cls.__name__}"
-
-    def _get_logger(self) -> FlextLogger:
-        """Get logger instance (lazy initialization)."""
-        if not hasattr(self, "_logger"):
-            logger_name = getattr(
-                self.__class__,
-                "_logger_name",
-                self.__class__.__name__,
-            )
-            self._logger = FlextLoggerFactory.get_logger(logger_name)
-
-        return self._logger
+    Proper mixin with lazy logger initialization per instance.
+    """
 
     @property
     def logger(self) -> FlextLogger:
-        """Access to logger instance."""
-        return self._get_logger()
+        """Access to logger instance with lazy initialization."""
+        if not hasattr(self, "_logger"):
+            logger_name = f"{self.__class__.__module__}.{self.__class__.__name__}"
+            self._logger = FlextLoggerFactory.get_logger(logger_name)
+        return self._logger
 
 
 class _BaseComparableMixin:
@@ -453,7 +415,7 @@ class _BaseCacheableMixin:
     """Foundation caching pattern without external dependencies."""
 
     # Class-level type annotations for MyPy
-    _cache: dict[str, object]
+    _cache: TAnyDict
     _cache_timestamps: dict[str, float]
 
     def __init_subclass__(cls, **kwargs: object) -> None:
@@ -468,47 +430,56 @@ class _BaseCacheableMixin:
 
     def _initialize_cache(self) -> None:
         """Initialize cache state."""
-        self._cache: dict[str, object] = {}
+        self._cache: TAnyDict = {}
         self._cache_timestamps: dict[str, float] = {}
 
-    def _cache_get(self, key: str, max_age_seconds: float = 300.0) -> object | None:
+    def __ensure_cache_state(self) -> None:
+        """Ensure cache state is initialized per instance."""
+        if not hasattr(self, "_cache"):
+            self._cache: TAnyDict = {}
+            self._cache_timestamps: dict[str, float] = {}
+
+    def cache_get(self, key: str, max_age_seconds: float = 300.0) -> object | None:
         """Get cached value if not expired."""
         if not FlextValidators.is_non_empty_string(key):
             return None
 
-        cache: dict[str, object] = getattr(self, "_cache", {})
-        if key not in cache:
+        self.__ensure_cache_state()
+        if key not in self._cache:
             return None
 
         # Check expiration
-        cache_timestamps: dict[str, float] = getattr(self, "_cache_timestamps", {})
-        timestamp = cache_timestamps.get(key, 0.0)
-        if _BaseGenerators.generate_timestamp() - timestamp > max_age_seconds:
-            self._cache_remove(key)
+        timestamp = self._cache_timestamps.get(key, 0.0)
+        if FlextGenerators.generate_timestamp() - timestamp > max_age_seconds:
+            self.cache_remove(key)
             return None
 
-        return cache[key]
+        return self._cache[key]
 
-    def _cache_set(self, key: str, value: object) -> None:
+    def cache_set(self, key: str, value: object) -> None:
         """Set cached value with timestamp."""
         if not FlextValidators.is_non_empty_string(key):
             return
 
+        self.__ensure_cache_state()
         self._cache[key] = value
-        self._cache_timestamps[key] = _BaseGenerators.generate_timestamp()
+        self._cache_timestamps[key] = FlextGenerators.generate_timestamp()
 
-    def _cache_remove(self, key: str) -> None:
+    def cache_remove(self, key: str) -> None:
         """Remove cached value."""
+        self.__ensure_cache_state()
         self._cache.pop(key, None)
         self._cache_timestamps.pop(key, None)
 
-    def _cache_clear(self) -> None:
+    def cache_clear(self) -> None:
         """Clear all cached values."""
+        self.__ensure_cache_state()
         self._cache.clear()
         self._cache_timestamps.clear()
 
-    def _cache_size(self) -> int:
+    def cache_size(self) -> int:
         """Get cache size."""
+        self.__ensure_cache_state()
         return len(self._cache)
 
 
@@ -519,14 +490,17 @@ class _BaseEntityMixin(
     _BaseValidatableMixin,
     _BaseLoggableMixin,
 ):
-    """Combined mixin for entities - ID + timestamps + validation + logging."""
+    """Combined mixin for entities - ID + timestamps + validation + logging.
 
-    def __init__(self, entity_id: TEntityId | None = None, **kwargs: object) -> None:
-        """Initialize entity with combined mixins."""
-        super().__init__(**kwargs)
-        self._initialize_id(entity_id)
-        self._initialize_timestamps()
-        self._initialize_validation()
+    Proper mixin composition without __init__ conflicts.
+    All behavior comes from lazy initialization in component mixins.
+    """
+
+    def initialize_entity(self, entity_id: TEntityId | None = None) -> None:
+        """Initialize entity state (call this from your class __init__)."""
+        if entity_id:
+            self.set_id(entity_id)
+        # Other mixins initialize lazily via properties/methods
 
 
 class _BaseValueObjectMixin(
@@ -534,12 +508,15 @@ class _BaseValueObjectMixin(
     _BaseSerializableMixin,
     _BaseComparableMixin,
 ):
-    """Combined mixin for value objects - validation + serialization + comparison."""
+    """Combined mixin for value objects - validation + serialization + comparison.
 
-    def __init__(self, **kwargs: object) -> None:
-        """Initialize value object with combined mixins."""
-        super().__init__(**kwargs)
-        self._initialize_validation()
+    Proper mixin composition without __init__ conflicts.
+    All behavior comes from lazy initialization in component mixins.
+    """
+
+    def initialize_value_object(self) -> None:
+        """Initialize value object state (call this from your class __init__)."""
+        # All mixins initialize lazily via properties/methods
 
 
 # Factory functions

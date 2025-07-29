@@ -6,9 +6,9 @@ unit, integration, and e2e tests.
 
 import math
 import os
-from typing import Any
 
 import pytest
+import structlog
 
 from flext_core.container import FlextContainer
 
@@ -60,7 +60,7 @@ def reset_environment(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.fixture
-def sample_data() -> dict[str, Any]:
+def sample_data() -> dict[str, object]:
     """Provide sample data for tests."""
     return {
         "string": "test_string",
@@ -74,7 +74,7 @@ def sample_data() -> dict[str, Any]:
 
 
 @pytest.fixture
-def sample_metadata() -> dict[str, Any]:
+def sample_metadata() -> dict[str, object]:
     """Provide sample metadata for tests."""
     return {
         "source": "test",
@@ -85,7 +85,7 @@ def sample_metadata() -> dict[str, Any]:
 
 
 @pytest.fixture
-def error_context() -> dict[str, Any]:
+def error_context() -> dict[str, object]:
     """Provide sample error context for tests."""
     return {
         "error_code": "TEST_ERROR",
@@ -99,3 +99,31 @@ def error_context() -> dict[str, Any]:
 def clean_container() -> FlextContainer:
     """Provide a clean FlextContainer instance for each test."""
     return FlextContainer()
+
+
+@pytest.fixture(autouse=True)
+def clean_logging_state() -> None:
+    """Reset logging configuration between tests to prevent state pollution."""
+    # Clear structlog configuration cache to ensure clean state
+    structlog.reset_defaults()
+
+    # Clear any logger caches if they exist
+    try:
+        if (
+            hasattr(structlog, "_CONFIG")
+            and hasattr(
+                structlog._CONFIG,
+                "logger_factory",
+            )
+            and hasattr(structlog._CONFIG.logger_factory, "_cache")
+        ):
+            structlog._CONFIG.logger_factory._cache.clear()
+    except AttributeError:
+        # structlog configuration might not be set up yet
+        pass
+
+    # Reset FlextLogger class state if needed
+    from flext_core.loggings import FlextLoggerFactory
+
+    FlextLoggerFactory.clear_loggers()
+    FlextLoggerFactory.clear_log_store()

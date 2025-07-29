@@ -67,16 +67,41 @@ from abc import ABC, abstractmethod
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Self
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
-from flext_core.flext_types import TAnyDict
+from flext_core.exceptions import FlextValidationError
+from flext_core.fields import FlextFields
 from flext_core.payload import FlextEvent
 from flext_core.result import FlextResult
+from flext_core.types import TAnyDict
 from flext_core.utilities import FlextGenerators
 
 if TYPE_CHECKING:
     from flext_core.types import TAnyDict
 
+# =============================================================================
+# DOMAIN-SPECIFIC TYPES - Entity Pattern Specializations
+# =============================================================================
+
+# Entity pattern specific types for better domain modeling
+type TEntityVersion = int  # Entity version for optimistic locking
+type TEntityTimestamp = datetime  # Entity timestamp fields
+type TDomainEventType = str  # Domain event type identifier
+type TDomainEventData = TAnyDict  # Domain event payload data
+type TAggregateId = str  # Aggregate root identifier
+type TEntityRule = str  # Domain rule identifier for validation
+type TEntityState = str  # Entity state for state machines
+type TEntityMetadata = TAnyDict  # Entity metadata for extensions
+
+# Factory and creation types
+type TEntityDefaults = TAnyDict  # Default values for entity creation
+type TEntityChanges = TAnyDict  # Changes for entity updates
+type TFactoryResult[T] = FlextResult[T]  # Factory creation result
+
+# Event sourcing types
+type TDomainEvents = list[FlextEvent]  # Collection of domain events
+type TEventStream = list[FlextEvent]  # Entity event stream
+type TEventVersion = int  # Event version for ordering
 
 # =============================================================================
 # ENTITIES - Domain Objects with Identity
@@ -116,32 +141,42 @@ class FlextEntity(BaseModel, ABC):
         - Integration with FlextEvent for structured event transport
 
     Usage Patterns:
-        # Define domain entity
-        class User(FlextEntity):
-            email: str
-            name: str
-            is_active: bool = True
+        # Use shared domain entity with factory pattern
+        from examples.shared_domain import User, SharedDomainFactory
+
+        # Create entity using SharedDomainFactory for consistency
+        user_result = SharedDomainFactory.create_user(
+            name="John Doe",
+            email="john@example.com",
+            age=30
+        )
+
+        if user_result.is_success:
+            user = user_result.data
+            # Entity has built-in validation and business rules
+            validation = user.validate_domain_rules()
+
+            # User entity includes standard business operations
+            if user.status.value == "pending":
+                activation_result = user.activate()
+                if activation_result.is_success:
+                    activated_user = activation_result.data
+                    print(f"User {activated_user.name} activated")
+
+        # Example of entity inheritance for custom behavior
+        class CustomUser(User):
+            department: str = "general"
 
             def validate_domain_rules(self) -> FlextResult[None]:
-                if not self.email or "@" not in self.email:
-                    return FlextResult.fail("Invalid email address")
-                if not self.name.strip():
-                    return FlextResult.fail("Name cannot be empty")
+                # Call parent validation first
+                result = super().validate_domain_rules()
+                if result.is_failure:
+                    return result
+
+                # Add custom validation
+                if not self.department.strip():
+                    return FlextResult.fail("Department cannot be empty")
                 return FlextResult.ok(None)
-
-            def activate(self) -> FlextResult[User]:
-                if self.is_active:
-                    return FlextResult.fail("User already active")
-
-                # Create modified entity with event
-                result = self.copy_with(is_active=True)
-                if result.is_success:
-                    activated_user = result.data
-                    activated_user.add_domain_event(
-                        "UserActivated",
-                        {"user_id": self.id, "activated_at": datetime.utcnow()}
-                    )
-                return result
 
         # Create entity with factory
         user_result = User(
@@ -186,20 +221,20 @@ class FlextEntity(BaseModel, ABC):
         description="Unique entity identifier",
     )
 
-    version: int = Field(
+    version: TEntityVersion = Field(
         default=1,
         description="Version for optimistic locking",
         ge=1,
     )
 
     # Timestamp fields for entity lifecycle tracking
-    created_at: datetime = Field(
+    created_at: TEntityTimestamp = Field(
         default_factory=lambda: datetime.now(UTC),
         description="Entity creation timestamp",
     )
 
     # Domain events collected during operations
-    domain_events: list[FlextEvent] = Field(default_factory=list, exclude=True)
+    domain_events: TDomainEvents = Field(default_factory=list, exclude=True)
 
     def __eq__(self, other: object) -> bool:
         """Check equality based on entity ID."""
@@ -217,7 +252,27 @@ class FlextEntity(BaseModel, ABC):
 
     def __repr__(self) -> str:
         """Return detailed representation."""
-        return f"{self.__class__.__name__}(id={self.id}, version={self.version})"
+        # Include all model fields in representation
+        fields = []
+        for name, value in self.model_dump().items():
+            if name != "domain_events":  # Exclude domain events from repr
+                if isinstance(value, str):
+                    fields.append(f"{name}={value}")
+                else:
+                    fields.append(f"{name}={value!r}")
+        return f"{self.__class__.__name__}({', '.join(fields)})"
+
+    @field_validator("id")
+    @classmethod
+    def validate_entity_id(cls, v: str) -> str:
+        """Validate entity ID field."""
+        if not v or not v.strip():
+            msg = "Entity ID cannot be empty"
+            raise FlextValidationError(
+                msg,
+                validation_details={"field": "id", "value": v},
+            )
+        return v.strip()
 
     @abstractmethod
     def validate_domain_rules(self) -> FlextResult[None]:
@@ -280,8 +335,8 @@ class FlextEntity(BaseModel, ABC):
 
     def add_domain_event(
         self,
-        event_type: str,
-        event_data: dict[str, object],
+        event_type: TDomainEventType,
+        event_data: TDomainEventData,
     ) -> FlextResult[None]:
         """Add domain event to entity.
 
@@ -306,7 +361,7 @@ class FlextEntity(BaseModel, ABC):
         self.domain_events.append(event_result.unwrap())
         return FlextResult.ok(None)
 
-    def clear_events(self) -> list[FlextEvent]:
+    def clear_events(self) -> TEventStream:
         """Clear and return collected domain events.
 
         Returns:
@@ -316,6 +371,112 @@ class FlextEntity(BaseModel, ABC):
         events = self.domain_events.copy()
         self.domain_events.clear()
         return events
+
+    def validate_field(self, field_name: str, field_value: object) -> FlextResult[None]:
+        """Validate a specific field using the fields system.
+
+        Args:
+            field_name: Name of the field to validate
+            field_value: Value to validate
+
+        Returns:
+            Result of field validation
+
+        """
+        try:
+            # Try to get field definition from registry
+            field_result = FlextFields.get_field_by_name(field_name)
+            if field_result.is_success:
+                field_def = field_result.unwrap()
+                validation_result = field_def.validate_value(field_value)
+                if validation_result.is_success:
+                    return FlextResult.ok(None)
+                return FlextResult.fail(
+                    validation_result.error or "Field validation failed",
+                )
+
+            # If no field definition found, return success (allow other validation)
+            return FlextResult.ok(None)
+        except (ImportError, AttributeError, ValueError) as e:
+            return FlextResult.fail(f"Field validation error: {e}")
+
+    def validate_all_fields(self) -> FlextResult[None]:
+        """Validate all entity fields using the fields system.
+
+        Automatically validates all model fields that have corresponding
+        field definitions in the fields registry.
+
+        Returns:
+            Result of comprehensive field validation
+
+        """
+        errors = []
+
+        # Get all model fields and their values
+        model_data = self.model_dump()
+
+        for field_name, field_value in model_data.items():
+            # Skip internal fields
+            if field_name.startswith("_") or field_name == "domain_events":
+                continue
+
+            validation_result = self.validate_field(field_name, field_value)
+            if validation_result.is_failure:
+                errors.append(f"{field_name}: {validation_result.error}")
+
+        if errors:
+            return FlextResult.fail(f"Field validation errors: {'; '.join(errors)}")
+
+        return FlextResult.ok(None)
+
+    def with_version(self, version: TEntityVersion) -> Self:
+        """Create new instance with specific version number.
+
+        Args:
+            version: New version number for the entity
+
+        Returns:
+            New entity instance with updated version
+
+        Raises:
+            ValueError: If version is not greater than current version
+
+        """
+        if version <= self.version:
+            msg = "New version must be greater than current version"
+            raise FlextValidationError(
+                msg,
+                validation_details={
+                    "field": "version",
+                    "value": version,
+                    "current_version": self.version,
+                },
+            )
+
+        try:
+            data = self.model_dump()
+            data["version"] = version
+            new_entity = self.__class__(**data)
+
+            # Validate domain rules
+            validation_result = new_entity.validate_domain_rules()
+            if validation_result.is_failure:
+                msg = validation_result.error or "Domain validation failed"
+                raise FlextValidationError(
+                    msg,
+                    validation_details={"field": "domain_rules", "entity_id": self.id},
+                )
+            return new_entity
+        except (TypeError, ValidationError) as e:
+            msg = f"Failed to set version: {e}"
+            raise FlextValidationError(
+                msg,
+                validation_details={
+                    "field": "version",
+                    "value": version,
+                    "error": str(e),
+                },
+            ) from e
 
 
 # =============================================================================
@@ -416,11 +577,6 @@ class FlextEntityFactory:
             **kwargs: object,
         ) -> FlextResult[FlextEntity]:
             try:
-                if FlextGenerators is None:
-                    # Fallback if FlextGenerators is not available
-                    error_msg = "FlextGenerators not available due to circular imports"
-                    raise ImportError(error_msg)
-
                 data = {**(defaults or {}), **kwargs}
 
                 # Generate ID if not provided
@@ -433,7 +589,9 @@ class FlextEntityFactory:
                 instance = entity_class.model_validate(data)
                 validation_result = instance.validate_domain_rules()
                 if validation_result.is_failure:
-                    return validation_result
+                    return FlextResult.fail(
+                        validation_result.error or "Domain validation failed",
+                    )
                 return FlextResult.ok(instance)
             except (TypeError, ValueError, AttributeError, RuntimeError) as e:
                 return FlextResult.fail(f"Entity creation failed: {e}")

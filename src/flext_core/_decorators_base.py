@@ -83,13 +83,14 @@ import functools
 import time
 from typing import TYPE_CHECKING, Protocol
 
+from flext_core.exceptions import FlextValidationError
 from flext_core.loggings import get_logger
 from flext_core.result import safe_call
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from flext_core.types import TErrorHandler, TValidator
+    from flext_core.types import TAnyDict, TErrorHandler, TValidator
 
 
 class _DecoratedFunction(Protocol):
@@ -378,7 +379,10 @@ def _validate_input_decorator(
             # Simple validation - at least one argument must pass
             if args and callable(validator) and not any(validator(arg) for arg in args):
                 validation_error = "Input validation failed"
-                raise ValueError(validation_error)
+                raise FlextValidationError(
+                    validation_error,
+                    validation_details={"field": "input", "args": str(args)[:100]},
+                )
             return func(*args, **kwargs)
 
         return _BaseDecoratorUtils.preserve_metadata(func, wrapper)
@@ -430,7 +434,7 @@ def _cache_decorator(
     """
 
     def decorator(func: _DecoratedFunction) -> _DecoratedFunction:
-        cache: dict[str, object] = {}
+        cache: TAnyDict = {}
 
         @functools.wraps(func)
         def wrapper(*args: object, **kwargs: object) -> object:

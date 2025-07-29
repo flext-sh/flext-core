@@ -18,9 +18,15 @@ Features demonstrated:
 from __future__ import annotations
 
 import time
-from typing import Any
 
-from flext_core.mixins import (
+# Import shared domain models to reduce duplication
+from shared_domain import (
+    SharedDomainFactory,
+    User as SharedUser,
+    log_domain_operation,
+)
+
+from flext_core import (
     FlextCacheableMixin,
     FlextComparableMixin,
     FlextEntityMixin,
@@ -29,10 +35,20 @@ from flext_core.mixins import (
     FlextSerializableMixin,
     FlextTimestampMixin,
     FlextTimingMixin,
+    FlextUtilities,
     FlextValidatableMixin,
     FlextValueObjectMixin,
 )
-from flext_core.utilities import FlextUtilities
+
+# =============================================================================
+# VALIDATION CONSTANTS - Mixin validation constraints
+# =============================================================================
+
+# Username validation constants
+MIN_USERNAME_LENGTH = 3  # Minimum characters for username validation
+
+# Content display constants
+MAX_CONTENT_PREVIEW_LENGTH = 100  # Maximum characters for content preview
 
 # =============================================================================
 # INDIVIDUAL MIXIN DEMONSTRATIONS - Single responsibility patterns
@@ -53,7 +69,7 @@ class TimestampedDocument(FlextTimestampMixin):
         super().__init__()
         self.title = title
         self.content = content
-        self._initialize_timestamps()
+        # Timestamps are initialized lazily via property access
 
     def update_content(self, new_content: str) -> None:
         """Update document content with timestamp tracking."""
@@ -73,43 +89,46 @@ class TimestampedDocument(FlextTimestampMixin):
         return f"Document('{self.title}', age: {age:.2f}s)"
 
 
-class IdentifiableUser(FlextIdentifiableMixin):
-    """User with unique identification."""
-
-    def __init__(self, username: str, email: str, user_id: str | None = None) -> None:
-        """Initialize IdentifiableUser.
-
-        Args:
-            username: User username
-            email: User email
-            user_id: User ID
-
-        """
-        super().__init__()
-        self.username = username
-        self.email = email
-        self._initialize_id(user_id)
+class IdentifiableUser(SharedUser, FlextIdentifiableMixin, FlextLoggableMixin):
+    """Enhanced user with unique identification using shared domain models."""
 
     def change_username(self, new_username: str) -> bool:
-        """Change username with ID validation."""
+        """Change username with ID validation and logging.
+
+        Note: Since SharedUser is immutable, this demonstrates the pattern
+        but returns a success indicator rather than mutating the instance.
+        """
         if not self.has_id():
             print("❌ Cannot change username: User has no valid ID")
             return False
 
-        old_username = self.username
-        self.username = new_username
-        print(f"👤 User {self.id}: '{old_username}' → '{new_username}'")
+        old_username = self.name
+
+        # Use shared domain copy_with method for immutable updates
+        update_result = self.copy_with(name=new_username)
+        if update_result.is_failure:
+            self.logger.error("Failed to update username", error=update_result.error)
+            return False
+
+        # In a real system, you would return the new instance or update via repository
+        self.logger.info(
+            "Username change validated",
+            old_name=old_username,
+            new_name=new_username,
+        )
+        print(f"👤 User {self.id}: '{old_username}' → '{new_username}' (validated)")
+        print("   Note: SharedUser is immutable - use copy_with() for actual updates")
         return True
 
     def __str__(self) -> str:
-        """Strings representation with ID."""
-        return f"User({self.username}, ID: {self.id})"
+        """Return string representation with ID."""
+        return f"User({self.name}, ID: {self.id}, Email: {self.email_address.email})"
 
 
 class ValidatableConfiguration(FlextValidatableMixin):
     """Configuration with validation state tracking."""
 
-    def __init__(self, config_name: str, settings: dict[str, Any]) -> None:
+    def __init__(self, config_name: str, settings: dict[str, object]) -> None:
         """Initialize ValidatableConfiguration.
 
         Args:
@@ -120,28 +139,28 @@ class ValidatableConfiguration(FlextValidatableMixin):
         super().__init__()
         self.config_name = config_name
         self.settings = settings
-        self._initialize_validation()
+        # Validation state is initialized lazily via method calls
 
     def validate_configuration(self) -> bool:
         """Validate configuration settings."""
-        self._clear_validation_errors()
+        self.clear_validation_errors()
 
         # Required settings validation
         required_keys = ["database_url", "api_key", "timeout"]
         for key in required_keys:
             if key not in self.settings:
-                self._add_validation_error(f"Missing required setting: {key}")
+                self.add_validation_error(f"Missing required setting: {key}")
 
         # Value validation
         if "timeout" in self.settings:
             timeout = self.settings["timeout"]
             if not isinstance(timeout, int | float) or timeout <= 0:
-                self._add_validation_error("Timeout must be a positive number")
+                self.add_validation_error("Timeout must be a positive number")
 
         # Set validation status
         is_valid = len(self.validation_errors) == 0
         if is_valid:
-            self._mark_valid()
+            self.mark_valid()
 
         return is_valid
 
@@ -175,9 +194,13 @@ class LoggableService(FlextLoggableMixin):
         super().__init__()
         self.service_name = service_name
 
-    def process_request(self, request_id: str, data: dict[str, Any]) -> dict[str, Any]:
+    def process_request(
+        self,
+        request_id: str,
+        _data: dict[str, object],
+    ) -> dict[str, object]:
         """Process request with comprehensive logging."""
-        self.logger.info("Processing request %s , request_id=request_id", request_id)
+        self.logger.info("Processing request", request_id=request_id)
 
         try:
             # Simulate processing
@@ -190,22 +213,18 @@ class LoggableService(FlextLoggableMixin):
                 "service": self.service_name,
             }
 
-            self.logger.info(f"Request {request_id} completed successfully", **result)
+            self.logger.info("Request completed successfully", request_id=request_id)
             return result
 
         except Exception as e:
-            self.logger.exception(
-                f"Request {request_id} failed",
-                error=str(e),
-                request_id=request_id,
-            )
+            self.logger.exception("Request failed", request_id=request_id)
             return {
                 "request_id": request_id,
                 "status": "error",
                 "error": str(e),
             }
 
-    def health_check(self) -> dict[str, Any]:
+    def health_check(self) -> dict[str, object]:
         """Perform health check with logging."""
         self.logger.debug("Performing health check")
 
@@ -215,7 +234,7 @@ class LoggableService(FlextLoggableMixin):
             "timestamp": FlextUtilities.generate_iso_timestamp(),
         }
 
-        self.logger.info("Health check completed", **health_status)
+        self.logger.info("Health check completed")
         return health_status
 
 
@@ -232,7 +251,7 @@ class TimedOperation(FlextTimingMixin):
         super().__init__()
         self.operation_name = operation_name
 
-    def execute_operation(self, complexity: int = 1000) -> dict[str, Any]:
+    def execute_operation(self, complexity: int = 1000) -> dict[str, object]:
         """Execute operation with timing measurement."""
         print(f"⏱️ Starting operation: {self.operation_name}")
 
@@ -269,7 +288,7 @@ class CacheableCalculator(FlextCacheableMixin):
         cache_key = f"fib_{n}"
 
         # Check cache first
-        cached_result = self._cache_get(cache_key)
+        cached_result = self.cache_get(cache_key)
         if cached_result is not None:
             print(f"💰 Cache hit for fib({n}): {cached_result}")
             return cached_result
@@ -281,10 +300,10 @@ class CacheableCalculator(FlextCacheableMixin):
         result = n if n <= 1 else self.fibonacci(n - 1) + self.fibonacci(n - 2)
 
         # Cache the result
-        self._cache_set(cache_key, result)
+        self.cache_set(cache_key, result)
         return result
 
-    def get_stats(self) -> dict[str, Any]:
+    def get_stats(self) -> dict[str, object]:
         """Get calculation statistics."""
         return {
             "calculations_performed": self.calculation_count,
@@ -298,65 +317,85 @@ class CacheableCalculator(FlextCacheableMixin):
 
 
 class AdvancedUser(
-    FlextIdentifiableMixin,
+    SharedUser,
     FlextTimestampMixin,
     FlextValidatableMixin,
     FlextLoggableMixin,
 ):
-    """User with multiple behavioral mixins."""
+    """Enhanced user with multiple behavioral mixins using shared domain models."""
 
-    def __init__(self, username: str, email: str, role: str = "user") -> None:
-        """Initialize AdvancedUser.
+    def __init__(self, username: str, email: str, age: int, role: str = "user") -> None:
+        """Initialize AdvancedUser using shared domain factory.
 
         Args:
             username: User username
             email: User email
+            age: User age
             role: User role
 
         """
-        super().__init__()
-        self.username = username
-        self.email = email
-        self.role = role
+        # Create user using shared domain factory
+        user_result = SharedDomainFactory.create_user(username, email, age)
+        if user_result.is_failure:
+            msg = f"Failed to create user: {user_result.error}"
+            raise ValueError(msg)
 
-        # Initialize all mixins
-        self._initialize_id()
-        self._initialize_timestamps()
-        self._initialize_validation()
+        shared_user = user_result.data
 
-        self.logger.info(
-            f"Advanced user created: {username}",
-            username=username,
+        # Initialize with shared user data
+        super().__init__(
+            id=shared_user.id,
+            name=shared_user.name,
+            email_address=shared_user.email_address,
+            age=shared_user.age,
+            status=shared_user.status,
+            phone=shared_user.phone,
+            address=shared_user.address,
+            version=shared_user.version,
+            created_at=shared_user.created_at,
+        )
+
+        # Use object.__setattr__ to set role on immutable instance
+        object.__setattr__(self, "role", role)
+
+        # Initialize mixins
+        # Timestamps are inherited from shared domain
+        # Validation state is initialized lazily via method calls
+
+        self.logger.info("Advanced user created", username=username, role=role)
+        log_domain_operation(
+            "advanced_user_created",
+            "AdvancedUser",
+            self.id,
             role=role,
         )
 
     def validate_user(self) -> bool:
-        """Comprehensive user validation."""
-        self._clear_validation_errors()
+        """Comprehensive user validation using shared domain validation."""
+        self.clear_validation_errors()
 
-        # Username validation
-        if not self.username or len(self.username) < 3:
-            self._add_validation_error("Username must be at least 3 characters")
+        # First validate using shared domain rules
+        domain_validation = self.validate_domain_rules()
+        if domain_validation.is_failure:
+            self.add_validation_error(
+                f"Domain validation failed: {domain_validation.error}",
+            )
 
-        # Email validation
-        if not self.email or "@" not in self.email:
-            self._add_validation_error("Invalid email format")
-
-        # Role validation
+        # Additional role validation
         valid_roles = ["user", "admin", "moderator"]
         if self.role not in valid_roles:
-            self._add_validation_error(f"Invalid role. Must be one of: {valid_roles}")
+            self.add_validation_error(f"Invalid role. Must be one of: {valid_roles}")
 
         is_valid = len(self.validation_errors) == 0
         if is_valid:
-            self._mark_valid()
+            self.mark_valid()
 
         if is_valid:
-            self.logger.info("User validation successful: %s", self.username)
+            self.logger.info("User validation successful", username=self.name)
         else:
             self.logger.warning(
-                "User validation failed: %s",
-                self.username,
+                "User validation failed",
+                username=self.name,
                 errors=self.validation_errors,
             )
 
@@ -369,29 +408,46 @@ class AdvancedUser(
             return False
 
         if self.role == "admin":
-            self.logger.warning(f"User {self.username} is already admin")
+            self.logger.warning("User is already admin", username=self.name)
             return False
 
         old_role = self.role
-        self.role = "admin"
-        self._update_timestamp()
+        # Note: In a real system with immutable entities, you would use copy_with
+        # and return a new instance or update via repository
+        # For this demonstration, we'll simulate the role change
+        try:
+            # This is a demonstration - in production use proper state management
+            object.__setattr__(self, "role", "admin")
+            self._update_timestamp()
+        except Exception as e:
+            self.logger.exception("Failed to update role", error=str(e))
+            return False
 
         self.logger.info(
-            f"User promoted: {self.username}",
+            "User promoted",
+            username=self.name,
             old_role=old_role,
-            new_role="admin",
-            user_id=self.id,
+            new_role=self.role,
+        )
+        log_domain_operation(
+            "user_promoted",
+            "AdvancedUser",
+            self.id,
+            old_role=old_role,
+            new_role=self.role,
         )
         return True
 
-    def get_user_info(self) -> dict[str, Any]:
+    def get_user_info(self) -> dict[str, object]:
         """Get comprehensive user information."""
         age_seconds = time.time() - (self.created_at or 0)
 
         return {
             "id": self.id,
-            "username": self.username,
-            "email": self.email,
+            "username": self.name,
+            "email": self.email_address.email,
+            "age": self.age.value,
+            "status": self.status.value,
             "role": self.role,
             "created_at": self.created_at,
             "updated_at": self.updated_at,
@@ -425,14 +481,14 @@ class SmartDocument(
         self.view_count = 0
 
         # Initialize mixins
-        self._initialize_timestamps()
+        # Timestamps are initialized lazily via property access
 
-    def view_document(self) -> dict[str, Any]:
+    def view_document(self) -> dict[str, object]:
         """View document with caching and statistics."""
         cache_key = f"view_{self.title}"
 
         # Check if view is cached
-        cached_view = self._cache_get(cache_key)
+        cached_view = self.cache_get(cache_key)
         if cached_view is not None:
             print(f"📄 Cached view for: {self.title}")
             self.view_count += 1
@@ -441,8 +497,8 @@ class SmartDocument(
         # Generate view data
         view_data = {
             "title": self.title,
-            "content": self.content[:100] + "..."
-            if len(self.content) > 100
+            "content": self.content[:MAX_CONTENT_PREVIEW_LENGTH] + "..."
+            if len(self.content) > MAX_CONTENT_PREVIEW_LENGTH
             else self.content,
             "category": self.category,
             "created_at": self.created_at,
@@ -451,7 +507,7 @@ class SmartDocument(
         }
 
         # Cache the view
-        self._cache_set(cache_key, view_data)
+        self.cache_set(cache_key, view_data)
         self.view_count += 1
 
         print(f"📄 Generated view for: {self.title}")
@@ -464,16 +520,16 @@ class SmartDocument(
 
         # Clear cached views
         cache_key = f"view_{self.title}"
-        cached_view = self._cache_get(cache_key)
+        cached_view = self.cache_get(cache_key)
         if cached_view is not None:
-            self._cache_remove(cache_key)
+            self.cache_remove(cache_key)
 
         print(f"📝 Content updated for: {self.title}")
 
-    def compare_with(self, other: SmartDocument) -> dict[str, Any]:
+    def compare_with(self, other: SmartDocument) -> dict[str, object]:
         """Compare documents using comparable mixin."""
         if not isinstance(other, SmartDocument):
-            return {"error": "Can only compare with other SmartDocument instances"}
+            return {"error": "Can only compare with other SmartDocument instances"}  # type: ignore[unreachable]
 
         return {
             "title_match": self.title == other.title,
@@ -483,7 +539,7 @@ class SmartDocument(
             "view_count_diff": self.view_count - other.view_count,
         }
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self) -> dict[str, object]:
         """Serialize document to dictionary."""
         return {
             "title": self.title,
@@ -504,7 +560,14 @@ class EnterpriseService(
 ):
     """Enterprise service with comprehensive mixin composition."""
 
-    def __init__(self, service_name: str, config: dict[str, Any]) -> None:
+    def __init__(self, service_name: str, config: dict[str, object]) -> None:
+        """Initialize EnterpriseService with name and configuration.
+
+        Args:
+            service_name: Name of the enterprise service
+            config: Service configuration dictionary
+
+        """
         super().__init__()
         self.service_name = service_name
         self.config = config
@@ -512,46 +575,50 @@ class EnterpriseService(
         self.error_count = 0
 
         # Initialize all mixins
-        self._initialize_id()
-        self._initialize_validation()
+        self.generate_id()
+        # Validation state is initialized lazily via method calls
 
-        self.logger.info(f"Enterprise service initialized: {service_name}")
+        self.logger.info("Enterprise service initialized", service_name=service_name)
 
     def validate_service(self) -> bool:
         """Validate service configuration."""
-        self._clear_validation_errors()
+        self.clear_validation_errors()
 
         required_config = ["host", "port", "timeout"]
         for key in required_config:
             if key not in self.config:
-                self._add_validation_error(f"Missing required config: {key}")
+                self.add_validation_error(f"Missing required config: {key}")
 
         if "timeout" in self.config:
             timeout = self.config["timeout"]
             if not isinstance(timeout, int | float) or timeout <= 0:
-                self._add_validation_error("Timeout must be positive number")
+                self.add_validation_error("Timeout must be positive number")
 
         is_valid = len(self.validation_errors) == 0
         if is_valid:
-            self._mark_valid()
+            self.mark_valid()
 
         return is_valid
 
-    def process_request(self, request_id: str, data: dict[str, Any]) -> dict[str, Any]:
+    def process_request(
+        self,
+        request_id: str,
+        data: dict[str, object],
+    ) -> dict[str, object]:
         """Process request with comprehensive monitoring."""
-        self.logger.info(f"Processing request: {request_id}")
+        self.logger.info("Processing request", request_id=request_id)
 
         # Validate service first
         if not self.validate_service():
             self.error_count += 1
-            self.logger.error("Service validation failed", request_id=request_id)
+            self.logger.error("Service validation failed")
             return {"error": "Service not properly configured"}
 
         # Check cache
         cache_key = f"request_{request_id}"
-        cached_result = self._cache_get(cache_key)
+        cached_result = self.cache_get(cache_key)
         if cached_result is not None:
-            self.logger.info(f"Cache hit for request: {request_id}")
+            self.logger.info("Cache hit for request", request_id=request_id)
             return cached_result
 
         # Time the operation
@@ -573,24 +640,17 @@ class EnterpriseService(
             result["execution_time"] = execution_time
 
             # Cache successful results
-            self._cache_set(cache_key, result)
+            self.cache_set(cache_key, result)
 
             self.request_count += 1
-            self.logger.info(
-                f"Request completed: {request_id}",
-                execution_time=execution_time,
-            )
+            self.logger.info("Request completed", request_id=request_id)
 
             return result
 
         except Exception as e:
             execution_time = self._get_execution_time_seconds(start_time)
             self.error_count += 1
-            self.logger.exception(
-                f"Request failed: {request_id}",
-                error=str(e),
-                execution_time=execution_time,
-            )
+            self.logger.exception("Request failed", request_id=request_id)
 
             return {
                 "request_id": request_id,
@@ -599,7 +659,7 @@ class EnterpriseService(
                 "execution_time": execution_time,
             }
 
-    def get_service_metrics(self) -> dict[str, Any]:
+    def get_service_metrics(self) -> dict[str, object]:
         """Get comprehensive service metrics."""
         return {
             "service_id": self.id,
@@ -621,18 +681,25 @@ class EnterpriseService(
 class DomainEntity(FlextEntityMixin):
     """Domain entity using composite entity mixin."""
 
-    def __init__(self, entity_type: str, data: dict[str, Any]) -> None:
+    def __init__(self, entity_type: str, data: dict[str, object]) -> None:
+        """Initialize DomainEntity with type and data.
+
+        Args:
+            entity_type: Type classification of the entity
+            data: Entity data dictionary
+
+        """
         super().__init__()
         self.entity_type = entity_type
         self.data = data
 
-    def update_data(self, new_data: dict[str, Any]) -> None:
+    def update_data(self, new_data: dict[str, object]) -> None:
         """Update entity data with timestamp tracking."""
         self.data.update(new_data)
         self._update_timestamp()
         print(f"🔄 Entity {self.entity_type} updated")
 
-    def get_entity_info(self) -> dict[str, Any]:
+    def get_entity_info(self) -> dict[str, object]:
         """Get comprehensive entity information."""
         return {
             "id": self.id,
@@ -647,30 +714,38 @@ class DomainEntity(FlextEntityMixin):
 class ValueObjectExample(FlextValueObjectMixin):
     """Value object using composite value object mixin."""
 
-    def __init__(self, name: str, value: Any, unit: str | None = None) -> None:
+    def __init__(self, name: str, value: object, unit: str | None = None) -> None:
+        """Initialize ValueObjectExample with name, value and optional unit.
+
+        Args:
+            name: Name of the value object
+            value: The contained value
+            unit: Optional unit of measurement
+
+        """
         super().__init__()
         self.name = name
         self.value = value
         self.unit = unit
-        self._initialize_validation()
+        # Validation state is initialized lazily via method calls
 
     def validate_value(self) -> bool:
         """Validate value object."""
-        self._clear_validation_errors()
+        self.clear_validation_errors()
 
         if not self.name:
-            self._add_validation_error("Name cannot be empty")
+            self.add_validation_error("Name cannot be empty")
 
         if self.value is None:
-            self._add_validation_error("Value cannot be None")
+            self.add_validation_error("Value cannot be None")
 
         is_valid = len(self.validation_errors) == 0
         if is_valid:
-            self._mark_valid()
+            self.mark_valid()
 
         return is_valid
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self) -> dict[str, object]:
         """Serialize value object."""
         return {
             "name": self.name,
@@ -680,7 +755,7 @@ class ValueObjectExample(FlextValueObjectMixin):
         }
 
     def __str__(self) -> str:
-        """String representation."""
+        """Represent string representation."""
         unit_str = f" {self.unit}" if self.unit else ""
         return f"{self.name}: {self.value}{unit_str}"
 
@@ -705,10 +780,26 @@ def demonstrate_individual_mixins() -> None:
 
     # Identifiable mixin
     print("\n📋 Identifiable Mixin:")
-    user = IdentifiableUser("john_doe", "john@example.com")
-    print(f"  👤 User: {user}")
-    user.change_username("john_smith")
-    print(f"  👤 Updated: {user}")
+    # Create user using shared domain factory first
+    user_result = SharedDomainFactory.create_user("john_doe", "john@example.com", 25)
+    if user_result.is_success:
+        shared_user = user_result.data
+        user = IdentifiableUser(
+            id=shared_user.id,
+            name=shared_user.name,
+            email_address=shared_user.email_address,
+            age=shared_user.age,
+            status=shared_user.status,
+            phone=shared_user.phone,
+            address=shared_user.address,
+            version=shared_user.version,
+            created_at=shared_user.created_at,
+        )
+        print(f"  👤 User: {user}")
+        user.change_username("john_smith")
+        print(f"  👤 Updated: {user}")
+    else:
+        print(f"  ❌ Failed to create user: {user_result.error}")
 
     # Validatable mixin
     print("\n📋 Validatable Mixin:")
@@ -756,7 +847,7 @@ def demonstrate_multiple_inheritance() -> None:
 
     # Advanced user with multiple mixins
     print("📋 Advanced User (4 mixins):")
-    user = AdvancedUser("alice_admin", "alice@company.com", "user")
+    user = AdvancedUser("alice_admin", "alice@company.com", 28, "user")
 
     # Validate user
     is_valid = user.validate_user()
@@ -769,7 +860,8 @@ def demonstrate_multiple_inheritance() -> None:
     # Get user info
     info = user.get_user_info()
     print(
-        f"  📊 User info: ID={info['id']}, Role={info['role']}, Valid={info['is_valid']}",
+        f"  📊 User info: ID={info['id']}, Role={info['role']}, "
+        f"Valid={info['is_valid']}",
     )
 
     # Smart document with multiple mixins
@@ -816,13 +908,15 @@ def demonstrate_multiple_inheritance() -> None:
         request_id = f"req_{i:03d}"
         result = service.process_request(request_id, {"amount": 100 + i * 10})
         print(
-            f"  📦 Request {request_id}: {result['status']} in {result.get('execution_time', 0):.4f}s",
+            f"  📦 Request {request_id}: {result['status']} in "
+            f"{result.get('execution_time', 0):.4f}s",
         )
 
     # Get service metrics
     metrics = service.get_service_metrics()
     print(
-        f"  📊 Service metrics: {metrics['request_count']} requests, {metrics['error_rate']:.2%} error rate",
+        f"  📊 Service metrics: {metrics['request_count']} requests, "
+        f"{metrics['error_rate']:.2%} error rate",
     )
 
 
@@ -886,22 +980,22 @@ def demonstrate_method_resolution_order() -> None:
         def __init__(self, name: str) -> None:
             super().__init__()
             self.name = name
-            self._initialize_id()
-            self._initialize_validation()
-            self.logger.info(f"Complex class initialized: {name}")
+            self.generate_id()
+            # Validation state is initialized lazily via method calls
+            self.logger.info("Complex class initialized: %s", name)
 
-        def perform_operation(self) -> dict[str, Any]:
+        def perform_operation(self) -> dict[str, object]:
             """Operation using multiple mixin capabilities."""
             start_time = self._start_timing()
 
             # Validate state
-            self._clear_validation_errors()
+            self.clear_validation_errors()
             if not self.name:
-                self._add_validation_error("Name cannot be empty")
+                self.add_validation_error("Name cannot be empty")
 
             is_valid = len(self.validation_errors) == 0
             if is_valid:
-                self._mark_valid()
+                self.mark_valid()
 
             # Simulate work
             time.sleep(0.001)
@@ -916,7 +1010,7 @@ def demonstrate_method_resolution_order() -> None:
                 "mro_length": len(self.__class__.__mro__),
             }
 
-            self.logger.info(f"Operation completed for {self.name}", **result)
+            self.logger.info("Operation completed for %s", self.name)
             return result
 
     # Demonstrate MRO
@@ -928,7 +1022,8 @@ def demonstrate_method_resolution_order() -> None:
     # Perform operation
     result = complex_obj.perform_operation()
     print(
-        f"  📊 Operation result: Valid={result['is_valid']}, Time={result['execution_time']:.4f}s",
+        f"  📊 Operation result: Valid={result['is_valid']}, "
+        f"Time={result['execution_time']:.4f}s",
     )
 
 
@@ -950,7 +1045,7 @@ def demonstrate_performance_characteristics() -> None:
         def __init__(self, name: str) -> None:
             super().__init__()
             self.name = name
-            self._initialize_timestamps()
+            # Timestamps are initialized lazily via property access
 
         def operation(self) -> str:
             return f"Single: {self.name}"
@@ -965,9 +1060,9 @@ def demonstrate_performance_characteristics() -> None:
         def __init__(self, name: str) -> None:
             super().__init__()
             self.name = name
-            self._initialize_id()
-            self._initialize_timestamps()
-            self._initialize_validation()
+            self.generate_id()
+            # Timestamps are initialized lazily via property access
+            # Validation state is initialized lazily via method calls
 
         def operation(self) -> str:
             return f"Multiple: {self.name}"
@@ -1000,7 +1095,8 @@ def demonstrate_performance_characteristics() -> None:
     print(f"  🔹 Simple class: {simple_time:.4f}s ({operations / simple_time:.0f}/s)")
     print(f"  🔹 Single mixin: {single_time:.4f}s ({operations / single_time:.0f}/s)")
     print(
-        f"  🔹 Multiple mixins: {multiple_time:.4f}s ({operations / multiple_time:.0f}/s)",
+        f"  🔹 Multiple mixins: {multiple_time:.4f}s "
+        f"({operations / multiple_time:.0f}/s)",
     )
 
     # Calculate overhead
@@ -1027,46 +1123,44 @@ def demonstrate_enterprise_patterns() -> None:
 
         def __init__(self) -> None:
             super().__init__()
-            self.users: dict[str, dict[str, Any]] = {}
+            self.users: dict[str, dict[str, object]] = {}
 
-        def save_user(self, user_id: str, user_data: dict[str, Any]) -> bool:
+        def save_user(self, user_id: str, user_data: dict[str, object]) -> bool:
             """Save user with caching and logging."""
             start_time = self._start_timing()
 
             try:
                 self.users[user_id] = user_data
-                self.set_cached(f"user_{user_id}", user_data, ttl=60)
+                self.cache_set(f"user_{user_id}", user_data)
 
-                execution_time = self._get_execution_time_seconds(start_time)
-                self.logger.info(
-                    f"User saved: {user_id}",
-                    execution_time=execution_time,
-                )
+                _ = self._get_execution_time_seconds(start_time)  # Track execution time
+                self.logger.info("User saved: %s", user_id)
 
                 return True
-
-            except Exception as e:
-                execution_time = self._get_execution_time_seconds(start_time)
-                self.logger.exception(f"Failed to save user: {user_id}", error=str(e))
+            except Exception:
+                _ = self._get_execution_time_seconds(start_time)  # Track execution time
+                self.logger.exception("Failed to save user: %s", user_id)
                 return False
 
-        def find_user(self, user_id: str) -> dict[str, Any] | None:
-            """Find user with caching."""
+        def find_user(self, user_id: str) -> dict[str, object] | None:
+            """Find user with caching and logging."""
+            self._start_timing()
+
             # Check cache first
-            cache_key = f"user_{user_id}"
-            cached_user = self._cache_get(cache_key)
+            cache_key = f"user:{user_id}"
+            cached_user = self.cache_get(cache_key)
             if cached_user is not None:
-                self.logger.info(f"Cache hit for user: {user_id}")
+                self.logger.info("Cache hit for user: %s", user_id)
                 return cached_user
 
             # Check storage
             if user_id in self.users:
                 user_data = self.users[user_id]
-                self._cache_set(cache_key, user_data)
-                self.logger.info(f"User found in storage: {user_id}")
+                self.cache_set(cache_key, user_data)
+                self.logger.info("User found in storage: %s", user_id)
                 return user_data
 
-            self.logger.warning(f"User not found: {user_id}")
+            self.logger.warning("User not found: %s", user_id)
             return None
 
     # Domain service pattern
@@ -1081,39 +1175,36 @@ def demonstrate_enterprise_patterns() -> None:
         def __init__(self, user_repo: UserRepository) -> None:
             super().__init__()
             self.user_repo = user_repo
-            self.orders: dict[str, dict[str, Any]] = {}
-            self._initialize_id()
-            self._initialize_validation()
+            self.orders: dict[str, dict[str, object]] = {}
+            self.generate_id()
+            # Validation state is initialized lazily via method calls
 
         def create_order(
             self,
             user_id: str,
-            items: list[dict[str, Any]],
-        ) -> dict[str, Any] | None:
+            items: list[dict[str, object]],
+        ) -> dict[str, object] | None:
             """Create order with validation and logging."""
             start_time = self._start_timing()
-            self.logger.info(f"Creating order for user: {user_id}")
+            self.logger.info("Creating order for user: %s", user_id)
 
             # Validate user exists
             user = self.user_repo.find_user(user_id)
             if not user:
-                self.logger.error(f"Cannot create order: User not found: {user_id}")
+                self.logger.error("Cannot create order: User not found: %s", user_id)
                 return None
 
             # Validate items
-            self._clear_validation_errors()
+            self.clear_validation_errors()
             if not items:
-                self._add_validation_error("Order must have at least one item")
+                self.add_validation_error("Order must have at least one item")
 
             for item in items:
                 if "product_id" not in item or "quantity" not in item:
-                    self._add_validation_error("Invalid item format")
+                    self.add_validation_error("Invalid item format")
 
             if not self.is_valid:
-                self.logger.error(
-                    "Order validation failed",
-                    errors=self.validation_errors,
-                )
+                self.logger.error("Order validation failed")
                 return None
 
             # Create order
@@ -1128,11 +1219,8 @@ def demonstrate_enterprise_patterns() -> None:
 
             self.orders[order_id] = order
 
-            execution_time = self._get_execution_time_seconds(start_time)
-            self.logger.info(
-                f"Order created: {order_id}",
-                execution_time=execution_time,
-            )
+            _ = self._get_execution_time_seconds(start_time)  # Track execution time
+            self.logger.info("Order created: %s", order_id)
 
             return order
 

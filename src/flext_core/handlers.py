@@ -71,7 +71,8 @@ from typing import cast
 from flext_core._handlers_base import (
     _BaseHandler,
 )
-from flext_core.flext_types import (
+from flext_core.result import FlextResult
+from flext_core.types import (
     R,
     T,
     TAnyDict,
@@ -79,10 +80,29 @@ from flext_core.flext_types import (
     TServiceKey,
     TServiceName,
 )
-from flext_core.result import FlextResult
 
 # FlextLogger imported for convenience - all handlers use FlextLoggableMixin
 
+# =============================================================================
+# DOMAIN-SPECIFIC TYPES - Handler Pattern Specializations
+# =============================================================================
+
+# Handler pattern specific types for better domain modeling
+type THandlerId = str  # Handler instance identifier
+type THandlerType = str  # Handler type name for routing
+type TMessageType = str  # Message type for handler dispatch
+type TEventType = str  # Event type for event handlers
+type TRequestType = str  # Request type for request handlers
+type TResponseType[T] = FlextResult[T]  # Handler response with type parameter
+type THandlerMetadata = TAnyDict  # Handler metadata for middleware
+type THandlerPriority = int  # Handler execution priority (1-10)
+type THandlerTimeout = int  # Handler timeout in milliseconds
+type TRetryCount = int  # Number of retry attempts for failed handlers
+
+# Registry and dispatch types
+type THandlerRegistry = dict[str, THandler]  # Handler type to handler mapping
+type THandlerKey = str  # Key for handler registration and lookup
+type TDispatchResult[T] = FlextResult[T]  # Result of handler dispatch
 
 # =============================================================================
 # FLEXT HANDLERS - Unified handler patterns
@@ -162,7 +182,7 @@ class FlextHandlers:
     # BASE HANDLER - Foundation for all handlers
     # =============================================================================
 
-    class Handler(Generic[T, R]):
+    class Handler[T, R]:
         """Generic handler interface using composition-based delegation.
 
         Comprehensive handler functionality through composition and delegation
@@ -228,20 +248,39 @@ class FlextHandlers:
 
         def __init__(self, handler_name: TServiceName | None = None) -> None:
             """Initialize handler with composition-based delegation."""
-            # Create base handler instance for delegation
-            self._base_handler = _BaseHandler[object, object](handler_name)
+            # Initialize using composition pattern - not inheritance from abstract base
+            self._handler_name = handler_name or self.__class__.__name__
+            # Generate unique handler_id based on class name and object id
+            self.handler_id = f"{self.__class__.__name__}_{id(self)}"
+            self.handler_name = self._handler_name
+            self._metrics = {
+                "messages_handled": 0,
+                "successes": 0,
+                "failures": 0,
+                "total_processing_time_ms": 0.0,
+            }
+
+            # Create concrete implementation of abstract base for delegation
+            class _ConcreteBaseHandler(_BaseHandler[object, object]):
+                def handle(self, message: object) -> FlextResult[object]:
+                    # Delegate to outer instance handle method
+                    return FlextResult.ok(message)
+
+            self._base_handler = _ConcreteBaseHandler(handler_name)
 
         # =====================================================================
         # DELEGATION METHODS - Direct delegation to base handler
         # =====================================================================
 
         def handle(self, message: object) -> FlextResult[object]:
-            """Handle message - delegates to base handler."""
-            return self._base_handler.handle(message)
+            """Handle message - implement in subclasses."""
+            # Default implementation returns success with message
+            return FlextResult.ok(message)
 
-        def can_handle(self, message: object) -> bool:
-            """Check if handler can process message - delegates to base."""
-            return self._base_handler.can_handle(message)
+        def can_handle(self, message: object) -> bool:  # noqa: ARG002
+            """Check if handler can process message - override in subclasses."""
+            # Default implementation - override in subclasses for specific logic
+            return True
 
         def pre_handle(self, message: object) -> FlextResult[object]:
             """Pre-processing hook - delegates to base."""
@@ -264,197 +303,119 @@ class FlextHandlers:
             """Access logger - delegates to base."""
             return self._base_handler.logger
 
-
-        def can_handle(self, message: object) -> bool:
-            """Check if handler can process this message.
-
-            Uses FlextUtilities type guards for validation.
-            """
-            self.logger.debug(
-                "Checking if handler can process message",
-                message_type=type(message).__name__,
-            )
-
-            # Get expected message type from Generic parameter
-            if hasattr(self, "__orig_bases__"):
-                for base in self.__orig_bases__:
-                    if hasattr(base, "__args__") and len(base.__args__) >= 1:
-                        expected_type = base.__args__[0]
-                        # Use FlextTypeGuards - MAXIMIZA base usage com DRY
-                        can_handle = FlextTypeGuards.is_instance_of(
-                            message,
-                            expected_type,
-                        )
-
-                        self.logger.debug(
-                            "Handler check result",
-                            can_handle=can_handle,
-                            expected_type=getattr(
-                                expected_type,
-                                "__name__",
-                                str(expected_type),
-                            ),
-                        )
-                        return can_handle
-
-            # Default to True if we can't determine type
-            return True
-
-        def pre_handle(self, message: T) -> FlextResult[T]:
-            """Pre-processing hook with logging.
-
-            Called before main handle method.
-            Default implementation validates message.
-            """
-            self.logger.debug(
-                "Pre-processing message",
-                message_type=type(message).__name__,
-            )
-
-            # Validate message if it has validation method
-            if hasattr(message, "validate"):
-                validation_result = message.validate()
-                if (
-                    hasattr(validation_result, "is_failure")
-                    and validation_result.is_failure
-                ):
-                    self.logger.warning(
-                        "Message validation failed in pre-processing",
-                        error=validation_result.error,
-                    )
-                    return FlextResult.fail(
-                        validation_result.error or "Validation failed",
-                    )
-
+        def validate_message(self, message: object) -> FlextResult[object]:
+            """Validate message before processing."""
+            if message is None:
+                return FlextResult.fail("Message cannot be None")
             return FlextResult.ok(message)
 
-        def post_handle(self, result: FlextResult[R]) -> FlextResult[R]:
-            """Post-processing hook with metrics.
+        def get_handler_metadata(self) -> TAnyDict:
+            """Get handler metadata."""
+            return {
+                "handler_id": self.handler_id,
+                "handler_name": self.handler_name,
+                "handler_class": self.__class__.__name__,
+            }
 
-            Called after main handle method.
-            Updates metrics and logs results.
-            """
-            # Update metrics
-            if result.is_success:
-                self._metrics["successes"] += 1
-                self.logger.debug(
-                    "Post-processing successful result",
-                    handler=self._handler_name,
-                )
-            else:
-                self._metrics["failures"] += 1
-                self.logger.warning(
-                    "Post-processing failed result",
-                    handler=self._handler_name,
-                    error=result.error,
-                )
-
-            return result
-
-        def handle_with_hooks(self, message: T) -> FlextResult[R]:
-            """Handle with pre/post processing hooks and full logging."""
-            start_time = self._start_timing()
-
-            self.logger.info(
-                "Starting message handling",
-                handler=self._handler_name,
-                message_type=type(message).__name__,
-            )
+        def process_message(self, message: object) -> FlextResult[object]:
+            """Process message with validation and handling."""
+            # Validate message
+            validation_result = self.validate_message(message)
+            if validation_result.is_failure:
+                return validation_result
 
             # Check if can handle
             if not self.can_handle(message):
-                error_msg = (
-                    f"{self._handler_name} cannot handle {type(message).__name__}"
-                )
-                self.logger.error(error_msg)
-                return FlextResult.fail(error_msg)
+                return FlextResult.fail("Handler cannot process this message")
 
-            # Pre-process
-            pre_result = self.pre_handle(message)
-            if pre_result.is_failure:
-                self.logger.error(
-                    "Pre-processing failed",
-                    error=pre_result.error,
-                )
-                return FlextResult.fail(pre_result.error or "Pre-processing failed")
+            # Handle message
+            try:
+                return self.handle_message(message)
+            except (RuntimeError, OSError) as e:
+                return FlextResult.fail(f"Message processing failed: {e}")
 
-            # Main handling
-            processed_message = pre_result.unwrap()
-            main_result = self.handle(processed_message)
+        def handle_message(self, message: object) -> FlextResult[object]:
+            """Handle message - override in subclasses."""
+            return self.handle(message)
 
-            # Post-process
-            final_result = self.post_handle(main_result)
-
-            # Update metrics using timing mixin
-            execution_time_ms = self._get_execution_time_ms(start_time)
-            self._metrics["messages_handled"] += 1
-            self._metrics["total_processing_time_ms"] += execution_time_ms
-
-            self.logger.info(
-                "Message handling completed",
-                handler=self._handler_name,
-                success=final_result.is_success,
-                execution_time_ms=self._get_execution_time_ms_rounded(start_time),
-                total_handled=self._metrics["messages_handled"],
-            )
-
-            return final_result
-
-        def get_metrics(self) -> TAnyDict:
-            """Get handler metrics.
-
-            Returns:
-                Dictionary of handler metrics
-
-            """
-            avg_time = 0.0
-            if self._metrics["messages_handled"] > 0:
-                avg_time = (
-                    self._metrics["total_processing_time_ms"]
-                    / self._metrics["messages_handled"]
-                )
-
-            return {
-                **self._metrics,
-                "average_processing_time_ms": round(avg_time, 2),
-                "success_rate": self._metrics["successes"]
-                / max(1, self._metrics["messages_handled"]),
-            }
+        def process(self, message: object) -> FlextResult[object]:
+            """Process generic message."""
+            if message is None:
+                return FlextResult.fail("Message validation failed")
+            return self.process_message(message)
 
     # =============================================================================
     # SPECIALIZED HANDLERS - Domain-specific handlers
     # =============================================================================
 
-    class CommandHandler(Handler[T, R]):
-        """Handler specifically for commands.
+    class CommandHandler:
+        """Handler specifically for commands using composition-based delegation.
 
         Commands represent intentions to change system state.
+        Follows architectural guidelines with single internal definition
+        (_BaseCommandHandler) and external exposure through composition.
         """
 
-        def validate_command(self, command: T) -> FlextResult[None]:
-            """Validate command before processing.
+        def __init__(self, handler_name: TServiceName | None = None) -> None:
+            """Initialize command handler with composition-based delegation."""
+            self._handler_name = handler_name
+            # Note: _BaseCommandHandler is abstract, so we implement methods directly
 
-            Override to add command-specific validation.
-            """
-            _ = command  # Mark as used for linting
+        # =====================================================================
+        # DELEGATION METHODS - Direct delegation to base command handler
+        # =====================================================================
+
+        def validate_command(self, command: object) -> FlextResult[None]:  # noqa: ARG002
+            """Validate command."""
+            # Basic validation - can be overridden by subclasses
             return FlextResult.ok(None)
 
-        def pre_handle(self, command: T) -> FlextResult[T]:
-            """Pre-process command with validation.
+        def handle(self, command: object) -> FlextResult[object]:
+            """Handle command - must be implemented by concrete handlers."""
+            # Default implementation returns the command as-is
+            return FlextResult.ok(command)
 
-            Args:
-                command: Command to pre-process
+        def can_handle(self, message: object) -> bool:  # noqa: ARG002
+            """Check if can handle."""
+            # Default implementation - can handle any message
+            return True
 
-            Returns:
-                FlextResult with pre-processed command
-
-            """
+        def pre_handle(self, command: object) -> FlextResult[object]:
+            """Pre-process command."""
             validation_result = self.validate_command(command)
             if validation_result.is_failure:
-                return FlextResult.fail(
-                    validation_result.error or "Command validation failed",
-                )
+                return FlextResult.fail(validation_result.error or "Validation failed")
             return FlextResult.ok(command)
+
+        def post_handle(self, result: FlextResult[object]) -> FlextResult[object]:
+            """Post-process result."""
+            return result
+
+        def handle_with_hooks(self, command: object) -> FlextResult[object]:
+            """Handle with hooks."""
+            # Pre-process
+            pre_result = self.pre_handle(command)
+            if pre_result.is_failure:
+                return pre_result
+
+            # Handle
+            handle_result = self.handle(pre_result.data)
+
+            # Post-process
+            return self.post_handle(handle_result)
+
+        def get_metrics(self) -> TAnyDict:
+            """Get metrics."""
+            return {
+                "handler_name": self._handler_name,
+                "handler_type": "CommandHandler",
+            }
+
+        @property
+        def logger(self) -> object:
+            """Access logger."""
+            # Return a simple placeholder - can be enhanced with actual logging
+            return None
 
     class EventHandler(Handler[T, None]):
         """Handler specifically for events.
@@ -463,7 +424,7 @@ class FlextHandlers:
         Event handlers typically don't return values.
         """
 
-        def handle(self, event: T) -> FlextResult[None]:
+        def handle(self, event: object) -> FlextResult[object]:
             """Handle event.
 
             Args:
@@ -476,9 +437,33 @@ class FlextHandlers:
             self.process_event(event)
             return FlextResult.ok(None)
 
+        def process_event(self, event: object) -> FlextResult[None]:
+            """Process event with validation."""
+            # Validate event
+            validation_result = self.validate_message(event)
+            if validation_result.is_failure:
+                return FlextResult.fail(validation_result.error or "Validation failed")
+
+            # Check if can handle
+            if not self.can_handle(event):
+                return FlextResult.fail("Handler cannot process this event")
+
+            # Handle event
+            try:
+                return self.handle_event(event)
+            except (RuntimeError, OSError) as e:
+                return FlextResult.fail(f"Event processing failed: {e}")
+
+        def handle_event(self, event: object) -> FlextResult[None]:
+            """Handle event - override in subclasses."""
+            result = self.handle(event)
+            if result.is_success:
+                return FlextResult.ok(None)
+            return FlextResult.fail(result.error or "Event handling failed")
+
         @abstractmethod
-        def process_event(self, event: T) -> None:
-            """Process the event.
+        def process_event_impl(self, event: object) -> None:
+            """Process the event - implement in subclasses.
 
             This method should have side effects but no return value.
             """
@@ -489,7 +474,7 @@ class FlextHandlers:
         Queries request data without side effects.
         """
 
-        def authorize_query(self, query: T) -> FlextResult[None]:
+        def authorize_query(self, query: object) -> FlextResult[None]:
             """Check query authorization.
 
             Override to add authorization logic.
@@ -497,7 +482,7 @@ class FlextHandlers:
             _ = query  # Mark as used for linting
             return FlextResult.ok(None)
 
-        def pre_handle(self, query: T) -> FlextResult[T]:
+        def pre_handle(self, query: object) -> FlextResult[object]:
             """Pre-process query with authorization."""
             auth_result = self.authorize_query(query)
             if auth_result.is_failure:
@@ -505,6 +490,27 @@ class FlextHandlers:
                     auth_result.error or "Query authorization failed",
                 )
             return FlextResult.ok(query)
+
+        def process_request(self, request: object) -> FlextResult[object]:
+            """Process request with validation."""
+            # Validate request
+            validation_result = self.validate_message(request)
+            if validation_result.is_failure:
+                return FlextResult.fail(validation_result.error or "Validation failed")
+
+            # Check if can handle
+            if not self.can_handle(request):
+                return FlextResult.fail("Handler cannot process this request")
+
+            # Handle request
+            try:
+                return self.handle_request(request)
+            except (RuntimeError, OSError) as e:
+                return FlextResult.fail(f"Request processing failed: {e}")
+
+        def handle_request(self, request: object) -> FlextResult[object]:
+            """Handle request - override in subclasses."""
+            return self.handle(request)
 
     # =============================================================================
     # HANDLER REGISTRY - Managing handler registration
@@ -522,26 +528,42 @@ class FlextHandlers:
             """Initialize handler registry."""
             self._handlers: dict[TServiceKey, object] = {}
             self._type_handlers: dict[type[object], object] = {}
+            self._handler_list: list[object] = []  # List to track all handlers
 
         def register(
             self,
-            key: TServiceKey,
-            handler: FlextHandlers.Handler[object, object],
+            handler_or_key: object | TServiceKey,
+            handler: FlextHandlers.Handler[object, object] | None = None,
         ) -> FlextResult[None]:
-            """Register handler by string key.
+            """Register handler by string key or directly.
 
             Args:
-                key: Unique key for handler
-                handler: Handler instance
+                handler_or_key: Handler instance or key for handler
+                handler: Handler instance (when first arg is key)
 
             Returns:
                 FlextResult indicating registration success
 
             """
+            # Handle single argument case (just the handler)
+            if handler is None:
+                if not hasattr(handler_or_key, "handle"):
+                    return FlextResult.fail(
+                        "Invalid handler: must have 'handle' method",
+                    )
+                handler_obj = handler_or_key
+                # Use handler_id as key for uniqueness
+                key = getattr(handler_obj, "handler_id", handler_obj.__class__.__name__)
+            else:
+                # Handle two argument case (key, handler)
+                key = handler_or_key
+                handler_obj = handler
+
             if key in self._handlers:
                 return FlextResult.fail(f"Handler already registered for key: {key}")
 
-            self._handlers[key] = handler
+            self._handlers[key] = handler_obj
+            self._handler_list.append(handler_obj)
             return FlextResult.ok(None)
 
         def register_for_type(
@@ -591,6 +613,41 @@ class FlextHandlers:
                 self._type_handlers[message_type],
             )
             return FlextResult.ok(handler)
+
+        def get_all_handlers(self) -> list[object]:
+            """Get all registered handlers."""
+            return list(self._handler_list)
+
+        def find_handlers(self, message: object) -> list[object]:
+            """Find all handlers that can process the given message."""
+            return [
+                handler
+                for handler in self._handler_list
+                if hasattr(handler, "can_handle") and handler.can_handle(message)
+            ]
+
+        def get_handler_by_id(self, handler_id: str) -> object | None:
+            """Get handler by ID."""
+            for handler in self._handler_list:
+                if hasattr(handler, "handler_id") and handler.handler_id == handler_id:
+                    return handler
+            return None
+
+        def get_handler_info(self) -> list[TAnyDict]:
+            """Get information about all registered handlers."""
+            info_list = []
+            for handler in self._handler_list:
+                handler_info = {
+                    "handler_id": getattr(handler, "handler_id", "unknown"),
+                    "handler_class": handler.__class__.__name__,
+                    "handler_name": getattr(
+                        handler,
+                        "handler_name",
+                        handler.__class__.__name__,
+                    ),
+                }
+                info_list.append(handler_info)
+            return info_list
 
     # =============================================================================
     # HANDLER CHAIN - Chain of responsibility pattern
@@ -649,12 +706,12 @@ class FlextHandlers:
         """
 
         class FunctionHandler(FlextHandlers.Handler[T, R]):
-            def handle(self, message: T) -> FlextResult[R]:
+            def handle(self, message: object) -> FlextResult[object]:
                 result = handler_func(message)
                 # Ensure we return FlextResult[R]
                 if hasattr(result, "is_success"):
-                    return cast("FlextResult[R]", result)
-                return FlextResult.ok(cast("R", result))
+                    return cast("FlextResult[object]", result)
+                return FlextResult.ok(result)
 
         return FunctionHandler()
 

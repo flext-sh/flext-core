@@ -13,6 +13,7 @@ Features demonstrated:
     - Configuration validation and error handling
     - Enterprise configuration patterns
     - Configuration hierarchies and inheritance
+    - Maximum type safety using flext_core.types
 
 Key Components:
     - FlextConfig: Main configuration management class
@@ -28,28 +29,40 @@ demonstrating the power and flexibility of the FlextConfig system.
 import json
 import os
 import tempfile
-import traceback
-from pathlib import Path
 
-from flext_core.config import (
+# Import shared domain models to integrate domain validation patterns
+from shared_domain import (
+    SharedDomainFactory,
+    log_domain_operation,
+)
+
+from flext_core import (
     FlextBaseSettings,
     FlextConfig,
     FlextConfigDefaults,
-    FlextConfigOps,
     FlextConfigValidation,
+    FlextTypes,
+    TConfigDict,
+    TErrorMessage,
+    TLogMessage,
     merge_configs,
 )
 
 
 def demonstrate_basic_configuration() -> None:
-    """Demonstrate basic configuration patterns with FlextConfig."""
-    print("\n" + "=" * 80)
+    """Demonstrate basic configuration patterns with FlextConfig.
+
+    Using flext_core.types for type safety.
+    """
+    log_message: TLogMessage = "\n" + "=" * 80
+    print(log_message)
     print("🔧 BASIC CONFIGURATION PATTERNS")
     print("=" * 80)
 
     # 1. Basic configuration creation
-    print("\n1. Creating basic configuration:")
-    config_data = {
+    log_message = "\n1. Creating basic configuration:"
+    print(log_message)
+    config_data: TConfigDict = {
         "app_name": "MyApp",
         "debug": True,
         "max_connections": 100,
@@ -59,64 +72,74 @@ def demonstrate_basic_configuration() -> None:
     config_result = FlextConfig.create_complete_config(config_data)
     if config_result.is_success:
         config = config_result.data
-        print(f"✅ Config created: {config}")
-        print(f"   App name: {config.get('app_name')}")
-        print(f"   Debug mode: {config.get('debug')}")
-        print(f"   Max connections: {config.get('max_connections')}")
+        if config is not None:
+            log_message = f"✅ Config created: {config}"
+            print(log_message)
+            log_message = f"   App name: {config.get('app_name')}"
+            print(log_message)
+            log_message = f"   Debug mode: {config.get('debug')}"
+            print(log_message)
+            log_message = f"   Max connections: {config.get('max_connections')}"
+            print(log_message)
     else:
-        print(f"❌ Config creation failed: {config_result.error}")
+        error_message: TErrorMessage = f"Config creation failed: {config_result.error}"
+        print(f"❌ {error_message}")
 
     # 2. Configuration validation
-    print("\n2. Configuration validation:")
+    log_message = "\n2. Configuration validation:"
+    print(log_message)
     validation_result = FlextConfigValidation.validate_config_type(
         config_data.get("app_name"),
         str,
         "app_name",
     )
     if validation_result.is_success:
-        print("✅ Configuration type validation is valid")
+        log_message = "✅ Configuration type validation is valid"
+        print(log_message)
     else:
-        print(f"❌ Configuration validation failed: {validation_result.error}")
+        error_message = f"Configuration validation failed: {validation_result.error}"
+        print(f"❌ {error_message}")
 
     # 3. Configuration defaults
-    print("\n3. Configuration defaults:")
-    defaults = {"debug": False, "timeout": 30, "port": 8000, "max_retries": 3}
-    print(f"📋 Default configuration: {defaults}")
+    log_message = "\n3. Configuration defaults:"
+    print(log_message)
+    defaults: TConfigDict = {
+        "debug": False,
+        "timeout": 30,
+        "port": 8000,
+        "max_retries": 3,
+    }
+    log_message = f"📋 Default configuration: {defaults}"
+    print(log_message)
 
     # 4. Applying defaults
     defaults_result = FlextConfigDefaults.apply_defaults(config_data, defaults)
     if defaults_result.is_success:
         config_with_defaults = defaults_result.data
-        print("🔄 Config with defaults applied:")
-        for key, value in config_with_defaults.items():
-            print(f"   {key}: {value}")
+        if config_with_defaults is not None:
+            log_message = "🔄 Config with defaults applied:"
+            print(log_message)
+            for key, value in config_with_defaults.items():
+                log_message = f"   {key}: {value}"
+                print(log_message)
     else:
-        print(f"❌ Applying defaults failed: {defaults_result.error}")
+        error_message = f"Applying defaults failed: {defaults_result.error}"
+        print(f"❌ {error_message}")
 
 
 def demonstrate_environment_integration() -> None:
-    """Demonstrate environment variable integration."""
-    print("\n" + "=" * 80)
-    print("🌍 ENVIRONMENT VARIABLE INTEGRATION")
+    """Demonstrate environment variable integration using flext_core.types."""
+    log_message: TLogMessage = "\n" + "=" * 80
+    print(log_message)
+    print("🌍 ENVIRONMENT INTEGRATION")
     print("=" * 80)
 
-    # 1. Set environment variables for testing
-    test_env_vars = {
-        "MYAPP_DEBUG": "false",
-        "MYAPP_MAX_CONNECTIONS": "200",
-        "MYAPP_DATABASE_URL": "postgresql://localhost:5432/myapp",
-        "MYAPP_API_KEY": "super-secret-api-key",
-        "MYAPP_TIMEOUT": "45.5",
-    }
+    # 1. Environment-based settings
+    log_message = "\n1. Environment-based settings:"
+    print(log_message)
 
-    print("1. Setting test environment variables:")
-    for key, value in test_env_vars.items():
-        os.environ[key] = value
-        print(f"   {key} = {value}")
-
-    # 2. Create settings class with environment loading
     class MyAppSettings(FlextBaseSettings):
-        """Application settings with environment loading."""
+        """Application settings with environment loading using flext_core.types."""
 
         debug: bool = True
         max_connections: int = 100
@@ -130,389 +153,709 @@ def demonstrate_environment_integration() -> None:
             env_prefix = "MYAPP_"
             case_sensitive = False
             env_file = ".env"
-            extra = "ignore"  # Ignore extra environment variables
+            extra = "ignore"  # Skip extra environment variables not defined in model
 
-    # 3. Load configuration from environment
-    print("\n2. Loading configuration from environment:")
-    settings = None
+    # 2. Simulate environment variables
+    log_message = "\n2. Simulating environment variables:"
+    print(log_message)
+
+    # Set environment variables for demonstration
+    os.environ["MYAPP_DEBUG"] = "false"
+    os.environ["MYAPP_MAX_CONNECTIONS"] = "200"
+    os.environ["MYAPP_DATABASE_URL"] = "postgresql://localhost:5432/mydb"
+    os.environ["MYAPP_API_KEY"] = "env-api-key-123"
+
     try:
         settings = MyAppSettings()
-        print("✅ Settings loaded successfully:")
-        print(f"   Debug: {settings.debug}")
-        print(f"   Max connections: {settings.max_connections}")
-        print(f"   Database URL: {settings.database_url}")
-        print(f"   API key: {settings.api_key[:10]}...")  # Masked for security
-        print(f"   Timeout: {settings.timeout}")
-    except Exception as e:
-        print(f"❌ Failed to load settings: {e}")
+        log_message = "✅ Settings loaded from environment:"
+        print(log_message)
+        log_message = f"   Debug: {settings.debug}"
+        print(log_message)
+        log_message = f"   Max connections: {settings.max_connections}"
+        print(log_message)
+        log_message = f"   Database URL: {settings.database_url}"
+        print(log_message)
+        log_message = f"   API Key: {settings.api_key[:10]}..."
+        print(log_message)
+        log_message = f"   Timeout: {settings.timeout}"
+        print(log_message)
 
-    # 4. Configuration operations with environment data
-    print("\n3. Configuration operations:")
-    if settings:
-        env_config = {
-            "debug": settings.debug,
-            "max_connections": settings.max_connections,
-            "database_url": settings.database_url,
-            "timeout": settings.timeout,
-        }
-    else:
-        # Use fallback config if settings failed
-        env_config = {
-            "debug": False,
-            "max_connections": 200,
-            "database_url": "postgresql://localhost:5432/myapp",
-            "timeout": 45.5,
-        }
-        print("Using fallback configuration due to settings load failure")
+    except Exception as e:  # noqa: BLE001
+        error_message: TErrorMessage = f"Failed to load settings: {e}"
+        print(f"❌ {error_message}")
 
-    # Filter configuration keys
-    filtered_result = FlextConfigDefaults.filter_config_keys(
-        env_config,
-        ["debug", "max_connections", "timeout"],
-    )
-    if filtered_result.is_success:
-        print(f"🔄 Filtered config: {filtered_result.data}")
-    else:
-        print(f"❌ Filter failed: {filtered_result.error}")
+    # 3. Environment variable validation
+    log_message = "\n3. Environment variable validation:"
+    print(log_message)
+
+    # Test invalid environment variable
+    os.environ["MYAPP_MAX_CONNECTIONS"] = "invalid_number"
+
+    try:
+        settings = MyAppSettings()
+        log_message = "✅ Settings loaded successfully"
+        print(log_message)
+    except Exception as e:  # noqa: BLE001
+        error_message = f"Validation error (expected): {e}"
+        print(f"❌ {error_message}")
 
     # Clean up environment variables
-    for key in test_env_vars:
+    for key in [
+        "MYAPP_DEBUG",
+        "MYAPP_MAX_CONNECTIONS",
+        "MYAPP_DATABASE_URL",
+        "MYAPP_API_KEY",
+    ]:
         os.environ.pop(key, None)
 
 
 def demonstrate_configuration_merging() -> None:
-    """Demonstrate configuration merging and override patterns."""
-    print("\n" + "=" * 80)
-    print("🔀 CONFIGURATION MERGING AND OVERRIDES")
+    """Demonstrate configuration merging patterns using flext_core.types."""
+    log_message: TLogMessage = "\n" + "=" * 80
+    print(log_message)
+    print("🔄 CONFIGURATION MERGING")
     print("=" * 80)
 
-    # 1. Base configuration (defaults)
-    base_config = {
-        "app_name": "BaseApp",
+    # 1. Basic configuration merging
+    log_message = "\n1. Basic configuration merging:"
+    print(log_message)
+
+    base_config: TConfigDict = {
+        "app_name": "MyApp",
         "debug": False,
+        "port": 8000,
         "database": {
-            "host": "localhost",
-            "port": 5432,
-            "name": "base_db",
+            "url": "sqlite:///app.db",
             "pool_size": 10,
         },
-        "logging": {"level": "INFO", "format": "json"},
-        "features": {"feature_a": True, "feature_b": False},
     }
 
-    # 2. Development configuration (overrides)
-    dev_config = {
+    override_config: TConfigDict = {
         "debug": True,
-        "database": {"name": "dev_db", "pool_size": 5},
-        "logging": {"level": "DEBUG"},
-        "features": {"feature_b": True, "feature_c": True},
-    }
-
-    # 3. Production configuration (overrides)
-    prod_config = {
-        "app_name": "ProductionApp",
+        "port": 9000,
         "database": {
-            "host": "prod-db.example.com",
-            "port": 5433,
-            "name": "prod_db",
-            "pool_size": 50,
+            "url": "postgresql://localhost:5432/prod",
+            "pool_size": 20,
         },
-        "logging": {"level": "WARNING", "format": "structured"},
-        "features": {"feature_a": True, "feature_b": True, "feature_c": False},
+        "new_setting": "value",
     }
 
-    print("1. Base configuration:")
-    print(f"📋 {base_config}")
+    log_message = f"📋 Base config: {base_config}"
+    print(log_message)
+    log_message = f"📋 Override config: {override_config}"
+    print(log_message)
 
-    print("\n2. Development overrides:")
-    print(f"🔧 {dev_config}")
+    # Merge configurations
+    merged_config = merge_configs(base_config, override_config)
+    log_message = "✅ Merged configuration:"
+    print(log_message)
+    for key, value in merged_config.items():
+        log_message = f"   {key}: {value}"
+        print(log_message)
 
-    print("\n3. Production overrides:")
-    print(f"🏭 {prod_config}")
+    # 2. Deep merging demonstration
+    log_message = "\n2. Deep merging demonstration:"
+    print(log_message)
 
-    # 4. Merge configurations
-    print("\n4. Configuration merging:")
+    deep_base: TConfigDict = {
+        "services": {
+            "auth": {
+                "enabled": True,
+                "timeout": 30,
+            },
+            "cache": {
+                "enabled": False,
+                "ttl": 3600,
+            },
+        },
+    }
 
-    # Development configuration (base + dev)
-    dev_merged = merge_configs(base_config, dev_config)
-    print(f"🔧 Development config: {dev_merged}")
+    deep_override: TConfigDict = {
+        "services": {
+            "auth": {
+                "timeout": 60,
+            },
+            "cache": {
+                "enabled": True,
+            },
+            "new_service": {
+                "enabled": True,
+            },
+        },
+    }
 
-    # Production configuration (base + prod)
-    prod_merged = merge_configs(base_config, prod_config)
-    print(f"🏭 Production config: {prod_merged}")
-
-    # 5. Deep merge validation
-    print("\n5. Deep merge validation:")
-    print(f"   Dev database config: {dev_merged.get('database')}")
-    print(f"   Prod database config: {prod_merged.get('database')}")
-    print(f"   Dev features: {dev_merged.get('features')}")
-    print(f"   Prod features: {prod_merged.get('features')}")
+    deep_merged = merge_configs(deep_base, deep_override)
+    log_message = "✅ Deep merged configuration:"
+    print(log_message)
+    log_message = f"   Services: {deep_merged.get('services')}"
+    print(log_message)
 
 
 def demonstrate_file_configuration() -> None:
-    """Demonstrate file-based configuration loading."""
-    print("\n" + "=" * 80)
-    print("📁 FILE-BASED CONFIGURATION LOADING")
+    """Demonstrate file-based configuration using flext_core.types."""
+    log_message: TLogMessage = "\n" + "=" * 80
+    print(log_message)
+    print("📁 FILE CONFIGURATION")
     print("=" * 80)
 
-    # 1. Create temporary configuration files
-    with tempfile.TemporaryDirectory() as temp_dir:
-        config_dir = Path(temp_dir)
+    # 1. Create temporary configuration file
+    log_message = "\n1. Creating configuration file:"
+    print(log_message)
 
-        # Create JSON configuration file
-        json_config = {
-            "service_name": "FileConfigService",
+    config_data: TConfigDict = {
+        "app": {
+            "name": "FileConfigApp",
             "version": "1.0.0",
-            "api": {"port": 8080, "host": "0.0.0.0", "cors": True},
-            "security": {"jwt_secret": "secure-jwt-secret", "token_expiry": 3600},
-            "monitoring": {"metrics_enabled": True, "health_check_interval": 30},
-        }
+            "debug": True,
+        },
+        "database": {
+            "url": "postgresql://localhost:5432/fileconfig",
+            "pool_size": 15,
+            "timeout": 30,
+        },
+        "features": {
+            "caching": True,
+            "logging": True,
+            "metrics": False,
+        },
+    }
 
-        json_file = config_dir / "config.json"
+    # Create temporary file
+    with tempfile.NamedTemporaryFile(
+        encoding="utf-8",
+        mode="w",
+        suffix=".json",
+        delete=False,
+    ) as f:
+        json.dump(config_data, f, indent=2)
+        temp_file_path = f.name
 
-        with open(json_file, "w", encoding="utf-8") as f:
-            json.dump(json_config, f, indent=2)
+    log_message = f"📄 Created config file: {temp_file_path}"
+    print(log_message)
 
-        print(f"1. Created configuration file: {json_file}")
-        print(f"📄 Content: {json_config}")
+    # 2. Load configuration from file
+    log_message = "\n2. Loading configuration from file:"
+    print(log_message)
 
-        # 2. Load configuration from file
-        print("\n2. Loading configuration from file:")
-        try:
-            loaded_result = FlextConfigOps.safe_load_json_file(str(json_file))
-            if loaded_result.is_success:
-                loaded_config = loaded_result.data
-                print("✅ Configuration loaded successfully:")
-                print(f"   Service: {loaded_config.get('service_name')}")
-                print(f"   Version: {loaded_config.get('version')}")
-                print(f"   API config: {loaded_config.get('api')}")
-                print(f"   Security config: {loaded_config.get('security')}")
-                print(f"   Monitoring: {loaded_config.get('monitoring')}")
-            else:
-                print(f"❌ Failed to load config: {loaded_result.error}")
-        except Exception as e:
-            print(f"❌ Exception loading config: {e}")
+    try:
+        with open(temp_file_path, encoding="utf-8") as f:  # noqa: PTH123
+            loaded_config: TConfigDict = json.load(f)
 
-        # 3. Configuration validation
-        print("\n3. File configuration validation:")
-        if "loaded_config" in locals() and loaded_result.is_success:
-            # Validate service name
-            service_validation = FlextConfigValidation.validate_config_type(
-                loaded_config.get("service_name"),
-                str,
-                "service_name",
-            )
-            if service_validation.is_success:
-                print("✅ Service name validation passed")
-            else:
-                print(f"❌ Service validation failed: {service_validation.error}")
+        log_message = "✅ Configuration loaded from file:"
+        print(log_message)
+        log_message = f"   App name: {loaded_config.get('app', {}).get('name')}"
+        print(log_message)
+        log_message = f"   Database URL: {loaded_config.get('database', {}).get('url')}"
+        print(log_message)
+        log_message = f"   Features: {loaded_config.get('features')}"
+        print(log_message)
 
-            # Validate version
-            version_validation = FlextConfigValidation.validate_config_type(
-                loaded_config.get("version"),
-                str,
-                "version",
-            )
-            if version_validation.is_success:
-                print("✅ Version validation passed")
-            else:
-                print(f"❌ Version validation failed: {version_validation.error}")
+    except Exception as e:  # noqa: BLE001
+        error_message: TErrorMessage = f"Failed to load config file: {e}"
+        print(f"❌ {error_message}")
+
+    # 3. Configuration validation
+    log_message = "\n3. Configuration validation:"
+    print(log_message)
+
+    # Validate app name
+    app_name = loaded_config.get("app", {}).get("name")
+    validation_result = FlextConfigValidation.validate_config_type(
+        app_name,
+        str,
+        "app.name",
+    )
+
+    if validation_result.is_success:
+        log_message = "✅ App name validation passed"
+        print(log_message)
+    else:
+        error_message = f"App name validation failed: {validation_result.error}"
+        print(f"❌ {error_message}")
+
+    # Clean up
+    try:
+        os.unlink(temp_file_path)  # noqa: PTH108
+        log_message = "🗑️ Temporary file cleaned up"
+        print(log_message)
+    except Exception as e:  # noqa: BLE001
+        error_message = f"Failed to clean up file: {e}"
+        print(f"⚠️ {error_message}")
 
 
 def demonstrate_configuration_hierarchies() -> None:
-    """Demonstrate configuration hierarchies and inheritance."""
-    print("\n" + "=" * 80)
-    print("🏗️ CONFIGURATION HIERARCHIES AND INHERITANCE")
+    """Demonstrate configuration hierarchies using flext_core.types."""
+    log_message: TLogMessage = "\n" + "=" * 80
+    print(log_message)
+    print("🏗️ CONFIGURATION HIERARCHIES")
     print("=" * 80)
 
-    # 1. Global configuration
-    global_config = {
-        "organization": "ACME Corp",
-        "timezone": "UTC",
-        "logging": {"level": "INFO", "output": "console"},
-        "security": {"encryption": "AES256", "audit": True},
-    }
+    # 1. Configuration hierarchy levels
+    log_message = "\n1. Configuration hierarchy levels:"
+    print(log_message)
 
-    # 2. Application configuration
-    app_config = {
-        "app_name": "UserService",
-        "version": "2.1.0",
-        "database": {"type": "postgresql", "timeout": 30},
-        "cache": {"type": "redis", "ttl": 300},
-    }
-
-    # 3. Environment-specific configuration
-    env_configs = {
-        "development": {
-            "logging": {"level": "DEBUG"},
-            "database": {"host": "localhost", "debug": True},
-            "cache": {"host": "localhost", "debug": True},
+    # Base configuration
+    base_config: TConfigDict = {
+        "app": {
+            "name": "HierarchyApp",
+            "version": "1.0.0",
         },
-        "staging": {
-            "logging": {"level": "INFO"},
-            "database": {"host": "staging-db.internal", "pool_size": 10},
-            "cache": {"host": "staging-cache.internal"},
+        "database": {
+            "pool_size": 10,
+            "timeout": 30,
         },
-        "production": {
-            "logging": {"level": "WARNING", "output": "file"},
-            "database": {"host": "prod-db.internal", "pool_size": 50},
-            "cache": {"host": "prod-cache.internal", "cluster": True},
-            "security": {"audit": True, "monitoring": True},
+        "logging": {
+            "level": "INFO",
+            "format": "json",
         },
     }
 
-    print("1. Configuration hierarchy:")
-    print(f"🌍 Global: {global_config}")
-    print(f"📱 Application: {app_config}")
-    print(f"🔧 Environment configs available: {list(env_configs.keys())}")
+    # Environment-specific overrides
+    dev_config: TConfigDict = {
+        "app": {
+            "debug": True,
+        },
+        "database": {
+            "url": "sqlite:///dev.db",
+        },
+        "logging": {
+            "level": "DEBUG",
+        },
+    }
 
-    # 4. Build complete configurations for each environment
-    print("\n2. Building complete configurations:")
-    for env_name, env_config in env_configs.items():
-        print(f"\n🏷️ Environment: {env_name.upper()}")
+    prod_config: TConfigDict = {
+        "app": {
+            "debug": False,
+        },
+        "database": {
+            "url": "postgresql://prod-server:5432/prod",
+            "pool_size": 50,
+        },
+        "logging": {
+            "level": "WARNING",
+        },
+    }
 
-        # Merge: Global -> App -> Environment
-        step1 = merge_configs(global_config, app_config)
-        complete_config = merge_configs(step1, env_config)
+    log_message = "📋 Configuration hierarchy:"
+    print(log_message)
+    log_message = "   Base → Development → Production"
+    print(log_message)
 
-        print(f"   Organization: {complete_config.get('organization')}")
-        print(
-            f"   App: {complete_config.get('app_name')} v{complete_config.get('version')}",
-        )
-        print(f"   Logging: {complete_config.get('logging')}")
-        print(f"   Database: {complete_config.get('database')}")
-        print(f"   Cache: {complete_config.get('cache')}")
-        print(f"   Security: {complete_config.get('security')}")
+    # 2. Merge hierarchy
+    log_message = "\n2. Merging configuration hierarchy:"
+    print(log_message)
 
-    # 5. Configuration inheritance validation
-    print("\n3. Configuration inheritance validation:")
-    prod_config = merge_configs(
-        merge_configs(global_config, app_config),
-        env_configs["production"],
-    )
+    # Merge base + dev
+    dev_merged = merge_configs(base_config, dev_config)
+    log_message = "✅ Development configuration:"
+    print(log_message)
+    log_message = f"   Debug: {dev_merged.get('app', {}).get('debug')}"
+    print(log_message)
+    log_message = f"   Database: {dev_merged.get('database', {}).get('url')}"
+    print(log_message)
+    log_message = f"   Log level: {dev_merged.get('logging', {}).get('level')}"
+    print(log_message)
 
-    # Check if all global keys are present in production config
-    inheritance_valid = all(key in prod_config for key in global_config)
-    if inheritance_valid:
-        print("✅ Configuration inheritance is valid")
-    else:
-        print("❌ Configuration inheritance failed: missing global keys")
+    # Merge base + prod
+    prod_merged = merge_configs(base_config, prod_config)
+    log_message = "✅ Production configuration:"
+    print(log_message)
+    log_message = f"   Debug: {prod_merged.get('app', {}).get('debug')}"
+    print(log_message)
+    log_message = f"   Database: {prod_merged.get('database', {}).get('url')}"
+    print(log_message)
+    log_message = f"   Pool size: {prod_merged.get('database', {}).get('pool_size')}"
+    print(log_message)
+
+    # 3. Configuration inheritance patterns
+    log_message = "\n3. Configuration inheritance patterns:"
+    print(log_message)
+
+    # Feature flags configuration
+    feature_config: TConfigDict = {
+        "features": {
+            "new_ui": {
+                "enabled": True,
+                "beta": True,
+            },
+            "analytics": {
+                "enabled": True,
+                "tracking_id": "UA-123456",
+            },
+            "caching": {
+                "enabled": False,
+                "ttl": 3600,
+            },
+        },
+    }
+
+    # Environment-specific feature overrides
+    dev_features: TConfigDict = {
+        "features": {
+            "new_ui": {
+                "enabled": True,
+                "beta": True,
+            },
+            "analytics": {
+                "enabled": False,  # Disable in dev
+            },
+            "caching": {
+                "enabled": True,
+                "ttl": 60,  # Short TTL for dev
+            },
+        },
+    }
+
+    # Merge feature configurations
+    feature_merged = merge_configs(feature_config, dev_features)
+    log_message = "✅ Feature configuration:"
+    print(log_message)
+    features = feature_merged.get("features", {})
+    for feature_name, feature_config in features.items():
+        enabled = feature_config.get("enabled", False)
+        status = "✅ Enabled" if enabled else "❌ Disabled"
+        log_message = f"   {feature_name}: {status}"
+        print(log_message)
 
 
-def demonstrate_advanced_configuration_patterns() -> None:
-    """Demonstrate advanced configuration patterns and operations."""
-    print("\n" + "=" * 80)
+def demonstrate_advanced_configuration_patterns() -> None:  # noqa: PLR0912, PLR0915
+    """Demonstrate advanced configuration patterns using flext_core.types."""
+    log_message: TLogMessage = "\n" + "=" * 80
+    print(log_message)
     print("🚀 ADVANCED CONFIGURATION PATTERNS")
     print("=" * 80)
 
-    # 1. Configuration templates
-    print("1. Configuration templates:")
-    template_config = {
-        "service_name": "${SERVICE_NAME}",
-        "database_url": "${DATABASE_URL}",
-        "api_url": "https://${HOST}:${PORT}/api",
-        "debug": "${DEBUG:false}",  # Default value
-        "max_connections": "${MAX_CONNECTIONS:100}",
+    # 1. Configuration validation patterns
+    log_message = "\n1. Configuration validation patterns:"
+    print(log_message)
+
+    # Complex configuration with validation
+    complex_config: TConfigDict = {
+        "server": {
+            "host": "localhost",
+            "port": 8080,
+            "workers": 4,
+        },
+        "security": {
+            "ssl_enabled": True,
+            "cert_path": "/path/to/cert.pem",
+            "key_path": "/path/to/key.pem",
+        },
+        "monitoring": {
+            "enabled": True,
+            "metrics_port": 9090,
+            "health_check_interval": 30,
+        },
     }
 
-    variables = {
-        "SERVICE_NAME": "AdvancedService",
-        "DATABASE_URL": "postgresql://localhost/advanced_db",
-        "HOST": "api.example.com",
-        "PORT": "443",
-        "DEBUG": "true",
-    }
+    # Validate configuration structure
+    log_message = "🔍 Validating configuration structure:"
+    print(log_message)
 
-    print(f"📋 Template: {template_config}")
-    print(f"🔧 Variables: {variables}")
+    required_fields = [
+        ("server.host", str),
+        ("server.port", int),
+        ("server.workers", int),
+        ("security.ssl_enabled", bool),
+        ("monitoring.enabled", bool),
+    ]
 
-    # Simple template substitution (manual for demo)
-    resolved_config = {}
-    for key, value in template_config.items():
-        if isinstance(value, str) and value.startswith("${"):
-            var_name = value[2:-1].split(":")[0]  # Remove ${} and get variable name
-            resolved_config[key] = variables.get(var_name, value)
-        else:
-            resolved_config[key] = value
-    print(f"✅ Resolved config: {resolved_config}")
+    validation_errors: list[TErrorMessage] = []
 
-    # 2. Configuration validation with rules
-    print("\n2. Advanced configuration validation:")
-    validation_rules = {
-        "service_name": {"required": True, "type": str, "min_length": 3},
-        "database_url": {"required": True, "type": str, "pattern": r"postgresql://.*"},
-        "api_url": {"required": True, "type": str, "pattern": r"https://.*"},
-        "max_connections": {"required": False, "type": int, "min": 1, "max": 1000},
-    }
+    for field_path, expected_type in required_fields:
+        # Navigate to nested field
+        value = complex_config
+        for key in field_path.split("."):
+            if isinstance(value, dict):
+                value = value.get(key)
+            else:
+                value = None
+                break
 
-    # Manual validation for demo
-    validation_errors = []
-    for key, rules in validation_rules.items():
-        value = resolved_config.get(key)
-        if rules.get("required") and value is None:
-            validation_errors.append(f"{key} is required")
-        if value and "type" in rules and not isinstance(value, rules["type"]):
-            validation_errors.append(f"{key} must be {rules['type'].__name__}")
+        # Validate type
+        if not FlextTypes.TypeGuards.is_instance_of(value, expected_type):
+            error_message = (
+                f"Field '{field_path}' must be {expected_type.__name__}, "
+                f"got {type(value).__name__}"
+            )
+            validation_errors.append(error_message)
 
-    if not validation_errors:
-        print("✅ Advanced validation passed")
+    if validation_errors:
+        log_message = "❌ Configuration validation failed:"
+        print(log_message)
+        for error in validation_errors:
+            log_message = f"   - {error}"
+            print(log_message)
     else:
-        print(f"❌ Advanced validation failed: {'; '.join(validation_errors)}")
+        log_message = "✅ Configuration validation passed"
+        print(log_message)
 
-    # 3. Configuration serialization and export
-    print("\n3. Configuration serialization:")
+    # 2. Configuration transformation patterns
+    log_message = "\n2. Configuration transformation patterns:"
+    print(log_message)
 
-    serialized = json.dumps(resolved_config, indent=2)
-    print(f"📤 Serialized config: {serialized}")
-
-    # 4. Configuration diff analysis
-    print("\n4. Configuration diff analysis:")
-    old_config = {"debug": False, "max_connections": 50, "timeout": 30}
-    new_config = {"debug": True, "max_connections": 100, "timeout": 45, "cache": True}
-
-    # Simple diff analysis for demo
-    added = {k: v for k, v in new_config.items() if k not in old_config}
-    changed = {
-        k: (old_config[k], new_config[k])
-        for k in old_config.keys() & new_config.keys()
-        if old_config[k] != new_config[k]
+    # Transform configuration for different environments
+    transform_config: TConfigDict = {
+        "database": {
+            "host": "localhost",
+            "port": 5432,
+            "name": "myapp",
+            "user": "app_user",
+            "password": "secret",
+        },
+        "redis": {
+            "host": "localhost",
+            "port": 6379,
+            "db": 0,
+        },
     }
-    removed = {k: old_config[k] for k in old_config.keys() - new_config.keys()}
 
-    diff = {"added": added, "changed": changed, "removed": removed}
-    print(f"🔄 Configuration diff: {diff}")
+    # Transform to connection strings
+    transformed_config: TConfigDict = {}
+
+    # Database connection string
+    db_config = transform_config.get("database", {})
+    if all(key in db_config for key in ["host", "port", "name", "user", "password"]):
+        db_url = f"postgresql://{db_config['user']}:{db_config['password']}@{db_config['host']}:{db_config['port']}/{db_config['name']}"
+        transformed_config["database_url"] = db_url
+
+    # Redis connection string
+    redis_config = transform_config.get("redis", {})
+    if all(key in redis_config for key in ["host", "port", "db"]):
+        redis_url = f"redis://{redis_config['host']}:{redis_config['port']}/{redis_config['db']}"
+        transformed_config["redis_url"] = redis_url
+
+    log_message = "🔄 Transformed configuration:"
+    print(log_message)
+    for key, value in transformed_config.items():
+        # Mask sensitive information
+        if "password" in str(value):
+            masked_value = str(value).replace(db_config.get("password", ""), "***")
+            log_message = f"   {key}: {masked_value}"
+        else:
+            log_message = f"   {key}: {value}"
+        print(log_message)
+
+    # 3. Configuration composition patterns
+    log_message = "\n3. Configuration composition patterns:"
+    print(log_message)
+
+    # Compose configuration from multiple sources
+    config_sources: list[tuple[str, TConfigDict]] = [
+        ("defaults", {"timeout": 30, "retries": 3, "debug": False}),
+        ("environment", {"timeout": 60, "debug": True}),
+        ("user_preferences", {"retries": 5}),
+    ]
+
+    composed_config: TConfigDict = {}
+
+    for source_name, source_config in config_sources:
+        log_message = f"📋 Applying {source_name} configuration:"
+        print(log_message)
+        for key, value in source_config.items():
+            composed_config[key] = value
+            log_message = f"   {key}: {value}"
+            print(log_message)
+
+    log_message = "✅ Final composed configuration:"
+    print(log_message)
+    for key, value in composed_config.items():
+        log_message = f"   {key}: {value}"
+        print(log_message)
+
+
+def demonstrate_domain_configuration_integration() -> None:  # noqa: PLR0912, PLR0915
+    """Demonstrate configuration integration with shared domain models."""
+    log_message: TLogMessage = "\n" + "=" * 80
+    print(log_message)
+    print("🏢 DOMAIN MODEL CONFIGURATION INTEGRATION")
+    print("=" * 80)
+
+    # 1. Configuration with domain model validation
+    log_message = "\n1. Configuration with domain model validation:"
+    print(log_message)
+
+    # Configuration for user management service
+    user_service_config: TConfigDict = {
+        "service_name": "user_management",
+        "admin_users": [
+            {
+                "name": "admin",
+                "email": "admin@company.com",
+                "age": 30,
+            },
+            {
+                "name": "moderator",
+                "email": "mod@company.com",
+                "age": 25,
+            },
+        ],
+        "user_validation": {
+            "min_age": 18,
+            "max_age": 120,
+            "require_email": True,
+        },
+        "features": {
+            "email_notifications": True,
+            "user_audit_log": True,
+            "auto_suspend_inactive": False,
+        },
+    }
+
+    log_message = "📋 User service configuration loaded"
+    print(log_message)
+
+    # 2. Validate admin users using shared domain models
+    log_message = "\n2. Validating admin users with shared domain models:"
+    print(log_message)
+
+    admin_users = user_service_config.get("admin_users", [])
+    validated_users = []
+
+    for user_data in admin_users:
+        if isinstance(user_data, dict):
+            name = user_data.get("name", "")
+            email = user_data.get("email", "")
+            age = user_data.get("age", 0)
+
+            # Use SharedDomainFactory for validation
+            user_result = SharedDomainFactory.create_user(name, email, age)
+            if user_result.is_success:
+                user = user_result.data
+                validated_users.append(user)
+                log_message = (
+                    f"✅ Admin user validated: {user.name} ({user.email_address.email})"
+                )
+                print(log_message)
+
+                # Log domain operation
+                log_domain_operation(
+                    "admin_user_configured",
+                    "SharedUser",
+                    user.id,
+                    service="user_management",
+                    config_role="admin",
+                )
+            else:
+                log_message = f"❌ Invalid admin user config: {user_result.error}"
+                print(log_message)
+
+    log_message = f"📊 Validated {len(validated_users)}/{len(admin_users)} admin users"
+    print(log_message)
+
+    # 3. Configuration-driven user creation
+    log_message = "\n3. Configuration-driven user creation:"
+    print(log_message)
+
+    # Test configuration
+    test_user_configs = [
+        {"name": "test_user_1", "email": "test1@example.com", "age": 25},
+        {"name": "test_user_2", "email": "test2@example.com", "age": 35},
+        {"name": "", "email": "invalid", "age": 15},  # Invalid user
+    ]
+
+    created_users = []
+
+    for config in test_user_configs:
+        if isinstance(config, dict):
+            user_result = SharedDomainFactory.create_user(
+                config.get("name", ""),
+                config.get("email", ""),
+                config.get("age", 0),
+            )
+
+            if user_result.is_success:
+                user = user_result.data
+                created_users.append(user)
+                log_message = f"✅ User created from config: {user.name}"
+                print(log_message)
+            else:
+                log_message = (
+                    f"❌ Failed to create user from config: {user_result.error}"
+                )
+                print(log_message)
+
+    # 4. Configuration validation using domain rules
+    log_message = "\n4. Configuration validation using domain rules:"
+    print(log_message)
+
+    validation_config = user_service_config.get("user_validation", {})
+    min_age = validation_config.get("min_age", 18)
+    max_age = validation_config.get("max_age", 120)
+
+    log_message = "📋 Domain validation rules from config:"
+    print(log_message)
+    log_message = f"   Min age: {min_age}"
+    print(log_message)
+    log_message = f"   Max age: {max_age}"
+    print(log_message)
+
+    # Test configuration against domain models
+    test_ages = [17, 25, 130]  # Below min, valid, above max
+
+    for test_age in test_ages:
+        try:
+            user_result = SharedDomainFactory.create_user(
+                "test",
+                "test@example.com",
+                test_age,
+            )
+            if user_result.is_success:
+                log_message = f"✅ Age {test_age}: Valid according to domain rules"
+                print(log_message)
+            else:
+                log_message = f"❌ Age {test_age}: Invalid - {user_result.error}"
+                print(log_message)
+        except Exception as e:  # noqa: BLE001
+            log_message = f"❌ Age {test_age}: Validation error - {e}"
+            print(log_message)
+
+    # 5. Configuration-based feature flags with domain context
+    log_message = "\n5. Configuration-based feature flags with domain context:"
+    print(log_message)
+
+    features = user_service_config.get("features", {})
+
+    for feature_name, enabled in features.items():
+        if isinstance(enabled, bool):
+            status = "✅ Enabled" if enabled else "❌ Disabled"
+            log_message = f"   {feature_name}: {status}"
+            print(log_message)
+
+            # Log feature configuration as domain operation
+            log_domain_operation(
+                "feature_configured",
+                "FeatureFlag",
+                feature_name,
+                enabled=enabled,
+                service="user_management",
+            )
+
+    log_message = (
+        f"📊 Successfully validated configuration with "
+        f"{len(created_users)} domain objects"
+    )
+    print(log_message)
 
 
 def main() -> None:
-    """Execute all FlextConfig demonstrations."""
-    print("🚀 FLEXT CONFIG - ENTERPRISE CONFIGURATION MANAGEMENT EXAMPLE")
-    print("Demonstrating comprehensive configuration patterns and operations")
+    """Run comprehensive FlextConfig demonstration with maximum type safety."""
+    print("=" * 80)
+    print("🚀 FLEXT CONFIG - ENTERPRISE CONFIGURATION DEMONSTRATION")
+    print("=" * 80)
 
-    try:
-        demonstrate_basic_configuration()
-        demonstrate_environment_integration()
-        demonstrate_configuration_merging()
-        demonstrate_file_configuration()
-        demonstrate_configuration_hierarchies()
-        demonstrate_advanced_configuration_patterns()
+    # Run all demonstrations
+    demonstrate_basic_configuration()
+    demonstrate_environment_integration()
+    demonstrate_configuration_merging()
+    demonstrate_file_configuration()
+    demonstrate_configuration_hierarchies()
+    demonstrate_advanced_configuration_patterns()
+    demonstrate_domain_configuration_integration()
 
-        print("\n" + "=" * 80)
-        print("✅ ALL FLEXT CONFIG DEMONSTRATIONS COMPLETED SUCCESSFULLY!")
-        print("=" * 80)
-        print("\n📊 Summary of capabilities demonstrated:")
-        print("   🔧 Basic configuration creation and management")
-        print("   🌍 Environment variable integration")
-        print("   🔀 Configuration merging and overrides")
-        print("   📁 File-based configuration loading")
-        print("   🏗️ Configuration hierarchies and inheritance")
-        print("   🚀 Advanced patterns (templates, validation, diff)")
-        print("\n💡 FlextConfig provides enterprise-grade configuration management")
-        print("   with type safety, validation, and flexible integration patterns!")
-
-    except Exception as e:
-        print(f"\n❌ Error during FlextConfig demonstration: {e}")
-
-        traceback.print_exc()
+    print("\n" + "=" * 80)
+    print("🎉 FLEXT CONFIG DEMONSTRATION COMPLETED")
+    print("=" * 80)
 
 
 if __name__ == "__main__":

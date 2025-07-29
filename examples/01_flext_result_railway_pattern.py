@@ -2,59 +2,49 @@
 """FLEXT Result - Railway Pattern Example.
 
 Demonstrates advanced error handling using FlextResult with railway-oriented
-programming.
+programming using shared domain models.
 Shows how to chain operations safely without exception handling.
 
 Features demonstrated:
 - Railway pattern for safe operation chaining
 - Error handling without exceptions
-- Data transformation pipelines
+- Data transformation pipelines using shared domain models
 - Recovery patterns
 - Result combination
+- Maximum type safety using flext_core.types
 """
 
 from __future__ import annotations
 
 import json
 import random
-from typing import Any
 
-from flext_core import FlextResult
-from flext_core.utilities import FlextUtilities
-from flext_core.validation import FlextValidation
+# Import ALL domain models from shared_domain - NO local domain models
+from shared_domain import (
+    SharedDomainFactory,
+    User as SharedUser,
+    log_domain_operation,
+)
 
-# =============================================================================
-# DOMAIN MODELS - Real-world user data processing
-# =============================================================================
+from flext_core import (
+    FlextResult,
+    FlextValidation,
+    TAnyObject,
+    TEntityId,
+    TErrorMessage,
+    TLogMessage,
+    TUserData,
+    safe_call,
+)
 
-
-class User:
-    """User domain model with validation."""
-
-    def __init__(self, name: str, email: str, age: int) -> None:
-        self.name = name
-        self.email = email
-        self.age = age
-
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary."""
-        return {
-            "name": self.name,
-            "email": self.email,
-            "age": self.age,
-            "id": FlextUtilities.generate_entity_id(),
-            "created_at": FlextUtilities.generate_iso_timestamp(),
-        }
+# Constants to avoid magic numbers
+FAILURE_RATE = 0.2  # 20% chance of failure
 
 
-# =============================================================================
-# BUSINESS LOGIC - Railway pattern implementation
-# =============================================================================
-
-
-def validate_user_data(data: dict[str, Any]) -> FlextResult[dict[str, Any]]:
-    """Validate user input data using FLEXT validation."""
-    print(f"🔍 Validating user data: {data}")
+def validate_user_data(data: TUserData) -> FlextResult[TUserData]:
+    """Validate user input data using railway pattern."""
+    log_message: TLogMessage = f"🔍 Validating user data: {data}"
+    print(log_message)
 
     # Chain multiple validations using railway pattern
     return (
@@ -67,61 +57,85 @@ def validate_user_data(data: dict[str, Any]) -> FlextResult[dict[str, Any]]:
             lambda d: FlextValidation.is_non_empty_string(d["name"]),
             "Name must be a non-empty string",
         )
-        .filter(lambda d: FlextValidation.is_email(d["email"]), "Invalid email format")
-        .filter(
-            lambda d: isinstance(d["age"], int) and 18 <= d["age"] <= 120,
-            "Age must be between 18 and 120",
-        )
-        .tap(lambda d: print(f"✅ Validation successful for: {d['name']}"))
+        .tap(lambda d: print(f"✅ Basic validation successful for: {d['name']}"))
     )
 
 
-def create_user(validated_data: dict[str, Any]) -> FlextResult[User]:
-    """Create User instance from validated data."""
-    print(f"👤 Creating user from: {validated_data}")
+def create_user(validated_data: TUserData) -> FlextResult[SharedUser]:
+    """Create User using ONLY SharedDomainFactory - NO local models."""
+    log_message: TLogMessage = (
+        f"👤 Creating user entity from shared domain: {validated_data}"
+    )
+    print(log_message)
 
-    try:
-        user = User(
-            name=validated_data["name"],
-            email=validated_data["email"],
-            age=validated_data["age"],
-        )
-        print(f"✅ User created: {user.name} ({user.email})")
-        return FlextResult.ok(user)
-    except Exception as e:
-        return FlextResult.fail(f"Failed to create user: {e}")
+    # Use ONLY SharedDomainFactory - complete domain model reuse
+    user_result = SharedDomainFactory.create_user(
+        name=str(validated_data["name"]),
+        email=str(validated_data["email"]),
+        age=int(validated_data["age"]),
+    )
+
+    if user_result.is_failure:
+        return FlextResult.fail(f"User creation failed: {user_result.error}")
+
+    user = user_result.data
+
+    log_domain_operation(
+        "user_created_railway",
+        "SharedUser",
+        user.id,
+        name=user.name,
+        email=user.email_address.email,
+        pattern="railway",
+    )
+
+    print(
+        f"✅ Shared domain user created: {user.name} ({user.email_address.email})",
+    )
+    return FlextResult.ok(user)
 
 
-def save_user_to_database(user: User) -> FlextResult[str]:
-    """Simulate saving user to database."""
-    print(f"💾 Saving user to database: {user.name}")
+def save_user_to_database(user: SharedUser) -> FlextResult[TEntityId]:
+    """Simulate saving user entity to database."""
+    log_message: TLogMessage = f"💾 Saving user entity to database: {user.name}"
+    print(log_message)
 
-    # Simulate database save with potential failure
-    user_id = FlextUtilities.generate_entity_id()
+    # Use the entity's existing ID instead of generating new one
+    user_id: TEntityId = user.id
 
     # Simulate occasional database failure
-    if random.random() < 0.2:  # 20% chance of failure
-        return FlextResult.fail("Database connection timeout")
+    if random.random() < FAILURE_RATE:  # noqa: S311
+        error_message: TErrorMessage = "Database connection timeout"
+        return FlextResult.fail(error_message)
 
-    print(f"✅ User saved with ID: {user_id}")
+    print(f"✅ User entity saved with ID: {user_id} (version: {user.version})")
     return FlextResult.ok(user_id)
 
 
-def send_welcome_email(user: User) -> FlextResult[bool]:
-    """Simulate sending welcome email."""
-    print(f"📧 Sending welcome email to: {user.email}")
+def send_welcome_email(user: SharedUser) -> FlextResult[bool]:
+    """Simulate sending welcome email using user entity."""
+    log_message: TLogMessage = (
+        f"📧 Sending welcome email to: {user.email_address.email}"
+    )
+    print(log_message)
 
-    # Simulate email service
-    if "@invalid.com" in user.email:
-        return FlextResult.fail("Email service rejected invalid domain")
+    # Simulate email service with domain validation
+    if "@invalid.com" in user.email_address.email:
+        error_message: TErrorMessage = "Email service rejected invalid domain"
+        return FlextResult.fail(error_message)
 
-    print(f"✅ Welcome email sent to: {user.email}")
-    return FlextResult.ok(True)
+    print(f"✅ Welcome email sent to: {user.email_address.email}")
+    email_sent = True
+    return FlextResult.ok(email_sent)
 
 
-def process_user_registration(data: dict[str, Any]) -> FlextResult[dict[str, Any]]:
-    """Complete user registration pipeline using railway pattern."""
-    print("\n🚀 Starting user registration pipeline...")
+def process_user_registration(data: TUserData) -> FlextResult[TAnyObject]:
+    """Complete user registration pipeline using railway pattern.
+
+    Uses shared domain entities for enhanced functionality.
+    """
+    log_message: TLogMessage = "\n🚀 Starting user registration pipeline..."
+    print(log_message)
 
     # Railway pattern: chain operations with automatic error propagation
     result = (
@@ -129,34 +143,56 @@ def process_user_registration(data: dict[str, Any]) -> FlextResult[dict[str, Any
         .flat_map(create_user)
         .flat_map(
             lambda user:
-            # Combine database save and email sending
-            FlextResult.combine(
-                save_user_to_database(user),
-                send_welcome_email(user),
-                lambda user_id, email_sent: {
-                    "user": user.to_dict(),
-                    "user_id": user_id,
-                    "email_sent": email_sent,
-                    "status": "registered",
-                },
+            # Activate user as part of registration process
+            user.activate().flat_map(
+                lambda activated_user:
+                # Combine database save and email sending with activated user
+                FlextResult.combine(
+                    save_user_to_database(activated_user),
+                    send_welcome_email(activated_user),
+                ).map(
+                    lambda results: {
+                        "user": {
+                            "id": activated_user.id,
+                            "name": activated_user.name,
+                            "email": activated_user.email_address.email,
+                            "age": activated_user.age.value,
+                            "status": activated_user.status.value,
+                            "created_at": (
+                                str(activated_user.created_at)
+                                if activated_user.created_at
+                                else None
+                            ),
+                        },
+                        "user_id": results[0]
+                        if isinstance(results, list) and len(results) > 0
+                        else None,
+                        "email_sent": results[1]
+                        if isinstance(results, list) and len(results) > 1
+                        else False,
+                        "status": "registered",
+                        "domain_events": len(activated_user.domain_events),
+                    },
+                ),
             ),
         )
     )
 
     if result.is_success:
         print("🎉 Registration completed successfully!")
-        return result
+        return FlextResult.ok(result.data if isinstance(result.data, dict) else {})
     print(f"❌ Registration failed: {result.error}")
-    return result
+    return FlextResult.fail(result.error or "Registration failed")
 
 
 def process_multiple_users(
-    users_data: list[dict[str, Any]],
-) -> FlextResult[list[dict[str, Any]]]:
-    """Process multiple users with error aggregation."""
-    print(f"\n📊 Processing {len(users_data)} users...")
+    users_data: list[TUserData],
+) -> FlextResult[TAnyObject]:
+    """Process multiple users with error aggregation using types."""
+    log_message: TLogMessage = f"\n📊 Processing {len(users_data)} users..."
+    print(log_message)
 
-    results = []
+    results: list[TAnyObject] = []
     successful = 0
     failed = 0
 
@@ -169,10 +205,11 @@ def process_multiple_users(
             successful += 1
         else:
             # Recovery pattern: log error and continue
-            print(f"⚠️  User {i + 1} failed: {result.error}")
+            error_message: TErrorMessage = f"User {i + 1} failed: {result.error}"
+            print(f"⚠️  {error_message}")
             failed += 1
 
-    summary = {
+    summary: TAnyObject = {
         "total_processed": len(users_data),
         "successful": successful,
         "failed": failed,
@@ -195,11 +232,14 @@ def process_multiple_users(
 
 
 def process_with_retry(
-    data: dict[str, Any],
+    data: TUserData,
     max_retries: int = 3,
-) -> FlextResult[dict[str, Any]]:
-    """Process with retry logic using FlextResult."""
-    print(f"\n🔄 Processing with retry (max {max_retries} attempts)...")
+) -> FlextResult[TAnyObject]:
+    """Process with retry logic using FlextResult and types."""
+    log_message: TLogMessage = (
+        f"\n🔄 Processing with retry (max {max_retries} attempts)..."
+    )
+    print(log_message)
 
     for attempt in range(1, max_retries + 1):
         print(f"   Attempt {attempt}/{max_retries}")
@@ -210,25 +250,27 @@ def process_with_retry(
             return result
 
         if attempt < max_retries:
-            print(f"⚠️  Attempt {attempt} failed: {result.error}, retrying...")
+            error_message: TErrorMessage = (
+                f"Attempt {attempt} failed: {result.error}, retrying..."
+            )
+            print(f"⚠️  {error_message}")
         else:
             print(f"❌ All {max_retries} attempts failed")
             return result.recover(
-                lambda error: FlextResult.ok(
-                    {
-                        "status": "failed_after_retries",
-                        "error": error,
-                        "attempts": max_retries,
-                    },
-                ),
+                lambda error: {
+                    "status": "failed_after_retries",
+                    "error": error,
+                    "attempts": max_retries,
+                },
             )
 
     return FlextResult.fail("Unexpected retry loop exit")
 
 
-def transform_user_data(raw_data: str) -> FlextResult[dict[str, Any]]:
+def transform_user_data(raw_data: str) -> FlextResult[TUserData]:
     """Transform raw JSON string to user data with validation."""
-    print(f"🔄 Transforming raw data: {raw_data[:50]}...")
+    log_message: TLogMessage = f"🔄 Transforming raw data: {raw_data[:50]}..."
+    print(log_message)
 
     return (
         FlextResult.ok(raw_data)
@@ -236,8 +278,11 @@ def transform_user_data(raw_data: str) -> FlextResult[dict[str, Any]]:
             lambda s: isinstance(s, str) and len(s) > 0,
             "Input must be non-empty string",
         )
-        .flat_map(lambda s: FlextUtilities.safe_call(lambda: json.loads(s)))
-        .filter(lambda d: isinstance(d, dict), "Parsed data must be a dictionary")
+        .flat_map(lambda s: safe_call(lambda: json.loads(s)))
+        .filter(
+            lambda d: isinstance(d, dict),
+            "Parsed data must be a dictionary",
+        )
         .tap(lambda d: print(f"✅ Data transformed: {d}"))
     )
 
@@ -247,44 +292,47 @@ def transform_user_data(raw_data: str) -> FlextResult[dict[str, Any]]:
 # =============================================================================
 
 
-def main() -> None:
-    """Run comprehensive FlextResult demonstration."""
-    print("=" * 80)
-    print("🚀 FLEXT RESULT - RAILWAY PATTERN DEMONSTRATION")
-    print("=" * 80)
-
-    # Example 1: Successful user registration
+def demo_successful_registration() -> None:
+    """Demonstrate successful user registration."""
     print("\n" + "=" * 60)
     print("📋 EXAMPLE 1: Successful User Registration")
     print("=" * 60)
 
-    valid_user = {"name": "Alice Johnson", "email": "alice@example.com", "age": 28}
+    valid_user: TUserData = {
+        "name": "Alice Johnson",
+        "email": "alice@example.com",
+        "age": 28,
+    }
 
-    result1 = process_user_registration(valid_user)
-    if result1.is_success:
-        print(f"✅ Success: {json.dumps(result1.data, indent=2)}")
+    result = process_user_registration(valid_user)
+    if result.is_success:
+        print(f"✅ Success: {json.dumps(result.data, indent=2)}")
     else:
-        print(f"❌ Failed: {result1.error}")
+        print(f"❌ Failed: {result.error}")
 
-    # Example 2: Validation failure
+
+def demo_validation_failure() -> None:
+    """Demonstrate validation failure handling."""
     print("\n" + "=" * 60)
     print("📋 EXAMPLE 2: Validation Failure")
     print("=" * 60)
 
-    invalid_user = {"name": "", "email": "not-an-email", "age": 15}
+    invalid_user: TUserData = {"name": "", "email": "not-an-email", "age": 15}
 
-    result2 = process_user_registration(invalid_user)
-    if result2.is_success:
-        print(f"✅ Success: {result2.data}")
+    result = process_user_registration(invalid_user)
+    if result.is_success:
+        print(f"✅ Success: {result.data}")
     else:
-        print(f"❌ Expected failure: {result2.error}")
+        print(f"❌ Expected failure: {result.error}")
 
-    # Example 3: Batch processing
+
+def demo_batch_processing() -> None:
+    """Demonstrate batch processing with error handling."""
     print("\n" + "=" * 60)
     print("📋 EXAMPLE 3: Batch Processing")
     print("=" * 60)
 
-    users_batch = [
+    users_batch: list[TUserData] = [
         {"name": "Bob Smith", "email": "bob@example.com", "age": 35},
         {"name": "Carol Davis", "email": "carol@example.com", "age": 42},
         {"name": "", "email": "invalid", "age": 16},  # This will fail
@@ -292,37 +340,60 @@ def main() -> None:
         {"name": "Eve Brown", "email": "eve@invalid.com", "age": 33},  # This might fail
     ]
 
-    batch_result = process_multiple_users(users_batch)
-    if batch_result.is_success:
+    result = process_multiple_users(users_batch)
+    if result.is_success:
         print("✅ Batch processing completed!")
 
-    # Example 4: JSON transformation pipeline
+
+def demo_json_transformation() -> None:
+    """Demonstrate JSON transformation pipeline."""
     print("\n" + "=" * 60)
     print("📋 EXAMPLE 4: JSON Transformation Pipeline")
     print("=" * 60)
 
     json_data = '{"name": "Frank Miller", "email": "frank@example.com", "age": 45}'
 
-    pipeline_result = transform_user_data(json_data).flat_map(process_user_registration)
+    result = transform_user_data(json_data).flat_map(process_user_registration)
 
-    if pipeline_result.is_success:
-        print(
-            "✅ Pipeline success:"
-            f" User {pipeline_result.data['user']['name']} processed",
-        )
+    if result.is_success:
+        data = result.data
+        if isinstance(data, dict) and "user" in data and isinstance(data["user"], dict):
+            user_name = data["user"].get("name", "Unknown")
+            print(f"✅ Pipeline success: User {user_name} processed")
+        else:
+            print("✅ Pipeline success: User processed")
     else:
-        print(f"❌ Pipeline failed: {pipeline_result.error}")
+        print(f"❌ Pipeline failed: {result.error}")
 
-    # Example 5: Retry pattern
+
+def demo_retry_pattern() -> None:
+    """Demonstrate retry pattern with error recovery."""
     print("\n" + "=" * 60)
     print("📋 EXAMPLE 5: Retry Pattern")
     print("=" * 60)
 
-    retry_user = {"name": "Grace Taylor", "email": "grace@example.com", "age": 31}
+    retry_user: TUserData = {
+        "name": "Grace Taylor",
+        "email": "grace@example.com",
+        "age": 31,
+    }
 
-    retry_result = process_with_retry(retry_user, max_retries=3)
-    if retry_result.is_success:
+    result = process_with_retry(retry_user, max_retries=3)
+    if result.is_success:
         print("✅ Retry pattern success!")
+
+
+def main() -> None:
+    """Run comprehensive FlextResult demonstration with shared domain models."""
+    print("=" * 80)
+    print("🚀 FLEXT RESULT - RAILWAY PATTERN DEMONSTRATION")
+    print("=" * 80)
+
+    demo_successful_registration()
+    demo_validation_failure()
+    demo_batch_processing()
+    demo_json_transformation()
+    demo_retry_pattern()
 
     print("\n" + "=" * 80)
     print("🎉 FLEXT RESULT DEMONSTRATION COMPLETED")

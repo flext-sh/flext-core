@@ -68,11 +68,12 @@ from typing import TYPE_CHECKING, Self
 
 from pydantic import BaseModel, ConfigDict
 
-from flext_core.flext_types import TAnyDict
+from flext_core.fields import FlextFields
 from flext_core.loggings import FlextLoggerFactory
 from flext_core.mixins import FlextLoggableMixin, FlextValueObjectMixin
 from flext_core.payload import FlextPayload
 from flext_core.result import FlextResult
+from flext_core.types import TAnyDict
 from flext_core.utilities import FlextFormatters, FlextGenerators
 
 if TYPE_CHECKING:
@@ -195,6 +196,31 @@ class FlextValueObject(
         extra="forbid",
     )
 
+    def __hash__(self) -> int:
+        """Generate hash from hashable field values.
+
+        Handles unhashable types like lists and dicts by converting them to hashable
+        representations.
+        """
+
+        def make_hashable(item: object) -> object:
+            """Convert item to hashable representation."""
+            if isinstance(item, dict):
+                return frozenset((k, make_hashable(v)) for k, v in item.items())
+            if isinstance(item, list):
+                return tuple(make_hashable(i) for i in item)
+            if isinstance(item, set):
+                return frozenset(make_hashable(i) for i in item)
+            return item
+
+        # Get all field values excluding domain_events if present
+        values = []
+        for name, value in self.model_dump().items():
+            if name != "domain_events":  # Exclude non-hashable internal fields
+                values.append((name, make_hashable(value)))
+
+        return hash(tuple(sorted(values)))
+
     def __init_subclass__(cls, **kwargs: object) -> None:
         """Track ValueObject subclasses for type safety.
 
@@ -243,6 +269,73 @@ class FlextValueObject(
         )
         return FlextResult.ok(self)
 
+    def validate_field(self, field_name: str, field_value: object) -> FlextResult[None]:
+        """Validate a specific field using the fields system.
+
+        Args:
+            field_name: Name of the field to validate
+            field_value: Value to validate
+
+        Returns:
+            Result of field validation
+
+        """
+        try:
+            # Try to get field definition from registry
+            field_result = FlextFields.get_field_by_name(field_name)
+            if field_result.is_success:
+                field_def = field_result.unwrap()
+                validation_result = field_def.validate_value(field_value)
+                if validation_result.is_success:
+                    return FlextResult.ok(None)
+                return FlextResult.fail(
+                    validation_result.error or "Field validation failed",
+                )
+
+            # If no field definition found, return success (allow other validation)
+            return FlextResult.ok(None)
+        except (ImportError, AttributeError, ValueError) as e:
+            return FlextResult.fail(f"Field validation error: {e}")
+
+    def validate_all_fields(self) -> FlextResult[None]:
+        """Validate all value object fields using the fields system.
+
+        Automatically validates all model fields that have corresponding
+        field definitions in the fields registry.
+
+        Returns:
+            Result of comprehensive field validation
+
+        """
+        errors = []
+
+        # Get all model fields and their values
+        model_data = self.model_dump()
+
+        for field_name, field_value in model_data.items():
+            # Skip internal fields
+            if field_name.startswith("_"):
+                continue
+
+            validation_result = self.validate_field(field_name, field_value)
+            if validation_result.is_failure:
+                errors.append(f"{field_name}: {validation_result.error}")
+
+        if errors:
+            return FlextResult.fail(f"Field validation errors: {'; '.join(errors)}")
+
+        return FlextResult.ok(None)
+
+    def format_dict(self, data: dict[str, object]) -> str:
+        """Format dictionary for string representation."""
+        formatted_items = []
+        for key, value in data.items():
+            if isinstance(value, str):
+                formatted_items.append(f"{key}='{value}'")
+            else:
+                formatted_items.append(f"{key}={value}")
+        return ", ".join(formatted_items)
+
     def __str__(self) -> str:
         """Return string representation using inherited formatters."""
         # Use inherited formatting method directly
@@ -276,7 +369,7 @@ class FlextValueObject(
 
         # 3. Use base formatters for data preparation
         raw_data = self.model_dump()
-        formatted_data = FlextFormatters.format_dict(raw_data)
+        formatted_data = self.format_dict(raw_data)
 
         # 4. Build comprehensive payload data
         payload_data: TAnyDict = {
@@ -300,7 +393,7 @@ class FlextValueObject(
                 error=payload_result.error,
             )
             # Fallback to minimal payload
-            fallback_data: dict[str, object] = {
+            fallback_data: TAnyDict = {
                 "error": "Payload creation failed",
                 "raw_data": raw_data,
             }

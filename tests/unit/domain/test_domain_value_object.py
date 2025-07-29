@@ -7,46 +7,18 @@ focusing on missing test cases to achieve 80%+ coverage.
 from __future__ import annotations
 
 from decimal import Decimal
-from typing import Any
 
 import pytest
 from pydantic import ValidationError
 
 from flext_core.value_objects import FlextValueObject
 
-
-class ConcreteValueObject(FlextValueObject):
-    """Concrete value object implementation for comprehensive testing."""
-
-    amount: Decimal
-    currency: str = "USD"
-    description: str = ""
-
-    def validate_domain_rules(self) -> None:
-        """Validate test value object domain rules."""
-        if self.amount < 0:
-            msg = "Amount cannot be negative"
-            raise ValueError(msg)
-        if len(self.currency) != 3:
-            msg = "Currency must be 3 characters"
-            raise ValueError(msg)
-        if not self.currency.isupper():
-            msg = "Currency must be uppercase"
-            raise ValueError(msg)
-
-
-class ComplexValueObject(FlextValueObject):
-    """Value object with complex data types for testing."""
-
-    name: str
-    tags: list[str]
-    metadata: dict[str, Any]
-
-    def validate_domain_rules(self) -> None:
-        """Validate complex value object domain rules."""
-        if not self.name.strip():
-            msg = "Name cannot be empty"
-            raise ValueError(msg)
+# Import shared test domain
+from tests.shared_test_domain import (
+    ComplexValueObject,
+    ConcreteValueObject,
+    TestDomainFactory,
+)
 
 
 class TestFlextValueObjectEquality:
@@ -54,8 +26,15 @@ class TestFlextValueObjectEquality:
 
     def test_equality_same_values(self) -> None:
         """Test value objects with same values are equal."""
-        vo1 = ConcreteValueObject(amount=Decimal("10.50"), currency="USD")
-        vo2 = ConcreteValueObject(amount=Decimal("10.50"), currency="USD")
+        vo1_result = TestDomainFactory.create_concrete_value_object(
+            amount=Decimal("10.50"), currency="USD",
+        )
+        vo2_result = TestDomainFactory.create_concrete_value_object(
+            amount=Decimal("10.50"), currency="USD",
+        )
+        assert vo1_result.is_success
+        assert vo2_result.is_success
+        vo1, vo2 = vo1_result.data, vo2_result.data
 
         assert vo1 == vo2
         assert vo2 == vo1
@@ -133,16 +112,20 @@ class TestFlextValueObjectHashing:
         assert hash(vo1) != hash(vo2)
 
     def test_hash_with_complex_types(self) -> None:
-        """Test that hashing fails properly with unhashable types."""
+        """Test that hashing works with complex types by converting them to hashable."""
         vo1 = ComplexValueObject(
             name="Test",
-            tags=["tag1", "tag2"],  # List is unhashable
-            metadata={"key": "value"},  # Dict is unhashable
+            tags=["tag1", "tag2"],  # List is unhashable but converted to tuple
+            metadata={"key": "value"},  # Dict is unhashable but converted to frozenset
         )
 
-        # Value objects with unhashable types should raise TypeError when hashed
-        with pytest.raises(TypeError, match="unhashable type"):
-            hash(vo1)
+        # Value objects with complex types should now be hashable via conversion
+        hash_value = hash(vo1)
+        assert isinstance(hash_value, int)
+
+        # Should work in collections that require hashable items
+        vo_set = {vo1}
+        assert len(vo_set) == 1
 
     def test_hash_stability(self) -> None:
         """Test hash stability across multiple calls."""

@@ -19,7 +19,7 @@ class TestFlextResult:
 
     def test_failure_creation(self) -> None:
         """Test creating failure result."""
-        result = FlextResult.fail("test_error")
+        result: FlextResult[str] = FlextResult.fail("test_error")
         assert result.is_failure is True
         assert result.data is None
         assert result.error == "test_error"
@@ -33,13 +33,13 @@ class TestFlextResult:
     def test_failure_with_metadata(self) -> None:
         """Test creating failure result with metadata."""
         # Metadata not supported in current FlextResult implementation
-        result = FlextResult.fail("test_error")
+        result: FlextResult[str] = FlextResult.fail("test_error")
         assert result.error == "test_error"
 
     def test_boolean_conversion(self) -> None:
         """Test boolean conversion."""
         success_result = FlextResult.ok("data")
-        failure_result = FlextResult.fail("error")
+        failure_result: FlextResult[str] = FlextResult.fail("error")
 
         assert bool(success_result) is True
         assert bool(failure_result) is False
@@ -52,8 +52,10 @@ class TestFlextResult:
 
     def test_unwrap_failure_raises(self) -> None:
         """Test unwrapping failure result raises exception."""
-        result = FlextResult.fail("test_error")
-        with pytest.raises(ValueError, match="test_error"):
+        from flext_core.exceptions import FlextOperationError
+
+        result: FlextResult[str] = FlextResult.fail("test_error")
+        with pytest.raises(FlextOperationError, match="test_error"):
             result.unwrap()
 
     def test_unwrap_or_success(self) -> None:
@@ -64,7 +66,7 @@ class TestFlextResult:
 
     def test_unwrap_or_failure(self) -> None:
         """Test unwrap_or with failure result."""
-        result = FlextResult.fail("error")
+        result: FlextResult[str] = FlextResult.fail("error")
         assert result.unwrap_or("default") == "default"
 
     def test_map_success(self) -> None:
@@ -76,7 +78,7 @@ class TestFlextResult:
 
     def test_map_failure(self) -> None:
         """Test map with failure result."""
-        result = FlextResult.fail("error")
+        result: FlextResult[str] = FlextResult.fail("error")
         mapped = result.map(lambda x: x.upper())
         assert mapped.is_failure is True
         assert mapped.error == "error"
@@ -90,7 +92,7 @@ class TestFlextResult:
 
     def test_flat_map_failure(self) -> None:
         """Test flat_map with failure result."""
-        result = FlextResult.fail("error")
+        result: FlextResult[str] = FlextResult.fail("error")
         flat_mapped = result.flat_map(lambda x: FlextResult.ok("success"))
         assert flat_mapped.is_failure is True
         assert flat_mapped.error == "error"
@@ -98,7 +100,9 @@ class TestFlextResult:
     def test_flat_map_chain_failure(self) -> None:
         """Test flat_map with chain failure."""
         result = FlextResult.ok("hello")
-        flat_mapped = result.flat_map(lambda x: FlextResult.fail("chain_error"))
+        flat_mapped: FlextResult[str] = result.flat_map(
+            lambda x: FlextResult.fail("chain_error"),
+        )
         assert flat_mapped.is_failure is True
         assert flat_mapped.error == "chain_error"
 
@@ -106,7 +110,7 @@ class TestFlextResult:
         """Test equality comparison."""
         result1 = FlextResult.ok("test")
         result2 = FlextResult.ok("test")
-        result3 = FlextResult.fail("error")
+        result3: FlextResult[str] = FlextResult.fail("error")
 
         assert result1 == result2
         assert result1 != result3
@@ -115,7 +119,7 @@ class TestFlextResult:
         """Test string representation."""
         result = FlextResult.ok("test_data")
         repr_str = repr(result)
-        assert "_BaseResult" in repr_str
+        assert "FlextResult" in repr_str
         assert "is_success=True" in repr_str
 
 
@@ -128,22 +132,33 @@ class TestComposeFunction:
         result2 = FlextResult.ok("data2")
 
         # Use _BaseResultOperations.chain_results for combining results into a list
-        from flext_core._result_base import _BaseResultOperations
+        from typing import cast
 
-        composed = _BaseResultOperations.chain_results(result1, result2)
+        from flext_core._result_base import _BaseResult, _BaseResultOperations
+
+        composed = _BaseResultOperations.chain_results(
+            cast("_BaseResult[object]", result1),
+            cast("_BaseResult[object]", result2),
+        )
         assert composed.is_success is True
         assert composed.data == ["data1", "data2"]
 
     def test_compose_with_failure(self) -> None:
         """Test composing with failure result."""
         result1 = FlextResult.ok("data1")
-        result2 = FlextResult.fail("error")
+        result2: FlextResult[str] = FlextResult.fail("error")
         result3 = FlextResult.ok("data3")
 
         # Use _BaseResultOperations.chain_results for combining results
-        from flext_core._result_base import _BaseResultOperations
+        from typing import cast
 
-        composed = _BaseResultOperations.chain_results(result1, result2, result3)
+        from flext_core._result_base import _BaseResult, _BaseResultOperations
+
+        composed = _BaseResultOperations.chain_results(
+            cast("_BaseResult[object]", result1),
+            cast("_BaseResult[object]", result2),
+            cast("_BaseResult[object]", result3),
+        )
         assert composed.is_failure is True
         assert composed.error == "error"
 
@@ -174,7 +189,11 @@ class TestPipeFunction:
         def to_lower(x: str) -> FlextResult[str]:
             return FlextResult.ok(x.lower())
 
-        pipeline = FlextCore.pipe(to_upper, replace_spaces, to_lower)
+        pipeline = FlextCore.pipe(
+            to_upper,
+            replace_spaces,
+            to_lower,
+        )
         result = pipeline("hello world")
 
         assert result.is_success is True
@@ -190,7 +209,10 @@ class TestPipeFunction:
         def another_func(x: str) -> FlextResult[str]:
             return FlextResult.ok(x.upper())
 
-        pipeline = FlextCore.pipe(failing_func, another_func)
+        pipeline = FlextCore.pipe(
+            failing_func,
+            another_func,
+        )
         result = pipeline("hello")
 
         assert result.is_failure is True
@@ -204,10 +226,13 @@ class TestPipeFunction:
             msg = "Transform failed"
             return FlextResult.fail(msg)
 
-        pipeline = FlextCore.pipe(failing_transform)
+        pipeline = FlextCore.pipe(
+            failing_transform,
+        )
         result = pipeline("hello")
 
         assert result.is_failure is True
+        assert result.error is not None
         assert "Transform failed" in result.error
 
 
@@ -218,7 +243,7 @@ class TestTapFunction:
         """Test tap with success result."""
         from flext_core.core import FlextCore
 
-        side_effects = []
+        side_effects: list[str] = []
 
         # FlextCore.tap creates a function that executes side effects
         tap_func = FlextCore.tap(side_effects.append)
@@ -232,14 +257,17 @@ class TestTapFunction:
         """Test tap with failure result."""
         from flext_core.core import FlextCore
 
-        side_effects = []
+        side_effects: list[str] = []
 
         # For a failure result, we need to test the tap behavior with a pipeline
         def failing_func(x: str) -> FlextResult[str]:
             return FlextResult.fail("error")
 
         tap_func = FlextCore.tap(side_effects.append)
-        pipeline = FlextCore.pipe(failing_func, tap_func)
+        pipeline = FlextCore.pipe(
+            failing_func,
+            tap_func,
+        )
         result = pipeline("test")
 
         assert result.is_failure is True
@@ -271,8 +299,8 @@ class TestWhenFunction:
 
         # FlextCore.when creates a conditional function
         when_func = FlextCore.when(
-            lambda x: len(x) > 5,
-            lambda x: FlextResult.ok(x.upper()),
+            lambda x: len(str(x)) > 5,
+            lambda x: FlextResult.ok(str(x).upper()),
         )
         result = when_func("test_data")
 
@@ -285,8 +313,8 @@ class TestWhenFunction:
 
         # FlextCore.when creates a conditional function
         when_func = FlextCore.when(
-            lambda x: len(x) > 10,
-            lambda x: FlextResult.ok(x.upper()),
+            lambda x: len(str(x)) > 10,
+            lambda x: FlextResult.ok(str(x).upper()),
         )
         result = when_func("test")
 
@@ -306,7 +334,10 @@ class TestWhenFunction:
             lambda x: FlextResult.ok(x.upper()),
         )
 
-        pipeline = FlextCore.pipe(failing_func, when_func)
+        pipeline = FlextCore.pipe(
+            failing_func,
+            when_func,
+        )
         result = pipeline("test")
 
         assert result.is_failure is True
@@ -321,8 +352,8 @@ class TestWhenFunction:
             raise ValueError(msg)
 
         when_func = FlextCore.when(
-            failing_condition,
-            lambda x: FlextResult.ok(x.upper()),
+            lambda x: failing_condition(str(x)),
+            lambda x: FlextResult.ok(str(x).upper()),
         )
 
         # The current implementation doesn't catch exceptions in predicates

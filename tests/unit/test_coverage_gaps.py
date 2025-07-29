@@ -39,8 +39,8 @@ class TestCoverageGaps:
         """Test basic constants functionality."""
         assert FlextConstants.DEFAULT_TIMEOUT > 0
         assert FlextConstants.VERSION is not None
-        assert FlextEnvironment.PRODUCTION == "production"
-        assert FlextLogLevel.INFO == "INFO"
+        assert FlextEnvironment.PRODUCTION.value == "production"
+        assert FlextLogLevel.INFO.value == "INFO"
 
     def test_container_edge_cases(self) -> None:
         """Test container edge cases."""
@@ -48,11 +48,11 @@ class TestCoverageGaps:
 
         # Test empty service name
         result = container.register("", lambda: "test")
-        assert not result.success
+        assert not result.is_success
 
         # Test missing service
         result = container.get("nonexistent")
-        assert not result.success
+        assert not result.is_success
 
     def test_payload_basics(self) -> None:
         """Test basic payload functionality."""
@@ -66,10 +66,10 @@ class TestCoverageGaps:
     def test_result_edge_cases(self) -> None:
         """Test result edge cases."""
         result = FlextResultDirect.ok(None)
-        assert result.success
+        assert result.is_success
 
         result = FlextResultDirect.fail("")
-        assert not result.success
+        assert not result.is_success
 
     def test_types_system_basic(self) -> None:
         """Test basic types system functionality."""

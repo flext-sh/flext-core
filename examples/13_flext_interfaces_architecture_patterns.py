@@ -33,6 +33,10 @@ import time
 import traceback
 from collections.abc import Mapping
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from structlog.stdlib import BoundLogger
 
 from flext_core.interfaces import (
     FlextConfigurable,
@@ -49,6 +53,13 @@ from flext_core.interfaces import (
     FlextValidator,
 )
 from flext_core.result import FlextResult
+
+# =============================================================================
+# INTERFACE CONSTANTS - Network and system constraints
+# =============================================================================
+
+# Network port validation constants
+MAX_TCP_PORT = 65535  # Maximum valid TCP port number
 
 # =============================================================================
 # DOMAIN MODELS - Business entities for examples
@@ -224,7 +235,7 @@ class UserService(FlextService):
 
     def health_check(self) -> FlextResult[dict[str, object]]:
         """Check user service health."""
-        health_status = {
+        health_status: dict[str, object] = {
             "service": "UserService",
             "status": "healthy" if self._is_running else "stopped",
             "total_users": len(self._users),
@@ -280,7 +291,7 @@ class ConfigurableEmailService:
 
             if "smtp_port" in settings:
                 port = settings["smtp_port"]
-                if isinstance(port, int) and 1 <= port <= 65535:
+                if isinstance(port, int) and 1 <= port <= MAX_TCP_PORT:
                     self._smtp_port = port
                 else:
                     return FlextResult.fail("Invalid SMTP port")
@@ -295,10 +306,10 @@ class ConfigurableEmailService:
             print(f"EmailService configured: {self._smtp_host}:{self._smtp_port}")
             return FlextResult.ok(None)
 
-        except Exception as e:
+        except (ValueError, TypeError, KeyError) as e:
             return FlextResult.fail(f"Configuration failed: {e}")
 
-    def send_email(self, to: str, subject: str, body: str) -> FlextResult[None]:
+    def send_email(self, to: str, subject: str, _body: str) -> FlextResult[None]:
         """Send email (simulated)."""
         if not self._configured:
             return FlextResult.fail("Service not configured")
@@ -343,11 +354,13 @@ class UserCommandHandler(FlextHandler):
             email = getattr(message, "email", "")
             age = getattr(message, "age", None)
 
-            return self._user_service.create_user(name, email, age)
+            result = self._user_service.create_user(name, email, age)
+            return result.map(lambda user: user)
 
         if message_type == "user_get":
             user_id = getattr(message, "user_id", "")
-            return self._user_service.get_user(user_id)
+            result = self._user_service.get_user(user_id)
+            return result.map(lambda user: user)
 
         return FlextResult.fail(f"Unknown user command: {message_type}")
 
@@ -540,6 +553,80 @@ class DatabaseUnitOfWork(FlextUnitOfWork):
 # =============================================================================
 
 
+# Simple logger mock to satisfy BoundLogger interface
+class MockLogger:
+    """Mock logger that behaves like BoundLogger."""
+
+    def info(self, message: str, *args: object) -> None:
+        """Log info message.
+
+        Args:
+            message: Message to log
+            *args: Arguments to format message
+
+        """
+        if args:
+            message %= args
+        print(f"[INFO] {message}")
+
+    def error(self, message: str, *args: object) -> None:
+        """Log error message.
+
+        Args:
+            message: Message to log
+            *args: Arguments to format message
+
+        """
+        if args:
+            message %= args
+        print(f"[ERROR] {message}")
+
+    def debug(self, message: str, *args: object) -> None:
+        """Log debug message.
+
+        Args:
+            message: Message to log
+            *args: Arguments to format message
+
+        """
+        if args:
+            message %= args
+        print(f"[DEBUG] {message}")
+
+    def warning(self, message: str, *args: object) -> None:
+        """Log warning message.
+
+        Args:
+            message: Message to log
+            *args: Arguments to format message
+
+        """
+        if args:
+            message %= args
+        print(f"[WARNING] {message}")
+
+    def critical(self, message: str, *args: object) -> None:
+        """Log critical message.
+
+        Args:
+            message: Message to log
+            *args: Arguments to format message
+
+        """
+        if args:
+            message %= args
+        print(f"[CRITICAL] {message}")
+
+    # Mock the other methods that BoundLogger might have
+    def bind(self, **_kwargs: object) -> "MockLogger":
+        """Bind additional context (mock implementation)."""
+        return self
+
+    def unbind(self, *_keys: str) -> "MockLogger":
+        """Unbind context keys (mock implementation)."""
+        return self
+
+
 class SimplePluginContext:
     """Simple plugin context demonstrating FlextPluginContext protocol."""
 
@@ -552,11 +639,13 @@ class SimplePluginContext:
         """
         self._config = config or {}
         self._services: dict[str, object] = {}
+        self._logger = MockLogger()
 
     @property
-    def logger(self) -> object:
+    def logger(self) -> "BoundLogger":
         """Get logger for plugin (simplified)."""
-        return print  # Simple logger replacement
+        # Return MockLogger which implements BoundLogger interface
+        return self._logger  # type: ignore[return-value]
 
     @property
     def config(self) -> Mapping[str, object]:
@@ -601,7 +690,11 @@ class EmailNotificationPlugin(FlextPlugin):
             if email_service_result.is_failure:
                 return FlextResult.fail("Email service not available")
 
-            self._email_service = email_service_result.data
+            service_data = email_service_result.data
+            if isinstance(service_data, ConfigurableEmailService):
+                self._email_service = service_data
+            else:
+                return FlextResult.fail("Invalid email service type")
 
             # Configure email service from plugin config
             config = dict(context.config)
@@ -611,10 +704,10 @@ class EmailNotificationPlugin(FlextPlugin):
                     return config_result
 
             self._initialized = True
-            context.logger(f"Plugin {self.name} v{self.version} initialized")
+            context.logger.info("Plugin %s v%s initialized", self.name, self.version)
             return FlextResult.ok(None)
 
-        except Exception as e:
+        except (ValueError, TypeError, ImportError) as e:
             return FlextResult.fail(f"Plugin initialization failed: {e}")
 
     def shutdown(self) -> FlextResult[None]:
@@ -635,7 +728,7 @@ class EmailNotificationPlugin(FlextPlugin):
         return self._email_service.send_email(
             to=user.email,
             subject="Welcome!",
-            body=f"Welcome to our platform, {user.name}!",
+            _body=f"Welcome to our platform, {user.name}!",
         )
 
 
@@ -660,7 +753,7 @@ class AuditLogPlugin(FlextPlugin):
     def initialize(self, context: FlextPluginContext) -> FlextResult[None]:
         """Initialize plugin with context."""
         self._initialized = True
-        context.logger(f"Plugin {self.name} v{self.version} initialized")
+        context.logger.info("Plugin %s v%s initialized", self.name, self.version)
         return FlextResult.ok(None)
 
     def shutdown(self) -> FlextResult[None]:
@@ -759,11 +852,12 @@ class SimpleEventSubscriber(FlextEventSubscriber):
             self._subscriptions[event_type].append(handler)
 
             print(
-                f"Handler {handler.__class__.__name__} subscribed to {event_type.__name__}",
+                f"Handler {handler.__class__.__name__} subscribed to "
+                f"{event_type.__name__}",
             )
             return FlextResult.ok(None)
 
-        except Exception as e:
+        except (ValueError, TypeError, KeyError) as e:
             return FlextResult.fail(f"Subscription failed: {e}")
 
     def unsubscribe(
@@ -773,16 +867,19 @@ class SimpleEventSubscriber(FlextEventSubscriber):
     ) -> FlextResult[None]:
         """Unsubscribe from event type."""
         try:
-            if event_type in self._subscriptions:
-                if handler in self._subscriptions[event_type]:
-                    self._subscriptions[event_type].remove(handler)
-                    print(
-                        f"Handler {handler.__class__.__name__} unsubscribed from {event_type.__name__}",
-                    )
+            if (
+                event_type in self._subscriptions
+                and handler in self._subscriptions[event_type]
+            ):
+                self._subscriptions[event_type].remove(handler)
+                print(
+                    f"Handler {handler.__class__.__name__} unsubscribed from "
+                    f"{event_type.__name__}",
+                )
 
             return FlextResult.ok(None)
 
-        except Exception as e:
+        except (ValueError, TypeError, KeyError) as e:
             return FlextResult.fail(f"Unsubscription failed: {e}")
 
 
@@ -800,7 +897,7 @@ class UserEventHandler(FlextHandler):
     def handle(self, message: object) -> FlextResult[object]:
         """Handle user events."""
         if isinstance(message, UserCreatedEvent):
-            return self._audit_plugin.log_event(
+            result = self._audit_plugin.log_event(
                 "user_created",
                 {
                     "user_id": message.user_id,
@@ -808,9 +905,10 @@ class UserEventHandler(FlextHandler):
                     "email": message.email,
                 },
             )
+            return result.map(lambda _: None)
 
         if isinstance(message, OrderPlacedEvent):
-            return self._audit_plugin.log_event(
+            result = self._audit_plugin.log_event(
                 "order_placed",
                 {
                     "order_id": message.order_id,
@@ -818,6 +916,7 @@ class UserEventHandler(FlextHandler):
                     "total": message.total,
                 },
             )
+            return result.map(lambda _: None)
 
         return FlextResult.fail(f"Unknown event type: {type(message)}")
 
@@ -854,7 +953,8 @@ def demonstrate_validation_interfaces() -> None:
 
     # Runtime type checking
     print(
-        f"   Email validator is FlextValidator: {isinstance(email_validator, FlextValidator)}",
+        f"   Email validator is FlextValidator: "
+        f"{isinstance(email_validator, FlextValidator)}",
     )
 
     # 2. Rule-based validation
@@ -918,7 +1018,8 @@ def demonstrate_service_interfaces() -> None:
     user_result = user_service.create_user("Alice Johnson", "alice@example.com", 28)
     if user_result.is_success:
         user = user_result.data
-        print(f"   ✅ User created: {user.name} ({user.id})")
+        if user is not None:
+            print(f"   ✅ User created: {user.name} ({user.id})")
 
     # Stop service
     result = user_service.stop()
@@ -962,7 +1063,8 @@ def demonstrate_service_interfaces() -> None:
 
     # Test runtime protocol checking
     print(
-        f"   Email service is configurable: {isinstance(email_service, FlextConfigurable)}",
+        f"   Email service is configurable: "
+        f"{isinstance(email_service, FlextConfigurable)}",
     )
 
     print("✅ Service interfaces demonstration completed")
@@ -1003,7 +1105,8 @@ def demonstrate_handler_interfaces() -> None:
         result = handler.handle(create_message)
         if result.is_success:
             user = result.data
-            print(f"   ✅ User created via handler: {user.name} ({user.id})")
+            if hasattr(user, "name") and hasattr(user, "id"):
+                print(f"   ✅ User created via handler: {user.name} ({user.id})")
         else:
             print(f"   ❌ Handler failed: {result.error}")
 
@@ -1029,7 +1132,8 @@ def demonstrate_handler_interfaces() -> None:
         result = logging_middleware.process(valid_message, handler)
         if result.is_success:
             user = result.data
-            print(f"   ✅ Pipeline success: {user.name} ({user.id})")
+            if hasattr(user, "name") and hasattr(user, "id"):
+                print(f"   ✅ Pipeline success: {user.name} ({user.id})")
 
     # Test invalid message through pipeline
     print("   Testing invalid message through pipeline:")
@@ -1048,7 +1152,7 @@ def demonstrate_handler_interfaces() -> None:
     print("✅ Handler interfaces demonstration completed")
 
 
-def demonstrate_repository_interfaces() -> None:
+def demonstrate_repository_interfaces() -> None:  # noqa: PLR0912, PLR0915
     """Demonstrate repository and unit of work interfaces."""
     print("\n" + "=" * 80)
     print("💾 REPOSITORY INTERFACES - DATA ACCESS PATTERNS")
@@ -1067,25 +1171,30 @@ def demonstrate_repository_interfaces() -> None:
     ]
 
     for user in users:
-        result = user_repo.save(user)
-        if result.is_success:
+        save_result = user_repo.save(user)
+        if save_result.is_success:
             print(f"   ✅ Saved user: {user.name}")
         else:
-            print(f"   ❌ Save failed: {result.error}")
+            print(f"   ❌ Save failed: {save_result.error}")
 
     # Find users
     print("   Finding users:")
     for user_id in ["user_1", "user_999", "user_2"]:
         result = user_repo.find_by_id(user_id)
         if result.is_success:
-            user = result.data
-            print(f"   ✅ Found: {user.name} ({user.id})")
+            user_data = result.data
+            if (
+                user_data is not None
+                and hasattr(user_data, "name")
+                and hasattr(user_data, "id")
+            ):
+                print(f"   ✅ Found: {user_data.name} ({user_data.id})")
         else:
             print(f"   ❌ Not found: {user_id} - {result.error}")
 
     # Delete user
-    result = user_repo.delete("user_2")
-    if result.is_success:
+    delete_result = user_repo.delete("user_2")
+    if delete_result.is_success:
         print("   ✅ User deleted")
 
     # Try to find deleted user
@@ -1102,7 +1211,8 @@ def demonstrate_repository_interfaces() -> None:
     print("   Successful transaction:")
     with DatabaseUnitOfWork(fresh_repo) as uow:
         new_user = User("user_100", "Transaction User", "transaction@example.com", 40)
-        uow.add_change("save", new_user)
+        if hasattr(uow, "add_change"):
+            uow.add_change("save", new_user)
 
         # Commit explicitly
         commit_result = uow.commit()
@@ -1112,19 +1222,26 @@ def demonstrate_repository_interfaces() -> None:
     # Verify user was saved
     result = fresh_repo.find_by_id("user_100")
     if result.is_success:
-        user = result.data
-        print(f"   ✅ User persisted after commit: {user.name}")
+        user_data = result.data
+        if hasattr(user_data, "name"):
+            print(f"   ✅ User persisted after commit: {user_data.name}")
 
     # Failed transaction (rollback)
     print("   Failed transaction with rollback:")
+
+    def _simulate_transaction_error() -> None:
+        """Simulate a transaction error to test rollback behavior."""
+        msg = "Simulated transaction error"
+        raise ValueError(msg)
+
     try:
         with DatabaseUnitOfWork(fresh_repo) as uow:
             failing_user = User("user_101", "Failing User", "fail@example.com", 50)
-            uow.add_change("save", failing_user)
+            if hasattr(uow, "add_change"):
+                uow.add_change("save", failing_user)
 
             # Simulate error by raising exception
-            msg = "Simulated transaction error"
-            raise ValueError(msg)
+            _simulate_transaction_error()
     except ValueError as e:
         print(f"   ❌ Transaction failed (expected): {e}")
 
@@ -1339,10 +1456,11 @@ def main() -> None:
         print("   📡 Event interfaces with publish-subscribe patterns")
         print("\n💡 FlextInterfaces provides enterprise-grade architecture patterns")
         print(
-            "   with Clean Architecture, DDD, and extensibility through protocols and ABCs!",
+            "   with Clean Architecture, DDD, and extensibility through protocols "
+            "and ABCs!",
         )
 
-    except Exception as e:
+    except (ValueError, TypeError, ImportError, AttributeError) as e:
         print(f"\n❌ Error during FlextInterfaces demonstration: {e}")
 
         traceback.print_exc()

@@ -11,10 +11,12 @@ from flext_core.result import FlextResult
 FlextCommand = FlextCommands.Command
 FlextCommandHandler = FlextCommands.Handler
 FlextCommandBus = FlextCommands.Bus
-FlextCommandResult = FlextResult  # Use FlextResult directly
+FlextCommandResult = FlextCommands.Result  # FlextCommands.Result with metadata
 
 if TYPE_CHECKING:
-    from flext_core.types import FlextCommandId, FlextCommandType
+    # Type aliases for command patterns
+    FlextCommandId = str
+    FlextCommandType = str
 
 # =============================================================================
 # TEST COMMAND IMPLEMENTATIONS
@@ -77,6 +79,9 @@ class CreateUserCommand(FlextCommand):
 class UpdateUserCommand(FlextCommand):
     """Test command for updating users."""
 
+    user_id: str
+    updates: dict[str, Any]
+
     def __init__(
         self,
         user_id: str,
@@ -84,12 +89,20 @@ class UpdateUserCommand(FlextCommand):
         command_id: FlextCommandId | None = None,
     ) -> None:
         """Initialize update user command with user ID and updates."""
-        super().__init__(
-            command_id=command_id,
-            command_type="update_user",
-        )
-        self.user_id = user_id
-        self.updates = updates
+        # Only pass command_id if it's provided, let default factory work otherwise
+        if command_id is not None:
+            super().__init__(
+                command_id=command_id,
+                command_type="update_user",
+                user_id=user_id,
+                updates=updates,
+            )
+        else:
+            super().__init__(
+                command_type="update_user",
+                user_id=user_id,
+                updates=updates,
+            )
 
     def get_payload(self) -> dict[str, Any]:
         """Get command payload."""

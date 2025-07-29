@@ -8,7 +8,12 @@ Builder patterns for fluent APIs and progressive configuration.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from flext_core.validation import FlextValidators
+
+if TYPE_CHECKING:
+    from flext_core.types import TAnyDict
 
 
 class _BaseBuilder:
@@ -22,7 +27,7 @@ class _BaseBuilder:
 
         """
         self._builder_name = builder_name
-        self._properties: dict[str, object] = {}
+        self._properties: TAnyDict = {}
         self._validation_errors: list[str] = []
         self._is_built = False
 

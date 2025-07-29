@@ -1,0 +1,292 @@
+"""Example demonstrating boilerplate reduction using enhanced FlextDomainService.
+
+This example shows how to use the enhanced FlextDomainService to reduce
+boilerplate code across FLEXT projects.
+
+Copyright (c) 2025 FLEXT Contributors
+SPDX-License-Identifier: MIT
+"""
+
+from __future__ import annotations
+
+from datetime import datetime
+from typing import Any
+
+from flext_core import FlextDomainService, FlextResult, get_logger
+
+logger = get_logger(__name__)
+
+
+# ==============================================================================
+# BEFORE: Traditional service with lots of boilerplate
+# ==============================================================================
+
+
+class TraditionalOracleService:
+    """Traditional service with lots of boilerplate code."""
+
+    def __init__(self, host: str, port: int, username: str, password: str) -> None:
+        self.host = host
+        self.port = port
+        self.username = username
+        self.password = password
+        self._connection = None
+        self._initialized = False
+        logger.info("Initializing TraditionalOracleService")
+
+    def validate_config(self) -> FlextResult[None]:
+        """Validate configuration."""
+        try:
+            if not self.host:
+                return FlextResult.fail("Host is required")
+            if not self.username:
+                return FlextResult.fail("Username is required")
+            if not self.password:
+                return FlextResult.fail("Password is required")
+            if self.port <= 0:
+                return FlextResult.fail("Port must be positive")
+            return FlextResult.ok(None)
+        except Exception as e:
+            logger.exception("Configuration validation failed")
+            return FlextResult.fail(f"Validation failed: {e}")
+
+    def execute_query(self, query: str) -> FlextResult[Any]:
+        """Execute database query."""
+        try:
+            # Validate configuration first
+            config_result = self.validate_config()
+            if config_result.is_failure:
+                return config_result
+
+            logger.info("Executing query: %s", query)
+
+            # Simulate query execution
+            result = {"query": query, "timestamp": datetime.now().isoformat()}
+
+            logger.info("Query executed successfully")
+            return FlextResult.ok(result)
+
+        except Exception as e:
+            logger.exception("Query execution failed")
+            return FlextResult.fail(f"Query failed: {e}")
+
+    def get_service_info(self) -> dict[str, Any]:
+        """Get service information."""
+        return {
+            "service_type": "TraditionalOracleService",
+            "host": self.host,
+            "port": self.port,
+            "initialized": self._initialized,
+            "config_valid": self.validate_config().is_success,
+        }
+
+
+# ==============================================================================
+# AFTER: Enhanced service using FlextDomainService
+# ==============================================================================
+
+
+class EnhancedOracleService(FlextDomainService):
+    """Enhanced service using FlextDomainService - much less boilerplate."""
+
+    host: str
+    port: int
+    username: str
+    password: str
+
+    def execute(self) -> FlextResult[Any]:
+        """Execute the domain service operation."""
+        return self.execute_operation(
+            "oracle_service_operation",
+            self._perform_operation,
+        )
+
+    def validate_config(self) -> FlextResult[None]:
+        """Validate service configuration - override from base class."""
+        if not self.host:
+            return FlextResult.fail("Host is required")
+        if not self.username:
+            return FlextResult.fail("Username is required")
+        if not self.password:
+            return FlextResult.fail("Password is required")
+        if self.port <= 0:
+            return FlextResult.fail("Port must be positive")
+        return FlextResult.ok(None)
+
+    def execute_query(self, query: str) -> FlextResult[Any]:
+        """Execute database query using enhanced error handling."""
+        return self.execute_operation(
+            "execute_query",
+            self._execute_query_impl,
+            query,
+        )
+
+    def _execute_query_impl(self, query: str) -> Any:
+        """Internal query implementation."""
+        # Simulate query execution
+        return {"query": query, "timestamp": datetime.now().isoformat()}
+
+    def _perform_operation(self) -> Any:
+        """Internal operation implementation."""
+        return {"status": "ready", "host": self.host, "port": self.port}
+
+
+# ==============================================================================
+# COMPARISON: Before vs After
+# ==============================================================================
+
+
+def demonstrate_boilerplate_reduction() -> None:
+    """Demonstrate the reduction in boilerplate code."""
+    print("=== BOILERPLATE REDUCTION DEMONSTRATION ===\n")
+
+    # Traditional approach
+    print("1. TRADITIONAL APPROACH (lots of boilerplate):")
+    traditional_service = TraditionalOracleService(
+        host="localhost",
+        port=1521,
+        username="oracle",
+        password="secret",
+    )
+
+    # Manual validation and error handling
+    config_result = traditional_service.validate_config()
+    if config_result.is_failure:
+        print(f"   ❌ Config validation failed: {config_result.error}")
+        return
+
+    query_result = traditional_service.execute_query("SELECT * FROM users")
+    if query_result.is_success:
+        print(f"   ✅ Query executed: {query_result.data}")
+    else:
+        print(f"   ❌ Query failed: {query_result.error}")
+
+    print(f"   📊 Service info: {traditional_service.get_service_info()}")
+
+    print("\n2. ENHANCED APPROACH (minimal boilerplate):")
+    enhanced_service = EnhancedOracleService(
+        host="localhost",
+        port=1521,
+        username="oracle",
+        password="secret",
+    )
+
+    # Automatic validation and error handling
+    operation_result = enhanced_service.execute()
+    if operation_result.is_success:
+        print(f"   ✅ Service ready: {operation_result.data}")
+    else:
+        print(f"   ❌ Service failed: {operation_result.error}")
+
+    query_result = enhanced_service.execute_query("SELECT * FROM users")
+    if query_result.is_success:
+        print(f"   ✅ Query executed: {query_result.data}")
+    else:
+        print(f"   ❌ Query failed: {query_result.error}")
+
+    print(f"   📊 Service info: {enhanced_service.get_service_info()}")
+
+    print("\n=== KEY IMPROVEMENTS ===")
+    print("✅ Automatic configuration validation")
+    print("✅ Standardized error handling")
+    print("✅ Built-in logging and monitoring")
+    print("✅ Less code duplication")
+    print("✅ Consistent service patterns")
+    print("✅ Type safety with Pydantic")
+
+
+# ==============================================================================
+# REAL-WORLD EXAMPLE: LDAP Service
+# ==============================================================================
+
+
+class LDAPConnectionService(FlextDomainService):
+    """Real-world example: LDAP connection service."""
+
+    host: str
+    port: int
+    bind_dn: str
+    password: str
+    base_dn: str
+    use_ssl: bool = False
+
+    def execute(self) -> FlextResult[Any]:
+        """Execute the domain service operation."""
+        return self.execute_operation(
+            "ldap_connection_test",
+            self._test_connection,
+        )
+
+    def validate_config(self) -> FlextResult[None]:
+        """Validate LDAP configuration."""
+        if not self.host:
+            return FlextResult.fail("LDAP host is required")
+        if not self.bind_dn:
+            return FlextResult.fail("Bind DN is required")
+        if not self.password:
+            return FlextResult.fail("Password is required")
+        if self.port <= 0 or self.port > 65535:
+            return FlextResult.fail("Port must be between 1 and 65535")
+        return FlextResult.ok(None)
+
+    def search_users(self, filter_expr: str) -> FlextResult[Any]:
+        """Search users in LDAP."""
+        return self.execute_operation(
+            "ldap_search",
+            self._search_users_impl,
+            filter_expr,
+        )
+
+    def _test_connection(self) -> Any:
+        """Test LDAP connection."""
+        return {
+            "status": "connected",
+            "host": self.host,
+            "port": self.port,
+            "base_dn": self.base_dn,
+            "ssl_enabled": self.use_ssl,
+        }
+
+    def _search_users_impl(self, filter_expr: str) -> Any:
+        """Internal LDAP search implementation."""
+        return {
+            "filter": filter_expr,
+            "results": [
+                {"cn": "John Doe", "mail": "john@example.com"},
+                {"cn": "Jane Smith", "mail": "jane@example.com"},
+            ],
+            "count": 2,
+        }
+
+
+def demonstrate_ldap_service() -> None:
+    """Demonstrate LDAP service using enhanced patterns."""
+    print("\n=== LDAP SERVICE EXAMPLE ===")
+
+    ldap_service = LDAPConnectionService(
+        host="ldap.example.com",
+        port=389,
+        bind_dn="cn=admin,dc=example,dc=com",
+        password="admin123",
+        base_dn="dc=example,dc=com",
+        use_ssl=False,
+    )
+
+    # Test connection
+    connection_result = ldap_service.execute()
+    if connection_result.is_success:
+        print(f"✅ LDAP connected: {connection_result.data}")
+    else:
+        print(f"❌ LDAP connection failed: {connection_result.error}")
+
+    # Search users
+    search_result = ldap_service.search_users("(objectClass=person)")
+    if search_result.is_success:
+        print(f"✅ Users found: {search_result.data}")
+    else:
+        print(f"❌ Search failed: {search_result.error}")
+
+
+if __name__ == "__main__":
+    demonstrate_boilerplate_reduction()
+    demonstrate_ldap_service()

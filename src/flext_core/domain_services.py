@@ -68,17 +68,23 @@ from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, ConfigDict
 
-from flext_core._mixins_base import _BaseSerializableMixin, _BaseValidatableMixin
-
 if TYPE_CHECKING:
-    from flext_core.result import FlextResult
+    from collections.abc import Callable
+
+from flext_core.mixins import FlextSerializableMixin, FlextValidatableMixin
+from flext_core.result import FlextResult
 
 # =============================================================================
 # FLEXT DOMAIN SERVICE - Public DDD Domain Service implementation
 # =============================================================================
 
 
-class FlextDomainService(BaseModel, ABC):
+class FlextDomainService(
+    BaseModel,
+    FlextValidatableMixin,
+    FlextSerializableMixin,
+    ABC,
+):
     """Abstract Domain-Driven Design service for stateless cross-entity operations.
 
     Comprehensive domain service implementation providing stateless business logic that
@@ -217,71 +223,9 @@ class FlextDomainService(BaseModel, ABC):
         extra="forbid",
     )
 
-    def __init__(self, **data: object) -> None:
-        """Initialize domain service with mixin functionality through composition."""
-        super().__init__(**data)
-        # Initialize mixin functionality through composition
-        self._validation_errors: list[str] = []
-        self._is_valid: bool | None = None
-
-    # =========================================================================
-    # VALIDATION FUNCTIONALITY - Composition-based delegation to _BaseValidatableMixin
-    # =========================================================================
-
-    def _add_validation_error(self, error: str) -> None:
-        """Add validation error (delegates to base)."""
-        return _BaseValidatableMixin._add_validation_error(self, error)
-
-    def _clear_validation_errors(self) -> None:
-        """Clear all validation errors (delegates to base)."""
-        return _BaseValidatableMixin._clear_validation_errors(self)
-
-    def _mark_valid(self) -> None:
-        """Mark as valid and clear errors (delegates to base)."""
-        return _BaseValidatableMixin._mark_valid(self)
-
-    @property
-    def validation_errors(self) -> list[str]:
-        """Get validation errors (delegates to base)."""
-        return _BaseValidatableMixin.validation_errors.fget(self)  # type: ignore[misc]
-
-    @property
-    def is_valid(self) -> bool:
-        """Check if object is valid (delegates to base)."""
-        return _BaseValidatableMixin.is_valid.fget(self)  # type: ignore[misc]
-
-    def has_validation_errors(self) -> bool:
-        """Check if object has validation errors (delegates to base)."""
-        return _BaseValidatableMixin.has_validation_errors(self)
-
-    # =========================================================================
-    # SERIALIZATION FUNCTIONALITY - Composition-based delegation to
-    # _BaseSerializableMixin
-    # =========================================================================
-
-    def to_dict_basic(self) -> dict[str, object]:
-        """Convert to basic dictionary representation (delegates to base)."""
-        return _BaseSerializableMixin.to_dict_basic(self)
-
-    def _serialize_value(self, value: object) -> object | None:
-        """Serialize a single value for dict conversion (delegates to base)."""
-        return _BaseSerializableMixin._serialize_value(self, value)
-
-    def _serialize_collection(
-        self,
-        collection: list[object] | tuple[object, ...],
-    ) -> list[object]:
-        """Serialize list or tuple values (delegates to base)."""
-        return _BaseSerializableMixin._serialize_collection(self, collection)
-
-    def _serialize_dict(self, dict_value: dict[str, object]) -> dict[str, object]:
-        """Serialize dictionary values (delegates to base)."""
-        return _BaseSerializableMixin._serialize_dict(self, dict_value)
-
-    def _from_dict_basic(self, data: dict[str, object]) -> FlextDomainService:
-        """Create instance from dictionary (delegates to base)."""
-        _BaseSerializableMixin._from_dict_basic(self, data)
-        return self
+    # Mixin functionality is now inherited properly:
+    # - Validation methods from FlextValidatableMixin
+    # - Serialization methods from FlextSerializableMixin
 
     @abstractmethod
     def execute(self) -> FlextResult[object]:
@@ -289,6 +233,52 @@ class FlextDomainService(BaseModel, ABC):
 
         Must be implemented by concrete services.
         """
+
+    def validate_config(self) -> FlextResult[None]:
+        """Validate service configuration - override in subclasses.
+
+        Default implementation returns success. Override to add custom validation.
+        """
+        return FlextResult.ok(None)
+
+    def execute_operation(  # type: ignore[explicit-any]
+        self,
+        operation_name: str,
+        operation: Callable[..., object],
+        *args: object,
+        **kwargs: object,
+    ) -> FlextResult[object]:
+        """Execute operation with standard error handling and logging.
+
+        Args:
+            operation_name: Name of the operation for logging
+            operation: Operation to execute
+            *args: Arguments to pass to the operation
+            **kwargs: Keyword arguments to pass to the operation
+
+        Returns:
+            Result of the operation
+
+        """
+        try:
+            # Validate configuration first
+            config_result = self.validate_config()
+            if config_result.is_failure:
+                error_message = config_result.error or "Configuration validation failed"
+                return FlextResult.fail(error_message)
+
+            # Execute operation
+            result = operation(*args, **kwargs)
+            return FlextResult.ok(result)
+        except Exception as e:  # noqa: BLE001
+            return FlextResult.fail(f"Operation {operation_name} failed: {e}")
+
+    def get_service_info(self) -> dict[str, object]:
+        """Get service information for monitoring."""
+        return {
+            "service_type": self.__class__.__name__,
+            "config_valid": self.validate_config().is_success,
+        }
 
 
 # Export API

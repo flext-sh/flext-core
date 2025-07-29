@@ -32,10 +32,6 @@ def _run_ruff_command(command_args: list[str]) -> subprocess.CompletedProcess[st
 
     """
     # Validate input arguments
-    if not isinstance(command_args, list):
-        msg = "Command arguments must be a list"
-        raise TypeError(msg)
-
     if not all(isinstance(arg, str) for arg in command_args):
         msg = "All command arguments must be strings"
         raise TypeError(msg)

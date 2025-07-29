@@ -15,59 +15,68 @@ class TestFlextPayloadCreation:
 
     def test_empty_payload_creation(self) -> None:
         """Test creating an empty payload."""
-        payload = FlextPayload()
+        payload: FlextPayload[None] = FlextPayload()
 
         assert isinstance(payload, FlextPayload)
-        assert payload.keys() == []
-        assert payload.items() == []
+        assert payload.data is None
+        assert payload.metadata == {}
 
     def test_payload_with_kwargs(self) -> None:
-        """Test creating payload with keyword arguments."""
-        payload = FlextPayload(
-            user_id="123",
-            action="login",
-            timestamp="2025-01-01T00:00:00Z",
+        """Test creating payload with data and metadata."""
+        payload: FlextPayload[dict[str, str]] = FlextPayload(
+            data={
+                "user_id": "123",
+                "action": "login",
+            },
+            metadata={"timestamp": "2025-01-01T00:00:00Z"},
         )
 
-        assert payload.user_id == "123"
-        assert payload.action == "login"
-        assert payload.timestamp == "2025-01-01T00:00:00Z"
+        assert payload.data is not None
+        assert payload.data["user_id"] == "123"
+        assert payload.data["action"] == "login"
+        assert payload.metadata["timestamp"] == "2025-01-01T00:00:00Z"
 
     def test_payload_with_mixed_types(self) -> None:
         """Test payload with different data types."""
-        payload = FlextPayload(
-            string_field="text",
-            int_field=42,
-            bool_field=True,
-            float_field=math.pi,
-            list_field=[1, 2, 3],
-            dict_field={"nested": "value"},
+        payload: FlextPayload[dict[str, object]] = FlextPayload(
+            data={
+                "string_field": "text",
+                "int_field": 42,
+                "bool_field": True,
+                "float_field": math.pi,
+                "list_field": [1, 2, 3],
+                "dict_field": {"nested": "value"},
+            },
         )
 
-        assert payload.string_field == "text"
-        assert payload.int_field == 42
-        assert payload.bool_field is True
-        assert payload.float_field == math.pi
-        assert payload.list_field == [1, 2, 3]
-        assert payload.dict_field == {"nested": "value"}
+        assert payload.data is not None
+        assert payload.data["string_field"] == "text"
+        assert payload.data["int_field"] == 42
+        assert payload.data["bool_field"] is True
+        assert payload.data["float_field"] == math.pi
+        assert payload.data["list_field"] == [1, 2, 3]
+        assert payload.data["dict_field"] == {"nested": "value"}
 
     def test_payload_immutability(self) -> None:
         """Test that payload is immutable after creation."""
-        payload = FlextPayload(user_id="123")
+        payload: FlextPayload[dict[str, str]] = FlextPayload(data={"user_id": "123"})
 
         with pytest.raises((ValidationError, AttributeError, TypeError)):
-            payload.user_id = "456"
+            payload.data = {"user_id": "456"}  # type: ignore[misc]
 
     def test_payload_string_stripping(self) -> None:
         """Test string whitespace preservation in extra fields."""
-        payload = FlextPayload(
-            normal_field="  trimmed  ",
-            empty_field="   ",
+        payload: FlextPayload[dict[str, str]] = FlextPayload(
+            data={
+                "normal_field": "  trimmed  ",
+                "empty_field": "   ",
+            },
         )
 
         # Extra fields preserve original string values
-        assert payload.normal_field == "  trimmed  "
-        assert payload.empty_field == "   "
+        assert payload.data is not None
+        assert payload.data["normal_field"] == "  trimmed  "
+        assert payload.data["empty_field"] == "   "
 
 
 class TestFlextPayloadAttributeAccess:
@@ -82,9 +91,11 @@ class TestFlextPayloadAttributeAccess:
 
     def test_getattr_nonexistent_field(self) -> None:
         """Test __getattr__ for non-existent fields."""
+        from flext_core.exceptions import FlextAttributeError
+
         payload = FlextPayload(user_id="123")
 
-        with pytest.raises(AttributeError, match="object has no attribute"):
+        with pytest.raises(FlextAttributeError, match="object has no attribute"):
             _ = payload.nonexistent_field
 
     def test_has_method_existing_field(self) -> None:

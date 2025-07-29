@@ -12,19 +12,14 @@ import pytest
 from pydantic import ValidationError
 
 from flext_core.entities import FlextEntity
+from flext_core.exceptions import FlextValidationError
+from flext_core.result import FlextResult
 
-
-class ConcreteFlextEntity(FlextEntity):
-    """Concrete entity implementation for comprehensive testing."""
-
-    name: str
-    status: str = "active"
-
-    def validate_domain_rules(self) -> None:
-        """Validate test entity domain rules."""
-        if not self.name.strip():
-            msg = "Entity name cannot be empty"
-            raise ValueError(msg)
+# Import shared test domain
+from tests.shared_test_domain import (
+    ConcreteFlextEntity,
+    TestDomainFactory,
+)
 
 
 class TestFlextEntityFieldValidators:
@@ -32,7 +27,7 @@ class TestFlextEntityFieldValidators:
 
     def test_validate_entity_id_empty_string(self) -> None:
         """Test entity ID validation with empty string."""
-        with pytest.raises(ValidationError) as exc_info:
+        with pytest.raises(FlextValidationError) as exc_info:
             ConcreteFlextEntity(id="", name="Test")
 
         assert "Entity ID cannot be empty" in str(
@@ -41,7 +36,7 @@ class TestFlextEntityFieldValidators:
 
     def test_validate_entity_id_whitespace_only(self) -> None:
         """Test entity ID validation with whitespace-only string."""
-        with pytest.raises(ValidationError) as exc_info:
+        with pytest.raises(FlextValidationError) as exc_info:
             ConcreteFlextEntity(id="   ", name="Test")
 
         assert "Entity ID cannot be empty" in str(
@@ -75,7 +70,7 @@ class TestFlextEntityFieldValidators:
 
     def test_validate_entity_version_valid(self) -> None:
         """Test entity version validation with valid positive number."""
-        entity = ConcreteFlextEntity(name="Test", version=5)
+        entity = ConcreteFlextEntity(id="test-id", name="Test", version=5)
         assert entity.version == 5
 
 
@@ -84,7 +79,7 @@ class TestFlextEntityEquality:
 
     def test_equality_with_non_entity(self) -> None:
         """Test entity equality with non-FlextEntity object."""
-        entity = ConcreteFlextEntity(name="Test")
+        entity = ConcreteFlextEntity(id="test-id", name="Test")
 
         assert entity != "not an entity"
         assert entity != 123
@@ -97,8 +92,8 @@ class TestFlextEntityEquality:
         class AnotherEntity(FlextEntity):
             title: str
 
-            def validate_domain_rules(self) -> None:
-                pass
+            def validate_domain_rules(self) -> FlextResult[None]:
+                return FlextResult.ok(None)
 
         entity_id = "test-entity-123"
         entity1 = ConcreteFlextEntity(id=entity_id, name="Test")
@@ -113,7 +108,11 @@ class TestFlextEntityVersioning:
 
     def test_with_version_valid_increment(self) -> None:
         """Test creating entity with incremented version."""
-        entity = ConcreteFlextEntity(name="Test", version=1)
+        entity_result = TestDomainFactory.create_concrete_entity(
+            name="Test", id="test-id", version=1,
+        )
+        assert entity_result.is_success
+        entity = entity_result.data
         updated_entity = entity.with_version(2)
 
         assert updated_entity.version == 2
@@ -124,7 +123,11 @@ class TestFlextEntityVersioning:
 
     def test_with_version_large_increment(self) -> None:
         """Test creating entity with large version increment."""
-        entity = ConcreteFlextEntity(name="Test", version=1)
+        entity_result = TestDomainFactory.create_concrete_entity(
+            name="Test", id="test-id", version=1,
+        )
+        assert entity_result.is_success
+        entity = entity_result.data
         updated_entity = entity.with_version(100)
 
         assert updated_entity.version == 100
@@ -132,20 +135,20 @@ class TestFlextEntityVersioning:
 
     def test_with_version_same_version(self) -> None:
         """Test with_version with same version number."""
-        entity = ConcreteFlextEntity(name="Test", version=5)
+        entity = ConcreteFlextEntity(id="test-id", name="Test", version=5)
 
         with pytest.raises(
-            ValueError,
+            FlextValidationError,
             match="New version must be greater than current version",
         ):
             entity.with_version(5)
 
     def test_with_version_lower_version(self) -> None:
         """Test with_version with lower version number."""
-        entity = ConcreteFlextEntity(name="Test", version=5)
+        entity = ConcreteFlextEntity(id="test-id", name="Test", version=5)
 
         with pytest.raises(
-            ValueError,
+            FlextValidationError,
             match="New version must be greater than current version",
         ):
             entity.with_version(3)
@@ -169,7 +172,7 @@ class TestFlextEntityVersioning:
 
     def test_with_version_maintains_type(self) -> None:
         """Test with_version returns same entity type."""
-        entity = ConcreteFlextEntity(name="Test", version=1)
+        entity = ConcreteFlextEntity(id="test-id", name="Test", version=1)
         updated_entity = entity.with_version(2)
 
         assert type(updated_entity) is type(entity)
@@ -239,7 +242,7 @@ class TestFlextEntityEdgeCases:
 
     def test_entity_model_dump_excludes_private_fields(self) -> None:
         """Test that model_dump works correctly."""
-        entity = ConcreteFlextEntity(name="Test", status="active")
+        entity = ConcreteFlextEntity(id="test-id", name="Test", status="active")
         data = entity.model_dump()
 
         assert isinstance(data, dict)
@@ -262,15 +265,17 @@ class TestFlextEntityValidation:
     def test_domain_rules_validation_called(self) -> None:
         """Test that domain rules validation is properly integrated."""
         # This test verifies the domain rules method exists and can be called
-        entity = ConcreteFlextEntity(name="Test")
+        entity = ConcreteFlextEntity(id="test-id", name="Test")
 
         # Should not raise any exception for valid entity
-        entity.validate_domain_rules()
+        result = entity.validate_domain_rules()
+        assert result.is_success
 
-        # Verify that invalid entities would raise exceptions
-        entity_invalid = ConcreteFlextEntity(name="")
-        with pytest.raises(ValueError, match="Entity name cannot be empty"):
-            entity_invalid.validate_domain_rules()
+        # Verify that invalid entities would return failure
+        entity_invalid = ConcreteFlextEntity(id="test-id-2", name="")
+        result_invalid = entity_invalid.validate_domain_rules()
+        assert result_invalid.is_failure
+        assert "Entity name cannot be empty" in result_invalid.error
 
     def test_pydantic_field_validation_integration(self) -> None:
         """Test integration with Pydantic field validation."""
@@ -279,5 +284,5 @@ class TestFlextEntityValidation:
             ConcreteFlextEntity()  # Missing required 'name' field
 
         # Test successful creation with valid data
-        entity = ConcreteFlextEntity(name="Valid Name")
+        entity = ConcreteFlextEntity(id="test-id", name="Valid Name")
         assert entity.name == "Valid Name"
