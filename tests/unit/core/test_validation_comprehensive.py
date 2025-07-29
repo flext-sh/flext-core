@@ -1489,15 +1489,11 @@ class TestValidationIntegration:
         # Should have multiple errors
         if len(errors) != 4:
             raise AssertionError(f"Expected {4}, got {len(errors)}")
-        if any("username" in error for error in errors):
-            raise AssertionError(
-                f"Expected {any('username' in error for error in errors)} in {errors}"
-            )
+        if not any("username" in error for error in errors):
+            raise AssertionError(f"Expected username error in {errors}")
         assert any("email" in error for error in errors)
-        if any("age" in error for error in errors):
-            raise AssertionError(
-                f"Expected {any('age' in error for error in errors)} in {errors}"
-            )
+        if not any("age" in error for error in errors):
+            raise AssertionError(f"Expected age error in {errors}")
         assert any("password" in error for error in errors)
 
     def test_complex_validation_chains(self) -> None:

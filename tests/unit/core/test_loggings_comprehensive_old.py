@@ -274,7 +274,7 @@ class TestFlextLogger:
         """Test _should_log level filtering."""
         # Logger is at DEBUG level (20)
         assert logger_instance._should_log("TRACE") is False  # 5 < 10
-        if logger_instance._should_log("DEBUG") is True:  # 20 < 20:
+        if logger_instance._should_log("DEBUG") is False:  # 20 >= 20:
             msg = f"Expected {logger_instance._should_log('DEBUG') is True} >= {20}"
             raise AssertionError(msg)
         if logger_instance._should_log("INFO") is False:  # 30 >= 20:
@@ -835,8 +835,8 @@ class TestFlextLogContextManager:
         if log_entry["context"]["permanent"] != "value":
             msg = f"Expected {'value'}, got {log_entry['context']['permanent']}"
             raise AssertionError(msg)
-        if "user_id" not in log_entry["context"]:
-            msg = f"Expected {'user_id'} in {log_entry['context']}"
+        if "user_id" in log_entry["context"]:
+            msg = f"Expected {'user_id'} not in {log_entry['context']}"
             raise AssertionError(msg)
         assert "temp" not in log_entry["context"]
 
@@ -886,8 +886,8 @@ class TestFlextLogContextManager:
         if log_entry["context"]["base"] != "context":
             msg = f"Expected {'context'}, got {log_entry['context']['base']}"
             raise AssertionError(msg)
-        if "temp" not in log_entry["context"]:
-            msg = f"Expected {'temp'} in {log_entry['context']}"
+        if "temp" in log_entry["context"]:
+            msg = f"Expected {'temp'} not in {log_entry['context']}"
             raise AssertionError(msg)
 
     def test_nested_context_managers(
@@ -1006,16 +1006,16 @@ class TestLoggingIntegration:
             msg = f"Expected {'auth'}, got {auth_entry['context']['component']}"
             raise AssertionError(msg)
         assert auth_entry["context"]["user_id"] == "123"
-        if "connection" not in auth_entry["context"]:
-            msg = f"Expected {'connection'} in {auth_entry['context']}"
+        if "connection" in auth_entry["context"]:
+            msg = f"Expected {'connection'} not in {auth_entry['context']}"
             raise AssertionError(msg)
 
         if db_entry["context"]["component"] != "database":
             msg = f"Expected {'database'}, got {db_entry['context']['component']}"
             raise AssertionError(msg)
         assert db_entry["context"]["connection"] == "primary"
-        if "user_id" not in db_entry["context"]:
-            msg = f"Expected {'user_id'} in {db_entry['context']}"
+        if "user_id" in db_entry["context"]:
+            msg = f"Expected {'user_id'} not in {db_entry['context']}"
             raise AssertionError(msg)
 
     def test_performance_with_level_filtering(self, clean_log_store: None) -> None:

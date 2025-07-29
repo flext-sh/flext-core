@@ -8,6 +8,12 @@ from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, Field
 
+from flext_core._decorators_base import (
+    _BaseDecoratorUtils,
+    _BaseErrorHandlingDecorators,
+    _BasePerformanceDecorators,
+    _BaseValidationDecorators,
+)
 from flext_core.decorators import (
     FlextDecorators,
     flext_cache_decorator,
@@ -488,3 +494,300 @@ class TestDecoratorPerformance:
 
         if call_count != 4:
             raise AssertionError(f"Expected {4}, got {call_count}")
+
+
+class TestBaseDecoratorClasses:
+    """Test base decorator classes for better coverage."""
+
+    def test_base_decorator_utils(self) -> None:
+        """Test _BaseDecoratorUtils functionality."""
+
+        # Test preserve_metadata
+        def original_function() -> str:
+            """Original docstring."""
+            return "test"
+
+        def wrapper_function() -> str:
+            return "wrapper"
+
+        # This should preserve metadata
+        result = _BaseDecoratorUtils.preserve_metadata(
+            original_function, wrapper_function
+        )
+        assert callable(result)
+
+    def test_base_validation_decorators(self) -> None:
+        """Test _BaseValidationDecorators functionality."""
+
+        def simple_validator(value: object) -> bool:
+            return isinstance(value, str) and len(str(value)) > 0
+
+        # Test create_validation_decorator
+        decorator = _BaseValidationDecorators.create_validation_decorator(
+            simple_validator
+        )
+        assert callable(decorator)
+
+        # Test validate_arguments (currently just returns the function)
+        def test_func() -> str:
+            return "test"
+
+        validated_func = _BaseValidationDecorators.validate_arguments(test_func)
+        assert validated_func is test_func
+
+    def test_base_error_handling_decorators(self) -> None:
+        """Test _BaseErrorHandlingDecorators functionality."""
+
+        def error_handler(error: Exception) -> str:
+            return f"Handled: {error}"
+
+        # Test create_safe_decorator
+        decorator = _BaseErrorHandlingDecorators.create_safe_decorator(error_handler)
+        assert callable(decorator)
+
+        # Test create_safe_decorator without handler
+        decorator = _BaseErrorHandlingDecorators.create_safe_decorator()
+        assert callable(decorator)
+
+    def test_base_performance_decorators(self) -> None:
+        """Test _BasePerformanceDecorators functionality."""
+
+        # Test get_timing_decorator
+        decorator = _BasePerformanceDecorators.get_timing_decorator()
+        assert callable(decorator)
+
+        # Test create_cache_decorator
+        decorator = _BasePerformanceDecorators.create_cache_decorator(max_size=10)
+        assert callable(decorator)
+
+        # Test memoize_decorator
+        def test_func(x: int) -> int:
+            return x * 2
+
+        memoized = _BasePerformanceDecorators.memoize_decorator(test_func)
+        assert callable(memoized)
+
+
+class TestDecoratorCoverageImprovements:
+    """Test cases specifically for improving coverage of _decorators_base.py module."""
+
+    def test_decorator_imports_coverage(self) -> None:
+        """Test decorator imports from TYPE_CHECKING block (lines 91-93)."""
+        from flext_core import _decorators_base
+
+        # Verify that TYPE_CHECKING imports are available at runtime for coverage
+        assert hasattr(_decorators_base, "_DecoratedFunction")
+        assert hasattr(_decorators_base, "_BaseDecoratorUtils")
+
+    def test_immutability_decorators_coverage(self) -> None:
+        """Test immutability decorator methods (lines 161, 276, 281)."""
+        from flext_core._decorators_base import _BaseImmutabilityDecorators
+
+        def sample_function(x: int) -> int:
+            return x * 2
+
+        # Test immutable_decorator - line 276
+        decorated = _BaseImmutabilityDecorators.immutable_decorator(sample_function)
+        assert decorated is sample_function  # Returns same function
+
+        # Test freeze_args_decorator - line 281
+        decorated = _BaseImmutabilityDecorators.freeze_args_decorator(sample_function)
+        assert decorated is sample_function  # Returns same function
+
+    def test_functional_decorators_coverage(self) -> None:
+        """Test functional decorator methods (lines 290, 295)."""
+        from flext_core._decorators_base import _BaseFunctionalDecorators
+
+        def sample_function(x: int) -> int:
+            return x * 2
+
+        # Test curry_decorator - line 290
+        decorated = _BaseFunctionalDecorators.curry_decorator(sample_function)
+        assert decorated is sample_function  # Returns same function
+
+        # Test compose_decorator - line 295
+        decorated = _BaseFunctionalDecorators.compose_decorator(sample_function)
+        assert decorated is sample_function  # Returns same function
+
+    def test_logging_decorator_exception_handling(self) -> None:
+        """Test logging decorator exception handling (lines 222-236)."""
+        import pytest
+
+        from flext_core._decorators_base import _BaseLoggingDecorators
+
+        def failing_function() -> None:
+            msg = "Test runtime error"
+            raise RuntimeError(msg)
+
+        decorated = _BaseLoggingDecorators.log_calls_decorator(failing_function)
+
+        # Should re-raise the exception after logging
+        with pytest.raises(RuntimeError, match="Test runtime error"):
+            decorated()
+
+    def test_logging_decorator_type_error_handling(self) -> None:
+        """Test logging decorator with TypeError (lines 222-236)."""
+        import pytest
+
+        from flext_core._decorators_base import _BaseLoggingDecorators
+
+        def type_error_function() -> None:
+            msg = "Type error occurred"
+            raise TypeError(msg)
+
+        decorated = _BaseLoggingDecorators.log_calls_decorator(type_error_function)
+
+        with pytest.raises(TypeError, match="Type error occurred"):
+            decorated()
+
+    def test_logging_decorator_value_error_handling(self) -> None:
+        """Test logging decorator with ValueError (lines 222-236)."""
+        import pytest
+
+        from flext_core._decorators_base import _BaseLoggingDecorators
+
+        def value_error_function() -> None:
+            msg = "Value error occurred"
+            raise ValueError(msg)
+
+        decorated = _BaseLoggingDecorators.log_calls_decorator(value_error_function)
+
+        with pytest.raises(ValueError, match="Value error occurred"):
+            decorated()
+
+    def test_log_exceptions_decorator_exception_handling(self) -> None:
+        """Test log_exceptions_decorator exception handling (lines 246-267)."""
+        import pytest
+
+        from flext_core._decorators_base import _BaseLoggingDecorators
+
+        def failing_function() -> None:
+            msg = "Exception for logging test"
+            raise RuntimeError(msg)
+
+        decorated = _BaseLoggingDecorators.log_exceptions_decorator(failing_function)
+
+        with pytest.raises(RuntimeError, match="Exception for logging test"):
+            decorated()
+
+    def test_log_exceptions_decorator_multiple_exception_types(self) -> None:
+        """Test log_exceptions_decorator with different exception types (lines 246-267)."""
+        import pytest
+
+        from flext_core._decorators_base import _BaseLoggingDecorators
+
+        def type_error_function() -> None:
+            msg = "Type error in log_exceptions test"
+            raise TypeError(msg)
+
+        def value_error_function() -> None:
+            msg = "Value error in log_exceptions test"
+            raise ValueError(msg)
+
+        decorated_type = _BaseLoggingDecorators.log_exceptions_decorator(type_error_function)
+        decorated_value = _BaseLoggingDecorators.log_exceptions_decorator(value_error_function)
+
+        with pytest.raises(TypeError, match="Type error in log_exceptions test"):
+            decorated_type()
+
+        with pytest.raises(ValueError, match="Value error in log_exceptions test"):
+            decorated_value()
+
+    def test_safe_call_decorator_with_error_handler(self) -> None:
+        """Test safe_call_decorator with error handler (lines 325-326)."""
+        from flext_core._decorators_base import _safe_call_decorator
+
+        error_handled = False
+
+        def error_handler(error: Exception) -> str:
+            nonlocal error_handled
+            error_handled = True
+            return f"Handled: {error}"
+
+        def failing_function() -> None:
+            msg = "Function failed"
+            raise ValueError(msg)
+
+        decorator = _safe_call_decorator(error_handler)
+        decorated = decorator(failing_function)
+
+        result = decorated()
+        assert error_handled
+        assert result == "Handled: Function failed"
+
+    def test_validate_input_decorator_validation_failure(self) -> None:
+        """Test validation decorator with validation failure (lines 377-388)."""
+        import pytest
+
+        from flext_core._decorators_base import _validate_input_decorator
+        from flext_core.exceptions import FlextValidationError
+
+        def always_false_validator(arg: object) -> bool:
+            return False
+
+        def sample_function(x: int) -> int:
+            return x * 2
+
+        decorator = _validate_input_decorator(always_false_validator)
+        decorated = decorator(sample_function)
+
+        with pytest.raises(FlextValidationError, match="Input validation failed"):
+            decorated(5)
+
+    def test_validate_input_decorator_with_multiple_args(self) -> None:
+        """Test validation decorator with multiple arguments (lines 377-388)."""
+        import pytest
+
+        from flext_core._decorators_base import _validate_input_decorator
+        from flext_core.exceptions import FlextValidationError
+
+        def validator_requiring_positive(arg: object) -> bool:
+            return isinstance(arg, int) and arg > 0
+
+        def sample_function(x: int, y: int) -> int:
+            return x + y
+
+        decorator = _validate_input_decorator(validator_requiring_positive)
+        decorated = decorator(sample_function)
+
+        # Should pass with at least one positive argument
+        result = decorated(5, -1)
+        assert result == 4
+
+        # Should fail with all non-positive arguments
+        with pytest.raises(FlextValidationError, match="Input validation failed"):
+            decorated(-1, -2)
+
+    def test_decorator_factory_methods_coverage(self) -> None:
+        """Test decorator factory methods (lines 401, 408, 413, 420)."""
+        from flext_core._decorators_base import _BaseDecoratorFactory
+
+        # Test create_cache_decorator - line 401
+        cache_decorator = _BaseDecoratorFactory.create_cache_decorator(64)
+        assert callable(cache_decorator)
+
+        # Test create_safe_decorator - line 408
+        safe_decorator = _BaseDecoratorFactory.create_safe_decorator()
+        assert callable(safe_decorator)
+
+        # Test create_timing_decorator - line 413
+        timing_decorator = _BaseDecoratorFactory.create_timing_decorator()
+        assert callable(timing_decorator)
+
+        # Test create_validation_decorator - line 420
+        def dummy_validator(arg: object) -> bool:
+            return True
+
+        validation_decorator = _BaseDecoratorFactory.create_validation_decorator(dummy_validator)
+        assert callable(validation_decorator)
+
+    def test_error_handling_decorator_retry_method(self) -> None:
+        """Test retry_decorator method (line 161)."""
+        from flext_core._decorators_base import _BaseErrorHandlingDecorators
+
+        def sample_function(x: int) -> int:
+            return x * 2
+
+        # Test retry_decorator - currently returns same function (line 161)
+        decorated = _BaseErrorHandlingDecorators.retry_decorator(sample_function)
+        assert decorated is sample_function  # Returns same function

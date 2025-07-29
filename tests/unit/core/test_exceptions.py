@@ -9,14 +9,23 @@ import pytest
 
 from flext_core.constants import ERROR_CODES
 from flext_core.exceptions import (
+    FlextAlreadyExistsError,
+    FlextAttributeError,
     FlextAuthenticationError,
     FlextConfigurationError,
     FlextConnectionError,
+    FlextCriticalError,
     FlextError,
+    FlextExceptions,
+    FlextNotFoundError,
     FlextOperationError,
     FlextPermissionError,
+    FlextProcessingError,
+    FlextTimeoutError,
     FlextTypeError,
     FlextValidationError,
+    clear_exception_metrics,
+    get_exception_metrics,
 )
 from flext_core.result import FlextResult
 
@@ -682,9 +691,9 @@ class TestExceptionEdgeCases:
         timestamps = [error.timestamp for error in errors]
 
         # All should have timestamps
-        if all(ts is not None for ts in timestamps):
+        if not all(ts is not None for ts in timestamps):
             raise AssertionError(
-                f"Expected {all(ts is not None for ts in timestamps)} in {timestamps}"
+                f"Expected all timestamps to be not None, but got: {timestamps}"
             )
 
         # Timestamps should be reasonable (all within last few seconds)
@@ -693,3 +702,111 @@ class TestExceptionEdgeCases:
         for ts in timestamps:
             if ts is not None:
                 assert abs(current_time - ts) < 10  # Within 10 seconds
+
+
+class TestAdditionalExceptions:
+    """Test additional exception types not previously covered."""
+
+    def test_flext_not_found_error(self) -> None:
+        """Test FlextNotFoundError functionality."""
+        error = FlextNotFoundError("Resource not found", resource_id="123", type="user")
+
+        assert str(error) == f"[{ERROR_CODES['NOT_FOUND']}] Resource not found"
+        assert error.error_code == ERROR_CODES["NOT_FOUND"]
+        assert error.context["resource_id"] == "123"
+        assert error.context["type"] == "user"
+
+    def test_flext_already_exists_error(self) -> None:
+        """Test FlextAlreadyExistsError functionality."""
+        error = FlextAlreadyExistsError(
+            "Resource exists", resource_id="456", type="email"
+        )
+
+        assert str(error) == f"[{ERROR_CODES['ALREADY_EXISTS']}] Resource exists"
+        assert error.error_code == ERROR_CODES["ALREADY_EXISTS"]
+        assert error.context["resource_id"] == "456"
+        assert error.context["type"] == "email"
+
+    def test_flext_timeout_error(self) -> None:
+        """Test FlextTimeoutError functionality."""
+        error = FlextTimeoutError("Operation timed out", timeout=30, duration=45)
+
+        assert str(error) == f"[{ERROR_CODES['TIMEOUT_ERROR']}] Operation timed out"
+        assert error.error_code == ERROR_CODES["TIMEOUT_ERROR"]
+        assert error.context["timeout"] == 30
+        assert error.context["duration"] == 45
+
+    def test_flext_processing_error(self) -> None:
+        """Test FlextProcessingError functionality."""
+        error = FlextProcessingError(
+            "Processing failed", data="test_data", stage="validation"
+        )
+
+        assert str(error) == f"[{ERROR_CODES['PROCESSING_ERROR']}] Processing failed"
+        assert error.error_code == ERROR_CODES["PROCESSING_ERROR"]
+        assert error.context["data"] == "test_data"
+        assert error.context["stage"] == "validation"
+
+    def test_flext_critical_error(self) -> None:
+        """Test FlextCriticalError functionality."""
+        error = FlextCriticalError(
+            "System failure", system="database", component="connection"
+        )
+
+        assert str(error) == f"[{ERROR_CODES['CRITICAL_ERROR']}] System failure"
+        assert error.error_code == ERROR_CODES["CRITICAL_ERROR"]
+        assert error.context["system"] == "database"
+        assert error.context["component"] == "connection"
+
+    def test_flext_attribute_error(self) -> None:
+        """Test FlextAttributeError functionality."""
+        attr_context = {
+            "class_name": "TestClass",
+            "attribute_name": "missing_attr",
+            "available_attributes": ["attr1", "attr2"],
+        }
+        error = FlextAttributeError(
+            "Attribute not found", attribute_context=attr_context
+        )
+
+        assert str(error) == f"[{ERROR_CODES['TYPE_ERROR']}] Attribute not found"
+        assert error.error_code == ERROR_CODES["TYPE_ERROR"]
+        assert error.context["class_name"] == "TestClass"
+        assert error.context["attribute_name"] == "missing_attr"
+
+    def test_exception_metrics(self) -> None:
+        """Test exception metrics functionality."""
+        # Clear metrics first
+        clear_exception_metrics()
+
+        # Get initial metrics
+        metrics = get_exception_metrics()
+        assert isinstance(metrics, dict)
+
+        # Clear again to ensure clean state
+        clear_exception_metrics()
+        metrics_after_clear = get_exception_metrics()
+        assert len(metrics_after_clear) == 0
+
+    def test_flext_exceptions_factory(self) -> None:
+        """Test FlextExceptions factory methods."""
+        # Test create_validation_error
+        validation_error = FlextExceptions.create_validation_error(
+            "Invalid field", field="email", value="invalid", rules=["email_format"]
+        )
+        assert isinstance(validation_error, FlextValidationError)
+        assert validation_error.context["field"] == "email"
+
+        # Test create_type_error
+        type_error = FlextExceptions.create_type_error(
+            "Type mismatch", expected_type=str, actual_type=int
+        )
+        assert isinstance(type_error, FlextTypeError)
+        assert "str" in str(type_error.context["expected_type"])
+
+        # Test create_operation_error
+        op_error = FlextExceptions.create_operation_error(
+            "Operation failed", operation_name="user_creation"
+        )
+        assert isinstance(op_error, FlextOperationError)
+        assert op_error.context["operation"] == "user_creation"

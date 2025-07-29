@@ -389,3 +389,29 @@ class TestWhenFunction:
         # This is expected behavior - predicates should be pure functions
         with pytest.raises(ValueError, match="Condition failed"):
             when_func("test_data")
+
+
+class TestResultBaseCoverage:
+    """Test cases specifically for improving coverage of _result_base.py module."""
+
+    def test_combine_results_method(self) -> None:
+        """Test combine_results method (line 51 coverage)."""
+        from flext_core._result_base import _BaseResultOperations, _BaseResult
+        
+        # Create some test results
+        result1 = _BaseResult.ok("data1")
+        result2 = _BaseResult.ok("data2")
+        result3 = _BaseResult.ok("data3")
+        
+        # Test combine_results which calls chain_results (line 51)
+        combined = _BaseResultOperations.combine_results(result1, result2, result3)
+        
+        assert combined.is_success 
+        assert combined.data == ["data1", "data2", "data3"]
+        
+        # Test with failure
+        result_fail = _BaseResult.fail("error")
+        combined_with_fail = _BaseResultOperations.combine_results(result1, result_fail, result2)
+        
+        assert combined_with_fail.is_failure
+        assert combined_with_fail.error == "error"
