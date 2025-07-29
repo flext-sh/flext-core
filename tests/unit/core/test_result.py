@@ -1,5 +1,23 @@
 """Tests for result module."""
 
+from flext_core.exceptions import FlextOperationError
+from typing import cast
+from flext_core._result_base import _BaseResult, _BaseResultOperations
+from typing import cast
+from flext_core._result_base import _BaseResult, _BaseResultOperations
+from flext_core._result_base import _BaseResultOperations
+from flext_core.core import FlextCore
+from flext_core.core import FlextCore
+from flext_core.core import FlextCore
+from flext_core.core import FlextCore
+from flext_core.core import FlextCore
+from flext_core.core import FlextCore
+from flext_core.core import FlextCore
+from flext_core.core import FlextCore
+from flext_core.core import FlextCore
+from flext_core.core import FlextCore
+
+
 import pytest
 
 from flext_core import FlextResult
@@ -13,46 +31,55 @@ class TestFlextResult:
     def test_success_creation(self) -> None:
         """Test creating success result."""
         result = FlextResult.ok("test_data")
-        assert result.is_success is True
-        assert result.data == "test_data"
+        if not (result.is_success):
+            raise AssertionError(f"Expected True, got {result.is_success}")
+        if result.data != "test_data":
+            raise AssertionError(f"Expected {"test_data"}, got {result.data}")
         assert result.error is None
 
     def test_failure_creation(self) -> None:
         """Test creating failure result."""
         result: FlextResult[str] = FlextResult.fail("test_error")
-        assert result.is_failure is True
+        if not (result.is_failure):
+            raise AssertionError(f"Expected True, got {result.is_failure}")
         assert result.data is None
-        assert result.error == "test_error"
+        if result.error != "test_error":
+            raise AssertionError(f"Expected {"test_error"}, got {result.error}")
 
     def test_success_with_metadata(self) -> None:
         """Test creating success result with metadata."""
         # Metadata not supported in current FlextResult implementation
         result = FlextResult.ok("test_data")
-        assert result.data == "test_data"
+        if result.data != "test_data":
+            raise AssertionError(f"Expected {"test_data"}, got {result.data}")
 
     def test_failure_with_metadata(self) -> None:
         """Test creating failure result with metadata."""
         # Metadata not supported in current FlextResult implementation
         result: FlextResult[str] = FlextResult.fail("test_error")
-        assert result.error == "test_error"
+        if result.error != "test_error":
+            raise AssertionError(f"Expected {"test_error"}, got {result.error}")
 
     def test_boolean_conversion(self) -> None:
         """Test boolean conversion."""
         success_result = FlextResult.ok("data")
         failure_result: FlextResult[str] = FlextResult.fail("error")
 
-        assert bool(success_result) is True
-        assert bool(failure_result) is False
+        if not (bool(success_result)):
 
+            raise AssertionError(f"Expected True, got {bool(success_result)}")
+        if bool(failure_result):
+            raise AssertionError(f"Expected False, got {bool(failure_result)}")\ n
     def test_unwrap_success(self) -> None:
         """Test unwrapping success result."""
         data = "test_data"
         result = FlextResult.ok(data)
-        assert result.unwrap() == data
+        if result.unwrap() != data:
+            raise AssertionError(f"Expected {data}, got {result.unwrap()}")
 
     def test_unwrap_failure_raises(self) -> None:
         """Test unwrapping failure result raises exception."""
-        from flext_core.exceptions import FlextOperationError
+
 
         result: FlextResult[str] = FlextResult.fail("test_error")
         with pytest.raises(FlextOperationError, match="test_error"):
@@ -62,40 +89,50 @@ class TestFlextResult:
         """Test unwrap_or with success result."""
         data = "test_data"
         result = FlextResult.ok(data)
-        assert result.unwrap_or("default") == data
+        if result.unwrap_or("default") != data:
+            raise AssertionError(f"Expected {data}, got {result.unwrap_or("default")}")
 
     def test_unwrap_or_failure(self) -> None:
         """Test unwrap_or with failure result."""
         result: FlextResult[str] = FlextResult.fail("error")
-        assert result.unwrap_or("default") == "default"
+        if result.unwrap_or("default") != "default":
+            raise AssertionError(f"Expected {"default"}, got {result.unwrap_or("default")}")
 
     def test_map_success(self) -> None:
         """Test map with success result."""
         result = FlextResult.ok("hello")
         mapped = result.map(lambda x: x.upper())
-        assert mapped.is_success is True
-        assert mapped.data == "HELLO"
+        if not (mapped.is_success):
+            raise AssertionError(f"Expected True, got {mapped.is_success}")
+        if mapped.data != "HELLO":
+            raise AssertionError(f"Expected {"HELLO"}, got {mapped.data}")
 
     def test_map_failure(self) -> None:
         """Test map with failure result."""
         result: FlextResult[str] = FlextResult.fail("error")
         mapped = result.map(lambda x: x.upper())
-        assert mapped.is_failure is True
-        assert mapped.error == "error"
+        if not (mapped.is_failure):
+            raise AssertionError(f"Expected True, got {mapped.is_failure}")
+        if mapped.error != "error":
+            raise AssertionError(f"Expected {"error"}, got {mapped.error}")
 
     def test_flat_map_success(self) -> None:
         """Test flat_map with success result."""
         result = FlextResult.ok("hello")
         flat_mapped = result.flat_map(lambda x: FlextResult.ok(x.upper()))
-        assert flat_mapped.is_success is True
-        assert flat_mapped.data == "HELLO"
+        if not (flat_mapped.is_success):
+            raise AssertionError(f"Expected True, got {flat_mapped.is_success}")
+        if flat_mapped.data != "HELLO":
+            raise AssertionError(f"Expected {"HELLO"}, got {flat_mapped.data}")
 
     def test_flat_map_failure(self) -> None:
         """Test flat_map with failure result."""
         result: FlextResult[str] = FlextResult.fail("error")
         flat_mapped = result.flat_map(lambda x: FlextResult.ok("success"))
-        assert flat_mapped.is_failure is True
-        assert flat_mapped.error == "error"
+        if not (flat_mapped.is_failure):
+            raise AssertionError(f"Expected True, got {flat_mapped.is_failure}")
+        if flat_mapped.error != "error":
+            raise AssertionError(f"Expected {"error"}, got {flat_mapped.error}")
 
     def test_flat_map_chain_failure(self) -> None:
         """Test flat_map with chain failure."""
@@ -103,8 +140,10 @@ class TestFlextResult:
         flat_mapped: FlextResult[str] = result.flat_map(
             lambda x: FlextResult.fail("chain_error"),
         )
-        assert flat_mapped.is_failure is True
-        assert flat_mapped.error == "chain_error"
+        if not (flat_mapped.is_failure):
+            raise AssertionError(f"Expected True, got {flat_mapped.is_failure}")
+        if flat_mapped.error != "chain_error":
+            raise AssertionError(f"Expected {"chain_error"}, got {flat_mapped.error}")
 
     def test_equality(self) -> None:
         """Test equality comparison."""
@@ -112,14 +151,17 @@ class TestFlextResult:
         result2 = FlextResult.ok("test")
         result3: FlextResult[str] = FlextResult.fail("error")
 
-        assert result1 == result2
+        if result1 != result2:
+
+            raise AssertionError(f"Expected {result2}, got {result1}")
         assert result1 != result3
 
     def test_repr(self) -> None:
         """Test string representation."""
         result = FlextResult.ok("test_data")
         repr_str = repr(result)
-        assert "FlextResult" in repr_str
+        if "FlextResult" not in repr_str:
+            raise AssertionError(f"Expected {"FlextResult"} in {repr_str}")
         assert "is_success=True" in repr_str
 
 
@@ -132,16 +174,18 @@ class TestComposeFunction:
         result2 = FlextResult.ok("data2")
 
         # Use _BaseResultOperations.chain_results for combining results into a list
-        from typing import cast
 
-        from flext_core._result_base import _BaseResult, _BaseResultOperations
+
+
 
         composed = _BaseResultOperations.chain_results(
             cast("_BaseResult[object]", result1),
             cast("_BaseResult[object]", result2),
         )
-        assert composed.is_success is True
-        assert composed.data == ["data1", "data2"]
+        if not (composed.is_success):
+            raise AssertionError(f"Expected True, got {composed.is_success}")
+        if composed.data != ["data1", "data2"]:
+            raise AssertionError(f"Expected {["data1", "data2"]}, got {composed.data}")
 
     def test_compose_with_failure(self) -> None:
         """Test composing with failure result."""
@@ -150,26 +194,30 @@ class TestComposeFunction:
         result3 = FlextResult.ok("data3")
 
         # Use _BaseResultOperations.chain_results for combining results
-        from typing import cast
 
-        from flext_core._result_base import _BaseResult, _BaseResultOperations
+
+
 
         composed = _BaseResultOperations.chain_results(
             cast("_BaseResult[object]", result1),
             cast("_BaseResult[object]", result2),
             cast("_BaseResult[object]", result3),
         )
-        assert composed.is_failure is True
-        assert composed.error == "error"
+        if not (composed.is_failure):
+            raise AssertionError(f"Expected True, got {composed.is_failure}")
+        if composed.error != "error":
+            raise AssertionError(f"Expected {"error"}, got {composed.error}")
 
     def test_compose_empty_list(self) -> None:
         """Test composing empty list."""
         # Use _BaseResultOperations.chain_results for combining results
-        from flext_core._result_base import _BaseResultOperations
+
 
         composed = _BaseResultOperations.chain_results()
-        assert composed.is_success is True
-        assert composed.data == []
+        if not (composed.is_success):
+            raise AssertionError(f"Expected True, got {composed.is_success}")
+        if composed.data != []:
+            raise AssertionError(f"Expected {[]}, got {composed.data}")
 
 
 class TestPipeFunction:
@@ -177,7 +225,7 @@ class TestPipeFunction:
 
     def test_pipe_success(self) -> None:
         """Test piping success result through functions."""
-        from flext_core.core import FlextCore
+
 
         # FlextCore.pipe creates a pipeline function
         def to_upper(x: str) -> FlextResult[str]:
@@ -196,12 +244,15 @@ class TestPipeFunction:
         )
         result = pipeline("hello world")
 
-        assert result.is_success is True
-        assert result.data == "hello_world"
+        if not (result.is_success):
+
+            raise AssertionError(f"Expected True, got {result.is_success}")
+        if result.data != "hello_world":
+            raise AssertionError(f"Expected {"hello_world"}, got {result.data}")
 
     def test_pipe_failure(self) -> None:
         """Test piping failure result."""
-        from flext_core.core import FlextCore
+
 
         def failing_func(x: str) -> FlextResult[str]:
             return FlextResult.fail("error")
@@ -215,12 +266,15 @@ class TestPipeFunction:
         )
         result = pipeline("hello")
 
-        assert result.is_failure is True
-        assert result.error == "error"
+        if not (result.is_failure):
+
+            raise AssertionError(f"Expected True, got {result.is_failure}")
+        if result.error != "error":
+            raise AssertionError(f"Expected {"error"}, got {result.error}")
 
     def test_pipe_with_transformation_error(self) -> None:
         """Test pipe with transformation error."""
-        from flext_core.core import FlextCore
+
 
         def failing_transform(x: str) -> FlextResult[str]:
             msg = "Transform failed"
@@ -231,9 +285,12 @@ class TestPipeFunction:
         )
         result = pipeline("hello")
 
-        assert result.is_failure is True
+        if not (result.is_failure):
+
+            raise AssertionError(f"Expected True, got {result.is_failure}")
         assert result.error is not None
-        assert "Transform failed" in result.error
+        if "Transform failed" not in result.error:
+            raise AssertionError(f"Expected {"Transform failed"} in {result.error}")
 
 
 class TestTapFunction:
@@ -241,7 +298,7 @@ class TestTapFunction:
 
     def test_tap_success(self) -> None:
         """Test tap with success result."""
-        from flext_core.core import FlextCore
+
 
         side_effects: list[str] = []
 
@@ -249,13 +306,16 @@ class TestTapFunction:
         tap_func = FlextCore.tap(side_effects.append)
         result = tap_func("test_data")
 
-        assert result.is_success is True
-        assert result.data == "test_data"
+        if not (result.is_success):
+
+            raise AssertionError(f"Expected True, got {result.is_success}")
+        if result.data != "test_data":
+            raise AssertionError(f"Expected {"test_data"}, got {result.data}")
         assert side_effects == ["test_data"]
 
     def test_tap_failure(self) -> None:
         """Test tap with failure result."""
-        from flext_core.core import FlextCore
+
 
         side_effects: list[str] = []
 
@@ -270,13 +330,16 @@ class TestTapFunction:
         )
         result = pipeline("test")
 
-        assert result.is_failure is True
-        assert result.error == "error"
+        if not (result.is_failure):
+
+            raise AssertionError(f"Expected True, got {result.is_failure}")
+        if result.error != "error":
+            raise AssertionError(f"Expected {"error"}, got {result.error}")
         assert side_effects == []  # Side effect should not be called
 
     def test_tap_with_error(self) -> None:
         """Test tap with side effect error."""
-        from flext_core.core import FlextCore
+
 
         def failing_side_effect(x: str) -> None:
             msg = "Side effect failed"
@@ -295,7 +358,7 @@ class TestWhenFunction:
 
     def test_when_true_condition(self) -> None:
         """Test when with true condition."""
-        from flext_core.core import FlextCore
+
 
         # FlextCore.when creates a conditional function
         when_func = FlextCore.when(
@@ -304,12 +367,15 @@ class TestWhenFunction:
         )
         result = when_func("test_data")
 
-        assert result.is_success is True
-        assert result.data == "TEST_DATA"
+        if not (result.is_success):
+
+            raise AssertionError(f"Expected True, got {result.is_success}")
+        if result.data != "TEST_DATA":
+            raise AssertionError(f"Expected {"TEST_DATA"}, got {result.data}")
 
     def test_when_false_condition(self) -> None:
         """Test when with false condition."""
-        from flext_core.core import FlextCore
+
 
         # FlextCore.when creates a conditional function
         when_func = FlextCore.when(
@@ -318,12 +384,15 @@ class TestWhenFunction:
         )
         result = when_func("test")
 
-        assert result.is_success is True
-        assert result.data == "test"  # Should remain unchanged
+        if not (result.is_success):
+
+            raise AssertionError(f"Expected True, got {result.is_success}")
+        if result.data != "test"  # Should remain unchanged:
+            raise AssertionError(f"Expected {"test"  # Should remain unchanged}, got {result.data}")
 
     def test_when_failure_result(self) -> None:
         """Test when with failure result in pipeline."""
-        from flext_core.core import FlextCore
+
 
         # Test when function with a failing input via pipeline
         def failing_func(x: str) -> FlextResult[str]:
@@ -340,12 +409,15 @@ class TestWhenFunction:
         )
         result = pipeline("test")
 
-        assert result.is_failure is True
-        assert result.error == "error"
+        if not (result.is_failure):
+
+            raise AssertionError(f"Expected True, got {result.is_failure}")
+        if result.error != "error":
+            raise AssertionError(f"Expected {"error"}, got {result.error}")
 
     def test_when_with_condition_error(self) -> None:
         """Test when with condition error."""
-        from flext_core.core import FlextCore
+
 
         def failing_condition(x: str) -> bool:
             msg = "Condition failed"

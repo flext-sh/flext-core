@@ -4,10 +4,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
 from flext_core.constants import FlextConstants, FlextEnvironment, FlextLogLevel
 from flext_core.container import FlextContainer
 from flext_core.payload import FlextPayload
 from flext_core.result import FlextResult as FlextResultDirect
+
+# Constants
+EXPECTED_DATA_COUNT = 3
 
 if TYPE_CHECKING:
     from flext_core.types import FlextEntityId
@@ -19,7 +24,6 @@ class TestCoverageGaps:
     def test_basic_config(self) -> None:
         """Test basic configuration functionality."""
         # Create a temporary settings class without external environment interference
-        from pydantic_settings import BaseSettings, SettingsConfigDict
 
         class TestSettings(BaseSettings):
             model_config = SettingsConfigDict(
@@ -32,14 +36,18 @@ class TestCoverageGaps:
 
         settings = TestSettings()
         assert settings is not None
-        assert settings.debug is False
+        if settings.debug:
+            msg = f"Expected False, got {settings.debug}"
+            raise AssertionError(msg)
         assert settings.timeout == 30
 
     def test_basic_constants(self) -> None:
         """Test basic constants functionality."""
         assert FlextConstants.DEFAULT_TIMEOUT > 0
         assert FlextConstants.VERSION is not None
-        assert FlextEnvironment.PRODUCTION.value == "production"
+        if FlextEnvironment.PRODUCTION.value != "production":
+            msg = f"Expected {"production"}, got {FlextEnvironment.PRODUCTION.value}"
+            raise AssertionError(msg)
         assert FlextLogLevel.INFO.value == "INFO"
 
     def test_container_edge_cases(self) -> None:
@@ -58,10 +66,14 @@ class TestCoverageGaps:
         """Test basic payload functionality."""
         payload = FlextPayload()
         result = payload.get("missing", "default")
-        assert result == "default"
+        if result != "default":
+            msg = f"Expected {"default"}, got {result}"
+            raise AssertionError(msg)
 
         payload_with_data = FlextPayload(key="value")
-        assert payload_with_data.get("key") == "value"
+        if payload_with_data.get("key") != "value":
+            msg = f"Expected {"value"}, got {payload_with_data.get("key")}"
+            raise AssertionError(msg)
 
     def test_result_edge_cases(self) -> None:
         """Test result edge cases."""

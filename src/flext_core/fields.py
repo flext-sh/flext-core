@@ -511,9 +511,13 @@ class FlextFieldMetadata(BaseModel):
         metadata = FlextFieldMetadata.from_field(field)
 
         # Access metadata properties
-        assert metadata.field_name == "user_email"
-        assert metadata.required is True
-        assert metadata.description == "User email address"
+        if metadata.field_name != "user_email":
+            raise AssertionError(f"Expected {"user_email"}, got {metadata.field_name}")
+        if not (metadata.required):
+            raise AssertionError(f"Expected True, got {metadata.required}")
+        if metadata.description != "User email address":
+            expected = "User email address"
+            raise AssertionError(f"Expected {expected}, got {metadata.description}")
     """
 
     model_config = ConfigDict(frozen=True)

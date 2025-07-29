@@ -43,7 +43,9 @@ def main() -> None:  # noqa: PLR0915
 
     user = user_result.data
 
-    print(f"  User: {user.name} ({user.email_address.email}), Status: {user.status.value}")
+    print(
+        f"  User: {user.name} ({user.email_address.email}), Status: {user.status.value}",
+    )
 
     validation = user.validate_domain_rules()
     print(f"  Validation: {validation.is_success}")

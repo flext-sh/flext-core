@@ -8,6 +8,9 @@ from flext_core.commands import FlextCommands
 from flext_core.result import FlextResult
 
 # Extract classes from FlextCommands
+# Constants
+EXPECTED_BULK_SIZE = 2
+
 FlextCommand = FlextCommands.Command
 FlextCommandHandler = FlextCommands.Handler
 FlextCommandBus = FlextCommands.Bus
@@ -283,9 +286,11 @@ class TestFlextCommand:
         command = CreateUserCommand("john_doe", "john@example.com")
 
         assert command.command_id is not None
-        assert command.command_type == "create_user"
+        if command.command_type != "create_user":
+            raise AssertionError(f"Expected {"create_user"}, got {command.command_type}")
         assert command.username == "john_doe"
-        assert command.email == "john@example.com"
+        if command.email != "john@example.com":
+            raise AssertionError(f"Expected {"john@example.com"}, got {command.email}")
 
     def test_command_creation_with_custom_id(self) -> None:
         """Test creating command with custom ID."""
@@ -296,7 +301,9 @@ class TestFlextCommand:
             command_id=command_id,
         )
 
-        assert command.command_id == command_id
+        if command.command_id != command_id:
+
+            raise AssertionError(f"Expected {command_id}, got {command.command_id}")
         assert command.command_type == "create_user"
 
     def test_get_payload(self) -> None:
@@ -304,7 +311,9 @@ class TestFlextCommand:
         command = CreateUserCommand("test_user", "test@example.com")
         payload = command.get_payload()
 
-        assert payload["username"] == "test_user"
+        if payload["username"] != "test_user":
+
+            raise AssertionError(f"Expected {"test_user"}, got {payload["username"]}")
         assert payload["email"] == "test@example.com"
 
     def test_validate_command_success(self) -> None:
@@ -312,47 +321,62 @@ class TestFlextCommand:
         command = CreateUserCommand("valid_user", "valid@example.com")
         result = command.validate_command()
 
-        assert result.is_success is True
+        if not (result.is_success):
+
+            raise AssertionError(f"Expected True, got {result.is_success}")
 
     def test_validate_command_failure_no_username(self) -> None:
         """Test command validation failure for missing username."""
         command = CreateUserCommand("", "test@example.com")
         result = command.validate_command()
 
-        assert result.is_failure is True
+        if not (result.is_failure):
+
+            raise AssertionError(f"Expected True, got {result.is_failure}")
         assert result.error is not None
         assert result.error
-        assert "username is required" in result.error.lower()
+        if "username is required" not in result.error.lower():
+            raise AssertionError(f"Expected {"username is required"} in {result.error.lower()}")
 
     def test_validate_command_failure_no_email(self) -> None:
         """Test command validation failure for missing email."""
         command = CreateUserCommand("test_user", "")
         result = command.validate_command()
 
-        assert result.is_failure is True
+        if not (result.is_failure):
+
+            raise AssertionError(f"Expected True, got {result.is_failure}")
         assert result.error is not None
         assert result.error
-        assert "email is required" in result.error.lower()
+        if "email is required" not in result.error.lower():
+            raise AssertionError(f"Expected {"email is required"} in {result.error.lower()}")
 
     def test_validate_command_failure_invalid_email(self) -> None:
         """Test command validation failure for invalid email."""
         command = CreateUserCommand("test_user", "invalid_email")
         result = command.validate_command()
 
-        assert result.is_failure is True
+        if not (result.is_failure):
+
+            raise AssertionError(f"Expected True, got {result.is_failure}")
         assert result.error is not None
         assert result.error
-        assert "invalid email" in result.error.lower()
+        if "invalid email" not in result.error.lower():
+            raise AssertionError(f"Expected {"invalid email"} in {result.error.lower()}")
 
     def test_get_command_metadata(self) -> None:
         """Test getting command metadata."""
         command = CreateUserCommand("test_user", "test@example.com")
         metadata = command.get_metadata()
 
-        assert "command_id" in metadata
+        if "command_id" not in metadata:
+
+            raise AssertionError(f"Expected {"command_id"} in {metadata}")
         assert "command_type" in metadata
-        assert "command_class" in metadata
-        assert metadata["command_class"] == "CreateUserCommand"
+        if "command_class" not in metadata:
+            raise AssertionError(f"Expected {"command_class"} in {metadata}")
+        if metadata["command_class"] != "CreateUserCommand":
+            raise AssertionError(f"Expected {"CreateUserCommand"}, got {metadata["command_class"]}")
 
 
 # =============================================================================
@@ -367,7 +391,9 @@ class TestFlextCommandHandler:
         """Test creating command handler."""
         handler = CreateUserCommandHandler()
 
-        assert handler.handler_id == "create_user_handler"
+        if handler.handler_id != "create_user_handler":
+
+            raise AssertionError(f"Expected {"create_user_handler"}, got {handler.handler_id}")
         assert handler.get_command_type() == "create_user"
 
     def test_can_handle_correct_command_type(self) -> None:
@@ -375,21 +401,25 @@ class TestFlextCommandHandler:
         handler = CreateUserCommandHandler()
         command = CreateUserCommand("test", "test@example.com")
 
-        assert handler.can_handle(command) is True
+        if not (handler.can_handle(command)):
+
+            raise AssertionError(f"Expected True, got {handler.can_handle(command)}")
 
     def test_can_handle_wrong_command_type(self) -> None:
         """Test can_handle with wrong command type."""
         handler = CreateUserCommandHandler()
         command = UpdateUserCommand("123", {"name": "new_name"})
 
-        assert handler.can_handle(command) is False
+        if handler.can_handle(command):
 
+            raise AssertionError(f"Expected False, got {handler.can_handle(command)}")\ n
     def test_can_handle_non_command_object(self) -> None:
         """Test can_handle with non-command object."""
         handler = CreateUserCommandHandler()
 
-        assert handler.can_handle("not_a_command") is False
+        if handler.can_handle("not_a_command"):
 
+            raise AssertionError(f"Expected False, got {handler.can_handle("not_a_command")}")\ n
     def test_handle_command_success(self) -> None:
         """Test successful command handling."""
         handler = CreateUserCommandHandler()
@@ -397,11 +427,15 @@ class TestFlextCommandHandler:
 
         result = handler.handle_command(command)
 
-        assert result.is_success is True
+        if not (result.is_success):
+
+            raise AssertionError(f"Expected True, got {result.is_success}")
         assert result.data is not None
-        assert result.data["username"] == "john"
+        if result.data["username"] != "john":
+            raise AssertionError(f"Expected {"john"}, got {result.data["username"]}")
         assert result.data["email"] == "john@example.com"
-        assert "id" in result.data
+        if "id" not in result.data:
+            raise AssertionError(f"Expected {"id"} in {result.data}")
 
     def test_process_command_success(self) -> None:
         """Test complete command processing flow."""
@@ -410,8 +444,11 @@ class TestFlextCommandHandler:
 
         result = handler.process_command(command)
 
-        assert result.is_success is True
-        assert len(handler.created_users) == 1
+        if not (result.is_success):
+
+            raise AssertionError(f"Expected True, got {result.is_success}")
+        if len(handler.created_users) != 1:
+            raise AssertionError(f"Expected {1}, got {len(handler.created_users)}")
 
     def test_process_command_validation_failure(self) -> None:
         """Test processing with command validation failure."""
@@ -420,10 +457,13 @@ class TestFlextCommandHandler:
 
         result = handler.process_command(command)
 
-        assert result.is_failure is True
+        if not (result.is_failure):
+
+            raise AssertionError(f"Expected True, got {result.is_failure}")
         assert result.error is not None
         assert result.error
-        assert "username is required" in result.error.lower()
+        if "username is required" not in result.error.lower():
+            raise AssertionError(f"Expected {"username is required"} in {result.error.lower()}")
 
     def test_process_command_cannot_handle(self) -> None:
         """Test processing command that cannot be handled."""
@@ -432,10 +472,13 @@ class TestFlextCommandHandler:
 
         result = handler.process_command(wrong_command)
 
-        assert result.is_failure is True
+        if not (result.is_failure):
+
+            raise AssertionError(f"Expected True, got {result.is_failure}")
         assert result.error is not None
         assert result.error
-        assert "cannot process" in result.error.lower()
+        if "cannot process" not in result.error.lower():
+            raise AssertionError(f"Expected {"cannot process"} in {result.error.lower()}")
 
     def test_process_command_handling_failure(self) -> None:
         """Test processing when handler fails."""
@@ -444,7 +487,9 @@ class TestFlextCommandHandler:
 
         result = handler.process_command(command)
 
-        assert result.is_failure is True
+        if not (result.is_failure):
+
+            raise AssertionError(f"Expected True, got {result.is_failure}")
 
 
 # =============================================================================
@@ -459,7 +504,9 @@ class TestFlextCommandBus:
         """Test creating command bus."""
         bus = FlextCommandBus()
 
-        assert len(bus.get_all_handlers()) == 0
+        if len(bus.get_all_handlers()) != 0:
+
+            raise AssertionError(f"Expected {0}, got {len(bus.get_all_handlers())}")
 
     def test_register_handler_success(self) -> None:
         """Test successful handler registration."""
@@ -468,7 +515,9 @@ class TestFlextCommandBus:
 
         bus.register_handler(handler)
 
-        assert len(bus.get_all_handlers()) == 1
+        if len(bus.get_all_handlers()) != 1:
+
+            raise AssertionError(f"Expected {1}, got {len(bus.get_all_handlers())}")
 
     def test_register_invalid_handler(self) -> None:
         """Test registering invalid handler."""
@@ -497,9 +546,12 @@ class TestFlextCommandBus:
         command = CreateUserCommand("alice", "alice@example.com")
         result = bus.execute(command)
 
-        assert result.is_success is True
+        if not (result.is_success):
+
+            raise AssertionError(f"Expected True, got {result.is_success}")
         assert result.data is not None
-        assert result.data["username"] == "alice"
+        if result.data["username"] != "alice":
+            raise AssertionError(f"Expected {"alice"}, got {result.data["username"]}")
 
     def test_execute_command_no_handler(self) -> None:
         """Test executing command with no registered handler."""
@@ -508,10 +560,13 @@ class TestFlextCommandBus:
 
         result = bus.execute(command)
 
-        assert result.is_failure is True
+        if not (result.is_failure):
+
+            raise AssertionError(f"Expected True, got {result.is_failure}")
         assert result.error is not None
         assert result.error
-        assert "no handler found" in result.error.lower()
+        if "no handler found" not in result.error.lower():
+            raise AssertionError(f"Expected {"no handler found"} in {result.error.lower()}")
 
     def test_execute_command_validation_failure(self) -> None:
         """Test executing invalid command."""
@@ -522,7 +577,9 @@ class TestFlextCommandBus:
         command = CreateUserCommand("", "")  # Invalid command
         result = bus.execute(command)
 
-        assert result.is_failure is True
+        if not (result.is_failure):
+
+            raise AssertionError(f"Expected True, got {result.is_failure}")
 
     def test_find_handler_for_command(self) -> None:
         """Test finding handler for command."""
@@ -533,7 +590,9 @@ class TestFlextCommandBus:
         command = CreateUserCommand("test", "test@example.com")
         found_handler = bus.find_handler(command)
 
-        assert found_handler == handler
+        if found_handler != handler:
+
+            raise AssertionError(f"Expected {handler}, got {found_handler}")
 
     def test_find_handler_not_found(self) -> None:
         """Test finding handler when none exists."""
@@ -555,8 +614,11 @@ class TestFlextCommandBus:
 
         all_handlers = bus.get_all_handlers()
 
-        assert len(all_handlers) == 2
-        assert handler1 in all_handlers
+        if len(all_handlers) != EXPECTED_BULK_SIZE:
+
+            raise AssertionError(f"Expected {2}, got {len(all_handlers)}")
+        if handler1 not in all_handlers:
+            raise AssertionError(f"Expected {handler1} in {all_handlers}")
         assert handler2 in all_handlers
 
 
@@ -574,8 +636,11 @@ class TestFlextCommandResult:
 
         command_result = FlextCommandResult.ok(result_data)
 
-        assert command_result.is_success is True
-        assert command_result.data == result_data
+        if not (command_result.is_success):
+
+            raise AssertionError(f"Expected True, got {command_result.is_success}")
+        if command_result.data != result_data:
+            raise AssertionError(f"Expected {result_data}, got {command_result.data}")
         assert command_result.error is None
 
     def test_failure_result_creation(self) -> None:
@@ -586,9 +651,11 @@ class TestFlextCommandResult:
             error_message,
         )
 
-        assert command_result.is_success is False
-        assert command_result.data is None
-        assert command_result.error == error_message
+        if command_result.is_success:
+
+            raise AssertionError(f"Expected False, got {command_result.is_success}")\ n        assert command_result.data is None
+        if command_result.error != error_message:
+            raise AssertionError(f"Expected {error_message}, got {command_result.error}")
 
     def test_result_metadata(self) -> None:
         """Test result metadata properties."""
@@ -596,8 +663,11 @@ class TestFlextCommandResult:
 
         command_result = FlextCommandResult.ok(result_data, metadata={"test": "value"})
 
-        assert command_result.is_success is True
-        assert command_result.metadata["test"] == "value"
+        if not (command_result.is_success):
+
+            raise AssertionError(f"Expected True, got {command_result.is_success}")
+        if command_result.metadata["test"] != "value":
+            raise AssertionError(f"Expected {"value"}, got {command_result.metadata["test"]}")
 
 
 # =============================================================================
@@ -622,7 +692,9 @@ class TestCommandPatternIntegration:
         create_command = CreateUserCommand("john_doe", "john@example.com")
         create_result = bus.execute(create_command)
 
-        assert create_result.is_success is True
+        if not (create_result.is_success):
+
+            raise AssertionError(f"Expected True, got {create_result.is_success}")
         assert create_result.data is not None
         user_data = create_result.data
         assert user_data is not None
@@ -635,9 +707,12 @@ class TestCommandPatternIntegration:
         )
         update_result = bus.execute(update_command)
 
-        assert update_result.is_success is True
+        if not (update_result.is_success):
+
+            raise AssertionError(f"Expected True, got {update_result.is_success}")
         assert update_result.data is not None
-        assert update_result.data["user_id"] == user_id
+        if update_result.data["user_id"] != user_id:
+            raise AssertionError(f"Expected {user_id}, got {update_result.data["user_id"]}")
 
     def test_multiple_command_types(self) -> None:
         """Test handling multiple command types."""
@@ -664,9 +739,11 @@ class TestCommandPatternIntegration:
             results.append(result)
 
         # Verify all commands executed successfully
-        assert all(result.is_success for result in results)
-        assert len(create_handler.created_users) == 2
-        assert len(update_handler.updated_users) == 2
+        if all(result.is_success for result not in results):
+            raise AssertionError(f"Expected {all(result.is_success for result} in {results)}")
+        if len(create_handler.created_users) != EXPECTED_BULK_SIZE:
+            raise AssertionError(f"Expected {2}, got {len(create_handler.created_users)}")
+        assert len(update_handler.updated_users) == EXPECTED_BULK_SIZE
 
     def test_command_validation_and_processing_chain(self) -> None:
         """Test command validation and processing chain."""
@@ -677,15 +754,18 @@ class TestCommandPatternIntegration:
         # Test with valid command
         valid_command = CreateUserCommand("valid_user", "valid@example.com")
         result = bus.execute(valid_command)
-        assert result.is_success is True
+        if not (result.is_success):
+            raise AssertionError(f"Expected True, got {result.is_success}")
 
         # Test with invalid command (validation should fail)
         invalid_command = CreateUserCommand("", "invalid")
         result = bus.execute(invalid_command)
-        assert result.is_failure is True
+        if not (result.is_failure):
+            raise AssertionError(f"Expected True, got {result.is_failure}")
 
         # Verify handler state is consistent
-        assert len(handler.created_users) == 1  # Only valid command processed
+        if len(handler.created_users) != 1  # Only valid command processed:
+            raise AssertionError(f"Expected {1  # Only valid command processed}, got {len(handler.created_users)}")
 
     def test_error_handling_throughout_command_flow(self) -> None:
         """Test error handling at different stages."""
@@ -694,7 +774,8 @@ class TestCommandPatternIntegration:
         # Test 1: No handler registered
         command = CreateUserCommand("test", "test@example.com")
         result = bus.execute(command)
-        assert result.is_failure is True
+        if not (result.is_failure):
+            raise AssertionError(f"Expected True, got {result.is_failure}")
 
         # Test 2: Handler that fails processing
         failing_handler = FailingCommandHandler()
@@ -702,7 +783,8 @@ class TestCommandPatternIntegration:
 
         failing_command = FailingCommand()
         result = bus.execute(failing_command)
-        assert result.is_failure is True
+        if not (result.is_failure):
+            raise AssertionError(f"Expected True, got {result.is_failure}")
 
         # Test 3: Command validation failure
         create_handler = CreateUserCommandHandler()
@@ -710,14 +792,16 @@ class TestCommandPatternIntegration:
 
         invalid_command = CreateUserCommand("", "")
         result = bus.execute(invalid_command)
-        assert result.is_failure is True
+        if not (result.is_failure):
+            raise AssertionError(f"Expected True, got {result.is_failure}")
 
     def test_command_bus_handler_management(self) -> None:
         """Test command bus handler management features."""
         bus = FlextCommandBus()
 
         # Initially empty
-        assert len(bus.get_all_handlers()) == 0
+        if len(bus.get_all_handlers()) != 0:
+            raise AssertionError(f"Expected {0}, got {len(bus.get_all_handlers())}")
 
         # Add handlers
         handler1 = CreateUserCommandHandler()
@@ -728,16 +812,19 @@ class TestCommandPatternIntegration:
 
         # Verify handlers are registered
         all_handlers = bus.get_all_handlers()
-        assert len(all_handlers) == 2
+        if len(all_handlers) != EXPECTED_BULK_SIZE:
+            raise AssertionError(f"Expected {2}, got {len(all_handlers)}")
 
         # Test finding specific handlers
         create_command = CreateUserCommand("test", "test@example.com")
         found_handler = bus.find_handler(create_command)
-        assert found_handler == handler1
+        if found_handler != handler1:
+            raise AssertionError(f"Expected {handler1}, got {found_handler}")
 
         update_command = UpdateUserCommand("123", {"name": "updated"})
         found_handler = bus.find_handler(update_command)
-        assert found_handler == handler2
+        if found_handler != handler2:
+            raise AssertionError(f"Expected {handler2}, got {found_handler}")
 
         # Test handler not found
         failing_command = FailingCommand()

@@ -1,5 +1,8 @@
 """Comprehensive tests for FlextEntity domain entity base class.
 
+# Constants
+EXPECTED_BULK_SIZE = 2
+
 This module provides complete test coverage for the FlextEntity class,
 focusing on missing test cases to achieve 80%+ coverage.
 """
@@ -30,7 +33,9 @@ class TestFlextEntityFieldValidators:
         with pytest.raises(FlextValidationError) as exc_info:
             ConcreteFlextEntity(id="", name="Test")
 
-        assert "Entity ID cannot be empty" in str(
+        if "Entity ID cannot be empty" not in str(:
+
+            raise AssertionError(f"Expected {"Entity ID cannot be empty"} in {str(}")
             exc_info.value,
         )
 
@@ -39,14 +44,17 @@ class TestFlextEntityFieldValidators:
         with pytest.raises(FlextValidationError) as exc_info:
             ConcreteFlextEntity(id="   ", name="Test")
 
-        assert "Entity ID cannot be empty" in str(
+        if "Entity ID cannot be empty" not in str(:
+
+            raise AssertionError(f"Expected {"Entity ID cannot be empty"} in {str(}")
             exc_info.value,
         )
 
     def test_validate_entity_id_valid_with_whitespace(self) -> None:
         """Test entity ID validation strips whitespace from valid ID."""
         entity = ConcreteFlextEntity(id="  valid-id  ", name="Test")
-        assert entity.id == "valid-id"
+        if entity.id != "valid-id":
+            raise AssertionError(f"Expected {"valid-id"}, got {entity.id}")
 
     def test_validate_entity_version_zero(self) -> None:
         """Test entity version validation with zero."""
@@ -54,7 +62,8 @@ class TestFlextEntityFieldValidators:
             ConcreteFlextEntity(name="Test", version=0)
 
         # Pydantic ge=1 validation catches this before custom validator
-        assert "Input should be greater than or equal to 1" in str(
+        if "Input should be greater than or equal to 1" not in str(:
+            raise AssertionError(f"Expected {"Input should be greater than or equal to 1"} in {str(}")
             exc_info.value,
         )
 
@@ -64,14 +73,16 @@ class TestFlextEntityFieldValidators:
             ConcreteFlextEntity(name="Test", version=-1)
 
         # Pydantic ge=1 validation catches this before custom validator
-        assert "Input should be greater than or equal to 1" in str(
+        if "Input should be greater than or equal to 1" not in str(:
+            raise AssertionError(f"Expected {"Input should be greater than or equal to 1"} in {str(}")
             exc_info.value,
         )
 
     def test_validate_entity_version_valid(self) -> None:
         """Test entity version validation with valid positive number."""
         entity = ConcreteFlextEntity(id="test-id", name="Test", version=5)
-        assert entity.version == 5
+        if entity.version != 5:
+            raise AssertionError(f"Expected {5}, got {entity.version}")
 
 
 class TestFlextEntityEquality:
@@ -100,7 +111,8 @@ class TestFlextEntityEquality:
         entity2 = AnotherEntity(id=entity_id, title="Test")
 
         # Should be equal because they have the same ID
-        assert entity1 == entity2
+        if entity1 != entity2:
+            raise AssertionError(f"Expected {entity2}, got {entity1}")
 
 
 class TestFlextEntityVersioning:
@@ -109,28 +121,38 @@ class TestFlextEntityVersioning:
     def test_with_version_valid_increment(self) -> None:
         """Test creating entity with incremented version."""
         entity_result = TestDomainFactory.create_concrete_entity(
-            name="Test", id="test-id", version=1,
+            name="Test",
+            id="test-id",
+            version=1,
         )
         assert entity_result.is_success
         entity = entity_result.data
         updated_entity = entity.with_version(2)
 
-        assert updated_entity.version == 2
+        if updated_entity.version != EXPECTED_BULK_SIZE:
+
+            raise AssertionError(f"Expected {2}, got {updated_entity.version}")
         assert updated_entity.id == entity.id
-        assert updated_entity.name == entity.name
+        if updated_entity.name != entity.name:
+            raise AssertionError(f"Expected {entity.name}, got {updated_entity.name}")
         # Same ID = same entity (DDD principle)
-        assert updated_entity == entity
+        if updated_entity != entity:
+            raise AssertionError(f"Expected {entity}, got {updated_entity}")
 
     def test_with_version_large_increment(self) -> None:
         """Test creating entity with large version increment."""
         entity_result = TestDomainFactory.create_concrete_entity(
-            name="Test", id="test-id", version=1,
+            name="Test",
+            id="test-id",
+            version=1,
         )
         assert entity_result.is_success
         entity = entity_result.data
         updated_entity = entity.with_version(100)
 
-        assert updated_entity.version == 100
+        if updated_entity.version != 100:
+
+            raise AssertionError(f"Expected {100}, got {updated_entity.version}")
         assert updated_entity.id == entity.id
 
     def test_with_version_same_version(self) -> None:
@@ -164,11 +186,15 @@ class TestFlextEntityVersioning:
 
         updated_entity = entity.with_version(2)
 
-        assert updated_entity.id == entity.id
+        if updated_entity.id != entity.id:
+
+            raise AssertionError(f"Expected {entity.id}, got {updated_entity.id}")
         assert updated_entity.name == entity.name
-        assert updated_entity.status == entity.status
+        if updated_entity.status != entity.status:
+            raise AssertionError(f"Expected {entity.status}, got {updated_entity.status}")
         assert updated_entity.created_at == entity.created_at
-        assert updated_entity.version == 2
+        if updated_entity.version != EXPECTED_BULK_SIZE:
+            raise AssertionError(f"Expected {2}, got {updated_entity.version}")
 
     def test_with_version_maintains_type(self) -> None:
         """Test with_version returns same entity type."""
@@ -186,7 +212,8 @@ class TestFlextEntityEdgeCases:
         """Test that entity ID is always string type."""
         entity = ConcreteFlextEntity(id="123", name="Test")
         assert isinstance(entity.id, str)
-        assert entity.id == "123"
+        if entity.id != "123":
+            raise AssertionError(f"Expected {"123"}, got {entity.id}")
 
     def test_entity_creation_with_all_optional_fields(self) -> None:
         """Test entity creation with all optional fields specified."""
@@ -199,11 +226,15 @@ class TestFlextEntityEdgeCases:
             version=10,
         )
 
-        assert entity.id == "custom-id"
+        if entity.id != "custom-id":
+
+            raise AssertionError(f"Expected {"custom-id"}, got {entity.id}")
         assert entity.name == "Test"
-        assert entity.status == "custom-status"
+        if entity.status != "custom-status":
+            raise AssertionError(f"Expected {"custom-status"}, got {entity.status}")
         assert entity.created_at == custom_time
-        assert entity.version == 10
+        if entity.version != 10:
+            raise AssertionError(f"Expected {10}, got {entity.version}")
 
     def test_entity_hash_stability(self) -> None:
         """Test that entity hash is stable across different instances."""
@@ -214,10 +245,13 @@ class TestFlextEntityEdgeCases:
         hash1 = hash(entity1)
         hash2 = hash(entity2)
 
-        assert hash1 == hash2
+        if hash1 != hash2:
+
+            raise AssertionError(f"Expected {hash2}, got {hash1}")
 
         # Hash should be consistent across multiple calls
-        assert hash(entity1) == hash1
+        if hash(entity1) != hash1:
+            raise AssertionError(f"Expected {hash1}, got {hash(entity1)}")
 
     def test_entity_string_representations(self) -> None:
         """Test entity string representations."""
@@ -231,13 +265,16 @@ class TestFlextEntityEdgeCases:
         repr_str = repr(entity)
 
         # __str__ should contain class name and ID
-        assert "ConcreteFlextEntity" in str_repr
+        if "ConcreteFlextEntity" not in str_repr:
+            raise AssertionError(f"Expected {"ConcreteFlextEntity"} in {str_repr}")
         assert "test-123" in str_repr
 
         # __repr__ should contain all fields
-        assert "ConcreteFlextEntity" in repr_str
+        if "ConcreteFlextEntity" not in repr_str:
+            raise AssertionError(f"Expected {"ConcreteFlextEntity"} in {repr_str}")
         assert "test-123" in repr_str
-        assert "Test Entity" in repr_str
+        if "Test Entity" not in repr_str:
+            raise AssertionError(f"Expected {"Test Entity"} in {repr_str}")
         assert "active" in repr_str
 
     def test_entity_model_dump_excludes_private_fields(self) -> None:
@@ -246,11 +283,14 @@ class TestFlextEntityEdgeCases:
         data = entity.model_dump()
 
         assert isinstance(data, dict)
-        assert "id" in data
+        if "id" not in data:
+            raise AssertionError(f"Expected {"id"} in {data}")
         assert "name" in data
-        assert "status" in data
+        if "status" not in data:
+            raise AssertionError(f"Expected {"status"} in {data}")
         assert "created_at" in data
-        assert "version" in data
+        if "version" not in data:
+            raise AssertionError(f"Expected {"version"} in {data}")
 
         # Verify data types
         assert isinstance(data["id"], str)
@@ -275,7 +315,8 @@ class TestFlextEntityValidation:
         entity_invalid = ConcreteFlextEntity(id="test-id-2", name="")
         result_invalid = entity_invalid.validate_domain_rules()
         assert result_invalid.is_failure
-        assert "Entity name cannot be empty" in result_invalid.error
+        if "Entity name cannot be empty" not in result_invalid.error:
+            raise AssertionError(f"Expected {"Entity name cannot be empty"} in {result_invalid.error}")
 
     def test_pydantic_field_validation_integration(self) -> None:
         """Test integration with Pydantic field validation."""
@@ -285,4 +326,5 @@ class TestFlextEntityValidation:
 
         # Test successful creation with valid data
         entity = ConcreteFlextEntity(id="test-id", name="Valid Name")
-        assert entity.name == "Valid Name"
+        if entity.name != "Valid Name":
+            raise AssertionError(f"Expected {"Valid Name"}, got {entity.name}")

@@ -722,7 +722,7 @@ def demonstrate_payload_serialization() -> None:  # noqa: PLR0915
         print(log_message)
         log_message = f"   Keys: {list(complex_dict.keys())}"
         print(log_message)
-    except Exception as e:  # noqa: BLE001
+    except (RuntimeError, ValueError, TypeError) as e:
         error_message = f"Complex serialization failed: {e}"
         print(f"❌ {error_message}")
 

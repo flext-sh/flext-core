@@ -12,6 +12,9 @@ from flext_core.fields import (
 )
 from flext_core.result import FlextResult
 
+# Constants
+EXPECTED_BULK_SIZE = 2
+
 
 class TestFlextFieldCoreInteger:
     """Test FlextFieldCore integer type."""
@@ -24,10 +27,14 @@ class TestFlextFieldCoreInteger:
             field_type=FlextFieldType.INTEGER.value,
         )
 
-        assert field.field_id == "test_id"
+        if field.field_id != "test_id":
+            raise AssertionError(f"Expected test_id, got {field.field_id}")
         assert field.field_name == "test_field"
         # field_type is stored as string value
-        assert field.field_type == FlextFieldType.INTEGER.value
+        if field.field_type != FlextFieldType.INTEGER.value:
+            raise AssertionError(
+                f"Expected {FlextFieldType.INTEGER.value}, got {field.field_type}"
+            )
         assert field.required is True  # Default is True, not False
         assert field.default_value is None
 
@@ -41,7 +48,8 @@ class TestFlextFieldCoreInteger:
             max_value=100,
         )
 
-        assert field.min_value == 1
+        if field.min_value != 1:
+            raise AssertionError(f"Expected 1, got {field.min_value}")
         assert field.max_value == 100
 
     def test_integer_field_validate_value_success(self) -> None:
@@ -89,7 +97,8 @@ class TestFlextFieldCoreInteger:
         result = field.validate_value("not an integer")
         assert result.is_failure
         if result.error:
-            assert "integer" in result.error.lower()
+            if "integer" not in result.error.lower():
+                raise AssertionError(f"Expected integer in {result.error.lower()}")
         else:
             pytest.fail("Expected validation error for non-integer type")
 
@@ -116,10 +125,13 @@ class TestFlextFieldCoreInteger:
         assert metadata.min_length is None
         assert metadata.max_length is None
         assert metadata.pattern is None
-        assert metadata.allowed_values == []
-        assert metadata.deprecated is False
+        if metadata.allowed_values != []:
+            raise AssertionError(f"Expected [], got {metadata.allowed_values}")
+        if metadata.deprecated:
+            raise AssertionError(f"Expected False, got {metadata.deprecated}")
         assert metadata.sensitive is False
-        assert metadata.indexed is False
+        if metadata.indexed:
+            raise AssertionError(f"Expected False, got {metadata.indexed}")
         assert metadata.tags == []
 
     def test_metadata_creation_with_values(self) -> None:
@@ -142,20 +154,28 @@ class TestFlextFieldCoreInteger:
             custom_properties={"key": "value"},
         )
 
-        assert metadata.description == "Test field"
+        if metadata.description != "Test field":
+            raise AssertionError(f"Expected Test field, got {metadata.description}")
         assert metadata.example == "example value"
-        assert metadata.min_value == 0.0
+        if metadata.min_value != 0.0:
+            raise AssertionError(f"Expected 0.0, got {metadata.min_value}")
         assert metadata.max_value == 100.0
-        assert metadata.min_length == 1
+        if metadata.min_length != 1:
+            raise AssertionError(f"Expected 1, got {metadata.min_length}")
         assert metadata.max_length == 50
-        assert metadata.pattern == r"^\w+$"
+        if metadata.pattern != r"^\w+$":
+            raise AssertionError(f"Expected {r'^\w+$'}, got {metadata.pattern}")
         assert metadata.allowed_values == ["a", "b", "c"]
-        assert metadata.deprecated is True
+        if not metadata.deprecated:
+            raise AssertionError(f"Expected True, got {metadata.deprecated}")
         assert metadata.internal is True
-        assert metadata.sensitive is True
+        if not metadata.sensitive:
+            raise AssertionError(f"Expected True, got {metadata.sensitive}")
         assert metadata.indexed is True
-        assert metadata.unique is True
-        assert metadata.tags == ["test", "important"]
+        if not metadata.unique:
+            raise AssertionError(f"Expected True, got {metadata.unique}")
+        if metadata.tags != ["test", "important"]:
+            raise AssertionError(f"Expected ['test', 'important'], got {metadata.tags}")
         assert metadata.custom_properties == {"key": "value"}
 
     def test_metadata_to_dict(self) -> None:
@@ -170,12 +190,17 @@ class TestFlextFieldCoreInteger:
 
         result = metadata.to_dict()
 
-        assert result["description"] == "Test field"
+        if result["description"] != "Test field":
+            raise AssertionError(f"Expected Test field, got {result['description']}")
         assert result["min_length"] == 1
-        assert result["max_length"] == 10
-        assert result["deprecated"] is True
-        assert result["tags"] == ["test"]
-        assert result["internal"] is False
+        if result["max_length"] != 10:
+            raise AssertionError(f"Expected 10, got {result['max_length']}")
+        if not result["deprecated"]:
+            raise AssertionError(f"Expected True, got {result['deprecated']}")
+        if result["tags"] != ["test"]:
+            raise AssertionError(f"Expected ['test'], got {result['tags']}")
+        if result["internal"]:
+            raise AssertionError(f"Expected False, got {result['internal']}")
 
     def test_metadata_from_dict(self) -> None:
         """Test metadata creation from dictionary."""
@@ -190,11 +215,15 @@ class TestFlextFieldCoreInteger:
 
         metadata = FlextFieldCoreMetadata.from_dict(data)
 
-        assert metadata.description == "Test field"
+        if metadata.description != "Test field":
+            raise AssertionError(f"Expected Test field, got {metadata.description}")
         assert metadata.min_length == 1
-        assert metadata.max_length == 10
-        assert metadata.deprecated is True
-        assert metadata.tags == ["test"]
+        if metadata.max_length != 10:
+            raise AssertionError(f"Expected 10, got {metadata.max_length}")
+        if not metadata.deprecated:
+            raise AssertionError(f"Expected True, got {metadata.deprecated}")
+        if metadata.tags != ["test"]:
+            raise AssertionError(f"Expected ['test'], got {metadata.tags}")
         assert metadata.custom_properties == {"key": "value"}
 
     def test_metadata_from_dict_with_defaults(self) -> None:
@@ -203,9 +232,11 @@ class TestFlextFieldCoreInteger:
 
         metadata = FlextFieldCoreMetadata.from_dict(data)
 
-        assert metadata.description == "Test field"
+        if metadata.description != "Test field":
+            raise AssertionError(f"Expected Test field, got {metadata.description}")
         assert metadata.deprecated is False  # default
-        assert metadata.tags == []  # default
+        if metadata.tags != []:  # default
+            raise AssertionError(f"Expected [], got {metadata.tags}")
         assert metadata.custom_properties == {}  # default
 
     def test_metadata_round_trip(self) -> None:
@@ -222,11 +253,18 @@ class TestFlextFieldCoreInteger:
         data = original.to_dict()
         restored = FlextFieldCoreMetadata.from_dict(data)
 
-        assert restored.description == original.description
+        if restored.description != original.description:
+            raise AssertionError(
+                f"Expected {original.description}, got {restored.description}"
+            )
         assert restored.min_length == original.min_length
-        assert restored.max_length == original.max_length
+        if restored.max_length != original.max_length:
+            raise AssertionError(
+                f"Expected {original.max_length}, got {restored.max_length}"
+            )
         assert restored.deprecated == original.deprecated
-        assert restored.tags == original.tags
+        if restored.tags != original.tags:
+            raise AssertionError(f"Expected {original.tags}, got {restored.tags}")
         assert restored.custom_properties == original.custom_properties
 
 
@@ -261,10 +299,17 @@ class TestFlextFieldCoreBase:
             field_type=FlextFieldType.STRING.value,
         )
 
-        assert field.field_id == "test_id"
+        if field.field_id != "test_id":
+            raise AssertionError(f"Expected test_id, got {field.field_id}")
         assert field.field_name == "test_field"
-        assert field.field_type == FlextFieldType.STRING.value
-        assert field.required is True  # Default is True
+        if field.field_type != FlextFieldType.STRING.value:
+            raise AssertionError(
+                f"Expected {FlextFieldType.STRING.value}, got {field.field_type}"
+            )
+        if field.required is not True:  # Default
+            raise AssertionError(
+                f"Expected True, got {field.required is True}"
+            )  # Default
         assert field.default_value is None
         assert isinstance(field.metadata, FlextFieldCoreMetadata)
         assert field.validator is None
@@ -281,10 +326,15 @@ class TestFlextFieldCoreBase:
             example="example_value",
         )
 
-        assert field.field_id == "test_id"
+        if field.field_id != "test_id":
+            raise AssertionError(f"Expected test_id, got {field.field_id}")
         assert field.field_name == "test_field"
-        assert field.field_type == FlextFieldType.STRING.value
-        assert field.required is False
+        if field.field_type != FlextFieldType.STRING.value:
+            raise AssertionError(
+                f"Expected {FlextFieldType.STRING.value}, got {field.field_type}"
+            )
+        if field.required:
+            raise AssertionError(f"Expected False, got {field.required}")
         assert field.default_value == "default"
 
     def test_field_get_default_value(self) -> None:
@@ -296,7 +346,8 @@ class TestFlextFieldCoreBase:
             default_value="default",
         )
 
-        assert field.get_default_value() == "default"
+        if field.get_default_value() != "default":
+            raise AssertionError(f"Expected default, got {field.get_default_value()}")
 
     def test_field_get_default_value_none(self) -> None:
         """Test getting default value when None."""
@@ -317,7 +368,8 @@ class TestFlextFieldCoreBase:
             required=True,
         )
 
-        assert field.is_required() is True
+        if not field.is_required():
+            raise AssertionError(f"Expected True, got {field.is_required()}")
 
         field = ConcreteFlextFieldCore(
             field_id="test_id",
@@ -326,7 +378,8 @@ class TestFlextFieldCoreBase:
             required=False,
         )
 
-        assert field.is_required() is False
+        if field.is_required():
+            raise AssertionError(f"Expected False, got {field.is_required()}")
 
     def test_field_is_deprecated(self) -> None:
         """Test field deprecated status."""
@@ -337,7 +390,8 @@ class TestFlextFieldCoreBase:
             deprecated=True,
         )
 
-        assert field.is_deprecated() is True
+        if not field.is_deprecated():
+            raise AssertionError(f"Expected True, got {field.is_deprecated()}")
 
         field = ConcreteFlextFieldCore(
             field_id="test_id",
@@ -346,7 +400,8 @@ class TestFlextFieldCoreBase:
             deprecated=False,
         )
 
-        assert field.is_deprecated() is False
+        if field.is_deprecated():
+            raise AssertionError(f"Expected False, got {field.is_deprecated()}")
 
     def test_field_is_sensitive(self) -> None:
         """Test field sensitive status."""
@@ -357,7 +412,8 @@ class TestFlextFieldCoreBase:
             sensitive=True,
         )
 
-        assert field.is_sensitive() is True
+        if not field.is_sensitive():
+            raise AssertionError(f"Expected True, got {field.is_sensitive()}")
 
         field = ConcreteFlextFieldCore(
             field_id="test_id",
@@ -366,7 +422,8 @@ class TestFlextFieldCoreBase:
             sensitive=False,
         )
 
-        assert field.is_sensitive() is False
+        if field.is_sensitive():
+            raise AssertionError(f"Expected False, got {field.is_sensitive()}")
 
     def test_field_get_field_info(self) -> None:
         """Test getting field information."""
@@ -379,11 +436,18 @@ class TestFlextFieldCoreBase:
         )
 
         info = field.get_field_info()
-        assert info["field_id"] == "test_id"
+        if info["field_id"] != "test_id":
+            raise AssertionError(f"Expected test_id, got {info['field_id']}")
         assert info["field_name"] == "test_field"
-        assert info["field_type"] == FlextFieldType.STRING.value
+        if info["field_type"] != FlextFieldType.STRING.value:
+            raise AssertionError(
+                f"Expected {FlextFieldType.STRING.value}, got {info['field_type']}"
+            )
         assert info["metadata"]["description"] == "Test description"
-        assert info["metadata"]["example"] == "test_example"
+        if info["metadata"]["example"] != "test_example":
+            raise AssertionError(
+                f"Expected test_example, got {info['metadata']['example']}"
+            )
 
     def test_field_get_field_info_no_validator(self) -> None:
         """Test getting field information without validator."""
@@ -394,9 +458,13 @@ class TestFlextFieldCoreBase:
         )
 
         info = field.get_field_info()
-        assert info["field_id"] == "test_id"
+        if info["field_id"] != "test_id":
+            raise AssertionError(f"Expected test_id, got {info['field_id']}")
         assert info["field_name"] == "test_field"
-        assert info["field_type"] == FlextFieldType.STRING.value
+        if info["field_type"] != FlextFieldType.STRING.value:
+            raise AssertionError(
+                f"Expected {FlextFieldType.STRING.value}, got {info['field_type']}"
+            )
 
     def test_field_validate_value_required_success(self) -> None:
         """Test field validation with required value."""
@@ -431,7 +499,8 @@ class TestFlextFieldCoreBase:
         )
 
         result = field.serialize_value("test_value")
-        assert result == "test_value"
+        if result != "test_value":
+            raise AssertionError(f"Expected test_value, got {result}")
 
     def test_field_deserialize_value(self) -> None:
         """Test field deserialization."""
@@ -442,7 +511,8 @@ class TestFlextFieldCoreBase:
         )
 
         result = field.deserialize_value("test_value")
-        assert result == "test_value"
+        if result != "test_value":
+            raise AssertionError(f"Expected test_value, got {result}")
 
 
 class TestFlextFieldCoreString:
@@ -456,10 +526,15 @@ class TestFlextFieldCoreString:
             field_type="string",
         )
 
-        assert field.field_id == "test_id"
+        if field.field_id != "test_id":
+            raise AssertionError(f"Expected test_id, got {field.field_id}")
         assert field.field_name == "test_field"
-        assert field.field_type == "string"
-        assert field.required is True  # Default is True
+        if field.field_type != "string":
+            raise AssertionError(f"Expected string, got {field.field_type}")
+        if field.required is not True:  # Default
+            raise AssertionError(
+                f"Expected True, got {field.required is True}"
+            )  # Default
         assert field.default_value is None
 
     def test_string_field_creation_with_constraints(self) -> None:
@@ -473,9 +548,11 @@ class TestFlextFieldCoreString:
             pattern=r"^\w+$",
         )
 
-        assert field.metadata.min_length == 1
+        if field.metadata.min_length != 1:
+            raise AssertionError(f"Expected 1, got {field.metadata.min_length}")
         assert field.metadata.max_length == 10
-        assert field.metadata.pattern == r"^\w+$"
+        if field.metadata.pattern != r"^\w+$":
+            raise AssertionError(f"Expected {r'^\w+$'}, got {field.metadata.pattern}")
 
     def test_string_field_creation_with_custom_metadata(self) -> None:
         """Test string field creation with custom metadata."""
@@ -488,7 +565,10 @@ class TestFlextFieldCoreString:
         )
 
         # Metadata is computed from field properties
-        assert field.metadata.description == "Custom field"
+        if field.metadata.description != "Custom field":
+            raise AssertionError(
+                f"Expected Custom field, got {field.metadata.description}"
+            )
         assert field.metadata.min_length == 5
 
     def test_string_field_validate_value_success(self) -> None:
@@ -522,7 +602,8 @@ class TestFlextFieldCoreString:
         )
 
         result = field.serialize_value("test_string")
-        assert result == "test_string"
+        if result != "test_string":
+            raise AssertionError(f"Expected test_string, got {result}")
 
     def test_string_field_deserialize_value(self) -> None:
         """Test string field deserialization."""
@@ -533,7 +614,8 @@ class TestFlextFieldCoreString:
         )
 
         result = field.deserialize_value("test_string")
-        assert result == "test_string"
+        if result != "test_string":
+            raise AssertionError(f"Expected test_string, got {result}")
 
     def test_string_field_deserialize_non_string(self) -> None:
         """Test string field deserialization of non-string values."""
@@ -544,7 +626,8 @@ class TestFlextFieldCoreString:
         )
 
         result = field.deserialize_value(123)
-        assert result == "123"
+        if result != "123":
+            raise AssertionError(f"Expected 123, got {result}")
 
     def test_string_field_validate_none_value(self) -> None:
         """Test string field validation with None value."""
@@ -568,7 +651,8 @@ class TestFlextFieldCoreString:
 
         result = field.validate_value(123)
         assert result.is_failure
-        assert "string" in result.error.lower()
+        if "string" not in result.error.lower():
+            raise AssertionError(f"Expected string in {result.error.lower()}")
 
     def test_string_field_with_all_parameters(self) -> None:
         """Test string field with all parameters."""
@@ -584,14 +668,21 @@ class TestFlextFieldCoreString:
             description="Test string field",
         )
 
-        assert field.field_id == "test_id"
+        if field.field_id != "test_id":
+            raise AssertionError(f"Expected test_id, got {field.field_id}")
         assert field.field_name == "test_field"
-        assert field.field_type == "string"
-        assert field.required is True
-        assert field.default_value == "default_value"
+        if field.field_type != "string":
+            raise AssertionError(f"Expected string, got {field.field_type}")
+        if not field.required:
+            raise AssertionError(f"Expected True, got {field.required}")
+        if field.default_value != "default_value":
+            raise AssertionError(f"Expected default_value, got {field.default_value}")
         assert field.description == "Test string field"
         # Verify metadata is correctly computed
-        assert field.metadata.description == "Test string field"
+        if field.metadata.description != "Test string field":
+            raise AssertionError(
+                f"Expected Test string field, got {field.metadata.description}"
+            )
 
 
 class TestFlextFieldCoreBoolean:
@@ -605,10 +696,15 @@ class TestFlextFieldCoreBoolean:
             field_type="boolean",
         )
 
-        assert field.field_id == "test_id"
+        if field.field_id != "test_id":
+            raise AssertionError(f"Expected test_id, got {field.field_id}")
         assert field.field_name == "test_field"
-        assert field.field_type == "boolean"
-        assert field.required is True  # Default is True
+        if field.field_type != "boolean":
+            raise AssertionError(f"Expected boolean, got {field.field_type}")
+        if field.required is not True:  # Default
+            raise AssertionError(
+                f"Expected True, got {field.required is True}"
+            )  # Default
         assert field.default_value is None
 
     def test_boolean_field_validate_value_success(self) -> None:
@@ -644,7 +740,8 @@ class TestFlextFieldCoreBoolean:
 
         result = field.validate_value("not a boolean")
         assert result.is_failure
-        assert "boolean" in result.error.lower()
+        if "boolean" not in result.error.lower():
+            raise AssertionError(f"Expected boolean in {result.error.lower()}")
 
     def test_boolean_field_serialize_value(self) -> None:
         """Test boolean field serialization."""
@@ -708,7 +805,8 @@ class TestFlextFieldCoreRegistry:
     def test_registry_creation(self) -> None:
         """Test registry creation."""
         registry = FlextFieldRegistry()
-        assert registry._fields == {}
+        if registry._fields != {}:
+            raise AssertionError(f"Expected {{}}, got {registry._fields}")
 
     def test_register_field(self) -> None:
         """Test registering a field."""
@@ -747,7 +845,8 @@ class TestFlextFieldCoreRegistry:
         registry = FlextFieldRegistry()
 
         result = registry.get_all_fields()
-        assert result == {}
+        if result != {}:
+            raise AssertionError(f"Expected {{}}, got {result}")
 
     def test_get_all_fields_with_fields(self) -> None:
         """Test getting all fields when registry has fields."""
@@ -767,7 +866,8 @@ class TestFlextFieldCoreRegistry:
         registry.register_field(field2)
 
         result = registry.get_all_fields()
-        assert len(result) == 2
+        if len(result) != EXPECTED_BULK_SIZE:
+            raise AssertionError(f"Expected 2, got {len(result)}")
         assert result["field1"] is field1
         assert result["field2"] is field2
 
@@ -797,10 +897,13 @@ class TestFlextFieldCoreRegistry:
         registry.register_field(int_field)
 
         result = registry.get_fields_by_type(FlextFieldType.STRING.value)
-        assert len(result) == 2
-        assert string_field1 in result
+        if len(result) != EXPECTED_BULK_SIZE:
+            raise AssertionError(f"Expected 2, got {len(result)}")
+        if string_field1 not in result:
+            raise AssertionError(f"Expected {string_field1} in {result}")
         assert string_field2 in result
-        assert int_field not in result
+        if int_field in result:
+            raise AssertionError(f"Expected {int_field} not in {result}")
 
     def test_validate_all_fields_success(self) -> None:
         """Test validating all fields with valid data."""
@@ -830,7 +933,8 @@ class TestFlextFieldCoreRegistry:
         data: dict[str, str] = {}  # Missing required field
         result = registry.validate_all_fields(data)
         assert result.is_failure
-        assert "required" in result.error.lower()
+        if "required" not in result.error.lower():
+            raise AssertionError(f"Expected required in {result.error.lower()}")
 
     def test_validate_all_fields_validation_error(self) -> None:
         """Test validating all fields with validation error."""
@@ -845,4 +949,5 @@ class TestFlextFieldCoreRegistry:
         data = {"test_id": 123}  # Invalid type for string field
         result = registry.validate_all_fields(data)
         assert result.is_failure
-        assert "string" in result.error.lower()
+        if "string" not in result.error.lower():
+            raise AssertionError(f"Expected string in {result.error.lower()}")

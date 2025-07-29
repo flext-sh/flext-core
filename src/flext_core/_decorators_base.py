@@ -219,7 +219,7 @@ class _BaseLoggingDecorators:
                         "success": True,
                     },
                 )
-            except Exception as e:
+            except (RuntimeError, ValueError, TypeError) as e:
                 execution_time_ms = (time.perf_counter() - start_time) * 1000
 
                 # Log exception with proper exception logging
@@ -249,7 +249,7 @@ class _BaseLoggingDecorators:
 
             try:
                 return func(*args, **kwargs)
-            except Exception as e:
+            except (RuntimeError, ValueError, TypeError) as e:
                 # Log exception with full context
                 logger.exception(
                     "Exception in function",

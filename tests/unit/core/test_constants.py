@@ -19,10 +19,14 @@ class TestFlextLogLevel:
         # Hash should be consistent
         hash1 = hash(level)
         hash2 = hash(level)
-        assert hash1 == hash2
+        if hash1 != hash2:
+            msg = f"Expected {hash2}, got {hash1}"
+            raise AssertionError(msg)
 
         # Hash should be based on value
-        assert hash(level) == hash(level.value)
+        if hash(level) != hash(level.value):
+            msg = f"Expected {hash(level.value)}, got {hash(level)}"
+            raise AssertionError(msg)
 
     def test_get_numeric_value(self) -> None:
         """Test get_numeric_value method."""

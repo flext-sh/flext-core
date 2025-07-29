@@ -86,7 +86,9 @@ class TestRealUsagePatterns:
         assert result.is_success
         user = result.data
         assert user is not None
-        assert user.name == "John Doe"
+        if user.name != "John Doe":
+            msg = f"Expected {"John Doe"}, got {user.name}"
+            raise AssertionError(msg)
         assert user.id == "user-123"
 
     def test_flext_result_failure_flow(self) -> None:
@@ -101,7 +103,9 @@ class TestRealUsagePatterns:
         assert result.is_failure
         assert result.error is not None
         assert result.error
-        assert "not found" in result.error
+        if "not found" not in result.error:
+            msg = f"Expected {"not found"} in {result.error}"
+            raise AssertionError(msg)
 
     def test_chained_operations(self) -> None:
         """Test chaining operations with FlextResult."""
@@ -118,7 +122,9 @@ class TestRealUsagePatterns:
         fetch_result = service.fetch_user("new-user")
         assert fetch_result.is_success
         assert fetch_result.data is not None
-        assert fetch_result.data.name == "New User"
+        if fetch_result.data.name != "New User":
+            msg = f"Expected {"New User"}, got {fetch_result.data.name}"
+            raise AssertionError(msg)
 
     def test_error_handling_patterns(self) -> None:
         """Test common error handling patterns."""
@@ -132,13 +138,17 @@ class TestRealUsagePatterns:
         )
         assert duplicate_result.is_failure
         assert duplicate_result.error is not None
-        assert "already exists" in duplicate_result.error
+        if "already exists" not in duplicate_result.error:
+            msg = f"Expected {"already exists"} in {duplicate_result.error}"
+            raise AssertionError(msg)
 
         # Original user should be unchanged
         original_result = service.fetch_user("user-123")
         assert original_result.is_success
         assert original_result.data is not None
-        assert original_result.data.name == "John Doe"
+        if original_result.data.name != "John Doe":
+            msg = f"Expected {"John Doe"}, got {original_result.data.name}"
+            raise AssertionError(msg)
 
     def test_dependency_injection_basic_usage(self) -> None:
         """Test basic dependency injection usage (most common pattern).
@@ -174,7 +184,9 @@ class TestRealUsagePatterns:
         user_result = service.fetch_user("user-123")
         assert user_result.is_success
         assert user_result.data is not None
-        assert user_result.data.name == "John Doe"
+        if user_result.data.name != "John Doe":
+            msg = f"Expected {"John Doe"}, got {user_result.data.name}"
+            raise AssertionError(msg)
 
     def test_global_container_usage(self) -> None:
         """Test global container usage (application-wide pattern)."""
@@ -208,7 +220,9 @@ class TestRealUsagePatterns:
         fetch_result = service.fetch_user(user_id)
         assert fetch_result.is_success
         assert fetch_result.data is not None
-        assert fetch_result.data.id == user_id
+        if fetch_result.data.id != user_id:
+            msg = f"Expected {user_id}, got {fetch_result.data.id}"
+            raise AssertionError(msg)
 
     def test_validation_patterns(self) -> None:
         """Test validation patterns used in production."""

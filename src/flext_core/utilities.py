@@ -8,6 +8,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import datetime
 import time
 import uuid
 from typing import TYPE_CHECKING, Protocol, TypeGuard
@@ -48,6 +49,10 @@ class DecoratedFunction(Protocol):
 class FlextUtilities:
     """Utility functions for common operations."""
 
+    # Time constants for duration formatting
+    SECONDS_PER_MINUTE = 60
+    SECONDS_PER_HOUR = 3600
+
     @classmethod
     def generate_uuid(cls) -> str:
         """Generate UUID."""
@@ -66,8 +71,6 @@ class FlextUtilities:
     @classmethod
     def generate_iso_timestamp(cls) -> str:
         """Generate ISO format timestamp."""
-        import datetime
-
         return datetime.datetime.now(datetime.UTC).isoformat()
 
     @classmethod
@@ -97,11 +100,11 @@ class FlextUtilities:
         """Format duration."""
         if seconds < 1:
             return f"{seconds * 1000:.1f}ms"
-        if seconds < 60:
+        if seconds < cls.SECONDS_PER_MINUTE:
             return f"{seconds:.1f}s"
-        if seconds < 3600:
-            return f"{seconds / 60:.1f}m"
-        return f"{seconds / 3600:.1f}h"
+        if seconds < cls.SECONDS_PER_HOUR:
+            return f"{seconds / cls.SECONDS_PER_MINUTE:.1f}m"
+        return f"{seconds / cls.SECONDS_PER_HOUR:.1f}h"
 
     @classmethod
     def has_attribute(cls, obj: object, attr: str) -> bool:
@@ -147,7 +150,7 @@ def flext_track_performance(
                     success=True,
                 )
                 return result
-            except Exception as e:
+            except (RuntimeError, ValueError, TypeError):
                 execution_time = time.time() - start_time
                 flext_record_performance(
                     category,
@@ -155,7 +158,7 @@ def flext_track_performance(
                     execution_time,
                     success=False,
                 )
-                raise e
+                raise
 
         return wrapper
 
@@ -177,9 +180,10 @@ def flext_record_performance(
     function_name: str,
     execution_time: float,
     *,
-    success: bool,
+    success: bool,  # noqa: ARG001
 ) -> None:
     """Record performance metrics for observability."""
+    # Note: success parameter reserved for future observability features
     key = f"{category}.{function_name}"
     PERFORMANCE_METRICS[key] = execution_time
 
@@ -278,6 +282,10 @@ class FlextTypeGuards:
 class FlextGenerators:
     """ID and timestamp generation utilities."""
 
+    # Time constants for duration formatting
+    SECONDS_PER_MINUTE = 60
+    SECONDS_PER_HOUR = 3600
+
     @staticmethod
     def generate_uuid() -> str:
         """Generate UUID."""
@@ -296,8 +304,6 @@ class FlextGenerators:
     @staticmethod
     def generate_iso_timestamp() -> str:
         """Generate ISO format timestamp."""
-        import datetime
-
         return datetime.datetime.now(datetime.UTC).isoformat()
 
     @staticmethod
@@ -331,11 +337,11 @@ class FlextFormatters:
         """Format duration."""
         if seconds < 1:
             return f"{seconds * 1000:.1f}ms"
-        if seconds < 60:
+        if seconds < FlextGenerators.SECONDS_PER_MINUTE:
             return f"{seconds:.1f}s"
-        if seconds < 3600:
-            return f"{seconds / 60:.1f}m"
-        return f"{seconds / 3600:.1f}h"
+        if seconds < FlextGenerators.SECONDS_PER_HOUR:
+            return f"{seconds / FlextGenerators.SECONDS_PER_MINUTE:.1f}m"
+        return f"{seconds / FlextGenerators.SECONDS_PER_HOUR:.1f}h"
 
 
 # =============================================================================

@@ -219,7 +219,39 @@ warn_required_dynamic_aliases = true
 warn_untyped_fields = true
 
 [tool.pytest.ini_options]
-extend = "../.pytest-ini-options-shared.toml"
+# Complete configuration copying from shared file due to extend limitations
+addopts = [
+    "--maxfail=1000000",
+    "--strict-config",
+    "--strict-markers",
+    "--tb=short",
+    "-ra",
+]
+asyncio_mode = "auto"
+filterwarnings = [
+    "error",
+    "ignore::DeprecationWarning",
+    "ignore::UserWarning",
+]
+markers = [
+    "cleanup: Cleanup tests",
+    "dbt: dbt transformation tests",
+    "destructive: Tests that may modify external systems",
+    "e2e: End-to-end tests",
+    "integration: Integration tests",
+    "oracle: Oracle database tests",
+    "performance: Performance tests",
+    "slow: Slow tests",
+    "smoke: Smoke tests",
+    "tap: Singer tap tests",
+    "target: Singer target tests",
+    "unit: Unit tests",
+    "core: Core framework functionality tests",
+    "architecture: Architectural pattern tests",
+    "pep8: PEP8 compliance validation tests",
+]
+minversion = "8.0"
+testpaths = ["tests"]
 
 [tool.ruff]
 extend = "../.ruff-shared.toml"

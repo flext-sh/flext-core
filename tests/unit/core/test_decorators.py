@@ -1,0 +1,490 @@
+"""Comprehensive tests for FlextDecorators and decorator functionality."""
+
+from __future__ import annotations
+
+import contextlib
+import time
+from typing import TYPE_CHECKING
+
+from pydantic import BaseModel, Field
+
+from flext_core.decorators import (
+# Constants
+EXPECTED_BULK_SIZE = 2
+EXPECTED_DATA_COUNT = 3
+
+    FlextDecorators,
+    flext_cache_decorator,
+    flext_safe_call,
+    flext_safe_decorator,
+    flext_timing_decorator,
+)
+from flext_core.result import FlextResult
+
+
+class UserModel(BaseModel):
+    """Test model for validation."""
+
+    name: str = Field(min_length=1)
+    age: int = Field(ge=0, le=150)
+    email: str
+
+
+class TestFlextDecorators:
+    """Test FlextDecorators orchestration functionality."""
+
+    def test_safe_result_decorator_success(self) -> None:
+        """Test safe_result decorator with successful function."""
+
+        @FlextDecorators.safe_result
+        def safe_function(x: int, y: int) -> int:
+            return x + y
+
+        result = safe_function(2, 3)
+
+        assert isinstance(result, FlextResult)
+        assert result.is_success
+        if result.data != 5:
+            raise AssertionError(f"Expected {5}, got {result.data}")
+
+    def test_safe_result_decorator_failure(self) -> None:
+        """Test safe_result decorator with failing function."""
+
+        @FlextDecorators.safe_result
+        def failing_function() -> int:
+            msg = "Test error"
+            raise ValueError(msg)
+
+        result = failing_function()
+
+        assert isinstance(result, FlextResult)
+        assert result.is_failure
+        if "Test error" not in result.error:
+            raise AssertionError(f"Expected {"Test error"} in {result.error}")
+
+    def test_safe_result_decorator_with_none_return(self) -> None:
+        """Test safe_result decorator with function returning None."""
+
+        @FlextDecorators.safe_result
+        def void_function() -> None:
+            return None
+
+        result = void_function()
+
+        assert isinstance(result, FlextResult)
+        assert result.is_success
+        assert result.data is None
+
+    def test_validated_with_result_decorator_success(self) -> None:
+        """Test validated_with_result decorator with valid data."""
+
+        @FlextDecorators.validated_with_result(UserModel)
+        def create_user(**kwargs: object) -> str:
+            return f"Created user: {kwargs['name']}"
+
+        result = create_user(name="Alice", age=30, email="alice@example.com")
+
+        assert isinstance(result, FlextResult)
+        assert result.is_success
+        if "Created user: Alice" not in result.data:
+            raise AssertionError(f"Expected {"Created user: Alice"} in {result.data}")
+
+    def test_validated_with_result_decorator_validation_failure(self) -> None:
+        """Test validated_with_result decorator with invalid data."""
+
+        @FlextDecorators.validated_with_result(UserModel)
+        def create_user(**kwargs: object) -> str:
+            return f"Created user: {kwargs['name']}"
+
+        # Invalid age
+        result = create_user(name="Alice", age=-5, email="alice@example.com")
+
+        assert isinstance(result, FlextResult)
+        assert result.is_failure
+        if "Validation failed" not in result.error:
+            raise AssertionError(f"Expected {"Validation failed"} in {result.error}")
+
+    def test_validated_with_result_decorator_execution_failure(self) -> None:
+        """Test validated_with_result decorator when execution fails."""
+
+        @FlextDecorators.validated_with_result(UserModel)
+        def failing_user_creation(**kwargs: object) -> str:
+            msg = "Database error"
+            raise RuntimeError(msg)
+
+        result = failing_user_creation(name="Alice", age=30, email="alice@example.com")
+
+        assert isinstance(result, FlextResult)
+        assert result.is_failure
+        if "Execution failed" not in result.error:
+            raise AssertionError(f"Expected {"Execution failed"} in {result.error}")
+
+    def test_cached_with_timing_decorator(self) -> None:
+        """Test cached_with_timing decorator functionality."""
+        call_count = 0
+
+        @FlextDecorators.cached_with_timing(max_size=2)
+        def expensive_operation(x: int) -> int:
+            nonlocal call_count
+            call_count += 1
+            time.sleep(0.01)  # Simulate work
+            return x * 2
+
+        # First call
+        result1 = expensive_operation(5)
+        if result1 != 10:
+            raise AssertionError(f"Expected {10}, got {result1}")
+        assert call_count == 1
+
+        # Second call with same argument (should be cached)
+        result2 = expensive_operation(5)
+        if result2 != 10:
+            raise AssertionError(f"Expected {10}, got {result2}")
+        assert call_count == 1  # Should not increment
+
+        # Different argument
+        result3 = expensive_operation(3)
+        if result3 != 6:
+            raise AssertionError(f"Expected {6}, got {result3}")
+        assert call_count == EXPECTED_BULK_SIZE
+
+    def test_safe_cached_decorator(self) -> None:
+        """Test safe_cached decorator functionality."""
+        call_count = 0
+
+        @FlextDecorators.safe_cached(max_size=2)
+        def safe_cached_operation(x: int) -> int:
+            nonlocal call_count
+            call_count += 1
+            if x < 0:
+                msg = "Negative input"
+                raise ValueError(msg)
+            return x * 3
+
+        # Successful call - safe_cached doesn't return FlextResult,
+        # it works with base decorators
+        result1 = safe_cached_operation(4)
+        if result1 != 12:
+            raise AssertionError(f"Expected {12}, got {result1}")
+        assert call_count == 1
+
+        # Cached call
+        result2 = safe_cached_operation(4)
+        if result2 != 12:
+            raise AssertionError(f"Expected {12}, got {result2}")
+        assert call_count == 1  # Should not increment
+
+        # Failing call - safe decorator will handle the exception
+        with contextlib.suppress(ValueError):
+            safe_cached_operation(-1)
+            # If safe decorator doesn't raise, we continue
+
+    def test_validated_cached_decorator(self) -> None:
+        """Test validated_cached decorator functionality."""
+
+        @FlextDecorators.validated_cached(UserModel, max_size=2)
+        def process_user(**kwargs: object) -> str:
+            return f"Processed: {kwargs['name']} ({kwargs['age']})"
+
+        # Valid input
+        result1 = process_user(name="Bob", age=25, email="bob@example.com")
+        assert isinstance(result1, FlextResult)
+        assert result1.is_success
+        if "Processed: Bob (25)" not in result1.data:
+            raise AssertionError(f"Expected {"Processed: Bob (25)"} in {result1.data}")
+
+        # Invalid input
+        result2 = process_user(name="", age=25, email="bob@example.com")
+        assert result2.is_failure
+        if "Validation failed" not in result2.error:
+            raise AssertionError(f"Expected {"Validation failed"} in {result2.error}")
+
+    def test_complete_decorator_with_all_features(self) -> None:
+        """Test complete_decorator with all features enabled."""
+
+        @FlextDecorators.complete_decorator(
+            UserModel,
+            cache_size=16,
+            with_timing=True,
+            with_logging=True,
+        )
+        def complex_user_operation(**kwargs: object) -> str:
+            return f"Complex operation for: {kwargs['name']}"
+
+        result = complex_user_operation(
+            name="Charlie",
+            age=35,
+            email="charlie@example.com",
+        )
+
+        assert isinstance(result, FlextResult)
+        assert result.is_success
+        if "Complex operation for: Charlie" not in result.data:
+            raise AssertionError(f"Expected {"Complex operation for: Charlie"} in {result.data}")
+
+    def test_complete_decorator_minimal(self) -> None:
+        """Test complete_decorator with minimal configuration."""
+
+        @FlextDecorators.complete_decorator()
+        def simple_operation(x: int) -> int:
+            return x * 2
+
+        result = simple_operation(x=7)
+
+        # complete_decorator without model_class doesn't return FlextResult
+        if result != 14:
+            raise AssertionError(f"Expected {14}, got {result}")
+
+
+class TestStandaloneDecorators:
+    """Test standalone decorator functions."""
+
+    def test_flext_safe_call_success(self) -> None:
+        """Test flext_safe_call with successful function."""
+
+        @flext_safe_call
+        def safe_operation(a: int, b: int) -> int:
+            return a * b
+
+        result = safe_operation(6, 7)
+        # flext_safe_call returns FlextResult
+        assert isinstance(result, FlextResult)
+        assert result.is_success
+        if result.data != 42:
+            raise AssertionError(f"Expected {42}, got {result.data}")
+
+    def test_flext_safe_call_failure(self) -> None:
+        """Test flext_safe_call with failing function."""
+
+        @flext_safe_call
+        def risky_operation() -> int:
+            msg = "Something went wrong"
+            raise RuntimeError(msg)
+
+        # flext_safe_call returns FlextResult, not exception
+        result = risky_operation()
+        assert isinstance(result, FlextResult)
+        assert result.is_failure
+        if "Something went wrong" not in result.error:
+            raise AssertionError(f"Expected {"Something went wrong"} in {result.error}")
+
+    def test_flext_cache_decorator(self) -> None:
+        """Test flext_cache_decorator functionality."""
+        cache_decorator = flext_cache_decorator(max_size=3)
+        call_count = 0
+
+        @cache_decorator
+        def cached_function(x: int) -> int:
+            nonlocal call_count
+            call_count += 1
+            return x**2
+
+        # First call
+        result1 = cached_function(4)
+        if result1 != 16:
+            raise AssertionError(f"Expected {16}, got {result1}")
+        assert call_count == 1
+
+        # Cached call
+        result2 = cached_function(4)
+        if result2 != 16:
+            raise AssertionError(f"Expected {16}, got {result2}")
+        assert call_count == 1
+
+        # New argument
+        result3 = cached_function(5)
+        if result3 != 25:
+            raise AssertionError(f"Expected {25}, got {result3}")
+        assert call_count == EXPECTED_BULK_SIZE
+
+    def test_flext_safe_decorator(self) -> None:
+        """Test flext_safe_decorator functionality."""
+        safe_decorator = flext_safe_decorator()
+
+        @safe_decorator
+        def potentially_unsafe_function(x: int) -> int:
+            if x < 0:
+                msg = "Negative value not allowed"
+                raise ValueError(msg)
+            return x + 10
+
+        # Should handle exceptions gracefully
+        try:
+            result1 = potentially_unsafe_function(5)
+            if result1 != 15:
+                raise AssertionError(f"Expected {15}, got {result1}")
+        except (ValueError, TypeError, RuntimeError) as e:
+            if TYPE_CHECKING:
+                import pytest  # imported but unused in TYPE_CHECKING
+            else:
+                import pytest
+            pytest.fail(f"Safe decorator should handle exceptions: {e}")
+
+    def test_flext_timing_decorator(self) -> None:
+        """Test flext_timing_decorator functionality."""
+
+        @flext_timing_decorator
+        def timed_function(delay: float) -> str:
+            time.sleep(delay)
+            return "completed"
+
+        result = timed_function(0.01)
+        if result != "completed":
+            raise AssertionError(f"Expected {"completed"}, got {result}")
+
+
+class TestDecoratorComposition:
+    """Test combining multiple decorators."""
+
+    def test_multiple_decorators_composition(self) -> None:
+        """Test applying multiple decorators to the same function."""
+
+        @FlextDecorators.safe_result
+        @flext_timing_decorator
+        def multi_decorated_function(x: int) -> int:
+            time.sleep(0.001)
+            return x * 10
+
+        result = multi_decorated_function(3)
+
+        assert isinstance(result, FlextResult)
+        assert result.is_success
+        if result.data != 30:
+            raise AssertionError(f"Expected {30}, got {result.data}")
+
+    def test_decorator_with_validation_and_caching(self) -> None:
+        """Test decorator combining validation and caching."""
+
+        @FlextDecorators.validated_cached(UserModel, max_size=5)
+        def user_processor(**kwargs: object) -> dict[str, object]:
+            return {
+                "id": hash(kwargs["email"]),
+                "display_name": f"{kwargs['name']} ({kwargs['age']})",
+                "status": "active",
+            }
+
+        # Valid processing
+        result1 = user_processor(name="Diana", age=28, email="diana@example.com")
+        assert result1.is_success
+        if "display_name" not in result1.data:
+            raise AssertionError(f"Expected {"display_name"} in {result1.data}")
+
+        # Invalid input
+        result2 = user_processor(name="Diana", age=200, email="diana@example.com")
+        assert result2.is_failure
+
+
+class TestDecoratorErrorHandling:
+    """Test error handling across different decorators."""
+
+    def test_safe_result_with_different_exception_types(self) -> None:
+        """Test safe_result handling different exception types."""
+
+        @FlextDecorators.safe_result
+        def multi_exception_function(exception_type: str) -> str:
+            if exception_type == "value":
+                value_error_msg = "Value error"
+                raise ValueError(value_error_msg)
+            if exception_type == "type":
+                type_error_msg = "Type error"
+                raise TypeError(type_error_msg)
+            if exception_type == "runtime":
+                runtime_error_msg = "Runtime error"
+                raise RuntimeError(runtime_error_msg)
+            return "success"
+
+        # Test different exception types
+        result1 = multi_exception_function("value")
+        assert result1.is_failure
+        if "Value error" not in result1.error:
+            raise AssertionError(f"Expected {"Value error"} in {result1.error}")
+
+        result2 = multi_exception_function("type")
+        assert result2.is_failure
+        if "Type error" not in result2.error:
+            raise AssertionError(f"Expected {"Type error"} in {result2.error}")
+
+        result3 = multi_exception_function("runtime")
+        assert result3.is_failure
+        if "Runtime error" not in result3.error:
+            raise AssertionError(f"Expected {"Runtime error"} in {result3.error}")
+
+        # Test success case
+        result4 = multi_exception_function("none")
+        assert result4.is_success
+        if result4.data != "success":
+            raise AssertionError(f"Expected {"success"}, got {result4.data}")
+
+    def test_validation_decorator_error_details(self) -> None:
+        """Test validation decorator provides detailed error information."""
+
+        @FlextDecorators.validated_with_result(UserModel)
+        def detailed_user_creation(**kwargs: object) -> dict[str, object]:
+            return {"created": True, "user": kwargs}
+
+        # Multiple validation errors
+        result = detailed_user_creation(
+            name="",  # Too short
+            age=-1,  # Negative
+            email="invalid-email",  # Invalid format
+        )
+
+        assert result.is_failure
+        if "Validation failed" not in result.error:
+            raise AssertionError(f"Expected {"Validation failed"} in {result.error}")
+
+
+class TestDecoratorPerformance:
+    """Test decorator performance characteristics."""
+
+    def test_caching_effectiveness(self) -> None:
+        """Test that caching actually improves performance."""
+        expensive_calls = 0
+
+        @FlextDecorators.cached_with_timing(max_size=10)
+        def expensive_computation(n: int) -> int:
+            nonlocal expensive_calls
+            expensive_calls += 1
+            # Simulate expensive computation
+            time.sleep(0.001)
+            return sum(range(n))
+
+        # First call
+        start_time = time.time()
+        result1 = expensive_computation(100)
+        first_call_time = time.time() - start_time
+
+        # Second call (should be cached)
+        start_time = time.time()
+        result2 = expensive_computation(100)
+        cached_call_time = time.time() - start_time
+
+        if result1 != result2:
+
+            raise AssertionError(f"Expected {result2}, got {result1}")
+        assert expensive_calls == 1  # Only called once
+        assert cached_call_time < first_call_time  # Cached call is faster
+
+    def test_cache_size_limits(self) -> None:
+        """Test that cache respects size limits."""
+        call_count = 0
+
+        @FlextDecorators.cached_with_timing(max_size=2)
+        def limited_cache_function(x: int) -> int:
+            nonlocal call_count
+            call_count += 1
+            return x * 2
+
+        # Fill cache
+        limited_cache_function(1)  # call_count = 1
+        limited_cache_function(2)  # call_count = 2
+        limited_cache_function(3)  # call_count = 3, evicts 1
+
+        # Verify cache behavior
+        limited_cache_function(2)  # Should be cached, call_count stays 3
+        limited_cache_function(3)  # Should be cached, call_count stays 3
+        limited_cache_function(1)  # Should be re-computed, call_count = 4
+
+        if call_count != 4:
+
+            raise AssertionError(f"Expected {4}, got {call_count}")

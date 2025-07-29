@@ -239,9 +239,15 @@ class _BaseSerializableMixin:
 
         # Get all attributes that don't start with __
         for attr_name in dir(self):
-            if not attr_name.startswith("__") and not callable(
-                getattr(self, attr_name),
-            ):
+            if not attr_name.startswith("__"):
+                # Skip Pydantic internal attributes that cause deprecation warnings
+                if attr_name in {"model_computed_fields", "model_fields"}:
+                    continue
+
+                # Skip callable attributes
+                if callable(getattr(self, attr_name)):
+                    continue
+
                 try:
                     value = getattr(self, attr_name)
                     serialized_value = self._serialize_value(value)

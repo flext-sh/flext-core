@@ -168,7 +168,10 @@ class FlextValueObject(
         # Value object equality
         money1 = Money(amount=Decimal("10.00"))
         money2 = Money(amount=Decimal("10.00"))
-        assert money1 == money2  # Attribute-based equality
+        if money1 != money2:  # Attribute-based equality
+            raise AssertionError(
+                f"Expected {money2}, got {money1}"
+            )
 
         # Payload conversion for transport
         payload = email.to_payload()

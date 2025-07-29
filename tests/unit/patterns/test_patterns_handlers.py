@@ -6,6 +6,10 @@ from flext_core.handlers import FlextHandlers
 from flext_core.result import FlextResult
 
 # Extract classes from FlextHandlers - mapping to available classes
+# Constants
+EXPECTED_BULK_SIZE = 2
+EXPECTED_DATA_COUNT = 3
+
 FlextMessageHandler = FlextHandlers.Handler  # Base handler - will need adaptation
 FlextEventHandler = FlextHandlers.EventHandler
 #  QueryHandler has process_request method
@@ -160,7 +164,8 @@ class TestFlextHandler:
         handler = SampleMessageHandler()
 
         assert handler.handler_id is not None
-        assert handler.handler_name == "SampleMessageHandler"
+        if handler.handler_name != "SampleMessageHandler":
+            raise AssertionError(f"Expected {"SampleMessageHandler"}, got {handler.handler_name}")
 
     def test_handler_creation_with_custom_values(self) -> None:
         """Test creating handler with custom ID and name."""
@@ -171,7 +176,9 @@ class TestFlextHandler:
         handler.handler_id = handler_id
         handler.handler_name = handler_name
 
-        assert handler.handler_id == handler_id
+        if handler.handler_id != handler_id:
+
+            raise AssertionError(f"Expected {handler_id}, got {handler.handler_id}")
         assert handler.handler_name == handler_name
 
     def test_get_handler_metadata(self) -> None:
@@ -179,20 +186,27 @@ class TestFlextHandler:
         handler = SampleMessageHandler()
         metadata = handler.get_handler_metadata()
 
-        assert "handler_id" in metadata
+        if "handler_id" not in metadata:
+
+            raise AssertionError(f"Expected {"handler_id"} in {metadata}")
         assert "handler_name" in metadata
-        assert "handler_class" in metadata
-        assert metadata["handler_class"] == "SampleMessageHandler"
+        if "handler_class" not in metadata:
+            raise AssertionError(f"Expected {"handler_class"} in {metadata}")
+        if metadata["handler_class"] != "SampleMessageHandler":
+            raise AssertionError(f"Expected {"SampleMessageHandler"}, got {metadata["handler_class"]}")
 
     def test_validate_message_none(self) -> None:
         """Test validating None message."""
         handler = SampleMessageHandler()
         result = handler.validate_message(None)
 
-        assert result.is_failure is True
+        if not (result.is_failure):
+
+            raise AssertionError(f"Expected True, got {result.is_failure}")
         assert result.error is not None
         assert result.error
-        assert "message cannot be none" in result.error.lower()
+        if "message cannot be none" not in result.error.lower():
+            raise AssertionError(f"Expected {"message cannot be none"} in {result.error.lower()}")
 
     def test_validate_message_valid(self) -> None:
         """Test validating valid message."""
@@ -200,7 +214,9 @@ class TestFlextHandler:
         message = SampleMessage("test")
         result = handler.validate_message(message)
 
-        assert result.is_success is True
+        if not (result.is_success):
+
+            raise AssertionError(f"Expected True, got {result.is_success}")
 
 
 # ===================================================================
@@ -217,8 +233,10 @@ class TestFlextMessageHandler:
         message = SampleMessage("hello")
 
         result = handler.handle_message(message)
-        assert result.is_success is True
-        assert result.data == "Handled: hello"
+        if not (result.is_success):
+            raise AssertionError(f"Expected True, got {result.is_success}")
+        if result.data != "Handled: hello":
+            raise AssertionError(f"Expected {"Handled: hello"}, got {result.data}")
 
     def test_process_message_success(self) -> None:
         """Test complete message processing flow."""
@@ -226,18 +244,22 @@ class TestFlextMessageHandler:
         message = SampleMessage("test")
 
         result = handler.process_message(message)
-        assert result.is_success is True
-        assert result.data == "Handled: test"
+        if not (result.is_success):
+            raise AssertionError(f"Expected True, got {result.is_success}")
+        if result.data != "Handled: test":
+            raise AssertionError(f"Expected {"Handled: test"}, got {result.data}")
 
     def test_process_message_validation_failure(self) -> None:
         """Test processing with validation failure."""
         handler = SampleMessageHandler()
 
         result = handler.process(None)
-        assert result.is_failure is True
+        if not (result.is_failure):
+            raise AssertionError(f"Expected True, got {result.is_failure}")
         assert result.error is not None
         assert result.error
-        assert "validation failed" in result.error.lower()
+        if "validation failed" not in result.error.lower():
+            raise AssertionError(f"Expected {"validation failed"} in {result.error.lower()}")
 
     def test_process_message_cannot_handle(self) -> None:
         """Test processing message that cannot be handled."""
@@ -245,10 +267,12 @@ class TestFlextMessageHandler:
         message = SampleMessage("different")
 
         result = handler.process_message(message)
-        assert result.is_failure is True
+        if not (result.is_failure):
+            raise AssertionError(f"Expected True, got {result.is_failure}")
         assert result.error is not None
         assert result.error
-        assert "cannot process" in result.error.lower()
+        if "cannot process" not in result.error.lower():
+            raise AssertionError(f"Expected {"cannot process"} in {result.error.lower()}")
 
     def test_process_message_handling_exception(self) -> None:
         """Test handling exceptions during message processing."""
@@ -268,10 +292,12 @@ class TestFlextMessageHandler:
         message = SampleMessage("test")
 
         result = handler.process_message(message)
-        assert result.is_failure is True
+        if not (result.is_failure):
+            raise AssertionError(f"Expected True, got {result.is_failure}")
         assert result.error is not None
         assert result.error
-        assert "processing failed" in result.error.lower()
+        if "processing failed" not in result.error.lower():
+            raise AssertionError(f"Expected {"processing failed"} in {result.error.lower()}")
 
 
 # ===================================================================
@@ -288,7 +314,8 @@ class TestFlextEventHandler:
         event = SampleEvent("user.created", {"user_id": "123"})
 
         result = handler.handle_event(event)
-        assert result.is_success is True
+        if not (result.is_success):
+            raise AssertionError(f"Expected True, got {result.is_success}")
 
     def test_handle_event_failure(self) -> None:
         """Test event handling failure."""
@@ -296,46 +323,54 @@ class TestFlextEventHandler:
         event = SampleEvent("user.created", {"should_fail": True})
 
         result = handler.handle_event(event)
-        assert result.is_failure is True
+        if not (result.is_failure):
+            raise AssertionError(f"Expected True, got {result.is_failure}")
 
     def test_can_handle_correct_event_type(self) -> None:
         """Test can_handle with correct event type."""
         handler = SampleEventHandler("order.placed")
         event = SampleEvent("order.placed", {})
 
-        assert handler.can_handle(event) is True
+        if not (handler.can_handle(event)):
+
+            raise AssertionError(f"Expected True, got {handler.can_handle(event)}")
 
     def test_can_handle_wrong_event_type(self) -> None:
         """Test can_handle with wrong event type."""
         handler = SampleEventHandler("order.placed")
         event = SampleEvent("order.cancelled", {})
 
-        assert handler.can_handle(event) is False
+        if handler.can_handle(event):
 
+            raise AssertionError(f"Expected False, got {handler.can_handle(event)}")\ n
     def test_can_handle_no_event_type_attribute(self) -> None:
         """Test can_handle with object without event_type."""
         handler = SampleEventHandler()
         message = SampleMessage("test")
 
-        assert handler.can_handle(message) is False
+        if handler.can_handle(message):
 
+            raise AssertionError(f"Expected False, got {handler.can_handle(message)}")\ n
     def test_process_event_success(self) -> None:
         """Test complete event processing flow."""
         handler = SampleEventHandler("payment.completed")
         event = SampleEvent("payment.completed", {"amount": 100})
 
         result = handler.process_event(event)
-        assert result.is_success is True
+        if not (result.is_success):
+            raise AssertionError(f"Expected True, got {result.is_success}")
 
     def test_process_event_validation_failure(self) -> None:
         """Test event processing with validation failure."""
         handler = SampleEventHandler()
 
         result = handler.process_event(None)
-        assert result.is_failure is True
+        if not (result.is_failure):
+            raise AssertionError(f"Expected True, got {result.is_failure}")
         assert result.error is not None
         assert result.error
-        assert "message cannot be none" in result.error.lower()
+        if "message cannot be none" not in result.error.lower():
+            raise AssertionError(f"Expected {"message cannot be none"} in {result.error.lower()}")
 
     def test_process_event_cannot_handle(self) -> None:
         """Test processing event that cannot be handled."""
@@ -343,10 +378,12 @@ class TestFlextEventHandler:
         event = SampleEvent("different.event", {})
 
         result = handler.process_event(event)
-        assert result.is_failure is True
+        if not (result.is_failure):
+            raise AssertionError(f"Expected True, got {result.is_failure}")
         assert result.error is not None
         assert result.error
-        assert "cannot process" in result.error.lower()
+        if "cannot process" not in result.error.lower():
+            raise AssertionError(f"Expected {"cannot process"} in {result.error.lower()}")
 
 
 # ===================================================================
@@ -363,9 +400,11 @@ class TestFlextRequestHandler:
         request = SampleRequest("create_user", {"name": "John"})
 
         result = handler.handle_request(request)
-        assert result.is_success is True
+        if not (result.is_success):
+            raise AssertionError(f"Expected True, got {result.is_success}")
         assert result.data is not None
-        assert result.data.result == "success"
+        if result.data.result != "success":
+            raise AssertionError(f"Expected {"success"}, got {result.data.result}")
 
     def test_handle_request_failure(self) -> None:
         """Test request handling failure."""
@@ -373,39 +412,46 @@ class TestFlextRequestHandler:
         request = SampleRequest("delete_user", {"id": "123"})
 
         result = handler.handle_request(request)
-        assert result.is_failure is True
+        if not (result.is_failure):
+            raise AssertionError(f"Expected True, got {result.is_failure}")
 
     def test_can_handle_correct_request_type(self) -> None:
         """Test can_handle with correct request type."""
         handler = SampleRequestHandler()
         request = SampleRequest("test", {})
 
-        assert handler.can_handle(request) is True
+        if not (handler.can_handle(request)):
+
+            raise AssertionError(f"Expected True, got {handler.can_handle(request)}")
 
     def test_can_handle_wrong_request_type(self) -> None:
         """Test can_handle with wrong request type."""
         handler = SampleRequestHandler()
         message = SampleMessage("test")
 
-        assert handler.can_handle(message) is False
+        if handler.can_handle(message):
 
+            raise AssertionError(f"Expected False, got {handler.can_handle(message)}")\ n
     def test_process_request_success(self) -> None:
         """Test complete request processing flow."""
         handler = SampleRequestHandler("update_profile")
         request = SampleRequest("update_profile", {"name": "Jane"})
 
         result = handler.process_request(request)
-        assert result.is_success is True
+        if not (result.is_success):
+            raise AssertionError(f"Expected True, got {result.is_success}")
 
     def test_process_request_validation_failure(self) -> None:
         """Test request processing with validation failure."""
         handler = SampleRequestHandler()
 
         result = handler.process_request(None)
-        assert result.is_failure is True
+        if not (result.is_failure):
+            raise AssertionError(f"Expected True, got {result.is_failure}")
         assert result.error is not None
         assert result.error
-        assert "message cannot be none" in result.error.lower()
+        if "message cannot be none" not in result.error.lower():
+            raise AssertionError(f"Expected {"message cannot be none"} in {result.error.lower()}")
 
     def test_process_request_cannot_handle(self) -> None:
         """Test processing request that cannot be handled."""
@@ -413,10 +459,12 @@ class TestFlextRequestHandler:
         request = SampleRequest("different_action", {})
 
         result = handler.process_request(request)
-        assert result.is_failure is True
+        if not (result.is_failure):
+            raise AssertionError(f"Expected True, got {result.is_failure}")
         assert result.error is not None
         assert result.error
-        assert "cannot process" in result.error.lower()
+        if "cannot process" not in result.error.lower():
+            raise AssertionError(f"Expected {"cannot process"} in {result.error.lower()}")
 
 
 # ===================================================================
@@ -430,7 +478,8 @@ class TestFlextHandlerRegistry:
     def test_registry_creation(self) -> None:
         """Test creating empty registry."""
         registry = FlextHandlerRegistry()
-        assert len(registry.get_all_handlers()) == 0
+        if len(registry.get_all_handlers()) != 0:
+            raise AssertionError(f"Expected {0}, got {len(registry.get_all_handlers())}")
 
     def test_register_handler_success(self) -> None:
         """Test successful handler registration."""
@@ -438,15 +487,18 @@ class TestFlextHandlerRegistry:
         handler = SampleMessageHandler()
 
         result = registry.register(handler)
-        assert result.is_success is True
-        assert len(registry.get_all_handlers()) == 1
+        if not (result.is_success):
+            raise AssertionError(f"Expected True, got {result.is_success}")
+        if len(registry.get_all_handlers()) != 1:
+            raise AssertionError(f"Expected {1}, got {len(registry.get_all_handlers())}")
 
     def test_register_invalid_handler(self) -> None:
         """Test registering invalid handler."""
         registry = FlextHandlerRegistry()
 
         result = registry.register("not_a_handler")
-        assert result.is_failure is True
+        if not (result.is_failure):
+            raise AssertionError(f"Expected True, got {result.is_failure}")
 
     def test_find_handlers_for_message(self) -> None:
         """Test finding handlers for specific message."""
@@ -460,7 +512,9 @@ class TestFlextHandlerRegistry:
         message = SampleMessage("hello")
         handlers = registry.find_handlers(message)
 
-        assert len(handlers) == 1
+        if len(handlers) != 1:
+
+            raise AssertionError(f"Expected {1}, got {len(handlers)}")
         assert handlers[0] == handler1
 
     def test_find_handlers_no_matches(self) -> None:
@@ -472,7 +526,9 @@ class TestFlextHandlerRegistry:
         message = SampleMessage("different")
         handlers = registry.find_handlers(message)
 
-        assert len(handlers) == 0
+        if len(handlers) != 0:
+
+            raise AssertionError(f"Expected {0}, got {len(handlers)}")
 
     def test_get_handler_by_id(self) -> None:
         """Test getting handler by ID."""
@@ -483,7 +539,8 @@ class TestFlextHandlerRegistry:
         registry.register(handler)
 
         found_handler = registry.get_handler_by_id(handler_id)
-        assert found_handler == handler
+        if found_handler != handler:
+            raise AssertionError(f"Expected {handler}, got {found_handler}")
 
     def test_get_handler_by_id_not_found(self) -> None:
         """Test getting handler by non-existent ID."""
@@ -504,8 +561,10 @@ class TestFlextHandlerRegistry:
         registry.register(handler2)
 
         all_handlers = registry.get_all_handlers()
-        assert len(all_handlers) == 2
-        assert handler1 in all_handlers
+        if len(all_handlers) != EXPECTED_BULK_SIZE:
+            raise AssertionError(f"Expected {2}, got {len(all_handlers)}")
+        if handler1 not in all_handlers:
+            raise AssertionError(f"Expected {handler1} in {all_handlers}")
         assert handler2 in all_handlers
 
     def test_get_handler_info(self) -> None:
@@ -515,8 +574,10 @@ class TestFlextHandlerRegistry:
         registry.register(handler)
 
         info = registry.get_handler_info()
-        assert len(info) == 1
-        assert "handler_id" in info[0]
+        if len(info) != 1:
+            raise AssertionError(f"Expected {1}, got {len(info)}")
+        if "handler_id" not in info[0]:
+            raise AssertionError(f"Expected {"handler_id"} in {info[0]}")
         assert "handler_class" in info[0]
 
 
@@ -542,22 +603,26 @@ class TestHandlerPatternIntegration:
         # Test hello message
         hello_message = SampleMessage("hello")
         hello_handlers = registry.find_handlers(hello_message)
-        assert len(hello_handlers) == 1
+        if len(hello_handlers) != 1:
+            raise AssertionError(f"Expected {1}, got {len(hello_handlers)}")
 
         message_handler = hello_handlers[0]
         assert isinstance(message_handler, FlextMessageHandler)
         result = message_handler.process(hello_message)
-        assert result.is_success is True
+        if not (result.is_success):
+            raise AssertionError(f"Expected True, got {result.is_success}")
 
         # Test goodbye message
         goodbye_message = SampleMessage("goodbye")
         goodbye_handlers = registry.find_handlers(goodbye_message)
-        assert len(goodbye_handlers) == 1
+        if len(goodbye_handlers) != 1:
+            raise AssertionError(f"Expected {1}, got {len(goodbye_handlers)}")
 
         message_handler = goodbye_handlers[0]
         assert isinstance(message_handler, FlextMessageHandler)
         result = message_handler.process(goodbye_message)
-        assert result.is_success is True
+        if not (result.is_success):
+            raise AssertionError(f"Expected True, got {result.is_success}")
 
     def test_event_driven_processing_flow(self) -> None:
         """Test complete event-driven processing flow."""
@@ -573,22 +638,26 @@ class TestHandlerPatternIntegration:
         # Process user created event
         user_event = SampleEvent("user.created", {"user_id": "123"})
         handlers = registry.find_handlers(user_event)
-        assert len(handlers) == 1
+        if len(handlers) != 1:
+            raise AssertionError(f"Expected {1}, got {len(handlers)}")
 
         event_handler = handlers[0]
         assert isinstance(event_handler, FlextEventHandler)
         result = event_handler.process_event(user_event)
-        assert result.is_success is True
+        if not (result.is_success):
+            raise AssertionError(f"Expected True, got {result.is_success}")
 
         # Process order placed event
         order_event = SampleEvent("order.placed", {"order_id": "456"})
         handlers = registry.find_handlers(order_event)
-        assert len(handlers) == 1
+        if len(handlers) != 1:
+            raise AssertionError(f"Expected {1}, got {len(handlers)}")
 
         event_handler = handlers[0]
         assert isinstance(event_handler, FlextEventHandler)
         result = event_handler.process_event(order_event)
-        assert result.is_success is True
+        if not (result.is_success):
+            raise AssertionError(f"Expected True, got {result.is_success}")
 
     def test_request_response_processing_flow(self) -> None:
         """Test complete request/response processing flow."""
@@ -604,25 +673,30 @@ class TestHandlerPatternIntegration:
         # Process create user request
         create_request = SampleRequest("create_user", {"name": "John"})
         handlers = registry.find_handlers(create_request)
-        assert len(handlers) == 1
+        if len(handlers) != 1:
+            raise AssertionError(f"Expected {1}, got {len(handlers)}")
 
         request_handler = handlers[0]
         assert isinstance(request_handler, FlextRequestHandler)
         result = request_handler.process_request(create_request)
-        assert result.is_success is True
+        if not (result.is_success):
+            raise AssertionError(f"Expected True, got {result.is_success}")
         assert result.data is not None
         assert isinstance(result.data, SampleResponse)
-        assert result.data.result == "success"
+        if result.data.result != "success":
+            raise AssertionError(f"Expected {"success"}, got {result.data.result}")
 
         # Process update profile request
         update_request = SampleRequest("update_profile", {"bio": "Developer"})
         handlers = registry.find_handlers(update_request)
-        assert len(handlers) == 1
+        if len(handlers) != 1:
+            raise AssertionError(f"Expected {1}, got {len(handlers)}")
 
         request_handler = handlers[0]
         assert isinstance(request_handler, FlextRequestHandler)
         result = request_handler.process_request(update_request)
-        assert result.is_success is True
+        if not (result.is_success):
+            raise AssertionError(f"Expected True, got {result.is_success}")
 
     def test_mixed_handler_types_in_registry(self) -> None:
         """Test registry with mixed handler types."""
@@ -639,17 +713,21 @@ class TestHandlerPatternIntegration:
 
         # Verify all handlers are registered
         all_handlers = registry.get_all_handlers()
-        assert len(all_handlers) == 3
+        if len(all_handlers) != EXPECTED_DATA_COUNT:
+            raise AssertionError(f"Expected {3}, got {len(all_handlers)}")
 
         # Test each handler type can be found
         message = SampleMessage("process")
-        assert len(registry.find_handlers(message)) == 1
+        if len(registry.find_handlers(message)) != 1:
+            raise AssertionError(f"Expected {1}, got {len(registry.find_handlers(message))}")
 
         event = SampleEvent("data.updated", {})
-        assert len(registry.find_handlers(event)) == 1
+        if len(registry.find_handlers(event)) != 1:
+            raise AssertionError(f"Expected {1}, got {len(registry.find_handlers(event))}")
 
         request = SampleRequest("execute", {})
-        assert len(registry.find_handlers(request)) == 1
+        if len(registry.find_handlers(request)) != 1:
+            raise AssertionError(f"Expected {1}, got {len(registry.find_handlers(request))}")
 
     def test_handler_error_recovery(self) -> None:
         """Test error handling and recovery in handlers."""
@@ -658,16 +736,19 @@ class TestHandlerPatternIntegration:
         message = SampleMessage("unhandled")
 
         result = handler.process_message(message)
-        assert result.is_failure is True
+        if not (result.is_failure):
+            raise AssertionError(f"Expected True, got {result.is_failure}")
 
         # Test event handler error recovery
         event_handler = SampleEventHandler("test.event")
         failing_event = SampleEvent("test.event", {"should_fail": True})
 
         event_result = event_handler.process_event(failing_event)
-        assert event_result.is_failure is True
+        if not (event_result.is_failure):
+            raise AssertionError(f"Expected True, got {event_result.is_failure}")
 
         # Verify handler is still functional for valid inputs
         valid_event = SampleEvent("test.event", {"valid": True})
         valid_event_result = event_handler.process_event(valid_event)
-        assert valid_event_result.is_success is True
+        if not (valid_event_result.is_success):
+            raise AssertionError(f"Expected True, got {valid_event_result.is_success}")

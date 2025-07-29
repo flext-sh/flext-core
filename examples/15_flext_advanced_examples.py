@@ -131,24 +131,28 @@ def main() -> None:  # noqa: PLR0915
             # Simulate database query with SharedOrder
             order1_result = SharedDomainFactory.create_order(
                 customer_id=user.id,
-                items=[{
-                    "product_id": "product1",
-                    "product_name": "Product 1",
-                    "quantity": 1,
-                    "unit_price": "50.0",
-                    "currency": "USD",
-                }],
+                items=[
+                    {
+                        "product_id": "product1",
+                        "product_name": "Product 1",
+                        "quantity": 1,
+                        "unit_price": "50.0",
+                        "currency": "USD",
+                    },
+                ],
             )
 
             order2_result = SharedDomainFactory.create_order(
                 customer_id=user.id,
-                items=[{
-                    "product_id": "product2",
-                    "product_name": "Product 2",
-                    "quantity": 1,
-                    "unit_price": "75.0",
-                    "currency": "USD",
-                }],
+                items=[
+                    {
+                        "product_id": "product2",
+                        "product_name": "Product 2",
+                        "quantity": 1,
+                        "unit_price": "75.0",
+                        "currency": "USD",
+                    },
+                ],
             )
 
             orders = []
@@ -223,7 +227,7 @@ def main() -> None:  # noqa: PLR0915
         # Simulate some work
         result = 100 / 10
         logger.info("Calculation completed", result=result)
-    except Exception as e:
+    except (RuntimeError, ValueError, TypeError) as e:
         logger.exception("Calculation failed", error=str(e))
 
     print("  Check logs above for structured logging output")

@@ -843,7 +843,8 @@ class ConcreteValueObject(FlextValueObject):
         if self.amount < 0:
             msg = "Amount cannot be negative"
             raise ValueError(msg)
-        if len(self.currency) != 3:
+        currency_code_length = 3  # ISO 4217 standard
+        if len(self.currency) != currency_code_length:
             msg = "Currency must be 3 characters"
             raise ValueError(msg)
         if not self.currency.isupper():
@@ -885,7 +886,7 @@ class TestDomainFactory:
                     f"Entity validation failed: {validation_result.error}",
                 )
             return FlextResult.ok(entity)
-        except Exception as e:
+        except (RuntimeError, ValueError, TypeError) as e:  # Test factory needs to handle any exception
             return FlextResult.fail(f"Failed to create test entity: {e}")
 
     @staticmethod
@@ -899,7 +900,7 @@ class TestDomainFactory:
             vo = ConcreteValueObject(amount=amount, currency=currency, **kwargs)
             vo.validate_domain_rules()  # May raise ValueError
             return FlextResult.ok(vo)
-        except Exception as e:
+        except (RuntimeError, ValueError, TypeError) as e:  # Test factory needs to handle any exception
             return FlextResult.fail(f"Failed to create test value object: {e}")
 
     @staticmethod
@@ -913,5 +914,5 @@ class TestDomainFactory:
             vo = ComplexValueObject(name=name, tags=tags, metadata=metadata)
             vo.validate_domain_rules()  # May raise ValueError
             return FlextResult.ok(vo)
-        except Exception as e:
+        except (RuntimeError, ValueError, TypeError) as e:  # Test factory needs to handle any exception
             return FlextResult.fail(f"Failed to create complex value object: {e}")

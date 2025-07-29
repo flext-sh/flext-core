@@ -47,12 +47,12 @@ Enterprise Logging Features:
     - Testing utilities with log store access and assertion capabilities
 
 Logging Level Hierarchy:
-    - TRACE (10): Most verbose debugging information for fine-grained analysis
-    - DEBUG (20): General debugging information for development and troubleshooting
-    - INFO (30): General information about application flow and business operations
-    - WARNING (40): Potentially harmful situations requiring attention
-    - ERROR (50): Error events that allow application to continue running
-    - CRITICAL (60): Very severe error events that may require application termination
+    - TRACE (5): Most verbose debugging information for fine-grained analysis
+    - DEBUG (10): General debugging information for development and troubleshooting
+    - INFO (20): General information about application flow and business operations
+    - WARNING (30): Potentially harmful situations requiring attention
+    - ERROR (40): Error events that allow application to continue running
+    - CRITICAL (50): Very severe error events that may require application termination
 
 Context Management Patterns:
     - Instance-level context: Persistent across all log calls from logger instance
@@ -88,7 +88,6 @@ import structlog
 
 from flext_core.constants import FlextLogLevel
 from flext_core.utilities import FlextGenerators
-from flext_core.validation import FlextValidators
 
 if TYPE_CHECKING:
     from structlog.typing import EventDict
@@ -182,6 +181,58 @@ class FlextLogContext(TypedDict, total=False):
 _log_store: TAnyList = []
 
 # =============================================================================
+# CUSTOM TRACE LEVEL SETUP - Complete Implementation
+# =============================================================================
+
+# Define custom TRACE level
+TRACE_LEVEL = 5
+
+
+def setup_custom_trace_level() -> None:
+    """Set up custom TRACE level for both stdlib logging and structlog."""
+    # Add to standard logging
+    logging.addLevelName(TRACE_LEVEL, "TRACE")
+
+    # Update structlog's internal mappings - check for correct attribute names
+    if hasattr(structlog.stdlib, "_NAME_TO_LEVEL"):
+        structlog.stdlib._NAME_TO_LEVEL["trace"] = TRACE_LEVEL
+        # Note: _LEVEL_TO_NAME may not exist in all versions
+        if hasattr(structlog.stdlib, "_LEVEL_TO_NAME"):
+            structlog.stdlib._LEVEL_TO_NAME[TRACE_LEVEL] = "trace"  # type: ignore[attr-defined]
+    elif hasattr(structlog.stdlib, "NAME_TO_LEVEL"):
+        structlog.stdlib.NAME_TO_LEVEL["trace"] = TRACE_LEVEL
+        # Some versions may not have LEVEL_TO_NAME
+        if hasattr(structlog.stdlib, "LEVEL_TO_NAME"):
+            structlog.stdlib.LEVEL_TO_NAME[TRACE_LEVEL] = "trace"  # type: ignore[attr-defined]
+
+    # Add trace method to standard logger
+    def trace_method(
+        self: logging.Logger,
+        msg: str,
+        *args: object,
+    ) -> None:
+        if self.isEnabledFor(TRACE_LEVEL):
+            # Use the correct signature for _log
+            self._log(TRACE_LEVEL, msg, args)
+
+    logging.Logger.trace = trace_method  # type: ignore[attr-defined]
+
+    # Add trace method to structlog BoundLogger
+    def bound_trace_method(
+        self: object,
+        event: str | None = None,
+        **kwargs: object,
+    ) -> object:
+        # Use type ignore for dynamic attribute access
+        return self._proxy_to_logger("trace", event, **kwargs)  # type: ignore[attr-defined]
+
+    structlog.stdlib.BoundLogger.trace = bound_trace_method  # type: ignore[attr-defined]
+
+
+# Initialize custom TRACE level
+setup_custom_trace_level()
+
+# =============================================================================
 # STRUCTLOG CONFIGURATION
 # =============================================================================
 
@@ -222,43 +273,14 @@ def _add_to_log_store(
     return event_dict
 
 
-def _console_renderer(
-    logger: object,
-    method_name: str,
-    event_dict: EventDict,
-) -> str:
-    """Render console output matching original format.
-
-    Args:
-        logger: The structlog logger instance (used for logger name fallback)
-        method_name: The log method name (included in debug output)
-        event_dict: The log event dictionary to render
-
-    Returns:
-        Formatted console string for output
-
-    """
-    level = str(event_dict.get("level", "INFO")).upper()
-    # Use logger name from logger object if not in event_dict
-    logger_name = str(event_dict.get("logger", getattr(logger, "name", "unknown")))
-    message = str(event_dict.get("event", ""))
-
-    # Include method name in debug mode for enhanced debugging
-    if level == "DEBUG" and method_name:
-        return f"[{level}] {logger_name}.{method_name}: {message}"
-    return f"[{level}] {logger_name}: {message}"
-
-
-# Configure structlog with console output
+# Configure structlog with simpler, more stable processors
 structlog.configure(
     processors=[
+        structlog.stdlib.filter_by_level,
         structlog.stdlib.add_logger_name,
         structlog.stdlib.add_log_level,
-        structlog.stdlib.PositionalArgumentsFormatter(),
         structlog.processors.TimeStamper(fmt="unix"),
-        structlog.processors.StackInfoRenderer(),
-        structlog.processors.format_exc_info,
-        _add_to_log_store,
+        _add_to_log_store,  # Add to log store before rendering
         structlog.dev.ConsoleRenderer(),
     ],
     context_class=dict,
@@ -267,11 +289,11 @@ structlog.configure(
     cache_logger_on_first_use=True,
 )
 
-# Configure console output to stderr to match original behavior
+# Configure standard logging simply
 logging.basicConfig(
     format="%(message)s",
     stream=sys.stderr,
-    level=logging.DEBUG,
+    level=TRACE_LEVEL,
 )
 
 
@@ -341,7 +363,7 @@ class FlextLogger:
         # Exception logging with automatic traceback
         try:
             risky_operation()
-        except Exception:
+        except (RuntimeError, ValueError, TypeError):
             logger.exception("Operation failed", operation="user_creation")
 
         # Context inheritance for distributed operations
@@ -374,13 +396,18 @@ class FlextLogger:
             level: Minimum log level
 
         """
+        # Auto-configure structlog if not already configured
+        if not self._configured:
+            self.configure()
+
         self._name = name
         self._level = level.upper()
         numeric_levels = FlextLogLevel.get_numeric_levels()
         self._level_value = numeric_levels.get(self._level, numeric_levels["INFO"])
         self._context: TContextDict = {}
 
-        # Create structlog logger with the name
+        # Create structlog logger with the name - this will use the global configuration
+        # that includes _add_to_log_store processor
         self._structlog_logger = structlog.get_logger(name)
 
     def _should_log(self, level: str) -> bool:
@@ -414,7 +441,7 @@ class FlextLogger:
 
         # Map our levels to standard logging levels for structlog
         level_mapping = {
-            "TRACE": "debug",  # Structlog doesn't have trace, use debug
+            "TRACE": "trace",  # Now we have proper custom TRACE level
             "DEBUG": "debug",
             "INFO": "info",
             "WARNING": "warning",
@@ -427,7 +454,7 @@ class FlextLogger:
         structlog_level = level_mapping.get(level_str, "info")
         log_method = getattr(self._structlog_logger, structlog_level)
 
-        # Log with structlog - message as first positional argument
+        # Log with structlog - message goes as first positional argument
         try:
             # Structlog expects message as first positional argument
             log_method(str(message), **log_data)
@@ -449,9 +476,15 @@ class FlextLogger:
         """Set logger context."""
         self._context = dict(context)
 
+    def clear_context(self) -> None:
+        """Clear logger context."""
+        self._context = {}
+
     def with_context(self, **context: object) -> FlextLogger:
         """Create logger with additional context."""
         new_logger = FlextLogger(self._name, self._level)
+        # Use the same structlog instance but with merged context
+        new_logger._structlog_logger = self._structlog_logger
         new_logger._context = {**self._context, **context}
         return new_logger
 
@@ -537,6 +570,8 @@ class FlextLogger:
 
         """
         new_logger = FlextLogger(self._name, self._level)
+        # Use the same structlog instance but with merged context
+        new_logger._structlog_logger = self._structlog_logger
         new_logger._context = {**self._context, **context}
         return new_logger
 
@@ -565,15 +600,36 @@ class FlextLogger:
         # For now just validate parameters exist
         _ = log_level or _log_level or FlextLogLevel.INFO
 
-        # Use parameters to configure logging
-        if json_output:
-            structlog.configure(processors=[structlog.processors.JSONRenderer()])
+        # Build processors list while preserving essential ones
+        processors = [
+            structlog.stdlib.filter_by_level,
+            structlog.stdlib.add_logger_name,
+            structlog.stdlib.add_log_level,
+        ]
+
+        # Add optional processors
         if add_timestamp:
-            structlog.configure(processors=[structlog.processors.TimeStamper()])
+            processors.append(structlog.processors.TimeStamper(fmt="unix"))  # type: ignore[arg-type]
         if add_caller:
-            structlog.configure(
-                processors=[structlog.processors.CallsiteParameterAdder()],
-            )
+            processors.append(structlog.processors.CallsiteParameterAdder())  # type: ignore[arg-type]
+
+        # Always preserve our essential processors
+        processors.append(_add_to_log_store)  # Always keep log store
+
+        # Choose final renderer
+        if json_output:
+            processors.append(structlog.processors.JSONRenderer())  # type: ignore[arg-type]
+        else:
+            processors.append(structlog.dev.ConsoleRenderer())  # type: ignore[arg-type]
+
+        # Reconfigure structlog with preserved essential functionality
+        structlog.configure(
+            processors=processors,
+            context_class=dict,
+            logger_factory=structlog.stdlib.LoggerFactory(),
+            wrapper_class=structlog.stdlib.BoundLogger,
+            cache_logger_on_first_use=True,
+        )
 
         cls._configured = True
 
@@ -608,11 +664,6 @@ class FlextLogger:
 
         """
         return structlog.get_logger("context").bind(**context)
-
-    @classmethod
-    def clear_context(cls) -> None:
-        """Clear global context variables."""
-        structlog.contextvars.clear_contextvars()
 
     @classmethod
     def with_performance_tracking(cls, name: str) -> object:
@@ -695,41 +746,59 @@ class FlextLoggerFactory:
     """
 
     _loggers: ClassVar[dict[str, FlextLogger]] = {}
+    _global_level: ClassVar[str] = "INFO"
 
     @classmethod
     def get_logger(cls, name: str, level: str = "INFO") -> FlextLogger:
-        """Get or create logger instance.
+        """Get logger with caching and global level support.
 
         Args:
             name: Logger name
-            level: Log level
+            level: Log level (uses global level if not specified)
 
         Returns:
-            Logger instance
+            Cached logger instance
 
         """
-        if not FlextValidators.is_non_empty_string(name):
+        # Validate and normalize name
+        if not (isinstance(name, str) and len(name.strip()) > 0):
             name = "flext.unknown"
 
-        if not FlextValidators.is_non_empty_string(level):
+        # Validate and normalize level
+        if not (isinstance(level, str) and len(level.strip()) > 0):
             level = "INFO"
 
-        cache_key = f"{name}:{level}"
-        if cache_key not in cls._loggers:
-            cls._loggers[cache_key] = FlextLogger(name, level)
+        # Use global level if not specified
+        if level == "INFO" and cls._global_level != "INFO":
+            level = cls._global_level
 
-        return cls._loggers[cache_key]
+        # Create cache key
+        cache_key = f"{name}:{level}"
+
+        # Return cached logger if exists
+        if cache_key in cls._loggers:
+            return cls._loggers[cache_key]
+
+        # Create new logger
+        logger = FlextLogger(name, level)
+        cls._loggers[cache_key] = logger
+        return logger
 
     @classmethod
     def set_global_level(cls, level: str) -> None:
-        """Set global log level for all loggers."""
-        if not FlextValidators.is_non_empty_string(level):
-            return
+        """Set global log level for all loggers.
 
-        level = level.upper()
+        Args:
+            level: Log level to set globally
+
+        """
+        # Validate level
         numeric_levels = FlextLogLevel.get_numeric_levels()
         if level not in numeric_levels:
             return
+
+        # Update global level
+        cls._global_level = level
 
         # Update all existing loggers
         for logger in cls._loggers.values():

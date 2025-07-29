@@ -83,11 +83,13 @@ class TestPEP8Compliance:
             ],
         )
 
-        assert result.returncode == 0, (
-            f"Ruff formatting violations detected:\n{result.stdout}\n"
-            f"{result.stderr}\n"
-            "Run 'make pep8' to fix formatting issues."
-        )
+        if result.returncode != 0:
+            msg = (
+                f"Ruff formatting violations detected:\n{result.stdout}\n"
+                f"{result.stderr}\n"
+                "Run 'make pep8' to fix formatting issues."
+            )
+            raise AssertionError(msg)
 
     def test_ruff_linting_compliance(self) -> None:
         """Test that all Python files pass PEP8 linting rules."""
@@ -99,11 +101,13 @@ class TestPEP8Compliance:
             ],
         )
 
-        assert result.returncode == 0, (
-            f"Ruff linting violations detected:\n{result.stdout}\n"
-            f"{result.stderr}\n"
-            "Run 'make pep8' to fix linting issues."
-        )
+        if result.returncode != 0:
+            msg = (
+                f"Ruff linting violations detected:\n{result.stdout}\n"
+                f"{result.stderr}\n"
+                "Run 'make pep8' to fix linting issues."
+            )
+            raise AssertionError(msg)
 
     def test_line_length_compliance(self) -> None:
         """Test that all Python files respect line length via ruff."""
@@ -141,11 +145,13 @@ class TestPEP8Compliance:
             ],
         )
 
-        assert result.returncode == 0, (
-            f"Import organization violations detected:\n{result.stdout}\n"
-            f"{result.stderr}\n"
-            "Run 'make pep8' to fix import organization."
-        )
+        if result.returncode != 0:
+            msg = (
+                f"Import organization violations detected:\n{result.stdout}\n"
+                f"{result.stderr}\n"
+                "Run 'make pep8' to fix import organization."
+            )
+            raise AssertionError(msg)
 
     def test_naming_conventions(self) -> None:
         """Test that naming follows PEP8 conventions."""
@@ -158,11 +164,13 @@ class TestPEP8Compliance:
             ],
         )
 
-        assert result.returncode == 0, (
-            f"Naming convention violations detected:\n{result.stdout}\n"
-            f"{result.stderr}\n"
-            "Fix naming to follow PEP8 conventions."
-        )
+        if result.returncode != 0:
+            msg = (
+                f"Naming convention violations detected:\n{result.stdout}\n"
+                f"{result.stderr}\n"
+                "Fix naming to follow PEP8 conventions."
+            )
+            raise AssertionError(msg)
 
     def test_docstring_compliance(self) -> None:
         """Test that docstrings follow PEP257/PEP8 standards."""
@@ -191,8 +199,10 @@ class TestPEP8Compliance:
             ],
         )
 
-        assert result.returncode == 0, (
-            f"Code complexity violations detected:\n{result.stdout}\n"
-            f"{result.stderr}\n"
-            "Refactor complex functions to improve maintainability."
-        )
+        if result.returncode != 0:
+            msg = (
+                f"Code complexity violations detected:\n{result.stdout}\n"
+                f"{result.stderr}\n"
+                "Refactor complex functions to improve maintainability."
+            )
+            raise AssertionError(msg)

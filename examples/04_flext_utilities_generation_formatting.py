@@ -143,7 +143,8 @@ def get_age_category(age_value: int) -> str:
 
 
 def calculate_discount_price(
-    product: SharedProduct, discount_percentage: int,
+    product: SharedProduct,
+    discount_percentage: int,
 ) -> FlextResult[Money]:
     """Calculate discounted price using Money operations for shared products."""
     if discount_percentage < 0 or discount_percentage > MAX_DISCOUNT_PERCENTAGE:

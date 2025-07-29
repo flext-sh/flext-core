@@ -438,12 +438,9 @@ class _PerformanceConfig:
     """Performance configuration constants."""
 
     DEFAULT_CACHE_SIZE = 1000
-    # Import constants from central location to avoid duplication
-    from flext_core.constants import (  # noqa: PLC0415
-        DEFAULT_PAGE_SIZE,
-        DEFAULT_RETRIES,
-        DEFAULT_TIMEOUT,
-    )
+    DEFAULT_PAGE_SIZE = 100
+    DEFAULT_RETRIES = 3
+    DEFAULT_TIMEOUT = 30
 
     DEFAULT_BATCH_SIZE = DEFAULT_PAGE_SIZE  # Reuse page size for batch size
     DEFAULT_POOL_SIZE = 10
