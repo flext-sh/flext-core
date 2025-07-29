@@ -216,7 +216,7 @@ class LoggableService(FlextLoggableMixin):
             self.logger.info("Request completed successfully", request_id=request_id)
             return result
 
-        except Exception as e:
+        except (RuntimeError, ValueError, TypeError) as e:
             self.logger.exception("Request failed", request_id=request_id)
             return {
                 "request_id": request_id,
@@ -419,7 +419,7 @@ class AdvancedUser(
             # This is a demonstration - in production use proper state management
             object.__setattr__(self, "role", "REDACTED_LDAP_BIND_PASSWORD")
             self._update_timestamp()
-        except Exception as e:
+        except (RuntimeError, ValueError, TypeError) as e:
             self.logger.exception("Failed to update role", error=str(e))
             return False
 
@@ -647,7 +647,7 @@ class EnterpriseService(
 
             return result
 
-        except Exception as e:
+        except (RuntimeError, ValueError, TypeError) as e:
             execution_time = self._get_execution_time_seconds(start_time)
             self.error_count += 1
             self.logger.exception("Request failed", request_id=request_id)
@@ -1137,7 +1137,7 @@ def demonstrate_enterprise_patterns() -> None:
                 self.logger.info("User saved: %s", user_id)
 
                 return True
-            except Exception:
+            except (RuntimeError, ValueError, TypeError):
                 _ = self._get_execution_time_seconds(start_time)  # Track execution time
                 self.logger.exception("Failed to save user: %s", user_id)
                 return False

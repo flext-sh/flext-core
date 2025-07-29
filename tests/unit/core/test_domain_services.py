@@ -36,16 +36,19 @@ class TestFlextDomainService:
         # Should be able to execute
         result = service.execute()
         assert result.is_success
-        assert result.data == "executed"
+        if result.data != "executed":
+            msg = f"Expected {"executed"}, got {result.data}"
+            raise AssertionError(msg)
 
     def test_abstract_method_coverage(self) -> None:
         """Test coverage of abstract method definition."""
         # This covers the TYPE_CHECKING import for FlextResult
-        from flext_core.domain_services import FlextDomainService
 
         # Verify abstract class structure
         assert hasattr(FlextDomainService, "execute")
-        assert FlextDomainService.__abstractmethods__ == frozenset(["execute"])
+        if FlextDomainService.__abstractmethods__ != frozenset(["execute"]):
+            msg = f"Expected {frozenset(["execute"])}, got {FlextDomainService.__abstractmethods__}"
+            raise AssertionError(msg)
 
     def test_domain_service_inheritance_structure(self) -> None:
         """Test domain service class hierarchy."""
@@ -54,4 +57,6 @@ class TestFlextDomainService:
         # Should inherit from base classes properly
         assert issubclass(ConcreteDomainService, FlextDomainService)
         assert hasattr(service, "__class__")
-        assert service.__class__.__name__ == "ConcreteDomainService"
+        if service.__class__.__name__ != "ConcreteDomainService":
+            msg = f"Expected {"ConcreteDomainService"}, got {service.__class__.__name__}"
+            raise AssertionError(msg)

@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """FLEXT Core - Complete Integration Example.
 
-Comprehensive example showing all FLEXT components working together with shared domain models.
+Comprehensive example showing all FLEXT components working together with shared
+domain models.
 """
 
 # Import shared domain models to eliminate duplication
@@ -187,13 +188,15 @@ def main() -> None:  # noqa: PLR0915
     # Create multiple orders for the customer
     order2_result = SharedDomainFactory.create_order(
         customer_id=customer.id,
-        items=[{
-            "product_id": "product456",
-            "product_name": "Another Product",
-            "quantity": "2",  # String format
-            "unit_price": "50.0",
-            "currency": "USD",
-        }],
+        items=[
+            {
+                "product_id": "product456",
+                "product_name": "Another Product",
+                "quantity": "2",  # String format
+                "unit_price": "50.0",
+                "currency": "USD",
+            },
+        ],
     )
 
     if order2_result.is_success:

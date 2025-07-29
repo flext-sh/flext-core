@@ -607,7 +607,7 @@ def demonstrate_enterprise_patterns() -> None:  # noqa: PLR0915
                     "data": {"user_id": user_id, "operation": operation},
                 }
 
-        except Exception as e:
+        except (RuntimeError, ValueError, TypeError) as e:
             gateway_logger.exception(
                 "Request processing failed",
                 **correlation_context,

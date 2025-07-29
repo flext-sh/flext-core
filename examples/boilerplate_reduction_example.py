@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from flext_core import FlextDomainService, FlextResult, get_logger
@@ -46,7 +46,7 @@ class TraditionalOracleService:
             if self.port <= 0:
                 return FlextResult.fail("Port must be positive")
             return FlextResult.ok(None)
-        except Exception as e:
+        except (RuntimeError, ValueError, TypeError) as e:
             logger.exception("Configuration validation failed")
             return FlextResult.fail(f"Validation failed: {e}")
 
@@ -61,12 +61,12 @@ class TraditionalOracleService:
             logger.info("Executing query: %s", query)
 
             # Simulate query execution
-            result = {"query": query, "timestamp": datetime.now().isoformat()}
+            result = {"query": query, "timestamp": datetime.now(UTC).isoformat()}
 
             logger.info("Query executed successfully")
             return FlextResult.ok(result)
 
-        except Exception as e:
+        except (RuntimeError, ValueError, TypeError) as e:
             logger.exception("Query execution failed")
             return FlextResult.fail(f"Query failed: {e}")
 
@@ -121,13 +121,13 @@ class EnhancedOracleService(FlextDomainService):
             query,
         )
 
-    def _execute_query_impl(self, query: str) -> Any:
-        """Internal query implementation."""
+    def _execute_query_impl(self, query: str) -> dict[str, str]:
+        """Execute query implementation with proper error handling."""
         # Simulate query execution
-        return {"query": query, "timestamp": datetime.now().isoformat()}
+        return {"query": query, "timestamp": datetime.now(UTC).isoformat()}
 
-    def _perform_operation(self) -> Any:
-        """Internal operation implementation."""
+    def _perform_operation(self) -> dict[str, Any]:
+        """Perform operation and return status information."""
         return {"status": "ready", "host": self.host, "port": self.port}
 
 
@@ -146,7 +146,7 @@ def demonstrate_boilerplate_reduction() -> None:
         host="localhost",
         port=1521,
         username="oracle",
-        password="secret",
+        password="secret",  # noqa: S106
     )
 
     # Manual validation and error handling
@@ -168,7 +168,7 @@ def demonstrate_boilerplate_reduction() -> None:
         host="localhost",
         port=1521,
         username="oracle",
-        password="secret",
+        password="secret",  # noqa: S106
     )
 
     # Automatic validation and error handling
@@ -225,8 +225,9 @@ class LDAPConnectionService(FlextDomainService):
             return FlextResult.fail("Bind DN is required")
         if not self.password:
             return FlextResult.fail("Password is required")
-        if self.port <= 0 or self.port > 65535:
-            return FlextResult.fail("Port must be between 1 and 65535")
+        max_port = 65535  # Standard TCP port range
+        if self.port <= 0 or self.port > max_port:
+            return FlextResult.fail(f"Port must be between 1 and {max_port}")
         return FlextResult.ok(None)
 
     def search_users(self, filter_expr: str) -> FlextResult[Any]:
@@ -237,7 +238,7 @@ class LDAPConnectionService(FlextDomainService):
             filter_expr,
         )
 
-    def _test_connection(self) -> Any:
+    def _test_connection(self) -> dict[str, Any]:
         """Test LDAP connection."""
         return {
             "status": "connected",
@@ -247,8 +248,8 @@ class LDAPConnectionService(FlextDomainService):
             "ssl_enabled": self.use_ssl,
         }
 
-    def _search_users_impl(self, filter_expr: str) -> Any:
-        """Internal LDAP search implementation."""
+    def _search_users_impl(self, filter_expr: str) -> dict[str, Any]:
+        """Execute LDAP search with filter and return results."""
         return {
             "filter": filter_expr,
             "results": [
@@ -267,7 +268,7 @@ def demonstrate_ldap_service() -> None:
         host="ldap.example.com",
         port=389,
         bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
-        password="REDACTED_LDAP_BIND_PASSWORD123",
+        password="REDACTED_LDAP_BIND_PASSWORD123",  # noqa: S106
         base_dn="dc=example,dc=com",
         use_ssl=False,
     )

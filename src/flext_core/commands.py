@@ -63,10 +63,11 @@ Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
 """
 
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Self, cast
 from zoneinfo import ZoneInfo
 
@@ -165,7 +166,7 @@ class FlextCommands:
 
     Usage Patterns:
         # Define domain command using shared domain models
-        from examples.shared_domain import Order, OrderItem, SharedDomainFactory
+
         class CreateOrderCommand(FlextCommands.Command):
             customer_id: str
             items: list[dict[str, str]]  # Use generic dict for compatibility
@@ -260,7 +261,7 @@ class FlextCommands:
         )
 
         timestamp: datetime = Field(
-            default_factory=datetime.utcnow,
+            default_factory=lambda: datetime.now(UTC),
             description="Command creation timestamp",
         )
 

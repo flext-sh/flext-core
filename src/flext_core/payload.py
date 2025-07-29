@@ -273,7 +273,7 @@ class FlextPayload[T](
             # Cast to proper type for the generic class
             payload = cls(data=payload_data, metadata=payload_metadata)  # type: ignore[arg-type]
             return FlextResult.ok(payload)
-        except Exception as e:  # noqa: BLE001
+        except (RuntimeError, ValueError, TypeError) as e:
             # Broad exception handling for API contract safety in payload creation
             return FlextResult.fail(f"Failed to create payload from dict: {e}")
 
@@ -297,7 +297,7 @@ class FlextPayload[T](
             transformed_data = transformer(self.data)
             new_payload = FlextPayload(data=transformed_data, metadata=self.metadata)
             return FlextResult.ok(new_payload)
-        except Exception as e:  # noqa: BLE001
+        except (RuntimeError, ValueError, TypeError) as e:
             # Broad exception handling for transformer function safety
             return FlextResult.fail(f"Data transformation failed: {e}")
 
@@ -327,16 +327,93 @@ class FlextPayload[T](
         return key in self.metadata
 
     def to_dict(self) -> TAnyDict:
-        """Convert to dictionary representation.
+        """Convert payload to dictionary representation.
 
         Returns:
-            Dictionary with data and metadata
+            Dictionary representation of payload
 
         """
         return {
             "data": self.data,
             "metadata": self.metadata,
         }
+
+    def to_dict_basic(self) -> TAnyDict:
+        """Convert to basic dictionary representation."""
+        result: TAnyDict = {}
+
+        # Get all attributes that don't start with __
+        for attr_name in dir(self):
+            if not attr_name.startswith("__"):
+                # Skip mixin attributes that might not be initialized yet
+                if attr_name in {"_validation_errors", "_is_valid", "_logger"}:
+                    continue
+
+                # Skip Pydantic internal attributes that cause deprecation warnings
+                if attr_name in {"model_computed_fields", "model_fields"}:
+                    continue
+
+                # Skip callable attributes
+                if callable(getattr(self, attr_name)):
+                    continue
+
+                try:
+                    value = getattr(self, attr_name)
+                    serialized_value = self._serialize_value(value)
+                    if serialized_value is not None:
+                        result[attr_name] = serialized_value
+                except (AttributeError, TypeError):
+                    # Skip attributes that can't be accessed or serialized
+                    continue
+
+        return result
+
+    def _serialize_value(self, value: object) -> object | None:
+        """Serialize a single value for dict conversion."""
+        # Simple types
+        if isinstance(value, str | int | float | bool | type(None)):
+            return value
+
+        # Collections
+        if isinstance(value, list | tuple):
+            return self._serialize_collection(value)
+
+        if isinstance(value, dict):
+            return self._serialize_dict(value)
+
+        # Objects with serialization method
+        if hasattr(value, "to_dict_basic"):
+            to_dict_method = value.to_dict_basic
+            if callable(to_dict_method):
+                result = to_dict_method()
+                return result if isinstance(result, dict) else None
+
+        return None
+
+    def _serialize_collection(
+        self,
+        collection: list[object] | tuple[object, ...],
+    ) -> list[object]:
+        """Serialize list or tuple values."""
+        serialized_list: list[object] = []
+        for item in collection:
+            if isinstance(item, str | int | float | bool | type(None)):
+                serialized_list.append(item)
+            elif hasattr(item, "to_dict_basic"):
+                to_dict_method = item.to_dict_basic
+                if callable(to_dict_method):
+                    result = to_dict_method()
+                    if isinstance(result, dict):
+                        serialized_list.append(result)
+        return serialized_list
+
+    def _serialize_dict(self, dict_value: TAnyDict) -> TAnyDict:
+        """Serialize dictionary values."""
+        serialized_dict: TAnyDict = {}
+        for k, v in dict_value.items():
+            if isinstance(v, str | int | float | bool | type(None)):
+                serialized_dict[str(k)] = v
+        return serialized_dict
 
     def __repr__(self) -> str:
         """Return string representation."""
@@ -360,12 +437,35 @@ class FlextPayload[T](
             AttributeError: If field doesn't exist
 
         """
+        # Handle mixin attributes that need lazy initialization
+        mixin_attrs: dict[str, tuple[type | object, object]] = {
+            "_validation_errors": (list[str], []),
+            "_is_valid": (bool | None, None),
+            "_logger": (object, None),
+        }
+
+        if name in mixin_attrs:
+            _attr_type, default_value = mixin_attrs[name]
+            try:
+                return object.__getattribute__(self, name)
+            except AttributeError:
+                if name == "_logger":
+                    logger_name = (
+                        f"{self.__class__.__module__}.{self.__class__.__name__}"
+                    )
+                    self._logger = FlextLoggerFactory.get_logger(logger_name)
+                    return self._logger
+                setattr(self, name, default_value)
+                return default_value
+
+        # Handle extra fields
         if (
             hasattr(self, "__pydantic_extra__")
             and self.__pydantic_extra__
             and name in self.__pydantic_extra__
         ):
             return self.__pydantic_extra__[name]
+
         error_msg = f"'{self.__class__.__name__}' object has no attribute '{name}'"
         available_fields = (
             list(self.__pydantic_extra__.keys())
@@ -377,7 +477,7 @@ class FlextPayload[T](
             attribute_context={
                 "class_name": self.__class__.__name__,
                 "attribute_name": name,
-                "available_extra_fields": available_fields,
+                "available_fields": available_fields,
             },
         )
 

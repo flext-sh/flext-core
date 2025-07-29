@@ -25,7 +25,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import inspect
+import contextlib
 from typing import TYPE_CHECKING, ClassVar
 
 if TYPE_CHECKING:
@@ -33,8 +33,41 @@ if TYPE_CHECKING:
 
     from flext_core.types import TAnyDict
 
+from flext_core._mixins_base import (
+    _BaseSerializableMixin,
+    _BaseValidatableMixin,
+)
 from flext_core.exceptions import FlextOperationError, FlextTypeError
 from flext_core.result import FlextResult
+
+
+class DelegatedProperty:
+    def __init__(
+        self,
+        prop_name: str,
+        mixin_instance: object,
+        *,
+        has_setter: bool,
+        doc: str | None = None,
+    ) -> None:
+        self.prop_name = prop_name
+        self.mixin_instance = mixin_instance
+        self.has_setter = has_setter
+        self.__doc__ = doc
+
+    def __get__(self, instance: object, owner: type | None = None) -> object:
+        return getattr(self.mixin_instance, self.prop_name)
+
+    def __set__(self, instance: object, value: object) -> None:
+        if self.has_setter:
+            setattr(self.mixin_instance, self.prop_name, value)
+        else:
+            error_msg = f"Property '{self.prop_name}' is read-only"
+            raise FlextOperationError(
+                error_msg,
+                operation="property_setter",
+                context={"property_name": self.prop_name, "readonly": True},
+            )
 
 
 class FlextMixinDelegator:
@@ -125,18 +158,55 @@ class FlextMixinDelegator:
                 if attr_name.startswith("_"):
                     continue
 
-                attr = getattr(mixin_instance, attr_name)
+                # Delegate properties first (they are also callable)
+                try:
+                    is_property = isinstance(
+                        getattr(type(mixin_instance), attr_name, None),
+                        property,
+                    )
+                except (AttributeError, TypeError, ValueError):
+                    is_property = False
 
-                # Delegate public methods
-                if callable(attr):
-                    self._create_delegated_method(attr_name, mixin_instance, attr)
+                if is_property:
+                    try:
+                        self._create_delegated_property(attr_name, mixin_instance)
+                    except (AttributeError, TypeError, ValueError):
+                        # Ignore properties that can't be delegated
+                        continue
+                else:
+                    try:
+                        attr = getattr(mixin_instance, attr_name)
+                    except (AttributeError, TypeError, ValueError):
+                        continue
+                    if callable(attr):
+                        try:
+                            self._create_delegated_method(
+                                attr_name,
+                                mixin_instance,
+                                attr,
+                            )
+                        except (AttributeError, TypeError, ValueError):
+                            continue
 
-                # Delegate properties
-                elif isinstance(
-                    getattr(type(mixin_instance), attr_name, None),
-                    property,
-                ):
-                    self._create_delegated_property(attr_name, mixin_instance)
+    def _create_delegated_property(
+        self,
+        prop_name: str,
+        mixin_instance: object,
+    ) -> None:
+        """Create a delegated property with getter/setter preservation."""
+        prop = getattr(type(mixin_instance), prop_name)
+        has_setter = prop.fset is not None
+        delegated_prop = DelegatedProperty(
+            prop_name,
+            mixin_instance,
+            has_setter=has_setter,
+            doc=prop.__doc__,
+        )
+        # Remove atributo de instância se existir
+        if hasattr(self._host, prop_name):
+            with contextlib.suppress(AttributeError):
+                delattr(self._host, prop_name)
+        setattr(type(self._host), prop_name, delegated_prop)
 
     def _create_delegated_method(
         self,
@@ -165,54 +235,22 @@ class FlextMixinDelegator:
         try:
             delegated_method.__name__ = method_name
             delegated_method.__doc__ = method.__doc__
+            import inspect  # noqa: PLC0415
+
             delegated_method.__signature__ = inspect.signature(method)  # type: ignore[attr-defined]
         except (AttributeError, ValueError):
-            # Fallback for special methods
             pass
 
         # Store for access via host
         self._delegated_methods[method_name] = delegated_method
 
         # Try to attach to host instance - handle frozen Pydantic models
-        if not hasattr(self._host, method_name):
-            try:
+        try:
+            if not hasattr(self._host, method_name):
                 setattr(self._host, method_name, delegated_method)
-            except (AttributeError, ValueError):
-                # For frozen Pydantic models, attach to class instead
-                if hasattr(self._host, "__class__"):
-                    setattr(self._host.__class__, method_name, delegated_method)
-
-    def _create_delegated_property(
-        self,
-        prop_name: str,
-        mixin_instance: object,
-    ) -> None:
-        """Create a delegated property with getter/setter preservation."""
-        prop = getattr(type(mixin_instance), prop_name)
-
-        def getter(_host_self: object) -> object:
-            return getattr(mixin_instance, prop_name)
-
-        def setter(_host_self: object, value: object) -> None:
-            if prop.fset:
-                setattr(mixin_instance, prop_name, value)
-            else:
-                error_msg = f"Property '{prop_name}' is read-only"
-                raise FlextOperationError(
-                    error_msg,
-                    operation="property_setter",
-                    context={"property_name": prop_name, "readonly": True},
-                )
-
-        # Create property with proper getter/setter
-        if prop.fset:
-            delegated_prop = property(getter, setter, None, prop.__doc__)
-        else:
-            delegated_prop = property(getter, None, None, prop.__doc__)
-
-        # Attach to host class if it doesn't exist
-        if not hasattr(type(self._host), prop_name):
-            setattr(type(self._host), prop_name, delegated_prop)
+        except AttributeError:
+            if hasattr(self._host, "__class__"):
+                setattr(self._host.__class__, method_name, delegated_method)
 
     def _validate_delegation(self) -> FlextResult[None]:
         """Validate that delegation system is working correctly."""
@@ -280,10 +318,6 @@ def validate_delegation_system() -> FlextResult[TAnyDict]:  # noqa: C901
 
     """
     # Import inside to avoid circular imports
-    from flext_core._mixins_base import (  # noqa: PLC0415
-        _BaseSerializableMixin,
-        _BaseValidatableMixin,
-    )
 
     # Test case 1: Basic delegation
     class TestHost:

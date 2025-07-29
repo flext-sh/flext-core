@@ -11,6 +11,7 @@ import pytest
 import structlog
 
 from flext_core.container import FlextContainer
+from flext_core.loggings import FlextLoggerFactory
 
 
 # Pytest configuration for test markers
@@ -104,8 +105,10 @@ def clean_container() -> FlextContainer:
 @pytest.fixture(autouse=True)
 def clean_logging_state() -> None:
     """Reset logging configuration between tests to prevent state pollution."""
-    # Clear structlog configuration cache to ensure clean state
-    structlog.reset_defaults()
+    # Reset FlextLogger class state if needed
+
+    FlextLoggerFactory.clear_loggers()
+    FlextLoggerFactory.clear_log_store()
 
     # Clear any logger caches if they exist
     try:
@@ -122,8 +125,6 @@ def clean_logging_state() -> None:
         # structlog configuration might not be set up yet
         pass
 
-    # Reset FlextLogger class state if needed
-    from flext_core.loggings import FlextLoggerFactory
-
-    FlextLoggerFactory.clear_loggers()
-    FlextLoggerFactory.clear_log_store()
+    # DO NOT call structlog.reset_defaults() because it removes our processor
+    # The logging module is already configured properly when imported
+    # Just clear the log store and logger cache above

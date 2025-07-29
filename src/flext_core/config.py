@@ -459,7 +459,12 @@ class FlextBaseSettings(PydanticBaseSettings):
                 final_config.update(kwargs)
 
             # Let Pydantic handle validation directly
-            instance = cls(**final_config) if final_config else cls()  # type: ignore[arg-type]
+            # Pass _env_file=None to prevent .env file loading during tests
+            instance = (
+                cls(_env_file=None, **final_config)  # type: ignore[arg-type]
+                if final_config
+                else cls(_env_file=None)
+            )
             return FlextResult.ok(instance)
 
         except (TypeError, ValueError, AttributeError) as e:

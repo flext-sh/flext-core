@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import types
+
 import pytest
 
+from flext_core import interfaces
 from flext_core.interfaces import FlextConfigurable, FlextValidator
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
@@ -31,9 +34,6 @@ class TestProtocolInterfaces:
     def test_protocol_imports(self) -> None:
         """Test that TYPE_CHECKING imports are accessible in protocols."""
         # This test covers the TYPE_CHECKING import lines
-        import types
-
-        from flext_core import interfaces
 
         # Verify module structure
         assert isinstance(interfaces, types.ModuleType)
@@ -43,8 +43,9 @@ class TestProtocolInterfaces:
     def test_type_checking_imports(self) -> None:
         """Test TYPE_CHECKING imports for coverage."""
         # These tests will cover the TYPE_CHECKING import lines
-        from flext_core.interfaces import FlextConfigurable, FlextValidator
 
         # Test protocol structure - covers TYPE_CHECKING imports
-        assert FlextConfigurable.__module__ == "flext_core.interfaces"
+        if FlextConfigurable.__module__ != "flext_core.interfaces":
+            msg = f"Expected {"flext_core.interfaces"}, got {FlextConfigurable.__module__}"
+            raise AssertionError(msg)
         assert FlextValidator.__module__ == "flext_core.interfaces"

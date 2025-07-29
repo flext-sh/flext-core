@@ -8,54 +8,98 @@ Architecture:
     - Domain-Driven Design entity patterns with identity-based equality
     - Pydantic BaseModel integration for automatic validation and serialization
     - Mixin inheritance for entity-specific behaviors and cross-cutting concerns
-    - Version tracking for optimistic locking and concurrency control
-    - Domain event collection for event sourcing and notification patterns
-    - Immutable entity instances with copy-on-write modification patterns
 
-Entity System Components:
-    - FlextEntity: Abstract base entity with identity, versioning, and domain events
-    - FlextEntityFactory: Factory pattern for type-safe entity creation
-    - Domain event integration: Event collection and management within entities
-    - Version management: Optimistic locking and automatic version incrementing
-    - Identity management: Entity equality based on identity rather than attributes
+Domain Entity Features:
+    - Identity-based equality and hash operations
+    - Version tracking for optimistic concurrency control
+    - Domain event integration for event sourcing patterns
+    - Pydantic validation with automatic type conversion
+    - Mixin inheritance for cross-cutting concerns
+    - Type-safe operations with comprehensive error handling
 
-Maintenance Guidelines:
-    - Create domain entities by inheriting from FlextEntity abstract base class
-    - Implement validate_domain_rules method for entity-specific business validation
-    - Use copy_with method for immutable entity modifications with version tracking
-    - Collect domain events during entity operations for event sourcing patterns
-    - Leverage factory methods for consistent entity creation with validation
-    - Follow DDD principles with rich entity behaviors and encapsulated business logic
+Entity Lifecycle:
+    - Creation: Identity assignment and initial validation
+    - Modification: Version increment and domain event generation
+    - Persistence: Optimistic concurrency control with version checking
+    - Retrieval: Identity-based lookup with type-safe operations
 
-Design Decisions:
-    - Abstract base class pattern enforcing domain validation implementation
-    - Pydantic frozen models for immutability and thread safety
-    - Version field for optimistic concurrency control in distributed systems
-    - Domain events list for event sourcing and cross-aggregate communication
-    - Factory pattern for validated entity creation with default value support
-    - FlextResult pattern integration for type-safe error handling
+Identity Management:
+    - Unique identifier generation and validation
+    - Type-safe identity operations with domain-specific constraints
+    - Identity-based equality and hash operations
+    - Identity persistence and retrieval patterns
 
-Domain-Driven Design Features:
-    - Identity-based equality following DDD entity principles
-    - Rich domain model with encapsulated business behaviors
-    - Domain event collection for publishing aggregate events
-    - Version tracking for conflict detection in concurrent scenarios
-    - Business rule validation through abstract validate_domain_rules method
-    - Immutable entities with controlled modification through copy patterns
+Version Tracking:
+    - Automatic version increment on entity modification
+    - Optimistic concurrency control with version checking
+    - Version-based conflict detection and resolution
+    - Version history tracking for audit trails
 
-Event Sourcing Integration:
-    - Domain event collection during entity lifecycle operations
-    - Aggregate ID correlation for event stream reconstruction
-    - Version tracking for event ordering and conflict resolution
-    - Event clearing for batch publishing after persistence
-    - Integration with FlextEvent payload for structured event transport
+Domain Events:
+    - Automatic domain event generation on entity changes
+    - Event sourcing integration for state reconstruction
+    - Event-driven architecture support
+    - Event persistence and retrieval patterns
+
+Validation Patterns:
+    - Pydantic automatic validation on entity creation and modification
+    - Domain-specific validation rules with custom error messages
+    - Type-safe validation with comprehensive error handling
+    - Validation integration with domain event generation
+
+Mixin Integration:
+    - Cross-cutting concerns through mixin inheritance
+    - Reusable behaviors across different entity types
+    - Type-safe mixin operations with proper inheritance
+    - Mixin validation and error handling
+
+Usage Patterns:
+    # Basic entity creation
+    class User(FlextEntity):
+        name: str
+        email: str
+
+        def validate_domain_rules(self) -> FlextResult[None]:
+            if not self.email or '@' not in self.email:
+                return FlextResult.fail("Invalid email format")
+            return FlextResult.ok(None)
+
+    user = User(name="John Doe", email="john@example.com")
+    assert user.id is not None
+    assert user.version == 1
+
+    # Entity modification with version tracking
+    user.name = "Jane Doe"
+    assert user.version == 2
+
+    # Identity-based equality
+    user2 = User(name="Jane Doe", email="jane@example.com")
+    user2.id = user.id
+    assert user == user2
+    assert hash(user) == hash(user2)
+
+    # Domain event integration
+    events = user.domain_events
+    assert len(events) > 0
+    assert events[-1].event_type == "UserModified"
+
+Thread Safety:
+    - Entity operations are thread-safe through immutable identity
+    - Version tracking provides optimistic concurrency control
+    - Domain events are thread-safe for event sourcing patterns
+    - Mixin operations maintain thread safety guarantees
+
+Performance Considerations:
+    - Identity-based operations are O(1) for equality and hash
+    - Version tracking adds minimal overhead to entity operations
+    - Domain event generation is optimized for high-frequency operations
+    - Mixin inheritance provides efficient code reuse
 
 Dependencies:
-    - pydantic: Data validation and immutable model configuration
-    - mixins: Entity-specific behavior inheritance for identity and validation
-    - payload: FlextEvent integration for domain event management
-    - result: FlextResult pattern for consistent error handling
-    - abc: Abstract base class patterns for enforcing implementation contracts
+    - pydantic: Data validation and serialization
+    - typing: Type hints and generic support
+    - datetime: Timestamp generation and version tracking
+    - uuid: Identity generation and management
 
 Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
@@ -142,7 +186,7 @@ class FlextEntity(BaseModel, ABC):
 
     Usage Patterns:
         # Use shared domain entity with factory pattern
-        from examples.shared_domain import User, SharedDomainFactory
+
 
         # Create entity using SharedDomainFactory for consistency
         user_result = SharedDomainFactory.create_user(
@@ -190,7 +234,11 @@ class FlextEntity(BaseModel, ABC):
         if modified_result.is_success:
             updated_user = modified_result.data
             # Version automatically incremented
-            assert updated_user.version == user.version + 1
+            if updated_user.version != user.version + 1:
+                expected_version = user.version + 1
+                raise AssertionError(
+                    f"Expected {expected_version}, got {updated_user.version}"
+                )
 
         # Collect and clear domain events
         events = updated_user.clear_events()
@@ -519,7 +567,7 @@ class FlextEntityFactory:
             User,
             defaults={
                 "is_active": False,
-                "created_at": datetime.utcnow(),
+                "created_at": datetime.now(timezone.utc),
                 "role": "user"
             }
         )

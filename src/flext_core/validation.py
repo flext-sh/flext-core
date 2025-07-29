@@ -28,6 +28,7 @@ Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
 """
 
+
 from __future__ import annotations
 
 import re
@@ -653,7 +654,7 @@ def flext_validate_service_name(name: str) -> bool:
         if flext_validate_service_name(service_name):
             container.register(service_name, service_instance)
         else:
-            from flext_core.exceptions import FlextValidationError
+
             raise FlextValidationError(
                 "Invalid service name",
                 validation_details={

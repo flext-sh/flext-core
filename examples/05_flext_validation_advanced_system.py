@@ -84,9 +84,8 @@ class ValidationDemoUser(SharedUser, FlextLoggableMixin):
             return base_validation
 
         # Additional business rules
-        if (
-            self.age.value < MIN_GUARDIAN_AGE
-            and hasattr(self, "requires_guardian_consent")
+        if self.age.value < MIN_GUARDIAN_AGE and hasattr(
+            self, "requires_guardian_consent",
         ):
             return FlextResult.fail("Users under 21 require guardian consent")
 
@@ -321,7 +320,7 @@ def demonstrate_functional_predicates() -> None:
             try:
                 result = predicate(value)
                 results.append((value, result))
-            except Exception as e:  # noqa: BLE001
+            except (RuntimeError, ValueError, TypeError) as e:
                 error_message: TErrorMessage = f"Predicate failed: {e}"
                 log_message = f"   ❌ {value} -> {error_message}"
                 print(log_message)
@@ -462,7 +461,7 @@ def validate_customer_complete(
         print(log_message)
         return FlextResult.ok(user)
 
-    except Exception as e:  # noqa: BLE001
+    except (RuntimeError, ValueError, TypeError) as e:
         error_message = f"Failed to validate shared customer: {e}"
         return FlextResult.fail(error_message)
 
@@ -584,7 +583,7 @@ def validate_product_complete(  # noqa: PLR0911, PLR0912
         print(log_message)
         return FlextResult.ok(enhanced_product)
 
-    except Exception as e:  # noqa: BLE001
+    except (RuntimeError, ValueError, TypeError) as e:
         error_message = f"Failed to create enhanced product: {e}"
         return FlextResult.fail(error_message)
 

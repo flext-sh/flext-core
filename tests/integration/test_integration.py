@@ -30,7 +30,9 @@ class TestLibraryIntegration:
 
         # Test FlextEntityId
         entity_id: FlextEntityId = "entity-123"
-        assert entity_id == "entity-123"
+        if entity_id != "entity-123":
+            msg = f"Expected {"entity-123"}, got {entity_id}"
+            raise AssertionError(msg)
 
         # Test FlextContainer
         container = FlextContainer()
@@ -39,7 +41,9 @@ class TestLibraryIntegration:
 
         service_result = container.get("service")
         assert service_result.is_success
-        assert service_result.data == "value"
+        if service_result.data != "value":
+            msg = f"Expected {"value"}, got {service_result.data}"
+            raise AssertionError(msg)
 
         # Test global container
         global_container = get_flext_container()
@@ -64,7 +68,9 @@ class TestLibraryIntegration:
 
         result = factory_result.data
         assert isinstance(result, FlextResult)
-        assert result.data == "container_result"
+        if result.data != "container_result":
+            msg = f"Expected {"container_result"}, got {result.data}"
+            raise AssertionError(msg)
 
     def test_entity_id_in_flext_result(self) -> None:
         """Test FlextEntityId used in FlextResult."""
@@ -72,7 +78,9 @@ class TestLibraryIntegration:
         result = FlextResult.ok(entity_id)
 
         assert result.is_success
-        assert result.data == "user-456"
+        if result.data != "user-456":
+            msg = f"Expected {"user-456"}, got {result.data}"
+            raise AssertionError(msg)
         assert isinstance(result.data, str)
 
     def test_version_info_available(self) -> None:

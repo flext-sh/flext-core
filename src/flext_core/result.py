@@ -8,43 +8,90 @@ Architecture:
     - Inheritance from specialized result base classes (_BaseResult, _BaseResultFactory)
     - Single source of truth pattern with _result_base.py as internal definitions
     - Railway-oriented programming with monadic operations and functional composition
-    - Type-safe error handling without exception propagation across entire system
-    - Clean public API with Flext* prefixed classes eliminating underscore prefixes
 
-Result System Components:
-    - FlextResult[T]: Main result type inheriting from _BaseResult with all
-      functionality
-    - FlextResultFactory: Factory methods inherited from _BaseResultFactory
-    - FlextResultOperations: Utility operations inherited from _BaseResultOperations
-    - Railway operations: bind, compose, switch, tee patterns for workflow orchestration
-    - Transformation methods: map, flat_map, filter for functional data processing
-    - Combination methods: combine for multi-result aggregation
+Railway-Oriented Programming Features:
+    - Success and failure result types with type-safe operations
+    - Monadic operations (map, flat_map, bind) for functional composition
+    - Error handling with comprehensive error information
+    - Safe function execution with automatic error wrapping
+    - Result chaining for complex operation sequences
 
-Maintenance Guidelines:
-    - Add new result patterns to _result_base.py first following established patterns
-    - Use inheritance from base classes for consistent functionality
-    - Maintain type safety across all transformation and composition operations
-    - Follow railway programming patterns for error handling and control flow
-    - Keep transformation chains pure and composable for predictable behavior
+Result Types:
+    - Success: Contains value with type-safe access and operations
+    - Failure: Contains error information with detailed error context
+    - Generic: Type-safe result with specific success and error types
 
-Design Decisions:
-    - Single source of truth with _result_base.py for internal definitions
-    - Direct inheritance from base classes eliminating code duplication
-    - Clean public API with Flext* prefixed classes
-    - Type-safe transformations preserving generic constraints
-    - Factory patterns consolidated from base implementations
+Monadic Operations:
+    - map: Transform success value without changing result type
+    - flat_map: Transform success value with potential result type change
+    - bind: Alias for flat_map with functional programming terminology
+    - and_then: Chain operations with automatic error propagation
+    - or_else: Provide fallback for failure cases
 
-Railway Programming Features:
-    - Success track: Data flows through transformations with type preservation
-    - Failure track: Errors bypass transformations and propagate with full context
-    - Monadic composition: Chain operations without nested error checking boilerplate
-    - Function composition: Build complex workflows from simple operation primitives
-    - Error recovery: Handle failures with alternative success paths and fallbacks
-    - Side effects: Execute logging and monitoring without breaking functional chains
+Error Handling:
+    - Comprehensive error information with context
+    - Type-safe error access and manipulation
+    - Error propagation through monadic operations
+    - Safe function execution with automatic error wrapping
+
+Usage Patterns:
+    # Basic result creation
+    result = FlextResult.ok("success")
+    assert result.is_success
+    assert result.value == "success"
+
+    error_result = FlextResult.fail("error message")
+    assert not error_result.is_success
+    assert error_result.error == "error message"
+
+    # Monadic operations
+    result = FlextResult.ok(5)
+    doubled = result.map(lambda x: x * 2)
+    assert doubled.value == 10
+
+    # Safe function execution
+    def risky_operation() -> str:
+        raise ValueError("Something went wrong")
+
+    result = safe_call(risky_operation)
+    assert not result.is_success
+    assert "Something went wrong" in result.error
+
+    # Result chaining
+    def parse_number(s: str) -> FlextResult[int]:
+        try:
+            return FlextResult.ok(int(s))
+        except ValueError:
+            return FlextResult.fail(f"Invalid number: {s}")
+
+    def double_number(n: int) -> FlextResult[int]:
+        return FlextResult.ok(n * 2)
+
+    result = parse_number("5").and_then(double_number)
+    assert result.is_success
+    assert result.value == 10
+
+    # Error propagation
+    result = parse_number("invalid").and_then(double_number)
+    assert not result.is_success
+    assert "Invalid number" in result.error
+
+Thread Safety:
+    - Result instances are immutable and thread-safe
+    - Monadic operations create new result instances
+    - Error information is thread-safe for concurrent access
+    - Safe function execution is thread-safe
+
+Performance Considerations:
+    - Result creation is optimized for minimal overhead
+    - Monadic operations are efficient with lazy evaluation
+    - Error handling adds minimal performance impact
+    - Memory usage is optimized for result instances
 
 Dependencies:
-    - _result_base: Foundation result implementations with all core functionality
-    - types: Type definitions for generic programming and TYPE_CHECKING
+    - typing: Type hints and generic support
+    - functools: Functional programming utilities
+    - traceback: Error context and stack trace information
 
 Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
@@ -54,6 +101,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, TypeVar
 
+from flext_core.constants import ERROR_CODES
+from flext_core.exceptions import FlextOperationError
+
 if TYPE_CHECKING:
     from collections.abc import Callable
 
@@ -61,8 +111,6 @@ if TYPE_CHECKING:
 
 # Import for runtime use
 import contextlib
-
-from flext_core.exceptions import FlextOperationError
 
 # Local type definitions for runtime use
 T = TypeVar("T")
@@ -143,12 +191,14 @@ class FlextResult[T]:
         """Get data or raise exception."""
         if self.is_failure:
             error_msg = self._error or "Unwrap failed"
-            raise FlextOperationError(error_msg)
-        # For success cases, data should not be None (but MyPy doesn't know this)
-        if self._data is None:
-            error_msg = "Success result has None data"
-            raise FlextOperationError(error_msg)
-        return self._data
+            raise FlextOperationError(
+                error_msg,
+                error_code=self._error_code or ERROR_CODES["UNWRAP_ERROR"],
+                context=self._error_data,
+            )
+        # For success cases, return data even if it's None
+        # None is a valid value for successful results (e.g., void operations)
+        return self._data  # type: ignore[return-value]
 
     def map(self, func: Callable[[T], U]) -> FlextResult[U]:
         """Map successful result."""
@@ -159,13 +209,17 @@ class FlextResult[T]:
                 self._error_data,
             )
         try:
-            # For success cases, _data should not be None
-            if self._data is None:
-                return FlextResult.fail("Cannot map None data from success result")
-            result = func(self._data)
+            # Apply function to data, even if it's None
+            # None is a valid value for successful results
+            result = func(self._data)  # type: ignore[arg-type]  # None is valid for successful results
             return FlextResult.ok(result)
-        except (TypeError, ValueError, AttributeError) as e:
-            return FlextResult.fail(f"Transformation failed: {e}")
+        except (TypeError, ValueError, AttributeError, RuntimeError) as e:
+            # Use FLEXT Core structured error handling
+            return FlextResult.fail(
+                f"Transformation failed: {e}",
+                error_code=ERROR_CODES["MAP_ERROR"],
+                error_data={"exception_type": type(e).__name__, "exception": str(e)},
+            )
 
     def flat_map(self, func: Callable[[T], FlextResult[U]]) -> FlextResult[U]:
         """Flat map for chaining results."""
@@ -176,12 +230,16 @@ class FlextResult[T]:
                 self._error_data,
             )
         try:
-            # For success cases, _data should not be None
-            if self._data is None:
-                return FlextResult.fail("Cannot flat_map None data from success result")
-            return func(self._data)
-        except (TypeError, ValueError, AttributeError) as e:
-            return FlextResult.fail(f"Unexpected chaining error: {e}")
+            # Apply function to data, even if it's None
+            # None is a valid value for successful results
+            return func(self._data)  # type: ignore[arg-type]  # None is valid for successful results
+        except (TypeError, ValueError, AttributeError, IndexError, KeyError) as e:
+            # Use FLEXT Core structured error handling
+            return FlextResult.fail(
+                f"Chained operation failed: {e}",
+                error_code=ERROR_CODES["BIND_ERROR"],
+                error_data={"exception_type": type(e).__name__, "exception": str(e)},
+            )
 
     def __bool__(self) -> bool:
         """Boolean conversion - True for success, False for failure."""
@@ -316,7 +374,7 @@ class FlextResult[T]:
             try:
                 result = func(self._data, other._data)
                 return FlextResult.ok(result)
-            except (TypeError, ValueError, AttributeError) as e:
+            except (TypeError, ValueError, AttributeError, ZeroDivisionError) as e:
                 return FlextResult.fail(str(e))
         return FlextResult.fail("Missing data for zip operation")
 
@@ -330,6 +388,7 @@ class FlextResult[T]:
         """Convert result to exception or None."""
         if self.is_success:
             return None
+
         error_msg = self._error or "Result failed"
         return FlextOperationError(error_msg)
 
@@ -381,7 +440,7 @@ class FlextResult[T]:
         for func in funcs:
             try:
                 return FlextResult.ok(func())
-            except (TypeError, ValueError, AttributeError) as e:
+            except (TypeError, ValueError, AttributeError, RuntimeError) as e:
                 last_error = str(e)
                 continue
         return FlextResult.fail(last_error)

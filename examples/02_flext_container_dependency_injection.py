@@ -635,7 +635,7 @@ def check_container_health(container: FlextContainer) -> FlextResult[TAnyObject]
         }
         if connect_result.is_success:
             db_connection.close()
-    except Exception as e:  # noqa: BLE001
+    except (RuntimeError, ValueError, TypeError) as e:
         health_data["services"]["database"] = {
             "status": "error",
             "error": str(e),
@@ -645,7 +645,7 @@ def check_container_health(container: FlextContainer) -> FlextResult[TAnyObject]
     try:
         cast("EmailService", container.get(EmailService))
         health_data["services"]["email"] = {"status": "healthy"}
-    except Exception as e:  # noqa: BLE001
+    except (RuntimeError, ValueError, TypeError) as e:
         health_data["services"]["email"] = {
             "status": "error",
             "error": str(e),
@@ -655,7 +655,7 @@ def check_container_health(container: FlextContainer) -> FlextResult[TAnyObject]
     try:
         cast("UserRepository", container.get(UserRepository))
         health_data["services"]["user_repository"] = {"status": "healthy"}
-    except Exception as e:  # noqa: BLE001
+    except (RuntimeError, ValueError, TypeError) as e:
         health_data["services"]["user_repository"] = {
             "status": "error",
             "error": str(e),
@@ -720,7 +720,7 @@ def main() -> None:  # noqa: PLR0912, PLR0915
             print(f"✅ Test registration successful: {registration_result.data}")
         else:
             print(f"❌ Test registration failed: {registration_result.error}")
-    except Exception as e:  # noqa: BLE001
+    except (RuntimeError, ValueError, TypeError) as e:
         print(f"❌ Test registration error: {e}")
 
     # Health check
@@ -779,7 +779,7 @@ def main() -> None:  # noqa: PLR0912, PLR0915
                     f"❌ Production registration failed:"
                     f" {prod_registration_result.error}",
                 )
-        except Exception as e:  # noqa: BLE001  # noqa: BLE001
+        except (RuntimeError, ValueError, TypeError) as e:
             print(f"❌ Production registration error: {e}")
     else:
         print(f"❌ Production container setup failed: {prod_container_result.error}")

@@ -180,7 +180,7 @@ def demonstrate_environment_integration() -> None:
         log_message = f"   Timeout: {settings.timeout}"
         print(log_message)
 
-    except Exception as e:  # noqa: BLE001
+    except (RuntimeError, ValueError, TypeError) as e:
         error_message: TErrorMessage = f"Failed to load settings: {e}"
         print(f"❌ {error_message}")
 
@@ -195,7 +195,7 @@ def demonstrate_environment_integration() -> None:
         settings = MyAppSettings()
         log_message = "✅ Settings loaded successfully"
         print(log_message)
-    except Exception as e:  # noqa: BLE001
+    except (RuntimeError, ValueError, TypeError) as e:
         error_message = f"Validation error (expected): {e}"
         print(f"❌ {error_message}")
 
@@ -350,7 +350,7 @@ def demonstrate_file_configuration() -> None:
         log_message = f"   Features: {loaded_config.get('features')}"
         print(log_message)
 
-    except Exception as e:  # noqa: BLE001
+    except (RuntimeError, ValueError, TypeError) as e:
         error_message: TErrorMessage = f"Failed to load config file: {e}"
         print(f"❌ {error_message}")
 
@@ -378,7 +378,7 @@ def demonstrate_file_configuration() -> None:
         os.unlink(temp_file_path)  # noqa: PTH108
         log_message = "🗑️ Temporary file cleaned up"
         print(log_message)
-    except Exception as e:  # noqa: BLE001
+    except (RuntimeError, ValueError, TypeError) as e:
         error_message = f"Failed to clean up file: {e}"
         print(f"⚠️ {error_message}")
 
@@ -806,7 +806,7 @@ def demonstrate_domain_configuration_integration() -> None:  # noqa: PLR0912, PL
             else:
                 log_message = f"❌ Age {test_age}: Invalid - {user_result.error}"
                 print(log_message)
-        except Exception as e:  # noqa: BLE001
+        except (RuntimeError, ValueError, TypeError) as e:
             log_message = f"❌ Age {test_age}: Validation error - {e}"
             print(log_message)
 

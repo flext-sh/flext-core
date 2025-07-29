@@ -1,11 +1,18 @@
 """Tests for FLEXT Core Railway Base module."""
 
+from flext_core._railway_base import _BaseRailway, _BaseRailwayUtils
+
+
 from __future__ import annotations
 
 import pytest
 
 from flext_core._railway_base import _BaseRailway, _BaseRailwayUtils
 from flext_core.result import FlextResult
+
+# Constants
+EXPECTED_BULK_SIZE = 2
+EXPECTED_TOTAL_PAGES = 8
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 
@@ -26,7 +33,8 @@ class TestBaseRailway:
         result = _BaseRailway.bind(initial_result, add_five)
 
         assert result.is_success
-        assert result.data == 15
+        if result.data != 15:
+            raise AssertionError(f"Expected {15}, got {result.data}")
 
     def test_bind_failure_propagation(self) -> None:
         """Test bind failure propagation."""
@@ -41,7 +49,8 @@ class TestBaseRailway:
         result = _BaseRailway.bind(initial_result, add_five)
 
         assert result.is_failure
-        assert result.error == "Initial error"
+        if result.error != "Initial error":
+            raise AssertionError(f"Expected {"Initial error"}, got {result.error}")
 
     def test_bind_function_failure(self) -> None:
         """Test bind when transformation function fails."""
@@ -56,7 +65,8 @@ class TestBaseRailway:
         result = _BaseRailway.bind(initial_result, failing_function)
 
         assert result.is_failure
-        assert result.error == "Function failed"
+        if result.error != "Function failed":
+            raise AssertionError(f"Expected {"Function failed"}, got {result.error}")
 
     def test_compose_functions_success(self) -> None:
         """Test successful function composition."""
@@ -78,7 +88,8 @@ class TestBaseRailway:
         result = composed(5)
 
         assert result.is_success
-        assert result.data == "12"  # (5 + 1) * 2 = 12
+        if result.data != "12"  # (5 + 1) * 2 = 12:
+            raise AssertionError(f"Expected {"12"  # (5 + 1) * 2 = 12}, got {result.data}")
 
     def test_compose_functions_failure_propagation(self) -> None:
         """Test failure propagation in function composition."""
@@ -104,7 +115,8 @@ class TestBaseRailway:
         result = composed(5)
 
         assert result.is_failure
-        assert result.error == "Middle function failed"
+        if result.error != "Middle function failed":
+            raise AssertionError(f"Expected {"Middle function failed"}, got {result.error}")
 
     def test_switch_condition_true(self) -> None:
         """Test switch operation when condition is true."""
@@ -126,7 +138,8 @@ class TestBaseRailway:
         switched_result = switch_func(10)
 
         assert switched_result.is_success
-        assert switched_result.data == 20  # double(10)
+        if switched_result.data != 20  # double(10):
+            raise AssertionError(f"Expected {20  # double(10)}, got {switched_result.data}")
 
     def test_switch_condition_false(self) -> None:
         """Test switch operation when condition is false."""
@@ -148,7 +161,8 @@ class TestBaseRailway:
         switched_result = switch_func(-5)
 
         assert switched_result.is_success
-        assert switched_result.data == 5  # negate(-5)
+        if switched_result.data != 5  # negate(-5):
+            raise AssertionError(f"Expected {5  # negate(-5)}, got {switched_result.data}")
 
     def test_switch_with_exception(self) -> None:
         """Test switch operation when condition raises exception."""
@@ -173,7 +187,8 @@ class TestBaseRailway:
         switched_result = switch_func(0)
 
         assert switched_result.is_failure
-        assert "Switch evaluation failed" in switched_result.error
+        if "Switch evaluation failed" not in switched_result.error:
+            raise AssertionError(f"Expected {"Switch evaluation failed"} in {switched_result.error}")
 
     def test_tee_success(self) -> None:
         """Test tee operation for side effects."""
@@ -194,7 +209,8 @@ class TestBaseRailway:
         teed_result = tee_func(42)
 
         assert teed_result.is_success
-        assert teed_result.data == 84  # main_func result (42 * 2)
+        if teed_result.data != 84  # main_func result (42 * 2):
+            raise AssertionError(f"Expected {84  # main_func result (42 * 2)}, got {teed_result.data}")
         assert side_effect_called == [42]  # Side effect executed
 
     def test_tee_with_main_function_failure(self) -> None:
@@ -216,9 +232,11 @@ class TestBaseRailway:
         teed_result = tee_func(42)
 
         assert teed_result.is_failure
-        assert teed_result.error == "Main function failed"
+        if teed_result.error != "Main function failed":
+            raise AssertionError(f"Expected {"Main function failed"}, got {teed_result.error}")
         # Side effect should still execute (suppressed exceptions)
-        assert side_effect_called == [42]
+        if side_effect_called != [42]:
+            raise AssertionError(f"Expected {[42]}, got {side_effect_called}")
 
     def test_dead_end_success(self) -> None:
         """Test dead_end operation success."""
@@ -235,7 +253,8 @@ class TestBaseRailway:
         dead_end_result = dead_end_func(100)
 
         assert dead_end_result.is_success
-        assert dead_end_result.data == 100  # Original value preserved
+        if dead_end_result.data != 100  # Original value preserved:
+            raise AssertionError(f"Expected {100  # Original value preserved}, got {dead_end_result.data}")
         assert void_function_called == [200]  # Void function executed
 
     def test_dead_end_with_exception(self) -> None:
@@ -256,8 +275,10 @@ class TestBaseRailway:
         dead_end_result = dead_end_func(-10)
 
         assert dead_end_result.is_failure
-        assert "Dead end function failed" in dead_end_result.error
-        assert void_function_called == [-10]  # Function was called before failing
+        if "Dead end function failed" not in dead_end_result.error:
+            raise AssertionError(f"Expected {"Dead end function failed"} in {dead_end_result.error}")
+        if void_function_called != [-10]  # Function was called before failing:
+            raise AssertionError(f"Expected {[-10]  # Function was called before failing}, got {void_function_called}")
 
     def test_plus_both_success(self) -> None:
         """Test plus operation with both functions successful."""
@@ -275,7 +296,8 @@ class TestBaseRailway:
         plus_result = plus_func(10)
 
         assert plus_result.is_success
-        assert plus_result.data == [15, 20]  # [func1(10), func2(10)]
+        if plus_result.data != [15, 20]  # [func1(10), func2(10)]:
+            raise AssertionError(f"Expected {[15, 20]  # [func1(10), func2(10)]}, got {plus_result.data}")
 
     def test_plus_first_failure(self) -> None:
         """Test plus operation with first function failing."""
@@ -293,7 +315,8 @@ class TestBaseRailway:
         plus_result = plus_func(10)
 
         assert plus_result.is_failure
-        assert "First function failed" in plus_result.error
+        if "First function failed" not in plus_result.error:
+            raise AssertionError(f"Expected {"First function failed"} in {plus_result.error}")
 
     def test_plus_second_failure(self) -> None:
         """Test plus operation with second function failing."""
@@ -311,7 +334,8 @@ class TestBaseRailway:
         plus_result = plus_func(10)
 
         assert plus_result.is_failure
-        assert "Second function failed" in plus_result.error
+        if "Second function failed" not in plus_result.error:
+            raise AssertionError(f"Expected {"Second function failed"} in {plus_result.error}")
 
     def test_plus_both_failure(self) -> None:
         """Test plus operation with both functions failing."""
@@ -330,7 +354,8 @@ class TestBaseRailway:
 
         assert plus_result.is_failure
         # Should contain both errors
-        assert "First function failed" in plus_result.error
+        if "First function failed" not in plus_result.error:
+            raise AssertionError(f"Expected {"First function failed"} in {plus_result.error}")
         assert "Second function failed" in plus_result.error
 
 
@@ -351,7 +376,8 @@ class TestBaseRailwayUtils:
         result = railway_function(5)
 
         assert result.is_success
-        assert result.data == 10
+        if result.data != 10:
+            raise AssertionError(f"Expected {10}, got {result.data}")
 
     def test_lift_function_exception(self) -> None:
         """Test lifting function that raises exception."""
@@ -370,7 +396,8 @@ class TestBaseRailwayUtils:
         result = railway_function(-1)
 
         assert result.is_failure
-        assert "Negative value not allowed" in result.error
+        if "Negative value not allowed" not in result.error:
+            raise AssertionError(f"Expected {"Negative value not allowed"} in {result.error}")
 
     def test_ignore_success(self) -> None:
         """Test ignore utility function."""
@@ -395,7 +422,8 @@ class TestBaseRailwayUtils:
             result = pass_func(test_input)
 
             assert result.is_success
-            assert result.data == test_input
+            if result.data != test_input:
+                raise AssertionError(f"Expected {test_input}, got {result.data}")
 
     def test_complex_railway_chain(self) -> None:
         """Test complex railway operation chain."""
@@ -425,7 +453,8 @@ class TestBaseRailwayUtils:
         )
 
         assert result.is_success
-        assert result.data == 20  # (5 * 2) + 10 = 20
+        if result.data != 20  # (5 * 2) + 10 = 20:
+            raise AssertionError(f"Expected {20  # (5 * 2) + 10 = 20}, got {result.data}")
 
     def test_complex_railway_chain_with_failure(self) -> None:
         """Test complex railway chain with failure in middle."""
@@ -455,7 +484,8 @@ class TestBaseRailwayUtils:
         )
 
         assert result.is_failure
-        assert result.error == "Must be positive"
+        if result.error != "Must be positive":
+            raise AssertionError(f"Expected {"Must be positive"}, got {result.error}")
 
     def test_bind_with_none_data(self) -> None:
         """Test bind operation when success result has None data."""
@@ -469,7 +499,8 @@ class TestBaseRailwayUtils:
         result = _BaseRailway.bind(success_result, process_data)
 
         assert result.is_failure
-        assert result.error == "Cannot bind with None data"
+        if result.error != "Cannot bind with None data":
+            raise AssertionError(f"Expected {"Cannot bind with None data"}, got {result.error}")
 
     def test_bind_function_exception(self) -> None:
         """Test bind operation when function raises exception."""
@@ -485,13 +516,14 @@ class TestBaseRailwayUtils:
         result = _BaseRailway.bind(initial_result, failing_function)
 
         assert result.is_failure
-        assert "Bind operation failed:" in result.error
+        if "Bind operation failed:" not in result.error:
+            raise AssertionError(f"Expected {"Bind operation failed:"} in {result.error}")
 
     def test_type_checking_imports(self) -> None:
         """Test that TYPE_CHECKING imports are properly structured."""
         # This test ensures TYPE_CHECKING block is executed during static analysis
         # The imports in TYPE_CHECKING block (lines 101-103) are covered by this test
-        from flext_core._railway_base import _BaseRailway, _BaseRailwayUtils
+
 
         # Verify classes are properly imported and functional
         assert _BaseRailway is not None
@@ -502,4 +534,5 @@ class TestBaseRailwayUtils:
         bind_result = _BaseRailway.bind(result, lambda x: FlextResult.ok(x * 2))
 
         assert bind_result.is_success
-        assert bind_result.data == 84
+        if bind_result.data != 84:
+            raise AssertionError(f"Expected {84}, got {bind_result.data}")

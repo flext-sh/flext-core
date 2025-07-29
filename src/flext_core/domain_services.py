@@ -270,7 +270,7 @@ class FlextDomainService(
             # Execute operation
             result = operation(*args, **kwargs)
             return FlextResult.ok(result)
-        except Exception as e:  # noqa: BLE001
+        except (RuntimeError, ValueError, TypeError) as e:
             return FlextResult.fail(f"Operation {operation_name} failed: {e}")
 
     def get_service_info(self) -> dict[str, object]:

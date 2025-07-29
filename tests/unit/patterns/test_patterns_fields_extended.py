@@ -8,6 +8,9 @@ from flext_core.fields import (
     FlextFields,
 )
 
+# Constants
+EXPECTED_BULK_SIZE = 2
+
 
 class TestFlextFieldsFactory:
     """Test FlextFields factory methods."""
@@ -19,10 +22,17 @@ class TestFlextFieldsFactory:
             field_name="test_field",
         )
 
-        assert field.field_id == "test_id"
+        if field.field_id != "test_id":
+            raise AssertionError(f"Expected test_id, got {field.field_id}")
         assert field.field_name == "test_field"
-        assert field.field_type == FlextFieldType.INTEGER.value
-        assert field.required is True  # Default is True
+        if field.field_type != FlextFieldType.INTEGER.value:
+            raise AssertionError(
+                f"Expected {FlextFieldType.INTEGER.value}, got {field.field_type}"
+            )
+        if field.required is not True:  # Default
+            raise AssertionError(
+                f"Expected True, got {field.required is True}"
+            )  # Default
         assert field.default_value is None
 
     def test_create_integer_field_with_constraints(self) -> None:
@@ -34,7 +44,8 @@ class TestFlextFieldsFactory:
             max_value=100,
         )
 
-        assert field.min_value == 0
+        if field.min_value != 0:
+            raise AssertionError(f"Expected 0, got {field.min_value}")
         assert field.max_value == 100
 
     def test_create_integer_field_with_description(self) -> None:
@@ -46,7 +57,10 @@ class TestFlextFieldsFactory:
             min_value=10,
         )
 
-        assert field.description == "Custom integer field"
+        if field.description != "Custom integer field":
+            raise AssertionError(
+                f"Expected Custom integer field, got {field.description}"
+            )
         assert field.min_value == 10
 
     def test_integer_field_validate_value_success(self) -> None:
@@ -80,11 +94,16 @@ class TestFlextFieldsFactory:
         )
 
         schema = field.get_field_schema()
-        assert schema["field_id"] == "test_id"
+        if schema["field_id"] != "test_id":
+            raise AssertionError(f"Expected test_id, got {schema['field_id']}")
         assert schema["field_name"] == "test_field"
-        assert schema["field_type"] == FlextFieldType.INTEGER.value
+        if schema["field_type"] != FlextFieldType.INTEGER.value:
+            raise AssertionError(
+                f"Expected {FlextFieldType.INTEGER.value}, got {schema['field_type']}"
+            )
         assert schema["min_value"] == 0
-        assert schema["max_value"] == 100
+        if schema["max_value"] != 100:
+            raise AssertionError(f"Expected 100, got {schema['max_value']}")
 
     def test_create_boolean_field_minimal(self) -> None:
         """Test boolean field creation with minimal parameters."""
@@ -93,10 +112,17 @@ class TestFlextFieldsFactory:
             field_name="test_field",
         )
 
-        assert field.field_id == "test_id"
+        if field.field_id != "test_id":
+            raise AssertionError(f"Expected test_id, got {field.field_id}")
         assert field.field_name == "test_field"
-        assert field.field_type == FlextFieldType.BOOLEAN.value
-        assert field.required is True  # Default is True
+        if field.field_type != FlextFieldType.BOOLEAN.value:
+            raise AssertionError(
+                f"Expected {FlextFieldType.BOOLEAN.value}, got {field.field_type}"
+            )
+        if field.required is not True:  # Default
+            raise AssertionError(
+                f"Expected True, got {field.required is True}"
+            )  # Default
         assert field.default_value is None
 
     def test_create_boolean_field_with_description(self) -> None:
@@ -107,7 +133,10 @@ class TestFlextFieldsFactory:
             description="Custom boolean field",
         )
 
-        assert field.description == "Custom boolean field"
+        if field.description != "Custom boolean field":
+            raise AssertionError(
+                f"Expected Custom boolean field, got {field.description}"
+            )
 
     def test_boolean_field_validate_value_success(self) -> None:
         """Test boolean field validation success."""
@@ -140,10 +169,17 @@ class TestFlextFieldsFactory:
             field_name="test_field",
         )
 
-        assert field.field_id == "test_id"
+        if field.field_id != "test_id":
+            raise AssertionError(f"Expected test_id, got {field.field_id}")
         assert field.field_name == "test_field"
-        assert field.field_type == FlextFieldType.STRING.value
-        assert field.required is True  # Default is True
+        if field.field_type != FlextFieldType.STRING.value:
+            raise AssertionError(
+                f"Expected {FlextFieldType.STRING.value}, got {field.field_type}"
+            )
+        if field.required is not True:  # Default
+            raise AssertionError(
+                f"Expected True, got {field.required is True}"
+            )  # Default
         assert field.default_value is None
 
     def test_create_string_field_with_pattern(self) -> None:
@@ -156,9 +192,11 @@ class TestFlextFieldsFactory:
             max_length=10,
         )
 
-        assert field.pattern == r"^[A-Z]+$"
+        if field.pattern != r"^[A-Z]+$":
+            raise AssertionError(f"Expected {r'^[A-Z]+$'}, got {field.pattern}")
         assert field.min_length == 1
-        assert field.max_length == 10
+        if field.max_length != 10:
+            raise AssertionError(f"Expected 10, got {field.max_length}")
 
 
 class TestFlextFieldRegistry:
@@ -168,7 +206,8 @@ class TestFlextFieldRegistry:
         """Test registry creation."""
         registry = FlextFieldRegistry()
         assert isinstance(registry, FlextFieldRegistry)
-        assert registry.get_field_count() == 0
+        if registry.get_field_count() != 0:
+            raise AssertionError(f"Expected 0, got {registry.get_field_count()}")
 
     def test_register_field(self) -> None:
         """Test registering a field."""
@@ -221,8 +260,10 @@ class TestFlextFieldRegistry:
         registry.register_field(field2)
 
         field_names = registry.list_field_names()
-        assert len(field_names) == 2
-        assert "Field 1" in field_names
+        if len(field_names) != EXPECTED_BULK_SIZE:
+            raise AssertionError(f"Expected 2, got {len(field_names)}")
+        if "Field 1" not in field_names:
+            raise AssertionError(f"Expected Field 1 in {field_names}")
         assert "Field 2" in field_names
 
     def test_list_field_ids(self) -> None:
@@ -241,8 +282,10 @@ class TestFlextFieldRegistry:
         registry.register_field(field2)
 
         field_ids = registry.list_field_ids()
-        assert len(field_ids) == 2
-        assert "field1" in field_ids
+        if len(field_ids) != EXPECTED_BULK_SIZE:
+            raise AssertionError(f"Expected 2, got {len(field_ids)}")
+        if "field1" not in field_ids:
+            raise AssertionError(f"Expected field1 in {field_ids}")
         assert "field2" in field_ids
 
     def test_clear_registry(self) -> None:
@@ -254,10 +297,12 @@ class TestFlextFieldRegistry:
         )
 
         registry.register_field(field)
-        assert registry.get_field_count() == 1
+        if registry.get_field_count() != 1:
+            raise AssertionError(f"Expected 1, got {registry.get_field_count()}")
 
         registry.clear_registry()
-        assert registry.get_field_count() == 0
+        if registry.get_field_count() != 0:
+            raise AssertionError(f"Expected 0, got {registry.get_field_count()}")
 
     def test_remove_field(self) -> None:
         """Test removing a field from registry."""
@@ -268,12 +313,16 @@ class TestFlextFieldRegistry:
         )
 
         registry.register_field(field)
-        assert registry.get_field_count() == 1
+        if registry.get_field_count() != 1:
+            raise AssertionError(f"Expected 1, got {registry.get_field_count()}")
 
         result = registry.remove_field("test_id")
-        assert result is True
-        assert registry.get_field_count() == 0
+        if not result:
+            raise AssertionError(f"Expected True, got {result}")
+        if registry.get_field_count() != 0:
+            raise AssertionError(f"Expected 0, got {registry.get_field_count()}")
 
         # Try to remove non-existing field
         result = registry.remove_field("non_existing")
-        assert result is False
+        if result:
+            raise AssertionError(f"Expected False, got {result}")
