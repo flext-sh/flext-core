@@ -1,8 +1,5 @@
 """Unit tests for FlextContainer - Modern pytest patterns.
 
-# Constants
-EXPECTED_BULK_SIZE = 2
-
 Tests for the enterprise dependency injection container system.
 """
 
@@ -93,10 +90,14 @@ class TestFlextContainerBasicOperations:
     ) -> None:
         """Test FlextContainer initializes with empty state."""
         if len(clean_container.list_services()) != 0:
-            raise AssertionError(f"Expected {0}, got {len(clean_container.list_services())}")
+            raise AssertionError(
+                f"Expected {0}, got {len(clean_container.list_services())}"
+            )
         assert clean_container.get_service_count() == 0
         if clean_container.get_service_names() != []:
-            raise AssertionError(f"Expected {[]}, got {clean_container.get_service_names()}")
+            raise AssertionError(
+                f"Expected {[]}, got {clean_container.get_service_names()}"
+            )
 
     def test_service_registration_success(
         self,
@@ -111,7 +112,9 @@ class TestFlextContainerBasicOperations:
         assert result.data is None
         assert clean_container.has("database")
         if "database" not in clean_container.list_services():
-            raise AssertionError(f"Expected {"database"} in {clean_container.list_services()}")
+            raise AssertionError(
+                f"Expected {'database'} in {clean_container.list_services()}"
+            )
 
     @pytest.mark.parametrize(
         "service_name",
@@ -175,7 +178,9 @@ class TestFlextContainerBasicOperations:
         assert result.data is service
         assert isinstance(result.data, SampleService)
         if result.data.name != "DatabaseService":
-            raise AssertionError(f"Expected {"DatabaseService"}, got {result.data.name}")
+            raise AssertionError(
+                f"Expected {'DatabaseService'}, got {result.data.name}"
+            )
 
     def test_service_retrieval_not_found(
         self,
@@ -188,7 +193,7 @@ class TestFlextContainerBasicOperations:
         assert result.error is not None
         assert result.error
         if "not found" not in result.error:
-            raise AssertionError(f"Expected {"not found"} in {result.error}")
+            raise AssertionError(f"Expected {'not found'} in {result.error}")
 
     @pytest.mark.parametrize(
         "service_names",
@@ -214,7 +219,9 @@ class TestFlextContainerBasicOperations:
         # Verify all services are registered
         registered_services = clean_container.list_services()
         if len(registered_services) != len(service_names):
-            raise AssertionError(f"Expected {len(service_names)}, got {len(registered_services)}")
+            raise AssertionError(
+                f"Expected {len(service_names)}, got {len(registered_services)}"
+            )
 
         for name in service_names:
             if name not in registered_services:
@@ -279,7 +286,9 @@ class TestFlextContainerSingletonPattern:
         assert result1.is_success
         assert isinstance(result1.data, SampleService)
         if result1.data.name != "DatabaseService":
-            raise AssertionError(f"Expected {"DatabaseService"}, got {result1.data.name}")
+            raise AssertionError(
+                f"Expected {'DatabaseService'}, got {result1.data.name}"
+            )
 
     def test_singleton_factory_caching(
         self,
@@ -313,7 +322,7 @@ class TestFlextContainerSingletonPattern:
             raise AssertionError(f"Expected {1}, got {call_count}")
         assert isinstance(result1.data, SampleService)
         if result1.data.name != "Service_1":
-            raise AssertionError(f"Expected {"Service_1"}, got {result1.data.name}")
+            raise AssertionError(f"Expected {'Service_1'}, got {result1.data.name}")
 
     def test_singleton_factory_failure_handling(
         self,
@@ -329,7 +338,9 @@ class TestFlextContainerSingletonPattern:
         assert get_result.is_failure
         assert get_result.error is not None
         if "Factory for 'failing' failed" not in get_result.error:
-            raise AssertionError(f"Expected {"Factory for 'failing' failed"} in {get_result.error}")
+            raise AssertionError(
+                f"Expected {"Factory for 'failing' failed"} in {get_result.error}"
+            )
         assert "Intentional test failure" in get_result.error
 
     def test_non_callable_factory_rejection(
@@ -346,7 +357,7 @@ class TestFlextContainerSingletonPattern:
         assert result.error is not None
         assert result.error
         if "must be callable" not in result.error:
-            raise AssertionError(f"Expected {"must be callable"} in {result.error}")
+            raise AssertionError(f"Expected {'must be callable'} in {result.error}")
 
     @pytest.mark.parametrize("factory_count", [1, 3, 5, 10])
     def test_multiple_singleton_factories(
@@ -379,7 +390,9 @@ class TestFlextContainerSingletonPattern:
             assert isinstance(get_result.data, SampleService)
             service_instance = get_result.data
             if service_instance.name != service_name:
-                raise AssertionError(f"Expected {service_name}, got {service_instance.name}")
+                raise AssertionError(
+                    f"Expected {service_name}, got {service_instance.name}"
+                )
 
 
 @pytest.mark.unit
@@ -440,8 +453,10 @@ class TestFlextContainerServiceManagement:
 
         # Verify service is gone
         assert not clean_container.has("database")
-        if "database" not not in clean_container.list_services():
-            raise AssertionError(f"Expected {"database" not} in {clean_container.list_services()}")
+        if "database" not in clean_container.list_services():
+            raise AssertionError(
+                f"Expected {'database'} not in {clean_container.list_services()}"
+            )
 
     def test_service_removal_not_found(
         self,
@@ -454,7 +469,7 @@ class TestFlextContainerServiceManagement:
         assert result.error is not None
         assert result.error
         if "not found" not in result.error:
-            raise AssertionError(f"Expected {"not found"} in {result.error}")
+            raise AssertionError(f"Expected {'not found'} in {result.error}")
 
     def test_singleton_removal_clears_cache(
         self,
@@ -476,7 +491,9 @@ class TestFlextContainerServiceManagement:
         # Verify complete removal
         assert not clean_container.has("database")
         if clean_container.get_service_count() != 0:
-            raise AssertionError(f"Expected {0}, got {clean_container.get_service_count()}")
+            raise AssertionError(
+                f"Expected {0}, got {clean_container.get_service_count()}"
+            )
 
     def test_container_clear_operation(
         self,
@@ -489,8 +506,9 @@ class TestFlextContainerServiceManagement:
             clean_container.register(name, service)
 
         if len(clean_container.list_services()) != len(sample_services):
-
-            raise AssertionError(f"Expected {len(sample_services)}, got {len(clean_container.list_services())}")
+            raise AssertionError(
+                f"Expected {len(sample_services)}, got {len(clean_container.list_services())}"
+            )
 
         # Clear container
         result = clean_container.clear()
@@ -499,10 +517,14 @@ class TestFlextContainerServiceManagement:
 
         # Verify empty state
         if len(clean_container.list_services()) != 0:
-            raise AssertionError(f"Expected {0}, got {len(clean_container.list_services())}")
+            raise AssertionError(
+                f"Expected {0}, got {len(clean_container.list_services())}"
+            )
         assert clean_container.get_service_count() == 0
         if clean_container.get_service_names() != []:
-            raise AssertionError(f"Expected {[]}, got {clean_container.get_service_names()}")
+            raise AssertionError(
+                f"Expected {[]}, got {clean_container.get_service_names()}"
+            )
 
     def test_service_listing_accuracy(
         self,
@@ -523,7 +545,9 @@ class TestFlextContainerServiceManagement:
 
             current_services = clean_container.get_service_names()
             if len(current_services) != len(expected_services):
-                raise AssertionError(f"Expected {len(expected_services)}, got {len(current_services)}")
+                raise AssertionError(
+                    f"Expected {len(expected_services)}, got {len(current_services)}"
+                )
             assert set(current_services) == set(expected_services)
 
 
@@ -622,7 +646,9 @@ class TestFlextContainerIntegration:
         assert db_result.data is database_service
         assert isinstance(logger_result.data, SampleService)
         if logger_result.data.name != "LoggerService":
-            raise AssertionError(f"Expected {"LoggerService"}, got {logger_result.data.name}")
+            raise AssertionError(
+                f"Expected {'LoggerService'}, got {logger_result.data.name}"
+            )
 
     def test_service_replacement_scenarios(
         self,
@@ -710,5 +736,7 @@ class TestFlextContainerIntegration:
         # Container should remain functional
         assert clean_container.has("working")
         assert clean_container.has("failing")  # Registration still exists
-        if len(clean_container.list_services()) != EXPECTED_BULK_SIZE:
-            raise AssertionError(f"Expected {2}, got {len(clean_container.list_services())}")
+        if len(clean_container.list_services()) != 2:
+            raise AssertionError(
+                f"Expected {2}, got {len(clean_container.list_services())}"
+            )

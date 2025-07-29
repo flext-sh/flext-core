@@ -9,10 +9,6 @@ from typing import TYPE_CHECKING
 from pydantic import BaseModel, Field
 
 from flext_core.decorators import (
-# Constants
-EXPECTED_BULK_SIZE = 2
-EXPECTED_DATA_COUNT = 3
-
     FlextDecorators,
     flext_cache_decorator,
     flext_safe_call,
@@ -20,6 +16,10 @@ EXPECTED_DATA_COUNT = 3
     flext_timing_decorator,
 )
 from flext_core.result import FlextResult
+
+# Constants
+EXPECTED_BULK_SIZE = 2
+EXPECTED_DATA_COUNT = 3
 
 
 class UserModel(BaseModel):
@@ -60,7 +60,7 @@ class TestFlextDecorators:
         assert isinstance(result, FlextResult)
         assert result.is_failure
         if "Test error" not in result.error:
-            raise AssertionError(f"Expected {"Test error"} in {result.error}")
+            raise AssertionError(f"Expected {'Test error'} in {result.error}")
 
     def test_safe_result_decorator_with_none_return(self) -> None:
         """Test safe_result decorator with function returning None."""
@@ -87,7 +87,7 @@ class TestFlextDecorators:
         assert isinstance(result, FlextResult)
         assert result.is_success
         if "Created user: Alice" not in result.data:
-            raise AssertionError(f"Expected {"Created user: Alice"} in {result.data}")
+            raise AssertionError(f"Expected {'Created user: Alice'} in {result.data}")
 
     def test_validated_with_result_decorator_validation_failure(self) -> None:
         """Test validated_with_result decorator with invalid data."""
@@ -102,7 +102,7 @@ class TestFlextDecorators:
         assert isinstance(result, FlextResult)
         assert result.is_failure
         if "Validation failed" not in result.error:
-            raise AssertionError(f"Expected {"Validation failed"} in {result.error}")
+            raise AssertionError(f"Expected {'Validation failed'} in {result.error}")
 
     def test_validated_with_result_decorator_execution_failure(self) -> None:
         """Test validated_with_result decorator when execution fails."""
@@ -117,7 +117,7 @@ class TestFlextDecorators:
         assert isinstance(result, FlextResult)
         assert result.is_failure
         if "Execution failed" not in result.error:
-            raise AssertionError(f"Expected {"Execution failed"} in {result.error}")
+            raise AssertionError(f"Expected {'Execution failed'} in {result.error}")
 
     def test_cached_with_timing_decorator(self) -> None:
         """Test cached_with_timing decorator functionality."""
@@ -191,13 +191,13 @@ class TestFlextDecorators:
         assert isinstance(result1, FlextResult)
         assert result1.is_success
         if "Processed: Bob (25)" not in result1.data:
-            raise AssertionError(f"Expected {"Processed: Bob (25)"} in {result1.data}")
+            raise AssertionError(f"Expected {'Processed: Bob (25)'} in {result1.data}")
 
         # Invalid input
         result2 = process_user(name="", age=25, email="bob@example.com")
         assert result2.is_failure
         if "Validation failed" not in result2.error:
-            raise AssertionError(f"Expected {"Validation failed"} in {result2.error}")
+            raise AssertionError(f"Expected {'Validation failed'} in {result2.error}")
 
     def test_complete_decorator_with_all_features(self) -> None:
         """Test complete_decorator with all features enabled."""
@@ -220,7 +220,9 @@ class TestFlextDecorators:
         assert isinstance(result, FlextResult)
         assert result.is_success
         if "Complex operation for: Charlie" not in result.data:
-            raise AssertionError(f"Expected {"Complex operation for: Charlie"} in {result.data}")
+            raise AssertionError(
+                f"Expected {'Complex operation for: Charlie'} in {result.data}"
+            )
 
     def test_complete_decorator_minimal(self) -> None:
         """Test complete_decorator with minimal configuration."""
@@ -266,7 +268,7 @@ class TestStandaloneDecorators:
         assert isinstance(result, FlextResult)
         assert result.is_failure
         if "Something went wrong" not in result.error:
-            raise AssertionError(f"Expected {"Something went wrong"} in {result.error}")
+            raise AssertionError(f"Expected {'Something went wrong'} in {result.error}")
 
     def test_flext_cache_decorator(self) -> None:
         """Test flext_cache_decorator functionality."""
@@ -330,7 +332,7 @@ class TestStandaloneDecorators:
 
         result = timed_function(0.01)
         if result != "completed":
-            raise AssertionError(f"Expected {"completed"}, got {result}")
+            raise AssertionError(f"Expected {'completed'}, got {result}")
 
 
 class TestDecoratorComposition:
@@ -367,7 +369,7 @@ class TestDecoratorComposition:
         result1 = user_processor(name="Diana", age=28, email="diana@example.com")
         assert result1.is_success
         if "display_name" not in result1.data:
-            raise AssertionError(f"Expected {"display_name"} in {result1.data}")
+            raise AssertionError(f"Expected {'display_name'} in {result1.data}")
 
         # Invalid input
         result2 = user_processor(name="Diana", age=200, email="diana@example.com")
@@ -397,23 +399,23 @@ class TestDecoratorErrorHandling:
         result1 = multi_exception_function("value")
         assert result1.is_failure
         if "Value error" not in result1.error:
-            raise AssertionError(f"Expected {"Value error"} in {result1.error}")
+            raise AssertionError(f"Expected {'Value error'} in {result1.error}")
 
         result2 = multi_exception_function("type")
         assert result2.is_failure
         if "Type error" not in result2.error:
-            raise AssertionError(f"Expected {"Type error"} in {result2.error}")
+            raise AssertionError(f"Expected {'Type error'} in {result2.error}")
 
         result3 = multi_exception_function("runtime")
         assert result3.is_failure
         if "Runtime error" not in result3.error:
-            raise AssertionError(f"Expected {"Runtime error"} in {result3.error}")
+            raise AssertionError(f"Expected {'Runtime error'} in {result3.error}")
 
         # Test success case
         result4 = multi_exception_function("none")
         assert result4.is_success
         if result4.data != "success":
-            raise AssertionError(f"Expected {"success"}, got {result4.data}")
+            raise AssertionError(f"Expected {'success'}, got {result4.data}")
 
     def test_validation_decorator_error_details(self) -> None:
         """Test validation decorator provides detailed error information."""
@@ -431,7 +433,7 @@ class TestDecoratorErrorHandling:
 
         assert result.is_failure
         if "Validation failed" not in result.error:
-            raise AssertionError(f"Expected {"Validation failed"} in {result.error}")
+            raise AssertionError(f"Expected {'Validation failed'} in {result.error}")
 
 
 class TestDecoratorPerformance:
@@ -460,7 +462,6 @@ class TestDecoratorPerformance:
         cached_call_time = time.time() - start_time
 
         if result1 != result2:
-
             raise AssertionError(f"Expected {result2}, got {result1}")
         assert expensive_calls == 1  # Only called once
         assert cached_call_time < first_call_time  # Cached call is faster
@@ -486,5 +487,4 @@ class TestDecoratorPerformance:
         limited_cache_function(1)  # Should be re-computed, call_count = 4
 
         if call_count != 4:
-
             raise AssertionError(f"Expected {4}, got {call_count}")

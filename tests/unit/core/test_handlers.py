@@ -57,20 +57,22 @@ class TestBaseHandler:
         )
 
         if handler.handler_name != "test_handler":
-
-            raise AssertionError(f"Expected {"test_handler"}, got {handler.handler_name}")
+            raise AssertionError(
+                f"Expected {'test_handler'}, got {handler.handler_name}"
+            )
         assert handler.handler_id.startswith("Handler_")
         assert hasattr(handler, "_metrics")
         if handler._metrics["messages_handled"] != 0:
-            raise AssertionError(f"Expected {0}, got {handler._metrics["messages_handled"]}")
+            raise AssertionError(
+                f"Expected {0}, got {handler._metrics['messages_handled']}"
+            )
 
     def test_handler_default_name(self) -> None:
         """Test handler creation with default name."""
         handler: FlextHandlers.Handler[object, object] = FlextHandlers.Handler()
 
         if handler.handler_name != "Handler":
-
-            raise AssertionError(f"Expected {"Handler"}, got {handler.handler_name}")
+            raise AssertionError(f"Expected {'Handler'}, got {handler.handler_name}")
         assert handler._handler_name == "Handler"
 
     def test_handler_can_handle_default(self) -> None:
@@ -83,7 +85,7 @@ class TestBaseHandler:
             raise AssertionError(f"Expected True, got {handler.can_handle(message)}")
         assert handler.can_handle(None) is True
         if not (handler.can_handle("string")):
-            raise AssertionError(f"Expected True, got {handler.can_handle("string")}")
+            raise AssertionError(f"Expected True, got {handler.can_handle('string')}")
 
     def test_handler_handle_default(self) -> None:
         """Test default handle implementation."""
@@ -113,7 +115,7 @@ class TestBaseHandler:
         assert result.error is not None
         assert result.error is not None
         if "cannot be None" not in result.error:
-            raise AssertionError(f"Expected {"cannot be None"} in {result.error}")
+            raise AssertionError(f"Expected {'cannot be None'} in {result.error}")
 
     def test_handler_get_handler_metadata(self) -> None:
         """Test handler metadata."""
@@ -124,10 +126,12 @@ class TestBaseHandler:
 
         assert isinstance(metadata, dict)
         if metadata["handler_name"] != "test_handler":
-            raise AssertionError(f"Expected {"test_handler"}, got {metadata["handler_name"]}")
+            raise AssertionError(
+                f"Expected {'test_handler'}, got {metadata['handler_name']}"
+            )
         assert metadata["handler_class"] == "Handler"
         if "handler_id" not in metadata:
-            raise AssertionError(f"Expected {"handler_id"} in {metadata}")
+            raise AssertionError(f"Expected {'handler_id'} in {metadata}")
 
     def test_handler_process_message(self) -> None:
         """Test message processing workflow."""
@@ -144,7 +148,7 @@ class TestBaseHandler:
         result = handler.process_message(message)
         assert result.is_success
         if result.data != "Processed: hello":
-            raise AssertionError(f"Expected {"Processed: hello"}, got {result.data}")
+            raise AssertionError(f"Expected {'Processed: hello'}, got {result.data}")
 
     def test_handler_process_message_validation_failure(self) -> None:
         """Test message processing with validation failure."""
@@ -155,7 +159,7 @@ class TestBaseHandler:
         assert result.error is not None
         assert result.error is not None
         if "cannot be None" not in result.error:
-            raise AssertionError(f"Expected {"cannot be None"} in {result.error}")
+            raise AssertionError(f"Expected {'cannot be None'} in {result.error}")
 
     def test_handler_process_message_cannot_handle(self) -> None:
         """Test message processing when handler cannot handle message."""
@@ -170,7 +174,9 @@ class TestBaseHandler:
         assert result.is_failure
         assert result.error is not None
         if "cannot process this message" not in result.error:
-            raise AssertionError(f"Expected {"cannot process this message"} in {result.error}")
+            raise AssertionError(
+                f"Expected {'cannot process this message'} in {result.error}"
+            )
 
     def test_handler_process_message_exception_handling(self) -> None:
         """Test message processing with exception handling."""
@@ -187,7 +193,7 @@ class TestBaseHandler:
         assert result.is_failure
         assert result.error is not None
         if "Processing failed" not in result.error:
-            raise AssertionError(f"Expected {"Processing failed"} in {result.error}")
+            raise AssertionError(f"Expected {'Processing failed'} in {result.error}")
 
     def test_handler_process_generic_message(self) -> None:
         """Test generic message processing."""
@@ -202,7 +208,7 @@ class TestBaseHandler:
         assert result.is_failure
         assert result.error is not None
         if "validation failed" not in result.error:
-            raise AssertionError(f"Expected {"validation failed"} in {result.error}")
+            raise AssertionError(f"Expected {'validation failed'} in {result.error}")
 
     def test_handler_delegation_methods(self) -> None:
         """Test delegation to base handler."""
@@ -240,8 +246,9 @@ class _TestCommandHandler:
         )
 
         if handler._handler_name != "test_command_handler":
-
-            raise AssertionError(f"Expected {"test_command_handler"}, got {handler._handler_name}")
+            raise AssertionError(
+                f"Expected {'test_command_handler'}, got {handler._handler_name}"
+            )
 
     def test_command_handler_default_name(self) -> None:
         """Test command handler with default name."""
@@ -280,8 +287,9 @@ class _TestCommandHandler:
         )
 
         if not (handler.can_handle(_TestCommand("test"))):
-
-            raise AssertionError(f"Expected True, got {handler.can_handle(_TestCommand("test"))}")
+            raise AssertionError(
+                f"Expected True, got {handler.can_handle(_TestCommand('test'))}"
+            )
         assert handler.can_handle("any message") is True
 
     def test_command_handler_pre_handle(self) -> None:
@@ -310,7 +318,7 @@ class _TestCommandHandler:
         assert result.is_failure
         assert result.error is not None
         if "Validation failed" not in result.error:
-            raise AssertionError(f"Expected {"Validation failed"} in {result.error}")
+            raise AssertionError(f"Expected {'Validation failed'} in {result.error}")
 
     def test_command_handler_post_handle(self) -> None:
         """Test command post-processing."""
@@ -322,7 +330,7 @@ class _TestCommandHandler:
         post_result = handler.post_handle(result)
         assert post_result.is_success
         if post_result.data != "test result":
-            raise AssertionError(f"Expected {"test result"}, got {post_result.data}")
+            raise AssertionError(f"Expected {'test result'}, got {post_result.data}")
 
     def test_command_handler_handle_with_hooks(self) -> None:
         """Test command handling with hooks."""
@@ -339,7 +347,9 @@ class _TestCommandHandler:
         result = handler.handle_with_hooks(command)
         assert result.is_success
         if result.data != "Handled: create_user":
-            raise AssertionError(f"Expected {"Handled: create_user"}, got {result.data}")
+            raise AssertionError(
+                f"Expected {'Handled: create_user'}, got {result.data}"
+            )
 
     def test_command_handler_handle_with_hooks_pre_failure(self) -> None:
         """Test command handling with pre-handle failure."""
@@ -355,7 +365,9 @@ class _TestCommandHandler:
         assert result.is_failure
         assert result.error is not None
         if "Pre-processing failed" not in result.error:
-            raise AssertionError(f"Expected {"Pre-processing failed"} in {result.error}")
+            raise AssertionError(
+                f"Expected {'Pre-processing failed'} in {result.error}"
+            )
 
     def test_command_handler_get_metrics(self) -> None:
         """Test command handler metrics."""
@@ -366,7 +378,9 @@ class _TestCommandHandler:
 
         assert isinstance(metrics, dict)
         if metrics["handler_name"] != "test_handler":
-            raise AssertionError(f"Expected {"test_handler"}, got {metrics["handler_name"]}")
+            raise AssertionError(
+                f"Expected {'test_handler'}, got {metrics['handler_name']}"
+            )
         assert metrics["handler_type"] == "CommandHandler"
 
     def test_command_handler_logger_access(self) -> None:
@@ -392,7 +406,9 @@ class _TestEventHandler:
 
         handler = _TestEventHandler("test_event_handler")
         if handler.handler_name != "test_event_handler":
-            raise AssertionError(f"Expected {"test_event_handler"}, got {handler.handler_name}")
+            raise AssertionError(
+                f"Expected {'test_event_handler'}, got {handler.handler_name}"
+            )
 
     def test_event_handler_handle(self) -> None:
         """Test event handling."""
@@ -434,7 +450,7 @@ class _TestEventHandler:
         assert result.is_failure
         assert result.error is not None
         if "cannot be None" not in result.error:
-            raise AssertionError(f"Expected {"cannot be None"} in {result.error}")
+            raise AssertionError(f"Expected {'cannot be None'} in {result.error}")
 
     def test_event_handler_process_event_cannot_handle(self) -> None:
         """Test event processing when handler cannot handle."""
@@ -452,7 +468,9 @@ class _TestEventHandler:
         assert result.is_failure
         assert result.error is not None
         if "cannot process this event" not in result.error:
-            raise AssertionError(f"Expected {"cannot process this event"} in {result.error}")
+            raise AssertionError(
+                f"Expected {'cannot process this event'} in {result.error}"
+            )
 
     def test_event_handler_process_event_exception(self) -> None:
         """Test event processing with exception."""
@@ -472,7 +490,9 @@ class _TestEventHandler:
         assert result.is_failure
         assert result.error is not None
         if "Event processing failed" not in result.error:
-            raise AssertionError(f"Expected {"Event processing failed"} in {result.error}")
+            raise AssertionError(
+                f"Expected {'Event processing failed'} in {result.error}"
+            )
 
     def test_event_handler_handle_event(self) -> None:
         """Test event handler handle_event method."""
@@ -507,7 +527,7 @@ class _TestEventHandler:
         assert result.is_failure
         assert result.error is not None
         if "Handle failed" not in result.error:
-            raise AssertionError(f"Expected {"Handle failed"} in {result.error}")
+            raise AssertionError(f"Expected {'Handle failed'} in {result.error}")
 
     def test_event_handler_abstract_method(self) -> None:
         """Test that process_event_impl is abstract."""
@@ -541,8 +561,9 @@ class _TestQueryHandler:
         handler = FlextHandlers.QueryHandler("test_query_handler")
 
         if handler.handler_name != "test_query_handler":
-
-            raise AssertionError(f"Expected {"test_query_handler"}, got {handler.handler_name}")
+            raise AssertionError(
+                f"Expected {'test_query_handler'}, got {handler.handler_name}"
+            )
 
     def test_query_handler_authorize_query(self) -> None:
         """Test query authorization."""
@@ -576,7 +597,7 @@ class _TestQueryHandler:
         assert result.is_failure
         assert result.error is not None
         if "Access denied" not in result.error:
-            raise AssertionError(f"Expected {"Access denied"} in {result.error}")
+            raise AssertionError(f"Expected {'Access denied'} in {result.error}")
 
     def test_query_handler_process_request(self) -> None:
         """Test request processing."""
@@ -594,7 +615,7 @@ class _TestQueryHandler:
         assert result.is_failure
         assert result.error is not None
         if "cannot be None" not in result.error:
-            raise AssertionError(f"Expected {"cannot be None"} in {result.error}")
+            raise AssertionError(f"Expected {'cannot be None'} in {result.error}")
 
     def test_query_handler_process_request_cannot_handle(self) -> None:
         """Test request processing when handler cannot handle."""
@@ -609,7 +630,9 @@ class _TestQueryHandler:
         assert result.is_failure
         assert result.error is not None
         if "cannot process this request" not in result.error:
-            raise AssertionError(f"Expected {"cannot process this request"} in {result.error}")
+            raise AssertionError(
+                f"Expected {'cannot process this request'} in {result.error}"
+            )
 
     def test_query_handler_process_request_exception(self) -> None:
         """Test request processing with exception."""
@@ -626,7 +649,9 @@ class _TestQueryHandler:
         assert result.is_failure
         assert result.error is not None
         if "Request processing failed" not in result.error:
-            raise AssertionError(f"Expected {"Request processing failed"} in {result.error}")
+            raise AssertionError(
+                f"Expected {'Request processing failed'} in {result.error}"
+            )
 
     def test_query_handler_handle_request(self) -> None:
         """Test query handler handle_request method."""
@@ -643,7 +668,9 @@ class _TestQueryHandler:
         result = handler.handle_request(query)
         assert result.is_success
         if result.data != "Query result for get_users":
-            raise AssertionError(f"Expected {"Query result for get_users"}, got {result.data}")
+            raise AssertionError(
+                f"Expected {'Query result for get_users'}, got {result.data}"
+            )
 
 
 class TestHandlerRegistry:
@@ -682,7 +709,7 @@ class TestHandlerRegistry:
         result = registry.register("custom_key", handler)
         assert result.is_success
         if "custom_key" not in registry._handlers:
-            raise AssertionError(f"Expected {"custom_key"} in {registry._handlers}")
+            raise AssertionError(f"Expected {'custom_key'} in {registry._handlers}")
         if len(registry._handler_list) != 1:
             raise AssertionError(f"Expected {1}, got {len(registry._handler_list)}")
 
@@ -695,7 +722,9 @@ class TestHandlerRegistry:
         assert result.is_failure
         assert result.error is not None
         if "must have 'handle' method" not in result.error:
-            raise AssertionError(f"Expected {"must have 'handle' method"} in {result.error}")
+            raise AssertionError(
+                f"Expected {"must have 'handle' method"} in {result.error}"
+            )
 
     def test_registry_register_duplicate_key(self) -> None:
         """Test registering handler with duplicate key."""
@@ -711,7 +740,7 @@ class TestHandlerRegistry:
         result2 = registry.register("duplicate_key", handler2)
         assert result2.is_failure
         if "already registered" not in result2.error:
-            raise AssertionError(f"Expected {"already registered"} in {result2.error}")
+            raise AssertionError(f"Expected {'already registered'} in {result2.error}")
 
     def test_registry_register_for_type(self) -> None:
         """Test registering handler for message type."""
@@ -723,7 +752,9 @@ class TestHandlerRegistry:
         result = registry.register_for_type(_TestMessage, handler)
         assert result.is_success
         if _TestMessage not in registry._type_handlers:
-            raise AssertionError(f"Expected {_TestMessage} in {registry._type_handlers}")
+            raise AssertionError(
+                f"Expected {_TestMessage} in {registry._type_handlers}"
+            )
 
     def test_registry_register_for_type_duplicate(self) -> None:
         """Test registering handler for type with duplicate."""
@@ -739,7 +770,7 @@ class TestHandlerRegistry:
         result2 = registry.register_for_type(_TestMessage, handler2)
         assert result2.is_failure
         if "already registered" not in result2.error:
-            raise AssertionError(f"Expected {"already registered"} in {result2.error}")
+            raise AssertionError(f"Expected {'already registered'} in {result2.error}")
 
     def test_registry_get_handler(self) -> None:
         """Test getting handler by key."""
@@ -765,7 +796,7 @@ class TestHandlerRegistry:
         assert result.is_failure
         assert result.error is not None
         if "No handler found" not in result.error:
-            raise AssertionError(f"Expected {"No handler found"} in {result.error}")
+            raise AssertionError(f"Expected {'No handler found'} in {result.error}")
 
     def test_registry_get_handler_for_type(self) -> None:
         """Test getting handler for message type."""
@@ -791,7 +822,7 @@ class TestHandlerRegistry:
         assert result.is_failure
         assert result.error is not None
         if "No handler found" not in result.error:
-            raise AssertionError(f"Expected {"No handler found"} in {result.error}")
+            raise AssertionError(f"Expected {'No handler found'} in {result.error}")
 
     def test_registry_get_all_handlers(self) -> None:
         """Test getting all registered handlers."""
@@ -829,9 +860,8 @@ class TestHandlerRegistry:
         message = _TestMessage("test")
         handlers = registry.find_handlers(message)
 
-        if len(handlers) != EXPECTED_BULK_SIZE  # Both should be able to handle _TestMessage:
-
-            raise AssertionError(f"Expected {2  # Both should be able to handle _TestMessage}, got {len(handlers)}")
+        if len(handlers) != EXPECTED_BULK_SIZE:
+            raise AssertionError(f"Expected {2}, got {len(handlers)}")
         if selective_handler not in handlers:
             raise AssertionError(f"Expected {selective_handler} in {handlers}")
         assert universal_handler in handlers
@@ -872,10 +902,12 @@ class TestHandlerRegistry:
         info = info_list[0]
         assert isinstance(info, dict)
         if info["handler_name"] != "test_handler":
-            raise AssertionError(f"Expected {"test_handler"}, got {info["handler_name"]}")
+            raise AssertionError(
+                f"Expected {'test_handler'}, got {info['handler_name']}"
+            )
         assert info["handler_class"] == "Handler"
         if "handler_id" not in info:
-            raise AssertionError(f"Expected {"handler_id"} in {info}")
+            raise AssertionError(f"Expected {'handler_id'} in {info}")
 
 
 class TestHandlerChain:
@@ -922,7 +954,9 @@ class TestHandlerChain:
 
         assert result.is_success
         if result.data != "Processed: test message":
-            raise AssertionError(f"Expected {"Processed: test message"}, got {result.data}")
+            raise AssertionError(
+                f"Expected {'Processed: test message'}, got {result.data}"
+            )
 
     def test_chain_process_no_handler_found(self) -> None:
         """Test processing message when no handler can handle it."""
@@ -941,7 +975,7 @@ class TestHandlerChain:
         assert result.is_failure
         assert result.error is not None
         if "No handler found" not in result.error:
-            raise AssertionError(f"Expected {"No handler found"} in {result.error}")
+            raise AssertionError(f"Expected {'No handler found'} in {result.error}")
 
     def test_chain_process_all(self) -> None:
         """Test processing message through all applicable handlers."""
@@ -978,10 +1012,12 @@ class TestHandlerChain:
         # Should get results from Handler1 and Handler2, not Handler3
         if len(results) != EXPECTED_BULK_SIZE:
             raise AssertionError(f"Expected {2}, got {len(results)}")
-        if all(result.is_success for result not in results):
-            raise AssertionError(f"Expected {all(result.is_success for result} in {results)}")
+        if all(result.is_success for result in results):
+            raise AssertionError(
+                f"Expected {all(result.is_success for result in results)} in {results}"
+            )
         if results[0].data != "Handler1 result":
-            raise AssertionError(f"Expected {"Handler1 result"}, got {results[0].data}")
+            raise AssertionError(f"Expected {'Handler1 result'}, got {results[0].data}")
         assert results[1].data == "Handler2 result"
 
     def test_chain_process_all_no_handlers(self) -> None:
@@ -998,7 +1034,6 @@ class TestHandlerChain:
         results = chain.process_all(message)
 
         if len(results) != 0:
-
             raise AssertionError(f"Expected {0}, got {len(results)}")
 
 
@@ -1022,7 +1057,9 @@ class TestFactoryMethods:
 
         assert result.is_success
         if result.data != "Function processed: test":
-            raise AssertionError(f"Expected {"Function processed: test"}, got {result.data}")
+            raise AssertionError(
+                f"Expected {'Function processed: test'}, got {result.data}"
+            )
 
     def test_create_function_handler_non_result_return(self) -> None:
         """Test creating handler from function that doesn't return FlextResult."""
@@ -1036,7 +1073,7 @@ class TestFactoryMethods:
         result = handler.handle(message)
         assert result.is_success
         if result.data != "simple result":
-            raise AssertionError(f"Expected {"simple result"}, got {result.data}")
+            raise AssertionError(f"Expected {'simple result'}, got {result.data}")
 
     def test_create_registry(self) -> None:
         """Test creating registry."""
@@ -1074,10 +1111,11 @@ class TestHandlerEdgeCases:
         metadata = handler.get_handler_metadata()
 
         if "handler_name" not in metadata:
-
-            raise AssertionError(f"Expected {"handler_name"} in {metadata}")
+            raise AssertionError(f"Expected {'handler_name'} in {metadata}")
         if metadata["handler_name"] != "complex-handler_name.with.dots":
-            raise AssertionError(f"Expected {"complex-handler_name.with.dots"}, got {metadata["handler_name"]}")
+            raise AssertionError(
+                f"Expected {'complex-handler_name.with.dots'}, got {metadata['handler_name']}"
+            )
 
     def test_registry_with_handler_without_id(self) -> None:
         """Test registry with handler that doesn't have handler_id."""
@@ -1137,8 +1175,9 @@ class TestHandlerEdgeCases:
         handler = CustomHandler("custom_handler")
 
         if handler.custom_attribute != "custom_value":
-
-            raise AssertionError(f"Expected {"custom_value"}, got {handler.custom_attribute}")
+            raise AssertionError(
+                f"Expected {'custom_value'}, got {handler.custom_attribute}"
+            )
         assert handler.handler_name == "custom_handler"
 
         message = _TestMessage("test")
@@ -1146,7 +1185,7 @@ class TestHandlerEdgeCases:
 
         assert result.is_success
         if result.data != "Custom: test":
-            raise AssertionError(f"Expected {"Custom: test"}, got {result.data}")
+            raise AssertionError(f"Expected {'Custom: test'}, got {result.data}")
 
     def test_performance_with_many_handlers(self) -> None:
         """Test performance characteristics with many handlers."""
@@ -1162,8 +1201,9 @@ class TestHandlerEdgeCases:
             registry.register(handler)
 
         if len(registry.get_all_handlers()) != 100:
-
-            raise AssertionError(f"Expected {100}, got {len(registry.get_all_handlers())}")
+            raise AssertionError(
+                f"Expected {100}, got {len(registry.get_all_handlers())}"
+            )
 
         # Test finding handlers
         message = _TestMessage("test")
@@ -1188,7 +1228,9 @@ class TestHandlerEdgeCases:
             results.append(result)
 
         # All should succeed
-        if all(result.is_success for result not in results):
-            raise AssertionError(f"Expected {all(result.is_success for result} in {results)}")
+        if all(result.is_success for result in results):
+            raise AssertionError(
+                f"Expected {all(result.is_success for result in results)} in {results}"
+            )
         if len(results) != 10:
             raise AssertionError(f"Expected {10}, got {len(results)}")

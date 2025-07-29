@@ -1,15 +1,10 @@
 """Comprehensive tests for entities module."""
 
-from flext_core.result import FlextResult
-from flext_core.result import FlextResult
-from flext_core.result import FlextResult
-
-
 from __future__ import annotations
 
 import time
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import pytest
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
@@ -17,14 +12,12 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_valida
 from flext_core.aggregate_root import FlextAggregateRoot
 from flext_core.entities import FlextEntity, FlextEntityFactory
 from flext_core.payload import FlextEvent
+from flext_core.result import FlextResult
 from flext_core.value_objects import FlextValueObject
 
 # Constants
 EXPECTED_BULK_SIZE = 2
 EXPECTED_DATA_COUNT = 3
-
-if TYPE_CHECKING:
-    from flext_core.result import FlextResult
 
 
 def create_test_entity(entity_class: type, **kwargs: object) -> object:
@@ -104,7 +97,6 @@ class SampleEntity(FlextEntity):
     def validate_domain_rules(self) -> FlextResult[None]:
         """Validate test entity domain rules."""
 
-
         if not self.name.strip():
             return FlextResult.fail("Entity name cannot be empty")
         return FlextResult.ok(None)
@@ -119,7 +111,6 @@ class SampleValueObject(FlextValueObject):
     def validate_domain_rules(self) -> FlextResult[None]:
         """Validate test value object domain rules."""
 
-
         if self.amount < 0:
             return FlextResult.fail("Amount cannot be negative")
         return FlextResult.ok(None)
@@ -133,7 +124,6 @@ class SampleAggregateRoot(FlextAggregateRoot):
 
     def validate_domain_rules(self) -> FlextResult[None]:
         """Validate test aggregate root domain rules."""
-
 
         if not self.title.strip():
             return FlextResult.fail("Aggregate title cannot be empty")
@@ -162,8 +152,7 @@ class TestFlextEntity:
         entity = create_test_entity(SampleEntity, name="Test Entity")
 
         if entity.name != "Test Entity":
-
-            raise AssertionError(f"Expected {"Test Entity"}, got {entity.name}")
+            raise AssertionError(f"Expected {'Test Entity'}, got {entity.name}")
         assert entity.status == "active"
         assert entity.id is not None
         assert isinstance(entity.id, str)
@@ -177,7 +166,6 @@ class TestFlextEntity:
         entity = SampleEntity(id=custom_id, name="Test Entity")
 
         if entity.id != custom_id:
-
             raise AssertionError(f"Expected {custom_id}, got {entity.id}")
         assert entity.name == "Test Entity"
 
@@ -191,7 +179,6 @@ class TestFlextEntity:
         )
 
         if entity.created_at != now:
-
             raise AssertionError(f"Expected {now}, got {entity.created_at}")
 
     def test_entity_immutability(self) -> None:
@@ -211,9 +198,8 @@ class TestFlextEntity:
         entity2 = SampleEntity(id=entity_id, name="Entity 2")  # Different name
         entity3 = SampleEntity(id="different-id", name="Entity 1")
 
-        if entity1 != entity2  # Same ID:
-
-            raise AssertionError(f"Expected {entity2  # Same ID}, got {entity1}")
+        if entity1 != entity2:  # Same ID
+            raise AssertionError(f"Expected {entity2}, got {entity1}")
         assert entity1 != entity3  # Different ID
         assert entity2 != entity3  # Different ID
 
@@ -224,13 +210,12 @@ class TestFlextEntity:
         entity2 = SampleEntity(id=entity_id, name="Entity 2")
 
         if hash(entity1) != hash(entity2):
-
             raise AssertionError(f"Expected {hash(entity2)}, got {hash(entity1)}")
 
         # Test in set/dict
         entity_set = {entity1, entity2}
-        if len(entity_set) != 1  # Only one entity due to same ID:
-            raise AssertionError(f"Expected {1  # Only one entity due to same ID}, got {len(entity_set)}")
+        if len(entity_set) != 1:  # Only one entity due to same ID
+            raise AssertionError(f"Expected {1}, got {len(entity_set)}")
 
     def test_entity_string_representation(self) -> None:
         """Test entity string representation."""
@@ -240,8 +225,7 @@ class TestFlextEntity:
         repr_str = repr(entity)
 
         if "test-123" not in str_repr:
-
-            raise AssertionError(f"Expected {"test-123"} in {str_repr}")
+            raise AssertionError(f"Expected {'test-123'} in {str_repr}")
         assert "SampleEntity" in repr_str
 
     def test_entity_model_dump(self) -> None:
@@ -252,10 +236,10 @@ class TestFlextEntity:
 
         assert isinstance(data, dict)
         if data["name"] != "Test Entity":
-            raise AssertionError(f"Expected {"Test Entity"}, got {data["name"]}")
+            raise AssertionError(f"Expected {'Test Entity'}, got {data['name']}")
         assert data["status"] == "active"
         if "id" not in data:
-            raise AssertionError(f"Expected {"id"} in {data}")
+            raise AssertionError(f"Expected {'id'} in {data}")
         assert "created_at" in data
 
     def test_entity_validation_error(self) -> None:
@@ -274,7 +258,6 @@ class TestFlextValueObject:
         vo = SampleValueObject(amount=100, currency="EUR")
 
         if vo.amount != 100:
-
             raise AssertionError(f"Expected {100}, got {vo.amount}")
         assert vo.currency == "EUR"
 
@@ -283,7 +266,6 @@ class TestFlextValueObject:
         vo = SampleValueObject(amount=50)
 
         if vo.amount != 50:
-
             raise AssertionError(f"Expected {50}, got {vo.amount}")
         assert vo.currency == "USD"  # Default value
 
@@ -301,9 +283,8 @@ class TestFlextValueObject:
         vo3 = SampleValueObject(amount=100, currency="EUR")
         vo4 = SampleValueObject(amount=200, currency="USD")
 
-        if vo1 != vo2  # Same values:
-
-            raise AssertionError(f"Expected {vo2  # Same values}, got {vo1}")
+        if vo1 != vo2:  # Same values
+            raise AssertionError(f"Expected {vo2}, got {vo1}")
         assert vo1 != vo3  # Different currency
         assert vo1 != vo4  # Different amount
 
@@ -314,14 +295,13 @@ class TestFlextValueObject:
         vo3 = SampleValueObject(amount=100, currency="EUR")
 
         if hash(vo1) != hash(vo2):
-
             raise AssertionError(f"Expected {hash(vo2)}, got {hash(vo1)}")
         assert hash(vo1) != hash(vo3)
 
         # Test in set
         vo_set = {vo1, vo2, vo3}
-        if len(vo_set) != EXPECTED_BULK_SIZE  # vo1 and vo2 are the same:
-            raise AssertionError(f"Expected {2  # vo1 and vo2 are the same}, got {len(vo_set)}")
+        if len(vo_set) != EXPECTED_BULK_SIZE:  # vo1 and vo2 are the same
+            raise AssertionError(f"Expected {2}, got {len(vo_set)}")
 
     def test_value_object_model_dump(self) -> None:
         """Test value object serialization."""
@@ -331,7 +311,7 @@ class TestFlextValueObject:
 
         assert isinstance(data, dict)
         if data["amount"] != 100:
-            raise AssertionError(f"Expected {100}, got {data["amount"]}")
+            raise AssertionError(f"Expected {100}, got {data['amount']}")
         assert data["currency"] == "EUR"
 
 
@@ -349,11 +329,10 @@ class TestFlextDomainEvent:
         )
 
         if event.aggregate_id != aggregate_id:
-
             raise AssertionError(f"Expected {aggregate_id}, got {event.aggregate_id}")
         assert event.event_type == "test.created"
         if event.action != "create":
-            raise AssertionError(f"Expected {"create"}, got {event.action}")
+            raise AssertionError(f"Expected {'create'}, got {event.action}")
         assert event.details == {"key": "value"}
         assert event.event_id is not None
         assert event.timestamp is not None
@@ -375,7 +354,6 @@ class TestFlextDomainEvent:
         )
 
         if event.event_id != custom_id:
-
             raise AssertionError(f"Expected {custom_id}, got {event.event_id}")
         assert event.timestamp == custom_time
         if event.version != 5:
@@ -444,16 +422,18 @@ class TestFlextDomainEvent:
 
         assert isinstance(data, dict)
         if data["aggregate_id"] != "aggregate-123":
-            raise AssertionError(f"Expected {"aggregate-123"}, got {data["aggregate_id"]}")
+            raise AssertionError(
+                f"Expected {'aggregate-123'}, got {data['aggregate_id']}"
+            )
         assert data["event_type"] == "test.created"
         if data["action"] != "create":
-            raise AssertionError(f"Expected {"create"}, got {data["action"]}")
+            raise AssertionError(f"Expected {'create'}, got {data['action']}")
         assert data["details"] == {"key": "value"}
         if "event_id" not in data:
-            raise AssertionError(f"Expected {"event_id"} in {data}")
+            raise AssertionError(f"Expected {'event_id'} in {data}")
         assert "timestamp" in data
         if "version" not in data:
-            raise AssertionError(f"Expected {"version"} in {data}")
+            raise AssertionError(f"Expected {'version'} in {data}")
 
 
 class TestFlextAggregateRoot:
@@ -468,8 +448,7 @@ class TestFlextAggregateRoot:
         )
 
         if aggregate.title != "Test Aggregate":
-
-            raise AssertionError(f"Expected {"Test Aggregate"}, got {aggregate.title}")
+            raise AssertionError(f"Expected {'Test Aggregate'}, got {aggregate.title}")
         assert aggregate.description == "Test description"
         assert aggregate.id is not None
         if aggregate.version != 1:
@@ -485,7 +464,6 @@ class TestFlextAggregateRoot:
         )
 
         if aggregate.version != 5:
-
             raise AssertionError(f"Expected {5}, got {aggregate.version}")
 
     def test_aggregate_root_raise_event(self) -> None:
@@ -494,21 +472,29 @@ class TestFlextAggregateRoot:
 
         # Initially no events
         if len(aggregate.get_domain_events()) != 0:
-            raise AssertionError(f"Expected {0}, got {len(aggregate.get_domain_events())}")
+            raise AssertionError(
+                f"Expected {0}, got {len(aggregate.get_domain_events())}"
+            )
 
         # Perform action that raises event
         aggregate.perform_action("created")
 
         # Check event was raised
         if len(aggregate.get_domain_events()) != 1:
-            raise AssertionError(f"Expected {1}, got {len(aggregate.get_domain_events())}")
+            raise AssertionError(
+                f"Expected {1}, got {len(aggregate.get_domain_events())}"
+            )
         event = aggregate.get_domain_events()[0]
         assert isinstance(event, FlextEvent)
         if event.get_metadata("aggregate_id") != aggregate.id:
-            raise AssertionError(f"Expected {aggregate.id}, got {event.get_metadata("aggregate_id")}")
+            raise AssertionError(
+                f"Expected {aggregate.id}, got {event.get_metadata('aggregate_id')}"
+            )
         assert event.get_metadata("event_type") == "test.created"
         if event.data.get("action") != "created":
-            raise AssertionError(f"Expected {"created"}, got {event.data.get("action")}")
+            raise AssertionError(
+                f"Expected {'created'}, got {event.data.get('action')}"
+            )
 
     def test_aggregate_root_multiple_events(self) -> None:
         """Test raising multiple domain events."""
@@ -519,18 +505,19 @@ class TestFlextAggregateRoot:
         aggregate.perform_action("activated")
 
         if len(aggregate.get_domain_events()) != EXPECTED_DATA_COUNT:
-
-            raise AssertionError(f"Expected {3}, got {len(aggregate.get_domain_events())}")
+            raise AssertionError(
+                f"Expected {3}, got {len(aggregate.get_domain_events())}"
+            )
 
         # Check event types
         event_types = [
             event.get_metadata("event_type") for event in aggregate.get_domain_events()
         ]
         if "test.created" not in event_types:
-            raise AssertionError(f"Expected {"test.created"} in {event_types}")
+            raise AssertionError(f"Expected {'test.created'} in {event_types}")
         assert "test.updated" in event_types
         if "test.activated" not in event_types:
-            raise AssertionError(f"Expected {"test.activated"} in {event_types}")
+            raise AssertionError(f"Expected {'test.activated'} in {event_types}")
 
     def test_aggregate_root_clear_events(self) -> None:
         """Test clearing pending events."""
@@ -540,12 +527,16 @@ class TestFlextAggregateRoot:
         aggregate.perform_action("created")
         aggregate.perform_action("updated")
         if len(aggregate.get_domain_events()) != EXPECTED_BULK_SIZE:
-            raise AssertionError(f"Expected {2}, got {len(aggregate.get_domain_events())}")
+            raise AssertionError(
+                f"Expected {2}, got {len(aggregate.get_domain_events())}"
+            )
 
         # Clear events
         aggregate.clear_domain_events()
         if len(aggregate.get_domain_events()) != 0:
-            raise AssertionError(f"Expected {0}, got {len(aggregate.get_domain_events())}")
+            raise AssertionError(
+                f"Expected {0}, got {len(aggregate.get_domain_events())}"
+            )
 
     def test_aggregate_root_immutability(self) -> None:
         """Test that aggregate root is immutable."""
@@ -588,17 +579,19 @@ class TestFlextAggregateRoot:
 
         assert isinstance(data, dict)
         if data["title"] != "Test Aggregate":
-            raise AssertionError(f"Expected {"Test Aggregate"}, got {data["title"]}")
+            raise AssertionError(f"Expected {'Test Aggregate'}, got {data['title']}")
         assert data["description"] == "Test description"
         if "id" not in data:
-            raise AssertionError(f"Expected {"id"} in {data}")
+            raise AssertionError(f"Expected {'id'} in {data}")
         assert "version" in data
         # Domain events are excluded from serialization
-        if "domain_events" not not in data:
-            raise AssertionError(f"Expected {"domain_events" not} in {data}")
+        if "domain_events" not in data:
+            raise AssertionError(f"Expected {'domain_events'} not in {data}")
         # But we can verify events exist through the method
         if len(aggregate.get_domain_events()) != 1:
-            raise AssertionError(f"Expected {1}, got {len(aggregate.get_domain_events())}")
+            raise AssertionError(
+                f"Expected {1}, got {len(aggregate.get_domain_events())}"
+            )
 
     def test_aggregate_root_with_entity_id_parameter(self) -> None:
         """Test aggregate root creation with entity_id parameter."""
@@ -609,7 +602,6 @@ class TestFlextAggregateRoot:
         )
 
         if aggregate.id != custom_id:
-
             raise AssertionError(f"Expected {custom_id}, got {aggregate.id}")
         assert aggregate.title == "Test Aggregate"
         if aggregate.version != 1:
@@ -624,8 +616,7 @@ class TestFlextAggregateRoot:
         )
 
         if aggregate.title != "Test Aggregate":
-
-            raise AssertionError(f"Expected {"Test Aggregate"}, got {aggregate.title}")
+            raise AssertionError(f"Expected {'Test Aggregate'}, got {aggregate.title}")
         assert aggregate.created_at == created_time
 
     def test_add_domain_event_failure_handling(self) -> None:
@@ -637,7 +628,9 @@ class TestFlextAggregateRoot:
 
         assert result.is_failure
         if "Failed to create event" not in result.error:
-            raise AssertionError(f"Expected {"Failed to create event"} in {result.error}")
+            raise AssertionError(
+                f"Expected {'Failed to create event'} in {result.error}"
+            )
 
     def test_add_domain_event_exception_handling(self) -> None:
         """Test add_domain_event exception handling."""
@@ -670,14 +663,18 @@ class TestFlextAggregateRoot:
 
         # Initially no events
         if len(aggregate.get_domain_events()) != 0:
-            raise AssertionError(f"Expected {0}, got {len(aggregate.get_domain_events())}")
+            raise AssertionError(
+                f"Expected {0}, got {len(aggregate.get_domain_events())}"
+            )
 
         # Add event object directly
         aggregate.add_event_object(event)
 
         # Verify event was added
         if len(aggregate.get_domain_events()) != 1:
-            raise AssertionError(f"Expected {1}, got {len(aggregate.get_domain_events())}")
+            raise AssertionError(
+                f"Expected {1}, got {len(aggregate.get_domain_events())}"
+            )
         assert aggregate.get_domain_events()[0] == event
 
     def test_has_domain_events_method(self) -> None:
@@ -716,8 +713,9 @@ class TestEntitiesIntegration:
         }
 
         if composite_data["entity"]["name"] != "Test Entity":
-
-            raise AssertionError(f"Expected {"Test Entity"}, got {composite_data["entity"]["name"]}")
+            raise AssertionError(
+                f"Expected {'Test Entity'}, got {composite_data['entity']['name']}"
+            )
         assert composite_data["value"]["amount"] == 100
 
     def test_aggregate_event_sourcing_pattern(self) -> None:
@@ -737,19 +735,27 @@ class TestEntitiesIntegration:
         # Clear events (simulate after persistence)
         aggregate.clear_domain_events()
         if len(aggregate.get_domain_events()) != 0:
-            raise AssertionError(f"Expected {0}, got {len(aggregate.get_domain_events())}")
+            raise AssertionError(
+                f"Expected {0}, got {len(aggregate.get_domain_events())}"
+            )
 
         # Events should contain full audit trail
         if events[0].data.get("action") != "created":
-            raise AssertionError(f"Expected {"created"}, got {events[0].data.get("action")}")
+            raise AssertionError(
+                f"Expected {'created'}, got {events[0].data.get('action')}"
+            )
         assert events[1].data.get("action") == "updated"
         if events[2].data.get("action") != "activated":
-            raise AssertionError(f"Expected {"activated"}, got {events[2].data.get("action")}")
+            raise AssertionError(
+                f"Expected {'activated'}, got {events[2].data.get('action')}"
+            )
 
         # All events should be for same aggregate
         aggregate_ids = [event.get_metadata("aggregate_id") for event in events]
-        if all(aid != aggregate.id for aid in aggregate_ids):
-            raise AssertionError(f"Expected {aggregate.id for aid in aggregate_ids)}, got {all(aid}")
+        if not all(aid == aggregate.id for aid in aggregate_ids):
+            raise AssertionError(
+                f"Expected all aggregate IDs to be {aggregate.id}, got {aggregate_ids}"
+            )
 
     def test_polymorphic_entity_behavior(self) -> None:
         """Test polymorphic behavior of entities."""
@@ -766,7 +772,7 @@ class TestEntitiesIntegration:
 
         # Should have all properties
         if entity.name != "Special Entity":
-            raise AssertionError(f"Expected {"Special Entity"}, got {entity.name}")
+            raise AssertionError(f"Expected {'Special Entity'}, got {entity.name}")
         assert entity.special_field == "special"
         assert entity.id is not None
 
@@ -793,4 +799,4 @@ class TestEntitiesIntegration:
         data = entity.model_dump()
         assert isinstance(data, dict)
         if "id" not in data:
-            raise AssertionError(f"Expected {"id"} in {data}")
+            raise AssertionError(f"Expected {'id'} in {data}")

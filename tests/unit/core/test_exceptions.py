@@ -1,18 +1,14 @@
 """Comprehensive tests for FlextExceptions and exception functionality."""
 
+from __future__ import annotations
+
 import json
 import time
-
-
-from __future__ import annotations
 
 import pytest
 
 from flext_core.constants import ERROR_CODES
 from flext_core.exceptions import (
-# Constants
-EXPECTED_DATA_COUNT = 3
-
     FlextAuthenticationError,
     FlextConfigurationError,
     FlextConnectionError,
@@ -24,6 +20,9 @@ EXPECTED_DATA_COUNT = 3
 )
 from flext_core.result import FlextResult
 
+# Constants
+EXPECTED_DATA_COUNT = 3
+
 
 class TestFlextError:
     """Test FlextError base exception functionality."""
@@ -33,11 +32,14 @@ class TestFlextError:
         error = FlextError("Test error message")
 
         if str(error) != "[GENERIC_ERROR] Test error message":
-
-            raise AssertionError(f"Expected {"[GENERIC_ERROR] Test error message"}, got {str(error)}")
+            raise AssertionError(
+                f"Expected {'[GENERIC_ERROR] Test error message'}, got {error!s}"
+            )
         assert error.message == "Test error message"
         if error.error_code != ERROR_CODES["GENERIC_ERROR"]:
-            raise AssertionError(f"Expected {ERROR_CODES["GENERIC_ERROR"]}, got {error.error_code}")
+            raise AssertionError(
+                f"Expected {ERROR_CODES['GENERIC_ERROR']}, got {error.error_code}"
+            )
         assert isinstance(error.context, dict)
         assert isinstance(error.timestamp, float)
         assert isinstance(error.stack_trace, list)
@@ -50,8 +52,9 @@ class TestFlextError:
         )
 
         if error.error_code != ERROR_CODES["CONFIGURATION_ERROR"]:
-
-            raise AssertionError(f"Expected {ERROR_CODES["CONFIGURATION_ERROR"]}, got {error.error_code}")
+            raise AssertionError(
+                f"Expected {ERROR_CODES['CONFIGURATION_ERROR']}, got {error.error_code}"
+            )
         assert error.message == "Configuration error"
 
     def test_flext_error_with_context(self) -> None:
@@ -66,11 +69,12 @@ class TestFlextError:
         )
 
         if error.context["component"] != "test_component":
-
-            raise AssertionError(f"Expected {"test_component"}, got {error.context["component"]}")
+            raise AssertionError(
+                f"Expected {'test_component'}, got {error.context['component']}"
+            )
         assert error.context["operation"] == "test_operation"
         if error.message != "Context error":
-            raise AssertionError(f"Expected {"Context error"}, got {error.message}")
+            raise AssertionError(f"Expected {'Context error'}, got {error.message}")
 
     def test_flext_error_with_full_context(self) -> None:
         """Test FlextError with full context and error code."""
@@ -87,11 +91,14 @@ class TestFlextError:
         )
 
         if error.context["component"] != "test_component":
-
-            raise AssertionError(f"Expected {"test_component"}, got {error.context["component"]}")
+            raise AssertionError(
+                f"Expected {'test_component'}, got {error.context['component']}"
+            )
         assert error.context["operation"] == "test_operation"
         if error.context["user_id"] != "test_user":
-            raise AssertionError(f"Expected {"test_user"}, got {error.context["user_id"]}")
+            raise AssertionError(
+                f"Expected {'test_user'}, got {error.context['user_id']}"
+            )
         assert error.error_code == ERROR_CODES["VALIDATION_ERROR"]
 
     def test_flext_error_context_enhancement(self) -> None:
@@ -115,16 +122,18 @@ class TestFlextError:
 
         assert isinstance(serialized, dict)
         if serialized["message"] != "Serialization test":
-            raise AssertionError(f"Expected {"Serialization test"}, got {serialized["message"]}")
+            raise AssertionError(
+                f"Expected {'Serialization test'}, got {serialized['message']}"
+            )
         assert serialized["error_code"] == ERROR_CODES["OPERATION_ERROR"]
         if "context" not in serialized:
-            raise AssertionError(f"Expected {"context"} in {serialized}")
+            raise AssertionError(f"Expected {'context'} in {serialized}")
         context = serialized["context"]
         assert isinstance(context, dict)
         if context["test_key"] != "test_value":
-            raise AssertionError(f"Expected {"test_value"}, got {context["test_key"]}")
+            raise AssertionError(f"Expected {'test_value'}, got {context['test_key']}")
         if "timestamp" not in serialized:
-            raise AssertionError(f"Expected {"timestamp"} in {serialized}")
+            raise AssertionError(f"Expected {'timestamp'} in {serialized}")
         assert isinstance(serialized["timestamp"], float)
 
     def test_flext_error_str_representation(self) -> None:
@@ -133,11 +142,12 @@ class TestFlextError:
         str_repr = str(error)
 
         if "String test error" not in str_repr:
-
-            raise AssertionError(f"Expected {"String test error"} in {str_repr}")
+            raise AssertionError(f"Expected {'String test error'} in {str_repr}")
         assert isinstance(str_repr, str)
         if str_repr != "[GENERIC_ERROR] String test error":
-            raise AssertionError(f"Expected {"[GENERIC_ERROR] String test error"}, got {str_repr}")
+            raise AssertionError(
+                f"Expected {'[GENERIC_ERROR] String test error'}, got {str_repr}"
+            )
 
     def test_flext_error_repr_representation(self) -> None:
         """Test repr representation of FlextError."""
@@ -145,8 +155,7 @@ class TestFlextError:
         repr_str = repr(error)
 
         if "FlextError" not in repr_str:
-
-            raise AssertionError(f"Expected {"FlextError"} in {repr_str}")
+            raise AssertionError(f"Expected {'FlextError'} in {repr_str}")
         assert "Repr test error" in repr_str
 
     def test_flext_error_inheritance(self) -> None:
@@ -176,8 +185,9 @@ class TestFlextValidationError:
         error = FlextValidationError("Field validation failed")
 
         if error.message != "Field validation failed":
-
-            raise AssertionError(f"Expected {"Field validation failed"}, got {error.message}")
+            raise AssertionError(
+                f"Expected {'Field validation failed'}, got {error.message}"
+            )
         assert error.error_code == ERROR_CODES["VALIDATION_ERROR"]
         assert isinstance(error, FlextError)
 
@@ -195,11 +205,10 @@ class TestFlextValidationError:
         )
 
         if error.context["field"] != "email":
-
-            raise AssertionError(f"Expected {"email"}, got {error.context["field"]}")
+            raise AssertionError(f"Expected {'email'}, got {error.context['field']}")
         assert error.context["value"] == "invalid-email"
         if error.field != "email":
-            raise AssertionError(f"Expected {"email"}, got {error.field}")
+            raise AssertionError(f"Expected {'email'}, got {error.field}")
         assert error.value == "invalid-email"
 
     def test_validation_error_multiple_fields(self) -> None:
@@ -215,11 +224,12 @@ class TestFlextValidationError:
         )
 
         if error.field != "user_data":
-
-            raise AssertionError(f"Expected {"user_data"}, got {error.field}")
+            raise AssertionError(f"Expected {'user_data'}, got {error.field}")
         assert error.context["field"] == "user_data"
         if error.rules != ["required", "format", "length"]:
-            raise AssertionError(f"Expected {["required", "format", "length"]}, got {error.rules}")
+            raise AssertionError(
+                f"Expected {['required', 'format', 'length']}, got {error.rules}"
+            )
 
     def test_validation_error_serialization(self) -> None:
         """Test validation error serialization includes validation details."""
@@ -232,12 +242,11 @@ class TestFlextValidationError:
         serialized = error.to_dict()
 
         if "context" not in serialized:
-
-            raise AssertionError(f"Expected {"context"} in {serialized}")
+            raise AssertionError(f"Expected {'context'} in {serialized}")
         context = serialized["context"]
         assert isinstance(context, dict)
         if context["field"] != "username":
-            raise AssertionError(f"Expected {"username"}, got {context["field"]}")
+            raise AssertionError(f"Expected {'username'}, got {context['field']}")
         assert context["value"] == "ab"
 
 
@@ -249,8 +258,9 @@ class TestFlextTypeError:
         error = FlextTypeError("Type conversion failed")
 
         if error.message != "Type conversion failed":
-
-            raise AssertionError(f"Expected {"Type conversion failed"}, got {error.message}")
+            raise AssertionError(
+                f"Expected {'Type conversion failed'}, got {error.message}"
+            )
         assert error.error_code == ERROR_CODES["TYPE_ERROR"]
         assert isinstance(error, FlextError)
 
@@ -269,7 +279,9 @@ class TestFlextTypeError:
         assert error.expected_type is str
         assert error.actual_type is int
         if error.context["expected_type"] != str(str):
-            raise AssertionError(f"Expected {str(str)}, got {error.context["expected_type"]}")
+            raise AssertionError(
+                f"Expected {str!s}, got {error.context['expected_type']}"
+            )
         assert error.context["actual_type"] == str(int)
 
     def test_type_error_with_conversion_details(self) -> None:
@@ -287,11 +299,14 @@ class TestFlextTypeError:
         )
 
         if error.context["source"] != "user_input":
-
-            raise AssertionError(f"Expected {"user_input"}, got {error.context["source"]}")
+            raise AssertionError(
+                f"Expected {'user_input'}, got {error.context['source']}"
+            )
         assert error.context["converter"] == "int()"
         if error.error_code != ERROR_CODES["TYPE_ERROR"]:
-            raise AssertionError(f"Expected {ERROR_CODES["TYPE_ERROR"]}, got {error.error_code}")
+            raise AssertionError(
+                f"Expected {ERROR_CODES['TYPE_ERROR']}, got {error.error_code}"
+            )
 
 
 class TestFlextOperationError:
@@ -302,8 +317,7 @@ class TestFlextOperationError:
         error = FlextOperationError("Operation failed")
 
         if error.message != "Operation failed":
-
-            raise AssertionError(f"Expected {"Operation failed"}, got {error.message}")
+            raise AssertionError(f"Expected {'Operation failed'}, got {error.message}")
         assert error.error_code == ERROR_CODES["OPERATION_ERROR"]
         assert isinstance(error, FlextError)
 
@@ -320,11 +334,12 @@ class TestFlextOperationError:
         )
 
         if error.operation != "file_read":
-
-            raise AssertionError(f"Expected {"file_read"}, got {error.operation}")
+            raise AssertionError(f"Expected {'file_read'}, got {error.operation}")
         assert error.stage == "file_open"
         if error.context["operation"] != "file_read":
-            raise AssertionError(f"Expected {"file_read"}, got {error.context["operation"]}")
+            raise AssertionError(
+                f"Expected {'file_read'}, got {error.context['operation']}"
+            )
         assert error.context["stage"] == "file_open"
 
     def test_operation_error_with_retry_info(self) -> None:
@@ -342,11 +357,12 @@ class TestFlextOperationError:
         )
 
         if error.context["attempt"] != EXPECTED_DATA_COUNT:
-
-            raise AssertionError(f"Expected {3}, got {error.context["attempt"]}")
+            raise AssertionError(f"Expected {3}, got {error.context['attempt']}")
         assert error.context["max_retries"] == EXPECTED_DATA_COUNT
         if error.context["last_error"] != "connection_timeout":
-            raise AssertionError(f"Expected {"connection_timeout"}, got {error.context["last_error"]}")
+            raise AssertionError(
+                f"Expected {'connection_timeout'}, got {error.context['last_error']}"
+            )
         assert error.error_code == ERROR_CODES["OPERATION_ERROR"]
 
 
@@ -358,8 +374,9 @@ class TestSpecificErrors:
         error = FlextConfigurationError("Invalid configuration")
 
         if error.message != "Invalid configuration":
-
-            raise AssertionError(f"Expected {"Invalid configuration"}, got {error.message}")
+            raise AssertionError(
+                f"Expected {'Invalid configuration'}, got {error.message}"
+            )
         assert error.error_code == ERROR_CODES["CONFIG_ERROR"]
         assert isinstance(error, FlextError)
 
@@ -368,8 +385,9 @@ class TestSpecificErrors:
         error = FlextConnectionError("Database connection failed")
 
         if error.message != "Database connection failed":
-
-            raise AssertionError(f"Expected {"Database connection failed"}, got {error.message}")
+            raise AssertionError(
+                f"Expected {'Database connection failed'}, got {error.message}"
+            )
         assert error.error_code == ERROR_CODES["CONNECTION_ERROR"]
         assert isinstance(error, FlextError)
 
@@ -378,8 +396,9 @@ class TestSpecificErrors:
         error = FlextAuthenticationError("Invalid credentials")
 
         if error.message != "Invalid credentials":
-
-            raise AssertionError(f"Expected {"Invalid credentials"}, got {error.message}")
+            raise AssertionError(
+                f"Expected {'Invalid credentials'}, got {error.message}"
+            )
         assert error.error_code == ERROR_CODES["AUTH_ERROR"]
         assert isinstance(error, FlextError)
 
@@ -388,8 +407,7 @@ class TestSpecificErrors:
         error = FlextPermissionError("Access denied")
 
         if error.message != "Access denied":
-
-            raise AssertionError(f"Expected {"Access denied"}, got {error.message}")
+            raise AssertionError(f"Expected {'Access denied'}, got {error.message}")
         assert error.error_code == ERROR_CODES["PERMISSION_ERROR"]
         assert isinstance(error, FlextError)
 
@@ -402,8 +420,9 @@ class TestSpecificErrors:
         )
 
         if config_error.context["config_file"] != "/etc/app/config.yml":
-
-            raise AssertionError(f"Expected {"/etc/app/config.yml"}, got {config_error.context["config_file"]}")
+            raise AssertionError(
+                f"Expected {'/etc/app/config.yml'}, got {config_error.context['config_file']}"
+            )
         assert config_error.context["missing_key"] == "database.host"
 
     def test_error_code_consistency(self) -> None:
@@ -421,9 +440,8 @@ class TestSpecificErrors:
             config_error.error_code,
         }
 
-        if len(error_codes) != 4  # All different:
-
-            raise AssertionError(f"Expected {4  # All different}, got {len(error_codes)}")
+        if len(error_codes) != 4:  # All different:
+            raise AssertionError(f"Expected {4}, got {len(error_codes)}")
 
 
 class TestExceptionIntegration:
@@ -445,7 +463,7 @@ class TestExceptionIntegration:
         assert result.is_failure
         assert result.error is not None
         if "Validation failed" not in result.error:
-            raise AssertionError(f"Expected {"Validation failed"} in {result.error}")
+            raise AssertionError(f"Expected {'Validation failed'} in {result.error}")
 
     def test_exception_context_enhancement(self) -> None:
         """Test automatic context enhancement in exceptions."""
@@ -456,7 +474,7 @@ class TestExceptionIntegration:
 
         # Should have context and automatic fields
         if "test" not in error.context:
-            raise AssertionError(f"Expected {"test"} in {error.context}")
+            raise AssertionError(f"Expected {'test'} in {error.context}")
         assert isinstance(error.timestamp, float)
         assert error.timestamp > 0
 
@@ -478,11 +496,15 @@ class TestExceptionIntegration:
 
         # Check all data is preserved in serialization
         if serialized["message"] != "User creation validation failed":
-            raise AssertionError(f"Expected {"User creation validation failed"}, got {serialized["message"]}")
+            raise AssertionError(
+                f"Expected {'User creation validation failed'}, got {serialized['message']}"
+            )
         context = serialized["context"]
         assert isinstance(context, dict)
         if context["component"] != "user_service":
-            raise AssertionError(f"Expected {"user_service"}, got {context["component"]}")
+            raise AssertionError(
+                f"Expected {'user_service'}, got {context['component']}"
+            )
         assert context["field"] == "email"
 
     def test_exception_chaining_patterns(self) -> None:
@@ -509,7 +531,7 @@ class TestExceptionIntegration:
         original_error = flext_error.context["original_error"]
         assert isinstance(original_error, str)
         if "Original error" not in original_error:
-            raise AssertionError(f"Expected {"Original error"} in {original_error}")
+            raise AssertionError(f"Expected {'Original error'} in {original_error}")
         assert flext_error.__cause__ is not None
         assert isinstance(flext_error.__cause__, ValueError)
 
@@ -525,8 +547,9 @@ class TestErrorCodeIntegration:
         )
 
         if error.error_code != ERROR_CODES["VALIDATION_ERROR"]:
-
-            raise AssertionError(f"Expected {ERROR_CODES["VALIDATION_ERROR"]}, got {error.error_code}")
+            raise AssertionError(
+                f"Expected {ERROR_CODES['VALIDATION_ERROR']}, got {error.error_code}"
+            )
         assert isinstance(error.error_code, str)
 
     def test_error_context_variations(self) -> None:
@@ -535,8 +558,9 @@ class TestErrorCodeIntegration:
         high_error = FlextError("Important error", context={"priority": "high"})
 
         if low_error.context["priority"] != "low":
-
-            raise AssertionError(f"Expected {"low"}, got {low_error.context["priority"]}")
+            raise AssertionError(
+                f"Expected {'low'}, got {low_error.context['priority']}"
+            )
         assert high_error.context["priority"] == "high"
         assert low_error.context != high_error.context
 
@@ -555,7 +579,9 @@ class TestErrorCodeIntegration:
 
         for error, expected_code in errors:
             if error.error_code != expected_code:
-                raise AssertionError(f"Expected {expected_code}, got {error.error_code}")
+                raise AssertionError(
+                    f"Expected {expected_code}, got {error.error_code}"
+                )
 
 
 class TestExceptionEdgeCases:
@@ -566,7 +592,7 @@ class TestExceptionEdgeCases:
         # Test with empty string instead of None since FlextError expects str
         error = FlextError("")
         if error.message != "":
-            raise AssertionError(f"Expected {""}, got {error.message}")
+            raise AssertionError(f"Expected {''}, got {error.message}")
 
     def test_exception_with_empty_context(self) -> None:
         """Test exception with empty context."""
@@ -595,10 +621,10 @@ class TestExceptionEdgeCases:
         data_context = nested_context["data"]
         assert isinstance(data_context, dict)
         if data_context["key"] != "value":
-            raise AssertionError(f"Expected {"value"}, got {data_context["key"]}")
+            raise AssertionError(f"Expected {'value'}, got {data_context['key']}")
         assert nested_context["list"] == [1, 2, 3]
         if error.context["simple"] != "value":
-            raise AssertionError(f"Expected {"value"}, got {error.context["simple"]}")
+            raise AssertionError(f"Expected {'value'}, got {error.context['simple']}")
 
     def test_exception_serialization_with_non_serializable_context(self) -> None:
         """Test exception serialization with non-serializable context data."""
@@ -614,10 +640,11 @@ class TestExceptionEdgeCases:
         # to_dict() doesn't serialize deeply, so it should succeed
         result = error.to_dict()
         if result["context"] != non_serializable_context:
-            raise AssertionError(f"Expected {non_serializable_context}, got {result["context"]}")
+            raise AssertionError(
+                f"Expected {non_serializable_context}, got {result['context']}"
+            )
 
         # But JSON serialization should fail
-
 
         with pytest.raises((TypeError, ValueError)):
             json.dumps(result)
@@ -634,15 +661,14 @@ class TestExceptionEdgeCases:
             errors.append(error)
 
         if len(errors) != 100:
-
             raise AssertionError(f"Expected {100}, got {len(errors)}")
 
         # All should be properly constructed
         for i, error in enumerate(errors):
             if error.context["index"] != i:
-                raise AssertionError(f"Expected {i}, got {error.context["index"]}")
+                raise AssertionError(f"Expected {i}, got {error.context['index']}")
             if f"Error {i}" not in error.message:
-                raise AssertionError(f"Expected {f"Error {i}"} in {error.message}")
+                raise AssertionError(f"Expected {f'Error {i}'} in {error.message}")
 
     def test_exception_thread_safety_basic(self) -> None:
         """Test basic thread safety of exception creation."""
@@ -656,11 +682,12 @@ class TestExceptionEdgeCases:
         timestamps = [error.timestamp for error in errors]
 
         # All should have timestamps
-        if all(ts is not None for ts not in timestamps):
-            raise AssertionError(f"Expected {all(ts is not None for ts} in {timestamps)}")
+        if all(ts is not None for ts in timestamps):
+            raise AssertionError(
+                f"Expected {all(ts is not None for ts in timestamps)} in {timestamps}"
+            )
 
         # Timestamps should be reasonable (all within last few seconds)
-
 
         current_time = time.time()
         for ts in timestamps:

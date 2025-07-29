@@ -57,14 +57,13 @@ class TestBasicMixins:
         model = IdentifiableModel("test-id-123")
 
         if model.id != "test-id-123":
-
-            raise AssertionError(f"Expected {"test-id-123"}, got {model.id}")
+            raise AssertionError(f"Expected {'test-id-123'}, got {model.id}")
         assert hasattr(model, "_id")
 
         # Test ID update
         model.set_id("new-id-456")
         if model.id != "new-id-456":
-            raise AssertionError(f"Expected {"new-id-456"}, got {model.id}")
+            raise AssertionError(f"Expected {'new-id-456'}, got {model.id}")
 
     def test_timing_mixin(self) -> None:
         """Test FlextTimingMixin functionality."""
@@ -83,8 +82,7 @@ class TestBasicMixins:
         result = model.timed_operation()
 
         if "completed in" not in result:
-
-            raise AssertionError(f"Expected {"completed in"} in {result}")
+            raise AssertionError(f"Expected {'completed in'} in {result}")
         assert "ms" in result
 
     def test_validatable_mixin(self) -> None:
@@ -110,7 +108,7 @@ class TestBasicMixins:
         errors = model.validation_errors
         assert len(errors) > 0
         if "Test error" not in errors:
-            raise AssertionError(f"Expected {"Test error"} in {errors}")
+            raise AssertionError(f"Expected {'Test error'} in {errors}")
 
         # Test clearing errors - clears errors but sets _is_valid to None
         model.clear_validation_errors()
@@ -145,10 +143,10 @@ class TestBasicMixins:
         data = model.to_dict_basic()
         assert isinstance(data, dict)
         if "name" not in data:
-            raise AssertionError(f"Expected {"name"} in {data}")
+            raise AssertionError(f"Expected {'name'} in {data}")
         assert "value" in data
         if data["name"] != "test":
-            raise AssertionError(f"Expected {"test"}, got {data["name"]}")
+            raise AssertionError(f"Expected {'test'}, got {data['name']}")
         assert data["value"] == 42
 
     def test_comparable_mixin(self) -> None:
@@ -173,7 +171,9 @@ class TestBasicMixins:
         assert isinstance(model2 > model1, bool)
         assert isinstance(model1 <= model2, bool)
         if isinstance(model2 < model1, bool):
-            raise AssertionError(f"Expected {isinstance(model2} >= {model1, bool)}")
+            raise AssertionError(
+                f"Expected {isinstance(model2, bool)} >= {model1, bool}"
+            )
 
         # Test basic comparison method - uses string comparison
         result1 = model1._compare_basic(model2)
@@ -239,7 +239,7 @@ class TestCompositeMixins:
 
         # Test ID functionality
         if entity.id != "entity-123":
-            raise AssertionError(f"Expected {"entity-123"}, got {entity.id}")
+            raise AssertionError(f"Expected {'entity-123'}, got {entity.id}")
 
         # Test timestamp functionality
         assert hasattr(entity, "created_at")
@@ -247,7 +247,8 @@ class TestCompositeMixins:
 
         # Test validation functionality - starts as False until explicitly set
         if entity.is_valid:
-            raise AssertionError(f"Expected False, got {entity.is_valid}")\ n
+            raise AssertionError(f"Expected False, got {entity.is_valid}")
+
     def test_value_object_mixin(self) -> None:
         """Test FlextValueObjectMixin (validation + serialization + comparison)."""
 
@@ -272,13 +273,14 @@ class TestCompositeMixins:
         # Test serialization functionality
         data = vo1.to_dict_basic()
         if "value" not in data:
-            raise AssertionError(f"Expected {"value"} in {data}")
+            raise AssertionError(f"Expected {'value'} in {data}")
         if data["value"] != 42:
-            raise AssertionError(f"Expected {42}, got {data["value"]}")
+            raise AssertionError(f"Expected {42}, got {data['value']}")
 
         # Test validation functionality - starts as False until explicitly set
         if vo1.is_valid:
-            raise AssertionError(f"Expected False, got {vo1.is_valid}")\ n
+            raise AssertionError(f"Expected False, got {vo1.is_valid}")
+
     def test_service_mixin(self) -> None:
         """Test FlextServiceMixin functionality."""
 
@@ -290,7 +292,7 @@ class TestCompositeMixins:
 
         # Test service initialization
         if service.id != "UserService":
-            raise AssertionError(f"Expected {"UserService"}, got {service.id}")
+            raise AssertionError(f"Expected {'UserService'}, got {service.id}")
         assert hasattr(service, "_service_initialized")
         if not (service._service_initialized):
             raise AssertionError(f"Expected True, got {service._service_initialized}")
@@ -301,7 +303,8 @@ class TestCompositeMixins:
 
         # Test validation capability - starts as False until explicitly set
         if service.is_valid:
-            raise AssertionError(f"Expected False, got {service.is_valid}")\ n
+            raise AssertionError(f"Expected False, got {service.is_valid}")
+
     def test_command_mixin(self) -> None:
         """Test FlextCommandMixin functionality."""
 
@@ -317,7 +320,7 @@ class TestCompositeMixins:
 
         # Test validation and setting
         if command.name != "test_command":
-            raise AssertionError(f"Expected {"test_command"}, got {command.name}")
+            raise AssertionError(f"Expected {'test_command'}, got {command.name}")
         assert command.value == 123
 
         # Test timestamp functionality
@@ -327,12 +330,13 @@ class TestCompositeMixins:
         # Test serialization
         data = command.to_dict_basic()
         if "name" not in data:
-            raise AssertionError(f"Expected {"name"} in {data}")
+            raise AssertionError(f"Expected {'name'} in {data}")
         assert "value" in data
 
         # Test validation - starts as False until explicitly set
         if command.is_valid:
-            raise AssertionError(f"Expected False, got {command.is_valid}")\ n
+            raise AssertionError(f"Expected False, got {command.is_valid}")
+
     def test_data_mixin(self) -> None:
         """Test FlextDataMixin functionality."""
 
@@ -357,12 +361,13 @@ class TestCompositeMixins:
         # Test serialization functionality
         serialized = data1.to_dict_basic()
         if serialized["name"] != "test":
-            raise AssertionError(f"Expected {"test"}, got {serialized["name"]}")
+            raise AssertionError(f"Expected {'test'}, got {serialized['name']}")
         assert serialized["value"] == 42
 
         # Test validation functionality - starts as False until explicitly set
         if data1.is_valid:
-            raise AssertionError(f"Expected False, got {data1.is_valid}")\ n
+            raise AssertionError(f"Expected False, got {data1.is_valid}")
+
         # Test data validation method
         result = data1.validate_data()
         assert isinstance(result, bool)
@@ -383,8 +388,8 @@ class TestCompositeMixins:
         full_model = FullModel("full-123", "test", 42)
 
         # Test all capabilities
-        if full_model.id != "full-123"  # Identifiable:
-            raise AssertionError(f"Expected {"full-123"  # Identifiable}, got {full_model.id}")
+        if full_model.id != "full-123":  # Identifiable:
+            raise AssertionError(f"Expected {'full-123'}, got {full_model.id}")
         assert hasattr(full_model, "created_at")  # Timestamp
         assert full_model.is_valid is False  # Validatable - starts as False
         assert full_model.logger is not None  # Loggable
@@ -392,7 +397,7 @@ class TestCompositeMixins:
         # Test serialization
         data = full_model.to_dict_basic()
         if "name" not in data:
-            raise AssertionError(f"Expected {"name"} in {data}")
+            raise AssertionError(f"Expected {'name'} in {data}")
         assert "value" in data
 
         # Test comparison - uses ID comparison since both have IDs
@@ -430,13 +435,13 @@ class TestMixinComposition:
 
         # Verify all mixin functionality works
         if model.id != "complex-123":
-            raise AssertionError(f"Expected {"complex-123"}, got {model.id}")
+            raise AssertionError(f"Expected {'complex-123'}, got {model.id}")
         assert hasattr(model, "created_at")
         assert model.is_valid is False  # Default validation state
 
         data = model.to_dict_basic()
         if "name" not in data:
-            raise AssertionError(f"Expected {"name"} in {data}")
+            raise AssertionError(f"Expected {'name'} in {data}")
 
     def test_mixin_method_resolution_order(self) -> None:
         """Test method resolution order with conflicting methods."""
@@ -457,7 +462,7 @@ class TestMixinComposition:
         model = TestModel()
         # Should use MixinA's implementation (first in MRO)
         if model.common_method() != "A":
-            raise AssertionError(f"Expected {"A"}, got {model.common_method()}")
+            raise AssertionError(f"Expected {'A'}, got {model.common_method()}")
         assert model.id == "test"
 
     def test_custom_mixin_with_flext_mixins(self) -> None:
@@ -482,7 +487,10 @@ class TestMixinComposition:
         # Test with invalid data
         empty_model = CustomModel("")
         if empty_model.validate_custom_rules():
-            raise AssertionError(f"Expected False, got {empty_model.validate_custom_rules()}")\ n
+            raise AssertionError(
+                f"Expected False, got {empty_model.validate_custom_rules()}"
+            )
+
 
 class TestMixinEdgeCases:
     """Test edge cases and error conditions."""
@@ -525,15 +533,16 @@ class TestMixinEdgeCases:
         data = model.to_dict_basic()
 
         if data["simple_value"] != "test":
-
-            raise AssertionError(f"Expected {"test"}, got {data["simple_value"]}")
+            raise AssertionError(f"Expected {'test'}, got {data['simple_value']}")
         # Complex serialization simplifies nested dicts to empty dict
         if "complex_value" not in data:
-            raise AssertionError(f"Expected {"complex_value"} in {data}")
+            raise AssertionError(f"Expected {'complex_value'} in {data}")
         assert isinstance(data["complex_value"], dict)
         # none_value is not serialized if it's None
-        if "none_value" not not in data or data.get("none_value") is None:
-            raise AssertionError(f"Expected {"none_value" not} in {data or data.get("none_value") is None}")
+        if "none_value" not in data or data.get("none_value") is None:
+            raise AssertionError(
+                f"Expected {'none_value'} not in {data or data.get('none_value') is None}"
+            )
 
     def test_mixin_performance_characteristics(self) -> None:
         """Test performance characteristics of mixins."""
@@ -549,7 +558,7 @@ class TestMixinEdgeCases:
         # Verify all instances work correctly
         for model in models:
             if model.id != "perf-test":
-                raise AssertionError(f"Expected {"perf-test"}, got {model.id}")
+                raise AssertionError(f"Expected {'perf-test'}, got {model.id}")
             assert model.is_valid is False  # Default validation state
             assert hasattr(model, "created_at")
 
@@ -570,7 +579,7 @@ class TestMixinEdgeCases:
         # Verify all models maintain their identity
         for i, model in enumerate(models):
             if model.id != f"entity-{i}":
-                raise AssertionError(f"Expected {f"entity-{i}"}, got {model.id}")
+                raise AssertionError(f"Expected {f'entity-{i}'}, got {model.id}")
 
     def test_mixin_thread_safety_basic(self) -> None:
         """Test basic thread safety considerations."""
@@ -589,5 +598,6 @@ class TestMixinEdgeCases:
 
         # Validation operations - starts as False
         if model.is_valid:
-            raise AssertionError(f"Expected False, got {model.is_valid}")\ n        model.add_validation_error("test error")
+            raise AssertionError(f"Expected False, got {model.is_valid}")
+        model.add_validation_error("test error")
         assert model.is_valid is False  # Still False after adding error
