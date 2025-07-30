@@ -37,11 +37,11 @@ if TYPE_CHECKING:
 # VERSION INFORMATION - Single source of truth for FLEXT Core version
 # =============================================================================
 
-__version__ = "0.8.0"
+__version__ = "0.9.0"
 
 # Version metadata for programmatic access
 VERSION_MAJOR = 0
-VERSION_MINOR = 8
+VERSION_MINOR = 9
 VERSION_PATCH = 0
 
 # Semantic version format constants
@@ -326,7 +326,7 @@ def compare_versions(version1: str, version2: str) -> int:
         -1 if version1 < version2, 0 if equal, 1 if version1 > version2
 
     Usage:
-        result = compare_versions("0.8.0", "1.0.0")
+        result = compare_versions("0.9.0", "0.9.0")
         if result < 0:
             print("First version is older")
 

@@ -83,7 +83,7 @@ def demonstrate_basic_logging() -> None:
     # Basic logging at different levels
     logger.trace("Application startup trace", phase="initialization", step=1)
     logger.debug("Debug information", module="config", settings_loaded=True)
-    logger.info("Service started successfully", port=8080, version="1.0.0")
+    logger.info("Service started successfully", port=8080, version="0.9.0")
     logger.warning("High memory usage detected", memory_usage_percent=85)
     logger.error("Database connection failed", database="users", retry_count=3)
     logger.critical("System overload detected", cpu_usage_percent=95)
@@ -196,7 +196,7 @@ def demonstrate_context_management() -> None:
     print("\n1. Basic context management:")
 
     base_logger = FlextLogger("myapp.context", "INFO")
-    base_logger.set_context({"service": "user_service", "version": "1.0.0"})
+    base_logger.set_context({"service": "user_service", "version": "0.9.0"})
 
     base_logger.info("Service started with base context")
 

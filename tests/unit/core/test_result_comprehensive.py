@@ -240,7 +240,7 @@ class TestFlextResultFlatMapExceptions:
 
         def failing_func(x: str) -> FlextResult[int]:
             # This will raise AttributeError when accessing non-existent method
-            x.non_existent_method()
+            x.non_existent_method()  # type: ignore[attr-defined]
             return FlextResult.ok(42)  # Never reached
 
         mapped = result.flat_map(failing_func)
@@ -396,7 +396,7 @@ class TestFlextResultRailwayMethods:
 
     def test_then_failure(self) -> None:
         """Test then method with failure."""
-        result: FlextResult[object] = FlextResult.fail("initial error")
+        result: FlextResult[int] = FlextResult.fail("initial error")
 
         def double(x: int) -> FlextResult[int]:
             return FlextResult.ok(x * 2)
@@ -432,7 +432,7 @@ class TestFlextResultRailwayMethods:
 
     def test_or_else_failure(self) -> None:
         """Test or_else method with failure result."""
-        result: FlextResult[object] = FlextResult.fail("error")
+        result: FlextResult[str] = FlextResult.fail("error")
         alternative = FlextResult.ok("alternative")
 
         chosen = result.or_else(alternative)
@@ -454,7 +454,7 @@ class TestFlextResultRailwayMethods:
 
     def test_or_else_get_failure(self) -> None:
         """Test or_else_get method with failure result."""
-        result: FlextResult[object] = FlextResult.fail("error")
+        result: FlextResult[str] = FlextResult.fail("error")
 
         def get_alternative() -> FlextResult[str]:
             return FlextResult.ok("alternative")
@@ -466,7 +466,7 @@ class TestFlextResultRailwayMethods:
 
     def test_or_else_get_with_exception(self) -> None:
         """Test or_else_get method when function raises exception."""
-        result: FlextResult[object] = FlextResult.fail("error")
+        result: FlextResult[str] = FlextResult.fail("error")
 
         def failing_func() -> FlextResult[str]:
             msg = "Function failed"
@@ -546,7 +546,7 @@ class TestFlextResultRailwayMethods:
 
     def test_recover_with_failure(self) -> None:
         """Test recover_with method with failure result."""
-        result: FlextResult[object] = FlextResult.fail("error")
+        result: FlextResult[str] = FlextResult.fail("error")
 
         def recovery(error: str) -> FlextResult[str]:
             return FlextResult.ok(f"recovered_from_{error}")
@@ -573,7 +573,7 @@ class TestFlextResultRailwayMethods:
 
     def test_recover_with_exception_add(self) -> None:
         """Test recover_with method when recovery function raises exception."""
-        result: FlextResult[object] = FlextResult.fail("error")
+        result: FlextResult[str] = FlextResult.fail("error")
 
         def failing_recovery(error: str) -> FlextResult[str]:
             msg = "Recovery failed"
@@ -623,7 +623,7 @@ class TestFlextResultSideEffects:
 
     def test_tap_failure(self) -> None:
         """Test tap method with failure result."""
-        result: FlextResult[object] = FlextResult.fail("error")
+        result: FlextResult[str] = FlextResult.fail("error")
         side_effect_called = []
 
         def side_effect(data: str) -> None:
@@ -668,7 +668,7 @@ class TestFlextResultSideEffects:
 
     def test_tap_error_failure(self) -> None:
         """Test tap_error method with failure result."""
-        result = FlextResult.fail("test_error")
+        result: FlextResult[object] = FlextResult.fail("test_error")
         side_effect_called = []
 
         def error_side_effect(error: str) -> None:
@@ -756,7 +756,7 @@ class TestFlextResultFilter:
 
     def test_filter_failure(self) -> None:
         """Test filter method with failure result."""
-        result: FlextResult[object] = FlextResult.fail("initial error")
+        result: FlextResult[int] = FlextResult.fail("initial error")
 
         def always_true(x: int) -> bool:
             return True
@@ -816,7 +816,7 @@ class TestFlextResultZipWith:
 
     def test_zip_with_first_failure(self) -> None:
         """Test zip_with with first result failed."""
-        result1 = FlextResult.fail("first error")
+        result1: FlextResult[int] = FlextResult.fail("first error")
         result2 = FlextResult.ok(10)
 
         def add(x: int, y: int) -> int:
@@ -831,7 +831,7 @@ class TestFlextResultZipWith:
     def test_zip_with_second_failure(self) -> None:
         """Test zip_with with second result failed."""
         result1 = FlextResult.ok(5)
-        result2 = FlextResult.fail("second error")
+        result2: FlextResult[int] = FlextResult.fail("second error")
 
         def add(x: int, y: int) -> int:
             return x + y
@@ -916,7 +916,7 @@ class TestFlextResultConversion:
 
     def test_to_exception_failure(self) -> None:
         """Test to_exception method with failure result."""
-        result = FlextResult.fail("error message")
+        result: FlextResult[object] = FlextResult.fail("error message")
         exception = result.to_exception()
         assert isinstance(exception, FlextOperationError)
         if "error message" not in str(exception):

@@ -17,7 +17,11 @@ import os
 import tempfile
 from collections import UserDict
 from pathlib import Path
+from typing import TYPE_CHECKING
 from unittest.mock import patch
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
 
 import pytest
 
@@ -34,7 +38,7 @@ pytestmark = [pytest.mark.unit, pytest.mark.core]
 
 
 @pytest.fixture
-def temp_json_file() -> str:
+def temp_json_file() -> Generator[str]:
     """Create a temporary JSON file for testing."""
     with tempfile.NamedTemporaryFile(
         encoding="utf-8",
@@ -54,7 +58,7 @@ def temp_json_file() -> str:
 
 
 @pytest.fixture
-def temp_dir() -> Path:
+def temp_dir() -> Generator[Path]:
     """Create a temporary directory for testing."""
     with tempfile.TemporaryDirectory() as temp_path:
         yield Path(temp_path)
@@ -77,10 +81,12 @@ class TestBaseConfigOps:
 
     def test_safe_load_from_dict_not_dict(self) -> None:
         """Test safe_load_from_dict with non-dictionary."""
-        result = _BaseConfigOps.safe_load_from_dict("not a dict")
+        result = _BaseConfigOps.safe_load_from_dict("not a dict")  # type: ignore[arg-type]
 
         assert result.is_failure
-        if "Configuration must be a dictionary" not in result.error:
+        if not result.error or "Configuration must be a dictionary" not in (
+            result.error or ""
+        ):
             raise AssertionError(
                 f"Expected {'Configuration must be a dictionary'} in {result.error}"
             )
@@ -98,26 +104,32 @@ class TestBaseConfigOps:
 
     def test_safe_load_from_dict_with_required_keys_missing(self) -> None:
         """Test safe_load_from_dict with missing required keys."""
-        config_dict = {"key1": "value1"}
+        config_dict: dict[str, object] = {"key1": "value1"}
         required_keys = ["key1", "key2", "key3"]
 
         result = _BaseConfigOps.safe_load_from_dict(config_dict, required_keys)
 
         assert result.is_failure
-        if "Missing required configuration keys: key2, key3" not in result.error:
+        if (
+            not result.error
+            or "Missing required configuration keys: key2, key3"
+            not in (result.error or "")
+        ):
             raise AssertionError(
                 f"Expected {'Missing required configuration keys: key2, key3'} in {result.error}"
             )
 
     def test_safe_load_from_dict_invalid_required_keys(self) -> None:
         """Test safe_load_from_dict with invalid required_keys type."""
-        config_dict = {"key1": "value1"}
+        config_dict: dict[str, object] = {"key1": "value1"}
         required_keys = "not a list"
 
-        result = _BaseConfigOps.safe_load_from_dict(config_dict, required_keys)
+        result = _BaseConfigOps.safe_load_from_dict(config_dict, required_keys)  # type: ignore[arg-type]
 
         assert result.is_failure
-        if "Required keys must be a list" not in result.error:
+        if not result.error or "Required keys must be a list" not in (
+            result.error or ""
+        ):
             raise AssertionError(
                 f"Expected {'Required keys must be a list'} in {result.error}"
             )
@@ -128,10 +140,11 @@ class TestBaseConfigOps:
         # Create a non-dict object to trigger the early validation
         bad_config = "not a dict"
 
-        result = _BaseConfigOps.safe_load_from_dict(bad_config)
+        result = _BaseConfigOps.safe_load_from_dict(bad_config)  # type: ignore[arg-type]
 
         assert result.is_failure
-        if "Configuration must be a dictionary" not in result.error:
+        error_msg = result.error or ""
+        if "Configuration must be a dictionary" not in error_msg:
             raise AssertionError(
                 f"Expected {'Configuration must be a dictionary'} in {result.error}"
             )
@@ -161,7 +174,8 @@ class TestBaseConfigOps:
         result = _BaseConfigOps.safe_get_env_var("NONEXISTENT_VAR")
 
         assert result.is_failure
-        if "Environment variable 'NONEXISTENT_VAR' not found" not in result.error:
+        error_msg = result.error or ""
+        if "Environment variable 'NONEXISTENT_VAR' not found" not in error_msg:
             raise AssertionError(
                 f"Expected {"Environment variable 'NONEXISTENT_VAR' not found"} in {result.error}"
             )
@@ -171,26 +185,27 @@ class TestBaseConfigOps:
         result = _BaseConfigOps.safe_get_env_var("NONEXISTENT_VAR", required=True)
 
         assert result.is_failure
-        assert (
-            "Required environment variable 'NONEXISTENT_VAR' not found" in result.error
-        )
+        error_msg = result.error or ""
+        assert "Required environment variable 'NONEXISTENT_VAR' not found" in error_msg
 
     def test_safe_get_env_var_invalid_name(self) -> None:
         """Test safe_get_env_var with invalid variable name."""
         result = _BaseConfigOps.safe_get_env_var("")
 
         assert result.is_failure
-        if "Variable name must be non-empty string" not in result.error:
+        error_msg = result.error or ""
+        if "Variable name must be non-empty string" not in error_msg:
             raise AssertionError(
                 f"Expected {'Variable name must be non-empty string'} in {result.error}"
             )
 
     def test_safe_get_env_var_none_name(self) -> None:
         """Test safe_get_env_var with None variable name."""
-        result = _BaseConfigOps.safe_get_env_var(None)
+        result = _BaseConfigOps.safe_get_env_var(None)  # type: ignore[arg-type]
 
         assert result.is_failure
-        if "Variable name must be non-empty string" not in result.error:
+        error_msg = result.error or ""
+        if "Variable name must be non-empty string" not in error_msg:
             raise AssertionError(
                 f"Expected {'Variable name must be non-empty string'} in {result.error}"
             )
@@ -200,7 +215,8 @@ class TestBaseConfigOps:
         result = _BaseConfigOps.safe_get_env_var("   ")
 
         assert result.is_failure
-        if "Variable name must be non-empty string" not in result.error:
+        error_msg = result.error or ""
+        if "Variable name must be non-empty string" not in error_msg:
             raise AssertionError(
                 f"Expected {'Variable name must be non-empty string'} in {result.error}"
             )
@@ -211,7 +227,8 @@ class TestBaseConfigOps:
             result = _BaseConfigOps.safe_get_env_var("TEST_VAR")
 
             assert result.is_failure
-            if "Environment variable access failed" not in result.error:
+            error_msg = result.error or ""
+            if "Environment variable access failed" not in error_msg:
                 raise AssertionError(
                     f"Expected {'Environment variable access failed'} in {result.error}"
                 )
@@ -221,11 +238,15 @@ class TestBaseConfigOps:
         result = _BaseConfigOps.safe_load_json_file(temp_json_file)
 
         assert result.is_success
-        if "key1" not in result.data:
+        data = result.data or {}
+        if "key1" not in data:
             raise AssertionError(f"Expected {'key1'} in {result.data}")
-        if result.data["key1"] != "value1":
-            raise AssertionError(f"Expected {'value1'}, got {result.data['key1']}")
-        assert result.data["key2"] == 42
+        data = result.data or {}
+        if data.get("key1") != "value1":
+            data = result.data or {}
+            raise AssertionError(f"Expected {'value1'}, got {data.get('key1')}")
+        data = result.data or {}
+        assert data.get("key2") == 42
 
     def test_safe_load_json_file_path_object(self, temp_json_file: str) -> None:
         """Test safe_load_json_file with Path object."""
@@ -233,7 +254,8 @@ class TestBaseConfigOps:
         result = _BaseConfigOps.safe_load_json_file(path_obj)
 
         assert result.is_success
-        if "key1" not in result.data:
+        data = result.data or {}
+        if "key1" not in data:
             raise AssertionError(f"Expected {'key1'} in {result.data}")
 
     def test_safe_load_json_file_not_exists(self) -> None:
@@ -241,7 +263,7 @@ class TestBaseConfigOps:
         result = _BaseConfigOps.safe_load_json_file("/nonexistent/file.json")
 
         assert result.is_failure
-        if "Configuration file not found" not in result.error:
+        if "Configuration file not found" not in (result.error or ""):
             raise AssertionError(
                 f"Expected {'Configuration file not found'} in {result.error}"
             )
@@ -251,7 +273,7 @@ class TestBaseConfigOps:
         result = _BaseConfigOps.safe_load_json_file(temp_dir)
 
         assert result.is_failure
-        if "Path is not a file" not in result.error:
+        if "Path is not a file" not in (result.error or ""):
             raise AssertionError(f"Expected {'Path is not a file'} in {result.error}")
 
     def test_safe_load_json_file_invalid_json(self, temp_dir: Path) -> None:
@@ -262,7 +284,7 @@ class TestBaseConfigOps:
         result = _BaseConfigOps.safe_load_json_file(invalid_json_file)
 
         assert result.is_failure
-        if "JSON file loading failed" not in result.error:
+        if "JSON file loading failed" not in (result.error or ""):
             raise AssertionError(
                 f"Expected {'JSON file loading failed'} in {result.error}"
             )
@@ -275,7 +297,7 @@ class TestBaseConfigOps:
         result = _BaseConfigOps.safe_load_json_file(array_json_file)
 
         assert result.is_failure
-        if "JSON file must contain a dictionary" not in result.error:
+        if "JSON file must contain a dictionary" not in (result.error or ""):
             raise AssertionError(
                 f"Expected {'JSON file must contain a dictionary'} in {result.error}"
             )
@@ -290,14 +312,14 @@ class TestBaseConfigOps:
         result = _BaseConfigOps.safe_load_json_file(bad_encoding_file)
 
         assert result.is_failure
-        if "JSON file loading failed" not in result.error:
+        if "JSON file loading failed" not in (result.error or ""):
             raise AssertionError(
                 f"Expected {'JSON file loading failed'} in {result.error}"
             )
 
     def test_safe_save_json_file_valid(self, temp_dir: Path) -> None:
         """Test safe_save_json_file with valid data."""
-        data = {"key1": "value1", "key2": 42}
+        data: dict[str, object] = {"key1": "value1", "key2": 42}
         output_file = temp_dir / "output.json"
 
         result = _BaseConfigOps.safe_save_json_file(data, output_file)
@@ -313,7 +335,7 @@ class TestBaseConfigOps:
 
     def test_safe_save_json_file_create_dirs(self, temp_dir: Path) -> None:
         """Test safe_save_json_file with directory creation."""
-        data = {"key": "value"}
+        data: dict[str, object] = {"key": "value"}
         nested_file = temp_dir / "nested" / "deep" / "config.json"
 
         result = _BaseConfigOps.safe_save_json_file(data, nested_file, create_dirs=True)
@@ -324,7 +346,7 @@ class TestBaseConfigOps:
 
     def test_safe_save_json_file_no_create_dirs(self, temp_dir: Path) -> None:
         """Test safe_save_json_file without directory creation."""
-        data = {"key": "value"}
+        data: dict[str, object] = {"key": "value"}
         nested_file = temp_dir / "nonexistent" / "config.json"
 
         result = _BaseConfigOps.safe_save_json_file(
@@ -334,27 +356,27 @@ class TestBaseConfigOps:
         )
 
         assert result.is_failure
-        if "JSON file saving failed" not in result.error:
+        if "JSON file saving failed" not in (result.error or ""):
             raise AssertionError(
                 f"Expected {'JSON file saving failed'} in {result.error}"
             )
 
     def test_safe_save_json_file_not_dict(self, temp_dir: Path) -> None:
         """Test safe_save_json_file with non-dictionary data."""
-        data = ["not", "a", "dict"]
+        data = ["not", "a", "dict"]  # type: ignore[assignment]
         output_file = temp_dir / "output.json"
 
         result = _BaseConfigOps.safe_save_json_file(data, output_file)
 
         assert result.is_failure
-        if "Data must be a dictionary" not in result.error:
+        if "Data must be a dictionary" not in (result.error or ""):
             raise AssertionError(
                 f"Expected {'Data must be a dictionary'} in {result.error}"
             )
 
     def test_safe_save_json_file_permission_error(self, temp_dir: Path) -> None:
         """Test safe_save_json_file with permission error."""
-        data = {"key": "value"}
+        data: dict[str, object] = {"key": "value"}
 
         with patch(
             "pathlib.Path.open",
@@ -363,7 +385,7 @@ class TestBaseConfigOps:
             result = _BaseConfigOps.safe_save_json_file(data, temp_dir / "output.json")
 
             assert result.is_failure
-            if "JSON file saving failed" not in result.error:
+            if "JSON file saving failed" not in (result.error or ""):
                 raise AssertionError(
                     f"Expected {'JSON file saving failed'} in {result.error}"
                 )
@@ -398,7 +420,7 @@ class TestBaseConfigValidation:
         )
 
         assert result.is_failure
-        if "Must be positive" not in result.error:
+        if "Must be positive" not in (result.error or ""):
             raise AssertionError(f"Expected {'Must be positive'} in {result.error}")
 
     def test_validate_config_value_not_callable(self) -> None:
@@ -406,7 +428,7 @@ class TestBaseConfigValidation:
         result = _BaseConfigValidation.validate_config_value(42, "not callable")
 
         assert result.is_failure
-        if "Validator must be callable" not in result.error:
+        if "Validator must be callable" not in (result.error or ""):
             raise AssertionError(
                 f"Expected {'Validator must be callable'} in {result.error}"
             )
@@ -421,7 +443,7 @@ class TestBaseConfigValidation:
         result = _BaseConfigValidation.validate_config_value(42, failing_validator)
 
         assert result.is_failure
-        if "Validation failed" not in result.error:
+        if "Validation failed" not in (result.error or ""):
             raise AssertionError(f"Expected {'Validation failed'} in {result.error}")
 
     def test_validate_config_value_default_message(self) -> None:
@@ -433,7 +455,7 @@ class TestBaseConfigValidation:
         result = _BaseConfigValidation.validate_config_value(42, always_false)
 
         assert result.is_failure
-        if "Configuration value validation failed" not in result.error:
+        if "Configuration value validation failed" not in (result.error or ""):
             raise AssertionError(
                 f"Expected {'Configuration value validation failed'} in {result.error}"
             )
@@ -451,7 +473,9 @@ class TestBaseConfigValidation:
         result = _BaseConfigValidation.validate_config_type(42, str, "text_field")
 
         assert result.is_failure
-        if "Configuration 'text_field' must be str, got int" not in result.error:
+        if "Configuration 'text_field' must be str, got int" not in (
+            result.error or ""
+        ):
             raise AssertionError(
                 f"Expected {"Configuration 'text_field' must be str, got int"} in {result.error}"
             )
@@ -461,7 +485,7 @@ class TestBaseConfigValidation:
         result = _BaseConfigValidation.validate_config_type(42, str)
 
         assert result.is_failure
-        if "Configuration 'value' must be str, got int" not in result.error:
+        if "Configuration 'value' must be str, got int" not in (result.error or ""):
             raise AssertionError(
                 f"Expected {"Configuration 'value' must be str, got int"} in {result.error}"
             )
@@ -472,7 +496,7 @@ class TestBaseConfigValidation:
         result = _BaseConfigValidation.validate_config_type("42", int, "number")
 
         assert result.is_failure
-        if "Configuration 'number' must be int, got str" not in result.error:
+        if "Configuration 'number' must be int, got str" not in (result.error or ""):
             raise AssertionError(
                 f"Expected {"Configuration 'number' must be int, got str"} in {result.error}"
             )
@@ -508,7 +532,9 @@ class TestBaseConfigValidation:
         result = _BaseConfigValidation.validate_config_range(15.0, 1.0, 10.0, "number")
 
         assert result.is_failure
-        if "Configuration 'number' must be <= 10.0, got 15.0" not in result.error:
+        if "Configuration 'number' must be <= 10.0, got 15.0" not in (
+            result.error or ""
+        ):
             raise AssertionError(
                 f"Expected {"Configuration 'number' must be <= 10.0, got 15.0"} in {result.error}"
             )
@@ -542,7 +568,7 @@ class TestBaseConfigValidation:
         result = _BaseConfigValidation.validate_config_range(15.0, max_value=10.0)
 
         assert result.is_failure
-        if "Configuration 'value' must be <= 10.0" not in result.error:
+        if "Configuration 'value' must be <= 10.0" not in (result.error or ""):
             raise AssertionError(
                 f"Expected {"Configuration 'value' must be <= 10.0"} in {result.error}"
             )
@@ -571,7 +597,7 @@ class TestBaseConfigValidation:
         result = _BaseConfigValidation.validate_config_range(bad_value, 1.0, 10.0)
 
         assert result.is_failure
-        if "Range validation failed" not in result.error:
+        if "Range validation failed" not in (result.error or ""):
             raise AssertionError(
                 f"Expected {'Range validation failed'} in {result.error}"
             )
@@ -589,14 +615,16 @@ class TestBaseConfigDefaults:
         result = _BaseConfigDefaults.apply_defaults(config, defaults)
 
         assert result.is_success
-        if result.data["key1"] != "value1":
+        data = result.data or {}
+        if data.get("key1") != "value1":
             msg = f"Expected {'value1'}, got {result.data['key1']}"
             raise AssertionError(msg)
-        assert result.data["key2"] == 42
-        if result.data["key3"] != "default3":
+        data = result.data or {}
+        assert data.get("key2") == 42
+        if (result.data or {})["key3"] != "default3":
             msg = f"Expected {'default3'}, got {result.data['key3']}"
             raise AssertionError(msg)
-        assert result.data["key4"] == 100
+        assert (result.data or {})["key4"] == 100
 
     def test_apply_defaults_empty_config(self) -> None:
         """Test apply_defaults with empty configuration."""
@@ -625,7 +653,7 @@ class TestBaseConfigDefaults:
         result = _BaseConfigDefaults.apply_defaults("not dict", {})
 
         assert result.is_failure
-        if "Configuration must be a dictionary" not in result.error:
+        if "Configuration must be a dictionary" not in (result.error or ""):
             raise AssertionError(
                 f"Expected {'Configuration must be a dictionary'} in {result.error}"
             )
@@ -635,7 +663,7 @@ class TestBaseConfigDefaults:
         result = _BaseConfigDefaults.apply_defaults({}, "not dict")
 
         assert result.is_failure
-        if "Defaults must be a dictionary" not in result.error:
+        if "Defaults must be a dictionary" not in (result.error or ""):
             raise AssertionError(
                 f"Expected {'Defaults must be a dictionary'} in {result.error}"
             )
@@ -663,7 +691,7 @@ class TestBaseConfigDefaults:
         result = _BaseConfigDefaults.apply_defaults({}, bad_defaults)
 
         assert result.is_failure
-        if "Defaults must be a dictionary" not in result.error:
+        if "Defaults must be a dictionary" not in (result.error or ""):
             raise AssertionError(
                 f"Expected {'Defaults must be a dictionary'} in {result.error}"
             )
@@ -687,14 +715,15 @@ class TestBaseConfigDefaults:
         result = _BaseConfigDefaults.merge_configs(config1, config2, config3)
 
         assert result.is_success
-        if result.data["key1"] != "value1":
+        data = result.data or {}
+        if data.get("key1") != "value1":
             msg = f"Expected {'value1'}, got {result.data['key1']}"
             raise AssertionError(msg)
-        assert result.data["key2"] == 99  # From config2 (overridden)
-        if result.data["key3"] != "final_value3":
+        assert (result.data or {})["key2"] == 99  # From config2 (overridden)
+        if (result.data or {})["key3"] != "final_value3":
             msg = f"Expected {'final_value3'}, got {result.data['key3']}"
             raise AssertionError(msg)
-        assert result.data["key4"] is True
+        assert (result.data or {})["key4"] is True
 
     def test_merge_configs_empty(self) -> None:
         """Test merge_configs with no configurations."""
@@ -712,7 +741,7 @@ class TestBaseConfigDefaults:
         result = _BaseConfigDefaults.merge_configs(config1, config2)
 
         assert result.is_failure
-        if "Configuration 1 must be a dictionary" not in result.error:
+        if "Configuration 1 must be a dictionary" not in (result.error or ""):
             raise AssertionError(
                 f"Expected {'Configuration 1 must be a dictionary'} in {result.error}"
             )
@@ -787,7 +816,7 @@ class TestBaseConfigDefaults:
         result = _BaseConfigDefaults.filter_config_keys("not dict", ["key1"])
 
         assert result.is_failure
-        if "Configuration must be a dictionary" not in result.error:
+        if "Configuration must be a dictionary" not in (result.error or ""):
             msg = f"Expected {'Configuration must be a dictionary'} in {result.error}"
             raise AssertionError(msg)
 
@@ -798,7 +827,7 @@ class TestBaseConfigDefaults:
         result = _BaseConfigDefaults.filter_config_keys(config, "not list")
 
         assert result.is_failure
-        if "Allowed keys must be a list" not in result.error:
+        if "Allowed keys must be a list" not in (result.error or ""):
             msg = f"Expected {'Allowed keys must be a list'} in {result.error}"
             raise AssertionError(msg)
 
@@ -811,7 +840,7 @@ class TestBaseConfigDefaults:
         result = _BaseConfigDefaults.filter_config_keys(bad_config, ["key1"])
 
         assert result.is_failure
-        if "Configuration must be a dictionary" not in result.error:
+        if "Configuration must be a dictionary" not in (result.error or ""):
             msg = f"Expected {'Configuration must be a dictionary'} in {result.error}"
             raise AssertionError(msg)
 

@@ -293,12 +293,13 @@ class TestFlextHandlersCommandHandler:
             )
 
     def test_command_handler_default_name(self) -> None:
-        """Test command handler with default name."""
+        """Test command handler with default name - SOLID refactored version."""
         handler: FlextHandlers.CommandHandler[object, object] = (
             FlextHandlers.CommandHandler()
         )
 
-        assert handler._handler_name is None
+        # After SOLID refactoring, default name is the class name
+        assert handler._handler_name == "CommandHandler"
 
     def test_command_handler_validate_command(self) -> None:
         """Test command validation."""
@@ -1381,7 +1382,9 @@ class TestHandlerBaseCoverage:
 
             def validate(self) -> FlextResult[None]:
                 self.validate_called = True
-                failed_result: FlextResult[object] = FlextResult.fail("Message validation failed")
+                failed_result: FlextResult[object] = FlextResult.fail(
+                    "Message validation failed"
+                )
                 # Verify our test setup is correct
                 assert failed_result.is_failure
                 assert hasattr(failed_result, "is_failure")

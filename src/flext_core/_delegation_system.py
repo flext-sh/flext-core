@@ -265,8 +265,8 @@ class FlextMixinDelegator:
         if not self._delegated_methods:
             validation_errors.append("No methods were successfully delegated")
 
-        # Note: Due to typing, all methods in _delegated_methods are guaranteed to be callable  # noqa: E501
-        # so we skip the runtime callable check that would be unreachable
+        # Note: Due to typing, all methods in _delegated_methods are guaranteed
+        # to be callable so we skip the runtime callable check that would be unreachable
 
         # Check initialization log for errors
         failed_inits = [log for log in self._initialization_log if log.startswith("✗")]

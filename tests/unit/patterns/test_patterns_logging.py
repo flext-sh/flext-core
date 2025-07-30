@@ -5,6 +5,8 @@ from __future__ import annotations
 import time
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from flext_core.loggings import (
     FlextLogContext,
     FlextLogger,
@@ -318,6 +320,7 @@ class TestFlextLoggerUsage:
         bound_logger.info("Processing item 2")
         bound_logger.info("Batch process completed")
 
+    @pytest.mark.performance
     def test_performance_logging(self) -> None:
         """Test performance-focused logging."""
         perf_logger = FlextLogger.with_performance_tracking("performance_test")
@@ -414,6 +417,7 @@ class TestFlextLoggerIntegration:
                 user_id="user-123",
             )
 
+    @pytest.mark.performance
     def test_performance_logging_integration(self) -> None:
         """Test performance logging integration."""
 

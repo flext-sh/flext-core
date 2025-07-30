@@ -881,7 +881,8 @@ class FlextCommands:
                     def handle(self, command: object) -> FlextResult[object]:
                         result = func(command)
                         if hasattr(result, "is_success") and isinstance(
-                            result, FlextResult,
+                            result,
+                            FlextResult,
                         ):
                             return result
                         return FlextResult.ok(result)

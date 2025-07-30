@@ -760,7 +760,7 @@ class TestAdditionalExceptions:
 
     def test_flext_attribute_error(self) -> None:
         """Test FlextAttributeError functionality."""
-        attr_context = {
+        attr_context: dict[str, object] = {
             "class_name": "TestClass",
             "attribute_name": "missing_attr",
             "available_attributes": ["attr1", "attr2"],
@@ -818,13 +818,13 @@ class TestExceptionsCoverageImprovements:
     def test_context_truncation(self) -> None:
         """Test FlextError context truncation (lines 121-124)."""
         # Create a large context that should be truncated
-        large_context = {"data": "x" * 2000}  # Over 1000 char limit
+        large_context: dict[str, object] = {"data": "x" * 2000}  # Over 1000 char limit
 
         error = FlextError("Test message", context=large_context)
 
         # Context should be truncated
         assert error.context["_truncated"] is True
-        assert error.context["_original_size"] > 1000
+        assert int(error.context["_original_size"]) > 1000  # type: ignore[call-overload]
         assert "data" not in error.context
 
     def test_str_without_error_code(self) -> None:
@@ -836,7 +836,7 @@ class TestExceptionsCoverageImprovements:
 
         # Temporarily set error_code to None to test line 130
         original_error_code = error.error_code
-        error.error_code = None
+        error.error_code = None  # type: ignore[assignment]
 
         try:
             # Should return just the message without error code brackets (line 130)

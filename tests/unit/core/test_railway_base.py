@@ -23,7 +23,7 @@ class TestBaseRailway:
         initial_result = FlextResult.ok(10)
 
         # Define transformation function
-        def add_five(x: int) -> FlextResult[int]:
+        def add_five(x: int) -> FlextResult[object]:
             return FlextResult.ok(x + 5)
 
         # Execute bind operation
@@ -36,10 +36,10 @@ class TestBaseRailway:
     def test_bind_failure_propagation(self) -> None:
         """Test bind failure propagation."""
         # Create initial failure result
-        initial_result = FlextResult.fail("Initial error")
+        initial_result: FlextResult[int] = FlextResult.fail("Initial error")
 
         # Define transformation function (should not be called)
-        def add_five(x: int) -> FlextResult[int]:
+        def add_five(x: int) -> FlextResult[object]:
             return FlextResult.ok(x + 5)
 
         # Execute bind operation
@@ -55,7 +55,7 @@ class TestBaseRailway:
         initial_result = FlextResult.ok(10)
 
         # Define failing transformation function
-        def failing_function(x: int) -> FlextResult[int]:
+        def failing_function(x: int) -> FlextResult[object]:
             return FlextResult.fail("Function failed")
 
         # Execute bind operation
@@ -69,13 +69,13 @@ class TestBaseRailway:
         """Test successful function composition."""
 
         # Define component functions
-        def add_one(x: int) -> FlextResult[int]:
-            return FlextResult.ok(x + 1)
+        def add_one(x: object) -> FlextResult[object]:
+            return FlextResult.ok(int(x) + 1)  # type: ignore[call-overload]
 
-        def multiply_two(x: int) -> FlextResult[int]:
-            return FlextResult.ok(x * 2)
+        def multiply_two(x: object) -> FlextResult[object]:
+            return FlextResult.ok(int(x) * 2)  # type: ignore[call-overload]
 
-        def to_string(x: int) -> FlextResult[str]:
+        def to_string(x: object) -> FlextResult[object]:
             return FlextResult.ok(str(x))
 
         # Compose functions
@@ -92,14 +92,14 @@ class TestBaseRailway:
         """Test failure propagation in function composition."""
 
         # Define component functions
-        def add_one(x: int) -> FlextResult[int]:
-            return FlextResult.ok(x + 1)
+        def add_one(x: object) -> FlextResult[object]:
+            return FlextResult.ok(int(x) + 1)  # type: ignore[call-overload]
 
-        def failing_function(x: int) -> FlextResult[int]:
+        def failing_function(x: object) -> FlextResult[object]:
             return FlextResult.fail("Middle function failed")
 
-        def multiply_two(x: int) -> FlextResult[int]:
-            return FlextResult.ok(x * 2)
+        def multiply_two(x: object) -> FlextResult[object]:
+            return FlextResult.ok(int(x) * 2)  # type: ignore[call-overload]
 
         # Compose functions
         composed = _BaseRailway.compose_functions(
@@ -124,10 +124,10 @@ class TestBaseRailway:
         def is_positive(x: int) -> bool:
             return x > 0
 
-        def double(x: int) -> FlextResult[int]:
-            return FlextResult.ok(x * 2)
+        def double(x: object) -> FlextResult[object]:
+            return FlextResult.ok(int(x) * 2)  # type: ignore[call-overload]
 
-        def negate(x: int) -> FlextResult[int]:
+        def negate(x: int) -> FlextResult[object]:
             return FlextResult.ok(-x)
 
         # Create switch function
@@ -147,10 +147,10 @@ class TestBaseRailway:
         def is_positive(x: int) -> bool:
             return x > 0
 
-        def double(x: int) -> FlextResult[int]:
-            return FlextResult.ok(x * 2)
+        def double(x: object) -> FlextResult[object]:
+            return FlextResult.ok(int(x) * 2)  # type: ignore[call-overload]
 
-        def negate(x: int) -> FlextResult[int]:
+        def negate(x: int) -> FlextResult[object]:
             return FlextResult.ok(-x)
 
         # Create switch function
@@ -173,10 +173,10 @@ class TestBaseRailway:
                 raise ValueError(msg)
             return x > 0
 
-        def double(x: int) -> FlextResult[int]:
-            return FlextResult.ok(x * 2)
+        def double(x: object) -> FlextResult[object]:
+            return FlextResult.ok(int(x) * 2)  # type: ignore[call-overload]
 
-        def negate(x: int) -> FlextResult[int]:
+        def negate(x: int) -> FlextResult[object]:
             return FlextResult.ok(-x)
 
         # Create switch function
@@ -186,7 +186,10 @@ class TestBaseRailway:
         switched_result = switch_func(0)
 
         assert switched_result.is_failure
-        if "Switch evaluation failed" not in switched_result.error:
+        if (
+            not switched_result.error
+            or "Switch evaluation failed" not in switched_result.error
+        ):
             raise AssertionError(
                 f"Expected {'Switch evaluation failed'} in {switched_result.error}"
             )
@@ -196,10 +199,10 @@ class TestBaseRailway:
         # Track side effect execution
         side_effect_called = []
 
-        def main_func(x: int) -> FlextResult[int]:
+        def main_func(x: int) -> FlextResult[object]:
             return FlextResult.ok(x * 2)
 
-        def side_func(x: int) -> FlextResult[None]:
+        def side_func(x: int) -> FlextResult[object]:
             side_effect_called.append(x)
             return FlextResult.ok(None)
 
@@ -219,10 +222,10 @@ class TestBaseRailway:
         # Track side effect execution
         side_effect_called = []
 
-        def failing_main_func(x: int) -> FlextResult[int]:
+        def failing_main_func(x: int) -> FlextResult[object]:
             return FlextResult.fail("Main function failed")
 
-        def side_func(x: int) -> FlextResult[None]:
+        def side_func(x: int) -> FlextResult[object]:
             side_effect_called.append(x)
             return FlextResult.ok(None)
 
@@ -278,7 +281,10 @@ class TestBaseRailway:
         dead_end_result = dead_end_func(-10)
 
         assert dead_end_result.is_failure
-        if "Dead end function failed" not in dead_end_result.error:
+        if (
+            not dead_end_result.error
+            or "Dead end function failed" not in dead_end_result.error
+        ):
             raise AssertionError(
                 f"Expected {'Dead end function failed'} in {dead_end_result.error}"
             )
@@ -288,10 +294,10 @@ class TestBaseRailway:
     def test_plus_both_success(self) -> None:
         """Test plus operation with both functions successful."""
 
-        def func1(x: int) -> FlextResult[int]:
+        def func1(x: int) -> FlextResult[object]:
             return FlextResult.ok(x + 5)
 
-        def func2(x: int) -> FlextResult[int]:
+        def func2(x: int) -> FlextResult[object]:
             return FlextResult.ok(x * 2)
 
         # Create plus function
@@ -307,10 +313,10 @@ class TestBaseRailway:
     def test_plus_first_failure(self) -> None:
         """Test plus operation with first function failing."""
 
-        def failing_func1(x: int) -> FlextResult[int]:
+        def failing_func1(x: int) -> FlextResult[object]:
             return FlextResult.fail("First function failed")
 
-        def func2(x: int) -> FlextResult[int]:
+        def func2(x: int) -> FlextResult[object]:
             return FlextResult.ok(x * 2)
 
         # Create plus function
@@ -320,7 +326,7 @@ class TestBaseRailway:
         plus_result = plus_func(10)
 
         assert plus_result.is_failure
-        if "First function failed" not in plus_result.error:
+        if not plus_result.error or "First function failed" not in plus_result.error:
             raise AssertionError(
                 f"Expected {'First function failed'}, got {plus_result.error}"
             )
@@ -328,10 +334,10 @@ class TestBaseRailway:
     def test_plus_second_failure(self) -> None:
         """Test plus operation with second function failing."""
 
-        def func1(x: int) -> FlextResult[int]:
+        def func1(x: int) -> FlextResult[object]:
             return FlextResult.ok(x + 5)
 
-        def failing_func2(x: int) -> FlextResult[int]:
+        def failing_func2(x: int) -> FlextResult[object]:
             return FlextResult.fail("Second function failed")
 
         # Create plus function
@@ -341,7 +347,7 @@ class TestBaseRailway:
         plus_result = plus_func(10)
 
         assert plus_result.is_failure
-        if "Second function failed" not in plus_result.error:
+        if not plus_result.error or "Second function failed" not in plus_result.error:
             raise AssertionError(
                 f"Expected {'Second function failed'}, got {plus_result.error}"
             )
@@ -349,10 +355,10 @@ class TestBaseRailway:
     def test_plus_both_failure(self) -> None:
         """Test plus operation with both functions failing."""
 
-        def failing_func1(x: int) -> FlextResult[int]:
+        def failing_func1(x: int) -> FlextResult[object]:
             return FlextResult.fail("First function failed")
 
-        def failing_func2(x: int) -> FlextResult[int]:
+        def failing_func2(x: int) -> FlextResult[object]:
             return FlextResult.fail("Second function failed")
 
         # Create plus function
@@ -363,10 +369,11 @@ class TestBaseRailway:
 
         assert plus_result.is_failure
         # Should contain both errors
-        if "First function failed" not in plus_result.error:
+        if not plus_result.error or "First function failed" not in plus_result.error:
             raise AssertionError(
                 f"Expected {'First function failed'}, got {plus_result.error}"
             )
+        assert plus_result.error is not None
         assert "Second function failed" in plus_result.error
 
 
@@ -407,7 +414,7 @@ class TestBaseRailwayUtils:
         result = railway_function(-1)
 
         assert result.is_failure
-        if "Negative value not allowed" not in result.error:
+        if not result.error or "Negative value not allowed" not in result.error:
             raise AssertionError(
                 f"Expected {'Negative value not allowed'}, got {result.error}"
             )
@@ -442,16 +449,16 @@ class TestBaseRailwayUtils:
         """Test complex railway operation chain."""
 
         # Define component functions
-        def validate_positive(x: int) -> FlextResult[int]:
-            if x <= 0:
+        def validate_positive(x: object) -> FlextResult[object]:
+            if int(x) <= 0:  # type: ignore[call-overload]
                 return FlextResult.fail("Must be positive")
             return FlextResult.ok(x)
 
-        def double(x: int) -> FlextResult[int]:
-            return FlextResult.ok(x * 2)
+        def double(x: object) -> FlextResult[object]:
+            return FlextResult.ok(int(x) * 2)  # type: ignore[call-overload]
 
-        def add_ten(x: int) -> FlextResult[int]:
-            return FlextResult.ok(x + 10)
+        def add_ten(x: object) -> FlextResult[object]:
+            return FlextResult.ok(int(x) + 10)  # type: ignore[call-overload]
 
         # Create complex chain
         initial_result = FlextResult.ok(5)
@@ -473,16 +480,16 @@ class TestBaseRailwayUtils:
         """Test complex railway chain with failure in middle."""
 
         # Define component functions
-        def validate_positive(x: int) -> FlextResult[int]:
-            if x <= 0:
+        def validate_positive(x: object) -> FlextResult[object]:
+            if int(x) <= 0:  # type: ignore[call-overload]
                 return FlextResult.fail("Must be positive")
             return FlextResult.ok(x)
 
-        def double(x: int) -> FlextResult[int]:
-            return FlextResult.ok(x * 2)
+        def double(x: object) -> FlextResult[object]:
+            return FlextResult.ok(int(x) * 2)  # type: ignore[call-overload]
 
-        def add_ten(x: int) -> FlextResult[int]:
-            return FlextResult.ok(x + 10)
+        def add_ten(x: object) -> FlextResult[object]:
+            return FlextResult.ok(int(x) + 10)  # type: ignore[call-overload]
 
         # Create complex chain with negative input
         initial_result = FlextResult.ok(-3)
@@ -505,7 +512,7 @@ class TestBaseRailwayUtils:
         # Create success result with None data
         success_result = FlextResult.ok(None)
 
-        def process_data(x: object) -> FlextResult[str]:
+        def process_data(x: object) -> FlextResult[object]:
             return FlextResult.ok(str(x))
 
         # Execute bind operation
@@ -523,15 +530,15 @@ class TestBaseRailwayUtils:
         initial_result = FlextResult.ok("test")
 
         # Define function that raises TypeError
-        def failing_function(x: str) -> FlextResult[int]:
+        def failing_function(x: str) -> FlextResult[object]:
             # This will raise TypeError when called with string
-            return FlextResult.ok(int(x + None))
+            return FlextResult.ok(int(x + None))  # type: ignore[operator]
 
         # Execute bind operation
         result = _BaseRailway.bind(initial_result, failing_function)
 
         assert result.is_failure
-        if "Bind operation failed:" not in result.error:
+        if not result.error or "Bind operation failed:" not in result.error:
             raise AssertionError(
                 f"Expected {'Bind operation failed:'} in {result.error}"
             )

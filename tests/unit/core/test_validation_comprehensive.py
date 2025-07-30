@@ -510,7 +510,7 @@ class TestValidationModels:
         config = FlextValidationConfig(field_name="test")
 
         with pytest.raises(ValueError, match="frozen"):
-            config.field_name = "modified"
+            config.field_name = "modified"  # type: ignore[misc]
 
     def test_validation_result_creation(self) -> None:
         """Test FlextValidationResult creation."""
@@ -541,7 +541,7 @@ class TestValidationModels:
         result = FlextValidationResult(is_valid=True)
 
         with pytest.raises(ValueError, match="frozen"):
-            result.is_valid = False
+            result.is_valid = False  # type: ignore[misc]
 
 
 @pytest.mark.unit
@@ -1018,7 +1018,7 @@ class TestFlextValidation:
 
             def failing_validator(
                 value: object,
-                exc: type[Exception] = exception,
+                exc: type[Exception] = exception,  # type: ignore[assignment]
             ) -> bool:
                 raise exc()
 
@@ -1196,8 +1196,9 @@ class TestValidationEdgeCases:
         for email, expected in edge_cases:
             actual = FlextValidators.is_email(value=email)
             if actual != expected:
-                raise AssertionError(f"Expected {expected}, got {actual}")
-                f"Failed for {email}: expected {expected}, got {actual}"
+                raise AssertionError(
+                    f"Failed for {email}: expected {expected}, got {actual}"
+                )
 
     def test_uuid_regex_edge_cases(self) -> None:
         """Test UUID validation regex edge cases."""
@@ -1313,8 +1314,9 @@ class TestValidationEdgeCases:
         for pattern, text, expected in patterns:
             actual = FlextValidators.matches_pattern(value=text, pattern=pattern)
             if actual != expected:
-                raise AssertionError(f"Expected {expected}, got {actual}")
-                f"Pattern {pattern} with {text}: expected {expected}, got {actual}"
+                raise AssertionError(
+                    f"Pattern {pattern} with {text}: expected {expected}, got {actual}"
+                )
 
     def test_validation_with_complex_types(self) -> None:
         """Test validation with complex Python types."""

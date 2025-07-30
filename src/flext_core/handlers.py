@@ -65,8 +65,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from abc import abstractmethod
-from typing import cast
+import contextlib
+from typing import Protocol, cast
 
 from flext_core._handlers_base import (
     _BaseHandler,
@@ -103,6 +103,54 @@ type TRetryCount = int  # Number of retry attempts for failed handlers
 type THandlerRegistry = dict[str, THandler]  # Handler type to handler mapping
 type THandlerKey = str  # Key for handler registration and lookup
 type TDispatchResult[T] = FlextResult[T]  # Result of handler dispatch
+
+# =============================================================================
+# HANDLER INTERFACES - ISP Compliance (Interface Segregation Principle)
+# =============================================================================
+
+
+class FlextHandlerProtocols:
+    """Handler protocols for Interface Segregation Principle compliance."""
+
+    class MessageHandler(Protocol):
+        """Protocol for basic message handling."""
+
+        def handle(self, message: object) -> FlextResult[object]:
+            """Handle message - protocol method."""
+            ...
+
+        def can_handle(self, message: object) -> bool:
+            """Check if can handle message - protocol method."""
+            ...
+
+    class ValidatingHandler(Protocol):
+        """Protocol for handlers that need validation."""
+
+        def validate_message(self, message: object) -> FlextResult[object]:
+            """Validate message - protocol method."""
+            ...
+
+    class AuthorizingHandler(Protocol):
+        """Protocol for handlers that need authorization."""
+
+        def authorize_query(self, query: object) -> FlextResult[None]:
+            """Authorize query - protocol method."""
+            ...
+
+    class EventProcessor(Protocol):
+        """Protocol for event processing with side effects."""
+
+        def process_event_impl(self, event: object) -> None:
+            """Process event implementation - protocol method."""
+            ...
+
+    class MetricsCollector(Protocol):
+        """Protocol for handlers that collect metrics."""
+
+        def get_metrics(self) -> TAnyDict:
+            """Get metrics - protocol method."""
+            ...
+
 
 # =============================================================================
 # FLEXT HANDLERS - Unified handler patterns
@@ -349,25 +397,41 @@ class FlextHandlers:
     # =============================================================================
 
     class CommandHandler:
-        """Handler specifically for commands using composition-based delegation.
+        """SOLID-compliant command handler with single responsibility.
 
+        Follows Single Responsibility Principle - only handles command processing.
+        Uses dependency injection for validation and metrics collection.
         Commands represent intentions to change system state.
-        Follows architectural guidelines with single internal definition
-        (_BaseCommandHandler) and external exposure through composition.
         """
 
-        def __init__(self, handler_name: TServiceName | None = None) -> None:
-            """Initialize command handler with composition-based delegation."""
-            self._handler_name = handler_name
-            # Note: _BaseCommandHandler is abstract, so we implement methods directly
+        def __init__(
+            self,
+            handler_name: TServiceName | None = None,
+            validator: FlextHandlerProtocols.ValidatingHandler | None = None,
+            metrics_collector: FlextHandlerProtocols.MetricsCollector | None = None,
+        ) -> None:
+            """Initialize command handler with dependency injection."""
+            self._handler_name = handler_name or self.__class__.__name__
+            self._validator = validator
+            self._metrics_collector = metrics_collector
+            self._command_count = 0
+            self._success_count = 0
 
         # =====================================================================
         # DELEGATION METHODS - Direct delegation to base command handler
         # =====================================================================
 
-        def validate_command(self, command: object) -> FlextResult[None]:  # noqa: ARG002
-            """Validate command."""
-            # Basic validation - can be overridden by subclasses
+        def validate_command(self, command: object) -> FlextResult[None]:
+            """Validate command using injected validator or default validation."""
+            if self._validator:
+                validation_result = self._validator.validate_message(command)
+                if validation_result.is_failure:
+                    error_msg = validation_result.error or "Validation failed"
+                    return FlextResult.fail(error_msg)
+
+            # Default validation - command cannot be None
+            if command is None:
+                return FlextResult.fail("Command cannot be None")
             return FlextResult.ok(None)
 
         def handle(self, command: object) -> FlextResult[object]:
@@ -392,7 +456,9 @@ class FlextHandlers:
             return result
 
         def handle_with_hooks(self, command: object) -> FlextResult[object]:
-            """Handle with hooks."""
+            """Handle with hooks and metrics collection."""
+            self._command_count += 1
+
             # Pre-process
             pre_result = self.pre_handle(command)
             if pre_result.is_failure:
@@ -401,15 +467,28 @@ class FlextHandlers:
             # Handle
             handle_result = self.handle(pre_result.data)
 
+            # Update success metrics
+            if handle_result.is_success:
+                self._success_count += 1
+
             # Post-process
             return self.post_handle(handle_result)
 
         def get_metrics(self) -> TAnyDict:
-            """Get metrics."""
-            return {
+            """Get metrics using injected collector or default metrics."""
+            base_metrics = {
                 "handler_name": self._handler_name,
                 "handler_type": "CommandHandler",
+                "commands_processed": self._command_count,
+                "successful_commands": self._success_count,
+                "success_rate": self._success_count / max(self._command_count, 1),
             }
+
+            if self._metrics_collector:
+                additional_metrics = self._metrics_collector.get_metrics()
+                base_metrics.update(additional_metrics)
+
+            return base_metrics
 
         @property
         def logger(self) -> object:
@@ -461,29 +540,58 @@ class FlextHandlers:
                 return FlextResult.ok(None)
             return FlextResult.fail(result.error or "Event handling failed")
 
-        @abstractmethod
         def process_event_impl(self, event: object) -> None:
-            """Process the event - implement in subclasses.
+            """Process the event - default implementation.
 
             This method should have side effects but no return value.
+            Override in subclasses to implement specific event processing.
             """
+            # Default implementation - log the event processing
+            if hasattr(self, "logger") and self.logger:
+                with contextlib.suppress(AttributeError, TypeError):
+                    if hasattr(self.logger, "debug"):
+                        event_type = type(event).__name__
+                        self.logger.debug("Processing event: %s", event_type)
+            # No-op default implementation - subclasses should override
 
     class QueryHandler(Handler[T, R]):
-        """Handler specifically for queries.
+        """SOLID-compliant query handler with authorization support.
 
+        Follows Open/Closed Principle - extensible through dependency injection.
         Queries request data without side effects.
         """
 
-        def authorize_query(self, query: object) -> FlextResult[None]:
-            """Check query authorization.
+        def __init__(
+            self,
+            handler_name: TServiceName | None = None,
+            authorizer: FlextHandlerProtocols.AuthorizingHandler | None = None,
+        ) -> None:
+            """Initialize query handler with dependency injection."""
+            super().__init__(handler_name)
+            self._authorizer = authorizer
 
-            Override to add authorization logic.
+        def authorize_query(self, query: object) -> FlextResult[None]:
+            """Check query authorization using injected authorizer.
+
+            Uses dependency injection to support different authorization strategies.
             """
-            _ = query  # Mark as used for linting
+            if self._authorizer:
+                return self._authorizer.authorize_query(query)
+
+            # Default authorization - allow all queries
+            # Override by injecting a custom authorizer
             return FlextResult.ok(None)
 
         def pre_handle(self, query: object) -> FlextResult[object]:
-            """Pre-process query with authorization."""
+            """Pre-process query with authorization and validation."""
+            # First validate the query
+            validation_result = self.validate_message(query)
+            if validation_result.is_failure:
+                return FlextResult.fail(
+                    validation_result.error or "Query validation failed",
+                )
+
+            # Then authorize the query
             auth_result = self.authorize_query(query)
             if auth_result.is_failure:
                 return FlextResult.fail(

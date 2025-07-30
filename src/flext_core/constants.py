@@ -400,7 +400,7 @@ class FlextConstants:
     DEFAULT_LOG_LEVEL = "INFO"
 
     # Project metadata
-    VERSION = "1.0.0"
+    VERSION = "0.9.0"
     NAME = "flext-core"
 
     class Prefixes:
@@ -436,6 +436,78 @@ class FlextConstants:
         MAX_STRING_LENGTH = 10000
         MAX_LIST_SIZE = 10000
         MAX_ID_LENGTH = 255
+
+    # =============================================================================
+    # PLATFORM CONSTANTS - Single source of truth for entire FLEXT ecosystem
+    # =============================================================================
+
+    class Platform:
+        """Platform-wide constants for the entire FLEXT ecosystem."""
+
+        # Service Ports
+        FLEXCORE_PORT = 8080
+        FLEXT_SERVICE_PORT = 8081
+        FLEXT_API_PORT = 8000
+        FLEXT_WEB_PORT = 3000
+        FLEXT_GRPC_PORT = 50051
+
+        # Infrastructure Ports
+        POSTGRESQL_PORT = 5433
+        REDIS_PORT = 6380
+        MONITORING_PORT = 9090
+        METRICS_PORT = 8090
+
+        # Development Ports
+        DEV_DB_PORT = 5432
+        DEV_REDIS_PORT = 6379
+        DEV_WEBHOOK_PORT = 8888
+
+        # Hosts
+        DEFAULT_HOST = "localhost"
+        PRODUCTION_HOST = "localhost"  # Use specific host, not wildcard
+        LOOPBACK_HOST = "127.0.0.1"
+
+        # URLs
+        DEFAULT_BASE_URL = f"http://{DEFAULT_HOST}"
+        PRODUCTION_BASE_URL = "https://api.flext.io"
+
+        # Database
+        DB_MIN_CONNECTIONS = 1
+        DB_MAX_CONNECTIONS = 10
+        DB_CONNECTION_TIMEOUT = 30
+        DB_QUERY_TIMEOUT = 60
+        DEFAULT_POSTGRES_URL = (
+            f"postgresql://flext:flext@{DEFAULT_HOST}:{POSTGRESQL_PORT}/flext"
+        )
+        DEFAULT_SQLITE_URL = "sqlite:///flext.db"
+
+        # Cache
+        REDIS_URL = f"redis://{DEFAULT_HOST}:{REDIS_PORT}/0"
+        REDIS_TIMEOUT = 5
+        CACHE_TTL_SHORT = 300  # 5 minutes
+        CACHE_TTL_MEDIUM = 1800  # 30 minutes
+        CACHE_TTL_LONG = 3600  # 1 hour
+        CACHE_TTL_EXTENDED = 86400  # 24 hours
+
+        # Security
+        ACCESS_TOKEN_LIFETIME = 1800  # 30 minutes
+        REFRESH_TOKEN_LIFETIME = 604800  # 7 days
+        RATE_LIMIT_REQUESTS = 60  # requests per minute
+        RATE_LIMIT_WINDOW = 60  # window in seconds
+        MAX_LOGIN_ATTEMPTS = 5
+        LOCKOUT_DURATION = 1800  # 30 minutes
+
+        # Timeouts
+        HTTP_CONNECT_TIMEOUT = 10
+        HTTP_READ_TIMEOUT = 30
+        HTTP_TOTAL_TIMEOUT = 60
+        SERVICE_STARTUP_TIMEOUT = 30
+        SERVICE_SHUTDOWN_TIMEOUT = 10
+
+        # Validation
+        MAX_NAME_LENGTH = 255
+        MAX_DESCRIPTION_LENGTH = 1000
+        MAX_FILE_SIZE = 10485760  # 10MB
 
 
 # =============================================================================
