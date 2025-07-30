@@ -46,7 +46,7 @@ class TestFlextEventCoverage:
     def test_create_event_invalid_event_type_none(self) -> None:
         """Test create_event with None event_type (lines 793-795)."""
         result = FlextEvent.create_event(
-            event_type=None,  # type: ignore[arg-type]
+            event_type=None,
             event_data={"test": "data"},
         )
         assert result.is_failure
@@ -108,7 +108,7 @@ class TestFlextMessageCoverage:
 
     def test_create_message_none(self) -> None:
         """Test create_message with None message (lines 653-655)."""
-        result = FlextMessage.create_message(None)  # type: ignore[arg-type]
+        result = FlextMessage.create_message(None)
         assert result.is_failure
         assert "Message cannot be empty" in result.error
 
@@ -248,7 +248,7 @@ class TestFlextPayloadCoverageImprovements:
 
     def test_payload_transform_data_with_none(self) -> None:
         """Test transform_data with None data (line 278-279)."""
-        payload = FlextPayload(data=None)
+        payload: FlextPayload[object] = FlextPayload(data=None)
 
         def dummy_transformer(x: object) -> str:
             return str(x)
@@ -533,7 +533,7 @@ class TestFlextPayloadCoverageImprovements:
     def test_payload_from_dict_invalid_data(self) -> None:
         """Test from_dict with invalid data."""
         # Invalid structure
-        result = FlextPayload.from_dict("not_a_dict")  # type: ignore[arg-type]
+        result = FlextPayload.from_dict("not_a_dict")
         assert result.is_failure
         if "Failed to create payload from dict" not in result.error:
             raise AssertionError(
@@ -610,16 +610,16 @@ class TestFlextPayloadCoverageImprovements:
         payload = FlextPayload(data="test", name="test_name", value=42)
 
         # Should access extra fields
-        if payload.name != "test_name":  # type: ignore[attr-defined]
+        if payload.name != "test_name":
             raise AssertionError(f"Expected {'test_name'}, got {payload.name}")
-        assert payload.value == 42  # type: ignore[attr-defined]
+        assert payload.value == 42
 
     def test_payload_getattr_metadata_priority(self) -> None:
         """Test that extra fields work correctly."""
         payload = FlextPayload(data="test", name="extra_field_name")
 
         # Extra field should be accessible
-        if payload.name != "extra_field_name":  # type: ignore[attr-defined]
+        if payload.name != "extra_field_name":
             raise AssertionError(f"Expected {'extra_field_name'}, got {payload.name}")
 
     def test_payload_getattr_nonexistent(self) -> None:
@@ -627,7 +627,7 @@ class TestFlextPayloadCoverageImprovements:
         payload = FlextPayload(data="simple_string")
 
         with pytest.raises(FlextAttributeError):
-            _ = payload.nonexistent_attr  # type: ignore[attr-defined]
+            _ = payload.nonexistent_attr
 
     def test_payload_contains(self) -> None:
         """Test 'in' operator for extra fields."""
@@ -668,7 +668,7 @@ class TestFlextPayloadCoverageImprovements:
 
         # Should not be able to modify data
         with pytest.raises((AttributeError, ValidationError)):
-            payload.data = "new_data"  # type: ignore[misc]
+            payload.data = "new_data"
 
         # Should not be able to modify metadata dict directly
         # Note: The dict itself might be mutable, but the payload is frozen
@@ -679,7 +679,7 @@ class TestPayloadEdgeCases:
 
     def test_payload_with_none_data(self) -> None:
         """Test payload with None data."""
-        payload = FlextPayload(data=None)
+        payload: FlextPayload[object] = FlextPayload(data=None)
 
         assert payload.data is None
         assert isinstance(payload.metadata, dict)
@@ -782,7 +782,7 @@ class TestPayloadEdgeCases:
     def test_payload_event_like_with_empty_data(self) -> None:
         """Test payload simulating event with empty data - using FlextPayload with metadata."""
         # Use FlextPayload with event-like metadata instead of FlextEvent
-        event_payload = FlextPayload(
+        event_payload: FlextPayload[object] = FlextPayload(
             data={}, metadata={"event_type": "EmptyEvent", "aggregate_type": "System"}
         )
 
@@ -842,7 +842,7 @@ class TestPayloadEdgeCases:
 
         # Test accessing reserved names
         with pytest.raises(FlextAttributeError):
-            _ = payload.nonexistent_reserved_name  # type: ignore[attr-defined]
+            _ = payload.nonexistent_reserved_name
 
 
 class TestPayloadPerformance:
@@ -1111,7 +1111,7 @@ class TestPayloadCoverageImprovements:
     def test_payload_event_like_correlation_id_simulation(self) -> None:
         """Test payload simulating event correlation_id using FlextPayload with metadata."""
         # Test with correlation_id in metadata - using FlextPayload instead
-        event_payload = FlextPayload(
+        event_payload: FlextPayload[object] = FlextPayload(
             data={"test": "data"},
             metadata={
                 "correlation_id": "test-correlation-123",
@@ -1132,7 +1132,7 @@ class TestPayloadCoverageImprovements:
     def test_payload_event_like_properties_simulation(self) -> None:
         """Test payload simulating event properties using FlextPayload with metadata."""
         # Test event_type simulation using FlextPayload
-        event_payload = FlextPayload(
+        event_payload: FlextPayload[object] = FlextPayload(
             data={"test": "data"},
             metadata={"event_type": "user.created", "domain": "user"},
         )
@@ -1172,7 +1172,7 @@ class TestPayloadCoverageImprovements:
 
     def test_payload_event_like_properties_without_metadata(self) -> None:
         """Test payload simulating event properties without metadata (default values)."""
-        event_payload = FlextPayload(data={"test": "data"})
+        event_payload: FlextPayload[object] = FlextPayload(data={"test": "data"})
 
         # All should return None when not set in metadata - using FlextPayload methods
         assert event_payload.get_metadata("event_type") is None

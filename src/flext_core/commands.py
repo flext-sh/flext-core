@@ -880,8 +880,10 @@ class FlextCommands:
                 class FunctionHandler(FlextCommands.Handler[object, object]):
                     def handle(self, command: object) -> FlextResult[object]:
                         result = func(command)
-                        if hasattr(result, "is_success"):
-                            return result  # type: ignore[return-value]
+                        if hasattr(result, "is_success") and isinstance(
+                            result, FlextResult,
+                        ):
+                            return result
                         return FlextResult.ok(result)
 
                 # Create wrapper function with metadata instead of dynamic attributes

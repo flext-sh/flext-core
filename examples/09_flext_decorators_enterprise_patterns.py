@@ -460,7 +460,7 @@ def demonstrate_immutability_decorators() -> None:
 
     # Try to modify (should fail)
     try:
-        config["new_key"] = "new_value"  # type: ignore[index]
+        config["new_key"] = "new_value"
         log_message = f"✅ Config modified: {config}"
         print(log_message)
     except (RuntimeError, ValueError, TypeError) as e:
@@ -476,7 +476,7 @@ def demonstrate_immutability_decorators() -> None:
         """Process user data with frozen arguments."""
         # Try to modify input (should fail)
         try:
-            user_data["processed"] = True  # type: ignore[index]
+            user_data["processed"] = True
         except (RuntimeError, ValueError, TypeError) as e:
             error_message = f"Input modification failed (expected): {e}"
             print(f"❌ {error_message}")

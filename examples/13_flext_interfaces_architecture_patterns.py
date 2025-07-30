@@ -645,7 +645,7 @@ class SimplePluginContext:
     def logger(self) -> "BoundLogger":
         """Get logger for plugin (simplified)."""
         # Return MockLogger which implements BoundLogger interface
-        return self._logger  # type: ignore[return-value]
+        return self._logger
 
     @property
     def config(self) -> Mapping[str, object]:

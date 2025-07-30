@@ -185,8 +185,6 @@ class FlextAggregateRoot(FlextEntity):
         - Cross-aggregate eventual consistency through events
     """
 
-    # Domain events inherited from FlextEntity: list[FlextEvent]
-
     def __init__(
         self,
         entity_id: str | None = None,

@@ -577,7 +577,7 @@ class TestFlextHandlersEventHandler:
         # The abstract method is enforced by the abstractmethod decorator
         try:
             # Create instance - this might work
-            handler = FlextHandlers.EventHandler("test")
+            handler: object = FlextHandlers.EventHandler("test")
 
             # But calling the abstract method should raise NotImplementedError
             # Since the method is decorated with @abstractmethod,
@@ -600,7 +600,7 @@ class TestFlextHandlersQueryHandler:
 
     def test_query_handler_creation(self) -> None:
         """Test query handler creation."""
-        handler = FlextHandlers.QueryHandler("test_query_handler")
+        handler: object = FlextHandlers.QueryHandler("test_query_handler")
 
         if handler.handler_name != "test_query_handler":
             raise AssertionError(
@@ -609,7 +609,7 @@ class TestFlextHandlersQueryHandler:
 
     def test_query_handler_authorize_query(self) -> None:
         """Test query authorization."""
-        handler = FlextHandlers.QueryHandler()
+        handler: object = FlextHandlers.QueryHandler()
         query = _TestQuery("get_users")
 
         result = handler.authorize_query(query)
@@ -617,7 +617,7 @@ class TestFlextHandlersQueryHandler:
 
     def test_query_handler_pre_handle_with_authorization(self) -> None:
         """Test query pre-handling with authorization."""
-        handler = FlextHandlers.QueryHandler()
+        handler: object = FlextHandlers.QueryHandler()
         query = _TestQuery("get_data")
 
         result = handler.pre_handle(query)
@@ -643,7 +643,7 @@ class TestFlextHandlersQueryHandler:
 
     def test_query_handler_process_request(self) -> None:
         """Test request processing."""
-        handler = FlextHandlers.QueryHandler()
+        handler: object = FlextHandlers.QueryHandler()
         request = _TestQuery("search")
 
         result = handler.process_request(request)
@@ -651,7 +651,7 @@ class TestFlextHandlersQueryHandler:
 
     def test_query_handler_process_request_validation_failure(self) -> None:
         """Test request processing with validation failure."""
-        handler = FlextHandlers.QueryHandler()
+        handler: object = FlextHandlers.QueryHandler()
 
         result = handler.process_request(None)
         assert result.is_failure
@@ -771,8 +771,8 @@ class TestHandlerRegistry:
     def test_registry_register_duplicate_key(self) -> None:
         """Test registering handler with duplicate key."""
         registry = FlextHandlers.Registry()
-        handler1 = FlextHandlers.Handler("handler1")
-        handler2 = FlextHandlers.Handler("handler2")
+        handler1: object = FlextHandlers.Handler("handler1")
+        handler2: object = FlextHandlers.Handler("handler2")
 
         # Register first handler
         result1 = registry.register("duplicate_key", handler1)
@@ -801,8 +801,8 @@ class TestHandlerRegistry:
     def test_registry_register_for_type_duplicate(self) -> None:
         """Test registering handler for type with duplicate."""
         registry = FlextHandlers.Registry()
-        handler1 = FlextHandlers.Handler("handler1")
-        handler2 = FlextHandlers.Handler("handler2")
+        handler1: object = FlextHandlers.Handler("handler1")
+        handler2: object = FlextHandlers.Handler("handler2")
 
         # Register first handler
         result1 = registry.register_for_type(_TestMessage, handler1)
@@ -869,8 +869,8 @@ class TestHandlerRegistry:
     def test_registry_get_all_handlers(self) -> None:
         """Test getting all registered handlers."""
         registry = FlextHandlers.Registry()
-        handler1 = FlextHandlers.Handler("handler1")
-        handler2 = FlextHandlers.Handler("handler2")
+        handler1: object = FlextHandlers.Handler("handler1")
+        handler2: object = FlextHandlers.Handler("handler2")
 
         registry.register(handler1)
         registry.register(handler2)
@@ -1090,7 +1090,7 @@ class TestFactoryMethods:
                 return FlextResult.ok(f"Function processed: {message.content}")
             return FlextResult.ok("Function processed unknown message")
 
-        handler = FlextHandlers.flext_create_function_handler(test_function)
+        handler: object = FlextHandlers.flext_create_function_handler(test_function)
 
         assert isinstance(handler, FlextHandlers.Handler)
 
@@ -1109,7 +1109,7 @@ class TestFactoryMethods:
         def simple_function(message: object) -> str:
             return "simple result"
 
-        handler = FlextHandlers.flext_create_function_handler(simple_function)
+        handler: object = FlextHandlers.flext_create_function_handler(simple_function)
         message = _TestMessage("test")
 
         result = handler.handle(message)
@@ -1285,7 +1285,7 @@ class TestBaseHandlerClasses:
         """Test that base handler is abstract and cannot be instantiated."""
         # _BaseHandler is abstract and should not be instantiated directly
         try:
-            _BaseHandler()  # type: ignore[misc]
+            _BaseHandler()
             # If we get here, the handler was instantiated (shouldn't happen)
             msg = "Abstract handler should not be instantiable"
             raise AssertionError(msg)
@@ -1381,7 +1381,7 @@ class TestHandlerBaseCoverage:
 
             def validate(self) -> FlextResult[None]:
                 self.validate_called = True
-                failed_result = FlextResult.fail("Message validation failed")
+                failed_result: FlextResult[object] = FlextResult.fail("Message validation failed")
                 # Verify our test setup is correct
                 assert failed_result.is_failure
                 assert hasattr(failed_result, "is_failure")
@@ -1409,7 +1409,7 @@ class TestHandlerBaseCoverage:
         handler = FailureHandler("failure_handler")
 
         # Test post_handle with failure result
-        failure_result = FlextResult.fail("Test failure")
+        failure_result: FlextResult[object] = FlextResult.fail("Test failure")
         processed_result = handler.post_handle(failure_result)
 
         assert processed_result.is_failure

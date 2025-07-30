@@ -904,7 +904,7 @@ def _create_handler_chain() -> tuple[FlextHandlers.Chain, dict[str, User], str |
     if result.is_success:
         user = result.data
         if user is not None and hasattr(user, "name"):
-            print(f"✅ Create command handled by chain: {user.name}")  # type: ignore[attr-defined]
+            print(f"✅ Create command handled by chain: {user.name}")
         else:
             print("✅ Create command handled by chain")
         if hasattr(result.data, "id"):

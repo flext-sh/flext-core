@@ -237,6 +237,7 @@ class FlextMixinDelegator:
             delegated_method.__doc__ = method.__doc__
             import inspect  # noqa: PLC0415
 
+            # Use type ignore for dynamic attribute assignment
             delegated_method.__signature__ = inspect.signature(method)  # type: ignore[attr-defined]
         except (AttributeError, ValueError):
             pass

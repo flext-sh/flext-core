@@ -168,10 +168,10 @@ class TestTypeAliases:
             data_dict = payload.model_dump()
             return f"Processing: {len(data_dict)} fields"
 
-        assert user_payload.data["id"] == "123", (  # type: ignore[index]
+        assert user_payload.data["id"] == "123", (
             f"Expected {'123'} # type: ignore[index], got {user_payload.data['id']}"
         )
-        assert "name" in user_payload.data, (  # type: ignore[operator]
+        assert "name" in user_payload.data, (
             f"Expected {'name'} in {user_payload.data} # type: ignore[operator]"
         )
         assert process_payload(user_payload) == "Processing: 2 fields", (
@@ -486,12 +486,12 @@ class TestTypesCoverageImprovements:
                 raise TypeError(msg)
 
         # This should catch the exception and return False (lines 256-257)
-        result = FlextTypes.TypeGuards.is_instance_of("test", BadType)  # type: ignore[arg-type]
+        result = FlextTypes.TypeGuards.is_instance_of("test", BadType)
         assert result is False
 
         # Test with None type that might cause AttributeError
         try:
-            result = FlextTypes.TypeGuards.is_instance_of("test", None)  # type: ignore[arg-type]
+            result = FlextTypes.TypeGuards.is_instance_of("test", None)
             assert result is False
         except (TypeError, AttributeError):
             # If isinstance still raises, that's fine - we tested the path

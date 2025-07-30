@@ -198,6 +198,7 @@ class FlextResult[T]:
             )
         # For success cases, return data even if it's None
         # None is a valid value for successful results (e.g., void operations)
+        # Type system guarantees that for success results, _data is of type T
         return self._data  # type: ignore[return-value]
 
     def map(self, func: Callable[[T], U]) -> FlextResult[U]:
@@ -211,7 +212,8 @@ class FlextResult[T]:
         try:
             # Apply function to data, even if it's None
             # None is a valid value for successful results
-            result = func(self._data)  # type: ignore[arg-type]  # None is valid for successful results
+            # Type system guarantees that for success results, _data is of type T
+            result = func(self._data)  # type: ignore[arg-type]
             return FlextResult.ok(result)
         except (TypeError, ValueError, AttributeError, RuntimeError) as e:
             # Use FLEXT Core structured error handling
@@ -239,7 +241,8 @@ class FlextResult[T]:
         try:
             # Apply function to data, even if it's None
             # None is a valid value for successful results
-            return func(self._data)  # type: ignore[arg-type]  # None is valid for successful results
+            # Type system guarantees that for success results, _data is of type T
+            return func(self._data)  # type: ignore[arg-type]
         except (TypeError, ValueError, AttributeError, IndexError, KeyError) as e:
             # Use FLEXT Core structured error handling
             return FlextResult.fail(

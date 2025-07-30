@@ -252,7 +252,7 @@ class TestValidatedModel:
 
         # Test validation error
         with pytest.raises(FlextValidationError) as exc_info:
-            StrictModel(name="John", age="not_a_number")  # type: ignore[arg-type]
+            StrictModel(name="John", age="not_a_number")
 
         error = exc_info.value
         if "Invalid data" not in str(error):
@@ -277,7 +277,7 @@ class TestValidatedModel:
         assert user.age == 25
 
         # Test failed creation
-        result = UserModel.create(name="Bob", age="invalid")  # type: ignore[arg-type]
+        result = UserModel.create(name="Bob", age="invalid")
         assert result.is_failure
         if "Invalid data" not in result.error:
             msg = f"Expected {'Invalid data'} in {result.error}"

@@ -272,7 +272,7 @@ class TestFlextMixinDelegator:
 
         # Test that method was delegated
         assert hasattr(host, "mixin_method1")
-        result = host.mixin_method1()  # type: ignore[attr-defined]
+        result = host.mixin_method1()
         if result != "mixin1_method1":
             raise AssertionError(f"Expected {'mixin1_method1'}, got {result}")
 
@@ -283,12 +283,12 @@ class TestFlextMixinDelegator:
 
         # Test method with arguments
         assert hasattr(host, "mixin_method2")
-        result = host.mixin_method2("hello")  # type: ignore[attr-defined]
+        result = host.mixin_method2("hello")
         if result != "mixin1_method2_hello":
             raise AssertionError(f"Expected {'mixin1_method2_hello'}, got {result}")
 
         # Test with default arguments
-        result = host.mixin_method2("hello")  # type: ignore[attr-defined]
+        result = host.mixin_method2("hello")
         if result != "mixin1_method2_hello":
             raise AssertionError(f"Expected {'mixin1_method2_hello'}, got {result}")
 
@@ -301,8 +301,8 @@ class TestFlextMixinDelegator:
         assert hasattr(host, "mixin_method1")
         assert hasattr(host, "mixin_method3")
 
-        result1 = host.mixin_method1()  # type: ignore[attr-defined]
-        result2 = host.mixin_method3()  # type: ignore[attr-defined]
+        result1 = host.mixin_method1()
+        result2 = host.mixin_method3()
 
         if result1 != "mixin1_method1":
             raise AssertionError(f"Expected {'mixin1_method1'}, got {result1}")
@@ -315,7 +315,7 @@ class TestFlextMixinDelegator:
 
         # Test property getter
         assert hasattr(host, "writable_property")
-        value = host.writable_property  # type: ignore[attr-defined]
+        value = host.writable_property
         if value != "mixin1_value":
             raise AssertionError(f"Expected {'mixin1_value'}, got {value}")
 
@@ -325,8 +325,8 @@ class TestFlextMixinDelegator:
         FlextMixinDelegator(host, SampleMixin1)
 
         # Test property setter
-        host.writable_property = "new_value"  # type: ignore[attr-defined]
-        if host.writable_property != "new_value":  # type: ignore[attr-defined]
+        host.writable_property = "new_value"
+        if host.writable_property != "new_value":
             raise AssertionError(
                 f"Expected {'new_value'}, got {host.writable_property}"
             )
@@ -337,7 +337,7 @@ class TestFlextMixinDelegator:
         FlextMixinDelegator(host, SampleMixin1)
 
         # Test readonly property (don't use hasattr with __getattr__)
-        value = host.readonly_property  # type: ignore[attr-defined]
+        value = host.readonly_property
         if value != "readonly_value":
             raise AssertionError(f"Expected {'readonly_value'}, got {value}")
 
@@ -347,7 +347,7 @@ class TestFlextMixinDelegator:
             FlextOperationError,
             match="Property 'readonly_property' is read-only",
         ):
-            host.readonly_property = "new_value"  # type: ignore[attr-defined]
+            host.readonly_property = "new_value"
 
     def test_private_methods_not_delegated(self) -> None:
         """Test that private methods are not delegated."""
@@ -378,7 +378,7 @@ class TestFlextMixinDelegator:
             FlextOperationError,
             match="Delegation error in ErrorMixin.error_method",
         ):
-            host.error_method()  # type: ignore[attr-defined]
+            host.error_method()
 
     def test_method_signature_preservation(self) -> None:
         """Test that method signatures are preserved."""
@@ -620,12 +620,12 @@ class TestValidateDelegationSystem:
             # Mock delegator that returns wrong type for is_valid
             mock_delegator = Mock()
             mock_host = Mock()
-            mock_host.delegator = mock_delegator  # type: ignore[attr-defined]
-            mock_host.is_valid = "not_a_bool"  # type: ignore[attr-defined]
+            mock_host.delegator = mock_delegator
+            mock_host.is_valid = "not_a_bool"
 
             def mock_create_delegator(host: object, *mixins: type) -> Mock:
-                host.delegator = mock_delegator  # type: ignore[attr-defined]
-                host.is_valid = "not_a_bool"  # type: ignore[attr-defined]
+                host.delegator = mock_delegator
+                host.is_valid = "not_a_bool"
                 return mock_delegator
 
             mock_create.side_effect = mock_create_delegator
@@ -684,14 +684,14 @@ class TestDelegationSystemEdgeCases:
 
         # Callable attribute should be delegated
         assert hasattr(host, "callable_attr")
-        result = host.callable_attr("test")  # type: ignore[attr-defined]
+        result = host.callable_attr("test")
         if result != "lambda: test":
             msg = f"Expected {'lambda: test'}, got {result}"
             raise AssertionError(msg)
 
         # Regular method should also be delegated
         assert hasattr(host, "regular_method")
-        result = host.regular_method()  # type: ignore[attr-defined]
+        result = host.regular_method()
         if result != "regular":
             msg = f"Expected {'regular'}, got {result}"
             raise AssertionError(msg)
@@ -713,7 +713,7 @@ class TestDelegationSystemEdgeCases:
         FlextMixinDelegator(host, Mixin1, Mixin2)
 
         # Should have the method from the last registered mixin
-        result = host.conflict_method()  # type: ignore[attr-defined]
+        result = host.conflict_method()
         # The actual behavior depends on the order of processing
         if result not in {"mixin1", "mixin2"}:
             msg = f"Expected {'mixin1', 'mixin2'}, got {result}"
@@ -736,7 +736,7 @@ class TestDelegationSystemEdgeCases:
         # Host's original method might be preserved or overridden
         # depending on the delegation strategy
         assert hasattr(host, "new_method")
-        result = host.new_method()  # type: ignore[attr-defined]
+        result = host.new_method()
         if result != "new_method":
             msg = f"Expected {'new_method'}, got {result}"
             raise AssertionError(msg)
@@ -790,7 +790,7 @@ class TestDelegationSystemEdgeCases:
 
         # Normal property should work
         assert hasattr(host, "normal_property")
-        value = host.normal_property  # type: ignore[attr-defined]
+        value = host.normal_property
         if value != "initial":
             raise AssertionError(f"Expected {'initial'}, got {value}")
 
@@ -801,7 +801,7 @@ class TestDelegationSystemEdgeCases:
                 f"Expected {'property_with_error'} in {type(host).__dict__}"
             )
         with pytest.raises(ValueError, match="Property getter error"):
-            _ = host.property_with_error  # type: ignore[attr-defined]
+            _ = host.property_with_error
 
     def test_mixin_registry_persistence(self) -> None:
         """Test that mixin registry persists across delegator instances."""
@@ -923,8 +923,8 @@ class TestDelegationSystemIntegration:
         assert hasattr(host, "mixin_method3")
 
         # Use delegated methods
-        result1 = host.mixin_method1()  # type: ignore[attr-defined]
-        result2 = host.mixin_method3()  # type: ignore[attr-defined]
+        result1 = host.mixin_method1()
+        result2 = host.mixin_method3()
 
         # Results should come from the appropriate mixins
         if result1 != "mixin1_method1":
@@ -933,7 +933,7 @@ class TestDelegationSystemIntegration:
 
         # Test property delegation
         assert hasattr(host, "writable_property")
-        value = host.writable_property  # type: ignore[attr-defined]
+        value = host.writable_property
         assert isinstance(value, str)
 
         # Test validation

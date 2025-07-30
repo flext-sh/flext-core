@@ -103,7 +103,7 @@ class TestFlextFieldCore:
 
         # Should not be able to modify frozen model
         with pytest.raises((AttributeError, ValidationError)):
-            field.field_name = "new_name"  # type: ignore[misc]
+            field.field_name = "new_name"
 
     def test_field_pattern_validation(self) -> None:
         """Test regex pattern validation."""
@@ -530,9 +530,9 @@ class TestFlextFieldCore:
             raise AssertionError(
                 f"Expected {math.pi}, got {float_field.deserialize_value(math.pi)}"
             )
-        if float_field.deserialize_value("3.14") != 3.14:
+        if float_field.deserialize_value("3.14") != math.pi:
             raise AssertionError(
-                f"Expected {3.14}, got {float_field.deserialize_value('3.14')}"
+                f"Expected {math.pi}, got {float_field.deserialize_value('3.14')}"
             )
         if float_field.deserialize_value(42) != 42.0:
             raise AssertionError(
@@ -769,7 +769,7 @@ class TestFlextFieldMetadata:
         metadata = FlextFieldMetadata(field_id="immutable")
 
         with pytest.raises((AttributeError, ValidationError)):
-            metadata.field_id = "new_id"  # type: ignore[misc]
+            metadata.field_id = "new_id"
 
 
 class TestFlextFieldRegistry:
