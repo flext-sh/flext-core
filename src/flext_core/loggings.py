@@ -86,8 +86,10 @@ from typing import TYPE_CHECKING, ClassVar, TypedDict
 
 import structlog
 
-from flext_core.constants import FlextLogLevel
+from flext_core.constants import FlextConstants, FlextLogLevel
 from flext_core.utilities import FlextGenerators
+
+Platform = FlextConstants.Platform
 
 if TYPE_CHECKING:
     from structlog.typing import EventDict
@@ -194,6 +196,7 @@ def setup_custom_trace_level() -> None:
     logging.addLevelName(TRACE_LEVEL, "TRACE")
 
     # Update structlog's internal mappings - check for correct attribute names
+    # NOTE: Private member access is required for structlog compatibility
     if hasattr(structlog.stdlib, "_NAME_TO_LEVEL"):
         structlog.stdlib._NAME_TO_LEVEL["trace"] = TRACE_LEVEL
         # Note: _LEVEL_TO_NAME may not exist in all versions
@@ -355,7 +358,7 @@ class FlextLogger:
     Usage Patterns:
         # Basic structured logging
         logger = FlextLogger("myapp.service", "INFO")
-        logger.info("Service started", port=8080, version="1.0.0")
+        logger.info("Service started", port=Platform.FLEXCORE_PORT, version="0.9.0")
 
         # Context management for request tracing
         logger.set_context({"user_id": "123", "request_id": "abc-def"})

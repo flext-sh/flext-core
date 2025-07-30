@@ -231,7 +231,7 @@ from flext_core.version import (
 )
 
 # Version information
-__version__ = "0.8.0"
+__version__ = "0.9.0"
 __author__ = "FLEXT Contributors"
 
 # Clean public API - alphabetically organized for ruff compliance

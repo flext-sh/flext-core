@@ -632,7 +632,7 @@ class ExternalAPIService:
                 _raise_authentication_error()
 
             # Simulate successful response
-            profile_data = {
+            profile_data: dict[str, object] = {
                 "user_id": user_id,
                 "external_id": f"ext_{user_id}",
                 "profile_data": {
@@ -1069,9 +1069,9 @@ def demonstrate_connection_exceptions() -> None:  # noqa: PLR0915
 
     # Authentication error
     auth_api = ExternalAPIService("https://unauthorized-api.example.com/v1")
-    auth_result = auth_api.fetch_user_profile("user_123")
-    if auth_result.is_failure:
-        print(f"   ❌ API authentication failed (expected): {auth_result.error}")
+    auth_api_result = auth_api.fetch_user_profile("user_123")
+    if auth_api_result.is_failure:
+        print(f"   ❌ API authentication failed (expected): {auth_api_result.error}")
 
     print("✅ Connection exceptions demonstration completed")
 

@@ -137,14 +137,6 @@ def flext_track_performance(
             start_time = time.time()
             try:
                 result = func(*args, **kwargs)
-                execution_time = time.time() - start_time
-                flext_record_performance(
-                    category,
-                    func.__name__,
-                    execution_time,
-                    success=True,
-                )
-                return result
             except (RuntimeError, ValueError, TypeError):
                 execution_time = time.time() - start_time
                 flext_record_performance(
@@ -154,6 +146,15 @@ def flext_track_performance(
                     success=False,
                 )
                 raise
+            else:
+                execution_time = time.time() - start_time
+                flext_record_performance(
+                    category,
+                    func.__name__,
+                    execution_time,
+                    success=True,
+                )
+                return result
 
         return wrapper
 

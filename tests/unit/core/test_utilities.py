@@ -578,7 +578,7 @@ class TestPerformanceTracking:
         @flext_track_performance("test_category")
         def test_function(*args: object, **kwargs: object) -> object:
             time.sleep(0.001)  # Small delay to measure
-            return args[0] + args[1]
+            return int(args[0]) + int(args[1])  # type: ignore[call-overload]
 
         # Call the decorated function
         result = test_function(2, 3)

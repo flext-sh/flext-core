@@ -718,6 +718,8 @@ class TestEntitiesIntegration:
             )
         assert composite_data["value"]["amount"] == 100
 
+    @pytest.mark.ddd
+    @pytest.mark.architecture
     def test_aggregate_event_sourcing_pattern(self) -> None:
         """Test basic event sourcing pattern."""
         aggregate = create_test_entity(SampleAggregateRoot, title="Test Aggregate")

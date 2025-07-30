@@ -222,8 +222,15 @@ class FlextResult[T]:
                 error_code=ERROR_CODES["MAP_ERROR"],
                 error_data={"exception_type": type(e).__name__, "exception": str(e)},
             )
+        except (ImportError, MemoryError) as e:
+            # Handle specific system and runtime exceptions
+            return FlextResult.fail(
+                f"System error during transformation: {e}",
+                error_code=ERROR_CODES["EXCEPTION_ERROR"],
+                error_data={"exception_type": type(e).__name__, "exception": str(e)},
+            )
         except Exception as e:
-            # Catch-all for unexpected exceptions
+            # Handle any other unexpected exceptions
             return FlextResult.fail(
                 f"Unexpected transformation error: {e}",
                 error_code=ERROR_CODES["EXCEPTION_ERROR"],
@@ -250,8 +257,15 @@ class FlextResult[T]:
                 error_code=ERROR_CODES["BIND_ERROR"],
                 error_data={"exception_type": type(e).__name__, "exception": str(e)},
             )
+        except (ImportError, MemoryError) as e:
+            # Handle specific system and runtime exceptions
+            return FlextResult.fail(
+                f"System error during chaining: {e}",
+                error_code=ERROR_CODES["EXCEPTION_ERROR"],
+                error_data={"exception_type": type(e).__name__, "exception": str(e)},
+            )
         except Exception as e:
-            # Catch-all for unexpected exceptions
+            # Handle any other unexpected exceptions
             return FlextResult.fail(
                 f"Unexpected chaining error: {e}",
                 error_code=ERROR_CODES["CHAIN_ERROR"],
@@ -423,9 +437,9 @@ class FlextResult[T]:
         data: list[object] = []
         for result in results:
             if result.is_failure:
-                return FlextResult.fail(result._error or "Combine failed")
-            if result._data is not None:
-                data.append(result._data)
+                return FlextResult.fail(result.error or "Combine failed")
+            if result.data is not None:
+                data.append(result.data)
         return FlextResult.ok(data)
 
     @staticmethod
@@ -457,7 +471,13 @@ class FlextResult[T]:
         for func in funcs:
             try:
                 return FlextResult.ok(func())
-            except (TypeError, ValueError, AttributeError, RuntimeError) as e:
+            except (
+                TypeError,
+                ValueError,
+                AttributeError,
+                RuntimeError,
+                ArithmeticError,
+            ) as e:
                 last_error = str(e)
                 continue
         return FlextResult.fail(last_error)

@@ -1,75 +1,4 @@
-# ============================================================================
-# FLEXT-CORE - Python Foundation Library .gitignore
-# Python 3.13 | Poetry | Zero Dependencies | Enterprise Foundation
-# ============================================================================
-
-# ============================================================================
-# JUNK FILES - NEVER COMMIT THESE
-# ============================================================================
-
-# Archive and backup directories  
-archive/
-archives/
-backup/
-backups/
-.backup/
-*_backup/
-*_backup_*/
-
-# AI-generated files and reports
-*_REPORT*.md
-*_ANALYSIS*.md
-*_SUMMARY*.md  
-*_FINDINGS*.md
-CLAUDE*.md
-CONFIG_MIGRATION*.md
-DEVELOPMENT_STANDARDS*.md
-DUPLICATION_REPORT*.md
-LINT_CORRECTIONS*.md
-*.ai.md
-*.ai.txt
-
-# Backup files with timestamps
-*_20250*.bak
-*_202507*.bak
-*_202506*.bak
-*.md_20250*
-README_20250*.bak
-
-# Generic backup patterns
-*.bak
-*.backup
-*.orig
-*.syntax_backup  
-*.broken
-*.tmp.bak
-*_temp.py
-*_temp.md
-
-# Fix scripts and validation files
-fix_*.py
-*_fix.py
-*_validation.py
-validate_*.py
-investigate_*.py
-temp_*.py
-debug_*.py
-
-# Tool reports and analysis
-*_analysis.txt
-*_report.txt
-*_output.txt
-analysis_temp/
-report_*/
-reports/
-reports_*/
-temp_test_*/
-
-# ============================================================================
-# PYTHON ARTIFACTS
-# ============================================================================
-
-# Python artifacts
+# Python
 __pycache__/
 *.py[cod]
 *.pyc
@@ -77,7 +6,7 @@ __pycache__/
 *.pyd
 *.so
 
-# Distribution / packaging  
+# Build
 build/
 dist/
 *.egg-info/
@@ -85,7 +14,7 @@ dist/
 *.egg
 MANIFEST
 
-# Testing and coverage
+# Testing
 htmlcov/
 .tox/
 .nox/
@@ -95,14 +24,12 @@ coverage.xml
 *.cover
 .hypothesis/
 .pytest_cache/
-.benchmarks/
 
-# Development tools
+# Tools
 .mypy_cache/
 .ruff_cache/
 .pyre/
 .pytype/
-.bandit/
 
 # Virtual environments
 .env
@@ -111,14 +38,14 @@ env/
 venv/
 ENV/
 
-# IDEs and editors
+# Editors
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
 
-# System files
+# System
 .DS_Store
 Thumbs.db
 Desktop.ini
@@ -127,7 +54,7 @@ Desktop.ini
 docs/_build/
 site/
 
-# Logs and temporary files
+# Logs
 *.log
 logs/
 *.tmp
@@ -137,7 +64,17 @@ logs/
 *.pem
 *.crt
 
-# Force include critical files
-!pyproject.toml
-!Makefile
-!README.md
+# Archive/backup
+archive/
+backup/
+*.bak
+*.backup
+*.orig
+*_temp.*
+temp_*
+fix_*
+
+# Reports
+*_REPORT*.md
+*_ANALYSIS*.md
+*_SUMMARY*.md

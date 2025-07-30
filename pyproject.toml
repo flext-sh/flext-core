@@ -10,7 +10,7 @@ maintainers = [{ name = "FLEXT Team", email = "team@flext.sh" }]
 name = "flext-core"
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
-version = "0.8.0"
+version = "0.9.0"
 urls.Homepage = "https://github.com/flext-sh/flext-core"
 urls.Repository = "https://github.com/flext-sh/flext-core"
 urls.Documentation = "https://github.com/flext-sh/flext-core/blob/main/README.md"

@@ -4,11 +4,19 @@
 [![MIT License](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)
 [![Production Ready](https://img.shields.io/badge/production-ready-brightgreen.svg)](https://github.com/flext-sh/flext)
 
-Enterprise foundation framework for Python applications built on Clean Architecture and Domain-Driven Design principles.
+Enterprise-grade foundation library providing architectural patterns, dependency injection, and type-safe error handling for Python applications. Built on Clean Architecture and Domain-Driven Design principles with Python 3.13+ support.
 
 ## Overview
 
-FLEXT Core is a pure Python library that provides the architectural foundation for enterprise applications. It implements type-safe error handling, dependency injection, configuration management, and domain modeling patterns.
+FLEXT Core serves as the foundational library for the entire FLEXT ecosystem, providing enterprise-grade architectural patterns and utilities. As a pure Python library with minimal dependencies, it establishes the core patterns used across all 32+ FLEXT projects.
+
+### Key Characteristics
+
+- **Foundation Library**: Pure architectural patterns with no CLI or application logic
+- **Zero Runtime Dependencies**: Minimal external dependencies for maximum portability
+- **Type Safety**: Comprehensive type annotations with strict MyPy validation
+- **Enterprise Patterns**: Production-ready patterns for large-scale applications
+- **FLEXT Ecosystem Base**: Core foundation for all FLEXT data integration services
 
 ## Features
 

@@ -305,7 +305,7 @@ def demonstrate_file_configuration() -> None:
     config_data: TConfigDict = {
         "app": {
             "name": "FileConfigApp",
-            "version": "1.0.0",
+            "version": "0.9.0",
             "debug": True,
         },
         "database": {
@@ -398,7 +398,7 @@ def demonstrate_configuration_hierarchies() -> None:
     base_config: TConfigDict = {
         "app": {
             "name": "HierarchyApp",
-            "version": "1.0.0",
+            "version": "0.9.0",
         },
         "database": {
             "pool_size": 10,

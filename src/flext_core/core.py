@@ -61,6 +61,7 @@ from flext_core.container import (
     get_typed,
     register_typed,
 )
+from flext_core.guards import ValidatedModel, immutable, is_dict_of, pure
 from flext_core.loggings import FlextLogger, FlextLoggerFactory
 from flext_core.result import FlextResult
 
@@ -338,11 +339,96 @@ class FlextCore:
         return FlextConstants
 
     # =========================================================================
-    # VALIDATION & GUARDS (TODO: Implement when guards module is available)
+    # VALIDATION & GUARDS - SOLID Implementation with DIP
     # =========================================================================
 
-    # Note: Guards and validation functions not yet implemented
-    # Will be added when flext_core.guards module is completed
+    def validate_type(
+        self,
+        obj: object,
+        expected_type: type[object],
+    ) -> FlextResult[object]:
+        """Validate object type using dependency injection pattern.
+
+        Args:
+            obj: Object to validate
+            expected_type: Expected type
+
+        Returns:
+            FlextResult with validation outcome
+
+        """
+        if not isinstance(obj, expected_type):
+            return FlextResult.fail(
+                f"Expected {expected_type.__name__}, got {type(obj).__name__}",
+            )
+        return FlextResult.ok(obj)
+
+    def validate_dict_structure(
+        self,
+        obj: object,
+        value_type: type[object],
+    ) -> FlextResult[dict[str, object]]:
+        """Validate dictionary structure using guards module.
+
+        Args:
+            obj: Object to validate as dictionary
+            value_type: Expected type of dictionary values
+
+        Returns:
+            FlextResult with validated dictionary or error
+
+        """
+        if not isinstance(obj, dict):
+            return FlextResult.fail("Expected dictionary")
+
+        if not is_dict_of(obj, value_type):
+            return FlextResult.fail(
+                f"Dictionary values must be of type {value_type.__name__}",
+            )
+
+        return FlextResult.ok(obj)
+
+    def create_validated_model[T: ValidatedModel](
+        self,
+        model_class: type[T],
+        **data: object,
+    ) -> FlextResult[T]:
+        """Create validated model using guards module integration.
+
+        Args:
+            model_class: ValidatedModel subclass
+            **data: Model data
+
+        Returns:
+            FlextResult with validated model or error
+
+        """
+        # Use the safe creation method from ValidatedModel
+        return model_class.create(**data)  # type: ignore[return-value]
+
+    def make_immutable[T](self, cls: type[T]) -> type[T]:
+        """Make class immutable using guards module.
+
+        Args:
+            cls: Class to make immutable
+
+        Returns:
+            Immutable version of the class
+
+        """
+        return immutable(cls)
+
+    def make_pure[T](self, func: T) -> T:
+        """Make function pure using guards module.
+
+        Args:
+            func: Function to make pure
+
+        Returns:
+            Pure version of the function
+
+        """
+        return pure(func)  # type: ignore[return-value]
 
     # =========================================================================
     # UTILITY METHODS

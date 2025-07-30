@@ -645,7 +645,7 @@ class SimplePluginContext:
     def logger(self) -> "BoundLogger":
         """Get logger for plugin (simplified)."""
         # Return MockLogger which implements BoundLogger interface
-        return self._logger
+        return self._logger  # type: ignore[return-value]
 
     @property
     def config(self) -> Mapping[str, object]:
@@ -680,7 +680,7 @@ class EmailNotificationPlugin(FlextPlugin):
     @property
     def version(self) -> str:
         """Plugin version."""
-        return "1.0.0"
+        return "0.9.0"
 
     def initialize(self, context: FlextPluginContext) -> FlextResult[None]:
         """Initialize plugin with context."""
@@ -748,7 +748,7 @@ class AuditLogPlugin(FlextPlugin):
     @property
     def version(self) -> str:
         """Plugin version."""
-        return "1.0.0"
+        return "0.9.0"
 
     def initialize(self, context: FlextPluginContext) -> FlextResult[None]:
         """Initialize plugin with context."""
