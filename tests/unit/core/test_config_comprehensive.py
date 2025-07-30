@@ -1123,7 +1123,7 @@ class TestConfigEdgeCases:
             )
 
         # Test with validator that returns non-boolean
-        def bad_validator(value: object) -> str:  # type: ignore[return]
+        def bad_validator(value: object) -> str:
             return "not_boolean"
 
         # This should still work because Python treats "not_boolean" as truthy

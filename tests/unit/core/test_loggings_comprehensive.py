@@ -448,7 +448,7 @@ class TestFlextLoggerFactory:
             raise AssertionError(msg)
 
         # None name should default
-        logger2 = FlextLoggerFactory.get_logger(None, "INFO")  # type: ignore[arg-type]
+        logger2 = FlextLoggerFactory.get_logger(None, "INFO")
         if logger2._name != "flext.unknown":
             msg = f"Expected {'flext.unknown'}, got {logger2._name}"
             raise AssertionError(msg)

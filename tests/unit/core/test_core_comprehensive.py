@@ -427,10 +427,10 @@ class TestFlextCoreRailwayProgramming:
         """Test pipe with successful pipeline."""
 
         def add_one(x: object) -> FlextResult[object]:
-            return FlextResult.ok(int(x) + 1)  # type: ignore[arg-type]
+            return FlextResult.ok(int(x) + 1)
 
         def multiply_two(x: object) -> FlextResult[object]:
-            return FlextResult.ok(int(x) * 2)  # type: ignore[arg-type]
+            return FlextResult.ok(int(x) * 2)
 
         def to_string(x: object) -> FlextResult[object]:
             return FlextResult.ok(str(x))
@@ -631,10 +631,10 @@ class TestFlextCoreRailwayProgramming:
             return clean_flext_core.tap(logger)
 
         def add_ten(x: object) -> FlextResult[object]:
-            return FlextResult.ok(int(x) + 10)  # type: ignore[arg-type]
+            return FlextResult.ok(int(x) + 10)
 
         def multiply_three(x: object) -> FlextResult[object]:
-            return FlextResult.ok(int(x) * 3)  # type: ignore[arg-type]
+            return FlextResult.ok(int(x) * 3)
 
         pipeline = clean_flext_core.pipe(
             log_step("start"),
@@ -674,9 +674,9 @@ class TestFlextCoreRailwayProgramming:
 
         # Complex pipeline with conditional logic and side effects
         pipeline = clean_flext_core.pipe(
-            lambda x: validate_positive(int(x)),  # type: ignore[arg-type,return-value]
+            lambda x: validate_positive(int(x)),
             clean_flext_core.tap(log_value),
-            lambda x: double_if_even(int(x)),  # type: ignore[arg-type,return-value]
+            lambda x: double_if_even(int(x)),
             clean_flext_core.tap(log_value),
         )
 

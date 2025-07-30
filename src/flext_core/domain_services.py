@@ -241,10 +241,10 @@ class FlextDomainService(
         """
         return FlextResult.ok(None)
 
-    def execute_operation(  # type: ignore[explicit-any]
+    def execute_operation(
         self,
         operation_name: str,
-        operation: Callable[..., object],
+        operation: Callable[[object], object],
         *args: object,
         **kwargs: object,
     ) -> FlextResult[object]:

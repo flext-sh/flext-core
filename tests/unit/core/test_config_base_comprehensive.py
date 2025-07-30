@@ -77,7 +77,7 @@ class TestBaseConfigOps:
 
     def test_safe_load_from_dict_not_dict(self) -> None:
         """Test safe_load_from_dict with non-dictionary."""
-        result = _BaseConfigOps.safe_load_from_dict("not a dict")  # type: ignore[arg-type]
+        result = _BaseConfigOps.safe_load_from_dict("not a dict")
 
         assert result.is_failure
         if "Configuration must be a dictionary" not in result.error:
@@ -112,7 +112,7 @@ class TestBaseConfigOps:
     def test_safe_load_from_dict_invalid_required_keys(self) -> None:
         """Test safe_load_from_dict with invalid required_keys type."""
         config_dict = {"key1": "value1"}
-        required_keys = "not a list"  # type: ignore[assignment]
+        required_keys = "not a list"
 
         result = _BaseConfigOps.safe_load_from_dict(config_dict, required_keys)
 
@@ -128,7 +128,7 @@ class TestBaseConfigOps:
         # Create a non-dict object to trigger the early validation
         bad_config = "not a dict"
 
-        result = _BaseConfigOps.safe_load_from_dict(bad_config)  # type: ignore[arg-type]
+        result = _BaseConfigOps.safe_load_from_dict(bad_config)
 
         assert result.is_failure
         if "Configuration must be a dictionary" not in result.error:
@@ -187,7 +187,7 @@ class TestBaseConfigOps:
 
     def test_safe_get_env_var_none_name(self) -> None:
         """Test safe_get_env_var with None variable name."""
-        result = _BaseConfigOps.safe_get_env_var(None)  # type: ignore[arg-type]
+        result = _BaseConfigOps.safe_get_env_var(None)
 
         assert result.is_failure
         if "Variable name must be non-empty string" not in result.error:
@@ -344,7 +344,7 @@ class TestBaseConfigOps:
         data = ["not", "a", "dict"]
         output_file = temp_dir / "output.json"
 
-        result = _BaseConfigOps.safe_save_json_file(data, output_file)  # type: ignore[arg-type]
+        result = _BaseConfigOps.safe_save_json_file(data, output_file)
 
         assert result.is_failure
         if "Data must be a dictionary" not in result.error:
@@ -403,7 +403,7 @@ class TestBaseConfigValidation:
 
     def test_validate_config_value_not_callable(self) -> None:
         """Test validate_config_value with non-callable validator."""
-        result = _BaseConfigValidation.validate_config_value(42, "not callable")  # type: ignore[arg-type]
+        result = _BaseConfigValidation.validate_config_value(42, "not callable")
 
         assert result.is_failure
         if "Validator must be callable" not in result.error:
@@ -568,7 +568,7 @@ class TestBaseConfigValidation:
 
         bad_value = BadValue()
 
-        result = _BaseConfigValidation.validate_config_range(bad_value, 1.0, 10.0)  # type: ignore[arg-type]
+        result = _BaseConfigValidation.validate_config_range(bad_value, 1.0, 10.0)
 
         assert result.is_failure
         if "Range validation failed" not in result.error:
@@ -600,7 +600,7 @@ class TestBaseConfigDefaults:
 
     def test_apply_defaults_empty_config(self) -> None:
         """Test apply_defaults with empty configuration."""
-        config = {}
+        config: dict[str, object] = {}
         defaults = {"key1": "default1", "key2": 42}
 
         result = _BaseConfigDefaults.apply_defaults(config, defaults)
@@ -612,7 +612,7 @@ class TestBaseConfigDefaults:
     def test_apply_defaults_empty_defaults(self) -> None:
         """Test apply_defaults with empty defaults."""
         config = {"key1": "value1", "key2": 42}
-        defaults = {}
+        defaults: dict[str, object] = {}
 
         result = _BaseConfigDefaults.apply_defaults(config, defaults)
 
@@ -622,7 +622,7 @@ class TestBaseConfigDefaults:
 
     def test_apply_defaults_config_not_dict(self) -> None:
         """Test apply_defaults with non-dictionary config."""
-        result = _BaseConfigDefaults.apply_defaults("not dict", {})  # type: ignore[arg-type]
+        result = _BaseConfigDefaults.apply_defaults("not dict", {})
 
         assert result.is_failure
         if "Configuration must be a dictionary" not in result.error:
@@ -632,7 +632,7 @@ class TestBaseConfigDefaults:
 
     def test_apply_defaults_defaults_not_dict(self) -> None:
         """Test apply_defaults with non-dictionary defaults."""
-        result = _BaseConfigDefaults.apply_defaults({}, "not dict")  # type: ignore[arg-type]
+        result = _BaseConfigDefaults.apply_defaults({}, "not dict")
 
         assert result.is_failure
         if "Defaults must be a dictionary" not in result.error:
@@ -660,7 +660,7 @@ class TestBaseConfigDefaults:
         # Test with non-dict defaults to trigger early validation
         bad_defaults = "not a dict"
 
-        result = _BaseConfigDefaults.apply_defaults({}, bad_defaults)  # type: ignore[arg-type]
+        result = _BaseConfigDefaults.apply_defaults({}, bad_defaults)
 
         assert result.is_failure
         if "Defaults must be a dictionary" not in result.error:
@@ -709,7 +709,7 @@ class TestBaseConfigDefaults:
         config1 = {"key1": "value1"}
         config2 = "not a dict"
 
-        result = _BaseConfigDefaults.merge_configs(config1, config2)  # type: ignore[arg-type]
+        result = _BaseConfigDefaults.merge_configs(config1, config2)
 
         assert result.is_failure
         if "Configuration 1 must be a dictionary" not in result.error:
@@ -761,7 +761,7 @@ class TestBaseConfigDefaults:
     def test_filter_config_keys_empty_allowed(self) -> None:
         """Test filter_config_keys with empty allowed keys."""
         config = {"key1": "value1", "key2": 42}
-        allowed_keys = []
+        allowed_keys: list[str] = []
 
         result = _BaseConfigDefaults.filter_config_keys(config, allowed_keys)
 
@@ -784,7 +784,7 @@ class TestBaseConfigDefaults:
 
     def test_filter_config_keys_config_not_dict(self) -> None:
         """Test filter_config_keys with non-dictionary config."""
-        result = _BaseConfigDefaults.filter_config_keys("not dict", ["key1"])  # type: ignore[arg-type]
+        result = _BaseConfigDefaults.filter_config_keys("not dict", ["key1"])
 
         assert result.is_failure
         if "Configuration must be a dictionary" not in result.error:
@@ -795,7 +795,7 @@ class TestBaseConfigDefaults:
         """Test filter_config_keys with non-list allowed keys."""
         config = {"key1": "value1"}
 
-        result = _BaseConfigDefaults.filter_config_keys(config, "not list")  # type: ignore[arg-type]
+        result = _BaseConfigDefaults.filter_config_keys(config, "not list")
 
         assert result.is_failure
         if "Allowed keys must be a list" not in result.error:
@@ -808,7 +808,7 @@ class TestBaseConfigDefaults:
         # Test with non-dict config to trigger early validation
         bad_config = "not a dict"
 
-        result = _BaseConfigDefaults.filter_config_keys(bad_config, ["key1"])  # type: ignore[arg-type]
+        result = _BaseConfigDefaults.filter_config_keys(bad_config, ["key1"])
 
         assert result.is_failure
         if "Configuration must be a dictionary" not in result.error:
@@ -1047,7 +1047,7 @@ class TestConfigBaseIntegration:
             type_result.data,
             10,
             100,
-            "count",  # type: ignore[arg-type]
+            "count",
         )
         assert range_result.is_success
 

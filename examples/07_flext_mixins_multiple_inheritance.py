@@ -529,7 +529,7 @@ class SmartDocument(
     def compare_with(self, other: SmartDocument) -> dict[str, object]:
         """Compare documents using comparable mixin."""
         if not isinstance(other, SmartDocument):
-            return {"error": "Can only compare with other SmartDocument instances"}  # type: ignore[unreachable]
+            return {"error": "Can only compare with other SmartDocument instances"}
 
         return {
             "title_match": self.title == other.title,

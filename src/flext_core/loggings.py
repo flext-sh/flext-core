@@ -198,11 +198,13 @@ def setup_custom_trace_level() -> None:
         structlog.stdlib._NAME_TO_LEVEL["trace"] = TRACE_LEVEL
         # Note: _LEVEL_TO_NAME may not exist in all versions
         if hasattr(structlog.stdlib, "_LEVEL_TO_NAME"):
+            # Use type ignore for dynamic attribute access
             structlog.stdlib._LEVEL_TO_NAME[TRACE_LEVEL] = "trace"  # type: ignore[attr-defined]
     elif hasattr(structlog.stdlib, "NAME_TO_LEVEL"):
         structlog.stdlib.NAME_TO_LEVEL["trace"] = TRACE_LEVEL
         # Some versions may not have LEVEL_TO_NAME
         if hasattr(structlog.stdlib, "LEVEL_TO_NAME"):
+            # Use type ignore for dynamic attribute access
             structlog.stdlib.LEVEL_TO_NAME[TRACE_LEVEL] = "trace"  # type: ignore[attr-defined]
 
     # Add trace method to standard logger
@@ -215,6 +217,7 @@ def setup_custom_trace_level() -> None:
             # Use the correct signature for _log
             self._log(TRACE_LEVEL, msg, args)
 
+    # Use type ignore for dynamic attribute assignment
     logging.Logger.trace = trace_method  # type: ignore[attr-defined]
 
     # Add trace method to structlog BoundLogger
@@ -226,6 +229,7 @@ def setup_custom_trace_level() -> None:
         # Use type ignore for dynamic attribute access
         return self._proxy_to_logger("trace", event, **kwargs)  # type: ignore[attr-defined]
 
+    # Use type ignore for dynamic attribute assignment
     structlog.stdlib.BoundLogger.trace = bound_trace_method  # type: ignore[attr-defined]
 
 
@@ -601,7 +605,8 @@ class FlextLogger:
         _ = log_level or _log_level or FlextLogLevel.INFO
 
         # Build processors list while preserving essential ones
-        processors = [
+        # Use list of objects to handle structlog processor types
+        processors: list[object] = [
             structlog.stdlib.filter_by_level,
             structlog.stdlib.add_logger_name,
             structlog.stdlib.add_log_level,
@@ -609,22 +614,23 @@ class FlextLogger:
 
         # Add optional processors
         if add_timestamp:
-            processors.append(structlog.processors.TimeStamper(fmt="unix"))  # type: ignore[arg-type]
+            processors.append(structlog.processors.TimeStamper(fmt="unix"))
         if add_caller:
-            processors.append(structlog.processors.CallsiteParameterAdder())  # type: ignore[arg-type]
+            processors.append(structlog.processors.CallsiteParameterAdder())
 
         # Always preserve our essential processors
         processors.append(_add_to_log_store)  # Always keep log store
 
         # Choose final renderer
         if json_output:
-            processors.append(structlog.processors.JSONRenderer())  # type: ignore[arg-type]
+            processors.append(structlog.processors.JSONRenderer())
         else:
-            processors.append(structlog.dev.ConsoleRenderer())  # type: ignore[arg-type]
+            processors.append(structlog.dev.ConsoleRenderer())
 
         # Reconfigure structlog with preserved essential functionality
+        # Use type ignore for processor compatibility across structlog versions
         structlog.configure(
-            processors=processors,
+            processors=processors,  # type: ignore[arg-type]
             context_class=dict,
             logger_factory=structlog.stdlib.LoggerFactory(),
             wrapper_class=structlog.stdlib.BoundLogger,

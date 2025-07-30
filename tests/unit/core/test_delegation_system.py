@@ -329,7 +329,7 @@ class TestFlextMixinDelegator:
         assert hasattr(mixin_instance, "mixin_method")
 
         # Test calling method directly on instance
-        result = mixin_instance.mixin_method()  # type: ignore[union-attr]
+        result = mixin_instance.mixin_method()
         assert result == "mixin_method_called", (
             f"Expected 'mixin_method_called', got {result}"
         )

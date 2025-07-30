@@ -642,7 +642,7 @@ class ExternalAPIService:
                 },
             }
 
-            return FlextResult.ok(profile_data)  # type: ignore[arg-type]
+            return FlextResult.ok(profile_data)
 
         except (FlextConnectionError, FlextTimeoutError, FlextAuthenticationError) as e:
             return FlextResult.fail(str(e))

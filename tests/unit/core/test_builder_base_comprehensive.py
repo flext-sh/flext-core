@@ -120,7 +120,7 @@ class TestBaseBuilder:
         """Test setting property with None key."""
         builder = _BaseBuilder()
 
-        result = builder._set_property(None, "value")  # type: ignore[arg-type]
+        result = builder._set_property(None, "value")
 
         assert result is builder
         if builder.property_count != 0:
@@ -227,7 +227,7 @@ class TestBaseBuilder:
         if builder._has_property(""):
             msg = f"Expected False, got {builder._has_property('')}"
             raise AssertionError(msg)
-        assert builder._has_property(None) is False  # type: ignore[arg-type]
+        assert builder._has_property(None) is False
 
     def test_validate_required_exists(self) -> None:
         """Test validating required property that exists."""
@@ -507,7 +507,7 @@ class TestBaseBuilder:
         """Test adding None error message."""
         builder = _BaseBuilder()
 
-        builder._add_error(None)  # type: ignore[arg-type]
+        builder._add_error(None)
 
         if builder.error_count != 0:
             msg = f"Expected {0}, got {builder.error_count}"

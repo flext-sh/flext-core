@@ -151,17 +151,17 @@ class TestFlextDomainService:
         service = SampleCalculationService()
 
         with pytest.raises(ValueError, match=".*"):  # ValidationError or AttributeError
-            service.value = 20.0  # type: ignore[misc]
+            service.value = 20.0
 
     def test_domain_service_extra_fields_forbidden(self) -> None:
         """Test domain service forbids extra fields."""
         with pytest.raises(ValueError, match=".*"):  # ValidationError
-            SampleCalculationService(value=10.0, extra_field="not allowed")  # type: ignore[call-arg]
+            SampleCalculationService(value=10.0, extra_field="not allowed")
 
     def test_execute_method_is_abstract(self) -> None:
         """Test that execute method is abstract."""
         with pytest.raises(TypeError, match="Can't instantiate abstract class"):
-            FlextDomainService()  # type: ignore[abstract]
+            FlextDomainService()
 
     def test_execute_success(self) -> None:
         """Test successful service execution."""
@@ -656,9 +656,9 @@ class TestDomainServiceEdgeCases:
 
         assert result.is_success
         assert isinstance(result.data, dict)
-        if result.data["result"] != 42:  # type: ignore[index,call-overload]
+        if result.data["result"] != 42:
             raise AssertionError(f"Expected {42}, got {result.data['result']}")
-        assert result.data["status"] == "success"  # type: ignore[index,call-overload]
+        assert result.data["status"] == "success"
 
     def test_service_with_zero_values(self) -> None:
         """Test service with zero values."""
@@ -733,7 +733,7 @@ class TestDomainServiceTypes:
         assert service.multiplier == 2.5
 
         # Test with integer (should be coerced to float)
-        service = SampleCalculationService(value=10, multiplier=2)  # type: ignore[arg-type]
+        service = SampleCalculationService(value=10, multiplier=2)
         if service.value != 10.0:
             raise AssertionError(f"Expected {10.0}, got {service.value}")
         assert service.multiplier == 2.0

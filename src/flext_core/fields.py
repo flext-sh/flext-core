@@ -604,6 +604,7 @@ class FlextFieldMetadata(BaseModel):
 
         # Merge defaults with provided data
         merged_data = {**defaults, **data}
+        # Use type ignore for dynamic construction
         return cls(**merged_data)  # type: ignore[arg-type]
 
 

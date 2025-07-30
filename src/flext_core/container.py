@@ -168,7 +168,7 @@ class FlextServiceRegistrar(FlextLoggableMixin):
             total_services=len(self._services),
         )
         self.logger.trace(
-            "Service registration completed successfully", name=validated_name
+            "Service registration completed successfully", name=validated_name,
         )
         return FlextResult.ok(None)
 
@@ -196,7 +196,7 @@ class FlextServiceRegistrar(FlextLoggableMixin):
 
         validated_name = validation_result.unwrap()
         self.logger.trace(
-            "Factory name validated successfully", validated_name=validated_name
+            "Factory name validated successfully", validated_name=validated_name,
         )
 
         # Validate factory is callable
@@ -213,7 +213,7 @@ class FlextServiceRegistrar(FlextLoggableMixin):
         # Remove existing service if present to force factory usage
         if validated_name in self._services:
             self.logger.debug(
-                "Removing existing service to register factory", name=validated_name
+                "Removing existing service to register factory", name=validated_name,
             )
             del self._services[validated_name]
 
@@ -227,7 +227,7 @@ class FlextServiceRegistrar(FlextLoggableMixin):
             total_factories=len(self._factories),
         )
         self.logger.trace(
-            "Factory registration completed successfully", name=validated_name
+            "Factory registration completed successfully", name=validated_name,
         )
         return FlextResult.ok(None)
 
@@ -371,7 +371,7 @@ class FlextServiceRetrivier(FlextLoggableMixin):
 
         validated_name = validation_result.unwrap()
         self.logger.trace(
-            "Service name validated for retrieval", validated_name=validated_name
+            "Service name validated for retrieval", validated_name=validated_name,
         )
 
         # Check direct service registration
@@ -384,14 +384,14 @@ class FlextServiceRetrivier(FlextLoggableMixin):
                 service_id=id(service),
             )
             self.logger.trace(
-                "Service retrieval from cache completed", name=validated_name
+                "Service retrieval from cache completed", name=validated_name,
             )
             return FlextResult.ok(service)
 
         # Check factory registration
         if validated_name in self._factories:
             self.logger.trace(
-                "Service not in cache, attempting factory creation", name=validated_name
+                "Service not in cache, attempting factory creation", name=validated_name,
             )
             try:
                 factory = self._factories[validated_name]

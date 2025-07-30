@@ -586,7 +586,7 @@ class TestValueObjectEdgeCases:
         # Test operations that might fail
         # Add with invalid object
         with pytest.raises((AttributeError, TypeError)):
-            money.add(None)  # type: ignore[arg-type]
+            money.add(None)
 
     def test_value_object_performance(self) -> None:
         """Test performance characteristics of value objects."""

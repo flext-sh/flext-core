@@ -197,10 +197,10 @@ class TestFlextCommandsCommand:
         command = SampleCommand(name="test", value=42)
 
         with pytest.raises(ValidationError):
-            command.name = "changed"  # type: ignore[misc]
+            command.name = "changed"
 
         with pytest.raises(ValidationError):
-            command.value = 100  # type: ignore[misc]
+            command.value = 100
 
     def test_command_validation_success(self) -> None:
         """Test successful command validation."""
@@ -1086,7 +1086,7 @@ class TestFlextCommandsQuery:
         query = SampleQuery(search_term="test")
 
         with pytest.raises(ValidationError):
-            query.search_term = "changed"  # type: ignore[misc]
+            query.search_term = "changed"
 
     def test_query_mixin_methods(self) -> None:
         """Test query mixin methods availability."""
