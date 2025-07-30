@@ -280,15 +280,38 @@ def _add_to_log_store(
     return event_dict
 
 
-# Configure structlog with simpler, more stable processors
+# Human-readable console renderer configuration
+def _create_human_readable_renderer() -> object:
+    """Create human-readable console renderer following market standards."""
+    import os
+
+    # Check if we're in development or production
+    is_development = os.environ.get("ENVIRONMENT", "development").lower() in ("development", "dev", "local")
+    enable_colors = os.environ.get("FLEXT_LOG_COLORS", "true").lower() == "true" and is_development
+
+    return structlog.dev.ConsoleRenderer(
+        colors=enable_colors,
+        # Show level and logger name in brackets for clarity
+        level_styles={
+            "critical": "\033[91m",  # Bright red
+            "error": "\033[91m",     # Red
+            "warning": "\033[93m",   # Yellow
+            "info": "\033[92m",      # Green
+            "debug": "\033[94m",     # Blue
+            "trace": "\033[95m",     # Magenta
+        } if enable_colors else None,
+    )
+
+# Configure structlog with human-readable output
 structlog.configure(
     processors=[
         structlog.stdlib.filter_by_level,
         structlog.stdlib.add_logger_name,
         structlog.stdlib.add_log_level,
-        structlog.processors.TimeStamper(fmt="unix"),
-        _add_to_log_store,  # Add to log store before rendering
-        structlog.dev.ConsoleRenderer(),
+        # Use ISO timestamp format instead of unix timestamp for readability
+        structlog.processors.TimeStamper(fmt="iso"),
+        _add_to_log_store,  # Keep for testing
+        _create_human_readable_renderer(),
     ],
     context_class=dict,
     logger_factory=structlog.stdlib.LoggerFactory(),
@@ -296,11 +319,46 @@ structlog.configure(
     cache_logger_on_first_use=True,
 )
 
-# Configure standard logging simply
+# Configure standard logging with environment-aware level
+def _get_logging_level_from_env() -> int:
+    """Get logging level from environment variables."""
+    import os
+
+    # Check multiple environment variables in order of preference
+    env_level = (
+        os.environ.get("client-a_LOG_LEVEL") or
+        os.environ.get("FLEXT_LOG_LEVEL") or
+        os.environ.get("LOG_LEVEL") or
+        "INFO"
+    ).upper()
+
+    # Map to numeric levels
+    level_mapping = {
+        "CRITICAL": 50,
+        "ERROR": 40,
+        "WARNING": 30,
+        "INFO": 20,
+        "DEBUG": 10,
+        "TRACE": 5,
+    }
+
+    return level_mapping.get(env_level, 20)  # Default to INFO
+
+def _get_env_log_level_string() -> str:
+    """Get logging level from environment as string."""
+    import os
+
+    return (
+        os.environ.get("client-a_LOG_LEVEL") or
+        os.environ.get("FLEXT_LOG_LEVEL") or
+        os.environ.get("LOG_LEVEL") or
+        "INFO"
+    ).upper()
+
 logging.basicConfig(
     format="%(message)s",
     stream=sys.stderr,
-    level=TRACE_LEVEL,
+    level=_get_logging_level_from_env(),
 )
 
 
@@ -408,6 +466,13 @@ class FlextLogger:
             self.configure()
 
         self._name = name
+
+        # Use environment-aware level if default level is requested
+        if level == "INFO":
+            env_level = _get_env_log_level_string()
+            if env_level != "INFO":
+                level = env_level
+
         self._level = level.upper()
         numeric_levels = FlextLogLevel.get_numeric_levels()
         self._level_value = numeric_levels.get(self._level, numeric_levels["INFO"])
@@ -932,6 +997,12 @@ def get_logger(name: str, level: str = "INFO") -> FlextLogger:
         logger = get_logger(__name__, "DEBUG")
 
     """
+    # Use environment-aware level if default level is requested
+    if level == "INFO":
+        env_level = _get_env_log_level_string()
+        if env_level != "INFO":
+            level = env_level
+
     return FlextLoggerFactory.get_logger(name, level)
 
 

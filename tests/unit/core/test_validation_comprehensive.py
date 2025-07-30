@@ -8,9 +8,13 @@ achieve near 100% coverage.
 from __future__ import annotations
 
 import math
+from typing import TYPE_CHECKING
 from unittest.mock import patch
 
 import pytest
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 from flext_core.flext_types import TPredicate  # This should hit line 42
 from flext_core.result import FlextResult
@@ -1016,15 +1020,15 @@ class TestFlextValidation:
 
         for exception in exceptions:
 
-            def failing_validator(
-                value: object,
-                exc: type[Exception],
-            ) -> bool:
-                raise exc()
+            def make_failing_validator(exc: Exception) -> Callable[[object], bool]:
+                def failing_validator(value: object) -> bool:
+                    raise exc
+
+                return failing_validator
 
             result = FlextValidation.safe_validate(
                 value="test",
-                validator=lambda v: failing_validator(v, exception),
+                validator=make_failing_validator(exception),
             )
             assert result.is_failure
             assert result.error is not None

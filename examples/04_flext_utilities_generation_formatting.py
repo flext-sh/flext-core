@@ -92,7 +92,11 @@ def generate_hash_id(data: str) -> TEntityId:
 
 def is_email(value: str) -> bool:
     """Validate email format."""
-    return isinstance(value, str) and "@" in value and "." in value.rsplit("@", maxsplit=1)[-1]
+    return (
+        isinstance(value, str)
+        and "@" in value
+        and "." in value.rsplit("@", maxsplit=1)[-1]
+    )
 
 
 def is_url(value: str) -> bool:

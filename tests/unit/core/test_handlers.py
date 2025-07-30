@@ -333,7 +333,10 @@ class TestFlextHandlersCommandHandler:
             raise AssertionError(
                 f"Expected True, got {handler.can_handle(_TestCommand('test'))}"
             )
-        assert handler.can_handle("any message") is True
+        # String messages are not valid commands
+        assert handler.can_handle("any message") is False
+        # But dict/object messages are valid commands
+        assert handler.can_handle({"command": "test"}) is True
 
     def test_command_handler_pre_handle(self) -> None:
         """Test command pre-processing."""

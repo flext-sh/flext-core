@@ -55,7 +55,7 @@ class TestFlextEntityFieldValidators:
     def test_validate_entity_version_zero(self) -> None:
         """Test entity version validation with zero."""
         with pytest.raises(ValidationError) as exc_info:
-            ConcreteFlextEntity(name="Test", version=0)
+            ConcreteFlextEntity(id="test-id", name="Test", version=0)
 
         # Pydantic ge=1 validation catches this before custom validator
         if "Input should be greater than or equal to 1" not in str(exc_info.value):
@@ -66,7 +66,7 @@ class TestFlextEntityFieldValidators:
     def test_validate_entity_version_negative(self) -> None:
         """Test entity version validation with negative number."""
         with pytest.raises(ValidationError) as exc_info:
-            ConcreteFlextEntity(name="Test", version=-1)
+            ConcreteFlextEntity(id="test-id", name="Test", version=-1)
 
         # Pydantic ge=1 validation catches this before custom validator
         if "Input should be greater than or equal to 1" not in str(exc_info.value):
@@ -123,6 +123,7 @@ class TestFlextEntityVersioning:
         )
         assert entity_result.is_success
         entity = entity_result.data
+        assert entity is not None
         updated_entity = entity.with_version(2)
 
         if updated_entity.version != EXPECTED_BULK_SIZE:
@@ -143,6 +144,7 @@ class TestFlextEntityVersioning:
         )
         assert entity_result.is_success
         entity = entity_result.data
+        assert entity is not None
         updated_entity = entity.with_version(100)
 
         if updated_entity.version != 100:
@@ -308,16 +310,19 @@ class TestFlextEntityValidation:
         entity_invalid = ConcreteFlextEntity(id="test-id-2", name="")
         result_invalid = entity_invalid.validate_domain_rules()
         assert result_invalid.is_failure
-        if "Entity name cannot be empty" not in result_invalid.error:
+        if (
+            result_invalid.error is None
+            or "Entity name cannot be empty" not in result_invalid.error
+        ):
             raise AssertionError(
-                f"Expected {'Entity name cannot be empty'} in {result_invalid.error}"
+                f"Expected 'Entity name cannot be empty' in {result_invalid.error}"
             )
 
     def test_pydantic_field_validation_integration(self) -> None:
         """Test integration with Pydantic field validation."""
         # Test that Pydantic validation works as expected
         with pytest.raises(ValidationError):
-            ConcreteFlextEntity()  # Missing required 'name' field
+            ConcreteFlextEntity()  # Missing required 'id' and 'name' fields
 
         # Test successful creation with valid data
         entity = ConcreteFlextEntity(id="test-id", name="Valid Name")

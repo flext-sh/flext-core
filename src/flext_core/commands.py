@@ -415,7 +415,11 @@ class FlextCommands:
             field_name: str = "email",
         ) -> FlextResult[None]:
             """Validate email format."""
-            if not email or "@" not in email or "." not in email.rsplit("@", maxsplit=1)[-1]:
+            if (
+                not email
+                or "@" not in email
+                or "." not in email.rsplit("@", maxsplit=1)[-1]
+            ):
                 return FlextResult.fail(f"Invalid {field_name} format")
             return FlextResult.ok(None)
 
