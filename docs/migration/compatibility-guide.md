@@ -13,10 +13,10 @@ FLEXT Core maintains backward compatibility while providing a clear migration pa
 graph LR
     A[Legacy Patterns] --> B[Compatibility Layer]
     B --> C[Modern Patterns]
-    
+
     D[Your Old Code] --> E[Gradual Migration]
     E --> F[New FLEXT Core Code]
-    
+
     style A fill:#ffcccc
     style C fill:#ccffcc
     style F fill:#ccffcc
@@ -59,7 +59,7 @@ class UserService:
         if not user.is_active:
             raise InactiveUserError(f"User {user_id} is inactive")
         return user
-    
+
     def create_user(self, data: dict) -> User:
         try:
             user = User(**data)
@@ -91,33 +91,33 @@ class UserService:
         user_result = self.repository.find_by_id(user_id)
         if user_result.is_failure:
             return FlextResult.fail(f"Repository error: {user_result.error}")
-        
+
         user = user_result.data
         if not user:
             return FlextResult.fail(f"User {user_id} not found")
-        
+
         if not user.is_active:
             return FlextResult.fail(f"User {user_id} is inactive")
-        
+
         return FlextResult.ok(user)
-    
+
     def create_user(self, data: dict) -> FlextResult[User]:
         """Create user with comprehensive error handling."""
         # Validate input data
         validation_result = self._validate_user_data(data)
         if validation_result.is_failure:
             return FlextResult.fail(f"Validation error: {validation_result.error}")
-        
+
         # Create user entity
         user_creation_result = User.create(data)
         if user_creation_result.is_failure:
             return FlextResult.fail(f"User creation error: {user_creation_result.error}")
-        
+
         # Save to repository
         save_result = self.repository.save(user_creation_result.data)
         if save_result.is_failure:
             return FlextResult.fail(f"Database error: {save_result.error}")
-        
+
         return FlextResult.ok(user_creation_result.data)
 
 # Usage with functional composition
@@ -181,19 +181,19 @@ class UserService:
 def setup_services() -> FlextResult[None]:
     """Setup all application services."""
     container = get_flext_container()
-    
+
     # Register repository
     repository = PostgreSQLUserRepository()
     repo_result = container.register("user_repository", repository)
     if repo_result.is_failure:
         return FlextResult.fail(f"Failed to register repository: {repo_result.error}")
-    
+
     # Register service
     user_service = UserService(repository)
     service_result = container.register("user_service", user_service)
     if service_result.is_failure:
         return FlextResult.fail(f"Failed to register service: {service_result.error}")
-    
+
     return FlextResult.ok(None)
 
 # Usage with error handling
@@ -232,11 +232,11 @@ class Config:
         self.api_key = os.getenv("API_KEY")  # Might be None
         self.debug = os.getenv("DEBUG", "false").lower() == "true"
         self.port = int(os.getenv("PORT", "8000"))
-        
+
         # Manual validation
         if not self.api_key:
             raise ValueError("API_KEY environment variable is required")
-        
+
         if self.port < 1 or self.port > 65535:
             raise ValueError("PORT must be between 1 and 65535")
 
@@ -253,19 +253,19 @@ from pydantic import Field, SecretStr, field_validator
 
 class AppSettings(FlextCoreSettings):
     """Type-safe application configuration."""
-    
+
     # Database configuration
     database_url: str = Field(
         "sqlite:///app.db",
         description="Database connection URL"
     )
-    
+
     # API configuration with secrets
     api_key: SecretStr = Field(
         ...,  # Required
         description="External API key"
     )
-    
+
     # Server configuration
     port: int = Field(
         8000,
@@ -273,13 +273,13 @@ class AppSettings(FlextCoreSettings):
         le=65535,
         description="Server port"
     )
-    
+
     # Feature flags
     enable_metrics: bool = Field(
         False,
         description="Enable metrics collection"
     )
-    
+
     @field_validator("database_url")
     @classmethod
     def validate_database_url(cls, v: str) -> str:
@@ -287,7 +287,7 @@ class AppSettings(FlextCoreSettings):
         if not v.startswith(("sqlite://", "postgresql://", "mysql://")):
             raise ValueError("Invalid database URL scheme")
         return v
-    
+
     @property
     def is_production_ready(self) -> bool:
         """Check if configuration is production-ready."""
@@ -296,7 +296,7 @@ class AppSettings(FlextCoreSettings):
             not self.debug and
             self.database_url.startswith("postgresql://")
         )
-    
+
     def get_database_config(self) -> dict[str, any]:
         """Get database configuration for SQLAlchemy."""
         return {
@@ -344,11 +344,11 @@ class UserService:
     def activate_user(self, user: User) -> None:
         user.is_active = True
         self.repository.save(user)
-    
+
     def deactivate_user(self, user: User) -> None:
         user.is_active = False
         self.repository.save(user)
-    
+
     def change_email(self, user: User, new_email: str) -> None:
         # Business logic in service layer
         if "@" not in new_email:
@@ -378,23 +378,23 @@ class UserEmailChangedEvent(FlextDomainEvent):
 
 class ValidEmailRule(FlextBusinessRule):
     """Business rule for email validation."""
-    
+
     def __init__(self, email: str):
         self.email = email
-    
+
     def is_satisfied_by(self, _: any) -> bool:
         return "@" in self.email and "." in self.email.split("@")[1]
-    
+
     def get_error_message(self) -> str:
         return f"Email '{self.email}' is not valid"
 
 class User(FlextEntity):
     """Rich user domain entity with business logic."""
-    
+
     name: str = Field(..., description="User full name")
     email: str = Field(..., description="User email address")
     is_active: bool = Field(True, description="User active status")
-    
+
     @field_validator("email")
     @classmethod
     def validate_email_format(cls, v: str) -> str:
@@ -402,44 +402,44 @@ class User(FlextEntity):
         if "@" not in v:
             raise ValueError("Email must contain @ symbol")
         return v
-    
+
     def activate(self) -> FlextResult[None]:
         """Activate the user with domain logic."""
         if self.is_active:
             return FlextResult.fail("User is already active")
-        
+
         self.is_active = True
-        
+
         # Emit domain event
         event = UserActivatedEvent(
             user_id=self.id,
             activated_at=datetime.utcnow()
         )
         self.add_domain_event(event)
-        
+
         return FlextResult.ok(None)
-    
+
     def deactivate(self) -> FlextResult[None]:
         """Deactivate the user with domain logic."""
         if not self.is_active:
             return FlextResult.fail("User is already inactive")
-        
+
         self.is_active = False
         return FlextResult.ok(None)
-    
+
     def change_email(self, new_email: str) -> FlextResult[None]:
         """Change user email with business rules."""
         # Apply business rule
         email_rule = ValidEmailRule(new_email)
         if not email_rule.is_satisfied_by(None):
             return FlextResult.fail(email_rule.get_error_message())
-        
+
         if self.email == new_email:
             return FlextResult.fail("New email is the same as current email")
-        
+
         old_email = self.email
         self.email = new_email
-        
+
         # Emit domain event
         event = UserEmailChangedEvent(
             user_id=self.id,
@@ -447,22 +447,22 @@ class User(FlextEntity):
             new_email=new_email
         )
         self.add_domain_event(event)
-        
+
         return FlextResult.ok(None)
-    
+
     @classmethod
     def create(cls, name: str, email: str) -> FlextResult["User"]:
         """Factory method for creating users."""
         email_rule = ValidEmailRule(email)
         if not email_rule.is_satisfied_by(None):
             return FlextResult.fail(email_rule.get_error_message())
-        
+
         user = cls(
             name=name,
             email=email,
             is_active=True
         )
-        
+
         return FlextResult.ok(user)
 
 # Usage with rich domain model
@@ -499,12 +499,12 @@ from flext_core import FlextResult, FlextContainer
 
 ### Deprecation Timeline
 
-| Component | Deprecated In | Removal Target | Migration Path |
-|-----------|--------------|----------------|----------------|
-| `DIContainer` | v0.8.0 | v1.0.0 | Use `FlextContainer` |
-| `FlextResult` | v0.8.0 | v1.0.0 | Use `FlextResult` |
-| `types.py` legacy types | v0.8.0 | v1.0.0 | Use `constants.py` types |
-| Manual config loading | v0.8.0 | v1.0.0 | Use `FlextCoreSettings` |
+| Component               | Deprecated In | Removal Target | Migration Path           |
+| ----------------------- | ------------- | -------------- | ------------------------ |
+| `DIContainer`           | v0.8.0        | v1.0.0         | Use `FlextContainer`     |
+| `FlextResult`           | v0.8.0        | v1.0.0         | Use `FlextResult`        |
+| `types.py` legacy types | v0.8.0        | v1.0.0         | Use `constants.py` types |
+| Manual config loading   | v0.8.0        | v1.0.0         | Use `FlextCoreSettings`  |
 
 ### Migration Warning System
 
@@ -530,31 +530,31 @@ from flext_core import FlextResult
 
 class TestUserServiceMigration:
     """Test both old and new implementations during migration."""
-    
+
     def test_old_implementation(self):
         """Test legacy exception-based implementation."""
         service = OldUserService()
-        
+
         with pytest.raises(UserNotFoundError):
             service.get_user("nonexistent")
-    
+
     def test_new_implementation(self):
         """Test new FlextResult-based implementation."""
         service = NewUserService()
-        
+
         result = service.get_user("nonexistent")
         assert result.is_failure
         assert "not found" in result.error
-    
+
     def test_behavioral_equivalence(self):
         """Ensure both implementations have equivalent behavior."""
         old_service = OldUserService()
         new_service = NewUserService()
-        
+
         # Test success case
         old_user = old_service.get_user("existing_user")
         new_result = new_service.get_user("existing_user")
-        
+
         assert new_result.is_success
         assert new_result.data.id == old_user.id
         assert new_result.data.name == old_user.name
@@ -565,19 +565,19 @@ class TestUserServiceMigration:
 ```python
 class TestMigrationIntegration:
     """Test integration during gradual migration."""
-    
+
     def test_mixed_patterns(self):
         """Test that old and new patterns work together."""
         # Old container
         old_container = DIContainer()
-        
+
         # New container
         new_container = get_flext_container()
-        
+
         # Ensure they can coexist during migration
         old_service = old_container.get("legacy_service")
         new_result = new_container.get("modern_service")
-        
+
         assert old_service is not None
         assert new_result.is_success
 ```
@@ -589,7 +589,7 @@ class TestMigrationIntegration:
 ```python
 class MigrationProgress:
     """Track migration progress across application components."""
-    
+
     def __init__(self):
         self.components = {
             "error_handling": {
@@ -613,7 +613,7 @@ class MigrationProgress:
                 "files": []
             }
         }
-    
+
     def add_component(self, category: str, file_path: str, migrated: bool = False):
         """Track a component for migration."""
         self.components[category]["files"].append({
@@ -623,12 +623,12 @@ class MigrationProgress:
         self.components[category]["total"] += 1
         if migrated:
             self.components[category]["migrated"] += 1
-    
+
     def get_progress_report(self) -> dict:
         """Get overall migration progress."""
         total_components = sum(c["total"] for c in self.components.values())
         total_migrated = sum(c["migrated"] for c in self.components.values())
-        
+
         return {
             "overall_progress": (total_migrated / total_components * 100) if total_components > 0 else 0,
             "components": {
@@ -697,7 +697,7 @@ if TYPE_CHECKING:
 class OrderService:
     def __init__(self, get_user_service: Callable[[], "UserService"]):
         self._get_user_service = get_user_service
-    
+
     @property
     def user_service(self) -> "UserService":
         return self._get_user_service()
@@ -736,7 +736,7 @@ def load_configuration() -> FlextResult[AppSettings]:
             field = " -> ".join(str(loc) for loc in error["loc"])
             message = error["msg"]
             error_details.append(f"{field}: {message}")
-        
+
         return FlextResult.fail(
             f"Configuration validation failed:\n" + "\n".join(error_details)
         )

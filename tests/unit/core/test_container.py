@@ -161,7 +161,7 @@ class TestFlextContainerBasicOperations:
         assert result.is_failure
         assert result.error is not None
         if expected_error not in result.error:
-            raise AssertionError(f"Expected {expected_error} in {result.error}")
+            raise AssertionError(f"Expected expected_error in {result.error}")
 
     def test_service_retrieval_success(
         self,
@@ -192,8 +192,8 @@ class TestFlextContainerBasicOperations:
         assert result.is_failure
         assert result.error is not None
         assert result.error
-        if "not found" not in result.error:
-            raise AssertionError(f"Expected {'not found'} in {result.error}")
+        if "not found" not in (result.error or ""):
+            raise AssertionError(f"Expected 'not found' in {result.error}")
 
     @pytest.mark.parametrize(
         "service_names",
@@ -356,8 +356,8 @@ class TestFlextContainerSingletonPattern:
         assert result.is_failure
         assert result.error is not None
         assert result.error
-        if "must be callable" not in result.error:
-            raise AssertionError(f"Expected {'must be callable'} in {result.error}")
+        if "must be callable" not in (result.error or ""):
+            raise AssertionError(f"Expected 'must be callable' in {result.error}")
 
     @pytest.mark.parametrize("factory_count", [1, 3, 5, 10])
     def test_multiple_singleton_factories(
@@ -468,8 +468,8 @@ class TestFlextContainerServiceManagement:
         assert result.is_failure
         assert result.error is not None
         assert result.error
-        if "not found" not in result.error:
-            raise AssertionError(f"Expected {'not found'} in {result.error}")
+        if "not found" not in (result.error or ""):
+            raise AssertionError(f"Expected 'not found' in {result.error}")
 
     def test_singleton_removal_clears_cache(
         self,

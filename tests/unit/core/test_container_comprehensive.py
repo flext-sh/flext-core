@@ -87,17 +87,17 @@ class TestFlextServiceRegistrar:
         # Test empty string
         result = registrar.register_service("", service)
         assert result.is_failure
-        if "Service name cannot be empty" not in result.error:
+        if "Service name cannot be empty" not in (result.error or ""):
             raise AssertionError(
-                f"Expected {'Service name cannot be empty'} in {result.error}"
+                f"Expected 'Service name cannot be empty' in {result.error}"
             )
 
         # Test whitespace string
         result = registrar.register_service("   ", service)
         assert result.is_failure
-        if "Service name cannot be empty" not in result.error:
+        if "Service name cannot be empty" not in (result.error or ""):
             raise AssertionError(
-                f"Expected {'Service name cannot be empty'} in {result.error}"
+                f"Expected 'Service name cannot be empty' in {result.error}"
             )
 
     def test_service_registration_replacement_warning(self) -> None:
@@ -149,9 +149,9 @@ class TestFlextServiceRegistrar:
 
         result = registrar.register_factory("test", "not_callable")
         assert result.is_failure
-        if "Factory must be callable" not in result.error:
+        if "Factory must be callable" not in (result.error or ""):
             raise AssertionError(
-                f"Expected {'Factory must be callable'} in {result.error}"
+                f"Expected 'Factory must be callable' in {result.error}"
             )
 
     def test_unregister_service_success(self) -> None:
@@ -190,9 +190,9 @@ class TestFlextServiceRegistrar:
 
         result = registrar.unregister_service("nonexistent")
         assert result.is_failure
-        if "Service 'nonexistent' not found" not in result.error:
+        if "Service 'nonexistent' not found" not in (result.error or ""):
             raise AssertionError(
-                f"Expected {"Service 'nonexistent' not found"} in {result.error}"
+                f"Expected \"Service 'nonexistent' not found\" in {result.error}"
             )
 
     def test_clear_all_services(self) -> None:
@@ -328,9 +328,9 @@ class TestFlextServiceRetrivier:
 
         result = retriever.get_service("test")
         assert result.is_failure
-        if "Factory for 'test' failed" not in result.error:
+        if "Factory for 'test' failed" not in (result.error or ""):
             raise AssertionError(
-                f"Expected {"Factory for 'test' failed"} in {result.error}"
+                f"Expected \"Factory for 'test' failed\" in {result.error}"
             )
         assert "Factory failed" in result.error
 
@@ -357,7 +357,7 @@ class TestFlextServiceRetrivier:
             assert result.is_failure
             if f"Factory for 'test_{i}' failed" not in result.error:
                 raise AssertionError(
-                    f"Expected {f"Factory for 'test_{i}' failed"} in {result.error}"
+                    f"Expected \"Factory for 'test_{i}' failed\" in {result.error}"
                 )
 
     def test_get_service_not_found(self) -> None:
@@ -368,9 +368,9 @@ class TestFlextServiceRetrivier:
 
         result = retriever.get_service("nonexistent")
         assert result.is_failure
-        if "Service 'nonexistent' not found" not in result.error:
+        if "Service 'nonexistent' not found" not in (result.error or ""):
             raise AssertionError(
-                f"Expected {"Service 'nonexistent' not found"} in {result.error}"
+                f"Expected \"Service 'nonexistent' not found\" in {result.error}"
             )
 
     def test_get_service_info_for_instance(self) -> None:
@@ -424,9 +424,9 @@ class TestFlextServiceRetrivier:
 
         result = retriever.get_service_info("nonexistent")
         assert result.is_failure
-        if "Service 'nonexistent' not found" not in result.error:
+        if "Service 'nonexistent' not found" not in (result.error or ""):
             raise AssertionError(
-                f"Expected {"Service 'nonexistent' not found"} in {result.error}"
+                f"Expected \"Service 'nonexistent' not found\" in {result.error}"
             )
 
     def test_list_services_mixed(self) -> None:
@@ -472,17 +472,17 @@ class TestFlextContainerAdvancedFeatures:
         # Try to get as wrong type
         result = clean_container.get_typed("test", str)
         assert result.is_failure
-        if "is SampleService, expected str" not in result.error:
+        if "is SampleService, expected str" not in (result.error or ""):
             raise AssertionError(
-                f"Expected {'is SampleService, expected str'} in {result.error}"
+                f"Expected 'is SampleService, expected str' in {result.error}"
             )
 
     def test_get_typed_service_not_found(self, clean_container: FlextContainer) -> None:
         """Test type-safe retrieval of non-existent service."""
         result = clean_container.get_typed("nonexistent", SampleService)
         assert result.is_failure
-        if "not found" not in result.error:
-            raise AssertionError(f"Expected {'not found'} in {result.error}")
+        if "not found" not in (result.error or ""):
+            raise AssertionError(f"Expected 'not found' in {result.error}")
 
     def test_auto_wire_success(self, clean_container: FlextContainer) -> None:
         """Test successful auto-wiring of service with dependencies."""
@@ -521,9 +521,9 @@ class TestFlextContainerAdvancedFeatures:
         """Test auto-wiring fails when required dependency is missing."""
         result = clean_container.auto_wire(DependentService)
         assert result.is_failure
-        if "Required dependency 'test_service' not found" not in result.error:
+        if "Required dependency 'test_service' not found" not in (result.error or ""):
             raise AssertionError(
-                f"Expected {"Required dependency 'test_service' not found"} in {result.error}"
+                f"Expected \"Required dependency 'test_service' not found\" in {result.error}"
             )
 
     def test_auto_wire_registration_failure(
@@ -544,8 +544,8 @@ class TestFlextContainerAdvancedFeatures:
 
         result = clean_container.auto_wire(FailingService)
         assert result.is_failure
-        if "Auto-wiring failed" not in result.error:
-            raise AssertionError(f"Expected {'Auto-wiring failed'} in {result.error}")
+        if "Auto-wiring failed" not in (result.error or ""):
+            raise AssertionError(f"Expected 'Auto-wiring failed' in {result.error}")
 
     def test_get_or_create_existing_service(
         self,
@@ -589,9 +589,9 @@ class TestFlextContainerAdvancedFeatures:
 
         result = clean_container.get_or_create("test", failing_factory)
         assert result.is_failure
-        if "Factory failed for service 'test'" not in result.error:
+        if "Factory failed for service 'test'" not in (result.error or ""):
             raise AssertionError(
-                f"Expected {"Factory failed for service 'test'"} in {result.error}"
+                f"Expected \"Factory failed for service 'test'\" in {result.error}"
             )
 
     def test_batch_register_success(self, clean_container: FlextContainer) -> None:
@@ -626,9 +626,9 @@ class TestFlextContainerAdvancedFeatures:
 
         result = clean_container.batch_register(services)
         assert result.is_failure
-        if "Batch registration failed" not in result.error:
+        if "Batch registration failed" not in (result.error or ""):
             raise AssertionError(
-                f"Expected {'Batch registration failed'} in {result.error}"
+                f"Expected 'Batch registration failed' in {result.error}"
             )
 
         # Verify rollback occurred - service1 should not be registered
@@ -692,8 +692,8 @@ class TestServiceKey:
 
         result = get_typed(clean_container, key)
         assert result.is_failure
-        if "not found" not in result.error:
-            raise AssertionError(f"Expected {'not found'} in {result.error}")
+        if "not found" not in (result.error or ""):
+            raise AssertionError(f"Expected 'not found' in {result.error}")
 
 
 @pytest.mark.unit

@@ -435,9 +435,11 @@ class TestFlextCommandHandler:
         if not (result.is_success):
             raise AssertionError(f"Expected True, got {result.is_success}")
         assert result.data is not None
-        if result.data["username"] != "john":
-            raise AssertionError(f"Expected {'john'}, got {result.data['username']}")
-        assert result.data["email"] == "john@example.com"
+        if (result.data or {})["username"] != "john":
+            raise AssertionError(
+                f"Expected {'john'}, got {(result.data or {})['username']}"
+            )
+        assert (result.data or {})["email"] == "john@example.com"
         if "id" not in result.data:
             raise AssertionError(f"Expected {'id'} in {result.data}")
 
@@ -551,8 +553,10 @@ class TestFlextCommandBus:
         if not (result.is_success):
             raise AssertionError(f"Expected True, got {result.is_success}")
         assert result.data is not None
-        if result.data["username"] != "alice":
-            raise AssertionError(f"Expected {'alice'}, got {result.data['username']}")
+        if (result.data or {})["username"] != "alice":
+            raise AssertionError(
+                f"Expected {'alice'}, got {(result.data or {})['username']}"
+            )
 
     def test_execute_command_no_handler(self) -> None:
         """Test executing command with no registered handler."""

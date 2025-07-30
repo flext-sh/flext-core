@@ -156,8 +156,8 @@ class TestBaseHandler:
         assert result.is_failure
         assert result.error is not None
         assert result.error is not None
-        if "cannot be None" not in result.error:
-            raise AssertionError(f"Expected {'cannot be None'} in {result.error}")
+        if "cannot be None" not in (result.error or ""):
+            raise AssertionError(f"Expected 'cannot be None' in {result.error}")
 
     def test_handler_get_handler_metadata(self) -> None:
         """Test handler metadata."""
@@ -200,8 +200,8 @@ class TestBaseHandler:
         assert result.is_failure
         assert result.error is not None
         assert result.error is not None
-        if "cannot be None" not in result.error:
-            raise AssertionError(f"Expected {'cannot be None'} in {result.error}")
+        if "cannot be None" not in (result.error or ""):
+            raise AssertionError(f"Expected 'cannot be None' in {result.error}")
 
     def test_handler_process_message_cannot_handle(self) -> None:
         """Test message processing when handler cannot handle message."""
@@ -215,9 +215,9 @@ class TestBaseHandler:
         result = handler.process_message("not a test message")
         assert result.is_failure
         assert result.error is not None
-        if "cannot process this message" not in result.error:
+        if "cannot process this message" not in (result.error or ""):
             raise AssertionError(
-                f"Expected {'cannot process this message'} in {result.error}"
+                f"Expected 'cannot process this message' in {result.error}"
             )
 
     def test_handler_process_message_exception_handling(self) -> None:
@@ -234,8 +234,8 @@ class TestBaseHandler:
         result = handler.process_message(message)
         assert result.is_failure
         assert result.error is not None
-        if "Processing failed" not in result.error:
-            raise AssertionError(f"Expected {'Processing failed'} in {result.error}")
+        if "Processing failed" not in (result.error or ""):
+            raise AssertionError(f"Expected 'Processing failed' in {result.error}")
 
     def test_handler_process_generic_message(self) -> None:
         """Test generic message processing."""
@@ -249,8 +249,8 @@ class TestBaseHandler:
         result = handler.process(None)
         assert result.is_failure
         assert result.error is not None
-        if "validation failed" not in result.error:
-            raise AssertionError(f"Expected {'validation failed'} in {result.error}")
+        if "validation failed" not in (result.error or ""):
+            raise AssertionError(f"Expected 'validation failed' in {result.error}")
 
     def test_handler_delegation_methods(self) -> None:
         """Test delegation to base handler."""
@@ -360,8 +360,8 @@ class TestFlextHandlersCommandHandler:
         result = handler.pre_handle(command)
         assert result.is_failure
         assert result.error is not None
-        if "Validation failed" not in result.error:
-            raise AssertionError(f"Expected {'Validation failed'} in {result.error}")
+        if "Validation failed" not in (result.error or ""):
+            raise AssertionError(f"Expected 'Validation failed' in {result.error}")
 
     def test_command_handler_post_handle(self) -> None:
         """Test command post-processing."""
@@ -407,10 +407,8 @@ class TestFlextHandlersCommandHandler:
         result = handler.handle_with_hooks(command)
         assert result.is_failure
         assert result.error is not None
-        if "Pre-processing failed" not in result.error:
-            raise AssertionError(
-                f"Expected {'Pre-processing failed'} in {result.error}"
-            )
+        if "Pre-processing failed" not in (result.error or ""):
+            raise AssertionError(f"Expected 'Pre-processing failed' in {result.error}")
 
     def test_command_handler_get_metrics(self) -> None:
         """Test command handler metrics."""
@@ -492,8 +490,8 @@ class TestFlextHandlersEventHandler:
         result = handler.process_event(None)
         assert result.is_failure
         assert result.error is not None
-        if "cannot be None" not in result.error:
-            raise AssertionError(f"Expected {'cannot be None'} in {result.error}")
+        if "cannot be None" not in (result.error or ""):
+            raise AssertionError(f"Expected 'cannot be None' in {result.error}")
 
     def test_event_handler_process_event_cannot_handle(self) -> None:
         """Test event processing when handler cannot handle."""
@@ -510,9 +508,9 @@ class TestFlextHandlersEventHandler:
         result = handler.process_event("not an event")
         assert result.is_failure
         assert result.error is not None
-        if "cannot process this event" not in result.error:
+        if "cannot process this event" not in (result.error or ""):
             raise AssertionError(
-                f"Expected {'cannot process this event'} in {result.error}"
+                f"Expected 'cannot process this event' in {result.error}"
             )
 
     def test_event_handler_process_event_exception(self) -> None:
@@ -532,9 +530,9 @@ class TestFlextHandlersEventHandler:
         result = handler.process_event(event)
         assert result.is_failure
         assert result.error is not None
-        if "Event processing failed" not in result.error:
+        if "Event processing failed" not in (result.error or ""):
             raise AssertionError(
-                f"Expected {'Event processing failed'} in {result.error}"
+                f"Expected 'Event processing failed' in {result.error}"
             )
 
     def test_event_handler_handle_event(self) -> None:
@@ -569,8 +567,8 @@ class TestFlextHandlersEventHandler:
         result = handler.handle_event(event)
         assert result.is_failure
         assert result.error is not None
-        if "Handle failed" not in result.error:
-            raise AssertionError(f"Expected {'Handle failed'} in {result.error}")
+        if "Handle failed" not in (result.error or ""):
+            raise AssertionError(f"Expected 'Handle failed' in {result.error}")
 
     def test_event_handler_abstract_method(self) -> None:
         """Test that process_event_impl is abstract."""
@@ -639,8 +637,8 @@ class TestFlextHandlersQueryHandler:
         result = handler.pre_handle(query)
         assert result.is_failure
         assert result.error is not None
-        if "Access denied" not in result.error:
-            raise AssertionError(f"Expected {'Access denied'} in {result.error}")
+        if "Access denied" not in (result.error or ""):
+            raise AssertionError(f"Expected 'Access denied' in {result.error}")
 
     def test_query_handler_process_request(self) -> None:
         """Test request processing."""
@@ -657,8 +655,8 @@ class TestFlextHandlersQueryHandler:
         result = handler.process_request(None)
         assert result.is_failure
         assert result.error is not None
-        if "cannot be None" not in result.error:
-            raise AssertionError(f"Expected {'cannot be None'} in {result.error}")
+        if "cannot be None" not in (result.error or ""):
+            raise AssertionError(f"Expected 'cannot be None' in {result.error}")
 
     def test_query_handler_process_request_cannot_handle(self) -> None:
         """Test request processing when handler cannot handle."""
@@ -672,9 +670,9 @@ class TestFlextHandlersQueryHandler:
         result = handler.process_request("not a query")
         assert result.is_failure
         assert result.error is not None
-        if "cannot process this request" not in result.error:
+        if "cannot process this request" not in (result.error or ""):
             raise AssertionError(
-                f"Expected {'cannot process this request'} in {result.error}"
+                f"Expected 'cannot process this request' in {result.error}"
             )
 
     def test_query_handler_process_request_exception(self) -> None:
@@ -691,9 +689,9 @@ class TestFlextHandlersQueryHandler:
         result = handler.process_request(request)
         assert result.is_failure
         assert result.error is not None
-        if "Request processing failed" not in result.error:
+        if "Request processing failed" not in (result.error or ""):
             raise AssertionError(
-                f"Expected {'Request processing failed'} in {result.error}"
+                f"Expected 'Request processing failed' in {result.error}"
             )
 
     def test_query_handler_handle_request(self) -> None:
@@ -764,9 +762,9 @@ class TestHandlerRegistry:
         result = registry.register(invalid_handler)
         assert result.is_failure
         assert result.error is not None
-        if "must have 'handle' method" not in result.error:
+        if "must have 'handle' method" not in (result.error or ""):
             raise AssertionError(
-                f"Expected {"must have 'handle' method"} in {result.error}"
+                f"Expected \"must have 'handle' method\" in {result.error}"
             )
 
     def test_registry_register_duplicate_key(self) -> None:
@@ -838,8 +836,8 @@ class TestHandlerRegistry:
         result = registry.get_handler("non_existent_key")
         assert result.is_failure
         assert result.error is not None
-        if "No handler found" not in result.error:
-            raise AssertionError(f"Expected {'No handler found'} in {result.error}")
+        if "No handler found" not in (result.error or ""):
+            raise AssertionError(f"Expected 'No handler found' in {result.error}")
 
     def test_registry_get_handler_for_type(self) -> None:
         """Test getting handler for message type."""
@@ -864,8 +862,8 @@ class TestHandlerRegistry:
         result = registry.get_handler_for_type(_TestCommand)
         assert result.is_failure
         assert result.error is not None
-        if "No handler found" not in result.error:
-            raise AssertionError(f"Expected {'No handler found'} in {result.error}")
+        if "No handler found" not in (result.error or ""):
+            raise AssertionError(f"Expected 'No handler found' in {result.error}")
 
     def test_registry_get_all_handlers(self) -> None:
         """Test getting all registered handlers."""
@@ -1017,8 +1015,8 @@ class TestHandlerChain:
 
         assert result.is_failure
         assert result.error is not None
-        if "No handler found" not in result.error:
-            raise AssertionError(f"Expected {'No handler found'} in {result.error}")
+        if "No handler found" not in (result.error or ""):
+            raise AssertionError(f"Expected 'No handler found' in {result.error}")
 
     def test_chain_process_all(self) -> None:
         """Test processing message through all applicable handlers."""
@@ -1397,7 +1395,7 @@ class TestHandlerBaseCoverage:
         assert invalid_msg.validate_called, "validate() method should have been called"
 
         assert result.is_failure
-        if "Message validation failed" not in result.error:
+        if "Message validation failed" not in (result.error or ""):
             raise AssertionError(
                 f"Expected 'Message validation failed' in {result.error}"
             )
@@ -1440,7 +1438,7 @@ class TestHandlerBaseCoverage:
 
         result = handler.handle_with_hooks("test_message")
         assert result.is_failure
-        if "cannot handle" not in result.error:
+        if "cannot handle" not in (result.error or ""):
             raise AssertionError(f"Expected 'cannot handle' in {result.error}")
 
     def test_handler_pre_processing_failure_path(self) -> None:
@@ -1457,7 +1455,7 @@ class TestHandlerBaseCoverage:
 
         result = handler.handle_with_hooks("test_message")
         assert result.is_failure
-        if "Pre-processing failed" not in result.error:
+        if "Pre-processing failed" not in (result.error or ""):
             raise AssertionError(f"Expected 'Pre-processing failed' in {result.error}")
 
 
@@ -1538,7 +1536,7 @@ class TestBaseHandlersCoverage:
         # Test with invalid command
         result = handler.pre_handle("hi")
         assert result.is_failure
-        if "Command too short" not in result.error:
+        if "Command too short" not in (result.error or ""):
             raise AssertionError(f"Expected 'Command too short' in {result.error}")
 
         # Test with valid command
@@ -1561,7 +1559,7 @@ class TestBaseHandlersCoverage:
 
         result = handler.pre_handle("test")
         assert result.is_failure
-        if "Always fails validation" not in result.error:
+        if "Always fails validation" not in (result.error or ""):
             raise AssertionError(
                 f"Expected 'Always fails validation' in {result.error}"
             )
@@ -1602,7 +1600,7 @@ class TestBaseHandlersCoverage:
         # Test unauthorized query
         result = handler.pre_handle("secret_data")
         assert result.is_failure
-        if "Unauthorized" not in result.error:
+        if "Unauthorized" not in (result.error or ""):
             raise AssertionError(f"Expected 'Unauthorized' in {result.error}")
 
         # Test authorized query
@@ -1625,5 +1623,5 @@ class TestBaseHandlersCoverage:
 
         result = handler.pre_handle("test")
         assert result.is_failure
-        if "Authorization failed" not in result.error:
+        if "Authorization failed" not in (result.error or ""):
             raise AssertionError(f"Expected 'Authorization failed' in {result.error}")

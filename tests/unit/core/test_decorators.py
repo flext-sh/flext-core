@@ -65,8 +65,8 @@ class TestFlextDecorators:
 
         assert isinstance(result, FlextResult)
         assert result.is_failure
-        if "Test error" not in result.error:
-            raise AssertionError(f"Expected {'Test error'} in {result.error}")
+        if "Test error" not in (result.error or ""):
+            raise AssertionError(f"Expected 'Test error' in {result.error}")
 
     def test_safe_result_decorator_with_none_return(self) -> None:
         """Test safe_result decorator with function returning None."""
@@ -107,8 +107,8 @@ class TestFlextDecorators:
 
         assert isinstance(result, FlextResult)
         assert result.is_failure
-        if "Validation failed" not in result.error:
-            raise AssertionError(f"Expected {'Validation failed'} in {result.error}")
+        if "Validation failed" not in (result.error or ""):
+            raise AssertionError(f"Expected 'Validation failed' in {result.error}")
 
     def test_validated_with_result_decorator_execution_failure(self) -> None:
         """Test validated_with_result decorator when execution fails."""
@@ -122,8 +122,8 @@ class TestFlextDecorators:
 
         assert isinstance(result, FlextResult)
         assert result.is_failure
-        if "Execution failed" not in result.error:
-            raise AssertionError(f"Expected {'Execution failed'} in {result.error}")
+        if "Execution failed" not in (result.error or ""):
+            raise AssertionError(f"Expected 'Execution failed' in {result.error}")
 
     def test_cached_with_timing_decorator(self) -> None:
         """Test cached_with_timing decorator functionality."""
@@ -273,8 +273,8 @@ class TestStandaloneDecorators:
         result = risky_operation()
         assert isinstance(result, FlextResult)
         assert result.is_failure
-        if "Something went wrong" not in result.error:
-            raise AssertionError(f"Expected {'Something went wrong'} in {result.error}")
+        if "Something went wrong" not in (result.error or ""):
+            raise AssertionError(f"Expected 'Something went wrong' in {result.error}")
 
     def test_flext_cache_decorator(self) -> None:
         """Test flext_cache_decorator functionality."""
@@ -438,8 +438,8 @@ class TestDecoratorErrorHandling:
         )
 
         assert result.is_failure
-        if "Validation failed" not in result.error:
-            raise AssertionError(f"Expected {'Validation failed'} in {result.error}")
+        if "Validation failed" not in (result.error or ""):
+            raise AssertionError(f"Expected 'Validation failed' in {result.error}")
 
 
 class TestDecoratorPerformance:

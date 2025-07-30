@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import time
 from datetime import UTC, datetime
-from typing import Any
+from typing import cast
 
 import pytest
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
@@ -21,27 +21,32 @@ EXPECTED_DATA_COUNT = 3
 
 
 def create_test_entity(entity_class: type, **kwargs: object) -> object:
-    """Create test entities using factory."""
-    # For aggregate roots, use custom factory to avoid ID conflicts
-    if issubclass(entity_class, FlextAggregateRoot):
-        # Create aggregate root directly, avoiding factory ID generation
-        try:
-            # FlextAggregateRoot handles ID generation internally
-            instance = entity_class(**kwargs)
-            validation_result = instance.validate_domain_rules()
-            if validation_result.is_failure:
-                msg = f"Validation failed: {validation_result.error}"
-                raise ValueError(msg)  # noqa: TRY301
-        except (ValueError, TypeError, AttributeError) as e:
-            msg = f"Failed to create entity: {e}"
-            raise AssertionError(msg) from e
-        else:
-            return instance
-    else:
-        factory = FlextEntityFactory.create_entity_factory(entity_class)
-        result = factory(**kwargs)
-        assert result.is_success, f"Failed to create entity: {result.error}"
-        return result.unwrap()
+    """Create test entities using factory with proper DDD validation."""
+    # Use unified factory pattern for all entities (DRY principle)
+    factory_result = cast(
+        "FlextResult[object]", FlextEntityFactory.create_entity_factory(entity_class)
+    )
+    if factory_result.is_failure:
+        msg = f"Failed to create factory for {entity_class.__name__}: {factory_result.error}"
+        raise AssertionError(msg)
+
+    factory = factory_result.unwrap()
+    result = cast("FlextResult[object]", factory(**kwargs))
+
+    if result.is_failure:
+        msg = f"Failed to create {entity_class.__name__}: {result.error}"
+        raise AssertionError(msg)
+
+    instance = result.unwrap()
+
+    # Additional domain validation for aggregate roots
+    if isinstance(instance, FlextAggregateRoot):
+        validation_result = instance.validate_domain_rules()
+        if validation_result.is_failure:
+            msg = f"Domain validation failed for {entity_class.__name__}: {validation_result.error}"
+            raise AssertionError(msg)
+
+    return instance
 
 
 class SampleDomainEvent(BaseModel):
@@ -63,7 +68,7 @@ class SampleDomainEvent(BaseModel):
     timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
     version: int = Field(default=1, ge=1)
     action: str = Field(default="")
-    details: dict[str, Any] = Field(default_factory=dict)
+    details: dict[str, object] = Field(default_factory=dict)
 
     @field_validator("aggregate_id")
     @classmethod
@@ -92,7 +97,17 @@ class SampleEntity(FlextEntity):
 
     def __init__(self, **data: object) -> None:
         """Initialize entity with provided data."""
-        super().__init__(**data)
+        # Extract required FlextEntity parameters
+        entity_id = cast("str", data.get("entity_id", "test-id"))
+        version = cast("int", data.get("version", 1))
+        created_at = cast("datetime", data.get("created_at", datetime.now(UTC)))
+        domain_events = cast("list[FlextEvent]", data.get("domain_events", []))
+
+        super().__init__(entity_id, version, created_at, domain_events)
+
+        # Set additional fields from data
+        self.name = cast("str", data.get("name", ""))
+        self.status = cast("str", data.get("status", "active"))
 
     def validate_domain_rules(self) -> FlextResult[None]:
         """Validate test entity domain rules."""
@@ -627,10 +642,8 @@ class TestFlextAggregateRoot:
         result = aggregate.add_domain_event("", {"data": "test"})
 
         assert result.is_failure
-        if "Failed to create event" not in result.error:
-            raise AssertionError(
-                f"Expected {'Failed to create event'} in {result.error}"
-            )
+        if "Failed to create event" not in (result.error or ""):
+            raise AssertionError(f"Expected 'Failed to create event' in {result.error}")
 
     def test_add_domain_event_exception_handling(self) -> None:
         """Test add_domain_event exception handling."""

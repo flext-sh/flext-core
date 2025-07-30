@@ -37,6 +37,7 @@ tests/
 ## Test Types
 
 ### Unit Tests (`tests/unit/`)
+
 - **Purpose**: Test individual components in isolation
 - **Scope**: Single classes, functions, or modules
 - **Dependencies**: Minimal, use mocks when needed
@@ -44,6 +45,7 @@ tests/
 - **Coverage**: 95% minimum requirement
 
 ### Integration Tests (`tests/integration/`)
+
 - **Purpose**: Test component interactions
 - **Scope**: Multiple classes working together
 - **Dependencies**: Real dependencies within FLEXT Core
@@ -51,6 +53,7 @@ tests/
 - **Coverage**: Critical integration points
 
 ### End-to-End Tests (`tests/e2e/`)
+
 - **Purpose**: Test complete user workflows
 - **Scope**: Full scenarios from start to finish
 - **Dependencies**: Complete system
@@ -60,11 +63,12 @@ tests/
 ## Running Tests
 
 ### By Test Type
+
 ```bash
 # Unit tests only
 pytest tests/unit -m unit
 
-# Integration tests only  
+# Integration tests only
 pytest tests/integration -m integration
 
 # End-to-end tests only
@@ -72,6 +76,7 @@ pytest tests/e2e -m e2e
 ```
 
 ### By Component
+
 ```bash
 # Core module tests
 pytest tests/unit/core/
@@ -84,6 +89,7 @@ pytest tests/unit/domain/
 ```
 
 ### By Marker
+
 ```bash
 # PEP8 compliance tests
 pytest -m pep8
@@ -99,6 +105,7 @@ pytest -m architecture
 ```
 
 ### Quality Gates
+
 ```bash
 # Fast feedback loop
 pytest tests/unit/core/test_result.py -v
@@ -129,11 +136,13 @@ Available pytest markers for selective test execution:
 ## Configuration
 
 ### Main Configuration (`conftest.py`)
+
 - Test markers configuration
 - Shared fixtures for all test types
 - Environment setup and cleanup
 
 ### Integration Configuration (`conftest_integration.py`)
+
 - Integration-specific fixtures
 - Mock services and containers
 - Database and service mocks
@@ -151,8 +160,9 @@ Available pytest markers for selective test execution:
 ## Dependencies
 
 Test dependencies are minimal and isolated:
+
 - `pytest` - Test framework
-- `pytest-cov` - Coverage reporting  
+- `pytest-cov` - Coverage reporting
 - `pytest-mock` - Mocking utilities
 - Standard library only for mocks
 

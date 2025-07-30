@@ -27,21 +27,21 @@ FLEXT Core é a biblioteca fundamental que serve como base arquitetural para tod
 FLEXT Core Architecture
 ├── Domain Layer (Entidades, Value Objects, Aggregates)
 ├── Application Layer (Services, Commands, Handlers)
-├── Infrastructure Layer (Container DI, Configuration)  
+├── Infrastructure Layer (Container DI, Configuration)
 └── Patterns Layer (Validation, Logging, Fields)
 ```
 
 ### Componentes Principais
 
-| Componente | Descrição | Status |
-|------------|-----------|---------|
-| `FlextResult[T]` | Sistema de tratamento de erros type-safe | ✅ Moderno |
-| `FlextContainer` | Injeção de dependência empresarial | ✅ Moderno |
-| `FlextCommand` | Padrão Command com validação | ✅ Moderno |
-| `FlextHandler` | Sistema de processamento de mensagens | ✅ Moderno |
-| `FlextValidator` | Validação robusta com regras | ✅ Moderno |
-| `FlextEntity` | Base para entidades DDD | ✅ Moderno |
-| `FlextValueObject` | Value objects imutáveis | ✅ Moderno |
+| Componente         | Descrição                                | Status     |
+| ------------------ | ---------------------------------------- | ---------- |
+| `FlextResult[T]`   | Sistema de tratamento de erros type-safe | ✅ Moderno |
+| `FlextContainer`   | Injeção de dependência empresarial       | ✅ Moderno |
+| `FlextCommand`     | Padrão Command com validação             | ✅ Moderno |
+| `FlextHandler`     | Sistema de processamento de mensagens    | ✅ Moderno |
+| `FlextValidator`   | Validação robusta com regras             | ✅ Moderno |
+| `FlextEntity`      | Base para entidades DDD                  | ✅ Moderno |
+| `FlextValueObject` | Value objects imutáveis                  | ✅ Moderno |
 
 ## 🚀 Início Rápido
 
@@ -64,7 +64,7 @@ from flext_core import FlextResult, FlextContainer
 def fetch_user(user_id: str) -> FlextResult[dict]:
     if not user_id:
         return FlextResult.fail("User ID é obrigatório")
-    
+
     user_data = {"id": user_id, "name": "João"}
     return FlextResult.ok(user_data)
 
@@ -116,7 +116,7 @@ else:
 def process_payment(amount: float) -> FlextResult[str]:
     if amount <= 0:
         return FlextResult.fail("Valor deve ser positivo")
-    
+
     # Processar pagamento...
     return FlextResult.ok("payment_id_123")
 ```
@@ -142,7 +142,7 @@ class CreateUserCommand(FlextCommand):
         super().__init__()
         self.name = name
         self.email = email
-    
+
     def validate(self) -> FlextResult[None]:
         if not self.name:
             return FlextResult.fail("Nome é obrigatório")
@@ -158,7 +158,7 @@ class User(FlextEntity[UserId]):
         super().__init__(user_id)
         self.name = name
         self.email = email  # Value Object
-    
+
     def change_email(self, new_email: Email) -> FlextResult[None]:
         # Lógica de domínio aqui
         self.email = new_email

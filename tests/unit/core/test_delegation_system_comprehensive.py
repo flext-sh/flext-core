@@ -470,10 +470,8 @@ class TestFlextMixinDelegator:
 
         result = delegator._validate_delegation()
         assert result.is_failure
-        if "No mixins were successfully registered" not in result.error:
-            msg = (
-                f"Expected {'No mixins were successfully registered'} in {result.error}"
-            )
+        if "No mixins were successfully registered" not in (result.error or ""):
+            msg = f"Expected 'No mixins were successfully registered' in {result.error}"
             raise AssertionError(msg)
 
     def test_delegation_validation_no_methods(self) -> None:
@@ -489,10 +487,8 @@ class TestFlextMixinDelegator:
 
         result = delegator._validate_delegation()
         assert result.is_failure
-        if "No methods were successfully delegated" not in result.error:
-            msg = (
-                f"Expected {'No methods were successfully delegated'} in {result.error}"
-            )
+        if "No methods were successfully delegated" not in (result.error or ""):
+            msg = f"Expected 'No methods were successfully delegated' in {result.error}"
             raise AssertionError(msg)
 
     def test_delegation_validation_with_init_failures(self) -> None:
@@ -502,8 +498,8 @@ class TestFlextMixinDelegator:
 
         result = delegator._validate_delegation()
         assert result.is_failure
-        if "Initialization failed" not in result.error:
-            msg = f"Expected {'Initialization failed'} in {result.error}"
+        if "Initialization failed" not in (result.error or ""):
+            msg = f"Expected 'Initialization failed' in {result.error}"
             raise AssertionError(msg)
 
     def test_mixin_registry_global(self) -> None:
@@ -607,8 +603,8 @@ class TestValidateDelegationSystem:
 
             # Should fail due to delegation creation failure
             assert result.is_failure
-            if "Test failed" not in result.error:
-                msg = f"Expected {'Test failed'} in {result.error}"
+            if "Test failed" not in (result.error or ""):
+                msg = f"Expected 'Test failed' in {result.error}"
                 raise AssertionError(msg)
             assert "Delegation creation failed" in result.error
 
@@ -637,8 +633,8 @@ class TestValidateDelegationSystem:
 
             # Should fail due to type error
             assert result.is_failure
-            if "Test failed" not in result.error:
-                msg = f"Expected {'Test failed'} in {result.error}"
+            if "Test failed" not in (result.error or ""):
+                msg = f"Expected 'Test failed' in {result.error}"
                 raise AssertionError(msg)
 
     def test_validate_delegation_system_various_exceptions(self) -> None:
@@ -660,8 +656,8 @@ class TestValidateDelegationSystem:
 
                 result = validate_delegation_system()
                 assert result.is_failure
-                if "Test failed" not in result.error:
-                    msg = f"Expected {'Test failed'} in {result.error}"
+                if "Test failed" not in (result.error or ""):
+                    msg = f"Expected 'Test failed' in {result.error}"
                     raise AssertionError(msg)
 
 

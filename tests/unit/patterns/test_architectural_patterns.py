@@ -167,7 +167,7 @@ class TestCleanArchitecturePatterns:
                         return total_validation
 
                 # Business rules
-                if self.status not in ["pending", "confirmed", "shipped", "delivered"]:
+                if self.status not in {"pending", "confirmed", "shipped", "delivered"}:
                     return FlextResult.fail("Invalid order status")
 
                 return FlextResult.ok(None)
@@ -390,7 +390,7 @@ class TestEnterprisePatterns:
         for i in range(100):
             result = repo.find_by_id(f"entity_{i}")
             assert result.is_success
-            assert result.data["id"] == i
+            assert (result.data or {})["id"] == i
 
         query_duration = time.time() - start_time
 

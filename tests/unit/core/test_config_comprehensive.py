@@ -16,7 +16,7 @@ import json
 import os
 import tempfile
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 from unittest.mock import patch
 
 import pytest
@@ -34,6 +34,8 @@ from flext_core.config import (
 from flext_core.result import FlextResult
 
 if TYPE_CHECKING:
+    from collections.abc import Generator
+
     from flext_core.flext_types import TAnyDict
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
@@ -63,7 +65,7 @@ def sample_defaults() -> TAnyDict:
 
 
 @pytest.fixture
-def temp_json_file() -> str:
+def temp_json_file() -> Generator[str]:
     """Create a temporary JSON file for testing."""
     config_data = {
         "database_url": "sqlite:///test.db",
@@ -88,7 +90,7 @@ def temp_json_file() -> str:
 
 
 @pytest.fixture
-def invalid_json_file() -> str:
+def invalid_json_file() -> Generator[str]:
     """Create a temporary invalid JSON file for testing."""
     with tempfile.NamedTemporaryFile(
         encoding="utf-8",
@@ -119,18 +121,19 @@ class TestFlextConfig:
         )
 
         assert result.is_success
+        assert result.data is not None
         config = result.data
         if config["database_url"] != "postgresql://localhost/test":
             raise AssertionError(
-                f"Expected {'postgresql://localhost/test'}, got {config['database_url']}"
+                f"Expected 'postgresql://localhost/test', got {config['database_url']}"
             )
-        if not (config["debug"]):
+        if not config["debug"]:
             raise AssertionError(f"Expected True, got {config['debug']}")
         if config["port"] != 8080:
-            raise AssertionError(f"Expected {8080}, got {config['port']}")
+            raise AssertionError(f"Expected 8080, got {config['port']}")
         # Should apply defaults
         if "timeout" not in config:
-            raise AssertionError(f"Expected {'timeout'} in {config}")
+            raise AssertionError(f"Expected 'timeout' in {config}")
 
     def test_create_complete_config_no_defaults(self, sample_config: TAnyDict) -> None:
         """Test complete config creation without applying defaults."""
@@ -141,6 +144,7 @@ class TestFlextConfig:
         )
 
         assert result.is_success
+        assert result.data is not None
         config = result.data
         if config["database_url"] != "postgresql://localhost/test":
             raise AssertionError(
@@ -161,6 +165,7 @@ class TestFlextConfig:
         )
 
         assert result.is_success
+        assert result.data is not None
         config = result.data
         if config["database_url"] != "postgresql://localhost/test":
             raise AssertionError(
@@ -175,15 +180,15 @@ class TestFlextConfig:
         }
 
         result = FlextConfig.create_complete_config(
-            config_with_none,
+            cast("TAnyDict", config_with_none),
             apply_defaults=True,
             validate_all=True,
         )
 
         assert result.is_failure
-        if "Config validation failed for database_url" not in result.error:
+        if "Config validation failed for database_url" not in (result.error or ""):
             raise AssertionError(
-                f"Expected {'Config validation failed for database_url'} in {result.error}"
+                f"Expected 'Config validation failed for database_url' in {result.error}"
             )
 
     def test_create_complete_config_validation_failure(self) -> None:
@@ -197,14 +202,14 @@ class TestFlextConfig:
             mock_validate.return_value = FlextResult.fail("Validation failed")
 
             result = FlextConfig.create_complete_config(
-                config_data,
+                cast("TAnyDict", config_data),
                 validate_all=True,
             )
 
             assert result.is_failure
-            if "Config validation failed for key" not in result.error:
+            if "Config validation failed for key" not in (result.error or ""):
                 raise AssertionError(
-                    f"Expected {'Config validation failed for key'} in {result.error}"
+                    f"Expected 'Config validation failed for key' in {result.error}"
                 )
 
     def test_create_complete_config_load_failure(self) -> None:
@@ -218,10 +223,8 @@ class TestFlextConfig:
             result = FlextConfig.create_complete_config({"key": "value"})
 
             assert result.is_failure
-            if "Config load failed" not in result.error:
-                raise AssertionError(
-                    f"Expected {'Config load failed'} in {result.error}"
-                )
+            if "Config load failed" not in (result.error or ""):
+                raise AssertionError(f"Expected 'Config load failed' in {result.error}")
 
     def test_create_complete_config_defaults_failure(self) -> None:
         """Test complete config creation with defaults application failure."""
@@ -237,9 +240,9 @@ class TestFlextConfig:
             )
 
             assert result.is_failure
-            if "Applying defaults failed" not in result.error:
+            if "Applying defaults failed" not in (result.error or ""):
                 raise AssertionError(
-                    f"Expected {'Applying defaults failed'} in {result.error}"
+                    f"Expected 'Applying defaults failed' in {result.error}"
                 )
 
     def test_create_complete_config_exception_handling(self) -> None:
@@ -253,9 +256,9 @@ class TestFlextConfig:
             result = FlextConfig.create_complete_config({"key": "value"})
 
             assert result.is_failure
-            if "Complete config creation failed" not in result.error:
+            if "Complete config creation failed" not in (result.error or ""):
                 raise AssertionError(
-                    f"Expected {'Complete config creation failed'} in {result.error}"
+                    f"Expected 'Complete config creation failed' in {result.error}"
                 )
 
     def test_load_and_validate_from_file_success(self, temp_json_file: str) -> None:
@@ -266,6 +269,7 @@ class TestFlextConfig:
         )
 
         assert result.is_success
+        assert result.data is not None
         config = result.data
         if config["database_url"] != "sqlite:///test.db":
             raise AssertionError(
@@ -281,6 +285,7 @@ class TestFlextConfig:
         result = FlextConfig.load_and_validate_from_file(temp_json_file)
 
         assert result.is_success
+        assert result.data is not None
         config = result.data
         if "database_url" not in config:
             raise AssertionError(f"Expected {'database_url'} in {config}")
@@ -296,9 +301,9 @@ class TestFlextConfig:
         )
 
         assert result.is_failure
-        if "Required config key 'missing_key' not found" not in result.error:
+        if "Required config key 'missing_key' not found" not in (result.error or ""):
             raise AssertionError(
-                f"Expected {"Required config key 'missing_key' not found"} in {result.error}"
+                f"Expected 'Required config key \\'missing_key\\' not found' in {result.error}"
             )
 
     def test_load_and_validate_from_file_none_value(self) -> None:
@@ -316,9 +321,9 @@ class TestFlextConfig:
             )
 
             assert result.is_failure
-            if "Invalid config value for 'key'" not in result.error:
+            if "Invalid config value for 'key'" not in (result.error or ""):
                 raise AssertionError(
-                    f"Expected {"Invalid config value for 'key'"} in {result.error}"
+                    f"Expected 'Invalid config value for \\'key\\'' in {result.error}"
                 )
 
     def test_load_and_validate_from_file_load_failure(self) -> None:
@@ -331,8 +336,8 @@ class TestFlextConfig:
             result = FlextConfig.load_and_validate_from_file("nonexistent.json")
 
             assert result.is_failure
-            if "File load failed" not in result.error:
-                raise AssertionError(f"Expected {'File load failed'} in {result.error}")
+            if "File load failed" not in (result.error or ""):
+                raise AssertionError(f"Expected 'File load failed' in {result.error}")
 
     def test_load_and_validate_from_file_empty_error(self) -> None:
         """Test file loading with empty error message."""
@@ -345,9 +350,9 @@ class TestFlextConfig:
 
             assert result.is_failure
             # FlextResult converts empty errors to "Unknown error occurred"
-            if "Unknown error occurred" not in result.error:
+            if "Unknown error occurred" not in (result.error or ""):
                 raise AssertionError(
-                    f"Expected {'Unknown error occurred'} in {result.error}"
+                    f"Expected 'Unknown error occurred' in {result.error}"
                 )
 
     def test_merge_and_validate_configs_success(
@@ -359,6 +364,7 @@ class TestFlextConfig:
         result = FlextConfig.merge_and_validate_configs(sample_defaults, sample_config)
 
         assert result.is_success
+        assert result.data is not None
         merged = result.data
         # Override values should be preserved
         if not (merged["debug"]):
@@ -379,9 +385,9 @@ class TestFlextConfig:
             result = FlextConfig.merge_and_validate_configs({}, {})
 
             assert result.is_failure
-            if "Config merge failed" not in result.error:
+            if "Config merge failed" not in (result.error or ""):
                 raise AssertionError(
-                    f"Expected {'Config merge failed'} in {result.error}"
+                    f"Expected 'Config merge failed' in {result.error}"
                 )
 
     def test_merge_and_validate_configs_validation_failure(self) -> None:
@@ -395,14 +401,14 @@ class TestFlextConfig:
             mock_validate.return_value = FlextResult.fail("Validation failed")
 
             result = FlextConfig.merge_and_validate_configs(
-                base_config,
-                override_config,
+                cast("TAnyDict", base_config),
+                cast("TAnyDict", override_config),
             )
 
             assert result.is_failure
-            if "Merged config validation failed" not in result.error:
+            if "Merged config validation failed" not in (result.error or ""):
                 raise AssertionError(
-                    f"Expected {'Merged config validation failed'} in {result.error}"
+                    f"Expected 'Merged config validation failed' in {result.error}"
                 )
 
     def test_merge_and_validate_configs_exception_handling(self) -> None:
@@ -415,9 +421,9 @@ class TestFlextConfig:
             result = FlextConfig.merge_and_validate_configs({}, {})
 
             assert result.is_failure
-            if "Config merge failed" not in result.error:
+            if "Config merge failed" not in (result.error or ""):
                 raise AssertionError(
-                    f"Expected {'Config merge failed'} in {result.error}"
+                    f"Expected 'Config merge failed' in {result.error}"
                 )
 
     def test_get_env_with_validation_success(self) -> None:
@@ -457,10 +463,8 @@ class TestFlextConfig:
             result = FlextConfig.get_env_with_validation("TEST_VAR")
 
             assert result.is_failure
-            if "Env access failed" not in result.error:
-                raise AssertionError(
-                    f"Expected {'Env access failed'} in {result.error}"
-                )
+            if "Env access failed" not in (result.error or ""):
+                raise AssertionError(f"Expected 'Env access failed' in {result.error}")
 
     def test_get_env_with_validation_empty_error(self) -> None:
         """Test environment variable access with empty error message."""
@@ -473,9 +477,9 @@ class TestFlextConfig:
 
             assert result.is_failure
             # FlextResult converts empty errors to "Unknown error occurred"
-            if "Unknown error occurred" not in result.error:
+            if "Unknown error occurred" not in (result.error or ""):
                 raise AssertionError(
-                    f"Expected {'Unknown error occurred'} in {result.error}"
+                    f"Expected 'Unknown error occurred' in {result.error}"
                 )
 
     def test_safe_get_env_var_empty_error(self) -> None:
@@ -489,9 +493,9 @@ class TestFlextConfig:
 
             assert result.is_failure
             # FlextResult converts empty errors to "Unknown error occurred"
-            if "Unknown error occurred" not in result.error:
+            if "Unknown error occurred" not in (result.error or ""):
                 raise AssertionError(
-                    f"Expected {'Unknown error occurred'} in {result.error}"
+                    f"Expected 'Unknown error occurred' in {result.error}"
                 )
 
     def test_safe_load_json_file_success(self, temp_json_file: str) -> None:
@@ -499,6 +503,7 @@ class TestFlextConfig:
         result = safe_load_json_file(temp_json_file)
 
         assert result.is_success
+        assert result.data is not None
         config = result.data
         if "database_url" not in config:
             raise AssertionError(f"Expected {'database_url'} in {config}")
@@ -509,6 +514,7 @@ class TestFlextConfig:
         result = safe_load_json_file(path_obj)
 
         assert result.is_success
+        assert result.data is not None
         config = result.data
         if "database_url" not in config:
             raise AssertionError(f"Expected {'database_url'} in {config}")
@@ -523,8 +529,8 @@ class TestFlextConfig:
             result = safe_load_json_file("dummy.json")
 
             assert result.is_failure
-            if "File error" not in result.error:
-                raise AssertionError(f"Expected {'File error'} in {result.error}")
+            if "File error" not in (result.error or ""):
+                raise AssertionError(f"Expected 'File error' in {result.error}")
 
     def test_safe_load_json_file_empty_error(self) -> None:
         """Test safe_load_json_file wrapper with empty error."""
@@ -537,9 +543,9 @@ class TestFlextConfig:
 
             assert result.is_failure
             # FlextResult converts empty errors to "Unknown error occurred"
-            if "Unknown error occurred" not in result.error:
+            if "Unknown error occurred" not in (result.error or ""):
                 raise AssertionError(
-                    f"Expected {'Unknown error occurred'} in {result.error}"
+                    f"Expected 'Unknown error occurred' in {result.error}"
                 )
 
     def test_merge_configs_proxy(
@@ -551,6 +557,7 @@ class TestFlextConfig:
         result = FlextConfig.merge_configs(sample_defaults, sample_config)
 
         assert result.is_success
+        assert result.data is not None
         merged = result.data
         # Simple merge implementation
         assert merged["debug"] is True
@@ -581,8 +588,8 @@ class TestFlextConfig:
         )
 
         assert result.is_failure
-        if "Must be integer" not in result.error:
-            raise AssertionError(f"Expected {'Must be integer'} in {result.error}")
+        if "Must be integer" not in (result.error or ""):
+            raise AssertionError(f"Expected 'Must be integer' in {result.error}")
 
     def test_validate_config_value_exception_in_validator(self) -> None:
         """Test validate_config_value with exception in validator."""
@@ -594,17 +601,17 @@ class TestFlextConfig:
         result = FlextConfig.validate_config_value("test", failing_validator)
 
         assert result.is_failure
-        if "Validation error" not in result.error:
-            raise AssertionError(f"Expected {'Validation error'} in {result.error}")
+        if "Validation error" not in (result.error or ""):
+            raise AssertionError(f"Expected 'Validation error' in {result.error}")
 
     def test_validate_config_value_non_callable_validator(self) -> None:
         """Test validate_config_value with non-callable validator."""
         result = FlextConfig.validate_config_value("test", "not_callable")
 
         assert result.is_failure
-        if "Validator must be callable" not in result.error:
+        if "Validator must be callable" not in (result.error or ""):
             raise AssertionError(
-                f"Expected {'Validator must be callable'} in {result.error}"
+                f"Expected 'Validator must be callable' in {result.error}"
             )
 
 
@@ -638,7 +645,8 @@ class TestFlextBaseSettings:
         with patch.dict(os.environ, {}, clear=True):
             result = TestSettings.create_with_validation(debug=True, timeout=60)
             assert result.is_success
-            settings = result.data
+            assert result.data is not None
+            settings = cast("TestSettings", result.data)
             if not (settings.debug):
                 raise AssertionError(f"Expected True, got {settings.debug}")
             if settings.timeout != 60:
@@ -654,9 +662,12 @@ class TestFlextBaseSettings:
         # Disable .env file loading and isolate environment variables
         with patch.dict(os.environ, {}, clear=True):
             overrides = {"debug": True, "timeout": 60}
-            result = TestSettings.create_with_validation(overrides=overrides)
+            result = TestSettings.create_with_validation(
+                overrides=cast("TAnyDict", overrides)
+            )
             assert result.is_success
-            settings = result.data
+            assert result.data is not None
+            settings = cast("TestSettings", result.data)
             if not (settings.debug):
                 raise AssertionError(f"Expected True, got {settings.debug}")
             if settings.timeout != 60:
@@ -673,7 +684,8 @@ class TestFlextBaseSettings:
         with patch.dict(os.environ, {}, clear=True):
             result = TestSettings.create_with_validation(debug=True, timeout=60)
             assert result.is_success
-            settings = result.data
+            assert result.data is not None
+            settings = cast("TestSettings", result.data)
             if not (settings.debug):
                 raise AssertionError(f"Expected True, got {settings.debug}")
             if settings.timeout != 60:
@@ -690,7 +702,8 @@ class TestFlextBaseSettings:
         with patch.dict(os.environ, {}, clear=True):
             result = TestSettings.create_with_validation()
             assert result.is_success
-            settings = result.data
+            assert result.data is not None
+            settings = cast("TestSettings", result.data)
             # The debug value might be affected by environment, so we check the timeout instead
             assert settings.timeout == 30
 
@@ -705,11 +718,12 @@ class TestFlextBaseSettings:
         with patch.dict(os.environ, {}, clear=True):
             overrides = {"debug": True}
             result = TestSettings.create_with_validation(
-                overrides=overrides,
+                overrides=cast("TAnyDict", overrides),
                 timeout=60,
             )
             assert result.is_success
-            settings = result.data
+            assert result.data is not None
+            settings = cast("TestSettings", result.data)
             assert settings.debug is True  # From overrides
             if settings.timeout != 60:  # From kwargs (higher priority)
                 raise AssertionError(f"Expected {60}, got {settings.timeout}")
@@ -777,6 +791,7 @@ class TestConfigAliases:
         result = FlextConfigDefaults.apply_defaults(sample_config, sample_defaults)
 
         assert result.is_success
+        assert result.data is not None
         # Should have both original and default values
         if "debug" not in result.data:
             raise AssertionError(f"Expected {'debug'} in {result.data}")
@@ -852,8 +867,10 @@ class TestModuleLevelFunctions:
             result = safe_get_env_var("REQUIRED_VAR", required=True)
 
             assert result.is_failure
-            if "required" not in result.error.lower():
-                raise AssertionError(f"Expected {'required'} in {result.error.lower()}")
+            if "required" not in (result.error or "").lower():
+                raise AssertionError(
+                    f"Expected {'required'} in {(result.error or '').lower()}"
+                )
 
     def test_safe_get_env_var_failure(self) -> None:
         """Test safe_get_env_var wrapper with failure."""
@@ -865,8 +882,8 @@ class TestModuleLevelFunctions:
             result = safe_get_env_var("TEST_VAR")
 
             assert result.is_failure
-            if "Env error" not in result.error:
-                raise AssertionError(f"Expected {'Env error'} in {result.error}")
+            if "Env error" not in (result.error or ""):
+                raise AssertionError(f"Expected 'Env error' in {result.error}")
 
     def test_safe_get_env_var_empty_error(self) -> None:
         """Test safe_get_env_var wrapper with empty error."""
@@ -879,9 +896,9 @@ class TestModuleLevelFunctions:
 
             assert result.is_failure
             # FlextResult converts empty errors to "Unknown error occurred"
-            if "Unknown error occurred" not in result.error:
+            if "Unknown error occurred" not in (result.error or ""):
                 raise AssertionError(
-                    f"Expected {'Unknown error occurred'} in {result.error}"
+                    f"Expected 'Unknown error occurred' in {result.error}"
                 )
 
     def test_safe_load_json_file_success(self, temp_json_file: str) -> None:
@@ -889,6 +906,7 @@ class TestModuleLevelFunctions:
         result = safe_load_json_file(temp_json_file)
 
         assert result.is_success
+        assert result.data is not None
         config = result.data
         if "database_url" not in config:
             raise AssertionError(f"Expected {'database_url'} in {config}")
@@ -899,6 +917,7 @@ class TestModuleLevelFunctions:
         result = safe_load_json_file(path_obj)
 
         assert result.is_success
+        assert result.data is not None
         config = result.data
         if "database_url" not in config:
             raise AssertionError(f"Expected {'database_url'} in {config}")
@@ -913,8 +932,8 @@ class TestModuleLevelFunctions:
             result = safe_load_json_file("dummy.json")
 
             assert result.is_failure
-            if "File error" not in result.error:
-                raise AssertionError(f"Expected {'File error'} in {result.error}")
+            if "File error" not in (result.error or ""):
+                raise AssertionError(f"Expected 'File error' in {result.error}")
 
     def test_safe_load_json_file_empty_error(self) -> None:
         """Test safe_load_json_file wrapper with empty error."""
@@ -927,9 +946,9 @@ class TestModuleLevelFunctions:
 
             assert result.is_failure
             # FlextResult converts empty errors to "Unknown error occurred"
-            if "Unknown error occurred" not in result.error:
+            if "Unknown error occurred" not in (result.error or ""):
                 raise AssertionError(
-                    f"Expected {'Unknown error occurred'} in {result.error}"
+                    f"Expected 'Unknown error occurred' in {result.error}"
                 )
 
 
@@ -953,13 +972,15 @@ class TestConfigIntegration:
 
         # Step 2: Merge with additional config
         additional_config = {"new_setting": "new_value"}
+        assert complete_result.data is not None
         merge_result = FlextConfig.merge_and_validate_configs(
             complete_result.data,
-            additional_config,
+            cast("TAnyDict", additional_config),
         )
         assert merge_result.is_success
 
         # Step 3: Verify final configuration
+        assert merge_result.data is not None
         final_config = merge_result.data
         if final_config["database_url"] != "postgresql://localhost/test":
             raise AssertionError(
@@ -982,13 +1003,16 @@ class TestConfigIntegration:
 
             # Test integration with FlextConfig
             config_data = {"debug": True, "timeout": 60}
-            result = FlextConfig.create_complete_config(config_data)
+            result = FlextConfig.create_complete_config(cast("TAnyDict", config_data))
             assert result.is_success
 
             # Test that settings can be created from config
-            settings_result = TestSettings.create_with_validation(**config_data)
+            settings_result = TestSettings.create_with_validation(
+                overrides=cast("TAnyDict", config_data)
+            )
             assert settings_result.is_success
-            updated_settings = settings_result.data
+            assert settings_result.data is not None
+            updated_settings = cast("TestSettings", settings_result.data)
             if not (updated_settings.debug):
                 raise AssertionError(f"Expected True, got {updated_settings.debug}")
             if updated_settings.timeout != 60:
@@ -1037,9 +1061,9 @@ class TestConfigIntegration:
         assert result.is_failure
 
         # Error should be descriptive
-        if "Config validation failed" not in result.error:
+        if "Config validation failed" not in (result.error or ""):
             raise AssertionError(
-                f"Expected {'Config validation failed'} in {result.error}"
+                f"Expected 'Config validation failed' in {result.error}"
             )
         assert "key" in result.error
 
@@ -1116,9 +1140,9 @@ class TestConfigEdgeCases:
         # Test with None validator
         result = FlextConfig.validate_config_value("test", None)
         assert result.is_failure
-        if "Validator must be callable" not in result.error:
+        if "Validator must be callable" not in (result.error or ""):
             raise AssertionError(
-                f"Expected {'Validator must be callable'} in {result.error}"
+                f"Expected 'Validator must be callable' in {result.error}"
             )
 
         # Test with validator that returns non-boolean

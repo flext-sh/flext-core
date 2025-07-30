@@ -242,7 +242,7 @@ def pure(func: object) -> object:
     # Mark function as pure for introspection
     pure_wrapper.__pure__ = True  # type: ignore[attr-defined]
     pure_wrapper.__cache_size__ = lambda: len(cache)  # type: ignore[attr-defined]
-    pure_wrapper.__clear_cache__ = lambda: cache.clear()  # type: ignore[attr-defined]
+    pure_wrapper.__clear_cache__ = cache.clear  # type: ignore[attr-defined]
 
     return pure_wrapper
 

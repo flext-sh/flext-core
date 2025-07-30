@@ -821,8 +821,8 @@ class TestFlextValidation:
         result = FlextValidation.validate(value=".@invalid")
         assert result.is_failure
         assert result.error is not None
-        if "Invalid email format" not in result.error:
-            raise AssertionError(f"Expected {'Invalid email format'} in {result.error}")
+        if "Invalid email format" not in (result.error or ""):
+            raise AssertionError(f"Expected 'Invalid email format' in {result.error}")
 
     def test_validate_with_string(self) -> None:
         """Test validate method with regular string."""
@@ -876,8 +876,8 @@ class TestFlextValidation:
         result = FlextValidation.validate(value=".@")
         assert result.is_failure
         assert result.error is not None
-        if "Invalid email format" not in result.error:
-            raise AssertionError(f"Expected {'Invalid email format'} in {result.error}")
+        if "Invalid email format" not in (result.error or ""):
+            raise AssertionError(f"Expected 'Invalid email format' in {result.error}")
 
         # Test string without @ or . (should hit the TPredicate import line)
 
@@ -985,8 +985,8 @@ class TestFlextValidation:
 
         assert result.is_failure
         assert result.error is not None
-        if "Validation failed" not in result.error:
-            raise AssertionError(f"Expected {'Validation failed'} in {result.error}")
+        if "Validation failed" not in (result.error or ""):
+            raise AssertionError(f"Expected 'Validation failed' in {result.error}")
 
     def test_safe_validate_exception(self) -> None:
         """Test safe_validate with validator that raises exception."""
@@ -1002,8 +1002,8 @@ class TestFlextValidation:
 
         assert result.is_failure
         assert result.error is not None
-        if "Validation error" not in result.error:
-            raise AssertionError(f"Expected {'Validation error'} in {result.error}")
+        if "Validation error" not in (result.error or ""):
+            raise AssertionError(f"Expected 'Validation error' in {result.error}")
         assert "Validator error" in result.error
 
     def test_safe_validate_various_exceptions(self) -> None:
@@ -1018,18 +1018,18 @@ class TestFlextValidation:
 
             def failing_validator(
                 value: object,
-                exc: type[Exception] = exception,  # type: ignore[assignment]
+                exc: type[Exception],
             ) -> bool:
                 raise exc()
 
             result = FlextValidation.safe_validate(
                 value="test",
-                validator=failing_validator,
+                validator=lambda v: failing_validator(v, exception),
             )
             assert result.is_failure
             assert result.error is not None
-            if "Validation error" not in result.error:
-                raise AssertionError(f"Expected {'Validation error'} in {result.error}")
+            if "Validation error" not in (result.error or ""):
+                raise AssertionError(f"Expected 'Validation error' in {result.error}")
 
     def test_validators_attribute_access(self) -> None:
         """Test accessing Validators attribute."""
@@ -1597,5 +1597,5 @@ class TestValidationIntegration:
         result = validate_user_data(invalid_data)
         assert result.is_failure
         assert result.error is not None
-        if "Username validation" not in result.error:
-            raise AssertionError(f"Expected {'Username validation'} in {result.error}")
+        if "Username validation" not in (result.error or ""):
+            raise AssertionError(f"Expected 'Username validation' in {result.error}")

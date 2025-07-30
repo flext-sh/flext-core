@@ -34,10 +34,10 @@ class TestFlextConfig:
         result = FlextConfig.create_complete_config(config_data)
 
         assert result.is_success
-        assert result.data["app_name"] == "test", (
-            f"Expected {'test'}, got {result.data['app_name']}"
+        assert (result.data or {})["app_name"] == "test", (
+            f"Expected {'test'}, got {(result.data or {})['app_name']}"
         )
-        assert result.data["custom_setting"] == "value"
+        assert (result.data or {})["custom_setting"] == "value"
 
     def test_create_complete_config_with_defaults(self) -> None:
         """Test complete configuration creation with defaults applied."""
@@ -49,8 +49,8 @@ class TestFlextConfig:
         )
 
         assert result.is_success
-        assert result.data["app_name"] == "test", (
-            f"Expected {'test'}, got {result.data['app_name']}"
+        assert (result.data or {})["app_name"] == "test", (
+            f"Expected {'test'}, got {(result.data or {})['app_name']}"
         )
         # Check that defaults were applied
         assert (
@@ -67,8 +67,8 @@ class TestFlextConfig:
         )
 
         assert result.is_success
-        assert result.data["app_name"] == "test", (
-            f"Expected {'test'}, got {result.data['app_name']}"
+        assert (result.data or {})["app_name"] == "test", (
+            f"Expected {'test'}, got {(result.data or {})['app_name']}"
         )
 
     def test_create_complete_config_validation_failure(self) -> None:
@@ -83,7 +83,7 @@ class TestFlextConfig:
         # Should fail because of None value when validation is enabled
         assert result.is_failure
         assert "Config validation failed" in result.error, (
-            f"Expected {'Config validation failed'} in {result.error}"
+            f"Expected 'Config validation failed' in {result.error}"
         )
 
     def test_load_and_validate_from_file_success(self) -> None:
@@ -103,8 +103,8 @@ class TestFlextConfig:
             result = FlextConfig.load_and_validate_from_file(config_path)
 
             assert result.is_success
-            assert result.data["app_name"] == "test", (
-                f"Expected {'test'}, got {result.data['app_name']}"
+            assert (result.data or {})["app_name"] == "test", (
+                f"Expected {'test'}, got {(result.data or {})['app_name']}"
             )
         finally:
             Path(config_path).unlink()
@@ -115,7 +115,7 @@ class TestFlextConfig:
 
         assert result.is_failure
         assert "Configuration file not found" in result.error, (
-            f"Expected {'Configuration file not found'} in {result.error}"
+            f"Expected 'Configuration file not found' in {result.error}"
         )
 
     def test_merge_and_validate_configs(self) -> None:
@@ -126,12 +126,12 @@ class TestFlextConfig:
         result = FlextConfig.merge_and_validate_configs(config1, config2)
 
         assert result.is_success
-        assert result.data["app_name"] == "test", (
-            f"Expected {'test'}, got {result.data['app_name']}"
+        assert (result.data or {})["app_name"] == "test", (
+            f"Expected {'test'}, got {(result.data or {})['app_name']}"
         )
-        assert result.data["debug"] is True  # config2 overrides config1
-        assert result.data["database_host"] == "localhost", (
-            f"Expected {'localhost'}, got {result.data['database_host']}"
+        assert (result.data or {})["debug"] is True  # config2 overrides config1
+        assert (result.data or {})["database_host"] == "localhost", (
+            f"Expected {'localhost'}, got {(result.data or {})['database_host']}"
         )
 
     def test_get_env_with_validation_exists(
@@ -154,7 +154,7 @@ class TestFlextConfig:
 
         assert result.is_failure
         assert "Environment variable 'NON_EXISTENT_VAR' not found" in result.error, (
-            f"Expected {'Environment variable "NON_EXISTENT_VAR" not found'} in {result.error}"
+            f"Expected 'Environment variable \\'NON_EXISTENT_VAR\\' not found' in {result.error}"
         )
 
 
@@ -182,10 +182,10 @@ class TestFlextConfigDefaults:
         result = FlextConfigDefaults.merge_configs(config, defaults)
 
         assert result.is_success
-        assert result.data["existing"] == "value", (
-            f"Expected {'value'}, got {result.data['existing']}"
+        assert (result.data or {})["existing"] == "value", (
+            f"Expected {'value'}, got {(result.data or {})['existing']}"
         )
-        assert result.data["new"] == "default"
+        assert (result.data or {})["new"] == "default"
 
 
 class TestFlextConfigOps:
@@ -234,7 +234,7 @@ class TestFlextConfigValidation:
 
         assert result.is_failure
         assert "Value must be string" in result.error, (
-            f"Expected {'Value must be string'} in {result.error}"
+            f"Expected 'Value must be string' in {result.error}"
         )
 
 

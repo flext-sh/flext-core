@@ -45,7 +45,7 @@ def divide_numbers(a: float, b: float) -> FlextResult[float]:
     """Divisão segura com tratamento de erro."""
     if b == 0:
         return FlextResult.fail("Divisão por zero não permitida")
-    
+
     result = a / b
     return FlextResult.ok(result)
 
@@ -110,41 +110,41 @@ Email = NewType("Email", str)
 
 class User(FlextEntity[UserId]):
     """Entidade User com regras de negócio."""
-    
+
     def __init__(self, user_id: UserId, name: str, email: Email):
         super().__init__(user_id)
         self._name = name
         self._email = email
         self._is_active = True
-    
+
     @property
     def name(self) -> str:
         return self._name
-    
-    @property 
+
+    @property
     def email(self) -> Email:
         return self._email
-    
+
     @property
     def is_active(self) -> bool:
         return self._is_active
-    
+
     def change_email(self, new_email: Email) -> FlextResult[None]:
         """Mudar email com validação de negócio."""
         if "@" not in new_email:
             return FlextResult.fail("Email deve conter @")
-        
+
         if new_email == self._email:
             return FlextResult.fail("Novo email deve ser diferente do atual")
-        
+
         self._email = new_email
         return FlextResult.ok(None)
-    
+
     def deactivate(self) -> FlextResult[None]:
         """Desativar usuário."""
         if not self._is_active:
             return FlextResult.fail("Usuário já está inativo")
-        
+
         self._is_active = False
         return FlextResult.ok(None)
 
@@ -178,18 +178,18 @@ class CreateUserCommand(FlextCommand):
         super().__init__()
         self.name = name
         self.email = email
-    
+
     def validate(self) -> FlextResult[None]:
         """Validação de entrada do command."""
         if not self.name.strip():
             return FlextResult.fail("Nome é obrigatório")
-        
+
         if "@" not in self.email:
             return FlextResult.fail("Email deve ser válido")
-        
+
         if len(self.name) < 2:
             return FlextResult.fail("Nome deve ter pelo menos 2 caracteres")
-        
+
         return FlextResult.ok(None)
 
 # Handler - Processa o command
@@ -197,25 +197,25 @@ class CreateUserHandler(FlextCommandHandler[CreateUserCommand, User]):
     def __init__(self, container: FlextContainer):
         super().__init__()
         self._container = container
-    
+
     def can_handle(self, command) -> bool:
         return isinstance(command, CreateUserCommand)
-    
+
     def handle(self, command: CreateUserCommand) -> FlextResult[User]:
         """Processar criação de usuário."""
         # Gerar ID único
         user_id = UserId(f"user_{hash(command.email)}")
-        
+
         # Criar entidade
         user = User(user_id, command.name, Email(command.email))
-        
+
         # Simular persistência
         save_result = self._save_user(user)
         if save_result.is_failure:
             return FlextResult.fail(f"Erro ao salvar usuário: {save_result.error}")
-        
+
         return FlextResult.ok(user)
-    
+
     def _save_user(self, user: User) -> FlextResult[None]:
         """Simular salvamento no banco."""
         # Em aplicação real, usaria repository
@@ -262,7 +262,7 @@ class UserRegistrationData:
 class MinimumAgeRule(ValidationRule[UserRegistrationData]):
     def __init__(self, min_age: int = 18):
         self.min_age = min_age
-    
+
     def validate(self, data: UserRegistrationData) -> FlextValidationResult:
         if data.age < self.min_age:
             return FlextValidationResult.with_errors([
@@ -273,16 +273,16 @@ class MinimumAgeRule(ValidationRule[UserRegistrationData]):
 class StrongPasswordRule(ValidationRule[UserRegistrationData]):
     def validate(self, data: UserRegistrationData) -> FlextValidationResult:
         result = FlextValidationResult.success()
-        
+
         if len(data.password) < 8:
             result.add_error("Senha deve ter pelo menos 8 caracteres")
-        
+
         if not any(c.isupper() for c in data.password):
             result.add_error("Senha deve ter pelo menos 1 letra maiúscula")
-        
+
         if not any(c.isdigit() for c in data.password):
             result.add_error("Senha deve ter pelo menos 1 número")
-        
+
         return result
 
 # Validator principal
@@ -292,19 +292,19 @@ class UserRegistrationValidator(FlextValidator[UserRegistrationData]):
         # Adicionar regras
         self.add_rule(MinimumAgeRule(18))
         self.add_rule(StrongPasswordRule())
-    
+
     def validate_business_rules(self, data: UserRegistrationData) -> FlextValidationResult:
         """Validações específicas de negócio."""
         result = FlextValidationResult.success()
-        
+
         # Regra: email deve ser corporativo
         if not data.email.endswith(".com"):
             result.add_error("Email deve ser de domínio corporativo (.com)")
-        
+
         # Regra: nome deve ter sobrenome
         if len(data.name.split()) < 2:
             result.add_error("Nome completo deve incluir sobrenome")
-        
+
         return result
 
 # Teste do sistema de validação
@@ -379,27 +379,27 @@ class Product(FlextEntity[ProductId]):
         self._name = name
         self._price = price
         self._stock = stock
-    
+
     @property
     def name(self) -> str:
         return self._name
-    
+
     @property
     def price(self) -> float:
         return self._price
-    
+
     @property
     def stock(self) -> int:
         return self._stock
-    
+
     def reserve_stock(self, quantity: int) -> FlextResult[None]:
         """Reservar estoque."""
         if quantity <= 0:
             return FlextResult.fail("Quantidade deve ser positiva")
-        
+
         if self._stock < quantity:
             return FlextResult.fail(f"Estoque insuficiente. Disponível: {self._stock}")
-        
+
         self._stock -= quantity
         return FlextResult.ok(None)
 
@@ -407,7 +407,7 @@ class OrderItem:
     def __init__(self, product: Product, quantity: int):
         self.product = product
         self.quantity = quantity
-    
+
     def total_price(self) -> float:
         return self.product.price * self.quantity
 
@@ -419,47 +419,47 @@ class Order(FlextEntity[OrderId]):
         self._status = OrderStatus.PENDING
         self._created_at = datetime.now()
         self._total = 0.0
-    
+
     @property
     def customer_id(self) -> CustomerId:
         return self._customer_id
-    
+
     @property
     def status(self) -> OrderStatus:
         return self._status
-    
+
     @property
     def total(self) -> float:
         return sum(item.total_price() for item in self._items)
-    
+
     @property
     def items(self) -> List[OrderItem]:
         return self._items.copy()
-    
+
     def add_item(self, product: Product, quantity: int) -> FlextResult[None]:
         """Adicionar item ao pedido."""
         if self._status != OrderStatus.PENDING:
             return FlextResult.fail("Não é possível modificar pedido já processado")
-        
+
         # Reservar estoque
         reserve_result = product.reserve_stock(quantity)
         if reserve_result.is_failure:
             return reserve_result
-        
+
         # Adicionar item
         item = OrderItem(product, quantity)
         self._items.append(item)
-        
+
         return FlextResult.ok(None)
-    
+
     def confirm(self) -> FlextResult[None]:
         """Confirmar pedido."""
         if self._status != OrderStatus.PENDING:
             return FlextResult.fail("Pedido deve estar pendente para ser confirmado")
-        
+
         if not self._items:
             return FlextResult.fail("Pedido deve ter pelo menos um item")
-        
+
         self._status = OrderStatus.CONFIRMED
         return FlextResult.ok(None)
 
@@ -473,21 +473,21 @@ class CreateOrderCommand(FlextCommand):
         super().__init__()
         self.customer_id = customer_id
         self.items = items  # [{"product_id": "p1", "quantity": 2}]
-    
+
     def validate(self) -> FlextResult[None]:
         if not self.customer_id:
             return FlextResult.fail("Customer ID é obrigatório")
-        
+
         if not self.items:
             return FlextResult.fail("Pedido deve ter pelo menos um item")
-        
+
         for item in self.items:
             if "product_id" not in item or "quantity" not in item:
                 return FlextResult.fail("Item deve ter product_id e quantity")
-            
+
             if item["quantity"] <= 0:
                 return FlextResult.fail("Quantidade deve ser positiva")
-        
+
         return FlextResult.ok(None)
 
 # Handler para processar criação de pedidos
@@ -495,37 +495,37 @@ class CreateOrderHandler(FlextCommandHandler[CreateOrderCommand, Order]):
     def __init__(self, container: FlextContainer):
         super().__init__()
         self._container = container
-    
+
     def can_handle(self, command) -> bool:
         return isinstance(command, CreateOrderCommand)
-    
+
     def handle(self, command: CreateOrderCommand) -> FlextResult[Order]:
         """Processar criação de pedido."""
         # Gerar ID do pedido
         order_id = OrderId(f"order_{hash(command.customer_id)}")
         customer_id = CustomerId(command.customer_id)
-        
+
         # Criar pedido
         order = Order(order_id, customer_id)
-        
+
         # Adicionar itens
         for item_data in command.items:
             product_result = self._get_product(item_data["product_id"])
             if product_result.is_failure:
                 return FlextResult.fail(f"Produto não encontrado: {item_data['product_id']}")
-            
+
             product = product_result.data
             add_result = order.add_item(product, item_data["quantity"])
             if add_result.is_failure:
                 return FlextResult.fail(f"Erro ao adicionar item: {add_result.error}")
-        
+
         # Confirmar pedido
         confirm_result = order.confirm()
         if confirm_result.is_failure:
             return confirm_result
-        
+
         return FlextResult.ok(order)
-    
+
     def _get_product(self, product_id: str) -> FlextResult[Product]:
         """Obter produto (simulado)."""
         # Em aplicação real, usaria repository
@@ -534,10 +534,10 @@ class CreateOrderHandler(FlextCommandHandler[CreateOrderCommand, Order]):
             "p2": Product(ProductId("p2"), "Mouse", 50.00, 100),
             "p3": Product(ProductId("p3"), "Teclado", 150.00, 50)
         }
-        
+
         if product_id not in products:
             return FlextResult.fail(f"Produto {product_id} não encontrado")
-        
+
         return FlextResult.ok(products[product_id])
 
 # ========================
@@ -547,11 +547,11 @@ class CreateOrderHandler(FlextCommandHandler[CreateOrderCommand, Order]):
 def run_order_system_example():
     """Exemplo completo do sistema de pedidos."""
     print("🛒 Sistema de Pedidos FLEXT Core\n")
-    
+
     # Setup
     container = FlextContainer()
     handler = CreateOrderHandler(container)
-    
+
     # Criar pedido válido
     print("📝 Criando pedido...")
     command = CreateOrderCommand(
@@ -561,7 +561,7 @@ def run_order_system_example():
             {"product_id": "p2", "quantity": 2},  # 2x Mouse
         ]
     )
-    
+
     result = handler.process_command(command)
     if result.is_success:
         order = result.data
@@ -570,34 +570,34 @@ def run_order_system_example():
         print(f"   Status: {order.status}")
         print(f"   Total: R$ {order.total:.2f}")
         print(f"   Itens: {len(order.items)}")
-        
+
         for item in order.items:
             print(f"     - {item.product.name}: {item.quantity}x R$ {item.product.price:.2f}")
     else:
         print(f"❌ Erro: {result.error}")
-    
+
     print("\n" + "="*50 + "\n")
-    
+
     # Teste com erro - produto inexistente
     print("🚫 Testando erro - produto inexistente...")
     invalid_command = CreateOrderCommand(
         customer_id="customer_456",
         items=[{"product_id": "invalid", "quantity": 1}]
     )
-    
+
     invalid_result = handler.process_command(invalid_command)
     if invalid_result.is_failure:
         print(f"❌ Erro esperado: {invalid_result.error}")
-    
+
     print("\n" + "="*50 + "\n")
-    
+
     # Teste com validação - dados inválidos
     print("🚫 Testando validação - quantidade inválida...")
     validation_command = CreateOrderCommand(
         customer_id="",  # Customer ID vazio
         items=[{"product_id": "p1", "quantity": -1}]  # Quantidade negativa
     )
-    
+
     validation_result = handler.process_command(validation_command)
     if validation_result.is_failure:
         print(f"❌ Erro de validação: {validation_result.error}")

@@ -71,7 +71,7 @@ class UserApplicationService:
     def __init__(self, container: FlextContainer):
         self.user_repo = container.get("user_repository").unwrap()
         self.email_service = container.get("email_service").unwrap()
-    
+
     def register_user(self, command: RegisterUserCommand) -> FlextResult[User]:
         return (
             self._validate_registration(command)
@@ -96,11 +96,11 @@ class UserApplicationService:
 class User(FlextEntity):
     name: str = Field(..., description="User full name")
     email: str = Field(..., description="User email address")
-    
+
     def activate(self) -> FlextResult[None]:
         if self.is_active:
             return FlextResult.fail("User already active")
-        
+
         self.is_active = True
         self.add_domain_event(UserActivatedEvent(user_id=self.id))
         return FlextResult.ok(None)
@@ -108,7 +108,7 @@ class User(FlextEntity):
 # Value Objects
 class Email(FlextValueObject):
     value: str = Field(..., description="Email address")
-    
+
     @field_validator("value")
     @classmethod
     def validate_email(cls, v: str) -> str:
@@ -146,7 +146,7 @@ if user_service.is_success:
 **Infrastructure Components**:
 
 - **FlextContainer**: Type-safe dependency injection
-- **Configuration**: Environment-aware settings management  
+- **Configuration**: Environment-aware settings management
 - **Logging**: Structured logging with context
 - **Monitoring**: Metrics and health checks
 
@@ -229,7 +229,7 @@ else:
 Errors propagate through the application layers:
 
 1. **Domain Layer**: Business rule violations
-2. **Application Layer**: Workflow coordination errors  
+2. **Application Layer**: Workflow coordination errors
 3. **Infrastructure Layer**: Technical failures
 4. **Presentation Layer**: Input validation errors
 
@@ -242,9 +242,9 @@ Errors propagate through the application layers:
 ```python
 def test_user_activation():
     user = User.create("John Doe", "john@example.com").unwrap()
-    
+
     result = user.activate()
-    
+
     assert result.is_success
     assert user.is_active
     assert len(user.get_domain_events()) == 1
@@ -256,9 +256,9 @@ def test_user_activation():
 def test_user_registration_workflow():
     service = UserApplicationService(mock_container)
     command = RegisterUserCommand(name="John", email="john@example.com")
-    
+
     result = service.register_user(command)
-    
+
     assert result.is_success
     assert isinstance(result.data, User)
 ```
@@ -269,9 +269,9 @@ def test_user_registration_workflow():
 def test_container_service_registration():
     container = FlextContainer()
     service = UserService()
-    
+
     result = container.register("user_service", service)
-    
+
     assert result.is_success
     retrieved = container.get("user_service")
     assert retrieved.is_success

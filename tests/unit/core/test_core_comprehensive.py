@@ -236,9 +236,9 @@ class TestFlextCoreContainerIntegration:
             result = clean_flext_core.register_service(service_key, Mock())
 
             assert result.is_failure
-            if "Registration failed" not in result.error:
+            if "Registration failed" not in (result.error or ""):
                 raise AssertionError(
-                    f"Expected {'Registration failed'} in {result.error}"
+                    f"Expected 'Registration failed' in {result.error}"
                 )
 
 

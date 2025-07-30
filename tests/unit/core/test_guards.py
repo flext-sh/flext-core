@@ -279,8 +279,8 @@ class TestValidatedModel:
         # Test failed creation
         result = UserModel.create(name="Bob", age="invalid")
         assert result.is_failure
-        if "Invalid data" not in result.error:
-            msg = f"Expected {'Invalid data'} in {result.error}"
+        if "Invalid data" not in (result.error or ""):
+            msg = f"Expected 'Invalid data' in {result.error}"
             raise AssertionError(msg)
 
     def test_validated_model_mixin_integration(self) -> None:

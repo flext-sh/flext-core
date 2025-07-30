@@ -328,8 +328,8 @@ class TestFlextFieldCore:
         # Invalid value
         result = field.validate_value("hi")
         assert result.is_failure
-        if "too short" not in result.error:
-            raise AssertionError(f"Expected {'too short'} in {result.error}")
+        if "too short" not in (result.error or ""):
+            raise AssertionError(f"Expected 'too short' in {result.error}")
 
         # None value with default
         field_with_default = FlextFieldCore(
@@ -530,9 +530,9 @@ class TestFlextFieldCore:
             raise AssertionError(
                 f"Expected {math.pi}, got {float_field.deserialize_value(math.pi)}"
             )
-        if float_field.deserialize_value("3.14") != 3.14:
+        if float_field.deserialize_value("3.14") != math.pi:
             raise AssertionError(
-                f"Expected {3.14}, got {float_field.deserialize_value('3.14')}"
+                f"Expected {math.pi}, got {float_field.deserialize_value('3.14')}"
             )
         if float_field.deserialize_value(42) != 42.0:
             raise AssertionError(
@@ -873,8 +873,8 @@ class TestFlextFieldRegistry:
         # Failed lookup
         result = registry.get_field_by_id("nonexistent")
         assert result.is_failure
-        if "not found" not in result.error:
-            raise AssertionError(f"Expected {'not found'} in {result.error}")
+        if "not found" not in (result.error or ""):
+            raise AssertionError(f"Expected 'not found' in {result.error}")
 
     def test_get_field_by_name(self) -> None:
         """Test getting field by name."""
@@ -896,8 +896,8 @@ class TestFlextFieldRegistry:
         # Failed lookup
         result = registry.get_field_by_name("nonexistent")
         assert result.is_failure
-        if "not found" not in result.error:
-            raise AssertionError(f"Expected {'not found'} in {result.error}")
+        if "not found" not in (result.error or ""):
+            raise AssertionError(f"Expected 'not found' in {result.error}")
 
     def test_registry_backward_compatibility(self) -> None:
         """Test backward compatibility methods."""
@@ -1028,8 +1028,8 @@ class TestFlextFieldRegistry:
         invalid_data = {"optional_field": 20}
         result = registry.validate_all_fields(invalid_data)
         assert result.is_failure
-        if "is missing" not in result.error:
-            raise AssertionError(f"Expected {'is missing'} in {result.error}")
+        if "is missing" not in (result.error or ""):
+            raise AssertionError(f"Expected 'is missing' in {result.error}")
 
         # Invalid field value
         invalid_value_data = {
@@ -1038,8 +1038,8 @@ class TestFlextFieldRegistry:
         }
         result = registry.validate_all_fields(invalid_value_data)
         assert result.is_failure
-        if "too short" not in result.error:
-            raise AssertionError(f"Expected {'too short'} in {result.error}")
+        if "too short" not in (result.error or ""):
+            raise AssertionError(f"Expected 'too short' in {result.error}")
 
     def test_get_fields_by_type(self) -> None:
         """Test getting fields by type."""
@@ -1506,8 +1506,8 @@ class TestFieldEdgeCases:
 
         result = registry.get_field_by_name("edge_registry_name")
         assert result.is_failure
-        if "not found" not in result.error:
-            raise AssertionError(f"Expected {'not found'} in {result.error}")
+        if "not found" not in (result.error or ""):
+            raise AssertionError(f"Expected 'not found' in {result.error}")
 
     def test_field_performance_with_large_allowed_values(self) -> None:
         """Test field performance with large allowed values list."""

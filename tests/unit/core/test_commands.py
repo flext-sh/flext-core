@@ -290,8 +290,8 @@ class TestFlextCommandsCommand:
 
         result = SampleCommand.from_payload(payload)
         assert result.is_failure
-        if "Name cannot be empty" not in result.error:
-            msg = f"Expected {'Name cannot be empty'} in {result.error}"
+        if "Name cannot be empty" not in (result.error or ""):
+            msg = f"Expected 'Name cannot be empty' in {result.error}"
             raise AssertionError(msg)
 
     def test_command_from_payload_with_defaults(self) -> None:
@@ -383,7 +383,7 @@ class TestFlextCommandsCommand:
 
         result = command.require_field("email", "", "Custom email error")
         assert result.is_failure
-        if "Custom email error" not in result.error:
+        if "Custom email error" not in (result.error or ""):
             raise AssertionError(f"Expected 'Custom email error' in {result.error}")
 
     def test_command_require_email_with_field_name(self) -> None:
@@ -396,7 +396,7 @@ class TestFlextCommandsCommand:
 
         result = command.require_email("invalid", "contact_email")
         assert result.is_failure
-        if "Invalid contact_email format" not in result.error:
+        if "Invalid contact_email format" not in (result.error or ""):
             raise AssertionError(
                 f"Expected 'Invalid contact_email format' in {result.error}"
             )
@@ -555,8 +555,8 @@ class TestFlextCommandsHandler:
 
         result = handler.process_command(command)
         assert result.is_failure
-        if "Name cannot be empty" not in result.error:
-            msg = f"Expected {'Name cannot be empty'} in {result.error}"
+        if "Name cannot be empty" not in (result.error or ""):
+            msg = f"Expected 'Name cannot be empty' in {result.error}"
             raise AssertionError(msg)
 
     def test_handler_process_command_cannot_handle(self) -> None:
@@ -566,8 +566,8 @@ class TestFlextCommandsHandler:
 
         result = handler.process_command(invalid_command)
         assert result.is_failure
-        if "cannot process" not in result.error:
-            msg = f"Expected {'cannot process'} in {result.error}"
+        if "cannot process" not in (result.error or ""):
+            msg = f"Expected 'cannot process' in {result.error}"
             raise AssertionError(msg)
 
     def test_handler_process_command_exception(self) -> None:
@@ -577,8 +577,8 @@ class TestFlextCommandsHandler:
 
         result = handler.process_command(command)
         assert result.is_failure
-        if "Command processing failed" not in result.error:
-            msg = f"Expected {'Command processing failed'} in {result.error}"
+        if "Command processing failed" not in (result.error or ""):
+            msg = f"Expected 'Command processing failed' in {result.error}"
             raise AssertionError(msg)
 
     def test_handler_execute_success(self) -> None:
@@ -599,8 +599,8 @@ class TestFlextCommandsHandler:
 
         result = handler.execute(invalid_command)
         assert result.is_failure
-        if "cannot handle" not in result.error:
-            msg = f"Expected {'cannot handle'} in {result.error}"
+        if "cannot handle" not in (result.error or ""):
+            msg = f"Expected 'cannot handle' in {result.error}"
             raise AssertionError(msg)
 
     def test_handler_execute_with_exception(self) -> None:
@@ -680,8 +680,8 @@ class TestFlextCommandsBus:
 
         result = bus.register_handler(invalid_handler)
         assert result.is_failure
-        if "must have 'handle' method" not in result.error:
-            msg = f"Expected {'must have handle method'} in {result.error}"
+        if "must have 'handle' method" not in (result.error or ""):
+            msg = f"Expected 'must have handle method' in {result.error}"
             raise AssertionError(msg)
 
     def test_bus_register_handler_none_command_type(self) -> None:
@@ -691,8 +691,8 @@ class TestFlextCommandsBus:
 
         result = bus.register_handler(None, handler)
         assert result.is_failure
-        if "Command type cannot be None" not in result.error:
-            msg = f"Expected {'Command type cannot be None'} in {result.error}"
+        if "Command type cannot be None" not in (result.error or ""):
+            msg = f"Expected 'Command type cannot be None' in {result.error}"
             raise AssertionError(msg)
 
     def test_bus_register_handler_none_handler(self) -> None:
@@ -703,8 +703,8 @@ class TestFlextCommandsBus:
         assert result.is_failure
         # When handler is None, the code tries to use the first argument as handler
         # and SampleCommand doesn't have a 'handle' method
-        if "must have 'handle' method" not in result.error:
-            msg = f"Expected {'must have handle method'} in {result.error}"
+        if "must have 'handle' method" not in (result.error or ""):
+            msg = f"Expected 'must have handle method' in {result.error}"
             raise AssertionError(msg)
 
     def test_bus_register_handler_duplicate(self) -> None:
@@ -751,8 +751,8 @@ class TestFlextCommandsBus:
         result = bus.execute(command)
 
         assert result.is_failure
-        if "Name cannot be empty" not in result.error:
-            msg = f"Expected {'Name cannot be empty'} in {result.error}"
+        if "Name cannot be empty" not in (result.error or ""):
+            msg = f"Expected 'Name cannot be empty' in {result.error}"
             raise AssertionError(msg)
 
     def test_bus_execute_no_handler(self) -> None:
@@ -762,8 +762,8 @@ class TestFlextCommandsBus:
 
         result = bus.execute(command)
         assert result.is_failure
-        if "No handler found" not in result.error:
-            msg = f"Expected {'No handler found'} in {result.error}"
+        if "No handler found" not in (result.error or ""):
+            msg = f"Expected 'No handler found' in {result.error}"
             raise AssertionError(msg)
 
     def test_bus_execute_with_middleware_success(self) -> None:
@@ -801,8 +801,8 @@ class TestFlextCommandsBus:
         result = bus.execute(command)
 
         assert result.is_failure
-        if "Middleware rejected" not in result.error:
-            msg = f"Expected {'Middleware rejected'} in {result.error}"
+        if "Middleware rejected" not in (result.error or ""):
+            msg = f"Expected 'Middleware rejected' in {result.error}"
             raise AssertionError(msg)
 
     def test_bus_execute_with_middleware_no_process_method(self) -> None:
@@ -906,8 +906,8 @@ class TestFlextCommandsBus:
         command = SampleCommand(name="test", value=42)
         result = bus.execute(command)
         assert result.is_failure
-        if "No handler found" not in result.error:
-            msg = f"Expected {'No handler found'} in {result.error}"
+        if "No handler found" not in (result.error or ""):
+            msg = f"Expected 'No handler found' in {result.error}"
             raise AssertionError(msg)
 
     def test_bus_execute_handler_non_result_return(self) -> None:
@@ -1073,12 +1073,12 @@ class TestFlextCommandsQuery:
         result = query.validate_query()
 
         assert result.is_failure
-        if "Page size must be positive" not in result.error:
-            msg = f"Expected {'Page size must be positive'} in {result.error}"
+        if "Page size must be positive" not in (result.error or ""):
+            msg = f"Expected 'Page size must be positive' in {result.error}"
             raise AssertionError(msg)
         assert "Page number must be positive" in result.error
-        if "Sort order must be 'asc' or 'desc'" not in result.error:
-            msg = f"Expected {'Sort order must be asc or desc'} in {result.error}"
+        if "Sort order must be 'asc' or 'desc'" not in (result.error or ""):
+            msg = f"Expected 'Sort order must be asc or desc' in {result.error}"
             raise AssertionError(msg)
 
     def test_query_immutability(self) -> None:
@@ -1249,8 +1249,8 @@ class TestCommandsEdgeCases:
         # Test require_field with whitespace-only value
         result = command.require_field("test_field", "   ")
         assert result.is_failure
-        if "test_field is required" not in result.error:
-            msg = f"Expected {'test_field is required'} in {result.error}"
+        if "test_field is required" not in (result.error or ""):
+            msg = f"Expected 'test_field is required' in {result.error}"
             raise AssertionError(msg)
 
         # Test require_email with edge cases

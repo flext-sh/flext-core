@@ -5,6 +5,7 @@ Sistema de tipos avançados para redução de boilerplate em aplicações.
 ## Tipos Funcionais
 
 ### Either[T, R]
+
 Representa sucesso ou erro sem exceções:
 
 ```python
@@ -23,6 +24,7 @@ result = (
 ```
 
 ### Pipe[T, R]
+
 Pipeline type-safe para transformações:
 
 ```python
@@ -41,7 +43,9 @@ result = pipe(5)  # 11
 ## Protocols Estruturais
 
 ### Identifiable
+
 Para objetos com ID:
+
 ```python
 from flext_core import Identifiable, is_identifiable
 
@@ -54,14 +58,16 @@ assert is_identifiable(user)  # True
 ```
 
 ### Serializable
+
 Para objetos serializáveis:
+
 ```python
 from flext_core import Serializable, is_serializable
 
 class Config:
     def to_dict(self) -> dict:
         return {"key": "value"}
-    
+
     @classmethod
     def from_dict(cls, data: dict):
         return cls()
@@ -73,7 +79,9 @@ assert is_serializable(config)  # True
 ## Utilitários de Conversão
 
 ### ensure_result
+
 Garante que valor seja FlextResult:
+
 ```python
 from flext_core import ensure_result
 
@@ -88,7 +96,9 @@ assert result is existing
 ```
 
 ### ensure_list
+
 Garante que valor seja lista:
+
 ```python
 from flext_core import ensure_list
 
@@ -98,7 +108,9 @@ assert ensure_list(("a", "b")) == ["a", "b"]
 ```
 
 ### ensure_dict
+
 Garante que valor seja dicionário:
+
 ```python
 from flext_core import ensure_dict
 
@@ -132,7 +144,9 @@ def process_user(
 ## Tipos Genéricos
 
 ### Repository[T]
+
 Protocol para repositórios:
+
 ```python
 from flext_core import Repository, FlextResult
 
@@ -140,14 +154,16 @@ class UserRepository(Repository[User]):
     def find_by_id(self, entity_id: str) -> FlextResult[User]:
         # implementação
         pass
-    
+
     def save(self, entity: User) -> FlextResult[None]:
         # implementação
         pass
 ```
 
 ### Factory[T]
+
 Protocol para factories:
+
 ```python
 from flext_core import Factory, FlextResult
 

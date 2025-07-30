@@ -17,7 +17,7 @@ from flext_core.patterns import (
     FlextCommandResult
 )
 
-# Handler Pattern  
+# Handler Pattern
 from flext_core.patterns import (
     FlextHandler,
     FlextMessageHandler,
@@ -60,7 +60,7 @@ from flext_core import FlextResult
 
 class CreateUserCommand(FlextCommand):
     """Command para criar usuário."""
-    
+
     def __init__(self, name: str, email: str, age: int):
         super().__init__(
             command_type=FlextCommandType("create_user")
@@ -68,20 +68,20 @@ class CreateUserCommand(FlextCommand):
         self.name = name
         self.email = email
         self.age = age
-    
+
     def validate(self) -> FlextResult[None]:
         """Validação específica do command."""
         if not self.name.strip():
             return FlextResult.fail("Nome é obrigatório")
-        
+
         if "@" not in self.email:
             return FlextResult.fail("Email inválido")
-        
+
         if self.age < 0 or self.age > 150:
             return FlextResult.fail("Idade deve estar entre 0 e 150")
-        
+
         return FlextResult.ok(None)
-    
+
     def get_payload(self) -> dict[str, Any]:
         """Payload para logging/auditoria."""
         return {
@@ -111,15 +111,15 @@ from flext_core.patterns import FlextCommandHandler
 
 class CreateUserHandler(FlextCommandHandler[CreateUserCommand, User]):
     """Handler para CreateUserCommand."""
-    
+
     def __init__(self, user_repository: UserRepository):
         super().__init__(handler_id="create_user_handler")
         self._repository = user_repository
-    
+
     def can_handle(self, command: FlextCommand) -> bool:
         """Verifica se pode processar o command."""
         return isinstance(command, CreateUserCommand)
-    
+
     def handle(self, command: CreateUserCommand) -> FlextResult[User]:
         """Processa o command."""
         # Business logic
@@ -128,12 +128,12 @@ class CreateUserHandler(FlextCommandHandler[CreateUserCommand, User]):
             email=command.email,
             age=command.age
         )
-        
+
         # Persistência
         save_result = self._repository.save(user)
         if save_result.is_failure:
             return FlextResult.fail(f"Erro ao salvar: {save_result.error}")
-        
+
         return FlextResult.ok(user)
 
 # Usage
@@ -170,7 +170,7 @@ result = bus.execute(create_command)
 if result.is_success:
     user = result.data.result  # Resultado do handler
     print(f"Usuário criado: {user.name}")
-    
+
     # Metadados da execução
     metadata = result.get_result_metadata()
     print(f"Command ID: {metadata['command_id']}")
@@ -197,15 +197,15 @@ class ProcessPaymentCommand(FlextCommand):
         self.order_id = order_id
         self.amount = amount
         self.payment_method = payment_method
-    
+
     def validate(self) -> FlextResult[None]:
         if self.amount <= 0:
             return FlextResult.fail("Valor deve ser positivo")
-        
+
         valid_methods = ["credit_card", "debit_card", "pix"]
         if self.payment_method not in valid_methods:
             return FlextResult.fail(f"Método inválido: {self.payment_method}")
-        
+
         return FlextResult.ok(None)
 
 class PaymentResult:
@@ -219,7 +219,7 @@ class ProcessPaymentHandler(FlextCommandHandler[ProcessPaymentCommand, PaymentRe
         # Simular processamento de pagamento
         if command.amount > 10000:
             return FlextResult.fail("Valor acima do limite permitido")
-        
+
         # Processar pagamento
         transaction_id = f"txn_{uuid.uuid4().hex[:8]}"
         payment_result = PaymentResult(
@@ -227,7 +227,7 @@ class ProcessPaymentHandler(FlextCommandHandler[ProcessPaymentCommand, PaymentRe
             status="approved",
             amount=command.amount
         )
-        
+
         return FlextResult.ok(payment_result)
 
 # Usage
@@ -257,15 +257,15 @@ class EmailMessage:
 
 class EmailHandler(FlextMessageHandler[EmailMessage, str]):
     """Handler para processar emails."""
-    
+
     def __init__(self, email_service: EmailService):
         super().__init__()
         self._email_service = email_service
-    
+
     def can_handle(self, message: Any) -> bool:
         """Verifica se pode processar a mensagem."""
         return isinstance(message, EmailMessage)
-    
+
     def handle_message(self, message: EmailMessage) -> FlextResult[str]:
         """Processa o email."""
         try:
@@ -307,15 +307,15 @@ class UserCreatedEvent:
 
 class UserCreatedHandler(FlextEventHandler[UserCreatedEvent]):
     """Handler para evento de usuário criado."""
-    
+
     def __init__(self, notification_service: NotificationService):
         super().__init__()
         self._notification_service = notification_service
-    
+
     def get_event_type(self) -> FlextMessageType:
         """Tipo de evento que este handler processa."""
         return FlextMessageType("user.created")
-    
+
     def handle_event(self, event: UserCreatedEvent) -> FlextResult[None]:
         """Processa o evento."""
         try:
@@ -325,10 +325,10 @@ class UserCreatedHandler(FlextEventHandler[UserCreatedEvent]):
                 name=event.name,
                 email=event.email
             )
-            
+
             # Log do evento
             logger.info(f"Welcome notification sent to {event.email}")
-            
+
             return FlextResult.ok(None)
         except Exception as e:
             return FlextResult.fail(f"Notification failed: {str(e)}")
@@ -360,29 +360,29 @@ class UserResponse:
 
 class GetUserHandler(FlextRequestHandler[GetUserRequest, UserResponse]):
     """Handler para buscar usuário."""
-    
+
     def __init__(self, user_repository: UserRepository):
         super().__init__()
         self._repository = user_repository
-    
+
     def get_request_type(self) -> type[GetUserRequest]:
         """Tipo de request que este handler processa."""
         return GetUserRequest
-    
+
     def handle_request(self, request: GetUserRequest) -> FlextResult[UserResponse]:
-        """Processa a request.""" 
+        """Processa a request."""
         user_result = self._repository.find_by_id(request.user_id)
-        
+
         if user_result.is_failure:
             return FlextResult.fail(f"Usuário não encontrado: {request.user_id}")
-        
+
         user = user_result.data
         response = UserResponse(
             user_id=user.id,
             name=user.name,
             email=user.email
         )
-        
+
         return FlextResult.ok(response)
 
 # Usage
@@ -426,7 +426,7 @@ for handler in handlers:
 
 # Buscar handler por ID
 handler_id = email_handler.handler_id
-found_handler = registry.get_handler_by_id(handler_id)  
+found_handler = registry.get_handler_by_id(handler_id)
 if found_handler:
     print(f"Handler encontrado: {found_handler.__class__.__name__}")
 
@@ -525,45 +525,45 @@ from flext_core.patterns import FlextValidationRule, FlextRuleName
 
 class EmailRule(FlextValidationRule[str]):
     """Regra customizada para validação de email."""
-    
+
     def __init__(self):
         super().__init__(FlextRuleName("email_format"))
-    
+
     def validate(self, value: str) -> bool:
         """Valida formato de email."""
         if not value:
             return False
-        
+
         return "@" in value and "." in value.split("@")[1]
-    
+
     def _get_default_error_message(self) -> str:
         return "Email deve ter formato válido (exemplo@dominio.com)"
 
 class CPFRule(FlextValidationRule[str]):
     """Regra para validação de CPF."""
-    
+
     def __init__(self):
         super().__init__(FlextRuleName("cpf_format"))
-    
+
     def validate(self, value: str) -> bool:
         """Valida CPF brasileiro."""
         if not value:
             return False
-        
+
         # Remove formatação
         cpf = ''.join(filter(str.isdigit, value))
-        
+
         # Verifica tamanho
         if len(cpf) != 11:
             return False
-        
+
         # Verifica se não são todos iguais
         if cpf == cpf[0] * 11:
             return False
-        
+
         # Algoritmo de validação do CPF
         return self._validate_cpf_digits(cpf)
-    
+
     def _validate_cpf_digits(self, cpf: str) -> bool:
         """Valida dígitos verificadores do CPF."""
         # Implementação do algoritmo de validação
@@ -573,7 +573,7 @@ class CPFRule(FlextValidationRule[str]):
             if digit != int(cpf[i]):
                 return False
         return True
-    
+
     def _get_default_error_message(self) -> str:
         return "CPF deve ter formato válido (XXX.XXX.XXX-XX)"
 
@@ -612,7 +612,7 @@ print(f"Erros: {result.field_errors}")
 
 # Validador para email
 email_validator = FlextFieldValidator(
-    field_path=FlextFieldPath("email"), 
+    field_path=FlextFieldPath("email"),
     rules=[
         NotEmptyRule(),
         EmailRule()  # Custom rule
@@ -620,7 +620,7 @@ email_validator = FlextFieldValidator(
     required=True
 )
 
-# Validador para idade  
+# Validador para idade
 age_validator = FlextFieldValidator(
     field_path=FlextFieldPath("age"),
     rules=[RangeRule(0, 120)],
@@ -645,57 +645,57 @@ from flext_core.patterns import FlextValidator, FlextValidatorId
 
 class UserValidator(FlextValidator[dict[str, Any]]):
     """Validador completo para dados de usuário."""
-    
+
     def __init__(self):
         super().__init__(FlextValidatorId("user_validator"))
-        
+
         # Configurar validadores de campo
         self.add_field_validator("name", FlextFieldValidator(
             FlextFieldPath("name"),
             rules=[NotEmptyRule(), MinLengthRule(2), MaxLengthRule(50)],
             required=True
         ))
-        
+
         self.add_field_validator("email", FlextFieldValidator(
             FlextFieldPath("email"),
             rules=[NotEmptyRule(), EmailRule()],
             required=True
         ))
-        
+
         self.add_field_validator("age", FlextFieldValidator(
             FlextFieldPath("age"),
             rules=[RangeRule(0, 120)],
             required=False
         ))
-        
+
         self.add_field_validator("cpf", FlextFieldValidator(
             FlextFieldPath("cpf"),
             rules=[CPFRule()],
             required=False
         ))
-    
+
     def validate_business_rules(self, data: dict[str, Any]) -> FlextValidationResult:
         """Regras de negócio específicas."""
         result = FlextValidationResult.success()
-        
+
         # Regra: usuários menores de 18 anos precisam de responsável
         age = data.get("age")
         guardian = data.get("guardian")
-        
+
         if age and age < 18 and not guardian:
             result.add_error("Usuários menores de 18 anos precisam de responsável")
-        
+
         # Regra: email corporativo para funcionários
         role = data.get("role")
         email = data.get("email", "")
-        
+
         if role == "employee" and not email.endswith("@company.com"):
             result.add_field_error("email", "Funcionários devem usar email corporativo")
-        
+
         # Warning para campos opcionais em branco
         if not data.get("phone"):
             result.add_warning("Telefone não informado - recomendado para contato")
-        
+
         return result
 
 # Usage
@@ -704,7 +704,7 @@ validator = UserValidator()
 # Dados válidos
 valid_data = {
     "name": "João Silva",
-    "email": "joao@example.com", 
+    "email": "joao@example.com",
     "age": 30,
     "phone": "11999999999"
 }
@@ -743,72 +743,72 @@ print(f"Erros de negócio: {result.errors}")
 ```python
 class OrderValidator(FlextValidator[dict[str, Any]]):
     """Validador para pedidos complexos."""
-    
+
     def __init__(self):
         super().__init__(FlextValidatorId("order_validator"))
-        
+
         # Campos do pedido
         self.add_field_validator("customer_id", FlextFieldValidator(
             FlextFieldPath("customer_id"),
             rules=[NotEmptyRule()],
             required=True
         ))
-        
+
         self.add_field_validator("total_amount", FlextFieldValidator(
             FlextFieldPath("total_amount"),
             rules=[RangeRule(0.01, 100000.0)],
             required=True
         ))
-    
+
     def validate_business_rules(self, data: dict[str, Any]) -> FlextValidationResult:
         result = FlextValidationResult.success()
-        
+
         # Validar itens do pedido
         items = data.get("items", [])
         if not items:
             result.add_error("Pedido deve ter pelo menos um item")
             return result
-        
+
         # Validar cada item
         for i, item in enumerate(items):
             item_result = self._validate_order_item(item, i)
             result.merge(item_result)
-        
+
         # Validar total calculado vs informado
         calculated_total = sum(
-            item.get("quantity", 0) * item.get("price", 0) 
+            item.get("quantity", 0) * item.get("price", 0)
             for item in items
         )
         informed_total = data.get("total_amount", 0)
-        
+
         if abs(calculated_total - informed_total) > 0.01:
             result.add_error(
                 f"Total informado ({informed_total}) difere do calculado ({calculated_total})"
             )
-        
+
         # Regras de desconto
         discount = data.get("discount", 0)
         if discount > calculated_total * 0.5:  # Max 50% desconto
             result.add_error("Desconto não pode ser maior que 50% do total")
-        
+
         return result
-    
+
     def _validate_order_item(self, item: dict, index: int) -> FlextValidationResult:
         """Valida item individual do pedido."""
         result = FlextValidationResult.success()
-        
+
         # Campos obrigatórios do item
         if not item.get("product_id"):
             result.add_field_error(f"items[{index}].product_id", "Product ID é obrigatório")
-        
+
         quantity = item.get("quantity", 0)
         if quantity <= 0:
             result.add_field_error(f"items[{index}].quantity", "Quantidade deve ser positiva")
-        
+
         price = item.get("price", 0)
         if price <= 0:
             result.add_field_error(f"items[{index}].price", "Preço deve ser positivo")
-        
+
         return result
 
 # Usage
@@ -859,7 +859,7 @@ class CreateOrderCommand(FlextCommand):
         self.items = items
         self.discount = discount
         self.total_amount = sum(item["quantity"] * item["price"] for item in items)
-    
+
     def validate(self) -> FlextResult[None]:
         # Usar validador reutilizável
         validator = OrderValidator()
@@ -869,7 +869,7 @@ class CreateOrderCommand(FlextCommand):
             "total_amount": self.total_amount,
             "discount": self.discount
         })
-        
+
         if validation_result.is_valid:
             return FlextResult.ok(None)
         else:
@@ -882,36 +882,36 @@ class CreateOrderHandler(FlextCommandHandler[CreateOrderCommand, Order]):
         super().__init__(handler_id="create_order_handler")
         self._order_repo = order_repository
         self._inventory = inventory_service
-    
+
     def can_handle(self, command: FlextCommand) -> bool:
         return isinstance(command, CreateOrderCommand)
-    
+
     def handle(self, command: CreateOrderCommand) -> FlextResult[Order]:
         # Verificar estoque
         for item in command.items:
             stock_result = self._inventory.check_availability(
-                item["product_id"], 
+                item["product_id"],
                 item["quantity"]
             )
             if stock_result.is_failure:
                 return FlextResult.fail(f"Insufficient stock: {stock_result.error}")
-        
+
         # Criar pedido
         order = Order.create(
             customer_id=command.customer_id,
             items=command.items,
             discount=command.discount
         )
-        
+
         # Salvar
         save_result = self._order_repo.save(order)
         if save_result.is_failure:
             return FlextResult.fail(f"Failed to save order: {save_result.error}")
-        
+
         # Reservar estoque
         for item in command.items:
             self._inventory.reserve_stock(item["product_id"], item["quantity"])
-        
+
         return FlextResult.ok(order)
 
 # Event handler para side effects
@@ -920,24 +920,24 @@ class OrderCreatedHandler(FlextEventHandler[OrderCreatedEvent]):
         super().__init__()
         self._email = email_service
         self._audit = audit_service
-    
+
     def get_event_type(self) -> FlextMessageType:
         return FlextMessageType("order.created")
-    
+
     def handle_event(self, event: OrderCreatedEvent) -> FlextResult[None]:
         # Enviar email de confirmação
         email_result = self._email.send_order_confirmation(
             event.customer_email,
             event.order_id
         )
-        
+
         if email_result.is_failure:
             # Log error but don't fail the event processing
             logger.error(f"Failed to send confirmation email: {email_result.error}")
-        
+
         # Auditoria
         self._audit.log_order_creation(event.order_id, event.customer_id)
-        
+
         return FlextResult.ok(None)
 
 # Integration usage
@@ -947,17 +947,17 @@ def setup_order_processing():
     inventory_service = InventoryService()
     email_service = EmailService()
     audit_service = AuditService()
-    
+
     # Setup command bus
     command_bus = FlextCommandBus()
     create_order_handler = CreateOrderHandler(order_repo, inventory_service)
     command_bus.register_handler(create_order_handler)
-    
+
     # Setup event handlers
     event_registry = FlextHandlerRegistry()
     order_created_handler = OrderCreatedHandler(email_service, audit_service)
     event_registry.register(order_created_handler)
-    
+
     return command_bus, event_registry
 
 # Usage
@@ -978,14 +978,14 @@ result = command_bus.execute(create_command)
 if result.is_success:
     order = result.data.result
     print(f"Pedido criado: {order.id}")
-    
+
     # Publicar evento
     event = OrderCreatedEvent(
         order_id=order.id,
         customer_id=order.customer_id,
         customer_email="customer@example.com"
     )
-    
+
     # Processar evento
     event_handlers = event_registry.find_handlers(event)
     for handler in event_handlers:
@@ -1008,11 +1008,11 @@ class CreateUserCommand(FlextCommand):
         super().__init__()
         self._name = name  # Private, immutable
         self._email = email
-    
+
     @property
     def name(self) -> str:
         return self._name
-    
+
     @property
     def email(self) -> str:
         return self._email
@@ -1020,16 +1020,16 @@ class CreateUserCommand(FlextCommand):
 # ✅ Validação abrangente
 def validate(self) -> FlextResult[None]:
     errors = []
-    
+
     if not self.name.strip():
         errors.append("Nome é obrigatório")
-    
+
     if not self.email or "@" not in self.email:
         errors.append("Email inválido")
-    
+
     if errors:
         return FlextResult.fail("; ".join(errors))
-    
+
     return FlextResult.ok(None)
 ```
 
@@ -1042,18 +1042,18 @@ class CreateUserHandler(FlextCommandHandler[CreateUserCommand, User]):
         super().__init__()
         self._user_repo = user_repo
         self._email = email
-    
+
     def handle(self, command: CreateUserCommand) -> FlextResult[User]:
         # Single responsibility: create user
         user = User.create(command.name, command.email)
-        
+
         save_result = self._user_repo.save(user)
         if save_result.is_failure:
             return save_result
-        
+
         # Side effects via events, not directly here
         # self._publish_event(UserCreatedEvent(user))
-        
+
         return FlextResult.ok(user)
 ```
 
@@ -1072,17 +1072,17 @@ class EmailValidator(FlextValidator[str]):
                 MaxLengthRule(254)  # RFC limit
             ]
         ))
-    
+
     def validate_business_rules(self, email: str) -> FlextValidationResult:
         result = FlextValidationResult.success()
-        
+
         # Business rule: no disposable emails
         disposable_domains = ["tempmail.com", "10minutemail.com"]
         domain = email.split("@")[1] if "@" in email else ""
-        
+
         if domain in disposable_domains:
             result.add_error("Emails temporários não são permitidos")
-        
+
         return result
 ```
 
@@ -1095,17 +1095,17 @@ def handle(self, command: CreateUserCommand) -> FlextResult[User]:
         # Business validation
         if self._user_exists(command.email):
             return FlextResult.fail(f"Usuário já existe com email: {command.email}")
-        
+
         # Create user
         user = User.create(command.name, command.email)
-        
+
         # Persist
         save_result = self._user_repo.save(user)
         if save_result.is_failure:
             return FlextResult.fail(f"Falha ao salvar usuário: {save_result.error}")
-        
+
         return FlextResult.ok(user)
-        
+
     except DatabaseConnectionError as e:
         return FlextResult.fail(f"Erro de conexão com banco: {str(e)}")
     except Exception as e:

@@ -166,7 +166,7 @@ from flext_core import FlextEntity, FlextValueObject
 class User(FlextEntity):
     name: str
     email: str
-    
+
     def activate(self) -> FlextResult[None]:
         # Business logic with domain events
         return FlextResult.ok(None)
@@ -236,7 +236,7 @@ from flext_core import FlextResult
 def validate_user(user_data: dict) -> FlextResult[User]:
     if not user_data.get("email"):
         return FlextResult.fail("Email is required")
-    
+
     user = User(**user_data)
     return FlextResult.ok(user)
 
@@ -257,11 +257,11 @@ class User(FlextEntity):
     name: str
     email: str
     is_active: bool = False
-    
+
     def activate(self) -> FlextResult[None]:
         if self.is_active:
             return FlextResult.fail("User already active")
-        
+
         self.is_active = True
         # Domain events can be added here
         return FlextResult.ok(None)
@@ -275,7 +275,7 @@ from flext_core import FlextBaseSettings
 class AppSettings(FlextBaseSettings):
     database_url: str = "sqlite:///app.db"
     log_level: str = "INFO"
-    
+
     class Config:
         env_prefix = "APP_"
 
@@ -293,7 +293,7 @@ def test_user_activation(clean_container: FlextContainer):
     # Use clean container fixture
     user_service = UserService()
     clean_container.register("user_service", user_service)
-    
+
     # Test the service
     result = user_service.activate_user("user123")
     assert result.is_success
@@ -377,14 +377,17 @@ examples/
 ## TODO: GAPS DE ARQUITETURA IDENTIFICADOS - PRIORIDADE CRÍTICA
 
 ### 🚨 GAP 1: Ecosystem Compatibility e Versionamento Strategy
+
 **Status**: CRÍTICO - Foundation library sem garantias de compatibilidade
 **Problema**:
+
 - flext-core é dependência crítica de 31+ projetos mas sem compatibility matrix
 - Breaking changes em core library podem quebrar ecosystem inteiro instantaneamente
 - Sem semantic versioning definido especificamente para ecosystem dependencies
 - Upgrade path não documentado para major version changes
 
 **TODO**:
+
 - [ ] Criar comprehensive compatibility testing matrix com todos projetos dependentes
 - [ ] Implementar semantic versioning strategy específico para ecosystem foundation
 - [ ] Documentar detailed migration guides para breaking changes em flext-core
@@ -392,14 +395,17 @@ examples/
 - [ ] Definir deprecation policy e timeline para breaking changes
 
 ### 🚨 GAP 2: Event Sourcing Architecture Foundation Missing
+
 **Status**: CRÍTICO - Event Sourcing promises não delivered
 **Problema**:
+
 - Event Sourcing amplamente mencionado em workspace mas zero implementation em core
 - FlextAggregateRoot exists mas sem event sourcing capabilities
 - Domain Events pattern incomplete - apenas mentions, não working implementation
 - Event Store patterns não definidos em foundation library
 
 **TODO**:
+
 - [ ] Implementar complete FlextEventStore com event persistence patterns
 - [ ] Criar FlextDomainEvent base class com serialization support
 - [ ] Refactor FlextAggregateRoot para full Event Sourcing support
@@ -408,14 +414,17 @@ examples/
 - [ ] Criar event versioning strategy para backward compatibility
 
 ### 🚨 GAP 3: Plugin Architecture Foundation Completely Missing
+
 **Status**: CRÍTICO - Plugin system central to ecosystem mas zero foundation
 **Problema**:
+
 - FlexCore (Go) relies on plugin system mas flext-core has zero plugin foundation
 - Plugin interfaces não defined em Python foundation layer
 - Hot-swappable components mencionados mas sem base architecture
 - Extensibility patterns não documented em core library
 
 **TODO**:
+
 - [ ] Design e implement comprehensive FlextPlugin base class hierarchy
 - [ ] Criar plugin registry system com lifecycle management
 - [ ] Implement plugin loading mechanisms com dependency resolution
@@ -424,14 +433,17 @@ examples/
 - [ ] Define plugin interface contracts para Go-Python bridge
 
 ### 🚨 GAP 4: CQRS Pattern Implementation Superficial
+
 **Status**: CRÍTICO - CQRS mentioned extensively mas implementation inadequate
 **Problema**:
+
 - commands.py e handlers.py exist mas são basic stub implementations
 - Command/Query separation não properly architected
 - Command Bus e Query Bus critical components completely missing
 - Pipeline behaviors (middleware) não implemented
 
 **TODO**:
+
 - [ ] Implement production-ready FlextCommandBus com message routing
 - [ ] Criar comprehensive FlextQueryBus com query optimization patterns
 - [ ] Document complete CQRS architectural patterns com working examples
@@ -440,14 +452,17 @@ examples/
 - [ ] Add command/query serialization para cross-service communication
 
 ### 🚨 GAP 5: Cross-Language Integration Architecture Gap
+
 **Status**: CRÍTICO - Python-Go bridge critical mas não architected
 **Problema**:
+
 - flext-core foundation para Go services via Python bridge mas integration undefined
 - Type safety between Python-Go não guaranteed nem documented
 - Serialization patterns para FlextResult cross-language não implemented
 - Bridge performance e reliability concerns não addressed em foundation
 
 **TODO**:
+
 - [ ] Design comprehensive Python-Go type mapping system
 - [ ] Implement FlextResult serialization/deserialization para Go integration
 - [ ] Create cross-language error handling patterns e best practices
@@ -456,14 +471,17 @@ examples/
 - [ ] Define data contract versioning para bridge compatibility
 
 ### 🚨 GAP 6: Enterprise Observability Foundation Missing
+
 **Status**: CRÍTICO - Enterprise platform mas observability não built into foundation
 **Problema**:
+
 - flext-observability project exists mas core library não integrated
 - Structured logging exists mas correlation IDs e tracing não built-in
 - Metrics collection patterns não defined em foundation level
 - Health check patterns não standardized across ecosystem
 
 **TODO**:
+
 - [ ] Integrate observability patterns directly into flext-core foundation
 - [ ] Implement correlation ID propagation throughout FlextResult chains
 - [ ] Create standardized metrics collection interfaces em core library

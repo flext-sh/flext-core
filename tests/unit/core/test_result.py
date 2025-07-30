@@ -256,8 +256,8 @@ class TestPipeFunction:
         if not (result.is_failure):
             raise AssertionError(f"Expected True, got {result.is_failure}")
         assert result.error is not None
-        if "Transform failed" not in result.error:
-            raise AssertionError(f"Expected {'Transform failed'} in {result.error}")
+        if "Transform failed" not in (result.error or ""):
+            raise AssertionError(f"Expected 'Transform failed' in {result.error}")
 
 
 class TestTapFunction:

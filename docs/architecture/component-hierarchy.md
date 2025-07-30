@@ -396,10 +396,10 @@ class CustomCommand(FlextCommand):
 ```python
 class CustomEntity(FlextEntity):
     """Custom entity with domain-specific behavior."""
-    
+
     # Domain-specific fields
     business_field: str = Field(..., description="Business-specific field")
-    
+
     # Domain methods
     def execute_business_logic(self) -> FlextResult[str]:
         """Execute domain-specific business logic."""
@@ -413,10 +413,10 @@ class CustomEntity(FlextEntity):
 ```python
 class CustomMessageHandler(FlextMessageHandler[MyMessage, MyResponse]):
     """Custom message handler implementation."""
-    
+
     def can_handle(self, message: Any) -> bool:
         return isinstance(message, MyMessage)
-    
+
     def handle_message(self, message: MyMessage) -> FlextResult[MyResponse]:
         # Custom processing logic
         try:
@@ -431,11 +431,11 @@ class CustomMessageHandler(FlextMessageHandler[MyMessage, MyResponse]):
 ```python
 class CustomBusinessRule(FlextBusinessRule[User]):
     """Custom business rule for user validation."""
-    
+
     def is_satisfied_by(self, user: User) -> bool:
         # Custom business logic
         return user.age >= 18 and user.email_verified
-    
+
     def get_error_message(self) -> str:
         return "User must be at least 18 years old and have verified email"
 ```
