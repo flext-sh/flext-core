@@ -247,7 +247,7 @@ class FlextPayload[T](
         # Validate input is actually a dictionary first
         if not isinstance(data_dict, dict):
             return FlextResult.fail(
-                "Failed to create payload from dict: Input is not a dictionary"
+                "Failed to create payload from dict: Input is not a dictionary",
             )
 
         try:
@@ -794,8 +794,10 @@ class FlextEvent(FlextPayload[Mapping[str, object]]):
             logger.error("Invalid event type - empty or not string")
             return FlextResult.fail("Event type cannot be empty")
 
-        # Validate aggregate_id if provided
-        if aggregate_id and not FlextValidators.is_non_empty_string(aggregate_id):
+        # Validate aggregate_id if provided (not None)
+        if aggregate_id is not None and not FlextValidators.is_non_empty_string(
+            aggregate_id,
+        ):
             logger.error("Invalid aggregate ID - empty or not string")
             return FlextResult.fail("Invalid aggregate ID")
 

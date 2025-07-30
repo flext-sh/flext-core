@@ -15,7 +15,7 @@ from flext_core.result import FlextResult as FlextResultDirect
 EXPECTED_DATA_COUNT = 3
 
 if TYPE_CHECKING:
-    from flext_core.types import FlextEntityId
+    from flext_core.flext_types import FlextEntityId
 
 
 class TestCoverageGaps:

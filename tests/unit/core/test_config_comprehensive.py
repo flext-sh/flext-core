@@ -34,7 +34,7 @@ from flext_core.config import (
 from flext_core.result import FlextResult
 
 if TYPE_CHECKING:
-    from flext_core.types import TAnyDict
+    from flext_core.flext_types import TAnyDict
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 

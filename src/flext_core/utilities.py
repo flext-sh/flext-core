@@ -47,46 +47,47 @@ class DecoratedFunction(Protocol):
 
 
 class FlextUtilities:
-    """Utility functions for common operations."""
+    """Utility functions for common operations - DRY REFACTORED."""
 
     # Time constants for duration formatting
     SECONDS_PER_MINUTE = 60
     SECONDS_PER_HOUR = 3600
 
+    # DRY REFACTORING: Delegates to FlextGenerators (single source)
     @classmethod
     def generate_uuid(cls) -> str:
-        """Generate UUID."""
-        return str(uuid.uuid4())
+        """Generate UUID (delegates to FlextGenerators)."""
+        return FlextGenerators.generate_uuid()
 
     @classmethod
     def generate_id(cls) -> str:
-        """Generate unique ID."""
-        return f"id_{uuid.uuid4().hex[:8]}"
+        """Generate unique ID (delegates to FlextGenerators)."""
+        return FlextGenerators.generate_id()
 
     @classmethod
     def generate_timestamp(cls) -> float:
-        """Generate timestamp."""
-        return time.time()
+        """Generate timestamp (delegates to FlextGenerators)."""
+        return FlextGenerators.generate_timestamp()
 
     @classmethod
     def generate_iso_timestamp(cls) -> str:
-        """Generate ISO format timestamp."""
-        return datetime.datetime.now(datetime.UTC).isoformat()
+        """Generate ISO format timestamp (delegates to FlextGenerators)."""
+        return FlextGenerators.generate_iso_timestamp()
 
     @classmethod
     def generate_correlation_id(cls) -> str:
-        """Generate correlation ID."""
-        return f"corr_{uuid.uuid4().hex[:12]}"
+        """Generate correlation ID (delegates to FlextGenerators)."""
+        return FlextGenerators.generate_correlation_id()
 
     @classmethod
     def generate_entity_id(cls) -> str:
-        """Generate entity ID."""
-        return f"entity_{uuid.uuid4().hex[:10]}"
+        """Generate entity ID (delegates to FlextGenerators)."""
+        return FlextGenerators.generate_entity_id()
 
     @classmethod
     def generate_session_id(cls) -> str:
-        """Generate session ID."""
-        return f"session_{uuid.uuid4().hex[:12]}"
+        """Generate session ID (delegates to FlextGenerators)."""
+        return FlextGenerators.generate_session_id()
 
     @classmethod
     def truncate(cls, text: str, max_length: int = 100, suffix: str = "...") -> str:
@@ -97,14 +98,8 @@ class FlextUtilities:
 
     @classmethod
     def format_duration(cls, seconds: float) -> str:
-        """Format duration."""
-        if seconds < 1:
-            return f"{seconds * 1000:.1f}ms"
-        if seconds < cls.SECONDS_PER_MINUTE:
-            return f"{seconds:.1f}s"
-        if seconds < cls.SECONDS_PER_HOUR:
-            return f"{seconds / cls.SECONDS_PER_MINUTE:.1f}m"
-        return f"{seconds / cls.SECONDS_PER_HOUR:.1f}h"
+        """Format duration (delegates to FlextGenerators)."""
+        return FlextGenerators.format_duration(seconds)
 
     @classmethod
     def has_attribute(cls, obj: object, attr: str) -> bool:
@@ -280,46 +275,57 @@ class FlextTypeGuards:
 
 
 class FlextGenerators:
-    """ID and timestamp generation utilities."""
+    """ID and timestamp generation utilities - SINGLE SOURCE OF TRUTH."""
 
     # Time constants for duration formatting
     SECONDS_PER_MINUTE = 60
     SECONDS_PER_HOUR = 3600
 
-    @staticmethod
-    def generate_uuid() -> str:
+    @classmethod
+    def generate_uuid(cls) -> str:
         """Generate UUID."""
         return str(uuid.uuid4())
 
-    @staticmethod
-    def generate_id() -> str:
+    @classmethod
+    def generate_id(cls) -> str:
         """Generate unique ID."""
         return f"id_{uuid.uuid4().hex[:8]}"
 
-    @staticmethod
-    def generate_timestamp() -> float:
+    @classmethod
+    def generate_timestamp(cls) -> float:
         """Generate timestamp."""
         return time.time()
 
-    @staticmethod
-    def generate_iso_timestamp() -> str:
+    @classmethod
+    def generate_iso_timestamp(cls) -> str:
         """Generate ISO format timestamp."""
         return datetime.datetime.now(datetime.UTC).isoformat()
 
-    @staticmethod
-    def generate_correlation_id() -> str:
+    @classmethod
+    def generate_correlation_id(cls) -> str:
         """Generate correlation ID."""
         return f"corr_{uuid.uuid4().hex[:12]}"
 
-    @staticmethod
-    def generate_entity_id() -> str:
+    @classmethod
+    def generate_entity_id(cls) -> str:
         """Generate entity ID."""
         return f"entity_{uuid.uuid4().hex[:10]}"
 
-    @staticmethod
-    def generate_session_id() -> str:
+    @classmethod
+    def generate_session_id(cls) -> str:
         """Generate session ID."""
         return f"session_{uuid.uuid4().hex[:12]}"
+
+    @classmethod
+    def format_duration(cls, seconds: float) -> str:
+        """Format duration."""
+        if seconds < 1:
+            return f"{seconds * 1000:.1f}ms"
+        if seconds < cls.SECONDS_PER_MINUTE:
+            return f"{seconds:.1f}s"
+        if seconds < cls.SECONDS_PER_HOUR:
+            return f"{seconds / cls.SECONDS_PER_MINUTE:.1f}m"
+        return f"{seconds / cls.SECONDS_PER_HOUR:.1f}h"
 
 
 class FlextFormatters:
@@ -334,14 +340,8 @@ class FlextFormatters:
 
     @staticmethod
     def format_duration(seconds: float) -> str:
-        """Format duration."""
-        if seconds < 1:
-            return f"{seconds * 1000:.1f}ms"
-        if seconds < FlextGenerators.SECONDS_PER_MINUTE:
-            return f"{seconds:.1f}s"
-        if seconds < FlextGenerators.SECONDS_PER_HOUR:
-            return f"{seconds / FlextGenerators.SECONDS_PER_MINUTE:.1f}m"
-        return f"{seconds / FlextGenerators.SECONDS_PER_HOUR:.1f}h"
+        """Format duration using FlextGenerators implementation."""
+        return FlextGenerators.format_duration(seconds)
 
 
 # =============================================================================

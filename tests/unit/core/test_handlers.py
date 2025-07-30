@@ -18,7 +18,7 @@ from flext_core.result import FlextResult
 EXPECTED_BULK_SIZE = 2
 
 if TYPE_CHECKING:
-    from flext_core.types import TData
+    from flext_core.flext_types import TData
 
 
 class _TestMessage:
@@ -27,6 +27,42 @@ class _TestMessage:
     def __init__(self, content: str, message_type: str = "test") -> None:
         self.content = content
         self.message_type = message_type
+
+
+# Test classes for covering base handlers functionality
+class _BaseTestCommandHandler(_BaseCommandHandler):
+    """Test command handler for covering base functionality."""
+
+    def __init__(self) -> None:
+        super().__init__("test_command_handler")
+
+    def handle(self, command: object) -> FlextResult[object]:
+        """Handle command with custom logic."""
+        if isinstance(command, dict) and command.get("should_fail"):
+            return FlextResult.fail("Test command failed")
+        return FlextResult.ok(f"Handled: {command}")
+
+
+class _BaseTestEventHandler(_BaseEventHandler):
+    """Test event handler for covering base functionality."""
+
+    def __init__(self) -> None:
+        super().__init__("test_event_handler")
+
+    def process_event(self, event: object) -> None:
+        """Process event with custom logic."""
+        # Event processing logic here
+
+
+class _BaseTestQueryHandler(_BaseQueryHandler):
+    """Test query handler for covering base functionality."""
+
+    def __init__(self) -> None:
+        super().__init__("test_query_handler")
+
+    def handle(self, query: object) -> FlextResult[object]:
+        """Handle query with custom logic."""
+        return FlextResult.ok(f"Query result: {query}")
 
 
 class _TestCommand:
@@ -242,8 +278,8 @@ class TestBaseHandler:
         assert logger is not None or logger is None
 
 
-class _TestCommandHandler:
-    """Test FlextHandlers.CommandHandler functionality."""
+class TestFlextHandlersCommandHandler:
+    """Test FlextHandlers.CommandHandler functionality - DRY REFACTORED."""
 
     def test_command_handler_creation(self) -> None:
         """Test command handler creation."""
@@ -400,17 +436,17 @@ class _TestCommandHandler:
         assert logger is None
 
 
-class _TestEventHandler:
-    """Test FlextHandlers.EventHandler functionality."""
+class TestFlextHandlersEventHandler:
+    """Test FlextHandlers.EventHandler functionality - DRY REFACTORED."""
 
     def test_event_handler_creation(self) -> None:
         """Test event handler creation."""
 
-        class _TestEventHandler(FlextHandlers.EventHandler):
+        class TestEventHandlerImpl(FlextHandlers.EventHandler):
             def process_event_impl(self, event: object) -> None:
                 pass
 
-        handler = _TestEventHandler("test_event_handler")
+        handler = TestEventHandlerImpl("test_event_handler")
         if handler.handler_name != "test_event_handler":
             raise AssertionError(
                 f"Expected {'test_event_handler'}, got {handler.handler_name}"
@@ -559,8 +595,8 @@ class _TestEventHandler:
             assert True  # Test passes
 
 
-class _TestQueryHandler:
-    """Test FlextHandlers.QueryHandler functionality."""
+class TestFlextHandlersQueryHandler:
+    """Test FlextHandlers.QueryHandler functionality - DRY REFACTORED."""
 
     def test_query_handler_creation(self) -> None:
         """Test query handler creation."""
@@ -1420,6 +1456,67 @@ class TestHandlerBaseCoverage:
         assert result.is_failure
         if "Pre-processing failed" not in result.error:
             raise AssertionError(f"Expected 'Pre-processing failed' in {result.error}")
+
+
+class TestBaseHandlersCoverage:
+    """Tests for covering base handlers functionality (lines 371, 376, 381, etc)."""
+
+    def test_base_command_handler_validate_default(self) -> None:
+        """Test default validate_command method (line 371)."""
+        handler = _BaseTestCommandHandler()
+
+        # Default validate_command should return success
+        result = handler.validate_command("test_command")
+        assert result.is_success
+
+    def test_base_command_handler_handle_default(self) -> None:
+        """Test default handle method (line 376)."""
+        handler = _BaseTestCommandHandler()
+
+        # Test successful handling
+        result = handler.handle({"test": "command"})
+        assert result.is_success
+        assert "Handled:" in str(result.data)
+
+        # Test failure path
+        result = handler.handle({"should_fail": True})
+        assert result.is_failure
+        assert "Test command failed" in result.error
+
+    def test_base_command_handler_can_handle_default(self) -> None:
+        """Test command handler pre_handle method (line 381)."""
+        handler = _BaseTestCommandHandler()
+
+        # Test pre_handle method that uses validate_command
+        result = handler.pre_handle("any_command")
+        assert result.is_success
+        assert result.data == "any_command"
+
+    def test_base_event_handler_functionality(self) -> None:
+        """Test base event handler functionality."""
+        handler = _BaseTestEventHandler()
+
+        # Test handle method (event handlers return None)
+        result = handler.handle({"event": "test"})
+        assert result.is_success
+        assert result.data is None  # Events return None
+
+    def test_base_query_handler_functionality(self) -> None:
+        """Test base query handler functionality."""
+        handler = _BaseTestQueryHandler()
+
+        # Test authorize_query method
+        result = handler.authorize_query({"query": "data"})
+        assert result.is_success
+
+        # Test handle method
+        result = handler.handle({"query": "search"})
+        assert result.is_success
+        assert "Query result:" in str(result.data)
+
+        # Test pre_handle method
+        result = handler.pre_handle({"query": "test"})
+        assert result.is_success
 
     def test_command_handler_validate_command_override(self) -> None:
         """Test command handler validate_command method override (lines 255-256)."""

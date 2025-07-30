@@ -23,7 +23,7 @@ from flext_core.loggings import (
 )
 
 if TYPE_CHECKING:
-    from flext_core.types import TContextDict
+    from flext_core.flext_types import TContextDict
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 

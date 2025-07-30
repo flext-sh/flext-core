@@ -149,7 +149,7 @@ fix: ## Auto-fix code issues
 .PHONY: test
 test: ## Run all tests with coverage
 	@echo "🧪 Running tests with coverage..."
-	@$(POETRY) run pytest $(TESTS_DIR) --cov=$(SRC_DIR) --cov-report=term-missing --cov-fail-under=$(MIN_COVERAGE)
+	@pytest $(TESTS_DIR) --cov=$(SRC_DIR) --cov-report=term-missing --cov-fail-under=$(MIN_COVERAGE)
 
 .PHONY: test-unit
 test-unit: ## Run unit tests only
@@ -174,12 +174,12 @@ test-watch: ## Run tests in watch mode
 .PHONY: coverage
 coverage: ## Generate coverage report
 	@echo "📊 Generating coverage report..."
-	@$(POETRY) run pytest $(TESTS_DIR) --cov=$(SRC_DIR) --cov-report=html --cov-report=xml
+	@pytest $(TESTS_DIR) --cov=$(SRC_DIR) --cov-report=html --cov-report=xml
 
 .PHONY: coverage-html
 coverage-html: ## Generate HTML coverage report
 	@echo "📊 Generating HTML coverage report..."
-	@$(POETRY) run pytest $(TESTS_DIR) --cov=$(SRC_DIR) --cov-report=html
+	@pytest $(TESTS_DIR) --cov=$(SRC_DIR) --cov-report=html
 	@echo "📊 Coverage report: htmlcov/index.html"
 
 # =============================================================================

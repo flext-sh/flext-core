@@ -41,6 +41,9 @@ from flext_core.result import FlextResult
 if TYPE_CHECKING:
     from flext_core.flext_types import TPredicate
 
+# DRY pattern: Remove get_logger import to break circular dependency
+# Validation logging moved to specific validator implementations when needed
+
 # =============================================================================
 # BASIC VALIDATION CLASSES
 # =============================================================================
@@ -82,7 +85,9 @@ class _BaseValidators:
     @staticmethod
     def is_non_empty_string(value: object) -> bool:
         """Check if value is non-empty string."""
-        return isinstance(value, str) and len(value.strip()) > 0
+        if not isinstance(value, str):
+            return False
+        return len(value.strip()) > 0
 
     @staticmethod
     def is_email(value: object) -> bool:

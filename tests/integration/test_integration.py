@@ -14,7 +14,7 @@ from flext_core import (
 )
 
 if TYPE_CHECKING:
-    from flext_core.types import FlextEntityId
+    from flext_core.flext_types import FlextEntityId
 
 pytestmark = [pytest.mark.integration]
 

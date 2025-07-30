@@ -129,17 +129,34 @@ class FlextServiceRegistrar(FlextLoggableMixin):
 
     def register_service(self, name: str, service: object) -> FlextResult[None]:
         """Register a service instance."""
+        self.logger.trace(
+            "Starting service registration",
+            name=name,
+            service_type=type(service).__name__,
+        )
+
         # Use centralized validation - eliminates duplication
         validation_result = self._validate_service_name(name)
         if validation_result.is_failure:
+            self.logger.debug(
+                "Service name validation failed",
+                name=name,
+                error=validation_result.error,
+            )
             return validation_result.map(lambda _: None)  # Convert type, preserve error
 
         validated_name = validation_result.unwrap()
+        self.logger.trace(
+            "Service name validated successfully",
+            validated_name=validated_name,
+        )
 
         if validated_name in self._services:
             self.logger.warning(
                 "Service already registered, replacing",
                 name=validated_name,
+                existing_service_type=type(self._services[validated_name]).__name__,
+                new_service_type=type(service).__name__,
             )
 
         self._services[validated_name] = service
@@ -147,6 +164,11 @@ class FlextServiceRegistrar(FlextLoggableMixin):
             "Service registered",
             name=validated_name,
             service_type=type(service).__name__,
+            service_id=id(service),
+            total_services=len(self._services),
+        )
+        self.logger.trace(
+            "Service registration completed successfully", name=validated_name
         )
         return FlextResult.ok(None)
 
@@ -156,24 +178,57 @@ class FlextServiceRegistrar(FlextLoggableMixin):
         factory: object,
     ) -> FlextResult[None]:
         """Register a service factory."""
+        self.logger.trace(
+            "Starting factory registration",
+            name=name,
+            factory_type=type(factory).__name__,
+        )
+
         # Use centralized validation - eliminates duplication
         validation_result = self._validate_service_name(name)
         if validation_result.is_failure:
+            self.logger.debug(
+                "Factory name validation failed",
+                name=name,
+                error=validation_result.error,
+            )
             return validation_result.map(lambda _: None)  # Convert type, preserve error
 
         validated_name = validation_result.unwrap()
+        self.logger.trace(
+            "Factory name validated successfully", validated_name=validated_name
+        )
 
         # Validate factory is callable
         if not callable(factory):
+            self.logger.debug(
+                "Factory validation failed - not callable",
+                name=validated_name,
+                factory_type=type(factory).__name__,
+            )
             return FlextResult.fail("Factory must be callable")
+
+        self.logger.trace("Factory callable validation passed", name=validated_name)
 
         # Remove existing service if present to force factory usage
         if validated_name in self._services:
+            self.logger.debug(
+                "Removing existing service to register factory", name=validated_name
+            )
             del self._services[validated_name]
 
         # Register factory with validated name - cast to correct type after validation
         factory_callable = cast("Callable[[], object]", factory)
         self._factories[validated_name] = factory_callable
+        self.logger.debug(
+            "Factory registered",
+            name=validated_name,
+            factory_type=type(factory).__name__,
+            total_factories=len(self._factories),
+        )
+        self.logger.trace(
+            "Factory registration completed successfully", name=validated_name
+        )
         return FlextResult.ok(None)
 
     def unregister_service(self, name: str) -> FlextResult[None]:
@@ -300,29 +355,71 @@ class FlextServiceRetrivier(FlextLoggableMixin):
 
     def get_service(self, name: str) -> FlextResult[object]:
         """Retrieve a registered service."""
+        self.logger.trace("Starting service retrieval", name=name)
+
         # Use centralized validation - eliminates duplication
         validation_result = self._validate_service_name(name)
         if validation_result.is_failure:
+            self.logger.debug(
+                "Service name validation failed during retrieval",
+                name=name,
+                error=validation_result.error,
+            )
             return validation_result.map(
                 lambda _: object(),
             )  # Convert type, preserve error
 
         validated_name = validation_result.unwrap()
+        self.logger.trace(
+            "Service name validated for retrieval", validated_name=validated_name
+        )
 
         # Check direct service registration
         if validated_name in self._services:
-            self.logger.debug("Service retrieved from cache", name=validated_name)
-            return FlextResult.ok(self._services[validated_name])
+            service = self._services[validated_name]
+            self.logger.debug(
+                "Service retrieved from cache",
+                name=validated_name,
+                service_type=type(service).__name__,
+                service_id=id(service),
+            )
+            self.logger.trace(
+                "Service retrieval from cache completed", name=validated_name
+            )
+            return FlextResult.ok(service)
 
         # Check factory registration
         if validated_name in self._factories:
+            self.logger.trace(
+                "Service not in cache, attempting factory creation", name=validated_name
+            )
             try:
-                self.logger.debug("Creating service from factory", name=validated_name)
-                service = self._factories[validated_name]()
+                factory = self._factories[validated_name]
+                self.logger.debug(
+                    "Creating service from factory",
+                    name=validated_name,
+                    factory_type=type(factory).__name__,
+                )
+                service = factory()
+                self.logger.trace(
+                    "Factory execution successful",
+                    name=validated_name,
+                    created_service_type=type(service).__name__,
+                    created_service_id=id(service),
+                )
+
                 # Cache the factory result as a service for singleton behavior
                 self._services[validated_name] = service
                 # Remove from factories since it's now cached as a service
                 del self._factories[validated_name]
+
+                self.logger.debug(
+                    "Service created and cached from factory",
+                    name=validated_name,
+                    service_type=type(service).__name__,
+                    total_services=len(self._services),
+                    total_factories=len(self._factories),
+                )
                 return FlextResult.ok(service)
             except (
                 TypeError,
@@ -335,10 +432,17 @@ class FlextServiceRetrivier(FlextLoggableMixin):
                     "Factory execution failed",
                     name=validated_name,
                     error=str(e),
+                    factory_type=type(self._factories[validated_name]).__name__,
                 )
                 return FlextResult.fail(f"Factory for '{validated_name}' failed: {e!s}")
 
-        self.logger.warning("Service not found", name=validated_name)
+        self.logger.warning(
+            "Service not found",
+            name=validated_name,
+            available_services=list(self._services.keys()),
+            available_factories=list(self._factories.keys()),
+        )
+        self.logger.trace("Service retrieval failed - not found", name=validated_name)
         return FlextResult.fail(f"Service '{validated_name}' not found")
 
     def get_service_info(self, name: str) -> FlextResult[TAnyDict]:

@@ -85,7 +85,8 @@ class ValidationDemoUser(SharedUser, FlextLoggableMixin):
 
         # Additional business rules
         if self.age.value < MIN_GUARDIAN_AGE and hasattr(
-            self, "requires_guardian_consent",
+            self,
+            "requires_guardian_consent",
         ):
             return FlextResult.fail("Users under 21 require guardian consent")
 

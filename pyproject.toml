@@ -172,8 +172,8 @@ platform = "linux"
 # Package structure
 explicit_package_bases = true
 namespace_packages = true
-mypy_path = ["src"]
-files = ["src", "tests"]
+mypy_path = ["src", "examples"]
+files = ["src", "tests", "examples"]
 
 # Plugins
 plugins = ["pydantic.mypy"]
@@ -194,11 +194,9 @@ warn_incomplete_stub = true
 
 exclude = [
     "__pycache__/",
-    ".*/examples/",
     ".*/generate_config.py",
     ".*/manage.py",
     ".*/scripts/",
-    ".*/tests/",
     ".coverage.*",
     ".git/",
     ".mypy_cache/",
