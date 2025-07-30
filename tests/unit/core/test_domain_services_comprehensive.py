@@ -180,9 +180,9 @@ class TestFlextDomainService:
         result = service.execute()
 
         assert result.is_failure
-        if "Value cannot be negative" not in result.error:
+        if "Value cannot be negative" not in (result.error or ""):
             raise AssertionError(
-                f"Expected {'Value cannot be negative'} in {result.error}"
+                f"Expected 'Value cannot be negative' in {result.error}"
             )
 
     def test_execute_validation_service_success(self) -> None:
@@ -202,8 +202,8 @@ class TestFlextDomainService:
         result = service.execute()
 
         assert result.is_failure
-        if "Name too short" not in result.error:
-            raise AssertionError(f"Expected {'Name too short'} in {result.error}")
+        if "Name too short" not in (result.error or ""):
+            raise AssertionError(f"Expected 'Name too short' in {result.error}")
 
     def test_validate_config_default_success(self) -> None:
         """Test default validate_config returns success."""
@@ -229,8 +229,8 @@ class TestFlextDomainService:
         result = service.validate_config()
 
         assert result.is_failure
-        if "Name cannot be empty" not in result.error:
-            raise AssertionError(f"Expected {'Name cannot be empty'} in {result.error}")
+        if "Name cannot be empty" not in (result.error or ""):
+            raise AssertionError(f"Expected 'Name cannot be empty' in {result.error}")
 
     def test_validate_config_negative_min_length(self) -> None:
         """Test validate_config with negative min_length."""
@@ -239,9 +239,9 @@ class TestFlextDomainService:
         result = service.validate_config()
 
         assert result.is_failure
-        if "Min length cannot be negative" not in result.error:
+        if "Min length cannot be negative" not in (result.error or ""):
             raise AssertionError(
-                f"Expected {'Min length cannot be negative'} in {result.error}"
+                f"Expected 'Min length cannot be negative' in {result.error}"
             )
 
     def test_execute_operation_success(self) -> None:
@@ -285,9 +285,9 @@ class TestFlextDomainService:
         result = service.execute_operation("test", test_operation)
 
         assert result.is_failure
-        if "Configuration validation failed" not in result.error:
+        if "Configuration validation failed" not in (result.error or ""):
             raise AssertionError(
-                f"Expected {'Configuration validation failed'} in {result.error}"
+                f"Expected 'Configuration validation failed' in {result.error}"
             )
 
     def test_execute_operation_config_validation_empty_error(self) -> None:
@@ -328,9 +328,9 @@ class TestFlextDomainService:
         result = service.execute_operation("failing", failing_operation)
 
         assert result.is_failure
-        if "Operation failing failed" not in result.error:
+        if "Operation failing failed" not in (result.error or ""):
             raise AssertionError(
-                f"Expected {'Operation failing failed'} in {result.error}"
+                f"Expected 'Operation failing failed' in {result.error}"
             )
 
     def test_execute_operation_type_error_handling(self) -> None:
@@ -344,9 +344,9 @@ class TestFlextDomainService:
         result = service.execute_operation("type_error", type_error_operation)
 
         assert result.is_failure
-        if "Operation type_error failed" not in result.error:
+        if "Operation type_error failed" not in (result.error or ""):
             raise AssertionError(
-                f"Expected {'Operation type_error failed'} in {result.error}"
+                f"Expected 'Operation type_error failed' in {result.error}"
             )
 
     def test_execute_operation_runtime_error_handling(self) -> None:
@@ -360,9 +360,9 @@ class TestFlextDomainService:
         result = service.execute_operation("runtime_error", runtime_error_operation)
 
         assert result.is_failure
-        if "Operation runtime_error failed" not in result.error:
+        if "Operation runtime_error failed" not in (result.error or ""):
             raise AssertionError(
-                f"Expected {'Operation runtime_error failed'} in {result.error}"
+                f"Expected 'Operation runtime_error failed' in {result.error}"
             )
 
     def test_get_service_info_success(self) -> None:
@@ -656,9 +656,9 @@ class TestDomainServiceEdgeCases:
 
         assert result.is_success
         assert isinstance(result.data, dict)
-        if result.data["result"] != 42:
-            raise AssertionError(f"Expected {42}, got {result.data['result']}")
-        assert result.data["status"] == "success"
+        if (result.data or {})["result"] != 42:
+            raise AssertionError(f"Expected {42}, got {(result.data or {})['result']}")
+        assert (result.data or {})["status"] == "success"
 
     def test_service_with_zero_values(self) -> None:
         """Test service with zero values."""

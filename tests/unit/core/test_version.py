@@ -103,7 +103,7 @@ class TestVersion:
         """Test validate_version_format function."""
         # Test valid version formats
         assert validate_version_format("1.0.0") is True
-        assert validate_version_format("0.8.0") is True
+        assert validate_version_format("0.9.0") is True
         assert validate_version_format("10.20.30") is True
 
         # Test invalid version formats

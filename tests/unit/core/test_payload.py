@@ -535,9 +535,9 @@ class TestFlextPayloadCoverageImprovements:
         # Invalid structure
         result = FlextPayload.from_dict("not_a_dict")
         assert result.is_failure
-        if "Failed to create payload from dict" not in result.error:
+        if "Failed to create payload from dict" not in (result.error or ""):
             raise AssertionError(
-                f"Expected {'Failed to create payload from dict'} in {result.error}"
+                f"Expected 'Failed to create payload from dict' in {result.error}"
             )
 
         # Missing required structure
@@ -573,8 +573,8 @@ class TestFlextPayloadCoverageImprovements:
         result = payload.transform_data(failing_transform)
 
         assert result.is_failure
-        if "Transform failed" not in result.error:
-            raise AssertionError(f"Expected {'Transform failed'} in {result.error}")
+        if "Transform failed" not in (result.error or ""):
+            raise AssertionError(f"Expected 'Transform failed' in {result.error}")
 
     def test_payload_to_dict(self) -> None:
         """Test payload serialization to dictionary."""
@@ -905,8 +905,8 @@ class TestPayloadIntegration:
         # Invalid case
         result = create_validated_payload("")
         assert result.is_failure
-        if "cannot be empty" not in result.error:
-            raise AssertionError(f"Expected {'cannot be empty'} in {result.error}")
+        if "cannot be empty" not in (result.error or ""):
+            raise AssertionError(f"Expected 'cannot be empty' in {result.error}")
 
     def test_payload_correlation_patterns(self) -> None:
         """Test payload correlation patterns - REAL functionality."""
@@ -977,7 +977,7 @@ class TestPayloadCoverageImprovements:
             result = FlextPayload.create(data="test_data")
 
             assert result.is_failure
-            if "Failed to create payload" not in result.error:
+            if "Failed to create payload" not in (result.error or ""):
                 raise AssertionError(
                     f"Expected 'Failed to create payload' in {result.error}"
                 )
@@ -1023,7 +1023,7 @@ class TestPayloadCoverageImprovements:
 
         result = payload.transform_data(failing_transform)
         assert result.is_failure
-        if "Transform failed" not in result.error:
+        if "Transform failed" not in (result.error or ""):
             raise AssertionError(f"Expected 'Transform failed' in {result.error}")
 
     def test_payload_enrich_metadata_edge_cases(self) -> None:

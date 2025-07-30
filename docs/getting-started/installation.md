@@ -94,17 +94,17 @@ def test_basic_functionality():
     result = FlextResult.ok("Installation successful!")
     assert result.is_success
     print(f"✅ FlextResult: {result.data}")
-    
+
     # Teste FlextContainer
     container = FlextContainer()
     reg_result = container.register("test_service", "test_value")
     assert reg_result.is_success
-    
+
     get_result = container.get("test_service")
     assert get_result.is_success
     assert get_result.data == "test_value"
     print("✅ FlextContainer: OK")
-    
+
     print("🎉 FLEXT Core instalado e funcionando corretamente!")
 
 if __name__ == "__main__":
@@ -261,54 +261,54 @@ from flext_core.patterns import (
 
 def test_all_components():
     """Teste abrangente de todos os componentes."""
-    
+
     print("🧪 Testando FLEXT Core...")
-    
+
     # 1. FlextResult
     result = FlextResult.ok("Success")
     assert result.is_success
     print("✅ FlextResult: OK")
-    
+
     # 2. FlextContainer
     container = FlextContainer()
     container.register("service", "value")
     get_result = container.get("service")
     assert get_result.is_success
     print("✅ FlextContainer: OK")
-    
+
     # 3. FlextCoreSettings
     settings = FlextCoreSettings()
     assert hasattr(settings, 'debug')
     print("✅ FlextCoreSettings: OK")
-    
+
     # 4. Command Pattern
     class TestCommand(FlextCommand):
         def validate(self) -> FlextResult[None]:
             return FlextResult.ok(None)
-    
+
     class TestHandler(FlextCommandHandler[TestCommand, str]):
         def can_handle(self, command):
             return isinstance(command, TestCommand)
-        
+
         def handle(self, command):
             return FlextResult.ok("handled")
-    
+
     command = TestCommand()
     handler = TestHandler()
     cmd_result = handler.process_command(command)
     assert cmd_result.is_success
     print("✅ Command Pattern: OK")
-    
+
     # 5. Validation
     class TestValidator(FlextValidator[str]):
         def validate_business_rules(self, data: str) -> FlextValidationResult:
             return FlextValidationResult.success()
-    
+
     validator = TestValidator()
     validation_result = validator.validate("test")
     assert validation_result.is_valid
     print("✅ Validation: OK")
-    
+
     print("🎉 Todos os componentes funcionando corretamente!")
     return True
 
@@ -326,31 +326,31 @@ from flext_core import FlextResult, FlextContainer
 def benchmark_flext_result():
     """Benchmark FlextResult performance."""
     start = time.time()
-    
+
     for i in range(10000):
         result = FlextResult.ok(f"value_{i}")
         if result.is_success:
             data = result.data
-    
+
     end = time.time()
     print(f"⚡ FlextResult: 10k operations in {end - start:.4f}s")
 
 def benchmark_container():
     """Benchmark Container performance."""
     container = FlextContainer()
-    
+
     # Setup
     for i in range(1000):
         container.register(f"service_{i}", f"value_{i}")
-    
+
     # Benchmark get operations
     start = time.time()
-    
+
     for i in range(1000):
         result = container.get(f"service_{i}")
         if result.is_success:
             data = result.data
-    
+
     end = time.time()
     print(f"⚡ Container: 1k lookups in {end - start:.4f}s")
 
@@ -450,20 +450,20 @@ import importlib.util
 
 def check_system_health():
     """Verificação completa da saúde do sistema."""
-    
+
     print("🔍 FLEXT Core Health Check")
     print("=" * 50)
-    
+
     # Python version
     python_version = sys.version_info
     print(f"Python: {python_version.major}.{python_version.minor}.{python_version.micro}")
-    
+
     if python_version < (3, 13):
         print("❌ Python 3.13+ required")
         return False
     else:
         print("✅ Python version OK")
-    
+
     # Check FLEXT Core installation
     try:
         import flext_core
@@ -471,16 +471,16 @@ def check_system_health():
     except ImportError as e:
         print(f"❌ FLEXT Core not installed: {e}")
         return False
-    
+
     # Check core modules
     modules = [
         'flext_core.result',
-        'flext_core.container', 
+        'flext_core.container',
         'flext_core.patterns.commands',
         'flext_core.patterns.handlers',
         'flext_core.patterns.validation'
     ]
-    
+
     for module in modules:
         try:
             importlib.import_module(module)
@@ -488,7 +488,7 @@ def check_system_health():
         except ImportError as e:
             print(f"❌ {module}: {e}")
             return False
-    
+
     print("=" * 50)
     print("🎉 Sistema saudável - FLEXT Core pronto para uso!")
     return True

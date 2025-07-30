@@ -103,8 +103,8 @@ class TestRealUsagePatterns:
         assert result.is_failure
         assert result.error is not None
         assert result.error
-        if "not found" not in result.error:
-            msg = f"Expected {'not found'} in {result.error}"
+        if "not found" not in (result.error or ""):
+            msg = f"Expected 'not found' in {result.error}"
             raise AssertionError(msg)
 
     def test_chained_operations(self) -> None:

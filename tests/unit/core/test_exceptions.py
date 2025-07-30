@@ -471,8 +471,8 @@ class TestExceptionIntegration:
 
         assert result.is_failure
         assert result.error is not None
-        if "Validation failed" not in result.error:
-            raise AssertionError(f"Expected {'Validation failed'} in {result.error}")
+        if "Validation failed" not in (result.error or ""):
+            raise AssertionError(f"Expected 'Validation failed' in {result.error}")
 
     def test_exception_context_enhancement(self) -> None:
         """Test automatic context enhancement in exceptions."""
@@ -835,8 +835,10 @@ class TestExceptionsCoverageImprovements:
         error = FlextError("Simple message")
 
         # Temporarily set error_code to None to test line 130
+        from typing import cast
+
         original_error_code = error.error_code
-        error.error_code = None  # type: ignore[assignment]
+        error.error_code = cast("str", None)  # Intentional None for testing
 
         try:
             # Should return just the message without error code brackets (line 130)

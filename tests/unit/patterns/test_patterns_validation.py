@@ -2,8 +2,13 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from flext_core.result import FlextResult
 from flext_core.validation import FlextValidation
+
+if TYPE_CHECKING:
+    from flext_core.flext_types import TAnyDict
 
 # =============================================================================
 # TEST VALIDATION UTILITIES
@@ -246,15 +251,15 @@ class TestFlextResultValidation:
         result = validate_email("")
         assert result.is_failure
         assert result.error is not None
-        if "required" not in result.error:
-            raise AssertionError(f"Expected {'required'} in {result.error}")
+        if "required" not in (result.error or ""):
+            raise AssertionError(f"Expected 'required' in {result.error}")
 
         # Test validation failure - invalid format
         result = validate_email("invalid")
         assert result.is_failure
         assert result.error is not None
-        if "format" not in result.error:
-            raise AssertionError(f"Expected {'format'} in {result.error}")
+        if "format" not in (result.error or ""):
+            raise AssertionError(f"Expected 'format' in {result.error}")
 
 
 # =============================================================================
@@ -306,11 +311,13 @@ class TestValidationIntegration:
             raise AssertionError(f"Expected {valid_data}, got {result.data}")
 
         # Test invalid data - not a dict - we need to cast to satisfy mypy
-        result = validate_user_data("not a dict")  # type: ignore[arg-type]
+        from typing import cast
+
+        result = validate_user_data(cast("TAnyDict", "not a dict"))
         assert result.is_failure
         assert result.error is not None
-        if "dictionary" not in result.error:
-            raise AssertionError(f"Expected {'dictionary'} in {result.error}")
+        if "dictionary" not in (result.error or ""):
+            raise AssertionError(f"Expected 'dictionary' in {result.error}")
 
         # Test invalid data - missing name
         invalid_data: dict[str, object] = {"email": "test@example.com"}
@@ -384,19 +391,19 @@ class TestValidationIntegration:
         result = validate_all_steps("")
         assert result.is_failure
         assert result.error is not None
-        if "Step 1" not in result.error:
-            raise AssertionError(f"Expected {'Step 1'} in {result.error}")
+        if "Step 1" not in (result.error or ""):
+            raise AssertionError(f"Expected 'Step 1' in {result.error}")
 
         # Test failure at step 2
         result = validate_all_steps("ab")
         assert result.is_failure
         assert result.error is not None
-        if "Step 2" not in result.error:
-            raise AssertionError(f"Expected {'Step 2'} in {result.error}")
+        if "Step 2" not in (result.error or ""):
+            raise AssertionError(f"Expected 'Step 2' in {result.error}")
 
         # Test failure at step 3
         result = validate_all_steps("test@123")
         assert result.is_failure
         assert result.error is not None
-        if "Step 3" not in result.error:
-            raise AssertionError(f"Expected {'Step 3'} in {result.error}")
+        if "Step 3" not in (result.error or ""):
+            raise AssertionError(f"Expected 'Step 3' in {result.error}")

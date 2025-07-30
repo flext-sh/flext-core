@@ -21,7 +21,7 @@ FLEXT Core serves as the foundational library for the entire FLEXT ecosystem, pr
 ## Features
 
 - **Type-Safe Error Handling**: FlextResult[T] pattern eliminates exceptions
-- **Dependency Injection**: Enterprise-grade IoC container with FlextContainer  
+- **Dependency Injection**: Enterprise-grade IoC container with FlextContainer
 - **Configuration Management**: Environment-aware settings with Pydantic validation
 - **Domain Modeling**: Rich domain entities, value objects, and aggregates
 - **CQRS & Event Sourcing**: Command/query separation with domain events
@@ -149,18 +149,18 @@ from flext_core import FlextEntity, FlextValueObject, FlextDomainEvent
 class User(FlextEntity):
     name: str
     email: str
-    
+
     def activate(self) -> FlextResult[None]:
         if self.is_active:
             return FlextResult.fail("User already active")
-        
+
         self.is_active = True
         self.add_domain_event(UserActivatedEvent(user_id=self.id))
         return FlextResult.ok(None)
 
 class Email(FlextValueObject):
     address: str
-    
+
     @field_validator("address")
     @classmethod
     def validate_email(cls, v: str) -> str:
@@ -218,7 +218,7 @@ make coverage      # Coverage report
 See the [examples directory](docs/examples/) for complete working applications demonstrating:
 
 - User management system
-- E-commerce domain model  
+- E-commerce domain model
 - Event-driven microservices
 - Configuration management patterns
 

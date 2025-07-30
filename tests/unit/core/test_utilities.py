@@ -303,8 +303,8 @@ class TestFlextUtilities:
         assert isinstance(result, FlextResult)
         assert result.is_failure
         assert result.error is not None
-        if "Test error" not in result.error:
-            raise AssertionError(f"Expected {'Test error'} in {result.error}")
+        if "Test error" not in (result.error or ""):
+            raise AssertionError(f"Expected 'Test error' in {result.error}")
 
     def test_is_not_none_guard(self) -> None:
         """Test not-None type guard."""

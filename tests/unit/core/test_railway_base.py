@@ -539,9 +539,7 @@ class TestBaseRailwayUtils:
 
         assert result.is_failure
         if not result.error or "Bind operation failed:" not in result.error:
-            raise AssertionError(
-                f"Expected {'Bind operation failed:'} in {result.error}"
-            )
+            raise AssertionError(f"Expected 'Bind operation failed:' in {result.error}")
 
     def test_type_checking_imports(self) -> None:
         """Test that TYPE_CHECKING imports are properly structured."""

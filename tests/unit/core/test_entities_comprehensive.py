@@ -223,8 +223,8 @@ class TestFlextEntity:
         result = user.increment_version()
 
         assert result.is_failure
-        if "Always fails" not in result.error:
-            raise AssertionError(f"Expected {'Always fails'} in {result.error}")
+        if "Always fails" not in (result.error or ""):
+            raise AssertionError(f"Expected 'Always fails' in {result.error}")
 
     def test_increment_version_construction_error(self) -> None:
         """Test version increment with construction error."""
@@ -235,9 +235,9 @@ class TestFlextEntity:
             result = user.increment_version()
 
         assert result.is_failure
-        if "Failed to increment version" not in result.error:
+        if "Failed to increment version" not in (result.error or ""):
             raise AssertionError(
-                f"Expected {'Failed to increment version'} in {result.error}"
+                f"Expected 'Failed to increment version' in {result.error}"
             )
 
     def test_copy_with_success(self) -> None:
@@ -291,8 +291,8 @@ class TestFlextEntity:
         result = user.copy_with(email="invalid_email")  # No @ symbol
 
         assert result.is_failure
-        if "Invalid email format" not in result.error:
-            msg = f"Expected {'Invalid email format'} in {result.error}"
+        if "Invalid email format" not in (result.error or ""):
+            msg = f"Expected 'Invalid email format' in {result.error}"
             raise AssertionError(msg)
 
     def test_copy_with_construction_error(self) -> None:
@@ -304,8 +304,8 @@ class TestFlextEntity:
             result = user.copy_with(name="Jane")
 
         assert result.is_failure
-        if "Failed to copy entity" not in result.error:
-            msg = f"Expected {'Failed to copy entity'} in {result.error}"
+        if "Failed to copy entity" not in (result.error or ""):
+            msg = f"Expected 'Failed to copy entity' in {result.error}"
             raise AssertionError(msg)
 
     def test_add_domain_event_success(self) -> None:
@@ -340,8 +340,8 @@ class TestFlextEntity:
             result = user.add_domain_event("user_created", {"action": "create"})
 
         assert result.is_failure
-        if "Failed to create event" not in result.error:
-            msg = f"Expected {'Failed to create event'} in {result.error}"
+        if "Failed to create event" not in (result.error or ""):
+            msg = f"Expected 'Failed to create event' in {result.error}"
             raise AssertionError(msg)
         if len(user.domain_events) != 0:
             raise AssertionError(f"Expected {0}, got {len(user.domain_events)}")
@@ -398,8 +398,8 @@ class TestFlextEntity:
             result = user.validate_field("name", "")
 
         assert result.is_failure
-        if "Validation failed" not in result.error:
-            raise AssertionError(f"Expected {'Validation failed'} in {result.error}")
+        if "Validation failed" not in (result.error or ""):
+            raise AssertionError(f"Expected 'Validation failed' in {result.error}")
 
     def test_validate_field_no_field_definition(self) -> None:
         """Test field validation with no field definition found."""
@@ -426,10 +426,8 @@ class TestFlextEntity:
             result = user.validate_field("name", "John")
 
         assert result.is_failure
-        if "Field validation error" not in result.error:
-            raise AssertionError(
-                f"Expected {'Field validation error'} in {result.error}"
-            )
+        if "Field validation error" not in (result.error or ""):
+            raise AssertionError(f"Expected 'Field validation error' in {result.error}")
 
     def test_validate_all_fields_success(self) -> None:
         """Test validation of all fields with success."""
@@ -469,9 +467,9 @@ class TestFlextEntity:
             result = user.validate_all_fields()
 
         assert result.is_failure
-        if "Field validation errors:" not in result.error:
+        if "Field validation errors:" not in (result.error or ""):
             raise AssertionError(
-                f"Expected {'Field validation errors:'} in {result.error}"
+                f"Expected 'Field validation errors:' in {result.error}"
             )
         assert "name: Name validation failed" in result.error
 
@@ -677,8 +675,8 @@ class TestFlextEntityFactory:
         result = factory(name="John", email="john@example.com")
 
         assert result.is_failure
-        if "Always fails" not in result.error:
-            raise AssertionError(f"Expected {'Always fails'} in {result.error}")
+        if "Always fails" not in (result.error or ""):
+            raise AssertionError(f"Expected 'Always fails' in {result.error}")
 
     def test_factory_model_validation_error(self) -> None:
         """Test factory with model validation error."""
@@ -688,10 +686,8 @@ class TestFlextEntityFactory:
         result = factory(email="john@example.com")
 
         assert result.is_failure
-        if "Entity creation failed" not in result.error:
-            raise AssertionError(
-                f"Expected {'Entity creation failed'} in {result.error}"
-            )
+        if "Entity creation failed" not in (result.error or ""):
+            raise AssertionError(f"Expected 'Entity creation failed' in {result.error}")
 
     def test_factory_type_error_handling(self) -> None:
         """Test factory handles TypeError."""
@@ -706,10 +702,8 @@ class TestFlextEntityFactory:
             result = factory(name="John", email="john@example.com")
 
         assert result.is_failure
-        if "Entity creation failed" not in result.error:
-            raise AssertionError(
-                f"Expected {'Entity creation failed'} in {result.error}"
-            )
+        if "Entity creation failed" not in (result.error or ""):
+            raise AssertionError(f"Expected 'Entity creation failed' in {result.error}")
 
     def test_factory_import_error_handling(self) -> None:
         """Test factory handles ImportError."""
@@ -723,8 +717,8 @@ class TestFlextEntityFactory:
             result = factory(name="John", email="john@example.com")
 
         assert result.is_failure
-        if "Import error" not in result.error:
-            raise AssertionError(f"Expected {'Import error'} in {result.error}")
+        if "Import error" not in (result.error or ""):
+            raise AssertionError(f"Expected 'Import error' in {result.error}")
 
 
 @pytest.mark.unit

@@ -959,7 +959,7 @@ class TestFlextResultStaticMethods:
         assert result.is_failure
         error_msg = result.error or ""
         if "Function failed" not in error_msg:
-            msg = f"Expected {'Function failed'} in {result.error}"
+            msg = f"Expected 'Function failed' in {result.error}"
             raise AssertionError(msg)
 
     def test_combine_all_success(self) -> None:

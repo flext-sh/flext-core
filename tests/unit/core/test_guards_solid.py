@@ -204,7 +204,7 @@ class TestGuardsSOLIDImplementation:
 
         # Test FlextValidationError is raised properly
         with pytest.raises(FlextValidationError) as exc_info:
-            StrictModel(name="test", value="not_an_int")  # type: ignore[arg-type]
+            StrictModel(name="test", value="not_an_int")
 
         # Error should be FlextValidationError with proper message
         error = exc_info.value
