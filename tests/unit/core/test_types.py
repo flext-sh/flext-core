@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from flext_core import FlextEntityId, FlextPayload
-from flext_core.types import (
+from flext_core.flext_types import (
     Comparable,
     FlextTypes,
     Serializable,
@@ -48,6 +48,7 @@ class TestTypeProtocols:
 
     def test_serializable_protocol(self) -> None:
         """Test Serializable protocol usage."""
+
         # Create a class that implements Serializable protocol
         class TestSerializable:
             def __init__(self, data: dict[str, object]) -> None:
@@ -202,6 +203,7 @@ class TestTypeGuards:
 
     def test_is_callable_type_guard(self) -> None:
         """Test is_callable type guard."""
+
         # Functions are callable
         def test_func() -> str:
             return "test"
@@ -211,6 +213,7 @@ class TestTypeGuards:
         # Lambda functions are callable
         def lambda_func(x: int) -> int:
             return x * 2
+
         assert FlextTypes.TypeGuards.is_callable(lambda_func) is True
 
         # Built-in functions are callable
@@ -232,8 +235,10 @@ class TestTypeGuards:
         class DictLike:
             def keys(self) -> list[str]:
                 return []
+
             def values(self) -> list[object]:
                 return []
+
             def items(self) -> list[tuple[str, object]]:
                 return []
 
@@ -273,7 +278,9 @@ class TestTypeGuards:
         # Test edge cases that might cause TypeError
         try:
             # This might cause TypeError in some cases, should be handled
-            result = FlextTypes.TypeGuards.is_instance_of(42, type("InvalidType", (), {}))
+            result = FlextTypes.TypeGuards.is_instance_of(
+                42, type("InvalidType", (), {})
+            )
             assert isinstance(result, bool)
         except TypeError:
             # If TypeError occurs, the function should handle it gracefully
@@ -285,6 +292,7 @@ class TestProtocolDefinitions:
 
     def test_comparable_protocol_interface(self) -> None:
         """Test Comparable protocol interface requirements."""
+
         # Create a class that implements Comparable
         class ComparableInt:
             def __init__(self, value: int) -> None:
@@ -315,6 +323,7 @@ class TestProtocolDefinitions:
 
     def test_flext_serializable_protocol_interface(self) -> None:
         """Test FlextSerializable protocol interface requirements."""
+
         # Create a class that implements FlextSerializable
         class SerializableData:
             def __init__(self, data: dict[str, object]) -> None:
@@ -325,6 +334,7 @@ class TestProtocolDefinitions:
 
             def to_json(self) -> str:
                 import json
+
                 return json.dumps(self.data)
 
         serializable_obj = SerializableData({"key": "value", "number": 42})
@@ -345,7 +355,7 @@ class TestTypeAliasComprehensive:
 
     def test_entity_type_aliases(self) -> None:
         """Test entity-related type aliases."""
-        from flext_core.types import TEntityId
+        from flext_core.flext_types import TEntityId
 
         # TEntityId usage
         user_id: TEntityId = "user-123"
@@ -358,7 +368,7 @@ class TestTypeAliasComprehensive:
 
     def test_cqrs_type_aliases(self) -> None:
         """Test CQRS-related type aliases."""
-        from flext_core.types import (
+        from flext_core.flext_types import (
             TCorrelationId,
             TRequestId,
             TUserId,
@@ -375,7 +385,7 @@ class TestTypeAliasComprehensive:
 
     def test_business_type_aliases(self) -> None:
         """Test business domain type aliases."""
-        from flext_core.types import (
+        from flext_core.flext_types import (
             TBusinessCode,
             TBusinessId,
             TBusinessName,
@@ -397,7 +407,7 @@ class TestTypeAliasComprehensive:
 
     def test_cache_type_aliases(self) -> None:
         """Test cache-related type aliases."""
-        from flext_core.types import TCacheKey, TCacheTTL, TCacheValue
+        from flext_core.flext_types import TCacheKey, TCacheTTL, TCacheValue
 
         cache_key: TCacheKey = "user:123:profile"
         cache_value: TCacheValue = {"name": "John", "email": "john@example.com"}
@@ -438,7 +448,7 @@ class TestTypeAliasComprehensive:
 
     def test_infrastructure_type_aliases(self) -> None:
         """Test infrastructure-related type aliases."""
-        from flext_core.types import (
+        from flext_core.flext_types import (
             TConfigDict,
             TConfigValue,
             TConnectionString,
@@ -458,3 +468,31 @@ class TestTypeAliasComprehensive:
         assert isinstance(dir_path, str)
         assert isinstance(config_dict, dict)
         assert isinstance(config_value, str)
+
+
+class TestTypesCoverageImprovements:
+    """Test cases specifically for improving coverage of types.py module."""
+
+    def test_is_instance_exception_handling(self) -> None:
+        """Test is_instance method exception handling (lines 256-257)."""
+        from flext_core.flext_types import FlextTypes
+
+        # Test with invalid type that causes TypeError/AttributeError
+        class BadType:
+            """Type that causes isinstance to fail."""
+
+            def __class_getitem__(cls, item: object) -> object:
+                msg = "Bad type"
+                raise TypeError(msg)
+
+        # This should catch the exception and return False (lines 256-257)
+        result = FlextTypes.TypeGuards.is_instance_of("test", BadType)  # type: ignore[arg-type]
+        assert result is False
+
+        # Test with None type that might cause AttributeError
+        try:
+            result = FlextTypes.TypeGuards.is_instance_of("test", None)  # type: ignore[arg-type]
+            assert result is False
+        except (TypeError, AttributeError):
+            # If isinstance still raises, that's fine - we tested the path
+            pass

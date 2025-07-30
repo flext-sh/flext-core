@@ -225,43 +225,49 @@ class TestFlextValueObjectDomainValidation:
         """Test that domain rules validation exists and can be called."""
         vo = ConcreteValueObject(amount=Decimal("10.50"), currency="USD")
 
-        # Should not raise any exception for valid value object
-        vo.validate_domain_rules()
+        # Should return success for valid value object
+        result = vo.validate_domain_rules()
+        assert result.is_success
 
     def test_domain_rules_validation_negative_amount(self) -> None:
         """Test domain rules validation with invalid amount."""
         vo = ConcreteValueObject(amount=Decimal("-5.00"), currency="USD")
 
-        with pytest.raises(ValueError, match="Amount cannot be negative"):
-            vo.validate_domain_rules()
+        result = vo.validate_domain_rules()
+        assert result.is_failure
+        assert "Amount cannot be negative" in (result.error or "")
 
     def test_domain_rules_validation_invalid_currency_length(self) -> None:
         """Test domain rules validation with invalid currency length."""
         vo = ConcreteValueObject(amount=Decimal("10.50"), currency="INVALID")
 
-        with pytest.raises(ValueError, match="Currency must be 3 characters"):
-            vo.validate_domain_rules()
+        result = vo.validate_domain_rules()
+        assert result.is_failure
+        assert "Currency must be 3 characters" in (result.error or "")
 
     def test_domain_rules_validation_lowercase_currency(self) -> None:
         """Test domain rules validation with lowercase currency."""
         vo = ConcreteValueObject(amount=Decimal("10.50"), currency="usd")
 
-        with pytest.raises(ValueError, match="Currency must be uppercase"):
-            vo.validate_domain_rules()
+        result = vo.validate_domain_rules()
+        assert result.is_failure
+        assert "Currency must be uppercase" in (result.error or "")
 
     def test_domain_rules_validation_empty_name(self) -> None:
         """Test domain rules validation with empty name."""
         vo = ComplexValueObject(name="", tags=[], metadata={})
 
-        with pytest.raises(ValueError, match="Name cannot be empty"):
-            vo.validate_domain_rules()
+        result = vo.validate_domain_rules()
+        assert result.is_failure
+        assert "Name cannot be empty" in (result.error or "")
 
     def test_domain_rules_validation_whitespace_name(self) -> None:
         """Test domain rules validation with whitespace-only name."""
         vo = ComplexValueObject(name="   ", tags=[], metadata={})
 
-        with pytest.raises(ValueError, match="Name cannot be empty"):
-            vo.validate_domain_rules()
+        result = vo.validate_domain_rules()
+        assert result.is_failure
+        assert "Name cannot be empty" in (result.error or "")
 
 
 class TestFlextValueObjectPydanticIntegration:

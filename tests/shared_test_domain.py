@@ -34,10 +34,14 @@ from shared_domain import (
 
 def create_test_entity_safe(name: str, **kwargs: object) -> ConcreteFlextEntity:
     """Create test entity with error handling."""
-    result = TestDomainFactory.create_concrete_entity(name=name, **kwargs)
+    status = str(kwargs.get("status", "active"))
+    result = TestDomainFactory.create_concrete_entity(name=name, status=status)
     if result.is_failure:
         error_msg = f"Failed to create test entity: {result.error}"
         raise ValueError(error_msg)
+    if result.data is None:
+        none_error_msg = "Failed to create test entity: result data is None"
+        raise ValueError(none_error_msg)
     return result.data
 
 
@@ -50,11 +54,14 @@ def create_test_value_object_safe(
     result = TestDomainFactory.create_concrete_value_object(
         amount=Decimal(amount),
         currency=currency,
-        **kwargs,
+        description=str(kwargs.get("description", "")),
     )
     if result.is_failure:
         error_msg = f"Failed to create test value object: {result.error}"
         raise ValueError(error_msg)
+    if result.data is None:
+        none_error_msg = "Failed to create test value object: result data is None"
+        raise ValueError(none_error_msg)
     return result.data
 
 
@@ -72,6 +79,11 @@ def create_complex_test_value_object_safe(
     if result.is_failure:
         error_msg = f"Failed to create complex test value object: {result.error}"
         raise ValueError(error_msg)
+    if result.data is None:
+        none_error_msg = (
+            "Failed to create complex test value object: result data is None"
+        )
+        raise ValueError(none_error_msg)
     return result.data
 
 

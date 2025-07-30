@@ -22,6 +22,114 @@ from flext_core.mixins import (
 )
 
 
+class TestMixinsBaseCoverage:
+    """Test cases specifically for improving coverage of _mixins_base.py module - DRY REFACTORED."""
+
+    def test_timestamp_mixin_age_calculation(self) -> None:
+        """Test age calculation covering lines 145-146 - DRY REAL."""
+        timestamp_obj = FlextTimestampMixin()
+
+        # Force timestamp initialization by accessing property
+        _ = timestamp_obj.created_at
+
+        # Test get_age_seconds calculation (should be close to 0)
+        age_seconds = timestamp_obj.get_age_seconds()
+        assert isinstance(age_seconds, float)
+        assert age_seconds >= 0.0
+
+    def test_identifiable_mixin_set_invalid_id(self) -> None:
+        """Test set_id with invalid ID covering lines 161-162 - DRY REAL."""
+        import pytest
+
+        from flext_core.exceptions import FlextValidationError
+
+        identifiable_obj = FlextIdentifiableMixin()
+
+        # Test with empty string using pytest.raises pattern (DRY REAL)
+        with pytest.raises(FlextValidationError) as exc_info:
+            identifiable_obj.set_id("")  # Invalid ID
+
+        # DRY REAL: proper exception validation without fallbacks
+        assert "Invalid entity ID" in str(exc_info.value)
+        assert exc_info.value.field == "entity_id"
+
+    def test_serializable_mixin_collection_serialization(self) -> None:
+        """Test collection serialization covering lines 291-298 - DRY REAL."""
+
+        class MockSerializable:
+            def to_dict_basic(self) -> dict[str, object]:
+                return {"mock": "data"}
+
+        serializable_obj = FlextSerializableMixin()
+
+        # Test list with mixed content
+        test_list = ["string", 42, MockSerializable(), None]
+        result = serializable_obj._serialize_collection(test_list)
+
+        assert isinstance(result, list)
+        # DRY REAL: None is included as it's a primitive type
+        assert len(result) == 4  # string, int, serialized object, and None
+        assert "string" in result
+        assert 42 in result
+        assert {"mock": "data"} in result
+        assert None in result
+
+    def test_serializable_mixin_to_dict_basic_method_handling(self) -> None:
+        """Test to_dict_basic method handling covering lines 277-280."""
+
+        class MockWithToDict:
+            def to_dict_basic(self) -> dict[str, str]:
+                return {"test": "value"}
+
+        class MockWithInvalidToDict:
+            def to_dict_basic(self) -> str:  # Returns non-dict
+                return "not a dict"
+
+        serializable_obj = FlextSerializableMixin()
+
+        # Test with valid to_dict_basic
+        result1 = serializable_obj._serialize_value(MockWithToDict())
+        assert result1 == {"test": "value"}
+
+        # Test with invalid to_dict_basic (returns None)
+        result2 = serializable_obj._serialize_value(MockWithInvalidToDict())
+        assert result2 is None
+
+    def test_serializable_mixin_exception_handling(self) -> None:
+        """Test serializable mixin with attributes that raise exceptions during serialization."""
+
+        class ProblematicSerializable(FlextSerializableMixin):
+            def __init__(self) -> None:
+                super().__init__()
+                self.normal_attr = "normal"
+
+            def _serialize_value(self, value: object) -> object | None:
+                """Override to cause TypeError for specific values."""
+                if value == "cause_type_error":
+                    msg = "Type error during serialization"
+                    raise TypeError(msg)
+                if value == "cause_attribute_error":
+                    msg = "Attribute error during serialization"
+                    raise AttributeError(msg)
+                return super()._serialize_value(value)
+
+        obj = ProblematicSerializable()
+
+        # Add problematic attributes after creation to avoid callable() check
+        obj.problematic_attr1 = "cause_type_error"
+        obj.problematic_attr2 = "cause_attribute_error"
+
+        # Should handle exceptions gracefully and skip problematic attributes
+        result = obj.to_dict_basic()
+
+        # Should still include normal attributes
+        assert "normal_attr" in result
+        assert result["normal_attr"] == "normal"
+        # Problematic attributes should be skipped due to exception handling (lines 256-258)
+        assert "problematic_attr1" not in result
+        assert "problematic_attr2" not in result
+
+
 class TestBasicMixins:
     """Test individual mixin functionality."""
 

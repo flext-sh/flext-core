@@ -49,7 +49,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, TypeVar, cast
 
 from pydantic import BaseModel, ValidationError
 
@@ -66,8 +66,15 @@ from flext_core.result import FlextResult, safe_call
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from typing import Protocol
 
     from flext_core.flext_types import F
+
+    class CallableProtocol(Protocol):
+        def __call__(self, *args: object, **kwargs: object) -> object: ...
+
+
+T = TypeVar("T")
 
 # =============================================================================
 # FLEXT DECORATORS - Consolidados com herança múltipla + funcionalidades específicas
@@ -162,11 +169,11 @@ class FlextDecorators:
 
         def wrapper(*args: object, **kwargs: object) -> object:
             def call_func() -> object:
-                return func(*args, **kwargs)  # type: ignore[operator]
+                return cast("CallableProtocol", func)(*args, **kwargs)
 
             return safe_call(call_func)
 
-        return wrapper  # type: ignore[return-value]
+        return cast("F", wrapper)
 
     @classmethod
     def validated_with_result(cls, model_class: type[BaseModel]) -> Callable[[F], F]:
@@ -180,14 +187,17 @@ class FlextDecorators:
                 try:
                     # Use inherited validation methods
                     validated_data = model_class(**kwargs)
-                    result = func(*args, **validated_data.model_dump())  # type: ignore[operator]
+                    result = cast("CallableProtocol", func)(
+                        *args,
+                        **validated_data.model_dump(),
+                    )
                     return FlextResult.ok(result)
                 except ValidationError as e:
                     return FlextResult.fail(f"Validation failed: {e}")
                 except (TypeError, ValueError, AttributeError, RuntimeError) as e:
                     return FlextResult.fail(f"Execution failed: {e}")
 
-            return wrapper  # type: ignore[return-value]
+            return cast("F", wrapper)
 
         return decorator
 
@@ -234,8 +244,11 @@ class FlextDecorators:
             # Use composition to access base functionality
             cached_func = _BasePerformanceDecorators.create_cache_decorator(
                 max_size,
-            )(func)  # type: ignore[arg-type]
-            return _BasePerformanceDecorators.get_timing_decorator()(cached_func)  # type: ignore[return-value]
+            )(cast("_DecoratedFunction", func))
+            return cast(
+                "F",
+                _BasePerformanceDecorators.get_timing_decorator()(cached_func),
+            )
 
         return decorator
 

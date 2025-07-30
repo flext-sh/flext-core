@@ -815,3 +815,34 @@ class TestEntityIntegration:
         assert users[0].id != users[1].id
         if users[2].id != "admin":
             raise AssertionError(f"Expected {'admin'}, got {users[2].id}")
+
+
+class TestEntityCoverageImprovements:
+    """Test cases specifically for improving coverage of entities.py module."""
+
+    def test_validate_all_fields_with_internal_fields(self) -> None:
+        """Test validate_all_fields skips internal fields (line 469 coverage)."""
+
+        class EntityWithInternalFields(FlextEntity):
+            name: str
+
+            def validate_domain_rules(self) -> FlextResult[None]:
+                """Validate domain rules."""
+                return FlextResult.ok(None)
+
+            def model_dump(self) -> dict[str, object]:
+                """Override model_dump to include internal fields for testing."""
+                normal_data = super().model_dump()
+                # Add internal fields that should be skipped by validate_all_fields
+                normal_data["_internal_field"] = "internal_value"
+                normal_data["_another_internal"] = "another_internal_value"
+                return normal_data
+
+        # Create entity
+        entity = EntityWithInternalFields(id="test-123", name="Test")
+
+        # validate_all_fields should skip _internal_field, _another_internal, and domain_events (line 469)
+        result = entity.validate_all_fields()
+
+        # Should succeed because internal fields are skipped during validation
+        assert result.is_success

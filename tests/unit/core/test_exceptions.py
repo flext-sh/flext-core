@@ -810,3 +810,93 @@ class TestAdditionalExceptions:
         )
         assert isinstance(op_error, FlextOperationError)
         assert op_error.context["operation"] == "user_creation"
+
+
+class TestExceptionsCoverageImprovements:
+    """Test cases specifically for improving coverage of exceptions.py module."""
+
+    def test_context_truncation(self) -> None:
+        """Test FlextError context truncation (lines 121-124)."""
+        # Create a large context that should be truncated
+        large_context = {"data": "x" * 2000}  # Over 1000 char limit
+
+        error = FlextError("Test message", context=large_context)
+
+        # Context should be truncated
+        assert error.context["_truncated"] is True
+        assert error.context["_original_size"] > 1000
+        assert "data" not in error.context
+
+    def test_str_without_error_code(self) -> None:
+        """Test FlextError __str__ without error_code (line 130)."""
+        # FlextError always assigns a default error_code, so we need to test the __str__ logic
+        # by directly testing the conditional branch. Since error_code is always set,
+        # we test the case where it would be falsy by mocking
+        error = FlextError("Simple message")
+
+        # Temporarily set error_code to None to test line 130
+        original_error_code = error.error_code
+        error.error_code = None
+
+        try:
+            # Should return just the message without error code brackets (line 130)
+            assert str(error) == "Simple message"
+        finally:
+            # Restore original error_code
+            error.error_code = original_error_code
+
+    def test_str_with_error_code(self) -> None:
+        """Test FlextError __str__ with error_code (line 129)."""
+        error = FlextError("Test message", error_code="E001")
+
+        # Should return formatted message with error code
+        assert str(error) == "[E001] Test message"
+
+    def test_record_exception_function(self) -> None:
+        """Test _record_exception function (line 565)."""
+        from flext_core.exceptions import (
+            _record_exception,
+            clear_exception_metrics,
+            get_exception_metrics,
+        )
+
+        # Clear metrics first
+        clear_exception_metrics()
+
+        # Record some exceptions
+        _record_exception("TestError")
+        _record_exception("TestError")  # Same error type again
+        _record_exception("AnotherError")
+
+        # Check metrics
+        metrics = get_exception_metrics()
+        assert metrics["TestError"] == 2
+        assert metrics["AnotherError"] == 1
+
+    def test_factory_config_error_with_config_key(self) -> None:
+        """Test create_configuration_error with config_key (lines 641-644)."""
+        config_error = FlextExceptions.create_configuration_error(
+            "Config error", config_key="database.host", context={"extra": "data"}
+        )
+
+        assert isinstance(config_error, FlextConfigurationError)
+        assert config_error.message == "Config error"
+        # The config_key should be in the error's context
+        assert "config_key" in str(config_error.context) or "database.host" in str(
+            config_error.context
+        )
+
+    def test_factory_connection_error_with_endpoint(self) -> None:
+        """Test create_connection_error with endpoint (lines 658-661)."""
+        conn_error = FlextExceptions.create_connection_error(
+            "Connection failed",
+            endpoint="https://api.example.com",
+            context={"timeout": 30},
+        )
+
+        assert isinstance(conn_error, FlextConnectionError)
+        assert conn_error.message == "Connection failed"
+        # The endpoint should be in the error's context
+        assert "endpoint" in str(
+            conn_error.context
+        ) or "https://api.example.com" in str(conn_error.context)

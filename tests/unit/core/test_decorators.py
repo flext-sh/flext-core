@@ -684,8 +684,12 @@ class TestDecoratorCoverageImprovements:
             msg = "Value error in log_exceptions test"
             raise ValueError(msg)
 
-        decorated_type = _BaseLoggingDecorators.log_exceptions_decorator(type_error_function)
-        decorated_value = _BaseLoggingDecorators.log_exceptions_decorator(value_error_function)
+        decorated_type = _BaseLoggingDecorators.log_exceptions_decorator(
+            type_error_function
+        )
+        decorated_value = _BaseLoggingDecorators.log_exceptions_decorator(
+            value_error_function
+        )
 
         with pytest.raises(TypeError, match="Type error in log_exceptions test"):
             decorated_type()
@@ -778,7 +782,9 @@ class TestDecoratorCoverageImprovements:
         def dummy_validator(arg: object) -> bool:
             return True
 
-        validation_decorator = _BaseDecoratorFactory.create_validation_decorator(dummy_validator)
+        validation_decorator = _BaseDecoratorFactory.create_validation_decorator(
+            dummy_validator
+        )
         assert callable(validation_decorator)
 
     def test_error_handling_decorator_retry_method(self) -> None:

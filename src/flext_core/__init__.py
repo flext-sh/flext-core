@@ -211,7 +211,7 @@ from flext_core.mixins import (
 )
 from flext_core.payload import FlextEvent, FlextMessage, FlextPayload
 from flext_core.result import FlextResult, chain, safe_call
-from flext_core.utilities import FlextUtilities
+from flext_core.utilities import FlextGenerators, FlextUtilities
 from flext_core.validation import FlextPredicates, FlextValidation, FlextValidators
 from flext_core.value_objects import FlextValueObject, FlextValueObjectFactory
 from flext_core.version import (
@@ -280,6 +280,7 @@ __all__ = [
     "FlextFieldCore",
     "FlextFieldType",
     "FlextFields",
+    "FlextGenerators",
     "FlextHandler",
     "FlextHandlers",
     "FlextIdentifiableMixin",
