@@ -182,6 +182,7 @@ class TestGlobalLogStore:
         from typing import cast
 
         log_entry_dict = cast("TAnyDict", log_entry)
+        assert isinstance(log_entry_dict, dict)
         from typing import cast
 
         log_entry_dict = cast("TAnyDict", log_entry)
@@ -222,6 +223,7 @@ class TestGlobalLogStore:
         from typing import cast
 
         log_entry_dict = cast("TAnyDict", log_entry)
+        assert isinstance(log_entry_dict, dict)
         if log_entry_dict["level"] != "INFO":  # Default level:
             msg = f"Expected {'INFO'}, got {log_entry_dict['level']}"
             raise AssertionError(msg)
@@ -247,6 +249,7 @@ class TestGlobalLogStore:
         from typing import cast
 
         log_entry_dict = cast("TAnyDict", log_entry)
+        assert isinstance(log_entry_dict, dict)
         if log_entry_dict["logger"] != "fallback.logger":
             msg = f"Expected {'fallback.logger'}, got {log_entry_dict['logger']}"
             raise AssertionError(msg)
@@ -337,6 +340,7 @@ class TestFlextLogger:
         from typing import cast
 
         log_entry_dict = cast("TAnyDict", log_entry)
+        assert isinstance(log_entry_dict, dict)
 
         if log_entry_dict["level"] != "INFO":
             msg = f"Expected {'INFO'}, got {log_entry_dict['level']}"
@@ -346,6 +350,9 @@ class TestFlextLogger:
             msg = f"Expected {'Test info message'}, got {log_entry_dict['message']}"
             raise AssertionError(msg)
         assert cast("TAnyDict", log_entry_dict["context"])["user_id"] == "123"
+        if cast("TAnyDict", log_entry_dict["context"])["action"] != "test":
+            assert isinstance(log_entry_dict, dict)
+        assert isinstance(log_entry_dict["context"], dict)
         if cast("TAnyDict", log_entry_dict["context"])["action"] != "test":
             msg = f"Expected {'test'}, got {log_entry_dict['context']['action']}"
             raise AssertionError(msg)
@@ -365,6 +372,7 @@ class TestFlextLogger:
         from typing import cast
 
         log_entry_dict = cast("TAnyDict", log_entry)
+        assert isinstance(log_entry_dict, dict)
 
         if log_entry_dict["level"] != "DEBUG":
             msg = f"Expected {'DEBUG'}, got {log_entry_dict['level']}"
@@ -391,6 +399,7 @@ class TestFlextLogger:
         from typing import cast
 
         log_entry_dict = cast("TAnyDict", log_entry)
+        assert isinstance(log_entry_dict, dict)
 
         if log_entry_dict["level"] != "WARNING":
             msg = f"Expected {'WARNING'}, got {log_entry_dict['level']}"
@@ -415,6 +424,7 @@ class TestFlextLogger:
         from typing import cast
 
         log_entry_dict = cast("TAnyDict", log_entry)
+        assert isinstance(log_entry_dict, dict)
 
         if log_entry_dict["level"] != "ERROR":
             msg = f"Expected {'ERROR'}, got {log_entry_dict['level']}"
@@ -439,6 +449,7 @@ class TestFlextLogger:
         from typing import cast
 
         log_entry_dict = cast("TAnyDict", log_entry)
+        assert isinstance(log_entry_dict, dict)
 
         if log_entry_dict["level"] != "CRITICAL":
             msg = f"Expected {'CRITICAL'}, got {log_entry_dict['level']}"
@@ -471,6 +482,7 @@ class TestFlextLogger:
         from typing import cast
 
         log_entry_dict = cast("TAnyDict", log_entry)
+        assert isinstance(log_entry_dict, dict)
 
         if log_entry_dict["level"] != "TRACE":
             msg = f"Expected {'TRACE'}, got {log_entry_dict['level']}"
@@ -504,6 +516,7 @@ class TestFlextLogger:
         from typing import cast
 
         log_entry_dict = cast("TAnyDict", log_entry)
+        assert isinstance(log_entry_dict, dict)
         if cast("TAnyDict", log_entry_dict["context"])["user_id"] != "123":
             msg = f"Expected {'123'}, got {log_entry_dict['context']['user_id']}"
             raise AssertionError(msg)
@@ -544,6 +557,7 @@ class TestFlextLogger:
         from typing import cast
 
         log_entry_dict = cast("TAnyDict", log_entry)
+        assert isinstance(log_entry_dict, dict)
         # Should only have the message, no additional context
         if log_entry_dict["context"] != {}:
             msg = f"Expected {{}}, got {log_entry_dict['context']}"
@@ -565,14 +579,19 @@ class TestFlextLogger:
         from typing import cast
 
         log_entry_dict = cast("TAnyDict", log_entry)
+        assert isinstance(log_entry_dict, dict)
         # Method context should override instance context
-        if cast("TAnyDict", log_entry_dict["context"])["user_id"] != "456":  # Overridden:
+        if (
+            cast("TAnyDict", log_entry_dict["context"])["user_id"] != "456"
+        ):  # Overridden:
             msg = f"Expected {'456'}, got {log_entry_dict['context']['user_id']}"
             raise AssertionError(msg)
         assert (
             cast("TAnyDict", log_entry_dict["context"])["default"] == "value"
         )  # From instance
-        if cast("TAnyDict", log_entry_dict["context"])["extra"] != "data":  # From method:
+        if (
+            cast("TAnyDict", log_entry_dict["context"])["extra"] != "data"
+        ):  # From method:
             msg = f"Expected {'data'}, got {log_entry_dict['context']['extra']}"
             raise AssertionError(msg)
 
@@ -599,6 +618,7 @@ class TestFlextLogger:
         from typing import cast
 
         log_entry_dict = cast("TAnyDict", log_entry)
+        assert isinstance(log_entry_dict, dict)
 
         if log_entry_dict["level"] != "ERROR":
             msg = f"Expected {'ERROR'}, got {log_entry_dict['level']}"
@@ -649,6 +669,7 @@ class TestFlextLogger:
         from typing import cast
 
         log_entry_dict = cast("TAnyDict", log_entry)
+        assert isinstance(log_entry_dict, dict)
         context = log_entry_dict["context"]
 
         if context["list"] != [1, 2, 3]:
@@ -874,6 +895,7 @@ class TestFlextLogContextManager:
         from typing import cast
 
         log_entry_dict = cast("TAnyDict", log_entry)
+        assert isinstance(log_entry_dict, dict)
         if cast("TAnyDict", log_entry_dict["context"])["permanent"] != "value":
             msg = f"Expected 'value', got {log_entry_dict['context']['permanent']}"
             raise AssertionError(msg)
@@ -890,13 +912,14 @@ class TestFlextLogContextManager:
         from typing import cast
 
         log_entry_dict = cast("TAnyDict", log_entry)
+        assert isinstance(log_entry_dict, dict)
         if cast("TAnyDict", log_entry_dict["context"])["permanent"] != "value":
             msg = f"Expected {'value'}, got {log_entry_dict['context']['permanent']}"
             raise AssertionError(msg)
         if "user_id" in log_entry_dict["context"]:
             msg = f"Expected {'user_id'} not in {log_entry_dict['context']}"
             raise AssertionError(msg)
-        assert "temp" not in log_entry_dict_dict["context"]
+        assert "temp" not in log_entry_dict["context"]
 
     def test_context_manager_with_statement(
         self,
@@ -915,6 +938,7 @@ class TestFlextLogContextManager:
         from typing import cast
 
         log_entry_dict = cast("TAnyDict", log_entry)
+        assert isinstance(log_entry_dict, dict)
         if cast("TAnyDict", log_entry_dict["context"])["request_id"] != "req_123":
             msg = f"Expected {'req_123'}, got {log_entry_dict['context']['request_id']}"
             raise AssertionError(msg)
@@ -947,6 +971,7 @@ class TestFlextLogContextManager:
         from typing import cast
 
         log_entry_dict = cast("TAnyDict", log_entry)
+        assert isinstance(log_entry_dict, dict)
         if cast("TAnyDict", log_entry_dict["context"])["base"] != "context":
             msg = f"Expected {'context'}, got {log_entry_dict['context']['base']}"
             raise AssertionError(msg)
@@ -970,6 +995,7 @@ class TestFlextLogContextManager:
         from typing import cast
 
         log_entry_dict = cast("TAnyDict", log_entry)
+        assert isinstance(log_entry_dict, dict)
         if cast("TAnyDict", log_entry_dict["context"])["level1"] != "outer":
             msg = f"Expected {'outer'}, got {log_entry_dict['context']['level1']}"
             raise AssertionError(msg)
@@ -990,6 +1016,7 @@ class TestFlextLogContextManager:
         from typing import cast
 
         log_entry_dict = cast("TAnyDict", log_entry)
+        assert isinstance(log_entry_dict, dict)
         if cast("TAnyDict", log_entry_dict["context"])["key"] != "overridden":
             msg = f"Expected {'overridden'}, got {log_entry_dict['context']['key']}"
             raise AssertionError(msg)
@@ -1158,6 +1185,7 @@ class TestLoggingIntegration:
         from typing import cast
 
         log_entry_dict = cast("TAnyDict", log_entry)
+        assert isinstance(log_entry_dict, dict)
         context = log_entry_dict["context"]
 
         # Verify complex data is preserved
@@ -1205,6 +1233,7 @@ class TestLoggingIntegration:
         from typing import cast
 
         log_entry_dict = cast("TAnyDict", log_entry)
+        assert isinstance(log_entry_dict, dict)
 
         if log_entry_dict["level"] != "ERROR":
             msg = f"Expected {'ERROR'}, got {log_entry_dict['level']}"
@@ -1229,6 +1258,7 @@ class TestLoggingEdgeCases:
         from typing import cast
 
         log_entry_dict = cast("TAnyDict", log_entry)
+        assert isinstance(log_entry_dict, dict)
         if log_entry_dict["logger"] != "root":  # structlog uses "root" for empty names:
             msg = f"Expected {'root'}, got {log_entry_dict['logger']}"
             raise AssertionError(msg)
@@ -1259,6 +1289,7 @@ class TestLoggingEdgeCases:
         from typing import cast
 
         log_entry_dict = cast("TAnyDict", log_entry)
+        assert isinstance(log_entry_dict, dict)
         context = log_entry_dict["context"]
 
         if context["valid_key"] != "valid_value":
@@ -1289,6 +1320,7 @@ class TestLoggingEdgeCases:
         from typing import cast
 
         log_entry_dict = cast("TAnyDict", log_entry)
+        assert isinstance(log_entry_dict, dict)
         context = log_entry_dict["context"]
 
         if context["unicode"] != "测试消息":
@@ -1322,6 +1354,7 @@ class TestLoggingEdgeCases:
         from typing import cast
 
         log_entry_dict = cast("TAnyDict", log_entry)
+        assert isinstance(log_entry_dict, dict)
         context = log_entry_dict["context"]
 
         if len(context["large_string"]) != 10000:

@@ -66,7 +66,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import contextlib
-from typing import Protocol, cast
+from typing import Protocol, cast, get_type_hints
 
 from flext_core._handlers_base import (
     _BaseHandler,
@@ -325,10 +325,35 @@ class FlextHandlers:
             # Default implementation returns success with message
             return FlextResult.ok(message)
 
-        def can_handle(self, message: object) -> bool:  # noqa: ARG002
-            """Check if handler can process message - override in subclasses."""
-            # Default implementation - override in subclasses for specific logic
-            return True
+        def can_handle(self, message: object) -> bool:
+            """Check if handler can process message based on type compatibility.
+
+            Args:
+                message: Message to check for compatibility
+
+            Returns:
+                True if handler can process message, False otherwise
+
+            """
+            # Get type hints from handle method if available
+            try:
+                handle_method = getattr(self.__class__, "handle", None)
+                if handle_method and hasattr(handle_method, "__annotations__"):
+                    type_hints = get_type_hints(handle_method)
+                    if "message" in type_hints:
+                        expected_type = type_hints["message"]
+                        # Check if message is compatible with expected type
+                        if hasattr(expected_type, "__origin__"):
+                            # Handle generic types
+                            return True  # Allow generic compatibility for now
+                        return isinstance(message, expected_type)
+
+                # Fallback to accepting all messages if no type hints
+                return True
+
+            except (ImportError, AttributeError, TypeError):
+                # Safe fallback - accept all messages
+                return True
 
         def pre_handle(self, message: object) -> FlextResult[object]:
             """Pre-processing hook - delegates to base."""
@@ -439,10 +464,34 @@ class FlextHandlers:
             # Default implementation returns the command as-is
             return FlextResult.ok(command)
 
-        def can_handle(self, message: object) -> bool:  # noqa: ARG002
-            """Check if can handle."""
-            # Default implementation - can handle any message
-            return True
+        def can_handle(self, message: object) -> bool:
+            """Check if command handler can process message.
+
+            Commands should be objects that represent intentions to change system state.
+
+            Args:
+                message: Message to check for command compatibility
+
+            Returns:
+                True if message can be handled as a command, False otherwise
+
+            """
+            # Commands typically have method signatures with command-like attributes
+            if hasattr(message, "__dict__"):
+                # Check for command-like patterns in object attributes
+                attrs = dir(message)
+                command_indicators = ["execute", "command", "action", "operation"]
+                if any(
+                    indicator in str(attrs).lower() for indicator in command_indicators
+                ):
+                    return True
+
+            # Check if message has command-like methods or is a callable
+            if callable(message) or hasattr(message, "execute"):
+                return True
+
+            # Accept any structured message as potential command
+            return hasattr(message, "__dict__") or isinstance(message, dict)
 
         def pre_handle(self, command: object) -> FlextResult[object]:
             """Pre-process command."""

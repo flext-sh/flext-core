@@ -22,15 +22,14 @@ EXPECTED_DATA_COUNT = 3
 
 def create_test_entity(entity_class: type, **kwargs: object) -> object:
     """Create test entities using factory with proper DDD validation."""
-    # Use unified factory pattern for all entities (DRY principle)
-    factory_result = cast(
-        "FlextResult[object]", FlextEntityFactory.create_entity_factory(entity_class)
-    )
-    if factory_result.is_failure:
-        msg = f"Failed to create factory for {entity_class.__name__}: {factory_result.error}"
-        raise AssertionError(msg)
+    # Get the factory function directly (not a FlextResult)
+    factory = FlextEntityFactory.create_entity_factory(entity_class)
 
-    factory = factory_result.unwrap()
+    if not callable(factory):
+        msg = f"Factory for {entity_class.__name__} is not callable"
+        raise TypeError(msg)
+
+    # Call the factory function which returns FlextResult
     result = cast("FlextResult[object]", factory(**kwargs))
 
     if result.is_failure:
@@ -95,23 +94,8 @@ class SampleEntity(FlextEntity):
     name: str
     status: str = "active"
 
-    def __init__(self, **data: object) -> None:
-        """Initialize entity with provided data."""
-        # Extract required FlextEntity parameters
-        entity_id = cast("str", data.get("entity_id", "test-id"))
-        version = cast("int", data.get("version", 1))
-        created_at = cast("datetime", data.get("created_at", datetime.now(UTC)))
-        domain_events = cast("list[FlextEvent]", data.get("domain_events", []))
-
-        super().__init__(entity_id, version, created_at, domain_events)
-
-        # Set additional fields from data
-        self.name = cast("str", data.get("name", ""))
-        self.status = cast("str", data.get("status", "active"))
-
     def validate_domain_rules(self) -> FlextResult[None]:
         """Validate test entity domain rules."""
-
         if not self.name.strip():
             return FlextResult.fail("Entity name cannot be empty")
         return FlextResult.ok(None)

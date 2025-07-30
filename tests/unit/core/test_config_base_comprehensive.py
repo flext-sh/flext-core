@@ -714,7 +714,7 @@ class TestBaseConfigDefaults:
         # Test with non-dict defaults to trigger early validation
         bad_defaults = "not a dict"
 
-        result = _BaseConfigDefaults.apply_defaults({}, bad_defaults)
+        result = _BaseConfigDefaults.apply_defaults({}, bad_defaults)  # type: ignore[arg-type]
 
         assert result.is_failure
         if "Defaults must be a dictionary" not in (result.error or ""):
@@ -764,7 +764,7 @@ class TestBaseConfigDefaults:
         config1 = {"key1": "value1"}
         config2 = "not a dict"
 
-        result = _BaseConfigDefaults.merge_configs(config1, config2)
+        result = _BaseConfigDefaults.merge_configs(config1, config2)  # type: ignore[arg-type]
 
         assert result.is_failure
         if "Configuration 1 must be a dictionary" not in (result.error or ""):
@@ -793,10 +793,10 @@ class TestBaseConfigDefaults:
         # Mock the update method to fail
         with patch.dict(config1, clear=False):
             # Create a new dict instance that will fail
-            class FailingDict(UserDict):
+            class FailingDict(UserDict[str, object]):
                 update_failed_msg = "Update failed"
 
-                def update(self, other: object) -> None:
+                def update(self, *args: object, **kwargs: object) -> None:
                     raise AttributeError(self.update_failed_msg)
 
             # This is complex to test, let's skip the deep exception test
@@ -839,7 +839,7 @@ class TestBaseConfigDefaults:
 
     def test_filter_config_keys_config_not_dict(self) -> None:
         """Test filter_config_keys with non-dictionary config."""
-        result = _BaseConfigDefaults.filter_config_keys("not dict", ["key1"])
+        result = _BaseConfigDefaults.filter_config_keys("not dict", ["key1"])  # type: ignore[arg-type]
 
         assert result.is_failure
         if "Configuration must be a dictionary" not in (result.error or ""):
@@ -850,7 +850,7 @@ class TestBaseConfigDefaults:
         """Test filter_config_keys with non-list allowed keys."""
         config = {"key1": "value1"}
 
-        result = _BaseConfigDefaults.filter_config_keys(config, "not list")
+        result = _BaseConfigDefaults.filter_config_keys(config, "not list")  # type: ignore[arg-type]
 
         assert result.is_failure
         if "Allowed keys must be a list" not in (result.error or ""):
@@ -863,7 +863,7 @@ class TestBaseConfigDefaults:
         # Test with non-dict config to trigger early validation
         bad_config = "not a dict"
 
-        result = _BaseConfigDefaults.filter_config_keys(bad_config, ["key1"])
+        result = _BaseConfigDefaults.filter_config_keys(bad_config, ["key1"])  # type: ignore[arg-type]
 
         assert result.is_failure
         if "Configuration must be a dictionary" not in (result.error or ""):
@@ -1046,7 +1046,8 @@ class TestConfigBaseIntegration:
         assert load_result.is_success
 
         # Apply defaults
-        defaults = {"debug": False, "port": 8080, "timeout": 30}
+        defaults: dict[str, object] = {"debug": False, "port": 8080, "timeout": 30}
+        assert load_result.data is not None
         config_with_defaults = _BaseConfigDefaults.apply_defaults(
             load_result.data,
             defaults,
@@ -1057,6 +1058,7 @@ class TestConfigBaseIntegration:
         def is_valid_port(value: object) -> bool:
             return isinstance(value, int) and 1 <= value <= 65535
 
+        assert config_with_defaults.data is not None
         port_validation = _BaseConfigValidation.validate_config_value(
             config_with_defaults.data["port"],
             is_valid_port,
@@ -1074,6 +1076,7 @@ class TestConfigBaseIntegration:
 
         # Final config should have expected values
         final_config = filtered_config.data
+        assert final_config is not None
         if final_config["database_url"] != "sqlite://test.db":
             msg = f"Expected {'sqlite://test.db'}, got {final_config['database_url']}"
             raise AssertionError(msg)
@@ -1098,8 +1101,10 @@ class TestConfigBaseIntegration:
         assert type_result.is_success
 
         # Range validation
+        assert type_result.data is not None
+        assert isinstance(type_result.data, (int, float, str))
         range_result = _BaseConfigValidation.validate_config_range(
-            type_result.data,
+            float(type_result.data),
             10,
             100,
             "count",
@@ -1108,7 +1113,11 @@ class TestConfigBaseIntegration:
 
         # Custom validation
         def is_even(value: object) -> bool:
-            return isinstance(value, int) and value % 2 == 0
+            if isinstance(value, int):
+                return value % 2 == 0
+            if isinstance(value, float) and value.is_integer():
+                return int(value) % 2 == 0
+            return False
 
         custom_result = _BaseConfigValidation.validate_config_value(
             range_result.data,
@@ -1122,15 +1131,20 @@ class TestConfigBaseIntegration:
 
     def test_config_merging_precedence(self) -> None:
         """Test configuration merging with proper precedence."""
-        base_config = {"debug": False, "port": 8080, "host": "localhost"}
-        env_config = {"debug": True, "port": 3000}
-        user_config = {"port": 9000, "custom": "value"}
+        base_config: dict[str, object] = {
+            "debug": False,
+            "port": 8080,
+            "host": "localhost",
+        }
+        env_config: dict[str, object] = {"debug": True, "port": 3000}
+        user_config: dict[str, object] = {"port": 9000, "custom": "value"}
 
         # Merge with proper precedence (later configs override earlier ones)
         result = _BaseConfigDefaults.merge_configs(base_config, env_config, user_config)
 
         assert result.is_success
         merged = result.data
+        assert merged is not None
 
         assert merged["debug"] is True
         if merged["port"] != 9000:
@@ -1213,7 +1227,7 @@ class TestConfigBaseIntegration:
         """Test error recovery in configuration workflow."""
         # Simulate config loading with fallbacks
         primary_file = "/nonexistent/primary.json"
-        fallback_config = {"fallback": True, "port": 8080}
+        fallback_config: dict[str, object] = {"fallback": True, "port": 8080}
 
         # Try primary config (will fail)
         primary_result = _BaseConfigOps.safe_load_json_file(primary_file)
@@ -1225,6 +1239,7 @@ class TestConfigBaseIntegration:
 
         # Use fallback config
         config = fallback_result.data
+        assert config is not None
 
         # Try to validate a potentially problematic value
         invalid_port_result = _BaseConfigValidation.validate_config_range(
@@ -1236,8 +1251,9 @@ class TestConfigBaseIntegration:
         assert invalid_port_result.is_failure
 
         # Fall back to default port
+        assert isinstance(config["port"], (int, float))
         default_port_result = _BaseConfigValidation.validate_config_range(
-            config["port"],
+            float(config["port"]),
             1,
             65535,
             "port",

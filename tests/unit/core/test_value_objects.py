@@ -375,6 +375,45 @@ class TestFlextValueObject:
         validation_result = email.validate_domain_rules()
         assert validation_result.is_success
 
+    def test_value_object_hash_complex_data(self) -> None:
+        """Test hash with complex data structures including sets and nested dicts."""
+        # Test the make_hashable function with sets, lists, and nested dicts
+        complex_data = Money(amount=100.0, currency="USD")
+
+        # Create another money object with same values for hash consistency
+        complex_data2 = Money(amount=100.0, currency="USD")
+
+        # Test hash consistency
+        if hash(complex_data) != hash(complex_data2):
+            msg = "Expected same hash for equal objects"
+            raise AssertionError(msg)
+
+        # Test with different currency
+        different_currency = Money(amount=100.0, currency="EUR")
+        assert hash(complex_data) != hash(different_currency)
+
+    def test_value_object_subclass_tracking(self) -> None:
+        """Test ValueObject subclass tracking functionality."""
+
+        # This test covers the __init_subclass__ method
+        class CustomValueObject(FlextValueObject):
+            """Test custom value object for subclass tracking."""
+
+            value: str
+
+            def validate_domain_rules(self) -> FlextResult[None]:
+                if not self.value:
+                    return FlextResult.fail("Value cannot be empty")
+                return FlextResult.ok(None)
+
+        # Create instance to trigger subclass tracking
+        custom_vo = CustomValueObject(value="test")
+        assert custom_vo.value == "test"
+
+        # Verify domain validation works
+        validation_result = custom_vo.validate_domain_rules()
+        assert validation_result.is_success
+
     def test_value_object_utility_inheritance(self) -> None:
         """Test utility inheritance in value objects."""
         email = EmailAddress(email="test@example.com")

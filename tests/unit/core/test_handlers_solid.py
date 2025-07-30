@@ -238,7 +238,7 @@ class TestSOLIDPrinciples:
         assert callable(handler.get_metrics)
 
         # Test actual protocol compliance
-        message = "test_message"
+        message = {"command": "test_message"}  # Use valid command object
         assert handler.can_handle(message) is True
 
         handle_result = handler.handle(message)
