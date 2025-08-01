@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from flext_core.commands import FlextCommands
 from flext_core.result import FlextResult
@@ -57,7 +57,7 @@ class CreateUserCommand(FlextCommand):
                 **kwargs,
             )
 
-    def get_payload(self) -> dict[str, Any]:
+    def get_payload(self) -> dict[str, object]:
         """Get command payload."""
         return {
             "username": self.username,
@@ -83,12 +83,12 @@ class UpdateUserCommand(FlextCommand):
     """Test command for updating users."""
 
     user_id: str
-    updates: dict[str, Any]
+    updates: dict[str, object]
 
     def __init__(
         self,
         user_id: str,
-        updates: dict[str, Any],
+        updates: dict[str, object],
         command_id: FlextCommandId | None = None,
     ) -> None:
         """Initialize update user command with user ID and updates."""
@@ -107,7 +107,7 @@ class UpdateUserCommand(FlextCommand):
                 updates=updates,
             )
 
-    def get_payload(self) -> dict[str, Any]:
+    def get_payload(self) -> dict[str, object]:
         """Get command payload."""
         return {
             "user_id": self.user_id,
@@ -134,7 +134,7 @@ class FailingCommand(FlextCommand):
         """Initialize failing command."""
         super().__init__(command_type="failing")
 
-    def get_payload(self) -> dict[str, Any]:
+    def get_payload(self) -> dict[str, object]:
         """Get command payload."""
         return {}
 
@@ -153,14 +153,14 @@ class FailingCommand(FlextCommand):
 
 
 class CreateUserCommandHandler(
-    FlextCommandHandler[CreateUserCommand, dict[str, Any]],
+    FlextCommandHandler[CreateUserCommand, dict[str, object]],
 ):
     """Test handler for CreateUserCommand."""
 
     def __init__(self) -> None:
         """Initialize create user command handler."""
         super().__init__(handler_id="create_user_handler")
-        self.created_users: list[dict[str, Any]] = []
+        self.created_users: list[dict[str, object]] = []
 
     def get_command_type(self) -> FlextCommandType:
         """Get command type this handler processes."""
@@ -179,7 +179,7 @@ class CreateUserCommandHandler(
     def handle(
         self,
         command: CreateUserCommand,
-    ) -> FlextResult[dict[str, Any]]:
+    ) -> FlextResult[dict[str, object]]:
         """Handle the create user command."""
         user_data = {
             "id": f"user_{len(self.created_users) + 1}",
@@ -193,20 +193,20 @@ class CreateUserCommandHandler(
     def handle_command(
         self,
         command: CreateUserCommand,
-    ) -> FlextResult[dict[str, Any]]:
+    ) -> FlextResult[dict[str, object]]:
         """Handle the create user command (alias for handle)."""
         return self.handle(command)
 
 
 class UpdateUserCommandHandler(
-    FlextCommandHandler[UpdateUserCommand, dict[str, Any]],
+    FlextCommandHandler[UpdateUserCommand, dict[str, object]],
 ):
     """Test handler for UpdateUserCommand."""
 
     def __init__(self) -> None:
         """Initialize update user command handler."""
         super().__init__(handler_id="update_user_handler")
-        self.updated_users: dict[str, dict[str, Any]] = {}
+        self.updated_users: dict[str, dict[str, object]] = {}
 
     def get_command_type(self) -> FlextCommandType:
         """Get command type this handler processes."""
@@ -225,7 +225,7 @@ class UpdateUserCommandHandler(
     def handle(
         self,
         command: UpdateUserCommand,
-    ) -> FlextResult[dict[str, Any]]:
+    ) -> FlextResult[dict[str, object]]:
         """Handle the update user command."""
         if command.user_id not in self.updated_users:
             self.updated_users[command.user_id] = {}
@@ -242,7 +242,7 @@ class UpdateUserCommandHandler(
     def handle_command(
         self,
         command: UpdateUserCommand,
-    ) -> FlextResult[dict[str, Any]]:
+    ) -> FlextResult[dict[str, object]]:
         """Handle the update user command (alias for handle)."""
         return self.handle(command)
 

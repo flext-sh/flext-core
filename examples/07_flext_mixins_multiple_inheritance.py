@@ -1260,9 +1260,9 @@ def demonstrate_enterprise_patterns() -> None:
 
 
 def main() -> None:
-    """Run comprehensive FlextMixins demonstration."""  
+    """Run comprehensive FlextMixins demonstration."""
     from shared_example_helpers import run_example_demonstration
-    
+
     examples = [
         ("Individual Mixin Patterns", demonstrate_individual_mixins),
         ("Multiple Inheritance Composition", demonstrate_multiple_inheritance),
@@ -1271,10 +1271,10 @@ def main() -> None:
         ("Performance Characteristics", demonstrate_performance_characteristics),
         ("Enterprise Architecture Patterns", demonstrate_enterprise_patterns),
     ]
-    
+
     run_example_demonstration(
         "🔧 FLEXT MIXINS - MULTIPLE INHERITANCE & COMPOSITION PATTERNS DEMONSTRATION",
-        examples
+        examples,
     )
 
 

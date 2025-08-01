@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
-
 import pytest
 from pydantic import Field, ValidationError
 
@@ -13,8 +11,6 @@ from flext_core.value_objects import FlextValueObject, FlextValueObjectFactory
 # Constants
 EXPECTED_BULK_SIZE = 2
 
-if TYPE_CHECKING:
-    from collections.abc import Any
 
 
 class EmailAddress(FlextValueObject):
@@ -566,7 +562,7 @@ class TestValueObjectEdgeCases:
         """Test value object with complex nested data."""
 
         class ComplexValueObject(FlextValueObject):
-            data: dict[str, Any]
+            data: dict[str, object]
             items: list[str]
 
             def validate_domain_rules(self) -> FlextResult[None]:

@@ -1418,7 +1418,7 @@ def demonstrate_performance_characteristics() -> None:
 def main() -> None:
     """Run comprehensive FlextEntity/ValueObject DDD demonstration."""
     from shared_example_helpers import run_example_demonstration
-    
+
     examples = [
         ("Value Object Patterns", demonstrate_value_objects),
         ("Entity Lifecycle Management", demonstrate_entity_lifecycle),
@@ -1427,10 +1427,10 @@ def main() -> None:
         ("Version Management and Optimistic Locking", demonstrate_version_management),
         ("Performance Characteristics", demonstrate_performance_characteristics),
     ]
-    
+
     run_example_demonstration(
         "FLEXT ENTITY/VALUE OBJECT - DOMAIN-DRIVEN DESIGN PATTERNS DEMONSTRATION",
-        examples
+        examples,
     )
 
 

@@ -17,7 +17,7 @@ def run_example_demonstration(
     examples: list[tuple[str, Callable[[], None]]],
 ) -> None:
     """Run a standardized example demonstration with consistent formatting.
-    
+
     Args:
         title: The main title for the demonstration
         examples: List of (title, function) tuples for each example

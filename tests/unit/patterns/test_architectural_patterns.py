@@ -7,7 +7,6 @@ Clean Architecture, DDD, CQRS, and enterprise design patterns.
 from __future__ import annotations
 
 import time
-from typing import Any
 
 import pytest
 from pydantic import BaseModel
@@ -231,7 +230,7 @@ class TestCleanArchitecturePatterns:
 
             user_id: str
 
-        class GetUserHandler(FlextHandlers.QueryHandler[GetUserQuery, dict[str, Any]]):
+        class GetUserHandler(FlextHandlers.QueryHandler[GetUserQuery, dict[str, object]]):
             """Handler for user queries."""
 
             def handle(self, query: object) -> FlextResult[object]:
@@ -304,7 +303,7 @@ class TestEnterprisePatterns:
 
             def __init__(self) -> None:
                 """Initialize builder."""
-                self._config: dict[str, Any] = {}
+                self._config: dict[str, object] = {}
 
             def with_database(self, host: str, port: int) -> ConfigurationBuilder:
                 """Add database configuration."""
@@ -321,7 +320,7 @@ class TestEnterprisePatterns:
                 self._config["cache"] = {"enabled": enabled}
                 return self
 
-            def build(self) -> FlextResult[dict[str, Any]]:
+            def build(self) -> FlextResult[dict[str, object]]:
                 """Build the configuration."""
                 if not self._config:
                     return FlextResult.fail("Configuration cannot be empty")
@@ -353,7 +352,7 @@ class TestEnterprisePatterns:
 
             def __init__(self) -> None:
                 """Initialize repository."""
-                self._data: dict[str, Any] = {}
+                self._data: dict[str, object] = {}
                 self._query_count = 0
 
             def save(self, entity_id: str, data: object) -> FlextResult[None]:

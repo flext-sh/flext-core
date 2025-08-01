@@ -299,7 +299,7 @@ class ContainerMemoryMonitor:
         process = psutil.Process()
         return process.memory_info().rss / 1024 / 1024
 
-    def monitor_container_memory(self) -> Dict[str, Any]:
+    def monitor_container_memory(self) -> Dict[str, object]:
         """Monitor container memory usage."""
         container = get_flext_container()
         current_memory = self._get_memory_usage()
@@ -321,7 +321,7 @@ class ContainerMemoryMonitor:
 
         return report
 
-    def cleanup_container(self) -> FlextResult[Dict[str, Any]]:
+    def cleanup_container(self) -> FlextResult[Dict[str, object]]:
         """Clean up container and force garbage collection."""
         container = get_flext_container()
 
@@ -382,7 +382,7 @@ class EnvironmentDiagnostics:
     """Diagnose environment configuration issues."""
 
     @staticmethod
-    def diagnose_environment_detection() -> Dict[str, Any]:
+    def diagnose_environment_detection() -> Dict[str, object]:
         """Diagnose how environment is being detected."""
 
         # Check all possible environment indicators
@@ -409,7 +409,7 @@ class EnvironmentDiagnostics:
         }
 
     @staticmethod
-    def validate_environment_consistency(settings_class: type[FlextCoreSettings]) -> FlextResult[Dict[str, Any]]:
+    def validate_environment_consistency(settings_class: type[FlextCoreSettings]) -> FlextResult[Dict[str, object]]:
         """Validate that environment settings are consistent."""
 
         try:
@@ -545,7 +545,7 @@ class PerformanceMonitor:
             return wrapper
         return decorator
 
-    def get_performance_report(self) -> Dict[str, Any]:
+    def get_performance_report(self) -> Dict[str, object]:
         """Get comprehensive performance report."""
         report = {
             "total_operations": len(self.metrics),
@@ -725,7 +725,7 @@ class FlextMetricsCollector:
         tag_str = ",".join(f"{k}={v}" for k, v in sorted(tags.items()))
         return f"{name}[{tag_str}]"
 
-    def get_metrics_summary(self) -> Dict[str, Any]:
+    def get_metrics_summary(self) -> Dict[str, object]:
         """Get summary of all collected metrics."""
         summary = {
             "counters": dict(self.counters),

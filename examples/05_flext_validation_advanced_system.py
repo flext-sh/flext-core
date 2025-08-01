@@ -66,30 +66,30 @@ MIN_GUARDIAN_AGE = 21  # Minimum age before requiring guardian consent
 
 class ValidationResult:
     """Helper to accumulate validation errors - eliminates multiple returns."""
-    
+
     def __init__(self) -> None:
         """Initialize validation result accumulator."""
         self.errors: list[TErrorMessage] = []
         self.warnings: list[str] = []
-    
+
     def add_error(self, error: TErrorMessage) -> None:
         """Add validation error to accumulator."""
         self.errors.append(error)
-    
+
     def add_warning(self, warning: str) -> None:
         """Add validation warning to accumulator."""
         self.warnings.append(warning)
-    
+
     def has_errors(self) -> bool:
         """Check if any validation errors occurred."""
         return len(self.errors) > 0
-    
+
     def get_combined_error(self) -> TErrorMessage:
         """Get combined error message from all validation errors."""
         if not self.has_errors():
             return ""
         return f"Validation failed: {'; '.join(self.errors)}"
-    
+
     def to_flext_result(self) -> FlextResult[None]:
         """Convert validation result to FlextResult - eliminates early returns."""
         if self.has_errors():
@@ -99,68 +99,72 @@ class ValidationResult:
 
 class ProductFieldValidator:
     """Strategy pattern: Specialized product field validation - reduces complexity."""
-    
+
     def __init__(self, validation_result: ValidationResult) -> None:
         """Initialize with validation result accumulator."""
         self.validation_result = validation_result
-    
+
     def validate_product_id(self, product_id: object) -> None:
         """Validate product ID field - SOLID SRP."""
         if not FlextTypes.TypeGuards.is_instance_of(product_id, str):
             self.validation_result.add_error("Product ID must be a string")
             return
-        
+
         if not product_id or len(product_id.strip()) == 0:
             self.validation_result.add_error("Product ID cannot be empty")
-    
+
     def validate_name(self, name: object) -> None:
         """Validate product name field - SOLID SRP."""
         if not FlextTypes.TypeGuards.is_instance_of(name, str):
             self.validation_result.add_error("Name must be a string")
             return
-            
+
         if not name or len(name.strip()) < MIN_PRODUCT_NAME_LENGTH:
-            self.validation_result.add_error(f"Name must be at least {MIN_PRODUCT_NAME_LENGTH} characters")
-    
+            self.validation_result.add_error(
+                f"Name must be at least {MIN_PRODUCT_NAME_LENGTH} characters"
+            )
+
     def validate_price(self, price: object) -> None:
         """Validate product price field - SOLID SRP."""
         if not FlextTypes.TypeGuards.is_instance_of(price, (int, float)):
             self.validation_result.add_error("Price must be a number")
             return
-            
+
         if price < 0:
             self.validation_result.add_error("Price cannot be negative")
-        
+
         if price > MAX_PRODUCT_PRICE:
-            self.validation_result.add_error(f"Price cannot exceed ${MAX_PRODUCT_PRICE}")
-    
+            self.validation_result.add_error(
+                f"Price cannot exceed ${MAX_PRODUCT_PRICE}"
+            )
+
     def validate_category(self, category: object) -> None:
         """Validate product category field - SOLID SRP."""
         if not FlextTypes.TypeGuards.is_instance_of(category, str):
             self.validation_result.add_error("Category must be a string")
             return
-            
+
         if not category or len(category.strip()) == 0:
             self.validation_result.add_error("Category cannot be empty")
-    
+
     def validate_stock(self, stock: object) -> None:
         """Validate product stock field - SOLID SRP."""
         if not FlextTypes.TypeGuards.is_instance_of(stock, int):
             self.validation_result.add_error("Stock must be an integer")
             return
-            
+
         if stock < 0:
             self.validation_result.add_error("Stock cannot be negative")
-    
+
     def validate_tags(self, tags: object) -> None:
         """Validate product tags field - SOLID SRP."""
         if tags is None:
             return  # Tags are optional
-            
+
         if not FlextTypes.TypeGuards.is_instance_of(tags, list):
             self.validation_result.add_error("Tags must be a list if provided")
             return
-        
+
         for tag in tags:
             if not FlextTypes.TypeGuards.is_instance_of(tag, str):
                 self.validation_result.add_error("All tags must be strings")
@@ -169,33 +173,33 @@ class ProductFieldValidator:
 
 class ProductValidationOrchestrator:
     """Orchestrator for complete product validation - eliminates multiple returns."""
-    
+
     def __init__(self, product_data: TAnyObject) -> None:
         """Initialize with product data to validate."""
         self.product_data = product_data
-        self.validation_result = ValidationResult() 
+        self.validation_result = ValidationResult()
         self.field_validator = ProductFieldValidator(self.validation_result)
-    
+
     def validate_all_fields(self) -> FlextResult[None]:
         """Validate all product fields using accumulator pattern - single return."""
         # Extract all fields
         fields = {
-            'product_id': self.product_data.get("product_id"),
-            'name': self.product_data.get("name"),
-            'price': self.product_data.get("price"),
-            'category': self.product_data.get("category"),
-            'stock': self.product_data.get("stock"),
-            'tags': self.product_data.get("tags"),
+            "product_id": self.product_data.get("product_id"),
+            "name": self.product_data.get("name"),
+            "price": self.product_data.get("price"),
+            "category": self.product_data.get("category"),
+            "stock": self.product_data.get("stock"),
+            "tags": self.product_data.get("tags"),
         }
-        
+
         # Validate each field using strategy pattern
-        self.field_validator.validate_product_id(fields['product_id'])
-        self.field_validator.validate_name(fields['name'])
-        self.field_validator.validate_price(fields['price'])
-        self.field_validator.validate_category(fields['category'])
-        self.field_validator.validate_stock(fields['stock'])
-        self.field_validator.validate_tags(fields['tags'])
-        
+        self.field_validator.validate_product_id(fields["product_id"])
+        self.field_validator.validate_name(fields["name"])
+        self.field_validator.validate_price(fields["price"])
+        self.field_validator.validate_category(fields["category"])
+        self.field_validator.validate_stock(fields["stock"])
+        self.field_validator.validate_tags(fields["tags"])
+
         # Single return point - Result pattern
         return self.validation_result.to_flext_result()
 
@@ -613,17 +617,19 @@ def validate_product_complete(
     product_data: TAnyObject,
 ) -> FlextResult[SharedProduct]:
     """Validate product data completely using validation orchestrator - single return."""
-    log_message: TLogMessage = f"🔍 Validating product: {product_data.get('name', 'Unknown')}"
+    log_message: TLogMessage = (
+        f"🔍 Validating product: {product_data.get('name', 'Unknown')}"
+    )
     print(log_message)
 
     # Use orchestrator pattern to eliminate multiple returns
     orchestrator = ProductValidationOrchestrator(product_data)
-    
+
     # Validate all fields using accumulator pattern
     field_validation = orchestrator.validate_all_fields()
     if field_validation.is_failure:
         return FlextResult.fail(field_validation.error)
-    
+
     # Extract validated fields for product creation
     name = product_data.get("name")
     price = product_data.get("price")
@@ -665,7 +671,9 @@ def validate_product_complete(
         if inventory_validation.is_failure:
             return FlextResult.fail(inventory_validation.error)
 
-        log_message = f"✅ Enhanced product validation successful: {enhanced_product.name}"
+        log_message = (
+            f"✅ Enhanced product validation successful: {enhanced_product.name}"
+        )
         print(log_message)
         return FlextResult.ok(enhanced_product)
 
@@ -899,7 +907,7 @@ def main() -> None:
             demonstrate_customer_validation,
             demonstrate_product_validation,
             demonstrate_validation_performance,
-        ]
+        ],
     )
 
 

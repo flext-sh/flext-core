@@ -831,7 +831,7 @@ def demonstrate_domain_model_decorators() -> None:  # noqa: PLR0915
     log_message = "\n4. Domain-aware validation decorators:"
     print(log_message)
 
-    def domain_user_validator(user_data: dict[str, Any]) -> bool:
+    def domain_user_validator(user_data: dict[str, object]) -> bool:
         """Validate user data using domain models."""
         if not isinstance(user_data, dict):
             return False
@@ -849,7 +849,7 @@ def demonstrate_domain_model_decorators() -> None:  # noqa: PLR0915
     )
 
     @domain_validator
-    def register_user_with_domain_validation(user_data: dict[str, Any]) -> SharedUser:
+    def register_user_with_domain_validation(user_data: dict[str, object]) -> SharedUser:
         """Register user with domain-aware validation."""
         name = user_data.get("name", "")
         email = user_data.get("email", "")

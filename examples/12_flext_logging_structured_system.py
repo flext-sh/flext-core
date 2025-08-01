@@ -83,7 +83,11 @@ def demonstrate_basic_logging() -> None:
     # Basic logging at different levels
     logger.trace("Application startup trace", phase="initialization", step=1)
     logger.debug("Debug information", module="config", settings_loaded=True)
-    logger.info("Service started successfully", port=FlextConstants.Platform.FLEXCORE_PORT, version=FlextConstants.VERSION)
+    logger.info(
+        "Service started successfully",
+        port=FlextConstants.Platform.FLEXCORE_PORT,
+        version=FlextConstants.VERSION,
+    )
     logger.warning("High memory usage detected", memory_usage_percent=85)
     logger.error("Database connection failed", database="users", retry_count=3)
     logger.critical("System overload detected", cpu_usage_percent=95)
@@ -399,7 +403,9 @@ def demonstrate_unified_api() -> None:  # noqa: PLR0915
     api_logger = FlextLoggerFactory.get_logger("myapp.unified_api", "DEBUG")
     metrics_logger = FlextLoggerFactory.get_logger("myapp.metrics", "INFO")
 
-    api_logger.info("API server starting", port=FlextConstants.Platform.FLEXCORE_PORT, workers=4)
+    api_logger.info(
+        "API server starting", port=FlextConstants.Platform.FLEXCORE_PORT, workers=4
+    )
     metrics_logger.info("Metrics collection enabled", interval_seconds=30)
 
     # Global configuration through unified API

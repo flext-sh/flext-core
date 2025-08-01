@@ -5,7 +5,7 @@ This package demonstrates SOLID principles by separating concerns into focused m
 
 Modules:
 - formatting_helpers: Constants and basic formatting utilities
-- validation_utilities: Type checking and validation functions  
+- validation_utilities: Type checking and validation functions
 - domain_models: Enhanced domain models with mixins
 - complexity_helpers: Helper classes following SRP
 - demonstration_runner: Main demonstration orchestrator

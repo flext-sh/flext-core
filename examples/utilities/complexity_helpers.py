@@ -20,7 +20,7 @@ from .validation_utilities import is_email, is_int, is_non_empty_string
 
 class DemonstrationSectionHelper:
     """Helper to reduce repetitive demonstration patterns - SOLID SRP."""
-    
+
     @staticmethod
     def print_section_header(example_num: int, title: str) -> None:
         """DRY Helper: Print standardized section headers."""
@@ -28,7 +28,7 @@ class DemonstrationSectionHelper:
         print(log_message)
         print(f"📋 EXAMPLE {example_num}: {title}")
         print("=" * 60)
-    
+
     @staticmethod
     def log_operation(operation: str, result: object) -> None:
         """DRY Helper: Log operation results consistently."""
@@ -55,25 +55,25 @@ class DemonstrationSectionHelper:
 
 class ValidationHelper:
     """Helper to reduce repetitive validation patterns - SOLID SRP."""
-    
+
     @staticmethod
     def validate_user_data(user_data: TUserData) -> list[TErrorMessage]:
         """DRY Helper: Validate user data with consistent rules."""
         validation_errors: list[TErrorMessage] = []
-        
+
         if not is_non_empty_string(user_data.get("name")):
             validation_errors.append("Name is required")
-        
+
         if not is_email(user_data.get("email", "")):
             validation_errors.append("Valid email is required")
-        
+
         if not is_int(user_data.get("age")):
             validation_errors.append("Age must be a number")
         elif user_data.get("age", 0) < 0:
             validation_errors.append("Age must be positive")
-        
+
         return validation_errors
-    
+
     @staticmethod
     def report_validation_result(validation_errors: list[TErrorMessage]) -> None:
         """DRY Helper: Report validation results consistently."""
@@ -88,31 +88,31 @@ class ValidationHelper:
     def validate_config_data(config: dict[str, object]) -> list[TErrorMessage]:
         """DRY Helper: Validate configuration data."""
         validation_errors: list[TErrorMessage] = []
-        
+
         required_keys = ["database_url", "api_key", "timeout"]
-        
+
         for key in required_keys:
             if key not in config:
                 validation_errors.append(f"Missing required config key: {key}")
             elif not is_non_empty_string(config[key]):
                 validation_errors.append(f"Config key '{key}' must be non-empty string")
-        
+
         return validation_errors
 
 
 class FormattingHelper:
     """Helper for consistent data formatting - SOLID SRP."""
-    
+
     @staticmethod
     def format_currency(amount: float, currency: str = "USD") -> str:
         """Format currency consistently."""
         return f"{currency} {amount:.2f}"
-    
+
     @staticmethod
     def format_percentage(value: float) -> str:
         """Format percentage consistently."""
         return f"{value:.1f}%"
-    
+
     @staticmethod
     def format_file_size(bytes_count: int) -> str:
         """Format file size in human-readable format."""

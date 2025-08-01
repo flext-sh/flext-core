@@ -82,7 +82,7 @@ class CreateUserCommand(FlextCommand):
 
         return FlextResult.ok(None)
 
-    def get_payload(self) -> dict[str, Any]:
+    def get_payload(self) -> dict[str, object]:
         """Payload para logging/auditoria."""
         return {
             "name": self.name,
@@ -643,7 +643,7 @@ print(f"Idade -5: {result.is_valid}")  # False
 ```python
 from flext_core.patterns import FlextValidator, FlextValidatorId
 
-class UserValidator(FlextValidator[dict[str, Any]]):
+class UserValidator(FlextValidator[dict[str, object]]):
     """Validador completo para dados de usuário."""
 
     def __init__(self):
@@ -674,7 +674,7 @@ class UserValidator(FlextValidator[dict[str, Any]]):
             required=False
         ))
 
-    def validate_business_rules(self, data: dict[str, Any]) -> FlextValidationResult:
+    def validate_business_rules(self, data: dict[str, object]) -> FlextValidationResult:
         """Regras de negócio específicas."""
         result = FlextValidationResult.success()
 
@@ -741,7 +741,7 @@ print(f"Erros de negócio: {result.errors}")
 ### Complex Validation Scenarios
 
 ```python
-class OrderValidator(FlextValidator[dict[str, Any]]):
+class OrderValidator(FlextValidator[dict[str, object]]):
     """Validador para pedidos complexos."""
 
     def __init__(self):
@@ -760,7 +760,7 @@ class OrderValidator(FlextValidator[dict[str, Any]]):
             required=True
         ))
 
-    def validate_business_rules(self, data: dict[str, Any]) -> FlextValidationResult:
+    def validate_business_rules(self, data: dict[str, object]) -> FlextValidationResult:
         result = FlextValidationResult.success()
 
         # Validar itens do pedido

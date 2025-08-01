@@ -152,7 +152,7 @@ if user_service.is_success:
 
 ## Design Principles
 
-###  Principles Implementation
+### Principles Implementation
 
 **Single Responsibility Principle**:
 

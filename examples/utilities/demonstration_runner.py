@@ -37,7 +37,11 @@ from .complexity_helpers import (
     ValidationHelper,
 )
 from .domain_models import UtilityDemoOrder, UtilityDemoProduct, UtilityDemoUser
-from .formatting_helpers import generate_hash_id, generate_prefixed_id, generate_short_id
+from .formatting_helpers import (
+    generate_hash_id,
+    generate_prefixed_id,
+    generate_short_id,
+)
 from .validation_utilities import (
     calculate_discount_price,
     is_dict,
@@ -118,7 +122,7 @@ def demonstrate_type_checking() -> None:
     for value, expected_type in test_values:
         DemonstrationSectionHelper.print_separator()
         print(f"Testing value: {value} (expected: {expected_type})")
-        
+
         # Test type checking functions
         print(f"  is_string: {is_string(value)}")
         print(f"  is_int: {is_int(value)}")
@@ -164,15 +168,15 @@ def demonstrate_shared_domain_usage() -> None:
 
     # Create user using shared domain
     user_result = SharedDomainFactory.create_user(
-        name="John Doe",
-        email="john.doe@example.com",
-        age=30
+        name="John Doe", email="john.doe@example.com", age=30
     )
-    
+
     if not user_result.is_success:
-        DemonstrationSectionHelper.log_error(f"Failed to create user: {user_result.error}")
+        DemonstrationSectionHelper.log_error(
+            f"Failed to create user: {user_result.error}"
+        )
         return
-    
+
     shared_user = user_result.data
     enhanced_user = UtilityDemoUser(
         id=shared_user.id,
@@ -187,7 +191,7 @@ def demonstrate_shared_domain_usage() -> None:
     # Demonstrate enhanced functionality
     print(f"Cache Key: {enhanced_user.get_cache_key()}")
     print(f"Cache TTL: {enhanced_user.get_cache_ttl()} seconds")
-    
+
     # Serialize the user
     serialized_data = enhanced_user.to_serializable()
     print(f"Serialized User Keys: {list(serialized_data.keys())}")
@@ -203,28 +207,38 @@ def demonstrate_business_logic() -> None:
     product_result = SharedDomainFactory.create_product(
         name="Sample Product",
         price_amount=100.00,
-        description="Test product for discount calculation"
+        description="Test product for discount calculation",
     )
-    
+
     if not product_result.is_success:
-        DemonstrationSectionHelper.log_error(f"Failed to create product: {product_result.error}")
+        DemonstrationSectionHelper.log_error(
+            f"Failed to create product: {product_result.error}"
+        )
         return
-    
+
     product = product_result.data
-    print(f"Product: {product.name} - {FormattingHelper.format_currency(float(product.price.amount))}")
+    print(
+        f"Product: {product.name} - {FormattingHelper.format_currency(float(product.price.amount))}"
+    )
 
     # Test discount calculation
     discount_result = calculate_discount_price(product, 20.0)
     if discount_result.is_success:
         final_price = discount_result.data
-        print(f"20% discount price: {FormattingHelper.format_currency(float(final_price))}")
+        print(
+            f"20% discount price: {FormattingHelper.format_currency(float(final_price))}"
+        )
     else:
-        DemonstrationSectionHelper.log_error(f"Discount calculation failed: {discount_result.error}")
+        DemonstrationSectionHelper.log_error(
+            f"Discount calculation failed: {discount_result.error}"
+        )
 
     # Test invalid discount
     invalid_discount_result = calculate_discount_price(product, 150.0)
     if not invalid_discount_result.is_success:
-        DemonstrationSectionHelper.log_error(f"Expected error: {invalid_discount_result.error}")
+        DemonstrationSectionHelper.log_error(
+            f"Expected error: {invalid_discount_result.error}"
+        )
 
     DemonstrationSectionHelper.log_success("Business logic demonstration completed")
 
@@ -243,7 +257,9 @@ def run_all_demonstrations() -> None:
         demonstrate_business_logic()
 
         print("\n" + "=" * 70)
-        DemonstrationSectionHelper.log_success("ALL DEMONSTRATIONS COMPLETED SUCCESSFULLY!")
+        DemonstrationSectionHelper.log_success(
+            "ALL DEMONSTRATIONS COMPLETED SUCCESSFULLY!"
+        )
         print("=" * 70)
 
     except Exception as e:
