@@ -120,14 +120,14 @@ event_store = EventStore()
 
 class BaseCommandHandler:
     """Base handler with common patterns - reduces complexity."""
-    
+
     def __init__(self, handler_type: str) -> None:
         """Initialize base handler with type identifier."""
         self.handler_id: TEntityId = FlextUtilities.generate_entity_id()
         self.handler_type = handler_type
         log_message: TLogMessage = f"🔧 {handler_type} initialized: {self.handler_id}"
         print(log_message)
-    
+
     def create_query_projection(self, shared_user: object) -> TAnyObject:
         """DRY Helper: Create standardized query projection."""
         return {
@@ -136,11 +136,15 @@ class BaseCommandHandler:
             "email": shared_user.email_address.email,
             "age": shared_user.age.value,
             "status": shared_user.status.value,
-            "created_at": str(shared_user.created_at) if shared_user.created_at else None,
+            "created_at": str(shared_user.created_at)
+            if shared_user.created_at
+            else None,
             "version": shared_user.version,
         }
-    
-    def store_domain_event(self, event_type: str, data: TAnyObject) -> FlextResult[TEntityId]:
+
+    def store_domain_event(
+        self, event_type: str, data: TAnyObject
+    ) -> FlextResult[TEntityId]:
         """DRY Helper: Store domain event with error handling."""
         event = DomainEvent(event_type, data)
         return event_store.append_event(event)
@@ -148,20 +152,20 @@ class BaseCommandHandler:
 
 class DemonstrationFlowHelper:
     """Helper to reduce repetitive demonstration patterns - SOLID SRP."""
-    
+
     @staticmethod
     def print_section_header(example_num: int, title: str) -> None:
         """DRY Helper: Print standardized section headers."""
         print("\n" + "=" * 60)
         print(f"📋 EXAMPLE {example_num}: {title}")
         print("=" * 60)
-    
+
     @staticmethod
     def handle_result_with_state_update(
-        result: FlextResult[TAnyObject], 
+        result: FlextResult[TAnyObject],
         success_message: str,
         state_dict: dict[TEntityId, TUserData],
-        user_id: TEntityId | None = None
+        user_id: TEntityId | None = None,
     ) -> FlextResult[TAnyObject]:
         """DRY Helper: Handle result and update state consistently."""
         if result.is_success:
@@ -169,8 +173,9 @@ class DemonstrationFlowHelper:
             if user_id and isinstance(result.data, dict):
                 state_dict[user_id] = result.data
             return result
-        else:
-            return FlextResult.fail(f"{success_message.split(' ')[0]} failed: {result.error}")
+        return FlextResult.fail(
+            f"{success_message.split(' ')[0]} failed: {result.error}"
+        )
 
 
 # =============================================================================
@@ -395,7 +400,7 @@ class UpdateUserCommandHandler(
         update_data: TAnyObject = {
             "updated_at": FlextUtilities.generate_iso_timestamp(),
         }
-        
+
         # Apply updates if provided
         if command.name is not None:
             user_data["name"] = command.name
@@ -437,11 +442,13 @@ class DeleteUserCommandHandler(
 
         # Mark as deleted
         deleted_at = FlextUtilities.generate_iso_timestamp()
-        user_data.update({
-            "status": "deleted",
-            "deleted_at": deleted_at,
-            "deletion_reason": command.reason,
-        })
+        user_data.update(
+            {
+                "status": "deleted",
+                "deleted_at": deleted_at,
+                "deletion_reason": command.reason,
+            }
+        )
 
         # Prepare deletion event data
         deletion_data: TAnyObject = {
@@ -693,7 +700,7 @@ class UserManagementApplicationService:
 # =============================================================================
 
 
-# SOLID SRP: Extract CQRS demonstration methods to reduce main complexity
+# Extract CQRS demonstration methods to reduce main complexity
 class CQRSDemonstrator:
     """Handles CQRS pattern demonstration following SOLID principles."""
 
@@ -710,13 +717,17 @@ class CQRSDemonstrator:
         # Setup command bus
         command_bus_result = setup_command_bus()
         if command_bus_result.is_failure:
-            return FlextResult.fail(f"Command bus setup failed: {command_bus_result.error}")
+            return FlextResult.fail(
+                f"Command bus setup failed: {command_bus_result.error}"
+            )
 
         # Setup query handlers
         query_handlers = setup_query_handlers(self.users_db)
 
         # Create application service
-        self.app_service = UserManagementApplicationService(command_bus_result.data, query_handlers)
+        self.app_service = UserManagementApplicationService(
+            command_bus_result.data, query_handlers
+        )
         return FlextResult.ok(None)
 
     def demonstrate_user_creation(self) -> FlextResult[TEntityId]:
@@ -727,23 +738,28 @@ class CQRSDemonstrator:
         # Use helper for standardized section header
         DemonstrationFlowHelper.print_section_header(2, "User Creation Commands")
 
-        create_result = self.app_service.create_user("Alice Johnson", "alice@example.com", 28)
-        
+        create_result = self.app_service.create_user(
+            "Alice Johnson", "alice@example.com", 28
+        )
+
         if create_result.is_success:
             user_data = create_result.data
             if isinstance(user_data, dict) and "id" in user_data:
                 user_id = user_data["id"]
                 # Use helper for consistent result handling with state update
-                handled_result = DemonstrationFlowHelper.handle_result_with_state_update(
-                    create_result, f"User created successfully: {user_id}", self.users_db, user_id
+                handled_result = (
+                    DemonstrationFlowHelper.handle_result_with_state_update(
+                        create_result,
+                        f"User created successfully: {user_id}",
+                        self.users_db,
+                        user_id,
+                    )
                 )
                 self.created_user_id = user_id
                 return FlextResult.ok(user_id)
-            else:
-                print("✅ User created successfully")
-                return FlextResult.ok("unknown_id")
-        else:
-            return FlextResult.fail(f"User creation failed: {create_result.error}")
+            print("✅ User created successfully")
+            return FlextResult.ok("unknown_id")
+        return FlextResult.fail(f"User creation failed: {create_result.error}")
 
     def demonstrate_user_update(self) -> FlextResult[None]:
         """Demonstrate user update command."""
@@ -754,15 +770,16 @@ class CQRSDemonstrator:
         print("📋 EXAMPLE 3: User Update Commands")
         print("=" * 60)
 
-        update_result = self.app_service.update_user(self.created_user_id, name="Alice Smith")
+        update_result = self.app_service.update_user(
+            self.created_user_id, name="Alice Smith"
+        )
         if update_result.is_success:
             print(f"✅ User updated successfully: {self.created_user_id}")
             # Update database
             if isinstance(update_result.data, dict):
                 self.users_db[self.created_user_id] = update_result.data
             return FlextResult.ok(None)
-        else:
-            return FlextResult.fail(f"User update failed: {update_result.error}")
+        return FlextResult.fail(f"User update failed: {update_result.error}")
 
     def demonstrate_user_queries(self) -> FlextResult[None]:
         """Demonstrate user query operations."""
@@ -784,8 +801,7 @@ class CQRSDemonstrator:
             else:
                 print("✅ Users listed successfully")
             return FlextResult.ok(None)
-        else:
-            return FlextResult.fail(f"User listing failed: {list_result.error}")
+        return FlextResult.fail(f"User listing failed: {list_result.error}")
 
     def demonstrate_event_sourcing(self) -> FlextResult[None]:
         """Demonstrate event sourcing functionality."""
@@ -818,8 +834,7 @@ class CQRSDemonstrator:
             if isinstance(delete_result.data, dict):
                 self.users_db[self.created_user_id] = delete_result.data
             return FlextResult.ok(None)
-        else:
-            return FlextResult.fail(f"User deletion failed: {delete_result.error}")
+        return FlextResult.fail(f"User deletion failed: {delete_result.error}")
 
     def demonstrate_validation_failure(self) -> FlextResult[None]:
         """Demonstrate command validation with invalid data."""
@@ -835,9 +850,8 @@ class CQRSDemonstrator:
         if invalid_result.is_failure:
             print(f"❌ Expected validation failure: {invalid_result.error}")
             return FlextResult.ok(None)
-        else:
-            print("⚠️  Unexpected success for invalid data")
-            return FlextResult.fail("Validation should have failed")
+        print("⚠️  Unexpected success for invalid data")
+        return FlextResult.fail("Validation should have failed")
 
 
 def main() -> None:
