@@ -114,6 +114,66 @@ event_store = EventStore()
 
 
 # =============================================================================
+# COMPLEXITY REDUCTION HELPERS - SOLID SRP: Eliminate repetitive patterns
+# =============================================================================
+
+
+class BaseCommandHandler:
+    """Base handler with common patterns - reduces complexity."""
+    
+    def __init__(self, handler_type: str) -> None:
+        """Initialize base handler with type identifier."""
+        self.handler_id: TEntityId = FlextUtilities.generate_entity_id()
+        self.handler_type = handler_type
+        log_message: TLogMessage = f"🔧 {handler_type} initialized: {self.handler_id}"
+        print(log_message)
+    
+    def create_query_projection(self, shared_user: object) -> TAnyObject:
+        """DRY Helper: Create standardized query projection."""
+        return {
+            "id": shared_user.id,
+            "name": shared_user.name,
+            "email": shared_user.email_address.email,
+            "age": shared_user.age.value,
+            "status": shared_user.status.value,
+            "created_at": str(shared_user.created_at) if shared_user.created_at else None,
+            "version": shared_user.version,
+        }
+    
+    def store_domain_event(self, event_type: str, data: TAnyObject) -> FlextResult[TEntityId]:
+        """DRY Helper: Store domain event with error handling."""
+        event = DomainEvent(event_type, data)
+        return event_store.append_event(event)
+
+
+class DemonstrationFlowHelper:
+    """Helper to reduce repetitive demonstration patterns - SOLID SRP."""
+    
+    @staticmethod
+    def print_section_header(example_num: int, title: str) -> None:
+        """DRY Helper: Print standardized section headers."""
+        print("\n" + "=" * 60)
+        print(f"📋 EXAMPLE {example_num}: {title}")
+        print("=" * 60)
+    
+    @staticmethod
+    def handle_result_with_state_update(
+        result: FlextResult[TAnyObject], 
+        success_message: str,
+        state_dict: dict[TEntityId, TUserData],
+        user_id: TEntityId | None = None
+    ) -> FlextResult[TAnyObject]:
+        """DRY Helper: Handle result and update state consistently."""
+        if result.is_success:
+            print(f"✅ {success_message}")
+            if user_id and isinstance(result.data, dict):
+                state_dict[user_id] = result.data
+            return result
+        else:
+            return FlextResult.fail(f"{success_message.split(' ')[0]} failed: {result.error}")
+
+
+# =============================================================================
 # COMMANDS - Write operations with business intent
 # =============================================================================
 
@@ -256,23 +316,18 @@ class GetUserEventsQuery(FlextCommands.Query):
 
 
 class CreateUserCommandHandler(
+    BaseCommandHandler,
     FlextCommands.Handler[CreateUserCommand, TAnyObject],
 ):
     """Handler for CreateUserCommand using flext_core.types."""
 
     def __init__(self) -> None:
         """Initialize command handler."""
-        self.handler_id: TEntityId = FlextUtilities.generate_entity_id()
-        log_message: TLogMessage = (
-            f"🔧 CreateUserCommandHandler initialized: {self.handler_id}"
-        )
-        print(log_message)
+        super().__init__("CreateUserCommandHandler")
 
     def handle(self, command: CreateUserCommand) -> FlextResult[TAnyObject]:
-        """Handle create user command using shared domain models."""
-        log_message: TLogMessage = (
-            f"👤 Creating enhanced user: {command.name} ({command.email})"
-        )
+        """Handle create user command using shared domain models - reduced complexity."""
+        log_message: TLogMessage = f"👤 Creating user: {command.name} ({command.email})"
         print(log_message)
 
         # Use SharedDomainFactory for robust user creation
@@ -287,39 +342,27 @@ class CreateUserCommandHandler(
 
         shared_user = user_result.data
 
-        # Create enhanced CQRS demo user
         try:
-            user = shared_user
-
             # Log domain operation using shared user
             log_domain_operation(
                 "user_created_via_command",
                 "SharedUser",
-                user.id,
+                shared_user.id,
                 handler_id=self.handler_id,
                 command_type="CreateUserCommand",
-                name=user.name,
-                email=user.email_address.email,
+                name=shared_user.name,
+                email=shared_user.email_address.email,
             )
 
-            # Create query projection data using shared user
-            query_projection: TAnyObject = {
-                "id": user.id,
-                "name": user.name,
-                "email": user.email_address.email,
-                "age": user.age.value,
-                "status": user.status.value,
-                "created_at": str(user.created_at) if user.created_at else None,
-                "version": user.version,
-            }
+            # Use helper to create query projection - DRY principle
+            query_projection = self.create_query_projection(shared_user)
 
-            # Store event with shared user data
-            event = DomainEvent("UserCreated", query_projection)
-            event_result = event_store.append_event(event)
+            # Use helper to store domain event - DRY principle
+            event_result = self.store_domain_event("UserCreated", query_projection)
             if event_result.is_failure:
                 return FlextResult.fail(event_result.error)
 
-            print(f"✅ Shared user created successfully: {user.id}")
+            print(f"✅ User created successfully: {shared_user.id}")
             return FlextResult.ok(query_projection)
 
         except (TypeError, ValueError) as e:
@@ -327,46 +370,42 @@ class CreateUserCommandHandler(
 
 
 class UpdateUserCommandHandler(
+    BaseCommandHandler,
     FlextCommands.Handler[UpdateUserCommand, TAnyObject],
 ):
     """Handler for UpdateUserCommand using flext_core.types."""
 
     def __init__(self, users_db: dict[TEntityId, TUserData]) -> None:
         """Initialize command handler with user database."""
+        super().__init__("UpdateUserCommandHandler")
         self.users_db = users_db
-        self.handler_id: TEntityId = FlextUtilities.generate_entity_id()
-        log_message: TLogMessage = (
-            f"🔧 UpdateUserCommandHandler initialized: {self.handler_id}"
-        )
-        print(log_message)
 
     def handle(self, command: UpdateUserCommand) -> FlextResult[TAnyObject]:
-        """Handle update user command using TAnyObject return type."""
+        """Handle update user command - reduced complexity."""
         log_message: TLogMessage = f"🔄 Updating user: {command.target_user_id}"
         print(log_message)
 
         # Check if user exists
         if command.target_user_id not in self.users_db:
-            error_message: TErrorMessage = f"User not found: {command.target_user_id}"
-            return FlextResult.fail(error_message)
+            return FlextResult.fail(f"User not found: {command.target_user_id}")
 
         user_data = self.users_db[command.target_user_id]
 
-        # Update fields
+        # Update fields using helper data structure
         update_data: TAnyObject = {
             "updated_at": FlextUtilities.generate_iso_timestamp(),
         }
+        
+        # Apply updates if provided
         if command.name is not None:
             user_data["name"] = command.name
             update_data["name"] = command.name
-
         if command.email is not None:
             user_data["email"] = command.email
             update_data["email"] = command.email
 
-        # Store event
-        event = DomainEvent("UserUpdated", update_data)
-        event_result = event_store.append_event(event)
+        # Use helper to store domain event - DRY principle
+        event_result = self.store_domain_event("UserUpdated", update_data)
         if event_result.is_failure:
             return FlextResult.fail(event_result.error)
 
@@ -375,44 +414,44 @@ class UpdateUserCommandHandler(
 
 
 class DeleteUserCommandHandler(
+    BaseCommandHandler,
     FlextCommands.Handler[DeleteUserCommand, TAnyObject],
 ):
     """Handler for DeleteUserCommand using flext_core.types."""
 
     def __init__(self, users_db: dict[TEntityId, TUserData]) -> None:
         """Initialize command handler with user database."""
+        super().__init__("DeleteUserCommandHandler")
         self.users_db = users_db
-        self.handler_id: TEntityId = FlextUtilities.generate_entity_id()
-        log_message: TLogMessage = (
-            f"🔧 DeleteUserCommandHandler initialized: {self.handler_id}"
-        )
-        print(log_message)
 
     def handle(self, command: DeleteUserCommand) -> FlextResult[TAnyObject]:
-        """Handle delete user command using TAnyObject return type."""
+        """Handle delete user command - reduced complexity."""
         log_message: TLogMessage = f"🗑️ Deleting user: {command.target_user_id}"
         print(log_message)
 
         # Check if user exists
         if command.target_user_id not in self.users_db:
-            error_message: TErrorMessage = f"User not found: {command.target_user_id}"
-            return FlextResult.fail(error_message)
+            return FlextResult.fail(f"User not found: {command.target_user_id}")
 
         user_data = self.users_db[command.target_user_id]
 
         # Mark as deleted
-        user_data["status"] = "deleted"
-        user_data["deleted_at"] = FlextUtilities.generate_iso_timestamp()
-        user_data["deletion_reason"] = command.reason
+        deleted_at = FlextUtilities.generate_iso_timestamp()
+        user_data.update({
+            "status": "deleted",
+            "deleted_at": deleted_at,
+            "deletion_reason": command.reason,
+        })
 
-        # Store event
+        # Prepare deletion event data
         deletion_data: TAnyObject = {
             "user_id": command.target_user_id,
             "reason": command.reason,
-            "deleted_at": user_data["deleted_at"],
+            "deleted_at": deleted_at,
         }
-        event = DomainEvent("UserDeleted", deletion_data)
-        event_result = event_store.append_event(event)
+
+        # Use helper to store domain event - DRY principle
+        event_result = self.store_domain_event("UserDeleted", deletion_data)
         if event_result.is_failure:
             return FlextResult.fail(event_result.error)
 
@@ -654,131 +693,177 @@ class UserManagementApplicationService:
 # =============================================================================
 
 
-def main() -> None:  # noqa: PLR0912, PLR0915
-    """Run comprehensive FlextCommands demonstration with maximum type safety."""
+# SOLID SRP: Extract CQRS demonstration methods to reduce main complexity
+class CQRSDemonstrator:
+    """Handles CQRS pattern demonstration following SOLID principles."""
+
+    def __init__(self) -> None:
+        self.users_db: dict[TEntityId, TUserData] = {}
+        self.app_service: UserManagementApplicationService | None = None
+        self.created_user_id: TEntityId | None = None
+
+    def setup_cqrs_infrastructure(self) -> FlextResult[None]:
+        """Setup command bus, query handlers, and application service."""
+        # Use helper for standardized section header
+        DemonstrationFlowHelper.print_section_header(1, "Command Bus Setup")
+
+        # Setup command bus
+        command_bus_result = setup_command_bus()
+        if command_bus_result.is_failure:
+            return FlextResult.fail(f"Command bus setup failed: {command_bus_result.error}")
+
+        # Setup query handlers
+        query_handlers = setup_query_handlers(self.users_db)
+
+        # Create application service
+        self.app_service = UserManagementApplicationService(command_bus_result.data, query_handlers)
+        return FlextResult.ok(None)
+
+    def demonstrate_user_creation(self) -> FlextResult[TEntityId]:
+        """Demonstrate user creation command - reduced complexity."""
+        if not self.app_service:
+            return FlextResult.fail("Application service not initialized")
+
+        # Use helper for standardized section header
+        DemonstrationFlowHelper.print_section_header(2, "User Creation Commands")
+
+        create_result = self.app_service.create_user("Alice Johnson", "alice@example.com", 28)
+        
+        if create_result.is_success:
+            user_data = create_result.data
+            if isinstance(user_data, dict) and "id" in user_data:
+                user_id = user_data["id"]
+                # Use helper for consistent result handling with state update
+                handled_result = DemonstrationFlowHelper.handle_result_with_state_update(
+                    create_result, f"User created successfully: {user_id}", self.users_db, user_id
+                )
+                self.created_user_id = user_id
+                return FlextResult.ok(user_id)
+            else:
+                print("✅ User created successfully")
+                return FlextResult.ok("unknown_id")
+        else:
+            return FlextResult.fail(f"User creation failed: {create_result.error}")
+
+    def demonstrate_user_update(self) -> FlextResult[None]:
+        """Demonstrate user update command."""
+        if not self.app_service or not self.created_user_id:
+            return FlextResult.fail("User not created or service not initialized")
+
+        print("\n" + "=" * 60)
+        print("📋 EXAMPLE 3: User Update Commands")
+        print("=" * 60)
+
+        update_result = self.app_service.update_user(self.created_user_id, name="Alice Smith")
+        if update_result.is_success:
+            print(f"✅ User updated successfully: {self.created_user_id}")
+            # Update database
+            if isinstance(update_result.data, dict):
+                self.users_db[self.created_user_id] = update_result.data
+            return FlextResult.ok(None)
+        else:
+            return FlextResult.fail(f"User update failed: {update_result.error}")
+
+    def demonstrate_user_queries(self) -> FlextResult[None]:
+        """Demonstrate user query operations."""
+        if not self.app_service:
+            return FlextResult.fail("Application service not initialized")
+
+        print("\n" + "=" * 60)
+        print("📋 EXAMPLE 4: User Queries")
+        print("=" * 60)
+
+        list_result = self.app_service.list_users(active_only=True)
+        if list_result.is_success:
+            users = list_result.data
+            if isinstance(users, list):
+                print(f"✅ Found {len(users)} active users")
+                for user in users:
+                    if isinstance(user, dict) and "name" in user:
+                        print(f"   - {user['name']} ({user.get('email', 'N/A')})")
+            else:
+                print("✅ Users listed successfully")
+            return FlextResult.ok(None)
+        else:
+            return FlextResult.fail(f"User listing failed: {list_result.error}")
+
+    def demonstrate_event_sourcing(self) -> FlextResult[None]:
+        """Demonstrate event sourcing functionality."""
+        print("\n" + "=" * 60)
+        print("📋 EXAMPLE 5: Event Sourcing")
+        print("=" * 60)
+
+        all_events = event_store.get_all_events()
+        print(f"📝 Total events in store: {len(all_events)}")
+        for event in all_events:
+            print(f"   - {event.event_type}: {event.event_id}")
+        return FlextResult.ok(None)
+
+    def demonstrate_user_deletion(self) -> FlextResult[None]:
+        """Demonstrate user deletion command."""
+        if not self.app_service or not self.created_user_id:
+            return FlextResult.fail("User not created or service not initialized")
+
+        print("\n" + "=" * 60)
+        print("📋 EXAMPLE 6: User Deletion Commands")
+        print("=" * 60)
+
+        delete_result = self.app_service.delete_user(
+            self.created_user_id,
+            "User requested account deletion",
+        )
+        if delete_result.is_success:
+            print(f"✅ User deleted successfully: {self.created_user_id}")
+            # Update database
+            if isinstance(delete_result.data, dict):
+                self.users_db[self.created_user_id] = delete_result.data
+            return FlextResult.ok(None)
+        else:
+            return FlextResult.fail(f"User deletion failed: {delete_result.error}")
+
+    def demonstrate_validation_failure(self) -> FlextResult[None]:
+        """Demonstrate command validation with invalid data."""
+        if not self.app_service:
+            return FlextResult.fail("Application service not initialized")
+
+        print("\n" + "=" * 60)
+        print("📋 EXAMPLE 7: Command Validation")
+        print("=" * 60)
+
+        # Try to create user with invalid data
+        invalid_result = self.app_service.create_user("", "invalid-email", 15)
+        if invalid_result.is_failure:
+            print(f"❌ Expected validation failure: {invalid_result.error}")
+            return FlextResult.ok(None)
+        else:
+            print("⚠️  Unexpected success for invalid data")
+            return FlextResult.fail("Validation should have failed")
+
+
+def main() -> None:
+    """Run comprehensive FlextCommands demonstration using SOLID principles."""
     print("=" * 80)
     print("🚀 FLEXT COMMANDS - CQRS PATTERN DEMONSTRATION")
     print("=" * 80)
 
-    # Setup command bus and query handlers
-    print("\n" + "=" * 60)
-    print("📋 EXAMPLE 1: Command Bus Setup")
-    print("=" * 60)
+    demonstrator = CQRSDemonstrator()
 
-    command_bus_result = setup_command_bus()
-    if command_bus_result.is_failure:
-        print(f"❌ Command bus setup failed: {command_bus_result.error}")
-        return
+    # Run all demonstration steps
+    steps = [
+        demonstrator.setup_cqrs_infrastructure,
+        demonstrator.demonstrate_user_creation,
+        demonstrator.demonstrate_user_update,
+        demonstrator.demonstrate_user_queries,
+        demonstrator.demonstrate_event_sourcing,
+        demonstrator.demonstrate_user_deletion,
+        demonstrator.demonstrate_validation_failure,
+    ]
 
-    command_bus = command_bus_result.data
-
-    # Initialize user database for query handlers
-    users_db: dict[TEntityId, TUserData] = {}
-    query_handlers = setup_query_handlers(users_db)
-
-    # Create application service
-    app_service = UserManagementApplicationService(command_bus, query_handlers)
-
-    # Test user creation
-    print("\n" + "=" * 60)
-    print("📋 EXAMPLE 2: User Creation Commands")
-    print("=" * 60)
-
-    create_result = app_service.create_user("Alice Johnson", "alice@example.com", 28)
-    if create_result.is_success:
-        user_data = create_result.data
-        if isinstance(user_data, dict) and "id" in user_data:
-            user_id = user_data["id"]
-            print(f"✅ User created successfully: {user_id}")
-            # Store in database for queries
-            users_db[user_id] = user_data
-        else:
-            print("✅ User created successfully")
-    else:
-        print(f"❌ User creation failed: {create_result.error}")
-
-    # Test user update
-    print("\n" + "=" * 60)
-    print("📋 EXAMPLE 3: User Update Commands")
-    print("=" * 60)
-
-    if (
-        create_result.is_success
-        and isinstance(create_result.data, dict)
-        and "id" in create_result.data
-    ):
-        user_id = create_result.data["id"]
-        update_result = app_service.update_user(user_id, name="Alice Smith")
-        if update_result.is_success:
-            print(f"✅ User updated successfully: {user_id}")
-            # Update database
-            if isinstance(update_result.data, dict):
-                users_db[user_id] = update_result.data
-        else:
-            print(f"❌ User update failed: {update_result.error}")
-
-    # Test user queries
-    print("\n" + "=" * 60)
-    print("📋 EXAMPLE 4: User Queries")
-    print("=" * 60)
-
-    list_result = app_service.list_users(active_only=True)
-    if list_result.is_success:
-        users = list_result.data
-        if isinstance(users, list):
-            print(f"✅ Found {len(users)} active users")
-            for user in users:
-                if isinstance(user, dict) and "name" in user:
-                    print(f"   - {user['name']} ({user.get('email', 'N/A')})")
-        else:
-            print("✅ Users listed successfully")
-    else:
-        print(f"❌ User listing failed: {list_result.error}")
-
-    # Test event sourcing
-    print("\n" + "=" * 60)
-    print("📋 EXAMPLE 5: Event Sourcing")
-    print("=" * 60)
-
-    all_events = event_store.get_all_events()
-    print(f"📝 Total events in store: {len(all_events)}")
-    for event in all_events:
-        print(f"   - {event.event_type}: {event.event_id}")
-
-    # Test user deletion
-    print("\n" + "=" * 60)
-    print("📋 EXAMPLE 6: User Deletion Commands")
-    print("=" * 60)
-
-    if (
-        create_result.is_success
-        and isinstance(create_result.data, dict)
-        and "id" in create_result.data
-    ):
-        user_id = create_result.data["id"]
-        delete_result = app_service.delete_user(
-            user_id,
-            "User requested account deletion",
-        )
-        if delete_result.is_success:
-            print(f"✅ User deleted successfully: {user_id}")
-            # Update database
-            if isinstance(delete_result.data, dict):
-                users_db[user_id] = delete_result.data
-        else:
-            print(f"❌ User deletion failed: {delete_result.error}")
-
-    # Test validation failure
-    print("\n" + "=" * 60)
-    print("📋 EXAMPLE 7: Command Validation")
-    print("=" * 60)
-
-    # Try to create user with invalid data
-    invalid_result = app_service.create_user("", "invalid-email", 15)
-    if invalid_result.is_failure:
-        print(f"❌ Expected validation failure: {invalid_result.error}")
-    else:
-        print("⚠️  Unexpected success for invalid data")
+    for step in steps:
+        result = step()
+        if result.is_failure:
+            print(f"❌ Demonstration step failed: {result.error}")
+            return
 
     print("\n" + "=" * 80)
     print("🎉 FLEXT COMMANDS DEMONSTRATION COMPLETED")

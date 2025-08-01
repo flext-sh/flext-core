@@ -35,6 +35,7 @@ from flext_core._config_base import (
     _ObservabilityConfig,
     _PerformanceConfig,
 )
+from flext_core.constants import FlextConstants
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 
@@ -1046,7 +1047,11 @@ class TestConfigBaseIntegration:
         assert load_result.is_success
 
         # Apply defaults
-        defaults: dict[str, object] = {"debug": False, "port": 8080, "timeout": 30}
+        defaults: dict[str, object] = {
+            "debug": False,
+            "port": FlextConstants.Platform.FLEXCORE_PORT,
+            "timeout": FlextConstants.DEFAULT_TIMEOUT,
+        }
         assert load_result.data is not None
         config_with_defaults = _BaseConfigDefaults.apply_defaults(
             load_result.data,
@@ -1080,7 +1085,7 @@ class TestConfigBaseIntegration:
         if final_config["database_url"] != "sqlite://test.db":
             msg = f"Expected {'sqlite://test.db'}, got {final_config['database_url']}"
             raise AssertionError(msg)
-        assert final_config["port"] == 8080
+        assert final_config["port"] == FlextConstants.Platform.FLEXCORE_PORT
         if final_config["timeout"] != 30:
             msg = f"Expected {30}, got {final_config['timeout']}"
             raise AssertionError(msg)
@@ -1133,7 +1138,7 @@ class TestConfigBaseIntegration:
         """Test configuration merging with proper precedence."""
         base_config: dict[str, object] = {
             "debug": False,
-            "port": 8080,
+            "port": FlextConstants.Platform.FLEXCORE_PORT,
             "host": "localhost",
         }
         env_config: dict[str, object] = {"debug": True, "port": 3000}
@@ -1162,7 +1167,7 @@ class TestConfigBaseIntegration:
             os.environ,
             {
                 "APP_DEBUG": "true",
-                "APP_PORT": "8080",
+                "APP_PORT": str(FlextConstants.Platform.FLEXCORE_PORT),
                 "APP_SECRET": "secret123",
             },
             clear=False,
@@ -1181,7 +1186,7 @@ class TestConfigBaseIntegration:
                 msg = f"Expected {'true'}, got {debug_result.data}"
                 raise AssertionError(msg)
             assert port_result.is_success
-            if port_result.data != "8080":
+            if port_result.data != str(FlextConstants.Platform.FLEXCORE_PORT):
                 msg = f"Expected {'8080'}, got {port_result.data}"
                 raise AssertionError(msg)
             assert secret_result.is_success
@@ -1227,7 +1232,10 @@ class TestConfigBaseIntegration:
         """Test error recovery in configuration workflow."""
         # Simulate config loading with fallbacks
         primary_file = "/nonexistent/primary.json"
-        fallback_config: dict[str, object] = {"fallback": True, "port": 8080}
+        fallback_config: dict[str, object] = {
+            "fallback": True,
+            "port": FlextConstants.Platform.FLEXCORE_PORT,
+        }
 
         # Try primary config (will fail)
         primary_result = _BaseConfigOps.safe_load_json_file(primary_file)
@@ -1268,6 +1276,6 @@ class TestConfigBaseIntegration:
         if not (final_config["fallback"]):
             msg = f"Expected True, got {final_config['fallback']}"
             raise AssertionError(msg)
-        if final_config["port"] != 8080:
-            msg = f"Expected {8080}, got {final_config['port']}"
+        if final_config["port"] != FlextConstants.Platform.FLEXCORE_PORT:
+            msg = f"Expected FlextConstants.Platform.FLEXCORE_PORT, got {final_config['port']}"
             raise AssertionError(msg)

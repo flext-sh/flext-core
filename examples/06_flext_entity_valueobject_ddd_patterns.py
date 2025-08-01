@@ -1417,49 +1417,21 @@ def demonstrate_performance_characteristics() -> None:
 
 def main() -> None:
     """Run comprehensive FlextEntity/ValueObject DDD demonstration."""
-    print("=" * 80)
-    print("🏢 FLEXT ENTITY/VALUE OBJECT - DOMAIN-DRIVEN DESIGN PATTERNS DEMONSTRATION")
-    print("=" * 80)
-
-    # Example 1: Value Objects
-    print("\n" + "=" * 60)
-    print("📋 EXAMPLE 1: Value Object Patterns")
-    print("=" * 60)
-    demonstrate_value_objects()
-
-    # Example 2: Entity Lifecycle
-    print("\n" + "=" * 60)
-    print("📋 EXAMPLE 2: Entity Lifecycle Management")
-    print("=" * 60)
-    demonstrate_entity_lifecycle()
-
-    # Example 3: Aggregate Patterns
-    print("\n" + "=" * 60)
-    print("📋 EXAMPLE 3: Aggregate Patterns and Domain Services")
-    print("=" * 60)
-    demonstrate_aggregate_patterns()
-
-    # Example 4: Repository Patterns
-    print("\n" + "=" * 60)
-    print("📋 EXAMPLE 4: Repository Patterns")
-    print("=" * 60)
-    demonstrate_repository_patterns()
-
-    # Example 5: Version Management
-    print("\n" + "=" * 60)
-    print("📋 EXAMPLE 5: Version Management and Optimistic Locking")
-    print("=" * 60)
-    demonstrate_version_management()
-
-    # Example 6: Performance Characteristics
-    print("\n" + "=" * 60)
-    print("📋 EXAMPLE 6: Performance Characteristics")
-    print("=" * 60)
-    demonstrate_performance_characteristics()
-
-    print("\n" + "=" * 80)
-    print("🎉 FLEXT ENTITY/VALUE OBJECT DDD DEMONSTRATION COMPLETED")
-    print("=" * 80)
+    from shared_example_helpers import run_example_demonstration
+    
+    examples = [
+        ("Value Object Patterns", demonstrate_value_objects),
+        ("Entity Lifecycle Management", demonstrate_entity_lifecycle),
+        ("Aggregate Patterns and Domain Services", demonstrate_aggregate_patterns),
+        ("Repository Patterns", demonstrate_repository_patterns),
+        ("Version Management and Optimistic Locking", demonstrate_version_management),
+        ("Performance Characteristics", demonstrate_performance_characteristics),
+    ]
+    
+    run_example_demonstration(
+        "FLEXT ENTITY/VALUE OBJECT - DOMAIN-DRIVEN DESIGN PATTERNS DEMONSTRATION",
+        examples
+    )
 
 
 if __name__ == "__main__":

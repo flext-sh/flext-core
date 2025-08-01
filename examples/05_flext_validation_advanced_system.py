@@ -25,6 +25,7 @@ from decimal import Decimal
 from shared_domain import (
     Money,
     Product as SharedProduct,
+    SharedDemonstrationPattern,
     SharedDomainFactory,
     User as SharedUser,
 )
@@ -57,6 +58,147 @@ MAX_PRODUCT_PRICE = 10000  # Maximum allowed product price ($10,000)
 # Age validation constants
 MAX_AGE = 150  # Maximum allowed age
 MIN_GUARDIAN_AGE = 21  # Minimum age before requiring guardian consent
+
+# =============================================================================
+# COMPLEXITY REDUCTION HELPERS - SOLID SRP: Validation pattern refactoring
+# =============================================================================
+
+
+class ValidationResult:
+    """Helper to accumulate validation errors - eliminates multiple returns."""
+    
+    def __init__(self) -> None:
+        """Initialize validation result accumulator."""
+        self.errors: list[TErrorMessage] = []
+        self.warnings: list[str] = []
+    
+    def add_error(self, error: TErrorMessage) -> None:
+        """Add validation error to accumulator."""
+        self.errors.append(error)
+    
+    def add_warning(self, warning: str) -> None:
+        """Add validation warning to accumulator."""
+        self.warnings.append(warning)
+    
+    def has_errors(self) -> bool:
+        """Check if any validation errors occurred."""
+        return len(self.errors) > 0
+    
+    def get_combined_error(self) -> TErrorMessage:
+        """Get combined error message from all validation errors."""
+        if not self.has_errors():
+            return ""
+        return f"Validation failed: {'; '.join(self.errors)}"
+    
+    def to_flext_result(self) -> FlextResult[None]:
+        """Convert validation result to FlextResult - eliminates early returns."""
+        if self.has_errors():
+            return FlextResult.fail(self.get_combined_error())
+        return FlextResult.ok(None)
+
+
+class ProductFieldValidator:
+    """Strategy pattern: Specialized product field validation - reduces complexity."""
+    
+    def __init__(self, validation_result: ValidationResult) -> None:
+        """Initialize with validation result accumulator."""
+        self.validation_result = validation_result
+    
+    def validate_product_id(self, product_id: object) -> None:
+        """Validate product ID field - SOLID SRP."""
+        if not FlextTypes.TypeGuards.is_instance_of(product_id, str):
+            self.validation_result.add_error("Product ID must be a string")
+            return
+        
+        if not product_id or len(product_id.strip()) == 0:
+            self.validation_result.add_error("Product ID cannot be empty")
+    
+    def validate_name(self, name: object) -> None:
+        """Validate product name field - SOLID SRP."""
+        if not FlextTypes.TypeGuards.is_instance_of(name, str):
+            self.validation_result.add_error("Name must be a string")
+            return
+            
+        if not name or len(name.strip()) < MIN_PRODUCT_NAME_LENGTH:
+            self.validation_result.add_error(f"Name must be at least {MIN_PRODUCT_NAME_LENGTH} characters")
+    
+    def validate_price(self, price: object) -> None:
+        """Validate product price field - SOLID SRP."""
+        if not FlextTypes.TypeGuards.is_instance_of(price, (int, float)):
+            self.validation_result.add_error("Price must be a number")
+            return
+            
+        if price < 0:
+            self.validation_result.add_error("Price cannot be negative")
+        
+        if price > MAX_PRODUCT_PRICE:
+            self.validation_result.add_error(f"Price cannot exceed ${MAX_PRODUCT_PRICE}")
+    
+    def validate_category(self, category: object) -> None:
+        """Validate product category field - SOLID SRP."""
+        if not FlextTypes.TypeGuards.is_instance_of(category, str):
+            self.validation_result.add_error("Category must be a string")
+            return
+            
+        if not category or len(category.strip()) == 0:
+            self.validation_result.add_error("Category cannot be empty")
+    
+    def validate_stock(self, stock: object) -> None:
+        """Validate product stock field - SOLID SRP."""
+        if not FlextTypes.TypeGuards.is_instance_of(stock, int):
+            self.validation_result.add_error("Stock must be an integer")
+            return
+            
+        if stock < 0:
+            self.validation_result.add_error("Stock cannot be negative")
+    
+    def validate_tags(self, tags: object) -> None:
+        """Validate product tags field - SOLID SRP."""
+        if tags is None:
+            return  # Tags are optional
+            
+        if not FlextTypes.TypeGuards.is_instance_of(tags, list):
+            self.validation_result.add_error("Tags must be a list if provided")
+            return
+        
+        for tag in tags:
+            if not FlextTypes.TypeGuards.is_instance_of(tag, str):
+                self.validation_result.add_error("All tags must be strings")
+                break
+
+
+class ProductValidationOrchestrator:
+    """Orchestrator for complete product validation - eliminates multiple returns."""
+    
+    def __init__(self, product_data: TAnyObject) -> None:
+        """Initialize with product data to validate."""
+        self.product_data = product_data
+        self.validation_result = ValidationResult() 
+        self.field_validator = ProductFieldValidator(self.validation_result)
+    
+    def validate_all_fields(self) -> FlextResult[None]:
+        """Validate all product fields using accumulator pattern - single return."""
+        # Extract all fields
+        fields = {
+            'product_id': self.product_data.get("product_id"),
+            'name': self.product_data.get("name"),
+            'price': self.product_data.get("price"),
+            'category': self.product_data.get("category"),
+            'stock': self.product_data.get("stock"),
+            'tags': self.product_data.get("tags"),
+        }
+        
+        # Validate each field using strategy pattern
+        self.field_validator.validate_product_id(fields['product_id'])
+        self.field_validator.validate_name(fields['name'])
+        self.field_validator.validate_price(fields['price'])
+        self.field_validator.validate_category(fields['category'])
+        self.field_validator.validate_stock(fields['stock'])
+        self.field_validator.validate_tags(fields['tags'])
+        
+        # Single return point - Result pattern
+        return self.validation_result.to_flext_result()
+
 
 # =============================================================================
 # ENHANCED DOMAIN MODELS - Using shared domain and flext-core patterns
@@ -467,84 +609,29 @@ def validate_customer_complete(
         return FlextResult.fail(error_message)
 
 
-def validate_product_complete(  # noqa: PLR0911, PLR0912
+def validate_product_complete(
     product_data: TAnyObject,
 ) -> FlextResult[SharedProduct]:
-    """Validate product data completely using flext_core.types."""
-    log_message: TLogMessage = (
-        f"🔍 Validating product: {product_data.get('name', 'Unknown')}"
-    )
+    """Validate product data completely using validation orchestrator - single return."""
+    log_message: TLogMessage = f"🔍 Validating product: {product_data.get('name', 'Unknown')}"
     print(log_message)
 
-    # Extract fields with type checking
-    product_id = product_data.get("product_id")
+    # Use orchestrator pattern to eliminate multiple returns
+    orchestrator = ProductValidationOrchestrator(product_data)
+    
+    # Validate all fields using accumulator pattern
+    field_validation = orchestrator.validate_all_fields()
+    if field_validation.is_failure:
+        return FlextResult.fail(field_validation.error)
+    
+    # Extract validated fields for product creation
     name = product_data.get("name")
     price = product_data.get("price")
     category = product_data.get("category")
     stock = product_data.get("stock")
-    tags = product_data.get("tags")
+    product_id = product_data.get("product_id")
 
-    # Validate product_id
-    if not FlextTypes.TypeGuards.is_instance_of(product_id, str):
-        error_message: TErrorMessage = "Product ID must be a string"
-        return FlextResult.fail(error_message)
-
-    if not product_id or len(product_id.strip()) == 0:
-        error_message = "Product ID cannot be empty"
-        return FlextResult.fail(error_message)
-
-    # Validate name
-    if not FlextTypes.TypeGuards.is_instance_of(name, str):
-        error_message = "Name must be a string"
-        return FlextResult.fail(error_message)
-
-    if not name or len(name.strip()) < MIN_PRODUCT_NAME_LENGTH:
-        error_message = f"Name must be at least {MIN_PRODUCT_NAME_LENGTH} characters"
-        return FlextResult.fail(error_message)
-
-    # Validate price
-    if not FlextTypes.TypeGuards.is_instance_of(price, (int, float)):
-        error_message = "Price must be a number"
-        return FlextResult.fail(error_message)
-
-    if price < 0:
-        error_message = "Price cannot be negative"
-        return FlextResult.fail(error_message)
-
-    if price > MAX_PRODUCT_PRICE:
-        error_message = f"Price cannot exceed ${MAX_PRODUCT_PRICE}"
-        return FlextResult.fail(error_message)
-
-    # Validate category
-    if not FlextTypes.TypeGuards.is_instance_of(category, str):
-        error_message = "Category must be a string"
-        return FlextResult.fail(error_message)
-
-    if not category or len(category.strip()) == 0:
-        error_message = "Category cannot be empty"
-        return FlextResult.fail(error_message)
-
-    # Validate stock
-    if not FlextTypes.TypeGuards.is_instance_of(stock, int):
-        error_message = "Stock must be an integer"
-        return FlextResult.fail(error_message)
-
-    if stock < 0:
-        error_message = "Stock cannot be negative"
-        return FlextResult.fail(error_message)
-
-    # Validate tags (optional)
-    if tags is not None and not FlextTypes.TypeGuards.is_instance_of(tags, list):
-        error_message = "Tags must be a list if provided"
-        return FlextResult.fail(error_message)
-
-    if tags is not None:
-        for tag in tags:
-            if not FlextTypes.TypeGuards.is_instance_of(tag, str):
-                error_message = "All tags must be strings"
-                return FlextResult.fail(error_message)
-
-    # Create product using SharedDomainFactory
+    # Create product using SharedDomainFactory - single path
     try:
         product_result = SharedDomainFactory.create_product(
             name=name,
@@ -578,15 +665,12 @@ def validate_product_complete(  # noqa: PLR0911, PLR0912
         if inventory_validation.is_failure:
             return FlextResult.fail(inventory_validation.error)
 
-        log_message = (
-            f"✅ Enhanced product validation successful: {enhanced_product.name}"
-        )
+        log_message = f"✅ Enhanced product validation successful: {enhanced_product.name}"
         print(log_message)
         return FlextResult.ok(enhanced_product)
 
     except (RuntimeError, ValueError, TypeError) as e:
-        error_message = f"Failed to create enhanced product: {e}"
-        return FlextResult.fail(error_message)
+        return FlextResult.fail(f"Failed to create enhanced product: {e}")
 
 
 def demonstrate_customer_validation() -> None:
@@ -803,23 +887,20 @@ def demonstrate_validation_performance() -> None:
 
 
 def main() -> None:
-    """Run comprehensive FlextValidators demonstration with maximum type safety."""
-    print("=" * 80)
-    print("🚀 FLEXT VALIDATION - ADVANCED VALIDATION SYSTEM DEMONSTRATION")
-    print("=" * 80)
-
-    # Run all demonstrations
-    demonstrate_basic_validations()
-    demonstrate_format_validations()
-    demonstrate_functional_predicates()
-    demonstrate_predicate_composition()
-    demonstrate_customer_validation()
-    demonstrate_product_validation()
-    demonstrate_validation_performance()
-
-    print("\n" + "=" * 80)
-    print("🎉 FLEXT VALIDATION DEMONSTRATION COMPLETED")
-    print("=" * 80)
+    """Run comprehensive FlextValidators demonstration using shared pattern."""
+    # DRY PRINCIPLE: Use SharedDemonstrationPattern to eliminate duplication
+    SharedDemonstrationPattern.run_demonstration(
+        "FLEXT VALIDATION - ADVANCED VALIDATION SYSTEM DEMONSTRATION",
+        [
+            demonstrate_basic_validations,
+            demonstrate_format_validations,
+            demonstrate_functional_predicates,
+            demonstrate_predicate_composition,
+            demonstrate_customer_validation,
+            demonstrate_product_validation,
+            demonstrate_validation_performance,
+        ]
+    )
 
 
 if __name__ == "__main__":

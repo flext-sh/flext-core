@@ -933,3 +933,36 @@ class TestDomainFactory:
         # Test factory needs exceptions handling
         except (RuntimeError, ValueError, TypeError) as e:
             return FlextResult.fail(f"Failed to create complex value object: {e}")
+
+
+# =============================================================================
+# SHARED DEMONSTRATION PATTERNS - DRY PRINCIPLE
+# =============================================================================
+
+
+class SharedDemonstrationPattern:
+    """Shared demonstration pattern to eliminate code duplication in examples.
+    
+    DRY PRINCIPLE: Eliminates 18-line duplication (mass=102) between main functions.
+    """
+
+    @staticmethod
+    def run_demonstration(
+        title: str,
+        demonstration_functions: list[callable],
+    ) -> None:
+        """Run a demonstration with consistent formatting and error handling."""
+        print("=" * 80)
+        print(f"🚀 {title}")
+        print("=" * 80)
+
+        # Run all demonstrations
+        for demo_func in demonstration_functions:
+            try:
+                demo_func()
+            except (RuntimeError, ValueError, TypeError) as e:
+                print(f"❌ Demonstration function {demo_func.__name__} failed: {e}")
+
+        print("\n" + "=" * 80)
+        print(f"🎉 {title.split(' - ')[0]} DEMONSTRATION COMPLETED")
+        print("=" * 80)

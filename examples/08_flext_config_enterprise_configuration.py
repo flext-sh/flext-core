@@ -32,6 +32,7 @@ import tempfile
 
 # Import shared domain models to integrate domain validation patterns
 from shared_domain import (
+    SharedDemonstrationPattern,
     SharedDomainFactory,
     log_domain_operation,
 )
@@ -529,11 +530,11 @@ def demonstrate_advanced_configuration_patterns() -> None:  # noqa: PLR0912, PLR
     log_message = "\n1. Configuration validation patterns:"
     print(log_message)
 
-    # Complex configuration with validation
+    # Complex configuration with validation - using FlextConstants.Platform
     complex_config: TConfigDict = {
         "server": {
-            "host": "localhost",
-            "port": 8080,
+            "host": FlextConstants.Platform.DEFAULT_HOST,
+            "port": FlextConstants.Platform.FLEXCORE_PORT,
             "workers": 4,
         },
         "security": {
@@ -839,23 +840,20 @@ def demonstrate_domain_configuration_integration() -> None:  # noqa: PLR0912, PL
 
 
 def main() -> None:
-    """Run comprehensive FlextConfig demonstration with maximum type safety."""
-    print("=" * 80)
-    print("🚀 FLEXT CONFIG - ENTERPRISE CONFIGURATION DEMONSTRATION")
-    print("=" * 80)
-
-    # Run all demonstrations
-    demonstrate_basic_configuration()
-    demonstrate_environment_integration()
-    demonstrate_configuration_merging()
-    demonstrate_file_configuration()
-    demonstrate_configuration_hierarchies()
-    demonstrate_advanced_configuration_patterns()
-    demonstrate_domain_configuration_integration()
-
-    print("\n" + "=" * 80)
-    print("🎉 FLEXT CONFIG DEMONSTRATION COMPLETED")
-    print("=" * 80)
+    """Run comprehensive FlextConfig demonstration using shared pattern."""
+    # DRY PRINCIPLE: Use SharedDemonstrationPattern to eliminate duplication
+    SharedDemonstrationPattern.run_demonstration(
+        "FLEXT CONFIG - ENTERPRISE CONFIGURATION DEMONSTRATION",
+        [
+            demonstrate_basic_configuration,
+            demonstrate_environment_integration,
+            demonstrate_configuration_merging,
+            demonstrate_file_configuration,
+            demonstrate_configuration_hierarchies,
+            demonstrate_advanced_configuration_patterns,
+            demonstrate_domain_configuration_integration,
+        ]
+    )
 
 
 if __name__ == "__main__":

@@ -897,9 +897,9 @@ def demonstrate_multiple_inheritance() -> None:
     service = EnterpriseService(
         "payment_service",
         {
-            "host": "localhost",
-            "port": 8080,
-            "timeout": 30,
+            "host": FlextConstants.Platform.DEFAULT_HOST,
+            "port": FlextConstants.Platform.FLEXCORE_PORT,
+            "timeout": FlextConstants.DEFAULT_TIMEOUT,
         },
     )
 
@@ -1260,50 +1260,22 @@ def demonstrate_enterprise_patterns() -> None:
 
 
 def main() -> None:
-    """Run comprehensive FlextMixins demonstration."""
-    print("=" * 80)
-    print("🔧 FLEXT MIXINS - MULTIPLE INHERITANCE & COMPOSITION PATTERNS DEMONSTRATION")
-    print("=" * 80)
-
-    # Example 1: Individual Mixins
-    print("\n" + "=" * 60)
-    print("📋 EXAMPLE 1: Individual Mixin Patterns")
-    print("=" * 60)
-    demonstrate_individual_mixins()
-
-    # Example 2: Multiple Inheritance
-    print("\n" + "=" * 60)
-    print("📋 EXAMPLE 2: Multiple Inheritance Composition")
-    print("=" * 60)
-    demonstrate_multiple_inheritance()
-
-    # Example 3: Composite Mixins
-    print("\n" + "=" * 60)
-    print("📋 EXAMPLE 3: Composite Mixin Patterns")
-    print("=" * 60)
-    demonstrate_composite_mixins()
-
-    # Example 4: Method Resolution Order
-    print("\n" + "=" * 60)
-    print("📋 EXAMPLE 4: Method Resolution Order")
-    print("=" * 60)
-    demonstrate_method_resolution_order()
-
-    # Example 5: Performance Characteristics
-    print("\n" + "=" * 60)
-    print("📋 EXAMPLE 5: Performance Characteristics")
-    print("=" * 60)
-    demonstrate_performance_characteristics()
-
-    # Example 6: Enterprise Patterns
-    print("\n" + "=" * 60)
-    print("📋 EXAMPLE 6: Enterprise Architecture Patterns")
-    print("=" * 60)
-    demonstrate_enterprise_patterns()
-
-    print("\n" + "=" * 80)
-    print("🎉 FLEXT MIXINS DEMONSTRATION COMPLETED")
-    print("=" * 80)
+    """Run comprehensive FlextMixins demonstration."""  
+    from shared_example_helpers import run_example_demonstration
+    
+    examples = [
+        ("Individual Mixin Patterns", demonstrate_individual_mixins),
+        ("Multiple Inheritance Composition", demonstrate_multiple_inheritance),
+        ("Composite Mixin Patterns", demonstrate_composite_mixins),
+        ("Method Resolution Order", demonstrate_method_resolution_order),
+        ("Performance Characteristics", demonstrate_performance_characteristics),
+        ("Enterprise Architecture Patterns", demonstrate_enterprise_patterns),
+    ]
+    
+    run_example_demonstration(
+        "🔧 FLEXT MIXINS - MULTIPLE INHERITANCE & COMPOSITION PATTERNS DEMONSTRATION",
+        examples
+    )
 
 
 if __name__ == "__main__":

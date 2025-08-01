@@ -15,6 +15,7 @@ from flext_core._builder_base import (
     _create_builder,
     _create_fluent_builder,
 )
+from flext_core.constants import FlextConstants
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 # Constants
@@ -1074,7 +1075,7 @@ class TestBuilderIntegration:
             .when(condition=debug_mode)
             .then_set("debug_level", "verbose")
             .then_set("log_file", "debug.log")
-            .with_property("port", 8080)
+            .with_property("port", FlextConstants.Platform.FLEXCORE_PORT)
             .validate()
         )
 
@@ -1090,8 +1091,8 @@ class TestBuilderIntegration:
         if not (builder._get_property("load_config")):
             msg = f"Expected True, got {builder._get_property('load_config')}"
             raise AssertionError(msg)
-        if builder._get_property("port") != 8080:
-            msg = f"Expected {8080}, got {builder._get_property('port')}"
+        if builder._get_property("port") != FlextConstants.Platform.FLEXCORE_PORT:
+            msg = f"Expected FlextConstants.Platform.FLEXCORE_PORT, got {builder._get_property('port')}"
             raise AssertionError(msg)
 
         # Debug properties should not be set

@@ -121,6 +121,105 @@ class FlextUtilities:
         """Type guard for not None values."""
         return FlextValidators.is_not_none(value)
 
+    # =================================================================
+    # INTEGER CONVERSION UTILITIES - DRY REFACTORING
+    # Eliminates duplication across FLEXT ecosystem projects
+    # =================================================================
+
+    @classmethod
+    def safe_int_conversion(
+        cls, value: object, default: int | None = None
+    ) -> int | None:
+        """Safely convert value to integer with optional default.
+
+        SOLID REFACTORING: Eliminates 18+ lines of duplicated integer conversion
+        logic across multiple FLEXT projects (client-a-oud-mig, flext-tap-oracle-wms).
+
+        Supports comprehensive type conversion patterns:
+        - int: Direct return
+        - str (digits): Parse to int
+        - float: Truncate to int
+        - Other types: Return default or None
+
+        Args:
+            value: Value to convert to integer
+            default: Default value if conversion fails (None for no default)
+
+        Returns:
+            Converted integer, default value, or None if conversion fails
+
+        Usage:
+            # With default
+            result = FlextUtilities.safe_int_conversion("123", 0)  # -> 123
+            result = FlextUtilities.safe_int_conversion("invalid", 0)  # -> 0
+
+            # Without default (returns None on failure)
+            result = FlextUtilities.safe_int_conversion("123")  # -> 123
+            result = FlextUtilities.safe_int_conversion("invalid")  # -> None
+
+        """
+        # Direct conversion strategies
+        conversion_result = cls._try_direct_int_conversion(value)
+        if conversion_result is not None:
+            return conversion_result
+
+        # Fallback string conversion
+        conversion_result = cls._try_string_int_conversion(value)
+        return conversion_result if conversion_result is not None else default
+
+    @classmethod
+    def _try_direct_int_conversion(cls, value: object) -> int | None:
+        """Try direct integer conversion strategies."""
+        # Fast path for already integers
+        if isinstance(value, int):
+            return value
+
+        # String digit conversion
+        if isinstance(value, str) and value.isdigit():
+            try:
+                return int(value)
+            except ValueError:
+                return None
+
+        # Float truncation
+        if isinstance(value, float):
+            try:
+                return int(value)
+            except (ValueError, OverflowError):
+                return None
+
+        return None
+
+    @classmethod
+    def _try_string_int_conversion(cls, value: object) -> int | None:
+        """Try string-based conversion as fallback."""
+        try:
+            return int(str(value))
+        except (ValueError, TypeError, OverflowError):
+            return None
+
+    @classmethod
+    def safe_int_conversion_with_default(cls, value: object, default: int) -> int:
+        """Safely convert value to integer with guaranteed default return.
+
+        SOLID REFACTORING: Template Method pattern for guaranteed integer return.
+        Never returns None - always returns either converted value or default.
+
+        Args:
+            value: Value to convert to integer
+            default: Default value if conversion fails (guaranteed return)
+
+        Returns:
+            Converted integer or default (never None)
+
+        Usage:
+            result = FlextUtilities.safe_int_conversion_with_default("123", 0)
+            result = FlextUtilities.safe_int_conversion_with_default("invalid", 0)
+
+        """
+        converted = cls.safe_int_conversion(value, default)
+        return converted if converted is not None else default
+
 
 # =============================================================================
 # PUBLIC API FUNCTIONS - Direct delegation to FlextUtilities
@@ -209,6 +308,38 @@ def flext_truncate(text: str, max_length: int = 100) -> str:
     return FlextUtilities.truncate(text, max_length)
 
 
+def flext_safe_int_conversion(value: object, default: int | None = None) -> int | None:
+    """Safely convert value to integer with optional default (public API).
+
+    SOLID REFACTORING: Eliminates duplication across FLEXT ecosystem.
+
+    Args:
+        value: Value to convert to integer
+        default: Default value if conversion fails
+
+    Returns:
+        Converted integer, default, or None if conversion fails
+
+    """
+    return FlextUtilities.safe_int_conversion(value, default)
+
+
+def flext_safe_int_conversion_with_default(value: object, default: int) -> int:
+    """Safely convert value to integer with guaranteed default (public API).
+
+    SOLID REFACTORING: Template Method pattern - never returns None.
+
+    Args:
+        value: Value to convert to integer
+        default: Default value if conversion fails (guaranteed return)
+
+    Returns:
+        Converted integer or default (never None)
+
+    """
+    return FlextUtilities.safe_int_conversion_with_default(value, default)
+
+
 # =============================================================================
 # BACKWARD COMPATIBILITY ALIASES - Essential for existing tests
 # =============================================================================
@@ -242,6 +373,16 @@ def generate_iso_timestamp() -> str:
 def is_not_none(value: object) -> bool:
     """Check if value is not None (backward compatibility)."""
     return FlextValidators.is_not_none(value)
+
+
+def safe_int_conversion(value: object, default: int | None = None) -> int | None:
+    """Safely convert value to integer (backward compatibility)."""
+    return FlextUtilities.safe_int_conversion(value, default)
+
+
+def safe_int_conversion_with_default(value: object, default: int) -> int:
+    """Safely convert value to integer with default (backward compatibility)."""
+    return FlextUtilities.safe_int_conversion_with_default(value, default)
 
 
 # safe_call is imported from result.py (single source of truth)
@@ -370,6 +511,8 @@ __all__ = [
     "flext_is_not_none",
     "flext_record_performance",
     "flext_safe_call",
+    "flext_safe_int_conversion",
+    "flext_safe_int_conversion_with_default",
     "flext_track_performance",
     "flext_truncate",
     # Backward compatibility functions
@@ -379,5 +522,7 @@ __all__ = [
     "generate_uuid",
     "is_not_none",
     "safe_call",
+    "safe_int_conversion",
+    "safe_int_conversion_with_default",
     "truncate",
 ]
