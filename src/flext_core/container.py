@@ -1096,7 +1096,8 @@ def create_module_container_utilities(module_name: str) -> dict[str, object]:
     its own container instance while using the shared FlextContainer implementation.
 
     Args:
-        module_name: Name of the module (e.g., "flext_target_ldap", "flext_oracle_oic_ext")
+        module_name: Name of the module (e.g., "flext_target_ldap",
+            "flext_oracle_oic_ext")
 
     Returns:
         Dictionary containing module-specific container utilities:

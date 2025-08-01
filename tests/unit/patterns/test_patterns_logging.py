@@ -330,7 +330,7 @@ class TestFlextLoggerUsage:
         assert hasattr(perf_logger, "info")
         perf_logger.info("Performance test message")
 
-    @patch("structlog.get_logger")
+    @patch("structlog.get_logger")  # type: ignore[misc]
     def test_logger_factory_called(self, mock_get_logger: MagicMock) -> None:
         """Test that structlog.get_logger is called appropriately."""
         mock_logger = MagicMock()
