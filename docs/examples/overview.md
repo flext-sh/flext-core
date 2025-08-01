@@ -986,12 +986,12 @@ class NotificationPriority(str, Enum):
 class DomainEvent:
     """Base domain event class."""
 
-    def __init__(self, event_type: str, data: Dict[str, Any]):
+    def __init__(self, event_type: str, data: Dict[str, object]):
         self.event_id = f"evt_{hash(str(datetime.now()))}"
         self.event_type = event_type
         self.data = data
         self.timestamp = datetime.now()
-        self.metadata: Dict[str, Any] = {}
+        self.metadata: Dict[str, object] = {}
 
 class UserRegisteredEvent(DomainEvent):
     """Event fired when a user registers."""
@@ -1043,7 +1043,7 @@ class NotificationTemplate:
         self.body_template = body_template
         self.channel = channel
 
-    def render(self, data: Dict[str, Any]) -> Dict[str, str]:
+    def render(self, data: Dict[str, object]) -> Dict[str, str]:
         """Render template with data."""
         try:
             subject = self.subject_template.format(**data)
@@ -1066,7 +1066,7 @@ class Notification:
         subject: str,
         body: str,
         priority: NotificationPriority = NotificationPriority.NORMAL,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, object]] = None
     ):
         self.notification_id = f"notif_{hash(recipient + str(datetime.now()))}"
         self.recipient = recipient
@@ -1101,7 +1101,7 @@ class NotificationProvider(ABC):
 class EmailProvider(NotificationProvider):
     """Email notification provider."""
 
-    def __init__(self, smtp_config: Dict[str, Any]):
+    def __init__(self, smtp_config: Dict[str, object]):
         self.smtp_config = smtp_config
 
     def get_channel(self) -> NotificationChannel:
@@ -1149,7 +1149,7 @@ class SMSProvider(NotificationProvider):
 class PushProvider(NotificationProvider):
     """Push notification provider."""
 
-    def __init__(self, push_service_config: Dict[str, Any]):
+    def __init__(self, push_service_config: Dict[str, object]):
         self.push_service_config = push_service_config
 
     def get_channel(self) -> NotificationChannel:
@@ -1194,7 +1194,7 @@ class NotificationService:
         self,
         recipient: str,
         template_id: str,
-        data: Dict[str, Any],
+        data: Dict[str, object],
         channel: NotificationChannel,
         priority: NotificationPriority = NotificationPriority.NORMAL
     ) -> FlextResult[Notification]:

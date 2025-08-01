@@ -70,7 +70,7 @@ class TraditionalOracleService:
             logger.exception("Query execution failed")
             return FlextResult.fail(f"Query failed: {e}")
 
-    def get_service_info(self) -> dict[str, Any]:
+    def get_service_info(self) -> dict[str, object]:
         """Get service information."""
         return {
             "service_type": "TraditionalOracleService",
@@ -126,7 +126,7 @@ class EnhancedOracleService(FlextDomainService):
         # Simulate query execution
         return {"query": query, "timestamp": datetime.now(UTC).isoformat()}
 
-    def _perform_operation(self) -> dict[str, Any]:
+    def _perform_operation(self) -> dict[str, object]:
         """Perform operation and return status information."""
         return {"status": "ready", "host": self.host, "port": self.port}
 
@@ -238,7 +238,7 @@ class LDAPConnectionService(FlextDomainService):
             filter_expr,
         )
 
-    def _test_connection(self) -> dict[str, Any]:
+    def _test_connection(self) -> dict[str, object]:
         """Test LDAP connection."""
         return {
             "status": "connected",
@@ -248,7 +248,7 @@ class LDAPConnectionService(FlextDomainService):
             "ssl_enabled": self.use_ssl,
         }
 
-    def _search_users_impl(self, filter_expr: str) -> dict[str, Any]:
+    def _search_users_impl(self, filter_expr: str) -> dict[str, object]:
         """Execute LDAP search with filter and return results."""
         return {
             "filter": filter_expr,

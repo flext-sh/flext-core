@@ -91,7 +91,7 @@ class UtilityDemoProduct(
     FlextCacheableMixin,
     FlextSerializableMixin,
     FlextComparableMixin,
-    FlextTimestampMixin
+    FlextTimestampMixin,
 ):
     """Enhanced product with comprehensive mixins."""
 
@@ -139,10 +139,7 @@ class UtilityDemoProduct(
 
 
 class UtilityDemoOrder(
-    SharedOrder,
-    FlextLoggableMixin,
-    FlextSerializableMixin,
-    FlextTimestampMixin
+    SharedOrder, FlextLoggableMixin, FlextSerializableMixin, FlextTimestampMixin
 ):
     """Enhanced order with logging and tracking capabilities."""
 

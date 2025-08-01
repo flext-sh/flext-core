@@ -27,7 +27,7 @@ class SampleService:
     def __init__(
         self,
         name: str,
-        config: dict[str, Any] | None = None,
+        config: dict[str, object] | None = None,
     ) -> None:
         """Initialize test service with name and optional config."""
         self.name = name
@@ -40,7 +40,7 @@ class SampleService:
 
 
 @pytest.fixture
-def sample_services() -> dict[str, Any]:
+def sample_services() -> dict[str, object]:
     """Provide sample services for testing."""
     return {
         "database": SampleService("DatabaseService"),

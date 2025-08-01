@@ -852,7 +852,7 @@ def main() -> None:
             demonstrate_configuration_hierarchies,
             demonstrate_advanced_configuration_patterns,
             demonstrate_domain_configuration_integration,
-        ]
+        ],
     )
 
 

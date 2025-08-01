@@ -66,7 +66,7 @@ FlextContainer        # Main DI container
   ├── .clear() -> FlextResult[None]
   ├── .exists(name: str) -> bool
   ├── .list_services() -> list[str]
-  └── .get_service_info() -> dict[str, Any]
+  └── .get_service_info() -> dict[str, object]
 
 # Global container management
 get_flext_container() -> FlextContainer  # Singleton access
@@ -100,7 +100,7 @@ FlextCoreSettings     # Base configuration class
 def is_development(self) -> bool
 def is_production(self) -> bool
 def is_testing(self) -> bool
-def get_log_config(self) -> dict[str, Any]
+def get_log_config(self) -> dict[str, object]
 ```
 
 **Integration Points:**
@@ -176,7 +176,7 @@ FlextHandler         # Base handler with metadata
   ├── handler_id: FlextHandlerId
   ├── handler_name: FlextHandlerName
   ├── can_handle(message: Any) -> bool
-  └── get_handler_metadata() -> dict[str, Any]
+  └── get_handler_metadata() -> dict[str, object]
 
 FlextMessageHandler[TMessage, TResponse]
   ├── handle_message(message: TMessage) -> FlextResult[TResponse]

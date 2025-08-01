@@ -69,15 +69,14 @@ def is_non_empty_string(value: object) -> bool:
 
 
 def calculate_discount_price(
-    product: SharedProduct,
-    discount_percentage: float
+    product: SharedProduct, discount_percentage: float
 ) -> FlextResult[Decimal]:
     """Calculate discounted price with validation."""
     if discount_percentage < 0 or discount_percentage > MAX_DISCOUNT_PERCENTAGE:
         return FlextResult.fail(
             f"Invalid discount: {discount_percentage}%. Must be 0-{MAX_DISCOUNT_PERCENTAGE}%"
         )
-    
+
     try:
         discount_amount = product.price.amount * Decimal(str(discount_percentage / 100))
         final_price = product.price.amount - discount_amount
@@ -90,14 +89,13 @@ def process_shared_order(order: SharedOrder) -> FlextResult[SharedOrder]:
     """Process shared domain order with validation."""
     if not order.items:
         return FlextResult.fail("Order must have at least one item")
-    
+
     # Validate total calculation
     calculated_total = sum(
-        item.quantity * item.product.price.amount 
-        for item in order.items
+        item.quantity * item.product.price.amount for item in order.items
     )
-    
+
     if abs(calculated_total - order.total.amount) > Decimal("0.01"):
         return FlextResult.fail("Order total mismatch with items")
-    
+
     return FlextResult.ok(data=order)

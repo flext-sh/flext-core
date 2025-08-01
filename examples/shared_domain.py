@@ -942,7 +942,7 @@ class TestDomainFactory:
 
 class SharedDemonstrationPattern:
     """Shared demonstration pattern to eliminate code duplication in examples.
-    
+
     DRY PRINCIPLE: Eliminates 18-line duplication (mass=102) between main functions.
     """
 

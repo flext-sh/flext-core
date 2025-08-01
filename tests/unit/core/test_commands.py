@@ -77,10 +77,10 @@ class SampleHandler(FlextCommands.Handler[SampleCommand, str]):
         return FlextResult.ok(f"Handled: {command.name} with value {command.value}")
 
 
-class SampleComplexHandler(FlextCommands.Handler[SampleComplexCommand, dict[str, Any]]):
+class SampleComplexHandler(FlextCommands.Handler[SampleComplexCommand, dict[str, object]]):
     """Test handler for complex commands."""
 
-    def handle(self, command: SampleComplexCommand) -> FlextResult[dict[str, Any]]:
+    def handle(self, command: SampleComplexCommand) -> FlextResult[dict[str, object]]:
         """Handle the complex test command."""
         return FlextResult.ok(
             {
