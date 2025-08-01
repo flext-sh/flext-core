@@ -16,6 +16,7 @@ import pytest
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+from flext_core.constants import FlextConstants
 from flext_core.flext_types import TPredicate  # This should hit line 42
 from flext_core.result import FlextResult
 from flext_core.validation import (
@@ -196,7 +197,7 @@ class TestBaseValidators:
             "http://example.com",
             "https://example.com",
             "http://subdomain.example.com/path",
-            "https://example.com:8080/path?query=value",
+            f"https://example.com:{FlextConstants.Platform.FLEXCORE_PORT}/path?query=value",
         ]
         for url in valid_urls:
             assert FlextValidators.is_url(value=url) is True, f"Failed for {url}"

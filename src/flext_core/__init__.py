@@ -214,6 +214,20 @@ from flext_core.mixins import (
 from flext_core.payload import FlextEvent, FlextMessage, FlextPayload
 from flext_core.result import FlextResult, chain, safe_call
 
+# Schema Processing - Reusable components for LDIF/Schema/ACL processing
+from flext_core.schema_processing import (
+    BaseConfigManager,
+    BaseEntry,
+    BaseFileWriter,
+    BaseProcessor,
+    BaseSorter,
+    ConfigAttributeValidator,
+    EntryType,
+    EntryValidator,
+    ProcessingPipeline,
+    RegexProcessor,
+)
+
 # Singer Protocol Base Exceptions - Eliminates duplication across Singer projects
 from flext_core.singer_base import (
     FlextSingerAuthenticationError,
@@ -258,8 +272,17 @@ __all__ = [
     "MAX_PYTHON_VERSION",
     "MIN_PYTHON_VERSION",
     "VERSION",
+    # Schema Processing Components
+    "BaseConfigManager",
+    "BaseEntry",
+    "BaseFileWriter",
+    "BaseProcessor",
+    "BaseSorter",
     "Comparable",
+    "ConfigAttributeValidator",
     "E",
+    "EntryType",
+    "EntryValidator",
     "FlextAggregateRoot",
     "FlextAlreadyExistsError",
     "FlextAuthenticationError",
@@ -350,7 +373,9 @@ __all__ = [
     "FlextValueObjectMixin",
     "FlextVersionInfo",
     "P",
+    "ProcessingPipeline",
     "R",
+    "RegexProcessor",
     "Serializable",
     "ServiceKey",
     "T",

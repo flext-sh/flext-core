@@ -14,7 +14,7 @@ import time
 
 import pytest
 
-from flext_core.constants import FlextLogLevel
+from flext_core.constants import FlextConstants, FlextLogLevel
 from flext_core.loggings import (
     FlextLogContext,
     FlextLogContextManager,
@@ -723,7 +723,7 @@ class TestLoggingIntegration:
 
         # Log different levels
         logger.debug("Service starting", component="database")
-        logger.info("Service ready", port=8080)
+        logger.info("Service ready", port=FlextConstants.Platform.FLEXCORE_PORT)
 
         with create_log_context(logger, request_id="req_123"):
             logger.info("Processing request", action="create_user")

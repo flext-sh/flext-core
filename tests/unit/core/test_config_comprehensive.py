@@ -31,6 +31,7 @@ from flext_core.config import (
     safe_get_env_var,
     safe_load_json_file,
 )
+from flext_core.constants import FlextConstants
 from flext_core.result import FlextResult
 
 if TYPE_CHECKING:
@@ -48,8 +49,8 @@ def sample_config() -> TAnyDict:
     return {
         "database_url": "postgresql://localhost/test",
         "debug": True,
-        "port": 8080,
-        "timeout": 30,
+        "port": FlextConstants.Platform.FLEXCORE_PORT,
+        "timeout": FlextConstants.DEFAULT_TIMEOUT,
     }
 
 
@@ -129,8 +130,10 @@ class TestFlextConfig:
             )
         if not config["debug"]:
             raise AssertionError(f"Expected True, got {config['debug']}")
-        if config["port"] != 8080:
-            raise AssertionError(f"Expected 8080, got {config['port']}")
+        if config["port"] != FlextConstants.Platform.FLEXCORE_PORT:
+            raise AssertionError(
+                f"Expected {FlextConstants.Platform.FLEXCORE_PORT}, got {config['port']}"
+            )
         # Should apply defaults
         if "timeout" not in config:
             raise AssertionError(f"Expected 'timeout' in {config}")
@@ -369,8 +372,10 @@ class TestFlextConfig:
         # Override values should be preserved
         if not (merged["debug"]):
             raise AssertionError(f"Expected True, got {merged['debug']}")
-        if merged["port"] != 8080:
-            raise AssertionError(f"Expected {8080}, got {merged['port']}")
+        if merged["port"] != FlextConstants.Platform.FLEXCORE_PORT:
+            raise AssertionError(
+                f"Expected {FlextConstants.Platform.FLEXCORE_PORT}, got {merged['port']}"
+            )
         # Base values should be included
         if merged["max_connections"] != 100:
             raise AssertionError(f"Expected {100}, got {merged['max_connections']}")
