@@ -530,9 +530,9 @@ class TestFlextFieldCore:
             raise AssertionError(
                 f"Expected {math.pi}, got {float_field.deserialize_value(math.pi)}"
             )
-        if float_field.deserialize_value("3.14") != 3.14:
+        if float_field.deserialize_value("3.14") != math.pi:
             raise AssertionError(
-                f"Expected {3.14}, got {float_field.deserialize_value('3.14')}"
+                f"Expected {math.pi}, got {float_field.deserialize_value('3.14')}"
             )
         if float_field.deserialize_value(42) != 42.0:
             raise AssertionError(

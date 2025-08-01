@@ -509,6 +509,10 @@ class FlextConstants:
         MAX_DESCRIPTION_LENGTH = 1000
         MAX_FILE_SIZE = 10485760  # 10MB
 
+        # Network
+        MIN_PORT_NUMBER = 1
+        MAX_PORT_NUMBER = 65535
+
 
 # =============================================================================
 # DIRECT ACCESS CONSTANTS - objetos sem underscore

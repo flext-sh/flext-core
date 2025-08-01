@@ -92,6 +92,7 @@ from flext_core.container import (
     FlextContainer,
     ServiceKey,
     configure_flext_container,
+    create_module_container_utilities,
     get_flext_container,
     get_typed,
     register_typed,
@@ -121,6 +122,7 @@ from flext_core.exceptions import (
     FlextTimeoutError,
     FlextTypeError,
     FlextValidationError,
+    create_module_exception_classes,
 )
 from flext_core.fields import FlextFieldCore, FlextFields
 
@@ -211,6 +213,19 @@ from flext_core.mixins import (
 )
 from flext_core.payload import FlextEvent, FlextMessage, FlextPayload
 from flext_core.result import FlextResult, chain, safe_call
+
+# Singer Protocol Base Exceptions - Eliminates duplication across Singer projects
+from flext_core.singer_base import (
+    FlextSingerAuthenticationError,
+    FlextSingerConfigurationError,
+    FlextSingerConnectionError,
+    FlextSingerError,
+    FlextSingerProcessingError,
+    FlextSingerValidationError,
+    FlextTapError,
+    FlextTargetError,
+    FlextTransformError,
+)
 from flext_core.utilities import FlextGenerators, FlextUtilities
 from flext_core.validation import FlextPredicates, FlextValidation, FlextValidators
 from flext_core.value_objects import FlextValueObject, FlextValueObjectFactory
@@ -306,9 +321,19 @@ __all__ = [
     "FlextResult",
     "FlextSerializableMixin",
     "FlextService",
+    "FlextSingerAuthenticationError",
+    "FlextSingerConfigurationError",
+    "FlextSingerConnectionError",
+    # Singer Protocol Base Exceptions (DRY implementation for all Singer projects)
+    "FlextSingerError",
+    "FlextSingerProcessingError",
+    "FlextSingerValidationError",
+    "FlextTapError",
+    "FlextTargetError",
     "FlextTimeoutError",
     "FlextTimestampMixin",
     "FlextTimingMixin",
+    "FlextTransformError",
     "FlextTypeError",
     "FlextTypes",
     "FlextUnitOfWork",
@@ -363,6 +388,8 @@ __all__ = [
     "compare_versions",
     "configure_flext_container",
     "create_log_context",
+    "create_module_container_utilities",
+    "create_module_exception_classes",
     "flext_core",
     "get_available_features",
     "get_flext_container",

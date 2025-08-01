@@ -1083,12 +1083,89 @@ def get_typed[T](
     return FlextResult.ok(cast("T", service))
 
 
+# =============================================================================
+# MODULE-SPECIFIC CONTAINER UTILITIES - DRY PATTERN
+# =============================================================================
+
+
+def create_module_container_utilities(module_name: str) -> dict[str, object]:
+    """Create DRY module-specific container utilities to eliminate duplication.
+
+    This function creates a set of module-specific container utilities that eliminate
+    the need for duplicate DI container code across FLEXT modules. Each module gets
+    its own container instance while using the shared FlextContainer implementation.
+
+    Args:
+        module_name: Name of the module (e.g., "flext_target_ldap", "flext_oracle_oic_ext")
+
+    Returns:
+        Dictionary containing module-specific container utilities:
+        - get_container: Function to get module container instance
+        - configure_dependencies: Function to configure module dependencies
+        - get_service: Function to get service from module container
+
+    Usage:
+        # In flext_target_ldap/infrastructure/di_container.py
+        from flext_core import create_module_container_utilities
+
+        utilities = create_module_container_utilities("flext_target_ldap")
+        get_flext_target_ldap_container = utilities["get_container"]
+        configure_flext_target_ldap_dependencies = utilities["configure_dependencies"]
+        get_flext_target_ldap_service = utilities["get_service"]
+
+    """
+    logger = FlextLoggerFactory.get_logger(__name__)
+    module_container_instance: FlextContainer | None = None
+
+    def get_container() -> FlextContainer:
+        """Get module-specific DI container instance."""
+        nonlocal module_container_instance
+        if module_container_instance is None:
+            logger.info(f"Creating {module_name} container instance")
+            module_container_instance = FlextContainer()
+        return module_container_instance
+
+    def configure_dependencies() -> None:
+        """Configure module dependencies using official FlextContainer."""
+        get_container()
+        logger.info(f"{module_name} dependencies configured successfully")
+        # Container is ready - module-specific registrations can be added by caller
+
+    def get_service(service_name: str) -> object:
+        """Get service from module container.
+
+        Args:
+            service_name: Name of service to retrieve
+
+        Returns:
+            Service instance or None if not found
+
+        """
+        container = get_container()
+        result = container.get(service_name)
+
+        if result.is_success:
+            return result.data
+
+        logger.warning(
+            f"{module_name} service '{service_name}' not found: {result.error}",
+        )
+        return None
+
+    return {
+        "get_container": get_container,
+        "configure_dependencies": configure_dependencies,
+        "get_service": get_service,
+    }
+
+
 # Export API
 __all__ = [
     "FlextContainer",
     "FlextServiceFactory",
     "ServiceKey",
     "configure_flext_container",
+    "create_module_container_utilities",
     "get_flext_container",
     "get_typed",
     "register_typed",

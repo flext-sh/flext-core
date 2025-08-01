@@ -80,6 +80,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import logging
+import os
 import sys
 import traceback
 from typing import TYPE_CHECKING, ClassVar, TypedDict
@@ -281,26 +282,29 @@ def _add_to_log_store(
 
 
 # Human-readable console renderer configuration
-def _create_human_readable_renderer() -> object:
+def _create_human_readable_renderer() -> structlog.dev.ConsoleRenderer:
     """Create human-readable console renderer following market standards."""
-    import os
-
     # Check if we're in development or production
-    is_development = os.environ.get("ENVIRONMENT", "development").lower() in ("development", "dev", "local")
-    enable_colors = os.environ.get("FLEXT_LOG_COLORS", "true").lower() == "true" and is_development
+    env_value = os.environ.get("ENVIRONMENT", "development").lower()
+    is_development = env_value in {"development", "dev", "local"}
+    colors_enabled = os.environ.get("FLEXT_LOG_COLORS", "true").lower()
+    enable_colors = colors_enabled == "true" and is_development
 
     return structlog.dev.ConsoleRenderer(
         colors=enable_colors,
         # Show level and logger name in brackets for clarity
         level_styles={
             "critical": "\033[91m",  # Bright red
-            "error": "\033[91m",     # Red
-            "warning": "\033[93m",   # Yellow
-            "info": "\033[92m",      # Green
-            "debug": "\033[94m",     # Blue
-            "trace": "\033[95m",     # Magenta
-        } if enable_colors else None,
+            "error": "\033[91m",  # Red
+            "warning": "\033[93m",  # Yellow
+            "info": "\033[92m",  # Green
+            "debug": "\033[94m",  # Blue
+            "trace": "\033[95m",  # Magenta
+        }
+        if enable_colors
+        else None,
     )
+
 
 # Configure structlog with human-readable output
 structlog.configure(
@@ -319,17 +323,16 @@ structlog.configure(
     cache_logger_on_first_use=True,
 )
 
+
 # Configure standard logging with environment-aware level
 def _get_logging_level_from_env() -> int:
     """Get logging level from environment variables."""
-    import os
-
     # Check multiple environment variables in order of preference
     env_level = (
-        os.environ.get("ALGAR_LOG_LEVEL") or
-        os.environ.get("FLEXT_LOG_LEVEL") or
-        os.environ.get("LOG_LEVEL") or
-        "INFO"
+        os.environ.get("ALGAR_LOG_LEVEL")
+        or os.environ.get("FLEXT_LOG_LEVEL")
+        or os.environ.get("LOG_LEVEL")
+        or "INFO"
     ).upper()
 
     # Map to numeric levels
@@ -344,16 +347,16 @@ def _get_logging_level_from_env() -> int:
 
     return level_mapping.get(env_level, 20)  # Default to INFO
 
+
 def _get_env_log_level_string() -> str:
     """Get logging level from environment as string."""
-    import os
-
     return (
-        os.environ.get("ALGAR_LOG_LEVEL") or
-        os.environ.get("FLEXT_LOG_LEVEL") or
-        os.environ.get("LOG_LEVEL") or
-        "INFO"
+        os.environ.get("ALGAR_LOG_LEVEL")
+        or os.environ.get("FLEXT_LOG_LEVEL")
+        or os.environ.get("LOG_LEVEL")
+        or "INFO"
     ).upper()
+
 
 logging.basicConfig(
     format="%(message)s",
@@ -477,6 +480,12 @@ class FlextLogger:
         numeric_levels = FlextLogLevel.get_numeric_levels()
         self._level_value = numeric_levels.get(self._level, numeric_levels["INFO"])
         self._context: TContextDict = {}
+
+        # Ensure stdlib logging level is permissive enough for structlog filtering
+        # The filter_by_level processor uses stdlib logging levels
+        current_stdlib_level = logging.getLogger().getEffectiveLevel()
+        if self._level_value < current_stdlib_level:
+            logging.getLogger().setLevel(self._level_value)
 
         # Create structlog logger with the name - this will use the global configuration
         # that includes _add_to_log_store processor

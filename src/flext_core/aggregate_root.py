@@ -226,7 +226,8 @@ class FlextAggregateRoot(FlextEntity):
         if created_at is not None:
             init_data["created_at"] = created_at
 
-        # Use type: ignore for complex init data passing to Pydantic BaseModel
+        # Pydantic BaseModel accepts **kwargs with object values
+        # MyPy doesn't understand the dynamic nature of Pydantic model construction
         super().__init__(**init_data)  # type: ignore[arg-type]
 
     def add_domain_event(
