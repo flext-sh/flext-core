@@ -63,8 +63,184 @@ import traceback
 from flext_core.constants import ERROR_CODES
 
 
+def _create_base_error_class(module_name: str) -> type:
+    """Create base error class for module."""
+
+    class ModuleBaseError(FlextError):
+        """Base exception for module operations."""
+
+        def __init__(
+            self,
+            message: str = f"{module_name} error",
+            **kwargs: object,
+        ) -> None:
+            """Initialize module error with context."""
+            context = kwargs.copy()
+            super().__init__(
+                message,
+                error_code=f"{module_name.upper()}_ERROR",
+                context=context,
+            )
+
+    return ModuleBaseError
+
+
+def _create_validation_error_class(module_name: str) -> type:
+    """Create validation error class for module."""
+
+    class ModuleValidationError(FlextValidationError):
+        """Module validation errors."""
+
+        def __init__(
+            self,
+            message: str = f"{module_name} validation failed",
+            field: str | None = None,
+            value: object = None,
+            **kwargs: object,
+        ) -> None:
+            """Initialize module validation error with context."""
+            validation_details: dict[str, object] = {}
+            if field is not None:
+                validation_details["field"] = field
+            if value is not None:
+                validation_details["value"] = str(value)[:100]
+
+            context = kwargs.copy()
+            super().__init__(
+                f"{module_name}: {message}",
+                validation_details=validation_details,
+                context=context,
+            )
+
+    return ModuleValidationError
+
+
+def _create_configuration_error_class(module_name: str) -> type:
+    """Create configuration error class for module."""
+
+    class ModuleConfigurationError(FlextConfigurationError):
+        """Module configuration errors."""
+
+        def __init__(
+            self,
+            message: str = f"{module_name} configuration error",
+            config_key: str | None = None,
+            **kwargs: object,
+        ) -> None:
+            """Initialize module configuration error with context."""
+            context = kwargs.copy()
+            if config_key is not None:
+                context["config_key"] = config_key
+            super().__init__(f"{module_name} config: {message}", **context)
+
+    return ModuleConfigurationError
+
+
+def _create_connection_error_class(module_name: str) -> type:
+    """Create connection error class for module."""
+
+    class ModuleConnectionError(FlextConnectionError):
+        """Module connection errors."""
+
+        def __init__(
+            self,
+            message: str = f"{module_name} connection failed",
+            service_name: str | None = None,
+            endpoint: str | None = None,
+            **kwargs: object,
+        ) -> None:
+            """Initialize module connection error with context."""
+            context = kwargs.copy()
+            if service_name is not None:
+                context["service_name"] = service_name
+            if endpoint is not None:
+                context["endpoint"] = endpoint
+            super().__init__(f"{module_name} connection: {message}", **context)
+
+    return ModuleConnectionError
+
+
+def _create_processing_error_class(module_name: str) -> type:
+    """Create processing error class for module."""
+
+    class ModuleProcessingError(FlextProcessingError):
+        """Module processing errors."""
+
+        def __init__(
+            self,
+            message: str = f"{module_name} processing failed",
+            operation: str | None = None,
+            file_path: str | None = None,
+            **kwargs: object,
+        ) -> None:
+            """Initialize module processing error with context."""
+            context = kwargs.copy()
+            if operation is not None:
+                context["operation"] = operation
+            if file_path is not None:
+                context["file_path"] = file_path
+            super().__init__(f"{module_name} processing: {message}", **context)
+
+    return ModuleProcessingError
+
+
+def _create_authentication_error_class(module_name: str) -> type:
+    """Create authentication error class for module."""
+
+    class ModuleAuthenticationError(FlextAuthenticationError):
+        """Module authentication errors."""
+
+        def __init__(
+            self,
+            message: str = f"{module_name} authentication failed",
+            username: str | None = None,
+            auth_method: str | None = None,
+            **kwargs: object,
+        ) -> None:
+            """Initialize module authentication error with context."""
+            context = kwargs.copy()
+            if username is not None:
+                context["username"] = username
+            if auth_method is not None:
+                context["auth_method"] = auth_method
+            super().__init__(f"{module_name}: {message}", **context)
+
+    return ModuleAuthenticationError
+
+
+def _create_timeout_error_class(module_name: str) -> type:
+    """Create timeout error class for module."""
+
+    class ModuleTimeoutError(FlextTimeoutError):
+        """Module timeout errors."""
+
+        def __init__(
+            self,
+            message: str = f"{module_name} operation timed out",
+            timeout_duration: float | None = None,
+            operation: str | None = None,
+            **kwargs: object,
+        ) -> None:
+            """Initialize module timeout error with context."""
+            context = kwargs.copy()
+            if timeout_duration is not None:
+                context["timeout_duration"] = timeout_duration
+            if operation is not None:
+                context["operation"] = operation
+            super().__init__(f"{module_name}: {message}", **context)
+
+    return ModuleTimeoutError
+
+
+def _get_module_prefix(module_name: str) -> str:
+    """Get module prefix for class naming."""
+    return "".join(
+        word.capitalize() for word in module_name.replace("_", "-").split("-")
+    )
+
+
 def create_module_exception_classes(module_name: str) -> dict[str, type]:
-    """Create DRY module-specific exception classes to eliminate massive duplication.
+    """Create DRY module-specific exception classes to eliminate duplication.
 
     This function creates a complete set of module-specific exception classes that
     eliminate the need for duplicate exception code across FLEXT modules. Each module
@@ -84,158 +260,22 @@ def create_module_exception_classes(module_name: str) -> dict[str, type]:
         FlextAuthValidationError = exceptions["FlextAuthValidationError"]
 
     """
+    module_prefix = _get_module_prefix(module_name)
 
-    # Create base exception class for the module
-    class ModuleBaseError(FlextError):
-        """Base exception for module operations."""
-
-        def __init__(
-            self,
-            message: str = f"{module_name} error",
-            **kwargs: object,
-        ) -> None:
-            """Initialize module error with context."""
-            context = kwargs.copy()
-            super().__init__(
-                message, error_code=f"{module_name.upper()}_ERROR", context=context,
-            )
-
-    # Create validation error class
-    class ModuleValidationError(FlextValidationError):
-        """Module validation errors."""
-
-        def __init__(
-            self,
-            message: str = f"{module_name} validation failed",
-            field: str | None = None,
-            value: object = None,
-            **kwargs: object,
-        ) -> None:
-            """Initialize module validation error with context."""
-            validation_details: dict[str, object] = {}
-            if field is not None:
-                validation_details["field"] = field
-            if value is not None:
-                validation_details["value"] = str(value)[:100]  # Truncate long values
-
-            context = kwargs.copy()
-
-            super().__init__(
-                f"{module_name}: {message}",
-                validation_details=validation_details,
-                context=context,
-            )
-
-    # Create configuration error class
-    class ModuleConfigurationError(FlextConfigurationError):
-        """Module configuration errors."""
-
-        def __init__(
-            self,
-            message: str = f"{module_name} configuration error",
-            config_key: str | None = None,
-            **kwargs: object,
-        ) -> None:
-            """Initialize module configuration error with context."""
-            context = kwargs.copy()
-            if config_key is not None:
-                context["config_key"] = config_key
-
-            super().__init__(f"{module_name} config: {message}", **context)
-
-    # Create connection error class
-    class ModuleConnectionError(FlextConnectionError):
-        """Module connection errors."""
-
-        def __init__(
-            self,
-            message: str = f"{module_name} connection failed",
-            service_name: str | None = None,
-            endpoint: str | None = None,
-            **kwargs: object,
-        ) -> None:
-            """Initialize module connection error with context."""
-            context = kwargs.copy()
-            if service_name is not None:
-                context["service_name"] = service_name
-            if endpoint is not None:
-                context["endpoint"] = endpoint
-
-            super().__init__(f"{module_name} connection: {message}", **context)
-
-    # Create processing error class
-    class ModuleProcessingError(FlextProcessingError):
-        """Module processing errors."""
-
-        def __init__(
-            self,
-            message: str = f"{module_name} processing failed",
-            operation: str | None = None,
-            file_path: str | None = None,
-            **kwargs: object,
-        ) -> None:
-            """Initialize module processing error with context."""
-            context = kwargs.copy()
-            if operation is not None:
-                context["operation"] = operation
-            if file_path is not None:
-                context["file_path"] = file_path
-
-            super().__init__(f"{module_name} processing: {message}", **context)
-
-    # Create authentication error class
-    class ModuleAuthenticationError(FlextAuthenticationError):
-        """Module authentication errors."""
-
-        def __init__(
-            self,
-            message: str = f"{module_name} authentication failed",
-            username: str | None = None,
-            auth_method: str | None = None,
-            **kwargs: object,
-        ) -> None:
-            """Initialize module authentication error with context."""
-            context = kwargs.copy()
-            if username is not None:
-                context["username"] = username
-            if auth_method is not None:
-                context["auth_method"] = auth_method
-
-            super().__init__(f"{module_name}: {message}", **context)
-
-    # Create timeout error class
-    class ModuleTimeoutError(FlextTimeoutError):
-        """Module timeout errors."""
-
-        def __init__(
-            self,
-            message: str = f"{module_name} operation timed out",
-            timeout_duration: float | None = None,
-            operation: str | None = None,
-            **kwargs: object,
-        ) -> None:
-            """Initialize module timeout error with context."""
-            context = kwargs.copy()
-            if timeout_duration is not None:
-                context["timeout_duration"] = timeout_duration
-            if operation is not None:
-                context["operation"] = operation
-
-            super().__init__(f"{module_name}: {message}", **context)
-
-    # Create module-specific class names
-    module_prefix = "".join(
-        word.capitalize() for word in module_name.replace("_", "-").split("-")
-    )
+    # Factory functions for each exception type
+    exception_factories = {
+        "Error": _create_base_error_class,
+        "ValidationError": _create_validation_error_class,
+        "ConfigurationError": _create_configuration_error_class,
+        "ConnectionError": _create_connection_error_class,
+        "ProcessingError": _create_processing_error_class,
+        "AuthenticationError": _create_authentication_error_class,
+        "TimeoutError": _create_timeout_error_class,
+    }
 
     return {
-        f"{module_prefix}Error": ModuleBaseError,
-        f"{module_prefix}ValidationError": ModuleValidationError,
-        f"{module_prefix}ConfigurationError": ModuleConfigurationError,
-        f"{module_prefix}ConnectionError": ModuleConnectionError,
-        f"{module_prefix}ProcessingError": ModuleProcessingError,
-        f"{module_prefix}AuthenticationError": ModuleAuthenticationError,
-        f"{module_prefix}TimeoutError": ModuleTimeoutError,
+        f"{module_prefix}{suffix}": factory(module_name)
+        for suffix, factory in exception_factories.items()
     }
 
 

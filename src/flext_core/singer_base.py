@@ -101,7 +101,7 @@ class FlextSingerValidationError(FlextValidationError):
         **kwargs: object,
     ) -> None:
         """Initialize Singer validation error with context."""
-        validation_details = {}
+        validation_details: dict[str, object] = {}
         if field is not None:
             validation_details["field"] = field
         if value is not None:
@@ -168,11 +168,10 @@ class FlextTapError(FlextSingerError):
         **kwargs: object,
     ) -> None:
         """Initialize tap error with context."""
-        context = kwargs.copy()
         if source_system is not None:
-            context["source_system"] = source_system
+            kwargs["source_system"] = source_system
 
-        super().__init__(message, component_type="tap", **context)
+        super().__init__(message, component_type="tap", stream_name=None, **kwargs)
 
 
 class FlextTargetError(FlextSingerError):
@@ -185,11 +184,10 @@ class FlextTargetError(FlextSingerError):
         **kwargs: object,
     ) -> None:
         """Initialize target error with context."""
-        context = kwargs.copy()
         if destination_system is not None:
-            context["destination_system"] = destination_system
+            kwargs["destination_system"] = destination_system
 
-        super().__init__(message, component_type="target", **context)
+        super().__init__(message, component_type="target", stream_name=None, **kwargs)
 
 
 class FlextTransformError(FlextSingerError):
@@ -202,11 +200,12 @@ class FlextTransformError(FlextSingerError):
         **kwargs: object,
     ) -> None:
         """Initialize transform error with context."""
-        context = kwargs.copy()
         if transform_name is not None:
-            context["transform_name"] = transform_name
+            kwargs["transform_name"] = transform_name
 
-        super().__init__(message, component_type="transform", **context)
+        super().__init__(
+            message, component_type="transform", stream_name=None, **kwargs
+        )
 
 
 # Factory functions removed - use direct exception class inheritance instead
