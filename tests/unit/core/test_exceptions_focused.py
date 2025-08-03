@@ -89,7 +89,10 @@ class TestFlextValidationErrorCoverage:
         )
 
         assert isinstance(error, FlextValidationError)
-        assert error.context == context
+        # Context should contain both original context and validation details
+        assert error.context["user_id"] == "123"  # Original context
+        assert error.context["field"] == "age"  # From validation_details
+        assert error.field == "age"  # Field attribute
 
 
 class TestFlextTypeErrorCoverage:

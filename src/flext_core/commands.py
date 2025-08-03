@@ -1,66 +1,83 @@
-"""FLEXT Core Commands Module.
+"""FLEXT Core Commands - CQRS Layer Command Implementation.
 
-Comprehensive Command Query Responsibility Segregation (CQRS) implementation with
-command processing, validation, and routing. Implements consolidated architecture with
-Pydantic validation, mixin inheritance, and type-safe operations.
+Command Query Responsibility Segregation (CQRS) implementation providing command
+processing, validation, and routing across the 32-project FLEXT ecosystem. Foundation
+for write operations with side effects, business logic encapsulation, and distributed
+system coordination in data integration pipelines.
 
-Architecture:
-    - CQRS pattern with clear command and query separation
-    - Type-safe command and handler interfaces with generic constraints
-    - Command bus implementation for routing and middleware processing
-    - Pydantic-based validation with automatic serialization support
-    - Multiple inheritance from specialized mixin classes for behavior composition
-    - Event sourcing integration with correlation ID tracking
+Module Role in Architecture:
+    CQRS Layer → Command Processing → Write Operations with Side Effects
 
-Command System Components:
-    - FlextCommands.Command: Base command with metadata and validation
-    - FlextCommands.Handler[T, R]: Generic command handler with lifecycle management
-    - FlextCommands.Bus: Command routing and execution with middleware support
-    - FlextCommands.Query: Read-only query operations with pagination
-    - FlextCommands.QueryHandler[T, R]: Query handler interface for read operations
-    - FlextCommands.Decorators: Function-based handler registration
+    This module provides CQRS command patterns used throughout FLEXT projects:
+    - Command definitions for write operations with business logic validation
+    - Command handlers for processing business operations with error handling
+    - Command bus for routing and middleware processing with cross-cutting concerns
+    - Query separation ensuring read/write operation distinction
 
-Maintenance Guidelines:
-    - Create domain commands by inheriting from FlextCommands.Command
-    - Implement handlers by inheriting from FlextCommands.Handler[Command, Result]
-    - Register handlers with command bus for automatic routing
-    - Use correlation IDs for request tracking across service boundaries
-    - Implement custom validation in command validate_command method
-    - Follow CQRS principles with clear command/query separation
+Command Architecture Patterns:
+    CQRS Separation: Clear distinction between commands (write) and queries (read)
+    Command Bus: Centralized routing with middleware pipeline support
+    Type Safety: Generic type parameters for compile-time command/handler safety
+    Immutable Commands: Frozen models ensuring command integrity during processing
 
-Design Decisions:
-    - Nested class organization within FlextCommands for namespace management
-    - Pydantic BaseModel for automatic validation and serialization
-    - Frozen models for immutability and thread safety
-    - Generic type parameters for compile-time type safety
-    - Command bus pattern for centralized routing and middleware
-    - Payload integration for transport and persistence
+Development Status (v0.9.0 → 1.0.0):
+    ✅ Production Ready: Command base, handler interface, validation
+    🚧 Active Development: Complete CQRS implementation (Priority 2 - October 2025)
+    📋 TODO Integration: Query Bus and auto-discovery (Priority 2)
 
-CQRS Implementation:
+CQRS Command Features:
+    FlextCommands.Command: Base command with metadata and correlation tracking
+    FlextCommands.Handler: Generic command handler with lifecycle management
+    FlextCommands.Bus: Command routing with middleware and execution tracking
+    FlextCommands.Query: Read-only query operations with pagination support
+
+Ecosystem Usage Patterns:
+    # FLEXT Service Commands
+    class CreateUserCommand(FlextCommands.Command):
+        name: str
+        email: str
+
+        def validate_command(self) -> FlextResult[None]:
+            if '@' not in self.email:
+                return FlextResult.fail("Invalid email format")
+            return FlextResult.ok(None)
+
+    class CreateUserHandler(FlextCommands.Handler[CreateUserCommand, User]):
+        def handle(self, command: CreateUserCommand) -> FlextResult[User]:
+            user = User(name=command.name, email=command.email)
+            return self.user_repository.save(user)
+
+    # Singer Tap/Target Commands
+    class ExtractOracleDataCommand(FlextCommands.Command):
+        table_name: str
+        batch_size: int
+
+    # client-a Migration Commands
+    class MigrateLdapUsersCommand(FlextCommands.Command):
+        source_dn: str
+        target_dn: str
+        batch_size: int = 100
+
+CQRS Patterns Implementation:
     - Commands: Write operations with side effects and state changes
-    - Queries: Read operations without side effects with pagination support
-    - Handlers: Processing logic with validation and error handling
-    - Bus: Routing infrastructure with middleware and execution tracking
-    - Event integration: Correlation tracking for event sourcing patterns
+    - Handlers: Business logic processing with validation and error handling
+    - Bus: Routing infrastructure with middleware pipeline support
+    - Correlation Tracking: Request tracing across distributed services
 
-Enterprise Features:
-    - Correlation ID tracking for distributed system observability
-    - Automatic timestamp generation with UTC timezone handling
-    - User context tracking for audit and authorization
-    - Command serialization for transport and persistence
-    - Middleware pipeline for cross-cutting concerns
-    - Comprehensive logging and metrics integration
+Quality Standards:
+    - All commands must implement validate_command for business validation
+    - Command handlers must be stateless and thread-safe
+    - Commands must be immutable (frozen models) to prevent modification
+    - Correlation IDs must be used for distributed request tracking
 
-Dependencies:
-    - pydantic: Data validation and immutable model configuration
-    - mixins: Serializable, validatable, timing, and logging behavior patterns
-    - payload: FlextPayload integration for transport and persistence
-    - result: FlextResult pattern for consistent error handling
-    - types: Generic type variables and command-specific type aliases
-    - utilities: ID generation and type guards for validation
+See Also:
+    docs/TODO.md: Priority 2 - Complete CQRS implementation
+    handlers.py: Handler patterns and execution lifecycle
+    interfaces.py: FlextHandler interface definitions
 
 Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations

@@ -1,96 +1,47 @@
-"""FLEXT Core Mixins Base Module.
+"""FLEXT Core Mixins - Internal Implementation Module.
 
-Comprehensive mixin foundation implementing enterprise-grade behavioral patterns with
-automatic initialization, type safety, and cross-cutting concerns. Provides source of
-truth for mixin implementations across the FLEXT ecosystem.
+Internal implementation providing the foundational logic for mixin behavioral patterns.
+This module is part of the Internal Implementation Layer and should not be imported
+directly by ecosystem projects. Use the public API through mixins module instead.
 
-Architecture:
-    - Foundation layer pattern providing base implementations for public mixin APIs
-    - Zero external dependencies beyond core validation utilities for portability
-    - Self-contained implementations with comprehensive functionality coverage
-    - Automatic initialization patterns through __init_subclass__ hooks for integration
-    - Property-based access patterns ensuring consistency and encapsulation
-    - Internal state management with underscore prefixes for proper encapsulation
+Module Role in Architecture:
+    Internal Implementation Layer → Mixin Patterns → Public API Layer
 
-Mixin Implementation Strategy:
-    - __init_subclass__ hooks for automatic setup and configuration management
-    - Lazy initialization patterns to minimize overhead and improve performance
-    - Property-based access patterns for consistency and data validation
-    - Internal state management with underscore prefixes for encapsulation and safety
+    This internal module provides:
+    - Base mixin categories (timestamp, identifiable, validatable, etc.)
+    - Automatic initialization patterns with lazy loading
     - Composite mixin patterns for common architectural use cases
-    - Type-safe implementations with proper error handling and validation
+    - Internal state management with proper encapsulation
 
-Base Mixin Categories:
-    - _BaseTimestampMixin: Creation and update timestamp tracking with age calculation
-    - _BaseIdentifiableMixin: Unique identifier management with validation
-    - _BaseValidatableMixin: Validation state and error tracking with reporting
-    - _BaseSerializableMixin: Dictionary conversion and serialization with type safety
-    - _BaseLoggableMixin: Structured logging integration with automatic logger creation
-    - _BaseComparableMixin: Comparison operator implementations with flexible logic
-    - _BaseTimingMixin: Execution timing and measurement with multiple time formats
-    - _BaseCacheableMixin: Key-value caching with expiration policies and size mgmt
+Implementation Patterns:
+    Mixin Composition: Behavioral patterns without multiple inheritance complexity
+    Lazy Initialization: Performance optimization through deferred state setup
 
-Maintenance Guidelines:
-    - Keep implementations dependency-free for maximum portability and reusability
-    - Use __init_subclass__ for automatic setup when possible to reduce boilerplate
-    - Implement lazy initialization for performance optimization and resource efficiency
-    - Maintain consistent property naming patterns for API consistency and predict
-    - Document mixin interaction patterns and potential conflicts for safe composition
-    - Follow single responsibility principle for each mixin category
-    - Ensure backward compatibility through careful API evolution
+Design Principles:
+    - Single responsibility for internal mixin implementation concerns
+    - No external dependencies beyond standard library and sibling modules
+    - Performance-optimized implementations for public API consumption
+    - Type safety maintained through internal validation
 
-Design Decisions:
-    - No external dependencies beyond core validation utilities for portability
-    - Automatic initialization through __init_subclass__ hooks for developer convenience
-    - Property-based access for consistency, validation, and encapsulation
-    - Internal state with underscore prefixes for proper encapsulation and safety
-    - Composite mixins for common architectural patterns and reduced boilerplate
-    - Type-safe implementations with proper error handling and graceful degradation
+Access Restrictions:
+    - This module is internal and not exported in __init__.py
+    - Use mixins module for all external access to mixin functionality
+    - Breaking changes may occur without notice in internal modules
+    - No compatibility guarantees for internal implementation details
 
-Enterprise Mixin Features:
-    - Comprehensive timestamp tracking for audit trails and temporal queries
-    - Unique identifier management with validation and automatic generation
-    - Validation state tracking with error collection and reporting capabilities
-    - Serialization support with type safety and recursive object handling
-    - Structured logging integration with automatic logger configuration
-    - Performance timing measurement with multiple precision options
-    - Caching capabilities with expiration policies and memory management
+Quality Standards:
+    - Internal implementation must maintain public API contracts
+    - Performance optimizations must not break type safety
+    - Code must be thoroughly tested through public API surface
+    - Internal changes must not affect public behavior
 
-Composite Mixin Patterns:
-    - _BaseEntityMixin: Complete entity pattern combining ID, timestamps, and validation
-    - _BaseValueObjectMixin: Value object pattern (validation + serialization)
-    - Factory functions for dynamic mixin creation and configuration
-    - Multiple inheritance composition for complex behavioral requirements
-
-Automatic Initialization Features:
-    - __init_subclass__ hooks for seamless mixin integration without manual setup
-    - Lazy initialization patterns for optimal performance and resource utilization
-    - Property-based access ensuring consistent behavior and data validation
-    - Internal state management preventing external interference and data corruption
-    - Graceful degradation for missing dependencies and configuration errors
-
-Type Safety and Validation:
-    - Type annotations for all methods and properties ensuring compile-time verification
-    - Integration with core validation utilities for data integrity
-    - Graceful error handling with fallback behaviors for robustness
-    - Property-based access with validation and type checking
-    - Safe serialization with type preservation and error handling
-
-Performance Optimization:
-    - Lazy initialization to minimize overhead and improve startup performance
-    - Efficient caching algorithms with size limits and expiration policies
-    - High-resolution timing measurement using performance counters
-    - Memory-efficient data structures for internal state management
-    - Optimized property access patterns for minimal runtime overhead
-
-Dependencies:
-    - flext_core.validation: Core validation utilities for data integrity and typing
-    - flext_core.types: Type definitions for TYPE_CHECKING static analysis only
-    - flext_core.loggings: Structured logging utilities with lazy initialization
-    - Standard library time: Timestamp generation and timing measurement utilities
+See Also:
+    mixins: Public API for mixin patterns and behavioral composition
+    docs/python-module-organization.md: Internal module architecture
 
 Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations

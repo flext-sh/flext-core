@@ -1,37 +1,66 @@
-"""FLEXT Core Types - Comprehensive type system with protocols and type aliases.
+"""FLEXT Core Types - Foundation Layer Type System.
 
-Enterprise-grade type system providing type-safe operations, domain-specific aliases,
-and protocol definitions for the FLEXT ecosystem. Implements Clean Architecture
-type constraints with generic programming support.
+Comprehensive type system providing the foundation for type-safe operations across
+all 32 projects in the FLEXT ecosystem. Establishes type contracts, protocols,
+and generic programming patterns used throughout the architectural layers.
 
-Architecture:
-    - Generic type variables for type-safe operations
-    - Domain-specific type aliases for business logic modeling
-    - Protocol definitions for structural typing and interface contracts
-    - CQRS type definitions for command, query, and event patterns
-    - Type guards for runtime type checking and validation
+Module Role in Architecture:
+    Foundation Layer → Type System → All Other Layers
 
-Type Categories:
-    - Core Types: Basic generic variables (T, U, V, R, E, P, F)
-    - Domain Types: Entity, service, and aggregate specific aliases
-    - CQRS Types: Command, query, event, and request/response patterns
-    - Protocol Types: Structural typing for interface definitions
-    - Utility Types: Common data structures and predicates
+    This module provides the fundamental type definitions that enable:
+    - Railway-oriented programming with FlextResult[T]
+    - Domain-driven design with typed entities and value objects
+    - CQRS patterns with command/query type contracts
+    - Dependency injection with type-safe service location
+    - Protocol-based interfaces for architectural flexibility
 
-Design Principles:
-    - Single source of truth for all FLEXT type definitions
-    - Type-safe operations through comprehensive generic programming
-    - Protocol-based design for flexible interface contracts
-    - Domain-driven type modeling for business logic clarity
-    - Runtime type validation through type guard implementations
+Type System Categories:
+    Generic Variables: T, U, V, R, E, P for comprehensive generic programming
+    Domain Types: TEntity, TEntityId, TValue for domain modeling
+    CQRS Types: TCommand, TQuery, TEvent for command-query separation
+    Service Types: TService, TServiceName for dependency injection
+    Data Types: TData, TMessage, TPayload for structured data handling
 
-Dependencies:
-    - typing: Core type system and generic programming support
-    - abc: Abstract base class patterns for protocol definitions
-    - Standard library: Built-in type annotations and constraints
+Development Status (v0.9.0 → 1.0.0):
+    ✅ Production Ready: Core generics, domain types, protocol definitions
+    🚧 Future Enhancement: Event sourcing types, advanced query patterns
+    📋 TODO Integration: Plugin architecture types (Plugin Priority 3)
+
+Protocol Design Patterns:
+    - Structural typing for interface segregation
+    - Runtime type checking capabilities
+    - Validation contract definitions
+    - Serialization/deserialization support
+    - Timestamping and comparison protocols
+
+Usage Across Ecosystem:
+    # Type-safe result handling (used in 15,000+ function signatures)
+    def process_data(data: TData) -> FlextResult[TEntity]:
+        return FlextResult.ok(create_entity(data))
+
+    # Domain modeling with typed entities
+    class User(FlextEntity):
+        user_id: TEntityId
+        name: str
+
+    # Service contracts with protocol typing
+    class UserService(Protocol):
+        def find_user(self, user_id: TEntityId) -> FlextResult[User]: ...
+
+Quality Standards:
+    - All types must be compatible with strict MyPy checking
+    - Protocol definitions must support structural typing
+    - Generic constraints must be properly bounded
+    - Type aliases must be semantically meaningful
+    - Runtime type guards must be provided where applicable
+
+See Also:
+    docs/python-module-organization.md: Type system architecture details
+    docs/TODO.md: Type system enhancement roadmap
 
 Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations

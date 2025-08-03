@@ -1,10 +1,47 @@
-"""FLEXT Base Handlers - Foundation handler patterns.
+"""FLEXT Core Handlers - Internal Implementation Module.
+
+Internal implementation providing the foundational logic for handler patterns.
+This module is part of the Internal Implementation Layer and should not be imported
+directly by ecosystem projects. Use the public API through handlers module instead.
+
+Module Role in Architecture:
+    Internal Implementation Layer → Handler Patterns → Public API Layer
+
+    This internal module provides:
+    - Base handler interface with type-safe message processing
+    - Specialized handlers for commands, events, and queries
+    - Composition-based delegation patterns eliminating multiple inheritance
+    - Lifecycle hooks for pre/post processing with logging integration
+
+Implementation Patterns:
+    Handler Pattern: Template method with customizable lifecycle hooks
+    Composition-Based: Delegation instead of multiple inheritance complexity
+
+Design Principles:
+    - Single responsibility for internal handler implementation concerns
+    - No external dependencies beyond standard library and sibling modules
+    - Performance-optimized implementations for public API consumption
+    - Type safety maintained through internal validation
+
+Access Restrictions:
+    - This module is internal and not exported in __init__.py
+    - Use handlers module for all external access to handler functionality
+    - Breaking changes may occur without notice in internal modules
+    - No compatibility guarantees for internal implementation details
+
+Quality Standards:
+    - Internal implementation must maintain public API contracts
+    - Performance optimizations must not break type safety
+    - Code must be thoroughly tested through public API surface
+    - Internal changes must not affect public behavior
+
+See Also:
+    handlers: Public API for handler patterns and message processing
+    docs/python-module-organization.md: Internal module architecture
 
 Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
 
-Foundation handler patterns with composition-based architecture.
-Single internal definition following 'entregar mais como muito menos' principle.
 """
 
 from __future__ import annotations

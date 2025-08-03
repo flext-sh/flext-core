@@ -1,80 +1,47 @@
-"""FLEXT Core Decorators Base Module.
+"""FLEXT Core Decorators - Internal Implementation Module.
 
-Comprehensive decorator foundation implementing enterprise-grade function enhancement
-with type safety, performance optimization, and cross-cutting concerns. Provides
-single source of truth for decorator implementations across the FLEXT ecosystem.
+Internal implementation providing the foundational logic for decorator patterns.
+This module is part of the Internal Implementation Layer and should not be imported
+directly by ecosystem projects. Use the public API through decorators module instead.
 
-Architecture:
-    - Base implementation pattern providing foundation for public decorator APIs
-    - Type-safe decorator patterns with Protocol-based function interfaces
-    - Consolidated decorator categories organized by functional domain
-    - Multiple inheritance support for complex decorator composition patterns
-    - Metadata preservation ensuring decorated function introspection capabilities
-    - Performance-optimized implementations with minimal runtime overhead
+Module Role in Architecture:
+    Internal Implementation Layer → Decorator Patterns → Public API Layer
 
-Decorator Categories:
-    - Validation decorators: Input validation and constraint enforcement patterns
-    - Error handling decorators: Safe execution and exception management patterns
-    - Performance decorators: Caching, memoization, and timing measurement patterns
-    - Logging decorators: Function call tracing and exception logging patterns
-    - Immutability decorators: Data protection and argument freezing patterns
-    - Functional decorators: Currying, composition, and functional programming patterns
+    This internal module provides:
+    - Base decorator utilities and protocol definitions
+    - Consolidated decorator categories (validation, error handling, performance, etc.)
+    - Factory functions for configurable decorator creation
+    - Internal decorator composition and metadata preservation
 
-Maintenance Guidelines:
-    - Add new decorator patterns to appropriate base category classes
-    - Maintain type safety through Protocol interfaces and proper type annotations
-    - Preserve function metadata using _BaseDecoratorUtils.preserve_metadata method
-    - Follow single source of truth principle for each decorator category
-    - Implement factory methods for configurable decorator creation patterns
-    - Keep base implementations simple and focused on core functionality
-    - Ensure decorator composition compatibility through consistent interfaces
+Implementation Patterns:
+    Protocol Interfaces: Type-safe decorator function interfaces
+    Category Organization: Logical grouping of decorator functionality
 
-Design Decisions:
-    - Base module pattern providing foundation for public decorator exposure
-    - Protocol-based interfaces for maximum type safety and flexibility
-    - Category-based organization for logical grouping and maintainability
-    - Factory pattern for configurable decorator creation with parameters
-    - Metadata preservation for debugging and introspection capabilities
-    - Closure-based state management for decorator-specific data storage
+Design Principles:
+    - Single responsibility for internal decorator implementation concerns
+    - No external dependencies beyond standard library and sibling modules
+    - Performance-optimized implementations for public API consumption
+    - Type safety maintained through internal validation
 
-Enterprise Decorator Features:
-    - Type-safe function decoration with compile-time verification support
-    - Performance optimization through caching and memoization patterns
-    - Error handling and recovery through safe execution decorators
-    - Observability integration through timing and logging decorators
-    - Data protection through immutability enforcement decorators
-    - Functional programming support through composition and currying patterns
+Access Restrictions:
+    - This module is internal and not exported in __init__.py
+    - Use decorators module for all external access to decorator functionality
+    - Breaking changes may occur without notice in internal modules
+    - No compatibility guarantees for internal implementation details
 
-Base Implementation Pattern:
-    - _BaseValidationDecorators: Input validation and constraint checking decorators
-    - _BaseErrorHandlingDecorators: Exception handling and safe execution decorators
-    - _BasePerformanceDecorators: Caching, timing, and optimization decorators
-    - _BaseLoggingDecorators: Function call tracing and exception logging decorators
-    - _BaseImmutabilityDecorators: Data protection and argument freezing decorators
-    - _BaseFunctionalDecorators: Functional programming pattern decorators
+Quality Standards:
+    - Internal implementation must maintain public API contracts
+    - Performance optimizations must not break type safety
+    - Code must be thoroughly tested through public API surface
+    - Internal changes must not affect public behavior
 
-Type Safety Features:
-    - Protocol-based function interfaces ensuring type compatibility
-    - Generic type preservation through proper wrapper implementation
-    - Metadata preservation maintaining function introspection capabilities
-    - Type-safe error handling with exception type constraints
-    - Compile-time verification through proper type annotations
-
-Performance Optimization:
-    - Minimal runtime overhead through efficient decorator implementation
-    - Closure-based state management avoiding global state pollution
-    - Efficient caching algorithms with size limits and eviction policies
-    - Timing measurement using high-resolution performance counters
-    - Memory-efficient decorator composition patterns
-
-Dependencies:
-    - functools: Function wrapping and metadata preservation utilities
-    - time: High-resolution timing measurement for performance decorators
-    - typing: Type annotation infrastructure and Protocol definitions
-    - flext_core.types: Domain-specific type aliases and function signatures
+See Also:
+    decorators: Public API for decorator patterns and function enhancement
+    docs/python-module-organization.md: Internal module architecture
 
 Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations

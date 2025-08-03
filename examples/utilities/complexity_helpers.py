@@ -9,9 +9,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import TErrorMessage, TLogMessage, TUserData
+from typing import TYPE_CHECKING
 
 from .validation_utilities import is_email, is_int, is_non_empty_string
+
+if TYPE_CHECKING:
+    from flext_core import TErrorMessage, TLogMessage, TUserData
 
 # =============================================================================
 # COMPLEXITY REDUCTION HELPERS - SOLID SRP: Modular utility demonstrations
@@ -116,11 +119,14 @@ class FormattingHelper:
     @staticmethod
     def format_file_size(bytes_count: int) -> str:
         """Format file size in human-readable format."""
-        if bytes_count < 1024:
+        kb = 1024
+        mb = kb * kb
+        gb = mb * kb
+
+        if bytes_count < kb:
             return f"{bytes_count} B"
-        elif bytes_count < 1024 * 1024:
-            return f"{bytes_count / 1024:.1f} KB"
-        elif bytes_count < 1024 * 1024 * 1024:
-            return f"{bytes_count / (1024 * 1024):.1f} MB"
-        else:
-            return f"{bytes_count / (1024 * 1024 * 1024):.1f} GB"
+        if bytes_count < mb:
+            return f"{bytes_count / kb:.1f} KB"
+        if bytes_count < gb:
+            return f"{bytes_count / mb:.1f} MB"
+        return f"{bytes_count / gb:.1f} GB"

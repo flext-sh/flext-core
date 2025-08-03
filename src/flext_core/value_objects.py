@@ -1,64 +1,86 @@
-"""FLEXT Core Value Objects Module.
+"""FLEXT Core Value Objects - Domain Layer Value Implementation.
 
-Comprehensive Domain-Driven Design (DDD) value object implementation with immutability,
-validation, and rich behavior composition. Implements consolidated architecture with
-Pydantic validation, mixin inheritance, and type-safe operations.
+Domain-Driven Design (DDD) value object implementation providing immutability, rich
+behavior composition, and attribute-based equality across the 32-project FLEXT
+ecosystem. Foundation for domain modeling with comprehensive validation and formatting
+capabilities in data integration value types.
 
-Architecture:
-    - Domain-Driven Design value object patterns with attribute-based equality
-    - Pydantic BaseModel integration for automatic validation and serialization
-    - Multiple inheritance from specialized mixin classes for behavior composition
-    - Immutable value objects with comprehensive validation and formatting
-    - Payload integration for transport and persistence with metadata enrichment
-    - Utility inheritance for formatting and generation capabilities
+Module Role in Architecture:
+    Domain Layer → Value Modeling → Domain Value Types
 
-Value Object System Components:
-    - FlextValueObject: Abstract base value object with validation and behavior
-    - FlextValueObjectFactory: Factory pattern for type-safe value object creation
-    - Validation integration: Domain rule validation with FlextResult patterns
-    - Payload conversion: Rich payload creation with metadata and correlation
-    - Utility inheritance: Direct access to formatting and generation utilities
-
-Maintenance Guidelines:
-    - Create domain value objects by inheriting from FlextValueObject abstract base
-    - Implement validate_domain_rules method for value-specific business validation
-    - Use immutable value objects with attribute-based equality comparisons
-    - Leverage inherited utilities for formatting and data generation needs
-    - Implement payload conversion for transport and persistence scenarios
-    - Follow DDD principles with rich value behaviors and encapsulated logic
-
-Design Decisions:
-    - Abstract base class pattern enforcing domain validation implementation
-    - Pydantic frozen models for immutability and thread safety
-    - Multiple inheritance from utility classes for direct method access
-    - Payload integration for structured transport with rich metadata
-    - Factory pattern for validated value object creation with defaults
-    - FlextResult pattern integration for type-safe error handling
-
-Domain-Driven Design Features:
-    - Attribute-based equality following DDD value object principles
+    This module provides DDD value object patterns used throughout FLEXT projects:
+    - Attribute-based equality distinguishing values from entities
     - Immutable value objects preventing modification after creation
     - Rich domain behaviors through multiple inheritance composition
-    - Business rule validation through abstract validate_domain_rules method
-    - Value object equality based on structural content rather than identity
-    - Comprehensive validation ensuring value object integrity
+    - Business rule validation ensuring value object integrity
 
-Utility Integration:
-    - Direct inheritance from FlextFormatters for data presentation
-    - Direct inheritance from FlextGenerators for ID and timestamp generation
-    - Mixin inheritance for value object specific behaviors
-    - Logging integration through FlextLoggableMixin
-    - Validation integration through FlextValueObjectMixin
+Value Object Architecture Patterns:
+    Immutable Design: Frozen Pydantic models preventing modification
+    Attribute Equality: Structural equality based on content, not identity
+    Rich Behaviors: Multiple inheritance from utility and mixin classes
+    Domain Validation: Abstract validate_domain_rules enforcement
 
-Dependencies:
-    - pydantic: Data validation and immutable model configuration
-    - mixins: Value object specific behavior inheritance and logging
-    - payload: FlextPayload integration for transport and persistence
-    - result: FlextResult pattern for consistent error handling
-    - utilities: Direct inheritance of formatting and generation utilities
+Development Status (v0.9.0 → 1.0.0):
+    ✅ Production Ready: Immutable values, attribute equality, validation, utilities
+    🚧 Active Development: Rich domain behaviors (Enhancement 3 - Priority Medium)
+    📋 TODO Integration: Value object serialization for Go bridge (Priority 4)
+
+Domain Value Features:
+    FlextValueObject: Abstract base with immutability and validation
+    FlextValueObjectFactory: Type-safe creation with validation and defaults
+    Utility Integration: Direct inheritance from formatters and generators
+    Payload Conversion: Rich payload creation for transport and persistence
+
+Ecosystem Usage Patterns:
+    # FLEXT Service Value Objects
+    class EmailAddress(FlextValueObject):
+        address: str
+
+        def validate_domain_rules(self) -> FlextResult[None]:
+            if '@' not in self.address or '.' not in self.address.split('@')[1]:
+                return FlextResult.fail("Invalid email format")
+            return FlextResult.ok(None)
+
+    # Singer Tap/Target Values
+    class OracleConnectionString(FlextValueObject):
+        host: str
+        port: int
+        service_name: str
+
+        def validate_domain_rules(self) -> FlextResult[None]:
+            if not (1 <= self.port <= 65535):
+                return FlextResult.fail("Port must be between 1 and 65535")
+            return FlextResult.ok(None)
+
+    # client-a Migration Values
+    class LdapDN(FlextValueObject):
+        distinguished_name: str
+
+        def validate_domain_rules(self) -> FlextResult[None]:
+            if '=' not in self.distinguished_name:
+                return FlextResult.fail("Invalid DN format")
+            return FlextResult.ok(None)
+
+Value Object Principles:
+    - Immutability ensuring values cannot be modified after creation
+    - Attribute-based equality comparing structural content
+    - Rich behaviors through utility and mixin inheritance
+    - Domain validation through validate_domain_rules abstract method
+
+Quality Standards:
+    - All value objects must be immutable (frozen Pydantic models)
+    - Equality must be based on attributes, not identity
+    - All value objects must implement validate_domain_rules
+    - Value objects should encapsulate related formatting and validation logic
+
+See Also:
+    docs/TODO.md: Enhancement 3 - Rich domain behavior development
+    entities.py: Entity patterns with identity-based equality
+    mixins.py: Behavior composition through mixin inheritance
 
 Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations

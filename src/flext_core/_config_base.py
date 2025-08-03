@@ -1,70 +1,47 @@
-"""FLEXT Core Configuration Base Module.
+"""FLEXT Core Configuration - Internal Implementation Module.
 
-Comprehensive configuration management system providing foundational patterns for
-configuration loading, validation, and management across the FLEXT Core library.
-Implements consolidated architecture with file operations and environment integration.
+Internal implementation providing the foundational logic for configuration management.
+This module is part of the Internal Implementation Layer and should not be imported
+directly by ecosystem projects. Use the public API through config module instead.
 
-Architecture:
-    - Single source of truth pattern for configuration operations
-    - File-based configuration loading with JSON support and validation
-    - Environment variable management with type checking and defaults
+Module Role in Architecture:
+    Internal Implementation Layer → Configuration Management → Public API Layer
+
+    This internal module provides:
+    - Base configuration operations for file and environment handling
     - Configuration validation with predicate-based checking patterns
-    - Default value application with merging and filtering capabilities
-    - Exception-safe operations with comprehensive error handling
+    - Default value management and configuration merging utilities
+    - Performance and observability configuration constants
 
-Configuration System Components:
-    - _BaseConfigOps: Core configuration operations for file and environment handling
-    - _BaseConfigValidation: Validation patterns for configuration values and types
-    - _BaseConfigDefaults: Default value management and configuration merging
-    - _BaseConfig: Utility functions for model configuration and standardization
-    - Performance and observability configuration constants for system tuning
+Implementation Patterns:
+    Configuration Operations: File loading, environment access, JSON processing
+    Validation Framework: Type checking, range validation, custom validators
 
-Maintenance Guidelines:
-    - Maintain exception-safe operations with comprehensive error context
-    - Use FlextResult pattern for all operations that can fail
-    - Validate inputs using FlextValidators for consistency
-    - Preserve configuration immutability through defensive copying
-    - Keep file operations atomic with proper resource management
-    - Follow path validation patterns for security and reliability
+Design Principles:
+    - Single responsibility for internal configuration implementation concerns
+    - No external dependencies beyond standard library and sibling modules
+    - Performance-optimized implementations for public API consumption
+    - Type safety maintained through internal validation
 
-Design Decisions:
-    - FlextResult integration for consistent error handling patterns
-    - Path-based file operations with pathlib for cross-platform compatibility
-    - Environment variable access with optional defaults and requirement checking
-    - JSON-based configuration files with UTF-8 encoding and validation
-    - Dictionary-based configuration with type checking and key validation
-    - Defensive copying preventing configuration mutation
+Access Restrictions:
+    - This module is internal and not exported in __init__.py
+    - Use config module for all external access to configuration functionality
+    - Breaking changes may occur without notice in internal modules
+    - No compatibility guarantees for internal implementation details
 
-Configuration Management Features:
-    - JSON file loading and saving with comprehensive error handling
-    - Environment variable access with defaults and requirement validation
-    - Configuration merging with precedence control and conflict resolution
-    - Default value application preserving existing configuration values
-    - Configuration filtering for security and namespace isolation
-    - Type validation with clear error messages and context
+Quality Standards:
+    - Internal implementation must maintain public API contracts
+    - Performance optimizations must not break type safety
+    - Code must be thoroughly tested through public API surface
+    - Internal changes must not affect public behavior
 
-File Operation Patterns:
-    - Atomic file operations with proper encoding and error handling
-    - Directory creation with parent directory support for file saving
-    - Path validation ensuring file existence and type checking
-    - JSON parsing with type validation and comprehensive error reporting
-    - Resource management with proper file handle cleanup
-
-Environment Integration:
-    - Environment variable retrieval with optional default values
-    - Required variable validation with clear error messages
-    - Type-safe environment variable access with validation
-    - Cross-platform environment variable handling
-
-Dependencies:
-    - json: JSON parsing and serialization for configuration files
-    - os: Environment variable access and system integration
-    - pathlib: Path operations and file system interaction
-    - _result_base: FlextResult pattern for error handling
-    - validation: FlextValidators for input validation
+See Also:
+    config: Public API for configuration management and settings
+    docs/python-module-organization.md: Internal module architecture
 
 Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations

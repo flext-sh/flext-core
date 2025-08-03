@@ -1,54 +1,78 @@
-"""FLEXT Core Configuration Module.
+"""FLEXT Core Configuration - Configuration Layer Management System.
 
-Comprehensive configuration management system for the FLEXT Core library providing
-consolidated functionality through composition patterns and Pydantic integration.
+Enterprise-grade configuration management providing consolidated environment loading,
+validation, and settings management across the 32-project FLEXT ecosystem. Foundation
+for consistent configuration patterns in distributed data integration platforms.
 
-Architecture:
-    - Composition-based delegation to specialized configuration base classes
+Module Role in Architecture:
+    Configuration Layer → Settings Management → Environment Integration
+
+    This module provides unified configuration management used throughout FLEXT:
     - Pydantic BaseSettings integration for automatic environment loading
-    - Configuration validation with comprehensive error handling
-    - File-based configuration loading with JSON support
-    - Environment variable management with type validation
-    - Configuration merging and override capabilities
+    - FlextResult pattern integration for consistent error handling
+    - JSON file loading with validation for deployment configurations
+    - Configuration merging and override capabilities for multi-environment support
 
-Configuration Categories:
-    - Base configuration: Core configuration loading and management
-    - Configuration defaults: Default value application and management
-    - Configuration operations: Merging, loading, and transformation
-    - Configuration validation: Type checking and constraint validation
-    - Environment integration: Environment variable loading and validation
-    - Pydantic integration: Automatic settings with model validation
+Configuration Architecture Patterns:
+    Composition Pattern: Specialized configuration bases without inheritance overhead
+    Environment Integration: Automatic .env file loading with type conversion
+    Validation Pipeline: Comprehensive error handling with actionable feedback
+    Settings Factory: Type-safe configuration creation with FlextResult
 
-Maintenance Guidelines:
-    - Add new configuration types to appropriate base classes first
-    - Use composition for configuration capability combination
-    - Integrate FlextResult pattern for all operations that can fail
-    - Maintain backward compatibility through function aliases
-    - Keep configuration operations stateless when possible
+Development Status (v0.9.0 → 1.0.0):
+    ✅ Production Ready: Environment loading, JSON files, Pydantic integration
+    🚧 Active Development: Configuration unification (Priority 2 - September 2025)
+    📋 TODO Integration: Hierarchical configuration system (Priority 2)
 
-Design Decisions:
-    - Composition pattern for configuration capability reuse without overhead
-    - Pydantic BaseSettings integration for automatic environment handling
-    - FlextResult integration for consistent error handling patterns
-    - File-based configuration with JSON format support
-    - Type validation for environment variables and configuration values
+Configuration Management Patterns:
+    FlextBaseSettings: Enterprise settings with automatic environment loading
+    FlextConfig: Consolidated operations with validation and merging
+    Environment Variables: Type-safe access with validation and defaults
+    File Loading: JSON configuration with comprehensive error handling
 
-Configuration Features:
-    - JSON file loading with automatic error handling
-    - Environment variable access with default value support
-    - Configuration merging with deep dictionary combination
-    - Type validation for configuration values and environment variables
-    - Complete configuration creation with validation and defaults
-    - Pydantic model integration for settings management
+Ecosystem Usage Patterns:
+    # FLEXT Service Applications
+    class ServiceSettings(FlextBaseSettings):
+        database_url: str = "postgresql://localhost/flext"
+        redis_url: str = "redis://localhost:6379"
+        log_level: str = "INFO"
 
-Dependencies:
-    - _config_base: Foundation configuration implementations
-    - pydantic_settings: BaseSettings for environment integration
-    - result: FlextResult pattern for consistent error handling
-    - types: Type definitions for configuration data structures
+        class Config:
+            env_prefix = "FLEXT_"
+
+    # Singer Taps/Targets
+    settings_result = FlextBaseSettings.create_with_validation({
+        "oracle_host": "localhost",
+        "oracle_port": 1521,
+        "batch_size": 1000
+    })
+
+    # Go Service Integration
+    config_result = FlextConfig.load_and_validate_from_file(
+        "config/production.json",
+        required_keys=["database_url", "secret_key"]
+    )
+
+Enterprise Configuration Features:
+    - Multi-environment support (dev, staging, production)
+    - Security-conscious settings with secret handling
+    - Type validation preventing runtime configuration errors
+    - Configuration merging for deployment flexibility
+
+Quality Standards:
+    - All configuration loading must use FlextResult pattern
+    - Environment variables must have sensible defaults
+    - Configuration validation must provide actionable error messages
+    - Settings classes must support both file and environment loading
+
+See Also:
+    docs/TODO.md: Priority 2 - Configuration system unification
+    _config_base.py: Foundation configuration implementations
+    constants.py: Configuration constants and defaults
 
 Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations

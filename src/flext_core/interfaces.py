@@ -1,77 +1,75 @@
-"""FLEXT Core Interfaces Module.
+"""FLEXT Core Interfaces - Configuration Layer Contract Definitions.
 
-Interface definitions for extending FLEXT Core functionality through clean architecture
-patterns and dependency inversion principles.
+Clean Architecture interface definitions enabling dependency inversion, extensibility,
+and consistent contracts across the 32-project FLEXT ecosystem. Foundation for
+plugin architecture, service boundaries, and domain-driven design patterns.
 
-Architecture:
-    - Protocol-based interfaces enabling structural typing for maximum flexibility
-    - Abstract base classes enforcing implementation contracts for consistency
-    - Runtime-checkable protocols for dynamic type validation
-    - Clean architecture compliance with dependency inversion principle
-    - Domain-driven design interfaces supporting repository and unit of work patterns
-    - Event-driven architecture interfaces for publish-subscribe patterns
+Module Role in Architecture:
+    Configuration Layer → Interface Contracts → Clean Architecture Boundaries
 
-Interface System Components:
-    - Validation Interfaces: FlextValidator protocol and FlextValidationRule ABC
-    - Service Interfaces: FlextService lifecycle management and FlextConfigurable
-      protocol
-    - Handler Interfaces: FlextHandler and FlextMiddleware for message processing
-    - Repository Interfaces: FlextRepository and FlextUnitOfWork for data access
-      patterns
-    - Plugin Interfaces: FlextPlugin and FlextPluginContext for extensibility
-    - Event Interfaces: FlextEventPublisher and FlextEventSubscriber for event-driven
-      patterns
+    This module provides interface abstractions used throughout FLEXT projects:
+    - Protocol-based interfaces for structural typing and implementation flexibility
+    - Abstract base classes for enforcing implementation contracts
+    - Service lifecycle interfaces for start/stop/health operations
+    - Plugin interfaces for runtime extensibility without core modification
 
-Maintenance Guidelines:
-    - All interfaces must follow FlextResult pattern for consistent error handling
-    - Use Protocol for structural typing when implementation flexibility is needed
-    - Use ABC when enforcing specific implementation contracts is required
-    - Add @runtime_checkable decorator to protocols used in runtime type checking
-    - Maintain backward compatibility when evolving interface definitions
-    - Document all interface methods with comprehensive usage examples
+Interface Architecture Patterns:
+    Dependency Inversion: Abstractions independent of concrete implementations
+    Protocol-Based Typing: Structural typing for maximum implementation flexibility
+    Plugin Architecture: Runtime extensibility through well-defined contracts
+    Service Boundaries: Clear interface definition for Clean Architecture layers
 
-Design Decisions:
-    - Protocol over inheritance for maximum implementation flexibility
-    - FlextResult return types for consistent error handling across all interfaces
-    - Abstract base classes for complex interfaces requiring implementation guidance
-    - Context manager integration for resource management patterns
-    - Plugin architecture support for runtime extensibility
-    - Event-driven patterns for loose coupling and scalability
+Development Status (v0.9.0 → 1.0.0):
+    ✅ Production Ready: Validation, service, handler, repository interfaces
+    🚧 Active Development: Plugin architecture foundation (Priority 3 - October 2025)
+    📋 TODO Integration: Event sourcing interfaces (Priority 1)
 
-Clean Architecture Compliance:
-    - Dependency inversion through interface abstractions
-    - Domain layer interfaces independent of infrastructure concerns
-    - Application service interfaces defining use case boundaries
-    - Repository interfaces abstracting data access persistence details
-    - Plugin interfaces enabling runtime extension without core modification
+Interface Categories:
+    Validation Interfaces: FlextValidator protocol and FlextValidationRule ABC
+    Service Interfaces: FlextService lifecycle and FlextConfigurable protocol
+    Handler Interfaces: FlextHandler and FlextMiddleware for CQRS patterns
+    Repository Interfaces: FlextRepository and FlextUnitOfWork for data access
+    Plugin Interfaces: FlextPlugin and FlextPluginContext for extensibility
+    Event Interfaces: FlextEventPublisher and FlextEventSubscriber patterns
 
-Enterprise Integration Patterns:
-    - Service lifecycle management with start/stop/health check operations
-    - Unit of Work pattern for transactional consistency across repositories
-    - Middleware pipeline for cross-cutting concerns implementation
-    - Configuration injection through FlextConfigurable protocol
-    - Plugin context providing controlled access to system services
+Ecosystem Usage Patterns:
+    # FLEXT Service Implementation
+    class ApiService(FlextService):
+        def start(self) -> FlextResult[None]: ...
+        def health_check(self) -> FlextResult[TAnyDict]: ...
 
-Protocol Usage Patterns:
-    - Structural typing enabling duck typing with type safety
-    - Runtime checking for dynamic type validation scenarios
-    - Flexible implementation without inheritance constraints
-    - Integration with existing codebases through protocol compliance
+    # Singer Tap/Target Validation
+    class OracleValidator(FlextValidator):
+        def validate(self, value: object) -> FlextResult[object]: ...
 
-Abstract Base Class Patterns:
-    - Implementation contract enforcement through abstract methods
-    - Template method patterns for common implementation concerns
-    - Documentation through abstract method signatures and docstrings
-    - Inheritance hierarchies for specialized interface variants
+    # Plugin Development
+    class CustomPlugin(FlextPlugin):
+        def initialize(self, context: FlextPluginContext) -> FlextResult[None]: ...
 
-Dependencies:
-    - abc: Abstract base class patterns for interface definition
-    - typing: Protocol definitions and runtime type checking
-    - result: FlextResult integration for consistent error handling
-    - structlog: Logger integration for plugin context implementations
+    # Repository Pattern (DDD)
+    class UserRepository(FlextRepository):
+        def find_by_id(self, entity_id: str) -> FlextResult[object]: ...
+
+Clean Architecture Benefits:
+    - Dependency inversion preventing tight coupling to implementations
+    - Domain layer independence from infrastructure concerns
+    - Plugin architecture enabling runtime extensibility
+    - Testability through interface mocking and substitution
+
+Quality Standards:
+    - All interfaces must use FlextResult for consistent error handling
+    - Protocols must be runtime-checkable when used for dynamic validation
+    - Abstract base classes must provide comprehensive implementation guidance
+    - Interface evolution must maintain backward compatibility
+
+See Also:
+    docs/TODO.md: Priority 3 - Plugin architecture foundation
+    abc: Abstract base class patterns for interface definition
+    typing: Protocol definitions and runtime type checking
 
 Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations

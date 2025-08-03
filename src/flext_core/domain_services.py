@@ -1,64 +1,81 @@
-"""FLEXT Core Domain Services Module.
+"""FLEXT Core Domain Services - Domain Layer Service Implementation.
 
-Comprehensive Domain-Driven Design (DDD) domain service implementation for stateless
-business operations that don't naturally belong to entities or value objects.
-Implements consolidated architecture with Pydantic validation and mixin inheritance.
+Domain-Driven Design (DDD) domain service implementation for stateless business
+operations that don't naturally belong to entities or value objects across the
+32-project FLEXT ecosystem. Foundation for cross-entity business logic, complex
+validation, and integration services in data integration domains.
 
-Architecture:
-    - Domain-Driven Design domain service patterns for cross-entity operations
-    - Abstract base class enforcing service operation implementation
-    - Pydantic BaseModel integration for automatic validation and serialization
-    - Multiple inheritance from validation and serialization mixins
-    - Stateless design for thread-safe and scalable service operations
-    - FlextResult pattern integration for consistent error handling
+Module Role in Architecture:
+    Domain Layer → Domain Services → Cross-Entity Business Logic
 
-Domain Service System Components:
-    - FlextDomainService: Abstract base domain service with operation interface
-    - Service execution: Abstract execute method enforcing implementation
-    - Validation integration: Automatic validation through mixin inheritance
-    - Serialization support: Service state serialization for transport and persistence
-    - Error handling: FlextResult pattern for type-safe service operations
-
-Maintenance Guidelines:
-    - Create domain services by inheriting from FlextDomainService abstract base
-    - Implement execute method for service-specific business operations
-    - Use domain services for operations involving multiple entities or value objects
-    - Keep services stateless to ensure thread safety and scalability
-    - Integrate validation through inherited mixin capabilities
-    - Follow DDD principles with clear service boundaries and responsibilities
-
-Design Decisions:
-    - Abstract base class pattern enforcing execute method implementation
-    - Pydantic frozen models for immutability and thread safety
-    - Multiple inheritance from validation and serialization mixins
-    - Stateless design for scalable service operations
-    - FlextResult return type for consistent error handling
-    - Service composition patterns for complex business operations
-
-Domain-Driven Design Features:
-    - Stateless domain operations for cross-entity business logic
-    - Service encapsulation of complex business rules and workflows
-    - Clear separation of service responsibilities from entity behaviors
-    - Domain service composition for complex business scenarios
-    - Integration with aggregate roots and value objects
-    - Business process orchestration through service coordination
-
-Service Operation Patterns:
-    - Cross-entity business operations that don't belong to single aggregate
+    This module provides DDD domain service patterns used throughout FLEXT projects:
+    - Stateless business operations spanning multiple entities or aggregates
     - Complex validation and business rule enforcement across boundaries
     - Integration services for external system communication
-    - Calculation services for complex business computations
-    - Policy services for business rule evaluation and enforcement
-    - Orchestration services for multi-step business processes
+    - Policy enforcement and business rule evaluation services
 
-Dependencies:
-    - pydantic: Data validation and immutable model configuration
-    - mixins: Validation and serialization behavior inheritance
-    - result: FlextResult pattern for consistent error handling (TYPE_CHECKING)
-    - abc: Abstract base class patterns for enforcing implementation contracts
+Domain Service Architecture Patterns:
+    Stateless Operations: Thread-safe services without state management
+    Cross-Entity Logic: Business operations spanning multiple domain objects
+    Policy Enforcement: Business rule evaluation and validation services
+    Integration Patterns: External system communication and coordination
+
+Development Status (v0.9.0 → 1.0.0):
+    ✅ Production Ready: Abstract base service, validation, serialization
+    🚧 Active Development: Service composition patterns (Enhancement 3 - Med)
+    📋 TODO Integration: Complex business workflow orchestration (Priority 2)
+
+Domain Service Features:
+    FlextDomainService: Abstract base with execute method enforcement
+    Stateless Design: Thread-safe operations without instance state
+    Validation Integration: Automatic validation through mixin inheritance
+    Service Composition: Complex business operations through service coordination
+
+Ecosystem Usage Patterns:
+    # FLEXT Service Domain Services
+    class UserRegistrationService(FlextDomainService):
+        def execute(self, registration_data: dict) -> FlextResult[User]:
+            # Cross-entity validation and business logic
+            if self.is_email_taken(registration_data["email"]):
+                return FlextResult.fail("Email already registered")
+            return FlextResult.ok(User(**registration_data))
+
+    # Singer Tap/Target Services
+    class OracleConnectionValidationService(FlextDomainService):
+        def execute(self, connection_data: dict) -> FlextResult[bool]:
+            # Complex validation across connection parameters
+            if not self.validate_host_reachability(connection_data["host"]):
+                return FlextResult.fail("Host unreachable")
+            return FlextResult.ok(data=True)
+
+    # client-a Migration Services
+    class LdapMigrationService(FlextDomainService):
+        def execute(self, migration_request: dict) -> FlextResult[MigrationResult]:
+            # Complex migration logic across multiple systems
+            source_users = self.extract_users(migration_request["source"])
+            return self.migrate_users(source_users, migration_request["target"])
+
+Service Operation Categories:
+    - Cross-Entity Operations: Business logic spanning multiple domain objects
+    - Complex Validation: Multi-step validation across aggregate boundaries
+    - Integration Services: External system communication and data exchange
+    - Policy Services: Business rule evaluation and enforcement
+    - Calculation Services: Complex business computations and analytics
+
+Quality Standards:
+    - All domain services must be stateless for thread safety
+    - Services must implement the abstract execute method
+    - Cross-entity operations must respect aggregate boundaries
+    - Services should coordinate through domain events when possible
+
+See Also:
+    docs/TODO.md: Enhancement 3 - Service composition pattern development
+    entities.py: Entity patterns that services coordinate
+    aggregate_root.py: Aggregate boundaries that services must respect
 
 Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations

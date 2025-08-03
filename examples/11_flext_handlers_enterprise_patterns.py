@@ -1064,7 +1064,9 @@ def demonstrate_function_handlers() -> None:  # noqa: PLR0912, PLR0915
     # 3. Complex function handler with business logic
     print("\n3. Complex function handler:")
 
-    def process_order_total(order_data: dict[str, object]) -> FlextResult[dict[str, object]]:
+    def process_order_total(
+        order_data: dict[str, object],
+    ) -> FlextResult[dict[str, object]]:
         """Complex order processing function."""
         if not order_data.get("items"):
             return FlextResult.fail("Order must have items")

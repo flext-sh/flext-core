@@ -1,40 +1,62 @@
-"""FLEXT Core Guards Module.
+"""FLEXT Core Guards - Extension Layer Type Safety System.
 
 Comprehensive type guards and validation system providing enterprise-grade safety
-patterns for the FLEXT Core library. Implements compatibility layer with consolidated
-functionality from specialized modules while maintaining backward compatibility.
+patterns and runtime type checking across the 32-project FLEXT ecosystem. Foundation
+for type safety enforcement, validation decorators, and safe object construction in
+distributed data integration and business logic components.
 
-Architecture:
-    - Compatibility layer aggregating functionality from specialized modules
-    - Type guard system providing runtime type safety validation
+Module Role in Architecture:
+    Extension Layer → Type Safety System → Runtime Validation & Guards
+
+    This module provides type safety patterns used throughout FLEXT projects:
+    - Runtime type guards with compile-time type narrowing support
     - Validation decorators for function and class safety enforcement
-    - Automatic validation models with comprehensive error handling
+    - Automatic validation models with enhanced error reporting
     - Factory and builder patterns for safe object construction
-    - Requirement validators with descriptive error messaging
+
+Guard Architecture Patterns:
+    Compatibility Layer: Aggregating functionality from specialized modules
+    Type Guard System: Runtime type safety validation with static analysis benefits
+    Validation Decorators: Function and class-level safety enforcement
+    Factory Patterns: Safe object construction with comprehensive error handling
+
+Development Status (v0.9.0 → 1.0.0):
+    ✅ Production Ready: Type guards, validation decorators, validated models
+    🚧 Active Development: Advanced guard patterns (Enhancement 5 - Priority Low)
+    📋 TODO Integration: Generic type validation enhancement (Priority 4)
 
 Guards System Components:
-    - Type Guards: Runtime type checking with comprehensive validation patterns
-    - Validation Decorators: Function and class-level safety enforcement
-    - ValidatedModel: Automatic validation with enhanced error reporting
-    - Factory Helpers: Safe object construction patterns with error handling
-    - Requirement Validators: Assertion-style validation with custom messaging
-    - Compatibility Exports: Re-exports from specialized modules for API stability
+    Type Guards: Runtime type checking with comprehensive validation patterns
+    Validation Decorators: Function and class-level safety enforcement
+    ValidatedModel: Automatic validation with enhanced error reporting
+    Factory Helpers: Safe object construction patterns with error handling
+    Requirement Validators: Assertion-style validation with custom messaging
 
-Maintenance Guidelines:
-    - This module serves as a compatibility layer, avoid adding new functionality
-    - Direct users to specialized modules (FlextValidators, FlextDecorators, etc.)
-    - Maintain backward compatibility for existing public API surface
-    - Update re-exports when underlying modules change their interfaces
-    - Keep validation utilities simple and focused on common use cases
-    - Preserve error message consistency across validation patterns
+Ecosystem Usage Patterns:
+    # FLEXT Service Type Safety
+    from flext_core.guards import TypeGuards, require
 
-Design Decisions:
-    - Compatibility layer pattern aggregating specialized module functionality
-    - Re-export strategy preserving existing API contracts for stability
-    - ValidatedModel as bridge between Pydantic and FLEXT patterns
-    - Factory helpers providing simple construction patterns
-    - Requirement validators with assertion-style API for common validations
-    - FlextResult integration for safe validation operations
+    def process_user_data(data: object) -> FlextResult[User]:
+        require.not_none(data, "User data cannot be None")
+        if TypeGuards.is_dict(data):
+            return User.create_from_dict(data)
+        return FlextResult.fail("Invalid user data format")
+
+    # Singer Tap/Target Guards
+    @TypeGuards.validated_input
+    def extract_oracle_data(connection_string: str, table_name: str):
+        require.non_empty_string(connection_string, "Connection required")
+        require.non_empty_string(table_name, "Table name required")
+        return oracle_client.extract(connection_string, table_name)
+
+    # client-a Migration Safety
+    class LdapUserValidator(ValidatedModel):
+        dn: str
+        uid: str
+
+        @classmethod
+        def validate_dn_format(cls, dn: str) -> bool:
+            return TypeGuards.is_valid_ldap_dn(dn)
 
 Type Safety Features:
     - Runtime type guards with compile-time type narrowing support
@@ -43,29 +65,20 @@ Type Safety Features:
     - Null safety validation preventing None value propagation
     - Type-safe factory and builder patterns for object construction
 
-Validation Patterns:
-    - Decorator-based validation for functions and classes
-    - Model-based validation with automatic error aggregation
-    - Requirement-style validation with assertion semantics
-    - Safe object construction through factory patterns
-    - Result-based validation avoiding exception propagation
+Quality Standards:
+    - All type guards must support both runtime and static analysis
+    - Validation decorators must preserve function signatures and type annotations
+    - Error messages must be actionable and provide debugging context
+    - Guard compatibility must be maintained across version updates
 
-Backward Compatibility:
-    - All previously exported functions remain available
-    - Error message formats preserved for existing integrations
-    - Function signatures maintained for API stability
-    - Decorator interfaces unchanged for existing code
-    - Type guard behavior consistent with previous versions
-
-Dependencies:
-    - validation: FlextValidators for core validation functionality
-    - decorators: FlextDecorators for validation decorator patterns
-    - mixins: FlextSerializableMixin and FlextValidatableMixin for model enhancement
-    - result: FlextResult for safe validation operations
-    - utilities: FlextUtilities for type guard functionality
+See Also:
+    docs/TODO.md: Enhancement 5 - Advanced guard pattern development
+    validation.py: FlextValidators integration for comprehensive validation
+    decorators.py: Validation decorator implementation details
 
 Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations

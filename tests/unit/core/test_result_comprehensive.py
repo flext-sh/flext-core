@@ -206,14 +206,11 @@ class TestFlextResultMapExceptions:
 
         mapped = result.map(failing_func)
         assert mapped.is_failure
-        if (
-            mapped.error is None
-            or "Unexpected transformation error" not in mapped.error
-        ):
-            msg = f"Expected {'Unexpected transformation error'} in {mapped.error}"
+        if mapped.error is None or "Transformation failed" not in mapped.error:
+            msg = f"Expected {'Transformation failed'} in {mapped.error}"
             raise AssertionError(msg)
-        if mapped.error_code != "EXCEPTION_ERROR":
-            msg = f"Expected {'EXCEPTION_ERROR'}, got {mapped.error_code}"
+        if mapped.error_code != "MAP_ERROR":
+            msg = f"Expected {'MAP_ERROR'}, got {mapped.error_code}"
             raise AssertionError(msg)
 
     def test_map_with_none_data(self) -> None:

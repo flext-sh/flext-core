@@ -174,7 +174,7 @@ class DemonstrationFlowHelper:
                 state_dict[user_id] = result.data
             return result
         return FlextResult.fail(
-            f"{success_message.split(' ')[0]} failed: {result.error}"
+            f"{success_message.split(' ', maxsplit=1)[0]} failed: {result.error}"
         )
 
 
@@ -331,7 +331,10 @@ class CreateUserCommandHandler(
         super().__init__("CreateUserCommandHandler")
 
     def handle(self, command: CreateUserCommand) -> FlextResult[TAnyObject]:
-        """Handle create user command using shared domain models - reduced complexity."""
+        """Handle create user command using shared domain models.
+
+        Reduced complexity through domain model reuse.
+        """
         log_message: TLogMessage = f"👤 Creating user: {command.name} ({command.email})"
         print(log_message)
 
@@ -747,13 +750,11 @@ class CQRSDemonstrator:
             if isinstance(user_data, dict) and "id" in user_data:
                 user_id = user_data["id"]
                 # Use helper for consistent result handling with state update
-                handled_result = (
-                    DemonstrationFlowHelper.handle_result_with_state_update(
-                        create_result,
-                        f"User created successfully: {user_id}",
-                        self.users_db,
-                        user_id,
-                    )
+                DemonstrationFlowHelper.handle_result_with_state_update(
+                    create_result,
+                    f"User created successfully: {user_id}",
+                    self.users_db,
+                    user_id,
                 )
                 self.created_user_id = user_id
                 return FlextResult.ok(user_id)

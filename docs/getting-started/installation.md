@@ -1,83 +1,108 @@
-# Instalação - FLEXT Core
+# FLEXT Core Installation Guide
 
-**Guia completo de instalação e configuração inicial**
+**Complete installation and configuration guide for the architectural foundation of enterprise data integration**
 
-## 🎯 Requisitos do Sistema
+FLEXT Core serves as the foundational library for all 32 projects in the FLEXT ecosystem, providing essential patterns for type-safe error handling, dependency injection, domain modeling, and configuration management.
 
-### Requisitos Obrigatórios
+## 🎯 System Requirements
 
-- **Python 3.13+** (biblioteca é exclusiva para Python 3.13)
-- **pip** ou **Poetry** para gerenciamento de dependências
-- **Git** para versionamento (desenvolvimento)
+### Mandatory Requirements
 
-### Verificação do Python
+- **Python 3.13+** (library is exclusive to Python 3.13 - no backward compatibility)
+- **pip** or **Poetry** for dependency management
+- **Git** for version control (development)
+- **Modern IDE** with Python 3.13 support (VS Code, PyCharm, etc.)
+
+### Python Version Verification
 
 ```bash
-# Verificar versão do Python
+# Check Python version
 python --version
-# Deve retornar: Python 3.13.x
+# Must return: Python 3.13.x
 
-# Verificar se pip está disponível
+# Check pip availability
 pip --version
 
-# Verificar Poetry (opcional, mas recomendado)
+# Check Poetry (optional, but recommended)
 poetry --version
 ```
 
-## 📦 Métodos de Instalação
+**Important**: FLEXT Core requires Python 3.13+ exclusively. No backward compatibility is provided to ensure access to the latest language features and performance improvements.
 
-### 1. Instalação via Poetry (Recomendado)
+## 📦 Installation Methods
 
-**Poetry oferece melhor gerenciamento de dependências e ambientes virtuais.**
+### 1. Poetry Installation (Recommended)
+
+**Poetry provides superior dependency management and virtual environment handling for enterprise development.**
 
 ```bash
-# Instalar FLEXT Core
+# Install FLEXT Core
 poetry add flext-core
 
-# Ou especificar versão específica
-poetry add flext-core@^1.0.0
+# Install specific version
+poetry add flext-core@^0.9.0
 
-# Para desenvolvimento
+# For development projects
 poetry add --group dev flext-core
+
+# Install with all optional dependencies
+poetry add flext-core[all]
 ```
 
-### 2. Instalação via pip
+### 2. pip Installation
 
 ```bash
-# Instalação básica
+# Basic installation
 pip install flext-core
 
-# Instalar versão específica
-pip install flext-core==1.0.0
+# Install specific version
+pip install flext-core==0.9.0
 
-# Instalar versão mais recente
+# Upgrade to latest version
 pip install --upgrade flext-core
 
-# Instalar em ambiente virtual (recomendado)
+# Install in virtual environment (recommended)
 python -m venv flext-env
 source flext-env/bin/activate  # Linux/Mac
 # flext-env\Scripts\activate   # Windows
 pip install flext-core
 ```
 
-### 3. Instalação para Desenvolvimento
+### 3. Development Installation
+
+**For contributing to FLEXT Core or ecosystem projects:**
 
 ```bash
-# Clonar repositório
-git clone https://github.com/flext/flext-core.git
+# Clone repository
+git clone https://github.com/flext-sh/flext-core.git
 cd flext-core
 
-# Instalar Poetry (se não tiver)
+# Install Poetry (if not available)
 curl -sSL https://install.python-poetry.org | python3 -
 
-# Instalar dependências de desenvolvimento
+# Install development dependencies
 poetry install
 
-# Ativar ambiente virtual do Poetry
+# Activate Poetry virtual environment
 poetry shell
 
-# Verificar instalação
-make check
+# Setup development environment
+make setup
+
+# Verify installation with quality gates
+make validate
+```
+
+### 4. Ecosystem Project Integration
+
+**For projects within the FLEXT ecosystem:**
+
+```bash
+# In your FLEXT ecosystem project
+poetry add flext-core@^0.9.0
+
+# Ensure compatibility with other FLEXT projects
+poetry add flext-observability flext-db-oracle flext-ldap
 ```
 
 ## 🔧 Configuração Inicial

@@ -1417,7 +1417,7 @@ def demonstrate_performance_characteristics() -> None:
 
 def main() -> None:
     """Run comprehensive FlextEntity/ValueObject DDD demonstration."""
-    from shared_example_helpers import run_example_demonstration
+    from shared_example_helpers import run_example_demonstration  # noqa: PLC0415
 
     examples = [
         ("Value Object Patterns", demonstrate_value_objects),

@@ -964,5 +964,5 @@ class SharedDemonstrationPattern:
                 print(f"❌ Demonstration function {demo_func.__name__} failed: {e}")
 
         print("\n" + "=" * 80)
-        print(f"🎉 {title.split(' - ')[0]} DEMONSTRATION COMPLETED")
+        print(f"🎉 {title.split(' - ', maxsplit=1)[0]} DEMONSTRATION COMPLETED")
         print("=" * 80)

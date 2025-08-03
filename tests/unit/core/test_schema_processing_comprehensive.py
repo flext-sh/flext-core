@@ -129,7 +129,7 @@ class MockProcessor(BaseProcessor[MockEntry]):
         """Extract mock identifier."""
         if "invalid" in content:
             return FlextResult.fail("Invalid content")
-        return FlextResult.ok(f"id_{content.split()[-1]}")
+        return FlextResult.ok(f"id_{content.rsplit(maxsplit=1)[-1]}")
 
     def _create_entry(
         self,

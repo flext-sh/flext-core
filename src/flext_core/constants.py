@@ -1,65 +1,72 @@
-"""FLEXT Core Constants Module.
+"""FLEXT Core Constants - Foundation Layer Constants Management.
 
-Comprehensive constants management system for the FLEXT Core library providing
-centralized constant definitions with enterprise-grade organization and type safety.
-Implements consolidated architecture pattern eliminating base module duplication.
+Centralized constants providing the foundational values used throughout all 32 projects
+in the FLEXT ecosystem. Establishes standardized error codes, environment settings,
+validation patterns, and system defaults that ensure consistent behavior across
+the entire architectural stack.
 
-Architecture:
-    - Single source of truth for all constant definitions across the system
-    - Consolidated architecture eliminating _constants_base.py duplication
-    - Hierarchical organization with Enum classes for type safety
-    - No underscore prefixes on public objects for clean API access
-    - Multiple access patterns supporting both direct and nested access
-    - Enterprise-grade constant management with validation and type safety
+Module Role in Architecture:
+    Foundation Layer → Constants → All Other Layers
 
-Constant Categories:
-    - Error codes: Standardized error classification for consistent error handling
-    - Status codes: Operation and process status indicators for workflow management
-    - Log levels: Structured logging level definitions with numeric priorities
-    - Field types: Data validation type constants for schema definition
-    - Environment types: Deployment context constants for configuration management
-    - Validation patterns: Regex patterns for common data format validation
-    - Default values: System defaults for timeouts, pagination, and configuration
-    - Project metadata: Version information and project identification
+    This module provides essential constants that enable:
+    - Standardized error codes across all FlextResult operations
+    - Environment-aware configuration for multi-deployment scenarios
+    - Validation patterns for data integrity across ecosystem projects
+    - System defaults for timeouts, pagination, and performance tuning
+    - Version management for ecosystem compatibility tracking
 
-Maintenance Guidelines:
-    - Add new constants to appropriate Enum classes for type safety
-    - Use FlextConstants class for complex constants requiring documentation
-    - Maintain ERROR_CODES dictionary consistency with exception hierarchy
-    - Keep LOG_LEVELS synchronized with logging implementation and numeric values
-    - Follow UPPER_CASE naming convention for all public constants
-    - Update version information through FlextConstants.VERSION for releases
-    - Maintain backward compatibility through legacy wrapper classes
+Constant Categories by Usage:
+    Error Codes: Standardized classification for FlextResult error handling
+    Environment Types: Development, staging, production deployment contexts
+    Log Levels: Structured logging priorities aligned with enterprise monitoring
+    Field Types: Data validation constants for domain model validation
+    Timeout Values: Performance-tuned defaults for network and processing operations
+    Validation Patterns: Regex patterns for email, URLs, and data format validation
 
-Design Decisions:
-    - Eliminated _constants_base.py following "deliver more with much less" principle
-    - Direct dictionary access patterns optimized for runtime performance
-    - Enum classes providing type safety and IDE autocomplete support
-    - Legacy class wrappers maintaining backward compatibility without breaking changes
-    - Nested class organization for logical grouping without namespace pollution
-    - Multiple access patterns supporting different coding styles and preferences
+Development Status (v0.9.0 → 1.0.0):
+    ✅ Production Ready: Error codes, environment types, validation patterns
+    🔄 Enhancement: Observability constants (Enhancement Priority 2)
+    📋 TODO Integration: Plugin architecture constants (Plugin Priority 3)
 
-Enterprise Features:
-    - Comprehensive error code standardization for operational monitoring
-    - Environment-aware configuration constants for multi-deployment scenarios
-    - Performance-tuned constants for cache sizes and timeout configurations
-    - Validation pattern constants ensuring data integrity across the system
-    - Project metadata constants supporting version management and identification
-    - Legacy compatibility ensuring smooth migration from previous implementations
+Ecosystem Integration:
+    - Used by all 32 projects for consistent error classification
+    - Enables standardized monitoring and alerting across deployments
+    - Provides configuration defaults that work across different project types
+    - Supports version compatibility checking for ecosystem updates
 
-Access Patterns:
-    - Direct access: FlextConstants.VERSION, EMAIL_PATTERN for common constants
-    - Nested access: FlextConstants.Performance.CACHE_SIZE_LARGE for grouped constants
-    - Legacy access: Environment.PRODUCTION, Defaults.TIMEOUT for compatibility
-    - Dictionary access: ERROR_CODES["VALIDATION_ERROR"] for dynamic lookups
+Usage Patterns Across Projects:
+    # Standardized error handling in Singer taps/targets
+    if connection_failed:
+        return FlextResult.fail(ERROR_CODES["CONNECTION_ERROR"])
 
-Dependencies:
-    - Standard library: No external dependencies for maximum portability
-    - Type hints: Full type annotation support for static analysis
-    - Pattern definitions: Regex patterns for validation and data formatting
+    # Environment-aware configuration in services
+    if FlextEnvironment.PRODUCTION:
+        timeout = DEFAULT_TIMEOUT * 2
+
+    # Validation in domain entities
+    if not EMAIL_PATTERN.match(email):
+        return FlextResult.fail(ERROR_CODES["VALIDATION_ERROR"])
+
+Design Principles:
+    - Single source of truth eliminates constant duplication
+    - Type-safe enums provide IDE support and runtime validation
+    - Backward compatibility ensures smooth ecosystem updates
+    - Performance-optimized for high-frequency access patterns
+    - Hierarchical organization supports different access patterns
+
+Quality Standards:
+    - All constants must be used by multiple ecosystem projects
+    - Error codes must align with FlextResult failure patterns
+    - Environment constants must support production deployment needs
+    - Validation patterns must be tested across real-world data
+
+See Also:
+    docs/python-module-organization.md: Constants architecture guidance
+    src/flext_core/exceptions.py: Related error hierarchy implementation
 
 Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations

@@ -10,11 +10,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from decimal import Decimal
+from typing import TYPE_CHECKING
 
 from flext_core import FlextResult, FlextTypes
 
-# Import shared domain to reduce duplication
-from shared_domain import Product as SharedProduct, Order as SharedOrder
+if TYPE_CHECKING:
+    # Import shared domain to reduce duplication
+    from shared_domain import Order as SharedOrder, Product as SharedProduct
 
 from .formatting_helpers import MAX_DISCOUNT_PERCENTAGE
 
@@ -25,11 +27,12 @@ from .formatting_helpers import MAX_DISCOUNT_PERCENTAGE
 
 def is_email(value: str) -> bool:
     """Validate email format using enterprise standards."""
+    min_email_length = 5  # user@a.b is minimum valid email
     return (
         isinstance(value, str)
         and "@" in value
         and "." in value.rsplit("@", maxsplit=1)[-1]
-        and len(value) > 5  # Basic minimum length
+        and len(value) > min_email_length
     )
 
 
@@ -74,7 +77,8 @@ def calculate_discount_price(
     """Calculate discounted price with validation."""
     if discount_percentage < 0 or discount_percentage > MAX_DISCOUNT_PERCENTAGE:
         return FlextResult.fail(
-            f"Invalid discount: {discount_percentage}%. Must be 0-{MAX_DISCOUNT_PERCENTAGE}%"
+            f"Invalid discount: {discount_percentage}%. "
+            f"Must be 0-{MAX_DISCOUNT_PERCENTAGE}%"
         )
 
     try:

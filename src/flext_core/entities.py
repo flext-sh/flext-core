@@ -1,108 +1,84 @@
-"""FLEXT Core Entities Module.
+"""FLEXT Core Entities - Domain Layer Entity Implementation.
 
-Comprehensive Domain-Driven Design (DDD) entity implementation with identity management,
-version tracking, and domain event integration. Implements consolidated architecture
-Pydantic validation, mixin inheritance, and type-safe operations.
+Domain-Driven Design (DDD) entity implementation providing identity management, version
+tracking, and domain event integration across the 32-project FLEXT ecosystem. Foundation
+for business entity modeling with optimistic concurrency control and event sourcing
+patterns in data integration domains.
 
-Architecture:
-    - Domain-Driven Design entity patterns with identity-based equality
-    - Pydantic BaseModel integration for automatic validation and serialization
-    - Mixin inheritance for entity-specific behaviors and cross-cutting concerns
+Module Role in Architecture:
+    Domain Layer → Entity Modeling → Business Logic Foundation
+
+    This module provides DDD entity patterns used throughout FLEXT projects:
+    - Identity-based equality distinguishing entities from value objects
+    - Version tracking for optimistic concurrency control in distributed systems
+    - Domain event integration for event sourcing and CQRS patterns
+    - Business logic encapsulation within entity boundaries
+
+Entity Architecture Patterns:
+    Identity Management: Unique identifier generation and identity-based equality
+    Version Tracking: Automatic versioning for optimistic concurrency control
+    Domain Events: Event collection for cross-aggregate communication
+    Business Validation: Domain rule enforcement through validate_domain_rules
+
+Development Status (v0.9.0 → 1.0.0):
+    ✅ Production Ready: Identity management, version tracking, Pydantic validation
+    🚧 Active Development: Event sourcing integration (Priority 1 - September 2025)
+    📋 TODO Integration: Complete domain event persistence (Priority 1)
 
 Domain Entity Features:
-    - Identity-based equality and hash operations
-    - Version tracking for optimistic concurrency control
-    - Domain event integration for event sourcing patterns
-    - Pydantic validation with automatic type conversion
-    - Mixin inheritance for cross-cutting concerns
-    - Type-safe operations with comprehensive error handling
+    FlextEntity: Abstract base with identity-based equality and version tracking
+    Identity Management: Unique identifier generation with collision prevention
+    Version Tracking: Automatic increment on modification for concurrency control
+    Domain Events: Event collection during business operations for event sourcing
 
-Entity Lifecycle:
-    - Creation: Identity assignment and initial validation
-    - Modification: Version increment and domain event generation
-    - Persistence: Optimistic concurrency control with version checking
-    - Retrieval: Identity-based lookup with type-safe operations
-
-Identity Management:
-    - Unique identifier generation and validation
-    - Type-safe identity operations with domain-specific constraints
-    - Identity-based equality and hash operations
-    - Identity persistence and retrieval patterns
-
-Version Tracking:
-    - Automatic version increment on entity modification
-    - Optimistic concurrency control with version checking
-    - Version-based conflict detection and resolution
-    - Version history tracking for audit trails
-
-Domain Events:
-    - Automatic domain event generation on entity changes
-    - Event sourcing integration for state reconstruction
-    - Event-driven architecture support
-    - Event persistence and retrieval patterns
-
-Validation Patterns:
-    - Pydantic automatic validation on entity creation and modification
-    - Domain-specific validation rules with custom error messages
-    - Type-safe validation with comprehensive error handling
-    - Validation integration with domain event generation
-
-Mixin Integration:
-    - Cross-cutting concerns through mixin inheritance
-    - Reusable behaviors across different entity types
-    - Type-safe mixin operations with proper inheritance
-    - Mixin validation and error handling
-
-Usage Patterns:
-    # Basic entity creation
+Ecosystem Usage Patterns:
+    # FLEXT Service Entities
     class User(FlextEntity):
         name: str
         email: str
 
         def validate_domain_rules(self) -> FlextResult[None]:
-            if not self.email or '@' not in self.email:
+            if '@' not in self.email:
                 return FlextResult.fail("Invalid email format")
             return FlextResult.ok(None)
 
-    user = User(name="John Doe", email="john@example.com")
-    assert user.id is not None
-    assert user.version == 1
+    # Singer Tap/Target Entities
+    class OracleTable(FlextEntity):
+        schema_name: str
+        table_name: str
+        column_count: int
 
-    # Entity modification with version tracking
-    user.name = "Jane Doe"
-    assert user.version == 2
+        def validate_domain_rules(self) -> FlextResult[None]:
+            if self.column_count <= 0:
+                return FlextResult.fail("Table must have columns")
+            return FlextResult.ok(None)
 
-    # Identity-based equality
-    user2 = User(name="Jane Doe", email="jane@example.com")
-    user2.id = user.id
-    assert user == user2
-    assert hash(user) == hash(user2)
+    # client-a Migration Entities
+    class LdapUser(FlextEntity):
+        dn: str
+        cn: str
+        uid: str
 
-    # Domain event integration
-    events = user.domain_events
-    assert len(events) > 0
-    assert events[-1].event_type == "UserModified"
+Entity Lifecycle Management:
+    - Creation: Identity assignment and initial validation
+    - Modification: Version increment and domain event generation
+    - Persistence: Optimistic concurrency control with version checking
+    - Event Sourcing: Domain event collection for state reconstruction
 
-Thread Safety:
-    - Entity operations are thread-safe through immutable identity
-    - Version tracking provides optimistic concurrency control
-    - Domain events are thread-safe for event sourcing patterns
-    - Mixin operations maintain thread safety guarantees
+Quality Standards:
+    - All entities must implement validate_domain_rules for business validation
+    - Identity must be immutable after initial assignment
+    - Version tracking must increment on any business state change
+    - Domain events must be collected during business operations
 
-Performance Considerations:
-    - Identity-based operations are O(1) for equality and hash
-    - Version tracking adds minimal overhead to entity operations
-    - Domain event generation is optimized for high-frequency operations
-    - Mixin inheritance provides efficient code reuse
-
-Dependencies:
-    - pydantic: Data validation and serialization
-    - typing: Type hints and generic support
-    - datetime: Timestamp generation and version tracking
-    - uuid: Identity generation and management
+See Also:
+    docs/TODO.md: Priority 1 - Event sourcing foundation implementation
+    aggregate_root.py: Aggregate root patterns with transactional boundaries
+    value_objects.py: Value object patterns with attribute-based equality
 
 Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations

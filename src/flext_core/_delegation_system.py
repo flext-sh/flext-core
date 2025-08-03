@@ -1,26 +1,47 @@
-"""FLEXT Core Delegation System - Sistema robusto de delegação de mixins.
+"""FLEXT Core Delegation System - Internal Implementation Module.
 
-Sistema arquiteturalmente correto para eliminar múltiplas heranças através de
-composição automática e delegação inteligente. Implementa padrão universal
-para todos os mixins da FLEXT, garantindo funcionalidade completa sem
-complexidade de herança múltipla.
+Internal implementation providing the foundational logic for mixin delegation patterns.
+This module is part of the Internal Implementation Layer and should not be imported
+directly by ecosystem projects. Use the public API through mixins module instead.
 
-Architecture:
-    - Delegação automática com descoberta dinâmica de métodos
-    - Sistema de registro de mixins para reutilização global
-    - Proxy inteligente que preserva signatures e tipos
-    - Inicialização automática de state mixin através de composição
-    - Validação e testes automáticos para garantir funcionamento correto
+Module Role in Architecture:
+    Internal Implementation Layer → Delegation System → Public API Layer
+
+    This internal module provides:
+    - Automatic mixin delegation with dynamic method discovery
+    - Intelligent proxy system preserving signatures and types
+    - Automatic state initialization through composition patterns
+    - Comprehensive validation and testing infrastructure
+
+Implementation Patterns:
+    Delegation Pattern: Composition over inheritance with automatic discovery
+    Proxy System: Type-safe method and property delegation
 
 Design Principles:
-    - SINGLE SOURCE OF TRUTH: cada funcionalidade definida uma vez
-    - COMPOSITION OVER INHERITANCE: delegação em vez de herança múltipla
-    - AUTOMATIC DISCOVERY: métodos descobertos dinamicamente
-    - TYPE SAFE: preservação de tipos em delegação
-    - FULLY TESTED: sistema amplamente testável e validável
+    - Single responsibility for internal delegation implementation concerns
+    - No external dependencies beyond standard library and sibling modules
+    - Performance-optimized implementations for public API consumption
+    - Type safety maintained through internal validation
+
+Access Restrictions:
+    - This module is internal and not exported in __init__.py
+    - Use mixins module for all external access to delegation functionality
+    - Breaking changes may occur without notice in internal modules
+    - No compatibility guarantees for internal implementation details
+
+Quality Standards:
+    - Internal implementation must maintain public API contracts
+    - Performance optimizations must not break type safety
+    - Code must be thoroughly tested through public API surface
+    - Internal changes must not affect public behavior
+
+See Also:
+    mixins: Public API for mixin delegation and composition patterns
+    docs/python-module-organization.md: Internal module architecture
 
 Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations

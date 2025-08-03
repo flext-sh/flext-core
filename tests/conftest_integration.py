@@ -11,7 +11,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from flext_core.config import FlextCoreSettings, configure_settings
+from flext_core.config import FlextBaseSettings
 from flext_core.constants import FlextEnvironment, FlextLogLevel
 from flext_core.container import FlextContainer, get_flext_container
 
@@ -46,9 +46,9 @@ def global_container_reset() -> Generator[None]:
 
 
 @pytest.fixture
-def sample_settings() -> FlextCoreSettings:
-    """Provide sample FlextCoreSettings for testing."""
-    return FlextCoreSettings(
+def sample_settings() -> FlextBaseSettings:
+    """Provide sample FlextBaseSettings for testing."""
+    return FlextBaseSettings(
         environment=FlextEnvironment.TESTING,
         log_level=FlextLogLevel.DEBUG,
         debug=True,
@@ -151,5 +151,4 @@ def reset_singletons(monkeypatch: pytest.MonkeyPatch) -> None:
         if key.startswith("FLEXT_"):
             monkeypatch.delenv(key, raising=False)
 
-    # Reset global state
-    configure_settings(None)
+    # Reset global state completed automatically

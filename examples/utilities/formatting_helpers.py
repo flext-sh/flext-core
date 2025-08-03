@@ -62,9 +62,8 @@ def get_age_category(age_value: int) -> str:
     """Categorize age into groups with enterprise constants."""
     if age_value < YOUNG_ADULT_AGE_THRESHOLD:
         return "young_adult"
-    elif age_value < ADULT_AGE_THRESHOLD:
+    if age_value < ADULT_AGE_THRESHOLD:
         return "adult"
-    elif age_value < MIDDLE_AGED_THRESHOLD:
+    if age_value < MIDDLE_AGED_THRESHOLD:
         return "middle_aged"
-    else:
-        return "senior"
+    return "senior"

@@ -11,6 +11,10 @@ from __future__ import annotations
 
 import threading
 import time
+from typing import TYPE_CHECKING, cast
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
 
 import pytest
 
@@ -24,6 +28,9 @@ from flext_core.loggings import (
     get_logger,
 )
 
+if TYPE_CHECKING:
+    from flext_core.flext_types import TAnyDict
+
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 
 # Constants
@@ -32,7 +39,7 @@ EXPECTED_DATA_COUNT = 3
 
 
 @pytest.fixture
-def clean_log_store() -> None:
+def clean_log_store() -> Generator[None]:
     """Clean log store before each test."""
     FlextLoggerFactory.clear_log_store()
     yield
@@ -40,7 +47,7 @@ def clean_log_store() -> None:
 
 
 @pytest.fixture
-def clean_logger_cache() -> None:
+def clean_logger_cache() -> Generator[None]:
     """Clean logger cache and reset global level before each test."""
     FlextLoggerFactory.clear_loggers()
     FlextLoggerFactory._global_level = "INFO"  # Reset global level
@@ -100,11 +107,11 @@ class TestFlextLogger:
         logger = FlextLogger("test.app", "INFO")
 
         # Test with enum objects
-        if not (logger._should_log(FlextLogLevel.ERROR)):
-            msg = f"Expected True, got {logger._should_log(FlextLogLevel.ERROR)}"
+        if not (logger._should_log(FlextLogLevel.ERROR.value)):
+            msg = f"Expected True, got {logger._should_log(FlextLogLevel.ERROR.value)}"
             raise AssertionError(msg)
-        if logger._should_log(FlextLogLevel.DEBUG):
-            msg = f"Expected False, got {logger._should_log(FlextLogLevel.DEBUG)}"
+        if logger._should_log(FlextLogLevel.DEBUG.value):
+            msg = f"Expected False, got {logger._should_log(FlextLogLevel.DEBUG.value)}"
             raise AssertionError(msg)
 
     def test_should_log_unknown_level(self, clean_log_store: None) -> None:
@@ -165,7 +172,7 @@ class TestFlextLogger:
             raise AssertionError(msg)
 
         # Set context
-        test_context = {"user_id": "123", "request_id": "abc"}
+        test_context: dict[str, object] = {"user_id": "123", "request_id": "abc"}
         logger.set_context(test_context)
 
         retrieved_context = logger.get_context()
@@ -225,7 +232,7 @@ class TestFlextLogger:
             msg = f"Expected {1}, got {len(logs)}"
             raise AssertionError(msg)
 
-        log_entry = logs[0]
+        log_entry = cast("TAnyDict", logs[0])
         if log_entry["level"] != "INFO":
             msg = f"Expected {'INFO'}, got {log_entry['level']}"
             raise AssertionError(msg)
@@ -233,7 +240,7 @@ class TestFlextLogger:
         if log_entry["message"] != "Test info message":
             msg = f"Expected {'Test info message'}, got {log_entry['message']}"
             raise AssertionError(msg)
-        if "extra_data" not in log_entry["context"]:
+        if "extra_data" not in cast("TAnyDict", log_entry["context"]):
             msg = f"Expected {'extra_data'} in {log_entry['context']}"
             raise AssertionError(msg)
 
@@ -247,7 +254,7 @@ class TestFlextLogger:
         if len(logs) != 1:
             msg = f"Expected {1}, got {len(logs)}"
             raise AssertionError(msg)
-        assert logs[0]["level"] == "DEBUG"
+        assert cast("TAnyDict", logs[0])["level"] == "DEBUG"
 
     def test_warning_logging(self, clean_log_store: None) -> None:
         """Test warning level logging."""
@@ -259,7 +266,7 @@ class TestFlextLogger:
         if len(logs) != 1:
             msg = f"Expected {1}, got {len(logs)}"
             raise AssertionError(msg)
-        assert logs[0]["level"] == "WARNING"
+        assert cast("TAnyDict", logs[0])["level"] == "WARNING"
 
     def test_error_logging(self, clean_log_store: None) -> None:
         """Test error level logging."""
@@ -271,7 +278,7 @@ class TestFlextLogger:
         if len(logs) != 1:
             msg = f"Expected {1}, got {len(logs)}"
             raise AssertionError(msg)
-        assert logs[0]["level"] == "ERROR"
+        assert cast("TAnyDict", logs[0])["level"] == "ERROR"
 
     def test_critical_logging(self, clean_log_store: None) -> None:
         """Test critical level logging."""
@@ -283,7 +290,7 @@ class TestFlextLogger:
         if len(logs) != 1:
             msg = f"Expected {1}, got {len(logs)}"
             raise AssertionError(msg)
-        assert logs[0]["level"] == "CRITICAL"
+        assert cast("TAnyDict", logs[0])["level"] == "CRITICAL"
 
     def test_trace_logging_allowed(self, clean_log_store: None) -> None:
         """Test trace logging when level allows it."""
@@ -296,8 +303,8 @@ class TestFlextLogger:
             msg = f"Expected {1}, got {len(logs)}"
             raise AssertionError(msg)
         # TRACE level is now properly supported
-        if logs[0]["level"] != "TRACE":
-            msg = f"Expected {'TRACE'}, got {logs[0]['level']}"
+        if cast("TAnyDict", logs[0])["level"] != "TRACE":
+            msg = f"Expected {'TRACE'}, got {cast('TAnyDict', logs[0])['level']}"
             raise AssertionError(msg)
 
     def test_trace_logging_filtered(self, clean_log_store: None) -> None:
@@ -330,14 +337,16 @@ class TestFlextLogger:
             msg = f"Expected {1}, got {len(logs)}"
             raise AssertionError(msg)
 
-        log_entry = logs[0]
+        log_entry = cast("TAnyDict", logs[0])
         if log_entry["level"] != "ERROR":
             msg = f"Expected {'ERROR'}, got {log_entry['level']}"
             raise AssertionError(msg)
-        if "traceback" not in log_entry["context"]:
+        if "traceback" not in cast("TAnyDict", log_entry["context"]):
             msg = f"Expected {'traceback'} in {log_entry['context']}"
             raise AssertionError(msg)
-        assert "ValueError: Test exception" in log_entry["context"]["traceback"]
+        assert "ValueError: Test exception" in str(
+            cast("TAnyDict", log_entry["context"])["traceback"]
+        )
 
     def test_message_formatting_with_args(self, clean_log_store: None) -> None:
         """Test message formatting with positional arguments."""
@@ -381,7 +390,7 @@ class TestFlextLogger:
             msg = f"Expected {1}, got {len(logs)}"
             raise AssertionError(msg)
 
-        context = logs[0]["context"]
+        context = cast("TAnyDict", cast("TAnyDict", logs[0])["context"])
         if context["user_id"] != "456":
             msg = f"Expected {'456'}, got {context['user_id']}"
             raise AssertionError(msg)
@@ -514,7 +523,7 @@ class TestFlextLoggerFactory:
         if len(logs) != 1:
             msg = f"Expected {1}, got {len(logs)}"
             raise AssertionError(msg)
-        assert logs[0]["message"] == "Test message"
+        assert cast("TAnyDict", logs[0])["message"] == "Test message"
 
     def test_clear_log_store(self, clean_log_store: None) -> None:
         """Test log store clearing."""
@@ -575,7 +584,7 @@ class TestFlextLogContextManager:
     def test_context_manager_with_statement(self, clean_log_store: None) -> None:
         """Test context manager used with 'with' statement."""
         logger = FlextLogger("test", "INFO")
-        original_context = {"service": "auth"}
+        original_context: dict[str, object] = {"service": "auth"}
         logger.set_context(original_context)
 
         with FlextLogContextManager(logger, request_id="abc123") as ctx_logger:
@@ -592,7 +601,7 @@ class TestFlextLogContextManager:
         if len(logs) != 1:
             msg = f"Expected {1}, got {len(logs)}"
             raise AssertionError(msg)
-        context = logs[0]["context"]
+        context = cast("TAnyDict", cast("TAnyDict", logs[0])["context"])
         if context["service"] != "auth":
             msg = f"Expected {'auth'}, got {context['service']}"
             raise AssertionError(msg)
@@ -604,7 +613,7 @@ class TestFlextLogContextManager:
     def test_context_manager_exception_handling(self, clean_log_store: None) -> None:
         """Test context manager restores context even with exceptions."""
         logger = FlextLogger("test", "INFO")
-        original_context = {"service": "auth"}
+        original_context: dict[str, object] = {"service": "auth"}
         logger.set_context(original_context)
 
         def raise_test_exception() -> None:
@@ -687,7 +696,9 @@ class TestConvenienceFunctions:
         if len(logs) != 1:
             msg = f"Expected {1}, got {len(logs)}"
             raise AssertionError(msg)
-        assert logs[0]["context"]["user_id"] == "123"
+        assert (
+            cast("TAnyDict", cast("TAnyDict", logs[0])["context"])["user_id"] == "123"
+        )
 
 
 @pytest.mark.unit
@@ -738,19 +749,27 @@ class TestLoggingIntegration:
 
         # Check that context is properly maintained
         for log in logs:
-            if log["context"]["service"] != "user_service":
-                msg = f"Expected {'user_service'}, got {log['context']['service']}"
+            log_entry = cast("TAnyDict", log)
+            log_context = cast("TAnyDict", log_entry["context"])
+            if log_context["service"] != "user_service":
+                msg = f"Expected {'user_service'}, got {log_context['service']}"
                 raise AssertionError(msg)
-            assert log["context"]["version"] == "1.0"
+            assert log_context["version"] == "1.0"
 
         # Check request-scoped context
-        request_logs = [log for log in logs if "request_id" in log["context"]]
+        request_logs = [
+            log
+            for log in logs
+            if "request_id" in cast("TAnyDict", cast("TAnyDict", log)["context"])
+        ]
         if len(request_logs) != EXPECTED_BULK_SIZE:
             msg = f"Expected {2}, got {len(request_logs)}"
             raise AssertionError(msg)
         for log in request_logs:
-            if log["context"]["request_id"] != "req_123":
-                msg = f"Expected {'req_123'}, got {log['context']['request_id']}"
+            log_entry = cast("TAnyDict", log)
+            log_context = cast("TAnyDict", log_entry["context"])
+            if log_context["request_id"] != "req_123":
+                msg = f"Expected {'req_123'}, got {log_context['request_id']}"
                 raise AssertionError(msg)
 
     def test_multiple_loggers_isolation(
@@ -762,8 +781,10 @@ class TestLoggingIntegration:
         logger1 = get_logger("service1", "INFO")
         logger2 = get_logger("service2", "INFO")
 
-        logger1.set_context({"service_id": "svc1"})
-        logger2.set_context({"service_id": "svc2"})
+        context1: dict[str, object] = {"service_id": "svc1"}
+        context2: dict[str, object] = {"service_id": "svc2"}
+        logger1.set_context(context1)
+        logger2.set_context(context2)
 
         logger1.info("Message from service 1")
         logger2.info("Message from service 2")
@@ -774,18 +795,24 @@ class TestLoggingIntegration:
             raise AssertionError(msg)
 
         # Find logs by logger name and verify context isolation
-        svc1_logs = [log for log in logs if log["logger"] == "service1"]
-        svc2_logs = [log for log in logs if log["logger"] == "service2"]
+        svc1_logs = [
+            log for log in logs if cast("TAnyDict", log)["logger"] == "service1"
+        ]
+        svc2_logs = [
+            log for log in logs if cast("TAnyDict", log)["logger"] == "service2"
+        ]
 
         if len(svc1_logs) != 1:
             msg = f"Expected {1}, got {len(svc1_logs)}"
             raise AssertionError(msg)
         assert len(svc2_logs) == 1
 
-        if svc1_logs[0]["context"]["service_id"] != "svc1":
-            msg = f"Expected {'svc1'}, got {svc1_logs[0]['context']['service_id']}"
+        svc1_context = cast("TAnyDict", cast("TAnyDict", svc1_logs[0])["context"])
+        svc2_context = cast("TAnyDict", cast("TAnyDict", svc2_logs[0])["context"])
+        if svc1_context["service_id"] != "svc1":
+            msg = f"Expected {'svc1'}, got {svc1_context['service_id']}"
             raise AssertionError(msg)
-        assert svc2_logs[0]["context"]["service_id"] == "svc2"
+        assert svc2_context["service_id"] == "svc2"
 
     def test_performance_with_level_filtering(self, clean_log_store: None) -> None:
         """Test performance optimization with level filtering."""
@@ -829,7 +856,7 @@ class TestLoggingEdgeCases:
         if len(logs) != 1:
             msg = f"Expected {1}, got {len(logs)}"
             raise AssertionError(msg)
-        assert logs[0]["logger"] == "flext.unknown"
+        assert cast("TAnyDict", logs[0])["logger"] == "flext.unknown"
 
     def test_logger_with_invalid_level(self, clean_log_store: None) -> None:
         """Test logger with invalid level defaults to INFO."""
@@ -851,7 +878,7 @@ class TestLoggingEdgeCases:
         logger.info("Message with %s %s", "one")  # noqa: PLE1206
 
         # Test with non-string message
-        logger.info(123, "arg")
+        logger.info(str(123), "arg")
 
         logs = FlextLoggerFactory.get_log_store()
         if len(logs) != EXPECTED_DATA_COUNT:
@@ -860,13 +887,15 @@ class TestLoggingEdgeCases:
 
         # All should have logged something
         for log in logs:
-            assert len(log["message"]) > 0
+            log_entry = cast("TAnyDict", log)
+            assert len(str(log_entry["message"])) > 0
 
     def test_context_with_none_values(self, clean_log_store: None) -> None:
         """Test context handling with None values."""
         logger = FlextLogger("test", "INFO")
 
-        logger.set_context({"user_id": None, "request_id": "123"})
+        context_with_none: dict[str, object] = {"user_id": None, "request_id": "123"}
+        logger.set_context(context_with_none)
         logger.info("Test message", session_id=None)
 
         logs = FlextLoggerFactory.get_log_store()
@@ -874,7 +903,7 @@ class TestLoggingEdgeCases:
             msg = f"Expected {1}, got {len(logs)}"
             raise AssertionError(msg)
 
-        context = logs[0]["context"]
+        context = cast("TAnyDict", cast("TAnyDict", logs[0])["context"])
         assert context["user_id"] is None
         if context["request_id"] != "123":
             msg = f"Expected {'123'}, got {context['request_id']}"
@@ -893,11 +922,11 @@ class TestLoggingEdgeCases:
             msg = f"Expected {1}, got {len(logs)}"
             raise AssertionError(msg)
 
-        context = logs[0]["context"]
-        if len(context["data"]) != 1000:
-            msg = f"Expected {1000}, got {len(context['data'])}"
+        context = cast("TAnyDict", cast("TAnyDict", logs[0])["context"])
+        if len(str(context["data"])) != 1000:
+            msg = f"Expected {1000}, got {len(str(context['data']))}"
             raise AssertionError(msg)
-        assert len(context["items"]) == 100
+        assert len(cast("list[object]", context["items"])) == 100
 
     def test_concurrent_logging_simulation(self, clean_log_store: None) -> None:
         """Test logging behavior with simulated concurrent access."""
@@ -923,7 +952,10 @@ class TestLoggingEdgeCases:
             raise AssertionError(msg)
 
         # Verify all thread IDs are present
-        thread_ids = {log["context"]["thread_id"] for log in logs}
+        thread_ids = {
+            cast("TAnyDict", cast("TAnyDict", log)["context"])["thread_id"]
+            for log in logs
+        }
         if thread_ids != {0, 1, 2}:
             msg = f"Expected {{0, 1, 2}}, got {thread_ids}"
             raise AssertionError(msg)
