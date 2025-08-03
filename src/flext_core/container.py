@@ -1159,7 +1159,7 @@ def create_module_container_utilities(module_name: str) -> dict[str, object]:
         """Get module-specific DI container instance."""
         nonlocal module_container_instance
         if module_container_instance is None:
-            logger.info(f"Creating {module_name} container instance")
+            logger.info("Creating %s container instance", module_name)
             module_container_instance = FlextContainer()
         return module_container_instance
 
