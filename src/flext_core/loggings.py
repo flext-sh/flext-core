@@ -1,80 +1,73 @@
-"""FLEXT Core Logging Module.
+"""FLEXT Core Logging - Configuration Layer Structured Logging System.
 
-Comprehensive enterprise-grade structured logging system for the FLEXT Core library
-providing consolidated architecture with context management and observability features.
+Enterprise-grade structured logging infrastructure providing comprehensive context
+management, observability features, and performance-optimized logging across the
+32-project FLEXT ecosystem. Foundation for distributed tracing and operational
+monitoring in data integration pipelines.
 
-Architecture:
-    - Consolidated single-responsibility structured logging components
-    - Enterprise-grade observability with in-memory log store for testing
-    - Factory pattern with intelligent caching for performance optimization
-    - Context management with automatic cleanup and scope isolation
-    - Thread-safe operations for concurrent application environments
-    - Level-based filtering with performance optimization for production use
+Module Role in Architecture:
+    Configuration Layer → Logging Infrastructure → Observability Foundation
 
-Logging System Components:
-    - FlextLogger: Core structured logger with context management and level filtering
-    - FlextLoggerFactory: Centralized logger creation with intelligent caching strategy
-    - FlextLogContext: Context manager for scoped logging with automatic cleanup
-    - FlextLogging: Unified public API providing consolidated access to all features
-    - Global log store: Thread-safe in-memory storage for testing and observability
-    - Context inheritance: Hierarchical context management for request tracing
+    This module provides unified logging patterns used throughout FLEXT projects:
+    - Structured logging with JSON-serializable context for log aggregation
+    - Correlation ID propagation for distributed request tracing
+    - Performance-optimized level filtering for high-throughput scenarios
+    - Thread-safe context management for concurrent data processing
 
-Maintenance Guidelines:
-    - Add new log levels to FlextLogLevel.get_numeric_levels() method with values
-    - Maintain structured logging format consistency across all log entries
-    - Use context managers for request-scoped logging with automatic cleanup
-    - Keep log store operations thread-safe for concurrent access patterns
-    - Use factory pattern for logger caching and lifecycle management
-    - Preserve context inheritance patterns for distributed tracing
-    - Follow structured format: timestamp, level, logger, message, context
+Logging Architecture Patterns:
+    Factory Pattern: Centralized logger creation with intelligent caching
+    Context Management: Hierarchical context with automatic cleanup
+    Structured Format: Consistent timestamp, level, logger, message, context
+    Performance Optimization: Early level filtering and efficient context copying
 
-Design Decisions:
-    - Single source of truth pattern eliminating base module duplication
-    - Global log store for comprehensive testing and production observability
-    - Factory pattern with intelligent caching for optimal performance
-    - Context manager pattern for automatic resource cleanup and scope management
-    - Structured format with consistent field ordering for parsing and analysis
-    - Level-based filtering with early exit for performance optimization
-    - Thread-safe global state management for concurrent environments
+Development Status (v0.9.0 → 1.0.0):
+    ✅ Production Ready: Structured logging, context management, factory caching
+    🚧 Active Development: Correlation ID propagation (Enhancement 2 - Priority High)
+    📋 TODO Integration: OpenTelemetry distributed tracing (Enhancement 2)
 
 Enterprise Logging Features:
-    - Structured logging with consistent JSON-serializable format
-    - Context inheritance for distributed request tracing and correlation
-    - Level-based filtering with performance optimization for high-throughput systems
-    - Exception logging with automatic traceback capture and context preservation
-    - Factory caching with memory management for long-running applications
-    - Global configuration management affecting all logger instances
-    - Testing utilities with log store access and assertion capabilities
+    FlextLogger: Core structured logger with context management and level filtering
+    FlextLoggerFactory: Centralized creation with caching and global configuration
+    FlextLogContextManager: Scoped context with automatic cleanup
+    Custom TRACE level: Fine-grained debugging for complex data transformations
 
-Logging Level Hierarchy:
-    - TRACE (5): Most verbose debugging information for fine-grained analysis
-    - DEBUG (10): General debugging information for development and troubleshooting
-    - INFO (20): General information about application flow and business operations
-    - WARNING (30): Potentially harmful situations requiring attention
-    - ERROR (40): Error events that allow application to continue running
-    - CRITICAL (50): Very severe error events that may require application termination
+Ecosystem Usage Patterns:
+    # FLEXT Service Applications
+    logger = get_logger(__name__, "INFO")
+    logger.info("Service started", port=8080, version="0.9.0")
 
-Context Management Patterns:
-    - Instance-level context: Persistent across all log calls from logger instance
-    - Method-level context: Passed as keyword arguments for specific log entries
-    - Scoped context: Temporary context using context managers with automatic cleanup
-    - Context inheritance: Parent context preserved when adding child context
-    - Context merging: Method context takes precedence over instance context
+    # Singer Taps/Targets
+    with create_log_context(logger, correlation_id="tap_123", source="oracle"):
+        logger.info("Extracting data", table="users", rows=1000)
 
-Performance Considerations:
-    - Early level filtering prevents expensive operations for filtered messages
-    - Logger caching reduces object creation overhead in high-frequency scenarios
-    - Structured format optimized for both human readability and machine parsing
-    - Context copying minimizes shared state for thread safety
-    - Global store management with controlled memory usage
+    # ALGAR Oracle Migration
+    logger.error("Migration failed", operation="user_sync", error_code="ORA-00001")
 
-Dependencies:
-    - validation: Input validation utilities for parameter checking
-    - constants: Log levels and configuration constants with numeric mappings
-    - types: Type definitions for context dictionaries and log messages
+    # Performance Monitoring
+    @flext_track_performance("data_processing")
+    def process_batch(data):
+        logger.debug("Processing batch", size=len(data))
+
+Observability Integration:
+    - Global log store for testing and development debugging
+    - Structured context supporting JSON serialization for log aggregation
+    - Environment-aware log levels supporting ALGAR_LOG_LEVEL, FLEXT_LOG_LEVEL
+    - Integration with flext-observability for metrics and tracing
+
+Quality Standards:
+    - All log messages must include structured context for debugging
+    - Logger instances must be cached to prevent memory overhead
+    - Context operations must be thread-safe for concurrent access
+    - Log levels must be respected for performance in production
+
+See Also:
+    docs/TODO.md: Enhancement 2 - Enterprise observability features
+    constants.py: Log level definitions and numeric mappings
+    utilities.py: Performance tracking decorator integration
 
 Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations
@@ -176,12 +169,27 @@ class FlextLogContext(TypedDict, total=False):
     stack_trace: str
 
 
+class FlextLogEntry(TypedDict):
+    """TypedDict for log store entries with proper typing.
+
+    Defines the structure of log entries stored in the global log store
+    for testing and debugging purposes.
+    """
+
+    timestamp: str
+    level: str
+    logger: str
+    message: str
+    method: str
+    context: TAnyDict
+
+
 # =============================================================================
 # GLOBAL LOG STORE - Private para observabilidade
 # =============================================================================
 
 # Global log store consolidado - elimina duplicação
-_log_store: TAnyList = []
+_log_store: list[FlextLogEntry] = []
 
 # =============================================================================
 # CUSTOM TRACE LEVEL SETUP - Complete Implementation
@@ -265,7 +273,7 @@ def _add_to_log_store(
     # Use logger name from logger object if not in event_dict
     logger_name = str(event_dict.get("logger", getattr(logger, "name", "unknown")))
 
-    log_entry = {
+    log_entry: FlextLogEntry = {
         "timestamp": event_dict.get("timestamp", FlextGenerators.generate_timestamp()),
         "level": str(event_dict.get("level", "INFO")).upper(),
         "logger": logger_name,
@@ -832,7 +840,7 @@ class FlextLoggerFactory:
     _global_level: ClassVar[str] = "INFO"
 
     @classmethod
-    def get_logger(cls, name: str, level: str = "INFO") -> FlextLogger:
+    def get_logger(cls, name: str | None, level: str = "INFO") -> FlextLogger:
         """Get logger with caching and global level support.
 
         Args:
@@ -894,7 +902,7 @@ class FlextLoggerFactory:
 
     # Consolidated methods from FlextLogging - eliminates duplication
     @staticmethod
-    def get_log_store() -> TAnyList:
+    def get_log_store() -> list[FlextLogEntry]:
         """Get log store for testing (consolidated from FlextLogging)."""
         return _log_store.copy()
 
@@ -1072,13 +1080,10 @@ def flext_get_logger(name: str) -> object:
 __all__ = [
     "FlextLogContext",
     "FlextLogContextManager",
-    # Log levels from constants
+    "FlextLogEntry",
     "FlextLogLevel",
-    # Main consolidated classes (FlextLogging eliminated - functionality in
-    # FlextLoggerFactory)
     "FlextLogger",
     "FlextLoggerFactory",
-    # Convenience functions
     "create_log_context",
     "flext_get_logger",
     "get_logger",

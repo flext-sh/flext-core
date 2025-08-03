@@ -7,7 +7,7 @@ property delegation, and validation to achieve near 100% coverage.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 from unittest.mock import Mock, patch
 
 import pytest
@@ -437,14 +437,17 @@ class TestFlextMixinDelegator:
             raise AssertionError(msg)
         assert "validation_result" in info
 
-        if SampleMixin1 not in info["registered_mixins"]:
-            msg = f"Expected {SampleMixin1} in {info['registered_mixins']}"
+        registered_mixins = cast("list[object]", info["registered_mixins"])
+        if SampleMixin1 not in registered_mixins:
+            msg = f"Expected {SampleMixin1} in {registered_mixins}"
             raise AssertionError(msg)
-        assert SampleMixin2 in info["registered_mixins"]
-        if "mixin_method1" not in info["delegated_methods"]:
-            msg = f"Expected {'mixin_method1'} in {info['delegated_methods']}"
+        assert SampleMixin2 in registered_mixins
+
+        delegated_methods = cast("list[str]", info["delegated_methods"])
+        if "mixin_method1" not in delegated_methods:
+            msg = f"Expected {'mixin_method1'} in {delegated_methods}"
             raise AssertionError(msg)
-        assert "mixin_method3" in info["delegated_methods"]
+        assert "mixin_method3" in delegated_methods
         if not (info["validation_result"]):
             msg = f"Expected True, got {info['validation_result']}"
             raise AssertionError(msg)

@@ -1,65 +1,87 @@
-"""FLEXT Core Aggregate Root Module.
+"""FLEXT Core Aggregate Root - Domain Layer Aggregate Implementation.
 
-Comprehensive Domain-Driven Design (DDD) aggregate root implementation with
-transactional boundaries, domain event management, and consistency enforcement.
-Implements consolidated architecture with entity inheritance and event sourcing
-patterns.
+Domain-Driven Design (DDD) aggregate root implementation providing transactional
+boundaries, domain event management, and consistency enforcement across the 32-project
+FLEXT ecosystem. Foundation for business aggregate modeling with event sourcing and
+transactional consistency in data integration domains.
 
-Architecture:
-    - Domain-Driven Design aggregate root patterns with transactional boundaries
-    - Entity inheritance providing identity, versioning, and validation capabilities
-    - Domain event collection and management for event sourcing patterns
-    - Transactional consistency enforcement within aggregate boundaries
-    - Event publishing coordination for cross-aggregate communication
-    - Immutable design with controlled mutation through business operations
+Module Role in Architecture:
+    Domain Layer → Aggregate Modeling → Business Transaction Boundaries
 
-Aggregate Root System Components:
-    - FlextAggregateRoot: Primary aggregate root with event management
-    - Domain event collection: Event storage and lifecycle management
-    - Transactional boundary: Consistency enforcement within aggregate
-    - Event publishing: Coordination of domain events for external systems
-    - Business operation methods: Encapsulated aggregate behaviors
-
-Maintenance Guidelines:
-    - Create domain aggregates by inheriting from FlextAggregateRoot
-    - Implement business operations as methods on the aggregate root
-    - Use add_domain_event for collecting events during business operations
-    - Clear events after publishing to external systems or event store
-    - Maintain aggregate invariants through validation and business rules
-    - Follow DDD principles with bounded context respect
-
-Design Decisions:
-    - Inheritance from FlextEntity for identity and versioning capabilities
-    - Internal events list excluded from serialization for performance
-    - Event collection separate from event publishing for flexibility
-    - Immutable aggregate design with controlled mutation patterns
-    - Business operation encapsulation within aggregate boundaries
-    - FlextResult pattern integration for type-safe error handling
-
-Domain-Driven Design Features:
-    - Transactional boundaries defining consistency scope
-    - Aggregate invariant enforcement through business operations
+    This module provides DDD aggregate root patterns used throughout FLEXT projects:
+    - Transactional boundaries defining consistency scope within aggregates
     - Domain event collection for cross-aggregate communication
-    - Business logic encapsulation within aggregate root
-    - Entity coordination and lifecycle management
-    - Bounded context integration and aggregate relationships
+    - Business invariant enforcement through aggregate operations
+    - Entity coordination and lifecycle management within aggregate boundaries
 
-Event Sourcing Integration:
-    - Domain event collection during aggregate operations
-    - Event lifecycle management from creation to publishing
-    - Event clearing for batch publishing coordination
-    - Event object support for rich event implementations
-    - Cross-aggregate communication through published events
-    - Event store integration patterns for persistence
+Aggregate Architecture Patterns:
+    Transactional Boundaries: Consistency enforcement within aggregate scope
+    Domain Event Collection: Event-driven communication between aggregates
+    Business Invariants: Rule enforcement through aggregate operations
+    Entity Coordination: Lifecycle management of contained entities
 
-Dependencies:
-    - entities: FlextEntity inheritance for identity and versioning
-    - result: FlextResult pattern for consistent error handling
-    - utilities: FlextGenerators for ID generation and utility functions
-    - pydantic: Field configuration for event management and serialization
+Development Status (v0.9.0 → 1.0.0):
+    ✅ Production Ready: Aggregate boundaries, event collection, entity inheritance
+    🚧 Active Development: Event sourcing foundation (Priority 1 - September 2025)
+    📋 TODO Integration: Complete event store integration (Priority 1)
+
+Aggregate Root Features:
+    FlextAggregateRoot: Base aggregate with transactional boundaries and events
+    Domain Event Collection: Event storage during business operations
+    Business Operations: Encapsulated aggregate behaviors with validation
+    Cross-Aggregate Communication: Event publishing coordination
+
+Ecosystem Usage Patterns:
+    # FLEXT Service Aggregates
+    class UserAggregate(FlextAggregateRoot):
+        name: str
+        email: str
+        orders: List[Order] = []
+
+        def place_order(self, order_data: dict) -> FlextResult[Order]:
+            # Business operation with event generation
+            order = Order(**order_data)
+            self.orders.append(order)
+            self.add_domain_event("OrderPlaced", {"order_id": order.id})
+            return FlextResult.ok(order)
+
+    # Singer Tap/Target Aggregates
+    class OracleTableAggregate(FlextAggregateRoot):
+        schema_name: str
+        table_name: str
+        columns: List[Column] = []
+
+        def add_column(self, column_data: dict) -> FlextResult[None]:
+            column = Column(**column_data)
+            self.columns.append(column)
+            self.add_domain_event("ColumnAdded", {"column_name": column.name})
+            return FlextResult.ok(None)
+
+    # ALGAR Migration Aggregates
+    class LdapDirectoryAggregate(FlextAggregateRoot):
+        base_dn: str
+        users: List[LdapUser] = []
+
+Transactional Consistency Features:
+    - Aggregate invariant enforcement through business operations
+    - Cross-entity validation within aggregate boundaries
+    - Atomic changes across all entities within aggregate
+    - Event-driven communication with external aggregates
+
+Quality Standards:
+    - All business operations must maintain aggregate invariants
+    - Domain events must be collected during state changes
+    - Transactional boundaries must be respected (no cross-aggregate transactions)
+    - Event clearing must occur after successful publishing
+
+See Also:
+    docs/TODO.md: Priority 1 - Event sourcing foundation implementation
+    entities.py: FlextEntity inheritance for identity and versioning
+    payload.py: FlextEvent for domain event structure
 
 Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations

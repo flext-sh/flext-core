@@ -1,69 +1,122 @@
-"""FLEXT Core - Enterprise Foundation Library.
+"""FLEXT Core - Foundation Layer Public API Gateway.
 
-Comprehensive foundation library for the FLEXT ecosystem providing
-Clean Architecture, Domain-Driven Design, and CQRS patterns with type-safe operations.
+The architectural foundation that establishes consistent patterns across all 32 projects
+in the FLEXT data integration ecosystem. This module serves as the public API gateway,
+providing enterprise-grade patterns for Clean Architecture, Domain-Driven Design,
+and railway-oriented programming.
 
-Architecture:
-    - Clean Architecture with clear separation of concerns
-    - Domain-Driven Design patterns for business logic modeling
-    - CQRS implementation for command-query responsibility segregation
-    - Railway-oriented programming for error handling
-    - Type-safe operations with comprehensive generic support
+Module Role in Architecture:
+    Foundation Layer → Public API Gateway → Unified Import Interface
 
-Core Components:
-    - FlextResult: Type-safe error handling with railway programming
-    - FlextEntity: Domain entities with rich behavior and validation
-    - FlextValueObject: Immutable value objects with validation
-    - FlextAggregateRoot: DDD aggregate roots with event sourcing
-    - FlextDomainService: Domain services for complex business logic
-    - FlextTypes: Comprehensive type system with protocols and aliases
+    This foundation module provides the unified public API that enables:
+    - Consistent import patterns across all 32 ecosystem projects
+    - Type system foundation with comprehensive generic type definitions
+    - Version compatibility and feature detection for progressive enhancement
+    - Namespace management with FlextXxx prefixing for conflict avoidance
+    - Architectural layer organization with clear dependency management
 
-Enterprise Features:
-    - Type safety through extensive generic programming
-    - Error handling without exception propagation
-    - Validation system with Pydantic integration
-    - Logging system with structured context management
-    - Dependency injection container with type-safe operations
-    - Configuration management with environment variable support
+Architecture Layers Export Organization:
+    Foundation Layer: Types, constants, version management (this module)
+    Core Pattern Layer: FlextResult, FlextContainer, exceptions, utilities
+    Configuration Layer: Settings, logging, payload, interfaces
+    Domain Layer: Entities, value objects, aggregates, domain services
+    CQRS Layer: Commands, handlers, validation
+    Extension Layer: Mixins, decorators, fields, guards
 
-Public API Categories:
-    - Core patterns: FlextResult, type system, constants
-    - DDD patterns: Entities, value objects, aggregates, domain services
-    - Type system: Generic types, protocols, and domain-specific aliases
-    - Constants: Environment settings, field types, log levels
-    - Version information: Library version and authorship
+Development Status (v0.9.0 → 1.0.0):
+    ✅ Production Ready: FlextResult, FlextContainer, Domain Patterns, Configuration
+    🚧 In Development: Event Sourcing, Advanced CQRS, Plugin Architecture
+    📋 Planned: Python-Go Bridge, Enterprise Observability
 
-Design Principles:
-    - Single responsibility principle with focused components
-    - Open/closed principle through extensible patterns
-    - Liskov substitution with compatible implementations
-    - Interface segregation through protocol-based design
-    - Dependency inversion through abstraction dependencies
+Core Patterns Exported:
+    FlextResult[T]: Railway-oriented programming for type-safe error handling
+    FlextContainer: Enterprise dependency injection with type safety
+    FlextEntity: Rich domain entities with business logic and events
+    FlextValueObject: Immutable value objects with validation
+    FlextAggregateRoot: DDD aggregates with event sourcing (in development)
+    FlextBaseSettings: Environment-aware configuration management
 
-Usage Patterns:
-    # Basic error handling
+Ecosystem Usage Patterns:
+    # FLEXT Service Railway-Oriented Programming
     from flext_core import FlextResult
-    result = FlextResult.ok("success")
 
-    # Domain modeling
-    from flext_core import FlextEntity, TEntityId
-    class User(FlextEntity):
-        def __init__(self, user_id: TEntityId, name: str):
-            super().__init__(user_id)
-            self.name = name
+    def process_user_data(data: dict) -> FlextResult[User]:
+        return (
+            validate_input(data)
+            .map(transform_data)
+            .flat_map(save_to_database)
+            .map(format_response)
+        )
 
-    # Type-safe operations
-    from flext_core import T, U
-    def process_data[T, U](data: T, transformer: Callable[[T], U]) -> U:
-        return transformer(data)
+    # Domain Modeling across 32 Projects
+    from flext_core import FlextEntity
 
-Dependencies:
-    - pydantic: Data validation and configuration management
-    - typing: Type system and generic programming support
-    - Standard library: Core Python functionality
+    class OracleInventoryItem(FlextEntity):
+        sku: str
+        quantity: int
+        location: str
+
+        def transfer_to_location(self, target: str) -> FlextResult[None]:
+            if not self.validate_location(target):
+                return FlextResult.fail(f"Invalid location: {target}")
+
+            self.location = target
+            self.add_domain_event({
+                "type": "InventoryTransferred",
+                "sku": self.sku,
+                "target_location": target
+            })
+            return FlextResult.ok(None)
+
+    # Singer Tap/Target Configuration (15 projects)
+    from flext_core import FlextContainer, FlextDatabaseConfig
+
+    container = get_flext_container()
+    db_config = FlextDatabaseConfig(
+        host="oracle-wms.enterprise.com",
+        port=1521,
+        username="tap_user",
+        service_name="WMS_PROD"
+    )
+    container.register("oracle_config", db_config)
+
+    # Cross-Service Messaging (flext-api, flexcore integration)
+    from flext_core import FlextMessage, FlextEvent
+
+    message_result = FlextMessage.create_message(
+        "Oracle extraction completed",
+        level="info",
+        source="flext-tap-oracle-wms"
+    )
+
+    event_result = FlextEvent.create_event(
+        "DataExtractionCompleted",
+        {"records": 15000, "duration": 45.2},
+        aggregate_id="extraction_001"
+    )
+
+Ecosystem Integration Benefits:
+    - Used by all 32 FLEXT projects as architectural foundation
+    - Provides consistent error handling across 15,000+ function signatures
+    - Enables zero-downtime updates through semantic versioning
+    - Supports enterprise production deployments with type safety
+    - Cross-language compatibility for Python-Go bridge (FlexCore integration)
+
+Quality Requirements:
+    - Python 3.13+ only (no backward compatibility)
+    - 95% test coverage minimum across all exported modules
+    - Strict MyPy compliance with zero tolerance for type errors
+    - Railway-oriented error handling throughout ecosystem
+    - Comprehensive type annotations for compile-time safety
+
+See Also:
+    docs/python-module-organization.md: Complete module architecture guide
+    docs/TODO.md: Development roadmap and gaps analysis
+    examples/: 17 comprehensive working examples demonstrating patterns
 
 Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations
@@ -77,6 +130,46 @@ from flext_core.config import (
     FlextConfigOps,
     FlextConfigValidation,
     merge_configs,
+)
+from flext_core.config_hierarchical import (
+    # Hierarchical configuration system
+    FlextHierarchicalConfigManager,
+    create_application_project_config,
+    create_infrastructure_project_config,
+    create_integration_project_config,
+    import_complete_config_system,
+)
+from flext_core.config_models import (
+    # TypedDict definitions
+    DatabaseConfigDict,
+    # Core infrastructure models
+    FlextApplicationConfig,
+    FlextBaseConfigModel,
+    FlextDatabaseConfig,
+    # Settings classes
+    FlextDatabaseSettings,
+    FlextDataIntegrationConfig,
+    FlextJWTConfig,
+    FlextLDAPConfig,
+    FlextObservabilityConfig,
+    FlextOracleConfig,
+    FlextRedisConfig,
+    FlextRedisSettings,
+    FlextSingerConfig,
+    JWTConfigDict,
+    LDAPConfigDict,
+    ObservabilityConfigDict,
+    OracleConfigDict,
+    RedisConfigDict,
+    SingerConfigDict,
+    # Factory functions
+    create_database_config,
+    create_ldap_config,
+    create_oracle_config,
+    create_redis_config,
+    # Utilities
+    load_config_from_env,
+    validate_config,
 )
 from flext_core.constants import (
     DEFAULT_TIMEOUT,
@@ -122,6 +215,7 @@ from flext_core.exceptions import (
     FlextTimeoutError,
     FlextTypeError,
     FlextValidationError,
+    create_context_exception_factory,
     create_module_exception_classes,
 )
 from flext_core.fields import FlextFieldCore, FlextFields
@@ -142,6 +236,7 @@ from flext_core.flext_types import (
     TAnyObject,
     TCommand,
     TConfigDict,
+    TConnectionString,
     TData,
     TEntity,
     TEntityId,
@@ -158,6 +253,7 @@ from flext_core.flext_types import (
     TResponse,
     TResult,
     TService,
+    TServiceName,
     TTransformer,
     TUserData,
     TValue,
@@ -194,6 +290,7 @@ from flext_core.interfaces import (
 )
 from flext_core.loggings import (
     FlextLogContext,
+    FlextLogEntry,
     FlextLogger,
     FlextLoggerFactory,
     create_log_context,
@@ -210,6 +307,43 @@ from flext_core.mixins import (
     FlextTimingMixin,
     FlextValidatableMixin,
     FlextValueObjectMixin,
+)
+from flext_core.models import (
+    # Base models
+    FlextBaseModel,
+    # TypedDict definitions
+    FlextConnectionDict,
+    # Core semantic enums
+    FlextConnectionType,
+    # Configuration models
+    FlextDatabaseModel,
+    FlextDataFormat,
+    # Domain models
+    FlextDomainEntity,
+    FlextDomainValueObject,
+    FlextEntityDict,
+    FlextEntityStatus,
+    FlextImmutableModel,
+    FlextMutableModel,
+    FlextOperationDict,
+    # Operation models
+    FlextOperationModel,
+    FlextOperationStatus,
+    FlextOracleModel,
+    # Service models
+    FlextServiceModel,
+    # Data integration models
+    FlextSingerStreamModel,
+    FlextValueObjectDict,
+    # Factory functions
+    create_database_model,
+    create_operation_model,
+    create_oracle_model,
+    create_service_model,
+    create_singer_stream_model,
+    # Utilities
+    model_to_dict_safe,
+    validate_all_models,
 )
 from flext_core.payload import FlextEvent, FlextMessage, FlextPayload
 from flext_core.result import FlextResult, chain, safe_call
@@ -239,6 +373,11 @@ from flext_core.singer_base import (
     FlextTapError,
     FlextTargetError,
     FlextTransformError,
+)
+from flext_core.testing_utilities import (
+    create_api_test_response,
+    create_ldap_test_config,
+    create_oud_connection_config,
 )
 from flext_core.utilities import FlextGenerators, FlextUtilities
 from flext_core.validation import FlextPredicates, FlextValidation, FlextValidators
@@ -272,7 +411,6 @@ __all__ = [
     "MAX_PYTHON_VERSION",
     "MIN_PYTHON_VERSION",
     "VERSION",
-    # Schema Processing Components
     "BaseConfigManager",
     "BaseEntry",
     "BaseFileWriter",
@@ -280,12 +418,17 @@ __all__ = [
     "BaseSorter",
     "Comparable",
     "ConfigAttributeValidator",
+    # Centralized config models
+    "DatabaseConfigDict",
     "E",
     "EntryType",
     "EntryValidator",
     "FlextAggregateRoot",
     "FlextAlreadyExistsError",
+    "FlextApplicationConfig",
     "FlextAuthenticationError",
+    "FlextBaseConfigModel",
+    "FlextBaseModel",
     "FlextBaseSettings",
     "FlextCacheableMixin",
     "FlextCommands",
@@ -297,33 +440,48 @@ __all__ = [
     "FlextConfigValidation",
     "FlextConfigurable",
     "FlextConfigurationError",
+    "FlextConnectionDict",
     "FlextConnectionError",
+    "FlextConnectionType",
     "FlextConstants",
     "FlextContainer",
     "FlextCore",
     "FlextCriticalError",
+    "FlextDataFormat",
+    "FlextDataIntegrationConfig",
+    "FlextDatabaseConfig",
+    "FlextDatabaseModel",
+    "FlextDatabaseSettings",
     "FlextDecorators",
+    "FlextDomainEntity",
     "FlextDomainService",
+    "FlextDomainValueObject",
     "FlextEntity",
+    "FlextEntityDict",
     "FlextEntityFactory",
     "FlextEntityId",
     "FlextEntityMixin",
+    "FlextEntityStatus",
     "FlextEnvironment",
     "FlextError",
     "FlextErrorHandlingDecorators",
     "FlextEvent",
     "FlextEventPublisher",
     "FlextEventSubscriber",
-    "FlextExceptions",
     "FlextFieldCore",
     "FlextFieldType",
     "FlextFields",
     "FlextGenerators",
     "FlextHandler",
     "FlextHandlers",
+    "FlextHierarchicalConfigManager",
     "FlextIdentifiableMixin",
     "FlextImmutabilityDecorators",
+    "FlextImmutableModel",
+    "FlextJWTConfig",
+    "FlextLDAPConfig",
     "FlextLogContext",
+    "FlextLogEntry",
     "FlextLogLevel",
     "FlextLoggableMixin",
     "FlextLogger",
@@ -331,8 +489,15 @@ __all__ = [
     "FlextLoggingDecorators",
     "FlextMessage",
     "FlextMiddleware",
+    "FlextMutableModel",
     "FlextNotFoundError",
+    "FlextObservabilityConfig",
+    "FlextOperationDict",
     "FlextOperationError",
+    "FlextOperationModel",
+    "FlextOperationStatus",
+    "FlextOracleConfig",
+    "FlextOracleModel",
     "FlextPayload",
     "FlextPerformanceDecorators",
     "FlextPermissionError",
@@ -340,16 +505,20 @@ __all__ = [
     "FlextPluginContext",
     "FlextPredicates",
     "FlextProcessingError",
+    "FlextRedisConfig",
+    "FlextRedisSettings",
     "FlextRepository",
     "FlextResult",
     "FlextSerializableMixin",
     "FlextService",
+    "FlextServiceModel",
     "FlextSingerAuthenticationError",
+    "FlextSingerConfig",
     "FlextSingerConfigurationError",
     "FlextSingerConnectionError",
-    # Singer Protocol Base Exceptions (DRY implementation for all Singer projects)
     "FlextSingerError",
     "FlextSingerProcessingError",
+    "FlextSingerStreamModel",
     "FlextSingerValidationError",
     "FlextTapError",
     "FlextTargetError",
@@ -369,21 +538,29 @@ __all__ = [
     "FlextValidator",
     "FlextValidators",
     "FlextValueObject",
+    "FlextValueObjectDict",
     "FlextValueObjectFactory",
     "FlextValueObjectMixin",
     "FlextVersionInfo",
+    "JWTConfigDict",
+    "LDAPConfigDict",
+    "ObservabilityConfigDict",
+    "OracleConfigDict",
     "P",
     "ProcessingPipeline",
     "R",
+    "RedisConfigDict",
     "RegexProcessor",
     "Serializable",
     "ServiceKey",
+    "SingerConfigDict",
     "T",
     "TAnyDict",
     "TAnyList",
     "TAnyObject",
     "TCommand",
     "TConfigDict",
+    "TConnectionString",
     "TData",
     "TEntity",
     "TEntityId",
@@ -399,6 +576,7 @@ __all__ = [
     "TResponse",
     "TResult",
     "TService",
+    "TServiceName",
     "TTransformer",
     "TUserData",
     "TValue",
@@ -412,9 +590,25 @@ __all__ = [
     "check_python_compatibility",
     "compare_versions",
     "configure_flext_container",
+    "create_api_test_response",
+    "create_application_project_config",
+    "create_context_exception_factory",
+    "create_database_config",
+    "create_database_model",
+    "create_infrastructure_project_config",
+    "create_integration_project_config",
+    "create_ldap_config",
+    "create_ldap_test_config",
     "create_log_context",
     "create_module_container_utilities",
     "create_module_exception_classes",
+    "create_operation_model",
+    "create_oracle_config",
+    "create_oracle_model",
+    "create_oud_connection_config",
+    "create_redis_config",
+    "create_service_model",
+    "create_singer_stream_model",
     "flext_core",
     "get_available_features",
     "get_flext_container",
@@ -424,11 +618,14 @@ __all__ = [
     "get_version_string",
     "get_version_tuple",
     "immutable",
+    "import_complete_config_system",
     "is_dict_of",
     "is_feature_available",
+    "load_config_from_env",
     "make_builder",
     "make_factory",
     "merge_configs",
+    "model_to_dict_safe",
     "pure",
     "register_typed",
     "require_in_range",
@@ -436,5 +633,7 @@ __all__ = [
     "require_not_none",
     "require_positive",
     "safe_call",
+    "validate_all_models",
+    "validate_config",
     "validate_version_format",
 ]

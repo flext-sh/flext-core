@@ -230,7 +230,9 @@ class TestCleanArchitecturePatterns:
 
             user_id: str
 
-        class GetUserHandler(FlextHandlers.QueryHandler[GetUserQuery, dict[str, object]]):
+        class GetUserHandler(
+            FlextHandlers.QueryHandler[GetUserQuery, dict[str, object]]
+        ):
             """Handler for user queries."""
 
             def handle(self, query: object) -> FlextResult[object]:

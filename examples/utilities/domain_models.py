@@ -9,6 +9,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+# Import shared domain models to reduce duplication
+from shared_domain import (
+    Order as SharedOrder,
+    Product as SharedProduct,
+    User as SharedUser,
+)
+
 from flext_core import (
     FlextCacheableMixin,
     FlextComparableMixin,
@@ -17,15 +24,6 @@ from flext_core import (
     FlextTimestampMixin,
     FlextUtilities,
     TAnyObject,
-)
-
-# Import shared domain models to reduce duplication
-from shared_domain import (
-    Money,
-    Order as SharedOrder,
-    OrderStatus,
-    Product as SharedProduct,
-    User as SharedUser,
 )
 
 from .formatting_helpers import (
@@ -78,12 +76,11 @@ class UtilityDemoUser(SharedUser, FlextCacheableMixin, FlextSerializableMixin):
         age_value = self.age.value
         if age_value < YOUNG_ADULT_AGE_THRESHOLD:
             return "young_adult"
-        elif age_value < ADULT_AGE_THRESHOLD:
+        if age_value < ADULT_AGE_THRESHOLD:
             return "adult"
-        elif age_value < MIDDLE_AGED_THRESHOLD:
+        if age_value < MIDDLE_AGED_THRESHOLD:
             return "middle_aged"
-        else:
-            return "senior"
+        return "senior"
 
 
 class UtilityDemoProduct(
@@ -132,10 +129,9 @@ class UtilityDemoProduct(
             return -1
         if self.price.amount < other.price.amount:
             return -1
-        elif self.price.amount > other.price.amount:
+        if self.price.amount > other.price.amount:
             return 1
-        else:
-            return 0
+        return 0
 
 
 class UtilityDemoOrder(

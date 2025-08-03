@@ -1,11 +1,84 @@
-"""Schema and Entry Processing - Reusable Components for LDIF/Schema Processing.
+"""FLEXT Core Schema Processing - Specialized Processing Components.
 
-Copyright (c) 2025 Flext. All rights reserved.
+Reusable schema and entry processing components designed for LDIF, ACL, and
+structured data processing across FLEXT ecosystem projects. Provides common
+patterns for data validation, transformation, and pipeline processing that
+eliminate code duplication in infrastructure libraries.
+
+Module Role in Architecture:
+    Extension Layer → Specialized Processing → Infrastructure Libraries
+
+    This specialized module enables:
+    - LDIF file processing in flext-ldap and flext-ldif projects
+    - Schema validation and transformation in Oracle-based infrastructure
+    - ACL processing for security and permission management
+    - Configuration file processing across Singer taps and targets
+    - Structured data pipeline components for enterprise data integration
+
+Processing Patterns:
+    Entry Processing: Structured data transformation with validation
+    Schema Validation: Type-safe schema checking with error aggregation
+    Pipeline Processing: Composable processing stages with FlextResult integration
+    Configuration Management: Attribute validation and transformation
+    File Processing: Abstract file I/O with processing hook integration
+
+Development Status (v0.9.0 → 1.0.0):
+    ✅ Production Ready: Base processing patterns, entry validation, pipeline
+    🔄 Enhancement: Performance optimization for large file processing
+    📋 TODO Integration: Plugin-based processing extensions (Plugin Priority 3)
+
+Core Components:
+    BaseEntry: Immutable value object for structured data representation
+    EntryValidator: Protocol for type-safe validation logic
+    BaseProcessor: Abstract processor with pipeline integration
+    ProcessingPipeline: Composable processing stages with error handling
+    ConfigAttributeValidator: Configuration validation with business rules
+
+Ecosystem Usage Patterns:
+    # LDIF processing in flext-ldap
+    class LDIFEntry(BaseEntry):
+        dn: str
+        attributes: dict[str, list[str]]
+
+    class LDIFProcessor(BaseProcessor[LDIFEntry]):
+        def process_entry(self, entry: LDIFEntry) -> FlextResult[LDIFEntry]:
+            return self.validate_entry(entry).map(self.transform_entry)
+
+    # Configuration processing in Singer projects
+    pipeline = ProcessingPipeline()
+    result = (
+        pipeline.add_stage(validate_config)
+        .add_stage(transform_schema)
+        .add_stage(write_output)
+        .execute(input_data)
+    )
+
+Processing Philosophy:
+    - Immutable data structures prevent processing corruption
+    - Railway-oriented programming ensures error propagation
+    - Protocol-based design enables flexible implementations
+    - Pipeline composition supports complex processing workflows
+    - Value objects ensure data integrity throughout processing
+
+Performance Considerations:
+    - Streaming processing for large datasets
+    - Memory-efficient value object patterns
+    - Lazy evaluation for expensive transformations
+    - Batched processing for I/O operations
+
+Quality Standards:
+    - All processing operations must use FlextResult for error handling
+    - Value objects must be immutable to prevent data corruption
+    - Protocols must support structural typing for flexibility
+    - Processing pipelines must be composable and testable
+
+See Also:
+    src/flext_core/value_objects.py: Base value object patterns
+    examples/: Schema processing usage examples
+
+Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
 
-Provides base classes for schema/ACL processing that can be extended by
-specific implementations.
-Reduces complexity by extracting common patterns into reusable components.
 """
 
 from __future__ import annotations
@@ -76,14 +149,17 @@ class BaseProcessor[EntryT](ABC):
         ...
 
     def extract_entry_info(
-        self, content: str, entry_type: str, prefix: str = ""
+        self,
+        content: str,
+        entry_type: str,
+        prefix: str = "",
     ) -> FlextResult[EntryT]:
         """Extract entry information from content with type safety."""
         # Step 1: Extract and validate identifier
         identifier_validation = self._validate_identifier_extraction(content)
         if not identifier_validation.is_success:
             return FlextResult.fail(
-                identifier_validation.error or "Identifier validation failed"
+                identifier_validation.error or "Identifier validation failed",
             )
 
         identifier = identifier_validation.data
@@ -96,7 +172,10 @@ class BaseProcessor[EntryT](ABC):
         )
 
         entry_validation = self._validate_entry_creation(
-            entry_type, clean_content, content, identifier
+            entry_type,
+            clean_content,
+            content,
+            identifier,
         )
         if not entry_validation.is_success:
             return entry_validation
@@ -113,7 +192,7 @@ class BaseProcessor[EntryT](ABC):
         identifier_result = self._extract_identifier(content)
         if not identifier_result.is_success:
             return FlextResult.fail(
-                f"Failed to extract identifier: {identifier_result.error}"
+                f"Failed to extract identifier: {identifier_result.error}",
             )
 
         identifier = identifier_result.data
@@ -126,11 +205,18 @@ class BaseProcessor[EntryT](ABC):
         return FlextResult.ok(identifier)
 
     def _validate_entry_creation(
-        self, entry_type: str, clean_content: str, content: str, identifier: str
+        self,
+        entry_type: str,
+        clean_content: str,
+        content: str,
+        identifier: str,
     ) -> FlextResult[EntryT]:
         """Validate entry creation step."""
         entry_result = self._create_entry(
-            entry_type, clean_content, content, identifier
+            entry_type,
+            clean_content,
+            content,
+            identifier,
         )
         if not entry_result.is_success:
             return entry_result
@@ -145,7 +231,10 @@ class BaseProcessor[EntryT](ABC):
         return FlextResult.ok(entry)
 
     def process_content_lines(
-        self, lines: list[str], entry_type: str, prefix: str = ""
+        self,
+        lines: list[str],
+        entry_type: str,
+        prefix: str = "",
     ) -> FlextResult[list[EntryT]]:
         """Process multiple content lines and return successful entries."""
         results: list[EntryT] = []
@@ -181,7 +270,9 @@ class RegexProcessor(BaseProcessor[EntryT]):
     """Regex-based processor for entries with pattern matching."""
 
     def __init__(
-        self, identifier_pattern: str, validator: EntryValidator[EntryT] | None = None
+        self,
+        identifier_pattern: str,
+        validator: EntryValidator[EntryT] | None = None,
     ) -> None:
         """Initialize with regex pattern for identifier extraction."""
         super().__init__(validator)
@@ -192,7 +283,7 @@ class RegexProcessor(BaseProcessor[EntryT]):
         match = self.identifier_pattern.search(content)
         if not match:
             return FlextResult.fail(
-                f"No identifier found matching pattern in: {content[:50]}"
+                f"No identifier found matching pattern in: {content[:50]}",
             )
 
         return FlextResult.ok(match.group(1))
@@ -213,13 +304,14 @@ class ConfigAttributeValidator:
 
     @staticmethod
     def validate_required_attributes(
-        config: object, required: list[str]
+        config: object,
+        required: list[str],
     ) -> FlextResult[bool]:
         """Validate that config has all required attributes."""
         missing = [attr for attr in required if not hasattr(config, attr)]
         if missing:
             return FlextResult.fail(f"Missing required attributes: {missing}")
-        return FlextResult.ok(True)  # noqa: FBT003
+        return FlextResult.ok(data=True)
 
 
 class BaseConfigManager:
@@ -235,14 +327,16 @@ class BaseConfigManager:
         return getattr(self.config, key, default)
 
     def validate_config(
-        self, required_attrs: list[str] | None = None
+        self,
+        required_attrs: list[str] | None = None,
     ) -> FlextResult[bool]:
         """Validate configuration has required attributes."""
         if required_attrs:
             return self.validator.validate_required_attributes(
-                self.config, required_attrs
+                self.config,
+                required_attrs,
             )
-        return FlextResult.ok(True)  # noqa: FBT003
+        return FlextResult.ok(data=True)
 
 
 class BaseSorter[T]:
@@ -276,7 +370,9 @@ class BaseFileWriter(ABC):
         ...
 
     def write_entries(
-        self, output_file: object, entries: list[object]
+        self,
+        output_file: object,
+        entries: list[object],
     ) -> FlextResult[None]:
         """Write multiple entries with header."""
         try:

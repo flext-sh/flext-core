@@ -616,7 +616,10 @@ def validate_customer_complete(
 def validate_product_complete(
     product_data: TAnyObject,
 ) -> FlextResult[SharedProduct]:
-    """Validate product data completely using validation orchestrator - single return."""
+    """Validate product data completely using validation orchestrator.
+
+    Single return point for consistent error handling.
+    """
     log_message: TLogMessage = (
         f"🔍 Validating product: {product_data.get('name', 'Unknown')}"
     )

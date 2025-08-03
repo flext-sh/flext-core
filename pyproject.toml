@@ -122,15 +122,16 @@ exclude = [
 known_first_party = ["flext_core"]
 pep621_dev_dependency_groups = ["dev", "security", "test", "typings"]
 
+
 [tool.mypy]
 # Strict mode - enables all recommended checks
 strict = true
 
 # Additional strict checks beyond default strict mode
+disallow_any_expr = false
 check_untyped_defs = true
 disallow_any_decorated = true
 disallow_any_explicit = true
-disallow_any_expr = false          # Too restrictive for real-world usage
 disallow_any_generics = true
 disallow_any_unimported = true
 disallow_incomplete_defs = true
@@ -172,8 +173,8 @@ platform = "linux"
 # Package structure
 explicit_package_bases = true
 namespace_packages = true
-mypy_path = ["src", "examples"]
-files = ["src", "tests", "examples"]
+mypy_path = ["src"]
+files = ["src", "tests"]
 
 # Plugins
 plugins = ["pydantic.mypy"]
@@ -194,9 +195,11 @@ warn_incomplete_stub = true
 
 exclude = [
     "__pycache__/",
+    ".*/examples/",
     ".*/generate_config.py",
     ".*/manage.py",
     ".*/scripts/",
+    ".*/tests/",
     ".coverage.*",
     ".git/",
     ".mypy_cache/",
@@ -210,7 +213,6 @@ exclude = [
 ]
 
 [tool.pydantic-mypy]
-# Pydantic plugin strict configuration
 init_forbid_extra = true
 init_typed = true
 warn_required_dynamic_aliases = true
@@ -226,11 +228,7 @@ addopts = [
     "-ra",
 ]
 asyncio_mode = "auto"
-filterwarnings = [
-    "error",
-    "ignore::DeprecationWarning",
-    "ignore::UserWarning",
-]
+filterwarnings = ["error", "ignore::DeprecationWarning", "ignore::UserWarning"]
 markers = [
     "cleanup: Cleanup tests",
     "dbt: dbt transformation tests",

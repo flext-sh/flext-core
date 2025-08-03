@@ -849,7 +849,9 @@ def demonstrate_domain_model_decorators() -> None:  # noqa: PLR0915
     )
 
     @domain_validator
-    def register_user_with_domain_validation(user_data: dict[str, object]) -> SharedUser:
+    def register_user_with_domain_validation(
+        user_data: dict[str, object],
+    ) -> SharedUser:
         """Register user with domain-aware validation."""
         name = user_data.get("name", "")
         email = user_data.get("email", "")

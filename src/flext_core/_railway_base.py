@@ -1,93 +1,48 @@
-"""FLEXT Core Railway Base Module.
+"""FLEXT Core Railway - Internal Implementation Module.
 
-Comprehensive railway-oriented programming foundation implementing enterprise-grade
-functional composition patterns, monadic operations, and type-safe error handling
-chains. Provides single source of truth for railway implementations across the
-FLEXT ecosystem.
+Internal implementation providing the foundational logic for railway-oriented
+programming.
+This module is part of the Internal Implementation Layer and should not be imported
+directly by ecosystem projects. Use the public API through result module instead.
 
-Architecture:
-    - Base implementation layer for railway-oriented programming patterns
-    - Monadic operations through bind, compose, and chaining functions
-    - Type-safe error handling with automatic failure propagation
-    - Functional composition primitives for complex workflow orchestration
-    - Zero external dependencies beyond core result types for maximum portability
+Module Role in Architecture:
+    Internal Implementation Layer → Railway Programming → Public API Layer
+
+    This internal module provides:
+    - Base railway programming operations (bind, compose, switch, tee, plus)
+    - Monadic function composition with type safety
+    - Utility functions for function lifting and transformation
     - Pure functional patterns with immutable operation chains
 
-Railway Programming Principles:
-    - Success track: Operations continue when previous operations succeed
-    - Failure track: Operations short-circuit when any operation fails
-    - Bind operations: Chain functions with automatic error propagation
-    - Composition: Build complex workflows from simple function combinations
-    - Side effects: Handle logging, monitoring without breaking the chain
-    - Lifting: Convert regular functions to railway-compatible functions
+Implementation Patterns:
+    Railway Operations: Complete monadic bind and composition implementations
+    Utility Functions: Function lifting, identity operations, pass-through patterns
 
-Base Railway Operations:
-    - _BaseRailway.bind: Monadic bind operation for function chaining
-    - _BaseRailway.compose_functions: Left-to-right function composition
-    - _BaseRailway.switch: Conditional branching based on value inspection
-    - _BaseRailway.tee: Execute side effects without disrupting main flow
-    - _BaseRailway.dead_end: Convert void functions to railway functions
-    - _BaseRailway.plus: Parallel execution with result aggregation
+Design Principles:
+    - Single responsibility for internal railway implementation concerns
+    - No external dependencies beyond standard library and sibling modules
+    - Performance-optimized implementations for public API consumption
+    - Type safety maintained through internal validation
 
-Utility Operations:
-    - _BaseRailwayUtils.lift: Convert regular functions to railway functions
-    - _BaseRailwayUtils.ignore: Success function that discards input
-    - _BaseRailwayUtils.pass_through: Identity function for railway chains
+Access Restrictions:
+    - This module is internal and not exported in __init__.py
+    - Use result module for all external access to railway functionality
+    - Breaking changes may occur without notice in internal modules
+    - No compatibility guarantees for internal implementation details
 
-Maintenance Guidelines:
-    - Keep implementations dependency-free for maximum portability and reusability
-    - Maintain pure functional patterns without side effects in core operations
-    - Use type-safe error handling with comprehensive exception management
-    - Document railway composition patterns for complex workflow scenarios
-    - Follow monadic laws for bind and compose operations
-    - Ensure backward compatibility through careful API evolution
+Quality Standards:
+    - Internal implementation must maintain public API contracts
+    - Performance optimizations must not break type safety
+    - Code must be thoroughly tested through public API surface
+    - Internal changes must not affect public behavior
 
-Design Decisions:
-    - No external dependencies beyond core result patterns for portability
-    - Pure functional design with immutable operation chains
-    - Type-safe error propagation through monadic bind operations
-    - Automatic failure short-circuiting for efficient error handling
-    - Composable primitives for building complex workflows
-    - Integration with FlextResult for consistent error handling patterns
-
-Enterprise Railway Features:
-    - Type-safe function composition with compile-time verification
-    - Automatic error propagation eliminating manual error handling boilerplate
-    - Side effect management through tee operations for logging and monitoring
-    - Parallel execution patterns with result aggregation for performance
-    - Conditional branching for complex business logic workflows
-    - Function lifting for seamless integration with existing codebases
-
-Railway Composition Patterns:
-    - Sequential processing: bind operations for dependent step chains
-    - Parallel processing: plus operations for independent step execution
-    - Conditional processing: switch operations for business rule branching
-    - Side effect processing: tee operations for monitoring and logging
-    - Error recovery: compose patterns with fallback function chains
-    - Workflow orchestration: complex combinations of all operation types
-
-Type Safety and Error Handling:
-    - Type annotations for all operations ensuring compile-time verification
-    - Automatic error propagation through railway failure track
-    - Comprehensive exception handling with graceful degradation
-    - Result type integration for consistent error representation
-    - Pure functional patterns eliminating runtime exception scenarios
-
-Performance Optimization:
-    - Short-circuit evaluation for early failure detection
-    - Lazy evaluation patterns for conditional operation execution
-    - Efficient composition algorithms minimizing function call overhead
-    - Memory-efficient result handling with minimal object creation
-    - Optimized exception handling for performance-critical scenarios
-
-Dependencies:
-    - flext_core._result_base: Core result types for error handling patterns
-    - flext_core.types: Type definitions for TYPE_CHECKING static analysis only
-    - Standard library contextlib: Safe exception suppression utilities
-    - Standard library typing: Type annotation infrastructure and generics
+See Also:
+    result: Public API for railway-oriented programming patterns
+    docs/python-module-organization.md: Internal module architecture
 
 Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations

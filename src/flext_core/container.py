@@ -1,51 +1,88 @@
-"""FLEXT Core Container Module.
+"""FLEXT Core Container - Core Pattern Layer Dependency Injection.
 
-Enterprise-grade dependency injection system for the FLEXT Core library providing
-comprehensive service management through SOLID principles and type-safe operations.
+Enterprise dependency injection system that provides type-safe service management
+across all 32 projects in the FLEXT ecosystem. Implements Clean Architecture
+dependency inversion principle with railway-oriented error handling integration.
 
-Architecture:
-    - SOLID-compliant design with clear separation of responsibilities
-    - Internal modular organization with focused single-responsibility classes
-    - Type-safe service registration and retrieval with generic support
-    - FlextResult integration for comprehensive error handling
-    - Global container management with thread-safe operations
+Module Role in Architecture:
+    Core Pattern Layer → Dependency Injection → Service Location & Management
 
-Container System Components:
-    - FlextServiceRegistrar: Service and factory registration operations
-    - FlextServiceRetrivier: Service retrieval and information operations
-    - FlextContainer: Main public API orchestrating internal components
-    - ServiceKey[T]: Type-safe service key system for enhanced type safety
-    - Global management: Thread-safe global container instance management
+    FlextContainer is used throughout the ecosystem for:
+    - Service registration and location in all application projects
+    - Database connection management in infrastructure libraries
+    - Configuration service injection across Singer taps and targets
+    - Cross-layer dependency management following Clean Architecture
+    - Plugin registration and lifecycle management (future v1.0.0)
 
-Maintenance Guidelines:
-    - Maintain single responsibility principle in internal classes
-    - Use FlextResult pattern for all operations that can fail
-    - Integrate FlextLoggableMixin for consistent logging across components
-    - Preserve type safety through ServiceKey system and type guards
-    - Keep registration and retrieval operations separate for clarity
+Dependency Injection Patterns:
+    Service Registration: Type-safe registration with compile-time validation
+    Service Location: FlextResult-based retrieval with error handling
+    Factory Support: Lazy initialization for expensive service creation
+    Singleton Management: Automatic singleton lifecycle for stateful services
+    Global Access: Thread-safe global container for application-wide access
 
-Design Decisions:
-    - Consolidated from multiple modules while maintaining internal SRP
-    - Dependency inversion through interface abstractions
-    - Factory pattern support for lazy service initialization
-    - Type-safe operations with compile-time and runtime validation
-    - FlextResult error handling instead of exception propagation
+Development Status (v0.9.0 → 1.0.0):
+    ✅ Production Ready: Service registration, type-safe retrieval, global management
+    🔄 Performance Issue: ~100x slower than FlextResult (Enhancement Priority 1)
+    📋 TODO Integration: Plugin registration system (Plugin Priority 3)
 
-Dependency Injection Features:
-    - Service instance registration with singleton management
-    - Factory function registration for lazy initialization
-    - Type-safe retrieval with compile-time type checking
-    - Service information and introspection capabilities
-    - Global container management for application-wide access
+Core Operations:
+    register(key, service): Register service instance with type checking
+    register_factory(key, factory): Register factory for lazy initialization
+    get(key): Retrieve service with FlextResult error handling
+    get_typed(key, type_hint): Type-safe retrieval with runtime validation
+    configure(): Setup container with predefined service configuration
 
-Dependencies:
-    - result: FlextResult pattern for error handling
-    - mixins: FlextLoggableMixin for structured logging
-    - types: Type definitions and type guard utilities
-    - validation_base: Core validation for service names and parameters
+Ecosystem Usage Patterns:
+    # Service registration in application startup
+    container = get_flext_container()
+    container.register("database_service", DatabaseService(config))
+    container.register_factory("email_service", lambda: EmailService())
+
+    # Service location in business logic
+    def process_user(user_data: dict) -> FlextResult[User]:
+        return (
+            container.get("validation_service")
+            .flat_map(lambda validator: validator.validate_user(user_data))
+            .flat_map(lambda valid_data: create_user(valid_data))
+        )
+
+    # Cross-layer dependency injection
+    class UserRepository:
+        def __init__(self):
+            self.db_service = container.get("database_service").unwrap()
+
+Performance Characteristics:
+    - Current Issue: Container operations significantly slower than FlextResult
+    - Memory Usage: Singleton pattern prevents memory leaks
+    - Thread Safety: Global container supports concurrent access
+    - Type Safety: Compile-time and runtime type validation
+
+Critical Performance Gap (Enhancement Priority 1):
+    Container lookup performance needs 10x improvement to match ecosystem requirements.
+    Current implementation suitable for low-frequency service location but not
+    high-throughput scenarios. Optimization planned for November 2025.
+
+Service Registration Philosophy:
+    - Register services at application boundaries (main, setup, configuration)
+    - Use factory registration for expensive or stateful services
+    - Prefer constructor injection over service location in business logic
+    - Validate service dependencies at registration time, not retrieval
+    - Use typed keys for compile-time safety
+
+Quality Standards:
+    - All service operations must use FlextResult for error handling
+    - Service registration must validate types at registration time
+    - Global container must be thread-safe for concurrent access
+    - Service lifecycle must be explicitly managed
+
+See Also:
+    docs/TODO.md: Container performance optimization (Enhancement Priority 1)
+    examples/02_flext_container_dependency_injection.py: Usage patterns
 
 Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations

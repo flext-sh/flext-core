@@ -1,66 +1,80 @@
-"""FLEXT Core Handlers Module.
+"""FLEXT Core Handlers - CQRS Layer Handler Implementation.
 
 Comprehensive handler pattern implementation for enterprise message processing with
-CQRS, event sourcing, and chain of responsibility patterns. Implements consolidated
-architecture with mixin inheritance and type-safe operations.
+CQRS, event sourcing, and chain of responsibility patterns across the 32-project
+FLEXT ecosystem. Foundation for command/query/event processing with lifecycle
+management and cross-cutting concerns in data integration pipelines.
 
-Architecture:
-    - Unified handler patterns for commands, events, queries, and requests
-    - Generic type-safe base handler with abstract interface definition
-    - Specialized handlers for CQRS pattern implementation
+Module Role in Architecture:
+    CQRS Layer → Handler Processing → Message Lifecycle Management
+
+    This module provides handler patterns used throughout FLEXT projects:
+    - Generic handler base for type-safe message processing
+    - Specialized handlers for CQRS command/query/event patterns
     - Handler registry for service location and dependency injection
-    - Chain of responsibility pattern for multi-handler processing
-    - Multiple inheritance from timing and logging mixins
+    - Chain of responsibility for complex multi-handler scenarios
 
-Handler System Components:
-    - FlextHandlers.Handler[T, R]: Base generic handler with lifecycle hooks
-    - FlextHandlers.CommandHandler: CQRS command processing with validation
-    - FlextHandlers.EventHandler: Domain event processing with side effects
-    - FlextHandlers.QueryHandler: Read-only query processing with authorization
-    - FlextHandlers.Registry: Service location pattern for handler management
-    - FlextHandlers.Chain: Chain of responsibility for multi-handler scenarios
+Handler Architecture Patterns:
+    Generic Type Safety: Handler[T, R] with compile-time input/output type checking
+    Lifecycle Hooks: Pre/post processing with validation and cross-cutting concerns
+    Service Location: Registry pattern for handler discovery and dependency injection
+    Chain of Responsibility: Multi-handler processing with flexible orchestration
 
-Maintenance Guidelines:
-    - Create specialized handlers by inheriting from appropriate base classes
-    - Use FlextResult pattern for all handler operations that can fail
-    - Integrate logging and timing through mixin inheritance patterns
-    - Maintain handler registration in registry for service location
-    - Implement proper pre/post processing hooks for cross-cutting concerns
-    - Follow CQRS principles with command/query/event separation
+Development Status (v0.9.0 → 1.0.0):
+    ✅ Production Ready: Base handler, lifecycle hooks, mixin inheritance
+    🚧 Active Development: Handler registry and discovery (Priority 2 - October 2025)
+    📋 TODO Integration: Complete CQRS handler specializations (Priority 2)
 
-Design Decisions:
-    - Nested class organization within FlextHandlers for namespace management
-    - Generic type parameters [T, R] for input message and result type safety
-    - Abstract base class pattern for enforcing handler interface contracts
-    - Mixin inheritance for logging, timing, and validation behaviors
-    - Registry pattern for handler service location and dependency injection
-    - Chain of responsibility for flexible multi-handler processing scenarios
+Handler Pattern Features:
+    FlextHandlers.Handler[T, R]: Base generic handler with lifecycle management
+    FlextHandlers.CommandHandler: CQRS command processing with validation
+    FlextHandlers.EventHandler: Domain event processing with side effects
+    FlextHandlers.QueryHandler: Read-only query processing with authorization
+    FlextHandlers.Registry: Service location for handler management
 
-Enterprise Patterns:
-    - CQRS (Command Query Responsibility Segregation) with specialized handlers
-    - Event sourcing support through EventHandler with domain event processing
-    - Service location pattern through Registry for handler discovery
-    - Chain of responsibility for complex message processing workflows
-    - Pre/post processing hooks for cross-cutting concerns and aspect-oriented
-      programming
-    - Comprehensive metrics and observability through mixin integration
+Ecosystem Usage Patterns:
+    # FLEXT Service Handlers
+    class CreateUserHandler(FlextHandlers.CommandHandler):
+        def handle(self, command: CreateUserCommand) -> FlextResult[User]:
+            # Business logic with validation and error handling
+            if self.user_repository.email_exists(command.email):
+                return FlextResult.fail("Email already exists")
+            return self.user_repository.create(command)
 
-Handler Lifecycle:
+    # Singer Tap/Target Handlers
+    class OracleExtractHandler(FlextHandlers.Handler[ExtractCommand, ExtractResult]):
+        def pre_handle(self, command: ExtractCommand) -> FlextResult[None]:
+            return self.validate_connection(command.connection_string)
+
+        def handle(self, command: ExtractCommand) -> FlextResult[ExtractResult]:
+            return self.oracle_service.extract_data(command.table_name)
+
+    # ALGAR Migration Handlers
+    class LdapMigrationHandler(FlextHandlers.EventHandler):
+        def handle(self, event: LdapUserMigrated) -> FlextResult[None]:
+            return self.notification_service.notify_migration_complete(event)
+
+Handler Lifecycle Management:
     - can_handle: Type-based message compatibility checking
     - pre_handle: Pre-processing with validation and authorization
     - handle: Core business logic processing (abstract method)
     - post_handle: Post-processing with metrics and cleanup
     - handle_with_hooks: Complete lifecycle orchestration with timing
 
-Dependencies:
-    - abc: Abstract base class patterns for handler interface definition
-    - mixins: Logging and timing behavior inheritance for cross-cutting concerns
-    - result: FlextResult pattern for consistent error handling
-    - types: Generic type variables and handler-specific type aliases
-    - utilities: Type guards for runtime type checking and validation
+Quality Standards:
+    - All handlers must implement the abstract handle method
+    - Handlers must be stateless and thread-safe for concurrent processing
+    - Pre/post hooks must be used for cross-cutting concerns
+    - Handler registration must use type-safe service location patterns
+
+See Also:
+    docs/TODO.md: Priority 2 - Handler registry and discovery
+    commands.py: Command patterns that handlers process
+    interfaces.py: FlextHandler interface definitions
 
 Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations

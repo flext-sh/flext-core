@@ -120,9 +120,9 @@ class TestFlextResult:
         mapped = result.map(lambda x: x / 0)  # Will raise ZeroDivisionError
         assert mapped.is_failure
         assert mapped.error is not None
-        if "Unexpected transformation error" not in mapped.error:
+        if "Transformation failed" not in mapped.error:
             raise AssertionError(
-                f"Expected {'Unexpected transformation error'} in {mapped.error}"
+                f"Expected {'Transformation failed'} in {mapped.error}"
             )
 
     def test_flat_map_success(self) -> None:

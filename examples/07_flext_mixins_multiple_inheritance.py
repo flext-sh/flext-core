@@ -29,6 +29,7 @@ from shared_domain import (
 from flext_core import (
     FlextCacheableMixin,
     FlextComparableMixin,
+    FlextConstants,
     FlextEntityMixin,
     FlextIdentifiableMixin,
     FlextLoggableMixin,
@@ -1261,7 +1262,7 @@ def demonstrate_enterprise_patterns() -> None:
 
 def main() -> None:
     """Run comprehensive FlextMixins demonstration."""
-    from shared_example_helpers import run_example_demonstration
+    from shared_example_helpers import run_example_demonstration  # noqa: PLC0415
 
     examples = [
         ("Individual Mixin Patterns", demonstrate_individual_mixins),

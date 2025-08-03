@@ -1,31 +1,85 @@
-"""FLEXT Core Validation Module.
+"""FLEXT Core Validation - CQRS Layer Validation System.
 
-Unified validation system consolidating all validation functionality including
-auto-detection, fluent interfaces, type guards, and structured validation.
+Unified validation system providing auto-detection, fluent interfaces, type guards,
+and structured validation across the 32-project FLEXT ecosystem. Foundation for
+business rule validation, input sanitization, and data integrity enforcement in
+command/query processing and data integration pipelines.
 
-Architecture:
-    - Consolidated validation with intelligent auto-detection
-    - Fluent interfaces for complex validation chains
-    - Type guards with compile-time and runtime safety
-    - Railway-oriented error handling with FlextResult
-    - Direct inheritance eliminating code duplication
+Module Role in Architecture:
+    CQRS Layer → Validation System → Business Rule Enforcement
 
-Core Components:
-    - FlextValidators: Foundation validation functions
-    - FlextPredicates: Functional predicates for filtering
-    - FlextValidation: Main orchestration class
-    - AutoValidator: Intelligent validation with type detection
-    - FluentValidator: Chainable validation interface
-    - TypeGuards: Runtime type checking with static analysis
+    This module provides validation patterns used throughout FLEXT projects:
+    - Auto-detection validation with intelligent type inference
+    - Fluent interfaces for complex validation chains and rules
+    - Type guards for compile-time and runtime type safety
+    - Railway-oriented error handling with FlextResult integration
 
-Validation Patterns:
-    - Auto-detection: AutoValidator.check(value)
-    - Fluent chains: FluentValidator.string("email").email().min_length(5).validate()
-    - Type guards: if TypeGuards.is_valid_email(data): process_email(data)
-    - Structured: FlextValidation.validate_object(data, schema)
+Validation Architecture Patterns:
+    Auto-Detection: AutoValidator.check(value) with intelligent type inference
+    Fluent Interface: Chainable validation with method composition
+    Type Guards: Runtime type checking with static analysis benefits
+    Structured Validation: Schema-based validation for complex objects
+
+Development Status (v0.9.0 → 1.0.0):
+    ✅ Production Ready: Foundation validators, predicates, type guards
+    🚧 Active Development: Fluent validation chains (Enhancement 4 - Priority Medium)
+    📋 TODO Integration: Schema-based validation with Pydantic (Priority 3)
+
+Validation System Components:
+    FlextValidators: Foundation validation functions for common data types
+    FlextPredicates: Functional predicates for filtering and data processing
+    FlextValidation: Main orchestration class for complex validation scenarios
+    AutoValidator: Intelligent validation with automatic type detection
+    FluentValidator: Chainable validation interface for complex rules
+
+Ecosystem Usage Patterns:
+    # FLEXT Service Validation
+    if FlextValidators.is_non_empty_string(user_input):
+        process_user_input(user_input)
+
+    # Singer Tap/Target Validation
+    connection_result = (
+        FluentValidator.string(connection_string)
+        .min_length(10)
+        .contains("oracle://")
+        .validate()
+    )
+
+    # ALGAR Migration Validation
+    dn_result = AutoValidator.check(ldap_dn)
+    if dn_result.is_success:
+        process_ldap_dn(ldap_dn)
+
+    # Complex Schema Validation
+    user_validation = FlextValidation.validate_object(
+        user_data,
+        {
+            "name": FlextValidators.is_non_empty_string,
+            "email": FlextValidators.is_email,
+            "age": lambda x: isinstance(x, int) and 18 <= x <= 120
+        }
+    )
+
+Validation Pattern Categories:
+    - Foundation Validation: Basic type checking and common patterns
+    - Business Rule Validation: Domain-specific validation logic
+    - Input Sanitization: Data cleaning and normalization
+    - Schema Validation: Structured validation for complex objects
+
+Quality Standards:
+    - All validation functions must return FlextResult for consistent error handling
+    - Validation errors must provide actionable feedback for users
+    - Type guards must support both runtime checking and static analysis
+    - Complex validation must be composable through fluent interfaces
+
+See Also:
+    docs/TODO.md: Enhancement 4 - Fluent validation chain development
+    result.py: FlextResult pattern for validation error handling
+    interfaces.py: FlextValidator protocol definitions
 
 Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations

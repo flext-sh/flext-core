@@ -1,9 +1,47 @@
-"""FLEXT Builder Base - Foundation builder patterns.
+"""FLEXT Core Builder - Internal Implementation Module.
+
+Internal implementation providing the foundational logic for builder patterns.
+This module is part of the Internal Implementation Layer and should not be imported
+directly by ecosystem projects. Use the public API through guards module instead.
+
+Module Role in Architecture:
+    Internal Implementation Layer → Builder Patterns → Public API Layer
+
+    This internal module provides:
+    - Base builder class with property management
+    - Fluent builder interface with method chaining
+    - Validation infrastructure for builder state
+    - Factory functions for builder creation
+
+Implementation Patterns:
+    Builder Pattern: Progressive configuration with validation
+    Fluent Interface: Method chaining with conditional building
+
+Design Principles:
+    - Single responsibility for internal builder implementation concerns
+    - No external dependencies beyond standard library and sibling modules
+    - Performance-optimized implementations for public API consumption
+    - Type safety maintained through internal validation
+
+Access Restrictions:
+    - This module is internal and not exported in __init__.py
+    - Use guards module for all external access to builder functionality
+    - Breaking changes may occur without notice in internal modules
+    - No compatibility guarantees for internal implementation details
+
+Quality Standards:
+    - Internal implementation must maintain public API contracts
+    - Performance optimizations must not break type safety
+    - Code must be thoroughly tested through public API surface
+    - Internal changes must not affect public behavior
+
+See Also:
+    guards: Public API for builder patterns and validation
+    docs/python-module-organization.md: Internal module architecture
 
 Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
 
-Builder patterns for fluent APIs and progressive configuration.
 """
 
 from __future__ import annotations

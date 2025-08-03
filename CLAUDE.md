@@ -4,15 +4,23 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-FLEXT Core is the foundational library for the entire FLEXT ecosystem - a production-ready enterprise foundation framework built on Clean Architecture, Domain-Driven Design (DDD), and Python 3.13. This is a pure library (no CLI) that serves as the architectural base for 32+ FLEXT projects.
+FLEXT Core is the **architectural foundation** for the entire FLEXT data integration ecosystem - a production-ready enterprise library implementing Clean Architecture, Domain-Driven Design (DDD), and railway-oriented programming patterns. This pure library (no CLI) serves as the cornerstone for **32 interconnected projects** delivering enterprise-grade data integration solutions.
 
-**Key Characteristics:**
+**Ecosystem Impact:**
 
-- Python 3.13 only with modern type hints and PEP8 strict compliance
-- Minimal runtime dependencies (pydantic, dependency-injector)
-- Clean Architecture + DDD + CQRS patterns
-- Enterprise-grade quality standards with 95%+ test coverage requirement
-- Type-safe error handling with FlextResult pattern
+- **32 Projects** depend on FLEXT Core patterns (3 services, 6 applications, 6 infrastructure, 15 Singer ecosystem, 4 Go binaries)
+- **15,000+ Function Signatures** use FlextResult[T] for type-safe error handling
+- **Zero-Downtime** deployment requirements for production environments
+- **Enterprise Production** deployments across data integration pipelines
+
+**Key Architectural Characteristics:**
+
+- **Python 3.13+ Only**: Modern type hints with strict PEP8 compliance (no backward compatibility)
+- **Minimal Dependencies**: pydantic, pydantic-settings, structlog (enterprise-grade only)
+- **Railway-Oriented Programming**: FlextResult[T] pattern eliminates exceptions across ecosystem
+- **Clean Architecture**: Foundation → Core → Configuration → Domain → CQRS → Extension layers
+- **Domain-Driven Design**: Rich entities, value objects, aggregates with event sourcing foundation
+- **Enterprise Quality**: 95%+ test coverage, strict MyPy, comprehensive security scanning
 
 ## Essential Commands
 
@@ -49,7 +57,6 @@ make test                  # Full test suite with coverage (95% minimum)
 make test-unit             # Unit tests only (excludes integration tests)
 make test-integration      # Integration tests only
 make test-fast             # Tests without coverage (faster feedback)
-make test-watch            # Watch mode for continuous testing
 make coverage-html         # Generate HTML coverage report
 
 # Run specific tests
@@ -82,7 +89,6 @@ make deps-update           # Update all dependencies
 
 # Development utilities
 make shell                 # Open Python shell with project loaded
-make notebook              # Start Jupyter notebook
 make pre-commit            # Run pre-commit hooks manually
 make fix                   # Auto-fix code issues
 
@@ -92,7 +98,8 @@ make diagnose              # Project diagnostics info
 
 # Build and publish
 make build                 # Build distribution packages
-make publish-test          # Publish to test PyPI
+make build-clean           # Clean and build
+make reset                 # Reset project (clean-all + setup)
 
 # Documentation
 make docs                  # Build documentation
@@ -111,6 +118,8 @@ src/flext_core/
 ├── result.py                # FlextResult[T] - type-safe error handling
 ├── container.py             # FlextContainer - enterprise DI system
 ├── config.py                # FlextBaseSettings - configuration management
+├── config_hierarchical.py  # Hierarchical configuration management system
+├── config_models.py         # Configuration models and TypedDict definitions
 ├── constants.py             # Core enums and constants
 ├── flext_types.py           # Modern type definitions and type system
 ├── payload.py               # FlextPayload/FlextEvent/FlextMessage
@@ -130,6 +139,10 @@ src/flext_core/
 ├── guards.py                # Validation guards and builders
 ├── utilities.py             # Utility functions
 ├── core.py                  # FlextCore main class
+├── models.py                # Common model definitions
+├── schema_processing.py     # Schema processing utilities
+├── singer_base.py           # Singer specification base classes
+├── testing_utilities.py     # Testing utilities and fixtures
 ├── version.py               # Version management and compatibility
 ├── py.typed                 # Type information marker
 └── _*_base.py               # Base implementation modules (internal)
@@ -191,6 +204,7 @@ Available test markers (use with `pytest -m <marker>`):
 - `integration` - Integration tests (component interaction)
 - `e2e` - End-to-end tests (full system testing)
 - `slow` - Slow-running tests (deselect with `-m "not slow"`)
+- `performance` - Performance benchmark tests
 - `pep8` - PEP8 compliance validation tests
 - `core` - Core framework functionality tests
 - `architecture` - Architectural pattern tests
@@ -344,7 +358,7 @@ examples/
 ├── 01_flext_result_railway_pattern.py        # Railway-oriented programming
 ├── 02_flext_container_dependency_injection.py # DI container usage
 ├── 03_flext_commands_cqrs_pattern.py         # CQRS implementation
-├── 04_flext_utilities_generation_formatting.py # Utility functions
+├── 04_flext_utilities_modular.py             # Utility functions
 ├── 05_flext_validation_advanced_system.py    # Validation patterns
 ├── 06_flext_entity_valueobject_ddd_patterns.py # DDD modeling
 ├── 07_flext_mixins_multiple_inheritance.py   # Mixin patterns
@@ -358,8 +372,45 @@ examples/
 ├── 15_flext_advanced_examples.py             # Advanced usage
 ├── 16_flext_integration_example.py           # Integration example
 ├── 17_flext_working_examples.py              # Working examples
-└── shared_domain.py                          # Shared domain models
+├── boilerplate_reduction_example.py          # Boilerplate reduction patterns
+├── shared_domain.py                          # Shared domain models
+├── shared_example_helpers.py                 # Example helper utilities
+└── utilities/                                # Utility modules
+    ├── complexity_helpers.py                 # Complexity management helpers
+    ├── demonstration_runner.py               # Example demonstration runner
+    ├── domain_models.py                      # Domain model examples
+    ├── formatting_helpers.py                 # Formatting utilities
+    └── validation_utilities.py               # Validation helper utilities
 ```
+
+## Ecosystem Responsibilities
+
+### **FLEXT Core's Role in the Ecosystem**
+
+**flext-core** is the **architectural foundation** providing patterns used by all 32 projects:
+
+#### **Direct Dependencies** (Projects that import flext-core)
+
+- **All 29 FLEXT libraries**: Use FlextResult, FlextContainer, domain patterns
+- **FlexCore (Go service)**: Integrates via Python bridge for business logic
+- **ALGAR & GrupoNos services**: Use core patterns for consistency
+- **Go cmd binaries**: Access patterns through service layer
+
+#### **Core Patterns Provided**
+
+- **FlextResult[T]**: Type-safe error handling used across all projects
+- **FlextContainer**: Dependency injection container for service location
+- **Domain Modeling**: FlextEntity, FlextValueObject, FlextAggregateRoot patterns
+- **Configuration Management**: Environment-aware settings with Pydantic
+- **Structured Logging**: FlextLogger with correlation ID support
+- **CQRS Foundation**: Command/handler patterns (Query Bus in development)
+
+#### **Architecture Boundaries**
+
+- **flext-core provides**: Foundational patterns, types, base classes
+- **Other libraries provide**: Specialized implementations (Oracle, LDAP, gRPC, etc.)
+- **Services provide**: Business logic, orchestration, user interfaces
+- **Go binaries provide**: High-performance runtime and distributed coordination
 
 ## Important Notes
 
@@ -373,6 +424,7 @@ examples/
 - **Quality Gates:** All quality gates must pass before commits (validate, lint, type-check, test)
 - **Documentation:** Comprehensive docs in docs/ directory with MkDocs
 - **Python Version:** Python 3.13 only, no backward compatibility
+- **Ecosystem Impact:** Changes affect 32 dependent projects - breaking changes require ecosystem-wide validation
 
 ## TODO: GAPS DE ARQUITETURA IDENTIFICADOS - PRIORIDADE CRÍTICA
 
@@ -381,7 +433,7 @@ examples/
 **Status**: CRÍTICO - Foundation library sem garantias de compatibilidade
 **Problema**:
 
-- flext-core é dependência crítica de 31+ projetos mas sem compatibility matrix
+- flext-core é dependência crítica de 32 projetos (29 libraries + 3 services) mas sem compatibility matrix
 - Breaking changes em core library podem quebrar ecosystem inteiro instantaneamente
 - Sem semantic versioning definido especificamente para ecosystem dependencies
 - Upgrade path não documentado para major version changes
@@ -391,7 +443,7 @@ examples/
 - [ ] Criar comprehensive compatibility testing matrix com todos projetos dependentes
 - [ ] Implementar semantic versioning strategy específico para ecosystem foundation
 - [ ] Documentar detailed migration guides para breaking changes em flext-core
-- [ ] Setup automated compatibility testing pipeline contra todos projetos FLEXT
+- [ ] Setup automated compatibility testing pipeline against all 32 FLEXT projects
 - [ ] Definir deprecation policy e timeline para breaking changes
 
 ### 🚨 GAP 2: Event Sourcing Architecture Foundation Missing

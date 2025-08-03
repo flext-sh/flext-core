@@ -12,7 +12,6 @@ from flext_core.value_objects import FlextValueObject, FlextValueObjectFactory
 EXPECTED_BULK_SIZE = 2
 
 
-
 class EmailAddress(FlextValueObject):
     """Test email value object."""
 

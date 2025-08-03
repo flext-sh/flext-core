@@ -1,76 +1,86 @@
-r"""FLEXT Core Fields Module.
+r"""FLEXT Core Fields - Extension Layer Field Definition System.
 
-Comprehensive field definition and validation system for enterprise data management with
-metadata support, registry patterns, and type-safe operations. Implements consolidated
-architecture with factory patterns and comprehensive validation.
+Comprehensive field definition and validation system for enterprise data management
+with metadata support, registry patterns, and type-safe operations across the
+32-project FLEXT ecosystem. Foundation for structured data modeling, form validation,
+and schema definition in data integration and business logic components.
 
-Architecture:
-    - Single source of truth pattern eliminating base module
-      duplication
-    - Pydantic-based validation with strict type safety and immutability
-    - Factory pattern for type-safe field creation with validation
-    - Registry singleton pattern for centralized field management
-    - Composition with mixin delegation for behavior composition (no multiple
-      inheritance)
-    - FlextResult pattern integration for consistent error handling
+Module Role in Architecture:
+    Extension Layer → Field Definition System → Structured Data Modeling
 
-Field System Components:
-    - FlextFieldCore: Immutable field definition with comprehensive validation
-    - FlextFieldRegistry: Thread-safe centralized field registration and lookup
-    - FlextFields: Factory methods and unified public API interface
-    - Type definitions: Strong typing for field properties and metadata
-    - Convenience functions: Automatic registration with factory methods
-    - Validation integration: Type-specific validation with FlextValidators
-
-Maintenance Guidelines:
-    - Add new field types through factory methods in FlextFields class
-    - Maintain validation consistency with FlextValidators integration patterns
-    - Use FlextResult pattern for all operations that can fail or return errors
-    - Keep field metadata separate from validation logic for clear separation
-    - Register new field types with consistent naming and validation patterns
-    - Follow immutability principles with frozen Pydantic models
-
-Design Decisions:
-    - Eliminated _fields_base.py module to reduce code duplication and complexity
-    - Pydantic BaseModel for automatic validation and serialization support
-    - Composition with mixin delegation for reusable behavior composition  # noqa: E501
-    - Factory pattern for type-safe field creation with comprehensive validation
-    - Registry singleton for global field management with conflict detection
-    - Frozen models for immutability and thread safety in concurrent environments
-
-Enterprise Features:
-    - Type-safe field creation with compile-time verification through factory methods
+    This module provides field definition patterns used throughout FLEXT projects:
+    - Type-safe field creation with compile-time verification
     - Comprehensive metadata support for field description and categorization
     - Registry pattern for centralized field management and conflict resolution
-    - Validation integration with enterprise-grade error handling and reporting
-    - Thread-safe operations for concurrent access in multi-threaded environments
-    - Immutable field definitions preventing accidental modification after creation
+    - Validation integration with enterprise-grade error handling
+
+Field Architecture Patterns:
+    Factory Pattern: Type-safe field creation with comprehensive validation
+    Registry Singleton: Centralized field management with conflict detection
+    Immutable Design: Frozen Pydantic models for thread safety
+    Metadata Enrichment: Comprehensive field metadata for enterprise applications
+
+Development Status (v0.9.0 → 1.0.0):
+    ✅ Production Ready: Field definitions, registry, factory methods, validation
+    🚧 Active Development: Dynamic field validation (Enhancement 4 - Priority Medium)
+    📋 TODO Integration: Schema-based field generation (Priority 3)
+
+Field System Components:
+    FlextFieldCore: Immutable field definition with comprehensive validation
+    FlextFieldRegistry: Thread-safe centralized field registration and lookup
+    FlextFields: Factory methods and unified public API interface
+    Type Definitions: Strong typing for field properties and metadata
+    Validation Integration: Type-specific validation with FlextValidators
+
+Ecosystem Usage Patterns:
+    # FLEXT Service Data Models
+    from flext_core.fields import FlextFields
+
+    # Field registration and validation
+    user_name_field = FlextFields.string_field(
+        name="user_name",
+        description="User's full name",
+        required=True,
+        min_length=2,
+        max_length=100
+    )
+
+    # Singer Tap/Target Schema Fields
+    oracle_column_field = FlextFields.database_field(
+        name="employee_id",
+        column_type="NUMBER(10)",
+        nullable=False,
+        primary_key=True
+    )
+
+    # ALGAR Migration Fields
+    ldap_attribute_field = FlextFields.ldap_field(
+        name="uid",
+        attribute_type="string",
+        required=True,
+        indexed=True
+    )
 
 Field Validation Strategy:
     - Type-specific validation methods for string, integer, boolean, and custom types
-    - Constraint validation using FlextValidators for consistency and reusability
-    - FlextResult pattern for validation outcomes with comprehensive error reporting
-    - Comprehensive error messaging for field violations with detailed context
-    - Pattern-based validation for strings with regex compilation verification
-    - Range validation for numeric types with min/max constraint enforcement
+    - Metadata validation ensuring field definitions meet enterprise requirements
+    - Registry validation preventing field name conflicts and ensuring uniqueness
+    - Cross-field validation for complex business rules and dependencies
 
-Registry Management:
-    - Singleton registry pattern for global field management and access
-    - Dual indexing by field ID and field name for efficient lookup operations
-    - Conflict detection and resolution for field ID and name uniqueness
-    - Thread-safe registration and retrieval operations for concurrent access
-    - Registry statistics and management operations for monitoring and maintenance
-    - Clean removal operations with proper cleanup and consistency maintenance
+Quality Standards:
+    - All field definitions must be immutable after creation
+    - Field names must be unique within their registration scope
+    - Field validation must provide actionable error messages
+    - Metadata must be comprehensive and support introspection
 
-Dependencies:
-    - pydantic: Field definition, validation core, and immutable model configuration
-    - _mixins_base: Serializable and validatable behavior inheritance patterns
-    - validation: FlextValidators for core validation utilities and consistency
-    - constants: FlextFieldType definitions and field categorization constants
-    - result: FlextResult pattern for consistent error handling across operations
+See Also:
+    docs/TODO.md: Enhancement 4 - Dynamic field validation development
+    validation.py: FlextValidators integration for field validation
+    entities.py: Entity patterns using field definitions
 
 Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations

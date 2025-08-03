@@ -1,52 +1,83 @@
-"""FLEXT Core Main Module.
+"""FLEXT Core Main - Extension Layer Central Orchestration.
 
-Central orchestration point for the FLEXT Core library providing unified access
-to all functionality through a single, cohesive interface.
+Central orchestration point providing unified access to all FLEXT Core functionality
+through a single, cohesive interface across the 32-project FLEXT ecosystem. Foundation
+for application-wide consistency, subsystem coordination, and enterprise integration
+patterns in distributed data integration platforms.
 
-Architecture:
-    - Singleton pattern for application-wide consistency
+Module Role in Architecture:
+    Extension Layer → Central Orchestration → Unified System Access
+
+    This module provides unified system access patterns used throughout FLEXT projects:
+    - Singleton pattern for application-wide consistency and state management
     - Facade pattern hiding complex subsystem interactions
-    - Type-safe operations with comprehensive generic support
+    - Type-safe operations with comprehensive dependency injection
     - Railway-oriented programming utilities for functional composition
-    - Dependency injection integration with type-safe service management
+
+Core Architecture Patterns:
+    Singleton Pattern: Application-wide consistency with global state management
+    Facade Pattern: Subsystem complexity hiding through unified interface
+    Dependency Injection: Type-safe service registration and retrieval
+    Railway Programming: Functional composition with FlextResult integration
+
+Development Status (v0.9.0 → 1.0.0):
+    ✅ Production Ready: Singleton orchestration, facade interface, DI integration
+    🚧 Active Development: Advanced orchestration patterns (Enhancement 5 - Low)
+    📋 TODO Integration: Plugin system orchestration (Priority 3)
 
 Core Orchestration Features:
-    - Unified container access for dependency injection
-    - Centralized logging configuration and management
-    - Result pattern integration for error handling
-    - Railway programming utilities for functional pipelines
-    - Configuration management with settings caching
-    - Constants access for system-wide values
+    FlextCore: Main singleton providing unified system access
+    Container Integration: Type-safe dependency injection with service management
+    Logging Configuration: Centralized logging setup and context management
+    Result Pattern Integration: Railway-oriented programming for error handling
+    Configuration Management: Settings caching with environment variable support
 
-Maintenance Guidelines:
-    - Maintain singleton pattern for global access consistency
-    - Keep facade interface simple while preserving functionality
-    - Integrate new subsystems through type-safe wrapper methods
-    - Preserve railway programming patterns for functional composition
-    - Use FlextResult pattern for all operations that can fail
+Ecosystem Usage Patterns:
+    # FLEXT Service Applications
+    from flext_core import FlextCore
 
-Design Decisions:
-    - Singleton pattern for global state management
-    - Facade pattern for subsystem complexity hiding
-    - Type-safe service registration and retrieval
-    - Railway programming support for functional composition
-    - Settings caching for performance optimization
+    core = FlextCore.get_instance()
+    container = core.get_container()
+    logger = core.get_logger(__name__)
 
-Enterprise Integration:
-    - Container-based dependency injection for loosely coupled design
-    - Structured logging with context management
-    - Type-safe error handling without exception propagation
-    - Configuration management with environment variable support
-    - Functional programming utilities for data processing pipelines
+    # Service registration
+    container.register("user_service", user_service_instance)
 
-Dependencies:
-    - container: Dependency injection with type-safe operations
-    - result: Railway-oriented programming patterns
-    - loggings: Structured logging with context management
-    - constants: System-wide constants and configuration values
+    # FLEXT Applications
+    class FlextApplication:
+        def __init__(self):
+            self.core = FlextCore.get_instance()
+            self.setup_dependencies()
+
+        def setup_dependencies(self):
+            self.core.configure_logging(level="INFO")
+            self.core.register_services()
+
+    # Singer Tap/Target Integration
+    core = FlextCore.get_instance()
+    oracle_service = core.get_service("oracle_client")
+    result = oracle_service.extract_data("users")
+
+Enterprise Integration Benefits:
+    - Application-wide consistency through singleton pattern
+    - Subsystem coordination through facade interface
+    - Type-safe dependency management with compile-time validation
+    - Functional programming support for data processing pipelines
+
+Quality Standards:
+    - Singleton instance must be thread-safe for concurrent access
+    - Facade interface must remain stable across version updates
+    - Service registration must be type-safe with proper error handling
+    - Configuration management must support environment-specific settings
+
+See Also:
+    docs/TODO.md: Enhancement 5 - Advanced orchestration pattern development
+    container.py: Dependency injection implementation details
+    result.py: Railway-oriented programming pattern implementation
 
 Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations

@@ -1,50 +1,75 @@
-"""FLEXT Core Decorators Module.
+"""FLEXT Core Decorators - Extension Layer Function Enhancement.
 
-Comprehensive decorator system for the FLEXT Core library providing consolidated
-functionality through single inheritance and direct delegation patterns.
+Comprehensive decorator system providing function enhancement patterns for validation,
+error handling, performance optimization, and cross-cutting concerns across the
+32-project FLEXT ecosystem. Foundation for aspect-oriented programming and functional
+composition in data integration and business logic components.
 
-Architecture:
-    - Single source of truth pattern eliminating multiple inheritance complexity
-    - Direct base class exposure for specialized decorator functionality
-    - Orchestration methods combining base functionality through composition
-    - FlextResult integration for consistent error handling patterns
-    - Performance-optimized delegation patterns with minimal overhead
+Module Role in Architecture:
+    Extension Layer → Function Enhancement → Aspect-Oriented Programming
 
-Decorator Categories:
-    - Validation decorators: Pydantic-based input validation
-    - Error handling decorators: Safe execution with error capture
-    - Performance decorators: Caching and timing functionality
-    - Logging decorators: Structured logging integration
-    - Immutability decorators: Frozen and read-only patterns
-    - Functional decorators: Pure function and composition patterns
+    This module provides decorator patterns used throughout FLEXT projects:
+    - Validation decorators for Pydantic-based input validation
+    - Error handling decorators for safe execution with FlextResult integration
+    - Performance decorators for caching and timing functionality
+    - Logging decorators for structured logging with context management
 
-Maintenance Guidelines:
-    - Add new decorator types by exposing them directly from _decorators_base
-    - Use composition and delegation instead of multiple inheritance
-    - Maintain orchestration methods in main FlextDecorators class
-    - Keep individual decorators focused and composable
-    - Preserve backward compatibility through function aliases
+Decorator Architecture Patterns:
+    Single Responsibility: Focused decorators for specific concerns
+    Composition Orchestration: Combining multiple decorator types through delegation
+    FlextResult Integration: Consistent error handling without exception propagation
+    Performance Optimization: Minimal overhead with direct delegation patterns
 
-Design Decisions:
-    - Single inheritance pattern eliminating method resolution overhead
-    - Composition-based orchestration combining multiple decorator types
-    - Direct base class exposure for specialized use cases
-    - FlextResult integration for consistent error handling
-    - Clean API design following "deliver more with much less" principle
+Development Status (v0.9.0 → 1.0.0):
+    ✅ Production Ready: Validation, error handling, performance, logging decorators
+    🚧 Active Development: Functional composition patterns (Enhancement 4 - Med)
+    📋 TODO Integration: Async decorator support for pipeline optimization (Priority 3)
 
-Orchestration Patterns:
-    - safe_result: Exception handling with FlextResult returns
-    - validated_with_result: Pydantic validation with FlextResult
-    - cached_with_timing: Performance optimization with metrics
-    - complete_decorator: Full-featured decorator orchestration
+Decorator System Categories:
+    Validation Decorators: Pydantic-based input validation with automatic error handling
+    Error Handling Decorators: Safe execution with error capture and FlextResult returns
+    Performance Decorators: Caching and timing functionality with metrics collection
+    Logging Decorators: Structured logging integration with context preservation
+    Immutability Decorators: Frozen and read-only patterns for data integrity
 
-Dependencies:
-    - _decorators_base: Foundation decorator implementations
-    - result: FlextResult pattern for error handling
-    - pydantic: Validation and model support
+Ecosystem Usage Patterns:
+    # FLEXT Service Functions
+    @FlextDecorators.safe_result
+    @FlextDecorators.validated_input
+    def create_user(user_data: UserCreateRequest) -> FlextResult[User]:
+        return user_service.create(user_data)
+
+    # Singer Tap/Target Functions
+    @FlextDecorators.cached_with_timing("oracle_extract")
+    @FlextDecorators.logged("data_extraction")
+    def extract_oracle_table(connection: str, table: str) -> FlextResult[list]:
+        return oracle_client.extract_data(connection, table)
+
+    # ALGAR Migration Functions
+    @FlextDecorators.complete_decorator(cache_key="ldap_migration")
+    def migrate_ldap_users(source_dn: str, target_dn: str) -> FlextResult[int]:
+        return ldap_service.migrate_users(source_dn, target_dn)
+
+Decorator Orchestration Features:
+    - safe_result: Exception handling with FlextResult returns and error context
+    - validated_with_result: Pydantic validation with comprehensive error reporting
+    - cached_with_timing: Performance optimization with metrics and cache management
+    - complete_decorator: Full-featured decorator orchestration with all features
+
+Quality Standards:
+    - All decorators must preserve function signatures and type annotations
+    - Error handling decorators must use FlextResult for consistent error propagation
+    - Performance decorators must minimize overhead and provide accurate metrics
+    - Validation decorators must provide actionable error messages for debugging
+
+See Also:
+    docs/TODO.md: Enhancement 4 - Functional composition pattern development
+    _decorators_base.py: Foundation decorator implementations
+    result.py: FlextResult pattern for error handling integration
 
 Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations

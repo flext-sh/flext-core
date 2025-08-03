@@ -9,26 +9,18 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import math
 import time
-from decimal import Decimal
-
-from flext_core import (
-    FlextResult,
-    FlextUtilities,
-    TAnyObject,
-    TEntityId,
-    TLogMessage,
-    TUserData,
-)
 
 # Import shared domain models
 from shared_domain import (
-    Money,
-    Order as SharedOrder,
-    OrderStatus,
-    Product as SharedProduct,
     SharedDomainFactory,
-    User as SharedUser,
+)
+
+from flext_core import (
+    FlextUtilities,
+    TEntityId,
+    TUserData,
 )
 
 from .complexity_helpers import (
@@ -36,7 +28,7 @@ from .complexity_helpers import (
     FormattingHelper,
     ValidationHelper,
 )
-from .domain_models import UtilityDemoOrder, UtilityDemoProduct, UtilityDemoUser
+from .domain_models import UtilityDemoUser
 from .formatting_helpers import (
     generate_hash_id,
     generate_prefixed_id,
@@ -48,7 +40,6 @@ from .validation_utilities import (
     is_int,
     is_list,
     is_string,
-    process_shared_order,
 )
 
 # =============================================================================
@@ -57,7 +48,10 @@ from .validation_utilities import (
 
 
 def demonstrate_id_generation() -> None:
-    """Demonstrate various ID generation strategies using helper - reduced complexity."""
+    """Demonstrate various ID generation strategies using helper.
+
+    Reduced complexity through utility functions.
+    """
     DemonstrationSectionHelper.print_section_header(1, "ID Generation Strategies")
 
     # Basic entity ID generation
@@ -116,7 +110,7 @@ def demonstrate_type_checking() -> None:
         (42, "integer"),
         ([1, 2, 3], "list"),
         ({"key": "value"}, "dict"),
-        (3.14, "float"),
+        (math.pi, "float"),
     ]
 
     for value, expected_type in test_values:
@@ -218,7 +212,8 @@ def demonstrate_business_logic() -> None:
 
     product = product_result.data
     print(
-        f"Product: {product.name} - {FormattingHelper.format_currency(float(product.price.amount))}"
+        f"Product: {product.name} - "
+        f"{FormattingHelper.format_currency(float(product.price.amount))}"
     )
 
     # Test discount calculation
@@ -226,7 +221,8 @@ def demonstrate_business_logic() -> None:
     if discount_result.is_success:
         final_price = discount_result.data
         print(
-            f"20% discount price: {FormattingHelper.format_currency(float(final_price))}"
+            f"20% discount price: "
+            f"{FormattingHelper.format_currency(float(final_price))}"
         )
     else:
         DemonstrationSectionHelper.log_error(
