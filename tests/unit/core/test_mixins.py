@@ -102,6 +102,8 @@ class TestMixinsBaseCoverage:
             def __init__(self) -> None:
                 super().__init__()
                 self.normal_attr = "normal"
+                self.problematic_attr1: str | None = None
+                self.problematic_attr2: str | None = None
 
             def _serialize_value(self, value: object) -> object | None:
                 """Override to cause TypeError for specific values."""

@@ -69,7 +69,7 @@ class _BaseBuilder:
         self._validation_errors: list[str] = []
         self._is_built = False
 
-    def _set_property(self, key: str, value: object) -> _BaseBuilder:
+    def _set_property(self, key: str, value: str | float | None) -> _BaseBuilder:
         """Set a property value.
 
         Args:
@@ -299,7 +299,9 @@ class _BaseBuilder:
 class _BaseFluentBuilder(_BaseBuilder):
     """Fluent builder with method chaining support."""
 
-    def with_property(self, key: str, value: object) -> _BaseFluentBuilder:
+    def with_property(
+        self, key: str, value: str | float | None
+    ) -> _BaseFluentBuilder:
         """Set property with fluent interface.
 
         Args:
@@ -327,7 +329,7 @@ class _BaseFluentBuilder(_BaseBuilder):
         self._set_property("_last_condition", condition)
         return self
 
-    def then_set(self, key: str, value: object) -> _BaseFluentBuilder:
+    def then_set(self, key: str, value: str | int | float | bool | None) -> _BaseFluentBuilder:
         """Set property if last condition was true.
 
         Args:

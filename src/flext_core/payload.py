@@ -284,6 +284,38 @@ class FlextPayload[T](
             # Broad exception handling for API contract safety in payload creation
             return FlextResult.fail(f"Failed to create payload from dict: {e}")
 
+    def has_data(self) -> bool:
+        """Check if payload has non-None data.
+
+        Returns:
+            True if data is not None
+
+        """
+        return self.data is not None
+
+    def get_data(self) -> FlextResult[T]:
+        """Get payload data with type safety.
+
+        Returns:
+            FlextResult containing data or error if None
+
+        """
+        if self.data is None:
+            return FlextResult.fail("Payload data is None")
+        return FlextResult.ok(self.data)
+
+    def get_data_or_default(self, default: T) -> T:
+        """Get payload data or return default if None.
+
+        Args:
+            default: Default value to return if data is None
+
+        Returns:
+            Payload data or default value
+
+        """
+        return self.data if self.data is not None else default
+
     def transform_data(
         self,
         transformer: Callable[[T], object],

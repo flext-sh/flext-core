@@ -114,12 +114,11 @@ class UtilityDemoProduct(
                 "amount": str(self.price.amount),
                 "currency": self.price.currency,
             },
-            "stock_quantity": self.stock_quantity,
+            "in_stock": self.in_stock,
             "category": self.category,
-            "sku": self.sku,
             "cache_key": self.get_cache_key(),
             "serialized_at": FlextUtilities.generate_iso_timestamp(),
-            "is_available": self.stock_quantity > 0,
+            "is_available": self.in_stock,
             "price_display": f"{self.price.currency} {self.price.amount}",
         }
 
@@ -141,10 +140,13 @@ class UtilityDemoOrder(
 
     def get_log_context(self) -> dict[str, object]:
         """Get logging context for order operations."""
+        # Calculate total from items since Order doesn't have a total attribute
+        calculated_total = sum(item.quantity * item.unit_price.amount for item in self.items)
+
         return {
             "order_id": self.id,
-            "customer_id": self.customer.id,
-            "total_amount": str(self.total.amount),
+            "customer_id": self.customer_id,
+            "total_amount": str(calculated_total),
             "items_count": len(self.items),
             "status": self.status.value,
         }
@@ -155,33 +157,33 @@ class UtilityDemoOrder(
 
     def to_serializable(self) -> TAnyObject:
         """Convert to serializable format with enhanced data."""
+        # Calculate total since Order doesn't have a total attribute
+        calculated_total = sum(item.quantity * item.unit_price.amount for item in self.items)
+        currency = self.items[0].unit_price.currency if self.items else "USD"
+
         return {
             "id": self.id,
-            "customer": {
-                "id": self.customer.id,
-                "name": self.customer.name,
-                "email": self.customer.email_address.email,
-            },
+            "customer_id": self.customer_id,
             "items": [
                 {
-                    "product_id": item.product.id,
-                    "product_name": item.product.name,
+                    "product_id": item.product_id,
+                    "product_name": item.product_name,
                     "quantity": item.quantity,
-                    "unit_price": str(item.product.price.amount),
-                    "line_total": str(item.quantity * item.product.price.amount),
+                    "unit_price": str(item.unit_price.amount),
+                    "line_total": str(item.quantity * item.unit_price.amount),
                 }
                 for item in self.items
             ],
             "total": {
-                "amount": str(self.total.amount),
-                "currency": self.total.currency,
+                "amount": str(calculated_total),
+                "currency": currency,
             },
             "status": self.status.value,
-            "created_at": self.created_at,
+            "created_at": getattr(self, "created_at", FlextUtilities.generate_iso_timestamp()),
             "serialized_at": FlextUtilities.generate_iso_timestamp(),
             "summary": {
                 "items_count": len(self.items),
-                "total_display": f"{self.total.currency} {self.total.amount}",
+                "total_display": f"{currency} {calculated_total}",
                 "status_display": self.status.value.title(),
             },
         }

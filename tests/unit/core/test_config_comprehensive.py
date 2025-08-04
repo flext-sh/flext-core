@@ -1030,6 +1030,7 @@ class TestConfigIntegration:
         assert file_result.is_success
 
         base_config = file_result.data
+        assert base_config is not None
 
         # Get environment override
         with patch.dict(os.environ, {"DATABASE_URL": "postgresql://prod/app"}):
@@ -1038,9 +1039,10 @@ class TestConfigIntegration:
                 validate_type=str,
             )
             assert env_result.is_success
+            assert env_result.data is not None
 
             # Merge file config with env override
-            env_override = {"database_url": env_result.data}
+            env_override: dict[str, object] = {"database_url": env_result.data}
             final_result = FlextConfig.merge_and_validate_configs(
                 base_config,
                 env_override,
@@ -1048,6 +1050,7 @@ class TestConfigIntegration:
             assert final_result.is_success
 
             final_config = final_result.data
+            assert final_config is not None
             if final_config["database_url"] != "postgresql://prod/app":
                 raise AssertionError(
                     f"Expected {'postgresql://prod/app'}, got {final_config['database_url']}"
@@ -1056,7 +1059,7 @@ class TestConfigIntegration:
     def test_error_handling_cascade(self) -> None:
         """Test error handling cascades through integration."""
         # Start with invalid config
-        invalid_config = {"key": None}
+        invalid_config: dict[str, object] = {"key": None}
 
         # This should fail validation
         result = FlextConfig.create_complete_config(
@@ -1070,7 +1073,7 @@ class TestConfigIntegration:
             raise AssertionError(
                 f"Expected 'Config validation failed' in {result.error}"
             )
-        assert "key" in result.error
+        assert "key" in (result.error or "")
 
     def test_proxy_methods_consistency(self, sample_config: TAnyDict) -> None:
         """Test that proxy methods are consistent with direct calls."""
@@ -1113,6 +1116,7 @@ class TestConfigEdgeCases:
 
         # Should still apply defaults
         config = result.data
+        assert config is not None
         assert config["debug"] is False  # Default value
 
     def test_nested_configuration_handling(self) -> None:
@@ -1134,11 +1138,18 @@ class TestConfigEdgeCases:
         assert result.is_success
 
         config = result.data
-        if config["database"]["host"] != "localhost":
+        assert config is not None
+
+        # Type cast to access nested structure
+        database_config = cast("dict[str, object]", config["database"])
+        cache_config = cast("dict[str, object]", config["cache"])
+        redis_config = cast("dict[str, object]", cache_config["redis"])
+
+        if database_config["host"] != "localhost":
             raise AssertionError(
-                f"Expected {'localhost'}, got {config['database']['host']}"
+                f"Expected {'localhost'}, got {database_config['host']}"
             )
-        assert config["cache"]["redis"]["port"] == 6379
+        assert redis_config["port"] == 6379
 
     def test_type_validation_edge_cases(self) -> None:
         """Test type validation with edge cases."""
@@ -1189,8 +1200,8 @@ class TestConfigEdgeCases:
 
     def test_merge_configs_with_none_values(self) -> None:
         """Test config merging with None values."""
-        base_config = {"key1": "value1", "key2": None}
-        override_config = {"key2": "new_value", "key3": None}
+        base_config: dict[str, object] = {"key1": "value1", "key2": None}
+        override_config: dict[str, object] = {"key2": "new_value", "key3": None}
 
         result = FlextConfig.merge_and_validate_configs(base_config, override_config)
         # This should fail validation due to None values

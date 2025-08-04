@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import cast
+
 from flext_core.handlers import FlextHandlers
 from flext_core.result import FlextResult
 
@@ -79,7 +81,7 @@ class SampleMessageHandler(FlextMessageHandler[SampleMessage, str]):
             return False
         return message.content == self.handled_content
 
-    def handle_message(self, message: object) -> FlextResult[str]:
+    def handle_message(self, message: object) -> FlextResult[object]:
         """Handle the message."""
         if not isinstance(message, SampleMessage):
             return FlextResult.fail("Invalid message type")
@@ -112,11 +114,16 @@ class SampleEventHandler(FlextEventHandler[SampleEvent]):
             return FlextResult.fail("Event processing failed")
         return FlextResult.ok(None)
 
-    def process_event_impl(self, event: SampleEvent) -> FlextResult[None]:
+    def process_event_impl(self, event: object) -> None:
         """Process the event implementation."""
+        if not isinstance(event, SampleEvent):
+            return  # Cannot process non-SampleEvent types
         if event.data.get("should_fail"):
-            return FlextResult.fail("Event processing failed")
-        return FlextResult.ok(None)
+            # In real implementation, this might log an error or raise an exception
+            # For tests, just return since we can't return FlextResult
+            return
+        # Successfully processed event
+        return
 
 
 class SampleRequestHandler(FlextRequestHandler[SampleRequest, SampleResponse]):
@@ -140,7 +147,7 @@ class SampleRequestHandler(FlextRequestHandler[SampleRequest, SampleResponse]):
     def handle_request(
         self,
         request: object,
-    ) -> FlextResult[SampleResponse]:
+    ) -> FlextResult[object]:
         """Handle the request."""
         if not isinstance(request, SampleRequest):
             return FlextResult.fail("Invalid request type")
@@ -289,8 +296,8 @@ class TestFlextMessageHandler:
 
             def handle_message(
                 self,
-                message: SampleMessage,
-            ) -> FlextResult[str]:
+                message: object,
+            ) -> FlextResult[object]:
                 msg = "Handler failed"
                 raise RuntimeError(msg)
 
@@ -414,8 +421,11 @@ class TestFlextRequestHandler:
         if not (result.is_success):
             raise AssertionError(f"Expected True, got {result.is_success}")
         assert result.data is not None
-        if result.data.result != "success":
-            raise AssertionError(f"Expected {'success'}, got {result.data.result}")
+
+        # Cast to expected response type for testing
+        response = cast("SampleResponse", result.data)
+        if response.result != "success":
+            raise AssertionError(f"Expected {'success'}, got {response.result}")
 
     def test_handle_request_failure(self) -> None:
         """Test request handling failure."""

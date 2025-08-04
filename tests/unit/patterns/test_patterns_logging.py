@@ -330,18 +330,18 @@ class TestFlextLoggerUsage:
         assert hasattr(perf_logger, "info")
         perf_logger.info("Performance test message")
 
-    @patch("structlog.get_logger")  # type: ignore[misc]
-    def test_logger_factory_called(self, mock_get_logger: MagicMock) -> None:
+    def test_logger_factory_called(self) -> None:
         """Test that structlog.get_logger is called appropriately."""
-        mock_logger = MagicMock()
-        mock_get_logger.return_value = mock_logger
+        with patch("structlog.get_logger") as mock_get_logger:
+            mock_logger = MagicMock()
+            mock_get_logger.return_value = mock_logger
 
-        # Clear cache to force new logger creation
-        FlextLogger._loggers.clear()
+            # Clear cache to force new logger creation
+            FlextLogger._loggers.clear()
 
-        logger = FlextLogger.get_logger("factory_test")
+            logger = FlextLogger.get_logger("factory_test")
 
-        mock_get_logger.assert_called_once_with("factory_test")
+            mock_get_logger.assert_called_once_with("factory_test")
         if logger != mock_logger:
             raise AssertionError(f"Expected {mock_logger}, got {logger}")
 

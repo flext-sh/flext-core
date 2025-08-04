@@ -73,7 +73,7 @@ class TestBaseConfigOps:
 
     def test_safe_load_from_dict_valid(self) -> None:
         """Test safe_load_from_dict with valid dictionary."""
-        config_dict = {"key1": "value1", "key2": 42}
+        config_dict: TAnyDict = {"key1": "value1", "key2": 42}
 
         result = _BaseConfigOps.safe_load_from_dict(config_dict)
 
@@ -98,7 +98,7 @@ class TestBaseConfigOps:
 
     def test_safe_load_from_dict_with_required_keys_present(self) -> None:
         """Test safe_load_from_dict with required keys present."""
-        config_dict = {"key1": "value1", "key2": 42, "key3": "value3"}
+        config_dict: TAnyDict = {"key1": "value1", "key2": 42, "key3": "value3"}
         required_keys = ["key1", "key2"]
 
         result = _BaseConfigOps.safe_load_from_dict(config_dict, required_keys)

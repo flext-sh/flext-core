@@ -1063,14 +1063,21 @@ def check_container_health(container: FlextContainer) -> FlextResult[TAnyObject]
 
     # Check database connection
     try:
-        db_connection = cast("DatabaseConnection", container.get(DatabaseConnection))
-        connect_result = db_connection.connect()
-        health_data["services"]["database"] = {
-            "status": "healthy" if connect_result.is_success else "unhealthy",
-            "error": connect_result.error if connect_result.is_failure else None,
-        }
-        if connect_result.is_success:
-            db_connection.close()
+        db_result = container.get("DatabaseConnection")
+        if db_result.is_success:
+            db_connection = cast("DatabaseConnection", db_result.data)
+            connect_result = db_connection.connect()
+            health_data["services"]["database"] = {
+                "status": "healthy" if connect_result.is_success else "unhealthy",
+                "error": connect_result.error if connect_result.is_failure else None,
+            }
+            if connect_result.is_success:
+                db_connection.close()
+        else:
+            health_data["services"]["database"] = {
+                "status": "unavailable",
+                "error": f"Service not found: {db_result.error}",
+            }
     except (RuntimeError, ValueError, TypeError) as e:
         health_data["services"]["database"] = {
             "status": "error",
@@ -1172,6 +1179,33 @@ class ContainerDemonstrator:
         user_registration_strategy = UserRegistrationStrategy(container, context_name)
         return user_registration_strategy.register_user(user_data)
 
+    def run_user_registration_test(self) -> FlextResult[None]:
+        """Run user registration test using command pattern."""
+        command = UserRegistrationTestCommand(
+            self,
+            self.test_container,
+            "test",
+            DemonstrationSection(2, "User Registration with Test Container"),
+        )
+        return command.execute()
+
+    def run_health_check_demo(self) -> FlextResult[None]:
+        """Run health check demo using command pattern."""
+        command = HealthCheckDemoCommand(
+            self,
+            self.test_container,
+            DemonstrationSection(3, "Health Check Demo"),
+        )
+        return command.execute()
+
+    def run_production_container_demo(self) -> FlextResult[None]:
+        """Run production container demo using command pattern."""
+        command = ProductionContainerDemoCommand(
+            self,
+            DemonstrationSection(4, "Production Container Demo"),
+        )
+        return command.execute()
+
 
 class UserRegistrationStrategy:
     """Strategy for user registration operations - SOLID SRP."""
@@ -1220,16 +1254,6 @@ class UserRegistrationStrategy:
             f"{self._context_name.title()} registration failed: "
             f"{registration_result.error}"
         )
-
-    def run_user_registration_test(self) -> FlextResult[None]:
-        """Run user registration test using command pattern."""
-        command = UserRegistrationTestCommand(
-            self,
-            self.test_container,
-            "test",
-            DemonstrationSection(2, "User Registration with Test Container"),
-        )
-        return command.execute()
 
 
 class UserRegistrationTestCommand(DemonstrationCommand):

@@ -714,11 +714,31 @@ def create_database_config(
     host: str = "localhost",
     port: int = 5432,
     username: str = "postgres",
-    password: str = "flext_default_password",  # noqa: S107
+    password: str | None = None,
     database: str = "flext",
     **kwargs: object,
 ) -> FlextDatabaseConfig:
-    """Factory function to create database configuration."""
+    """Factory function to create database configuration.
+
+    Args:
+        host: Database host address
+        port: Database port number
+        username: Database username
+        password: Database password (required)
+        database: Database name
+        **kwargs: Additional configuration parameters
+
+    Returns:
+        FlextDatabaseConfig: Configured database configuration
+
+    Raises:
+        ValueError: If password is not provided
+
+    """
+    if password is None:
+        msg = "Database password is required"
+        raise ValueError(msg)
+
     return FlextDatabaseConfig(
         host=host,
         port=port,
@@ -749,11 +769,30 @@ def create_redis_config(
 def create_oracle_config(
     host: str = "localhost",
     username: str = "oracle",
-    password: str = "oracle_default_password",  # noqa: S107
+    password: str | None = None,
     service_name: str | None = None,
     **kwargs: object,
 ) -> FlextOracleConfig:
-    """Factory function to create Oracle configuration."""
+    """Factory function to create Oracle configuration.
+
+    Args:
+        host: Oracle database host address
+        username: Oracle database username
+        password: Oracle database password (required)
+        service_name: Oracle service name (optional)
+        **kwargs: Additional configuration parameters
+
+    Returns:
+        FlextOracleConfig: Configured Oracle configuration
+
+    Raises:
+        ValueError: If password is not provided
+
+    """
+    if password is None:
+        msg = "Oracle password is required"
+        raise ValueError(msg)
+
     # Create config data with defaults
     config_data = {
         "host": host,

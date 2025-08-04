@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import math
 import time
+from decimal import Decimal
 
 # Import shared domain models
 from shared_domain import (
@@ -172,6 +173,10 @@ def demonstrate_shared_domain_usage() -> None:
         return
 
     shared_user = user_result.data
+    if shared_user is None:
+        DemonstrationSectionHelper.log_error("User data is None")
+        return
+
     enhanced_user = UtilityDemoUser(
         id=shared_user.id,
         name=shared_user.name,
@@ -200,7 +205,7 @@ def demonstrate_business_logic() -> None:
     # Create a product for discount calculation
     product_result = SharedDomainFactory.create_product(
         name="Sample Product",
-        price_amount=100.00,
+        price_amount=Decimal("100.00"),
         description="Test product for discount calculation",
     )
 
@@ -211,6 +216,10 @@ def demonstrate_business_logic() -> None:
         return
 
     product = product_result.data
+    if product is None:
+        DemonstrationSectionHelper.log_error("Product data is None")
+        return
+
     print(
         f"Product: {product.name} - "
         f"{FormattingHelper.format_currency(float(product.price.amount))}"
@@ -220,10 +229,11 @@ def demonstrate_business_logic() -> None:
     discount_result = calculate_discount_price(product, 20.0)
     if discount_result.is_success:
         final_price = discount_result.data
-        print(
-            f"20% discount price: "
-            f"{FormattingHelper.format_currency(float(final_price))}"
-        )
+        if final_price is not None:
+            print(
+                f"20% discount price: "
+                f"{FormattingHelper.format_currency(float(final_price))}"
+            )
     else:
         DemonstrationSectionHelper.log_error(
             f"Discount calculation failed: {discount_result.error}"
