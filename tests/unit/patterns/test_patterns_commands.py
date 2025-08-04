@@ -40,7 +40,7 @@ class CreateUserCommand(FlextCommand):
         **kwargs: object,
     ) -> None:
         """Initialize create user command with user details."""
-        # Only pass command_id if it's provided, let default factory work otherwise
+        # Initialize base command with Pydantic data
         if command_id is not None:
             super().__init__(
                 command_id=command_id,
@@ -64,7 +64,7 @@ class CreateUserCommand(FlextCommand):
             "email": self.email,
         }
 
-    def validate(self) -> FlextResult[None]:
+    def validate_command(self) -> FlextResult[None]:
         """Validate command data."""
         if not self.username:
             return FlextResult.fail("Username is required")
@@ -73,10 +73,6 @@ class CreateUserCommand(FlextCommand):
         if "@" not in self.email:
             return FlextResult.fail("Invalid email format")
         return FlextResult.ok(None)
-
-    def validate_command(self) -> FlextResult[None]:
-        """Validate command data (alias for validate)."""
-        return self.validate()
 
 
 class UpdateUserCommand(FlextCommand):
@@ -92,7 +88,7 @@ class UpdateUserCommand(FlextCommand):
         command_id: FlextCommandId | None = None,
     ) -> None:
         """Initialize update user command with user ID and updates."""
-        # Only pass command_id if it's provided, let default factory work otherwise
+        # Initialize base command with Pydantic data
         if command_id is not None:
             super().__init__(
                 command_id=command_id,
@@ -114,17 +110,13 @@ class UpdateUserCommand(FlextCommand):
             "updates": self.updates,
         }
 
-    def validate(self) -> FlextResult[None]:
+    def validate_command(self) -> FlextResult[None]:
         """Validate command data."""
         if not self.user_id:
             return FlextResult.fail("User ID is required")
         if not self.updates:
             return FlextResult.fail("Updates are required")
         return FlextResult.ok(None)
-
-    def validate_command(self) -> FlextResult[None]:
-        """Validate command data (alias for validate)."""
-        return self.validate()
 
 
 class FailingCommand(FlextCommand):
@@ -138,13 +130,9 @@ class FailingCommand(FlextCommand):
         """Get command payload."""
         return {}
 
-    def validate(self) -> FlextResult[None]:
+    def validate_command(self) -> FlextResult[None]:
         """Fail validation intentionally."""
         return FlextResult.fail("This command always fails")
-
-    def validate_command(self) -> FlextResult[None]:
-        """Fail validation intentionally (alias for validate)."""
-        return self.validate()
 
 
 # =============================================================================
@@ -166,13 +154,11 @@ class CreateUserCommandHandler(
         """Get command type this handler processes."""
         return "create_user"
 
-    def can_handle(self, command: FlextCommand) -> bool:
+    def can_handle(self, command: object) -> bool:
         """Check if can handle command."""
         return (
-            isinstance(
-                command,
-                CreateUserCommand,
-            )
+            isinstance(command, CreateUserCommand)
+            and hasattr(command, "command_type")
             and command.command_type == "create_user"
         )
 
@@ -181,7 +167,7 @@ class CreateUserCommandHandler(
         command: CreateUserCommand,
     ) -> FlextResult[dict[str, object]]:
         """Handle the create user command."""
-        user_data = {
+        user_data: dict[str, object] = {
             "id": f"user_{len(self.created_users) + 1}",
             "username": command.username,
             "email": command.email,
@@ -321,8 +307,8 @@ class TestFlextCommand:
         command = CreateUserCommand("valid_user", "valid@example.com")
         result = command.validate_command()
 
-        if not (result.is_success):
-            raise AssertionError(f"Expected True, got {result.is_success}")
+        if not (result.success):
+            raise AssertionError(f"Expected True, got {result.success}")
 
     def test_validate_command_failure_no_username(self) -> None:
         """Test command validation failure for missing username."""
@@ -432,8 +418,8 @@ class TestFlextCommandHandler:
 
         result = handler.handle_command(command)
 
-        if not (result.is_success):
-            raise AssertionError(f"Expected True, got {result.is_success}")
+        if not result.success:
+            raise AssertionError(f"Expected True, got {result.success}")
         assert result.data is not None
         if (result.data or {})["username"] != "john":
             raise AssertionError(
@@ -450,8 +436,8 @@ class TestFlextCommandHandler:
 
         result = handler.process_command(command)
 
-        if not (result.is_success):
-            raise AssertionError(f"Expected True, got {result.is_success}")
+        if not result.success:
+            raise AssertionError(f"Expected True, got {result.success}")
         if len(handler.created_users) != 1:
             raise AssertionError(f"Expected {1}, got {len(handler.created_users)}")
 
@@ -550,8 +536,8 @@ class TestFlextCommandBus:
         command = CreateUserCommand("alice", "alice@example.com")
         result = bus.execute(command)
 
-        if not (result.is_success):
-            raise AssertionError(f"Expected True, got {result.is_success}")
+        if not result.success:
+            raise AssertionError(f"Expected True, got {result.success}")
         assert result.data is not None
         if (result.data or {})["username"] != "alice":
             raise AssertionError(
@@ -639,8 +625,8 @@ class TestFlextCommandResult:
 
         command_result = FlextCommandResult.ok(result_data)
 
-        if not (command_result.is_success):
-            raise AssertionError(f"Expected True, got {command_result.is_success}")
+        if not command_result.success:
+            raise AssertionError(f"Expected True, got {command_result.success}")
         if command_result.data != result_data:
             raise AssertionError(f"Expected {result_data}, got {command_result.data}")
         assert command_result.error is None
@@ -653,8 +639,8 @@ class TestFlextCommandResult:
             error_message,
         )
 
-        if command_result.is_success:
-            raise AssertionError(f"Expected False, got {command_result.is_success}")
+        if command_result.success:
+            raise AssertionError(f"Expected False, got {command_result.success}")
         assert command_result.data is None
         if command_result.error != error_message:
             raise AssertionError(
@@ -667,8 +653,8 @@ class TestFlextCommandResult:
 
         command_result = FlextCommandResult.ok(result_data, metadata={"test": "value"})
 
-        if not (command_result.is_success):
-            raise AssertionError(f"Expected True, got {command_result.is_success}")
+        if not command_result.success:
+            raise AssertionError(f"Expected True, got {command_result.success}")
         if command_result.metadata["test"] != "value":
             raise AssertionError(
                 f"Expected {'value'}, got {command_result.metadata['test']}"
@@ -697,8 +683,8 @@ class TestCommandPatternIntegration:
         create_command = CreateUserCommand("john_doe", "john@example.com")
         create_result = bus.execute(create_command)
 
-        if not (create_result.is_success):
-            raise AssertionError(f"Expected True, got {create_result.is_success}")
+        if not create_result.success:
+            raise AssertionError(f"Expected True, got {create_result.success}")
         assert create_result.data is not None
         user_data = create_result.data
         assert user_data is not None
@@ -711,8 +697,8 @@ class TestCommandPatternIntegration:
         )
         update_result = bus.execute(update_command)
 
-        if not (update_result.is_success):
-            raise AssertionError(f"Expected True, got {update_result.is_success}")
+        if not update_result.success:
+            raise AssertionError(f"Expected True, got {update_result.success}")
         assert update_result.data is not None
         if update_result.data["user_id"] != user_id:
             raise AssertionError(
@@ -744,9 +730,9 @@ class TestCommandPatternIntegration:
             results.append(result)
 
         # Verify all commands executed successfully
-        if not all(result.is_success for result in results):
+        if not all(result.success for result in results):
             raise AssertionError(
-                f"Expected {all(result.is_success for result in results)} in {results}"
+                f"Expected {all(result.success for result in results)} in {results}"
             )
         if len(create_handler.created_users) != EXPECTED_BULK_SIZE:
             raise AssertionError(
@@ -763,8 +749,8 @@ class TestCommandPatternIntegration:
         # Test with valid command
         valid_command = CreateUserCommand("valid_user", "valid@example.com")
         result = bus.execute(valid_command)
-        if not (result.is_success):
-            raise AssertionError(f"Expected True, got {result.is_success}")
+        if not result.success:
+            raise AssertionError(f"Expected True, got {result.success}")
 
         # Test with invalid command (validation should fail)
         invalid_command = CreateUserCommand("", "invalid")

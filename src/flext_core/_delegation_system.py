@@ -52,7 +52,6 @@ from typing import TYPE_CHECKING, ClassVar
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from flext_core.flext_types import TAnyDict
 
 from flext_core._mixins_base import (
     _BaseSerializableMixin,
@@ -83,7 +82,7 @@ class DelegatedProperty:
         if self.has_setter:
             setattr(self.mixin_instance, self.prop_name, value)
         else:
-            error_msg = f"Property '{self.prop_name}' is read-only"
+            error_msg: str = f"Property '{self.prop_name}' is read-only"
             raise FlextOperationError(
                 error_msg,
                 operation="property_setter",
@@ -160,15 +159,17 @@ class FlextMixinDelegator:
                             f"✓ {mixin_class.__name__}.{init_method}()",
                         )
                     except (AttributeError, TypeError, ValueError) as e:
-                        error_msg = f"✗ {mixin_class.__name__}.{init_method}(): {e}"
+                        error_msg: str = (
+                            f"✗ {mixin_class.__name__}.{init_method}(): {e}"
+                        )
                         self._initialization_log.append(error_msg)
 
             # Register globally for reuse
             self._MIXIN_REGISTRY[mixin_class.__name__] = mixin_class
 
         except (AttributeError, TypeError, ValueError) as e:
-            error_msg = f"✗ Failed to register {mixin_class.__name__}: {e}"
-            self._initialization_log.append(error_msg)
+            registration_error_msg = f"✗ Failed to register {mixin_class.__name__}: {e}"
+            self._initialization_log.append(registration_error_msg)
             raise
 
     def _auto_delegate_methods(self) -> None:
@@ -305,13 +306,13 @@ class FlextMixinDelegator:
         """Get specific mixin instance for direct access if needed."""
         return self._mixin_instances.get(mixin_class)
 
-    def get_delegation_info(self) -> TAnyDict:
+    def get_delegation_info(self) -> dict[str, object]:
         """Get comprehensive information about delegation state for debugging."""
         return {
             "registered_mixins": list(self._mixin_instances.keys()),
             "delegated_methods": list(self._delegated_methods.keys()),
             "initialization_log": self._initialization_log.copy(),
-            "validation_result": self._validate_delegation().is_success,
+            "validation_result": self._validate_delegation().success,
         }
 
 
@@ -332,14 +333,79 @@ def create_mixin_delegator(
     return FlextMixinDelegator(host_instance, *mixin_classes)
 
 
-def validate_delegation_system() -> FlextResult[TAnyDict]:  # noqa: C901
+def _validate_delegation_methods(host: object, test_results: list[str]) -> None:
+    """Validate that delegation methods exist on the host."""
+
+    def _raise_delegation_error(message: str) -> None:
+        raise FlextOperationError(message, operation="delegation_validation")  # noqa: TRY301
+
+    # Test validation methods exist
+    if not hasattr(host, "is_valid"):
+        _raise_delegation_error("is_valid property not delegated")
+    if not hasattr(host, "validation_errors"):
+        _raise_delegation_error("validation_errors property not delegated")
+    if not hasattr(host, "has_validation_errors"):
+        _raise_delegation_error("has_validation_errors method not delegated")
+    test_results.append("✓ Validation methods successfully delegated")
+
+    # Test serialization methods exist
+    if not hasattr(host, "to_dict_basic"):
+        _raise_delegation_error("to_dict_basic method not delegated")
+    test_results.append("✓ Serialization methods successfully delegated")
+
+
+def _validate_method_functionality(host: object, test_results: list[str]) -> None:
+    """Validate that delegated methods are functional."""
+
+    def _raise_type_error(message: str) -> None:
+        raise FlextTypeError(message)  # noqa: TRY301
+
+    # Test method functionality
+    validation_result = getattr(host, "is_valid", None)
+    if not isinstance(validation_result, bool):
+        _raise_type_error("is_valid should return bool")
+    test_results.append("✓ Delegated methods are functional")
+
+
+def _validate_delegation_info(
+    host: object, test_results: list[str]
+) -> dict[str, object]:
+    """Validate delegation system self-check and return info."""
+
+    def _raise_delegation_error(message: str) -> None:
+        raise FlextOperationError(message, operation="delegation_validation")  # noqa: TRY301
+
+    # Test delegation info - use type guard for host.delegator
+    if not hasattr(host, "delegator"):
+        _raise_delegation_error("Host must have delegator attribute")
+
+    delegator = host.delegator  # type: ignore[attr-defined]
+    if not hasattr(delegator, "get_delegation_info"):
+        _raise_delegation_error("Delegator must have get_delegation_info method")
+
+    info = delegator.get_delegation_info()
+    if not isinstance(info, dict):
+        _raise_delegation_error("Delegation info must be a dictionary")
+
+    # Type cast for MyPy after isinstance check
+    typed_info: dict[str, object] = info
+
+    validation_result = typed_info.get("validation_result", False)
+    if not validation_result:
+        _raise_delegation_error("Delegation validation should pass")
+    test_results.append("✓ Delegation system self-validation passed")
+    return typed_info
+
+
+def validate_delegation_system() -> FlextResult[
+    dict[str, str | list[str] | dict[str, object]]
+]:
     """Comprehensive validation of the delegation system with test cases.
 
     Returns:
         FlextResult with validation report and test results
 
     """
-    # Import inside to avoid circular imports
 
     # Test case 1: Basic delegation
     class TestHost:
@@ -350,43 +416,16 @@ def validate_delegation_system() -> FlextResult[TAnyDict]:  # noqa: C901
                 _BaseSerializableMixin,
             )
 
-    test_results = []
+    test_results: list[str] = []
 
     try:
         # Create test instance
         host = TestHost()
 
-        def _raise_delegation_error(message: str) -> None:
-            raise FlextOperationError(message, operation="delegation_validation")  # noqa: TRY301
-
-        def _raise_type_error(message: str) -> None:
-            raise FlextTypeError(message)  # noqa: TRY301
-
-        # Test validation methods exist
-        if not hasattr(host, "is_valid"):
-            _raise_delegation_error("is_valid property not delegated")
-        if not hasattr(host, "validation_errors"):
-            _raise_delegation_error("validation_errors property not delegated")
-        if not hasattr(host, "has_validation_errors"):
-            _raise_delegation_error("has_validation_errors method not delegated")
-        test_results.append("✓ Validation methods successfully delegated")
-
-        # Test serialization methods exist
-        if not hasattr(host, "to_dict_basic"):
-            _raise_delegation_error("to_dict_basic method not delegated")
-        test_results.append("✓ Serialization methods successfully delegated")
-
-        # Test method functionality
-        validation_result = getattr(host, "is_valid", None)
-        if not isinstance(validation_result, bool):
-            _raise_type_error("is_valid should return bool")
-        test_results.append("✓ Delegated methods are functional")
-
-        # Test delegation info
-        info = host.delegator.get_delegation_info()
-        if not info["validation_result"]:
-            _raise_delegation_error("Delegation validation should pass")
-        test_results.append("✓ Delegation system self-validation passed")
+        # Run validation steps
+        _validate_delegation_methods(host, test_results)
+        _validate_method_functionality(host, test_results)
+        info = _validate_delegation_info(host, test_results)
 
         return FlextResult.ok(
             {
@@ -405,11 +444,13 @@ def validate_delegation_system() -> FlextResult[TAnyDict]:  # noqa: C901
         FlextTypeError,
     ) as e:
         test_results.append(f"✗ Test failed: {e}")
-        error_msg = f"Delegation system validation failed: {'; '.join(test_results)}"
+        error_msg: str = (
+            f"Delegation system validation failed: {'; '.join(test_results)}"
+        )
         return FlextResult.fail(error_msg)
 
 
-__all__ = [
+__all__: list[str] = [
     "FlextMixinDelegator",
     "create_mixin_delegator",
     "validate_delegation_system",

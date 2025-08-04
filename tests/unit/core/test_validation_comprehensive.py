@@ -50,7 +50,9 @@ class TestBaseValidators:
     def test_is_not_none_with_value(self) -> None:
         """Test is_not_none with non-None values."""
         if not (FlextValidators.is_not_none(value="string")):
-            msg = f"Expected True, got {FlextValidators.is_not_none(value='string')}"
+            msg: str = (
+                f"Expected True, got {FlextValidators.is_not_none(value='string')}"
+            )
             raise AssertionError(msg)
         assert FlextValidators.is_not_none(value=42) is True
         if not (FlextValidators.is_not_none(value=[])):
@@ -815,12 +817,12 @@ class TestFlextValidation:
         """Test validate method with email detection."""
         # Valid email
         result = FlextValidation.validate(value="user@example.com")
-        assert result.is_success
+        assert result.success
 
         # Invalid email format - has @ and . but no . after @
         result = FlextValidation.validate(value="invalid@domain")
         # This passes because no dot in domain part, falls to string validation
-        assert result.is_success
+        assert result.success
 
         # Test a case that actually triggers email validation failure
         result = FlextValidation.validate(value=".@invalid")
@@ -832,7 +834,7 @@ class TestFlextValidation:
     def test_validate_with_string(self) -> None:
         """Test validate method with regular string."""
         result = FlextValidation.validate(value="regular string")
-        assert result.is_success
+        assert result.success
         if result.data != "regular string":
             raise AssertionError(f"Expected {'regular string'}, got {result.data}")
 
@@ -840,13 +842,13 @@ class TestFlextValidation:
         """Test validate method with numeric types."""
         # Integer
         result = FlextValidation.validate(value=42)
-        assert result.is_success
+        assert result.success
         if result.data != 42:
             raise AssertionError(f"Expected {42}, got {result.data}")
 
         # Float
         result = FlextValidation.validate(value=math.pi)
-        assert result.is_success
+        assert result.success
         if result.data != math.pi:
             raise AssertionError(f"Expected {math.pi}, got {result.data}")
 
@@ -854,13 +856,13 @@ class TestFlextValidation:
         """Test validate method with collections."""
         # List
         result = FlextValidation.validate(value=[1, 2, 3])
-        assert result.is_success
+        assert result.success
         if result.data != [1, 2, 3]:
             raise AssertionError(f"Expected {[1, 2, 3]}, got {result.data}")
 
         # Dictionary
         result = FlextValidation.validate(value={"key": "value"})
-        assert result.is_success
+        assert result.success
         if result.data != {"key": "value"}:
             raise AssertionError(f"Expected {{'key': 'value'}}, got {result.data}")
 
@@ -868,11 +870,11 @@ class TestFlextValidation:
         """Test validate method with other types."""
         # None
         result = FlextValidation.validate(value=None)
-        assert result.is_success
+        assert result.success
 
         # Boolean
         result = FlextValidation.validate(value=True)
-        assert result.is_success
+        assert result.success
 
     def test_validate_email_detection_edge_cases(self) -> None:
         """Test validate method email detection edge cases to hit missing lines."""
@@ -977,7 +979,7 @@ class TestFlextValidation:
             validator=FlextValidation.is_email,
         )
 
-        assert result.is_success
+        assert result.success
         if result.data != "test@example.com":
             raise AssertionError(f"Expected {'test@example.com'}, got {result.data}")
 
@@ -1149,14 +1151,14 @@ class TestConvenienceFunctions:
         result = validate_smart("test@example.com")
 
         assert isinstance(result, FlextResult)
-        assert result.is_success
+        assert result.success
 
     def test_validate_smart_with_context(self) -> None:
         """Test validate_smart with context parameters."""
         result = validate_smart("test", context="ignored")
 
         assert isinstance(result, FlextResult)
-        assert result.is_success
+        assert result.success
 
     def test_is_valid_data_true(self) -> None:
         """Test is_valid_data returning True."""
@@ -1363,7 +1365,7 @@ class TestValidationEdgeCases:
             value="hello world",
             validator=complex_validator,
         )
-        assert result.is_success
+        assert result.success
 
         result = FlextValidation.safe_validate(value="hi", validator=complex_validator)
         assert result.is_failure
@@ -1518,7 +1520,7 @@ class TestValidationIntegration:
             value="user@example.com",
             validator=email_validator,
         )
-        assert result.is_success
+        assert result.success
 
         # Invalid email (too long)
         long_email = "a" * 90 + "@example.com"
@@ -1593,7 +1595,7 @@ class TestValidationIntegration:
             "email": "john@example.com",
         }
         result = validate_user_data(valid_data)
-        assert result.is_success
+        assert result.success
         if result.data != valid_data:
             raise AssertionError(f"Expected {valid_data}, got {result.data}")
 

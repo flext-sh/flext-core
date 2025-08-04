@@ -177,7 +177,7 @@ class TestValidationDecorators:
         # Test successful operation
         result = risky_function(2)
         assert isinstance(result, FlextResult)
-        if result.is_success and result.data != 5:
+        if result.success and result.data != 5:
             raise AssertionError(f"Expected {5}, got {result.data}")
 
         # Test operation that raises exception
@@ -211,7 +211,7 @@ class TestValidationDecorators:
         # The decorator is a placeholder, so it just returns the function
         result = test_function(5)
         if result != 10:
-            msg = f"Expected {10}, got {result}"
+            msg: str = f"Expected {10}, got {result}"
             raise AssertionError(msg)
 
         # Verify the decorator returned the function unchanged
@@ -232,11 +232,11 @@ class TestValidatedModel:
         # Test valid creation
         user = UserModel(name="John", age=30, email="john@example.com")
         if user.name != "John":
-            msg = f"Expected {'John'}, got {user.name}"
+            msg: str = f"Expected {'John'}, got {user.name}"
             raise AssertionError(msg)
         assert user.age == 30
         if user.email != "john@example.com":
-            msg = f"Expected {'john@example.com'}, got {user.email}"
+            msg: str = f"Expected {'john@example.com'}, got {user.email}"
             raise AssertionError(msg)
 
         # Test mixin functionality is available
@@ -256,7 +256,7 @@ class TestValidatedModel:
 
         error = exc_info.value
         if "Invalid data" not in str(error):
-            msg = f"Expected {'Invalid data'} in {error!s}"
+            msg: str = f"Expected {'Invalid data'} in {error!s}"
             raise AssertionError(msg)
         assert isinstance(error, FlextValidationError)
 
@@ -269,18 +269,19 @@ class TestValidatedModel:
 
         # Test successful creation
         result = UserModel.create(name="Alice", age=25)
-        assert result.is_success
+        assert result.success
         user = result.data
-        if user.name != "Alice":
-            msg = f"Expected {'Alice'}, got {user.name}"
+        assert user is not None
+        if getattr(user, "name", None) != "Alice":
+            msg: str = f"Expected {'Alice'}, got {getattr(user, 'name', None)}"
             raise AssertionError(msg)
-        assert user.age == 25
+        assert getattr(user, "age", None) == 25
 
         # Test failed creation
         result = UserModel.create(name="Bob", age="invalid")
         assert result.is_failure
         if "Invalid data" not in (result.error or ""):
-            msg = f"Expected 'Invalid data' in {result.error}"
+            msg: str = f"Expected 'Invalid data' in {result.error}"
             raise AssertionError(msg)
 
     def test_validated_model_mixin_integration(self) -> None:
@@ -296,7 +297,7 @@ class TestValidatedModel:
         data_dict = model.to_dict_basic()
         assert isinstance(data_dict, dict)
         if "value" not in data_dict:
-            msg = f"Expected {'value'} in {data_dict}"
+            msg: str = f"Expected {'value'} in {data_dict}"
             raise AssertionError(msg)
         assert "count" in data_dict
 
@@ -327,7 +328,7 @@ class TestValidatedModel:
             email="john@example.com",
         )
         if model.name != "John Doe":
-            msg = f"Expected {'John Doe'}, got {model.name}"
+            msg: str = f"Expected {'John Doe'}, got {model.name}"
             raise AssertionError(msg)
 
         # Test validation failure - short name
@@ -356,16 +357,16 @@ class TestFactoryHelpers:
 
         # Use factory to create instances
         obj1 = factory(42)
-        if obj1.value != 42:
-            msg = f"Expected {42}, got {obj1.value}"
+        if getattr(obj1, "value", None) != 42:
+            msg: str = f"Expected {42}, got {getattr(obj1, 'value', None)}"
             raise AssertionError(msg)
-        assert obj1.name == "default"
+        assert getattr(obj1, "name", None) == "default"
 
         obj2 = factory(100, name="custom")
-        if obj2.value != 100:
-            msg = f"Expected {100}, got {obj2.value}"
+        if getattr(obj2, "value", None) != 100:
+            msg: str = f"Expected {100}, got {getattr(obj2, 'value', None)}"
             raise AssertionError(msg)
-        assert obj2.name == "custom"
+        assert getattr(obj2, "name", None) == "custom"
 
         # Verify instances are of correct type
         assert isinstance(obj1, TestClass)
@@ -385,16 +386,16 @@ class TestFactoryHelpers:
 
         # Use builder to create instances
         obj1 = builder()
-        if obj1.x != 0:
-            msg = f"Expected {0}, got {obj1.x}"
+        if getattr(obj1, "x", None) != 0:
+            msg: str = f"Expected {0}, got {getattr(obj1, 'x', None)}"
             raise AssertionError(msg)
-        assert obj1.y == 0
+        assert getattr(obj1, "y", None) == 0
 
         obj2 = builder(x=10, y=20)
-        if obj2.x != 10:
-            msg = f"Expected {10}, got {obj2.x}"
+        if getattr(obj2, "x", None) != 10:
+            msg: str = f"Expected {10}, got {getattr(obj2, 'x', None)}"
             raise AssertionError(msg)
-        assert obj2.y == 20
+        assert getattr(obj2, "y", None) == 20
 
         # Verify instances are of correct type
         assert isinstance(obj1, BuildableClass)
@@ -412,24 +413,24 @@ class TestFactoryHelpers:
 
         # Test with positional arguments
         obj1 = factory(1, 2, 3)
-        if obj1.args != (1, 2, 3):
-            msg = f"Expected {(1, 2, 3)}, got {obj1.args}"
+        if getattr(obj1, "args", None) != (1, 2, 3):
+            msg: str = f"Expected {(1, 2, 3)}, got {getattr(obj1, 'args', None)}"
             raise AssertionError(msg)
-        assert obj1.kwargs == {}
+        assert getattr(obj1, "kwargs", None) == {}
 
         # Test with keyword arguments
         obj2 = factory(a=1, b=2)
-        if obj2.args != ():
-            msg = f"Expected {()}, got {obj2.args}"
+        if getattr(obj2, "args", None) != ():
+            msg: str = f"Expected {()}, got {getattr(obj2, 'args', None)}"
             raise AssertionError(msg)
-        assert obj2.kwargs == {"a": 1, "b": 2}
+        assert getattr(obj2, "kwargs", None) == {"a": 1, "b": 2}
 
         # Test with mixed arguments
         obj3 = factory(1, 2, c=3, d=4)
-        if obj3.args != (1, 2):
-            msg = f"Expected {(1, 2)}, got {obj3.args}"
+        if getattr(obj3, "args", None) != (1, 2):
+            msg: str = f"Expected {(1, 2)}, got {getattr(obj3, 'args', None)}"
             raise AssertionError(msg)
-        assert obj3.kwargs == {"c": 3, "d": 4}
+        assert getattr(obj3, "kwargs", None) == {"c": 3, "d": 4}
 
 
 class TestValidationUtilities:
@@ -456,7 +457,7 @@ class TestValidationUtilities:
 
         error = exc_info.value
         if "Value cannot be None" not in str(error):
-            msg = f"Expected {'Value cannot be None'} in {error!s}"
+            msg: str = f"Expected {'Value cannot be None'} in {error!s}"
             raise AssertionError(msg)
 
         # Test with custom message
@@ -465,18 +466,18 @@ class TestValidationUtilities:
 
         error = exc_info.value
         if "Custom error message" not in str(error):
-            msg = f"Expected {'Custom error message'} in {error!s}"
+            msg: str = f"Expected {'Custom error message'} in {error!s}"
             raise AssertionError(msg)
 
     def test_require_positive(self) -> None:
         """Test require_positive utility."""
         # Test with valid positive integers
         if require_positive(1) != 1:
-            msg = f"Expected {1}, got {require_positive(1)}"
+            msg: str = f"Expected {1}, got {require_positive(1)}"
             raise AssertionError(msg)
         assert require_positive(100) == 100
         if require_positive(9999) != 9999:
-            msg = f"Expected {9999}, got {require_positive(9999)}"
+            msg: str = f"Expected {9999}, got {require_positive(9999)}"
             raise AssertionError(msg)
 
         # Test with invalid values
@@ -501,22 +502,22 @@ class TestValidationUtilities:
 
         error = exc_info.value
         if "Must be a positive number" not in str(error):
-            msg = f"Expected {'Must be a positive number'} in {error!s}"
+            msg: str = f"Expected {'Must be a positive number'} in {error!s}"
             raise AssertionError(msg)
 
     def test_require_in_range(self) -> None:
         """Test require_in_range utility."""
         # Test with valid values in range
         if require_in_range(5, 1, 10) != 5:
-            msg = f"Expected {5}, got {require_in_range(5, 1, 10)}"
+            msg: str = f"Expected {5}, got {require_in_range(5, 1, 10)}"
             raise AssertionError(msg)
         assert require_in_range(1, 1, 10) == 1  # Boundary
         if require_in_range(10, 1, 10) != 10:  # Boundary:
-            msg = f"Expected {10}, got {require_in_range(10, 1, 10)}"
+            msg: str = f"Expected {10}, got {require_in_range(10, 1, 10)}"
             raise AssertionError(msg)
         assert require_in_range(5.5, 1, 10) == 5.5  # Float
         if require_in_range(0, -5, 5) != 0:
-            msg = f"Expected {0}, got {require_in_range(0, -5, 5)}"
+            msg: str = f"Expected {0}, got {require_in_range(0, -5, 5)}"
             raise AssertionError(msg)
 
         # Test with values outside range
@@ -638,7 +639,7 @@ class TestEdgeCases:
 
         # Create method should work with empty model
         result = MinimalModel.create()
-        assert result.is_success
+        assert result.success
 
     def test_factory_edge_cases(self) -> None:
         """Test factory edge cases."""
@@ -746,8 +747,8 @@ class TestIntegrationAndComposition:
 
         # Valid creation
         obj = factory(42)
-        if obj.value != 42:
-            raise AssertionError(f"Expected {42}, got {obj.value}")
+        if getattr(obj, "value", None) != 42:
+            raise AssertionError(f"Expected {42}, got {getattr(obj, 'value', None)}")
 
         # Invalid creation should raise exception
         with pytest.raises(FlextValidationError):
@@ -835,7 +836,7 @@ class TestPerformanceAndScalability:
         objects = [factory(i) for i in range(100)]
         if len(objects) != 100:
             raise AssertionError(f"Expected {100}, got {len(objects)}")
-        if not all(obj.value == i for i, obj in enumerate(objects)):
+        if not all(getattr(obj, "value", None) == i for i, obj in enumerate(objects)):
             raise AssertionError(
-                f"Expected all objects to have matching values but got {[(i, obj.value) for i, obj in enumerate(objects[:5])]}"
+                f"Expected all objects to have matching values but got {[(i, getattr(obj, 'value', None)) for i, obj in enumerate(objects[:5])]}"
             )

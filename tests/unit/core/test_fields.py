@@ -183,30 +183,35 @@ class TestFlextFieldCore:
         is_valid, error = field.validate_field_value("hi")
         if is_valid:
             raise AssertionError(f"Expected False, got {is_valid}")
+        assert error is not None
         assert "too short" in error
 
         # Too long
         is_valid, error = field.validate_field_value("verylongstring")
         if is_valid:
             raise AssertionError(f"Expected False, got {is_valid}")
+        assert error is not None
         assert "too long" in error
 
         # Pattern mismatch
         is_valid, error = field.validate_field_value("hello123")
         if is_valid:
             raise AssertionError(f"Expected False, got {is_valid}")
+        assert error is not None
         assert "does not match pattern" in error
 
         # Not in allowed values
         is_valid, error = field.validate_field_value("invalid")
         if is_valid:
             raise AssertionError(f"Expected False, got {is_valid}")
+        assert error is not None
         assert "not in allowed list" in error
 
         # Wrong type
         is_valid, error = field.validate_field_value(123)
         if is_valid:
             raise AssertionError(f"Expected False, got {is_valid}")
+        assert error is not None
         assert "Expected string" in error
 
     def test_integer_value_validation(self) -> None:
@@ -229,18 +234,21 @@ class TestFlextFieldCore:
         is_valid, error = field.validate_field_value(5)
         if is_valid:
             raise AssertionError(f"Expected False, got {is_valid}")
+        assert error is not None
         assert "too small" in error
 
         # Too large
         is_valid, error = field.validate_field_value(150)
         if is_valid:
             raise AssertionError(f"Expected False, got {is_valid}")
+        assert error is not None
         assert "too large" in error
 
         # Wrong type
         is_valid, error = field.validate_field_value("50")
         if is_valid:
             raise AssertionError(f"Expected False, got {is_valid}")
+        assert error is not None
         assert "Expected integer" in error
 
     def test_boolean_value_validation(self) -> None:
@@ -266,6 +274,7 @@ class TestFlextFieldCore:
         is_valid, error = field.validate_field_value("true")
         if is_valid:
             raise AssertionError(f"Expected False, got {is_valid}")
+        assert error is not None
         assert "Expected boolean" in error
 
     def test_required_field_validation(self) -> None:
@@ -281,6 +290,7 @@ class TestFlextFieldCore:
         is_valid, error = required_field.validate_field_value(None)
         if is_valid:
             raise AssertionError(f"Expected False, got {is_valid}")
+        assert error is not None
         assert "is required" in error
 
         # Optional field
@@ -321,7 +331,7 @@ class TestFlextFieldCore:
 
         # Valid value
         result = field.validate_value("hello")
-        assert result.is_success
+        assert result.success
         if result.data != "hello":
             raise AssertionError(f"Expected {'hello'}, got {result.data}")
 
@@ -340,7 +350,7 @@ class TestFlextFieldCore:
         )
 
         result = field_with_default.validate_value(None)
-        assert result.is_success
+        assert result.success
         if result.data != "default_value":
             raise AssertionError(f"Expected {'default_value'}, got {result.data}")
 
@@ -528,7 +538,9 @@ class TestFlextFieldCore:
 
         # Use approximate comparison for floating point values
         pi_value = float_field.deserialize_value(math.pi)
-        if not (abs(pi_value - math.pi) < 1e-10):
+        if not isinstance(pi_value, (int, float)) or not (
+            abs(pi_value - math.pi) < 1e-10
+        ):
             raise AssertionError(f"Expected approximately {math.pi}, got {pi_value}")
         # Test float deserialization from string - expect exact value
         if float_field.deserialize_value("3.14") != 3.14:
@@ -796,7 +808,7 @@ class TestFlextFieldRegistry:
         )
 
         result = registry.register_field(field)
-        assert result.is_success
+        assert result.success
 
         if field.field_id not in registry.fields_dict:
             raise AssertionError(f"Expected {field.field_id} in {registry.fields_dict}")
@@ -822,13 +834,13 @@ class TestFlextFieldRegistry:
 
         # Register first field
         result1 = registry.register_field(field1)
-        assert result1.is_success
+        assert result1.success
 
         # Try to register second field with same ID
         result2 = registry.register_field(field2)
         assert result2.is_failure
-        if "already registered" not in result2.error:
-            raise AssertionError(f"Expected {'already registered'} in {result2.error}")
+        assert result2.error is not None
+        assert "already registered" in result2.error
 
     def test_field_registration_name_conflict(self) -> None:
         """Test field registration with name conflict."""
@@ -846,13 +858,13 @@ class TestFlextFieldRegistry:
 
         # Register first field
         result1 = registry.register_field(field1)
-        assert result1.is_success
+        assert result1.success
 
         # Try to register second field with same name
         result2 = registry.register_field(field2)
         assert result2.is_failure
-        if "already registered" not in result2.error:
-            raise AssertionError(f"Expected {'already registered'} in {result2.error}")
+        assert result2.error is not None
+        assert "already registered" in result2.error
 
     def test_get_field_by_id(self) -> None:
         """Test getting field by ID."""
@@ -867,7 +879,7 @@ class TestFlextFieldRegistry:
 
         # Successful lookup
         result = registry.get_field_by_id("lookup_id")
-        assert result.is_success
+        assert result.success
         if result.data != field:
             raise AssertionError(f"Expected {field}, got {result.data}")
 
@@ -890,7 +902,7 @@ class TestFlextFieldRegistry:
 
         # Successful lookup
         result = registry.get_field_by_name("name_lookup_name")
-        assert result.is_success
+        assert result.success
         if result.data != field:
             raise AssertionError(f"Expected {field}, got {result.data}")
 
@@ -1023,7 +1035,7 @@ class TestFlextFieldRegistry:
             "optional_field": 20,
         }
         result = registry.validate_all_fields(valid_data)
-        assert result.is_success
+        assert result.success
 
         # Missing required field
         invalid_data = {"optional_field": 20}
@@ -1235,16 +1247,16 @@ class TestFlextFields:
         )
 
         result = FlextFields.register_field(field)
-        assert result.is_success
+        assert result.success
 
         # Test lookup methods
         lookup_result = FlextFields.get_field_by_id("registry_test")
-        assert lookup_result.is_success
+        assert lookup_result.success
         if lookup_result.data != field:
             raise AssertionError(f"Expected {field}, got {lookup_result.data}")
 
         name_lookup_result = FlextFields.get_field_by_name("registry_test_name")
-        assert name_lookup_result.is_success
+        assert name_lookup_result.success
         if name_lookup_result.data != field:
             raise AssertionError(f"Expected {field}, got {name_lookup_result.data}")
 
@@ -1324,7 +1336,7 @@ class TestConvenienceFunctions:
 
         # Field should be automatically registered
         lookup_result = FlextFields.get_field_by_id("conv_string")
-        assert lookup_result.is_success
+        assert lookup_result.success
         if lookup_result.data != field:
             raise AssertionError(f"Expected {field}, got {lookup_result.data}")
 
@@ -1351,7 +1363,7 @@ class TestConvenienceFunctions:
 
         # Field should be automatically registered
         lookup_result = FlextFields.get_field_by_id("conv_int")
-        assert lookup_result.is_success
+        assert lookup_result.success
 
     def test_flext_create_boolean_field(self) -> None:
         """Test convenience boolean field creation."""
@@ -1374,7 +1386,7 @@ class TestConvenienceFunctions:
 
         # Field should be automatically registered
         lookup_result = FlextFields.get_field_by_id("conv_bool")
-        assert lookup_result.is_success
+        assert lookup_result.success
 
     def test_convenience_function_registration_conflict(self) -> None:
         """Test convenience function behavior with registration conflicts."""
@@ -1530,6 +1542,7 @@ class TestFieldEdgeCases:
         is_valid, error = field.validate_field_value("not_in_list")
         if is_valid:
             raise AssertionError(f"Expected False, got {is_valid}")
+        assert error is not None
         assert "not in allowed list" in error
 
     def test_field_memory_efficiency(self) -> None:
@@ -1638,16 +1651,16 @@ class TestIntegrationScenarios:
 
         # Register field
         result = FlextFields.register_field(field)
-        assert result.is_success
+        assert result.success
 
         # Lookup field by ID
         lookup_result = FlextFields.get_field_by_id("lifecycle_field")
-        assert lookup_result.is_success
+        assert lookup_result.success
         retrieved_field = lookup_result.data
 
         # Validate values through retrieved field
         valid_result = retrieved_field.validate_value("Hello")
-        assert valid_result.is_success
+        assert valid_result.success
         if valid_result.data != "Hello":
             raise AssertionError(f"Expected {'Hello'}, got {valid_result.data}")
 
@@ -1704,7 +1717,7 @@ class TestIntegrationScenarios:
             "multi_bool": True,
         }
         result = registry.validate_all_fields(valid_data)
-        assert result.is_success
+        assert result.success
 
         # Test with missing required field
         incomplete_data = {

@@ -184,7 +184,7 @@ class FlextValueObject(
 
         # Create value objects
         email_result = EmailAddress(email="user@example.com").validate_flext()
-        if email_result.is_success:
+        if email_result.success:
             email = email_result.data
 
         # Value object equality
@@ -307,10 +307,10 @@ class FlextValueObject(
         """
         # Get field definition from registry
         field_result = FlextFields.get_field_by_name(field_name)
-        if field_result.is_success:
+        if field_result.success:
             field_def = field_result.unwrap()
             validation_result = field_def.validate_value(field_value)
-            if validation_result.is_success:
+            if validation_result.success:
                 return FlextResult.ok(None)
             return FlextResult.fail(
                 validation_result.error or "Field validation failed",
@@ -364,7 +364,7 @@ class FlextValueObject(
         fields = self.format_dict(self.model_dump())
         return f"{self.__class__.__name__}({fields})"
 
-    def to_payload(self) -> FlextPayload[TAnyDict]:
+    def to_payload(self) -> FlextPayload[dict[str, str | int | float | bool | None]]:
         """Convert to FlextPayload for transport using orchestrated patterns.
 
         This demonstrates complex functionality using multiple base modules
@@ -386,27 +386,33 @@ class FlextValueObject(
             "type": f"ValueObject.{self.__class__.__name__}",
             "timestamp": FlextGenerators.generate_timestamp(),
             "correlation_id": FlextGenerators.generate_correlation_id(),
-            "validated": domain_validation.is_success,
+            "validated": domain_validation.success,
         }
 
         # 3. Use base formatters for data preparation
         raw_data = self.model_dump()
         formatted_data = self.format_dict(raw_data)
 
-        # 4. Build comprehensive payload data
-        payload_data: TAnyDict = {
+        # 4. Create metadata with only compatible types
+        compatible_metadata: dict[str, str | int | float | bool | None] = {}
+        compatible_metadata.update(
+            {
+                k: v
+                for k, v in payload_metadata.items()
+                if isinstance(v, (str, int, float, bool, type(None)))
+            }
+        )
+
+        # 5. Build comprehensive payload data (only with compatible types)
+        payload_data: dict[str, str | int | float | bool | None] = {
             "value_object_data": formatted_data,
-            "metadata": payload_metadata,
-            "class_info": {
-                "name": self.__class__.__name__,
-                "module": self.__class__.__module__,
-            },
+            "class_info": f"{self.__class__.__module__}.{self.__class__.__name__}",
+            "validation_status": "valid" if domain_validation.success else "invalid",
         }
 
-        # 5. Create payload with validation
+        # 6. Create payload with validation
         payload_result = FlextPayload.create(
             data=payload_data,
-            **payload_metadata,
         )
 
         if payload_result.is_failure:
@@ -414,10 +420,10 @@ class FlextValueObject(
                 "Failed to create payload for value object",
                 error=payload_result.error,
             )
-            # Fallback to minimal payload
-            fallback_data: TAnyDict = {
+            # Fallback to minimal payload (only compatible types)
+            fallback_data: dict[str, str | int | float | bool | None] = {
                 "error": "Payload creation failed",
-                "raw_data": raw_data,
+                "class_name": self.__class__.__name__,
             }
             return FlextPayload.create(data=fallback_data).unwrap()
 
@@ -473,7 +479,7 @@ class FlextValueObjectFactory:
             email="john@example.com"
         )
 
-        if email_result.is_success:
+        if email_result.success:
             email_address = email_result.data
             # Domain validation already executed
             # Defaults applied automatically
@@ -545,5 +551,12 @@ class FlextValueObjectFactory:
         return factory
 
 
+# =============================================================================
+# MODEL REBUILDS - Resolve forward references for Pydantic
+# =============================================================================
+
+# Rebuild models to resolve forward references after import
+FlextValueObject.model_rebuild()
+
 # Export API
-__all__ = ["FlextValueObject", "FlextValueObjectFactory"]
+__all__: list[str] = ["FlextValueObject", "FlextValueObjectFactory"]

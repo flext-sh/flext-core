@@ -61,7 +61,7 @@ def _raise_amount_error() -> None:
 
 def _raise_method_error(payment_method: str) -> None:
     """Raise payment method error."""
-    error_msg = f"Unsupported payment method: {payment_method}"
+    error_msg: str = f"Unsupported payment method: {payment_method}"
     raise ValueError(error_msg)
 
 

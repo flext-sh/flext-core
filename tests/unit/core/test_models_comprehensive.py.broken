@@ -134,7 +134,7 @@ class TestFlextBaseModel:
         model = TestModel()
         result = model.validate_semantic_rules()
 
-        assert result.is_success
+        assert result.success
         assert result.data is None
 
 
@@ -533,7 +533,7 @@ class TestFlextSingerStreamModel:
         )
 
         result = stream.validate_replication_config()
-        assert result.is_success
+        assert result.success
 
 
 @pytest.mark.unit

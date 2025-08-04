@@ -157,7 +157,7 @@ class BaseProcessor[EntryT](ABC):
         """Extract entry information from content with type safety."""
         # Step 1: Extract and validate identifier
         identifier_validation = self._validate_identifier_extraction(content)
-        if not identifier_validation.is_success:
+        if not identifier_validation.success:
             return FlextResult.fail(
                 identifier_validation.error or "Identifier validation failed",
             )
@@ -177,7 +177,7 @@ class BaseProcessor[EntryT](ABC):
             content,
             identifier,
         )
-        if not entry_validation.is_success:
+        if not entry_validation.success:
             return entry_validation
 
         entry = entry_validation.data
@@ -190,7 +190,7 @@ class BaseProcessor[EntryT](ABC):
     def _validate_identifier_extraction(self, content: str) -> FlextResult[str]:
         """Validate identifier extraction step."""
         identifier_result = self._extract_identifier(content)
-        if not identifier_result.is_success:
+        if not identifier_result.success:
             return FlextResult.fail(
                 f"Failed to extract identifier: {identifier_result.error}",
             )
@@ -218,7 +218,7 @@ class BaseProcessor[EntryT](ABC):
             content,
             identifier,
         )
-        if not entry_result.is_success:
+        if not entry_result.success:
             return entry_result
 
         entry = entry_result.data
@@ -245,7 +245,7 @@ class BaseProcessor[EntryT](ABC):
                 continue
 
             result = self.extract_entry_info(line, entry_type, prefix)
-            if result.is_success:
+            if result.success:
                 if result.data is not None:
                     results.append(result.data)
             else:
@@ -401,7 +401,7 @@ class ProcessingPipeline[T, U]:
         current_data = input_data
         for step in self.steps:
             result = step(current_data)
-            if not result.is_success:
+            if not result.success:
                 return result  # type: ignore[return-value]
             current_data = result.data  # type: ignore[assignment]
         return FlextResult.ok(current_data)  # type: ignore[arg-type]

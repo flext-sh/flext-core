@@ -27,14 +27,14 @@ class TestFlextResultProperties:
         """Test error_code property on failure result."""
         result: FlextResult[None] = FlextResult.fail("error", error_code="E001")
         if result.error_code != "E001":
-            msg = f"Expected {'E001'}, got {result.error_code}"
+            msg: str = f"Expected {'E001'}, got {result.error_code}"
             raise AssertionError(msg)
 
     def test_error_data_property_success(self) -> None:
         """Test error_data property on success result."""
         result = FlextResult.ok("data")
         if result.error_data != {}:
-            msg = f"Expected {{}}, got {result.error_data}"
+            msg: str = f"Expected {{}}, got {result.error_data}"
             raise AssertionError(msg)
 
     def test_error_data_property_failure(self) -> None:
@@ -42,14 +42,14 @@ class TestFlextResultProperties:
         error_data = {"field": "value", "code": 123}
         result: FlextResult[None] = FlextResult.fail("error", error_data=error_data)
         if result.error_data != error_data:
-            msg = f"Expected {error_data}, got {result.error_data}"
+            msg: str = f"Expected {error_data}, got {result.error_data}"
             raise AssertionError(msg)
 
     def test_error_data_property_failure_none(self) -> None:
         """Test error_data property when None passed."""
         result: FlextResult[None] = FlextResult.fail("error", error_data=None)
         if result.error_data != {}:
-            msg = f"Expected {{}}, got {result.error_data}"
+            msg: str = f"Expected {{}}, got {result.error_data}"
             raise AssertionError(msg)
 
 
@@ -61,14 +61,14 @@ class TestFlextResultFactoryMethods:
         """Test fail method with empty error string."""
         result: FlextResult[None] = FlextResult.fail("")
         if result.error != "Unknown error occurred":
-            msg = f"Expected {'Unknown error occurred'}, got {result.error}"
+            msg: str = f"Expected {'Unknown error occurred'}, got {result.error}"
             raise AssertionError(msg)
 
     def test_fail_with_whitespace_error(self) -> None:
         """Test fail method with whitespace-only error."""
         result: FlextResult[None] = FlextResult.fail("   ")
         if result.error != "Unknown error occurred":
-            msg = f"Expected {'Unknown error occurred'}, got {result.error}"
+            msg: str = f"Expected {'Unknown error occurred'}, got {result.error}"
             raise AssertionError(msg)
 
     def test_fail_with_all_parameters(self) -> None:
@@ -82,12 +82,12 @@ class TestFlextResultFactoryMethods:
 
         assert result.is_failure
         if result.error != "Test error":
-            msg = f"Expected {'Test error'}, got {result.error}"
+            msg: str = f"Expected {'Test error'}, got {result.error}"
             raise AssertionError(msg)
         assert result.error_code == "E001"
         if result.error_data != error_data:
-            msg = f"Expected {error_data}, got {result.error_data}"
-            raise AssertionError(msg)
+            error_data_msg: str = f"Expected {error_data}, got {result.error_data}"
+            raise AssertionError(error_data_msg)
 
 
 @pytest.mark.unit
@@ -109,11 +109,11 @@ class TestFlextResultUnwrap:
         exception = exc_info.value
         # FlextOperationError includes error code in string representation
         if "Test error" not in str(exception):
-            msg = f"Expected {'Test error'} in {exception!s}"
+            msg: str = f"Expected {'Test error'} in {exception!s}"
             raise AssertionError(msg)
         if exception.error_code != "E001":
-            msg = f"Expected {'E001'}, got {exception.error_code}"
-            raise AssertionError(msg)
+            error_code_msg: str = f"Expected {'E001'}, got {exception.error_code}"
+            raise AssertionError(error_code_msg)
 
     def test_unwrap_failure_raises_with_error_data(self) -> None:
         """Test unwrap failure raises FlextOperationError with error data."""
@@ -127,7 +127,7 @@ class TestFlextResultUnwrap:
 
         exception = exc_info.value
         if exception.context != error_data:
-            msg = f"Expected {error_data}, got {exception.context}"
+            msg: str = f"Expected {error_data}, got {exception.context}"
             raise AssertionError(msg)
 
     def test_unwrap_failure_with_none_error(self) -> None:
@@ -137,7 +137,7 @@ class TestFlextResultUnwrap:
 
         # When error is None, the result is actually successful, so unwrap should work
         # This test should expect success, not failure
-        assert result.is_success
+        assert result.success
         assert result.unwrap() is None  # Should return data (None) instead of raising
 
 
@@ -156,11 +156,11 @@ class TestFlextResultMapExceptions:
         assert mapped.is_failure
         error_msg = mapped.error or ""
         if "Transformation failed" not in error_msg:
-            msg = f"Expected {'Transformation failed'} in {mapped.error}"
+            msg: str = f"Expected {'Transformation failed'} in {mapped.error}"
             raise AssertionError(msg)
         if mapped.error_code != "MAP_ERROR":
-            msg = f"Expected {'MAP_ERROR'}, got {mapped.error_code}"
-            raise AssertionError(msg)
+            map_error_msg: str = f"Expected {'MAP_ERROR'}, got {mapped.error_code}"
+            raise AssertionError(map_error_msg)
         assert mapped.error_data["exception_type"] == "ValueError"
 
     def test_map_value_error_exception(self) -> None:
@@ -174,7 +174,7 @@ class TestFlextResultMapExceptions:
         assert mapped.is_failure
         error_msg = mapped.error or ""
         if "Transformation failed" not in error_msg:
-            msg = f"Expected {'Transformation failed'} in {mapped.error}"
+            msg: str = f"Expected {'Transformation failed'} in {mapped.error}"
             raise AssertionError(msg)
         if mapped.error is not None:
             assert "invalid literal" in mapped.error
@@ -191,7 +191,7 @@ class TestFlextResultMapExceptions:
         assert mapped.is_failure
         error_msg = mapped.error or ""
         if "Transformation failed" not in error_msg:
-            msg = f"Expected {'Transformation failed'} in {mapped.error}"
+            msg: str = f"Expected {'Transformation failed'} in {mapped.error}"
             raise AssertionError(msg)
         if mapped.error is not None:
             assert "Custom runtime error" in mapped.error
@@ -207,11 +207,13 @@ class TestFlextResultMapExceptions:
         mapped = result.map(failing_func)
         assert mapped.is_failure
         if mapped.error is None or "Transformation failed" not in mapped.error:
-            msg = f"Expected {'Transformation failed'} in {mapped.error}"
+            msg: str = f"Expected {'Transformation failed'} in {mapped.error}"
             raise AssertionError(msg)
         if mapped.error_code != "MAP_ERROR":
-            msg = f"Expected {'MAP_ERROR'}, got {mapped.error_code}"
-            raise AssertionError(msg)
+            unexpected_error_msg: str = (
+                f"Expected {'MAP_ERROR'}, got {mapped.error_code}"
+            )
+            raise AssertionError(unexpected_error_msg)
 
     def test_map_with_none_data(self) -> None:
         """Test map method with None data (valid for success)."""
@@ -221,9 +223,9 @@ class TestFlextResultMapExceptions:
             return f"processed_{x}"
 
         mapped = result.map(func)
-        assert mapped.is_success
+        assert mapped.success
         if mapped.data != "processed_None":
-            msg = f"Expected {'processed_None'}, got {mapped.data}"
+            msg: str = f"Expected {'processed_None'}, got {mapped.data}"
             raise AssertionError(msg)
 
 
@@ -244,11 +246,11 @@ class TestFlextResultFlatMapExceptions:
         assert mapped.is_failure
         error_msg = mapped.error or ""
         if "Chained operation failed" not in error_msg:
-            msg = f"Expected {'Chained operation failed'} in {mapped.error}"
+            msg: str = f"Expected {'Chained operation failed'} in {mapped.error}"
             raise AssertionError(msg)
         if mapped.error_code != "BIND_ERROR":
-            msg = f"Expected {'BIND_ERROR'}, got {mapped.error_code}"
-            raise AssertionError(msg)
+            bind_error_msg: str = f"Expected {'BIND_ERROR'}, got {mapped.error_code}"
+            raise AssertionError(bind_error_msg)
 
     def test_flat_map_index_error_exception(self) -> None:
         """Test flat_map method with IndexError exception."""
@@ -261,7 +263,7 @@ class TestFlextResultFlatMapExceptions:
         assert mapped.is_failure
         error_msg = mapped.error or ""
         if "Chained operation failed" not in error_msg:
-            msg = f"Expected {'Chained operation failed'} in {mapped.error}"
+            msg: str = f"Expected {'Chained operation failed'} in {mapped.error}"
             raise AssertionError(msg)
 
     def test_flat_map_key_error_exception(self) -> None:
@@ -275,7 +277,7 @@ class TestFlextResultFlatMapExceptions:
         assert mapped.is_failure
         error_msg = mapped.error or ""
         if "Chained operation failed" not in error_msg:
-            msg = f"Expected {'Chained operation failed'} in {mapped.error}"
+            msg: str = f"Expected {'Chained operation failed'} in {mapped.error}"
             raise AssertionError(msg)
 
     def test_flat_map_unexpected_exception(self) -> None:
@@ -290,11 +292,11 @@ class TestFlextResultFlatMapExceptions:
         assert mapped.is_failure
         error_msg = mapped.error or ""
         if "Unexpected chaining error" not in error_msg:
-            msg = f"Expected {'Unexpected chaining error'} in {mapped.error}"
+            msg: str = f"Expected {'Unexpected chaining error'} in {mapped.error}"
             raise AssertionError(msg)
         if mapped.error_code != "CHAIN_ERROR":
-            msg = f"Expected {'CHAIN_ERROR'}, got {mapped.error_code}"
-            raise AssertionError(msg)
+            chain_error_msg: str = f"Expected {'CHAIN_ERROR'}, got {mapped.error_code}"
+            raise AssertionError(chain_error_msg)
 
     def test_flat_map_with_none_data(self) -> None:
         """Test flat_map method with None data (valid for success)."""
@@ -304,9 +306,9 @@ class TestFlextResultFlatMapExceptions:
             return FlextResult.ok(f"processed_{x}")
 
         mapped = result.flat_map(func)
-        assert mapped.is_success
+        assert mapped.success
         if mapped.data != "processed_None":
-            msg = f"Expected {'processed_None'}, got {mapped.data}"
+            msg: str = f"Expected {'processed_None'}, got {mapped.data}"
             raise AssertionError(msg)
 
 
@@ -318,21 +320,21 @@ class TestFlextResultUnwrapOr:
         """Test unwrap_or with None data returns default."""
         result = FlextResult.ok(None)
         if result.unwrap_or("default") != "default":
-            msg = f"Expected {'default'}, got {result.unwrap_or('default')}"
+            msg: str = f"Expected {'default'}, got {result.unwrap_or('default')}"
             raise AssertionError(msg)
 
     def test_unwrap_or_success_with_data(self) -> None:
         """Test unwrap_or with actual data returns data."""
         result = FlextResult.ok("actual")
         if result.unwrap_or("default") != "actual":
-            msg = f"Expected {'actual'}, got {result.unwrap_or('default')}"
+            msg: str = f"Expected {'actual'}, got {result.unwrap_or('default')}"
             raise AssertionError(msg)
 
     def test_unwrap_or_failure_returns_default(self) -> None:
         """Test unwrap_or with failure returns default."""
         result: FlextResult[object] = FlextResult.fail("error")
         if result.unwrap_or("default") != "default":
-            msg = f"Expected {'default'}, got {result.unwrap_or('default')}"
+            msg: str = f"Expected {'default'}, got {result.unwrap_or('default')}"
             raise AssertionError(msg)
 
 
@@ -345,7 +347,7 @@ class TestFlextResultHash:
         result1 = FlextResult.ok("test")
         result2 = FlextResult.ok("test")
         if hash(result1) != hash(result2):
-            msg = f"Expected {hash(result2)}, got {hash(result1)}"
+            msg: str = f"Expected {hash(result2)}, got {hash(result1)}"
             raise AssertionError(msg)
 
     def test_hash_success_with_unhashable_data(self) -> None:
@@ -364,7 +366,7 @@ class TestFlextResultHash:
         result1: FlextResult[object] = FlextResult.fail("error", error_code="E001")
         result2: FlextResult[object] = FlextResult.fail("error", error_code="E001")
         if hash(result1) != hash(result2):
-            msg = f"Expected {hash(result2)}, got {hash(result1)}"
+            msg: str = f"Expected {hash(result2)}, got {hash(result1)}"
             raise AssertionError(msg)
 
     def test_hash_different_results(self) -> None:
@@ -386,9 +388,9 @@ class TestFlextResultRailwayMethods:
             return FlextResult.ok(x * 2)
 
         chained = result.then(double)
-        assert chained.is_success
+        assert chained.success
         if chained.data != 10:
-            msg = f"Expected {10}, got {chained.data}"
+            msg: str = f"Expected {10}, got {chained.data}"
             raise AssertionError(msg)
 
     def test_then_failure(self) -> None:
@@ -401,7 +403,7 @@ class TestFlextResultRailwayMethods:
         chained = result.then(double)
         assert chained.is_failure
         if chained.error != "initial error":
-            msg = f"Expected {'initial error'}, got {chained.error}"
+            msg: str = f"Expected {'initial error'}, got {chained.error}"
             raise AssertionError(msg)
 
     def test_bind_success(self) -> None:
@@ -412,9 +414,9 @@ class TestFlextResultRailwayMethods:
             return FlextResult.ok(x * 2)
 
         bound = result.bind(double)
-        assert bound.is_success
+        assert bound.success
         if bound.data != 10:
-            msg = f"Expected {10}, got {bound.data}"
+            msg: str = f"Expected {10}, got {bound.data}"
             raise AssertionError(msg)
 
     def test_or_else_success(self) -> None:
@@ -424,7 +426,7 @@ class TestFlextResultRailwayMethods:
 
         chosen = result.or_else(alternative)
         if chosen.data != "success":
-            msg = f"Expected {'success'}, got {chosen.data}"
+            msg: str = f"Expected {'success'}, got {chosen.data}"
             raise AssertionError(msg)
 
     def test_or_else_failure(self) -> None:
@@ -434,7 +436,7 @@ class TestFlextResultRailwayMethods:
 
         chosen = result.or_else(alternative)
         if chosen.data != "alternative":
-            msg = f"Expected {'alternative'}, got {chosen.data}"
+            msg: str = f"Expected {'alternative'}, got {chosen.data}"
             raise AssertionError(msg)
 
     def test_or_else_get_success(self) -> None:
@@ -446,7 +448,7 @@ class TestFlextResultRailwayMethods:
 
         chosen = result.or_else_get(get_alternative)
         if chosen.data != "success":
-            msg = f"Expected {'success'}, got {chosen.data}"
+            msg: str = f"Expected {'success'}, got {chosen.data}"
             raise AssertionError(msg)
 
     def test_or_else_get_failure(self) -> None:
@@ -458,7 +460,7 @@ class TestFlextResultRailwayMethods:
 
         chosen = result.or_else_get(get_alternative)
         if chosen.data != "alternative":
-            msg = f"Expected {'alternative'}, got {chosen.data}"
+            msg: str = f"Expected {'alternative'}, got {chosen.data}"
             raise AssertionError(msg)
 
     def test_or_else_get_with_exception(self) -> None:
@@ -473,7 +475,7 @@ class TestFlextResultRailwayMethods:
         assert chosen.is_failure
         error_msg = chosen.error or ""
         if "Function failed" not in error_msg:
-            msg = f"Expected {'Function failed'} in {chosen.error}"
+            msg: str = f"Expected {'Function failed'} in {chosen.error}"
             raise AssertionError(msg)
 
     def test_recover_success(self) -> None:
@@ -485,7 +487,7 @@ class TestFlextResultRailwayMethods:
 
         recovered = result.recover(recovery)
         if recovered.data != "success":
-            msg = f"Expected {'success'}, got {recovered.data}"
+            msg: str = f"Expected {'success'}, got {recovered.data}"
             raise AssertionError(msg)
 
     def test_recover_failure(self) -> None:
@@ -496,9 +498,9 @@ class TestFlextResultRailwayMethods:
             return f"recovered_from_{error}"
 
         recovered = result.recover(recovery)
-        assert recovered.is_success
+        assert recovered.success
         if recovered.data != "recovered_from_error":
-            msg = f"Expected {'recovered_from_error'}, got {recovered.data}"
+            msg: str = f"Expected {'recovered_from_error'}, got {recovered.data}"
             raise AssertionError(msg)
 
     def test_recover_with_none_error(self) -> None:
@@ -511,7 +513,7 @@ class TestFlextResultRailwayMethods:
             return "recovered"
 
         recovered = result.recover(recovery)
-        assert recovered.is_success  # Result is successful, so recover returns self
+        assert recovered.success  # Result is successful, so recover returns self
         assert recovered is result  # Should return the same instance
 
     def test_recover_with_exception(self) -> None:
@@ -526,7 +528,7 @@ class TestFlextResultRailwayMethods:
         assert recovered.is_failure
         error_msg = recovered.error or ""
         if "Recovery failed" not in error_msg:
-            msg = f"Expected {'Recovery failed'} in {recovered.error}"
+            msg: str = f"Expected {'Recovery failed'} in {recovered.error}"
             raise AssertionError(msg)
 
     def test_recover_with_success(self) -> None:
@@ -538,7 +540,7 @@ class TestFlextResultRailwayMethods:
 
         recovered = result.recover_with(recovery)
         if recovered.data != "success":
-            msg = f"Expected {'success'}, got {recovered.data}"
+            msg: str = f"Expected {'success'}, got {recovered.data}"
             raise AssertionError(msg)
 
     def test_recover_with_failure(self) -> None:
@@ -549,9 +551,9 @@ class TestFlextResultRailwayMethods:
             return FlextResult.ok(f"recovered_from_{error}")
 
         recovered = result.recover_with(recovery)
-        assert recovered.is_success
+        assert recovered.success
         if recovered.data != "recovered_from_error":
-            msg = f"Expected {'recovered_from_error'}, got {recovered.data}"
+            msg: str = f"Expected {'recovered_from_error'}, got {recovered.data}"
             raise AssertionError(msg)
 
     def test_recover_with_none_error_add(self) -> None:
@@ -564,8 +566,8 @@ class TestFlextResultRailwayMethods:
 
         recovered = result.recover_with(recovery)
         # When error is None, result should be treated as success, so return self
-        if not (recovered.is_success):
-            msg = f"Expected True, got {recovered.is_success}"
+        if not recovered.success:
+            msg: str = f"Expected True, got {recovered.success}"
             raise AssertionError(msg)
 
     def test_recover_with_exception_add(self) -> None:
@@ -580,7 +582,7 @@ class TestFlextResultRailwayMethods:
         assert recovered.is_failure
         error_msg = recovered.error or ""
         if "Recovery failed" not in error_msg:
-            msg = f"Expected {'Recovery failed'} in {recovered.error}"
+            msg: str = f"Expected {'Recovery failed'} in {recovered.error}"
             raise AssertionError(msg)
 
 
@@ -599,7 +601,7 @@ class TestFlextResultSideEffects:
         returned = result.tap(side_effect)
         assert returned is result  # Should return self
         if side_effect_called != ["test"]:
-            msg = f"Expected {['test']}, got {side_effect_called}"
+            msg: str = f"Expected {['test']}, got {side_effect_called}"
             raise AssertionError(msg)
 
     def test_tap_success_with_none_data(self) -> None:
@@ -615,7 +617,7 @@ class TestFlextResultSideEffects:
         if (
             side_effect_called != [] and side_effect_called is not None
         ):  # Should not call with None data:
-            msg = f"Expected {[]}, got {side_effect_called}"
+            msg: str = f"Expected {[]}, got {side_effect_called}"
             raise AssertionError(msg)
 
     def test_tap_failure(self) -> None:
@@ -631,7 +633,7 @@ class TestFlextResultSideEffects:
         if (
             side_effect_called != [] and side_effect_called is not None
         ):  # Should not call on failure:
-            msg = f"Expected {[]}, got {side_effect_called}"
+            msg: str = f"Expected {[]}, got {side_effect_called}"
             raise AssertionError(msg)
 
     def test_tap_with_exception(self) -> None:
@@ -645,7 +647,7 @@ class TestFlextResultSideEffects:
         # Should suppress exception and return original result
         returned = result.tap(failing_side_effect)
         assert returned is result
-        assert returned.is_success
+        assert returned.success
 
     def test_tap_error_success(self) -> None:
         """Test tap_error method with success result."""
@@ -660,7 +662,7 @@ class TestFlextResultSideEffects:
         if (
             side_effect_called != [] and side_effect_called is not None
         ):  # Should not call on success:
-            msg = f"Expected {[]}, got {side_effect_called}"
+            msg: str = f"Expected {[]}, got {side_effect_called}"
             raise AssertionError(msg)
 
     def test_tap_error_failure(self) -> None:
@@ -674,7 +676,7 @@ class TestFlextResultSideEffects:
         returned = result.tap_error(error_side_effect)
         assert returned is result
         if side_effect_called != ["test_error"]:
-            msg = f"Expected {['test_error']}, got {side_effect_called}"
+            msg: str = f"Expected {['test_error']}, got {side_effect_called}"
             raise AssertionError(msg)
 
     def test_tap_error_with_none_error(self) -> None:
@@ -691,7 +693,7 @@ class TestFlextResultSideEffects:
         if (
             side_effect_called != [] and side_effect_called is not None
         ):  # Should not call with None error:
-            msg = f"Expected {[]}, got {side_effect_called}"
+            msg: str = f"Expected {[]}, got {side_effect_called}"
             raise AssertionError(msg)
 
     def test_tap_error_with_exception(self) -> None:
@@ -720,9 +722,9 @@ class TestFlextResultFilter:
             return x > 0
 
         filtered = result.filter(is_positive)
-        assert filtered.is_success
+        assert filtered.success
         if filtered.data != 10:
-            msg = f"Expected {10}, got {filtered.data}"
+            msg: str = f"Expected {10}, got {filtered.data}"
             raise AssertionError(msg)
 
     def test_filter_success_predicate_false(self) -> None:
@@ -735,7 +737,7 @@ class TestFlextResultFilter:
         filtered = result.filter(is_positive, "Number must be positive")
         assert filtered.is_failure
         if filtered.error != "Number must be positive":
-            msg = f"Expected {'Number must be positive'}, got {filtered.error}"
+            msg: str = f"Expected {'Number must be positive'}, got {filtered.error}"
             raise AssertionError(msg)
 
     def test_filter_success_predicate_false_default_message(self) -> None:
@@ -748,7 +750,7 @@ class TestFlextResultFilter:
         filtered = result.filter(is_positive)
         assert filtered.is_failure
         if filtered.error != "Filter predicate failed":
-            msg = f"Expected {'Filter predicate failed'}, got {filtered.error}"
+            msg: str = f"Expected {'Filter predicate failed'}, got {filtered.error}"
             raise AssertionError(msg)
 
     def test_filter_failure(self) -> None:
@@ -761,7 +763,7 @@ class TestFlextResultFilter:
         filtered = result.filter(always_true)
         assert filtered.is_failure
         if filtered.error != "initial error":
-            msg = f"Expected {'initial error'}, got {filtered.error}"
+            msg: str = f"Expected {'initial error'}, got {filtered.error}"
             raise AssertionError(msg)
 
     def test_filter_with_none_data(self) -> None:
@@ -774,7 +776,7 @@ class TestFlextResultFilter:
         filtered = result.filter(is_not_none)
         assert filtered.is_failure
         if filtered.error != "No data to filter":
-            msg = f"Expected {'No data to filter'}, got {filtered.error}"
+            msg: str = f"Expected {'No data to filter'}, got {filtered.error}"
             raise AssertionError(msg)
 
     def test_filter_with_predicate_exception(self) -> None:
@@ -789,7 +791,7 @@ class TestFlextResultFilter:
         assert filtered.is_failure
         error_msg = filtered.error or ""
         if "Predicate failed" not in error_msg:
-            msg = f"Expected {'Predicate failed'} in {filtered.error}"
+            msg: str = f"Expected {'Predicate failed'} in {filtered.error}"
             raise AssertionError(msg)
 
 
@@ -806,9 +808,9 @@ class TestFlextResultZipWith:
             return x + y
 
         zipped = result1.zip_with(result2, add)
-        assert zipped.is_success
+        assert zipped.success
         if zipped.data != 15:
-            msg = f"Expected {15}, got {zipped.data}"
+            msg: str = f"Expected {15}, got {zipped.data}"
             raise AssertionError(msg)
 
     def test_zip_with_first_failure(self) -> None:
@@ -822,7 +824,7 @@ class TestFlextResultZipWith:
         zipped = result1.zip_with(result2, add)
         assert zipped.is_failure
         if zipped.error != "first error":
-            msg = f"Expected {'first error'}, got {zipped.error}"
+            msg: str = f"Expected {'first error'}, got {zipped.error}"
             raise AssertionError(msg)
 
     def test_zip_with_second_failure(self) -> None:
@@ -836,7 +838,7 @@ class TestFlextResultZipWith:
         zipped = result1.zip_with(result2, add)
         assert zipped.is_failure
         if zipped.error != "second error":
-            msg = f"Expected {'second error'}, got {zipped.error}"
+            msg: str = f"Expected {'second error'}, got {zipped.error}"
             raise AssertionError(msg)
 
     def test_zip_with_first_none_data(self) -> None:
@@ -850,7 +852,9 @@ class TestFlextResultZipWith:
         zipped = result1.zip_with(result2, combine)
         assert zipped.is_failure
         if zipped.error != "Missing data for zip operation":
-            msg = f"Expected {'Missing data for zip operation'}, got {zipped.error}"
+            msg: str = (
+                f"Expected {'Missing data for zip operation'}, got {zipped.error}"
+            )
             raise AssertionError(msg)
 
     def test_zip_with_second_none_data(self) -> None:
@@ -864,7 +868,9 @@ class TestFlextResultZipWith:
         zipped = result1.zip_with(result2, combine)
         assert zipped.is_failure
         if zipped.error != "Missing data for zip operation":
-            msg = f"Expected {'Missing data for zip operation'}, got {zipped.error}"
+            msg: str = (
+                f"Expected {'Missing data for zip operation'}, got {zipped.error}"
+            )
             raise AssertionError(msg)
 
     def test_zip_with_function_exception(self) -> None:
@@ -879,7 +885,7 @@ class TestFlextResultZipWith:
         assert zipped.is_failure
         error_msg = zipped.error or ""
         if "division by zero" not in error_msg:
-            msg = f"Expected {'division by zero'} in {zipped.error}"
+            msg: str = f"Expected {'division by zero'} in {zipped.error}"
             raise AssertionError(msg)
 
 
@@ -892,7 +898,7 @@ class TestFlextResultConversion:
         result = FlextResult.ok("data")
         data, error = result.to_either()
         if data != "data":
-            msg = f"Expected {'data'}, got {data}"
+            msg: str = f"Expected {'data'}, got {data}"
             raise AssertionError(msg)
         assert error is None
 
@@ -902,7 +908,7 @@ class TestFlextResultConversion:
         data, error = result.to_either()
         assert data is None
         if error != "error":
-            msg = f"Expected {'error'}, got {error}"
+            msg: str = f"Expected {'error'}, got {error}"
             raise AssertionError(msg)
 
     def test_to_exception_success(self) -> None:
@@ -917,7 +923,7 @@ class TestFlextResultConversion:
         exception = result.to_exception()
         assert isinstance(exception, FlextOperationError)
         if "error message" not in str(exception):
-            msg = f"Expected {'error message'} in {exception!s}"
+            msg: str = f"Expected {'error message'} in {exception!s}"
             raise AssertionError(msg)
 
     def test_to_exception_failure_with_none_error(self) -> None:
@@ -940,9 +946,9 @@ class TestFlextResultStaticMethods:
             return "success"
 
         result = FlextResult.from_exception(successful_func)
-        assert result.is_success
+        assert result.success
         if result.data != "success":
-            msg = f"Expected {'success'}, got {result.data}"
+            msg: str = f"Expected {'success'}, got {result.data}"
             raise AssertionError(msg)
 
     def test_from_exception_failure(self) -> None:
@@ -956,7 +962,7 @@ class TestFlextResultStaticMethods:
         assert result.is_failure
         error_msg = result.error or ""
         if "Function failed" not in error_msg:
-            msg = f"Expected 'Function failed' in {result.error}"
+            msg: str = f"Expected 'Function failed' in {result.error}"
             raise AssertionError(msg)
 
     def test_combine_all_success(self) -> None:
@@ -968,9 +974,9 @@ class TestFlextResultStaticMethods:
         ]
 
         combined = FlextResult.combine(*results)
-        assert combined.is_success
+        assert combined.success
         if combined.data != ["a", "b", "c"]:
-            msg = f"Expected {['a', 'b', 'c']}, got {combined.data}"
+            msg: str = f"Expected {['a', 'b', 'c']}, got {combined.data}"
             raise AssertionError(msg)
 
     def test_combine_with_failure(self) -> None:
@@ -984,7 +990,7 @@ class TestFlextResultStaticMethods:
         combined = FlextResult.combine(*results)
         assert combined.is_failure
         if combined.error != "error":
-            msg = f"Expected {'error'}, got {combined.error}"
+            msg: str = f"Expected {'error'}, got {combined.error}"
             raise AssertionError(msg)
 
     def test_combine_with_none_data(self) -> None:
@@ -996,9 +1002,9 @@ class TestFlextResultStaticMethods:
         ]
 
         combined = FlextResult.combine(*results)
-        assert combined.is_success
+        assert combined.success
         if combined.data != ["a", "c"]:
-            msg = f"Expected {['a', 'c']}, got {combined.data}"
+            msg: str = f"Expected {['a', 'c']}, got {combined.data}"
             raise AssertionError(msg)
 
     def test_all_success_true(self) -> None:
@@ -1010,7 +1016,7 @@ class TestFlextResultStaticMethods:
         ]
 
         if not (FlextResult.all_success(*results)):
-            msg = f"Expected True, got {FlextResult.all_success(*results)}"
+            msg: str = f"Expected True, got {FlextResult.all_success(*results)}"
             raise AssertionError(msg)
 
     def test_all_success_false(self) -> None:
@@ -1022,7 +1028,7 @@ class TestFlextResultStaticMethods:
         ]
 
         if FlextResult.all_success(*results):
-            msg = f"Expected False, got {FlextResult.all_success(*results)}"
+            msg: str = f"Expected False, got {FlextResult.all_success(*results)}"
             raise AssertionError(msg)
 
     def test_any_success_true(self) -> None:
@@ -1034,7 +1040,7 @@ class TestFlextResultStaticMethods:
         ]
 
         if not (FlextResult.any_success(*results)):
-            msg = f"Expected True, got {FlextResult.any_success(*results)}"
+            msg: str = f"Expected True, got {FlextResult.any_success(*results)}"
             raise AssertionError(msg)
 
     def test_any_success_false(self) -> None:
@@ -1046,7 +1052,7 @@ class TestFlextResultStaticMethods:
         ]
 
         if FlextResult.any_success(*results):
-            msg = f"Expected False, got {FlextResult.any_success(*results)}"
+            msg: str = f"Expected False, got {FlextResult.any_success(*results)}"
             raise AssertionError(msg)
 
     def test_first_success_found(self) -> None:
@@ -1058,9 +1064,9 @@ class TestFlextResultStaticMethods:
         ]
 
         first = FlextResult.first_success(*results)
-        assert first.is_success
+        assert first.success
         if first.data != "first_success":
-            msg = f"Expected {'first_success'}, got {first.data}"
+            msg: str = f"Expected {'first_success'}, got {first.data}"
             raise AssertionError(msg)
 
     def test_first_success_not_found(self) -> None:
@@ -1074,7 +1080,7 @@ class TestFlextResultStaticMethods:
         first = FlextResult.first_success(*results)
         assert first.is_failure
         if first.error != "last_error":
-            msg = f"Expected {'last_error'}, got {first.error}"
+            msg: str = f"Expected {'last_error'}, got {first.error}"
             raise AssertionError(msg)
 
     def test_first_success_empty_results(self) -> None:
@@ -1082,7 +1088,7 @@ class TestFlextResultStaticMethods:
         first: FlextResult[object] = FlextResult.first_success()
         assert first.is_failure
         if first.error != "No successful results found":
-            msg = f"Expected {'No successful results found'}, got {first.error}"
+            msg: str = f"Expected {'No successful results found'}, got {first.error}"
             raise AssertionError(msg)
 
     def test_try_all_success(self) -> None:
@@ -1096,9 +1102,9 @@ class TestFlextResultStaticMethods:
             raise ValueError(msg)
 
         result = FlextResult.try_all(func1, func2)
-        assert result.is_success
+        assert result.success
         if result.data != "success":
-            msg = f"Expected {'success'}, got {result.data}"
+            msg: str = f"Expected {'success'}, got {result.data}"
             raise AssertionError(msg)
 
     def test_try_all_second_succeeds(self) -> None:
@@ -1112,9 +1118,9 @@ class TestFlextResultStaticMethods:
             return "second_success"
 
         result = FlextResult.try_all(func1, func2)
-        assert result.is_success
+        assert result.success
         if result.data != "second_success":
-            msg = f"Expected {'second_success'}, got {result.data}"
+            msg: str = f"Expected {'second_success'}, got {result.data}"
             raise AssertionError(msg)
 
     def test_try_all_all_fail(self) -> None:
@@ -1131,7 +1137,7 @@ class TestFlextResultStaticMethods:
         result = FlextResult.try_all(func1, func2)
         assert result.is_failure
         if result.error != "Last error":
-            msg = f"Expected {'Last error'}, got {result.error}"
+            msg: str = f"Expected {'Last error'}, got {result.error}"
             raise AssertionError(msg)
 
     def test_try_all_no_functions(self) -> None:
@@ -1139,7 +1145,7 @@ class TestFlextResultStaticMethods:
         result: FlextResult[object] = FlextResult.try_all()
         assert result.is_failure
         if result.error != "No functions provided":
-            msg = f"Expected {'No functions provided'}, got {result.error}"
+            msg: str = f"Expected {'No functions provided'}, got {result.error}"
             raise AssertionError(msg)
 
 
@@ -1156,9 +1162,9 @@ class TestModuleLevelFunctions:
         ]
 
         chained = chain(*results)
-        assert chained.is_success
+        assert chained.success
         if chained.data != ["a", "b", "c"]:
-            msg = f"Expected {['a', 'b', 'c']}, got {chained.data}"
+            msg: str = f"Expected {['a', 'b', 'c']}, got {chained.data}"
             raise AssertionError(msg)
 
     def test_chain_with_failure(self) -> None:
@@ -1172,7 +1178,7 @@ class TestModuleLevelFunctions:
         chained = chain(*results)
         assert chained.is_failure
         if chained.error != "chain error":
-            msg = f"Expected {'chain error'}, got {chained.error}"
+            msg: str = f"Expected {'chain error'}, got {chained.error}"
             raise AssertionError(msg)
 
     def test_chain_with_none_data(self) -> None:
@@ -1184,9 +1190,9 @@ class TestModuleLevelFunctions:
         ]
 
         chained = chain(*results)
-        assert chained.is_success
+        assert chained.success
         if chained.data != ["a", "c"]:
-            msg = f"Expected {['a', 'c']}, got {chained.data}"
+            msg: str = f"Expected {['a', 'c']}, got {chained.data}"
             raise AssertionError(msg)
 
     def test_compose_alias(self) -> None:
@@ -1197,9 +1203,9 @@ class TestModuleLevelFunctions:
         ]
 
         composed = compose(*results)
-        assert composed.is_success
+        assert composed.success
         if composed.data != ["a", "b"]:
-            msg = f"Expected {['a', 'b']}, got {composed.data}"
+            msg: str = f"Expected {['a', 'b']}, got {composed.data}"
             raise AssertionError(msg)
 
     def test_safe_call_success(self) -> None:
@@ -1209,9 +1215,9 @@ class TestModuleLevelFunctions:
             return "success"
 
         result = safe_call(successful_func)
-        assert result.is_success
+        assert result.success
         if result.data != "success":
-            msg = f"Expected {'success'}, got {result.data}"
+            msg: str = f"Expected {'success'}, got {result.data}"
             raise AssertionError(msg)
 
     def test_safe_call_failure(self) -> None:
@@ -1224,7 +1230,7 @@ class TestModuleLevelFunctions:
         result = safe_call(failing_func)
         assert result.is_failure
         if result.error != "Function failed":
-            msg = f"Expected {'Function failed'}, got {result.error}"
+            msg: str = f"Expected {'Function failed'}, got {result.error}"
             raise AssertionError(msg)
         assert result.error_data["exception_type"] == "ValueError"
 
@@ -1238,7 +1244,7 @@ class TestModuleLevelFunctions:
         result = safe_call(failing_func)
         assert result.is_failure
         if result.error != "Runtime error":
-            msg = f"Expected {'Runtime error'}, got {result.error}"
+            msg: str = f"Expected {'Runtime error'}, got {result.error}"
             raise AssertionError(msg)
 
     def test_safe_call_empty_error_message(self) -> None:
@@ -1251,5 +1257,5 @@ class TestModuleLevelFunctions:
         result = safe_call(failing_func)
         assert result.is_failure
         if result.error != "Operation failed":
-            msg = f"Expected {'Operation failed'}, got {result.error}"
+            msg: str = f"Expected {'Operation failed'}, got {result.error}"
             raise AssertionError(msg)

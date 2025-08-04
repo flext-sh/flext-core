@@ -35,7 +35,7 @@ class TestFlextDomainService:
 
         # Should be able to execute
         result = service.execute()
-        assert result.is_success
+        assert result.success
         assert result.data == "executed", f"Expected {'executed'}, got {result.data}"
 
     def test_abstract_method_coverage(self) -> None:

@@ -52,8 +52,8 @@ def _run_ruff_command(command_args: list[str]) -> subprocess.CompletedProcess[st
     # Validate that all arguments are in our allowlist
     for arg in command_args:
         if arg not in allowed_commands and arg not in allowed_paths:
-            msg = f"Argument '{arg}' not in allowlist"
-            raise ValueError(msg)
+            validation_msg: str = f"Argument '{arg}' not in allowlist"
+            raise ValueError(validation_msg)
 
     # Construct safe command with hardcoded python executable
     safe_command = [sys.executable, "-m", "ruff", *command_args]
@@ -185,7 +185,9 @@ class TestPEP8Compliance:
         # Allow some docstring violations during migration
         # but fail if there are syntax errors or major issues
         if result.returncode != 0 and "syntax error" in result.stderr.lower():
-            msg = f"Docstring syntax errors detected:\n{result.stdout}\n{result.stderr}"
+            msg: str = (
+                f"Docstring syntax errors detected:\n{result.stdout}\n{result.stderr}"
+            )
             raise AssertionError(msg)
 
     def test_complexity_compliance(self) -> None:

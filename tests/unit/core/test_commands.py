@@ -56,7 +56,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
 from zoneinfo import ZoneInfo
 
 import pytest
@@ -186,13 +185,13 @@ class TestFlextCommandsCommand:
         command = SampleCommand(name="test", value=42)
 
         if command.name != "test":
-            msg = f"Expected {'test'}, got {command.name}"
+            msg: str = f"Expected {'test'}, got {command.name}"
             raise AssertionError(msg)
         assert command.value == 42
         assert command.command_id is not None
         # command_type defaults to empty string, then gets set by validator
         if command.command_type not in {"SampleCommand", ""}:
-            msg = f"Expected {'SampleCommand'} in {{SampleCommand, ''}}"
+            msg: str = f"Expected {'SampleCommand'} in {{SampleCommand, ''}}"
             raise AssertionError(msg)
         assert isinstance(command.timestamp, datetime)
         assert command.correlation_id is not None
@@ -212,15 +211,15 @@ class TestFlextCommandsCommand:
         )
 
         if command.command_id != "cmd-123":
-            msg = f"Expected {'cmd-123'}, got {command.command_id}"
+            msg: str = f"Expected {'cmd-123'}, got {command.command_id}"
             raise AssertionError(msg)
         assert command.command_type == "CustomType"
         if command.timestamp != timestamp:
-            msg = f"Expected {timestamp}, got {command.timestamp}"
+            msg: str = f"Expected {timestamp}, got {command.timestamp}"
             raise AssertionError(msg)
         assert command.user_id == "user-456"
         if command.correlation_id != "corr-789":
-            msg = f"Expected {'corr-789'}, got {command.correlation_id}"
+            msg: str = f"Expected {'corr-789'}, got {command.correlation_id}"
             raise AssertionError(msg)
 
     def test_command_type_auto_setting(self) -> None:
@@ -228,37 +227,44 @@ class TestFlextCommandsCommand:
         # Default value is empty string, validator only runs when value is provided
         command = SampleCommand(name="test")
         if command.command_type != "":  # Default value, validator not triggered:
-            msg = f"Expected {''}, got {command.command_type}"
+            msg: str = f"Expected {''}, got {command.command_type}"
             raise AssertionError(msg)
 
         # Test with empty string - validator should set to class name
         command2 = SampleCommand(name="test", command_type="")
         if command2.command_type != "SampleCommand":
-            msg = f"Expected {'SampleCommand'}, got {command2.command_type}"
+            msg: str = f"Expected {'SampleCommand'}, got {command2.command_type}"
             raise AssertionError(msg)
 
         # Test with explicit type
         command3 = SampleCommand(name="test", command_type="ExplicitType")
         if command3.command_type != "ExplicitType":
-            msg = f"Expected {'ExplicitType'}, got {command3.command_type}"
+            msg: str = f"Expected {'ExplicitType'}, got {command3.command_type}"
             raise AssertionError(msg)
 
     def test_command_immutability(self) -> None:
         """Test command immutability (frozen model)."""
         command = SampleCommand(name="test", value=42)
+        original_name = command.name
+        original_value = command.value
+
+        # Attempt to modify the command directly should raise ValidationError
+        with pytest.raises(ValidationError):
+            command.name = "changed"  # type: ignore[misc]
 
         with pytest.raises(ValidationError):
-            command.name = "changed"
+            command.value = 100  # type: ignore[misc]
 
-        with pytest.raises(ValidationError):
-            command.value = 100
+        # Verify values haven't changed
+        assert command.name == original_name
+        assert command.value == original_value
 
     def test_command_validation_success(self) -> None:
         """Test successful command validation."""
         command = SampleCommand(name="valid", value=42)
         result = command.validate_command()
 
-        assert result.is_success
+        assert result.success
 
     def test_command_validation_failure(self) -> None:
         """Test command validation failures."""
@@ -266,16 +272,18 @@ class TestFlextCommandsCommand:
         command1 = SampleCommand(name="", value=42)
         result1 = command1.validate_command()
         assert result1.is_failure
+        assert result1.error is not None
         if "Name cannot be empty" not in result1.error:
-            msg = f"Expected {'Name cannot be empty'} in {result1.error}"
+            msg: str = f"Expected {'Name cannot be empty'} in {result1.error}"
             raise AssertionError(msg)
 
         # Negative value
         command2 = SampleCommand(name="test", value=-1)
         result2 = command2.validate_command()
         assert result2.is_failure
+        assert result2.error is not None
         if "Value cannot be negative" not in result2.error:
-            msg = f"Expected {'Value cannot be negative'} in {result2.error}"
+            msg: str = f"Expected {'Value cannot be negative'} in {result2.error}"
             raise AssertionError(msg)
 
     def test_command_without_custom_validation(self) -> None:
@@ -283,7 +291,7 @@ class TestFlextCommandsCommand:
         command = SampleCommandWithoutValidation(description="test")
         result = command.validate_command()
 
-        assert result.is_success
+        assert result.success
 
     def test_command_to_payload_conversion(self) -> None:
         """Test command to payload conversion."""
@@ -293,15 +301,15 @@ class TestFlextCommandsCommand:
         assert isinstance(payload, FlextPayload)
         assert payload.data is not None
         if payload.data["name"] != "test":
-            msg = f"Expected {'test'}, got {payload.data['name']}"
+            msg: str = f"Expected {'test'}, got {payload.data['name']}"
             raise AssertionError(msg)
         assert payload.data["value"] == 42
         if "timestamp" not in payload.data:
-            msg = f"Expected {'timestamp'} in {payload.data}"
+            msg: str = f"Expected {'timestamp'} in {payload.data}"
             raise AssertionError(msg)
         # Default command_type is empty string, so payload type should be empty too
         if payload.metadata.get("type") != "":
-            msg = f"Expected {''}, got {payload.metadata.get('type')}"
+            msg: str = f"Expected {''}, got {payload.metadata.get('type')}"
             raise AssertionError(msg)
 
     def test_command_from_payload_success(self) -> None:
@@ -318,15 +326,16 @@ class TestFlextCommandsCommand:
         payload = FlextPayload.create(data=payload_data, type="SampleCommand").unwrap()
 
         result = SampleCommand.from_payload(payload)
-        assert result.is_success
+        assert result.success
 
         command = result.data
+        assert command is not None
         if command.name != "test":
-            msg = f"Expected {'test'}, got {command.name}"
+            msg: str = f"Expected {'test'}, got {command.name}"
             raise AssertionError(msg)
         assert command.value == 42
         if command.command_id != "cmd-123":
-            msg = f"Expected {'cmd-123'}, got {command.command_id}"
+            msg: str = f"Expected {'cmd-123'}, got {command.command_id}"
             raise AssertionError(msg)
         assert command.user_id == "user-456"
 
@@ -342,7 +351,7 @@ class TestFlextCommandsCommand:
         result = SampleCommand.from_payload(payload)
         assert result.is_failure
         if "Name cannot be empty" not in (result.error or ""):
-            msg = f"Expected 'Name cannot be empty' in {result.error}"
+            msg: str = f"Expected 'Name cannot be empty' in {result.error}"
             raise AssertionError(msg)
 
     def test_command_from_payload_with_defaults(self) -> None:
@@ -354,11 +363,12 @@ class TestFlextCommandsCommand:
         payload = FlextPayload.create(data=payload_data).unwrap()
 
         result = SampleCommand.from_payload(payload)
-        assert result.is_success
+        assert result.success
 
         command = result.data
+        assert command is not None
         if command.name != "minimal":
-            msg = f"Expected {'minimal'}, got {command.name}"
+            msg: str = f"Expected {'minimal'}, got {command.name}"
             raise AssertionError(msg)
         assert command.value == 10
         assert command.command_id is not None  # Auto-generated
@@ -371,11 +381,11 @@ class TestFlextCommandsCommand:
 
         # Should still succeed but log warning
         result = SampleCommand.from_payload(payload)
-        assert result.is_success
+        assert result.success
 
     def test_command_from_payload_none_data(self) -> None:
         """Test command creation from payload with None data."""
-        payload = FlextPayload(data=None)
+        payload: FlextPayload[dict[str, object]] = FlextPayload(data=None)
 
         # Should raise ValidationError due to missing required 'name' field
         with pytest.raises(ValidationError):
@@ -391,7 +401,7 @@ class TestFlextCommandsCommand:
 
         # Test successful validation
         result = command.validate_command()
-        assert result.is_success
+        assert result.success
 
     def test_command_validation_helpers_failures(self) -> None:
         """Test command validation helper method failures."""
@@ -408,6 +418,7 @@ class TestFlextCommandsCommand:
         )
         result2 = command2.validate_command()
         assert result2.is_failure
+        assert result2.error is not None
         if "Invalid email format" not in result2.error:
             raise AssertionError(f"Expected 'Invalid email format' in {result2.error}")
 
@@ -419,6 +430,7 @@ class TestFlextCommandsCommand:
         )
         result3 = command3.validate_command()
         assert result3.is_failure
+        assert result3.error is not None
         if "password must be at least 8 characters" not in result3.error:
             raise AssertionError(
                 f"Expected 'password must be at least 8 characters' in {result3.error}"
@@ -467,15 +479,15 @@ class TestFlextCommandsCommand:
 
         metadata = command.get_metadata()
         if metadata["command_id"] != "cmd-123":
-            msg = f"Expected {'cmd-123'}, got {metadata['command_id']}"
+            msg: str = f"Expected {'cmd-123'}, got {metadata['command_id']}"
             raise AssertionError(msg)
         assert metadata["command_type"] == "SampleCommand"
         if metadata["command_class"] != "SampleCommand":
-            msg = f"Expected {'SampleCommand'}, got {metadata['command_class']}"
+            msg: str = f"Expected {'SampleCommand'}, got {metadata['command_class']}"
             raise AssertionError(msg)
         assert metadata["timestamp"] == timestamp.isoformat()
         if metadata["user_id"] != "user-456":
-            msg = f"Expected {'user-456'}, got {metadata['user_id']}"
+            msg: str = f"Expected {'user-456'}, got {metadata['user_id']}"
             raise AssertionError(msg)
         assert metadata["correlation_id"] == "corr-789"
 
@@ -497,22 +509,22 @@ class TestFlextCommandsResult:
         """Test successful result creation."""
         result = FlextCommands.Result.ok("success_data", {"key": "value"})
 
-        assert result.is_success
+        assert result.success
         if result.data != "success_data":
-            msg = f"Expected {'success_data'}, got {result.data}"
+            msg: str = f"Expected {'success_data'}, got {result.data}"
             raise AssertionError(msg)
         assert result.metadata == {"key": "value"}
 
     def test_result_failure_creation(self) -> None:
         """Test failure result creation."""
-        result = FlextCommands.Result.fail(
+        result: FlextCommands.Result[object] = FlextCommands.Result.fail(
             "error message",
             error_data={"code": "ERR001"},
         )
 
         assert result.is_failure
         if result.error != "error message":
-            msg = f"Expected {'error message'}, got {result.error}"
+            msg: str = f"Expected {'error message'}, got {result.error}"
             raise AssertionError(msg)
         assert result.metadata == {"code": "ERR001"}
 
@@ -520,12 +532,14 @@ class TestFlextCommandsResult:
         """Test result creation without metadata."""
         success_result = FlextCommands.Result.ok("data")
         if success_result.metadata != {}:
-            msg = f"Expected {{}}, got {success_result.metadata}"
+            msg: str = f"Expected {{}}, got {success_result.metadata}"
             raise AssertionError(msg)
 
-        failure_result = FlextCommands.Result.fail("error")
+        failure_result: FlextCommands.Result[object] = FlextCommands.Result.fail(
+            "error"
+        )
         if failure_result.metadata != {}:  # __init__ converts None to {}:
-            msg = f"Expected {{}}, got {failure_result.metadata}"
+            msg: str = f"Expected {{}}, got {failure_result.metadata}"
             raise AssertionError(msg)
 
     def test_result_initialization_direct(self) -> None:
@@ -536,9 +550,9 @@ class TestFlextCommandsResult:
             metadata={"custom": "metadata"},
         )
 
-        assert result.is_success
+        assert result.success
         if result.data != "test_data":
-            msg = f"Expected {'test_data'}, got {result.data}"
+            msg: str = f"Expected {'test_data'}, got {result.data}"
             raise AssertionError(msg)
         assert result.metadata == {"custom": "metadata"}
 
@@ -552,7 +566,7 @@ class TestFlextCommandsHandler:
         handler = SampleHandler()
 
         if handler._handler_name != "SampleHandler":
-            msg = f"Expected {'SampleHandler'}, got {handler._handler_name}"
+            msg: str = f"Expected {'SampleHandler'}, got {handler._handler_name}"
             raise AssertionError(msg)
         assert handler.handler_name == "SampleHandler"
         assert handler.handler_id.startswith("SampleHandler_")
@@ -562,11 +576,11 @@ class TestFlextCommandsHandler:
         handler = SampleHandler(handler_name="CustomHandler", handler_id="custom_id")
 
         if handler._handler_name != "CustomHandler":
-            msg = f"Expected {'CustomHandler'}, got {handler._handler_name}"
+            msg: str = f"Expected {'CustomHandler'}, got {handler._handler_name}"
             raise AssertionError(msg)
         assert handler.handler_name == "CustomHandler"
         if handler.handler_id != "custom_id":
-            msg = f"Expected {'custom_id'}, got {handler.handler_id}"
+            msg: str = f"Expected {'custom_id'}, got {handler.handler_id}"
             raise AssertionError(msg)
 
     def test_handler_can_handle_success(self) -> None:
@@ -575,7 +589,7 @@ class TestFlextCommandsHandler:
         command = SampleCommand(name="test", value=42)
 
         if not (handler.can_handle(command)):
-            msg = f"Expected True, got {handler.can_handle(command)}"
+            msg: str = f"Expected True, got {handler.can_handle(command)}"
             raise AssertionError(msg)
 
     def test_handler_can_handle_invalid_type(self) -> None:
@@ -585,7 +599,7 @@ class TestFlextCommandsHandler:
 
         # Should return False for wrong type
         if handler.can_handle(invalid_command):
-            msg = f"Expected False, got {handler.can_handle(invalid_command)}"
+            msg: str = f"Expected False, got {handler.can_handle(invalid_command)}"
             raise AssertionError(msg)
 
     def test_handler_process_command_success(self) -> None:
@@ -594,9 +608,10 @@ class TestFlextCommandsHandler:
         command = SampleCommand(name="test", value=42)
 
         result = handler.process_command(command)
-        assert result.is_success
+        assert result.success
+        assert result.data is not None
         if "Handled: test with value 42" not in result.data:
-            msg = f"Expected {'Handled: test with value 42'} in {result.data}"
+            msg: str = f"Expected {'Handled: test with value 42'} in {result.data}"
             raise AssertionError(msg)
 
     def test_handler_process_command_validation_failure(self) -> None:
@@ -607,7 +622,7 @@ class TestFlextCommandsHandler:
         result = handler.process_command(command)
         assert result.is_failure
         if "Name cannot be empty" not in (result.error or ""):
-            msg = f"Expected 'Name cannot be empty' in {result.error}"
+            msg: str = f"Expected 'Name cannot be empty' in {result.error}"
             raise AssertionError(msg)
 
     def test_handler_process_command_cannot_handle(self) -> None:
@@ -615,10 +630,10 @@ class TestFlextCommandsHandler:
         handler = SampleHandler()
         invalid_command = SampleCommandWithoutValidation(description="test")
 
-        result = handler.process_command(invalid_command)
+        result = handler.process_command(invalid_command)  # type: ignore[arg-type]
         assert result.is_failure
         if "cannot process" not in (result.error or ""):
-            msg = f"Expected 'cannot process' in {result.error}"
+            msg: str = f"Expected 'cannot process' in {result.error}"
             raise AssertionError(msg)
 
     def test_handler_process_command_exception(self) -> None:
@@ -629,7 +644,7 @@ class TestFlextCommandsHandler:
         result = handler.process_command(command)
         assert result.is_failure
         if "Command processing failed" not in (result.error or ""):
-            msg = f"Expected 'Command processing failed' in {result.error}"
+            msg: str = f"Expected 'Command processing failed' in {result.error}"
             raise AssertionError(msg)
 
     def test_handler_execute_success(self) -> None:
@@ -638,9 +653,11 @@ class TestFlextCommandsHandler:
         command = SampleCommand(name="test", value=42)
 
         result = handler.execute(command)
-        assert result.is_success
+        assert result.success
+        assert result.data is not None
+        assert isinstance(result.data, str)
         if "Handled: test" not in result.data:
-            msg = f"Expected {'Handled: test'} in {result.data}"
+            msg: str = f"Expected {'Handled: test'} in {result.data}"
             raise AssertionError(msg)
 
     def test_handler_execute_cannot_handle(self) -> None:
@@ -648,10 +665,10 @@ class TestFlextCommandsHandler:
         handler = SampleHandler()
         invalid_command = "not a command"
 
-        result = handler.execute(invalid_command)
+        result = handler.execute(invalid_command)  # type: ignore[arg-type]
         assert result.is_failure
         if "cannot handle" not in (result.error or ""):
-            msg = f"Expected 'cannot handle' in {result.error}"
+            msg: str = f"Expected 'cannot handle' in {result.error}"
             raise AssertionError(msg)
 
     def test_handler_execute_with_exception(self) -> None:
@@ -666,7 +683,7 @@ class TestFlextCommandsHandler:
         """Test handler can_handle when no generic type info available."""
 
         # Create handler class without proper generic typing
-        class PlainHandler(FlextCommands.Handler):
+        class PlainHandler(FlextCommands.Handler[object, object]):
             def handle(self, command: object) -> FlextResult[object]:
                 return FlextResult.ok(command)
 
@@ -678,7 +695,7 @@ class TestFlextCommandsHandler:
         try:
             result = handler.can_handle(command)
             if not (result):
-                msg = f"Expected True, got {result}"
+                msg: str = f"Expected True, got {result}"
                 raise AssertionError(msg)
         except TypeError:
             # This is expected if the type checking fails with generic types
@@ -694,11 +711,11 @@ class TestFlextCommandsBus:
         bus = FlextCommands.Bus()
 
         if len(bus._handlers) != 0:
-            msg = f"Expected {0}, got {len(bus._handlers)}"
+            msg: str = f"Expected {0}, got {len(bus._handlers)}"
             raise AssertionError(msg)
         assert len(bus._middleware) == 0
         if bus._execution_count != 0:
-            msg = f"Expected {0}, got {bus._execution_count}"
+            msg: str = f"Expected {0}, got {bus._execution_count}"
             raise AssertionError(msg)
 
     def test_bus_register_handler_single_argument(self) -> None:
@@ -707,9 +724,9 @@ class TestFlextCommandsBus:
         handler = SampleHandler()
 
         result = bus.register_handler(handler)
-        assert result.is_success
+        assert result.success
         if len(bus._handlers) != 1:
-            msg = f"Expected {1}, got {len(bus._handlers)}"
+            msg: str = f"Expected {1}, got {len(bus._handlers)}"
             raise AssertionError(msg)
 
     def test_bus_register_handler_two_arguments(self) -> None:
@@ -718,9 +735,9 @@ class TestFlextCommandsBus:
         handler = SampleHandler()
 
         result = bus.register_handler(SampleCommand, handler)
-        assert result.is_success
+        assert result.success
         if SampleCommand not in bus._handlers:
-            msg = f"Expected {SampleCommand} in {bus._handlers}"
+            msg: str = f"Expected {SampleCommand} in {bus._handlers}"
             raise AssertionError(msg)
         assert bus._handlers[SampleCommand] is handler
 
@@ -732,7 +749,7 @@ class TestFlextCommandsBus:
         result = bus.register_handler(invalid_handler)
         assert result.is_failure
         if "must have 'handle' method" not in (result.error or ""):
-            msg = f"Expected 'must have handle method' in {result.error}"
+            msg: str = f"Expected 'must have handle method' in {result.error}"
             raise AssertionError(msg)
 
     def test_bus_register_handler_none_command_type(self) -> None:
@@ -743,7 +760,7 @@ class TestFlextCommandsBus:
         result = bus.register_handler(None, handler)
         assert result.is_failure
         if "Command type cannot be None" not in (result.error or ""):
-            msg = f"Expected 'Command type cannot be None' in {result.error}"
+            msg: str = f"Expected 'Command type cannot be None' in {result.error}"
             raise AssertionError(msg)
 
     def test_bus_register_handler_none_handler(self) -> None:
@@ -755,7 +772,7 @@ class TestFlextCommandsBus:
         # When handler is None, the code tries to use the first argument as handler
         # and SampleCommand doesn't have a 'handle' method
         if "must have 'handle' method" not in (result.error or ""):
-            msg = f"Expected 'must have handle method' in {result.error}"
+            msg: str = f"Expected 'must have handle method' in {result.error}"
             raise AssertionError(msg)
 
     def test_bus_register_handler_duplicate(self) -> None:
@@ -766,13 +783,14 @@ class TestFlextCommandsBus:
 
         # Register first handler
         result1 = bus.register_handler(SampleCommand, handler1)
-        assert result1.is_success
+        assert result1.success
 
         # Try to register second handler for same command type
         result2 = bus.register_handler(SampleCommand, handler2)
         assert result2.is_failure
+        assert result2.error is not None
         if "already registered" not in result2.error:
-            msg = f"Expected {'already registered'} in {result2.error}"
+            msg: str = f"Expected {'already registered'} in {result2.error}"
             raise AssertionError(msg)
 
     def test_bus_execute_success(self) -> None:
@@ -784,12 +802,14 @@ class TestFlextCommandsBus:
         command = SampleCommand(name="test", value=42)
         result = bus.execute(command)
 
-        assert result.is_success
+        assert result.success
+        assert result.data is not None
+        assert isinstance(result.data, str)
         if "Handled: test" not in result.data:
-            msg = f"Expected {'Handled: test'} in {result.data}"
+            msg: str = f"Expected {'Handled: test'} in {result.data}"
             raise AssertionError(msg)
         if bus._execution_count != 1:
-            msg = f"Expected {1}, got {bus._execution_count}"
+            msg: str = f"Expected {1}, got {bus._execution_count}"
             raise AssertionError(msg)
 
     def test_bus_execute_validation_failure(self) -> None:
@@ -803,7 +823,7 @@ class TestFlextCommandsBus:
 
         assert result.is_failure
         if "Name cannot be empty" not in (result.error or ""):
-            msg = f"Expected 'Name cannot be empty' in {result.error}"
+            msg: str = f"Expected 'Name cannot be empty' in {result.error}"
             raise AssertionError(msg)
 
     def test_bus_execute_no_handler(self) -> None:
@@ -814,7 +834,7 @@ class TestFlextCommandsBus:
         result = bus.execute(command)
         assert result.is_failure
         if "No handler found" not in (result.error or ""):
-            msg = f"Expected 'No handler found' in {result.error}"
+            msg: str = f"Expected 'No handler found' in {result.error}"
             raise AssertionError(msg)
 
     def test_bus_execute_with_middleware_success(self) -> None:
@@ -833,7 +853,7 @@ class TestFlextCommandsBus:
         command = SampleCommand(name="test", value=42)
         result = bus.execute(command)
 
-        assert result.is_success
+        assert result.success
 
     def test_bus_execute_with_middleware_failure(self) -> None:
         """Test command execution with failing middleware."""
@@ -853,7 +873,7 @@ class TestFlextCommandsBus:
 
         assert result.is_failure
         if "Middleware rejected" not in (result.error or ""):
-            msg = f"Expected 'Middleware rejected' in {result.error}"
+            msg: str = f"Expected 'Middleware rejected' in {result.error}"
             raise AssertionError(msg)
 
     def test_bus_execute_with_middleware_no_process_method(self) -> None:
@@ -872,7 +892,7 @@ class TestFlextCommandsBus:
         result = bus.execute(command)
 
         # Should still succeed as middleware is skipped
-        assert result.is_success
+        assert result.success
 
     def test_bus_find_handler_success(self) -> None:
         """Test finding handler for command."""
@@ -926,15 +946,15 @@ class TestFlextCommandsBus:
 
         handler = HandlerWithExecute()
         registration_result = bus.register_handler(handler)
-        assert registration_result.is_success
+        assert registration_result.success
 
         command = SampleCommand(name="test", value=42)
         result = bus.execute(command)
 
-        assert result.is_success
+        assert result.success
         # The bus should use the execute method when available
         if result.data != "executed":
-            msg = f"Expected {'executed'}, got {result.data}"
+            msg: str = f"Expected {'executed'}, got {result.data}"
             raise AssertionError(msg)
 
     def test_bus_execute_handler_no_execute_or_handle(self) -> None:
@@ -949,8 +969,11 @@ class TestFlextCommandsBus:
         # This should fail during registration since handler has no 'handle' method
         registration_result = bus.register_handler(handler)
         assert registration_result.is_failure
+        assert registration_result.error is not None
         if "must have 'handle' method" not in registration_result.error:
-            msg = f"Expected {'must have handle method'} in {registration_result.error}"
+            msg: str = (
+                f"Expected {'must have handle method'} in {registration_result.error}"
+            )
             raise AssertionError(msg)
 
         # Since registration failed, executing should result in "No handler found"
@@ -958,7 +981,7 @@ class TestFlextCommandsBus:
         result = bus.execute(command)
         assert result.is_failure
         if "No handler found" not in (result.error or ""):
-            msg = f"Expected 'No handler found' in {result.error}"
+            msg: str = f"Expected 'No handler found' in {result.error}"
             raise AssertionError(msg)
 
     def test_bus_execute_handler_non_result_return(self) -> None:
@@ -978,9 +1001,9 @@ class TestFlextCommandsBus:
         command = SampleCommand(name="test", value=42)
         result = bus.execute(command)
 
-        assert result.is_success
+        assert result.success
         if result.data != "simple result":
-            msg = f"Expected {'simple result'}, got {result.data}"
+            msg: str = f"Expected {'simple result'}, got {result.data}"
             raise AssertionError(msg)
 
 
@@ -991,26 +1014,28 @@ class TestFlextCommandsDecorators:
     def test_command_handler_decorator(self) -> None:
         """Test command handler decorator."""
 
-        @FlextCommands.Decorators.command_handler(SampleCommand)
+        @FlextCommands.Decorators.command_handler(SampleCommand)  # type: ignore[arg-type]
         def handle_test_command(command: SampleCommand) -> FlextResult[str]:
             return FlextResult.ok(f"Decorated: {command.name}")
 
         # Check decorator metadata
         assert handle_test_command.__dict__["command_type"] is SampleCommand
         if "handler_instance" not in handle_test_command.__dict__:
-            msg = f"Expected {'handler_instance'} in {handle_test_command.__dict__}"
+            msg: str = (
+                f"Expected {'handler_instance'} in {handle_test_command.__dict__}"
+            )
             raise AssertionError(msg)
 
         # Test wrapper function
         command = SampleCommand(name="test", value=42)
         result = handle_test_command(command)
         assert isinstance(result, FlextResult)
-        assert result.is_success
+        assert result.success
 
     def test_command_handler_decorator_with_handler_instance(self) -> None:
         """Test command handler decorator handler instance."""
 
-        @FlextCommands.Decorators.command_handler(SampleCommand)
+        @FlextCommands.Decorators.command_handler(SampleCommand)  # type: ignore[arg-type]
         def handle_test_command(command: SampleCommand) -> FlextResult[str]:
             return FlextResult.ok(f"Decorated: {command.name}")
 
@@ -1018,15 +1043,15 @@ class TestFlextCommandsDecorators:
         command = SampleCommand(name="test", value=42)
 
         result = handler_instance.handle(command)
-        assert result.is_success
+        assert result.success
         if "Decorated: test" not in result.data:
-            msg = f"Expected {'Decorated: test'} in {result.data}"
+            msg: str = f"Expected {'Decorated: test'} in {result.data}"
             raise AssertionError(msg)
 
     def test_command_handler_decorator_non_result_return(self) -> None:
         """Test command handler decorator with non-FlextResult return."""
 
-        @FlextCommands.Decorators.command_handler(SampleCommand)
+        @FlextCommands.Decorators.command_handler(SampleCommand)  # type: ignore[arg-type]
         def handle_test_command(command: SampleCommand) -> str:
             return f"Simple: {command.name}"
 
@@ -1034,9 +1059,9 @@ class TestFlextCommandsDecorators:
         command = SampleCommand(name="test", value=42)
 
         result = handler_instance.handle(command)
-        assert result.is_success
+        assert result.success
         if result.data != "Simple: test":
-            msg = f"Expected {'Simple: test'}, got {result.data}"
+            msg: str = f"Expected {'Simple: test'}, got {result.data}"
             raise AssertionError(msg)
 
 
@@ -1049,15 +1074,15 @@ class TestFlextCommandsQuery:
         query = SampleQuery(search_term="test", category="books")
 
         if query.search_term != "test":
-            msg = f"Expected {'test'}, got {query.search_term}"
+            msg: str = f"Expected {'test'}, got {query.search_term}"
             raise AssertionError(msg)
         assert query.category == "books"
         if query.page_size != 100:  # default:
-            msg = f"Expected {100} in {query.page_size}"
+            msg: str = f"Expected {100} in {query.page_size}"
             raise AssertionError(msg)
         assert query.page_number == 1  # default
         if query.sort_order != "asc":  # default:
-            msg = f"Expected {'asc'} in {query.sort_order}"
+            msg: str = f"Expected {'asc'} in {query.sort_order}"
             raise AssertionError(msg)
 
     def test_query_with_pagination(self) -> None:
@@ -1071,11 +1096,11 @@ class TestFlextCommandsQuery:
         )
 
         if query.page_size != 50:
-            msg = f"Expected {50}, got {query.page_size}"
+            msg: str = f"Expected {50}, got {query.page_size}"
             raise AssertionError(msg)
         assert query.page_number == EXPECTED_BULK_SIZE
         if query.sort_by != "title":
-            msg = f"Expected {'title'}, got {query.sort_by}"
+            msg: str = f"Expected {'title'}, got {query.sort_by}"
             raise AssertionError(msg)
         assert query.sort_order == "desc"
 
@@ -1084,7 +1109,7 @@ class TestFlextCommandsQuery:
         query = SampleQuery(search_term="test", page_size=10, page_number=1)
         result = query.validate_query()
 
-        assert result.is_success
+        assert result.success
         assert query.is_valid
 
     def test_query_validation_failures(self) -> None:
@@ -1093,24 +1118,27 @@ class TestFlextCommandsQuery:
         query1 = SampleQuery(search_term="test", page_size=0)
         result1 = query1.validate_query()
         assert result1.is_failure
+        assert result1.error is not None
         if "Page size must be positive" not in result1.error:
-            msg = f"Expected {'Page size must be positive'} in {result1.error}"
+            msg: str = f"Expected {'Page size must be positive'} in {result1.error}"
             raise AssertionError(msg)
 
         # Invalid page number
         query2 = SampleQuery(search_term="test", page_number=0)
         result2 = query2.validate_query()
         assert result2.is_failure
+        assert result2.error is not None
         if "Page number must be positive" not in result2.error:
-            msg = f"Expected {'Page number must be positive'} in {result2.error}"
+            msg: str = f"Expected {'Page number must be positive'} in {result2.error}"
             raise AssertionError(msg)
 
         # Invalid sort order
         query3 = SampleQuery(search_term="test", sort_order="invalid")
         result3 = query3.validate_query()
         assert result3.is_failure
+        assert result3.error is not None
         if "Sort order must be 'asc' or 'desc'" not in result3.error:
-            msg = f"Expected {'Sort order must be asc or desc'} in {result3.error}"
+            msg: str = f"Expected {'Sort order must be asc or desc'} in {result3.error}"
             raise AssertionError(msg)
 
     def test_query_validation_multiple_errors(self) -> None:
@@ -1125,19 +1153,20 @@ class TestFlextCommandsQuery:
 
         assert result.is_failure
         if "Page size must be positive" not in (result.error or ""):
-            msg = f"Expected 'Page size must be positive' in {result.error}"
+            msg: str = f"Expected 'Page size must be positive' in {result.error}"
             raise AssertionError(msg)
+        assert result.error is not None
         assert "Page number must be positive" in result.error
         if "Sort order must be 'asc' or 'desc'" not in (result.error or ""):
-            msg = f"Expected 'Sort order must be asc or desc' in {result.error}"
+            msg: str = f"Expected 'Sort order must be asc or desc' in {result.error}"
             raise AssertionError(msg)
 
     def test_query_immutability(self) -> None:
         """Test query immutability (frozen model)."""
         query = SampleQuery(search_term="test")
 
-        with pytest.raises(ValidationError):
-            query.search_term = "changed"
+        with pytest.raises((ValidationError, AttributeError)):
+            query.search_term = "changed"  # type: ignore[misc]
 
     def test_query_mixin_methods(self) -> None:
         """Test query mixin methods availability."""
@@ -1172,10 +1201,10 @@ class TestFlextCommandsQueryHandler:
         query = SampleQuery(search_term="test", category="books")
 
         result = handler.handle(query)
-        assert result.is_success
+        assert result.success
         assert isinstance(result.data, list)
         if "Result for test" not in result.data:
-            msg = f"Expected {'Result for test'} in {result.data}"
+            msg: str = f"Expected {'Result for test'} in {result.data}"
             raise AssertionError(msg)
         assert "Category: books" in result.data
 
@@ -1198,15 +1227,17 @@ class TestFlextCommandsFactoryMethods:
         def handler_func(command: SampleCommand) -> FlextResult[str]:
             return FlextResult.ok(f"Simple: {command.name}")
 
-        handler = FlextCommands.create_simple_handler(handler_func)
+        handler = FlextCommands.create_simple_handler(handler_func)  # type: ignore[arg-type]
 
         assert isinstance(handler, FlextCommands.Handler)
 
         command = SampleCommand(name="test", value=42)
         result = handler.handle(command)
-        assert result.is_success
+        assert result.success
+        assert result.data is not None
+        assert isinstance(result.data, str)
         if "Simple: test" not in result.data:
-            msg = f"Expected {'Simple: test'} in {result.data}"
+            msg: str = f"Expected {'Simple: test'} in {result.data}"
             raise AssertionError(msg)
 
     def test_create_simple_handler_non_result_return(self) -> None:
@@ -1215,13 +1246,13 @@ class TestFlextCommandsFactoryMethods:
         def handler_func(command: SampleCommand) -> str:
             return f"Simple: {command.name}"
 
-        handler = FlextCommands.create_simple_handler(handler_func)
+        handler = FlextCommands.create_simple_handler(handler_func)  # type: ignore[arg-type]
         command = SampleCommand(name="test", value=42)
 
         result = handler.handle(command)
-        assert result.is_success
+        assert result.success
         if result.data != "Simple: test":
-            msg = f"Expected {'Simple: test'}, got {result.data}"
+            msg: str = f"Expected {'Simple: test'}, got {result.data}"
             raise AssertionError(msg)
 
 
@@ -1249,6 +1280,7 @@ class TestCommandsEdgeCases:
         payload = command.to_payload()
 
         # Verify serialization handles datetime properly
+        assert payload.data is not None
         assert isinstance(payload.data["timestamp"], str)
 
     def test_bus_middleware_with_different_return_types(self) -> None:
@@ -1268,7 +1300,7 @@ class TestCommandsEdgeCases:
         result = bus.execute(command)
 
         # Should still execute successfully
-        assert result.is_success
+        assert result.success
 
     def test_handler_with_no_generic_bases(self) -> None:
         """Test handler without __orig_bases__ attribute."""
@@ -1301,23 +1333,25 @@ class TestCommandsEdgeCases:
         result = command.require_field("test_field", "   ")
         assert result.is_failure
         if "test_field is required" not in (result.error or ""):
-            msg = f"Expected 'test_field is required' in {result.error}"
+            msg: str = f"Expected 'test_field is required' in {result.error}"
             raise AssertionError(msg)
 
         # Test require_email with edge cases
         result1 = command.require_email("test@")
         assert result1.is_failure
+        assert result1.error is not None
         if "Invalid email format" not in result1.error:
-            msg = f"Expected {'Invalid email format'} in {result1.error}"
+            msg: str = f"Expected {'Invalid email format'} in {result1.error}"
             raise AssertionError(msg)
 
         result2 = command.require_email("@example.com")
-        assert result2.is_success  # Simple validation considers this valid
+        assert result2.success  # Simple validation considers this valid
 
         result3 = command.require_email("test@example")
         assert result3.is_failure
+        assert result3.error is not None
         if "Invalid email format" not in result3.error:
-            msg = f"Expected {'Invalid email format'} in {result3.error}"
+            msg: str = f"Expected {'Invalid email format'} in {result3.error}"
             raise AssertionError(msg)
 
     def test_performance_with_many_handlers(self) -> None:
@@ -1335,7 +1369,7 @@ class TestCommandsEdgeCases:
         # Test execution still works
         command = SampleCommand(name="test", value=42)
         result = bus.execute(command)
-        assert result.is_success
+        assert result.success
 
 
 @pytest.mark.integration
@@ -1355,9 +1389,11 @@ class TestCommandsSystemIntegration:
         # Execute through bus
         result = bus.execute(command)
 
-        assert result.is_success
+        assert result.success
+        assert result.data is not None
+        assert isinstance(result.data, str)
         if "Handled: integration_test with value 100" not in result.data:
-            msg = f"Expected {'Handled: integration_test with value 100'} in {result.data}"
+            msg: str = f"Expected {'Handled: integration_test with value 100'} in {result.data}"
             raise AssertionError(msg)
         if bus._execution_count != 1:
             raise AssertionError(f"Expected {1}, got {bus._execution_count}")
@@ -1375,9 +1411,10 @@ class TestCommandsSystemIntegration:
 
         # Convert back to command
         result = SampleCommand.from_payload(payload)
-        assert result.is_success
+        assert result.success
 
         recovered_command = result.data
+        assert recovered_command is not None
         if recovered_command.name != original_command.name:
             raise AssertionError(
                 f"Expected {original_command.name}, got {recovered_command.name}"
@@ -1400,15 +1437,16 @@ class TestCommandsSystemIntegration:
 
         # Validate query
         validation_result = query.validate_query()
-        assert validation_result.is_success
+        assert validation_result.success
 
         # Process query
         handler = SampleQueryHandler()
         result = handler.handle(query)
 
-        assert result.is_success
+        assert result.success
+        assert result.data is not None
         if "Result for integration" not in result.data:
-            msg = f"Expected {'Result for integration'} in {result.data}"
+            msg: str = f"Expected {'Result for integration'} in {result.data}"
             raise AssertionError(msg)
         assert "Category: test" in result.data
 
@@ -1426,7 +1464,7 @@ class TestCommandsSystemIntegration:
         # Add middleware
         class LoggingMiddleware:
             def __init__(self) -> None:
-                self.processed_commands: list[Any] = []
+                self.processed_commands: list[object] = []
 
             def process(self, command: object, handler: object) -> FlextResult[None]:
                 self.processed_commands.append(command)
@@ -1446,9 +1484,9 @@ class TestCommandsSystemIntegration:
         result1 = bus.execute(test_command)
         result2 = bus.execute(complex_command)
 
-        assert result1.is_success
-        assert result2.is_success
+        assert result1.success
+        assert result2.success
         if len(middleware.processed_commands) != EXPECTED_BULK_SIZE:
-            msg = f"Expected {2}, got {len(middleware.processed_commands)}"
+            msg: str = f"Expected {2}, got {len(middleware.processed_commands)}"
             raise AssertionError(msg)
         assert bus._execution_count == EXPECTED_BULK_SIZE

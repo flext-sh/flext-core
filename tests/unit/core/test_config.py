@@ -33,7 +33,7 @@ class TestFlextConfig:
 
         result = FlextConfig.create_complete_config(config_data)
 
-        assert result.is_success
+        assert result.success
         assert (result.data or {})["app_name"] == "test", (
             f"Expected {'test'}, got {(result.data or {})['app_name']}"
         )
@@ -48,13 +48,15 @@ class TestFlextConfig:
             apply_defaults=True,
         )
 
-        assert result.is_success
+        assert result.success
         assert (result.data or {})["app_name"] == "test", (
             f"Expected {'test'}, got {(result.data or {})['app_name']}"
         )
         # Check that defaults were applied
         assert (
-            "debug" in (result.data or {}) or "timeout" in (result.data or {}) or "port" in (result.data or {})
+            "debug" in (result.data or {})
+            or "timeout" in (result.data or {})
+            or "port" in (result.data or {})
         )
 
     def test_create_complete_config_without_validation(self) -> None:
@@ -66,7 +68,7 @@ class TestFlextConfig:
             validate_all=False,
         )
 
-        assert result.is_success
+        assert result.success
         assert (result.data or {})["app_name"] == "test", (
             f"Expected {'test'}, got {(result.data or {})['app_name']}"
         )
@@ -102,7 +104,7 @@ class TestFlextConfig:
         try:
             result = FlextConfig.load_and_validate_from_file(config_path)
 
-            assert result.is_success
+            assert result.success
             assert (result.data or {})["app_name"] == "test", (
                 f"Expected {'test'}, got {(result.data or {})['app_name']}"
             )
@@ -125,7 +127,7 @@ class TestFlextConfig:
 
         result = FlextConfig.merge_and_validate_configs(config1, config2)
 
-        assert result.is_success
+        assert result.success
         assert (result.data or {})["app_name"] == "test", (
             f"Expected {'test'}, got {(result.data or {})['app_name']}"
         )
@@ -143,7 +145,7 @@ class TestFlextConfig:
 
         result = FlextConfig.get_env_with_validation("TEST_VAR")
 
-        assert result.is_success
+        assert result.success
         assert result.data == "test_value", (
             f"Expected {'test_value'}, got {result.data}"
         )
@@ -153,7 +155,9 @@ class TestFlextConfig:
         result = FlextConfig.get_env_with_validation("NON_EXISTENT_VAR")
 
         assert result.is_failure
-        assert "Environment variable 'NON_EXISTENT_VAR' not found" in (result.error or ""), (
+        assert "Environment variable 'NON_EXISTENT_VAR' not found" in (
+            result.error or ""
+        ), (
             f"Expected 'Environment variable \\'NON_EXISTENT_VAR\\' not found' in {result.error}"
         )
 
@@ -164,11 +168,14 @@ class TestFlextConfigDefaults:
     def test_apply_defaults_simple(self) -> None:
         """Test applying simple defaults."""
         config: dict[str, object] = {"app": {"name": "test"}}
-        defaults: dict[str, object] = {"app": {"debug": False}, "database": {"host": "localhost"}}
+        defaults: dict[str, object] = {
+            "app": {"debug": False},
+            "database": {"host": "localhost"},
+        }
 
         result = FlextConfigDefaults.apply_defaults(config, defaults)
 
-        assert result.is_success
+        assert result.success
         merged_config = result.data
         assert merged_config is not None
 
@@ -185,7 +192,7 @@ class TestFlextConfigDefaults:
 
         result = FlextConfigDefaults.merge_configs(config, defaults)
 
-        assert result.is_success
+        assert result.success
         assert (result.data or {})["existing"] == "value", (
             f"Expected {'value'}, got {(result.data or {})['existing']}"
         )
@@ -201,7 +208,7 @@ class TestFlextConfigOps:
 
         result = FlextConfigOps.safe_load_from_dict(test_dict)
 
-        assert result.is_success
+        assert result.success
         assert result.data == test_dict, f"Expected {test_dict}, got {result.data}"
 
 
@@ -221,7 +228,7 @@ class TestFlextConfigValidation:
             "Value must be string",
         )
 
-        assert result.is_success
+        assert result.success
 
     def test_validate_config_value_failure(self) -> None:
         """Test config value validation failure."""
@@ -312,7 +319,7 @@ class TestStandaloneFunctions:
 
         result = safe_get_env_var("TEST_ENV_VAR")
 
-        assert result.is_success
+        assert result.success
         assert result.data == "test_value", (
             f"Expected {'test_value'}, got {result.data}"
         )
@@ -333,7 +340,7 @@ class TestStandaloneFunctions:
 
         result = safe_get_env_var("NON_EXISTENT_VAR", "default_value")
 
-        assert result.is_success
+        assert result.success
         assert result.data == "default_value", (
             f"Expected {'default_value'}, got {result.data}"
         )
@@ -354,7 +361,7 @@ class TestStandaloneFunctions:
         try:
             result = safe_load_json_file(file_path)
 
-            assert result.is_success
+            assert result.success
             assert result.data == test_data, f"Expected {test_data}, got {result.data}"
         finally:
             Path(file_path).unlink()
@@ -407,7 +414,7 @@ class TestConfigurationIntegration:
         try:
             # Load configuration
             load_result = safe_load_json_file(config_path)
-            assert load_result.is_success
+            assert load_result.success
             assert load_result.data is not None
 
             # Create complete configuration
@@ -417,7 +424,7 @@ class TestConfigurationIntegration:
                 validate_all=True,
             )
 
-            assert complete_result.is_success
+            assert complete_result.success
             final_config = complete_result.data
             assert final_config is not None
 

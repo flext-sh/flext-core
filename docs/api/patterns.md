@@ -142,7 +142,7 @@ command = CreateUserCommand("João", "joao@test.com", 30)
 
 # Processamento completo com validação
 result = handler.process_command(command)
-if result.is_success:
+if result.success:
     print(f"Usuário criado: {result.data}")
 else:
     print(f"Erro: {result.error}")
@@ -167,14 +167,14 @@ bus.register_handler(update_handler)
 create_command = CreateUserCommand("Maria", "maria@test.com", 25)
 result = bus.execute(create_command)
 
-if result.is_success:
+if result.success:
     user = result.data.result  # Resultado do handler
     print(f"Usuário criado: {user.name}")
 
     # Metadados da execução
     metadata = result.get_result_metadata()
     print(f"Command ID: {metadata['command_id']}")
-    print(f"Executado com sucesso: {metadata['is_success']}")
+    print(f"Executado com sucesso: {metadata['success']}")
 else:
     print(f"Falha na execução: {result.error}")
 
@@ -235,7 +235,7 @@ payment_command = ProcessPaymentCommand("order_123", 250.0, "credit_card")
 payment_handler = ProcessPaymentHandler()
 
 result = payment_handler.process_command(payment_command)
-if result.is_success:
+if result.success:
     payment = result.data
     print(f"Pagamento aprovado: {payment.transaction_id}")
 ```
@@ -288,7 +288,7 @@ email_message = EmailMessage(
 
 # Processamento completo
 result = email_handler.process(email_message)
-if result.is_success:
+if result.success:
     print(f"Resultado: {result.data}")
 ```
 
@@ -339,7 +339,7 @@ event = UserCreatedEvent("user_123", "João", "joao@test.com")
 
 # Processamento de evento
 result = handler.process_event(event)
-if result.is_success:
+if result.success:
     print("Evento processado com sucesso")
 ```
 
@@ -390,7 +390,7 @@ handler = GetUserHandler(user_repository)
 request = GetUserRequest("user_123")
 
 result = handler.process_request(request)
-if result.is_success:
+if result.success:
     user_response = result.data
     print(f"Usuário: {user_response.name} ({user_response.email})")
 ```
@@ -421,7 +421,7 @@ print(f"Handlers encontrados: {len(handlers)}")
 for handler in handlers:
     if isinstance(handler, FlextMessageHandler):
         result = handler.process(email_message)
-        if result.is_success:
+        if result.success:
             print(f"Processado: {result.data}")
 
 # Buscar handler por ID
@@ -975,7 +975,7 @@ create_command = CreateOrderCommand(
 
 # Executar command
 result = command_bus.execute(create_command)
-if result.is_success:
+if result.success:
     order = result.data.result
     print(f"Pedido criado: {order.id}")
 

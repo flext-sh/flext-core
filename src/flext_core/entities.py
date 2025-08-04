@@ -85,7 +85,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING, Self
+from typing import Self
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
@@ -95,9 +95,6 @@ from flext_core.flext_types import TAnyDict
 from flext_core.payload import FlextEvent
 from flext_core.result import FlextResult
 from flext_core.utilities import FlextGenerators
-
-if TYPE_CHECKING:
-    from flext_core.flext_types import TAnyDict
 
 # =============================================================================
 # DOMAIN-SPECIFIC TYPES - Entity Pattern Specializations
@@ -628,6 +625,13 @@ class FlextEntityFactory:
 
         return factory
 
+
+# =============================================================================
+# MODEL REBUILDS - Resolve forward references for Pydantic
+# =============================================================================
+
+# Rebuild models to resolve forward references after import
+FlextEntity.model_rebuild()
 
 # Export API
 __all__ = ["FlextEntity", "FlextEntityFactory"]

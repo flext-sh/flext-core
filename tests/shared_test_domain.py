@@ -37,7 +37,7 @@ def create_test_entity_safe(name: str, **kwargs: object) -> ConcreteFlextEntity:
     status = str(kwargs.get("status", "active"))
     result = TestDomainFactory.create_concrete_entity(name=name, status=status)
     if result.is_failure:
-        error_msg = f"Failed to create test entity: {result.error}"
+        error_msg: str = f"Failed to create test entity: {result.error}"
         raise ValueError(error_msg)
     if result.data is None:
         none_error_msg = "Failed to create test entity: result data is None"
@@ -57,7 +57,7 @@ def create_test_value_object_safe(
         description=str(kwargs.get("description", "")),
     )
     if result.is_failure:
-        error_msg = f"Failed to create test value object: {result.error}"
+        error_msg: str = f"Failed to create test value object: {result.error}"
         raise ValueError(error_msg)
     if result.data is None:
         none_error_msg = "Failed to create test value object: result data is None"
@@ -77,7 +77,7 @@ def create_complex_test_value_object_safe(
         metadata=metadata,
     )
     if result.is_failure:
-        error_msg = f"Failed to create complex test value object: {result.error}"
+        error_msg: str = f"Failed to create complex test value object: {result.error}"
         raise ValueError(error_msg)
     if result.data is None:
         none_error_msg = (
@@ -87,7 +87,7 @@ def create_complex_test_value_object_safe(
     return result.data
 
 
-__all__ = [
+__all__: list[str] = [
     "ComplexValueObject",
     "ConcreteFlextEntity",
     "ConcreteValueObject",

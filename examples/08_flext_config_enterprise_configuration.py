@@ -72,7 +72,7 @@ def demonstrate_basic_configuration() -> None:
     }
 
     config_result = FlextConfig.create_complete_config(config_data)
-    if config_result.is_success:
+    if config_result.success:
         config = config_result.data
         if config is not None:
             log_message = f"✅ Config created: {config}"
@@ -95,7 +95,7 @@ def demonstrate_basic_configuration() -> None:
         str,
         "app_name",
     )
-    if validation_result.is_success:
+    if validation_result.success:
         log_message = "✅ Configuration type validation is valid"
         print(log_message)
     else:
@@ -116,7 +116,7 @@ def demonstrate_basic_configuration() -> None:
 
     # 4. Applying defaults
     defaults_result = FlextConfigDefaults.apply_defaults(config_data, defaults)
-    if defaults_result.is_success:
+    if defaults_result.success:
         config_with_defaults = defaults_result.data
         if config_with_defaults is not None:
             log_message = "🔄 Config with defaults applied:"
@@ -368,7 +368,7 @@ def demonstrate_file_configuration() -> None:
         "app.name",
     )
 
-    if validation_result.is_success:
+    if validation_result.success:
         log_message = "✅ App name validation passed"
         print(log_message)
     else:
@@ -451,22 +451,22 @@ def demonstrate_configuration_hierarchies() -> None:
     dev_merged = merge_configs(base_config, dev_config)
     log_message = "✅ Development configuration:"
     print(log_message)
-    log_message = f"   Debug: {dev_merged.get('app', {}).get('debug')}"
+    log_message = f"   Debug: {dev_merged.get('app', {}).get('debug') if isinstance(dev_merged, dict) else 'N/A'}"
     print(log_message)
-    log_message = f"   Database: {dev_merged.get('database', {}).get('url')}"
+    log_message = f"   Database: {dev_merged.get('database', {}).get('url') if isinstance(dev_merged, dict) else 'N/A'}"
     print(log_message)
-    log_message = f"   Log level: {dev_merged.get('logging', {}).get('level')}"
+    log_message = f"   Log level: {dev_merged.get('logging', {}).get('level') if isinstance(dev_merged, dict) else 'N/A'}"
     print(log_message)
 
     # Merge base + prod
     prod_merged = merge_configs(base_config, prod_config)
     log_message = "✅ Production configuration:"
     print(log_message)
-    log_message = f"   Debug: {prod_merged.get('app', {}).get('debug')}"
+    log_message = f"   Debug: {prod_merged.get('app', {}).get('debug') if isinstance(prod_merged, dict) else 'N/A'}"
     print(log_message)
-    log_message = f"   Database: {prod_merged.get('database', {}).get('url')}"
+    log_message = f"   Database: {prod_merged.get('database', {}).get('url') if isinstance(prod_merged, dict) else 'N/A'}"
     print(log_message)
-    log_message = f"   Pool size: {prod_merged.get('database', {}).get('pool_size')}"
+    log_message = f"   Pool size: {prod_merged.get('database', {}).get('pool_size') if isinstance(prod_merged, dict) else 'N/A'}"
     print(log_message)
 
     # 3. Configuration inheritance patterns
@@ -513,7 +513,9 @@ def demonstrate_configuration_hierarchies() -> None:
     log_message = "✅ Feature configuration:"
     print(log_message)
     features = feature_merged.get("features", {})
-    for feature_name, feature_config in features.items():
+    for feature_name, feature_config in (
+        features.items() if isinstance(features, dict) else []
+    ):
         enabled = feature_config.get("enabled", False)
         status = "✅ Enabled" if enabled else "❌ Disabled"
         log_message = f"   {feature_name}: {status}"
@@ -722,8 +724,9 @@ def demonstrate_domain_configuration_integration() -> None:  # noqa: PLR0912, PL
 
             # Use SharedDomainFactory for validation
             user_result = SharedDomainFactory.create_user(name, email, age)
-            if user_result.is_success:
+            if user_result.success:
                 user = user_result.data
+                assert user is not None
                 validated_users.append(user)
                 log_message = (
                     f"✅ Admin user validated: {user.name} ({user.email_address.email})"
@@ -766,8 +769,9 @@ def demonstrate_domain_configuration_integration() -> None:  # noqa: PLR0912, PL
                 config.get("age", 0),
             )
 
-            if user_result.is_success:
+            if user_result.success:
                 user = user_result.data
+                assert user is not None
                 created_users.append(user)
                 log_message = f"✅ User created from config: {user.name}"
                 print(log_message)
@@ -802,7 +806,7 @@ def demonstrate_domain_configuration_integration() -> None:  # noqa: PLR0912, PL
                 "test@example.com",
                 test_age,
             )
-            if user_result.is_success:
+            if user_result.success:
                 log_message = f"✅ Age {test_age}: Valid according to domain rules"
                 print(log_message)
             else:

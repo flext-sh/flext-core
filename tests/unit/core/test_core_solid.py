@@ -26,7 +26,7 @@ class TestCoreSOLIDImplementation:
         """Test type validation implementation."""
         # Valid type validation
         result = self.core.validate_type("test_string", str)
-        assert result.is_success
+        assert result.success
         assert result.data == "test_string"
 
         # Invalid type validation
@@ -39,7 +39,7 @@ class TestCoreSOLIDImplementation:
         # Valid dictionary
         test_dict = {"key1": "value1", "key2": "value2"}
         result = self.core.validate_dict_structure(test_dict, str)
-        assert result.is_success
+        assert result.success
         assert result.data == test_dict
 
         # Non-dictionary object
@@ -64,7 +64,7 @@ class TestCoreSOLIDImplementation:
 
         # Valid model creation
         result = self.core.create_validated_model(TestModel, name="John", age=30)
-        assert result.is_success
+        assert result.success
         assert isinstance(result.data, TestModel)
         assert result.data.name == "John"
         assert result.data.age == 30
@@ -123,7 +123,7 @@ class TestCoreSOLIDImplementation:
 
         # Type validation uses isinstance (abstraction)
         result1 = self.core.validate_type(42, int)
-        assert result1.is_success
+        assert result1.success
 
         # Dict validation uses is_dict_of from guards module
         _result2 = self.core.validate_dict_structure({"a": 1}, int)
@@ -134,18 +134,18 @@ class TestCoreSOLIDImplementation:
             value: str
 
         result3 = self.core.create_validated_model(SimpleModel, value="test")
-        assert result3.is_success
+        assert result3.success
 
     def test_single_responsibility_principle(self) -> None:
         """Test that validation methods have single responsibilities."""
 
         # validate_type only validates types
         type_result = self.core.validate_type("text", str)
-        assert type_result.is_success
+        assert type_result.success
 
         # validate_dict_structure only validates dictionary structure
         dict_result = self.core.validate_dict_structure({"key": "value"}, str)
-        assert dict_result.is_success
+        assert dict_result.success
 
         # Each method has a single, well-defined responsibility
         # They don't mix concerns like validation + transformation + logging
@@ -169,7 +169,7 @@ class TestCoreSOLIDImplementation:
         result = self.core.create_validated_model(
             ExtendedModel, email="test@example.com"
         )
-        assert result.is_success
+        assert result.success
 
         # Invalid email is rejected by our custom validation
         result = self.core.create_validated_model(ExtendedModel, email="invalid_email")
@@ -207,10 +207,10 @@ class TestCoreSOLIDImplementation:
         dict_client = DictOnlyClient(self.core)
 
         type_result = type_client.validate_string("test")
-        assert type_result.is_success
+        assert type_result.success
 
         dict_result = dict_client.validate_string_dict({"key": "value"})
-        assert dict_result.is_success
+        assert dict_result.success
 
     def test_error_handling_consistency(self) -> None:
         """Test consistent error handling across validation methods."""
@@ -269,7 +269,7 @@ class TestCoreSOLIDCompliance:
         # Basic functionality test to ensure methods aren't just placeholders
         result = core.validate_type("test", str)
         assert isinstance(result, FlextResult)
-        assert result.is_success
+        assert result.success
 
     @pytest.mark.architecture
     @pytest.mark.ddd
@@ -300,7 +300,7 @@ class TestCoreSOLIDCompliance:
             result = method(*args)
             assert isinstance(result, FlextResult)
             if should_succeed:
-                assert result.is_success
+                assert result.success
             else:
                 assert result.is_failure
                 assert isinstance(result.error, str)

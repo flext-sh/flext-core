@@ -83,7 +83,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from functools import wraps
+from typing import TYPE_CHECKING, Self
 
 from pydantic import BaseModel, ValidationError
 
@@ -167,7 +168,7 @@ def immutable(cls: type) -> type:
         def __setattr__(self, name: str, value: object) -> None:
             """Prevent attribute modification after initialization."""
             if hasattr(self, "_initialized"):
-                error_msg = f"Cannot modify immutable object attribute '{name}'"
+                error_msg: str = f"Cannot modify immutable object attribute '{name}'"
                 raise AttributeError(error_msg)
             super().__setattr__(name, value)
 
@@ -192,7 +193,7 @@ def immutable(cls: type) -> type:
     return ImmutableWrapper
 
 
-def pure(func: object) -> object:
+def pure[T](func: T) -> T:
     """Mark function as pure with validation and caching.
 
     Implements functional purity through:
@@ -247,17 +248,15 @@ def pure(func: object) -> object:
         else:
             return result
 
-    # Copy function metadata manually to avoid wraps issues
-    pure_wrapper.__name__ = getattr(func, "__name__", "pure_wrapper")
-    pure_wrapper.__doc__ = getattr(func, "__doc__", pure_wrapper.__doc__)
-    pure_wrapper.__module__ = getattr(func, "__module__", __name__)
+    # Use functools.wraps to properly preserve function metadata
+    pure_wrapper = wraps(func)(pure_wrapper)
 
     # Mark function as pure for introspection
     pure_wrapper.__pure__ = True  # type: ignore[attr-defined]
     pure_wrapper.__cache_size__ = lambda: len(cache)  # type: ignore[attr-defined]
     pure_wrapper.__clear_cache__ = cache.clear  # type: ignore[attr-defined]
 
-    return pure_wrapper
+    return pure_wrapper  # type: ignore[return-value]
 
 
 # =============================================================================
@@ -324,7 +323,7 @@ class ValidatedModel(
             age=25,
             email="jane@example.com"
         )
-        if result.is_success:
+        if result.success:
             profile = result.data
             print(f"Created profile: {profile.name}")
         else:
@@ -349,7 +348,7 @@ class ValidatedModel(
                 loc = ".".join(str(x) for x in error["loc"])
                 msg = error["msg"]
                 errors.append(f"{loc}: {msg}")
-            error_msg = f"Invalid data: {'; '.join(errors)}"
+            error_msg: str = f"Invalid data: {'; '.join(errors)}"
             raise FlextValidationError(
                 error_msg,
                 validation_details={"errors": errors},
@@ -360,7 +359,7 @@ class ValidatedModel(
     # - Serialization methods from FlextSerializableMixin
 
     @classmethod
-    def create(cls, **data: object) -> FlextResult[ValidatedModel]:
+    def create(cls, **data: object) -> FlextResult[Self]:
         """Create instance returning Result instead of raising."""
         try:
             instance = cls(**data)
@@ -617,7 +616,7 @@ def require_non_empty(value: object, message: str = "Value cannot be empty") -> 
 
 
 # Export API
-__all__ = [
+__all__: list[str] = [
     # Base classes
     "ValidatedModel",
     "immutable",

@@ -87,7 +87,7 @@ from flext_core import ensure_result
 
 # Com valor regular
 result = ensure_result("data")
-assert result.is_success
+assert result.success
 
 # Com FlextResult existente (não modifica)
 existing = FlextResult.ok("data")

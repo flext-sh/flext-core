@@ -96,7 +96,7 @@ class _BaseValidationDecorators:
 
     @staticmethod
     def create_validation_decorator(
-        validator: TValidator,
+        validator: TValidator[object],
     ) -> Callable[[_DecoratedFunction], _DecoratedFunction]:
         """Create input validation decorator."""
         return _validate_input_decorator(validator)
@@ -328,7 +328,7 @@ def _timing_decorator(func: _DecoratedFunction) -> _DecoratedFunction:
 
 
 def _validate_input_decorator(
-    validator: TValidator,
+    validator: TValidator[object],
 ) -> Callable[[_DecoratedFunction], _DecoratedFunction]:
     """Validate function input arguments.
 
@@ -381,7 +381,7 @@ class _BaseDecoratorFactory:
 
     @staticmethod
     def create_validation_decorator(
-        validator: TValidator,
+        validator: TValidator[object],
     ) -> Callable[[_DecoratedFunction], _DecoratedFunction]:
         """Create input validation decorator."""
         return _validate_input_decorator(validator)
@@ -419,7 +419,9 @@ def _cache_decorator(
                 oldest_key = next(iter(cache))
                 del cache[oldest_key]
 
-            cache[cache_key] = result
+            # Only cache values that match TAnyDict value types
+            if isinstance(result, str | int | float | bool | type(None)):
+                cache[cache_key] = result
             return result
 
         return _BaseDecoratorUtils.preserve_metadata(func, wrapper)

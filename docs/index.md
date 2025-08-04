@@ -35,7 +35,7 @@ result = (
     .flat_map(lambda x: save_to_database(x))
 )
 
-if result.is_success:
+if result.success:
     print(f"Success: {result.data}")
 else:
     print(f"Error: {result.error}")

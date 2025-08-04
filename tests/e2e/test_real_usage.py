@@ -82,12 +82,12 @@ class TestRealUsagePatterns:
 
         result = service.fetch_user("user-123")
 
-        # Production code checks is_success first
-        assert result.is_success
+        # Production code checks success first
+        assert result.success
         user = result.data
         assert user is not None
         if user.name != "John Doe":
-            msg = f"Expected {'John Doe'}, got {user.name}"
+            msg: str = f"Expected {'John Doe'}, got {user.name}"
             raise AssertionError(msg)
         assert user.id == "user-123"
 
@@ -104,7 +104,7 @@ class TestRealUsagePatterns:
         assert result.error is not None
         assert result.error
         if "not found" not in (result.error or ""):
-            msg = f"Expected 'not found' in {result.error}"
+            msg: str = f"Expected 'not found' in {result.error}"
             raise AssertionError(msg)
 
     def test_chained_operations(self) -> None:
@@ -117,13 +117,13 @@ class TestRealUsagePatterns:
             "new-user",
             "New User",
         )
-        assert create_result.is_success
+        assert create_result.success
 
         fetch_result = service.fetch_user("new-user")
-        assert fetch_result.is_success
+        assert fetch_result.success
         assert fetch_result.data is not None
         if fetch_result.data.name != "New User":
-            msg = f"Expected {'New User'}, got {fetch_result.data.name}"
+            msg: str = f"Expected {'New User'}, got {fetch_result.data.name}"
             raise AssertionError(msg)
 
     def test_error_handling_patterns(self) -> None:
@@ -139,15 +139,15 @@ class TestRealUsagePatterns:
         assert duplicate_result.is_failure
         assert duplicate_result.error is not None
         if "already exists" not in duplicate_result.error:
-            msg = f"Expected {'already exists'} in {duplicate_result.error}"
+            msg: str = f"Expected {'already exists'} in {duplicate_result.error}"
             raise AssertionError(msg)
 
         # Original user should be unchanged
         original_result = service.fetch_user("user-123")
-        assert original_result.is_success
+        assert original_result.success
         assert original_result.data is not None
         if original_result.data.name != "John Doe":
-            msg = f"Expected {'John Doe'}, got {original_result.data.name}"
+            msg: str = f"Expected {'John Doe'}, got {original_result.data.name}"
             raise AssertionError(msg)
 
     def test_dependency_injection_basic_usage(self) -> None:
@@ -160,12 +160,12 @@ class TestRealUsagePatterns:
         # Register dependencies (application startup pattern)
         database = MockDatabase()
         register_db_result = container.register("database", database)
-        assert register_db_result.is_success
+        assert register_db_result.success
 
         # Register service with dependencies
         def create_user_service() -> UserService:
             db_result = container.get("database")
-            assert db_result.is_success
+            assert db_result.success
             assert isinstance(db_result.data, MockDatabase)
             return UserService(db_result.data)
 
@@ -173,19 +173,19 @@ class TestRealUsagePatterns:
             "user_service",
             create_user_service,
         )
-        assert register_service_result.is_success
+        assert register_service_result.success
 
         # Use service (application runtime pattern)
         service_result = container.get("user_service")
-        assert service_result.is_success
+        assert service_result.success
 
         service = service_result.data
         assert isinstance(service, UserService)
         user_result = service.fetch_user("user-123")
-        assert user_result.is_success
+        assert user_result.success
         assert user_result.data is not None
         if user_result.data.name != "John Doe":
-            msg = f"Expected {'John Doe'}, got {user_result.data.name}"
+            msg: str = f"Expected {'John Doe'}, got {user_result.data.name}"
             raise AssertionError(msg)
 
     def test_global_container_usage(self) -> None:
@@ -195,14 +195,14 @@ class TestRealUsagePatterns:
 
         database = MockDatabase()
         register_result = container.register("global_database", database)
-        assert register_result.is_success
+        assert register_result.success
 
         # Access from anywhere in application
         container2 = get_flext_container()
         assert container2 is container  # Same instance
 
         db_result = container2.get("global_database")
-        assert db_result.is_success
+        assert db_result.success
         assert db_result.data is database
 
     def test_entity_id_type_safety(self) -> None:
@@ -215,13 +215,13 @@ class TestRealUsagePatterns:
 
         # FlextEntityId works seamlessly with services
         create_result = service.create_user(user_id, "Typed User")
-        assert create_result.is_success
+        assert create_result.success
 
         fetch_result = service.fetch_user(user_id)
-        assert fetch_result.is_success
+        assert fetch_result.success
         assert fetch_result.data is not None
         if fetch_result.data.id != user_id:
-            msg = f"Expected {user_id}, got {fetch_result.data.id}"
+            msg: str = f"Expected {user_id}, got {fetch_result.data.id}"
             raise AssertionError(msg)
 
     def test_validation_patterns(self) -> None:
@@ -236,7 +236,7 @@ class TestRealUsagePatterns:
         # Service should handle validation (business logic)
         # This is a simplified example - real validation would be more
         # sophisticated
-        assert result.is_success or result.is_failure  # Either outcome is valid
+        assert result.success or result.is_failure  # Either outcome is valid
 
     def test_service_factory_pattern(self) -> None:
         """Test service factory pattern (enterprise usage)."""
@@ -253,12 +253,12 @@ class TestRealUsagePatterns:
             "complex_service",
             create_complex_service,
         )
-        assert register_result.is_success
+        assert register_result.success
 
         # Factory is called only once
         service1_result = container.get("complex_service")
         service2_result = container.get("complex_service")
 
-        assert service1_result.is_success
-        assert service2_result.is_success
+        assert service1_result.success
+        assert service2_result.success
         assert service1_result.data is service2_result.data  # Same instance

@@ -208,8 +208,8 @@ class TestFlextResultValidation:
         is_valid = True
         result = FlextResult.ok(is_valid)
 
-        if not (result.is_success):
-            raise AssertionError(f"Expected True, got {result.is_success}")
+        if not result.success:
+            raise AssertionError(f"Expected True, got {result.success}")
         assert result.data is True
         assert result.error is None
 
@@ -217,8 +217,8 @@ class TestFlextResultValidation:
         """Test creating failed validation result."""
         result: FlextResult[object] = FlextResult.fail("Validation failed")
 
-        if result.is_success:
-            raise AssertionError(f"Expected False, got {result.is_success}")
+        if result.success:
+            raise AssertionError(f"Expected False, got {result.success}")
         if not (result.is_failure):
             raise AssertionError(f"Expected True, got {result.is_failure}")
         assert result.data is None
@@ -238,7 +238,7 @@ class TestFlextResultValidation:
 
         # Test successful validation
         result = validate_email("test@example.com")
-        assert result.is_success
+        assert result.success
         if result.data != "test@example.com":
             raise AssertionError(f"Expected {'test@example.com'}, got {result.data}")
 
@@ -301,7 +301,7 @@ class TestValidationIntegration:
             "roles": ["user", "REDACTED_LDAP_BIND_PASSWORD"],
         }
         result = validate_user_data(valid_data)
-        assert result.is_success
+        assert result.success
         if result.data != valid_data:
             raise AssertionError(f"Expected {valid_data}, got {result.data}")
 
@@ -378,7 +378,7 @@ class TestValidationIntegration:
 
         # Test successful validation
         result = validate_all_steps("test123")
-        assert result.is_success
+        assert result.success
         if result.data != "TEST123":
             raise AssertionError(f"Expected {'TEST123'}, got {result.data}")
 

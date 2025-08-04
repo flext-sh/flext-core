@@ -77,7 +77,7 @@ class TraditionalOracleService:
             "host": self.host,
             "port": self.port,
             "initialized": self._initialized,
-            "config_valid": self.validate_config().is_success,
+            "config_valid": self.validate_config().success,
         }
 
 
@@ -156,7 +156,7 @@ def demonstrate_boilerplate_reduction() -> None:
         return
 
     query_result = traditional_service.execute_query("SELECT * FROM users")
-    if query_result.is_success:
+    if query_result.success:
         print(f"   ✅ Query executed: {query_result.data}")
     else:
         print(f"   ❌ Query failed: {query_result.error}")
@@ -173,13 +173,13 @@ def demonstrate_boilerplate_reduction() -> None:
 
     # Automatic validation and error handling
     operation_result = enhanced_service.execute()
-    if operation_result.is_success:
+    if operation_result.success:
         print(f"   ✅ Service ready: {operation_result.data}")
     else:
         print(f"   ❌ Service failed: {operation_result.error}")
 
     query_result = enhanced_service.execute_query("SELECT * FROM users")
-    if query_result.is_success:
+    if query_result.success:
         print(f"   ✅ Query executed: {query_result.data}")
     else:
         print(f"   ❌ Query failed: {query_result.error}")
@@ -275,14 +275,14 @@ def demonstrate_ldap_service() -> None:
 
     # Test connection
     connection_result = ldap_service.execute()
-    if connection_result.is_success:
+    if connection_result.success:
         print(f"✅ LDAP connected: {connection_result.data}")
     else:
         print(f"❌ LDAP connection failed: {connection_result.error}")
 
     # Search users
     search_result = ldap_service.search_users("(objectClass=person)")
-    if search_result.is_success:
+    if search_result.success:
         print(f"✅ Users found: {search_result.data}")
     else:
         print(f"❌ Search failed: {search_result.error}")

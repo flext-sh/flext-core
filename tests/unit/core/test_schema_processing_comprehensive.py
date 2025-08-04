@@ -246,7 +246,7 @@ class TestConfigAttributeValidator:
         result = ConfigAttributeValidator.validate_required_attributes(
             config, ["attr1", "attr2"]
         )
-        assert result.is_success
+        assert result.success
         assert result.data is True
 
     def test_validate_required_attributes_failure(self) -> None:
@@ -262,7 +262,7 @@ class TestConfigAttributeValidator:
         result = ConfigAttributeValidator.validate_required_attributes(
             config, ["attr1", "attr2", "attr3"]
         )
-        assert not result.is_success
+        assert not result.success
         assert "Missing required attributes" in result.error or ""
         assert "attr2" in result.error or ""
         assert "attr3" in result.error or ""
@@ -303,7 +303,7 @@ class TestBaseConfigManager:
         manager = BaseConfigManager(config)
 
         result = manager.validate_config(["attr1", "attr2"])
-        assert result.is_success
+        assert result.success
         assert result.data is True
 
     def test_validate_config_no_requirements(self) -> None:
@@ -312,7 +312,7 @@ class TestBaseConfigManager:
         manager = BaseConfigManager(config)
 
         result = manager.validate_config()
-        assert result.is_success
+        assert result.success
         assert result.data is True
 
     def test_validate_config_failure(self) -> None:
@@ -327,7 +327,7 @@ class TestBaseConfigManager:
         manager = BaseConfigManager(config)
 
         result = manager.validate_config(["attr1", "missing_attr"])
-        assert not result.is_success
+        assert not result.success
 
 
 class TestBaseProcessor:
@@ -350,7 +350,7 @@ class TestBaseProcessor:
         processor = MockProcessor()
         result = processor.extract_entry_info("test content 123", "test_type")
 
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         assert result.data.entry_type == "test_type"
         assert result.data.identifier == "id_123"
@@ -363,7 +363,7 @@ class TestBaseProcessor:
             "prefix: test content 456", "test_type", "prefix"
         )
 
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         assert result.data.clean_content == "test content 456"
 
@@ -372,7 +372,7 @@ class TestBaseProcessor:
         processor = MockProcessor()
         result = processor.extract_entry_info("invalid content", "test_type")
 
-        assert not result.is_success
+        assert not result.success
         assert "Failed to extract identifier" in result.error or ""
 
     def test_extract_entry_info_creation_failure(self) -> None:
@@ -380,7 +380,7 @@ class TestBaseProcessor:
         processor = MockProcessor()
         result = processor.extract_entry_info("fail_create content 789", "test_type")
 
-        assert not result.is_success
+        assert not result.success
 
     def test_extract_entry_info_validator_not_whitelisted(self) -> None:
         """Test entry extraction with validator rejection."""
@@ -388,7 +388,7 @@ class TestBaseProcessor:
         processor = MockProcessor(validator)
         result = processor.extract_entry_info("test content 123", "test_type")
 
-        assert not result.is_success
+        assert not result.success
         assert "not whitelisted" in result.error or ""
 
     def test_extract_entry_info_validator_not_valid(self) -> None:
@@ -397,7 +397,7 @@ class TestBaseProcessor:
         processor = MockProcessor(validator)
         result = processor.extract_entry_info("test content 123", "test_type")
 
-        assert not result.is_success
+        assert not result.success
         assert "Entry validation failed" in result.error or ""
 
     def test_process_content_lines_success(self) -> None:
@@ -410,7 +410,7 @@ class TestBaseProcessor:
         ]
 
         result = processor.process_content_lines(lines, "test_type")
-        assert result.is_success
+        assert result.success
         assert len(result.data or []) == 3
 
     def test_process_content_lines_with_empty_lines(self) -> None:
@@ -424,7 +424,7 @@ class TestBaseProcessor:
         ]
 
         result = processor.process_content_lines(lines, "test_type")
-        assert result.is_success
+        assert result.success
         assert len(result.data or []) == 2
 
     def test_process_content_lines_partial_failure(self) -> None:
@@ -437,7 +437,7 @@ class TestBaseProcessor:
         ]
 
         result = processor.process_content_lines(lines, "test_type")
-        assert result.is_success  # Partial success allowed
+        assert result.success  # Partial success allowed
         assert len(result.data or []) == 2
 
     def test_process_content_lines_all_failure(self) -> None:
@@ -449,7 +449,7 @@ class TestBaseProcessor:
         ]
 
         result = processor.process_content_lines(lines, "test_type")
-        assert not result.is_success
+        assert not result.success
         assert "All entries failed" in result.error or ""
 
     def test_get_extracted_entries(self) -> None:
@@ -486,7 +486,7 @@ class TestRegexProcessor:
         processor = ConcreteRegexProcessor(r"id:(\w+)")
         result = processor._extract_identifier("content with id:test123 here")
 
-        assert result.is_success
+        assert result.success
         assert result.data == "test123"
 
     def test_extract_identifier_no_match(self) -> None:
@@ -494,7 +494,7 @@ class TestRegexProcessor:
         processor = ConcreteRegexProcessor(r"id:(\w+)")
         result = processor._extract_identifier("content without identifier")
 
-        assert not result.is_success
+        assert not result.success
         assert "No identifier found" in result.error or ""
 
 
@@ -548,7 +548,7 @@ class TestBaseFileWriter:
         output_file = Mock()
 
         result = writer.write_entries(output_file, entries)
-        assert result.is_success
+        assert result.success
         assert len(writer.written_entries) == 3
 
     def test_write_entries_failure(self) -> None:
@@ -558,7 +558,7 @@ class TestBaseFileWriter:
         output_file = Mock()
 
         result = writer.write_entries(output_file, entries)
-        assert not result.is_success
+        assert not result.success
         assert "Failed to write entries" in result.error or ""
 
 
@@ -594,7 +594,7 @@ class TestProcessingPipeline:
         pipeline.add_step(step1).add_step(step2)
         result = pipeline.process("hello")
 
-        assert result.is_success
+        assert result.success
         assert result.data == "processed_HELLO"
 
     def test_process_failure(self) -> None:
@@ -610,7 +610,7 @@ class TestProcessingPipeline:
         pipeline.add_step(step1).add_step(step2)
         result = pipeline.process("hello")
 
-        assert not result.is_success
+        assert not result.success
         assert result.error == "Processing failed"
 
     def test_process_empty_pipeline(self) -> None:
@@ -618,7 +618,7 @@ class TestProcessingPipeline:
         pipeline = ProcessingPipeline[str, str]()
         result = pipeline.process("hello")
 
-        assert result.is_success
+        assert result.success
         assert result.data == "hello"
 
 

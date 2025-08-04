@@ -214,7 +214,7 @@ def process_user_registration(data: TUserData) -> FlextResult[TAnyObject]:
         )
     )
 
-    if result.is_success:
+    if result.success:
         print("🎉 Registration completed successfully!")
         return FlextResult.ok(result.data if isinstance(result.data, dict) else {})
     print(f"❌ Registration failed: {result.error}")
@@ -236,7 +236,7 @@ def process_multiple_users(
         print(f"\n--- Processing user {i + 1}/{len(users_data)} ---")
         result = process_user_registration(user_data)
 
-        if result.is_success:
+        if result.success:
             results.append(result.data)
             successful += 1
         else:
@@ -281,7 +281,7 @@ def process_with_retry(
         print(f"   Attempt {attempt}/{max_retries}")
         result = process_user_registration(data)
 
-        if result.is_success:
+        if result.success:
             print(f"✅ Succeeded on attempt {attempt}")
             return result
 
@@ -341,7 +341,7 @@ def demo_successful_registration() -> None:
     }
 
     result = process_user_registration(valid_user)
-    if result.is_success:
+    if result.success:
         print(f"✅ Success: {json.dumps(result.data, indent=2)}")
     else:
         print(f"❌ Failed: {result.error}")
@@ -356,7 +356,7 @@ def demo_validation_failure() -> None:
     invalid_user: TUserData = {"name": "", "email": "not-an-email", "age": 15}
 
     result = process_user_registration(invalid_user)
-    if result.is_success:
+    if result.success:
         print(f"✅ Success: {result.data}")
     else:
         print(f"❌ Expected failure: {result.error}")
@@ -377,7 +377,7 @@ def demo_batch_processing() -> None:
     ]
 
     result = process_multiple_users(users_batch)
-    if result.is_success:
+    if result.success:
         print("✅ Batch processing completed!")
 
 
@@ -391,7 +391,7 @@ def demo_json_transformation() -> None:
 
     result = transform_user_data(json_data).flat_map(process_user_registration)
 
-    if result.is_success:
+    if result.success:
         data = result.data
         if isinstance(data, dict) and "user" in data and isinstance(data["user"], dict):
             user_name = data["user"].get("name", "Unknown")
@@ -415,7 +415,7 @@ def demo_retry_pattern() -> None:
     }
 
     result = process_with_retry(retry_user, max_retries=3)
-    if result.is_success:
+    if result.success:
         print("✅ Retry pattern success!")
 
 

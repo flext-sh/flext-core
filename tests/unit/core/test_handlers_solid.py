@@ -49,21 +49,21 @@ class TestSOLIDPrinciples:
         )
 
         # Query handler with authorizer
-        query_handler = FlextHandlers.QueryHandler(
-            handler_name="test_query", authorizer=authorizer
+        query_handler: FlextHandlers.QueryHandler[object, object] = (
+            FlextHandlers.QueryHandler(handler_name="test_query", authorizer=authorizer)
         )
 
         # Test validation works
         long_message = "x" * 101
         validation_result = command_handler.validate_command(long_message)
         assert validation_result.is_failure
-        assert "too long" in validation_result.error
+        assert "too long" in (validation_result.error or "")
 
         # Test authorization works
         REDACTED_LDAP_BIND_PASSWORD_query = {"REDACTED_LDAP_BIND_PASSWORD_only": True}
         auth_result = query_handler.authorize_query(REDACTED_LDAP_BIND_PASSWORD_query)
         assert auth_result.is_failure
-        assert "Admin access required" in auth_result.error
+        assert "Admin access required" in (auth_result.error or "")
 
     def test_single_responsibility_principle(self) -> None:
         """Test SRP - each handler has single responsibility."""
@@ -73,11 +73,11 @@ class TestSOLIDPrinciples:
 
         # It handles commands
         result = command_handler.handle("test_command")
-        assert result.is_success
+        assert result.success
 
         # It validates commands (single responsibility)
         validation_result = command_handler.validate_command("test")
-        assert validation_result.is_success
+        assert validation_result.success
 
         # It provides metrics (single responsibility)
         metrics = command_handler.get_metrics()
@@ -101,7 +101,7 @@ class TestSOLIDPrinciples:
         # Original handler works as before
         original_handler = FlextHandlers.CommandHandler("original")
         result = original_handler.handle("normal_command")
-        assert result.is_success
+        assert result.success
         assert result.data == "normal_command"
 
         # Extended handler adds functionality without breaking original
@@ -109,12 +109,12 @@ class TestSOLIDPrinciples:
 
         # Normal command works
         normal_result = extended_handler.handle("normal_command")
-        assert normal_result.is_success
+        assert normal_result.success
 
         # Special command gets extended handling
         special_result = extended_handler.handle("SPECIAL_test")
-        assert special_result.is_success
-        assert "Special handling" in special_result.data
+        assert special_result.success
+        assert "Special handling" in str(special_result.data or "")
 
     def test_dependency_inversion_principle(self) -> None:
         """Test DIP - handlers depend on abstractions, not concretions."""
@@ -144,7 +144,7 @@ class TestSOLIDPrinciples:
         # Validation uses injected dependency
         validation_result = handler.validate_command("test")
         assert validation_result.is_failure
-        assert "Mock validation failed" in validation_result.error
+        assert "Mock validation failed" in (validation_result.error or "")
 
         # Metrics use injected dependency
         metrics = handler.get_metrics()
@@ -169,13 +169,13 @@ class TestSOLIDPrinciples:
         # Base handler works
         base_handler = FlextHandlers.CommandHandler("base")
         base_result = process_with_any_handler(base_handler, "test")
-        assert base_result.is_success
+        assert base_result.success
 
         # Derived handler can substitute base handler
         special_handler = SpecialCommandHandler("special")
         special_result = process_with_any_handler(special_handler, "test")
-        assert special_result.is_success
-        assert "SPECIAL:" in special_result.data
+        assert special_result.success
+        assert "SPECIAL:" in str(special_result.data or "")
 
         # Both handlers have same interface contracts
         assert hasattr(base_handler, "handle_with_hooks")
@@ -196,7 +196,7 @@ class TestSOLIDPrinciples:
 
         # Process successful command
         result = handler.handle_with_hooks("success_command")
-        assert result.is_success
+        assert result.success
 
         # Metrics updated
         updated_metrics = handler.get_metrics()
@@ -295,31 +295,35 @@ class TestSOLIDIntegration:
             metrics_collector=metrics,
         )
 
-        query_handler = FlextHandlers.QueryHandler(
-            handler_name="production_query", authorizer=authorizer
+        query_handler: FlextHandlers.QueryHandler[object, object] = (
+            FlextHandlers.QueryHandler(
+                handler_name="production_query", authorizer=authorizer
+            )
         )
 
         # Test complete workflow
         # 1. Command processing with validation
         valid_command = "valid_command_data"
         cmd_result = command_handler.handle_with_hooks(valid_command)
-        assert cmd_result.is_success
+        assert cmd_result.success
 
         # 2. Invalid command rejected
         invalid_command = ""
         invalid_result = command_handler.handle_with_hooks(invalid_command)
         assert invalid_result.is_failure
+        assert invalid_result.error is not None
         assert "empty" in invalid_result.error
 
         # 3. Query processing with authorization
         authorized_query = {"user_level": 5, "data": "query_data"}
         query_result = query_handler.pre_handle(authorized_query)
-        assert query_result.is_success
+        assert query_result.success
 
         # 4. Unauthorized query rejected
         unauthorized_query = {"user_level": 0, "data": "secret_data"}
         unauth_result = query_handler.pre_handle(unauthorized_query)
         assert unauth_result.is_failure
+        assert unauth_result.error is not None
         assert "Insufficient user level" in unauth_result.error
 
         # 5. Metrics include production data
@@ -327,4 +331,6 @@ class TestSOLIDIntegration:
         assert "environment" in cmd_metrics
         assert cmd_metrics["environment"] == "production"
         assert "version" in cmd_metrics
-        assert cmd_metrics["commands_processed"] >= 1
+        processed_count = cmd_metrics.get("commands_processed", 0)
+        assert isinstance(processed_count, int)
+        assert processed_count >= 1

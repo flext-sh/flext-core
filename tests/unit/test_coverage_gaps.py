@@ -37,7 +37,7 @@ class TestCoverageGaps:
         settings = TestSettings()
         assert settings is not None
         if settings.debug:
-            msg = f"Expected False, got {settings.debug}"
+            msg: str = f"Expected False, got {settings.debug}"
             raise AssertionError(msg)
         assert settings.timeout == 30
 
@@ -46,7 +46,9 @@ class TestCoverageGaps:
         assert FlextConstants.DEFAULT_TIMEOUT > 0
         assert FlextConstants.VERSION is not None
         if FlextEnvironment.PRODUCTION.value != "production":
-            msg = f"Expected {'production'}, got {FlextEnvironment.PRODUCTION.value}"
+            msg: str = (
+                f"Expected {'production'}, got {FlextEnvironment.PRODUCTION.value}"
+            )
             raise AssertionError(msg)
         assert FlextLogLevel.INFO.value == "INFO"
 
@@ -56,32 +58,32 @@ class TestCoverageGaps:
 
         # Test empty service name
         result = container.register("", lambda: "test")
-        assert not result.is_success
+        assert not result.success
 
         # Test missing service
         result = container.get("nonexistent")
-        assert not result.is_success
+        assert not result.success
 
     def test_payload_basics(self) -> None:
         """Test basic payload functionality."""
         payload = FlextPayload()
         result = payload.get("missing", "default")
         if result != "default":
-            msg = f"Expected {'default'}, got {result}"
+            msg: str = f"Expected {'default'}, got {result}"
             raise AssertionError(msg)
 
         payload_with_data = FlextPayload(key="value")
         if payload_with_data.get("key") != "value":
-            msg = f"Expected {'value'}, got {payload_with_data.get('key')}"
+            msg: str = f"Expected {'value'}, got {payload_with_data.get('key')}"
             raise AssertionError(msg)
 
     def test_result_edge_cases(self) -> None:
         """Test result edge cases."""
         result = FlextResultDirect.ok(None)
-        assert result.is_success
+        assert result.success
 
         result = FlextResultDirect.fail("")
-        assert not result.is_success
+        assert not result.success
 
     def test_types_system_basic(self) -> None:
         """Test basic types system functionality."""

@@ -9,7 +9,11 @@ configuration management to achieve near 100% coverage.
 from __future__ import annotations
 
 import contextlib
+from typing import TYPE_CHECKING
 from unittest.mock import Mock, patch
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 import pytest
 
@@ -144,11 +148,11 @@ class TestFlextCoreContainerIntegration:
         """Test successful service registration."""
         result = clean_flext_core.register_service(service_key, mock_service)
 
-        assert result.is_success
+        assert result.success
 
         # Verify registration worked
         retrieval_result = clean_flext_core.get_service(service_key)
-        assert retrieval_result.is_success
+        assert retrieval_result.success
         assert retrieval_result.data is mock_service
 
     def test_register_service_typed_keys(self, clean_flext_core: FlextCore) -> None:
@@ -157,11 +161,11 @@ class TestFlextCoreContainerIntegration:
         user_key = ServiceKey[UserService]("user_service")
 
         result = clean_flext_core.register_service(user_key, user_service)
-        assert result.is_success
+        assert result.success
 
         # Retrieve and verify type safety
         retrieval_result = clean_flext_core.get_service(user_key)
-        assert retrieval_result.is_success
+        assert retrieval_result.success
         retrieved_service = retrieval_result.data
         assert isinstance(retrieved_service, UserService)
         if retrieved_service.name != "prod_user_service":
@@ -181,7 +185,7 @@ class TestFlextCoreContainerIntegration:
 
         result = clean_flext_core.get_service(service_key)
 
-        assert result.is_success
+        assert result.success
         assert result.data is mock_service
 
     def test_get_service_not_found(
@@ -194,6 +198,7 @@ class TestFlextCoreContainerIntegration:
         result = clean_flext_core.get_service(non_existent_key)
 
         assert result.is_failure
+        assert result.error is not None
         if "not found" not in result.error.lower():
             raise AssertionError(f"Expected {'not found'} in {result.error.lower()}")
 
@@ -208,15 +213,15 @@ class TestFlextCoreContainerIntegration:
         user_result = clean_flext_core.register_service(user_key, user_service)
         data_result = clean_flext_core.register_service(data_key, data_service)
 
-        assert user_result.is_success
-        assert data_result.is_success
+        assert user_result.success
+        assert data_result.success
 
         # Both services should be retrievable
         user_retrieval = clean_flext_core.get_service(user_key)
         data_retrieval = clean_flext_core.get_service(data_key)
 
-        assert user_retrieval.is_success
-        assert data_retrieval.is_success
+        assert user_retrieval.success
+        assert data_retrieval.success
         assert isinstance(user_retrieval.data, UserService)
         assert isinstance(data_retrieval.data, DataService)
 
@@ -316,7 +321,7 @@ class TestFlextCoreLogging:
         service_key = ServiceKey[UserService]("user_service")
         result = clean_flext_core.register_service(service_key, service)
 
-        assert result.is_success
+        assert result.success
 
         # Logger should still work
         if logger._name != "service.integration":
@@ -334,7 +339,7 @@ class TestFlextCoreResultPatterns:
         result = clean_flext_core.ok("success_value")
 
         assert isinstance(result, FlextResult)
-        assert result.is_success
+        assert result.success
         if result.data != "success_value":
             raise AssertionError(f"Expected {'success_value'}, got {result.data}")
 
@@ -342,31 +347,31 @@ class TestFlextCoreResultPatterns:
         """Test ok method with different data types."""
         # String
         str_result = clean_flext_core.ok("test")
-        assert str_result.is_success
+        assert str_result.success
         if str_result.data != "test":
             raise AssertionError(f"Expected {'test'}, got {str_result.data}")
 
         # Integer
         int_result = clean_flext_core.ok(42)
-        assert int_result.is_success
+        assert int_result.success
         if int_result.data != 42:
             raise AssertionError(f"Expected {42}, got {int_result.data}")
 
         # List
         list_result = clean_flext_core.ok([1, 2, 3])
-        assert list_result.is_success
+        assert list_result.success
         if list_result.data != [1, 2, 3]:
             raise AssertionError(f"Expected {[1, 2, 3]}, got {list_result.data}")
 
         # Dict
         dict_result = clean_flext_core.ok({"key": "value"})
-        assert dict_result.is_success
+        assert dict_result.success
         if dict_result.data != {"key": "value"}:
             raise AssertionError(f'Expected {{"key": "value"}}, got {dict_result.data}')
 
     def test_fail_static_method(self, clean_flext_core: FlextCore) -> None:
         """Test fail static method."""
-        result = clean_flext_core.fail("error_message")
+        result: FlextResult[object] = clean_flext_core.fail("error_message")
 
         assert isinstance(result, FlextResult)
         assert result.is_failure
@@ -375,12 +380,14 @@ class TestFlextCoreResultPatterns:
 
     def test_fail_with_different_messages(self, clean_flext_core: FlextCore) -> None:
         """Test fail method with different error messages."""
-        error1 = clean_flext_core.fail("Simple error")
+        error1: FlextResult[object] = clean_flext_core.fail("Simple error")
         assert error1.is_failure
         if error1.error != "Simple error":
             raise AssertionError(f"Expected {'Simple error'}, got {error1.error}")
 
-        error2 = clean_flext_core.fail("Complex error with details")
+        error2: FlextResult[object] = clean_flext_core.fail(
+            "Complex error with details"
+        )
         assert error2.is_failure
         if error2.error != "Complex error with details":
             raise AssertionError(
@@ -388,7 +395,7 @@ class TestFlextCoreResultPatterns:
             )
 
         # Empty error should be handled
-        error3 = clean_flext_core.fail("")
+        error3: FlextResult[object] = clean_flext_core.fail("")
         assert error3.is_failure
         # FlextResult handles empty errors
         if error3.error != "Unknown error occurred":
@@ -400,11 +407,11 @@ class TestFlextCoreResultPatterns:
         """Test result pattern integration."""
         # Chain ok and fail operations
         success = clean_flext_core.ok("initial")
-        failure = clean_flext_core.fail("failed operation")
+        failure: FlextResult[object] = clean_flext_core.fail("failed operation")
 
         # Should be able to chain
         chained_success = success.map(lambda x: f"processed {x}")
-        assert chained_success.is_success
+        assert chained_success.success
         if chained_success.data != "processed initial":
             raise AssertionError(
                 f"Expected {'processed initial'}, got {chained_success.data}"
@@ -427,10 +434,12 @@ class TestFlextCoreRailwayProgramming:
         """Test pipe with successful pipeline."""
 
         def add_one(x: object) -> FlextResult[object]:
-            return FlextResult.ok(int(x) + 1)
+            assert isinstance(x, int)
+            return FlextResult.ok(x + 1)
 
         def multiply_two(x: object) -> FlextResult[object]:
-            return FlextResult.ok(int(x) * 2)
+            assert isinstance(x, int)
+            return FlextResult.ok(x * 2)
 
         def to_string(x: object) -> FlextResult[object]:
             return FlextResult.ok(str(x))
@@ -438,7 +447,7 @@ class TestFlextCoreRailwayProgramming:
         pipeline = clean_flext_core.pipe(add_one, multiply_two, to_string)
         result = pipeline(5)
 
-        assert result.is_success
+        assert result.success
         if result.data != "12":  # (5 + 1) * 2 = 12
             raise AssertionError(f"Expected {'12'}, got {result.data}")
 
@@ -466,7 +475,7 @@ class TestFlextCoreRailwayProgramming:
         pipeline = clean_flext_core.pipe()
         result = pipeline("test_value")
 
-        assert result.is_success
+        assert result.success
         if result.data != "test_value":
             raise AssertionError(f"Expected {'test_value'}, got {result.data}")
 
@@ -479,7 +488,7 @@ class TestFlextCoreRailwayProgramming:
         pipeline = clean_flext_core.pipe(transform)
         result = pipeline("input")
 
-        assert result.is_success
+        assert result.success
         if result.data != "transformed_input":
             raise AssertionError(f"Expected {'transformed_input'}, got {result.data}")
 
@@ -496,7 +505,7 @@ class TestFlextCoreRailwayProgramming:
         composition = clean_flext_core.compose(add_prefix, add_suffix)
         result = composition("middle")
 
-        assert result.is_success
+        assert result.success
         # Right to left: add_suffix first, then add_prefix
         if result.data != "prefix_middle_suffix":
             raise AssertionError(
@@ -518,7 +527,7 @@ class TestFlextCoreRailwayProgramming:
         conditional = clean_flext_core.when(is_positive, double_value, negate_value)
         result = conditional(5)
 
-        assert result.is_success
+        assert result.success
         if result.data != 10:  # Positive, so doubled
             raise AssertionError(f"Expected {10}, got {result.data}")
 
@@ -537,7 +546,7 @@ class TestFlextCoreRailwayProgramming:
         conditional = clean_flext_core.when(is_positive, double_value, negate_value)
         result = conditional(-3)
 
-        assert result.is_success
+        assert result.success
         if result.data != 3:  # Negative, so negated (becomes positive)
             raise AssertionError(f"Expected {3}, got {result.data}")
 
@@ -553,7 +562,7 @@ class TestFlextCoreRailwayProgramming:
         conditional = clean_flext_core.when(is_positive, double_value)
         result = conditional(-3)
 
-        assert result.is_success
+        assert result.success
         if result.data != -3:  # Unchanged when predicate false and no else
             raise AssertionError(f"Expected {-3}, got {result.data}")
 
@@ -570,23 +579,15 @@ class TestFlextCoreRailwayProgramming:
         conditional = clean_flext_core.when(is_positive, double_value)
         result = conditional(-3)
 
-        assert result.is_success
+        assert result.success
         if result.data != -3:  # Unchanged when predicate false and no else
             raise AssertionError(f"Expected {-3}, got {result.data}")
 
-        # Unchanged when predicate false and no else
-        def is_positive(x: int) -> bool:
-            return x > 0
-
-        def double_value(x: int) -> FlextResult[int]:
-            return FlextResult.ok(x * 2)
-
-        conditional = clean_flext_core.when(is_positive, double_value)
-        result = conditional(-3)
-
-        assert result.is_success
-        if result.data != -3:  # Unchanged when predicate false and no else
-            raise AssertionError(f"Expected {-3}, got {result.data}")
+        # Test second case with same functions
+        result2 = conditional(-5)
+        assert result2.success
+        if result2.data != -5:  # Unchanged when predicate false and no else
+            raise AssertionError(f"Expected {-5}, got {result2.data}")
 
     def test_when_exception_handling(self, clean_flext_core: FlextCore) -> None:
         """Test when with exception in predicate."""
@@ -615,7 +616,7 @@ class TestFlextCoreRailwayProgramming:
         tap_func = clean_flext_core.tap(record_value)
         result = tap_func("test_value")
 
-        assert result.is_success
+        assert result.success
         if result.data != "test_value":
             raise AssertionError(f"Expected {'test_value'}, got {result.data}")
         assert side_effect_calls == ["test_value"]
@@ -624,17 +625,19 @@ class TestFlextCoreRailwayProgramming:
         """Test tap function in pipeline."""
         side_effects = []
 
-        def log_step(name: str) -> callable:
+        def log_step(name: str) -> Callable[[object], FlextResult[object]]:
             def logger(x: object) -> None:
                 side_effects.append(f"{name}: {x}")
 
             return clean_flext_core.tap(logger)
 
         def add_ten(x: object) -> FlextResult[object]:
-            return FlextResult.ok(int(x) + 10)
+            assert isinstance(x, int)
+            return FlextResult.ok(x + 10)
 
         def multiply_three(x: object) -> FlextResult[object]:
-            return FlextResult.ok(int(x) * 3)
+            assert isinstance(x, int)
+            return FlextResult.ok(x * 3)
 
         pipeline = clean_flext_core.pipe(
             log_step("start"),
@@ -646,7 +649,7 @@ class TestFlextCoreRailwayProgramming:
 
         result = pipeline(5)
 
-        assert result.is_success
+        assert result.success
         if result.data != 45:  # (5 + 10) * 3
             raise AssertionError(f"Expected {45}, got {result.data}")
         assert side_effects == [
@@ -669,26 +672,26 @@ class TestFlextCoreRailwayProgramming:
                 return FlextResult.ok(x * 2)
             return FlextResult.ok(x)
 
-        def log_value(x: int) -> None:
-            logged_values.append(x)
+        def log_value(x: object) -> None:
+            logged_values.append(int(x) if isinstance(x, int) else x)
 
         # Complex pipeline with conditional logic and side effects
         pipeline = clean_flext_core.pipe(
-            lambda x: validate_positive(int(x)),
+            lambda x: validate_positive(x if isinstance(x, int) else int(x)),  # type: ignore[arg-type,call-overload,return-value]
             clean_flext_core.tap(log_value),
-            lambda x: double_if_even(int(x)),
+            lambda x: double_if_even(x if isinstance(x, int) else int(x)),  # type: ignore[arg-type,call-overload,return-value]
             clean_flext_core.tap(log_value),
         )
 
         # Test with even positive number
         result1 = pipeline(4)
-        assert result1.is_success
+        assert result1.success
         if result1.data != EXPECTED_TOTAL_PAGES:  # 4 * 2
             raise AssertionError(f"Expected {8}, got {result1.data}")
 
         # Test with odd positive number
         result2 = pipeline(3)
-        assert result2.is_success
+        assert result2.success
         if result2.data != EXPECTED_DATA_COUNT:  # unchanged
             raise AssertionError(f"Expected {3}, got {result2.data}")
 
@@ -825,7 +828,7 @@ class TestFlextCoreConvenienceFunction:
         # Should be able to chain operations
         result = flext_core().ok("test").map(lambda x: f"processed_{x}")
 
-        assert result.is_success
+        assert result.success
         if result.data != "processed_test":
             raise AssertionError(f"Expected {'processed_test'}, got {result.data}")
 
@@ -836,15 +839,15 @@ class TestFlextCoreConvenienceFunction:
 
         # Register through convenience function
         register_result = flext_core().register_service(service_key, service)
-        assert register_result.is_success
+        assert register_result.success
 
         # Retrieve through convenience function
         get_result = flext_core().get_service(service_key)
-        assert get_result.is_success
-        if get_result.data.name != "convenience_test":
-            raise AssertionError(
-                f"Expected {'convenience_test'}, got {get_result.data.name}"
-            )
+        assert get_result.success
+        service = get_result.data
+        assert service is not None
+        if service.name != "convenience_test":
+            raise AssertionError(f"Expected {'convenience_test'}, got {service.name}")
 
     def test_convenience_function_logging_access(self) -> None:
         """Test convenience function logging access."""
@@ -877,8 +880,8 @@ class TestFlextCoreIntegration:
         user_reg_result = clean_flext_core.register_service(user_key, user_service)
         data_reg_result = clean_flext_core.register_service(data_key, data_service)
 
-        assert user_reg_result.is_success
-        assert data_reg_result.is_success
+        assert user_reg_result.success
+        assert data_reg_result.success
 
         # 4. Create processing pipeline
         def get_user_data(user_id: str) -> FlextResult[str]:
@@ -886,7 +889,9 @@ class TestFlextCoreIntegration:
             if user_result.is_failure:
                 return FlextResult.fail("User service not available")
 
-            user_data = user_result.data.get_user(user_id)
+            user_service = user_result.data
+            assert user_service is not None
+            user_data = user_service.get_user(user_id)
             return FlextResult.ok(user_data)
 
         def save_user_data(user_data: str) -> FlextResult[bool]:
@@ -894,13 +899,16 @@ class TestFlextCoreIntegration:
             if data_result.is_failure:
                 return FlextResult.fail("Data service not available")
 
-            save_result = data_result.data.save_data(user_data)
+            data_service = data_result.data
+            assert data_service is not None
+
+            save_result = data_service.save_data(user_data)
             return FlextResult.ok(save_result)
 
         # 5. Execute pipeline with railway programming
         logged_steps = []
 
-        def log_step(step_name: str) -> callable:
+        def log_step(step_name: str) -> Callable[[object], object]:
             def logger_func(data: object) -> None:
                 logged_steps.append(f"{step_name}: {data}")
 
@@ -916,7 +924,7 @@ class TestFlextCoreIntegration:
 
         result = pipeline("user123")
 
-        assert result.is_success
+        assert result.success
         if not (result.data):
             raise AssertionError(f"Expected True, got {result.data}")
         if len(logged_steps) != EXPECTED_DATA_COUNT:
@@ -948,7 +956,7 @@ class TestFlextCoreIntegration:
 
         # Test success case
         success_result = pipeline("valid_input")
-        assert success_result.is_success
+        assert success_result.success
         if success_result.data != "saved_processed_valid_input":
             raise AssertionError(
                 f"Expected {'saved_processed_valid_input'}, got {success_result.data}"
@@ -979,11 +987,11 @@ class TestFlextCoreIntegration:
         service_key = ServiceKey[UserService]("configured_service")
         register_result = clean_flext_core.register_service(service_key, user_settings)
 
-        assert register_result.is_success
+        assert register_result.success
 
         # Retrieve and verify it's the same instance
         service_result = clean_flext_core.get_service(service_key)
-        assert service_result.is_success
+        assert service_result.success
         assert service_result.data is user_settings
 
     def test_constants_usage_integration(self, clean_flext_core: FlextCore) -> None:
@@ -1029,16 +1037,16 @@ class TestFlextCoreEdgeCases:
 
         # Should handle various input types
         result1 = empty_pipeline(None)
-        assert result1.is_success
+        assert result1.success
         assert result1.data is None
 
         result2 = empty_pipeline([])
-        assert result2.is_success
+        assert result2.success
         if result2.data != []:
             raise AssertionError(f"Expected {[]}, got {result2.data}")
 
         result3 = empty_pipeline({})
-        assert result3.is_success
+        assert result3.success
         if result3.data != {}:
             raise AssertionError(f"Expected {{}}, got {result3.data}")
 
@@ -1057,14 +1065,14 @@ class TestFlextCoreEdgeCases:
         # Always true
         true_condition = clean_flext_core.when(always_true, success_func)
         result1 = true_condition("test")
-        assert result1.is_success
+        assert result1.success
         if result1.data != "success_test":
             raise AssertionError(f"Expected {'success_test'}, got {result1.data}")
 
         # Always false with no else
         false_condition = clean_flext_core.when(always_false, success_func)
         result2 = false_condition("test")
-        assert result2.is_success
+        assert result2.success
         if result2.data != "test":  # Unchanged
             raise AssertionError(f"Expected {'test'}, got {result2.data}")
 

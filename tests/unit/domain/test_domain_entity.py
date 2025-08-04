@@ -121,7 +121,7 @@ class TestFlextEntityVersioning:
             id="test-id",
             version=1,
         )
-        assert entity_result.is_success
+        assert entity_result.success
         entity = entity_result.data
         assert entity is not None
         updated_entity = entity.with_version(2)
@@ -142,7 +142,7 @@ class TestFlextEntityVersioning:
             id="test-id",
             version=1,
         )
-        assert entity_result.is_success
+        assert entity_result.success
         entity = entity_result.data
         assert entity is not None
         updated_entity = entity.with_version(100)
@@ -304,7 +304,7 @@ class TestFlextEntityValidation:
 
         # Should not raise any exception for valid entity
         result = entity.validate_domain_rules()
-        assert result.is_success
+        assert result.success
 
         # Verify that invalid entities would return failure
         entity_invalid = ConcreteFlextEntity(id="test-id-2", name="")

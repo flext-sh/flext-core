@@ -122,7 +122,7 @@ class UserService:
 
 # Usage with functional composition
 result = user_service.get_user("123")
-if result.is_success:
+if result.success:
     print(f"Found user: {result.data.name}")
 else:
     print(f"Error: {result.error}")
@@ -474,7 +474,7 @@ def create_and_activate_user(name: str, email: str) -> FlextResult[User]:
 
 # Functional composition
 result = create_and_activate_user("John Doe", "john@example.com")
-if result.is_success:
+if result.success:
     user = result.data
     events = user.get_domain_events()
     print(f"Created user {user.name} with {len(events)} events")
@@ -555,7 +555,7 @@ class TestUserServiceMigration:
         old_user = old_service.get_user("existing_user")
         new_result = new_service.get_user("existing_user")
 
-        assert new_result.is_success
+        assert new_result.success
         assert new_result.data.id == old_user.id
         assert new_result.data.name == old_user.name
 ```
@@ -579,7 +579,7 @@ class TestMigrationIntegration:
         new_result = new_container.get("modern_service")
 
         assert old_service is not None
-        assert new_result.is_success
+        assert new_result.success
 ```
 
 ## 📊 Migration Progress Tracking

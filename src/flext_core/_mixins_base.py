@@ -202,7 +202,9 @@ class _BaseSerializableMixin:
                 try:
                     value = getattr(self, attr_name)
                     serialized_value = self._serialize_value(value)
-                    if serialized_value is not None:
+                    if serialized_value is not None and isinstance(
+                        serialized_value, (str, int, float, bool, type(None), dict)
+                    ):
                         result[attr_name] = serialized_value
                 except (AttributeError, TypeError):
                     # Skip attributes that can't be accessed or serialized
@@ -419,8 +421,10 @@ class _BaseCacheableMixin:
             return
 
         self.__ensure_cache_state()
-        self._cache[key] = value
-        self._cache_timestamps[key] = FlextGenerators.generate_timestamp()
+        # Only cache values that match TAnyDict value types
+        if isinstance(value, str | int | float | bool | type(None)):
+            self._cache[key] = value
+            self._cache_timestamps[key] = FlextGenerators.generate_timestamp()
 
     def cache_remove(self, key: str) -> None:
         """Remove cached value."""

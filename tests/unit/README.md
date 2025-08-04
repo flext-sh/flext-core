@@ -86,7 +86,7 @@ def test_should_[behavior]_when_[condition](fixture_name: Type) -> None:
     result = component_under_test.method(parameters)
 
     # Assert
-    assert result.is_success
+    assert result.success
     assert expected_behavior_occurred
 ```
 

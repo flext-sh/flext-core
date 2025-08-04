@@ -157,7 +157,7 @@ class FlextFieldCore(
         )
 
         result = field.validate_value("user@example.com")
-        if result.is_success:
+        if result.success:
             validated_value = result.data
     """
 
@@ -208,7 +208,8 @@ class FlextFieldCore(
     # Metadata
     description: str | None = Field(default=None, description="Field description")
     example: str | int | float | bool | None = Field(
-        default=None, description="Example"
+        default=None,
+        description="Example",
     )
     deprecated: bool = Field(default=False, description="Is field deprecated")
     sensitive: bool = Field(default=False, description="Contains sensitive data")
@@ -237,7 +238,7 @@ class FlextFieldCore(
             try:
                 re.compile(v)
             except re.error as e:
-                error_msg = f"Invalid regex pattern: {e}"
+                error_msg: str = f"Invalid regex pattern: {e}"
                 raise FlextValidationError(
                     error_msg,
                     validation_details={"field": "pattern", "value": v},
@@ -608,22 +609,29 @@ class FlextFieldMetadata(BaseModel):
         """Convert metadata to dictionary."""
         return self.model_dump()
 
+
     @classmethod
     def from_dict(cls, data: TAnyDict) -> FlextFieldMetadata:
         """Create metadata from dictionary."""
-        # Set defaults for required fields if not present
-        defaults: TAnyDict = {
-            "field_id": "unknown",
-            "field_name": "unknown",
-            "field_type": "string",
-            "required": True,
-            "default_value": None,
-        }
+        # Set defaults for required fields if not present and use explicit field assignments with type casting
+        return cls(
+            field_id=str(data.get("field_id", "unknown")),
+            field_name=str(data.get("field_name", "unknown")),
+            field_type=str(data.get("field_type", "string")),
+            required=bool(data.get("required", True)),
+            default_value=_safe_cast_default_value(data.get("default_value")),
+            # Additional fields that might be in data
+            description=str(data.get("description", "")) if data.get("description") else None,
+        )
 
-        # Merge defaults with provided data
-        merged_data = {**defaults, **data}
-        # MyPy cannot verify dynamic dict keys against Pydantic model fields
-        return cls(**merged_data)  # type: ignore[arg-type]
+
+def _safe_cast_default_value(value: object) -> str | int | float | bool | None:
+    """Safely cast a value to allowed default value types."""
+    if value is None:
+        return None
+    if isinstance(value, (str, int, float, bool)):
+        return value
+    return None
 
 
 # =============================================================================
@@ -661,7 +669,7 @@ class FlextFieldRegistry(BaseModel):
         field = FlextFieldCore(field_id="user_id", field_name="user_id", ...)
 
         result = registry.register_field(field)
-        if result.is_success:
+        if result.success:
             lookup_result = registry.get_field_by_name("user_id")
     """
 
@@ -896,7 +904,10 @@ class FlextFields:
             field_name=field_name,
             field_type=FlextFieldType.STRING.value,
             required=bool(field_config.get("required", True)),
-            default_value=field_config.get("default_value"),
+            default_value=cast(
+                "str | int | float | bool | None",
+                field_config.get("default_value"),
+            ),
             min_length=int(cast("int", min_length_val))
             if (min_length_val := field_config.get("min_length")) is not None
             else None,
@@ -910,7 +921,10 @@ class FlextFields:
             description=str(field_config.get("description"))
             if field_config.get("description") is not None
             else None,
-            example=field_config.get("example"),
+            example=cast(
+                "str | int | float | bool | None",
+                field_config.get("example"),
+            ),
             deprecated=bool(field_config.get("deprecated")),
             sensitive=bool(field_config.get("sensitive")),
             indexed=bool(field_config.get("indexed")),
@@ -930,7 +944,10 @@ class FlextFields:
             field_name=field_name,
             field_type=FlextFieldType.INTEGER.value,
             required=bool(field_config.get("required", True)),
-            default_value=field_config.get("default_value"),
+            default_value=cast(
+                "str | int | float | bool | None",
+                field_config.get("default_value"),
+            ),
             min_value=float(cast("float", min_value_val))
             if (min_value_val := field_config.get("min_value")) is not None
             else None,
@@ -940,7 +957,10 @@ class FlextFields:
             description=str(field_config.get("description"))
             if field_config.get("description") is not None
             else None,
-            example=field_config.get("example"),
+            example=cast(
+                "str | int | float | bool | None",
+                field_config.get("example"),
+            ),
             deprecated=bool(field_config.get("deprecated")),
             sensitive=bool(field_config.get("sensitive")),
             indexed=bool(field_config.get("indexed")),
@@ -960,11 +980,17 @@ class FlextFields:
             field_name=field_name,
             field_type=FlextFieldType.BOOLEAN.value,
             required=bool(field_config.get("required", True)),
-            default_value=field_config.get("default_value"),
+            default_value=cast(
+                "str | int | float | bool | None",
+                field_config.get("default_value"),
+            ),
             description=str(field_config.get("description"))
             if field_config.get("description") is not None
             else None,
-            example=field_config.get("example"),
+            example=cast(
+                "str | int | float | bool | None",
+                field_config.get("example"),
+            ),
             deprecated=bool(field_config.get("deprecated")),
             sensitive=bool(field_config.get("sensitive")),
             indexed=bool(field_config.get("indexed")),
@@ -1129,7 +1155,7 @@ FlextFieldCoreMetadata = FlextFieldMetadata
 # EXPORTS - Clean public API seguindo diretrizes
 # =============================================================================
 
-__all__ = [
+__all__: list[str] = [
     "FlextFieldCore",
     "FlextFieldCoreMetadata",  # Backward compatibility alias
     "FlextFieldId",

@@ -156,7 +156,7 @@ class FlextAggregateRoot(FlextEntity):
                     total_amount=new_total
                 )
 
-                if result.is_success:
+                if result.success:
                     updated_order = result.data
                     # Add domain event
                     updated_order.add_domain_event(
@@ -182,7 +182,7 @@ class FlextAggregateRoot(FlextEntity):
         item = OrderItem(id="item_456", price=29.99)
         updated_result = order.add_item(item)
 
-        if updated_result.is_success:
+        if updated_result.success:
             updated_order = updated_result.data
 
             # Collect events for publishing
@@ -309,5 +309,12 @@ class FlextAggregateRoot(FlextEntity):
         return bool(self.domain_events)
 
 
+# =============================================================================
+# MODEL REBUILDS - Resolve forward references for Pydantic
+# =============================================================================
+
+# Rebuild models to resolve forward references after import
+FlextAggregateRoot.model_rebuild()
+
 # Export API
-__all__ = ["FlextAggregateRoot"]
+__all__: list[str] = ["FlextAggregateRoot"]

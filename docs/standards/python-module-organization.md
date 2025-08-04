@@ -697,12 +697,12 @@ def with_cache(cache_key_func: Callable[[Any], str], ttl: int = 3600):
 
             # Try cache first
             cached_result = cache.get(cache_key)
-            if cached_result.is_success and cached_result.data is not None:
+            if cached_result.success and cached_result.data is not None:
                 return FlextResult.ok(cached_result.data)
 
             # Execute function
             result = func(*args, **kwargs)
-            if result.is_success:
+            if result.success:
                 cache.set(cache_key, result.data, ttl)
 
             return result
@@ -749,7 +749,7 @@ def test_result_success_path():
     """Test successful operation"""
     result = divide(10, 2)
 
-    assert result.is_success
+    assert result.success
     assert result.data == 5.0
     assert result.error is None
 
@@ -769,7 +769,7 @@ def test_result_chaining():
         .flat_map(lambda x: divide(x, 4))
     )
 
-    assert result.is_success
+    assert result.success
     assert result.data == 5.0
 
 def test_result_failure_propagation():
@@ -799,7 +799,7 @@ class TestUser:
 
         result = user.activate()
 
-        assert result.is_success
+        assert result.success
         assert user.is_active
         assert len(user.domain_events) == 1
         assert user.domain_events[0]["type"] == "UserActivated"
@@ -820,7 +820,7 @@ class TestUser:
 
         # Valid email
         result = user.change_email("newemail@example.com")
-        assert result.is_success
+        assert result.success
         assert user.email == "newemail@example.com"
 
         # Invalid email
@@ -846,10 +846,10 @@ def test_service_registration(clean_container):
 
     result = clean_container.register("user_service", service)
 
-    assert result.is_success
+    assert result.success
 
     retrieved = clean_container.get("user_service")
-    assert retrieved.is_success
+    assert retrieved.success
     assert retrieved.data is service
 
 def test_service_not_found(clean_container):
@@ -878,7 +878,7 @@ U = TypeVar('U')
 
 def map_result(result: FlextResult[T], func: Callable[[T], U]) -> FlextResult[U]:
     """Generic result mapping with type safety"""
-    if result.is_success:
+    if result.success:
         return FlextResult.ok(func(result.data))
     return FlextResult.fail(result.error)
 
@@ -938,7 +938,7 @@ def process_user_data(
     Example:
         >>> data = {"name": "John", "email": "john@example.com"}
         >>> result = process_user_data(data, validator, repository)
-        >>> if result.is_success:
+        >>> if result.success:
         ...     print(f"Created user: {result.data.name}")
         ... else:
         ...     print(f"Error: {result.error}")

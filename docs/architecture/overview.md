@@ -306,7 +306,7 @@ def complex_operation() -> FlextResult[ProcessedData]:
 
 # Usage
 result = complex_operation()
-if result.is_success:
+if result.success:
     handle_success(result.data)
 else:
     handle_error(result.error)
@@ -340,7 +340,7 @@ def test_user_activation():
 
     result = user.activate()
 
-    assert result.is_success
+    assert result.success
     assert user.is_active
     assert len(user.get_domain_events()) == 1
 ```
@@ -354,7 +354,7 @@ def test_user_registration_workflow():
 
     result = service.register_user(command)
 
-    assert result.is_success
+    assert result.success
     assert isinstance(result.data, User)
 ```
 
@@ -367,9 +367,9 @@ def test_container_service_registration():
 
     result = container.register("user_service", service)
 
-    assert result.is_success
+    assert result.success
     retrieved = container.get("user_service")
-    assert retrieved.is_success
+    assert retrieved.success
     assert retrieved.data is service
 ```
 

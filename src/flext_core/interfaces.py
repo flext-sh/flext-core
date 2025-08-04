@@ -156,7 +156,7 @@ class FlextValidator(Protocol):
         Usage:
             validator = MyValidator()
             result = validator.validate("input_data")
-            if result.is_success:
+            if result.success:
                 validated_value = result.data
             else:
                 error_message = result.error
@@ -643,7 +643,7 @@ class FlextEventSubscriber(ABC):
 
 
 # Export API
-__all__ = [
+__all__: list[str] = [
     "FlextConfigurable",
     # Events
     "FlextEventPublisher",

@@ -77,7 +77,7 @@ class TestBaseConfigOps:
 
         result = _BaseConfigOps.safe_load_from_dict(config_dict)
 
-        assert result.is_success
+        assert result.success
         if result.data != config_dict:
             raise AssertionError(f"Expected {config_dict}, got {result.data}")
         assert result.data is not config_dict  # Should be a copy
@@ -103,7 +103,7 @@ class TestBaseConfigOps:
 
         result = _BaseConfigOps.safe_load_from_dict(config_dict, required_keys)
 
-        assert result.is_success
+        assert result.success
         if result.data != config_dict:
             raise AssertionError(f"Expected {config_dict}, got {result.data}")
 
@@ -163,7 +163,7 @@ class TestBaseConfigOps:
         with patch.dict(os.environ, {"TEST_VAR": "test_value"}):
             result = _BaseConfigOps.safe_get_env_var("TEST_VAR")
 
-            assert result.is_success
+            assert result.success
             if result.data != "test_value":
                 raise AssertionError(f"Expected {'test_value'}, got {result.data}")
 
@@ -174,7 +174,7 @@ class TestBaseConfigOps:
             default="default_value",
         )
 
-        assert result.is_success
+        assert result.success
         if result.data != "default_value":
             raise AssertionError(f"Expected {'default_value'}, got {result.data}")
 
@@ -248,7 +248,7 @@ class TestBaseConfigOps:
         """Test safe_load_json_file with valid JSON file."""
         result = _BaseConfigOps.safe_load_json_file(temp_json_file)
 
-        assert result.is_success
+        assert result.success
         data = result.data or {}
         if "key1" not in data:
             raise AssertionError(f"Expected {'key1'} in {result.data}")
@@ -264,7 +264,7 @@ class TestBaseConfigOps:
         path_obj = Path(temp_json_file)
         result = _BaseConfigOps.safe_load_json_file(path_obj)
 
-        assert result.is_success
+        assert result.success
         data = result.data or {}
         if "key1" not in data:
             raise AssertionError(f"Expected {'key1'} in {result.data}")
@@ -335,7 +335,7 @@ class TestBaseConfigOps:
 
         result = _BaseConfigOps.safe_save_json_file(data, output_file)
 
-        assert result.is_success
+        assert result.success
         assert output_file.exists()
 
         # Verify content
@@ -351,7 +351,7 @@ class TestBaseConfigOps:
 
         result = _BaseConfigOps.safe_save_json_file(data, nested_file, create_dirs=True)
 
-        assert result.is_success
+        assert result.success
         assert nested_file.exists()
         assert nested_file.parent.exists()
 
@@ -416,7 +416,7 @@ class TestBaseConfigValidation:
 
         result = _BaseConfigValidation.validate_config_value(42, is_positive)
 
-        assert result.is_success
+        assert result.success
         if result.data != 42:
             raise AssertionError(f"Expected {42}, got {result.data}")
 
@@ -451,10 +451,10 @@ class TestBaseConfigValidation:
 
     def test_validate_config_value_validator_exception(self) -> None:
         """Test validate_config_value with validator that raises exception."""
-        validator_failed_msg = "Validator failed"
+        validator_failed_error_msg_1: str = "Validator failed"
 
         def failing_validator(value: object) -> bool:
-            raise ValueError(validator_failed_msg)
+            raise ValueError(validator_failed_error_msg_1)
 
         result = _BaseConfigValidation.validate_config_value(42, failing_validator)
 
@@ -480,7 +480,7 @@ class TestBaseConfigValidation:
         """Test validate_config_type with correct type."""
         result = _BaseConfigValidation.validate_config_type("hello", str, "text_field")
 
-        assert result.is_success
+        assert result.success
         if result.data != "hello":
             raise AssertionError(f"Expected {'hello'}, got {result.data}")
 
@@ -521,7 +521,7 @@ class TestBaseConfigValidation:
         """Test validate_config_range with valid range."""
         result = _BaseConfigValidation.validate_config_range(5.0, 1.0, 10.0, "number")
 
-        assert result.is_success
+        assert result.success
         if result.data != 5.0:
             raise AssertionError(f"Expected {5.0}, got {result.data}")
 
@@ -529,7 +529,7 @@ class TestBaseConfigValidation:
         """Test validate_config_range with no limits."""
         result = _BaseConfigValidation.validate_config_range(42.0, key_name="unlimited")
 
-        assert result.is_success
+        assert result.success
         if result.data != 42.0:
             raise AssertionError(f"Expected {42.0}, got {result.data}")
 
@@ -564,7 +564,7 @@ class TestBaseConfigValidation:
             key_name="min_only",
         )
 
-        assert result.is_success
+        assert result.success
         if result.data != 5.0:
             raise AssertionError(f"Expected {5.0}, got {result.data}")
 
@@ -576,7 +576,7 @@ class TestBaseConfigValidation:
             key_name="max_only",
         )
 
-        assert result.is_success
+        assert result.success
         if result.data != 5.0:
             raise AssertionError(f"Expected {5.0}, got {result.data}")
 
@@ -601,13 +601,13 @@ class TestBaseConfigValidation:
 
         # Test with a value type that can't be compared
         class BadValue:
-            cannot_compare_msg = "Cannot compare"
+            cannot_compare_error_msg_2: str = "Cannot compare"
 
             def __lt__(self, other: object) -> bool:
-                raise TypeError(self.cannot_compare_msg)
+                raise TypeError(self.cannot_compare_error_msg_2)
 
             def __gt__(self, other: object) -> bool:
-                raise TypeError(self.cannot_compare_msg)
+                raise TypeError(self.cannot_compare_error_msg_2)
 
         bad_value = BadValue()
         from typing import cast
@@ -634,17 +634,16 @@ class TestBaseConfigDefaults:
 
         result = _BaseConfigDefaults.apply_defaults(config, defaults)
 
-        assert result.is_success
+        assert result.success
         data = result.data or {}
         if data.get("key1") != "value1":
-            msg = f"Expected {'value1'}, got {(result.data or {})['key1']}"
-            raise AssertionError(msg)
-        data = result.data or {}
+            key1_error_msg_3: str = f"Expected {'value1'}, got {data['key1']}"
+            raise AssertionError(key1_error_msg_3)
         assert data.get("key2") == 42
-        if (result.data or {})["key3"] != "default3":
-            msg = f"Expected {'default3'}, got {(result.data or {})['key3']}"
-            raise AssertionError(msg)
-        assert (result.data or {})["key4"] == 100
+        if data["key3"] != "default3":
+            key3_error_msg_4: str = f"Expected {'default3'}, got {data['key3']}"
+            raise AssertionError(key3_error_msg_4)
+        assert data["key4"] == 100
 
     def test_apply_defaults_empty_config(self) -> None:
         """Test apply_defaults with empty configuration."""
@@ -653,7 +652,7 @@ class TestBaseConfigDefaults:
 
         result = _BaseConfigDefaults.apply_defaults(config, defaults)
 
-        assert result.is_success
+        assert result.success
         if result.data != defaults:
             raise AssertionError(f"Expected {defaults}, got {result.data}")
 
@@ -664,7 +663,7 @@ class TestBaseConfigDefaults:
 
         result = _BaseConfigDefaults.apply_defaults(config, defaults)
 
-        assert result.is_success
+        assert result.success
         if result.data != config:
             raise AssertionError(f"Expected {config}, got {result.data}")
 
@@ -701,13 +700,13 @@ class TestBaseConfigDefaults:
             cast("TAnyDict", config), cast("TAnyDict", defaults)
         )
 
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         # Modify original - should not affect result
         config["key3"] = "new_value"
         if "key3" in result.data:
-            msg = f"Expected 'key3' not in {result.data}"
-            raise AssertionError(msg)
+            error_msg_5: str = f"Expected 'key3' not in {result.data}"
+            raise AssertionError(error_msg_5)
 
     def test_apply_defaults_exception(self) -> None:
         """Test apply_defaults with exception during processing."""
@@ -729,7 +728,7 @@ class TestBaseConfigDefaults:
 
         result = _BaseConfigDefaults.merge_configs(config)
 
-        assert result.is_success
+        assert result.success
         if result.data != config:
             raise AssertionError(f"Expected {config}, got {result.data}")
 
@@ -741,22 +740,22 @@ class TestBaseConfigDefaults:
 
         result = _BaseConfigDefaults.merge_configs(config1, config2, config3)
 
-        assert result.is_success
+        assert result.success
         data = result.data or {}
         if data.get("key1") != "value1":
-            msg = f"Expected {'value1'}, got {(result.data or {})['key1']}"
-            raise AssertionError(msg)
-        assert (result.data or {})["key2"] == 99  # From config2 (overridden)
-        if (result.data or {})["key3"] != "final_value3":
-            msg = f"Expected {'final_value3'}, got {(result.data or {})['key3']}"
-            raise AssertionError(msg)
+            key1_error: str = f"Expected {'value1'}, got {data['key1']}"
+            raise AssertionError(key1_error)
+        assert data["key2"] == 99  # From config2 (overridden)
+        if data["key3"] != "final_value3":
+            key3_error: str = f"Expected {'final_value3'}, got {data['key3']}"
+            raise AssertionError(key3_error)
         assert (result.data or {})["key4"] is True
 
     def test_merge_configs_empty(self) -> None:
         """Test merge_configs with no configurations."""
         result = _BaseConfigDefaults.merge_configs()
 
-        assert result.is_success
+        assert result.success
         if result.data != {}:
             raise AssertionError(f"Expected {{}}, got {result.data}")
 
@@ -777,10 +776,10 @@ class TestBaseConfigDefaults:
         """Test merge_configs with exception during merging."""
 
         class BadDict:
-            cannot_update_msg = "Cannot update"
+            cannot_update_error_msg_6: str = "Cannot update"
 
             def update(self, other: object) -> None:
-                raise TypeError(self.cannot_update_msg)
+                raise TypeError(self.cannot_update_error_msg_6)
 
         bad_merged = BadDict()
 
@@ -795,10 +794,10 @@ class TestBaseConfigDefaults:
         with patch.dict(config1, clear=False):
             # Create a new dict instance that will fail
             class FailingDict(UserDict[str, object]):
-                update_failed_msg = "Update failed"
+                update_failed_error_msg_7: str = "Update failed"
 
                 def update(self, *args: object, **kwargs: object) -> None:
-                    raise AttributeError(self.update_failed_msg)
+                    raise AttributeError(self.update_failed_error_msg_7)
 
             # This is complex to test, let's skip the deep exception test
 
@@ -809,9 +808,9 @@ class TestBaseConfigDefaults:
 
         result = _BaseConfigDefaults.filter_config_keys(config, allowed_keys)
 
-        assert result.is_success
+        assert result.success
         if result.data != {"key1": "value1", "key3": "value3"}:
-            msg = f"Expected {{'key1': 'value1', 'key3': 'value3'}}, got {result.data}"
+            msg = "Assertion failed in test"
             raise AssertionError(msg)
 
     def test_filter_config_keys_empty_allowed(self) -> None:
@@ -821,9 +820,9 @@ class TestBaseConfigDefaults:
 
         result = _BaseConfigDefaults.filter_config_keys(config, allowed_keys)
 
-        assert result.is_success
+        assert result.success
         if result.data != {}:
-            msg = f"Expected {{}}, got {result.data}"
+            msg = "Assertion failed in test"
             raise AssertionError(msg)
 
     def test_filter_config_keys_all_allowed(self) -> None:
@@ -833,9 +832,9 @@ class TestBaseConfigDefaults:
 
         result = _BaseConfigDefaults.filter_config_keys(config, allowed_keys)
 
-        assert result.is_success
+        assert result.success
         if result.data != config:
-            msg = f"Expected {config}, got {result.data}"
+            msg = "Assertion failed in test"
             raise AssertionError(msg)
 
     def test_filter_config_keys_config_not_dict(self) -> None:
@@ -844,7 +843,7 @@ class TestBaseConfigDefaults:
 
         assert result.is_failure
         if "Configuration must be a dictionary" not in (result.error or ""):
-            msg = f"Expected 'Configuration must be a dictionary' in {result.error}"
+            msg = "Assertion failed in test"
             raise AssertionError(msg)
 
     def test_filter_config_keys_allowed_not_list(self) -> None:
@@ -855,7 +854,7 @@ class TestBaseConfigDefaults:
 
         assert result.is_failure
         if "Allowed keys must be a list" not in (result.error or ""):
-            msg = f"Expected 'Allowed keys must be a list' in {result.error}"
+            msg = "Assertion failed in test"
             raise AssertionError(msg)
 
     def test_filter_config_keys_exception(self) -> None:
@@ -868,7 +867,7 @@ class TestBaseConfigDefaults:
 
         assert result.is_failure
         if "Configuration must be a dictionary" not in (result.error or ""):
-            msg = f"Expected 'Configuration must be a dictionary' in {result.error}"
+            msg = "Assertion failed in test"
             raise AssertionError(msg)
 
 
@@ -889,7 +888,7 @@ class TestPerformanceConfig:
     def test_performance_config_values(self) -> None:
         """Test that performance config values are reasonable."""
         if _PerformanceConfig.DEFAULT_CACHE_SIZE != 1000:
-            msg = f"Expected {1000}, got {_PerformanceConfig.DEFAULT_CACHE_SIZE}"
+            msg = "Assertion failed in test"
             raise AssertionError(msg)
         assert _PerformanceConfig.DEFAULT_POOL_SIZE == 10
         assert isinstance(_PerformanceConfig.DEFAULT_BATCH_SIZE, int)
@@ -922,15 +921,17 @@ class TestObservabilityConfig:
     def test_observability_config_values(self) -> None:
         """Test that observability config values are reasonable."""
         if not (_ObservabilityConfig.ENABLE_METRICS):
-            msg = f"Expected True, got {_ObservabilityConfig.ENABLE_METRICS}"
-            raise AssertionError(msg)
+            metrics_error: str = (
+                f"Expected True, got {_ObservabilityConfig.ENABLE_METRICS}"
+            )
+            raise AssertionError(metrics_error)
         assert _ObservabilityConfig.TRACE_ENABLED is True
         if _ObservabilityConfig.TRACE_SAMPLE_RATE != 0.1:
-            msg = f"Expected {0.1}, got {_ObservabilityConfig.TRACE_SAMPLE_RATE}"
+            msg = "Assertion failed in test"
             raise AssertionError(msg)
         assert _ObservabilityConfig.SLOW_OPERATION_THRESHOLD == 1000
         if _ObservabilityConfig.CRITICAL_OPERATION_THRESHOLD != 5000:
-            msg = f"Expected {5000}, got {_ObservabilityConfig.CRITICAL_OPERATION_THRESHOLD}"
+            msg = "Assertion failed in test"
             raise AssertionError(msg)
 
         # Test logical relationships
@@ -961,25 +962,31 @@ class TestBaseConfig:
         }
 
         if set(config.keys()) != expected_keys:
-            msg = f"Expected {expected_keys}, got {set(config.keys())}"
+            f"Expected {expected_keys}, got {set(config.keys())}"
+            msg = "Assertion failed in test"
             raise AssertionError(msg)
         assert config["description"] == "Base configuration model"
         if not (config["frozen"]):
-            msg = f"Expected True, got {config['frozen']}"
+            f"Expected True, got {config['frozen']}"
+            msg = "Assertion failed in test"
             raise AssertionError(msg)
         if config["extra"] != "forbid":
-            msg = f"Expected {'forbid'}, got {config['extra']}"
+            f"Expected {'forbid'}, got {config['extra']}"
+            msg = "Assertion failed in test"
             raise AssertionError(msg)
         if not (config["validate_assignment"]):
-            msg = f"Expected True, got {config['validate_assignment']}"
+            f"Expected True, got {config['validate_assignment']}"
+            msg = "Assertion failed in test"
             raise AssertionError(msg)
         assert config["use_enum_values"] is True
         if not (config["str_strip_whitespace"]):
-            msg = f"Expected True, got {config['str_strip_whitespace']}"
+            f"Expected True, got {config['str_strip_whitespace']}"
+            msg = "Assertion failed in test"
             raise AssertionError(msg)
         assert config["validate_all"] is True
         if not (config["allow_reuse"]):
-            msg = f"Expected True, got {config['allow_reuse']}"
+            f"Expected True, got {config['allow_reuse']}"
+            msg = "Assertion failed in test"
             raise AssertionError(msg)
 
     def test_get_model_config_custom_description(self) -> None:
@@ -987,14 +994,17 @@ class TestBaseConfig:
         config = _BaseConfig.get_model_config("Custom description")
 
         if config["description"] != "Custom description":
-            msg = f"Expected {'Custom description'}, got {config['description']}"
+            (f"Expected {'Custom description'}, got {config['description']}")
+            msg = "Assertion failed in test"
             raise AssertionError(msg)
         # Other defaults should remain
         if not (config["frozen"]):
-            msg = f"Expected True, got {config['frozen']}"
+            f"Expected True, got {config['frozen']}"
+            msg = "Assertion failed in test"
             raise AssertionError(msg)
         if config["extra"] != "forbid":
-            msg = f"Expected {'forbid'}, got {config['extra']}"
+            f"Expected {'forbid'}, got {config['extra']}"
+            msg = "Assertion failed in test"
             raise AssertionError(msg)
 
     def test_get_model_config_custom_parameters(self) -> None:
@@ -1008,23 +1018,28 @@ class TestBaseConfig:
         )
 
         if config["description"] != "Custom model":
-            msg = f"Expected {'Custom model'}, got {config['description']}"
+            (f"Expected {'Custom model'}, got {config['description']}")
+            msg = "Assertion failed in test"
             raise AssertionError(msg)
         if config["frozen"]:
-            msg = f"Expected False, got {config['frozen']}"
+            f"Expected False, got {config['frozen']}"
+            msg = "Assertion failed in test"
             raise AssertionError(msg)
         assert config["extra"] == "allow"
         if config["validate_assignment"]:
-            msg = f"Expected False, got {config['validate_assignment']}"
+            f"Expected False, got {config['validate_assignment']}"
+            msg = "Assertion failed in test"
             raise AssertionError(msg)
         assert config["use_enum_values"] is False
         # Non-overridden defaults should remain
         if not (config["str_strip_whitespace"]):
-            msg = f"Expected True, got {config['str_strip_whitespace']}"
+            f"Expected True, got {config['str_strip_whitespace']}"
+            msg = "Assertion failed in test"
             raise AssertionError(msg)
         assert config["validate_all"] is True
         if not (config["allow_reuse"]):
-            msg = f"Expected True, got {config['allow_reuse']}"
+            f"Expected True, got {config['allow_reuse']}"
+            msg = "Assertion failed in test"
             raise AssertionError(msg)
 
 
@@ -1040,11 +1055,11 @@ class TestConfigBaseIntegration:
 
         # Save config
         save_result = _BaseConfigOps.safe_save_json_file(initial_config, config_file)
-        assert save_result.is_success
+        assert save_result.success
 
         # Load config
         load_result = _BaseConfigOps.safe_load_json_file(config_file)
-        assert load_result.is_success
+        assert load_result.success
 
         # Apply defaults
         defaults: dict[str, object] = {
@@ -1057,7 +1072,7 @@ class TestConfigBaseIntegration:
             load_result.data,
             defaults,
         )
-        assert config_with_defaults.is_success
+        assert config_with_defaults.success
 
         # Validate configuration
         def is_valid_port(value: object) -> bool:
@@ -1069,7 +1084,7 @@ class TestConfigBaseIntegration:
             is_valid_port,
             "Port must be 1-65535",
         )
-        assert port_validation.is_success
+        assert port_validation.success
 
         # Filter to allowed keys
         allowed_keys = ["database_url", "port", "timeout"]
@@ -1077,20 +1092,22 @@ class TestConfigBaseIntegration:
             config_with_defaults.data,
             allowed_keys,
         )
-        assert filtered_config.is_success
+        assert filtered_config.success
 
         # Final config should have expected values
         final_config = filtered_config.data
         assert final_config is not None
         if final_config["database_url"] != "sqlite://test.db":
-            msg = f"Expected {'sqlite://test.db'}, got {final_config['database_url']}"
+            (f"Expected {'sqlite://test.db'}, got {final_config['database_url']}")
+            msg = "Assertion failed in test"
             raise AssertionError(msg)
         assert final_config["port"] == FlextConstants.Platform.FLEXCORE_PORT
         if final_config["timeout"] != 30:
-            msg = f"Expected {30}, got {final_config['timeout']}"
+            f"Expected {30}, got {final_config['timeout']}"
+            msg = "Assertion failed in test"
             raise AssertionError(msg)
         if "debug" in final_config:
-            msg = f"Expected {'debug'} not in {final_config}"
+            msg = "Assertion failed in test"
             raise AssertionError(msg)
 
     def test_config_validation_chain(self) -> None:
@@ -1103,7 +1120,7 @@ class TestConfigBaseIntegration:
             int,
             "count",
         )
-        assert type_result.is_success
+        assert type_result.success
 
         # Range validation
         assert type_result.data is not None
@@ -1114,7 +1131,7 @@ class TestConfigBaseIntegration:
             100,
             "count",
         )
-        assert range_result.is_success
+        assert range_result.success
 
         # Custom validation
         def is_even(value: object) -> bool:
@@ -1129,9 +1146,9 @@ class TestConfigBaseIntegration:
             is_even,
             "Count must be even",
         )
-        assert custom_result.is_success
+        assert custom_result.success
         if custom_result.data != 42:
-            msg = f"Expected {42}, got {custom_result.data}"
+            msg = "Assertion failed in test"
             raise AssertionError(msg)
 
     def test_config_merging_precedence(self) -> None:
@@ -1147,17 +1164,19 @@ class TestConfigBaseIntegration:
         # Merge with proper precedence (later configs override earlier ones)
         result = _BaseConfigDefaults.merge_configs(base_config, env_config, user_config)
 
-        assert result.is_success
+        assert result.success
         merged = result.data
         assert merged is not None
 
         assert merged["debug"] is True
         if merged["port"] != 9000:
-            msg = f"Expected {9000}, got {merged['port']}"
+            f"Expected {9000}, got {merged['port']}"
+            msg = "Assertion failed in test"
             raise AssertionError(msg)
         assert merged["host"] == "localhost"
         if merged["custom"] != "value":
-            msg = f"Expected {'value'}, got {merged['custom']}"
+            f"Expected {'value'}, got {merged['custom']}"
+            msg = "Assertion failed in test"
             raise AssertionError(msg)
 
     def test_environment_variable_integration(self) -> None:
@@ -1181,21 +1200,21 @@ class TestConfigBaseIntegration:
                 default="default",
             )
 
-            assert debug_result.is_success
+            assert debug_result.success
             if debug_result.data != "true":
-                msg = f"Expected {'true'}, got {debug_result.data}"
+                msg = "Assertion failed in test"
                 raise AssertionError(msg)
-            assert port_result.is_success
+            assert port_result.success
             if port_result.data != str(FlextConstants.Platform.FLEXCORE_PORT):
-                msg = f"Expected {'8080'}, got {port_result.data}"
+                msg = "Assertion failed in test"
                 raise AssertionError(msg)
-            assert secret_result.is_success
+            assert secret_result.success
             if secret_result.data != "secret123":
-                msg = f"Expected {'secret123'}, got {secret_result.data}"
+                msg = "Assertion failed in test"
                 raise AssertionError(msg)
-            assert missing_result.is_success
+            assert missing_result.success
             if missing_result.data != "default":
-                msg = f"Expected {'default'}, got {missing_result.data}"
+                msg = "Assertion failed in test"
                 raise AssertionError(msg)
 
             # Build config from environment
@@ -1226,7 +1245,7 @@ class TestConfigBaseIntegration:
             ]
 
             for result in type_results:
-                assert result.is_success
+                assert result.success
 
     def test_error_recovery_workflow(self) -> None:
         """Test error recovery in configuration workflow."""
@@ -1243,7 +1262,7 @@ class TestConfigBaseIntegration:
 
         # Fall back to in-memory config
         fallback_result = _BaseConfigOps.safe_load_from_dict(fallback_config)
-        assert fallback_result.is_success
+        assert fallback_result.success
 
         # Use fallback config
         config = fallback_result.data
@@ -1266,7 +1285,7 @@ class TestConfigBaseIntegration:
             65535,
             "port",
         )
-        assert default_port_result.is_success
+        assert default_port_result.success
 
         # Final config is usable despite initial failures
         final_config = {
@@ -1274,8 +1293,10 @@ class TestConfigBaseIntegration:
             "port": default_port_result.data,
         }
         if not (final_config["fallback"]):
-            msg = f"Expected True, got {final_config['fallback']}"
+            f"Expected True, got {final_config['fallback']}"
+            msg = "Assertion failed in test"
             raise AssertionError(msg)
         if final_config["port"] != FlextConstants.Platform.FLEXCORE_PORT:
-            msg = f"Expected FlextConstants.Platform.FLEXCORE_PORT, got {final_config['port']}"
+            f"Expected FlextConstants.Platform.FLEXCORE_PORT, got {final_config['port']}"
+            msg = "Assertion failed in test"
             raise AssertionError(msg)

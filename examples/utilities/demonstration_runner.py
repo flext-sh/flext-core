@@ -166,7 +166,7 @@ def demonstrate_shared_domain_usage() -> None:
         name="John Doe", email="john.doe@example.com", age=30
     )
 
-    if not user_result.is_success:
+    if not user_result.success:
         DemonstrationSectionHelper.log_error(
             f"Failed to create user: {user_result.error}"
         )
@@ -209,7 +209,7 @@ def demonstrate_business_logic() -> None:
         description="Test product for discount calculation",
     )
 
-    if not product_result.is_success:
+    if not product_result.success:
         DemonstrationSectionHelper.log_error(
             f"Failed to create product: {product_result.error}"
         )
@@ -227,7 +227,7 @@ def demonstrate_business_logic() -> None:
 
     # Test discount calculation
     discount_result = calculate_discount_price(product, 20.0)
-    if discount_result.is_success:
+    if discount_result.success:
         final_price = discount_result.data
         if final_price is not None:
             print(
@@ -241,7 +241,7 @@ def demonstrate_business_logic() -> None:
 
     # Test invalid discount
     invalid_discount_result = calculate_discount_price(product, 150.0)
-    if not invalid_discount_result.is_success:
+    if not invalid_discount_result.success:
         DemonstrationSectionHelper.log_error(
             f"Expected error: {invalid_discount_result.error}"
         )

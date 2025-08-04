@@ -15,9 +15,9 @@ Features:
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from decimal import Decimal
 from enum import StrEnum
+from typing import TYPE_CHECKING
 
 from flext_core import (
     FlextEntity,
@@ -27,6 +27,9 @@ from flext_core import (
     TEntityId,
     get_logger,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 # =============================================================================
 # BUSINESS CONSTANTS - Centralized business rules
@@ -348,7 +351,7 @@ class User(FlextEntity):
             return FlextResult.fail("User is already active")
 
         result = self.copy_with(status=UserStatus.ACTIVE)
-        if result.is_success and result.data is not None:
+        if result.success and result.data is not None:
             activated_user = result.data
             # Add domain event
             event_result = activated_user.add_domain_event(
@@ -375,7 +378,7 @@ class User(FlextEntity):
             return FlextResult.fail("Suspension reason must be at least 10 characters")
 
         result = self.copy_with(status=UserStatus.SUSPENDED)
-        if result.is_success and result.data is not None:
+        if result.success and result.data is not None:
             suspended_user = result.data
             # Add domain event
             event_result = suspended_user.add_domain_event(
@@ -440,7 +443,7 @@ class Product(FlextEntity):
             return FlextResult.fail(f"Invalid price: {price_validation.error}")
 
         result = self.copy_with(price=new_price)
-        if result.is_success and result.data is not None:
+        if result.success and result.data is not None:
             updated_product = result.data
             # Add domain event
             event_result = updated_product.add_domain_event(
@@ -580,11 +583,7 @@ class Order(FlextEntity):
             return FlextResult.fail(f"Cannot confirm order: {total_result.error}")
 
         result = self.copy_with(status=OrderStatus.CONFIRMED)
-        if (
-            result.is_success
-            and result.data is not None
-            and total_result.data is not None
-        ):
+        if result.success and result.data is not None and total_result.data is not None:
             confirmed_order = result.data
             # Add domain event
             event_result = confirmed_order.add_domain_event(
@@ -752,11 +751,15 @@ class SharedDomainFactory:
                 status = OrderStatus.PENDING
 
             payment_method = kwargs.get("payment_method")
-            if payment_method is not None and not isinstance(payment_method, PaymentMethod):
+            if payment_method is not None and not isinstance(
+                payment_method, PaymentMethod
+            ):
                 payment_method = None
 
             shipping_address = kwargs.get("shipping_address")
-            if shipping_address is not None and not isinstance(shipping_address, Address):
+            if shipping_address is not None and not isinstance(
+                shipping_address, Address
+            ):
                 shipping_address = None
 
             order = Order(
@@ -803,7 +806,7 @@ def log_domain_operation(
 
 
 # Export all public components
-__all__ = [
+__all__: list[str] = [
     "CURRENCY_CODE_LENGTH",
     "MAX_AGE",
     "MAX_EMAIL_LENGTH",

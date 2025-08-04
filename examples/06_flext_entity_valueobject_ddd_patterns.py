@@ -545,7 +545,10 @@ class CustomerRepository:
     def find_by_email(self, email: str) -> FlextResult[Customer]:
         """Find customer by email."""
         for customer in self.customers.values():
-            if customer.email.value == email:
+            customer_email = getattr(customer, "email_address", None) or getattr(
+                customer, "email", None
+            )
+            if customer_email and getattr(customer_email, "email", None) == email:
                 print(f"🔍 Customer found by email: {customer.name}")
                 return FlextResult.ok(customer)
 
@@ -691,6 +694,7 @@ class OrderDomainService:
             )
 
         customer = customer_result.data
+        assert customer is not None
         if not customer.is_active:
             return FlextResult.fail("Cannot create order for inactive customer")
 
@@ -712,6 +716,7 @@ class OrderDomainService:
                 return FlextResult.fail(f"Product not found: {product_id}")
 
             product = product_result.data
+            assert product is not None
 
             # Validate product availability
             if not product.is_available:
@@ -742,7 +747,12 @@ class OrderDomainService:
             order_items.append(order_item)
 
             # Add to total
-            item_total_result = order_item.calculate_total()
+            if hasattr(order_item, "calculate_total"):
+                item_total_result = order_item.calculate_total()
+            else:
+                item_total_result = FlextResult.fail(
+                    "calculate_total method not available"
+                )
             if item_total_result.is_failure:
                 return FlextResult.fail(
                     f"Failed to calculate item total: {item_total_result.error}",
@@ -783,7 +793,7 @@ class OrderDomainService:
                 "item_count": len(order_items),
                 "total_amount": str(total_amount),
                 "shipping_address": str(shipping_address),
-                "creation_date": order.order_date,
+                "creation_date": getattr(order, "order_date", None),
             },
         )
 
@@ -810,6 +820,7 @@ class OrderDomainService:
             return order_result
 
         order = order_result.data
+        assert order is not None
 
         # Confirm order
         confirmed_result = order.confirm_order()
@@ -842,13 +853,14 @@ class OrderDomainService:
         # Update product stock
         for item in order.items:
             product_result = self.product_repo.find_by_id(item.product_id)
-            if product_result.is_success:
+            if product_result.success:
                 product = product_result.data
+                assert product is not None
                 stock_result = product.adjust_stock(
                     -item.quantity,
                     f"Order fulfillment: {order_id}",
                 )
-                if stock_result.is_success:
+                if stock_result.success:
                     self.product_repo.save(stock_result.data)
 
         print(f"✅ Order fulfilled successfully: {order_id}")
@@ -921,7 +933,7 @@ def demonstrate_value_objects() -> None:
 
     # Addition (same currency)
     sum_result = usd_10.add(usd_20)
-    if sum_result.is_success:
+    if sum_result.success:
         print(f"  ✅ {usd_10} + {usd_20} = {sum_result.data}")
 
     # Addition (different currency - should fail)
@@ -931,7 +943,7 @@ def demonstrate_value_objects() -> None:
 
     # Multiplication
     doubled_result = usd_10.multiply(Decimal("2.0"))
-    if doubled_result.is_success:
+    if doubled_result.success:
         print(f"  ✅ {usd_10} × 2 = {doubled_result.data}")  # noqa: RUF001
 
     # Address value objects
@@ -1011,7 +1023,7 @@ def demonstrate_entity_lifecycle() -> None:
     )
 
     updated_result = customer.update_address(new_address)
-    if updated_result.is_success:
+    if updated_result.success:
         updated_customer = updated_result.data
         print(f"✅ Address updated (Version: {updated_customer.version})")
         customer = updated_customer
@@ -1019,7 +1031,7 @@ def demonstrate_entity_lifecycle() -> None:
     # Increase credit limit
     credit_increase = Money(amount=Decimal("2000.0"), currency="USD")
     credit_result = customer.increase_credit_limit(credit_increase)
-    if credit_result.is_success:
+    if credit_result.success:
         credit_customer = credit_result.data
         print(
             f"✅ Credit limit increased to {credit_customer.credit_limit} "
@@ -1029,7 +1041,7 @@ def demonstrate_entity_lifecycle() -> None:
 
     # Increment order count
     order_result = customer.increment_order_count()
-    if order_result.is_success:
+    if order_result.success:
         order_customer = order_result.data
         print(
             f"✅ Order count incremented to {order_customer.total_orders} "
@@ -1100,7 +1112,7 @@ def demonstrate_aggregate_patterns() -> None:  # noqa: PLR0915
     products = []
     for product_data in products_data:
         product_result = product_factory(**product_data)
-        if product_result.is_success:
+        if product_result.success:
             product = product_result.data
             product_repo.save(product)
             products.append(product)
@@ -1145,7 +1157,7 @@ def demonstrate_aggregate_patterns() -> None:  # noqa: PLR0915
     # Fulfill order
     tracking_number = "TRK123456789"
     fulfill_result = order_service.fulfill_order(order.id, tracking_number)
-    if fulfill_result.is_success:
+    if fulfill_result.success:
         fulfilled_order = fulfill_result.data
         if fulfilled_order is None:
             print("❌ Order fulfillment returned None")
@@ -1154,7 +1166,7 @@ def demonstrate_aggregate_patterns() -> None:  # noqa: PLR0915
 
         # Deliver order
         deliver_result = fulfilled_order.deliver_order()
-        if deliver_result.is_success:
+        if deliver_result.success:
             delivered_order = deliver_result.data
             if delivered_order is None:
                 print("❌ Order delivery returned None")
@@ -1166,7 +1178,7 @@ def demonstrate_aggregate_patterns() -> None:  # noqa: PLR0915
     print("\n📋 Updated Product Stock:")
     for product in products:
         updated_result = product_repo.find_by_id(product.id)
-        if updated_result.is_success:
+        if updated_result.success:
             updated_product = updated_result.data
             if updated_product is None:
                 print(f"  📦 Product {product.id}: Not found")
@@ -1215,7 +1227,7 @@ def demonstrate_repository_patterns() -> None:
     customers = []
     for customer_data in customers_data:
         result = customer_factory(**customer_data)
-        if result.is_success:
+        if result.success:
             customer = result.data
             customer_repo.save(customer)
             customers.append(customer)
@@ -1225,7 +1237,7 @@ def demonstrate_repository_patterns() -> None:
 
     # Find by email
     email_result = customer_repo.find_by_email("alice@example.com")
-    if email_result.is_success:
+    if email_result.success:
         found_customer = email_result.data
         if found_customer is None:
             print("  🔍 Customer not found by email")
@@ -1241,7 +1253,7 @@ def demonstrate_repository_patterns() -> None:
         deactivate_result = customers[0].deactivate(
             "Customer requested account closure",
         )
-        if deactivate_result.is_success:
+        if deactivate_result.success:
             deactivated = deactivate_result.data
             customer_repo.save(deactivated)
             print(f"  ❌ Customer deactivated: {deactivated.name}")
@@ -1271,7 +1283,7 @@ def demonstrate_repository_patterns() -> None:
 
     for product_data in products_data:
         result = product_factory(**product_data)
-        if result.is_success:
+        if result.success:
             product = result.data
             product_repo.save(product)
 
@@ -1307,7 +1319,7 @@ def demonstrate_version_management() -> None:
     # First modification: Update price
     new_price = Money(amount=Decimal("120.0"), currency="USD")
     price_update_result = product.update_price(new_price)
-    if price_update_result.is_success:
+    if price_update_result.success:
         updated_product_1 = price_update_result.data
         print(
             f"  💰 Price updated: {updated_product_1.price} "
@@ -1316,7 +1328,7 @@ def demonstrate_version_management() -> None:
 
         # Second modification: Adjust stock
         stock_update_result = updated_product_1.adjust_stock(-10, "Sales")
-        if stock_update_result.is_success:
+        if stock_update_result.success:
             updated_product_2 = stock_update_result.data
             print(
                 f"  📦 Stock adjusted: {updated_product_2.stock_quantity} "
@@ -1375,7 +1387,7 @@ def demonstrate_performance_characteristics() -> None:
         ),
     )
 
-    if customer_result.is_success:
+    if customer_result.success:
         customer = customer_result.data
 
         # Test copy_with performance
@@ -1384,7 +1396,7 @@ def demonstrate_performance_characteristics() -> None:
 
         for _i in range(100):
             result = current_customer.increment_order_count()
-            if result.is_success:
+            if result.success:
                 current_customer = result.data
 
         operation_time = time.time() - start_time

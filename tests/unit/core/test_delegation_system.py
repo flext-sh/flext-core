@@ -254,7 +254,7 @@ class TestFlextMixinDelegator:
         delegator = FlextMixinDelegator(host, MockMixin)
 
         validation_result = delegator._validate_delegation()
-        assert validation_result.is_success
+        assert validation_result.success
 
     def test_delegation_info(self) -> None:
         """Test getting delegation information."""
@@ -302,7 +302,9 @@ class TestFlextMixinDelegator:
 
         validation_result = delegator._validate_delegation()
         assert validation_result.is_failure
-        assert "No mixins were successfully registered" in (validation_result.error or ""), (
+        assert "No mixins were successfully registered" in (
+            validation_result.error or ""
+        ), (
             f"Expected {'No mixins were successfully registered'} in {validation_result.error}"
         )
 
@@ -369,7 +371,7 @@ class TestFlextMixinDelegator:
 
         # Validation might fail but shouldn't crash
         validation_result = delegator._validate_delegation()
-        assert isinstance(validation_result.is_success, bool)
+        assert isinstance(validation_result.success, bool)
 
     def test_delegated_methods_storage(self) -> None:
         """Test delegated methods storage."""

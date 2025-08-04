@@ -69,7 +69,7 @@ class TestValueObjectsCoverage:
         # This tests the success branch of field validation
         result = money.validate_field("currency", "USD")
         # Should succeed (though it might not find the field def, that's OK)
-        assert result.is_success
+        assert result.success
 
     def test_value_object_fallback_payload_creation(self) -> None:
         """Test fallback payload creation (lines 391-400) - DRY REAL."""
@@ -90,7 +90,7 @@ class TestValueObjectsCoverage:
 
         # Test domain validation (actual method that exists)
         domain_result = money.validate_domain_rules()
-        assert domain_result.is_success
+        assert domain_result.success
 
         # Test flext validation
         flext_result = money.validate_flext()
@@ -191,9 +191,9 @@ class TestValueObjectCoverageImprovements:
             EmailAddress
         )
 
-        result = email_factory(email="test@example.com")
+        result = email_factory(email="test@example.com")  # type: ignore[operator]
 
-        assert result.is_success
+        assert result.success
         assert isinstance(result.data, EmailAddress)
         assert result.data.email == "test@example.com"
 
@@ -205,7 +205,7 @@ class TestValueObjectCoverageImprovements:
         )
 
         # Invalid email format
-        result = email_factory(email="invalid")
+        result = email_factory(email="invalid")  # type: ignore[operator]
 
         assert result.is_failure
         assert "validation" in result.error.lower() or "string" in result.error.lower()
@@ -244,7 +244,7 @@ class TestValueObjectCoverageImprovements:
 
         # Test with non-existent field (should return success - line 298)
         result = email.validate_field("nonexistent_field", "any_value")
-        assert result.is_success
+        assert result.success
 
     def test_validate_all_fields_success_path(self) -> None:
         """Test validate_all_fields success path (line 327)."""
@@ -252,7 +252,7 @@ class TestValueObjectCoverageImprovements:
 
         # This should return success (line 327)
         result = email.validate_all_fields()
-        assert result.is_success
+        assert result.success
 
 
 class TestFlextValueObject:
@@ -269,7 +269,7 @@ class TestFlextValueObject:
 
         # Test validation
         validation_result = email.validate_domain_rules()
-        assert validation_result.is_success
+        assert validation_result.success
 
         # Test Pydantic immutability
         # ValidationError or AttributeError for frozen model
@@ -289,6 +289,7 @@ class TestFlextValueObject:
             email = EmailAddress(email="test@invalid")
             validation_result = email.validate_domain_rules()
             assert validation_result.is_failure
+            assert validation_result.error is not None
             assert "domain must contain a dot" in validation_result.error, (
                 f"Expected {'domain must contain a dot'}, got {validation_result.error}"
             )
@@ -307,11 +308,11 @@ class TestFlextValueObject:
 
         # Test domain validation
         validation_result = money1.validate_domain_rules()
-        assert validation_result.is_success
+        assert validation_result.success
 
         # Test addition operation
         add_result = money1.add(money2)
-        assert add_result.is_success
+        assert add_result.success
         result_money = add_result.data
         assert result_money.amount == 150.0, (
             f"Expected {150.0}, got {result_money.amount}"
@@ -325,6 +326,7 @@ class TestFlextValueObject:
 
         add_result = money_usd.add(money_eur)
         assert add_result.is_failure
+        assert add_result.error is not None
         assert "Currency mismatch" in add_result.error, (
             f"Expected {'Currency mismatch'} in {add_result.error}"
         )
@@ -368,7 +370,7 @@ class TestFlextValueObject:
         # Test validation state (inherited from FlextValueObjectMixin)
         # Note: is_valid may start as None until validation is performed
         validation_result = email.validate_domain_rules()
-        assert validation_result.is_success
+        assert validation_result.success
 
     def test_value_object_hash_complex_data(self) -> None:
         """Test hash with complex data structures including sets and nested dicts."""
@@ -407,7 +409,7 @@ class TestFlextValueObject:
 
         # Verify domain validation works
         validation_result = custom_vo.validate_domain_rules()
-        assert validation_result.is_success
+        assert validation_result.success
 
     def test_value_object_utility_inheritance(self) -> None:
         """Test utility inheritance in value objects."""
@@ -431,22 +433,18 @@ class TestFlextValueObject:
         assert payload is not None
 
         payload_data = payload.data
+        assert payload_data is not None
         assert "value_object_data" in payload_data, (
             f"Expected {'value_object_data'} in {payload_data}"
         )
-        assert "metadata" in payload_data
+        assert "validation_status" in payload_data
         assert "class_info" in payload_data, (
             f"Expected {'class_info'} in {payload_data}"
         )
 
-        # Check metadata
-        metadata = payload_data["metadata"]
-        assert "type" in metadata, f"Expected {'type'} in {metadata}"
-        assert "timestamp" in metadata
-        assert "correlation_id" in metadata, (
-            f"Expected {'correlation_id'} in {metadata}"
-        )
-        assert "validated" in metadata
+        # Check validation status
+        validation_status = payload_data["validation_status"]
+        assert validation_status in ["valid", "invalid"]
 
     def test_value_object_field_validation(self) -> None:
         """Test field validation functionality."""
@@ -468,6 +466,7 @@ class TestFlextValueObject:
         # Domain validation should fail
         validation_result = invalid_obj.validate_domain_rules()
         assert validation_result.is_failure
+        assert validation_result.error is not None
         assert "always invalid" in validation_result.error, (
             f"Expected {'always invalid'} in {validation_result.error}"
         )
@@ -512,9 +511,9 @@ class TestFlextValueObjectFactory:
         email_factory = FlextValueObjectFactory.create_value_object_factory(
             EmailAddress,
         )
-        email_result = email_factory(email="test@example.com")
+        email_result = email_factory(email="test@example.com")  # type: ignore[operator]
 
-        if email_result.is_success:
+        if email_result.success:
             email = email_result.data
             assert email.email == "test@example.com", (
                 f"Expected {'test@example.com'}, got {email.email}"
@@ -529,16 +528,16 @@ class TestFlextValueObjectFactory:
         email_factory = FlextValueObjectFactory.create_value_object_factory(
             EmailAddress,
         )
-        email_result = email_factory(email="invalid-email")
+        email_result = email_factory(email="invalid-email")  # type: ignore[operator]
         assert email_result.is_failure
 
     def test_factory_money_creation(self) -> None:
         """Test factory creation of money value objects."""
         # Create factory for Money
         money_factory = FlextValueObjectFactory.create_value_object_factory(Money)
-        money_result = money_factory(amount=100.0, currency="USD")
+        money_result = money_factory(amount=100.0, currency="USD")  # type: ignore[operator]
 
-        if money_result.is_success:
+        if money_result.success:
             money = money_result.data
             assert money.amount == 100.0, f"Expected {100.0}, got {money.amount}"
             assert money.currency == "USD"
@@ -550,7 +549,7 @@ class TestFlextValueObjectFactory:
         """Test factory with invalid money."""
         # Create factory for Money
         money_factory = FlextValueObjectFactory.create_value_object_factory(Money)
-        money_result = money_factory(amount=-100.0, currency="USD")
+        money_result = money_factory(amount=-100.0, currency="USD")  # type: ignore[operator]
         assert money_result.is_failure
 
 
@@ -583,7 +582,7 @@ class TestValueObjectEdgeCases:
         assert len(complex_obj.items) == EXPECTED_BULK_SIZE
 
         validation_result = complex_obj.validate_domain_rules()
-        assert validation_result.is_success
+        assert validation_result.success
 
     def test_value_object_serialization(self) -> None:
         """Test value object serialization capabilities."""
@@ -606,9 +605,9 @@ class TestValueObjectEdgeCases:
         field_result = email.validate_all_fields()
 
         # All should be consistent
-        if domain_result.is_success:
+        if domain_result.success:
             # If domain rules pass, flext validation should also consider this
-            assert flext_result.is_success or flext_result.is_failure  # Either is valid
+            assert flext_result.success or flext_result.is_failure  # Either is valid
 
         # Field validation depends on field registry
         assert isinstance(field_result, FlextResult)
@@ -635,7 +634,7 @@ class TestValueObjectEdgeCases:
         # Test that they all validate correctly
         for email in emails[:10]:  # Test subset for performance
             validation_result = email.validate_domain_rules()
-            assert validation_result.is_success
+            assert validation_result.success
 
     def test_value_object_memory_efficiency(self) -> None:
         """Test memory efficiency of value objects."""
@@ -660,4 +659,4 @@ class TestValueObjectEdgeCases:
                 f"Expected {original_email}, got {email.email}"
             )
             validation_result = email.validate_domain_rules()
-            assert validation_result.is_success
+            assert validation_result.success

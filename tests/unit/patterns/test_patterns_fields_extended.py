@@ -71,7 +71,7 @@ class TestFlextFieldsFactory:
         )
 
         result = field.validate_value(42)
-        assert result.is_success
+        assert result.success
 
     def test_integer_field_validate_value_failure(self) -> None:
         """Test integer field validation failure."""
@@ -146,10 +146,10 @@ class TestFlextFieldsFactory:
         )
 
         result = field.validate_value(value=True)
-        assert result.is_success
+        assert result.success
 
         result = field.validate_value(value=False)
-        assert result.is_success
+        assert result.success
 
     def test_boolean_field_validate_value_failure(self) -> None:
         """Test boolean field validation failure."""
@@ -218,10 +218,10 @@ class TestFlextFieldRegistry:
         )
 
         result = registry.register_field(field)
-        assert result.is_success
+        assert result.success
 
         retrieved_result = registry.get_field_by_id("test_id")
-        assert retrieved_result.is_success
+        assert retrieved_result.success
         assert retrieved_result.data is field
 
     def test_get_field_existing(self) -> None:
@@ -234,7 +234,7 @@ class TestFlextFieldRegistry:
         registry.register_field(field)
 
         result = registry.get_field_by_id("test_id")
-        assert result.is_success
+        assert result.success
         assert result.data is field
 
     def test_get_field_non_existing(self) -> None:

@@ -97,7 +97,7 @@ result = (
     .flat_map(lambda x: divide(x, 3))
 )
 
-if result.is_success:
+if result.success:
     print(f"Result: {result.data}")  # Result: 3.33...
 else:
     print(f"Error: {result.error}")
@@ -105,7 +105,7 @@ else:
 # Dependency injection
 container = FlextContainer()
 result = container.register("calculator", CalculatorService())
-assert result.is_success
+assert result.success
 
 calculator = container.get("calculator").unwrap()
 ```
