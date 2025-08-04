@@ -44,6 +44,7 @@ from flext_core import (
     FlextConfigValidation,
     FlextConstants,
     FlextTypes,
+    TAnyDict,
     TConfigDict,
     TErrorMessage,
     TLogMessage,
@@ -71,7 +72,8 @@ def demonstrate_basic_configuration() -> None:
         "timeout": 30.0,
     }
 
-    config_result = FlextConfig.create_complete_config(config_data)
+    # Cast TConfigDict to TAnyDict for method compatibility
+    config_result = FlextConfig.create_complete_config(dict(config_data))
     if config_result.success:
         config = config_result.data
         if config is not None:
@@ -115,7 +117,8 @@ def demonstrate_basic_configuration() -> None:
     print(log_message)
 
     # 4. Applying defaults
-    defaults_result = FlextConfigDefaults.apply_defaults(config_data, defaults)
+    # Cast TConfigDict to TAnyDict for method compatibility
+    defaults_result = FlextConfigDefaults.apply_defaults(dict(config_data), dict(defaults))
     if defaults_result.success:
         config_with_defaults = defaults_result.data
         if config_with_defaults is not None:
