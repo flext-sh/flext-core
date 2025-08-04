@@ -400,7 +400,7 @@ class FlextValueObject(
                 k: v
                 for k, v in payload_metadata.items()
                 if isinstance(v, (str, int, float, bool, type(None)))
-            }
+            },
         )
 
         # 5. Build comprehensive payload data (only with compatible types)

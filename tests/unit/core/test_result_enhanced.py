@@ -322,11 +322,7 @@ class TestFlextResultEnhanced:
         ]
 
         # Cast to FlextResult[object] for combine method compatibility
-        combined = FlextResult.combine(
-            FlextResult.ok(1),
-            FlextResult.ok(2),
-            FlextResult.ok(3)
-        )
+        combined = FlextResult.combine(*results)
         assert combined.success
         if combined.data != [1, 2, 3]:
             raise AssertionError(f"Expected {[1, 2, 3]}, got {combined.data}")
@@ -340,11 +336,7 @@ class TestFlextResultEnhanced:
         ]
 
         # Cast to FlextResult[object] for combine method compatibility
-        combined = FlextResult.combine(
-            FlextResult.ok(1),
-            FlextResult.fail("error"),
-            FlextResult.ok(3)
-        )
+        combined = FlextResult.combine(*results)
         assert combined.is_failure
         if combined.error != "error":
             raise AssertionError(f"Expected {'error'}, got {combined.error}")
@@ -365,13 +357,9 @@ class TestFlextResultEnhanced:
         ]
 
         # Cast to FlextResult[object] for all_success method compatibility
-        if not (FlextResult.all_success(
-            FlextResult.ok(1),
-            FlextResult.ok(2),
-            FlextResult.ok(3)
-        )):
+        if not FlextResult.all_success(*results):
             raise AssertionError(
-                f"Expected True, got {FlextResult.all_success(FlextResult.ok(1), FlextResult.ok(2), FlextResult.ok(3))}"
+                f"Expected True, got {FlextResult.all_success(*results)}"
             )
 
     def test_all_success_false(self) -> None:
@@ -383,13 +371,9 @@ class TestFlextResultEnhanced:
         ]
 
         # Cast to FlextResult[object] for all_success method compatibility
-        if FlextResult.all_success(
-            FlextResult.ok(1),
-            FlextResult.fail("error"),
-            FlextResult.ok(3)
-        ):
+        if FlextResult.all_success(*results):
             raise AssertionError(
-                f"Expected False, got {FlextResult.all_success(FlextResult.ok(1), FlextResult.fail('error'), FlextResult.ok(3))}"
+                f"Expected False, got {FlextResult.all_success(*results)}"
             )
 
     def test_any_success_true(self) -> None:
@@ -401,13 +385,9 @@ class TestFlextResultEnhanced:
         ]
 
         # Cast to FlextResult[object] for any_success method compatibility
-        if not (FlextResult.any_success(
-            FlextResult.fail("error1"),
-            FlextResult.ok(2),
-            FlextResult.fail("error2")
-        )):
+        if not FlextResult.any_success(*results):
             raise AssertionError(
-                f"Expected True, got {FlextResult.any_success(FlextResult.fail('error1'), FlextResult.ok(2), FlextResult.fail('error2'))}"
+                f"Expected True, got {FlextResult.any_success(*results)}"
             )
 
     def test_any_success_false(self) -> None:
@@ -419,13 +399,9 @@ class TestFlextResultEnhanced:
         ]
 
         # Cast to FlextResult[object] for any_success method compatibility
-        if FlextResult.any_success(
-            FlextResult.fail("error1"),
-            FlextResult.fail("error2"),
-            FlextResult.fail("error3")
-        ):
+        if FlextResult.any_success(*results):
             raise AssertionError(
-                f"Expected False, got {FlextResult.any_success(FlextResult.fail('error1'), FlextResult.fail('error2'), FlextResult.fail('error3'))}"
+                f"Expected False, got {FlextResult.any_success(*results)}"
             )
 
     def test_first_success_found(self) -> None:

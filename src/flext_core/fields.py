@@ -609,11 +609,10 @@ class FlextFieldMetadata(BaseModel):
         """Convert metadata to dictionary."""
         return self.model_dump()
 
-
     @classmethod
     def from_dict(cls, data: TAnyDict) -> FlextFieldMetadata:
         """Create metadata from dictionary."""
-        # Set defaults for required fields if not present and use explicit field assignments with type casting
+        # Set defaults for required fields if not present
         return cls(
             field_id=str(data.get("field_id", "unknown")),
             field_name=str(data.get("field_name", "unknown")),
@@ -621,7 +620,9 @@ class FlextFieldMetadata(BaseModel):
             required=bool(data.get("required", True)),
             default_value=_safe_cast_default_value(data.get("default_value")),
             # Additional fields that might be in data
-            description=str(data.get("description", "")) if data.get("description") else None,
+            description=(
+                str(data.get("description", "")) if data.get("description") else None
+            ),
         )
 
 

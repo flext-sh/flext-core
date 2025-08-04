@@ -20,6 +20,7 @@ from __future__ import annotations
 import math
 import time
 from decimal import Decimal
+from typing import TYPE_CHECKING
 
 # Import shared domain models to reduce duplication
 from shared_domain import (
@@ -34,12 +35,14 @@ from flext_core import (
     FlextComparableMixin,
     FlextLoggableMixin,
     FlextResult,
-    FlextTypes,
     TAnyObject,
     TErrorMessage,
     TLogMessage,
     TUserData,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 # =============================================================================
 # VALIDATION CONSTANTS - Business rule constraints
@@ -106,19 +109,21 @@ class ProductFieldValidator:
 
     def validate_product_id(self, product_id: object) -> None:
         """Validate product ID field - SOLID SRP."""
-        if not FlextTypes.TypeGuards.is_instance_of(product_id, str):
+        if not isinstance(product_id, str):
             self.validation_result.add_error("Product ID must be a string")
             return
 
+        # Now product_id is narrowed to str type
         if not product_id or len(product_id.strip()) == 0:
             self.validation_result.add_error("Product ID cannot be empty")
 
     def validate_name(self, name: object) -> None:
         """Validate product name field - SOLID SRP."""
-        if not FlextTypes.TypeGuards.is_instance_of(name, str):
+        if not isinstance(name, str):
             self.validation_result.add_error("Name must be a string")
             return
 
+        # Now name is narrowed to str type
         if not name or len(name.strip()) < MIN_PRODUCT_NAME_LENGTH:
             self.validation_result.add_error(
                 f"Name must be at least {MIN_PRODUCT_NAME_LENGTH} characters"
@@ -126,10 +131,11 @@ class ProductFieldValidator:
 
     def validate_price(self, price: object) -> None:
         """Validate product price field - SOLID SRP."""
-        if not FlextTypes.TypeGuards.is_instance_of(price, (int, float)):
+        if not isinstance(price, (int, float)):
             self.validation_result.add_error("Price must be a number")
             return
 
+        # Now price is narrowed to int | float type
         if price < 0:
             self.validation_result.add_error("Price cannot be negative")
 
@@ -140,19 +146,21 @@ class ProductFieldValidator:
 
     def validate_category(self, category: object) -> None:
         """Validate product category field - SOLID SRP."""
-        if not FlextTypes.TypeGuards.is_instance_of(category, str):
+        if not isinstance(category, str):
             self.validation_result.add_error("Category must be a string")
             return
 
+        # Now category is narrowed to str type
         if not category or len(category.strip()) == 0:
             self.validation_result.add_error("Category cannot be empty")
 
     def validate_stock(self, stock: object) -> None:
         """Validate product stock field - SOLID SRP."""
-        if not FlextTypes.TypeGuards.is_instance_of(stock, int):
+        if not isinstance(stock, int):
             self.validation_result.add_error("Stock must be an integer")
             return
 
+        # Now stock is narrowed to int type
         if stock < 0:
             self.validation_result.add_error("Stock cannot be negative")
 
@@ -161,12 +169,13 @@ class ProductFieldValidator:
         if tags is None:
             return  # Tags are optional
 
-        if not FlextTypes.TypeGuards.is_instance_of(tags, list):
+        if not isinstance(tags, list):
             self.validation_result.add_error("Tags must be a list if provided")
             return
 
+        # Now tags is narrowed to list type
         for tag in tags:
-            if not FlextTypes.TypeGuards.is_instance_of(tag, str):
+            if not isinstance(tag, str):
                 self.validation_result.add_error("All tags must be strings")
                 break
 
@@ -305,8 +314,8 @@ def demonstrate_basic_validations() -> None:
     print("📋 EXAMPLE 1: Basic Validations")
     print("=" * 60)
 
-    # Test data for validation
-    test_cases: list[tuple[str, TAnyObject]] = [
+    # Test data for validation - use object for flexible test values
+    test_cases: list[tuple[str, object]] = [
         ("Valid String", "Hello World"),
         ("Empty String", ""),
         ("Valid Integer", 42),
@@ -320,12 +329,12 @@ def demonstrate_basic_validations() -> None:
         log_message = f"🔍 Testing: {test_name} = {test_value}"
         print(log_message)
 
-        # Basic type validations using FlextTypes.TypeGuards
-        is_str = FlextTypes.TypeGuards.is_instance_of(test_value, str)
-        is_int = FlextTypes.TypeGuards.is_instance_of(test_value, int)
-        is_float = FlextTypes.TypeGuards.is_instance_of(test_value, float)
-        is_list = FlextTypes.TypeGuards.is_instance_of(test_value, list)
-        is_dict = FlextTypes.TypeGuards.is_instance_of(test_value, dict)
+        # Basic type validations using built-in isinstance (better type narrowing)
+        is_str = isinstance(test_value, str)
+        is_int = isinstance(test_value, int)
+        is_float = isinstance(test_value, float)
+        is_list = isinstance(test_value, list)
+        is_dict = isinstance(test_value, dict)
 
         log_message = f"   📝 String: {is_str}"
         print(log_message)
@@ -339,7 +348,7 @@ def demonstrate_basic_validations() -> None:
         print(log_message)
 
         # Non-empty string validation
-        if is_str:
+        if is_str and isinstance(test_value, str):
             non_empty = len(test_value.strip()) > 0
             log_message = f"   📝 Non-empty: {non_empty}"
             print(log_message)
@@ -423,8 +432,8 @@ def demonstrate_functional_predicates() -> None:
     print("📋 EXAMPLE 3: Functional Predicates")
     print("=" * 60)
 
-    # Test data
-    test_values: list[TAnyObject] = [
+    # Test data - use object for mixed value types
+    test_values: list[object] = [
         "Hello World",
         "",
         "   ",
@@ -440,21 +449,21 @@ def demonstrate_functional_predicates() -> None:
         None,
     ]
 
-    # Define predicates using FlextTypes.TypeGuards
-    predicates = [
-        ("Is String", lambda x: FlextTypes.TypeGuards.is_instance_of(x, str)),
+    # Define predicates using built-in isinstance (better type narrowing)
+    predicates: list[tuple[str, Callable[[object], bool]]] = [
+        ("Is String", lambda x: isinstance(x, str)),
         ("Is Non-Empty String", lambda x: isinstance(x, str) and len(x.strip()) > 0),
         (
             "Is Positive Integer",
-            lambda x: FlextTypes.TypeGuards.is_instance_of(x, int) and x > 0,
+            lambda x: isinstance(x, int) and x > 0,
         ),
         ("Is Non-Negative", lambda x: isinstance(x, (int, float)) and x >= 0),
-        ("Is List", lambda x: FlextTypes.TypeGuards.is_instance_of(x, list)),
+        ("Is List", lambda x: isinstance(x, list)),
         (
             "Is Non-Empty List",
-            lambda x: FlextTypes.TypeGuards.is_instance_of(x, list) and len(x) > 0,
+            lambda x: isinstance(x, list) and len(x) > 0,
         ),
-        ("Is Dict", lambda x: FlextTypes.TypeGuards.is_instance_of(x, dict)),
+        ("Is Dict", lambda x: isinstance(x, dict)),
         ("Is Not None", lambda x: x is not None),
     ]
 
@@ -462,7 +471,7 @@ def demonstrate_functional_predicates() -> None:
         log_message = f"🔍 Predicate: {pred_name}"
         print(log_message)
 
-        results: list[tuple[TAnyObject, bool]] = []
+        results: list[tuple[object, bool]] = []
         for value in test_values:
             try:
                 result = predicate(value)
@@ -496,8 +505,8 @@ def demonstrate_predicate_composition() -> None:
     print("📋 EXAMPLE 4: Predicate Composition")
     print("=" * 60)
 
-    # Test data
-    test_values: list[TAnyObject] = [
+    # Test data - use object for mixed value types
+    test_values: list[object] = [
         "valid@email.com",
         "invalid-email",
         "user@domain",
@@ -509,24 +518,24 @@ def demonstrate_predicate_composition() -> None:
     ]
 
     # Define individual predicates
-    def is_string(value: TAnyObject) -> bool:
+    def is_string(value: object) -> bool:
         """Check if value is string."""
-        return FlextTypes.TypeGuards.is_instance_of(value, str)
+        return isinstance(value, str)
 
-    def has_at_symbol(value: TAnyObject) -> bool:
+    def has_at_symbol(value: object) -> bool:
         """Check if string has @ symbol."""
         return isinstance(value, str) and "@" in value
 
-    def has_domain_part(value: TAnyObject) -> bool:
+    def has_domain_part(value: object) -> bool:
         """Check if email has domain part."""
         return isinstance(value, str) and "." in value.split("@")[-1]
 
-    def is_non_empty(value: TAnyObject) -> bool:
+    def is_non_empty(value: object) -> bool:
         """Check if value is non-empty."""
         return isinstance(value, str) and len(value.strip()) > 0
 
     # Compose predicates
-    def is_valid_email(value: TAnyObject) -> bool:
+    def is_valid_email(value: object) -> bool:
         """Compose email validation predicates."""
         return (
             is_string(value)
@@ -577,11 +586,23 @@ def validate_customer_complete(
     )
     print(log_message)
 
-    # Use SharedDomainFactory for robust validation
+    # Use SharedDomainFactory for robust validation with proper type casting
+    name_value = customer_data.get("name", "")
+    email_value = customer_data.get("email", "")
+    age_value = customer_data.get("age", 0)
+
+    # Type validation and casting
+    if not isinstance(name_value, str):
+        return FlextResult.fail("Name must be a string")
+    if not isinstance(email_value, str):
+        return FlextResult.fail("Email must be a string")
+    if not isinstance(age_value, int):
+        return FlextResult.fail("Age must be an integer")
+
     user_result = SharedDomainFactory.create_user(
-        name=customer_data.get("name", ""),
-        email=customer_data.get("email", ""),
-        age=customer_data.get("age", 0),
+        name=name_value,
+        email=email_value,
+        age=age_value,
     )
 
     if user_result.is_failure:
@@ -594,7 +615,8 @@ def validate_customer_complete(
     try:
         business_validation = validate_user_business_rules(user)
         if business_validation.is_failure:
-            return FlextResult.fail(business_validation.error)
+            error_msg = business_validation.error or "Business validation failed"
+            return FlextResult.fail(error_msg)
 
         # Use shared user directly instead of creating local demo user
         enhanced_user = user
@@ -632,14 +654,25 @@ def validate_product_complete(
     # Validate all fields using accumulator pattern
     field_validation = orchestrator.validate_all_fields()
     if field_validation.is_failure:
-        return FlextResult.fail(field_validation.error)
+        error_msg = field_validation.error or "Field validation failed"
+        return FlextResult.fail(error_msg)
 
-    # Extract validated fields for product creation
+    # Extract validated fields for product creation with type checking
     name = product_data.get("name")
     price = product_data.get("price")
     category = product_data.get("category")
     stock = product_data.get("stock")
     product_id = product_data.get("product_id")
+
+    # Type validation for required fields
+    if not isinstance(name, str):
+        return FlextResult.fail("Product name must be a string")
+    if not isinstance(price, (int, float)):
+        return FlextResult.fail("Product price must be a number")
+    if not isinstance(category, str):
+        return FlextResult.fail("Product category must be a string")
+    if not isinstance(stock, int):
+        return FlextResult.fail("Product stock must be an integer")
 
     # Create product using SharedDomainFactory - single path
     try:
@@ -674,7 +707,8 @@ def validate_product_complete(
         # Perform inventory validation
         inventory_validation = enhanced_product.validate_inventory_rules()
         if inventory_validation.is_failure:
-            return FlextResult.fail(inventory_validation.error)
+            error_msg = inventory_validation.error or "Inventory validation failed"
+            return FlextResult.fail(error_msg)
 
         log_message = (
             f"✅ Enhanced product validation successful: {enhanced_product.name}"
@@ -841,8 +875,8 @@ def demonstrate_validation_performance() -> None:
     print("📋 EXAMPLE 7: Validation Performance")
     print("=" * 60)
 
-    # Benchmark data
-    test_data: list[TAnyObject] = [
+    # Benchmark data - use object for mixed value types
+    test_data: list[object] = [
         "valid@email.com",
         "invalid-email",
         "user@domain.co.uk",
@@ -854,7 +888,7 @@ def demonstrate_validation_performance() -> None:
     log_message = "🏃 Benchmarking Email Validation"
     print(log_message)
 
-    def validate_email_simple(email: TAnyObject) -> bool:
+    def validate_email_simple(email: object) -> bool:
         """Validate email format simply."""
         return isinstance(email, str) and "@" in email and "." in email.split("@")[-1]
 
@@ -877,7 +911,7 @@ def demonstrate_validation_performance() -> None:
 
     start_time = time.time()
     type_results = [
-        FlextTypes.TypeGuards.is_instance_of(item, str) for item in test_data
+        isinstance(item, str) for item in test_data
     ]
     end_time = time.time()
 

@@ -60,8 +60,8 @@ class TestBaseBuilder:
         builder = _BaseBuilder("test_builder")
 
         builder._set_property("key1", "value1")
-        builder._set_property("key2", 42)
-        builder._set_property("key3", {"nested": "dict"})
+        builder._set_property("key2", 42.0)
+        builder._set_property("key3", "nested_dict_string")
 
         if builder._properties["key1"] != "value1":
             raise AssertionError(
