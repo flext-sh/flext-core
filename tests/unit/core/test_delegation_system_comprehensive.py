@@ -324,11 +324,12 @@ class TestFlextMixinDelegator:
         host = HostObject()
         FlextMixinDelegator(host, SampleMixin1)
 
-        # Test property setter
-        host.writable_property = "new_value"
-        if host.writable_property != "new_value":
+        # Test property setter - cast to Any to handle dynamic delegation
+        host_with_props = cast("object", host)
+        host_with_props.writable_property = "new_value"  # type: ignore[attr-defined]
+        if host_with_props.writable_property != "new_value":  # type: ignore[attr-defined]
             raise AssertionError(
-                f"Expected {'new_value'}, got {host.writable_property}"
+                f"Expected {'new_value'}, got {host_with_props.writable_property}"  # type: ignore[attr-defined]
             )
 
     def test_property_delegation_readonly(self) -> None:
@@ -337,7 +338,8 @@ class TestFlextMixinDelegator:
         FlextMixinDelegator(host, SampleMixin1)
 
         # Test readonly property (don't use hasattr with __getattr__)
-        value = host.readonly_property
+        host_with_props = cast("object", host)
+        value = host_with_props.readonly_property  # type: ignore[attr-defined]
         if value != "readonly_value":
             raise AssertionError(f"Expected {'readonly_value'}, got {value}")
 
@@ -347,7 +349,7 @@ class TestFlextMixinDelegator:
             FlextOperationError,
             match="Property 'readonly_property' is read-only",
         ):
-            host.readonly_property = "new_value"
+            host_with_props.readonly_property = "new_value"  # type: ignore[attr-defined]
 
     def test_private_methods_not_delegated(self) -> None:
         """Test that private methods are not delegated."""
@@ -378,14 +380,14 @@ class TestFlextMixinDelegator:
             FlextOperationError,
             match="Delegation error in ErrorMixin.error_method",
         ):
-            host.error_method()
+            cast("object", host).error_method()  # type: ignore[attr-defined]
 
     def test_method_signature_preservation(self) -> None:
         """Test that method signatures are preserved."""
         host = HostObject()
         FlextMixinDelegator(host, SampleMixin1)
 
-        # Test that delegated method has correct signature
+        # Test that delegated method has correct signature - use getattr for dynamic delegation
         method = host.mixin_method2
         if method.__name__ != "mixin_method2":
             raise AssertionError(f"Expected {'mixin_method2'}, got {method.__name__}")
@@ -576,7 +578,13 @@ class TestValidateDelegationSystem:
 
             # Check that test results show success
             test_results = data["test_results"]
-            success_results = [r for r in test_results if r.startswith("✓")]
+            if not isinstance(test_results, (list, tuple)):
+                raise AssertionError(
+                    f"Expected list/tuple for test_results, got {type(test_results)}"
+                )
+            success_results = [
+                r for r in test_results if isinstance(r, str) and r.startswith("✓")
+            ]
             assert len(success_results) > 0
 
     def test_validate_delegation_system_missing_methods(self) -> None:
@@ -609,6 +617,9 @@ class TestValidateDelegationSystem:
             if "Test failed" not in (result.error or ""):
                 msg = f"Expected 'Test failed' in {result.error}"
                 raise AssertionError(msg)
+            if result.error is None:
+                error_msg = "Expected error message, got None"
+                raise AssertionError(error_msg)
             assert "Delegation creation failed" in result.error
 
     def test_validate_delegation_system_type_error(self) -> None:
@@ -623,8 +634,9 @@ class TestValidateDelegationSystem:
             mock_host.is_valid = "not_a_bool"
 
             def mock_create_delegator(host: object, *mixins: type) -> Mock:
-                host.delegator = mock_delegator
-                host.is_valid = "not_a_bool"
+                # Use dynamic attribute access in test mocking
+                host.delegator = mock_delegator  # type: ignore[attr-defined]
+                host.is_valid = "not_a_bool"  # type: ignore[attr-defined]
                 return mock_delegator
 
             mock_create.side_effect = mock_create_delegator
@@ -711,8 +723,9 @@ class TestDelegationSystemEdgeCases:
         # Later mixins should override earlier ones
         FlextMixinDelegator(host, Mixin1, Mixin2)
 
-        # Should have the method from the last registered mixin
-        result = host.conflict_method()
+        # Should have the method from the last registered mixin - use cast for dynamic delegation
+        host_with_methods = cast("object", host)
+        result = host_with_methods.conflict_method()  # type: ignore[attr-defined]
         # The actual behavior depends on the order of processing
         if result not in {"mixin1", "mixin2"}:
             msg = f"Expected {'mixin1', 'mixin2'}, got {result}"
@@ -799,8 +812,9 @@ class TestDelegationSystemEdgeCases:
             raise AssertionError(
                 f"Expected {'property_with_error'} in {type(host).__dict__}"
             )
+        host_with_props = cast("object", host)
         with pytest.raises(ValueError, match="Property getter error"):
-            _ = host.property_with_error
+            _ = host_with_props.property_with_error  # type: ignore[attr-defined]
 
     def test_mixin_registry_persistence(self) -> None:
         """Test that mixin registry persists across delegator instances."""
@@ -836,22 +850,34 @@ class TestDelegationSystemEdgeCases:
                 raise AssertionError(f"Expected {key} in {info}")
 
         # Should contain information from both mixins
-        if len(info["registered_mixins"]) != EXPECTED_BULK_SIZE:
-            raise AssertionError(f"Expected {2}, got {len(info['registered_mixins'])}")
-        if SampleMixin1 not in info["registered_mixins"]:
-            raise AssertionError(
-                f"Expected {SampleMixin1} in {info['registered_mixins']}"
+        registered_mixins = info["registered_mixins"]
+        if not isinstance(registered_mixins, (list, tuple)):
+            raise TypeError(
+                f"Expected list/tuple for registered_mixins, got {type(registered_mixins)}"
             )
-        assert InitializableMixin in info["registered_mixins"]
+        if len(registered_mixins) != EXPECTED_BULK_SIZE:
+            raise AssertionError(f"Expected {2}, got {len(registered_mixins)}")
+        if SampleMixin1 not in registered_mixins:
+            raise AssertionError(f"Expected {SampleMixin1} in {registered_mixins}")
+        assert InitializableMixin in registered_mixins
 
         # Should contain methods from both mixins
         methods = info["delegated_methods"]
+        if not isinstance(methods, (list, tuple, dict)):
+            raise TypeError(
+                f"Expected list/tuple/dict for delegated_methods, got {type(methods)}"
+            )
         if "mixin_method1" not in methods:  # From both mixins, but one will override:
             raise AssertionError(f"Expected {'mixin_method1'} in {methods}")
 
         # Should contain initialization log entries
-        if len(info["initialization_log"]) < 5:  # At least 5 initialization methods:
-            raise AssertionError(f"Expected {len(info['initialization_log'])} >= {5}")
+        initialization_log = info["initialization_log"]
+        if not isinstance(initialization_log, (list, tuple)):
+            raise TypeError(
+                f"Expected list/tuple for initialization_log, got {type(initialization_log)}"
+            )
+        if len(initialization_log) < 5:  # At least 5 initialization methods:
+            raise AssertionError(f"Expected {len(initialization_log)} >= {5}")
 
     def test_signature_preservation_edge_cases(self) -> None:
         """Test signature preservation edge cases."""
@@ -943,8 +969,13 @@ class TestDelegationSystemIntegration:
         info = delegator.get_delegation_info()
         if not (info["validation_result"]):
             raise AssertionError(f"Expected True, got {info['validation_result']}")
-        if len(info["registered_mixins"]) != EXPECTED_DATA_COUNT:
-            raise AssertionError(f"Expected {3}, got {len(info['registered_mixins'])}")
+        registered_mixins_info = info["registered_mixins"]
+        if not isinstance(registered_mixins_info, (list, tuple)):
+            raise TypeError(
+                f"Expected list/tuple, got {type(registered_mixins_info)}"
+            )
+        if len(registered_mixins_info) != EXPECTED_DATA_COUNT:
+            raise AssertionError(f"Expected {3}, got {len(registered_mixins_info)}")
 
     def test_system_validation_integration(self) -> None:
         """Test integration with system validation."""
@@ -953,14 +984,22 @@ class TestDelegationSystemIntegration:
         assert isinstance(result, FlextResult)
         if result.is_success:
             data = result.data
+            if not isinstance(data, dict):
+                raise AssertionError(f"Expected dict, got {type(data)}")
             if data["status"] != "SUCCESS":
                 raise AssertionError(f"Expected {'SUCCESS'}, got {data['status']}")
             if "test_results" not in data:
                 raise AssertionError(f"Expected {'test_results'} in {data}")
-            assert len(data["test_results"]) > 0
+
+            test_results = data["test_results"]
+            if not isinstance(test_results, (list, tuple)):
+                raise AssertionError(
+                    f"Expected list/tuple for test_results, got {type(test_results)}"
+                )
+            assert len(test_results) > 0
 
             # All test results should indicate success
-            for test_result in data["test_results"]:
+            for test_result in test_results:
                 assert test_result.startswith("✓")
         else:
             # If validation fails, error should be informative

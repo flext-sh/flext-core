@@ -38,6 +38,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from structlog.stdlib import BoundLogger
 
+from flext_core.flext_types import TAnyDict
 from flext_core.interfaces import (
     FlextConfigurable,
     FlextEventPublisher,
@@ -233,9 +234,9 @@ class UserService(FlextService):
         print("UserService stopped successfully")
         return FlextResult.ok(None)
 
-    def health_check(self) -> FlextResult[dict[str, object]]:
+    def health_check(self) -> FlextResult[TAnyDict]:
         """Check user service health."""
-        health_status: dict[str, object] = {
+        health_status: TAnyDict = {
             "service": "UserService",
             "status": "healthy" if self._is_running else "stopped",
             "total_users": len(self._users),

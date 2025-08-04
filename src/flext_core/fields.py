@@ -92,7 +92,13 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from flext_core.constants import FlextFieldType
 from flext_core.exceptions import FlextTypeError, FlextValidationError
-from flext_core.flext_types import FlextValidator, TAnyDict, TEntityId
+from flext_core.flext_types import (
+    FlextValidator,
+    TAnyDict,
+    TEntityId,
+    TFieldInfo,
+    TFieldMetadata,
+)
 from flext_core.mixins import FlextSerializableMixin, FlextValidatableMixin
 from flext_core.result import FlextResult
 from flext_core.validation import FlextValidators
@@ -169,7 +175,7 @@ class FlextFieldCore(
 
     # Core behavior
     required: bool = True
-    default_value: object = None
+    default_value: str | int | float | bool | None = None
 
     # Validation constraints
     min_value: int | float | None = Field(
@@ -201,7 +207,9 @@ class FlextFieldCore(
 
     # Metadata
     description: str | None = Field(default=None, description="Field description")
-    example: object = Field(default=None, description="Example value")
+    example: str | int | float | bool | None = Field(
+        default=None, description="Example"
+    )
     deprecated: bool = Field(default=False, description="Is field deprecated")
     sensitive: bool = Field(default=False, description="Contains sensitive data")
     indexed: bool = Field(default=False, description="Should be indexed")
@@ -336,7 +344,7 @@ class FlextFieldCore(
         """Get complete field schema."""
         return self.model_dump()
 
-    def get_field_metadata(self) -> TAnyDict:
+    def get_field_metadata(self) -> TFieldMetadata:
         """Get field metadata only."""
         return {
             "description": self.description,
@@ -457,7 +465,7 @@ class FlextFieldCore(
         return bool(value)
 
     # Backward compatibility methods for tests
-    def get_default_value(self) -> object:
+    def get_default_value(self) -> str | int | float | bool | None:
         """Get the default value for this field."""
         return self.default_value
 
@@ -473,7 +481,7 @@ class FlextFieldCore(
         """Check if field is sensitive."""
         return self.sensitive
 
-    def get_field_info(self) -> TAnyDict:
+    def get_field_info(self) -> TFieldInfo:
         """Get complete field information."""
         return {
             "field_id": self.field_id,
@@ -539,7 +547,7 @@ class FlextFieldMetadata(BaseModel):
 
     # Behavior settings with defaults
     required: bool = True
-    default_value: object | None = None
+    default_value: str | int | float | bool | None = None
 
     # Validation constraints
     min_value: int | float | None = None
@@ -551,7 +559,7 @@ class FlextFieldMetadata(BaseModel):
 
     # Documentation
     description: str | None = None
-    example: object | None = None
+    example: str | int | float | bool | None = None
     tags: list[str] = Field(default_factory=list)
 
     # System flags

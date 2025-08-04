@@ -94,8 +94,8 @@ TAggregateRoot = TypeVar("TAggregateRoot")  # Aggregate root type
 
 # Value object and data types
 TValueObject = TypeVar("TValueObject")  # Generic value object type
-TData = dict[str, object]  # Generic data dictionary
-TValue = object  # Generic value type
+TData = dict[str, str | int | float | bool | None]  # Specific data dictionary
+TValue = str | int | float | bool | None  # Specific value type
 
 # =============================================================================
 # CQRS TYPE DEFINITIONS - Command Query Responsibility Segregation
@@ -113,7 +113,7 @@ TResult = TypeVar("TResult")  # Generic result type
 
 # Message and handler types
 TMessage = TypeVar("TMessage")  # Generic message type
-THandler = Callable[[object], object]  # Generic handler function type
+THandler = TypeVar("THandler")  # Generic handler function type
 TRequestId = str  # Request identifier type
 
 # Tracking and identification types
@@ -129,12 +129,12 @@ TBusinessType = str  # Business type classifier
 
 # Cache and storage types
 TCacheKey = str  # Cache key type
-TCacheValue = object  # Cache value type
+TCacheValue = str | int | float | bool | None  # Cache value type
 TCacheTTL = int  # Cache time-to-live type
 
 # Configuration types
-TConfigDict = dict[str, object]  # Configuration dictionary type
-TConfigValue = object  # Configuration value type
+TConfigDict = dict[str, str | int | float | bool | None]  # Config dict
+TConfigValue = str | int | float | bool | None  # Configuration value type
 
 # Infrastructure types
 TConnectionString = str  # Database connection string type
@@ -146,17 +146,26 @@ TDirectoryPath = str  # Directory path type
 # =============================================================================
 
 # Collection types
-TAnyDict = dict[str, object]  # Dictionary with string keys and any values
-TAnyList = list[object]  # List with any value types
-TAnyMapping = dict[str, object]  # Generic mapping type alias
-TAnySequence = list[object]  # Generic sequence type alias
+TAnyDict = dict[str, str | int | float | bool | None]  # Dict with typed values
+TAnyList = list[str | int | float | bool | None]  # List with typed values
+TAnyMapping = dict[str, str | int | float | bool | None]  # Generic mapping type alias
+TAnySequence = list[str | int | float | bool | None]  # Generic sequence type alias
+
+# Field and metadata types
+TFieldValue = str | int | float | bool | None  # Field value type
+TFieldMetadata = dict[
+    str, str | int | float | bool | None | list[str]
+]  # Field metadata type
+TFieldInfo = dict[
+    str, str | int | float | bool | None | list[str] | TFieldMetadata
+]  # Field info type
 
 # Function and predicate types
-TPredicate = Callable[[object], bool]  # Predicate function type
+TPredicate = Callable[[T], bool]  # Predicate function type
 TTransformer = Callable[[T], U]  # Transformer function type
-TValidator = Callable[[object], bool]  # General validator function type
-FlextValidator = TValidator  # Validator function type alias
-TErrorHandler = Callable[[Exception], object]  # Error handler function type
+TValidator = Callable[[T], bool]  # General validator function type
+FlextValidator = TValidator[str | int | float | bool | None]  # Validator
+TErrorHandler = Callable[[Exception], str]  # Error handler function type
 TFactory = Callable[[], T]  # Generic factory function type
 
 # Error and message types

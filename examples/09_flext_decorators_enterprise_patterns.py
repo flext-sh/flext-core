@@ -52,6 +52,7 @@ from flext_core import (
     TLogMessage,
     TUserData,
 )
+from flext_core.exceptions import FlextValidationError
 
 # Constants to avoid magic numbers
 MAX_RETRY_ATTEMPTS = 3  # Maximum number of retry attempts
@@ -116,7 +117,7 @@ def demonstrate_validation_decorators() -> None:  # noqa: PLR0915
         result = register_user("valid@example.com")
         log_message = f"✅ Valid email registration: {result}"
         print(log_message)
-    except (RuntimeError, ValueError, TypeError) as e:
+    except (RuntimeError, ValueError, TypeError, FlextValidationError) as e:
         error_message = f"Email validation failed: {e}"
         print(f"❌ {error_message}")
 
@@ -125,7 +126,7 @@ def demonstrate_validation_decorators() -> None:  # noqa: PLR0915
         result = register_user("invalid-email")
         log_message = f"✅ Invalid email registration: {result}"
         print(log_message)
-    except (RuntimeError, ValueError, TypeError) as e:
+    except (RuntimeError, ValueError, TypeError, FlextValidationError) as e:
         error_message = f"Email validation failed (expected): {e}"
         print(f"❌ {error_message}")
 
@@ -150,7 +151,7 @@ def demonstrate_validation_decorators() -> None:  # noqa: PLR0915
         result = create_user_profile("Alice", 25)
         log_message = f"✅ Valid age profile: {result}"
         print(log_message)
-    except (RuntimeError, ValueError, TypeError) as e:
+    except (RuntimeError, ValueError, TypeError, FlextValidationError) as e:
         error_message = f"Age validation failed: {e}"
         print(f"❌ {error_message}")
 
@@ -159,7 +160,7 @@ def demonstrate_validation_decorators() -> None:  # noqa: PLR0915
         result = create_user_profile("Bob", 200)  # Too old
         log_message = f"✅ Invalid age profile: {result}"
         print(log_message)
-    except (RuntimeError, ValueError, TypeError) as e:
+    except (RuntimeError, ValueError, TypeError, FlextValidationError) as e:
         error_message = f"Age validation failed (expected): {e}"
         print(f"❌ {error_message}")
 
@@ -226,7 +227,7 @@ def demonstrate_error_handling_decorators() -> None:  # noqa: PLR0915
         print(log_message)
         log_message = f"   Attempts made: {attempt_count}"
         print(log_message)
-    except (RuntimeError, ValueError, TypeError) as e:
+    except (RuntimeError, ValueError, TypeError, FlextValidationError) as e:
         error_message = f"Retry service failed: {e}"
         print(f"❌ {error_message}")
 
@@ -257,7 +258,7 @@ def demonstrate_error_handling_decorators() -> None:  # noqa: PLR0915
         result = operation_with_custom_handling()
         log_message = f"✅ Custom handling result: {result}"
         print(log_message)
-    except (RuntimeError, ValueError, TypeError) as e:
+    except (RuntimeError, ValueError, TypeError, FlextValidationError) as e:
         error_message = f"Custom handling failed: {e}"
         print(f"❌ {error_message}")
 
@@ -383,7 +384,7 @@ def demonstrate_logging_decorators() -> None:
         result = risky_business_operation("success_001")
         log_message = f"✅ Successful operation: {result}"
         print(log_message)
-    except (RuntimeError, ValueError, TypeError) as e:
+    except (RuntimeError, ValueError, TypeError, FlextValidationError) as e:
         error_message = f"Operation failed: {e}"
         print(f"❌ {error_message}")
 
@@ -392,7 +393,7 @@ def demonstrate_logging_decorators() -> None:
         result = risky_business_operation("fail")
         log_message = f"✅ Failed operation: {result}"
         print(log_message)
-    except (RuntimeError, ValueError, TypeError) as e:
+    except (RuntimeError, ValueError, TypeError, FlextValidationError) as e:
         error_message = f"Operation failed (expected): {e}"
         print(f"❌ {error_message}")
 
@@ -426,7 +427,7 @@ def demonstrate_logging_decorators() -> None:
         result = comprehensive_service("error_service", {"param1": "value1"})
         log_message = f"✅ Error service result: {result}"
         print(log_message)
-    except (RuntimeError, ValueError, TypeError) as e:
+    except (RuntimeError, ValueError, TypeError, FlextValidationError) as e:
         error_message = f"Error service failed (expected): {e}"
         print(f"❌ {error_message}")
 
@@ -463,7 +464,7 @@ def demonstrate_immutability_decorators() -> None:
         config["new_key"] = "new_value"
         log_message = f"✅ Config modified: {config}"
         print(log_message)
-    except (RuntimeError, ValueError, TypeError) as e:
+    except (RuntimeError, ValueError, TypeError, FlextValidationError) as e:
         error_message = f"Config modification failed (expected): {e}"
         print(f"❌ {error_message}")
 
@@ -477,7 +478,7 @@ def demonstrate_immutability_decorators() -> None:
         # Try to modify input (should fail)
         try:
             user_data["processed"] = True
-        except (RuntimeError, ValueError, TypeError) as e:
+        except (RuntimeError, ValueError, TypeError, FlextValidationError) as e:
             error_message = f"Input modification failed (expected): {e}"
             print(f"❌ {error_message}")
 
@@ -536,7 +537,7 @@ def demonstrate_functional_decorators() -> None:
         result = enterprise_user_service("invalid", include_profile=False)
         log_message = f"✅ Invalid service result: {result}"
         print(log_message)
-    except (RuntimeError, ValueError, TypeError) as e:
+    except (RuntimeError, ValueError, TypeError, FlextValidationError) as e:
         error_message = f"Invalid service failed (expected): {e}"
         print(f"❌ {error_message}")
 
@@ -644,7 +645,7 @@ def demonstrate_decorator_best_practices() -> None:  # noqa: PLR0915
         result2 = set_completion_rate(75)
         log_message = f"✅ Valid rate: {result2}"
         print(log_message)
-    except (RuntimeError, ValueError, TypeError) as e:
+    except (RuntimeError, ValueError, TypeError, FlextValidationError) as e:
         error_message = f"Validation failed: {e}"
         print(f"❌ {error_message}")
 
@@ -653,7 +654,7 @@ def demonstrate_decorator_best_practices() -> None:  # noqa: PLR0915
         result1 = set_user_age(200)  # Invalid age
         log_message = f"✅ Invalid age: {result1}"
         print(log_message)
-    except (RuntimeError, ValueError, TypeError) as e:
+    except (RuntimeError, ValueError, TypeError, FlextValidationError) as e:
         error_message = f"Age validation failed (expected): {e}"
         print(f"❌ {error_message}")
 
@@ -722,7 +723,7 @@ def demonstrate_domain_model_decorators() -> None:  # noqa: PLR0915
         user = create_validated_user("Alice Johnson", "alice@example.com", 28)
         log_message = f"✅ User created with decorators: {user.name} (ID: {user.id})"
         print(log_message)
-    except (RuntimeError, ValueError, TypeError) as e:
+    except (RuntimeError, ValueError, TypeError, FlextValidationError) as e:
         error_message: TErrorMessage = f"User creation failed: {e}"
         print(f"❌ {error_message}")
 
@@ -731,7 +732,7 @@ def demonstrate_domain_model_decorators() -> None:  # noqa: PLR0915
         user = create_validated_user("", "invalid-email", 15)  # Invalid data
         log_message = f"✅ Invalid user created: {user.name}"
         print(log_message)
-    except (RuntimeError, ValueError, TypeError) as e:
+    except (RuntimeError, ValueError, TypeError, FlextValidationError) as e:
         error_message = f"Invalid user creation failed (expected): {e}"
         print(f"❌ {error_message}")
 
@@ -877,7 +878,7 @@ def demonstrate_domain_model_decorators() -> None:  # noqa: PLR0915
         user = register_user_with_domain_validation(valid_data)
         log_message = f"✅ Domain validation passed: {user.name}"
         print(log_message)
-    except (RuntimeError, ValueError, TypeError) as e:
+    except (RuntimeError, ValueError, TypeError, FlextValidationError) as e:
         error_message = f"Registration failed: {e}"
         print(f"❌ {error_message}")
 
@@ -891,7 +892,7 @@ def demonstrate_domain_model_decorators() -> None:  # noqa: PLR0915
         user = register_user_with_domain_validation(invalid_data)
         log_message = f"✅ Invalid registration: {user.name}"
         print(log_message)
-    except (RuntimeError, ValueError, TypeError) as e:
+    except (RuntimeError, ValueError, TypeError, FlextValidationError) as e:
         error_message = f"Invalid registration failed (expected): {e}"
         print(f"❌ {error_message}")
 

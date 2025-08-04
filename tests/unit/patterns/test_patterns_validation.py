@@ -2,13 +2,8 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from flext_core.result import FlextResult
 from flext_core.validation import FlextValidation
-
-if TYPE_CHECKING:
-    from flext_core.flext_types import TAnyDict
 
 # =============================================================================
 # TEST VALIDATION UTILITIES
@@ -313,7 +308,7 @@ class TestValidationIntegration:
         # Test invalid data - not a dict - we need to cast to satisfy mypy
         from typing import cast
 
-        result = validate_user_data(cast("TAnyDict", "not a dict"))
+        result = validate_user_data(cast("dict[str, object]", "not a dict"))
         assert result.is_failure
         assert result.error is not None
         if "dictionary" not in (result.error or ""):

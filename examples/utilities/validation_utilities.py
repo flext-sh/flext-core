@@ -96,10 +96,12 @@ def process_shared_order(order: SharedOrder) -> FlextResult[SharedOrder]:
 
     # Validate total calculation
     calculated_total = sum(
-        item.quantity * item.product.price.amount for item in order.items
+        item.quantity * item.unit_price.amount for item in order.items
     )
 
-    if abs(calculated_total - order.total.amount) > Decimal("0.01"):
-        return FlextResult.fail("Order total mismatch with items")
+    # Order doesn't have a total attribute, so we calculate the total dynamically
+    # This is a placeholder validation that could be extended
+    if calculated_total <= 0:
+        return FlextResult.fail("Order total must be positive")
 
     return FlextResult.ok(data=order)

@@ -225,6 +225,7 @@ from flext_core.fields import FlextFieldCore, FlextFields
 from flext_core.flext_types import (
     Comparable,
     E,
+    F,
     FlextEntityId,
     FlextTypes,
     P,
@@ -423,6 +424,7 @@ __all__ = [
     "E",
     "EntryType",
     "EntryValidator",
+    "F",
     "FlextAggregateRoot",
     "FlextAlreadyExistsError",
     "FlextApplicationConfig",

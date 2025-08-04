@@ -15,6 +15,7 @@ Features:
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from decimal import Decimal
 from enum import StrEnum
 
@@ -745,13 +746,26 @@ class SharedDomainFactory:
             # Create order entity
             entity_id = str(kwargs.get("id", FlextUtilities.generate_entity_id()))
 
+            # Type-safe parameter extraction from kwargs
+            status = kwargs.get("status", OrderStatus.PENDING)
+            if not isinstance(status, OrderStatus):
+                status = OrderStatus.PENDING
+
+            payment_method = kwargs.get("payment_method")
+            if payment_method is not None and not isinstance(payment_method, PaymentMethod):
+                payment_method = None
+
+            shipping_address = kwargs.get("shipping_address")
+            if shipping_address is not None and not isinstance(shipping_address, Address):
+                shipping_address = None
+
             order = Order(
                 id=entity_id,
                 customer_id=customer_id,
                 items=order_items,
-                status=kwargs.get("status", OrderStatus.PENDING),
-                payment_method=kwargs.get("payment_method"),
-                shipping_address=kwargs.get("shipping_address"),
+                status=status,
+                payment_method=payment_method,
+                shipping_address=shipping_address,
             )
 
             validation_result = order.validate_domain_rules()
@@ -949,7 +963,7 @@ class SharedDemonstrationPattern:
     @staticmethod
     def run_demonstration(
         title: str,
-        demonstration_functions: list[callable],
+        demonstration_functions: list[Callable[[], None]],
     ) -> None:
         """Run a demonstration with consistent formatting and error handling."""
         print("=" * 80)

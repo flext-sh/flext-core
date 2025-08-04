@@ -131,10 +131,10 @@ class SampleAggregateRoot(FlextAggregateRoot):
     def perform_action(self, action: str) -> None:
         """Test method that raises domain event."""
         event_type = f"test.{action}"
-        event_data = {
+        event_data: dict[str, str | int | float | bool | None] = {
             "aggregate_id": self.id,
             "action": action,
-            "details": {"title": self.title},
+            "details": self.title,  # Simplified to avoid nested dict with object
         }
         result = self.add_domain_event(event_type, event_data)
         if result.is_failure:
@@ -148,7 +148,8 @@ class TestFlextEntity:
     def test_entity_creation_with_auto_id(self) -> None:
         """Test entity creation with auto-generated ID."""
         # Use factory to create entity with auto-generated ID
-        entity = create_test_entity(SampleEntity, name="Test Entity")
+        entity_obj = create_test_entity(SampleEntity, name="Test Entity")
+        entity = cast("SampleEntity", entity_obj)
 
         if entity.name != "Test Entity":
             raise AssertionError(f"Expected {'Test Entity'}, got {entity.name}")
@@ -171,24 +172,26 @@ class TestFlextEntity:
     def test_entity_creation_with_timestamps(self) -> None:
         """Test entity creation with custom timestamps."""
         now = datetime.now(UTC)
-        entity = create_test_entity(
+        entity_obj = create_test_entity(
             SampleEntity,
             name="Test Entity",
             created_at=now,
         )
+        entity = cast("SampleEntity", entity_obj)
 
         if entity.created_at != now:
             raise AssertionError(f"Expected {now}, got {entity.created_at}")
 
     def test_entity_immutability(self) -> None:
         """Test that entities are immutable."""
-        entity = create_test_entity(SampleEntity, name="Test Entity")
+        entity_obj = create_test_entity(SampleEntity, name="Test Entity")
+        entity = cast("SampleEntity", entity_obj)
 
         with pytest.raises((ValidationError, AttributeError, TypeError)):
-            entity.name = "New Name"
+            entity.name = "New Name"  # type: ignore[misc]
 
         with pytest.raises((ValidationError, AttributeError, TypeError)):
-            entity.id = "new-id"
+            entity.id = "new-id"  # type: ignore[misc]
 
     def test_entity_equality_by_id(self) -> None:
         """Test that entities are equal based on ID."""
@@ -229,7 +232,8 @@ class TestFlextEntity:
 
     def test_entity_model_dump(self) -> None:
         """Test entity serialization."""
-        entity = create_test_entity(SampleEntity, name="Test Entity", status="active")
+        entity_obj = create_test_entity(SampleEntity, name="Test Entity", status="active")
+        entity = cast("SampleEntity", entity_obj)
 
         data = entity.model_dump()
 
@@ -440,11 +444,12 @@ class TestFlextAggregateRoot:
 
     def test_aggregate_root_creation(self) -> None:
         """Test aggregate root creation."""
-        aggregate = create_test_entity(
+        aggregate_obj = create_test_entity(
             SampleAggregateRoot,
             title="Test Aggregate",
             description="Test description",
         )
+        aggregate = cast("SampleAggregateRoot", aggregate_obj)
 
         if aggregate.title != "Test Aggregate":
             raise AssertionError(f"Expected {'Test Aggregate'}, got {aggregate.title}")

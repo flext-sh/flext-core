@@ -67,12 +67,14 @@ class ValidationHelper:
         if not is_non_empty_string(user_data.get("name")):
             validation_errors.append("Name is required")
 
-        if not is_email(user_data.get("email", "")):
+        email_value = user_data.get("email", "")
+        if not isinstance(email_value, str) or not is_email(email_value):
             validation_errors.append("Valid email is required")
 
-        if not is_int(user_data.get("age")):
+        age_value = user_data.get("age")
+        if not is_int(age_value):
             validation_errors.append("Age must be a number")
-        elif user_data.get("age", 0) < 0:
+        elif isinstance(age_value, int) and age_value < 0:
             validation_errors.append("Age must be positive")
 
         return validation_errors

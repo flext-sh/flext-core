@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import tempfile
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from pydantic_settings import SettingsConfigDict
 
@@ -29,7 +29,7 @@ class TestFlextConfig:
 
     def test_create_complete_config_basic(self) -> None:
         """Test basic complete configuration creation."""
-        config_data = {"app_name": "test", "custom_setting": "value"}
+        config_data: dict[str, object] = {"app_name": "test", "custom_setting": "value"}
 
         result = FlextConfig.create_complete_config(config_data)
 
@@ -41,7 +41,7 @@ class TestFlextConfig:
 
     def test_create_complete_config_with_defaults(self) -> None:
         """Test complete configuration creation with defaults applied."""
-        config_data = {"app_name": "test"}
+        config_data: dict[str, object] = {"app_name": "test"}
 
         result = FlextConfig.create_complete_config(
             config_data,
@@ -54,12 +54,12 @@ class TestFlextConfig:
         )
         # Check that defaults were applied
         assert (
-            "debug" in result.data or "timeout" in result.data or "port" in result.data
+            "debug" in (result.data or {}) or "timeout" in (result.data or {}) or "port" in (result.data or {})
         )
 
     def test_create_complete_config_without_validation(self) -> None:
         """Test complete configuration creation without validation."""
-        config_data = {"app_name": "test", "some_key": "valid_value"}
+        config_data: dict[str, object] = {"app_name": "test", "some_key": "valid_value"}
 
         result = FlextConfig.create_complete_config(
             config_data,
@@ -73,7 +73,7 @@ class TestFlextConfig:
 
     def test_create_complete_config_validation_failure(self) -> None:
         """Test complete configuration creation with validation failure."""
-        config_data = {"app_name": "test", "invalid_key": None}
+        config_data: dict[str, object] = {"app_name": "test", "invalid_key": None}
 
         result = FlextConfig.create_complete_config(
             config_data,
@@ -82,7 +82,7 @@ class TestFlextConfig:
 
         # Should fail because of None value when validation is enabled
         assert result.is_failure
-        assert "Config validation failed" in result.error, (
+        assert "Config validation failed" in (result.error or ""), (
             f"Expected 'Config validation failed' in {result.error}"
         )
 
@@ -114,7 +114,7 @@ class TestFlextConfig:
         result = FlextConfig.load_and_validate_from_file("non_existent.json")
 
         assert result.is_failure
-        assert "Configuration file not found" in result.error, (
+        assert "Configuration file not found" in (result.error or ""), (
             f"Expected 'Configuration file not found' in {result.error}"
         )
 
@@ -153,7 +153,7 @@ class TestFlextConfig:
         result = FlextConfig.get_env_with_validation("NON_EXISTENT_VAR")
 
         assert result.is_failure
-        assert "Environment variable 'NON_EXISTENT_VAR' not found" in result.error, (
+        assert "Environment variable 'NON_EXISTENT_VAR' not found" in (result.error or ""), (
             f"Expected 'Environment variable \\'NON_EXISTENT_VAR\\' not found' in {result.error}"
         )
 
@@ -163,21 +163,25 @@ class TestFlextConfigDefaults:
 
     def test_apply_defaults_simple(self) -> None:
         """Test applying simple defaults."""
-        config = {"app": {"name": "test"}}
-        defaults = {"app": {"debug": False}, "database": {"host": "localhost"}}
+        config: dict[str, object] = {"app": {"name": "test"}}
+        defaults: dict[str, object] = {"app": {"debug": False}, "database": {"host": "localhost"}}
 
         result = FlextConfigDefaults.apply_defaults(config, defaults)
 
         assert result.is_success
         merged_config = result.data
-        assert merged_config["app"]["name"] == "test", (
-            f"Expected {'test'}, got {merged_config['app']['name']}"
+        assert merged_config is not None
+
+        # Type cast to access nested structure
+        app_config = cast("dict[str, object]", merged_config["app"])
+        assert app_config["name"] == "test", (
+            f"Expected {'test'}, got {app_config['name']}"
         )
 
     def test_merge_configs_basic(self) -> None:
         """Test basic config merging."""
-        config = {"existing": "value"}
-        defaults = {"new": "default"}
+        config: dict[str, object] = {"existing": "value"}
+        defaults: dict[str, object] = {"new": "default"}
 
         result = FlextConfigDefaults.merge_configs(config, defaults)
 
@@ -233,9 +237,8 @@ class TestFlextConfigValidation:
         )
 
         assert result.is_failure
-        assert "Value must be string" in result.error, (
-            f"Expected 'Value must be string' in {result.error}"
-        )
+        assert result.error is not None
+        assert "Value must be string" in result.error
 
 
 class TestFlextBaseSettings:
@@ -287,8 +290,8 @@ class TestStandaloneFunctions:
 
     def test_merge_configs_function(self) -> None:
         """Test standalone merge_configs function."""
-        config1 = {"app_name": "test", "database_host": "localhost"}
-        config2 = {"app_debug": True, "database_port": 5432}
+        config1: dict[str, object] = {"app_name": "test", "database_host": "localhost"}
+        config2: dict[str, object] = {"app_debug": True, "database_port": 5432}
 
         result = merge_configs(config1, config2)
 
@@ -405,6 +408,7 @@ class TestConfigurationIntegration:
             # Load configuration
             load_result = safe_load_json_file(config_path)
             assert load_result.is_success
+            assert load_result.data is not None
 
             # Create complete configuration
             complete_result = FlextConfig.create_complete_config(
@@ -415,12 +419,16 @@ class TestConfigurationIntegration:
 
             assert complete_result.is_success
             final_config = complete_result.data
+            assert final_config is not None
 
-            # Validate final configuration
-            assert final_config["app"]["name"] == "test_app", (
-                f"Expected {'test_app'}, got {final_config['app']['name']}"
+            # Validate final configuration - proper type guards for nested dict access
+            app_config = cast("dict[str, object]", final_config["app"])
+            assert app_config["name"] == "test_app", (
+                f"Expected {'test_app'}, got {app_config['name']}"
             )
-            assert final_config["database"]["host"] == "localhost"
+
+            database_config = cast("dict[str, object]", final_config["database"])
+            assert database_config["host"] == "localhost"
 
         finally:
             Path(config_path).unlink()

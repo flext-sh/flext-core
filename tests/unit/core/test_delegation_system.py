@@ -302,7 +302,7 @@ class TestFlextMixinDelegator:
 
         validation_result = delegator._validate_delegation()
         assert validation_result.is_failure
-        assert "No mixins were successfully registered" in validation_result.error, (
+        assert "No mixins were successfully registered" in (validation_result.error or ""), (
             f"Expected {'No mixins were successfully registered'} in {validation_result.error}"
         )
 
