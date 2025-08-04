@@ -337,7 +337,7 @@ def _validate_delegation_methods(host: object, test_results: list[str]) -> None:
     """Validate that delegation methods exist on the host."""
 
     def _raise_delegation_error(message: str) -> None:
-        raise FlextOperationError(message, operation="delegation_validation")  # noqa: TRY301
+        raise FlextOperationError(message, operation="delegation_validation")
 
     # Test validation methods exist
     if not hasattr(host, "is_valid"):
@@ -358,7 +358,7 @@ def _validate_method_functionality(host: object, test_results: list[str]) -> Non
     """Validate that delegated methods are functional."""
 
     def _raise_type_error(message: str) -> None:
-        raise FlextTypeError(message)  # noqa: TRY301
+        raise FlextTypeError(message)
 
     # Test method functionality
     validation_result = getattr(host, "is_valid", None)
@@ -368,12 +368,12 @@ def _validate_method_functionality(host: object, test_results: list[str]) -> Non
 
 
 def _validate_delegation_info(
-    host: object, test_results: list[str]
+    host: object, test_results: list[str],
 ) -> dict[str, object]:
     """Validate delegation system self-check and return info."""
 
     def _raise_delegation_error(message: str) -> None:
-        raise FlextOperationError(message, operation="delegation_validation")  # noqa: TRY301
+        raise FlextOperationError(message, operation="delegation_validation")
 
     # Test delegation info - use type guard for host.delegator
     if not hasattr(host, "delegator"):

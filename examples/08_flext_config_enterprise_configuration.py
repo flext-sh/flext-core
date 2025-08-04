@@ -225,7 +225,8 @@ def demonstrate_configuration_merging() -> None:
     log_message = "\n1. Basic configuration merging:"
     print(log_message)
 
-    base_config: TConfigDict = {
+    # Use TAnyDict for configs with nested structures
+    base_config: TAnyDict = {
         "app_name": "MyApp",
         "debug": False,
         "port": 8000,
@@ -235,7 +236,8 @@ def demonstrate_configuration_merging() -> None:
         },
     }
 
-    override_config: TConfigDict = {
+    # Use TAnyDict for configs with nested structures
+    override_config: TAnyDict = {
         "debug": True,
         "port": 9000,
         "database": {
@@ -262,7 +264,8 @@ def demonstrate_configuration_merging() -> None:
     log_message = "\n2. Deep merging demonstration:"
     print(log_message)
 
-    deep_base: TConfigDict = {
+    # Use TAnyDict for configs with nested structures
+    deep_base: TAnyDict = {
         "services": {
             "auth": {
                 "enabled": True,
@@ -275,7 +278,8 @@ def demonstrate_configuration_merging() -> None:
         },
     }
 
-    deep_override: TConfigDict = {
+    # Use TAnyDict for configs with nested structures
+    deep_override: TAnyDict = {
         "services": {
             "auth": {
                 "timeout": 60,
@@ -307,7 +311,8 @@ def demonstrate_file_configuration() -> None:
     log_message = "\n1. Creating configuration file:"
     print(log_message)
 
-    config_data: TConfigDict = {
+    # Use TAnyDict for configs with nested structures
+    config_data: TAnyDict = {
         "app": {
             "name": "FileConfigApp",
             "version": "0.9.0",
@@ -344,15 +349,25 @@ def demonstrate_file_configuration() -> None:
 
     try:
         with open(temp_file_path, encoding="utf-8") as f:  # noqa: PTH123
-            loaded_config: TConfigDict = json.load(f)
+            # Use TAnyDict since JSON can have nested structures
+            loaded_config: TAnyDict = json.load(f)
 
         log_message = "✅ Configuration loaded from file:"
         print(log_message)
-        log_message = f"   App name: {loaded_config.get('app', {}).get('name')}"
+        # Type guard for loaded_config
+        if isinstance(loaded_config, dict):
+            app_dict = loaded_config.get("app", {})
+            app_name = app_dict.get("name") if isinstance(app_dict, dict) else None
+            log_message = f"   App name: {app_name}"
         print(log_message)
-        log_message = f"   Database URL: {loaded_config.get('database', {}).get('url')}"
+        if isinstance(loaded_config, dict):
+            db_dict = loaded_config.get("database", {})
+            db_url = db_dict.get("url") if isinstance(db_dict, dict) else None
+            log_message = f"   Database URL: {db_url}"
         print(log_message)
-        log_message = f"   Features: {loaded_config.get('features')}"
+        if isinstance(loaded_config, dict):
+            features = loaded_config.get("features")
+            log_message = f"   Features: {features}"
         print(log_message)
 
     except (RuntimeError, ValueError, TypeError) as e:
@@ -363,8 +378,12 @@ def demonstrate_file_configuration() -> None:
     log_message = "\n3. Configuration validation:"
     print(log_message)
 
-    # Validate app name
-    app_name = loaded_config.get("app", {}).get("name")
+    # Validate app name with type guard
+    app_name = None
+    if isinstance(loaded_config, dict):
+        app_dict = loaded_config.get("app", {})
+        if isinstance(app_dict, dict):
+            app_name = app_dict.get("name")
     validation_result = FlextConfigValidation.validate_config_type(
         app_name,
         str,
@@ -399,8 +418,8 @@ def demonstrate_configuration_hierarchies() -> None:
     log_message = "\n1. Configuration hierarchy levels:"
     print(log_message)
 
-    # Base configuration
-    base_config: TConfigDict = {
+    # Base configuration - use TAnyDict for nested structures
+    base_config: TAnyDict = {
         "app": {
             "name": "HierarchyApp",
             "version": "0.9.0",
@@ -415,8 +434,8 @@ def demonstrate_configuration_hierarchies() -> None:
         },
     }
 
-    # Environment-specific overrides
-    dev_config: TConfigDict = {
+    # Environment-specific overrides - use TAnyDict for nested structures
+    dev_config: TAnyDict = {
         "app": {
             "debug": True,
         },
@@ -428,7 +447,8 @@ def demonstrate_configuration_hierarchies() -> None:
         },
     }
 
-    prod_config: TConfigDict = {
+    # Production config - use TAnyDict for nested structures
+    prod_config: TAnyDict = {
         "app": {
             "debug": False,
         },
@@ -476,8 +496,8 @@ def demonstrate_configuration_hierarchies() -> None:
     log_message = "\n3. Configuration inheritance patterns:"
     print(log_message)
 
-    # Feature flags configuration
-    feature_config: TConfigDict = {
+    # Feature flags configuration - use TAnyDict for nested structures
+    feature_config: TAnyDict = {
         "features": {
             "new_ui": {
                 "enabled": True,
@@ -494,8 +514,8 @@ def demonstrate_configuration_hierarchies() -> None:
         },
     }
 
-    # Environment-specific feature overrides
-    dev_features: TConfigDict = {
+    # Environment-specific feature overrides - use TAnyDict for nested structures
+    dev_features: TAnyDict = {
         "features": {
             "new_ui": {
                 "enabled": True,

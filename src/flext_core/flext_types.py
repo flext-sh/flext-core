@@ -168,7 +168,7 @@ TTransformer = Callable[[T], U]  # Transformer function type
 TValidator = Callable[[T], bool]  # General validator function type
 FlextValidator = TValidator[str | int | float | bool | None]  # Validator
 TErrorHandler = Callable[[Exception], str]  # Error handler function type
-TFactory = Callable[[], T]  # Generic factory function type
+TFactory = Callable[[object], T]  # Generic factory function type
 
 # Error and message types
 TErrorCode = str  # Error code type

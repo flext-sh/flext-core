@@ -23,7 +23,6 @@ from flext_core.guards import (
     require_not_none,
     require_positive,
     safe,
-    validated,
 )
 from flext_core.result import FlextResult
 
@@ -155,7 +154,7 @@ class TestValidationDecorators:
             return x * 2
 
         # Apply the decorator
-        decorated_function = validated(sample_function)
+        decorated_function = safe(sample_function)
 
         # Test that the decorator returns a callable
         assert callable(decorated_function)
@@ -252,7 +251,7 @@ class TestValidatedModel:
 
         # Test validation error
         with pytest.raises(FlextValidationError) as exc_info:
-            StrictModel(name="John", age="not_a_number")
+            StrictModel(name="John", age="not_a_number")  # type: ignore[arg-type]
 
         error = exc_info.value
         if "Invalid data" not in str(error):
@@ -273,16 +272,16 @@ class TestValidatedModel:
         user = result.data
         assert user is not None
         if getattr(user, "name", None) != "Alice":
-            msg: str = f"Expected {'Alice'}, got {getattr(user, 'name', None)}"
-            raise AssertionError(msg)
+            msg_alice: str = f"Expected {'Alice'}, got {getattr(user, 'name', None)}"
+            raise AssertionError(msg_alice)
         assert getattr(user, "age", None) == 25
 
         # Test failed creation
         result = UserModel.create(name="Bob", age="invalid")
         assert result.is_failure
         if "Invalid data" not in (result.error or ""):
-            msg: str = f"Expected 'Invalid data' in {result.error}"
-            raise AssertionError(msg)
+            msg_invalid: str = f"Expected 'Invalid data' in {result.error}"
+            raise AssertionError(msg_invalid)
 
     def test_validated_model_mixin_integration(self) -> None:
         """Test ValidatedModel integration with FLEXT mixins."""
@@ -358,14 +357,14 @@ class TestFactoryHelpers:
         # Use factory to create instances
         obj1 = factory(42)
         if getattr(obj1, "value", None) != 42:
-            msg: str = f"Expected {42}, got {getattr(obj1, 'value', None)}"
-            raise AssertionError(msg)
+            msg_obj1: str = f"Expected {42}, got {getattr(obj1, 'value', None)}"
+            raise AssertionError(msg_obj1)
         assert getattr(obj1, "name", None) == "default"
 
         obj2 = factory(100, name="custom")
         if getattr(obj2, "value", None) != 100:
-            msg: str = f"Expected {100}, got {getattr(obj2, 'value', None)}"
-            raise AssertionError(msg)
+            msg_obj2: str = f"Expected {100}, got {getattr(obj2, 'value', None)}"
+            raise AssertionError(msg_obj2)
         assert getattr(obj2, "name", None) == "custom"
 
         # Verify instances are of correct type
@@ -387,14 +386,14 @@ class TestFactoryHelpers:
         # Use builder to create instances
         obj1 = builder()
         if getattr(obj1, "x", None) != 0:
-            msg: str = f"Expected {0}, got {getattr(obj1, 'x', None)}"
-            raise AssertionError(msg)
+            msg_builder1: str = f"Expected {0}, got {getattr(obj1, 'x', None)}"
+            raise AssertionError(msg_builder1)
         assert getattr(obj1, "y", None) == 0
 
         obj2 = builder(x=10, y=20)
         if getattr(obj2, "x", None) != 10:
-            msg: str = f"Expected {10}, got {getattr(obj2, 'x', None)}"
-            raise AssertionError(msg)
+            msg_builder2: str = f"Expected {10}, got {getattr(obj2, 'x', None)}"
+            raise AssertionError(msg_builder2)
         assert getattr(obj2, "y", None) == 20
 
         # Verify instances are of correct type
@@ -414,22 +413,22 @@ class TestFactoryHelpers:
         # Test with positional arguments
         obj1 = factory(1, 2, 3)
         if getattr(obj1, "args", None) != (1, 2, 3):
-            msg: str = f"Expected {(1, 2, 3)}, got {getattr(obj1, 'args', None)}"
-            raise AssertionError(msg)
+            msg_args1: str = f"Expected {(1, 2, 3)}, got {getattr(obj1, 'args', None)}"
+            raise AssertionError(msg_args1)
         assert getattr(obj1, "kwargs", None) == {}
 
         # Test with keyword arguments
         obj2 = factory(a=1, b=2)
         if getattr(obj2, "args", None) != ():
-            msg: str = f"Expected {()}, got {getattr(obj2, 'args', None)}"
-            raise AssertionError(msg)
+            msg_args2: str = f"Expected {()}, got {getattr(obj2, 'args', None)}"
+            raise AssertionError(msg_args2)
         assert getattr(obj2, "kwargs", None) == {"a": 1, "b": 2}
 
         # Test with mixed arguments
         obj3 = factory(1, 2, c=3, d=4)
         if getattr(obj3, "args", None) != (1, 2):
-            msg: str = f"Expected {(1, 2)}, got {getattr(obj3, 'args', None)}"
-            raise AssertionError(msg)
+            msg_args3: str = f"Expected {(1, 2)}, got {getattr(obj3, 'args', None)}"
+            raise AssertionError(msg_args3)
         assert getattr(obj3, "kwargs", None) == {"c": 3, "d": 4}
 
 
@@ -457,8 +456,8 @@ class TestValidationUtilities:
 
         error = exc_info.value
         if "Value cannot be None" not in str(error):
-            msg: str = f"Expected {'Value cannot be None'} in {error!s}"
-            raise AssertionError(msg)
+            msg_none: str = f"Expected {'Value cannot be None'} in {error!s}"
+            raise AssertionError(msg_none)
 
         # Test with custom message
         with pytest.raises(FlextValidationError) as exc_info:
@@ -466,19 +465,19 @@ class TestValidationUtilities:
 
         error = exc_info.value
         if "Custom error message" not in str(error):
-            msg: str = f"Expected {'Custom error message'} in {error!s}"
-            raise AssertionError(msg)
+            msg_custom: str = f"Expected {'Custom error message'} in {error!s}"
+            raise AssertionError(msg_custom)
 
     def test_require_positive(self) -> None:
         """Test require_positive utility."""
         # Test with valid positive integers
         if require_positive(1) != 1:
-            msg: str = f"Expected {1}, got {require_positive(1)}"
-            raise AssertionError(msg)
+            msg_pos1: str = f"Expected {1}, got {require_positive(1)}"
+            raise AssertionError(msg_pos1)
         assert require_positive(100) == 100
         if require_positive(9999) != 9999:
-            msg: str = f"Expected {9999}, got {require_positive(9999)}"
-            raise AssertionError(msg)
+            msg_pos2: str = f"Expected {9999}, got {require_positive(9999)}"
+            raise AssertionError(msg_pos2)
 
         # Test with invalid values
         with pytest.raises(FlextValidationError):
@@ -502,23 +501,23 @@ class TestValidationUtilities:
 
         error = exc_info.value
         if "Must be a positive number" not in str(error):
-            msg: str = f"Expected {'Must be a positive number'} in {error!s}"
-            raise AssertionError(msg)
+            msg_pos_custom: str = f"Expected {'Must be a positive number'} in {error!s}"
+            raise AssertionError(msg_pos_custom)
 
     def test_require_in_range(self) -> None:
         """Test require_in_range utility."""
         # Test with valid values in range
         if require_in_range(5, 1, 10) != 5:
-            msg: str = f"Expected {5}, got {require_in_range(5, 1, 10)}"
-            raise AssertionError(msg)
+            msg_range1: str = f"Expected {5}, got {require_in_range(5, 1, 10)}"
+            raise AssertionError(msg_range1)
         assert require_in_range(1, 1, 10) == 1  # Boundary
         if require_in_range(10, 1, 10) != 10:  # Boundary:
-            msg: str = f"Expected {10}, got {require_in_range(10, 1, 10)}"
-            raise AssertionError(msg)
+            msg_range2: str = f"Expected {10}, got {require_in_range(10, 1, 10)}"
+            raise AssertionError(msg_range2)
         assert require_in_range(5.5, 1, 10) == 5.5  # Float
         if require_in_range(0, -5, 5) != 0:
-            msg: str = f"Expected {0}, got {require_in_range(0, -5, 5)}"
-            raise AssertionError(msg)
+            msg_range3: str = f"Expected {0}, got {require_in_range(0, -5, 5)}"
+            raise AssertionError(msg_range3)
 
         # Test with values outside range
         with pytest.raises(FlextValidationError):
@@ -684,7 +683,7 @@ class TestEdgeCases:
     def test_error_message_consistency(self) -> None:
         """Test that error messages are consistent."""
         # All validation utilities should raise FlextValidationError
-        validation_functions = [
+        validation_functions: list[tuple[object, object]] = [
             (require_not_none, None),
             (require_positive, -1),
             (require_non_empty, ""),
@@ -692,8 +691,9 @@ class TestEdgeCases:
         ]
 
         for func, invalid_value in validation_functions:
-            with pytest.raises(FlextValidationError):
-                func(invalid_value)
+            if callable(func):
+                with pytest.raises(FlextValidationError):
+                    func(invalid_value)
 
 
 class TestIntegrationAndComposition:

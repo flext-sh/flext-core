@@ -444,7 +444,7 @@ class TestFlextValueObject:
 
         # Check validation status
         validation_status = payload_data["validation_status"]
-        assert validation_status in ["valid", "invalid"]
+        assert validation_status in {"valid", "invalid"}
 
     def test_value_object_field_validation(self) -> None:
         """Test field validation functionality."""

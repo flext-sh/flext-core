@@ -203,7 +203,7 @@ class _BaseSerializableMixin:
                     value = getattr(self, attr_name)
                     serialized_value = self._serialize_value(value)
                     if serialized_value is not None and isinstance(
-                        serialized_value, (str, int, float, bool, type(None), dict)
+                        serialized_value, (str, int, float, bool, type(None), dict),
                     ):
                         result[attr_name] = serialized_value
                 except (AttributeError, TypeError):

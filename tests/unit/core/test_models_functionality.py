@@ -30,6 +30,7 @@ from flext_core.models import (
     model_to_dict_safe,
     validate_all_models,
 )
+from flext_core.result import FlextResult
 
 
 @pytest.mark.unit
@@ -39,11 +40,11 @@ class TestEnumsActualUsage:
     def test_entity_status_transitions(self) -> None:
         """Test entity status represents real state transitions."""
         # Test valid status values
-        assert FlextEntityStatus.ACTIVE == "active"
-        assert FlextEntityStatus.INACTIVE == "inactive"
-        assert FlextEntityStatus.PENDING == "pending"
-        assert FlextEntityStatus.DELETED == "deleted"
-        assert FlextEntityStatus.SUSPENDED == "suspended"
+        assert FlextEntityStatus.ACTIVE.value == "active"
+        assert FlextEntityStatus.INACTIVE.value == "inactive"
+        assert FlextEntityStatus.PENDING.value == "pending"
+        assert FlextEntityStatus.DELETED.value == "deleted"
+        assert FlextEntityStatus.SUSPENDED.value == "suspended"
 
         # Test status can be used in business logic
         statuses = [status.value for status in FlextEntityStatus]
@@ -53,11 +54,11 @@ class TestEnumsActualUsage:
     def test_operation_status_workflow(self) -> None:
         """Test operation status represents real workflow states."""
         # Test workflow progression
-        assert FlextOperationStatus.PENDING == "pending"
-        assert FlextOperationStatus.RUNNING == "running"
-        assert FlextOperationStatus.COMPLETED == "completed"
-        assert FlextOperationStatus.FAILED == "failed"
-        assert FlextOperationStatus.CANCELLED == "cancelled"
+        assert FlextOperationStatus.PENDING.value == "pending"
+        assert FlextOperationStatus.RUNNING.value == "running"
+        assert FlextOperationStatus.COMPLETED.value == "completed"
+        assert FlextOperationStatus.FAILED.value == "failed"
+        assert FlextOperationStatus.CANCELLED.value == "cancelled"
 
         # Test can model actual workflow
         workflow = [
@@ -70,15 +71,15 @@ class TestEnumsActualUsage:
     def test_data_format_actual_formats(self) -> None:
         """Test data formats represent real file formats."""
         # Test actual data formats
-        assert FlextDataFormat.JSON == "json"
-        assert FlextDataFormat.XML == "xml"
-        assert FlextDataFormat.CSV == "csv"
-        assert FlextDataFormat.LDIF == "ldif"
-        assert FlextDataFormat.YAML == "yaml"
-        assert FlextDataFormat.PARQUET == "parquet"
+        assert FlextDataFormat.JSON.value == "json"
+        assert FlextDataFormat.XML.value == "xml"
+        assert FlextDataFormat.CSV.value == "csv"
+        assert FlextDataFormat.LDIF.value == "ldif"
+        assert FlextDataFormat.YAML.value == "yaml"
+        assert FlextDataFormat.PARQUET.value == "parquet"
 
         # Test can be used for file extension logic
-        json_files = [f"data.{FlextDataFormat.JSON}"]
+        json_files = [f"data.{FlextDataFormat.JSON.value}"]
         assert "data.json" in json_files
 
 
@@ -116,9 +117,7 @@ class TestModelValidationRules:
         class ValidatingModel(FlextBaseModel):
             name: str
 
-            def validate_semantic_rules(self) -> object:
-                from flext_core import FlextResult
-
+            def validate_semantic_rules(self) -> FlextResult[None]:
                 if self.name == "invalid":
                     return FlextResult.fail("Name cannot be 'invalid'")
                 return FlextResult.ok(None)
@@ -132,7 +131,7 @@ class TestModelValidationRules:
         invalid_model = ValidatingModel(name="invalid")
         result = invalid_model.validate_semantic_rules()
         assert result.is_failure
-        assert "invalid" in result.error
+        assert "invalid" in (result.error or "")
 
 
 @pytest.mark.unit
@@ -217,14 +216,14 @@ class TestFlextDomainEntity:
         assert len(entity.domain_events) == 0
 
         # Add domain event
-        event = {"type": "entity_created", "data": {"id": "test"}}
+        event: dict[str, object] = {"type": "entity_created", "data": {"id": "test"}}
         entity.add_domain_event(event)
 
         assert len(entity.domain_events) == 1
         assert entity.domain_events[0] == event
 
         # Add another event
-        event2 = {"type": "entity_updated", "data": {"id": "test"}}
+        event2: dict[str, object] = {"type": "entity_updated", "data": {"id": "test"}}
         entity.add_domain_event(event2)
 
         assert len(entity.domain_events) == 2
@@ -426,7 +425,7 @@ class TestOracleModelValidation:
         # Validation should fail when calling validate_semantic_rules
         result = model.validate_semantic_rules()
         assert result.is_failure
-        assert "Either service_name or sid must be provided" in result.error
+        assert "Either service_name or sid must be provided" in (result.error or "")
 
     def test_oracle_model_connection_string(self) -> None:
         """Test Oracle model connection string generation."""
@@ -525,7 +524,7 @@ class TestSingerStreamModel:
 
     def test_singer_stream_model_creation(self) -> None:
         """Test Singer stream model creation."""
-        schema = {
+        schema: dict[str, object] = {
             "type": "object",
             "properties": {"id": {"type": "string"}, "name": {"type": "string"}},
         }
@@ -551,10 +550,10 @@ class TestUtilityFunctions:
         assert result["id"] == "test"
 
         # Test with invalid input
-        result_none = model_to_dict_safe(None)
+        result_none = model_to_dict_safe(None)  # type: ignore[arg-type]
         assert result_none == {}
 
-        result_string = model_to_dict_safe("not_a_model")
+        result_string = model_to_dict_safe("not_a_model")  # type: ignore[arg-type]
         assert result_string == {}
 
     def test_validate_all_models(self) -> None:

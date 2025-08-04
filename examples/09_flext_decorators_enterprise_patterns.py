@@ -30,7 +30,7 @@ demonstrating the power and flexibility of the FlextDecorators system.
 
 import time
 from collections.abc import Callable
-from typing import Any
+from typing import Any, cast
 
 # Import shared domain models to demonstrate decorator patterns with domain objects
 from shared_domain import (
@@ -45,7 +45,6 @@ from flext_core import (
     FlextImmutabilityDecorators,
     FlextLoggingDecorators,
     FlextPerformanceDecorators,
-    FlextTypes,
     FlextValidationDecorators,
     TAnyObject,
     TErrorMessage,
@@ -82,7 +81,8 @@ def demonstrate_validation_decorators() -> None:  # noqa: PLR0915
     log_message = "\n1. Basic argument validation:"
     print(log_message)
 
-    @FlextValidationDecorators.validate_arguments
+    # Use cast to handle decorator type compatibility
+    @cast("Callable[..., Any]", FlextValidationDecorators.validate_arguments)  # type: ignore[explicit-any,misc]
     def validate_user_data(name: str, email: str, age: int) -> TUserData:
         """Validate user data using flext_core.types."""
         return {"name": name, "email": email, "age": age, "status": "validated"}
@@ -99,15 +99,15 @@ def demonstrate_validation_decorators() -> None:  # noqa: PLR0915
     log_message = "\n2. Custom validation decorator:"
     print(log_message)
 
-    def email_validator(email: str) -> bool:
+    def email_validator(email: object) -> bool:
         """Validate simple email."""
-        return "@" in email and "." in email
+        return isinstance(email, str) and "@" in email and "." in email
 
     email_validation_decorator = FlextValidationDecorators.create_validation_decorator(
         email_validator,
     )
 
-    @email_validation_decorator
+    @cast("Callable[..., Any]", email_validation_decorator)  # type: ignore[explicit-any,misc]
     def register_user(email: str) -> str:
         """Register user with email validation."""
         return f"User registered with email: {email}"
@@ -134,14 +134,14 @@ def demonstrate_validation_decorators() -> None:  # noqa: PLR0915
     log_message = "\n3. Type-based validation:"
     print(log_message)
 
-    def validate_age(age: int) -> bool:
+    def validate_age(age: object) -> bool:
         """Validate age using flext_core.types."""
         return (
-            FlextTypes.TypeGuards.is_instance_of(age, int)
+            isinstance(age, int)
             and 0 <= age <= MAX_REASONABLE_AGE
         )
 
-    @FlextValidationDecorators.create_validation_decorator(validate_age)
+    @cast("Callable[..., Any]", FlextValidationDecorators.create_validation_decorator(validate_age))  # type: ignore[explicit-any,misc]
     def create_user_profile(name: str, age: int) -> TUserData:
         """Create user profile with age validation."""
         return {"name": name, "age": age, "profile_created": True}
@@ -213,7 +213,7 @@ def demonstrate_error_handling_decorators() -> None:  # noqa: PLR0915
 
     attempt_count = 0
 
-    @FlextErrorHandlingDecorators.retry_decorator
+    @cast("Callable[..., Any]", FlextErrorHandlingDecorators.retry_decorator)  # type: ignore[explicit-any,misc]
     def unreliable_service() -> str:
         """Unreliable service that fails initially."""
         nonlocal attempt_count
@@ -224,7 +224,7 @@ def demonstrate_error_handling_decorators() -> None:  # noqa: PLR0915
         return "Service succeeded after retries"
 
     try:
-        result = unreliable_service()
+        result = cast("str", unreliable_service())
         log_message = f"✅ Retry service result: {result}"
         print(log_message)
         log_message = f"   Attempts made: {attempt_count}"
@@ -250,14 +250,14 @@ def demonstrate_error_handling_decorators() -> None:  # noqa: PLR0915
         custom_error_handler,
     )
 
-    @custom_safe_decorator
+    @cast("Callable[..., Any]", custom_safe_decorator)  # type: ignore[explicit-any,misc]
     def operation_with_custom_handling() -> str:
         """Operation with custom error handling."""
         msg = "Intentional error for testing"
         raise ValueError(msg)
 
     try:
-        result = operation_with_custom_handling()
+        result = cast("str", operation_with_custom_handling())
         log_message = f"✅ Custom handling result: {result}"
         print(log_message)
     except (RuntimeError, ValueError, TypeError, FlextValidationError) as e:
@@ -281,7 +281,7 @@ def demonstrate_performance_decorators() -> None:
 
     timing_decorator = FlextPerformanceDecorators.get_timing_decorator()
 
-    @timing_decorator
+    @cast("Callable[..., Any]", timing_decorator)  # type: ignore[explicit-any,misc]
     def slow_computation(n: int) -> int:
         """Slow computation for timing demonstration."""
         time.sleep(0.01)  # Simulate slow operation
@@ -295,12 +295,12 @@ def demonstrate_performance_decorators() -> None:
     log_message = "\n2. Memoization decorator:"
     print(log_message)
 
-    @FlextPerformanceDecorators.memoize_decorator
+    @cast("Callable[..., Any]", FlextPerformanceDecorators.memoize_decorator)  # type: ignore[explicit-any,misc]
     def expensive_fibonacci(n: int) -> int:
         """Expensive Fibonacci calculation with memoization."""
         if n <= 1:
             return n
-        return expensive_fibonacci(n - 1) + expensive_fibonacci(n - 2)
+        return cast("int", expensive_fibonacci(n - 1)) + cast("int", expensive_fibonacci(n - 2))
 
     # First call (expensive)
     start_time = time.time()
@@ -327,7 +327,7 @@ def demonstrate_performance_decorators() -> None:
 
     cache_decorator = FlextPerformanceDecorators.create_cache_decorator(max_size=10)
 
-    @cache_decorator
+    @cast("Callable[..., Any]", cache_decorator)  # type: ignore[explicit-any,misc]
     def data_processor(data_id: str) -> str:
         """Process data with caching."""
         time.sleep(0.01)  # Simulate processing
@@ -355,7 +355,7 @@ def demonstrate_logging_decorators() -> None:
     log_message = "\n1. Call logging decorator:"
     print(log_message)
 
-    @FlextLoggingDecorators.log_calls_decorator
+    @cast("Callable[..., Any]", FlextLoggingDecorators.log_calls_decorator)  # type: ignore[explicit-any,misc]
     def business_operation(operation_type: str, amount: float) -> TUserData:
         """Execute business operation with call logging."""
         return {
@@ -373,7 +373,7 @@ def demonstrate_logging_decorators() -> None:
     log_message = "\n2. Exception logging decorator:"
     print(log_message)
 
-    @FlextLoggingDecorators.log_exceptions_decorator
+    @cast("Callable[..., Any]", FlextLoggingDecorators.log_exceptions_decorator)  # type: ignore[explicit-any,misc]
     def risky_business_operation(operation_id: str) -> str:
         """Risky business operation with exception logging."""
         if operation_id == "fail":
@@ -403,8 +403,8 @@ def demonstrate_logging_decorators() -> None:
     log_message = "\n3. Combined logging decorators:"
     print(log_message)
 
-    @FlextLoggingDecorators.log_calls_decorator
-    @FlextLoggingDecorators.log_exceptions_decorator
+    @cast("Callable[..., Any]", FlextLoggingDecorators.log_calls_decorator)  # type: ignore[explicit-any,misc]
+    @cast("Callable[..., Any]", FlextLoggingDecorators.log_exceptions_decorator)  # type: ignore[explicit-any,misc]
     def comprehensive_service(
         service_name: str,
         params: TUserData,
@@ -448,7 +448,7 @@ def demonstrate_immutability_decorators() -> None:
     log_message = "\n1. Immutable result decorator:"
     print(log_message)
 
-    @FlextImmutabilityDecorators.immutable_decorator
+    @cast("Callable[..., Any]", FlextImmutabilityDecorators.immutable_decorator)  # type: ignore[explicit-any,misc]
     def create_immutable_config() -> TUserData:
         """Create immutable configuration."""
         return {
@@ -474,7 +474,7 @@ def demonstrate_immutability_decorators() -> None:
     log_message = "\n2. Frozen arguments decorator:"
     print(log_message)
 
-    @FlextImmutabilityDecorators.freeze_args_decorator
+    @cast("Callable[..., Any]", FlextImmutabilityDecorators.freeze_args_decorator)  # type: ignore[explicit-any,misc]
     def process_user_data(user_data: TUserData) -> TUserData:
         """Process user data with frozen arguments."""
         # Try to modify input (should fail)
@@ -503,10 +503,10 @@ def demonstrate_functional_decorators() -> None:
     log_message = "\n1. Decorator composition:"
     print(log_message)
 
-    @FlextLoggingDecorators.log_calls_decorator
-    @FlextErrorHandlingDecorators.retry_decorator
-    @FlextValidationDecorators.validate_arguments
-    @FlextPerformanceDecorators.memoize_decorator
+    @cast("Callable[..., Any]", FlextLoggingDecorators.log_calls_decorator)  # type: ignore[explicit-any,misc]
+    @cast("Callable[..., Any]", FlextErrorHandlingDecorators.retry_decorator)  # type: ignore[explicit-any,misc]
+    @cast("Callable[..., Any]", FlextValidationDecorators.validate_arguments)  # type: ignore[explicit-any,misc]
+    @cast("Callable[..., Any]", FlextPerformanceDecorators.memoize_decorator)  # type: ignore[explicit-any,misc]
     def enterprise_user_service(
         user_id: str,
         *,
@@ -547,17 +547,17 @@ def demonstrate_functional_decorators() -> None:
     log_message = "\n2. Pipeline decorators:"
     print(log_message)
 
-    @FlextPerformanceDecorators.get_timing_decorator()
+    @cast("Callable[..., Any]", FlextPerformanceDecorators.get_timing_decorator())  # type: ignore[explicit-any,misc]
     def step1_validate(data: TUserData) -> TUserData:
         """Step 1: Validate data."""
         return {**data, "validated": True}
 
-    @FlextPerformanceDecorators.get_timing_decorator()
+    @cast("Callable[..., Any]", FlextPerformanceDecorators.get_timing_decorator())  # type: ignore[explicit-any,misc]
     def step2_enrich(data: TUserData) -> TUserData:
         """Step 2: Enrich data."""
         return {**data, "enriched": True, "timestamp": time.time()}
 
-    @FlextPerformanceDecorators.get_timing_decorator()
+    @cast("Callable[..., Any]", FlextPerformanceDecorators.get_timing_decorator())  # type: ignore[explicit-any,misc]
     def step3_transform(data: TAnyObject) -> TAnyObject:
         """Step 3: Transform data."""
         return {**data, "transformed": True, "final": True}
@@ -594,7 +594,7 @@ def demonstrate_decorator_best_practices() -> None:  # noqa: PLR0915
 
         return wrapper
 
-    @custom_decorator
+    @cast("Callable[..., Any]", custom_decorator)  # type: ignore[explicit-any,misc]
     def documented_function(x: int, y: int) -> int:
         """Documented function with custom decorator."""
         return x + y
@@ -613,9 +613,9 @@ def demonstrate_decorator_best_practices() -> None:  # noqa: PLR0915
     ) -> Callable[[int], bool]:
         """Create range validator using flext_core.types."""
 
-        def range_validator(value: int) -> bool:
+        def range_validator(value: object) -> bool:
             return (
-                FlextTypes.TypeGuards.is_instance_of(value, int)
+                isinstance(value, int)
                 and min_val <= value <= max_val
             )
 
@@ -628,12 +628,12 @@ def demonstrate_decorator_best_practices() -> None:  # noqa: PLR0915
         create_range_validator(0, 100),
     )
 
-    @age_validator
+    @cast("Callable[..., Any]", age_validator)  # type: ignore[explicit-any,misc]
     def set_user_age(age: int) -> str:
         """Set user age with validation."""
         return f"User age set to {age}"
 
-    @percentage_validator
+    @cast("Callable[..., Any]", percentage_validator)  # type: ignore[explicit-any,misc]
     def set_completion_rate(rate: int) -> str:
         """Set completion rate with validation."""
         return f"Completion rate set to {rate}%"
@@ -680,7 +680,7 @@ def demonstrate_decorator_best_practices() -> None:  # noqa: PLR0915
 
         return wrapper
 
-    @performance_monitor
+    @cast("Callable[..., Any]", performance_monitor)  # type: ignore[explicit-any,misc]
     def monitored_operation(complexity: int) -> int:
         """Execute monitored operation."""
         time.sleep(0.01 * complexity)  # Simulate work
@@ -702,8 +702,8 @@ def demonstrate_domain_model_decorators() -> None:  # noqa: PLR0915
     log_message = "\n1. Decorator with domain model validation:"
     print(log_message)
 
-    @FlextValidationDecorators.validate_arguments
-    @FlextLoggingDecorators.log_calls_decorator
+    @cast("Callable[..., Any]", FlextValidationDecorators.validate_arguments)  # type: ignore[explicit-any,misc]
+    @cast("Callable[..., Any]", FlextLoggingDecorators.log_calls_decorator)  # type: ignore[explicit-any,misc]
     def create_validated_user(name: str, email: str, age: int) -> SharedUser:
         """Create validated user using shared domain models with decorators."""
         user_result = SharedDomainFactory.create_user(name, email, age)
@@ -712,13 +712,16 @@ def demonstrate_domain_model_decorators() -> None:  # noqa: PLR0915
             raise ValueError(error_message)
 
         user = user_result.data
-        log_domain_operation(
-            "user_created_with_decorators",
-            "SharedUser",
-            user.id,
-            decorator_stack="validation+logging",
-        )
-        return user
+        if user is not None:
+            log_domain_operation(
+                "user_created_with_decorators",
+                "SharedUser",
+                user.id,
+                decorator_stack="validation+logging",
+            )
+            return user
+        msg = "User creation returned None data"
+        raise ValueError(msg)
 
     # Test valid user creation
     try:
@@ -742,8 +745,8 @@ def demonstrate_domain_model_decorators() -> None:  # noqa: PLR0915
     log_message = "\n2. Performance decorators with domain operations:"
     print(log_message)
 
-    @FlextPerformanceDecorators.memoize_decorator
-    @FlextPerformanceDecorators.get_timing_decorator()
+    @cast("Callable[..., Any]", FlextPerformanceDecorators.memoize_decorator)  # type: ignore[explicit-any,misc]
+    @cast("Callable[..., Any]", FlextPerformanceDecorators.get_timing_decorator())  # type: ignore[explicit-any,misc]
     def find_user_by_email(email: str) -> SharedUser | None:
         """Find user by email with memoization and timing."""
         # Simulate database lookup
@@ -773,8 +776,8 @@ def demonstrate_domain_model_decorators() -> None:  # noqa: PLR0915
     log_message = "\n3. Error handling with domain operations:"
     print(log_message)
 
-    @FlextDecorators.safe_result
-    @FlextLoggingDecorators.log_exceptions_decorator
+    @cast("Callable[..., Any]", FlextDecorators.safe_result)  # type: ignore[explicit-any,misc]
+    @cast("Callable[..., Any]", FlextLoggingDecorators.log_exceptions_decorator)  # type: ignore[explicit-any,misc]
     def activate_user_account(user: SharedUser) -> SharedUser:
         """Activate user account with error handling decorators."""
         if user.status.value == "active":
@@ -787,14 +790,17 @@ def demonstrate_domain_model_decorators() -> None:  # noqa: PLR0915
             raise RuntimeError(error_message)
 
         activated_user = activation_result.data
-        log_domain_operation(
-            "user_activated_with_decorators",
-            "SharedUser",
-            activated_user.id,
-            old_status=user.status.value,
-            new_status=activated_user.status.value,
-        )
-        return activated_user
+        if activated_user is not None:
+            log_domain_operation(
+                "user_activated_with_decorators",
+                "SharedUser",
+                activated_user.id,
+                old_status=user.status.value,
+                new_status=activated_user.status.value,
+            )
+            return activated_user
+        msg = "User activation returned None data"
+        raise RuntimeError(msg)
 
     # Test user activation
     test_user_result = SharedDomainFactory.create_user(
@@ -841,7 +847,7 @@ def demonstrate_domain_model_decorators() -> None:  # noqa: PLR0915
     log_message = "\n4. Domain-aware validation decorators:"
     print(log_message)
 
-    def domain_user_validator(user_data: dict[str, object]) -> bool:
+    def domain_user_validator(user_data: object) -> bool:
         """Validate user data using domain models."""
         if not isinstance(user_data, dict):
             return False
@@ -849,6 +855,10 @@ def demonstrate_domain_model_decorators() -> None:  # noqa: PLR0915
         name = user_data.get("name", "")
         email = user_data.get("email", "")
         age = user_data.get("age", 0)
+
+        # Type validation before calling SharedDomainFactory
+        if not isinstance(name, str) or not isinstance(email, str) or not isinstance(age, int):
+            return False
 
         # Use domain factory for validation
         user_result = SharedDomainFactory.create_user(name, email, age)
@@ -858,7 +868,7 @@ def demonstrate_domain_model_decorators() -> None:  # noqa: PLR0915
         domain_user_validator,
     )
 
-    @domain_validator
+    @cast("Callable[..., Any]", domain_validator)  # type: ignore[explicit-any,misc]
     def register_user_with_domain_validation(
         user_data: dict[str, object],
     ) -> SharedUser:
@@ -867,19 +877,33 @@ def demonstrate_domain_model_decorators() -> None:  # noqa: PLR0915
         email = user_data.get("email", "")
         age = user_data.get("age", 0)
 
+        # Type validation and casting
+        if not isinstance(name, str):
+            msg = "Name must be a string"
+            raise ValueError(msg)
+        if not isinstance(email, str):
+            msg = "Email must be a string"
+            raise ValueError(msg)
+        if not isinstance(age, int):
+            msg = "Age must be an integer"
+            raise ValueError(msg)
+
         user_result = SharedDomainFactory.create_user(name, email, age)
         if user_result.is_failure:
             error_message = f"Registration failed: {user_result.error}"
             raise ValueError(error_message)
 
         user = user_result.data
-        log_domain_operation(
-            "user_registered_with_domain_validation",
-            "SharedUser",
-            user.id,
-            validation_method="domain_aware",
-        )
-        return user
+        if user is not None:
+            log_domain_operation(
+                "user_registered_with_domain_validation",
+                "SharedUser",
+                user.id,
+                validation_method="domain_aware",
+            )
+            return user
+        msg = "User registration returned None data"
+        raise ValueError(msg)
 
     # Test valid registration
     try:

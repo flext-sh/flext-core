@@ -7,6 +7,8 @@ edge cases.
 
 from __future__ import annotations
 
+import math
+from collections import UserString
 from unittest.mock import Mock, patch
 
 import pytest
@@ -241,7 +243,7 @@ class TestUtilitiesMissingCoverage:
         # Test all direct conversion paths
         assert FlextUtilities.safe_int_conversion(42) == 42  # int
         assert FlextUtilities.safe_int_conversion("123") == 123  # str digits
-        assert FlextUtilities.safe_int_conversion(3.14) == 3  # float
+        assert FlextUtilities.safe_int_conversion(math.pi) == 3  # float
         assert FlextUtilities.safe_int_conversion(3.99) == 3  # float truncation
 
         # Test edge cases
@@ -268,7 +270,7 @@ class TestUtilitiesMissingCoverage:
         # Test _try_direct_int_conversion
         assert FlextUtilities._try_direct_int_conversion(42) == 42
         assert FlextUtilities._try_direct_int_conversion("123") == 123
-        assert FlextUtilities._try_direct_int_conversion(3.14) == 3
+        assert FlextUtilities._try_direct_int_conversion(math.pi) == 3
         assert FlextUtilities._try_direct_int_conversion("abc") is None
         assert FlextUtilities._try_direct_int_conversion(None) is None
 
@@ -326,7 +328,7 @@ class TestUtilitiesMissingCoverage:
 
         # Test edge cases that trigger ValueError in string conversion
         # Create a custom string class that passes isdigit() but fails int()
-        class TrickyString(str):
+        class TrickyString(UserString):
             __slots__ = ()
 
             def isdigit(self) -> bool:
