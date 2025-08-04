@@ -324,7 +324,7 @@ class TestFlextResultEnhanced:
         # Cast to FlextResult[object] for combine method compatibility
         combined = FlextResult.combine(
             FlextResult.ok(1),
-            FlextResult.ok(2), 
+            FlextResult.ok(2),
             FlextResult.ok(3)
         )
         assert combined.success
@@ -364,7 +364,7 @@ class TestFlextResultEnhanced:
             FlextResult.ok(3),
         ]
 
-        # Cast to FlextResult[object] for all_success method compatibility  
+        # Cast to FlextResult[object] for all_success method compatibility
         if not (FlextResult.all_success(
             FlextResult.ok(1),
             FlextResult.ok(2),

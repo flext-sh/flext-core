@@ -232,12 +232,12 @@ class TestValidatedModel:
         # Test valid creation
         user = UserModel(name="John", age=30, email="john@example.com")
         if user.name != "John":
-            msg: str = f"Expected {'John'}, got {user.name}"
-            raise AssertionError(msg)
+            msg_name: str = f"Expected {'John'}, got {user.name}"
+            raise AssertionError(msg_name)
         assert user.age == 30
         if user.email != "john@example.com":
-            msg: str = f"Expected {'john@example.com'}, got {user.email}"
-            raise AssertionError(msg)
+            msg_email: str = f"Expected {'john@example.com'}, got {user.email}"
+            raise AssertionError(msg_email)
 
         # Test mixin functionality is available
         assert hasattr(user, "to_dict_basic")  # From FlextSerializableMixin
