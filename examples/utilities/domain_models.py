@@ -141,7 +141,9 @@ class UtilityDemoOrder(
     def get_log_context(self) -> dict[str, object]:
         """Get logging context for order operations."""
         # Calculate total from items since Order doesn't have a total attribute
-        calculated_total = sum(item.quantity * item.unit_price.amount for item in self.items)
+        calculated_total = sum(
+            item.quantity * item.unit_price.amount for item in self.items
+        )
 
         return {
             "order_id": self.id,
@@ -158,7 +160,9 @@ class UtilityDemoOrder(
     def to_serializable(self) -> TAnyObject:
         """Convert to serializable format with enhanced data."""
         # Calculate total since Order doesn't have a total attribute
-        calculated_total = sum(item.quantity * item.unit_price.amount for item in self.items)
+        calculated_total = sum(
+            item.quantity * item.unit_price.amount for item in self.items
+        )
         currency = self.items[0].unit_price.currency if self.items else "USD"
 
         return {
@@ -179,7 +183,9 @@ class UtilityDemoOrder(
                 "currency": currency,
             },
             "status": self.status.value,
-            "created_at": getattr(self, "created_at", FlextUtilities.generate_iso_timestamp()),
+            "created_at": getattr(
+                self, "created_at", FlextUtilities.generate_iso_timestamp()
+            ),
             "serialized_at": FlextUtilities.generate_iso_timestamp(),
             "summary": {
                 "items_count": len(self.items),

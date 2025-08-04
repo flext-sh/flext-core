@@ -445,7 +445,7 @@ class FlextBaseSettings(PydanticBaseSettings):
             database_url="postgresql://localhost/myapp"
         )
 
-        if settings_result.is_success:
+        if settings_result.success and settings_result.data:
             settings = settings_result.data
             print(settings.database_url)
     """
@@ -475,9 +475,10 @@ class FlextBaseSettings(PydanticBaseSettings):
 
         """
         try:
-            # Merge overrides and kwargs
-            final_config = {}
+            # Merge overrides and kwargs with type compatibility
+            final_config: dict[str, object] = {}
             if overrides:
+                # Overrides are TAnyDict compatible, convert to object
                 final_config.update(overrides)
             if kwargs:
                 final_config.update(kwargs)

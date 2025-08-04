@@ -268,7 +268,7 @@ class CreateUserHandler(FlextCommandHandler[CreateUserCommand, User]):
         # Check if email already exists
         email = Email(command.email.lower())
         exists_result = self._user_repository.exists_by_email(email)
-        if exists_result.is_success and exists_result.data:
+        if exists_result.success and exists_result.data:
             return FlextResult.fail("Email already registered")
 
         # Create user
@@ -404,7 +404,7 @@ def demo_user_system():
     )
 
     create_result = create_handler.process_command(create_command)
-    if create_result.is_success:
+    if create_result.success:
         user = create_result.data
         print(f"✅ User created: {user.name} ({user.id})")
         print(f"   Email: {user.email}")
@@ -422,7 +422,7 @@ def demo_user_system():
     )
 
     auth_result = auth_handler.process_command(auth_command)
-    if auth_result.is_success:
+    if auth_result.success:
         authenticated_user = auth_result.data
         print(f"✅ Authentication successful")
         print(f"   Last login: {authenticated_user._last_login}")
@@ -879,7 +879,7 @@ def demo_ecommerce_system():
 
     # Set shipping address
     address_result = order.set_shipping_address("123 Main St, City, State 12345")
-    if address_result.is_success:
+    if address_result.success:
         print("✅ Shipping address set")
     else:
         print(f"❌ Address error: {address_result.error}")
@@ -889,7 +889,7 @@ def demo_ecommerce_system():
 
     # Add laptop
     laptop_result = order.add_item(laptop, 1)
-    if laptop_result.is_success:
+    if laptop_result.success:
         print(f"✅ Added: 1x {laptop.name}")
         print(f"   Available stock now: {laptop.available_stock}")
     else:
@@ -897,7 +897,7 @@ def demo_ecommerce_system():
 
     # Add mice
     mouse_result = order.add_item(mouse, 2)
-    if mouse_result.is_success:
+    if mouse_result.success:
         print(f"✅ Added: 2x {mouse.name}")
         print(f"   Available stock now: {mouse.available_stock}")
     else:
@@ -919,7 +919,7 @@ def demo_ecommerce_system():
     # Confirm order
     print(f"\n✅ Confirming order...")
     confirm_result = order.confirm()
-    if confirm_result.is_success:
+    if confirm_result.success:
         print(f"✅ Order confirmed successfully")
         print(f"   Status: {order.status}")
         print(f"   Laptop stock after confirmation: {laptop.stock_quantity} (Reserved: {laptop._reserved_stock})")
@@ -1235,7 +1235,7 @@ class NotificationService:
         # Attempt to send
         send_result = provider.send(notification)
 
-        if send_result.is_success:
+        if send_result.success:
             return FlextResult.ok(notification)
 
         # Handle failure
@@ -1256,7 +1256,7 @@ class NotificationService:
         for notification in self.pending_notifications:
             if notification.retry_count <= notification.max_retries:
                 result = self._send_notification(notification)
-                if result.is_success:
+                if result.success:
                     processed += 1
                 else:
                     remaining.append(notification)
@@ -1486,7 +1486,7 @@ def demo_notification_system():
         for handler in handlers:
             if hasattr(handler, 'process_event'):
                 result = handler.process_event(event)
-                if result.is_success:
+                if result.success:
                     print(f"   ✅ Handler processed successfully")
                 else:
                     print(f"   ❌ Handler failed: {result.error}")

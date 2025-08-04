@@ -29,7 +29,7 @@ class TestBaseRailway:
         # Execute bind operation
         result = _BaseRailway.bind(initial_result, add_five)
 
-        assert result.is_success
+        assert result.success
         if result.data != 15:
             raise AssertionError(f"Expected {15}, got {result.data}")
 
@@ -84,7 +84,7 @@ class TestBaseRailway:
         # Execute composed function
         result = composed(5)
 
-        assert result.is_success
+        assert result.success
         if result.data != "12":
             raise AssertionError(f"Expected {'12'}, got {result.data}")
 
@@ -136,7 +136,7 @@ class TestBaseRailway:
         # Execute switch with positive value
         switched_result = switch_func(10)
 
-        assert switched_result.is_success
+        assert switched_result.success
         if switched_result.data != 20:
             raise AssertionError(f"Expected {20}, got {switched_result.data}")
 
@@ -159,7 +159,7 @@ class TestBaseRailway:
         # Execute switch with negative value
         switched_result = switch_func(-5)
 
-        assert switched_result.is_success
+        assert switched_result.success
         if switched_result.data != 5:  # negate(-5):
             raise AssertionError(f"Expected {5}, got {switched_result.data}")
 
@@ -212,7 +212,7 @@ class TestBaseRailway:
         # Execute tee
         teed_result = tee_func(42)
 
-        assert teed_result.is_success
+        assert teed_result.success
         if teed_result.data != 84:  # main_func result (42 * 2):
             raise AssertionError(f"Expected {84}, got {teed_result.data}")
         assert side_effect_called == [42]  # Side effect executed
@@ -258,7 +258,7 @@ class TestBaseRailway:
         # Execute dead_end
         dead_end_result = dead_end_func(100)
 
-        assert dead_end_result.is_success
+        assert dead_end_result.success
         if dead_end_result.data != 100:  # Original value preserved:
             raise AssertionError(f"Expected {100}, got {dead_end_result.data}")
         assert void_function_called == [200]  # Void function executed
@@ -306,7 +306,7 @@ class TestBaseRailway:
         # Execute plus
         plus_result = plus_func(10)
 
-        assert plus_result.is_success
+        assert plus_result.success
         if plus_result.data != [15, 20]:  # [func1(10), func2(10)]:
             raise AssertionError(f"Expected {[15, 20]}, got {plus_result.data}")
 
@@ -393,7 +393,7 @@ class TestBaseRailwayUtils:
         # Execute with success input
         result = railway_function(5)
 
-        assert result.is_success
+        assert result.success
         if result.data != 10:
             raise AssertionError(f"Expected {10}, got {result.data}")
 
@@ -427,7 +427,7 @@ class TestBaseRailwayUtils:
         # Execute ignore function
         result = ignore_func("any_input")
 
-        assert result.is_success
+        assert result.success
         assert result.data is None
 
     def test_pass_through_success(self) -> None:
@@ -441,7 +441,7 @@ class TestBaseRailwayUtils:
         for test_input in test_inputs:
             result = pass_func(test_input)
 
-            assert result.is_success
+            assert result.success
             if result.data != test_input:
                 raise AssertionError(f"Expected {test_input}, got {result.data}")
 
@@ -472,7 +472,7 @@ class TestBaseRailwayUtils:
             add_ten,
         )
 
-        assert result.is_success
+        assert result.success
         if result.data != 20:  # (5 * 2) + 10 = 20
             raise AssertionError(f"Expected {20}, got {result.data}")
 
@@ -554,6 +554,6 @@ class TestBaseRailwayUtils:
         result = FlextResult.ok(42)
         bind_result = _BaseRailway.bind(result, lambda x: FlextResult.ok(x * 2))
 
-        assert bind_result.is_success
+        assert bind_result.success
         if bind_result.data != 84:
             raise AssertionError(f"Expected {84}, got {bind_result.data}")

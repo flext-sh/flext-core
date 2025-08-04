@@ -38,7 +38,7 @@ def divide_numbers(a: float, b: float) -> FlextResult[float]:
 
 # Usage
 result = divide_numbers(10, 2)
-if result.is_success:
+if result.success:
     print(f"Result: {result.data}")
 else:
     print(f"Error: {result.error}")
@@ -199,7 +199,7 @@ def setup_container() -> FlextContainer:
 # Usage
 container = setup_container()
 handler_result = container.get("deactivate_user_handler")
-if handler_result.is_success:
+if handler_result.success:
     handler = handler_result.data
     result = handler.process_command(command)
 
@@ -248,7 +248,7 @@ class CreateUserHandler(FlextCommandHandler[CreateUserCommand, User]):
     def handle(self, command: CreateUserCommand) -> FlextResult[User]:
         # Check if email already exists
         exists_result = self._user_repository.exists_by_email(command.email)
-        if exists_result.is_success and exists_result.data:
+        if exists_result.success and exists_result.data:
             return FlextResult.fail("Email already registered")
 
         # Create user
@@ -374,7 +374,7 @@ def test_user_deactivation_success():
     result = handler.process_command(command)
 
     # ASSERT
-    assert result.is_success
+    assert result.success
     assert not user.is_active
     mock_repository.find_by_id.assert_called_once_with(user_id)
     mock_repository.save.assert_called_once_with(user)
@@ -470,8 +470,8 @@ def test_complete_user_registration_workflow():
     # Execute full workflow
     result = handler.process_command(command)
 
-    # Verify success
-    assert result.is_success
+    # Verify success:
+    assert result.success
     user = result.data
     assert user.name == command.name
     assert user.email == command.email
@@ -480,7 +480,7 @@ def test_complete_user_registration_workflow():
     # Verify persistence
     user_repo = container.get("user_repository").data
     found_user_result = user_repo.find_by_email(command.email)
-    assert found_user_result.is_success
+    assert found_user_result.success
     assert found_user_result.data.id == user.id
 ```
 
@@ -505,7 +505,7 @@ class Order(FlextEntity[str]):
         if self._customer is None:
             # Load only when needed
             customer_result = self._customer_repository.find_by_id(self._customer_id)
-            if customer_result.is_success:
+            if customer_result.success:
                 self._customer = customer_result.data
             else:
                 raise ValueError(f"Customer not found: {self._customer_id}")
@@ -517,7 +517,7 @@ class Order(FlextEntity[str]):
         """Lazy load items when accessed."""
         if self._items is None:
             items_result = self._order_item_repository.find_by_order_id(self.id)
-            self._items = items_result.data if items_result.is_success else []
+            self._items = items_result.data if items_result.success else []
 
         return self._items
 ```
@@ -544,7 +544,7 @@ class ProductCatalogService:
 
         # Load from repository
         result = self._repository.find_by_id(product_id)
-        if result.is_success:
+        if result.success:
             # Cache successful result
             self._cache[product_id] = result.data
 
@@ -740,7 +740,7 @@ class CreateUserHandler(FlextCommandHandler[CreateUserCommand, User]):
                 command_type="CreateUser",
                 command_id=command.command_id,
                 user_id=command.requester_id,
-                success=result.is_success,
+                success=result.success,
                 duration_ms=duration,
                 error=result.error if result.is_failure else None
             )
@@ -819,7 +819,7 @@ class MetricsDecorator:
 
             metrics.record_command_execution(
                 command.__class__.__name__,
-                result.is_success,
+                result.success,
                 duration
             )
 
@@ -869,7 +869,7 @@ class OrderAggregateRoot(FlextEntity[OrderId]):
     Example:
         >>> order = OrderAggregateRoot("order_123", "customer_456")
         >>> result = order.add_item(product, quantity=2)
-        >>> if result.is_success:
+        >>> if result.success:
         ...     confirm_result = order.confirm()
     """
 
@@ -1008,7 +1008,7 @@ class UserService:
         Example:
             >>> # Basic user creation
             >>> result = user_service.create_user("Alice Johnson", "alice@test.com")
-            >>> if result.is_success:
+            >>> if result.success:
             ...     user = result.data
             ...     print(f"Created user {user.id} with email {user.email}")
             ... else:
@@ -1067,7 +1067,7 @@ class LargeDataProcessor:
         try:
             for user_id in user_ids:
                 user_result = self._user_repository.find_by_id(user_id)
-                if user_result.is_success:
+                if user_result.success:
                     processed_users.append(user_result.data)
 
             # Process users

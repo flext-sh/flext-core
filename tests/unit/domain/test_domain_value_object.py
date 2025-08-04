@@ -37,8 +37,8 @@ class TestFlextValueObjectEquality:
             amount=Decimal("10.50"),
             currency="USD",
         )
-        assert vo1_result.is_success
-        assert vo2_result.is_success
+        assert vo1_result.success
+        assert vo2_result.success
         vo1, vo2 = vo1_result.data, vo2_result.data
 
         if vo1 != vo2:
@@ -227,7 +227,7 @@ class TestFlextValueObjectDomainValidation:
 
         # Should return success for valid value object
         result = vo.validate_domain_rules()
-        assert result.is_success
+        assert result.success
 
     def test_domain_rules_validation_negative_amount(self) -> None:
         """Test domain rules validation with invalid amount."""

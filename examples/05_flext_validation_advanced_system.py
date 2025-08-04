@@ -588,6 +588,7 @@ def validate_customer_complete(
         return FlextResult.fail(f"User creation failed: {user_result.error}")
 
     user = user_result.data
+    assert user is not None
 
     # Apply additional business rule validation using utility function
     try:
@@ -656,6 +657,7 @@ def validate_product_complete(
             return FlextResult.fail(f"Product creation failed: {product_result.error}")
 
         shared_product = product_result.data
+        assert shared_product is not None
 
         # Create enhanced validation demo product
         enhanced_product = ValidationDemoProduct(
@@ -738,8 +740,9 @@ def demonstrate_customer_validation() -> None:
         print(log_message)
 
         validation_result = validate_customer_complete(customer_data)
-        if validation_result.is_success:
+        if validation_result.success:
             customer = validation_result.data
+            assert customer is not None
             log_message = (
                 f"✅ Enhanced customer created: {customer.name} (ID: {customer.id})"
             )
@@ -810,8 +813,9 @@ def demonstrate_product_validation() -> None:
         print(log_message)
 
         validation_result = validate_product_complete(product_data)
-        if validation_result.is_success:
+        if validation_result.success:
             product = validation_result.data
+            assert product is not None
             log_message = (
                 f"✅ Enhanced product created: {product.name} (ID: {product.id})"
             )

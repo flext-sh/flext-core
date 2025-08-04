@@ -117,16 +117,16 @@ def test_basic_functionality():
     """Teste básico da funcionalidade."""
     # Teste FlextResult
     result = FlextResult.ok("Installation successful!")
-    assert result.is_success
+    assert result.success
     print(f"✅ FlextResult: {result.data}")
 
     # Teste FlextContainer
     container = FlextContainer()
     reg_result = container.register("test_service", "test_value")
-    assert reg_result.is_success
+    assert reg_result.success
 
     get_result = container.get("test_service")
-    assert get_result.is_success
+    assert get_result.success
     assert get_result.data == "test_value"
     print("✅ FlextContainer: OK")
 
@@ -291,14 +291,14 @@ def test_all_components():
 
     # 1. FlextResult
     result = FlextResult.ok("Success")
-    assert result.is_success
+    assert result.success
     print("✅ FlextResult: OK")
 
     # 2. FlextContainer
     container = FlextContainer()
     container.register("service", "value")
     get_result = container.get("service")
-    assert get_result.is_success
+    assert get_result.success
     print("✅ FlextContainer: OK")
 
     # 3. FlextCoreSettings
@@ -321,7 +321,7 @@ def test_all_components():
     command = TestCommand()
     handler = TestHandler()
     cmd_result = handler.process_command(command)
-    assert cmd_result.is_success
+    assert cmd_result.success
     print("✅ Command Pattern: OK")
 
     # 5. Validation
@@ -354,7 +354,7 @@ def benchmark_flext_result():
 
     for i in range(10000):
         result = FlextResult.ok(f"value_{i}")
-        if result.is_success:
+        if result.success:
             data = result.data
 
     end = time.time()
@@ -373,7 +373,7 @@ def benchmark_container():
 
     for i in range(1000):
         result = container.get(f"service_{i}")
-        if result.is_success:
+        if result.success:
             data = result.data
 
     end = time.time()

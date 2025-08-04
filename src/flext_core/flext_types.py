@@ -146,7 +146,7 @@ TDirectoryPath = str  # Directory path type
 # =============================================================================
 
 # Collection types
-TAnyDict = dict[str, str | int | float | bool | None]  # Dict with typed values
+TAnyDict = dict[str, object]  # Dict with flexible object values for configuration
 TAnyList = list[str | int | float | bool | None]  # List with typed values
 TAnyMapping = dict[str, str | int | float | bool | None]  # Generic mapping type alias
 TAnySequence = list[str | int | float | bool | None]  # Generic sequence type alias
@@ -154,10 +154,12 @@ TAnySequence = list[str | int | float | bool | None]  # Generic sequence type al
 # Field and metadata types
 TFieldValue = str | int | float | bool | None  # Field value type
 TFieldMetadata = dict[
-    str, str | int | float | bool | None | list[str]
+    str,
+    str | int | float | bool | None | list[str],
 ]  # Field metadata type
 TFieldInfo = dict[
-    str, str | int | float | bool | None | list[str] | TFieldMetadata
+    str,
+    str | int | float | bool | None | list[str] | TFieldMetadata,
 ]  # Field info type
 
 # Function and predicate types

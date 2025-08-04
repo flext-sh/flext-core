@@ -80,7 +80,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import contextlib
-from typing import Protocol, cast, get_type_hints
+from typing import TYPE_CHECKING, Protocol, cast, get_type_hints
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 from flext_core._handlers_base import (
     _BaseHandler,
@@ -89,7 +92,6 @@ from flext_core.flext_types import (
     R,
     T,
     TAnyDict,
-    THandler,
     TServiceKey,
     TServiceName,
 )
@@ -114,7 +116,7 @@ type THandlerTimeout = int  # Handler timeout in milliseconds
 type TRetryCount = int  # Number of retry attempts for failed handlers
 
 # Registry and dispatch types
-type THandlerRegistry = dict[str, THandler]  # Handler type to handler mapping
+type THandlerRegistry = dict[str, object]  # Handler type to handler mapping
 type THandlerKey = str  # Key for handler registration and lookup
 type TDispatchResult[T] = FlextResult[T]  # Result of handler dispatch
 
@@ -531,7 +533,7 @@ class FlextHandlers:
             handle_result = self.handle(pre_result.data)
 
             # Update success metrics
-            if handle_result.is_success:
+            if handle_result.success:
                 self._success_count += 1
 
             # Post-process
@@ -539,7 +541,7 @@ class FlextHandlers:
 
         def get_metrics(self) -> TAnyDict:
             """Get metrics using injected collector or default metrics."""
-            base_metrics = {
+            base_metrics: TAnyDict = {
                 "handler_name": self._handler_name,
                 "handler_type": "CommandHandler",
                 "commands_processed": self._command_count,
@@ -549,7 +551,10 @@ class FlextHandlers:
 
             if self._metrics_collector:
                 additional_metrics = self._metrics_collector.get_metrics()
-                base_metrics.update(additional_metrics)
+                # Only add compatible values
+                for k, v in additional_metrics.items():
+                    if isinstance(v, (str, int, float, bool, type(None))):
+                        base_metrics[k] = v
 
             return base_metrics
 
@@ -599,7 +604,7 @@ class FlextHandlers:
         def handle_event(self, event: object) -> FlextResult[None]:
             """Handle event - override in subclasses."""
             result = self.handle(event)
-            if result.is_success:
+            if result.success:
                 return FlextResult.ok(None)
             return FlextResult.fail(result.error or "Event handling failed")
 
@@ -864,7 +869,7 @@ class FlextHandlers:
 
     @staticmethod
     def flext_create_function_handler(
-        handler_func: THandler,
+        handler_func: Callable[[object], object],
     ) -> FlextHandlers.Handler[T, R]:
         """Create handler from function.
 
@@ -880,7 +885,7 @@ class FlextHandlers:
             def handle(self, message: object) -> FlextResult[object]:
                 result = handler_func(message)
                 # Ensure we return FlextResult[R]
-                if hasattr(result, "is_success"):
+                if hasattr(result, "success"):
                     return cast("FlextResult[object]", result)
                 return FlextResult.ok(result)
 
@@ -898,4 +903,4 @@ class FlextHandlers:
 
 
 # Export API
-__all__ = ["FlextHandlers"]
+__all__: list[str] = ["FlextHandlers"]

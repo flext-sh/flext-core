@@ -199,7 +199,7 @@ class _BaseRailway:
             - Exception safety: All exceptions caught and converted to results
 
         """
-        if not result.is_success:
+        if not result.success:
             return FlextResult.fail(
                 result.error or "Previous operation failed",
                 result.error_code,
@@ -282,7 +282,7 @@ class _BaseRailway:
         def composed(value: object) -> FlextResult[object]:
             result = FlextResult.ok(value)
             for func in functions:
-                if not result.is_success:
+                if not result.success:
                     break
                 result = _BaseRailway.bind(result, func)
             return result
@@ -386,14 +386,14 @@ class _BaseRailway:
             result1 = func1(value)
             result2 = func2(value)
 
-            if result1.is_success and result2.is_success:
+            if result1.success and result2.success:
                 return FlextResult.ok([result1.data, result2.data])
 
             # Collect errors
             errors = []
-            if not result1.is_success:
+            if not result1.success:
                 errors.append(result1.error or "Function 1 failed")
-            if not result2.is_success:
+            if not result2.success:
                 errors.append(result2.error or "Function 2 failed")
 
             return FlextResult.fail(f"Plus operation failed: {'; '.join(errors)}")
@@ -510,4 +510,4 @@ class _BaseRailwayUtils:
 # EXPORTS - Base railway functionality only
 # =============================================================================
 
-__all__ = ["_BaseRailway", "_BaseRailwayUtils"]
+__all__: list[str] = ["_BaseRailway", "_BaseRailwayUtils"]

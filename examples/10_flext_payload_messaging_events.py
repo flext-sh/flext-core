@@ -106,7 +106,7 @@ def demonstrate_generic_payloads() -> None:  # noqa: PLR0915
         processing_stage="created",
     )
 
-    if order_result.is_success:
+    if order_result.success:
         order_payload = order_result.data
         if order_payload is not None:
             log_message = f"✅ Order payload created: {order_payload}"
@@ -135,7 +135,7 @@ def demonstrate_generic_payloads() -> None:  # noqa: PLR0915
         source="test_service",
     )
 
-    if invalid_result.is_success:
+    if invalid_result.success:
         log_message = f"✅ Invalid payload created: {invalid_result.data}"
         print(log_message)
     else:
@@ -174,7 +174,7 @@ def demonstrate_generic_payloads() -> None:  # noqa: PLR0915
         lambda data: {"transformed_message": f"TRANSFORMED: {data.get('message', '')}"},
     )
 
-    if transform_result.is_success:
+    if transform_result.success:
         transformed_payload = transform_result.data
         if transformed_payload is not None:
             log_message = f"✅ Transformed payload: {transformed_payload}"
@@ -214,7 +214,7 @@ def demonstrate_message_payloads() -> None:  # noqa: PLR0912, PLR0915
         source="payment_service",
     )
 
-    if info_message.is_success:
+    if info_message.success:
         info_payload = info_message.data
         if info_payload is not None:
             log_message = f"✅ Info message: {info_payload}"
@@ -224,13 +224,13 @@ def demonstrate_message_payloads() -> None:  # noqa: PLR0912, PLR0915
             log_message = f"   Source: {info_payload.source}"
             print(log_message)
 
-    if warning_message.is_success:
+    if warning_message.success:
         warning_payload = warning_message.data
         if warning_payload is not None:
             log_message = f"✅ Warning message: {warning_payload}"
             print(log_message)
 
-    if error_message.is_success:
+    if error_message.success:
         error_payload = error_message.data
         if error_payload is not None:
             log_message = f"✅ Error message: {error_payload}"
@@ -247,7 +247,7 @@ def demonstrate_message_payloads() -> None:  # noqa: PLR0912, PLR0915
         source="test_service",
     )
 
-    if invalid_level_result.is_success:
+    if invalid_level_result.success:
         invalid_payload = invalid_level_result.data
         if invalid_payload is not None:
             log_message = f"✅ Invalid level message: {invalid_payload}"
@@ -268,7 +268,7 @@ def demonstrate_message_payloads() -> None:  # noqa: PLR0912, PLR0915
         source="base_service",
     )
 
-    if base_message_result.is_success:
+    if base_message_result.success:
         base_message = base_message_result.data
         if base_message is not None:
             # Enrich with additional context
@@ -305,7 +305,7 @@ def demonstrate_message_payloads() -> None:  # noqa: PLR0912, PLR0915
             level=msg_data["level"],
             source=msg_data["source"],
         )
-        if message_result.is_success:
+        if message_result.success:
             message = message_result.data
             if message is not None:
                 created_messages.append(message)
@@ -344,7 +344,7 @@ def demonstrate_message_payloads() -> None:  # noqa: PLR0912, PLR0915
         correlation_id=correlation_id,
     )
 
-    if request_message_result.is_success and response_message_result.is_success:
+    if request_message_result.success and response_message_result.success:
         request_msg = request_message_result.data
         response_msg = response_message_result.data
         if request_msg is not None and response_msg is not None:
@@ -383,7 +383,7 @@ def demonstrate_domain_events() -> None:  # noqa: PLR0912, PLR0915
         source="user_service",
     )
 
-    if user_registration_event.is_success:
+    if user_registration_event.success:
         event = user_registration_event.data
         if event is not None:
             log_message = f"✅ User registration event: {event}"
@@ -439,7 +439,7 @@ def demonstrate_domain_events() -> None:  # noqa: PLR0912, PLR0915
         version=2,
     )
 
-    if order_created_event.is_success and order_confirmed_event.is_success:
+    if order_created_event.success and order_confirmed_event.success:
         created_event = order_created_event.data
         confirmed_event = order_confirmed_event.data
         if created_event is not None and confirmed_event is not None:
@@ -479,7 +479,7 @@ def demonstrate_domain_events() -> None:  # noqa: PLR0912, PLR0915
     )
 
     # Low stock alert event
-    if stock_updated_event.is_success:
+    if stock_updated_event.success:
         stock_event = stock_updated_event.data
         if stock_event is not None:
             new_quantity = stock_event.data.get("new_quantity", 0)
@@ -504,7 +504,7 @@ def demonstrate_domain_events() -> None:  # noqa: PLR0912, PLR0915
                     version=2,
                 )
 
-                if low_stock_event.is_success:
+                if low_stock_event.success:
                     alert_event = low_stock_event.data
                     if alert_event is not None:
                         log_message = (
@@ -549,7 +549,7 @@ def demonstrate_domain_events() -> None:  # noqa: PLR0912, PLR0915
         correlation_id=process_id,
     )
 
-    if process_started_event.is_success and step_completed_event.is_success:
+    if process_started_event.success and step_completed_event.success:
         started_event = process_started_event.data
         completed_event = step_completed_event.data
         if started_event is not None and completed_event is not None:
@@ -576,7 +576,7 @@ def demonstrate_domain_events() -> None:  # noqa: PLR0912, PLR0915
         source="test_service",
     )
 
-    if invalid_event_result.is_success:
+    if invalid_event_result.success:
         invalid_event = invalid_event_result.data
         if invalid_event is not None:
             log_message = f"✅ Invalid event created: {invalid_event}"
@@ -638,7 +638,7 @@ def demonstrate_payload_serialization() -> None:  # noqa: PLR0915
         correlation_id="corr_789",
     )
 
-    if message_result.is_success:
+    if message_result.success:
         message = message_result.data
         if message is not None:
             message_dict = message.to_dict()
@@ -659,7 +659,7 @@ def demonstrate_payload_serialization() -> None:  # noqa: PLR0915
         correlation_id="corr_789",
     )
 
-    if event_result.is_success:
+    if event_result.success:
         event = event_result.data
         if event is not None:
             event_dict = event.to_dict()
@@ -683,7 +683,7 @@ def demonstrate_payload_serialization() -> None:  # noqa: PLR0915
 
     # Simulate receiving service
     received_payload = FlextPayload.from_dict(transport_data)
-    if received_payload.is_success:
+    if received_payload.success:
         payload = received_payload.data
         if payload is not None:
             log_message = f"✅ Received payload: {payload}"
@@ -841,7 +841,7 @@ def demonstrate_enterprise_messaging_patterns() -> None:  # noqa: PLR0912, PLR09
         inventory_reserved_event,
         payment_processed_event,
     ]:
-        if event_result.is_success:
+        if event_result.success:
             event = event_result.data
             if event is not None:
                 events.append(event)
@@ -888,7 +888,7 @@ def demonstrate_enterprise_messaging_patterns() -> None:  # noqa: PLR0912, PLR09
         normal_priority_result,
         low_priority_result,
     ]:
-        if msg_result.is_success:
+        if msg_result.success:
             message = msg_result.data
             if message is not None:
                 routing_messages.append(message)
@@ -939,7 +939,7 @@ def demonstrate_enterprise_messaging_patterns() -> None:  # noqa: PLR0912, PLR09
 
     correlated_messages = []
     for msg_result in [start_message, validation_message, completion_message]:
-        if msg_result.is_success:
+        if msg_result.success:
             message = msg_result.data
             if message is not None:
                 correlated_messages.append(message)
@@ -961,7 +961,7 @@ def demonstrate_enterprise_messaging_patterns() -> None:  # noqa: PLR0912, PLR09
         metadata={"retry_count": 3, "max_retries": 3, "dead_letter": True},
     )
 
-    if problematic_message_result.is_success:
+    if problematic_message_result.success:
         problematic_message = problematic_message_result.data
         if problematic_message is not None:
             retry_count = problematic_message.metadata.get("retry_count", 0)

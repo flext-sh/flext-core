@@ -57,13 +57,13 @@ error_result = FlextResult.fail("error message")
 result = fetch_user("123")
 
 # Verificação de sucesso/erro
-if result.is_success:
+if result.success:
     print(f"Dados: {result.data}")
 else:
     print(f"Erro: {result.error}")
 
 # Propriedades booleanas
-assert result.is_success == True
+assert result.success == True
 assert result.is_failure == False
 ```
 
@@ -73,8 +73,8 @@ assert result.is_failure == False
 # Acesso seguro aos dados
 result = fetch_user("123")
 
-if result.is_success:
-    # result.data é garantidamente não-None quando is_success=True
+if result.success:
+    # result.data é garantidamente não-None quando success=True
     user_data = result.datadict
     print(f"User: {user_data['name']}")
 
@@ -123,7 +123,7 @@ class FlextResult[T]:
 
     # Properties
     @property
-    def is_success(self) -> bool:
+    def success(self) -> bool:
         """True if result represents success."""
 
     @property
@@ -160,7 +160,7 @@ container = FlextContainer()
 
 # Registro básico
 result = container.register("database", DatabaseService())
-if result.is_success:
+if result.success:
     print("Serviço registrado com sucesso")
 
 # Registro com factory
@@ -178,13 +178,13 @@ container.register("cache", RedisCache(), singleton=True)
 ```python
 # Obter serviço registrado
 db_result = container.get("database")
-if db_result.is_success:
+if db_result.success:
     database = db_result.dataDatabaseService
     users = database.fetch_users()
 
 # Resolução com type hint
 email_service = container.get_typed("email", EmailService)
-if email_service.is_success:
+if email_service.success:
     service = email_service.dataEmailService
     service.send_email("test@example.com", "Hello")
 ```
@@ -203,7 +203,7 @@ class UserService:
         user = {"name": name, "email": email_addr}
         save_result = self.database.save_user(user)
 
-        if save_result.is_success:
+        if save_result.success:
             self.email.send_welcome_email(email_addr)
             return FlextResult.ok("Usuário criado")
         else:
@@ -227,7 +227,7 @@ container.configure(
 
 # Lifecycle management
 result = container.start()   # Initialize all services
-if result.is_success:
+if result.success:
     print("Container iniciado")
 
 # Cleanup
@@ -532,11 +532,11 @@ order = Order(OrderId("order_123"), CustomerId("customer_456"))
 
 # Business operations
 result = order.add_item(ProductId("prod_1"), 2, Money(50.0))
-if result.is_success:
+if result.success:
     print("Item added successfully")
 
 confirm_result = order.confirm()
-if confirm_result.is_success:
+if confirm_result.success:
     print("Order confirmed")
 ```
 
@@ -555,7 +555,7 @@ def save_user(user: User) -> FlextResult[None]:
 
 # ✅ Check results before using data
 result = fetch_user("123")
-if result.is_success:
+if result.success:
     process_user(result.data)  # Safe to use
 else:
     log_error(result.error)
@@ -655,7 +655,7 @@ from flext_core import FlextContainer
 container = FlextContainer()
 container.register("service", service)
 service_result = container.get("service")
-if service_result.is_success:
+if service_result.success:
     service = service_result.data
 ```
 

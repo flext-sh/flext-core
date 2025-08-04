@@ -489,7 +489,7 @@ class FlextValidation(FlextValidators):
         return FlextResult.ok(value)
 
     @staticmethod
-    def chain(*validators: TPredicate) -> TPredicate:
+    def chain(*validators: TPredicate[object]) -> TPredicate[object]:
         """Chain multiple validators together with AND logic.
 
         Args:
@@ -506,7 +506,7 @@ class FlextValidation(FlextValidators):
         return chained_validator
 
     @staticmethod
-    def any_of(*validators: TPredicate) -> TPredicate:
+    def any_of(*validators: TPredicate[object]) -> TPredicate[object]:
         """Chain multiple validators together with OR logic.
 
         Args:
@@ -549,7 +549,7 @@ class FlextValidation(FlextValidators):
     def safe_validate(
         cls,
         value: object,
-        validator: TPredicate,
+        validator: TPredicate[object],
     ) -> FlextResult[object]:
         """Safely validate value with FlextResult error handling.
 

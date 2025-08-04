@@ -290,7 +290,7 @@ class TestFlextUtilities:
 
         result = FlextUtilities.safe_call(successful_function)
         assert isinstance(result, FlextResult)
-        assert result.is_success
+        assert result.success
         if result.data != "success":
             raise AssertionError(f"Expected {'success'}, got {result.data}")
 
@@ -662,7 +662,7 @@ class TestPublicAPIFunctions:
 
         result = flext_safe_call(test_func)
         assert isinstance(result, FlextResult)
-        assert result.is_success
+        assert result.success
         if result.data != "success":
             raise AssertionError(f"Expected {'success'}, got {result.data}")
 
@@ -886,7 +886,7 @@ class TestIntegrationAndComposition:
             }
 
         result = FlextUtilities.safe_call(generate_multiple_ids)
-        assert result.is_success
+        assert result.success
         assert result.data is not None
 
         ids = result.data

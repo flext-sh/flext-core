@@ -58,8 +58,9 @@ def main() -> None:  # noqa: PLR0915
         age=30,
     )
 
-    if user_result.is_success:
+    if user_result.success:
         user = user_result.data
+        assert user is not None
         order_items = [
             {
                 "product_id": "product123",
@@ -75,8 +76,9 @@ def main() -> None:  # noqa: PLR0915
             items=order_items,
         )
 
-        if order_result.is_success:
+        if order_result.success:
             order = order_result.data
+            assert order is not None
         else:
             print(f"Failed to create order: {order_result.error}")
             return
@@ -87,8 +89,9 @@ def main() -> None:  # noqa: PLR0915
     print(f"  Order: {order.id}, Status: {order.status.value}")
     print(f"  Customer: {order.customer_id}")
     total_result = order.calculate_total()
-    if total_result.is_success:
+    if total_result.success:
         total = total_result.data
+        assert total is not None
         print(f"  Total: {total.amount} {total.currency}")
 
     # SharedOrder has built-in domain events
@@ -127,6 +130,7 @@ def main() -> None:  # noqa: PLR0915
                 return FlextResult.fail(f"Failed to create user: {user_result.error}")
 
             user = user_result.data
+            assert user is not None
 
             # Simulate database query with SharedOrder
             order1_result = SharedDomainFactory.create_order(
@@ -156,14 +160,22 @@ def main() -> None:  # noqa: PLR0915
             )
 
             orders = []
-            if order1_result.is_success:
-                orders.append(order1_result.data)
-            if order2_result.is_success:
-                orders.append(order2_result.data)
+            if order1_result.success:
+                order1 = order1_result.data
+                assert order1 is not None
+                orders.append(order1)
+            if order2_result.success:
+                order2 = order2_result.data
+                assert order2 is not None
+                orders.append(order2)
 
             # Filter by status if provided
             if query.status:
-                orders = [o for o in orders if o.status.value == query.status]
+                orders = [
+                    o
+                    for o in orders
+                    if o is not None and o.status.value == query.status
+                ]
 
             return FlextResult.ok(orders)
 
@@ -177,15 +189,19 @@ def main() -> None:  # noqa: PLR0915
 
     # Validate query
     validation = query.validate_query()
-    print(f"  Query validation: {validation.is_success}")
+    print(f"  Query validation: {validation.success}")
 
-    if validation.is_success:
+    if validation.success:
         query_result = query_handler.handle(query)
-        if query_result.is_success:
+        if query_result.success:
             orders = query_result.data
+            assert orders is not None
             print(f"  Found {len(orders)} orders")
             for o in orders:
-                print(f"    Order {o.id}: {o.status} - {o.total.amount}")
+                if hasattr(o, "total") and o.total is not None:
+                    print(f"    Order {o.id}: {o.status} - {o.total.amount}")
+                else:
+                    print(f"    Order {o.id}: {o.status} - No total available")
     print()
 
     # 4. Decorators
@@ -200,10 +216,14 @@ def main() -> None:  # noqa: PLR0915
 
     # Test safe execution
     safe_result = risky_calculation(10.0, 2.0)
-    print(f"  Safe calculation: {safe_result.is_success}, Result: {safe_result.data}")
+    print(
+        f"  Safe calculation: {getattr(safe_result, 'success', False)}, Result: {getattr(safe_result, 'data', 'N/A')}"
+    )
 
     error_result = risky_calculation(10.0, 0.0)
-    print(f"  Error handling: {error_result.is_failure}, Error: {error_result.error}")
+    print(
+        f"  Error handling: {getattr(error_result, 'is_failure', False)}, Error: {getattr(error_result, 'error', 'N/A')}"
+    )
     print()
 
     # 5. Logging
@@ -255,11 +275,12 @@ def main() -> None:  # noqa: PLR0915
         },
     )
 
-    if settings_result.is_success:
+    if settings_result.success:
         settings = settings_result.data
-        print(f"  Database URL: {settings.database_url}")
-        print(f"  Debug mode: {settings.debug}")
-        print(f"  Max workers: {settings.max_workers}")
+        assert settings is not None
+        print(f"  Database URL: {getattr(settings, 'database_url', 'N/A')}")
+        print(f"  Debug mode: {getattr(settings, 'debug', 'N/A')}")
+        print(f"  Max workers: {getattr(settings, 'max_workers', 'N/A')}")
     print()
 
     print("=== Advanced Examples Completed Successfully! ===")

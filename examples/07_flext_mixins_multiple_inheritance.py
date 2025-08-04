@@ -338,10 +338,11 @@ class AdvancedUser(
         # Create user using shared domain factory
         user_result = SharedDomainFactory.create_user(username, email, age)
         if user_result.is_failure:
-            msg = f"Failed to create user: {user_result.error}"
+            msg: str = f"Failed to create user: {user_result.error}"
             raise ValueError(msg)
 
         shared_user = user_result.data
+        assert shared_user is not None
 
         # Initialize with shared user data
         super().__init__(
@@ -384,7 +385,8 @@ class AdvancedUser(
 
         # Additional role validation
         valid_roles = ["user", "admin", "moderator"]
-        if self.role not in valid_roles:
+        user_role = getattr(self, "role", "user")
+        if user_role not in valid_roles:
             self.add_validation_error(f"Invalid role. Must be one of: {valid_roles}")
 
         is_valid = len(self.validation_errors) == 0
@@ -408,11 +410,11 @@ class AdvancedUser(
             self.logger.error("Cannot promote invalid user to admin")
             return False
 
-        if self.role == "admin":
+        if getattr(self, "role", "user") == "admin":
             self.logger.warning("User is already admin", username=self.name)
             return False
 
-        old_role = self.role
+        old_role = getattr(self, "role", "user")
         # Note: In a real system with immutable entities, you would use copy_with
         # and return a new instance or update via repository
         # For this demonstration, we'll simulate the role change
@@ -428,14 +430,14 @@ class AdvancedUser(
             "User promoted",
             username=self.name,
             old_role=old_role,
-            new_role=self.role,
+            new_role=getattr(self, "role", "user"),
         )
         log_domain_operation(
             "user_promoted",
             "AdvancedUser",
             self.id,
             old_role=old_role,
-            new_role=self.role,
+            new_role=getattr(self, "role", "user"),
         )
         return True
 
@@ -449,7 +451,7 @@ class AdvancedUser(
             "email": self.email_address.email,
             "age": self.age.value,
             "status": self.status.value,
-            "role": self.role,
+            "role": getattr(self, "role", "user"),
             "created_at": self.created_at,
             "updated_at": self.updated_at,
             "age_seconds": age_seconds,
@@ -783,8 +785,9 @@ def demonstrate_individual_mixins() -> None:
     print("\n📋 Identifiable Mixin:")
     # Create user using shared domain factory first
     user_result = SharedDomainFactory.create_user("john_doe", "john@example.com", 25)
-    if user_result.is_success:
+    if user_result.success:
         shared_user = user_result.data
+        assert shared_user is not None
         user = IdentifiableUser(
             id=shared_user.id,
             name=shared_user.name,

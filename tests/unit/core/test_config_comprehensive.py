@@ -121,7 +121,7 @@ class TestFlextConfig:
             validate_all=True,
         )
 
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         config = result.data
         if config["database_url"] != "postgresql://localhost/test":
@@ -146,7 +146,7 @@ class TestFlextConfig:
             validate_all=True,
         )
 
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         config = result.data
         if config["database_url"] != "postgresql://localhost/test":
@@ -167,7 +167,7 @@ class TestFlextConfig:
             validate_all=False,
         )
 
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         config = result.data
         if config["database_url"] != "postgresql://localhost/test":
@@ -271,7 +271,7 @@ class TestFlextConfig:
             required_keys=["database_url", "secret_key"],
         )
 
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         config = result.data
         if config["database_url"] != "sqlite:///test.db":
@@ -287,7 +287,7 @@ class TestFlextConfig:
         """Test file loading without required keys validation."""
         result = FlextConfig.load_and_validate_from_file(temp_json_file)
 
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         config = result.data
         if "database_url" not in config:
@@ -366,7 +366,7 @@ class TestFlextConfig:
         """Test successful config merging and validation."""
         result = FlextConfig.merge_and_validate_configs(sample_defaults, sample_config)
 
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         merged = result.data
         # Override values should be preserved
@@ -440,7 +440,7 @@ class TestFlextConfig:
                 validate_type=str,
             )
 
-            assert result.is_success
+            assert result.success
             if result.data != "test_value":
                 raise AssertionError(f"Expected {'test_value'}, got {result.data}")
 
@@ -454,7 +454,7 @@ class TestFlextConfig:
                 default="default_value",
             )
 
-            assert result.is_success
+            assert result.success
             if result.data != "default_value":
                 raise AssertionError(f"Expected {'default_value'}, got {result.data}")
 
@@ -507,7 +507,7 @@ class TestFlextConfig:
         """Test safe_load_json_file wrapper function success."""
         result = safe_load_json_file(temp_json_file)
 
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         config = result.data
         if "database_url" not in config:
@@ -518,7 +518,7 @@ class TestFlextConfig:
         path_obj = Path(temp_json_file)
         result = safe_load_json_file(path_obj)
 
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         config = result.data
         if "database_url" not in config:
@@ -561,13 +561,13 @@ class TestFlextConfig:
         """Test merge_configs proxy method."""
         result = FlextConfig.merge_configs(sample_defaults, sample_config)
 
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         merged = result.data
         # Simple merge implementation
         assert merged["debug"] is True
         if merged["max_connections"] != 100:
-            msg = f"Expected {100}, got {merged['max_connections']}"
+            msg: str = f"Expected {100}, got {merged['max_connections']}"
             raise AssertionError(msg)
 
     def test_validate_config_value_success(self) -> None:
@@ -578,7 +578,7 @@ class TestFlextConfig:
 
         result = FlextConfig.validate_config_value("test_value", validator)
 
-        assert result.is_success
+        assert result.success
 
     def test_validate_config_value_failure(self) -> None:
         """Test validate_config_value with validation failure."""
@@ -635,7 +635,7 @@ class TestFlextBaseSettings:
         with patch.dict(os.environ, {}, clear=True):
             settings = TestSettings(_env_file=None)
             if settings.debug:
-                msg = f"Expected False, got {settings.debug}"
+                msg: str = f"Expected False, got {settings.debug}"
                 raise AssertionError(msg)
             assert settings.timeout == 30
 
@@ -649,7 +649,7 @@ class TestFlextBaseSettings:
         # Disable .env file loading and isolate environment variables
         with patch.dict(os.environ, {}, clear=True):
             result = TestSettings.create_with_validation(debug=True, timeout=60)
-            assert result.is_success
+            assert result.success
             assert result.data is not None
             settings = cast("TestSettings", result.data)
             if not (settings.debug):
@@ -670,7 +670,7 @@ class TestFlextBaseSettings:
             result = TestSettings.create_with_validation(
                 overrides=cast("TAnyDict", overrides)
             )
-            assert result.is_success
+            assert result.success
             assert result.data is not None
             settings = cast("TestSettings", result.data)
             if not (settings.debug):
@@ -688,7 +688,7 @@ class TestFlextBaseSettings:
         # Disable .env file loading and isolate environment variables
         with patch.dict(os.environ, {}, clear=True):
             result = TestSettings.create_with_validation(debug=True, timeout=60)
-            assert result.is_success
+            assert result.success
             assert result.data is not None
             settings = cast("TestSettings", result.data)
             if not (settings.debug):
@@ -706,7 +706,7 @@ class TestFlextBaseSettings:
         # Disable .env file loading and isolate environment variables
         with patch.dict(os.environ, {}, clear=True):
             result = TestSettings.create_with_validation()
-            assert result.is_success
+            assert result.success
             assert result.data is not None
             settings = cast("TestSettings", result.data)
             # The debug value might be affected by environment, so we check the timeout instead
@@ -726,7 +726,7 @@ class TestFlextBaseSettings:
                 overrides=cast("TAnyDict", overrides),
                 timeout=60,
             )
-            assert result.is_success
+            assert result.success
             assert result.data is not None
             settings = cast("TestSettings", result.data)
             assert settings.debug is True  # From overrides
@@ -783,7 +783,7 @@ class TestConfigAliases:
         """Test FlextConfigOps alias works correctly."""
         result = FlextConfigOps.safe_load_from_dict(sample_config)
 
-        assert result.is_success
+        assert result.success
         if result.data != sample_config:
             raise AssertionError(f"Expected {sample_config}, got {result.data}")
 
@@ -795,7 +795,7 @@ class TestConfigAliases:
         """Test FlextConfigDefaults alias works correctly."""
         result = FlextConfigDefaults.apply_defaults(sample_config, sample_defaults)
 
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         # Should have both original and default values
         if "debug" not in result.data:
@@ -814,7 +814,7 @@ class TestConfigAliases:
             "Must be string",
         )
 
-        assert result.is_success
+        assert result.success
 
 
 @pytest.mark.unit
@@ -853,7 +853,7 @@ class TestModuleLevelFunctions:
         with patch.dict(os.environ, {"TEST_VAR": "test_value"}):
             result = safe_get_env_var("TEST_VAR")
 
-            assert result.is_success
+            assert result.success
             if result.data != "test_value":
                 raise AssertionError(f"Expected {'test_value'}, got {result.data}")
 
@@ -862,7 +862,7 @@ class TestModuleLevelFunctions:
         with patch.dict(os.environ, {}, clear=True):
             result = safe_get_env_var("NONEXISTENT_VAR", default="default_value")
 
-            assert result.is_success
+            assert result.success
             if result.data != "default_value":
                 raise AssertionError(f"Expected {'default_value'}, got {result.data}")
 
@@ -910,7 +910,7 @@ class TestModuleLevelFunctions:
         """Test safe_load_json_file wrapper function success."""
         result = safe_load_json_file(temp_json_file)
 
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         config = result.data
         if "database_url" not in config:
@@ -921,7 +921,7 @@ class TestModuleLevelFunctions:
         path_obj = Path(temp_json_file)
         result = safe_load_json_file(path_obj)
 
-        assert result.is_success
+        assert result.success
         assert result.data is not None
         config = result.data
         if "database_url" not in config:
@@ -973,7 +973,7 @@ class TestConfigIntegration:
             apply_defaults=True,
             validate_all=True,
         )
-        assert complete_result.is_success
+        assert complete_result.success
 
         # Step 2: Merge with additional config
         additional_config = {"new_setting": "new_value"}
@@ -982,7 +982,7 @@ class TestConfigIntegration:
             complete_result.data,
             cast("TAnyDict", additional_config),
         )
-        assert merge_result.is_success
+        assert merge_result.success
 
         # Step 3: Verify final configuration
         assert merge_result.data is not None
@@ -1009,13 +1009,13 @@ class TestConfigIntegration:
             # Test integration with FlextConfig
             config_data = {"debug": True, "timeout": 60}
             result = FlextConfig.create_complete_config(cast("TAnyDict", config_data))
-            assert result.is_success
+            assert result.success
 
             # Test that settings can be created from config
             settings_result = TestSettings.create_with_validation(
                 overrides=cast("TAnyDict", config_data)
             )
-            assert settings_result.is_success
+            assert settings_result.success
             assert settings_result.data is not None
             updated_settings = cast("TestSettings", settings_result.data)
             if not (updated_settings.debug):
@@ -1027,7 +1027,7 @@ class TestConfigIntegration:
         """Test file loading with environment variable override."""
         # Load config from file
         file_result = FlextConfig.load_and_validate_from_file(temp_json_file)
-        assert file_result.is_success
+        assert file_result.success
 
         base_config = file_result.data
         assert base_config is not None
@@ -1038,7 +1038,7 @@ class TestConfigIntegration:
                 "DATABASE_URL",
                 validate_type=str,
             )
-            assert env_result.is_success
+            assert env_result.success
             assert env_result.data is not None
 
             # Merge file config with env override
@@ -1047,7 +1047,7 @@ class TestConfigIntegration:
                 base_config,
                 env_override,
             )
-            assert final_result.is_success
+            assert final_result.success
 
             final_config = final_result.data
             assert final_config is not None
@@ -1081,9 +1081,9 @@ class TestConfigIntegration:
         direct_result = FlextConfigOps.safe_load_from_dict(sample_config)
         proxy_result = FlextConfig.safe_load_from_dict(sample_config)
 
-        if direct_result.is_success != proxy_result.is_success:
+        if direct_result.success != proxy_result.success:
             raise AssertionError(
-                f"Expected {proxy_result.is_success}, got {direct_result.is_success}"
+                f"Expected {proxy_result.success}, got {direct_result.success}"
             )
         assert direct_result.data == proxy_result.data
 
@@ -1097,9 +1097,9 @@ class TestConfigIntegration:
         )
         proxy_validation = FlextConfig.validate_config_value("test", validator)
 
-        if direct_validation.is_success != proxy_validation.is_success:
+        if direct_validation.success != proxy_validation.success:
             raise AssertionError(
-                f"Expected {proxy_validation.is_success}, got {direct_validation.is_success}"
+                f"Expected {proxy_validation.success}, got {direct_validation.success}"
             )
 
 
@@ -1112,7 +1112,7 @@ class TestConfigEdgeCases:
         empty_config: TAnyDict = {}
 
         result = FlextConfig.create_complete_config(empty_config)
-        assert result.is_success
+        assert result.success
 
         # Should still apply defaults
         config = result.data
@@ -1135,7 +1135,7 @@ class TestConfigEdgeCases:
         }
 
         result = FlextConfig.create_complete_config(nested_config)
-        assert result.is_success
+        assert result.success
 
         config = result.data
         assert config is not None
@@ -1167,21 +1167,21 @@ class TestConfigEdgeCases:
 
         # This should still work because Python treats "not_boolean" as truthy
         result = FlextConfig.validate_config_value("test", bad_validator)
-        assert result.is_success
+        assert result.success
 
     def test_environment_variable_edge_cases(self) -> None:
         """Test environment variable handling edge cases."""
         # Test with empty string environment variable
         with patch.dict(os.environ, {"EMPTY_VAR": ""}):
             result = FlextConfig.get_env_with_validation("EMPTY_VAR")
-            assert result.is_success
+            assert result.success
             if result.data != "":
                 raise AssertionError(f"Expected {''}, got {result.data}")
 
         # Test with whitespace-only environment variable
         with patch.dict(os.environ, {"WHITESPACE_VAR": "   "}):
             result = FlextConfig.get_env_with_validation("WHITESPACE_VAR")
-            assert result.is_success
+            assert result.success
             if result.data != "   ":
                 raise AssertionError(f"Expected {'   '}, got {result.data}")
 
@@ -1196,7 +1196,7 @@ class TestConfigEdgeCases:
             temp_json_file,
             required_keys=[],
         )
-        assert result.is_success
+        assert result.success
 
     def test_merge_configs_with_none_values(self) -> None:
         """Test config merging with None values."""

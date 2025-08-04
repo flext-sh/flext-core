@@ -133,8 +133,18 @@ class FlextResult[T]:
         return self._error is None
 
     @property
+    def success(self) -> bool:
+        """Alias for is_success for consistency."""
+        return self._error is None
+
+    @property
     def is_failure(self) -> bool:
         """Check if result is failure."""
+        return self._error is not None
+
+    @property
+    def is_fail(self) -> bool:
+        """Alias for is_failure for consistency."""
         return self._error is not None
 
     @property

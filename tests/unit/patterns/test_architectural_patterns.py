@@ -99,7 +99,7 @@ class TestCleanArchitecturePatterns:
         handler = CreateUserHandler()
 
         result = handler.handle(command)
-        assert result.is_success
+        assert result.success
         assert result.data == "User created successfully"
 
     @pytest.mark.architecture
@@ -193,11 +193,11 @@ class TestCleanArchitecturePatterns:
         """Test DDD validation and behavior."""
         # Test domain validation
         validation_result = order.validate_domain_rules()
-        assert validation_result.is_success
+        assert validation_result.success
 
         # Test domain behavior
         confirm_result = order.confirm_order()
-        assert confirm_result.is_success
+        assert confirm_result.success
 
     @pytest.mark.architecture
     def test_cqrs_pattern_implementation(self) -> None:
@@ -254,14 +254,14 @@ class TestCleanArchitecturePatterns:
         command_handler = UpdateUserHandler()
 
         command_result = command_handler.handle(command)
-        assert command_result.is_success
+        assert command_result.success
         assert "updated" in str(command_result.data)
 
         query = GetUserQuery(user_id="123")
         query_handler = GetUserHandler()
 
         query_result = query_handler.handle(query)
-        assert query_result.is_success
+        assert query_result.success
         assert isinstance(query_result.data, dict)
 
 
@@ -286,11 +286,11 @@ class TestEnterprisePatterns:
 
         # Test factory usage
         email_service = ServiceFactory.create_service("email")
-        assert email_service.is_success
+        assert email_service.success
         assert email_service.data["type"] == "email"
 
         sms_service = ServiceFactory.create_service("sms")
-        assert sms_service.is_success
+        assert sms_service.success
         assert sms_service.data["type"] == "sms"
 
         invalid_service = ServiceFactory.create_service("invalid")
@@ -338,7 +338,7 @@ class TestEnterprisePatterns:
             .build()
         )
 
-        assert config_result.is_success
+        assert config_result.success
         config = config_result.data
         assert config["database"]["host"] == "localhost"
         assert config["logging"]["level"] == "INFO"
@@ -382,7 +382,7 @@ class TestEnterprisePatterns:
         start_time = time.time()
         for i in range(1000):
             result = repo.save(f"entity_{i}", {"id": i, "name": f"Entity {i}"})
-            assert result.is_success
+            assert result.success
 
         save_duration = time.time() - start_time
 
@@ -390,7 +390,7 @@ class TestEnterprisePatterns:
         start_time = time.time()
         for i in range(100):
             result = repo.find_by_id(f"entity_{i}")
-            assert result.is_success
+            assert result.success
             assert (result.data or {})["id"] == i
 
         query_duration = time.time() - start_time
@@ -464,10 +464,10 @@ class TestEventDrivenPatterns:
 
         # Process events
         result1 = handler.handle_user_created(created_event)
-        assert result1.is_success
+        assert result1.success
 
         result2 = handler.handle_user_updated(updated_event)
-        assert result2.is_success
+        assert result2.success
 
         # Verify event processing
         assert len(handler.processed_events) == 2

@@ -26,7 +26,7 @@ def hello_world() -> FlextResult[str]:
 
 # Executar
 result = hello_world()
-if result.is_success:
+if result.success:
     print(result.data)  # Output: Hello, FLEXT World! 🚀
 else:
     print(f"Erro: {result.error}")
@@ -51,7 +51,7 @@ def divide_numbers(a: float, b: float) -> FlextResult[float]:
 
 # Uso seguro
 result = divide_numbers(10, 2)
-if result.is_success:
+if result.success:
     print(f"Resultado: {result.data}")  # 5.0
 else:
     print(f"Erro: {result.error}")
@@ -86,11 +86,11 @@ container.register("email_service", email_service)
 
 # Resolver dependências
 db_result = container.get("database_url")
-if db_result.is_success:
+if db_result.success:
     print(f"Database: {db_result.data}")
 
 email_result = container.get("email_service")
-if email_result.is_success:
+if email_result.success:
     service = email_result.data
     message = service.send_email("user@test.com", "Bem-vindo!")
     print(message)
@@ -158,7 +158,7 @@ print(f"Email: {user.email}")
 
 # Mudar email
 email_result = user.change_email(Email("joao.silva@newcompany.com"))
-if email_result.is_success:
+if email_result.success:
     print(f"Email atualizado: {user.email}")
 ```
 
@@ -230,7 +230,7 @@ command = CreateUserCommand("Ana Paula", "ana@empresa.com")
 
 # Processar command
 result = handler.process_command(command)
-if result.is_success:
+if result.success:
     user = result.data
     print(f"✅ Usuário criado: {user.name} ({user.id})")
 else:
@@ -563,7 +563,7 @@ def run_order_system_example():
     )
 
     result = handler.process_command(command)
-    if result.is_success:
+    if result.success:
         order = result.data
         print(f"✅ Pedido criado: {order.id}")
         print(f"   Cliente: {order.customer_id}")

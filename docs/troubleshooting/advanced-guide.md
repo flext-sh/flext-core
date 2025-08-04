@@ -99,7 +99,7 @@ def validate_container_health() -> FlextResult[dict]:
     for service_name in services:
         try:
             result = container.get(service_name)
-            if result.is_success:
+            if result.success:
                 health_report["healthy_services"] += 1
 
                 # Check memory usage
@@ -356,7 +356,7 @@ memory_report = monitor.monitor_container_memory()
 if memory_report["memory_increase_mb"] > 100:  # 100MB threshold
     print("High memory usage detected, initiating cleanup...")
     cleanup_result = monitor.cleanup_container()
-    if cleanup_result.is_success:
+    if cleanup_result.success:
         print(f"Cleanup successful: {cleanup_result.data}")
 ```
 
@@ -468,7 +468,7 @@ def diagnose_configuration_issues():
 
     consistency_result = EnvironmentDiagnostics.validate_environment_consistency(FlextCoreSettings)
 
-    if consistency_result.is_success:
+    if consistency_result.success:
         report = consistency_result.data
         print(f"Environment: {report['environment']}")
         print(f"Debug Mode: {report['debug_mode']}")
@@ -512,7 +512,7 @@ class PerformanceMonitor:
                     result = func(*args, **kwargs)
                     success = True
                     if isinstance(result, FlextResult):
-                        success = result.is_success
+                        success = result.success
                 except Exception as e:
                     result = e
                     success = False
@@ -663,8 +663,8 @@ def visualize_container_dependencies():
 
         node = {
             "id": service_name,
-            "status": "healthy" if service_result.is_success else "failed",
-            "type": type(service_result.data).__name__ if service_result.is_success else "unknown"
+            "status": "healthy" if service_result.success else "failed",
+            "type": type(service_result.data).__name__ if service_result.success else "unknown"
         }
 
         if service_result.is_failure:
@@ -758,7 +758,7 @@ def monitored_operation():
         # Your operation here
         result = some_flext_operation()
 
-        if result.is_success:
+        if result.success:
             metrics.increment_counter("flext.operations.success", tags={"operation": "some_operation"})
         else:
             metrics.increment_counter("flext.operations.failure", tags={"operation": "some_operation"})

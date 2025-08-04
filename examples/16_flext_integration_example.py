@@ -59,6 +59,7 @@ def main() -> None:  # noqa: PLR0915
         return
 
     customer = user_result.data
+    assert customer is not None
     print(f"  Customer: {customer.name} ({customer.email_address.email})")
     print()
 
@@ -84,6 +85,7 @@ def main() -> None:  # noqa: PLR0915
         return
 
     order = order_result.data
+    assert order is not None
     print(f"  Order: {order.id}, Status: {order.status.value}")
     print(f"  Customer: {order.customer_id}")
     print(f"  Events: {len(order.domain_events)} domain events")
@@ -110,7 +112,7 @@ def main() -> None:  # noqa: PLR0915
     )
 
     validation = create_command.validate_command()
-    print(f"  Command validation: {validation.is_success}")
+    print(f"  Command validation: {validation.success}")
     print()
 
     # 5. Simple Repository Pattern using shared domain
@@ -134,10 +136,10 @@ def main() -> None:  # noqa: PLR0915
     # Test repository with shared domain order
     repository = OrderRepository()
     save_result = repository.save(order)
-    print(f"  Order saved: {save_result.is_success}")
+    print(f"  Order saved: {save_result.success}")
 
     fetch_result = repository.get_by_id(order.id)
-    if fetch_result.is_success:
+    if fetch_result.success:
         fetched_order = fetch_result.data
         print(f"  Order fetched: {hasattr(fetched_order, 'id')}")
     print()
@@ -157,7 +159,7 @@ def main() -> None:  # noqa: PLR0915
     repo_result = container.get("order_repository")
     customer_result = container.get("current_customer")
 
-    if repo_result.is_success and customer_result.is_success:
+    if repo_result.success and customer_result.success:
         print("  Services registered and retrieved successfully")
         retrieved_customer = customer_result.data
         print(f"  Retrieved customer: {retrieved_customer.name}")
@@ -176,8 +178,8 @@ def main() -> None:  # noqa: PLR0915
     valid_test = email_field.validate_value("alice@example.com")
     invalid_test = email_field.validate_value("invalid-email")
 
-    print(f"  Valid email validation: {valid_test.is_success}")
-    print(f"  Invalid email validation: {invalid_test.is_success}")
+    print(f"  Valid email validation: {valid_test.success}")
+    print(f"  Invalid email validation: {invalid_test.success}")
     if invalid_test.is_failure:
         print(f"    Error: {invalid_test.error}")
     print()
@@ -199,8 +201,9 @@ def main() -> None:  # noqa: PLR0915
         ],
     )
 
-    if order2_result.is_success:
+    if order2_result.success:
         order2 = order2_result.data
+        assert order2 is not None
         repository.save(order2)
         print(f"  Created second order: {order2.id}")
 
@@ -208,9 +211,11 @@ def main() -> None:  # noqa: PLR0915
         total1_result = order.calculate_total()
         total2_result = order2.calculate_total()
 
-        if total1_result.is_success and total2_result.is_success:
+        if total1_result.success and total2_result.success:
             total1 = total1_result.data
             total2 = total2_result.data
+            assert total1 is not None
+            assert total2 is not None
 
             combined_amount = total1.amount + total2.amount
             print(f"  Order 1 total: {total1.amount} {total1.currency}")

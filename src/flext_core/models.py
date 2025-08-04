@@ -116,7 +116,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from enum import StrEnum
-from typing import TYPE_CHECKING, NotRequired, TypedDict
+from typing import NotRequired, TypedDict
 
 from pydantic import (
     BaseModel,
@@ -129,13 +129,6 @@ from pydantic import (
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from flext_core.result import FlextResult
-
-if TYPE_CHECKING:
-    from flext_core.flext_types import (
-        TEntityId,
-        TServiceName,
-        TValue,
-    )
 
 # =============================================================================
 # CORE SEMANTIC ENUMS - Domain value objects with type safety
@@ -194,7 +187,7 @@ class FlextConnectionType(StrEnum):
 class FlextEntityDict(TypedDict):
     """TypedDict for core entity structure."""
 
-    id: TEntityId
+    id: str
     created_at: str
     updated_at: str
     version: int
@@ -205,7 +198,7 @@ class FlextEntityDict(TypedDict):
 class FlextValueObjectDict(TypedDict):
     """TypedDict for value object structure."""
 
-    value: TValue
+    value: str | int | float | bool | None
     type: str
     metadata: NotRequired[dict[str, object]]
 
@@ -320,7 +313,7 @@ class FlextDomainEntity(FlextMutableModel):
     """Base domain entity with identity, versioning, and lifecycle management."""
 
     # Core identity
-    id: TEntityId = Field(description="Unique entity identifier")
+    id: str = Field(description="Unique entity identifier")
 
     # Lifecycle management
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
@@ -374,8 +367,23 @@ class FlextDomainValueObject(FlextImmutableModel):
     """Base domain value object with attribute-based equality."""
 
     def __hash__(self) -> int:
-        """Hash based on all attributes."""
-        return hash(tuple(sorted(self.model_dump().items())))
+        """Hash based on all attributes (with safe handling for unhashable types)."""
+
+        def make_hashable(item: object) -> object:
+            """Convert unhashable types to hashable equivalents."""
+            if isinstance(item, dict):
+                return tuple(sorted(item.items()))
+            if isinstance(item, list):
+                return tuple(item)
+            if isinstance(item, set):
+                return frozenset(item)
+            return item
+
+        dumped = self.model_dump()
+        hashable_items = []
+        for key, value in sorted(dumped.items()):
+            hashable_items.append((key, make_hashable(value)))
+        return hash(tuple(hashable_items))
 
     def __eq__(self, other: object) -> bool:
         """Equality based on all attributes."""
@@ -627,7 +635,7 @@ class FlextServiceModel(FlextMutableModel):
     """Model for service registration and discovery."""
 
     # Service identity
-    service_name: TServiceName = Field(description="Service name")
+    service_name: str = Field(description="Service name")
     service_id: str = Field(description="Unique service instance ID")
 
     # Network configuration
@@ -895,4 +903,18 @@ __all__ = [
     "validate_all_models",
 ]
 
-# Model rebuilds will be handled by flext_core module initialization if needed
+# =============================================================================
+# MODEL REBUILDS - Resolve forward references for Pydantic
+# =============================================================================
+
+# Rebuild all Pydantic models to resolve forward references after import
+FlextBaseModel.model_rebuild()
+FlextImmutableModel.model_rebuild()
+FlextMutableModel.model_rebuild()
+FlextDomainEntity.model_rebuild()
+FlextDomainValueObject.model_rebuild()
+FlextDatabaseModel.model_rebuild()
+FlextOracleModel.model_rebuild()
+FlextOperationModel.model_rebuild()
+FlextSingerStreamModel.model_rebuild()
+FlextServiceModel.model_rebuild()

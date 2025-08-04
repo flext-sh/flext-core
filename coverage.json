@@ -11080,7 +11080,7 @@
           "missing_lines": [],
           "excluded_lines": []
         },
-        "FlextResult.is_success": {
+        "FlextResult.success": {
           "executed_lines": [94],
           "summary": {
             "covered_lines": 1,

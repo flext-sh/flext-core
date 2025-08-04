@@ -184,7 +184,7 @@ class FlextDecorators:
                 return database.get_user(user_id)  # May raise exceptions
 
             result = risky_database_query("123")
-            if result.is_success:
+            if result.success:
                 user = result.data
             else:
                 error_message = result.error
@@ -560,7 +560,7 @@ def flext_timing_decorator(func: _DecoratedFunction) -> _DecoratedFunction:
 # EXPORTS - Clean public API seguindo diretrizes
 # =============================================================================
 
-__all__ = [
+__all__: list[str] = [
     "FlextDecorators",
     "FlextErrorHandlingDecorators",
     "FlextFunctionalDecorators",

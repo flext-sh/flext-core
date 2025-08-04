@@ -843,9 +843,11 @@ def load_config_from_env(config_class: type[FlextBaseSettings]) -> FlextBaseSett
 
 def merge_configs(*configs: FlextBaseConfigModel) -> dict[str, object]:
     """Merge multiple configuration objects."""
-    merged = {}
+    merged: dict[str, object] = {}
     for config in configs:
-        merged.update(config.to_dict())
+        config_dict = config.to_dict()
+        # Update with type conversion to object
+        merged.update(config_dict)
     return merged
 
 

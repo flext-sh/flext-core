@@ -35,7 +35,7 @@ Real-World Usage Validation:
 
     # Type-safe service retrieval
     service_result = container.get("database_service")
-    if service_result.is_success:
+    if service_result.success:
         database = service_result.data
 
 Test Architecture Patterns:
@@ -159,7 +159,7 @@ class TestFlextContainerBasicOperations:
         service = sample_services["database"]
         result = clean_container.register("database", service)
 
-        assert result.is_success
+        assert result.success
         assert result.data is None
         assert clean_container.has("database")
         if "database" not in clean_container.list_services():
@@ -186,7 +186,7 @@ class TestFlextContainerBasicOperations:
         service = SampleService(service_name)
         result = clean_container.register(service_name, service)
 
-        assert result.is_success
+        assert result.success
         assert clean_container.has(service_name)
 
     @pytest.mark.parametrize(
@@ -225,7 +225,7 @@ class TestFlextContainerBasicOperations:
 
         result = clean_container.get("database")
 
-        assert result.is_success
+        assert result.success
         assert result.data is service
         assert isinstance(result.data, SampleService)
         if result.data.name != "DatabaseService":
@@ -265,7 +265,7 @@ class TestFlextContainerBasicOperations:
         for name in service_names:
             service = SampleService(name)
             result = clean_container.register(name, service)
-            assert result.is_success
+            assert result.success
 
         # Verify all services are registered
         registered_services = clean_container.list_services()
@@ -287,21 +287,21 @@ class TestFlextContainerBasicOperations:
         # Register initial service
         service1 = SampleService("Original")
         result1 = clean_container.register("service", service1)
-        assert result1.is_success
+        assert result1.success
 
         # Verify initial service
         get_result1 = clean_container.get("service")
-        assert get_result1.is_success
+        assert get_result1.success
         assert get_result1.data is service1
 
         # Register replacement service
         service2 = SampleService("Replacement")
         result2 = clean_container.register("service", service2)
-        assert result2.is_success
+        assert result2.success
 
         # Verify replacement service
         get_result2 = clean_container.get("service")
-        assert get_result2.is_success
+        assert get_result2.success
         assert get_result2.data is service2
         assert get_result2.data is not service1
 
@@ -319,7 +319,7 @@ class TestFlextContainerSingletonPattern:
         factory = service_factories["database"]
         result = clean_container.register_factory("database", factory)
 
-        assert result.is_success
+        assert result.success
         assert result.data is None
         assert clean_container.has("database")
 
@@ -334,7 +334,7 @@ class TestFlextContainerSingletonPattern:
 
         # First access creates instance
         result1 = clean_container.get("database")
-        assert result1.is_success
+        assert result1.success
         assert isinstance(result1.data, SampleService)
         if result1.data.name != "DatabaseService":
             raise AssertionError(
@@ -360,9 +360,9 @@ class TestFlextContainerSingletonPattern:
         result2 = clean_container.get("service")
         result3 = clean_container.get("service")
 
-        assert result1.is_success
-        assert result2.is_success
-        assert result3.is_success
+        assert result1.success
+        assert result2.success
+        assert result3.success
 
         # Same instance returned
         assert result1.data is result2.data
@@ -382,7 +382,7 @@ class TestFlextContainerSingletonPattern:
     ) -> None:
         """Test singleton factory failure handling."""
         result = clean_container.register_factory("failing", failing_factory)
-        assert result.is_success
+        assert result.success
 
         # Factory failure should be handled gracefully
         get_result = clean_container.get("failing")
@@ -431,13 +431,13 @@ class TestFlextContainerSingletonPattern:
                 service_name,
                 create_service,
             )
-            assert result.is_success
+            assert result.success
 
         # Verify all services work independently
         for i in range(factory_count):
             service_name = f"service_{i}"
             get_result: FlextResult[object] = clean_container.get(service_name)
-            assert get_result.is_success
+            assert get_result.success
             assert isinstance(get_result.data, SampleService)
             service_instance = get_result.data
             if service_instance.name != service_name:
@@ -499,7 +499,7 @@ class TestFlextContainerServiceManagement:
 
         # Remove service
         result = clean_container.unregister("database")
-        assert result.is_success
+        assert result.success
         assert result.data is None
 
         # Verify service is gone
@@ -533,11 +533,11 @@ class TestFlextContainerServiceManagement:
 
         # Create instance (populates cache)
         result1 = clean_container.get("database")
-        assert result1.is_success
+        assert result1.success
 
         # Remove service
         remove_result = clean_container.unregister("database")
-        assert remove_result.is_success
+        assert remove_result.success
 
         # Verify complete removal
         assert not clean_container.has("database")
@@ -563,7 +563,7 @@ class TestFlextContainerServiceManagement:
 
         # Clear container
         result = clean_container.clear()
-        assert result.is_success
+        assert result.success
         assert result.data is None
 
         # Verify empty state
@@ -662,7 +662,7 @@ class TestFlextContainerGlobalManagement:
         assert container2.has("logger")
 
         result = container2.get("logger")
-        assert result.is_success
+        assert result.success
         assert result.data is service
 
 
@@ -691,8 +691,8 @@ class TestFlextContainerIntegration:
         db_result = clean_container.get("database")
         logger_result = clean_container.get("logger")
 
-        assert db_result.is_success
-        assert logger_result.is_success
+        assert db_result.success
+        assert logger_result.success
 
         assert db_result.data is database_service
         assert isinstance(logger_result.data, SampleService)
@@ -720,7 +720,7 @@ class TestFlextContainerIntegration:
         clean_container.register_factory("cache", cache_factory)
 
         result2 = clean_container.get("cache")
-        assert result2.is_success
+        assert result2.success
         assert result2.data is not original_service
         assert isinstance(result2.data, SampleService)
 
@@ -761,7 +761,7 @@ class TestFlextContainerIntegration:
             # Verify all previously registered services still work
             for registered_name in service_list:
                 result = clean_container.get(registered_name)
-                assert result.is_success
+                assert result.success
 
     def test_factory_error_isolation(
         self,
@@ -777,7 +777,7 @@ class TestFlextContainerIntegration:
 
         # Working service should still work
         working_result = clean_container.get("working")
-        assert working_result.is_success
+        assert working_result.success
         assert isinstance(working_result.data, SampleService)
 
         # Failing service should fail gracefully

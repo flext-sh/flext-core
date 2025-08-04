@@ -131,15 +131,21 @@ class BaseCommandHandler:
     def create_query_projection(self, shared_user: object) -> TAnyObject:
         """DRY Helper: Create standardized query projection."""
         return {
-            "id": shared_user.id,
-            "name": shared_user.name,
-            "email": shared_user.email_address.email,
-            "age": shared_user.age.value,
-            "status": shared_user.status.value,
-            "created_at": str(shared_user.created_at)
-            if shared_user.created_at
+            "id": getattr(shared_user, "id", None),
+            "name": getattr(shared_user, "name", None),
+            "email": getattr(getattr(shared_user, "email_address", None), "email", None)
+            if hasattr(shared_user, "email_address")
             else None,
-            "version": shared_user.version,
+            "age": getattr(getattr(shared_user, "age", None), "value", None)
+            if hasattr(shared_user, "age")
+            else None,
+            "status": getattr(getattr(shared_user, "status", None), "value", None)
+            if hasattr(shared_user, "status")
+            else None,
+            "created_at": str(getattr(shared_user, "created_at", None))
+            if getattr(shared_user, "created_at", None)
+            else None,
+            "version": getattr(shared_user, "version", None),
         }
 
     def store_domain_event(
@@ -168,7 +174,7 @@ class DemonstrationFlowHelper:
         user_id: TEntityId | None = None,
     ) -> FlextResult[TAnyObject]:
         """DRY Helper: Handle result and update state consistently."""
-        if result.is_success:
+        if result.success:
             print(f"✅ {success_message}")
             if user_id and isinstance(result.data, dict):
                 state_dict[user_id] = result.data
@@ -745,7 +751,7 @@ class CQRSDemonstrator:
             "Alice Johnson", "alice@example.com", 28
         )
 
-        if create_result.is_success:
+        if create_result.success:
             user_data = create_result.data
             if isinstance(user_data, dict) and "id" in user_data:
                 user_id = user_data["id"]
@@ -774,7 +780,7 @@ class CQRSDemonstrator:
         update_result = self.app_service.update_user(
             self.created_user_id, name="Alice Smith"
         )
-        if update_result.is_success:
+        if update_result.success:
             print(f"✅ User updated successfully: {self.created_user_id}")
             # Update database
             if isinstance(update_result.data, dict):
@@ -792,7 +798,7 @@ class CQRSDemonstrator:
         print("=" * 60)
 
         list_result = self.app_service.list_users(active_only=True)
-        if list_result.is_success:
+        if list_result.success:
             users = list_result.data
             if isinstance(users, list):
                 print(f"✅ Found {len(users)} active users")
@@ -829,7 +835,7 @@ class CQRSDemonstrator:
             self.created_user_id,
             "User requested account deletion",
         )
-        if delete_result.is_success:
+        if delete_result.success:
             print(f"✅ User deleted successfully: {self.created_user_id}")
             # Update database
             if isinstance(delete_result.data, dict):
@@ -876,8 +882,11 @@ def main() -> None:
 
     for step in steps:
         result = step()
-        if result.is_failure:
-            print(f"❌ Demonstration step failed: {result.error}")
+        if hasattr(result, "is_failure") and getattr(result, "is_failure", False):
+            print(
+                f"❌ Demonstration step failed: "
+                f"{getattr(result, 'error', 'Unknown error')}"
+            )
             return
 
     print("\n" + "=" * 80)

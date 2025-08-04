@@ -350,12 +350,10 @@ class FlextCommands:
             )
             command_type = TServiceName(data.get("command_type", cls.__name__))
 
-            # Handle timestamp
+            # Handle timestamp (TAnyDict only allows primitive types, not datetime)
             timestamp_raw = data.get("timestamp")
             if isinstance(timestamp_raw, str):
                 timestamp = datetime.fromisoformat(timestamp_raw)
-            elif isinstance(timestamp_raw, datetime):
-                timestamp = timestamp_raw
             else:
                 timestamp = datetime.now(tz=ZoneInfo("UTC"))
 
@@ -494,11 +492,17 @@ class FlextCommands:
             cls,
             error: str,
             error_code: str | None = None,  # noqa: ARG003
-            error_data: TAnyDict | None = None,
+            error_data: dict[str, object] | None = None,
         ) -> FlextCommands.Result[T]:
             """Create failed result with metadata."""
-            # Convert error_data to metadata for compatibility
-            metadata = error_data if error_data is not None else None
+            # Convert error_data to TAnyDict for metadata compatibility
+            metadata: TAnyDict | None = None
+            if error_data is not None:
+                metadata = {
+                    k: v
+                    for k, v in error_data.items()
+                    if isinstance(v, (str, int, float, bool, type(None)))
+                }
             return cls(error=error, metadata=metadata)
 
     # =============================================================================
@@ -658,7 +662,7 @@ class FlextCommands:
         def __init__(self) -> None:
             """Initialize command bus with logging."""
             self._handlers: dict[object, object] = {}
-            self._middleware: TAnyList = []
+            self._middleware: list[object] = []
             self._execution_count = 0
 
             self.logger.info(
@@ -863,7 +867,7 @@ class FlextCommands:
             """Add middleware to processing pipeline."""
             self._middleware.append(middleware)
 
-        def get_all_handlers(self) -> TAnyList:
+        def get_all_handlers(self) -> list[object]:
             """Get all registered handlers."""
             return list(self._handlers.values())
 
@@ -1016,6 +1020,14 @@ class FlextCommands:
 
         return SimpleHandler()
 
+
+# =============================================================================
+# MODEL REBUILDS - Resolve forward references for Pydantic
+# =============================================================================
+
+# Rebuild nested models to resolve forward references after import
+FlextCommands.Command.model_rebuild()
+FlextCommands.Query.model_rebuild()
 
 # Export API
 __all__ = ["FlextCommands"]

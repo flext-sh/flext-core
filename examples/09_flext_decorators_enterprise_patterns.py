@@ -189,20 +189,22 @@ def demonstrate_error_handling_decorators() -> None:  # noqa: PLR0915
 
     # Test successful operation
     result = risky_division(10.0, 2.0)
-    if result.is_success:
-        log_message = f"✅ Safe division result: {result.data}"
+    if hasattr(result, "success") and getattr(result, "success", False):
+        log_message = f"✅ Safe division result: {getattr(result, 'data', 'N/A')}"
         print(log_message)
     else:
-        error_message = f"Division failed: {result.error}"
+        error_message = f"Division failed: {getattr(result, 'error', 'Unknown error')}"
         print(f"❌ {error_message}")
 
     # Test failed operation
     result = risky_division(10.0, 0.0)
-    if result.is_success:
-        log_message = f"✅ Safe division result: {result.data}"
+    if hasattr(result, "success") and getattr(result, "success", False):
+        log_message = f"✅ Safe division result: {getattr(result, 'data', 'N/A')}"
         print(log_message)
     else:
-        error_message = f"Division failed (expected): {result.error}"
+        error_message = (
+            f"Division failed (expected): {getattr(result, 'error', 'Unknown error')}"
+        )
         print(f"❌ {error_message}")
 
     # 2. Retry decorator
@@ -217,7 +219,7 @@ def demonstrate_error_handling_decorators() -> None:  # noqa: PLR0915
         nonlocal attempt_count
         attempt_count += 1
         if attempt_count < MAX_RETRY_ATTEMPTS:
-            msg = f"Service failed on attempt {attempt_count}"
+            msg: str = f"Service failed on attempt {attempt_count}"
             raise RuntimeError(msg)
         return "Service succeeded after retries"
 
@@ -721,7 +723,7 @@ def demonstrate_domain_model_decorators() -> None:  # noqa: PLR0915
     # Test valid user creation
     try:
         user = create_validated_user("Alice Johnson", "alice@example.com", 28)
-        log_message = f"✅ User created with decorators: {user.name} (ID: {user.id})"
+        log_message = f"✅ User created with decorators: {getattr(user, 'name', 'N/A')} (ID: {getattr(user, 'id', 'N/A')})"
         print(log_message)
     except (RuntimeError, ValueError, TypeError, FlextValidationError) as e:
         error_message: TErrorMessage = f"User creation failed: {e}"
@@ -730,7 +732,7 @@ def demonstrate_domain_model_decorators() -> None:  # noqa: PLR0915
     # Test invalid user creation
     try:
         user = create_validated_user("", "invalid-email", 15)  # Invalid data
-        log_message = f"✅ Invalid user created: {user.name}"
+        log_message = f"✅ Invalid user created: {getattr(user, 'name', 'N/A')}"
         print(log_message)
     except (RuntimeError, ValueError, TypeError, FlextValidationError) as e:
         error_message = f"Invalid user creation failed (expected): {e}"
@@ -750,7 +752,7 @@ def demonstrate_domain_model_decorators() -> None:  # noqa: PLR0915
         # Create test user for demonstration
         if email == "cached@example.com":
             user_result = SharedDomainFactory.create_user("Cached User", email, 25)
-            if user_result.is_success:
+            if user_result.success:
                 return user_result.data
 
         return None
@@ -758,13 +760,13 @@ def demonstrate_domain_model_decorators() -> None:  # noqa: PLR0915
     # First lookup (expensive)
     user1 = find_user_by_email("cached@example.com")
     if user1:
-        log_message = f"✅ First lookup: {user1.name} ({user1.email_address.email})"
+        log_message = f"✅ First lookup: {getattr(user1, 'name', 'N/A')} ({getattr(getattr(user1, 'email_address', None), 'email', 'N/A') if hasattr(user1, 'email_address') else 'N/A'})"
         print(log_message)
 
     # Second lookup (cached)
     user2 = find_user_by_email("cached@example.com")
     if user2:
-        log_message = f"✅ Second lookup (cached): {user2.name}"
+        log_message = f"✅ Second lookup (cached): {getattr(user2, 'name', 'N/A')}"
         print(log_message)
 
     # 3. Error handling with domain operations
@@ -800,32 +802,39 @@ def demonstrate_domain_model_decorators() -> None:  # noqa: PLR0915
         "test@example.com",
         30,
     )
-    if test_user_result.is_success:
+    if test_user_result.success:
         test_user = test_user_result.data
 
         # Activate user
         activation_result = activate_user_account(test_user)
-        if activation_result.is_success:
-            activated_user = activation_result.data
-            log_message = (
-                f"✅ User activated: {activated_user.name} "
-                f"(Status: {activated_user.status.value})"
-            )
-            print(log_message)
+        if hasattr(activation_result, "success") and getattr(
+            activation_result, "success", False
+        ):
+            activated_user = getattr(activation_result, "data", None)
+            if activated_user:
+                log_message = (
+                    f"✅ User activated: {getattr(activated_user, 'name', 'N/A')} "
+                    f"(Status: {getattr(getattr(activated_user, 'status', None), 'value', 'N/A') if hasattr(activated_user, 'status') else 'N/A'})"
+                )
+                print(log_message)
         else:
-            error_message = f"Activation failed: {activation_result.error}"
+            error_message = f"Activation failed: {getattr(activation_result, 'error', 'Unknown error')}"
             print(f"❌ {error_message}")
 
         # Try to activate again (should fail)
-        if activation_result.is_success:
-            second_activation = activate_user_account(activation_result.data)
-            if second_activation.is_success:
-                log_message = f"✅ Second activation: {second_activation.data.name}"
+        if hasattr(activation_result, "success") and getattr(
+            activation_result, "success", False
+        ):
+            second_activation = activate_user_account(
+                getattr(activation_result, "data", None)
+            )
+            if hasattr(second_activation, "success") and getattr(
+                second_activation, "success", False
+            ):
+                log_message = f"✅ Second activation: {getattr(getattr(second_activation, 'data', None), 'name', 'N/A') if getattr(second_activation, 'data', None) else 'N/A'}"
                 print(log_message)
             else:
-                error_message = (
-                    f"Second activation failed (expected): {second_activation.error}"
-                )
+                error_message = f"Second activation failed (expected): {getattr(second_activation, 'error', 'Unknown error')}"
                 print(f"❌ {error_message}")
 
     # 4. Domain-aware validation decorators
@@ -843,7 +852,7 @@ def demonstrate_domain_model_decorators() -> None:  # noqa: PLR0915
 
         # Use domain factory for validation
         user_result = SharedDomainFactory.create_user(name, email, age)
-        return user_result.is_success
+        return user_result.success
 
     domain_validator = FlextValidationDecorators.create_validation_decorator(
         domain_user_validator,
@@ -876,7 +885,7 @@ def demonstrate_domain_model_decorators() -> None:  # noqa: PLR0915
     try:
         valid_data = {"name": "Domain User", "email": "domain@example.com", "age": 32}
         user = register_user_with_domain_validation(valid_data)
-        log_message = f"✅ Domain validation passed: {user.name}"
+        log_message = f"✅ Domain validation passed: {getattr(user, 'name', 'N/A')}"
         print(log_message)
     except (RuntimeError, ValueError, TypeError, FlextValidationError) as e:
         error_message = f"Registration failed: {e}"
@@ -890,7 +899,7 @@ def demonstrate_domain_model_decorators() -> None:  # noqa: PLR0915
             "age": 10,
         }  # Invalid per domain rules
         user = register_user_with_domain_validation(invalid_data)
-        log_message = f"✅ Invalid registration: {user.name}"
+        log_message = f"✅ Invalid registration: {getattr(user, 'name', 'N/A')}"
         print(log_message)
     except (RuntimeError, ValueError, TypeError, FlextValidationError) as e:
         error_message = f"Invalid registration failed (expected): {e}"

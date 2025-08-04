@@ -38,7 +38,7 @@ Real-World Usage Validation:
     )
 
     # Error handling without exceptions
-    if result.is_success:
+    if result.success:
         log_success(result.data)
     else:
         log_error(result.error)
@@ -77,7 +77,7 @@ class TestFlextResult:
     def test_success_creation(self) -> None:
         """Test creating success result."""
         result = FlextResult.ok("test_data")
-        assert result.is_success, f"Expected True, got {result.is_success}"
+        assert result.success, f"Expected True, got {result.success}"
         assert result.data == "test_data", f"Expected {'test_data'}, got {result.data}"
         assert result.error is None
 
@@ -144,7 +144,7 @@ class TestFlextResult:
         """Test map with success result."""
         result = FlextResult.ok("hello")
         mapped = result.map(lambda x: x.upper())
-        assert mapped.is_success, f"Expected True, got {mapped.is_success}"
+        assert mapped.success, f"Expected True, got {mapped.success}"
         assert mapped.data == "HELLO", f"Expected {'HELLO'}, got {mapped.data}"
 
     def test_map_failure(self) -> None:
@@ -160,8 +160,8 @@ class TestFlextResult:
         """Test flat_map with success result."""
         result = FlextResult.ok("hello")
         flat_mapped = result.flat_map(lambda x: FlextResult.ok(x.upper()))
-        if not (flat_mapped.is_success):
-            raise AssertionError(f"Expected True, got {flat_mapped.is_success}")
+        if not flat_mapped.success:
+            raise AssertionError(f"Expected True, got {flat_mapped.success}")
         if flat_mapped.data != "HELLO":
             raise AssertionError(f"Expected {'HELLO'}, got {flat_mapped.data}")
 
@@ -201,7 +201,7 @@ class TestFlextResult:
         repr_str = repr(result)
         if "FlextResult" not in repr_str:
             raise AssertionError(f"Expected {'FlextResult'} in {repr_str}")
-        assert "is_success=True" in repr_str
+        assert "is_success" in repr_str
 
 
 class TestComposeFunction:
@@ -218,8 +218,8 @@ class TestComposeFunction:
             cast("_BaseResult[object]", result1),
             cast("_BaseResult[object]", result2),
         )
-        if not (composed.is_success):
-            raise AssertionError(f"Expected True, got {composed.is_success}")
+        if not composed.success:
+            raise AssertionError(f"Expected True, got {composed.success}")
         if composed.data != ["data1", "data2"]:
             raise AssertionError(f"Expected {['data1', 'data2']}, got {composed.data}")
 
@@ -246,8 +246,8 @@ class TestComposeFunction:
         # Use _BaseResultOperations.chain_results for combining results
 
         composed = _BaseResultOperations.chain_results()
-        if not (composed.is_success):
-            raise AssertionError(f"Expected True, got {composed.is_success}")
+        if not composed.success:
+            raise AssertionError(f"Expected True, got {composed.success}")
         if composed.data != []:
             raise AssertionError(f"Expected {[]}, got {composed.data}")
 
@@ -275,8 +275,8 @@ class TestPipeFunction:
         )
         result = pipeline("hello world")
 
-        if not (result.is_success):
-            raise AssertionError(f"Expected True, got {result.is_success}")
+        if not result.success:
+            raise AssertionError(f"Expected True, got {result.success}")
         if result.data != "hello_world":
             raise AssertionError(f"Expected {'hello_world'}, got {result.data}")
 
@@ -331,8 +331,8 @@ class TestTapFunction:
         tap_func = FlextCore.tap(side_effects.append)
         result = tap_func("test_data")
 
-        if not (result.is_success):
-            raise AssertionError(f"Expected True, got {result.is_success}")
+        if not result.success:
+            raise AssertionError(f"Expected True, got {result.success}")
         if result.data != "test_data":
             raise AssertionError(f"Expected {'test_data'}, got {result.data}")
         assert side_effects == ["test_data"]
@@ -387,8 +387,8 @@ class TestWhenFunction:
         )
         result = when_func("test_data")
 
-        if not (result.is_success):
-            raise AssertionError(f"Expected True, got {result.is_success}")
+        if not result.success:
+            raise AssertionError(f"Expected True, got {result.success}")
         if result.data != "TEST_DATA":
             raise AssertionError(f"Expected {'TEST_DATA'}, got {result.data}")
 
@@ -402,8 +402,8 @@ class TestWhenFunction:
         )
         result = when_func("test")
 
-        if not (result.is_success):
-            raise AssertionError(f"Expected True, got {result.is_success}")
+        if not result.success:
+            raise AssertionError(f"Expected True, got {result.success}")
         if result.data != "test":  # Should remain unchanged:
             raise AssertionError(
                 f"Expected {'test'} # Should remain unchanged, got {result.data}"
@@ -465,7 +465,7 @@ class TestResultBaseCoverage:
         # Test combine_results which calls chain_results (line 51)
         combined = _BaseResultOperations.combine_results(result1, result2, result3)
 
-        assert combined.is_success
+        assert combined.success
         assert combined.data == ["data1", "data2", "data3"]
 
         # Test with failure

@@ -26,14 +26,14 @@ def create_test_entity(entity_class: type, **kwargs: object) -> object:
     factory = FlextEntityFactory.create_entity_factory(entity_class)
 
     if not callable(factory):
-        msg = f"Factory for {entity_class.__name__} is not callable"
+        msg: str = f"Factory for {entity_class.__name__} is not callable"
         raise TypeError(msg)
 
     # Call the factory function which returns FlextResult
     result = cast("FlextResult[object]", factory(**kwargs))
 
     if result.is_failure:
-        msg = f"Failed to create {entity_class.__name__}: {result.error}"
+        msg: str = f"Failed to create {entity_class.__name__}: {result.error}"
         raise AssertionError(msg)
 
     instance = result.unwrap()
@@ -42,7 +42,7 @@ def create_test_entity(entity_class: type, **kwargs: object) -> object:
     if isinstance(instance, FlextAggregateRoot):
         validation_result = instance.validate_domain_rules()
         if validation_result.is_failure:
-            msg = f"Domain validation failed for {entity_class.__name__}: {validation_result.error}"
+            msg: str = f"Domain validation failed for {entity_class.__name__}: {validation_result.error}"
             raise AssertionError(msg)
 
     return instance
@@ -131,14 +131,14 @@ class SampleAggregateRoot(FlextAggregateRoot):
     def perform_action(self, action: str) -> None:
         """Test method that raises domain event."""
         event_type = f"test.{action}"
-        event_data: dict[str, str | int | float | bool | None] = {
+        event_data: dict[str, object] = {
             "aggregate_id": self.id,
             "action": action,
             "details": self.title,  # Simplified to avoid nested dict with object
         }
         result = self.add_domain_event(event_type, event_data)
         if result.is_failure:
-            msg = f"Failed to add domain event: {result.error}"
+            msg: str = f"Failed to add domain event: {result.error}"
             raise ValueError(msg)
 
 
@@ -232,7 +232,9 @@ class TestFlextEntity:
 
     def test_entity_model_dump(self) -> None:
         """Test entity serialization."""
-        entity_obj = create_test_entity(SampleEntity, name="Test Entity", status="active")
+        entity_obj = create_test_entity(
+            SampleEntity, name="Test Entity", status="active"
+        )
         entity = cast("SampleEntity", entity_obj)
 
         data = entity.model_dump()
@@ -249,7 +251,8 @@ class TestFlextEntity:
         """Test entity validation with invalid data."""
         # Test validation error via factory directly
         factory = FlextEntityFactory.create_entity_factory(SampleEntity)
-        result = factory()  # Missing required 'name' field
+        factory_result = factory()  # Missing required 'name' field
+        result = cast("FlextResult[object]", factory_result)
         assert result.is_failure
 
 
@@ -461,18 +464,20 @@ class TestFlextAggregateRoot:
 
     def test_aggregate_root_with_custom_version(self) -> None:
         """Test aggregate root with custom version."""
-        aggregate = create_test_entity(
+        aggregate_obj = create_test_entity(
             SampleAggregateRoot,
             title="Test Aggregate",
             version=5,
         )
+        aggregate = cast("SampleAggregateRoot", aggregate_obj)
 
         if aggregate.version != 5:
             raise AssertionError(f"Expected {5}, got {aggregate.version}")
 
     def test_aggregate_root_raise_event(self) -> None:
         """Test raising domain events."""
-        aggregate = create_test_entity(SampleAggregateRoot, title="Test Aggregate")
+        aggregate_obj = create_test_entity(SampleAggregateRoot, title="Test Aggregate")
+        aggregate = cast("SampleAggregateRoot", aggregate_obj)
 
         # Initially no events
         if len(aggregate.get_domain_events()) != 0:
@@ -495,6 +500,7 @@ class TestFlextAggregateRoot:
                 f"Expected {aggregate.id}, got {event.get_metadata('aggregate_id')}"
             )
         assert event.get_metadata("event_type") == "test.created"
+        assert event.data is not None
         if event.data.get("action") != "created":
             raise AssertionError(
                 f"Expected {'created'}, got {event.data.get('action')}"
@@ -502,7 +508,8 @@ class TestFlextAggregateRoot:
 
     def test_aggregate_root_multiple_events(self) -> None:
         """Test raising multiple domain events."""
-        aggregate = create_test_entity(SampleAggregateRoot, title="Test Aggregate")
+        aggregate_obj = create_test_entity(SampleAggregateRoot, title="Test Aggregate")
+        aggregate = cast("SampleAggregateRoot", aggregate_obj)
 
         aggregate.perform_action("created")
         aggregate.perform_action("updated")
@@ -525,7 +532,8 @@ class TestFlextAggregateRoot:
 
     def test_aggregate_root_clear_events(self) -> None:
         """Test clearing pending events."""
-        aggregate = create_test_entity(SampleAggregateRoot, title="Test Aggregate")
+        aggregate_obj = create_test_entity(SampleAggregateRoot, title="Test Aggregate")
+        aggregate = cast("SampleAggregateRoot", aggregate_obj)
 
         # Raise some events
         aggregate.perform_action("created")
@@ -544,7 +552,8 @@ class TestFlextAggregateRoot:
 
     def test_aggregate_root_immutability(self) -> None:
         """Test that aggregate root is immutable."""
-        aggregate = create_test_entity(SampleAggregateRoot, title="Test Aggregate")
+        aggregate_obj = create_test_entity(SampleAggregateRoot, title="Test Aggregate")
+        aggregate = cast("SampleAggregateRoot", aggregate_obj)
 
         with pytest.raises((ValidationError, AttributeError, TypeError)):
             aggregate.title = "New Title"
@@ -554,7 +563,8 @@ class TestFlextAggregateRoot:
 
     def test_aggregate_root_inheritance_from_entity(self) -> None:
         """Test that aggregate root inherits entity behavior."""
-        aggregate = create_test_entity(SampleAggregateRoot, title="Test Aggregate")
+        aggregate_obj = create_test_entity(SampleAggregateRoot, title="Test Aggregate")
+        aggregate = cast("SampleAggregateRoot", aggregate_obj)
 
         # Should have entity properties
         assert hasattr(aggregate, "id")
@@ -570,11 +580,12 @@ class TestFlextAggregateRoot:
 
     def test_aggregate_root_model_dump(self) -> None:
         """Test aggregate root serialization."""
-        aggregate = create_test_entity(
+        aggregate_obj = create_test_entity(
             SampleAggregateRoot,
             title="Test Aggregate",
             description="Test description",
         )
+        aggregate = cast("SampleAggregateRoot", aggregate_obj)
 
         # Add some events
         aggregate.perform_action("created")
@@ -625,7 +636,8 @@ class TestFlextAggregateRoot:
 
     def test_add_domain_event_failure_handling(self) -> None:
         """Test add_domain_event when event creation fails."""
-        aggregate = create_test_entity(SampleAggregateRoot, title="Test Aggregate")
+        aggregate_obj = create_test_entity(SampleAggregateRoot, title="Test Aggregate")
+        aggregate = cast("SampleAggregateRoot", aggregate_obj)
 
         # Try to add event with invalid event_type (empty string should cause failure)
         result = aggregate.add_domain_event("", {"data": "test"})
@@ -636,7 +648,8 @@ class TestFlextAggregateRoot:
 
     def test_add_domain_event_exception_handling(self) -> None:
         """Test add_domain_event exception handling."""
-        aggregate = create_test_entity(SampleAggregateRoot, title="Test Aggregate")
+        aggregate_obj = create_test_entity(SampleAggregateRoot, title="Test Aggregate")
+        aggregate = cast("SampleAggregateRoot", aggregate_obj)
 
         # Mock a scenario that would cause an exception in add_domain_event
         # This is tricky since the method is robust, but we can potentially trigger it
@@ -647,11 +660,12 @@ class TestFlextAggregateRoot:
 
         # The method should handle this gracefully
         # Either outcome is acceptable
-        assert result.is_failure or result.is_success
+        assert result.is_failure or result.success
 
     def test_add_event_object_method(self) -> None:
         """Test add_event_object convenience method."""
-        aggregate = create_test_entity(SampleAggregateRoot, title="Test Aggregate")
+        aggregate_obj = create_test_entity(SampleAggregateRoot, title="Test Aggregate")
+        aggregate = cast("SampleAggregateRoot", aggregate_obj)
 
         # Create a test event
         event_result = FlextEvent.create_event(
@@ -660,7 +674,7 @@ class TestFlextAggregateRoot:
             aggregate_id=aggregate.id,
             version=aggregate.version,
         )
-        assert event_result.is_success
+        assert event_result.success
         event = event_result.unwrap()
 
         # Initially no events
@@ -681,7 +695,8 @@ class TestFlextAggregateRoot:
 
     def test_has_domain_events_method(self) -> None:
         """Test has_domain_events method."""
-        aggregate = create_test_entity(SampleAggregateRoot, title="Test Aggregate")
+        aggregate_obj = create_test_entity(SampleAggregateRoot, title="Test Aggregate")
+        aggregate = cast("SampleAggregateRoot", aggregate_obj)
 
         # Initially no events
         assert not aggregate.has_domain_events()
@@ -705,7 +720,8 @@ class TestEntitiesIntegration:
     def test_entity_value_object_composition(self) -> None:
         """Test composing entities with value objects."""
         # This would be a more complex test in a real scenario
-        entity = create_test_entity(SampleEntity, name="Test Entity")
+        entity_obj = create_test_entity(SampleEntity, name="Test Entity")
+        entity = cast("SampleEntity", entity_obj)
         value_obj = SampleValueObject(amount=100, currency="USD")
 
         # Test that both can be serialized together
@@ -724,7 +740,8 @@ class TestEntitiesIntegration:
     @pytest.mark.architecture
     def test_aggregate_event_sourcing_pattern(self) -> None:
         """Test basic event sourcing pattern."""
-        aggregate = create_test_entity(SampleAggregateRoot, title="Test Aggregate")
+        aggregate_obj = create_test_entity(SampleAggregateRoot, title="Test Aggregate")
+        aggregate = cast("SampleAggregateRoot", aggregate_obj)
 
         # Simulate business operations
         aggregate.perform_action("created")
@@ -744,6 +761,9 @@ class TestEntitiesIntegration:
             )
 
         # Events should contain full audit trail
+        assert events[0].data is not None
+        assert events[1].data is not None
+        assert events[2].data is not None
         if events[0].data.get("action") != "created":
             raise AssertionError(
                 f"Expected {'created'}, got {events[0].data.get('action')}"
@@ -767,7 +787,8 @@ class TestEntitiesIntegration:
         class SpecialEntity(SampleEntity):
             special_field: str = "special"
 
-        entity = create_test_entity(SpecialEntity, name="Special Entity")
+        entity_obj = create_test_entity(SpecialEntity, name="Special Entity")
+        entity = cast("SpecialEntity", entity_obj)
 
         # Should behave as both SpecialEntity and FlextEntity
         assert isinstance(entity, SpecialEntity)
@@ -787,9 +808,11 @@ class TestEntitiesIntegration:
     def test_entity_types_consistency(self, entity_class: type) -> None:
         """Test consistency across different entity types."""
         if entity_class is SampleEntity:
-            entity = create_test_entity(entity_class, name="Test")
+            entity_obj = create_test_entity(entity_class, name="Test")
+            entity = cast("SampleEntity", entity_obj)
         else:  # SampleAggregateRoot
-            entity = create_test_entity(entity_class, title="Test")
+            entity_obj = create_test_entity(entity_class, title="Test")
+            entity = cast("SampleAggregateRoot", entity_obj)
 
         # All entities should have these base properties
         assert hasattr(entity, "id")
@@ -797,7 +820,7 @@ class TestEntitiesIntegration:
 
         # All should be immutable
         with pytest.raises((ValidationError, AttributeError, TypeError)):
-            entity.id = "new-id"
+            entity.id = "new-id"  # type: ignore[misc]
 
         # All should be serializable
         data = entity.model_dump()

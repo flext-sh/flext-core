@@ -16,7 +16,7 @@ class TestFlextResult:
         """Test creating successful FlextResult."""
         result = FlextResult.ok("test data")
 
-        assert result.is_success
+        assert result.success
         assert not result.is_failure
         assert result.data == "test data", f"Expected {'test data'}, got {result.data}"
 
@@ -25,7 +25,7 @@ class TestFlextResult:
         result: FlextResult[str] = FlextResult.fail("error message")
 
         assert result.is_failure
-        assert not result.is_success
+        assert not result.success
         assert result.error == "error message", (
             f"Expected {'error message'}, got {result.error}"
         )
@@ -37,7 +37,7 @@ class TestFlextResult:
         """
         result = FlextResult.ok(None)
 
-        assert result.is_success
+        assert result.success
         assert result.data is None
 
     def test_equality(self) -> None:
@@ -102,7 +102,7 @@ class TestFlextResult:
         """Test mapping successful result."""
         result = FlextResult.ok("test")
         mapped = result.map(lambda x: x.upper())
-        assert mapped.is_success
+        assert mapped.success
         if mapped.data != "TEST":
             raise AssertionError(f"Expected {'TEST'}, got {mapped.data}")
 
@@ -129,7 +129,7 @@ class TestFlextResult:
         """Test flat_map with successful result."""
         result = FlextResult.ok("test")
         chained = result.flat_map(lambda x: FlextResult.ok(x.upper()))
-        assert chained.is_success
+        assert chained.success
         if chained.data != "TEST":
             raise AssertionError(f"Expected {'TEST'}, got {chained.data}")
 
@@ -169,7 +169,7 @@ class TestFlextResult:
     def test_factory_methods_ensure_consistency(self) -> None:
         """Test that factory methods create consistent results."""
         success = FlextResult.ok("data")
-        assert success.is_success
+        assert success.success
         assert success.error is None
         if success.data != "data":
             raise AssertionError(f"Expected {'data'}, got {success.data}")
@@ -205,7 +205,7 @@ class TestFlextResult:
         result = FlextResult.ok("test")
         with pytest.raises((AttributeError, ValidationError)):
             # Cannot set success directly on frozen model
-            result.is_success = False  # This should raise an exception
+            result.success = False  # This should raise an exception
 
     def test_type_generic_behavior(self) -> None:
         """Test generic type behavior with different data types."""
@@ -222,7 +222,7 @@ class TestFlextResult:
     def test_none_data_handling(self) -> None:
         """Test handling of None data values."""
         result = FlextResult.ok(None)
-        assert result.is_success
+        assert result.success
         assert result.data is None
         assert result.unwrap() is None
 
@@ -237,15 +237,15 @@ class TestFlextResult:
         # This creates a condition where len(values) < 2, covering line 72
         # by directly manipulating the validation info
         result = FlextResult.ok("test")
-        if not (result.is_success):
-            raise AssertionError(f"Expected True, got {result.is_success}")
+        if not result.success:
+            raise AssertionError(f"Expected True, got {result.success}")
 
     def test_map_with_none_data_on_success(self) -> None:
         """Test map behavior when success but data is None."""
         # This covers a specific branch in map method
         result: FlextResult[str] = FlextResult.ok(None)
         mapped = result.map(lambda x: x.upper() if x else "default")
-        assert mapped.is_success
+        assert mapped.success
         if mapped.data != "default":
             raise AssertionError(f"Expected {'default'}, got {mapped.data}")
 
@@ -314,13 +314,13 @@ class TestFlextResult:
         result = FlextResult.ok("test")
         # Test that the Callable type hint is working properly
         mapped = result.map(str.upper)
-        assert mapped.is_success
+        assert mapped.success
         if mapped.data != "TEST":
             raise AssertionError(f"Expected {'TEST'}, got {mapped.data}")
 
         # Test flat_map with callable
         chained = result.flat_map(lambda x: FlextResult.ok(x.lower()))
-        assert chained.is_success
+        assert chained.success
         if chained.data != "test":
             raise AssertionError(f"Expected {'test'}, got {chained.data}")
 
@@ -330,7 +330,7 @@ class TestFlextResult:
         # Try to trigger the validator with incomplete info
         # This should exercise the validator's early return paths
         result = FlextResult.ok("test")
-        assert result.is_success
+        assert result.success
 
         # Test the validator path with minimal field data
         result2: FlextResult[str] = FlextResult.fail("error")

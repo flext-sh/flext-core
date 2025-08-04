@@ -30,7 +30,7 @@ class _TestMessage:
 
 
 # Test classes for covering base handlers functionality
-class _BaseTestCommandHandler(_BaseCommandHandler):
+class _BaseTestCommandHandler(_BaseCommandHandler[object, object]):
     """Test command handler for covering base functionality."""
 
     def __init__(self) -> None:
@@ -43,7 +43,7 @@ class _BaseTestCommandHandler(_BaseCommandHandler):
         return FlextResult.ok(f"Handled: {command}")
 
 
-class _BaseTestEventHandler(_BaseEventHandler):
+class _BaseTestEventHandler(_BaseEventHandler[object]):
     """Test event handler for covering base functionality."""
 
     def __init__(self) -> None:
@@ -54,7 +54,7 @@ class _BaseTestEventHandler(_BaseEventHandler):
         # Event processing logic here
 
 
-class _BaseTestQueryHandler(_BaseQueryHandler):
+class _BaseTestQueryHandler(_BaseQueryHandler[object, object]):
     """Test query handler for covering base functionality."""
 
     def __init__(self) -> None:
@@ -136,7 +136,7 @@ class TestBaseHandler:
 
         result = handler.handle(message)
         assert isinstance(result, FlextResult)
-        assert result.is_success
+        assert result.success
         if result.data != message:
             raise AssertionError(f"Expected {message}, got {result.data}")
 
@@ -147,7 +147,7 @@ class TestBaseHandler:
         # Valid message
         message = _TestMessage("test")
         result = handler.validate_message(message)
-        assert result.is_success
+        assert result.success
         if result.data != message:
             raise AssertionError(f"Expected {message}, got {result.data}")
 
@@ -188,7 +188,7 @@ class TestBaseHandler:
         message = _TestMessage("hello")
 
         result = handler.process_message(message)
-        assert result.is_success
+        assert result.success
         if result.data != "Processed: hello":
             raise AssertionError(f"Expected {'Processed: hello'}, got {result.data}")
 
@@ -243,7 +243,7 @@ class TestBaseHandler:
         message = _TestMessage("test")
 
         result = handler.process(message)
-        assert result.is_success
+        assert result.success
 
         # Test with None
         result = handler.process(None)
@@ -283,9 +283,7 @@ class TestFlextHandlersCommandHandler:
 
     def test_command_handler_creation(self) -> None:
         """Test command handler creation."""
-        handler: FlextHandlers.CommandHandler[object, object] = (
-            FlextHandlers.CommandHandler("test_command_handler")
-        )
+        handler = FlextHandlers.CommandHandler("test_command_handler")
 
         if handler._handler_name != "test_command_handler":
             raise AssertionError(
@@ -294,40 +292,32 @@ class TestFlextHandlersCommandHandler:
 
     def test_command_handler_default_name(self) -> None:
         """Test command handler with default name - SOLID refactored version."""
-        handler: FlextHandlers.CommandHandler[object, object] = (
-            FlextHandlers.CommandHandler()
-        )
+        handler = FlextHandlers.CommandHandler()
 
         # After SOLID refactoring, default name is the class name
         assert handler._handler_name == "CommandHandler"
 
     def test_command_handler_validate_command(self) -> None:
         """Test command validation."""
-        handler: FlextHandlers.CommandHandler[object, object] = (
-            FlextHandlers.CommandHandler()
-        )
+        handler = FlextHandlers.CommandHandler()
         command = _TestCommand("create_user")
 
         result = handler.validate_command(command)
-        assert result.is_success
+        assert result.success
 
     def test_command_handler_handle_default(self) -> None:
         """Test default command handling."""
-        handler: FlextHandlers.CommandHandler[object, object] = (
-            FlextHandlers.CommandHandler()
-        )
+        handler = FlextHandlers.CommandHandler()
         command = _TestCommand("test_action")
 
         result = handler.handle(command)
-        assert result.is_success
+        assert result.success
         if result.data != command:
             raise AssertionError(f"Expected {command}, got {result.data}")
 
     def test_command_handler_can_handle(self) -> None:
         """Test command handler can_handle."""
-        handler: FlextHandlers.CommandHandler[object, object] = (
-            FlextHandlers.CommandHandler()
-        )
+        handler = FlextHandlers.CommandHandler()
 
         if not (handler.can_handle(_TestCommand("test"))):
             raise AssertionError(
@@ -340,13 +330,11 @@ class TestFlextHandlersCommandHandler:
 
     def test_command_handler_pre_handle(self) -> None:
         """Test command pre-processing."""
-        handler: FlextHandlers.CommandHandler[object, object] = (
-            FlextHandlers.CommandHandler()
-        )
+        handler = FlextHandlers.CommandHandler()
         command = _TestCommand("test")
 
         result = handler.pre_handle(command)
-        assert result.is_success
+        assert result.success
         if result.data != command:
             raise AssertionError(f"Expected {command}, got {result.data}")
 
@@ -368,13 +356,11 @@ class TestFlextHandlersCommandHandler:
 
     def test_command_handler_post_handle(self) -> None:
         """Test command post-processing."""
-        handler: FlextHandlers.CommandHandler[object, object] = (
-            FlextHandlers.CommandHandler()
-        )
-        result = FlextResult.ok("test result")
+        handler = FlextHandlers.CommandHandler()
+        result: FlextResult[object] = FlextResult.ok("test result")
 
         post_result = handler.post_handle(result)
-        assert post_result.is_success
+        assert post_result.success
         if post_result.data != "test result":
             raise AssertionError(f"Expected {'test result'}, got {post_result.data}")
 
@@ -391,7 +377,7 @@ class TestFlextHandlersCommandHandler:
         command = _TestCommand("create_user")
 
         result = handler.handle_with_hooks(command)
-        assert result.is_success
+        assert result.success
         if result.data != "Handled: create_user":
             raise AssertionError(
                 f"Expected {'Handled: create_user'}, got {result.data}"
@@ -415,9 +401,7 @@ class TestFlextHandlersCommandHandler:
 
     def test_command_handler_get_metrics(self) -> None:
         """Test command handler metrics."""
-        handler: FlextHandlers.CommandHandler[object, object] = (
-            FlextHandlers.CommandHandler("test_handler")
-        )
+        handler = FlextHandlers.CommandHandler("test_handler")
         metrics = handler.get_metrics()
 
         assert isinstance(metrics, dict)
@@ -429,9 +413,7 @@ class TestFlextHandlersCommandHandler:
 
     def test_command_handler_logger_access(self) -> None:
         """Test command handler logger access."""
-        handler: FlextHandlers.CommandHandler[object, object] = (
-            FlextHandlers.CommandHandler()
-        )
+        handler = FlextHandlers.CommandHandler()
         logger = handler.logger
 
         # Logger might be None in the current implementation
@@ -444,7 +426,7 @@ class TestFlextHandlersEventHandler:
     def test_event_handler_creation(self) -> None:
         """Test event handler creation."""
 
-        class TestEventHandlerImpl(FlextHandlers.EventHandler):
+        class TestEventHandlerImpl(FlextHandlers.EventHandler[object]):
             def process_event_impl(self, event: object) -> None:
                 pass
 
@@ -457,7 +439,7 @@ class TestFlextHandlersEventHandler:
     def test_event_handler_handle(self) -> None:
         """Test event handling."""
 
-        class _TestEventHandler(FlextHandlers.EventHandler):
+        class _TestEventHandler(FlextHandlers.EventHandler[object]):
             def process_event_impl(self, event: object) -> None:
                 pass
 
@@ -465,13 +447,13 @@ class TestFlextHandlersEventHandler:
         event = _TestEvent("user_created")
 
         result = handler.handle(event)
-        assert result.is_success
+        assert result.success
         assert result.data is None
 
     def test_event_handler_process_event(self) -> None:
         """Test event processing."""
 
-        class _TestEventHandler(FlextHandlers.EventHandler):
+        class _TestEventHandler(FlextHandlers.EventHandler[object]):
             def process_event_impl(self, event: object) -> None:
                 pass
 
@@ -479,12 +461,12 @@ class TestFlextHandlersEventHandler:
         event = _TestEvent("user_updated")
 
         result = handler.process_event(event)
-        assert result.is_success
+        assert result.success
 
     def test_event_handler_process_event_validation_failure(self) -> None:
         """Test event processing with validation failure."""
 
-        class _TestEventHandler(FlextHandlers.EventHandler):
+        class _TestEventHandler(FlextHandlers.EventHandler[object]):
             def process_event_impl(self, event: object) -> None:
                 pass
 
@@ -499,7 +481,7 @@ class TestFlextHandlersEventHandler:
     def test_event_handler_process_event_cannot_handle(self) -> None:
         """Test event processing when handler cannot handle."""
 
-        class SelectiveEventHandler(FlextHandlers.EventHandler):
+        class SelectiveEventHandler(FlextHandlers.EventHandler[object]):
             def can_handle(self, message: object) -> bool:
                 return isinstance(message, _TestEvent)
 
@@ -519,7 +501,7 @@ class TestFlextHandlersEventHandler:
     def test_event_handler_process_event_exception(self) -> None:
         """Test event processing with exception."""
 
-        class FailingEventHandler(FlextHandlers.EventHandler):
+        class FailingEventHandler(FlextHandlers.EventHandler[object]):
             def handle_event(self, event: object) -> FlextResult[None]:
                 msg = "Event processing failed"
                 raise RuntimeError(msg)
@@ -541,7 +523,7 @@ class TestFlextHandlersEventHandler:
     def test_event_handler_handle_event(self) -> None:
         """Test event handler handle_event method."""
 
-        class _TestEventHandler(FlextHandlers.EventHandler):
+        class _TestEventHandler(FlextHandlers.EventHandler[object]):
             def handle(self, event: object) -> FlextResult[object]:
                 return FlextResult.ok(f"Processed {event}")
 
@@ -552,12 +534,12 @@ class TestFlextHandlersEventHandler:
         event = _TestEvent("test")
 
         result = handler.handle_event(event)
-        assert result.is_success
+        assert result.success
 
     def test_event_handler_handle_event_failure(self) -> None:
         """Test event handler handle_event with failure."""
 
-        class FailingEventHandler(FlextHandlers.EventHandler):
+        class FailingEventHandler(FlextHandlers.EventHandler[object]):
             def handle(self, event: object) -> FlextResult[object]:
                 return FlextResult.fail("Handle failed")
 
@@ -579,14 +561,16 @@ class TestFlextHandlersEventHandler:
         # The abstract method is enforced by the abstractmethod decorator
         try:
             # Create instance - this might work
-            handler: object = FlextHandlers.EventHandler("test")
+            handler: FlextHandlers.EventHandler[object] = FlextHandlers.EventHandler(
+                "test"
+            )
 
             # But calling the abstract method should raise NotImplementedError
             # Since the method is decorated with @abstractmethod,
             # it might be an empty method
             # or it may not have an implementation, so let's test it
             try:
-                handler.process_event_impl("test")
+                getattr(handler, "process_event_impl", lambda x: None)("test")
                 # If we get here without exception, the method exists but may be empty
                 assert True  # Test passes - the method exists
             except NotImplementedError:
@@ -602,7 +586,9 @@ class TestFlextHandlersQueryHandler:
 
     def test_query_handler_creation(self) -> None:
         """Test query handler creation."""
-        handler: object = FlextHandlers.QueryHandler("test_query_handler")
+        handler: FlextHandlers.QueryHandler[object, object] = (
+            FlextHandlers.QueryHandler("test_query_handler")
+        )
 
         if handler.handler_name != "test_query_handler":
             raise AssertionError(
@@ -611,26 +597,30 @@ class TestFlextHandlersQueryHandler:
 
     def test_query_handler_authorize_query(self) -> None:
         """Test query authorization."""
-        handler: object = FlextHandlers.QueryHandler()
+        handler: FlextHandlers.QueryHandler[object, object] = (
+            FlextHandlers.QueryHandler()
+        )
         query = _TestQuery("get_users")
 
         result = handler.authorize_query(query)
-        assert result.is_success
+        assert result.success
 
     def test_query_handler_pre_handle_with_authorization(self) -> None:
         """Test query pre-handling with authorization."""
-        handler: object = FlextHandlers.QueryHandler()
+        handler: FlextHandlers.QueryHandler[object, object] = (
+            FlextHandlers.QueryHandler()
+        )
         query = _TestQuery("get_data")
 
         result = handler.pre_handle(query)
-        assert result.is_success
+        assert result.success
         if result.data != query:
             raise AssertionError(f"Expected {query}, got {result.data}")
 
     def test_query_handler_pre_handle_authorization_failure(self) -> None:
         """Test query pre-handling with authorization failure."""
 
-        class AuthorizingQueryHandler(FlextHandlers.QueryHandler):
+        class AuthorizingQueryHandler(FlextHandlers.QueryHandler[object, object]):
             def authorize_query(self, query: object) -> FlextResult[None]:
                 return FlextResult.fail("Access denied")
 
@@ -645,15 +635,19 @@ class TestFlextHandlersQueryHandler:
 
     def test_query_handler_process_request(self) -> None:
         """Test request processing."""
-        handler: object = FlextHandlers.QueryHandler()
+        handler: FlextHandlers.QueryHandler[object, object] = (
+            FlextHandlers.QueryHandler()
+        )
         request = _TestQuery("search")
 
         result = handler.process_request(request)
-        assert result.is_success
+        assert result.success
 
     def test_query_handler_process_request_validation_failure(self) -> None:
         """Test request processing with validation failure."""
-        handler: object = FlextHandlers.QueryHandler()
+        handler: FlextHandlers.QueryHandler[object, object] = (
+            FlextHandlers.QueryHandler()
+        )
 
         result = handler.process_request(None)
         assert result.is_failure
@@ -664,7 +658,7 @@ class TestFlextHandlersQueryHandler:
     def test_query_handler_process_request_cannot_handle(self) -> None:
         """Test request processing when handler cannot handle."""
 
-        class SelectiveQueryHandler(FlextHandlers.QueryHandler):
+        class SelectiveQueryHandler(FlextHandlers.QueryHandler[object, object]):
             def can_handle(self, message: object) -> bool:
                 return isinstance(message, _TestQuery)
 
@@ -681,7 +675,7 @@ class TestFlextHandlersQueryHandler:
     def test_query_handler_process_request_exception(self) -> None:
         """Test request processing with exception."""
 
-        class FailingQueryHandler(FlextHandlers.QueryHandler):
+        class FailingQueryHandler(FlextHandlers.QueryHandler[object, object]):
             def handle_request(self, request: object) -> FlextResult[object]:
                 msg = "Request processing failed"
                 raise RuntimeError(msg)
@@ -700,7 +694,7 @@ class TestFlextHandlersQueryHandler:
     def test_query_handler_handle_request(self) -> None:
         """Test query handler handle_request method."""
 
-        class _TestQueryHandler(FlextHandlers.QueryHandler):
+        class _TestQueryHandler(FlextHandlers.QueryHandler[object, object]):
             def handle(self, request: object) -> FlextResult[object]:
                 if isinstance(request, _TestQuery):
                     return FlextResult.ok(f"Query result for {request.query_type}")
@@ -710,7 +704,7 @@ class TestFlextHandlersQueryHandler:
         query = _TestQuery("get_users")
 
         result = handler.handle_request(query)
-        assert result.is_success
+        assert result.success
         if result.data != "Query result for get_users":
             raise AssertionError(
                 f"Expected {'Query result for get_users'}, got {result.data}"
@@ -738,7 +732,7 @@ class TestHandlerRegistry:
         )
 
         result = registry.register(handler)
-        assert result.is_success
+        assert result.success
         if len(registry._handlers) != 1:
             raise AssertionError(f"Expected {1}, got {len(registry._handlers)}")
         assert len(registry._handler_list) == 1
@@ -751,7 +745,7 @@ class TestHandlerRegistry:
         )
 
         result = registry.register("custom_key", handler)
-        assert result.is_success
+        assert result.success
         if "custom_key" not in registry._handlers:
             raise AssertionError(f"Expected {'custom_key'} in {registry._handlers}")
         if len(registry._handler_list) != 1:
@@ -773,16 +767,21 @@ class TestHandlerRegistry:
     def test_registry_register_duplicate_key(self) -> None:
         """Test registering handler with duplicate key."""
         registry = FlextHandlers.Registry()
-        handler1: object = FlextHandlers.Handler("handler1")
-        handler2: object = FlextHandlers.Handler("handler2")
+        handler1: FlextHandlers.Handler[object, object] = FlextHandlers.Handler(
+            "handler1"
+        )
+        handler2: FlextHandlers.Handler[object, object] = FlextHandlers.Handler(
+            "handler2"
+        )
 
         # Register first handler
         result1 = registry.register("duplicate_key", handler1)
-        assert result1.is_success
+        assert result1.success
 
         # Try to register second handler with same key
         result2 = registry.register("duplicate_key", handler2)
         assert result2.is_failure
+        assert result2.error is not None
         if "already registered" not in result2.error:
             raise AssertionError(f"Expected {'already registered'} in {result2.error}")
 
@@ -794,7 +793,7 @@ class TestHandlerRegistry:
         )
 
         result = registry.register_for_type(_TestMessage, handler)
-        assert result.is_success
+        assert result.success
         if _TestMessage not in registry._type_handlers:
             raise AssertionError(
                 f"Expected {_TestMessage} in {registry._type_handlers}"
@@ -803,16 +802,21 @@ class TestHandlerRegistry:
     def test_registry_register_for_type_duplicate(self) -> None:
         """Test registering handler for type with duplicate."""
         registry = FlextHandlers.Registry()
-        handler1: object = FlextHandlers.Handler("handler1")
-        handler2: object = FlextHandlers.Handler("handler2")
+        handler1: FlextHandlers.Handler[object, object] = FlextHandlers.Handler(
+            "handler1"
+        )
+        handler2: FlextHandlers.Handler[object, object] = FlextHandlers.Handler(
+            "handler2"
+        )
 
         # Register first handler
         result1 = registry.register_for_type(_TestMessage, handler1)
-        assert result1.is_success
+        assert result1.success
 
         # Try to register second handler for same type
         result2 = registry.register_for_type(_TestMessage, handler2)
         assert result2.is_failure
+        assert result2.error is not None
         if "already registered" not in result2.error:
             raise AssertionError(f"Expected {'already registered'} in {result2.error}")
 
@@ -828,7 +832,7 @@ class TestHandlerRegistry:
 
         # Get handler
         result = registry.get_handler("test_key")
-        assert result.is_success
+        assert result.success
         if result.data != handler:
             raise AssertionError(f"Expected {handler}, got {result.data}")
 
@@ -854,7 +858,7 @@ class TestHandlerRegistry:
 
         # Get handler for type
         result = registry.get_handler_for_type(_TestMessage)
-        assert result.is_success
+        assert result.success
         if result.data != handler:
             raise AssertionError(f"Expected {handler}, got {result.data}")
 
@@ -871,8 +875,12 @@ class TestHandlerRegistry:
     def test_registry_get_all_handlers(self) -> None:
         """Test getting all registered handlers."""
         registry = FlextHandlers.Registry()
-        handler1: object = FlextHandlers.Handler("handler1")
-        handler2: object = FlextHandlers.Handler("handler2")
+        handler1: FlextHandlers.Handler[object, object] = FlextHandlers.Handler(
+            "handler1"
+        )
+        handler2: FlextHandlers.Handler[object, object] = FlextHandlers.Handler(
+            "handler2"
+        )
 
         registry.register(handler1)
         registry.register(handler2)
@@ -996,7 +1004,7 @@ class TestHandlerChain:
         message = _TestMessage("test message")
         result = chain.process(message)
 
-        assert result.is_success
+        assert result.success
         if result.data != "Processed: test message":
             raise AssertionError(
                 f"Expected {'Processed: test message'}, got {result.data}"
@@ -1056,7 +1064,7 @@ class TestHandlerChain:
         # Should get results from Handler1 and Handler2, not Handler3
         if len(results) != EXPECTED_BULK_SIZE:
             raise AssertionError(f"Expected {2}, got {len(results)}")
-        if not all(result.is_success for result in results):
+        if not all(result.success for result in results):
             raise AssertionError(
                 f"Expected all results to be successful, got {results}"
             )
@@ -1092,14 +1100,16 @@ class TestFactoryMethods:
                 return FlextResult.ok(f"Function processed: {message.content}")
             return FlextResult.ok("Function processed unknown message")
 
-        handler: object = FlextHandlers.flext_create_function_handler(test_function)
+        handler: FlextHandlers.Handler[object, object] = (
+            FlextHandlers.flext_create_function_handler(test_function)
+        )
 
         assert isinstance(handler, FlextHandlers.Handler)
 
         message = _TestMessage("test")
         result = handler.handle(message)
 
-        assert result.is_success
+        assert result.success
         if result.data != "Function processed: test":
             raise AssertionError(
                 f"Expected {'Function processed: test'}, got {result.data}"
@@ -1111,11 +1121,13 @@ class TestFactoryMethods:
         def simple_function(message: object) -> str:
             return "simple result"
 
-        handler: object = FlextHandlers.flext_create_function_handler(simple_function)
+        handler: FlextHandlers.Handler[object, object] = (
+            FlextHandlers.flext_create_function_handler(simple_function)
+        )
         message = _TestMessage("test")
 
         result = handler.handle(message)
-        assert result.is_success
+        assert result.success
         if result.data != "simple result":
             raise AssertionError(f"Expected {'simple result'}, got {result.data}")
 
@@ -1174,7 +1186,7 @@ class TestHandlerEdgeCases:
         result = registry.register(mock_handler)
 
         # Should still register successfully using class name
-        assert result.is_success
+        assert result.success
 
     def test_chain_with_mixed_handler_types(self) -> None:
         """Test chain with different handler types."""
@@ -1187,7 +1199,7 @@ class TestHandlerEdgeCases:
         FlextHandlers.CommandHandler("command")
 
         # Note: We need to create a concrete EventHandler
-        class ConcreteEventHandler(FlextHandlers.EventHandler):
+        class ConcreteEventHandler(FlextHandlers.EventHandler[object]):
             def process_event_impl(self, event: object) -> None:
                 pass
 
@@ -1201,7 +1213,7 @@ class TestHandlerEdgeCases:
         result = chain.process(message)
 
         # Should work with base handler
-        assert result.is_success
+        assert result.success
 
     def test_handler_inheritance_behavior(self) -> None:
         """Test handler inheritance behavior."""
@@ -1227,7 +1239,7 @@ class TestHandlerEdgeCases:
         message = _TestMessage("test")
         result = handler.handle(message)
 
-        assert result.is_success
+        assert result.success
         if result.data != "Custom: test":
             raise AssertionError(f"Expected {'Custom: test'}, got {result.data}")
 
@@ -1272,7 +1284,7 @@ class TestHandlerEdgeCases:
             results.append(result)
 
         # All should succeed
-        if not all(result.is_success for result in results):
+        if not all(result.success for result in results):
             raise AssertionError(
                 f"Expected all results to be successful, got {results}"
             )
@@ -1287,7 +1299,7 @@ class TestBaseHandlerClasses:
         """Test that base handler is abstract and cannot be instantiated."""
         # _BaseHandler is abstract and should not be instantiated directly
         try:
-            _BaseHandler()
+            _BaseHandler()  # type: ignore[abstract]
             # If we get here, the handler was instantiated (shouldn't happen)
             msg = "Abstract handler should not be instantiable"
             raise AssertionError(msg)
@@ -1319,19 +1331,19 @@ class TestBaseHandlerClasses:
         # Test command handler
         cmd_handler = TestCommandHandler()
         cmd_result = cmd_handler.handle("test_command")
-        assert cmd_result.is_success
+        assert cmd_result.success
         assert cmd_result.data == "Handled command: test_command"
 
         # Test event handler
         event_handler = TestEventHandler()
         event_result = event_handler.handle("test_event")
-        assert event_result.is_success
+        assert event_result.success
         assert event_result.data is None
 
         # Test query handler
         query_handler = TestQueryHandler()
         query_result = query_handler.handle("test_query")
-        assert query_result.is_success
+        assert query_result.success
         assert query_result.data == "Query result: test_query"
 
     def test_handler_timing_mixin(self) -> None:
@@ -1346,7 +1358,8 @@ class TestBaseHandlerClasses:
         # The handler should have timing capabilities from the mixin
         # Test that we can call handle and get timing information
         result = handler.handle("timing_test")
-        assert result.is_success
+        assert result.success
+        assert result.data is not None
         assert "Timed: timing_test" in result.data
 
 
@@ -1389,7 +1402,7 @@ class TestHandlerBaseCoverage:
                 # Verify our test setup is correct
                 assert failed_result.is_failure
                 assert hasattr(failed_result, "is_failure")
-                return failed_result
+                return FlextResult.fail(failed_result.error or "Validation failed")
 
         invalid_msg = InvalidMessage()
         result = handler.pre_handle(invalid_msg)
@@ -1413,7 +1426,7 @@ class TestHandlerBaseCoverage:
         handler = FailureHandler("failure_handler")
 
         # Test post_handle with failure result
-        failure_result: FlextResult[object] = FlextResult.fail("Test failure")
+        failure_result: FlextResult[str] = FlextResult.fail("Test failure")
         processed_result = handler.post_handle(failure_result)
 
         assert processed_result.is_failure
@@ -1471,7 +1484,7 @@ class TestBaseHandlersCoverage:
 
         # Default validate_command should return success
         result = handler.validate_command("test_command")
-        assert result.is_success
+        assert result.success
 
     def test_base_command_handler_handle_default(self) -> None:
         """Test default handle method (line 376)."""
@@ -1479,12 +1492,13 @@ class TestBaseHandlersCoverage:
 
         # Test successful handling
         result = handler.handle({"test": "command"})
-        assert result.is_success
+        assert result.success
         assert "Handled:" in str(result.data)
 
         # Test failure path
         result = handler.handle({"should_fail": True})
         assert result.is_failure
+        assert result.error is not None
         assert "Test command failed" in result.error
 
     def test_base_command_handler_can_handle_default(self) -> None:
@@ -1493,7 +1507,7 @@ class TestBaseHandlersCoverage:
 
         # Test pre_handle method that uses validate_command
         result = handler.pre_handle("any_command")
-        assert result.is_success
+        assert result.success
         assert result.data == "any_command"
 
     def test_base_event_handler_functionality(self) -> None:
@@ -1502,7 +1516,7 @@ class TestBaseHandlersCoverage:
 
         # Test handle method (event handlers return None)
         result = handler.handle({"event": "test"})
-        assert result.is_success
+        assert result.success
         assert result.data is None  # Events return None
 
     def test_base_query_handler_functionality(self) -> None:
@@ -1511,16 +1525,16 @@ class TestBaseHandlersCoverage:
 
         # Test authorize_query method
         result = handler.authorize_query({"query": "data"})
-        assert result.is_success
+        assert result.success
 
         # Test handle method
-        result = handler.handle({"query": "search"})
-        assert result.is_success
-        assert "Query result:" in str(result.data)
+        handle_result: FlextResult[object] = handler.handle({"query": "search"})
+        assert handle_result.success
+        assert "Query result:" in str(handle_result.data)
 
         # Test pre_handle method
-        result = handler.pre_handle({"query": "test"})
-        assert result.is_success
+        result2: FlextResult[object] = handler.pre_handle({"query": "test"})
+        assert result2.success
 
     def test_command_handler_validate_command_override(self) -> None:
         """Test command handler validate_command method override (lines 255-256)."""
@@ -1544,7 +1558,7 @@ class TestBaseHandlersCoverage:
 
         # Test with valid command
         result = handler.pre_handle("hello")
-        assert result.is_success
+        assert result.success
         if result.data != "hello":
             raise AssertionError(f"Expected 'hello', got {result.data}")
 
@@ -1581,7 +1595,7 @@ class TestBaseHandlersCoverage:
         handler = ProcessingEventHandler("processing_event_handler")
 
         result = handler.handle("test_event")
-        assert result.is_success
+        assert result.success
         assert result.data is None
         if "test_event" not in handler.processed_events:
             raise AssertionError(f"Expected 'test_event' in {handler.processed_events}")
@@ -1608,7 +1622,7 @@ class TestBaseHandlersCoverage:
 
         # Test authorized query
         result = handler.pre_handle("public_data")
-        assert result.is_success
+        assert result.success
         if result.data != "public_data":
             raise AssertionError(f"Expected 'public_data', got {result.data}")
 

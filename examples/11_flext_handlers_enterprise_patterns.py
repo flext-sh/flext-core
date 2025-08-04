@@ -570,8 +570,9 @@ def demonstrate_command_handlers() -> None:
     )
 
     result = create_handler.handle(valid_command)
-    if result.is_success:
+    if result.success:
         user = result.data
+        assert user is not None
         print(f"✅ User created: {user.name} ({user.email}) - ID: {user.id}")
     else:
         print(f"❌ User creation failed: {result.error}")
@@ -583,8 +584,9 @@ def demonstrate_command_handlers() -> None:
     )
 
     result = create_handler.handle(duplicate_command)
-    if result.is_success:
+    if result.success:
         user = result.data
+        assert user is not None
         print(f"✅ User created: {user.name} ({user.email})")
     else:
         print(f"❌ Duplicate email prevented: {result.error}")
@@ -603,8 +605,9 @@ def demonstrate_command_handlers() -> None:
     )
 
     result = update_handler.handle(update_command)
-    if result.is_success:
+    if result.success:
         updated_user = result.data
+        assert updated_user is not None
         print(f"✅ User updated: {updated_user.name} ({updated_user.email})")
     else:
         print(f"❌ User update failed: {result.error}")
@@ -649,8 +652,9 @@ def demonstrate_query_handlers() -> None:  # noqa: PLR0915
     query = GetUserQuery(user_id="user_1", include_inactive=False)
     result = get_handler.handle(query)
 
-    if result.is_success:
+    if result.success:
         user = result.data
+        assert user is not None
         print(f"✅ User found: {user.name} ({user.email}) - Active: {user.is_active}")
     else:
         print(f"❌ User query failed: {result.error}")
@@ -659,8 +663,9 @@ def demonstrate_query_handlers() -> None:  # noqa: PLR0915
     inactive_query = GetUserQuery(user_id="user_3", include_inactive=False)
     result = get_handler.handle(inactive_query)
 
-    if result.is_success:
+    if result.success:
         user = result.data
+        assert user is not None
         print(f"✅ Inactive user found: {user.name}")
     else:
         print(f"❌ Inactive user query failed (expected): {result.error}")
@@ -669,8 +674,9 @@ def demonstrate_query_handlers() -> None:  # noqa: PLR0915
     inactive_query_allowed = GetUserQuery(user_id="user_3", include_inactive=True)
     result = get_handler.handle(inactive_query_allowed)
 
-    if result.is_success:
+    if result.success:
         user = result.data
+        assert user is not None
         print(f"✅ Inactive user found with permission: {user.name}")
     else:
         print(f"❌ Inactive user query failed: {result.error}")
@@ -683,8 +689,9 @@ def demonstrate_query_handlers() -> None:  # noqa: PLR0915
     list_query = ListUsersQuery(active_only=True, limit=5, offset=0)
     result = list_handler.handle(list_query)
 
-    if result.is_success:
+    if result.success:
         users = result.data
+        assert users is not None
         print(f"✅ Active users found: {len(users)}")
         for user in users:
             print(f"   - {user.name} ({user.email})")
@@ -695,8 +702,9 @@ def demonstrate_query_handlers() -> None:  # noqa: PLR0915
     all_query = ListUsersQuery(active_only=False, limit=10, offset=0)
     result = list_handler.handle(all_query)
 
-    if result.is_success:
+    if result.success:
         users = result.data
+        assert users is not None
         print(f"✅ All users found: {len(users)}")
         for user in users:
             status = "Active" if user.is_active else "Inactive"
@@ -736,7 +744,7 @@ def demonstrate_event_handlers() -> None:
     )
 
     result = user_created_handler.handle(user_created_event)
-    if result.is_success:
+    if result.success:
         print("✅ User created event processed successfully")
     else:
         print(f"❌ User created event failed: {result.error}")
@@ -752,7 +760,7 @@ def demonstrate_event_handlers() -> None:
     )
 
     result = user_updated_handler.handle(user_updated_event)
-    if result.is_success:
+    if result.success:
         print("✅ User updated event processed successfully")
     else:
         print(f"❌ User updated event failed: {result.error}")
@@ -769,7 +777,7 @@ def demonstrate_event_handlers() -> None:
     )
 
     result = order_created_handler.handle(order_created_event)
-    if result.is_success:
+    if result.success:
         print("✅ Order created event processed successfully")
     else:
         print(f"❌ Order created event failed: {result.error}")
@@ -826,7 +834,7 @@ def demonstrate_handler_registry() -> None:  # noqa: PLR0915
     print("\n2. Retrieving handlers by string key:")
 
     result = registry.get_handler("create_user")
-    if result.is_success:
+    if result.success:
         handler = result.data
         print(f"✅ Found handler: {handler.__class__.__name__}")
     else:
@@ -834,7 +842,7 @@ def demonstrate_handler_registry() -> None:  # noqa: PLR0915
 
     # Try to get non-existent handler
     result = registry.get_handler("non_existent")
-    if result.is_success:
+    if result.success:
         handler = result.data
         print(f"✅ Found handler: {handler}")
     else:
@@ -844,14 +852,14 @@ def demonstrate_handler_registry() -> None:  # noqa: PLR0915
     print("\n3. Retrieving handlers by message type:")
 
     result = registry.get_handler_for_type(CreateUserCommand)
-    if result.is_success:
+    if result.success:
         handler = result.data
         print(f"✅ Found handler for CreateUserCommand: {handler.__class__.__name__}")
     else:
         print(f"❌ Handler not found: {result.error}")
 
     result = registry.get_handler_for_type(GetUserQuery)
-    if result.is_success:
+    if result.success:
         handler = result.data
         print(f"✅ Found handler for GetUserQuery: {handler.__class__.__name__}")
     else:
@@ -864,11 +872,13 @@ def demonstrate_handler_registry() -> None:  # noqa: PLR0915
     command = CreateUserCommand(name="Registry User", email="registry@example.com")
     handler_result = registry.get_handler_for_type(CreateUserCommand)
 
-    if handler_result.is_success:
+    if handler_result.success:
         handler = handler_result.data
+        assert handler is not None
         result = handler.handle(command)
-        if result.is_success:
+        if result.success:
             user = result.data
+            assert user is not None
             print(f"✅ Command processed via registry: {user.name}")
         else:
             print(f"❌ Command processing failed: {result.error}")
@@ -900,7 +910,7 @@ def _create_handler_chain() -> tuple[FlextHandlers.Chain, dict[str, User], str |
     result = chain.process(create_command)
 
     user_id = None
-    if result.is_success:
+    if result.success:
         user = result.data
         if user is not None and hasattr(user, "name"):
             print(f"✅ Create command handled by chain: {user.name}")
@@ -922,7 +932,7 @@ def _process_get_query(chain: FlextHandlers.Chain, user_id: str | None) -> None:
     get_query = GetUserQuery(user_id=user_id)
     result = chain.process(get_query)
 
-    if result.is_success:
+    if result.success:
         user = result.data
         if hasattr(user, "name"):
             print(f"✅ Get query handled by chain: {user.name}")
@@ -943,7 +953,7 @@ def _process_update_command(chain: FlextHandlers.Chain, user_id: str | None) -> 
     )
     result = chain.process(update_command)
 
-    if result.is_success:
+    if result.success:
         user = result.data
         print(f"✅ Update command handled by chain: {user.name}")
     else:
@@ -963,7 +973,7 @@ def _process_event_through_all_handlers(chain: FlextHandlers.Chain) -> None:
     print(f"📊 Event processed by {len(results)} handlers")
 
     for i, result in enumerate(results, 1):
-        if result.is_success:
+        if result.success:
             print(f"   ✅ Handler {i}: Success")
         else:
             print(f"   ❌ Handler {i}: {result.error}")
@@ -1024,7 +1034,7 @@ def demonstrate_function_handlers() -> None:  # noqa: PLR0912, PLR0915
     # Test message handler - use handle() directly to avoid type checking
     try:
         result = message_handler.handle("hello world")
-        if result.is_success:
+        if result.success:
             print(f"✅ Message handler result: {result.data}")
         else:
             print(f"❌ Message handler failed: {result.error}")
@@ -1034,7 +1044,7 @@ def demonstrate_function_handlers() -> None:  # noqa: PLR0912, PLR0915
     # Test with empty message
     try:
         result = message_handler.handle("")
-        if result.is_success:
+        if result.success:
             print(f"✅ Empty message result: {result.data}")
         else:
             print(f"❌ Empty message failed (expected): {result.error}")
@@ -1044,7 +1054,7 @@ def demonstrate_function_handlers() -> None:  # noqa: PLR0912, PLR0915
     # Test number handler
     try:
         result = number_handler.handle(42)
-        if result.is_success:
+        if result.success:
             print(f"✅ Number handler result: {result.data}")
         else:
             print(f"❌ Number handler failed: {result.error}")
@@ -1054,7 +1064,7 @@ def demonstrate_function_handlers() -> None:  # noqa: PLR0912, PLR0915
     # Test with negative number
     try:
         result = number_handler.handle(-5)
-        if result.is_success:
+        if result.success:
             print(f"✅ Negative number result: {result.data}")
         else:
             print(f"❌ Negative number failed (expected): {result.error}")
@@ -1102,7 +1112,7 @@ def demonstrate_function_handlers() -> None:  # noqa: PLR0912, PLR0915
 
     try:
         result = order_handler.handle(order_data)
-        if result.is_success:
+        if result.success:
             order_result = result.data
             print(f"✅ Order processed: {order_result}")
         else:

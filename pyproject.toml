@@ -229,6 +229,7 @@ asyncio_mode = "auto"
 filterwarnings = ["error", "ignore::DeprecationWarning", "ignore::UserWarning"]
 markers = [
     "cleanup: Cleanup tests",
+    "coverage: Coverage improvement tests",
     "dbt: dbt transformation tests",
     "destructive: Tests that may modify external systems",
     "e2e: End-to-end tests",

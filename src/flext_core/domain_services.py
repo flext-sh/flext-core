@@ -81,22 +81,32 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
+from collections.abc import Callable
+from typing import TypeVar
 
 from pydantic import BaseModel, ConfigDict
 
-if TYPE_CHECKING:
-    from collections.abc import Callable
-
 from flext_core.mixins import FlextSerializableMixin, FlextValidatableMixin
 from flext_core.result import FlextResult
+
+# Generic type variable for domain service return types
+T = TypeVar("T")
+
+
+# Type alias for flexible operation callables
+OperationType = (
+    Callable[[], object]
+    | Callable[[object], object]
+    | Callable[[object, object], object]
+    | Callable[[object, object, object], object]
+)
 
 # =============================================================================
 # FLEXT DOMAIN SERVICE - Public DDD Domain Service implementation
 # =============================================================================
 
 
-class FlextDomainService(
+class FlextDomainService[T](
     BaseModel,
     FlextValidatableMixin,
     FlextSerializableMixin,
@@ -199,7 +209,7 @@ class FlextDomainService(
         )
 
         tax_result = tax_service.execute()
-        if tax_result.is_success:
+        if tax_result.success:
             tax_calculation = tax_result.data
             # Apply tax calculation to order
 
@@ -216,7 +226,7 @@ class FlextDomainService(
 
         # Execute services in sequence
         discount_result = discount_service.execute()
-        if discount_result.is_success:
+        if discount_result.success:
             payment_result = payment_service.execute()
 
     Service Composition Patterns:
@@ -245,7 +255,7 @@ class FlextDomainService(
     # - Serialization methods from FlextSerializableMixin
 
     @abstractmethod
-    def execute(self) -> FlextResult[object]:
+    def execute(self) -> FlextResult[T]:
         """Execute the domain service operation.
 
         Must be implemented by concrete services.
@@ -261,7 +271,7 @@ class FlextDomainService(
     def execute_operation(
         self,
         operation_name: str,
-        operation: Callable[[object], object],
+        operation: object,
         *args: object,
         **kwargs: object,
     ) -> FlextResult[object]:
@@ -285,6 +295,8 @@ class FlextDomainService(
                 return FlextResult.fail(error_message)
 
             # Execute operation
+            if not callable(operation):
+                return FlextResult.fail(f"Operation {operation_name} is not callable")
             result = operation(*args, **kwargs)
             return FlextResult.ok(result)
         except (RuntimeError, ValueError, TypeError) as e:
@@ -294,9 +306,9 @@ class FlextDomainService(
         """Get service information for monitoring."""
         return {
             "service_type": self.__class__.__name__,
-            "config_valid": self.validate_config().is_success,
+            "config_valid": self.validate_config().success,
         }
 
 
 # Export API
-__all__ = ["FlextDomainService"]
+__all__: list[str] = ["FlextDomainService"]

@@ -238,7 +238,7 @@ class UserValidationService:
         def _validate_age_range(age: int) -> None:
             """Validate age range."""
             if age < MIN_USER_AGE or age > MAX_USER_AGE:
-                msg = f"Age must be between {MIN_USER_AGE} and {MAX_USER_AGE}"
+                msg: str = f"Age must be between {MIN_USER_AGE} and {MAX_USER_AGE}"
                 raise FlextValidationError(
                     msg,
                     validation_details={
@@ -334,7 +334,7 @@ class UserManagementService:
 
         def _raise_user_id_exists_error(user: User) -> None:
             """Raise error for existing user ID."""
-            msg = f"User with ID {user.user_id} already exists"
+            msg: str = f"User with ID {user.user_id} already exists"
             raise FlextAlreadyExistsError(
                 msg,
                 resource_id=user.user_id,
@@ -344,7 +344,9 @@ class UserManagementService:
 
         def _raise_email_exists_error(user: User, existing_user: User) -> None:
             """Raise error for existing email."""
-            msg = f"Email {user.email} is already used by user {existing_user.user_id}"
+            msg: str = (
+                f"Email {user.email} is already used by user {existing_user.user_id}"
+            )
             raise FlextAlreadyExistsError(
                 msg,
                 resource_id=user.user_id,
@@ -402,7 +404,7 @@ class UserManagementService:
 
         def _raise_deleted_user_error(user_id: str) -> None:
             """Raise error for deleted user."""
-            msg = f"User {user_id} was deleted"
+            msg: str = f"User {user_id} was deleted"
             raise FlextNotFoundError(
                 msg,
                 resource_id=user_id,
@@ -412,7 +414,7 @@ class UserManagementService:
 
         def _raise_user_not_found_error(user_id: str) -> None:
             """Raise error for user not found."""
-            msg = f"User {user_id} not found"
+            msg: str = f"User {user_id} not found"
             raise FlextNotFoundError(
                 msg,
                 resource_id=user_id,
@@ -455,7 +457,7 @@ class UserManagementService:
 
         def _raise_user_not_found_for_delete(user_id: str) -> None:
             """Raise error for user not found during deletion."""
-            msg = f"User {user_id} not found"
+            msg: str = f"User {user_id} not found"
             raise FlextNotFoundError(
                 msg,
                 resource_id=user_id,
@@ -504,7 +506,7 @@ class ConfigurationService:
             config_data: dict[str, object],
         ) -> None:
             """Raise error for missing configuration key."""
-            msg = f"Missing required configuration: {key}"
+            msg: str = f"Missing required configuration: {key}"
             raise FlextConfigurationError(
                 msg,
                 missing_key=key,
@@ -527,7 +529,7 @@ class ConfigurationService:
             valid_levels: list[str],
         ) -> None:
             """Raise error for invalid log level."""
-            msg = f"Invalid log level: {log_level}"
+            msg: str = f"Invalid log level: {log_level}"
             raise FlextConfigurationError(
                 msg,
                 config_key="log_level",
@@ -818,13 +820,13 @@ def demonstrate_validation_exceptions() -> None:
         else:
             result = FlextResult.fail("Invalid data type")
 
-        if result.is_success and test_case["should_pass"]:
+        if result.success and test_case["should_pass"]:
             user = result.data
             print(f"     ✅ Validation passed: {user}")
         elif result.is_failure and not test_case["should_pass"]:
             print(f"     ❌ Validation failed (expected): {result.error}")
         else:
-            status = "passed" if result.is_success else "failed"
+            status = "passed" if result.success else "failed"
             expected = "pass" if test_case["should_pass"] else "fail"
             print(f"     ⚠️ Unexpected result: {status} (expected {expected})")
 
@@ -875,7 +877,7 @@ def demonstrate_operational_exceptions() -> None:
     }
 
     result = user_service.create_user(valid_user_data)
-    if result.is_success:
+    if result.success:
         user = result.data
         print(f"   ✅ User created: {user}")
     else:
@@ -903,7 +905,7 @@ def demonstrate_operational_exceptions() -> None:
 
     # Get existing user
     result = user_service.get_user("user_001")
-    if result.is_success:
+    if result.success:
         user = result.data
         print(f"   ✅ User retrieved: {user}")
 
@@ -924,7 +926,7 @@ def demonstrate_operational_exceptions() -> None:
 
     # Authorized deletion
     delete_result2 = user_service.delete_user("user_001", "admin")
-    if delete_result2.is_success:
+    if delete_result2.success:
         print("   ✅ User deleted by admin")
 
     # Try to retrieve deleted user
@@ -955,7 +957,7 @@ def demonstrate_configuration_exceptions() -> None:
     }
 
     result = config_service.load_configuration(valid_config)
-    if result.is_success:
+    if result.success:
         print("   ✅ Valid configuration loaded successfully")
     else:
         print(f"   ❌ Configuration loading failed: {result.error}")
@@ -1013,12 +1015,12 @@ def demonstrate_connection_exceptions() -> None:  # noqa: PLR0915
     db_conn = DatabaseConnection("localhost", 5432, "myapp_db")
     try:
         result = db_conn.connect()
-        if result.is_success:
+        if result.success:
             print("   ✅ Database connection successful")
 
             # Successful authentication
             auth_result = db_conn.authenticate("admin", "secret")
-            if auth_result.is_success:
+            if auth_result.success:
                 print("   ✅ Database authentication successful")
 
     except FlextConnectionError as e:
@@ -1051,7 +1053,7 @@ def demonstrate_connection_exceptions() -> None:  # noqa: PLR0915
     # Successful API call
     api_service = ExternalAPIService("https://api.example.com/v1")
     api_result = api_service.fetch_user_profile("user_123")
-    if api_result.is_success:
+    if api_result.success:
         profile = api_result.data
         print(f"   ✅ API call successful: {profile}")
 
@@ -1162,7 +1164,7 @@ def demonstrate_exception_patterns() -> None:  # noqa: PLR0915
 
     # Execute complex operation
     result = complex_operation()
-    if result.is_success:
+    if result.success:
         print(f"   ✅ Complex operation: {result.data}")
     else:
         print(f"   ❌ Complex operation failed: {result.error}")
@@ -1175,7 +1177,7 @@ def demonstrate_exception_patterns() -> None:  # noqa: PLR0915
 
         def _simulate_operation_failure(attempt: int, max_retries: int) -> None:
             """Simulate operation failure for retry demonstration."""
-            msg = f"Simulated failure on attempt {attempt + 1}"
+            msg: str = f"Simulated failure on attempt {attempt + 1}"
             raise FlextConnectionError(
                 msg,
                 attempt=attempt + 1,
@@ -1208,7 +1210,7 @@ def demonstrate_exception_patterns() -> None:  # noqa: PLR0915
 
     # Test retry operation
     retry_result = operation_with_retry()
-    if retry_result.is_success:
+    if retry_result.success:
         print(f"   ✅ Retry operation: {retry_result.data}")
     else:
         print(f"   ❌ Retry operation failed: {retry_result.error}")

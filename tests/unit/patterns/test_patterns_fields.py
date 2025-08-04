@@ -61,7 +61,7 @@ class TestFlextFieldCoreInteger:
         )
 
         result = field.validate_value(42)
-        assert result.is_success
+        assert result.success
 
     def test_integer_field_validate_value_success_case(self) -> None:
         """Test integer field validation with valid value."""
@@ -72,7 +72,7 @@ class TestFlextFieldCoreInteger:
         )
 
         result = field.validate_value(42)
-        assert result.is_success
+        assert result.success
 
     def test_integer_field_validate_none_value(self) -> None:
         """Test integer field validation with None value."""
@@ -84,7 +84,7 @@ class TestFlextFieldCoreInteger:
         )
 
         result = field.validate_value(None)
-        assert result.is_success
+        assert result.success
 
     def test_integer_field_validate_non_integer_type(self) -> None:
         """Test integer field validation with non-integer type."""
@@ -228,7 +228,7 @@ class TestFlextFieldCoreInteger:
 
     def test_metadata_from_dict_with_defaults(self) -> None:
         """Test metadata creation from partial dictionary."""
-        data = {"description": "Test field"}
+        data: dict[str, object] = {"description": "Test field"}
 
         metadata = FlextFieldCoreMetadata.from_dict(data)
 
@@ -271,7 +271,7 @@ class TestFlextFieldCoreInteger:
 class ConcreteFlextFieldCore(FlextFieldCore):
     """Concrete implementation for testing abstract FlextFieldCore."""
 
-    def validate_value(self, value: object) -> FlextResult[str]:
+    def validate_value(self, value: object) -> FlextResult[object]:
         """Validate the provided value against field requirements."""
         if self.required and value is None:
             return FlextResult.fail(f"Field '{self.field_name}' is required")
@@ -279,7 +279,7 @@ class ConcreteFlextFieldCore(FlextFieldCore):
             return FlextResult.fail(f"Field '{self.field_name}' must be a string")
         return FlextResult.ok(str(value) if value is not None else "")
 
-    def serialize_value(self, value: str) -> str:
+    def serialize_value(self, value: object) -> str:
         """Convert value to serialized format."""
         return str(value)
 
@@ -443,11 +443,15 @@ class TestFlextFieldCoreBase:
             raise AssertionError(
                 f"Expected {FlextFieldType.STRING.value}, got {info['field_type']}"
             )
-        assert info["metadata"]["description"] == "Test description"
-        if info["metadata"]["example"] != "test_example":
-            raise AssertionError(
-                f"Expected test_example, got {info['metadata']['example']}"
-            )
+
+        # Type safe access to metadata
+        metadata = info["metadata"]
+        if isinstance(metadata, dict):
+            assert metadata["description"] == "Test description"
+            if metadata["example"] != "test_example":
+                raise AssertionError(
+                    f"Expected test_example, got {metadata['example']}"
+                )
 
     def test_field_get_field_info_no_validator(self) -> None:
         """Test getting field information without validator."""
@@ -476,7 +480,7 @@ class TestFlextFieldCoreBase:
         )
 
         result = field.validate_value("test_value")
-        assert result.is_success
+        assert result.success
 
     def test_field_validate_value_required_failure(self) -> None:
         """Test field validation with required value failure."""
@@ -580,7 +584,7 @@ class TestFlextFieldCoreString:
         )
 
         result = field.validate_value("test_string")
-        assert result.is_success
+        assert result.success
 
     def test_string_field_validate_value_success_case(self) -> None:
         """Test string field validation with valid string."""
@@ -591,7 +595,7 @@ class TestFlextFieldCoreString:
         )
 
         result = field.validate_value("test_string")
-        assert result.is_success
+        assert result.success
 
     def test_string_field_serialize_value(self) -> None:
         """Test string field serialization."""
@@ -639,7 +643,7 @@ class TestFlextFieldCoreString:
         )
 
         result = field.validate_value(None)
-        assert result.is_success
+        assert result.success
 
     def test_string_field_validate_non_string_type(self) -> None:
         """Test string field validation with non-string type."""
@@ -651,7 +655,7 @@ class TestFlextFieldCoreString:
 
         result = field.validate_value(123)
         assert result.is_failure
-        if "string" not in result.error.lower():
+        if result.error is not None and "string" not in result.error.lower():
             raise AssertionError(f"Expected string in {result.error.lower()}")
 
     def test_string_field_with_all_parameters(self) -> None:
@@ -716,7 +720,7 @@ class TestFlextFieldCoreBoolean:
         )
 
         result = field.validate_value(value=True)
-        assert result.is_success
+        assert result.success
 
     def test_boolean_field_validate_value_success_case(self) -> None:
         """Test boolean field validation with valid boolean."""
@@ -728,7 +732,7 @@ class TestFlextFieldCoreBoolean:
 
         test_value = True
         result = field.validate_value(test_value)
-        assert result.is_success
+        assert result.success
 
     def test_boolean_field_validate_non_boolean_type(self) -> None:
         """Test boolean field validation with non-boolean type."""
@@ -740,7 +744,7 @@ class TestFlextFieldCoreBoolean:
 
         result = field.validate_value("not a boolean")
         assert result.is_failure
-        if "boolean" not in result.error.lower():
+        if result.error is not None and "boolean" not in result.error.lower():
             raise AssertionError(f"Expected boolean in {result.error.lower()}")
 
     def test_boolean_field_serialize_value(self) -> None:
@@ -915,9 +919,9 @@ class TestFlextFieldCoreRegistry:
         )
         registry.register_field(field)
 
-        data = {"test_id": "valid_string"}
+        data: dict[str, object] = {"test_id": "valid_string"}
         result = registry.validate_all_fields(data)
-        assert result.is_success
+        assert result.success
 
     def test_validate_all_fields_required_missing(self) -> None:
         """Test validating all fields with required field missing."""
@@ -930,10 +934,10 @@ class TestFlextFieldCoreRegistry:
         )
         registry.register_field(field)
 
-        data: dict[str, str] = {}  # Missing required field
+        data: dict[str, object] = {}  # Missing required field
         result = registry.validate_all_fields(data)
         assert result.is_failure
-        if "required" not in result.error.lower():
+        if result.error is not None and "required" not in result.error.lower():
             raise AssertionError(f"Expected required in {result.error.lower()}")
 
     def test_validate_all_fields_validation_error(self) -> None:
@@ -946,8 +950,8 @@ class TestFlextFieldCoreRegistry:
         )
         registry.register_field(field)
 
-        data = {"test_id": 123}  # Invalid type for string field
+        data: dict[str, object] = {"test_id": 123}  # Invalid type for string field
         result = registry.validate_all_fields(data)
         assert result.is_failure
-        if "string" not in result.error.lower():
+        if result.error is not None and "string" not in result.error.lower():
             raise AssertionError(f"Expected string in {result.error.lower()}")

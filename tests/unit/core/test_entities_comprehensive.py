@@ -8,6 +8,7 @@ domain events, and factory patterns to achieve near 100% coverage.
 from __future__ import annotations
 
 from datetime import datetime
+from typing import cast
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -33,10 +34,6 @@ class SampleUser(FlextEntity):
     age: int = 0
     is_active: bool = True
 
-    def __init__(self, **data: object) -> None:
-        super().__init__(**data)
-        self._internal_state = "initialized"
-
     def get_display_name(self) -> str:
         """Get user display name."""
         return f"{self.name} ({self.email})"
@@ -61,9 +58,6 @@ class SampleBadUser(FlextEntity):
     email: str
     age: int = -1  # Invalid default age
 
-    def __init__(self, **data: object) -> None:
-        super().__init__(**data)
-
     def validate_domain_rules(self) -> FlextResult[None]:
         """Validate domain rules for bad user entity."""
         # This entity intentionally has validation issues
@@ -84,22 +78,22 @@ class TestFlextEntity:
         )
 
         if user.id != "user_1":
-            msg = f"Expected {'user_1'}, got {user.id}"
+            msg: str = f"Expected {'user_1'}, got {user.id}"
             raise AssertionError(msg)
         assert user.name == "John Doe"
         if user.email != "john@example.com":
-            msg = f"Expected {'john@example.com'}, got {user.email}"
+            msg: str = f"Expected {'john@example.com'}, got {user.email}"
             raise AssertionError(msg)
         assert user.age == 25
         if user.version != 1:
-            msg = f"Expected {1}, got {user.version}"
+            msg: str = f"Expected {1}, got {user.version}"
             raise AssertionError(msg)
         if user.is_active is not True:
-            msg = f"Expected True, got {user.is_active is True}"
+            msg: str = f"Expected True, got {user.is_active is True}"
             raise AssertionError(msg)
         assert isinstance(user.created_at, datetime)
         if len(user.domain_events) != 0:
-            msg = f"Expected {0}, got {len(user.domain_events)}"
+            msg: str = f"Expected {0}, got {len(user.domain_events)}"
             raise AssertionError(msg)
 
     def test_entity_id_validation_empty(self) -> None:
@@ -111,7 +105,7 @@ class TestFlextEntity:
                 email="john@example.com",
             )
         if "Entity ID cannot be empty" not in str(exc_info.value):
-            msg = f"Expected {'Entity ID cannot be empty'} in {exc_info.value!s}"
+            msg: str = f"Expected {'Entity ID cannot be empty'} in {exc_info.value!s}"
             raise AssertionError(msg)
 
     def test_entity_id_validation_whitespace(self) -> None:
@@ -123,7 +117,7 @@ class TestFlextEntity:
                 email="john@example.com",
             )
         if "Entity ID cannot be empty" not in str(exc_info.value):
-            msg = f"Expected {'Entity ID cannot be empty'} in {exc_info.value!s}"
+            msg: str = f"Expected {'Entity ID cannot be empty'} in {exc_info.value!s}"
             raise AssertionError(msg)
 
     def test_entity_id_validation_strips_whitespace(self) -> None:
@@ -134,7 +128,7 @@ class TestFlextEntity:
             email="john@example.com",
         )
         if user.id != "user_1":
-            msg = f"Expected {'user_1'}, got {user.id}"
+            msg: str = f"Expected {'user_1'}, got {user.id}"
             raise AssertionError(msg)
 
     def test_entity_equality_same_id(self) -> None:
@@ -143,7 +137,7 @@ class TestFlextEntity:
         user2 = SampleUser(id="user_1", name="Jane", email="jane@example.com")
 
         if user1 != user2:  # Same ID, different attributes:
-            msg = f"Expected {user2}, got {user1}"
+            msg: str = f"Expected {user2}, got {user1}"
             raise AssertionError(msg)
 
     def test_entity_equality_different_id(self) -> None:
@@ -167,7 +161,7 @@ class TestFlextEntity:
         user2 = SampleUser(id="user_1", name="Jane", email="jane@example.com")
 
         if hash(user1) != hash(user2):
-            msg = f"Expected {hash(user2)}, got {hash(user1)}"
+            msg: str = f"Expected {hash(user2)}, got {hash(user1)}"
             raise AssertionError(msg)
 
     def test_entity_hash_different_id(self) -> None:
@@ -182,7 +176,7 @@ class TestFlextEntity:
         user = SampleUser(id="user_1", name="John", email="john@example.com")
 
         if str(user) != "SampleUser(id=user_1)":
-            msg = f"Expected {'SampleUser(id=user_1)'}, got {user!s}"
+            msg: str = f"Expected {'SampleUser(id=user_1)'}, got {user!s}"
             raise AssertionError(msg)
 
     def test_entity_repr_representation(self) -> None:
@@ -191,11 +185,11 @@ class TestFlextEntity:
 
         repr_str = repr(user)
         if "SampleUser(" not in repr_str:
-            msg = f"Expected {'SampleUser('} in {repr_str}"
+            msg: str = f"Expected {'SampleUser('} in {repr_str}"
             raise AssertionError(msg)
         assert "id=user_1" in repr_str
         if "name=John" not in repr_str:
-            msg = f"Expected {'name=John'} in {repr_str}"
+            msg: str = f"Expected {'name=John'} in {repr_str}"
             raise AssertionError(msg)
         assert "email=john@example.com" in repr_str
         if "age=25" not in repr_str:
@@ -208,8 +202,9 @@ class TestFlextEntity:
 
         result = user.increment_version()
 
-        assert result.is_success
+        assert result.success
         new_user = result.data
+        assert new_user is not None
         if new_user.version != user.version + 1:
             raise AssertionError(f"Expected {user.version + 1}, got {new_user.version}")
         assert new_user.id == user.id
@@ -246,17 +241,18 @@ class TestFlextEntity:
 
         result = user.copy_with(name="Jane", age=30)
 
-        assert result.is_success
+        assert result.success
         new_user = result.data
+        assert new_user is not None
         if new_user.name != "Jane":
             raise AssertionError(f"Expected {'Jane'}, got {new_user.name}")
         assert new_user.age == 30
         if new_user.version != user.version + 1:  # Auto-incremented:
-            msg = f"Expected {user.version + 1}, got {new_user.version}"
+            msg: str = f"Expected {user.version + 1}, got {new_user.version}"
             raise AssertionError(msg)
         assert new_user.id == user.id  # Unchanged
         if new_user.email != user.email:  # Unchanged:
-            msg = f"Expected {user.email}, got {new_user.email}"
+            msg: str = f"Expected {user.email}, got {new_user.email}"
             raise AssertionError(msg)
 
     def test_copy_with_explicit_version(self) -> None:
@@ -265,10 +261,11 @@ class TestFlextEntity:
 
         result = user.copy_with(name="Jane", version=10)
 
-        assert result.is_success
+        assert result.success
         new_user = result.data
+        assert new_user is not None
         if new_user.version != 10:  # Explicit version used:
-            msg = f"Expected {10}, got {new_user.version}"
+            msg: str = f"Expected {10}, got {new_user.version}"
             raise AssertionError(msg)
         assert new_user.name == "Jane"
 
@@ -278,10 +275,11 @@ class TestFlextEntity:
 
         result = user.copy_with()
 
-        assert result.is_success
+        assert result.success
         new_user = result.data
+        assert new_user is not None
         if new_user.version != 5:  # Version not incremented when no changes:
-            msg = f"Expected {5}, got {new_user.version}"
+            msg: str = f"Expected {5}, got {new_user.version}"
             raise AssertionError(msg)
 
     def test_copy_with_domain_validation_failure(self) -> None:
@@ -292,7 +290,7 @@ class TestFlextEntity:
 
         assert result.is_failure
         if "Invalid email format" not in (result.error or ""):
-            msg = f"Expected 'Invalid email format' in {result.error}"
+            msg: str = f"Expected 'Invalid email format' in {result.error}"
             raise AssertionError(msg)
 
     def test_copy_with_construction_error(self) -> None:
@@ -305,7 +303,7 @@ class TestFlextEntity:
 
         assert result.is_failure
         if "Failed to copy entity" not in (result.error or ""):
-            msg = f"Expected 'Failed to copy entity' in {result.error}"
+            msg: str = f"Expected 'Failed to copy entity' in {result.error}"
             raise AssertionError(msg)
 
     def test_add_domain_event_success(self) -> None:
@@ -314,16 +312,16 @@ class TestFlextEntity:
 
         result = user.add_domain_event("user_created", {"action": "create"})
 
-        assert result.is_success
+        assert result.success
         if len(user.domain_events) != 1:
             raise AssertionError(f"Expected {1}, got {len(user.domain_events)}")
         event = user.domain_events[0]
         if event.event_type != "user_created":
-            msg = f"Expected {'user_created'}, got {event.event_type}"
+            msg: str = f"Expected {'user_created'}, got {event.event_type}"
             raise AssertionError(msg)
         assert event.data == {"action": "create"}
         if event.aggregate_id != "user_1":
-            msg = f"Expected {'user_1'}, got {event.aggregate_id}"
+            msg: str = f"Expected {'user_1'}, got {event.aggregate_id}"
             raise AssertionError(msg)
         assert event.version == 1
 
@@ -341,7 +339,7 @@ class TestFlextEntity:
 
         assert result.is_failure
         if "Failed to create event" not in (result.error or ""):
-            msg = f"Expected 'Failed to create event' in {result.error}"
+            msg: str = f"Expected 'Failed to create event' in {result.error}"
             raise AssertionError(msg)
         if len(user.domain_events) != 0:
             raise AssertionError(f"Expected {0}, got {len(user.domain_events)}")
@@ -363,7 +361,7 @@ class TestFlextEntity:
             raise AssertionError(f"Expected {2}, got {len(events)}")
         assert len(user.domain_events) == 0
         if events[0].event_type != "event1":
-            msg = f"Expected {'event1'}, got {events[0].event_type}"
+            msg: str = f"Expected {'event1'}, got {events[0].event_type}"
             raise AssertionError(msg)
         assert events[1].event_type == "event2"
 
@@ -381,7 +379,7 @@ class TestFlextEntity:
         ):
             result = user.validate_field("name", "John")
 
-        assert result.is_success
+        assert result.success
 
     def test_validate_field_failure_with_field_definition(self) -> None:
         """Test field validation failure with field definition."""
@@ -412,7 +410,7 @@ class TestFlextEntity:
         ):
             result = user.validate_field("unknown_field", "value")
 
-        assert result.is_success  # Should succeed when no field definition found
+        assert result.success  # Should succeed when no field definition found
 
     def test_validate_field_exception_handling(self) -> None:
         """Test field validation with exception handling."""
@@ -443,7 +441,7 @@ class TestFlextEntity:
         ):
             result = user.validate_all_fields()
 
-        assert result.is_success
+        assert result.success
 
     def test_validate_all_fields_with_failures(self) -> None:
         """Test validation of all fields with some failures."""
@@ -471,6 +469,7 @@ class TestFlextEntity:
             raise AssertionError(
                 f"Expected 'Field validation errors:' in {result.error}"
             )
+        assert result.error is not None
         assert "name: Name validation failed" in result.error
 
     def test_validate_all_fields_no_field_definitions(self) -> None:
@@ -484,7 +483,7 @@ class TestFlextEntity:
         ):
             result = user.validate_all_fields()
 
-        assert result.is_success  # Should succeed when no field definitions found
+        assert result.success  # Should succeed when no field definitions found
 
     def test_with_version_success(self) -> None:
         """Test with_version method with valid version."""
@@ -572,9 +571,11 @@ class TestFlextEntityFactory:
         """Test successful entity creation through factory."""
         factory = FlextEntityFactory.create_entity_factory(SampleUser)
 
-        result = factory(name="John", email="john@example.com", age=25)
+        result = factory(  # type: ignore[operator]
+            name="John", email="john@example.com", age=25
+        )
 
-        assert result.is_success
+        assert result.success
         user = result.data
         assert isinstance(user, SampleUser)
         if user.name != "John":
@@ -588,28 +589,36 @@ class TestFlextEntityFactory:
     def test_factory_with_defaults(self) -> None:
         """Test factory with default values."""
         defaults = {"age": 18, "is_active": True}
-        factory = FlextEntityFactory.create_entity_factory(SampleUser, defaults)
+        factory = FlextEntityFactory.create_entity_factory(
+            SampleUser, cast("dict[str, object]", defaults)
+        )
 
-        result = factory(name="John", email="john@example.com")
+        result = factory(  # type: ignore[operator]
+            name="John", email="john@example.com"
+        )
 
-        assert result.is_success
+        assert result.success
         user = result.data
         if user.age != 18:  # From defaults:
-            msg = f"Expected {18}, got {user.age}"
+            msg: str = f"Expected {18}, got {user.age}"
             raise AssertionError(msg)
         assert user.is_active is True  # From defaults
 
     def test_factory_override_defaults(self) -> None:
         """Test factory overriding default values."""
         defaults = {"age": 18, "is_active": False}
-        factory = FlextEntityFactory.create_entity_factory(SampleUser, defaults)
+        factory = FlextEntityFactory.create_entity_factory(
+            SampleUser, cast("dict[str, object]", defaults)
+        )
 
-        result = factory(name="John", email="john@example.com", age=25, is_active=True)
+        result = factory(  # type: ignore[operator]
+            name="John", email="john@example.com", age=25, is_active=True
+        )
 
-        assert result.is_success
+        assert result.success
         user = result.data
         if user.age != 25:  # Overridden:
-            msg = f"Expected {25}, got {user.age}"
+            msg: str = f"Expected {25}, got {user.age}"
             raise AssertionError(msg)
         assert user.is_active is True  # Overridden
 
@@ -617,9 +626,11 @@ class TestFlextEntityFactory:
         """Test factory generates ID when not provided."""
         factory = FlextEntityFactory.create_entity_factory(SampleUser)
 
-        result = factory(name="John", email="john@example.com")
+        result = factory(  # type: ignore[operator]
+            name="John", email="john@example.com"
+        )
 
-        assert result.is_success
+        assert result.success
         user = result.data
         assert user.id
         assert len(user.id) > 0
@@ -628,9 +639,11 @@ class TestFlextEntityFactory:
         """Test factory uses provided ID."""
         factory = FlextEntityFactory.create_entity_factory(SampleUser)
 
-        result = factory(id="custom_id", name="John", email="john@example.com")
+        result = factory(  # type: ignore[operator]
+            id="custom_id", name="John", email="john@example.com"
+        )
 
-        assert result.is_success
+        assert result.success
         user = result.data
         if user.id != "custom_id":
             raise AssertionError(f"Expected {'custom_id'}, got {user.id}")
@@ -639,9 +652,11 @@ class TestFlextEntityFactory:
         """Test factory handles empty ID by generating new one."""
         factory = FlextEntityFactory.create_entity_factory(SampleUser)
 
-        result = factory(id="", name="John", email="john@example.com")
+        result = factory(  # type: ignore[operator]
+            id="", name="John", email="john@example.com"
+        )
 
-        assert result.is_success
+        assert result.success
         user = result.data
         assert user.id
         assert user.id != ""
@@ -650,9 +665,11 @@ class TestFlextEntityFactory:
         """Test factory sets default version."""
         factory = FlextEntityFactory.create_entity_factory(SampleUser)
 
-        result = factory(name="John", email="john@example.com")
+        result = factory(  # type: ignore[operator]
+            name="John", email="john@example.com"
+        )
 
-        assert result.is_success
+        assert result.success
         user = result.data
         if user.version != 1:
             raise AssertionError(f"Expected {1}, got {user.version}")
@@ -661,9 +678,11 @@ class TestFlextEntityFactory:
         """Test factory uses provided version."""
         factory = FlextEntityFactory.create_entity_factory(SampleUser)
 
-        result = factory(name="John", email="john@example.com", version=5)
+        result = factory(  # type: ignore[operator]
+            name="John", email="john@example.com", version=5
+        )
 
-        assert result.is_success
+        assert result.success
         user = result.data
         if user.version != 5:
             raise AssertionError(f"Expected {5}, got {user.version}")
@@ -672,7 +691,9 @@ class TestFlextEntityFactory:
         """Test factory with domain validation failure."""
         factory = FlextEntityFactory.create_entity_factory(SampleBadUser)
 
-        result = factory(name="John", email="john@example.com")
+        result = factory(  # type: ignore[operator]
+            name="John", email="john@example.com"
+        )
 
         assert result.is_failure
         if "Always fails" not in (result.error or ""):
@@ -683,7 +704,9 @@ class TestFlextEntityFactory:
         factory = FlextEntityFactory.create_entity_factory(SampleUser)
 
         # Missing required field 'name'
-        result = factory(email="john@example.com")
+        result = factory(  # type: ignore[operator]
+            email="john@example.com"
+        )
 
         assert result.is_failure
         if "Entity creation failed" not in (result.error or ""):
@@ -699,7 +722,9 @@ class TestFlextEntityFactory:
             "model_validate",
             side_effect=TypeError("Type error"),
         ):
-            result = factory(name="John", email="john@example.com")
+            result = factory(  # type: ignore[operator]
+                name="John", email="john@example.com"
+            )
 
         assert result.is_failure
         if "Entity creation failed" not in (result.error or ""):
@@ -714,7 +739,9 @@ class TestFlextEntityFactory:
             "flext_core.entities.FlextGenerators.generate_entity_id",
             side_effect=ImportError("Import error"),
         ):
-            result = factory(name="John", email="john@example.com")
+            result = factory(  # type: ignore[operator]
+                name="John", email="john@example.com"
+            )
 
         assert result.is_failure
         if "Import error" not in (result.error or ""):
@@ -735,14 +762,15 @@ class TestEntityIntegration:
         user.add_domain_event("profile_updated", {"field": "name"})
 
         if len(user.domain_events) != EXPECTED_BULK_SIZE:
-            msg = f"Expected {2}, got {len(user.domain_events)}"
+            msg: str = f"Expected {2}, got {len(user.domain_events)}"
             raise AssertionError(msg)
 
         # Modify entity
         result = user.copy_with(name="John Doe")
-        assert result.is_success
+        assert result.success
 
         updated_user = result.data
+        assert updated_user is not None
         if updated_user.name != "John Doe":
             raise AssertionError(f"Expected {'John Doe'}, got {updated_user.name}")
         assert updated_user.version == EXPECTED_BULK_SIZE
@@ -765,13 +793,15 @@ class TestEntityIntegration:
             "is_active": False,
         }
 
-        factory = FlextEntityFactory.create_entity_factory(SampleUser, defaults)
+        factory = FlextEntityFactory.create_entity_factory(
+            SampleUser, cast("dict[str, object]", defaults)
+        )
 
         # Create multiple entities
         results = [
-            factory(name="Alice", email="alice@example.com"),
-            factory(name="Bob", email="bob@example.com", age=30),
-            factory(
+            factory(name="Alice", email="alice@example.com"),  # type: ignore[operator]
+            factory(name="Bob", email="bob@example.com", age=30),  # type: ignore[operator]
+            factory(  # type: ignore[operator]
                 id="admin",
                 name="Admin",
                 email="admin@example.com",
@@ -779,10 +809,8 @@ class TestEntityIntegration:
             ),
         ]
 
-        if not all(result.is_success for result in results):
-            msg = (
-                f"Expected {all(result.is_success for result in results)} in {results}"
-            )
+        if not all(result.success for result in results):
+            msg = f"Expected {all(result.success for result in results)} in {results}"
             raise AssertionError(msg)
 
         users = [result.data for result in results]
@@ -824,7 +852,7 @@ class TestEntityCoverageImprovements:
                 """Validate domain rules."""
                 return FlextResult.ok(None)
 
-            def model_dump(self) -> dict[str, object]:
+            def model_dump(self, **kwargs: object) -> dict[str, object]:
                 """Override model_dump to include internal fields for testing."""
                 normal_data = super().model_dump()
                 # Add internal fields that should be skipped by validate_all_fields
@@ -839,4 +867,4 @@ class TestEntityCoverageImprovements:
         result = entity.validate_all_fields()
 
         # Should succeed because internal fields are skipped during validation
-        assert result.is_success
+        assert result.success

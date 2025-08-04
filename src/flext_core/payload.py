@@ -77,11 +77,17 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
+from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from flext_core.exceptions import FlextAttributeError, FlextValidationError
-from flext_core.flext_types import T, TAnyDict  # noqa: TC001
+
+if TYPE_CHECKING:
+    from flext_core.flext_types import T, TData, TValue
+
+# Import TAnyDict at runtime for Pydantic model rebuilds
+from flext_core.flext_types import TAnyDict  # noqa: TC001
 from flext_core.loggings import FlextLoggerFactory
 from flext_core.mixins import (
     FlextLoggableMixin,
@@ -154,7 +160,7 @@ class FlextPayload[T](
             version="2.0",
             source="batch_processor"
         )
-        if result.is_success:
+        if result.success:
             validated_payload = result.data
 
         # Metadata operations
@@ -224,7 +230,7 @@ class FlextPayload[T](
             logger.exception("Failed to create payload")
             return FlextResult.fail(f"Failed to create payload: {e}")
 
-    def with_metadata(self, **additional: object) -> FlextPayload[T]:
+    def with_metadata(self, **additional: TValue) -> FlextPayload[T]:
         """Create new payload with additional metadata.
 
         Args:
@@ -238,7 +244,7 @@ class FlextPayload[T](
         new_metadata = {**self.metadata, **additional}
         return FlextPayload(data=self.data, metadata=new_metadata)
 
-    def enrich_metadata(self, additional: dict[str, object]) -> FlextPayload[T]:
+    def enrich_metadata(self, additional: TData) -> FlextPayload[T]:
         """Create new payload with enriched metadata from dictionary.
 
         Args:
@@ -365,7 +371,7 @@ class FlextPayload[T](
         """
         return key in self.metadata
 
-    def to_dict(self) -> TAnyDict:
+    def to_dict(self) -> dict[str, object]:
         """Convert payload to dictionary representation.
 
         Returns:
@@ -399,7 +405,9 @@ class FlextPayload[T](
                 try:
                     value = getattr(self, attr_name)
                     serialized_value = self._serialize_value(value)
-                    if serialized_value is not None:
+                    if serialized_value is not None and isinstance(
+                        serialized_value, (str, int, float, bool, type(None))
+                    ):
                         result[attr_name] = serialized_value
                 except (AttributeError, TypeError):
                     # Skip attributes that can't be accessed or serialized
@@ -505,7 +513,7 @@ class FlextPayload[T](
         ):
             return self.__pydantic_extra__[name]
 
-        error_msg = f"'{self.__class__.__name__}' object has no attribute '{name}'"
+        error_msg: str = f"'{self.__class__.__name__}' object has no attribute '{name}'"
         available_fields = (
             list(self.__pydantic_extra__.keys())
             if hasattr(self, "__pydantic_extra__") and self.__pydantic_extra__
@@ -659,7 +667,7 @@ class FlextMessage(FlextPayload[str]):
     Usage Patterns:
         # Basic message creation
         result = FlextMessage.create_message("User logged in successfully")
-        if result.is_success:
+        if result.success:
             message = result.data
 
         # Message with level and source
@@ -915,8 +923,17 @@ class FlextEvent(FlextPayload[Mapping[str, object]]):
         return str(corr_id) if corr_id is not None else None
 
 
+# =============================================================================
+# MODEL REBUILDS - Resolve forward references for Pydantic
+# =============================================================================
+
+# Rebuild models to resolve forward references after import
+FlextPayload.model_rebuild()
+FlextMessage.model_rebuild()
+FlextEvent.model_rebuild()
+
 # Export API
-__all__ = [
+__all__: list[str] = [
     "FlextEvent",
     "FlextMessage",
     "FlextPayload",

@@ -21,7 +21,7 @@ def main() -> None:  # noqa: PLR0915
     # 1. FlextResult - Railway Pattern
     print("1. FlextResult Examples:")
     success_result = FlextResult.ok("Operation successful")
-    print(f"  Success: {success_result.is_success}, Data: {success_result.data}")
+    print(f"  Success: {success_result.success}, Data: {success_result.data}")
 
     error_result = FlextResult.fail("Something went wrong")
     print(f"  Error: {error_result.is_failure}, Error: {error_result.error}")
@@ -42,6 +42,7 @@ def main() -> None:  # noqa: PLR0915
         return
 
     user = user_result.data
+    assert user is not None
 
     print(
         f"  User: {user.name} ({user.email_address.email}), "
@@ -49,7 +50,7 @@ def main() -> None:  # noqa: PLR0915
     )
 
     validation = user.validate_domain_rules()
-    print(f"  Validation: {validation.is_success}")
+    print(f"  Validation: {validation.success}")
     print()
 
     # 3. FlextCommands - CQRS Pattern
@@ -83,8 +84,9 @@ def main() -> None:  # noqa: PLR0915
     print(f"  Command ID: {command.command_id}")
 
     result = handler.execute(command)
-    if result.is_success:
+    if result.success:
         created_user = result.data
+        assert created_user is not None
         print(f"  Created: {created_user.name} ({created_user.email_address.email})")
     print()
 
@@ -98,10 +100,10 @@ def main() -> None:  # noqa: PLR0915
         def create_user(self, email: str, name: str) -> SharedUser:
             # Use SharedDomainFactory for consistent user creation
             result = SharedDomainFactory.create_user(name=name, email=email, age=25)
-            if result.is_success:
+            if result.success:
                 return result.data
             # Fallback - this shouldn't happen in practice
-            msg = f"Failed to create user: {result.error}"
+            msg: str = f"Failed to create user: {result.error}"
             raise ValueError(msg)
 
     class UserRepository:
@@ -124,7 +126,7 @@ def main() -> None:  # noqa: PLR0915
 
     # Retrieve and use service
     service_result = container.get("user_service")
-    if service_result.is_success:
+    if service_result.success:
         user_service = service_result.data
         new_user = user_service.create_user("bob@example.com", "Bob Wilson")
         print(f"  Service created: {new_user.name} ({new_user.email_address.email})")
@@ -148,8 +150,8 @@ def main() -> None:  # noqa: PLR0915
     valid_email = email_field.validate_value("user@example.com")
     invalid_email = email_field.validate_value("invalid-email")
 
-    print(f"  Valid email: {valid_email.is_success}")
-    print(f"  Invalid email: {invalid_email.is_success} - {invalid_email.error}")
+    print(f"  Valid email: {valid_email.success}")
+    print(f"  Invalid email: {invalid_email.success} - {invalid_email.error}")
     print()
 
     # 6. Command Bus Pattern
@@ -159,11 +161,11 @@ def main() -> None:  # noqa: PLR0915
 
     # Register handler
     registration = bus.register_handler(CreateUserCommand, handler)
-    print(f"  Handler registered: {registration.is_success}")
+    print(f"  Handler registered: {registration.success}")
 
     # Execute via bus
     bus_result = bus.execute(command)
-    if bus_result.is_success:
+    if bus_result.success:
         bus_user = bus_result.data
         print(f"  Bus executed: {bus_user.name} created")
     print()

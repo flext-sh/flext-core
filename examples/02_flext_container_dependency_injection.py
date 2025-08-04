@@ -167,14 +167,20 @@ class ContainerSetupOrchestrator:
         """Get core service configurations - SOLID OCP: Open for extension."""
         return [
             ServiceConfiguration(
-                "DatabaseConnection", self._configurer.create_database_connection
-            ),
-            ServiceConfiguration("EmailService", self._configurer.create_email_service),
-            ServiceConfiguration(
-                "UserRepository", self._configurer.create_user_repository
+                "DatabaseConnection",
+                getattr(self._configurer, "create_database_connection", lambda: None),
             ),
             ServiceConfiguration(
-                "NotificationService", self._configurer.create_notification_service
+                "EmailService",
+                getattr(self._configurer, "create_email_service", lambda: None),
+            ),
+            ServiceConfiguration(
+                "UserRepository",
+                getattr(self._configurer, "create_user_repository", lambda: None),
+            ),
+            ServiceConfiguration(
+                "NotificationService",
+                getattr(self._configurer, "create_notification_service", lambda: None),
             ),
         ]
 
@@ -220,9 +226,17 @@ class UserManagementServiceFactoryCreator:
         """Create factory function for UserManagementService."""
 
         def user_management_factory() -> UserManagementService:
-            result = self._configurer.create_user_management_service()
+            create_method = getattr(
+                self._configurer, "create_user_management_service", None
+            )
+            if create_method is None:
+                msg = "User management service factory not available"
+                raise RuntimeError(msg)
+            result = create_method()
             if result.is_failure:
-                error_msg = f"User management service creation failed: {result.error}"
+                error_msg: str = (
+                    f"User management service creation failed: {result.error}"
+                )
                 raise RuntimeError(error_msg)
             return result.data
 
@@ -455,6 +469,7 @@ class SharedDomainUserRepository(UserRepository):
             return FlextResult.fail(f"User creation failed: {user_result.error}")
 
         user = user_result.data
+        assert user is not None
 
         # Log domain operation using shared user
         log_domain_operation(
@@ -657,6 +672,7 @@ class UserManagementService:
             return FlextResult.fail(user_result.error)
 
         user = user_result.data
+        assert user is not None
 
         # Send notification using shared user
         notification_result = self.notification_service.notify_user_created(user)
@@ -827,7 +843,7 @@ def setup_production_container() -> FlextResult[FlextContainer]:
         .map(lambda _: container)
     )
 
-    if setup_result.is_success:
+    if setup_result.success:
         print("✅ Production container setup completed")
 
     return setup_result
@@ -1064,14 +1080,14 @@ def check_container_health(container: FlextContainer) -> FlextResult[TAnyObject]
     # Check database connection
     try:
         db_result = container.get("DatabaseConnection")
-        if db_result.is_success:
+        if db_result.success:
             db_connection = cast("DatabaseConnection", db_result.data)
             connect_result = db_connection.connect()
             health_data["services"]["database"] = {
-                "status": "healthy" if connect_result.is_success else "unhealthy",
+                "status": "healthy" if connect_result.success else "unhealthy",
                 "error": connect_result.error if connect_result.is_failure else None,
             }
-            if connect_result.is_success:
+            if connect_result.success:
                 db_connection.close()
         else:
             health_data["services"]["database"] = {
@@ -1107,7 +1123,11 @@ def check_container_health(container: FlextContainer) -> FlextResult[TAnyObject]
     # Determine overall status
     unhealthy_services = [
         service
-        for service in health_data["services"].values()
+        for service in (
+            health_data["services"].values()
+            if isinstance(health_data.get("services"), dict)
+            else []
+        )
         if service["status"] != "healthy"
     ]
     if unhealthy_services:
@@ -1221,6 +1241,7 @@ class UserRegistrationStrategy:
             return service_result
 
         user_service = service_result.data
+        assert user_service is not None
         registration_result = user_service.register_user(user_data)
 
         return self._handle_registration_result(registration_result)
@@ -1244,7 +1265,7 @@ class UserRegistrationStrategy:
         self, registration_result: FlextResult[TAnyObject]
     ) -> FlextResult[None]:
         """Handle user registration result."""
-        if registration_result.is_success:
+        if registration_result.success:
             print(
                 f"✅ {self._context_name.title()} registration successful: "
                 f"{registration_result.data}"
@@ -1332,7 +1353,7 @@ class HealthCheckDemoCommand(DemonstrationCommand):
 
         # Execute health check
         health_result = check_container_health(self._container)
-        if health_result.is_success:
+        if health_result.success:
             self._display_health_results(health_result.data)
             return FlextResult.ok(None)
         return FlextResult.fail(f"Health check failed: {health_result.error}")
@@ -1340,7 +1361,11 @@ class HealthCheckDemoCommand(DemonstrationCommand):
     def _display_health_results(self, health_data: TAnyObject) -> None:
         """Display health check results."""
         print(f"🏥 Container health: {health_data['overall_status']}")
-        for service_name, service_health in health_data["services"].items():
+        for service_name, service_health in (
+            health_data["services"].items()
+            if isinstance(health_data.get("services"), dict)
+            else []
+        ):
             print(f"   {service_name}: {service_health['status']}")
 
     def run_production_container_demo(self) -> FlextResult[None]:

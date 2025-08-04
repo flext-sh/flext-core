@@ -435,7 +435,7 @@ class FlextCore:
 
         """
         # Use the safe creation method from ValidatedModel
-        return model_class.create(**data)  # type: ignore[return-value]
+        return model_class.create(**data)
 
     def make_immutable[T](self, cls: type[T]) -> type[T]:
         """Make class immutable using guards module.
@@ -459,7 +459,7 @@ class FlextCore:
             Pure version of the function
 
         """
-        return pure(func)  # type: ignore[return-value]
+        return pure(func)
 
     # =========================================================================
     # UTILITY METHODS

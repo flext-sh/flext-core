@@ -300,7 +300,9 @@ class _BaseFluentBuilder(_BaseBuilder):
     """Fluent builder with method chaining support."""
 
     def with_property(
-        self, key: str, value: str | float | None
+        self,
+        key: str,
+        value: str | float | None,
     ) -> _BaseFluentBuilder:
         """Set property with fluent interface.
 
@@ -329,7 +331,7 @@ class _BaseFluentBuilder(_BaseBuilder):
         self._set_property("_last_condition", condition)
         return self
 
-    def then_set(self, key: str, value: str | int | float | bool | None) -> _BaseFluentBuilder:
+    def then_set(self, key: str, value: str | float | None) -> _BaseFluentBuilder:
         """Set property if last condition was true.
 
         Args:

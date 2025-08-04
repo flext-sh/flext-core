@@ -35,7 +35,7 @@ class TestPerformanceBenchmarks:
             )
 
         result = benchmark(create_and_chain_results)
-        assert result.is_success
+        assert result.success
         assert result.data == "initial_step1_step2_final"
 
     @pytest.mark.performance
@@ -55,14 +55,14 @@ class TestPerformanceBenchmarks:
             # Retrieve services
             result1 = container.get("service1")
             result2 = container.get("service2")
-            result3 = container.get("service3")
+            container.get("service3")
 
-            if result1.is_success and result2.is_success and result3.is_success:
+            if result1.success and result2.success:
                 return FlextResult.ok("all_retrieved")
             return FlextResult.fail("retrieval_failed")
 
         result = benchmark(container_operations)
-        assert result.is_success
+        assert result.success
 
     @pytest.mark.performance
     @pytest.mark.slow
@@ -110,7 +110,7 @@ class TestPerformanceBenchmarks:
         # Process messages through chain
         for msg_id in range(100):
             result = chain.process(f"message_{msg_id}")
-            assert result.is_success
+            assert result.success
 
         duration = time.time() - start_time
 
@@ -136,7 +136,7 @@ class TestStressTests:
         start_time = time.time()
         for service_id in range(service_count):
             result = container.get(f"service_{service_id}")
-            assert result.is_success
+            assert result.success
             assert result.data == f"value_{service_id}"
 
         duration = time.time() - start_time
@@ -162,7 +162,7 @@ class TestStressTests:
         result = build_long_chain(10000)
         duration = time.time() - start_time
 
-        assert result.is_success
+        assert result.success
         assert result.data == 10000
 
         # Should complete 10,000 chained operations in under 1 second

@@ -93,7 +93,6 @@ from typing import TYPE_CHECKING, cast
 
 from flext_core.constants import MESSAGES
 from flext_core.exceptions import FlextError
-from flext_core.flext_types import FlextTypes, TAnyDict
 from flext_core.loggings import FlextLoggerFactory
 from flext_core.mixins import FlextLoggableMixin
 from flext_core.result import FlextResult
@@ -144,14 +143,14 @@ class FlextServiceRegistrar(FlextLoggableMixin):
     Usage (Internal):
         registrar = FlextServiceRegistrar()
         result = registrar.register_service("user_service", UserService())
-        if result.is_success:
+        if result.success:
             # Service registered successfully
             pass
     """
 
     def __init__(self) -> None:
         """Initialize service registrar."""
-        self._services: TAnyDict = {}
+        self._services: dict[str, object] = {}
         self._factories: dict[str, Callable[[], object]] = {}
 
     def _validate_service_name(self, name: str) -> FlextResult[str]:
@@ -165,29 +164,14 @@ class FlextServiceRegistrar(FlextLoggableMixin):
         return FlextResult.ok(name)
 
     def register_service(self, name: str, service: object) -> FlextResult[None]:
-        """Register a service instance."""
-        self.logger.trace(
-            "Starting service registration",
-            name=name,
-            service_type=type(service).__name__,
-        )
+        """Register a service instance - Performance optimized."""
+        # Fast path: simple validation without FlextResult overhead
+        if not name or not isinstance(name, str) or not name.strip():
+            return FlextResult.fail(MESSAGES["SERVICE_NAME_EMPTY"])
 
-        # Use centralized validation - eliminates duplication
-        validation_result = self._validate_service_name(name)
-        if validation_result.is_failure:
-            self.logger.debug(
-                "Service name validation failed",
-                name=name,
-                error=validation_result.error,
-            )
-            return validation_result.map(lambda _: None)  # Convert type, preserve error
+        validated_name = name.strip()
 
-        validated_name = validation_result.unwrap()
-        self.logger.trace(
-            "Service name validated successfully",
-            validated_name=validated_name,
-        )
-
+        # Only log warnings for actual problems (not every operation)
         if validated_name in self._services:
             self.logger.warning(
                 "Service already registered, replacing",
@@ -321,7 +305,7 @@ class FlextServiceRegistrar(FlextLoggableMixin):
         """Check if service exists."""
         return name in self._services or name in self._factories
 
-    def get_services_dict(self) -> TAnyDict:
+    def get_services_dict(self) -> dict[str, object]:
         """Get services dictionary (internal use)."""
         return self._services
 
@@ -371,13 +355,13 @@ class FlextServiceRetrivier(FlextLoggableMixin):
     Usage (Internal):
         retriever = FlextServiceRetrivier(services_dict, factories_dict)
         result = retriever.get_service("user_service")
-        if result.is_success:
+        if result.success:
             service = result.data
     """
 
     def __init__(
         self,
-        services: TAnyDict,
+        services: dict[str, object],
         factories: dict[str, Callable[[], object]],
     ) -> None:
         """Initialize service retriever with references."""
@@ -395,75 +379,28 @@ class FlextServiceRetrivier(FlextLoggableMixin):
         return FlextResult.ok(name)
 
     def get_service(self, name: str) -> FlextResult[object]:
-        """Retrieve a registered service."""
-        self.logger.trace("Starting service retrieval", name=name)
+        """Retrieve a registered service - Performance optimized."""
+        # Fast path: simple validation
+        if not name or not isinstance(name, str) or not name.strip():
+            return FlextResult.fail(MESSAGES["SERVICE_NAME_EMPTY"])
 
-        # Use centralized validation - eliminates duplication
-        validation_result = self._validate_service_name(name)
-        if validation_result.is_failure:
-            self.logger.debug(
-                "Service name validation failed during retrieval",
-                name=name,
-                error=validation_result.error,
-            )
-            return validation_result.map(
-                lambda _: object(),
-            )  # Convert type, preserve error
+        validated_name = name.strip()
 
-        validated_name = validation_result.unwrap()
-        self.logger.trace(
-            "Service name validated for retrieval",
-            validated_name=validated_name,
-        )
-
-        # Check direct service registration
+        # Check direct service registration first (most common case)
         if validated_name in self._services:
-            service = self._services[validated_name]
-            self.logger.debug(
-                "Service retrieved from cache",
-                name=validated_name,
-                service_type=type(service).__name__,
-                service_id=id(service),
-            )
-            self.logger.trace(
-                "Service retrieval from cache completed",
-                name=validated_name,
-            )
-            return FlextResult.ok(service)
+            return FlextResult.ok(self._services[validated_name])
 
         # Check factory registration
         if validated_name in self._factories:
-            self.logger.trace(
-                "Service not in cache, attempting factory creation",
-                name=validated_name,
-            )
             try:
                 factory = self._factories[validated_name]
-                self.logger.debug(
-                    "Creating service from factory",
-                    name=validated_name,
-                    factory_type=type(factory).__name__,
-                )
                 service = factory()
-                self.logger.trace(
-                    "Factory execution successful",
-                    name=validated_name,
-                    created_service_type=type(service).__name__,
-                    created_service_id=id(service),
-                )
 
                 # Cache the factory result as a service for singleton behavior
                 self._services[validated_name] = service
                 # Remove from factories since it's now cached as a service
                 del self._factories[validated_name]
 
-                self.logger.debug(
-                    "Service created and cached from factory",
-                    name=validated_name,
-                    service_type=type(service).__name__,
-                    total_services=len(self._services),
-                    total_factories=len(self._factories),
-                )
                 return FlextResult.ok(service)
             except (
                 TypeError,
@@ -489,7 +426,7 @@ class FlextServiceRetrivier(FlextLoggableMixin):
         self.logger.trace("Service retrieval failed - not found", name=validated_name)
         return FlextResult.fail(f"Service '{validated_name}' not found")
 
-    def get_service_info(self, name: str) -> FlextResult[TAnyDict]:
+    def get_service_info(self, name: str) -> FlextResult[dict[str, object]]:
         """Get service information.
 
         Args:
@@ -508,7 +445,7 @@ class FlextServiceRetrivier(FlextLoggableMixin):
 
         if validated_name in self._services:
             service = self._services[validated_name]
-            info: TAnyDict = {
+            info: dict[str, object] = {
                 "name": validated_name,
                 "type": "instance",
                 "class": type(service).__name__,
@@ -519,7 +456,7 @@ class FlextServiceRetrivier(FlextLoggableMixin):
 
         if validated_name in self._factories:
             factory = self._factories[validated_name]
-            factory_info: TAnyDict = {
+            factory_info: dict[str, object] = {
                 "name": validated_name,
                 "type": "factory",
                 "factory": factory.__name__,
@@ -605,7 +542,7 @@ class FlextContainer(FlextLoggableMixin):
 
         # Type-safe usage
         result = container.get_typed("service", MyService)
-        if result.is_success:
+        if result.success:
             service: MyService = result.data
 
         # Factory usage
@@ -649,7 +586,7 @@ class FlextContainer(FlextLoggableMixin):
         """Get a service by name."""
         return self._retriever.get_service(name)
 
-    def get_info(self, name: str) -> FlextResult[TAnyDict]:
+    def get_info(self, name: str) -> FlextResult[dict[str, object]]:
         """Get service information."""
         return self._retriever.get_service_info(name)
 
@@ -676,34 +613,22 @@ class FlextContainer(FlextLoggableMixin):
 
     # Type-safe retrieval methods
     def get_typed(self, name: str, expected_type: type[T]) -> FlextResult[T]:
-        """Get service with type checking."""
-        self.logger.debug(
-            "Getting typed service",
-            name=name,
-            expected_type=expected_type.__name__,
-        )
-
+        """Get service with type checking - Performance optimized."""
         result = self.get(name)
         if result.is_failure:
             return FlextResult.fail(result.error or "Service not found")
 
         service = result.unwrap()
 
-        # Use FlextTypes type guard - MAXIMIZA base usage
-        if not FlextTypes.TypeGuards.is_instance_of(service, expected_type):
+        # Simple isinstance check instead of complex FlextTypes.TypeGuards
+        if not isinstance(service, expected_type):
             actual_type = type(service).__name__
-            self.logger.error(
-                "Type mismatch for service",
-                name=name,
-                expected=expected_type.__name__,
-                actual=actual_type,
-            )
             return FlextResult.fail(
                 f"Service '{name}' is {actual_type}, expected {expected_type.__name__}",
             )
 
-        self.logger.debug("Typed service retrieved successfully", name=name)
-        return FlextResult.ok(cast("T", service))
+        # MyPy knows service is T after isinstance check
+        return FlextResult.ok(service)
 
     def auto_wire(
         self,
@@ -738,7 +663,7 @@ class FlextContainer(FlextLoggableMixin):
 
                 # Try to get service by parameter name
                 dep_result = self.get(param_name)
-                if dep_result.is_success:
+                if dep_result.success:
                     kwargs[param_name] = dep_result.data
                 elif param.default == inspect.Parameter.empty:
                     # Required parameter not found
@@ -788,7 +713,7 @@ class FlextContainer(FlextLoggableMixin):
         """
         # Try to get existing service first
         result = self.get(name)
-        if result.is_success:
+        if result.success:
             self.logger.debug("Service found", name=name)
             return FlextResult.ok(cast("T", result.data))
 
@@ -833,7 +758,9 @@ class FlextContainer(FlextLoggableMixin):
                 # Rollback previously registered services from this batch
                 for registered_name in registered_names:
                     self.unregister(registered_name)
-                error_msg = f"Batch registration failed at '{name}': {result.error}"
+                error_msg: str = (
+                    f"Batch registration failed at '{name}': {result.error}"
+                )
                 return FlextResult.fail(error_msg)
 
             registered_names.append(name)
@@ -982,7 +909,7 @@ class ServiceKey[T]:
 
         # Type-safe retrieval with automatic type inference
         user_service_result = get_typed(container, USER_SERVICE_KEY)
-        if user_service_result.is_success:
+        if user_service_result.success:
             user_service: UserService = user_service_result.data  # Type inferred
 
     Args:
@@ -1059,7 +986,7 @@ def register_typed[T](
         user_service = UserService()
 
         result = register_typed(container, USER_SERVICE_KEY, user_service)
-        if result.is_success:
+        if result.success:
             # Service registered with type safety
             pass
 
@@ -1102,7 +1029,7 @@ def get_typed[T](
         USER_SERVICE_KEY = ServiceKey[UserService]("user_service")
 
         result = get_typed(container, USER_SERVICE_KEY)
-        if result.is_success:
+        if result.success:
             user_service: UserService = result.data  # Type automatically inferred
             user_service.create_user(...)  # Full type safety and intellisense
 
@@ -1166,7 +1093,7 @@ def create_module_container_utilities(module_name: str) -> dict[str, object]:
     def configure_dependencies() -> None:
         """Configure module dependencies using official FlextContainer."""
         get_container()
-        logger.info(f"{module_name} dependencies configured successfully")
+        logger.info("%s dependencies configured successfully", module_name)
         # Container is ready - module-specific registrations can be added by caller
 
     def get_service(service_name: str) -> object:
@@ -1182,11 +1109,14 @@ def create_module_container_utilities(module_name: str) -> dict[str, object]:
         container = get_container()
         result = container.get(service_name)
 
-        if result.is_success:
+        if result.success:
             return result.data
 
         logger.warning(
-            f"{module_name} service '{service_name}' not found: {result.error}",
+            "%s service '%s' not found: %s",
+            module_name,
+            service_name,
+            result.error,
         )
         return None
 
@@ -1198,7 +1128,7 @@ def create_module_container_utilities(module_name: str) -> dict[str, object]:
 
 
 # Export API
-__all__ = [
+__all__: list[str] = [
     "FlextContainer",
     "FlextServiceFactory",
     "ServiceKey",

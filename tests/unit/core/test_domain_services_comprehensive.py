@@ -28,7 +28,7 @@ pytestmark = [pytest.mark.unit, pytest.mark.core]
 
 
 # Create concrete test services for testing
-class SampleCalculationService(FlextDomainService):
+class SampleCalculationService(FlextDomainService[float]):
     """Test calculation service for comprehensive testing."""
 
     value: float = 5.0
@@ -50,7 +50,7 @@ class SampleCalculationService(FlextDomainService):
         return a * b
 
 
-class SampleValidationService(FlextDomainService):
+class SampleValidationService(FlextDomainService[str]):
     """Test validation service for comprehensive testing."""
 
     name: str = "test"
@@ -79,7 +79,7 @@ class SampleValidationService(FlextDomainService):
         return 0 <= age <= 150
 
 
-class SampleErrorService(FlextDomainService):
+class SampleErrorService(FlextDomainService[None]):
     """Test service that always returns errors."""
 
     def execute(self) -> FlextResult[None]:
@@ -95,7 +95,7 @@ class SampleErrorService(FlextDomainService):
         return FlextResult.fail(f"Failed with context: {context}")
 
 
-class SampleExceptionService(FlextDomainService):
+class SampleExceptionService(FlextDomainService[None]):
     """Test service that raises exceptions."""
 
     def execute(self) -> FlextResult[None]:
@@ -113,7 +113,7 @@ class SampleExceptionService(FlextDomainService):
         raise ValueError(message)
 
 
-class SampleConfigErrorService(FlextDomainService):
+class SampleConfigErrorService(FlextDomainService[None]):
     """Test service with configuration errors."""
 
     def execute(self) -> FlextResult[None]:
@@ -151,17 +151,17 @@ class TestFlextDomainService:
         service = SampleCalculationService()
 
         with pytest.raises(ValueError, match=".*"):  # ValidationError or AttributeError
-            service.value = 20.0
+            service.value = 20.0  # type: ignore[misc]
 
     def test_domain_service_extra_fields_forbidden(self) -> None:
         """Test domain service forbids extra fields."""
         with pytest.raises(ValueError, match=".*"):  # ValidationError
-            SampleCalculationService(value=10.0, extra_field="not allowed")
+            SampleCalculationService(value=10.0, extra_field="not allowed")  # type: ignore[call-arg]
 
     def test_execute_method_is_abstract(self) -> None:
         """Test that execute method is abstract."""
         with pytest.raises(TypeError, match="Can't instantiate abstract class"):
-            FlextDomainService()
+            FlextDomainService()  # type: ignore[abstract]
 
     def test_execute_success(self) -> None:
         """Test successful service execution."""
@@ -169,7 +169,7 @@ class TestFlextDomainService:
 
         result = service.execute()
 
-        assert result.is_success
+        assert result.success
         if result.data != 10.0:
             raise AssertionError(f"Expected {10.0}, got {result.data}")
 
@@ -191,7 +191,7 @@ class TestFlextDomainService:
 
         result = service.execute()
 
-        assert result.is_success
+        assert result.success
         if result.data != "TEST":
             raise AssertionError(f"Expected {'TEST'}, got {result.data}")
 
@@ -211,7 +211,7 @@ class TestFlextDomainService:
 
         result = service.validate_config()
 
-        assert result.is_success
+        assert result.success
         assert result.data is None
 
     def test_validate_config_custom_success(self) -> None:
@@ -220,7 +220,7 @@ class TestFlextDomainService:
 
         result = service.validate_config()
 
-        assert result.is_success
+        assert result.success
 
     def test_validate_config_custom_failure(self) -> None:
         """Test custom validate_config failure."""
@@ -253,7 +253,7 @@ class TestFlextDomainService:
 
         result = service.execute_operation("add", test_operation, 5.0, 3.0)
 
-        assert result.is_success
+        assert result.success
         if result.data != EXPECTED_TOTAL_PAGES:
             raise AssertionError(f"Expected {8.0}, got {result.data}")
 
@@ -271,7 +271,7 @@ class TestFlextDomainService:
             multiplier=3.0,
         )
 
-        assert result.is_success
+        assert result.success
         if result.data != 15.0:
             raise AssertionError(f"Expected {15.0}, got {result.data}")
 
@@ -294,7 +294,7 @@ class TestFlextDomainService:
         """Test execute_operation with empty error from config validation."""
 
         # Create a service that returns empty error messages
-        class EmptyErrorService(FlextDomainService):
+        class EmptyErrorService(FlextDomainService[str]):
             def execute(self) -> FlextResult[str]:
                 return FlextResult.ok("executed")
 
@@ -453,7 +453,7 @@ class TestFlextDomainService:
         service = SampleValidationService(name="complex_test")
 
         result = service.execute()
-        assert result.is_success
+        assert result.success
         if result.data != "COMPLEX_TEST":
             raise AssertionError(f"Expected {'COMPLEX_TEST'}, got {result.data}")
 
@@ -495,10 +495,10 @@ class TestDomainServiceIntegration:
         calc_result = calc_service.execute()
         validation_result = validation_service.execute()
 
-        assert calc_result.is_success
+        assert calc_result.success
         if calc_result.data != 10.0:
             raise AssertionError(f"Expected {10.0}, got {calc_result.data}")
-        assert validation_result.is_success
+        assert validation_result.success
         if validation_result.data != "TEST":
             raise AssertionError(f"Expected {'TEST'}, got {validation_result.data}")
 
@@ -511,22 +511,24 @@ class TestDomainServiceIntegration:
         validation_result = validation_service.execute()
 
         assert calc_result.is_failure
-        assert validation_result.is_success
+        assert validation_result.success
 
     def test_service_chaining_with_results(self) -> None:
         """Test chaining services using results."""
         calc_service = SampleCalculationService(value=5.0, multiplier=2.0)
 
         calc_result = calc_service.execute()
-        if calc_result.is_success:
+        if calc_result.success and calc_result.data is not None:
             # Use calculation result in another service
+            # Since calc_result comes from SampleCalculationService[float], data is guaranteed to be float
+            data_value = float(calc_result.data)  # Type guard to ensure float
             validation_service = SampleValidationService(
-                name=f"result_{int(calc_result.data)}",
+                name=f"result_{int(data_value)}",
                 min_length=5,
             )
             validation_result = validation_service.execute()
 
-            assert validation_result.is_success
+            assert validation_result.success
             if validation_result.data != "RESULT_10":
                 raise AssertionError(
                     f"Expected {'RESULT_10'}, got {validation_result.data}"
@@ -534,14 +536,17 @@ class TestDomainServiceIntegration:
 
     def test_multiple_service_info_collection(self) -> None:
         """Test collecting service info from multiple services."""
-        services = [
-            SampleCalculationService(value=10.0),
-            SampleValidationService(name="test", min_length=2),
-            SampleErrorService(),
-            SampleConfigErrorService(),
-        ]
+        calc_service = SampleCalculationService(value=10.0)
+        validation_service = SampleValidationService(name="test", min_length=2)
+        error_service = SampleErrorService()
+        config_error_service = SampleConfigErrorService()
 
-        service_infos = [service.get_service_info() for service in services]
+        service_infos = [
+            calc_service.get_service_info(),
+            validation_service.get_service_info(),
+            error_service.get_service_info(),
+            config_error_service.get_service_info(),
+        ]
 
         if len(service_infos) != 4:
             raise AssertionError(f"Expected {4}, got {len(service_infos)}")
@@ -593,7 +598,7 @@ class TestDomainServiceIntegration:
             operations,
         )
 
-        assert result.is_success
+        assert result.success
         # (10 + 5) * 2 + 3 = 33
         if result.data != 33.0:
             raise AssertionError(f"Expected {33.0}, got {result.data}")
@@ -612,7 +617,7 @@ class TestDomainServiceEdgeCases:
 
         result = service.execute_operation("", test_operation)
 
-        assert result.is_success
+        assert result.success
         if result.data != "executed":
             raise AssertionError(f"Expected {'executed'}, got {result.data}")
 
@@ -625,7 +630,7 @@ class TestDomainServiceEdgeCases:
 
         result = service.execute_operation("no_args", no_args_operation)
 
-        assert result.is_success
+        assert result.success
         if result.data != "no args":
             raise AssertionError(f"Expected {'no args'}, got {result.data}")
 
@@ -638,7 +643,7 @@ class TestDomainServiceEdgeCases:
 
         result = service.execute_operation("none_op", none_operation)
 
-        assert result.is_success
+        assert result.success
         assert result.data is None
 
     def test_service_operation_returning_complex_object(self) -> None:
@@ -654,7 +659,7 @@ class TestDomainServiceEdgeCases:
 
         result = service.execute_operation("complex", complex_operation)
 
-        assert result.is_success
+        assert result.success
         assert isinstance(result.data, dict)
         if (result.data or {})["result"] != 42:
             raise AssertionError(f"Expected {42}, got {(result.data or {})['result']}")
@@ -666,7 +671,7 @@ class TestDomainServiceEdgeCases:
 
         result = service.execute()
 
-        assert result.is_success
+        assert result.success
         if result.data != 0.0:
             raise AssertionError(f"Expected {0.0}, got {result.data}")
 
@@ -676,7 +681,7 @@ class TestDomainServiceEdgeCases:
 
         result = service.execute()
 
-        assert result.is_success
+        assert result.success
         if result.data != 1e15:
             raise AssertionError(f"Expected {1e15}, got {result.data}")
 
@@ -685,7 +690,7 @@ class TestDomainServiceEdgeCases:
         # Test exactly at minimum length
         service = SampleValidationService()
         result = service.execute()
-        assert result.is_success
+        assert result.success
         if result.data != "TEST":
             raise AssertionError(f"Expected {'TEST'}, got {result.data}")
 
@@ -747,7 +752,7 @@ class TestDomainServiceTypes:
         assert service.min_length == 5
 
         result = service.execute()
-        assert result.is_success
+        assert result.success
         if result.data != "TEST_STRING":
             raise AssertionError(f"Expected {'TEST_STRING'}, got {result.data}")
 
@@ -781,7 +786,7 @@ class TestDomainServiceMockIntegration:
             "test_arg",
         )
 
-        assert result.is_success
+        assert result.success
         if result.data != 42:
             raise AssertionError(f"Expected {42}, got {result.data}")
         mock_func.assert_called_once_with("test_arg")
@@ -806,7 +811,7 @@ class TestDomainServiceMockIntegration:
             test_callback,
         )
 
-        assert result.is_success
+        assert result.success
         if result.data != 20.0:
             raise AssertionError(f"Expected {20.0}, got {result.data}")
         assert len(callback_results) == EXPECTED_BULK_SIZE
@@ -819,19 +824,19 @@ class TestDomainServiceMockIntegration:
         # Test service with multiple validation conditions
         service = SampleValidationService()
 
-        result = service.validate_config()
-        assert result.is_success
+        config_result = service.validate_config()
+        assert config_result.success
 
-        result = service.execute()
-        assert result.is_success
-        if result.data != "TEST":
-            raise AssertionError(f"Expected {'TEST'}, got {result.data}")
+        execute_result = service.execute()
+        assert execute_result.success
+        if execute_result.data != "TEST":
+            raise AssertionError(f"Expected {'TEST'}, got {execute_result.data}")
 
         # Test validation failure cascade
         service = SampleValidationService(name=" ", min_length=5)  # Whitespace only
         config_result = service.validate_config()
         assert config_result.is_failure
-        if "Name cannot be empty" not in config_result.error:
+        if "Name cannot be empty" not in (config_result.error or ""):
             raise AssertionError(
                 f"Expected {'Name cannot be empty'} in {config_result.error}"
             )

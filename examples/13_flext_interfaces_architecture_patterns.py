@@ -381,7 +381,7 @@ class LoggingMiddleware(FlextMiddleware):
         # Process through next handler
         result = next_handler.handle(message)
 
-        if result.is_success:
+        if result.success:
             print(f"[MIDDLEWARE] Message {message_type} processed successfully")
         else:
             print(f"[MIDDLEWARE] Message {message_type} failed: {result.error}")
@@ -940,14 +940,14 @@ def demonstrate_validation_interfaces() -> None:
 
     # Test valid email
     result = email_validator.validate("  User@Example.COM  ")
-    if result.is_success:
+    if result.success:
         print(f"✅ Valid email normalized: {result.data}")
     else:
         print(f"❌ Email validation failed: {result.error}")
 
     # Test invalid email
     result = email_validator.validate("invalid-email")
-    if result.is_success:
+    if result.success:
         print(f"✅ Email validated: {result.data}")
     else:
         print(f"❌ Invalid email (expected): {result.error}")
@@ -1000,31 +1000,31 @@ def demonstrate_service_interfaces() -> None:
 
     # Test health check before start
     health = user_service.health_check()
-    if health.is_success:
+    if health.success:
         print(f"   Health before start: {health.data}")
 
     # Start service
     result = user_service.start()
-    if result.is_success:
+    if result.success:
         print("   ✅ Service started successfully")
     else:
         print(f"   ❌ Service start failed: {result.error}")
 
     # Health check after start
     health = user_service.health_check()
-    if health.is_success:
+    if health.success:
         print(f"   Health after start: {health.data}")
 
     # Use service
     user_result = user_service.create_user("Alice Johnson", "alice@example.com", 28)
-    if user_result.is_success:
+    if user_result.success:
         user = user_result.data
         if user is not None:
             print(f"   ✅ User created: {user.name} ({user.id})")
 
     # Stop service
     result = user_service.stop()
-    if result.is_success:
+    if result.success:
         print("   ✅ Service stopped successfully")
 
     # 2. Configurable service demonstration
@@ -1046,7 +1046,7 @@ def demonstrate_service_interfaces() -> None:
     }
 
     config_result = email_service.configure(config)
-    if config_result.is_success:
+    if config_result.success:
         print("   ✅ Email service configured successfully")
     else:
         print(f"   ❌ Configuration failed: {config_result.error}")
@@ -1057,7 +1057,7 @@ def demonstrate_service_interfaces() -> None:
         "Welcome!",
         "Welcome to our service!",
     )
-    if result.is_success:
+    if result.success:
         print("   ✅ Email sent successfully")
     else:
         print(f"   ❌ Email send failed: {result.error}")
@@ -1104,7 +1104,7 @@ def demonstrate_handler_interfaces() -> None:
 
     if can_handle:
         result = handler.handle(create_message)
-        if result.is_success:
+        if result.success:
             user = result.data
             if hasattr(user, "name") and hasattr(user, "id"):
                 print(f"   ✅ User created via handler: {user.name} ({user.id})")
@@ -1129,9 +1129,9 @@ def demonstrate_handler_interfaces() -> None:
 
     # Process through validation middleware first, then logging
     result = validation_middleware.process(valid_message, handler)
-    if result.is_success:
+    if result.success:
         result = logging_middleware.process(valid_message, handler)
-        if result.is_success:
+        if result.success:
             user = result.data
             if hasattr(user, "name") and hasattr(user, "id"):
                 print(f"   ✅ Pipeline success: {user.name} ({user.id})")
@@ -1173,7 +1173,7 @@ def demonstrate_repository_interfaces() -> None:  # noqa: PLR0912, PLR0915
 
     for user in users:
         save_result = user_repo.save(user)
-        if save_result.is_success:
+        if save_result.success:
             print(f"   ✅ Saved user: {user.name}")
         else:
             print(f"   ❌ Save failed: {save_result.error}")
@@ -1182,7 +1182,7 @@ def demonstrate_repository_interfaces() -> None:  # noqa: PLR0912, PLR0915
     print("   Finding users:")
     for user_id in ["user_1", "user_999", "user_2"]:
         result = user_repo.find_by_id(user_id)
-        if result.is_success:
+        if result.success:
             user_data = result.data
             if (
                 user_data is not None
@@ -1195,7 +1195,7 @@ def demonstrate_repository_interfaces() -> None:  # noqa: PLR0912, PLR0915
 
     # Delete user
     delete_result = user_repo.delete("user_2")
-    if delete_result.is_success:
+    if delete_result.success:
         print("   ✅ User deleted")
 
     # Try to find deleted user
@@ -1217,12 +1217,12 @@ def demonstrate_repository_interfaces() -> None:  # noqa: PLR0912, PLR0915
 
         # Commit explicitly
         commit_result = uow.commit()
-        if commit_result.is_success:
+        if commit_result.success:
             print("   ✅ Transaction committed successfully")
 
     # Verify user was saved
     result = fresh_repo.find_by_id("user_100")
-    if result.is_success:
+    if result.success:
         user_data = result.data
         if hasattr(user_data, "name"):
             print(f"   ✅ User persisted after commit: {user_data.name}")
@@ -1286,7 +1286,7 @@ def demonstrate_plugin_interfaces() -> None:
     print(f"   Plugin: {email_plugin.name} v{email_plugin.version}")
 
     init_result = email_plugin.initialize(context)
-    if init_result.is_success:
+    if init_result.success:
         print("   ✅ Email notification plugin initialized")
     else:
         print(f"   ❌ Plugin initialization failed: {init_result.error}")
@@ -1296,7 +1296,7 @@ def demonstrate_plugin_interfaces() -> None:
     print(f"   Plugin: {audit_plugin.name} v{audit_plugin.version}")
 
     init_result = audit_plugin.initialize(context)
-    if init_result.is_success:
+    if init_result.success:
         print("   ✅ Audit log plugin initialized")
 
     # 3. Plugin usage
@@ -1305,7 +1305,7 @@ def demonstrate_plugin_interfaces() -> None:
     # Use email plugin
     test_user = User("plugin_user", "Plugin Test User", "plugintest@example.com", 30)
     email_result = email_plugin.send_welcome_email(test_user)
-    if email_result.is_success:
+    if email_result.success:
         print("   ✅ Welcome email sent via plugin")
     else:
         print(f"   ❌ Email send failed: {email_result.error}")
@@ -1318,18 +1318,18 @@ def demonstrate_plugin_interfaces() -> None:
             "action": "welcome_email_sent",
         },
     )
-    if audit_result.is_success:
+    if audit_result.success:
         print("   ✅ Event logged via audit plugin")
 
     # 4. Plugin shutdown
     print("\n4. Plugin shutdown:")
 
     shutdown_result = email_plugin.shutdown()
-    if shutdown_result.is_success:
+    if shutdown_result.success:
         print("   ✅ Email plugin shut down")
 
     shutdown_result = audit_plugin.shutdown()
-    if shutdown_result.is_success:
+    if shutdown_result.success:
         print("   ✅ Audit plugin shut down")
 
     print("✅ Plugin interfaces demonstration completed")
@@ -1362,11 +1362,11 @@ def demonstrate_event_interfaces() -> None:
 
     # Subscribe to events
     result = subscriber.subscribe(UserCreatedEvent, event_handler)
-    if result.is_success:
+    if result.success:
         print("   ✅ Subscribed to UserCreatedEvent")
 
     result = subscriber.subscribe(OrderPlacedEvent, event_handler)
-    if result.is_success:
+    if result.success:
         print("   ✅ Subscribed to OrderPlacedEvent")
 
     # 3. Event publishing
@@ -1381,7 +1381,7 @@ def demonstrate_event_interfaces() -> None:
     )
 
     result = publisher.publish(user_event)
-    if result.is_success:
+    if result.success:
         print("   ✅ UserCreatedEvent published successfully")
     else:
         print(f"   ❌ Event publish failed: {result.error}")
@@ -1395,7 +1395,7 @@ def demonstrate_event_interfaces() -> None:
     )
 
     result = publisher.publish(order_event)
-    if result.is_success:
+    if result.success:
         print("   ✅ OrderPlacedEvent published successfully")
     else:
         print(f"   ❌ Event publish failed: {result.error}")
@@ -1407,14 +1407,14 @@ def demonstrate_event_interfaces() -> None:
 
     unknown_event = UnknownEvent("test data")
     result = publisher.publish(unknown_event)
-    if result.is_success:
+    if result.success:
         print("   ✅ Unknown event published (no subscribers)")
 
     # 4. Event unsubscription
     print("\n4. Event unsubscription:")
 
     result = subscriber.unsubscribe(UserCreatedEvent, event_handler)
-    if result.is_success:
+    if result.success:
         print("   ✅ Unsubscribed from UserCreatedEvent")
 
     # Publish event after unsubscription
@@ -1426,7 +1426,7 @@ def demonstrate_event_interfaces() -> None:
     )
 
     result = publisher.publish(user_event2)
-    if result.is_success:
+    if result.success:
         print("   ✅ Event published after unsubscription (should have no effect)")
 
     print("✅ Event interfaces demonstration completed")
