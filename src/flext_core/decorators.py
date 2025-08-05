@@ -520,7 +520,9 @@ def flext_safe_call(func: F) -> F:
     return FlextDecorators.safe_result(func)
 
 
-def flext_cache_decorator(max_size: int = 128) -> object:
+def flext_cache_decorator(
+    max_size: int = 128,
+) -> Callable[[F], F]:
     """Cache decorator for function results.
 
     Args:
@@ -530,20 +532,23 @@ def flext_cache_decorator(max_size: int = 128) -> object:
         Decorator function
 
     """
-    return _BasePerformanceDecorators.create_cache_decorator(max_size)
+    return cast(
+        "Callable[[F], F]", 
+        _BasePerformanceDecorators.create_cache_decorator(max_size)
+    )
 
 
-def flext_safe_decorator() -> object:
+def flext_safe_decorator() -> Callable[[F], F]:
     """Safe execution decorator.
 
     Returns:
         Decorator function
 
     """
-    return _BaseErrorHandlingDecorators.get_safe_decorator()
+    return cast("Callable[[F], F]", _BaseErrorHandlingDecorators.get_safe_decorator())
 
 
-def flext_timing_decorator(func: _DecoratedFunction) -> _DecoratedFunction:
+def flext_timing_decorator(func: F) -> F:
     """Apply timing decorator for performance measurement.
 
     Args:
@@ -553,7 +558,12 @@ def flext_timing_decorator(func: _DecoratedFunction) -> _DecoratedFunction:
         Wrapped function with timing
 
     """
-    return _BasePerformanceDecorators.get_timing_decorator()(func)
+    return cast(
+        "F", 
+        _BasePerformanceDecorators.get_timing_decorator()(
+            cast("_DecoratedFunction", func)
+        )
+    )
 
 
 # =============================================================================

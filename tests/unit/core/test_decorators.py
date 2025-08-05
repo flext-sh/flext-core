@@ -280,8 +280,8 @@ class TestStandaloneDecorators:
         """Test flext_cache_decorator functionality."""
         call_count = 0
 
-        @flext_cache_decorator(max_size=3)  # type: ignore[operator]
-        def cached_function(x: int) -> int:  # type: ignore[misc]
+        @flext_cache_decorator(max_size=3)
+        def cached_function(x: int) -> int:
             nonlocal call_count
             call_count += 1
             return x**2
@@ -307,8 +307,8 @@ class TestStandaloneDecorators:
     def test_flext_safe_decorator(self) -> None:
         """Test flext_safe_decorator functionality."""
 
-        @flext_safe_decorator()  # type: ignore[operator]
-        def potentially_unsafe_function(x: int) -> int:  # type: ignore[misc]
+        @flext_safe_decorator()
+        def potentially_unsafe_function(x: int) -> int:
             if x < 0:
                 msg = "Negative value not allowed"
                 raise ValueError(msg)
@@ -329,7 +329,7 @@ class TestStandaloneDecorators:
     def test_flext_timing_decorator(self) -> None:
         """Test flext_timing_decorator functionality."""
 
-        @flext_timing_decorator  # type: ignore[arg-type]
+        @flext_timing_decorator
         def timed_function(delay: float) -> str:
             time.sleep(delay)
             return "completed"
@@ -346,7 +346,7 @@ class TestDecoratorComposition:
         """Test applying multiple decorators to the same function."""
 
         @FlextDecorators.safe_result
-        @flext_timing_decorator  # type: ignore[arg-type]
+        @flext_timing_decorator
         def multi_decorated_function(x: int) -> int:
             time.sleep(0.001)
             return x * 10
@@ -524,8 +524,8 @@ class TestBaseDecoratorClasses:
 
         # This should preserve metadata
         result = _BaseDecoratorUtils.preserve_metadata(
-            original_function,  # type: ignore[arg-type]
-            wrapper_function,  # type: ignore[arg-type]
+            original_function,
+            wrapper_function,
         )
         assert callable(result)
 
@@ -545,7 +545,7 @@ class TestBaseDecoratorClasses:
         def test_func() -> str:
             return "test"
 
-        validated_func = _BaseValidationDecorators.validate_arguments(test_func)  # type: ignore[arg-type]
+        validated_func = _BaseValidationDecorators.validate_arguments(test_func)
         assert validated_func is test_func
 
     def test_base_error_handling_decorators(self) -> None:
@@ -577,7 +577,7 @@ class TestBaseDecoratorClasses:
         def test_func(x: int) -> int:
             return x * 2
 
-        memoized = _BasePerformanceDecorators.memoize_decorator(test_func)  # type: ignore[arg-type]
+        memoized = _BasePerformanceDecorators.memoize_decorator(test_func)
         assert callable(memoized)
 
 
@@ -600,11 +600,11 @@ class TestDecoratorCoverageImprovements:
             return x * 2
 
         # Test immutable_decorator - line 276
-        decorated = _BaseImmutabilityDecorators.immutable_decorator(sample_function)  # type: ignore[arg-type]
+        decorated = _BaseImmutabilityDecorators.immutable_decorator(sample_function)
         assert decorated is sample_function  # Returns same function
 
         # Test freeze_args_decorator - line 281
-        decorated = _BaseImmutabilityDecorators.freeze_args_decorator(sample_function)  # type: ignore[arg-type]
+        decorated = _BaseImmutabilityDecorators.freeze_args_decorator(sample_function)
         assert decorated is sample_function  # Returns same function
 
     def test_functional_decorators_coverage(self) -> None:
@@ -615,11 +615,11 @@ class TestDecoratorCoverageImprovements:
             return x * 2
 
         # Test curry_decorator - line 290
-        decorated = _BaseFunctionalDecorators.curry_decorator(sample_function)  # type: ignore[arg-type]
+        decorated = _BaseFunctionalDecorators.curry_decorator(sample_function)
         assert decorated is sample_function  # Returns same function
 
         # Test compose_decorator - line 295
-        decorated = _BaseFunctionalDecorators.compose_decorator(sample_function)  # type: ignore[arg-type]
+        decorated = _BaseFunctionalDecorators.compose_decorator(sample_function)
         assert decorated is sample_function  # Returns same function
 
     def test_logging_decorator_exception_handling(self) -> None:
@@ -632,7 +632,7 @@ class TestDecoratorCoverageImprovements:
             msg = "Test runtime error"
             raise RuntimeError(msg)
 
-        decorated = _BaseLoggingDecorators.log_calls_decorator(failing_function)  # type: ignore[arg-type]
+        decorated = _BaseLoggingDecorators.log_calls_decorator(failing_function)
 
         # Should re-raise the exception after logging
         with pytest.raises(RuntimeError, match="Test runtime error"):
@@ -648,7 +648,7 @@ class TestDecoratorCoverageImprovements:
             msg = "Type error occurred"
             raise TypeError(msg)
 
-        decorated = _BaseLoggingDecorators.log_calls_decorator(type_error_function)  # type: ignore[arg-type]
+        decorated = _BaseLoggingDecorators.log_calls_decorator(type_error_function)
 
         with pytest.raises(TypeError, match="Type error occurred"):
             decorated()
@@ -663,7 +663,7 @@ class TestDecoratorCoverageImprovements:
             msg = "Value error occurred"
             raise ValueError(msg)
 
-        decorated = _BaseLoggingDecorators.log_calls_decorator(value_error_function)  # type: ignore[arg-type]
+        decorated = _BaseLoggingDecorators.log_calls_decorator(value_error_function)
 
         with pytest.raises(ValueError, match="Value error occurred"):
             decorated()
@@ -678,7 +678,7 @@ class TestDecoratorCoverageImprovements:
             msg = "Exception for logging test"
             raise RuntimeError(msg)
 
-        decorated = _BaseLoggingDecorators.log_exceptions_decorator(failing_function)  # type: ignore[arg-type]
+        decorated = _BaseLoggingDecorators.log_exceptions_decorator(failing_function)
 
         with pytest.raises(RuntimeError, match="Exception for logging test"):
             decorated()
@@ -698,10 +698,10 @@ class TestDecoratorCoverageImprovements:
             raise ValueError(msg)
 
         decorated_type = _BaseLoggingDecorators.log_exceptions_decorator(
-            type_error_function  # type: ignore[arg-type]
+            type_error_function
         )
         decorated_value = _BaseLoggingDecorators.log_exceptions_decorator(
-            value_error_function  # type: ignore[arg-type]
+            value_error_function
         )
 
         with pytest.raises(TypeError, match="Type error in log_exceptions test"):

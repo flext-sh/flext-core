@@ -543,7 +543,7 @@ class TestFlextFieldCore:
         ):
             raise AssertionError(f"Expected approximately {math.pi}, got {pi_value}")
         # Test float deserialization from string - expect exact value
-        if float_field.deserialize_value("3.14") != math.pi:
+        if float_field.deserialize_value("3.14") != 3.14:
             raise AssertionError(
                 f"Expected 3.14, got {float_field.deserialize_value('3.14')}"
             )
@@ -763,7 +763,7 @@ class TestFlextFieldMetadata:
 
     def test_metadata_from_dict_with_defaults(self) -> None:
         """Test creating metadata from dictionary with missing fields."""
-        data = {"description": "Partial description"}
+        data: dict[str, object] = {"description": "Partial description"}
 
         metadata = FlextFieldMetadata.from_dict(data)
         if metadata.field_id != "unknown":  # Default:
@@ -1038,7 +1038,7 @@ class TestFlextFieldRegistry:
         assert result.success
 
         # Missing required field
-        invalid_data = {"optional_field": 20}
+        invalid_data: dict[str, object] = {"optional_field": 20}
         result = registry.validate_all_fields(invalid_data)
         assert result.is_failure
         if "is missing" not in (result.error or ""):
@@ -1420,7 +1420,7 @@ class TestFieldEdgeCases:
         enum_field = FlextFieldCore(
             field_id="enum_field",
             field_name="enum_name",
-            field_type=FlextFieldType.STRING,  # Enum
+            field_type=FlextFieldType.STRING.value,  # Convert enum to string
         )
 
         # Field with string type
@@ -1657,6 +1657,9 @@ class TestIntegrationScenarios:
         lookup_result = FlextFields.get_field_by_id("lifecycle_field")
         assert lookup_result.success
         retrieved_field = lookup_result.data
+        assert retrieved_field is not None, (
+            "Field should have been retrieved successfully"
+        )
 
         # Validate values through retrieved field
         valid_result = retrieved_field.validate_value("Hello")

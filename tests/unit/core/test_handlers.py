@@ -1299,7 +1299,7 @@ class TestBaseHandlerClasses:
         """Test that base handler is abstract and cannot be instantiated."""
         # _BaseHandler is abstract and should not be instantiated directly
         try:
-            _BaseHandler()  # type: ignore[abstract]
+            _BaseHandler()
             # If we get here, the handler was instantiated (shouldn't happen)
             msg = "Abstract handler should not be instantiable"
             raise AssertionError(msg)

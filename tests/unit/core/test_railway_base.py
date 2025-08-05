@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import pytest
+from typing import cast
 
 from flext_core._railway_base import _BaseRailway, _BaseRailwayUtils
 from flext_core.result import FlextResult
@@ -70,10 +71,10 @@ class TestBaseRailway:
 
         # Define component functions
         def add_one(x: object) -> FlextResult[object]:
-            return FlextResult.ok(int(x) + 1)  # type: ignore[call-overload]
+            return FlextResult.ok(int(cast(int, x)) + 1)
 
         def multiply_two(x: object) -> FlextResult[object]:
-            return FlextResult.ok(int(x) * 2)  # type: ignore[call-overload]
+            return FlextResult.ok(int(cast(int, x)) * 2)
 
         def to_string(x: object) -> FlextResult[object]:
             return FlextResult.ok(str(x))
@@ -93,13 +94,13 @@ class TestBaseRailway:
 
         # Define component functions
         def add_one(x: object) -> FlextResult[object]:
-            return FlextResult.ok(int(x) + 1)  # type: ignore[call-overload]
+            return FlextResult.ok(int(cast(int, x)) + 1)
 
         def failing_function(x: object) -> FlextResult[object]:
             return FlextResult.fail("Middle function failed")
 
         def multiply_two(x: object) -> FlextResult[object]:
-            return FlextResult.ok(int(x) * 2)  # type: ignore[call-overload]
+            return FlextResult.ok(int(cast(int, x)) * 2)
 
         # Compose functions
         composed = _BaseRailway.compose_functions(
@@ -125,7 +126,7 @@ class TestBaseRailway:
             return x > 0
 
         def double(x: object) -> FlextResult[object]:
-            return FlextResult.ok(int(x) * 2)  # type: ignore[call-overload]
+            return FlextResult.ok(int(cast(int, x)) * 2)
 
         def negate(x: int) -> FlextResult[object]:
             return FlextResult.ok(-x)
@@ -148,7 +149,7 @@ class TestBaseRailway:
             return x > 0
 
         def double(x: object) -> FlextResult[object]:
-            return FlextResult.ok(int(x) * 2)  # type: ignore[call-overload]
+            return FlextResult.ok(int(cast(int, x)) * 2)
 
         def negate(x: int) -> FlextResult[object]:
             return FlextResult.ok(-x)
@@ -174,7 +175,7 @@ class TestBaseRailway:
             return x > 0
 
         def double(x: object) -> FlextResult[object]:
-            return FlextResult.ok(int(x) * 2)  # type: ignore[call-overload]
+            return FlextResult.ok(int(cast(int, x)) * 2)
 
         def negate(x: int) -> FlextResult[object]:
             return FlextResult.ok(-x)
@@ -450,15 +451,15 @@ class TestBaseRailwayUtils:
 
         # Define component functions
         def validate_positive(x: object) -> FlextResult[object]:
-            if int(x) <= 0:  # type: ignore[call-overload]
+            if int(cast(int, x)) <= 0:
                 return FlextResult.fail("Must be positive")
             return FlextResult.ok(x)
 
         def double(x: object) -> FlextResult[object]:
-            return FlextResult.ok(int(x) * 2)  # type: ignore[call-overload]
+            return FlextResult.ok(int(cast(int, x)) * 2)
 
         def add_ten(x: object) -> FlextResult[object]:
-            return FlextResult.ok(int(x) + 10)  # type: ignore[call-overload]
+            return FlextResult.ok(int(cast(int, x)) + 10)
 
         # Create complex chain
         initial_result = FlextResult.ok(5)
@@ -481,15 +482,15 @@ class TestBaseRailwayUtils:
 
         # Define component functions
         def validate_positive(x: object) -> FlextResult[object]:
-            if int(x) <= 0:  # type: ignore[call-overload]
+            if int(cast(int, x)) <= 0:
                 return FlextResult.fail("Must be positive")
             return FlextResult.ok(x)
 
         def double(x: object) -> FlextResult[object]:
-            return FlextResult.ok(int(x) * 2)  # type: ignore[call-overload]
+            return FlextResult.ok(int(cast(int, x)) * 2)
 
         def add_ten(x: object) -> FlextResult[object]:
-            return FlextResult.ok(int(x) + 10)  # type: ignore[call-overload]
+            return FlextResult.ok(int(cast(int, x)) + 10)
 
         # Create complex chain with negative input
         initial_result = FlextResult.ok(-3)
@@ -532,7 +533,7 @@ class TestBaseRailwayUtils:
         # Define function that raises TypeError
         def failing_function(x: str) -> FlextResult[object]:
             # This will raise TypeError when called with string
-            return FlextResult.ok(int(x + None))  # type: ignore[operator]
+            return FlextResult.ok(int(x + None))
 
         # Execute bind operation
         result = _BaseRailway.bind(initial_result, failing_function)

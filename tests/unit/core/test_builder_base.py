@@ -61,7 +61,7 @@ class TestBaseBuilder:
 
         builder._set_property("key1", "value1")
         builder._set_property("key2", 42.0)
-        builder._set_property("key3", "nested_dict_string")
+        builder._set_property("key3", {"nested": "dict"})
 
         if builder._properties["key1"] != "value1":
             raise AssertionError(
@@ -91,7 +91,7 @@ class TestBaseBuilder:
         """Test setting property with None key."""
         builder = _BaseBuilder("test_builder")
 
-        result = builder._set_property(None, "value")  # type: ignore[arg-type]
+        result = builder._set_property(None, "value")
 
         assert result is builder
         if "Invalid property key: None" not in builder._validation_errors[0]:
@@ -151,7 +151,7 @@ class TestBaseBuilder:
 
         builder._set_property("", "value1")
         builder._set_property("   ", "value2")
-        builder._set_property(None, "value3")  # type: ignore[arg-type]
+        builder._set_property(None, "value3")
 
         if len(builder._validation_errors) != EXPECTED_DATA_COUNT:
             raise AssertionError(f"Expected {3}, got {len(builder._validation_errors)}")

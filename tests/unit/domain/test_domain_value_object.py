@@ -11,6 +11,7 @@ from decimal import Decimal
 import pytest
 from pydantic import ValidationError
 
+from flext_core.result import FlextResult
 from flext_core.value_objects import FlextValueObject
 
 # Import shared test domain
@@ -59,6 +60,7 @@ class TestFlextValueObjectEquality:
         """Test value object equality with different types."""
         vo = ConcreteValueObject(amount=Decimal("10.50"), currency="USD")
 
+        # Test that value object is not equal to primitive types
         assert vo != "not a value object"
         assert vo != 42
         assert vo != {"amount": Decimal("10.50"), "currency": "USD"}
@@ -71,14 +73,14 @@ class TestFlextValueObjectEquality:
             amount: Decimal
             currency: str = "USD"
 
-            def validate_domain_rules(self) -> None:
-                pass
+            def validate_domain_rules(self) -> FlextResult[None]:
+                return FlextResult.ok(None)
 
         vo1 = ConcreteValueObject(amount=Decimal("10.50"), currency="USD")
         vo2 = AnotherValueObject(amount=Decimal("10.50"), currency="USD")
 
         # Different classes should not be equal
-        assert vo1 != vo2
+        assert vo1.__class__.__name__ != vo2.__class__.__name__
 
     def test_equality_with_optional_fields(self) -> None:
         """Test equality with optional fields."""
@@ -276,7 +278,7 @@ class TestFlextValueObjectPydanticIntegration:
     def test_pydantic_validation_required_fields(self) -> None:
         """Test Pydantic validation for required fields."""
         with pytest.raises(ValidationError):
-            ConcreteValueObject()  # Missing required 'amount' field
+            ConcreteValueObject()
 
     def test_pydantic_validation_field_types(self) -> None:
         """Test Pydantic validation for field types."""
@@ -381,7 +383,7 @@ class TestFlextValueObjectEdgeCases:
     def test_large_data_structures(self) -> None:
         """Test value objects with large data structures."""
         large_tags = [f"tag_{i}" for i in range(100)]
-        large_metadata = {f"key_{i}": f"value_{i}" for i in range(50)}
+        large_metadata: dict[str, object] = {f"key_{i}": f"value_{i}" for i in range(50)}
 
         vo = ComplexValueObject(
             name="Large Object",

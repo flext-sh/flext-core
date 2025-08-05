@@ -157,7 +157,7 @@ def immutable(cls: type) -> type:
     """
 
     # Create immutable wrapper class
-    class ImmutableWrapper(cls):  # type: ignore[misc]
+    class ImmutableWrapper(cls):
         """Immutable wrapper class."""
 
         def __init__(self, *args: object, **kwargs: object) -> None:
@@ -252,11 +252,11 @@ def pure[T](func: T) -> T:
     pure_wrapper = wraps(func)(pure_wrapper)
 
     # Mark function as pure for introspection
-    pure_wrapper.__pure__ = True  # type: ignore[attr-defined]
-    pure_wrapper.__cache_size__ = lambda: len(cache)  # type: ignore[attr-defined]
-    pure_wrapper.__clear_cache__ = cache.clear  # type: ignore[attr-defined]
+    pure_wrapper.__pure__ = True
+    pure_wrapper.__cache_size__ = lambda: len(cache)
+    pure_wrapper.__clear_cache__ = cache.clear
 
-    return pure_wrapper  # type: ignore[return-value]
+    return pure_wrapper
 
 
 # =============================================================================

@@ -406,7 +406,8 @@ class FlextPayload[T](
                     value = getattr(self, attr_name)
                     serialized_value = self._serialize_value(value)
                     if serialized_value is not None and isinstance(
-                        serialized_value, (str, int, float, bool, type(None)),
+                        serialized_value,
+                        (str, int, float, bool, type(None)),
                     ):
                         result[attr_name] = serialized_value
                 except (AttributeError, TypeError):

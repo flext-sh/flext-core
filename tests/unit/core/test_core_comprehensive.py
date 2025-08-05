@@ -9,7 +9,7 @@ configuration management to achieve near 100% coverage.
 from __future__ import annotations
 
 import contextlib
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 from unittest.mock import Mock, patch
 
 if TYPE_CHECKING:
@@ -677,9 +677,9 @@ class TestFlextCoreRailwayProgramming:
 
         # Complex pipeline with conditional logic and side effects
         pipeline = clean_flext_core.pipe(
-            lambda x: validate_positive(x if isinstance(x, int) else int(x)),  # type: ignore[arg-type,call-overload,return-value]
+            lambda x: validate_positive(x if isinstance(x, int) else int(x)),
             clean_flext_core.tap(log_value),
-            lambda x: double_if_even(x if isinstance(x, int) else int(x)),  # type: ignore[arg-type,call-overload,return-value]
+            lambda x: double_if_even(x if isinstance(x, int) else int(x)),
             clean_flext_core.tap(log_value),
         )
 
@@ -698,8 +698,8 @@ class TestFlextCoreRailwayProgramming:
         # Test with negative number
         result3 = pipeline(-1)
         assert result3.is_failure
-        if "positive" not in result3.error:
-            raise AssertionError(f"Expected {'positive'} in {result3.error}")
+        assert result3.error is not None
+        assert "positive" in result3.error, f"Expected 'positive' in {result3.error}"
 
         # Check logged values
         if logged_values != [4, 8, 3, 3]:  # Before and after doubling
@@ -725,7 +725,7 @@ class TestFlextCoreConfiguration:
 
         assert isinstance(user_settings, UserService)
         assert isinstance(data_settings, DataService)
-        assert user_settings is not data_settings
+        assert id(user_settings) != id(data_settings)
 
     def test_get_settings_initialization(self, clean_flext_core: FlextCore) -> None:
         """Test settings initialization."""
@@ -739,13 +739,13 @@ class TestFlextCoreConfiguration:
     def test_settings_cache_persistence(self, clean_flext_core: FlextCore) -> None:
         """Test settings cache persistence."""
         # Get settings
-        settings1 = clean_flext_core.get_settings(UserService)
+        settings1 = cast("UserService", clean_flext_core.get_settings(UserService))
 
         # Modify the instance
         settings1.name = "modified_name"
 
         # Get again - should be same modified instance
-        settings2 = clean_flext_core.get_settings(UserService)
+        settings2 = cast("UserService", clean_flext_core.get_settings(UserService))
         if settings2.name != "modified_name":
             raise AssertionError(f"Expected {'modified_name'}, got {settings2.name}")
         assert settings1 is settings2
@@ -884,17 +884,18 @@ class TestFlextCoreIntegration:
         assert data_reg_result.success
 
         # 4. Create processing pipeline
-        def get_user_data(user_id: str) -> FlextResult[str]:
+        def get_user_data(user_id: object) -> FlextResult[object]:
             user_result = clean_flext_core.get_service(user_key)
             if user_result.is_failure:
                 return FlextResult.fail("User service not available")
 
             user_service = user_result.data
             assert user_service is not None
-            user_data = user_service.get_user(user_id)
+            user_id_str = str(user_id)
+            user_data = user_service.get_user(user_id_str)
             return FlextResult.ok(user_data)
 
-        def save_user_data(user_data: str) -> FlextResult[bool]:
+        def save_user_data(user_data: object) -> FlextResult[object]:
             data_result = clean_flext_core.get_service(data_key)
             if data_result.is_failure:
                 return FlextResult.fail("Data service not available")
@@ -902,13 +903,14 @@ class TestFlextCoreIntegration:
             data_service = data_result.data
             assert data_service is not None
 
-            save_result = data_service.save_data(user_data)
+            user_data_str = str(user_data)
+            save_result = data_service.save_data(user_data_str)
             return FlextResult.ok(save_result)
 
         # 5. Execute pipeline with railway programming
         logged_steps = []
 
-        def log_step(step_name: str) -> Callable[[object], object]:
+        def log_step(step_name: str) -> Callable[[object], FlextResult[object]]:
             def logger_func(data: object) -> None:
                 logged_steps.append(f"{step_name}: {data}")
 
@@ -965,15 +967,17 @@ class TestFlextCoreIntegration:
         # Test failure cases
         empty_result = pipeline("")
         assert empty_result.is_failure
-        if "Empty input" not in empty_result.error:
-            raise AssertionError(f"Expected {'Empty input'} in {empty_result.error}")
+        assert empty_result.error is not None
+        assert "Empty input" in empty_result.error, (
+            f"Expected 'Empty input' in {empty_result.error}"
+        )
 
         fail_result = pipeline("fail")
         assert fail_result.is_failure
-        if "Processing failed" not in fail_result.error:
-            raise AssertionError(
-                f"Expected {'Processing failed'} in {fail_result.error}"
-            )
+        assert fail_result.error is not None
+        assert "Processing failed" in fail_result.error, (
+            f"Expected 'Processing failed' in {fail_result.error}"
+        )
 
     def test_settings_and_services_integration(
         self,

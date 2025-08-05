@@ -4,7 +4,10 @@ from __future__ import annotations
 
 import time
 from datetime import UTC, datetime
-from typing import cast
+from typing import TYPE_CHECKING, cast
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 import pytest
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
@@ -26,15 +29,15 @@ def create_test_entity(entity_class: type, **kwargs: object) -> object:
     factory = FlextEntityFactory.create_entity_factory(entity_class)
 
     if not callable(factory):
-        msg: str = f"Factory for {entity_class.__name__} is not callable"
-        raise TypeError(msg)
+        factory_msg: str = f"Factory for {entity_class.__name__} is not callable"
+        raise TypeError(factory_msg)
 
     # Call the factory function which returns FlextResult
     result = cast("FlextResult[object]", factory(**kwargs))
 
     if result.is_failure:
-        msg: str = f"Failed to create {entity_class.__name__}: {result.error}"
-        raise AssertionError(msg)
+        creation_msg: str = f"Failed to create {entity_class.__name__}: {result.error}"
+        raise AssertionError(creation_msg)
 
     instance = result.unwrap()
 
@@ -42,8 +45,8 @@ def create_test_entity(entity_class: type, **kwargs: object) -> object:
     if isinstance(instance, FlextAggregateRoot):
         validation_result = instance.validate_domain_rules()
         if validation_result.is_failure:
-            msg: str = f"Domain validation failed for {entity_class.__name__}: {validation_result.error}"
-            raise AssertionError(msg)
+            validation_msg: str = f"Domain validation failed for {entity_class.__name__}: {validation_result.error}"
+            raise AssertionError(validation_msg)
 
     return instance
 
@@ -188,10 +191,10 @@ class TestFlextEntity:
         entity = cast("SampleEntity", entity_obj)
 
         with pytest.raises((ValidationError, AttributeError, TypeError)):
-            entity.name = "New Name"  # type: ignore[misc]
+            entity.name = "New Name"
 
         with pytest.raises((ValidationError, AttributeError, TypeError)):
-            entity.id = "new-id"  # type: ignore[misc]
+            entity.id = "new-id"
 
     def test_entity_equality_by_id(self) -> None:
         """Test that entities are equal based on ID."""
@@ -250,10 +253,12 @@ class TestFlextEntity:
     def test_entity_validation_error(self) -> None:
         """Test entity validation with invalid data."""
         # Test validation error via factory directly
-        factory = FlextEntityFactory.create_entity_factory(SampleEntity)
-        factory_result = factory()  # Missing required 'name' field
-        result = cast("FlextResult[object]", factory_result)
-        assert result.is_failure
+        factory_fn = FlextEntityFactory.create_entity_factory(SampleEntity)
+        # Cast to callable returning FlextResult (avoiding explicit Any)
+        entity_factory = cast("Callable[[], FlextResult[object]]", factory_fn)
+        factory_result = entity_factory()  # Missing required 'name' field
+        # No need for redundant cast since factory_result is already FlextResult[object]
+        assert factory_result.is_failure
 
 
 class TestFlextValueObject:
@@ -612,7 +617,7 @@ class TestFlextAggregateRoot:
         """Test aggregate root creation with entity_id parameter."""
         custom_id = "custom-aggregate-id"
         aggregate = SampleAggregateRoot(
-            entity_id=custom_id,
+            id=custom_id,
             title="Test Aggregate",
         )
 
@@ -626,6 +631,7 @@ class TestFlextAggregateRoot:
         """Test aggregate root creation with created_at datetime."""
         created_time = datetime.now(UTC)
         aggregate = SampleAggregateRoot(
+            id="test-agg-id",
             title="Test Aggregate",
             created_at=created_time,
         )
@@ -655,7 +661,9 @@ class TestFlextAggregateRoot:
         # This is tricky since the method is robust, but we can potentially trigger it
         # by passing invalid event_data that causes JSON serialization issues
         # Use a complex object that might cause serialization issues
-        invalid_data = {"func": lambda x: x}  # Functions can't be serialized
+        invalid_data: dict[str, object] = {
+            "func": lambda x: x
+        }  # Functions can't be serialized
         result = aggregate.add_domain_event("test.event", invalid_data)
 
         # The method should handle this gracefully
@@ -809,10 +817,10 @@ class TestEntitiesIntegration:
         """Test consistency across different entity types."""
         if entity_class is SampleEntity:
             entity_obj = create_test_entity(entity_class, name="Test")
-            entity = cast("SampleEntity", entity_obj)
+            entity = cast("FlextEntity", entity_obj)  # Use base type for consistency
         else:  # SampleAggregateRoot
             entity_obj = create_test_entity(entity_class, title="Test")
-            entity = cast("SampleAggregateRoot", entity_obj)
+            entity = cast("FlextEntity", entity_obj)  # Use base type for consistency
 
         # All entities should have these base properties
         assert hasattr(entity, "id")
@@ -820,7 +828,7 @@ class TestEntitiesIntegration:
 
         # All should be immutable
         with pytest.raises((ValidationError, AttributeError, TypeError)):
-            entity.id = "new-id"  # type: ignore[misc]
+            entity.id = "new-id"
 
         # All should be serializable
         data = entity.model_dump()

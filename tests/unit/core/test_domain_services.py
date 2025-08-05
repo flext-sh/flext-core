@@ -10,7 +10,7 @@ from flext_core.result import FlextResult
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 
 
-class ConcreteDomainService(FlextDomainService):
+class ConcreteDomainService(FlextDomainService[str]):
     """Concrete implementation for testing."""
 
     def execute(self) -> FlextResult[str]:

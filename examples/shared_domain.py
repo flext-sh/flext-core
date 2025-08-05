@@ -643,9 +643,9 @@ class SharedDomainFactory:
                 name=name,
                 email_address=email_result.data,
                 age=age_result.data,
-                status=kwargs.get("status", UserStatus.PENDING),  # type: ignore[arg-type]
-                phone=kwargs.get("phone"),  # type: ignore[arg-type]
-                address=kwargs.get("address"),  # type: ignore[arg-type]
+                status=kwargs.get("status", UserStatus.PENDING),
+                phone=kwargs.get("phone"),
+                address=kwargs.get("address"),
             )
 
             validation_result = user.validate_domain_rules()

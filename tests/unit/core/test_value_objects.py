@@ -123,15 +123,7 @@ class TestValueObjectsCoverage:
         basic_dict = money.to_dict_basic()
         assert isinstance(basic_dict, dict)
 
-    def add(self, other: Money) -> FlextResult[Money]:
-        """Add two money amounts."""
-        if self.currency != other.currency:
-            return FlextResult.fail("Cannot add different currencies")
-        try:
-            new_amount = self.amount + other.amount
-            return FlextResult.ok(Money(amount=new_amount, currency=self.currency))
-        except (ValueError, TypeError, ArithmeticError) as e:
-            return FlextResult.fail(f"Addition failed: {e}")
+    # Remove this duplicate method - it's already in Money class above
 
 
 class InvalidValueObject(FlextValueObject):
@@ -153,7 +145,7 @@ class TestValueObjectCoverageImprovements:
         money = Money(amount=100.0, currency="USD")
 
         # Different types should not be equal
-        assert email != money
+        assert email != money  # type: ignore[comparison-overlap]
 
     def test_value_object_hash_functionality(self) -> None:
         """Test hash functionality for value objects."""
@@ -221,6 +213,7 @@ class TestValueObjectCoverageImprovements:
         assert valid_email.is_valid is True
 
         # Test money with invalid currency (domain rule)
+        # Note: XXX is not in supported currencies list, but Pydantic allows 3-char strings
         money = Money(amount=100.0, currency="XXX")  # Valid Pydantic, invalid domain
         assert money.is_valid is False
 
@@ -274,7 +267,7 @@ class TestFlextValueObject:
         # Test Pydantic immutability
         # ValidationError or AttributeError for frozen model
         with pytest.raises((AttributeError, ValueError)):
-            email.email = "new@example.com"  # Should raise due to frozen model
+            email.email = "new@example.com"  # type: ignore[misc]
 
     def test_email_value_object_invalid_email(self) -> None:
         """Test email value object with invalid email."""
@@ -313,6 +306,7 @@ class TestFlextValueObject:
         # Test addition operation
         add_result = money1.add(money2)
         assert add_result.success
+        assert add_result.data is not None
         result_money = add_result.data
         assert result_money.amount == 150.0, (
             f"Expected {150.0}, got {result_money.amount}"
@@ -619,7 +613,7 @@ class TestValueObjectEdgeCases:
         # Test operations that might fail
         # Add with invalid object
         with pytest.raises((AttributeError, TypeError)):
-            money.add(None)
+            money.add(None)  # type: ignore[arg-type]
 
     def test_value_object_performance(self) -> None:
         """Test performance characteristics of value objects."""

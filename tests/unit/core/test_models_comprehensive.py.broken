@@ -162,7 +162,7 @@ class TestFlextImmutableModel:
 
         # Should not be able to modify fields
         with pytest.raises((AttributeError, ValueError)):
-            model.name = "modified"  # type: ignore
+            model.name = "modified"
 
 
 @pytest.mark.unit

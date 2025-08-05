@@ -31,8 +31,11 @@ class TestTypeProtocols:
         def use_comparable(obj: Comparable) -> bool:
             return hasattr(obj, "__lt__")
 
-        assert use_comparable("test")
-        assert use_comparable(42)
+        # Use cast to bypass strict typing for protocol testing
+        from typing import cast
+
+        assert use_comparable(cast("Comparable", "test"))
+        assert use_comparable(cast("Comparable", 42))
 
     def test_type_aliases_usage(self) -> None:
         """Test type aliases from types module."""
@@ -42,7 +45,11 @@ class TestTypeProtocols:
         assert test_dict["key"] == "value"
 
         # Test TAnyList
-        test_list: TAnyList = ["item1", 42, {"nested": "value"}]
+        test_list: TAnyList = [
+            "item1",
+            42,
+            "item3",
+        ]  # TAnyList allows str|int|float|None only
         assert isinstance(test_list, list)
         assert len(test_list) == 3
 
@@ -150,30 +157,31 @@ class TestTypeAliases:
     def test_payload_basic_usage(self) -> None:
         """Test FlextPayload type alias for data payloads."""
         # FlextPayload is a Pydantic BaseModel for structured data
-        user_data = {
+        user_data: dict[str, object] = {
             "id": "123",
             "name": "John Doe",
             "email": "john@example.com",
         }
-        user_payload: FlextPayload = FlextPayload(data=user_data)
+        user_payload: FlextPayload[dict[str, object]] = FlextPayload(data=user_data)
 
-        event_data = {
+        event_data: dict[str, object] = {
             "event_type": "user.created",
             "timestamp": "2025-01-01T00:00:00Z",
         }
-        event_payload: FlextPayload = FlextPayload(data=event_data)
+        event_payload: FlextPayload[dict[str, object]] = FlextPayload(data=event_data)
 
         # Verify payload structure
-        def process_payload(payload: FlextPayload) -> str:
+        def process_payload(payload: FlextPayload[dict[str, object]]) -> str:
             data_dict = payload.model_dump()
             return f"Processing: {len(data_dict)} fields"
 
-        assert user_payload.data["id"] == "123", (
-            f"Expected {'123'} # type: ignore[index], got {user_payload.data['id']}"
+        from typing import cast
+
+        payload_data = cast("dict[str, object]", user_payload.data)
+        assert payload_data["id"] == "123", (
+            f"Expected {'123'}, got {payload_data['id']}"
         )
-        assert "name" in user_payload.data, (
-            f"Expected {'name'} in {user_payload.data} # type: ignore[operator]"
-        )
+        assert "name" in payload_data, f"Expected {'name'} in {payload_data}"
         assert process_payload(user_payload) == "Processing: 2 fields", (
             f"Expected {'Processing: 2 fields'}, got {process_payload(user_payload)}"
         )
@@ -410,11 +418,13 @@ class TestTypeAliasComprehensive:
         from flext_core.flext_types import TCacheKey, TCacheTTL, TCacheValue
 
         cache_key: TCacheKey = "user:123:profile"
-        cache_value: TCacheValue = {"name": "John", "email": "john@example.com"}
+        cache_value: TCacheValue = (
+            "John Doe"  # TCacheValue is str|int|float|bool|None, not dict
+        )
         cache_ttl: TCacheTTL = 3600  # 1 hour
 
         assert isinstance(cache_key, str)
-        assert isinstance(cache_value, dict)
+        assert isinstance(cache_value, str)
         assert isinstance(cache_ttl, int)
 
     def test_function_type_aliases(self) -> None:
@@ -490,9 +500,6 @@ class TestTypesCoverageImprovements:
         assert result is False
 
         # Test with None type that might cause AttributeError
-        try:
-            result = FlextTypes.TypeGuards.is_instance_of("test", None)
-            assert result is False
-        except (TypeError, AttributeError):
-            # If isinstance still raises, that's fine - we tested the path
-            pass
+        # Use type() to get a valid type instead of None
+        result = FlextTypes.TypeGuards.is_instance_of("test", type(None))
+        assert result is False

@@ -56,7 +56,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -101,7 +101,7 @@ def sample_services() -> dict[str, object]:
 
 
 @pytest.fixture
-def service_factories() -> dict[str, FlextServiceFactory[SampleService]]:
+def service_factories() -> dict[str, FlextServiceFactory]:
     """Provide service factory functions for testing."""
 
     def create_database() -> SampleService:
@@ -121,7 +121,7 @@ def service_factories() -> dict[str, FlextServiceFactory[SampleService]]:
 
 
 @pytest.fixture
-def failing_factory() -> FlextServiceFactory[SampleService]:
+def failing_factory() -> FlextServiceFactory:
     """Provide a factory that raises an exception."""
 
     def create_failing_service() -> SampleService:
@@ -207,6 +207,7 @@ class TestFlextContainerBasicOperations:
     ) -> None:
         """Test service registration with invalid names."""
         service = SampleService("test")
+        # The container handles all invalid names through FlextResult
         result = clean_container.register(invalid_name, service)
 
         assert result.is_failure
@@ -313,7 +314,7 @@ class TestFlextContainerSingletonPattern:
     def test_singleton_factory_registration(
         self,
         clean_container: FlextContainer,
-        service_factories: dict[str, FlextServiceFactory[SampleService]],
+        service_factories: dict[str, FlextServiceFactory],
     ) -> None:
         """Test successful singleton factory registration."""
         factory = service_factories["database"]
@@ -326,7 +327,7 @@ class TestFlextContainerSingletonPattern:
     def test_singleton_factory_creation(
         self,
         clean_container: FlextContainer,
-        service_factories: dict[str, FlextServiceFactory[SampleService]],
+        service_factories: dict[str, FlextServiceFactory],
     ) -> None:
         """Test singleton factory creates instance on first access."""
         factory = service_factories["database"]
@@ -378,7 +379,7 @@ class TestFlextContainerSingletonPattern:
     def test_singleton_factory_failure_handling(
         self,
         clean_container: FlextContainer,
-        failing_factory: FlextServiceFactory[SampleService],
+        failing_factory: FlextServiceFactory,
     ) -> None:
         """Test singleton factory failure handling."""
         result = clean_container.register_factory("failing", failing_factory)
@@ -401,7 +402,7 @@ class TestFlextContainerSingletonPattern:
         """Test rejection of non-callable factory."""
         # This would be caught by type system, but test runtime behavior
         # We need to bypass type checking for this test case
-        factory: Any = "not_callable"
+        factory = "not_callable"
         result = clean_container.register_factory("service", factory)
 
         assert result.is_failure
@@ -482,7 +483,7 @@ class TestFlextContainerServiceManagement:
         expected: bool,
     ) -> None:
         """Test service existence checking with edge cases."""
-        result = clean_container.has(name)
+        result = clean_container.has(str(name))
         assert result is expected
 
     def test_service_removal_success(
@@ -525,7 +526,7 @@ class TestFlextContainerServiceManagement:
     def test_singleton_removal_clears_cache(
         self,
         clean_container: FlextContainer,
-        service_factories: dict[str, FlextServiceFactory[SampleService]],
+        service_factories: dict[str, FlextServiceFactory],
     ) -> None:
         """Test singleton removal clears both registry and cache."""
         factory = service_factories["database"]
@@ -674,7 +675,7 @@ class TestFlextContainerIntegration:
         self,
         clean_container: FlextContainer,
         sample_services: dict[str, SampleService],
-        service_factories: dict[str, FlextServiceFactory[SampleService]],
+        service_factories: dict[str, FlextServiceFactory],
     ) -> None:
         """Test integration of regular services and singleton factories.
 
@@ -705,7 +706,7 @@ class TestFlextContainerIntegration:
         self,
         clean_container: FlextContainer,
         sample_services: dict[str, SampleService],
-        service_factories: dict[str, FlextServiceFactory[SampleService]],
+        service_factories: dict[str, FlextServiceFactory],
     ) -> None:
         """Test various service replacement scenarios."""
         # Start with direct service
@@ -766,8 +767,8 @@ class TestFlextContainerIntegration:
     def test_factory_error_isolation(
         self,
         clean_container: FlextContainer,
-        service_factories: dict[str, FlextServiceFactory[SampleService]],
-        failing_factory: FlextServiceFactory[SampleService],
+        service_factories: dict[str, FlextServiceFactory],
+        failing_factory: FlextServiceFactory,
     ) -> None:
         """Test that failing factories don't affect other services."""
         # Register working factory and failing factory

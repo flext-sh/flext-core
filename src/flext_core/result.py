@@ -88,7 +88,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, TypeVar
+import inspect
+from typing import TYPE_CHECKING, TypeVar, cast, overload
 
 from flext_core.constants import ERROR_CODES
 from flext_core.exceptions import FlextOperationError
@@ -198,7 +199,7 @@ class FlextResult[T]:
         # For success cases, return data even if it's None
         # None is a valid value for successful results (e.g., void operations)
         # Type system guarantees that for success results, _data is of type T
-        return self._data  # type: ignore[return-value]
+        return cast("T", self._data)
 
     def map(self, func: Callable[[T], U]) -> FlextResult[U]:
         """Map successful result."""
@@ -212,7 +213,7 @@ class FlextResult[T]:
             # Apply function to data, even if it's None
             # None is a valid value for successful results
             # Type system guarantees that for success results, _data is of type T
-            result = func(self._data)  # type: ignore[arg-type]
+            result = func(cast("T", self._data))
             return FlextResult.ok(result)
         except (ImportError, MemoryError) as e:
             # Handle specific system and runtime exceptions
@@ -241,7 +242,7 @@ class FlextResult[T]:
             # Apply function to data, even if it's None
             # None is a valid value for successful results
             # Type system guarantees that for success results, _data is of type T
-            return func(self._data)  # type: ignore[arg-type]
+            return func(cast("T", self._data))
         except (TypeError, ValueError, AttributeError, IndexError, KeyError) as e:
             # Use FLEXT Core structured error handling
             return FlextResult.fail(
@@ -354,9 +355,9 @@ class FlextResult[T]:
 
     def tap(self, func: Callable[[T], None]) -> FlextResult[T]:
         """Execute side effect function on success, return self."""
-        if self.is_success and self._data is not None:
+        if self.is_success:
             with contextlib.suppress(TypeError, ValueError, AttributeError):
-                func(self._data)
+                func(cast("T", self._data))
         return self
 
     def tap_error(self, func: Callable[[str], None]) -> FlextResult[T]:
@@ -374,14 +375,12 @@ class FlextResult[T]:
         """Filter success value with predicate."""
         if self.is_failure:
             return self
-        if self._data is not None:
-            try:
-                if predicate(self._data):
-                    return self
-                return FlextResult.fail(error_msg)
-            except (TypeError, ValueError, AttributeError) as e:
-                return FlextResult.fail(str(e))
-        return FlextResult.fail("No data to filter")
+        try:
+            if predicate(cast("T", self._data)):
+                return self
+            return FlextResult.fail(error_msg)
+        except (TypeError, ValueError, AttributeError) as e:
+            return FlextResult.fail(str(e))
 
     def zip_with(
         self,
@@ -393,13 +392,11 @@ class FlextResult[T]:
             return FlextResult.fail(self._error or "First result failed")
         if other.is_failure:
             return FlextResult.fail(other._error or "Second result failed")
-        if self._data is not None and other._data is not None:
-            try:
-                result = func(self._data, other._data)
-                return FlextResult.ok(result)
-            except (TypeError, ValueError, AttributeError, ZeroDivisionError) as e:
-                return FlextResult.fail(str(e))
-        return FlextResult.fail("Missing data for zip operation")
+        try:
+            result = func(cast("T", self._data), cast("U", other._data))
+            return FlextResult.ok(result)
+        except (TypeError, ValueError, AttributeError, ZeroDivisionError) as e:
+            return FlextResult.fail(str(e))
 
     def to_either(self) -> tuple[T | None, str | None]:
         """Convert result to either tuple (data, error)."""
@@ -504,6 +501,14 @@ def compose(*results: FlextResult[object]) -> FlextResult[list[object]]:
     return chain(*results)
 
 
+@overload
+def safe_call[T](func: Callable[[], T]) -> FlextResult[T]: ...
+
+
+@overload
+def safe_call[T](func: Callable[[object], T]) -> FlextResult[T]: ...
+
+
 def safe_call[T](func: TFactory[T]) -> FlextResult[T]:
     """Safely call function with FlextResult error handling.
 
@@ -514,14 +519,19 @@ def safe_call[T](func: TFactory[T]) -> FlextResult[T]:
     error for better debugging information.
 
     Args:
-        func: Function to execute safely
+        func: Function to execute safely (with 0 or 1 arguments)
 
     Returns:
         FlextResult[T] with function result or captured exception
 
     """
     try:
-        result = func()
+        # Check function signature to determine how to call it
+        sig = inspect.signature(func)
+        if len(sig.parameters) == 0:
+            result = cast("Callable[[], T]", func)()
+        else:
+            result = cast("Callable[[object], T]", func)(object())
         return FlextResult.ok(result)
     except Exception as e:
         # Use actual exception message for better debugging

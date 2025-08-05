@@ -118,7 +118,9 @@ def demonstrate_basic_configuration() -> None:
 
     # 4. Applying defaults
     # Cast TConfigDict to TAnyDict for method compatibility
-    defaults_result = FlextConfigDefaults.apply_defaults(dict(config_data), dict(defaults))
+    defaults_result = FlextConfigDefaults.apply_defaults(
+        dict(config_data), dict(defaults)
+    )
     if defaults_result.success:
         config_with_defaults = defaults_result.data
         if config_with_defaults is not None:

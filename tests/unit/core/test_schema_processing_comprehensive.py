@@ -37,9 +37,9 @@ class MockEntry(FlextValueObject):
     original_content: str
     identifier: str
 
-    def validate_domain_rules(self) -> FlextResult[bool]:
+    def validate_domain_rules(self) -> FlextResult[None]:
         """Mock domain validation - always returns success."""
-        return FlextResult.ok(data=True)
+        return FlextResult.ok(data=None)
 
 
 class ConcreteRegexProcessor(RegexProcessor[MockEntry]):
@@ -100,9 +100,9 @@ class ConcreteBaseProcessor(BaseProcessor[MockEntry]):
 class ConcreteBaseEntry(BaseEntry):
     """Concrete implementation of BaseEntry for testing."""
 
-    def validate_domain_rules(self) -> FlextResult[bool]:
+    def validate_domain_rules(self) -> FlextResult[None]:
         """Mock domain validation - always returns success."""
-        return FlextResult.ok(data=True)
+        return FlextResult.ok(data=None)
 
 
 class MockEntryValidator:
@@ -209,7 +209,7 @@ class TestBaseEntry:
         from pydantic_core import ValidationError
 
         with pytest.raises(ValidationError, match="Instance is frozen"):
-            entry.entry_type = "new_type"  # type: ignore[misc]
+            entry.entry_type = "new_type"
 
 
 class TestConfigAttributeValidator:
@@ -263,9 +263,9 @@ class TestConfigAttributeValidator:
             config, ["attr1", "attr2", "attr3"]
         )
         assert not result.success
-        assert "Missing required attributes" in result.error or ""
-        assert "attr2" in result.error or ""
-        assert "attr3" in result.error or ""
+        assert "Missing required attributes" in (result.error or "")
+        assert "attr2" in (result.error or "")
+        assert "attr3" in (result.error or "")
 
 
 class TestBaseConfigManager:
@@ -373,7 +373,7 @@ class TestBaseProcessor:
         result = processor.extract_entry_info("invalid content", "test_type")
 
         assert not result.success
-        assert "Failed to extract identifier" in result.error or ""
+        assert "Failed to extract identifier" in (result.error or "")
 
     def test_extract_entry_info_creation_failure(self) -> None:
         """Test entry extraction with creation failure."""
@@ -389,7 +389,7 @@ class TestBaseProcessor:
         result = processor.extract_entry_info("test content 123", "test_type")
 
         assert not result.success
-        assert "not whitelisted" in result.error or ""
+        assert "not whitelisted" in (result.error or "")
 
     def test_extract_entry_info_validator_not_valid(self) -> None:
         """Test entry extraction with invalid entry."""
@@ -398,7 +398,7 @@ class TestBaseProcessor:
         result = processor.extract_entry_info("test content 123", "test_type")
 
         assert not result.success
-        assert "Entry validation failed" in result.error or ""
+        assert "Entry validation failed" in (result.error or "")
 
     def test_process_content_lines_success(self) -> None:
         """Test processing multiple content lines successfully."""
@@ -450,7 +450,7 @@ class TestBaseProcessor:
 
         result = processor.process_content_lines(lines, "test_type")
         assert not result.success
-        assert "All entries failed" in result.error or ""
+        assert "All entries failed" in (result.error or "")
 
     def test_get_extracted_entries(self) -> None:
         """Test getting extracted entries."""
@@ -495,7 +495,7 @@ class TestRegexProcessor:
         result = processor._extract_identifier("content without identifier")
 
         assert not result.success
-        assert "No identifier found" in result.error or ""
+        assert "No identifier found" in (result.error or "")
 
 
 class TestBaseSorter:
@@ -543,8 +543,10 @@ class TestBaseFileWriter:
 
     def test_write_entries_success(self) -> None:
         """Test successful entries writing."""
+        from typing import cast
+
         writer = MockFileWriter()
-        entries = ["entry1", "entry2", "entry3"]
+        entries = cast("list[object]", ["entry1", "entry2", "entry3"])
         output_file = Mock()
 
         result = writer.write_entries(output_file, entries)
@@ -553,13 +555,15 @@ class TestBaseFileWriter:
 
     def test_write_entries_failure(self) -> None:
         """Test entries writing with failure."""
+        from typing import cast
+
         writer = MockFileWriter(fail_write=True)
-        entries = ["entry1", "entry2"]
+        entries = cast("list[object]", ["entry1", "entry2"])
         output_file = Mock()
 
         result = writer.write_entries(output_file, entries)
         assert not result.success
-        assert "Failed to write entries" in result.error or ""
+        assert "Failed to write entries" in (result.error or "")
 
 
 class TestProcessingPipeline:

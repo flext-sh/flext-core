@@ -82,7 +82,7 @@ def demonstrate_validation_decorators() -> None:  # noqa: PLR0915
     print(log_message)
 
     # Use cast to handle decorator type compatibility
-    @cast("Callable[..., Any]", FlextValidationDecorators.validate_arguments)  # type: ignore[explicit-any,misc]
+    @cast("Callable[..., Any]", FlextValidationDecorators.validate_arguments)
     def validate_user_data(name: str, email: str, age: int) -> TUserData:
         """Validate user data using flext_core.types."""
         return {"name": name, "email": email, "age": age, "status": "validated"}
@@ -107,7 +107,7 @@ def demonstrate_validation_decorators() -> None:  # noqa: PLR0915
         email_validator,
     )
 
-    @cast("Callable[..., Any]", email_validation_decorator)  # type: ignore[explicit-any,misc]
+    @cast("Callable[..., Any]", email_validation_decorator)
     def register_user(email: str) -> str:
         """Register user with email validation."""
         return f"User registered with email: {email}"
@@ -136,12 +136,12 @@ def demonstrate_validation_decorators() -> None:  # noqa: PLR0915
 
     def validate_age(age: object) -> bool:
         """Validate age using flext_core.types."""
-        return (
-            isinstance(age, int)
-            and 0 <= age <= MAX_REASONABLE_AGE
-        )
+        return isinstance(age, int) and 0 <= age <= MAX_REASONABLE_AGE
 
-    @cast("Callable[..., Any]", FlextValidationDecorators.create_validation_decorator(validate_age))  # type: ignore[explicit-any,misc]
+    @cast(
+        "Callable[..., Any]",
+        FlextValidationDecorators.create_validation_decorator(validate_age),
+    )
     def create_user_profile(name: str, age: int) -> TUserData:
         """Create user profile with age validation."""
         return {"name": name, "age": age, "profile_created": True}
@@ -213,7 +213,7 @@ def demonstrate_error_handling_decorators() -> None:  # noqa: PLR0915
 
     attempt_count = 0
 
-    @cast("Callable[..., Any]", FlextErrorHandlingDecorators.retry_decorator)  # type: ignore[explicit-any,misc]
+    @cast("Callable[..., Any]", FlextErrorHandlingDecorators.retry_decorator)
     def unreliable_service() -> str:
         """Unreliable service that fails initially."""
         nonlocal attempt_count
@@ -250,7 +250,7 @@ def demonstrate_error_handling_decorators() -> None:  # noqa: PLR0915
         custom_error_handler,
     )
 
-    @cast("Callable[..., Any]", custom_safe_decorator)  # type: ignore[explicit-any,misc]
+    @cast("Callable[..., Any]", custom_safe_decorator)
     def operation_with_custom_handling() -> str:
         """Operation with custom error handling."""
         msg = "Intentional error for testing"
@@ -281,7 +281,7 @@ def demonstrate_performance_decorators() -> None:
 
     timing_decorator = FlextPerformanceDecorators.get_timing_decorator()
 
-    @cast("Callable[..., Any]", timing_decorator)  # type: ignore[explicit-any,misc]
+    @cast("Callable[..., Any]", timing_decorator)
     def slow_computation(n: int) -> int:
         """Slow computation for timing demonstration."""
         time.sleep(0.01)  # Simulate slow operation
@@ -295,12 +295,14 @@ def demonstrate_performance_decorators() -> None:
     log_message = "\n2. Memoization decorator:"
     print(log_message)
 
-    @cast("Callable[..., Any]", FlextPerformanceDecorators.memoize_decorator)  # type: ignore[explicit-any,misc]
+    @cast("Callable[..., Any]", FlextPerformanceDecorators.memoize_decorator)
     def expensive_fibonacci(n: int) -> int:
         """Expensive Fibonacci calculation with memoization."""
         if n <= 1:
             return n
-        return cast("int", expensive_fibonacci(n - 1)) + cast("int", expensive_fibonacci(n - 2))
+        return cast("int", expensive_fibonacci(n - 1)) + cast(
+            "int", expensive_fibonacci(n - 2)
+        )
 
     # First call (expensive)
     start_time = time.time()
@@ -327,7 +329,7 @@ def demonstrate_performance_decorators() -> None:
 
     cache_decorator = FlextPerformanceDecorators.create_cache_decorator(max_size=10)
 
-    @cast("Callable[..., Any]", cache_decorator)  # type: ignore[explicit-any,misc]
+    @cast("Callable[..., Any]", cache_decorator)
     def data_processor(data_id: str) -> str:
         """Process data with caching."""
         time.sleep(0.01)  # Simulate processing
@@ -355,7 +357,7 @@ def demonstrate_logging_decorators() -> None:
     log_message = "\n1. Call logging decorator:"
     print(log_message)
 
-    @cast("Callable[..., Any]", FlextLoggingDecorators.log_calls_decorator)  # type: ignore[explicit-any,misc]
+    @cast("Callable[..., Any]", FlextLoggingDecorators.log_calls_decorator)
     def business_operation(operation_type: str, amount: float) -> TUserData:
         """Execute business operation with call logging."""
         return {
@@ -373,7 +375,7 @@ def demonstrate_logging_decorators() -> None:
     log_message = "\n2. Exception logging decorator:"
     print(log_message)
 
-    @cast("Callable[..., Any]", FlextLoggingDecorators.log_exceptions_decorator)  # type: ignore[explicit-any,misc]
+    @cast("Callable[..., Any]", FlextLoggingDecorators.log_exceptions_decorator)
     def risky_business_operation(operation_id: str) -> str:
         """Risky business operation with exception logging."""
         if operation_id == "fail":
@@ -403,8 +405,8 @@ def demonstrate_logging_decorators() -> None:
     log_message = "\n3. Combined logging decorators:"
     print(log_message)
 
-    @cast("Callable[..., Any]", FlextLoggingDecorators.log_calls_decorator)  # type: ignore[explicit-any,misc]
-    @cast("Callable[..., Any]", FlextLoggingDecorators.log_exceptions_decorator)  # type: ignore[explicit-any,misc]
+    @cast("Callable[..., Any]", FlextLoggingDecorators.log_calls_decorator)
+    @cast("Callable[..., Any]", FlextLoggingDecorators.log_exceptions_decorator)
     def comprehensive_service(
         service_name: str,
         params: TUserData,
@@ -448,7 +450,7 @@ def demonstrate_immutability_decorators() -> None:
     log_message = "\n1. Immutable result decorator:"
     print(log_message)
 
-    @cast("Callable[..., Any]", FlextImmutabilityDecorators.immutable_decorator)  # type: ignore[explicit-any,misc]
+    @cast("Callable[..., Any]", FlextImmutabilityDecorators.immutable_decorator)
     def create_immutable_config() -> TUserData:
         """Create immutable configuration."""
         return {
@@ -474,7 +476,7 @@ def demonstrate_immutability_decorators() -> None:
     log_message = "\n2. Frozen arguments decorator:"
     print(log_message)
 
-    @cast("Callable[..., Any]", FlextImmutabilityDecorators.freeze_args_decorator)  # type: ignore[explicit-any,misc]
+    @cast("Callable[..., Any]", FlextImmutabilityDecorators.freeze_args_decorator)
     def process_user_data(user_data: TUserData) -> TUserData:
         """Process user data with frozen arguments."""
         # Try to modify input (should fail)
@@ -503,10 +505,10 @@ def demonstrate_functional_decorators() -> None:
     log_message = "\n1. Decorator composition:"
     print(log_message)
 
-    @cast("Callable[..., Any]", FlextLoggingDecorators.log_calls_decorator)  # type: ignore[explicit-any,misc]
-    @cast("Callable[..., Any]", FlextErrorHandlingDecorators.retry_decorator)  # type: ignore[explicit-any,misc]
-    @cast("Callable[..., Any]", FlextValidationDecorators.validate_arguments)  # type: ignore[explicit-any,misc]
-    @cast("Callable[..., Any]", FlextPerformanceDecorators.memoize_decorator)  # type: ignore[explicit-any,misc]
+    @cast("Callable[..., Any]", FlextLoggingDecorators.log_calls_decorator)
+    @cast("Callable[..., Any]", FlextErrorHandlingDecorators.retry_decorator)
+    @cast("Callable[..., Any]", FlextValidationDecorators.validate_arguments)
+    @cast("Callable[..., Any]", FlextPerformanceDecorators.memoize_decorator)
     def enterprise_user_service(
         user_id: str,
         *,
@@ -547,17 +549,17 @@ def demonstrate_functional_decorators() -> None:
     log_message = "\n2. Pipeline decorators:"
     print(log_message)
 
-    @cast("Callable[..., Any]", FlextPerformanceDecorators.get_timing_decorator())  # type: ignore[explicit-any,misc]
+    @cast("Callable[..., Any]", FlextPerformanceDecorators.get_timing_decorator())
     def step1_validate(data: TUserData) -> TUserData:
         """Step 1: Validate data."""
         return {**data, "validated": True}
 
-    @cast("Callable[..., Any]", FlextPerformanceDecorators.get_timing_decorator())  # type: ignore[explicit-any,misc]
+    @cast("Callable[..., Any]", FlextPerformanceDecorators.get_timing_decorator())
     def step2_enrich(data: TUserData) -> TUserData:
         """Step 2: Enrich data."""
         return {**data, "enriched": True, "timestamp": time.time()}
 
-    @cast("Callable[..., Any]", FlextPerformanceDecorators.get_timing_decorator())  # type: ignore[explicit-any,misc]
+    @cast("Callable[..., Any]", FlextPerformanceDecorators.get_timing_decorator())
     def step3_transform(data: TAnyObject) -> TAnyObject:
         """Step 3: Transform data."""
         return {**data, "transformed": True, "final": True}
@@ -594,7 +596,7 @@ def demonstrate_decorator_best_practices() -> None:  # noqa: PLR0915
 
         return wrapper
 
-    @cast("Callable[..., Any]", custom_decorator)  # type: ignore[explicit-any,misc]
+    @cast("Callable[..., Any]", custom_decorator)
     def documented_function(x: int, y: int) -> int:
         """Documented function with custom decorator."""
         return x + y
@@ -614,10 +616,7 @@ def demonstrate_decorator_best_practices() -> None:  # noqa: PLR0915
         """Create range validator using flext_core.types."""
 
         def range_validator(value: object) -> bool:
-            return (
-                isinstance(value, int)
-                and min_val <= value <= max_val
-            )
+            return isinstance(value, int) and min_val <= value <= max_val
 
         return range_validator
 
@@ -628,12 +627,12 @@ def demonstrate_decorator_best_practices() -> None:  # noqa: PLR0915
         create_range_validator(0, 100),
     )
 
-    @cast("Callable[..., Any]", age_validator)  # type: ignore[explicit-any,misc]
+    @cast("Callable[..., Any]", age_validator)
     def set_user_age(age: int) -> str:
         """Set user age with validation."""
         return f"User age set to {age}"
 
-    @cast("Callable[..., Any]", percentage_validator)  # type: ignore[explicit-any,misc]
+    @cast("Callable[..., Any]", percentage_validator)
     def set_completion_rate(rate: int) -> str:
         """Set completion rate with validation."""
         return f"Completion rate set to {rate}%"
@@ -680,7 +679,7 @@ def demonstrate_decorator_best_practices() -> None:  # noqa: PLR0915
 
         return wrapper
 
-    @cast("Callable[..., Any]", performance_monitor)  # type: ignore[explicit-any,misc]
+    @cast("Callable[..., Any]", performance_monitor)
     def monitored_operation(complexity: int) -> int:
         """Execute monitored operation."""
         time.sleep(0.01 * complexity)  # Simulate work
@@ -702,8 +701,8 @@ def demonstrate_domain_model_decorators() -> None:  # noqa: PLR0915
     log_message = "\n1. Decorator with domain model validation:"
     print(log_message)
 
-    @cast("Callable[..., Any]", FlextValidationDecorators.validate_arguments)  # type: ignore[explicit-any,misc]
-    @cast("Callable[..., Any]", FlextLoggingDecorators.log_calls_decorator)  # type: ignore[explicit-any,misc]
+    @cast("Callable[..., Any]", FlextValidationDecorators.validate_arguments)
+    @cast("Callable[..., Any]", FlextLoggingDecorators.log_calls_decorator)
     def create_validated_user(name: str, email: str, age: int) -> SharedUser:
         """Create validated user using shared domain models with decorators."""
         user_result = SharedDomainFactory.create_user(name, email, age)
@@ -745,8 +744,8 @@ def demonstrate_domain_model_decorators() -> None:  # noqa: PLR0915
     log_message = "\n2. Performance decorators with domain operations:"
     print(log_message)
 
-    @cast("Callable[..., Any]", FlextPerformanceDecorators.memoize_decorator)  # type: ignore[explicit-any,misc]
-    @cast("Callable[..., Any]", FlextPerformanceDecorators.get_timing_decorator())  # type: ignore[explicit-any,misc]
+    @cast("Callable[..., Any]", FlextPerformanceDecorators.memoize_decorator)
+    @cast("Callable[..., Any]", FlextPerformanceDecorators.get_timing_decorator())
     def find_user_by_email(email: str) -> SharedUser | None:
         """Find user by email with memoization and timing."""
         # Simulate database lookup
@@ -776,8 +775,8 @@ def demonstrate_domain_model_decorators() -> None:  # noqa: PLR0915
     log_message = "\n3. Error handling with domain operations:"
     print(log_message)
 
-    @cast("Callable[..., Any]", FlextDecorators.safe_result)  # type: ignore[explicit-any,misc]
-    @cast("Callable[..., Any]", FlextLoggingDecorators.log_exceptions_decorator)  # type: ignore[explicit-any,misc]
+    @cast("Callable[..., Any]", FlextDecorators.safe_result)
+    @cast("Callable[..., Any]", FlextLoggingDecorators.log_exceptions_decorator)
     def activate_user_account(user: SharedUser) -> SharedUser:
         """Activate user account with error handling decorators."""
         if user.status.value == "active":
@@ -857,7 +856,11 @@ def demonstrate_domain_model_decorators() -> None:  # noqa: PLR0915
         age = user_data.get("age", 0)
 
         # Type validation before calling SharedDomainFactory
-        if not isinstance(name, str) or not isinstance(email, str) or not isinstance(age, int):
+        if (
+            not isinstance(name, str)
+            or not isinstance(email, str)
+            or not isinstance(age, int)
+        ):
             return False
 
         # Use domain factory for validation
@@ -868,7 +871,7 @@ def demonstrate_domain_model_decorators() -> None:  # noqa: PLR0915
         domain_user_validator,
     )
 
-    @cast("Callable[..., Any]", domain_validator)  # type: ignore[explicit-any,misc]
+    @cast("Callable[..., Any]", domain_validator)
     def register_user_with_domain_validation(
         user_data: dict[str, object],
     ) -> SharedUser:

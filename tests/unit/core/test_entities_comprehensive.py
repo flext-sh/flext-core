@@ -78,23 +78,23 @@ class TestFlextEntity:
         )
 
         if user.id != "user_1":
-            msg: str = f"Expected {'user_1'}, got {user.id}"
-            raise AssertionError(msg)
+            id_msg: str = f"Expected {'user_1'}, got {user.id}"
+            raise AssertionError(id_msg)
         assert user.name == "John Doe"
         if user.email != "john@example.com":
-            msg: str = f"Expected {'john@example.com'}, got {user.email}"
-            raise AssertionError(msg)
+            email_msg: str = f"Expected {'john@example.com'}, got {user.email}"
+            raise AssertionError(email_msg)
         assert user.age == 25
         if user.version != 1:
-            msg: str = f"Expected {1}, got {user.version}"
-            raise AssertionError(msg)
+            version_msg: str = f"Expected {1}, got {user.version}"
+            raise AssertionError(version_msg)
         if user.is_active is not True:
-            msg: str = f"Expected True, got {user.is_active is True}"
-            raise AssertionError(msg)
+            active_msg: str = f"Expected True, got {user.is_active is True}"
+            raise AssertionError(active_msg)
         assert isinstance(user.created_at, datetime)
         if len(user.domain_events) != 0:
-            msg: str = f"Expected {0}, got {len(user.domain_events)}"
-            raise AssertionError(msg)
+            events_msg: str = f"Expected {0}, got {len(user.domain_events)}"
+            raise AssertionError(events_msg)
 
     def test_entity_id_validation_empty(self) -> None:
         """Test entity ID validation with empty ID."""
@@ -185,12 +185,12 @@ class TestFlextEntity:
 
         repr_str = repr(user)
         if "SampleUser(" not in repr_str:
-            msg: str = f"Expected {'SampleUser('} in {repr_str}"
-            raise AssertionError(msg)
+            repr_msg: str = f"Expected {'SampleUser('} in {repr_str}"
+            raise AssertionError(repr_msg)
         assert "id=user_1" in repr_str
         if "name=John" not in repr_str:
-            msg: str = f"Expected {'name=John'} in {repr_str}"
-            raise AssertionError(msg)
+            name_repr_msg: str = f"Expected {'name=John'} in {repr_str}"
+            raise AssertionError(name_repr_msg)
         assert "email=john@example.com" in repr_str
         if "age=25" not in repr_str:
             raise AssertionError(f"Expected {'age=25'} in {repr_str}")
@@ -248,12 +248,14 @@ class TestFlextEntity:
             raise AssertionError(f"Expected {'Jane'}, got {new_user.name}")
         assert new_user.age == 30
         if new_user.version != user.version + 1:  # Auto-incremented:
-            msg: str = f"Expected {user.version + 1}, got {new_user.version}"
-            raise AssertionError(msg)
+            version_copy_msg: str = (
+                f"Expected {user.version + 1}, got {new_user.version}"
+            )
+            raise AssertionError(version_copy_msg)
         assert new_user.id == user.id  # Unchanged
         if new_user.email != user.email:  # Unchanged:
-            msg: str = f"Expected {user.email}, got {new_user.email}"
-            raise AssertionError(msg)
+            email_copy_msg: str = f"Expected {user.email}, got {new_user.email}"
+            raise AssertionError(email_copy_msg)
 
     def test_copy_with_explicit_version(self) -> None:
         """Test copy with explicit version provided."""
@@ -317,12 +319,12 @@ class TestFlextEntity:
             raise AssertionError(f"Expected {1}, got {len(user.domain_events)}")
         event = user.domain_events[0]
         if event.event_type != "user_created":
-            msg: str = f"Expected {'user_created'}, got {event.event_type}"
-            raise AssertionError(msg)
+            event_type_msg: str = f"Expected {'user_created'}, got {event.event_type}"
+            raise AssertionError(event_type_msg)
         assert event.data == {"action": "create"}
         if event.aggregate_id != "user_1":
-            msg: str = f"Expected {'user_1'}, got {event.aggregate_id}"
-            raise AssertionError(msg)
+            aggregate_id_msg: str = f"Expected {'user_1'}, got {event.aggregate_id}"
+            raise AssertionError(aggregate_id_msg)
         assert event.version == 1
 
     def test_add_domain_event_creation_failure(self) -> None:
@@ -571,7 +573,7 @@ class TestFlextEntityFactory:
         """Test successful entity creation through factory."""
         factory = FlextEntityFactory.create_entity_factory(SampleUser)
 
-        result = factory(  # type: ignore[operator]
+        result = factory(
             name="John", email="john@example.com", age=25
         )
 
@@ -593,7 +595,7 @@ class TestFlextEntityFactory:
             SampleUser, cast("dict[str, object]", defaults)
         )
 
-        result = factory(  # type: ignore[operator]
+        result = factory(
             name="John", email="john@example.com"
         )
 
@@ -611,7 +613,7 @@ class TestFlextEntityFactory:
             SampleUser, cast("dict[str, object]", defaults)
         )
 
-        result = factory(  # type: ignore[operator]
+        result = factory(
             name="John", email="john@example.com", age=25, is_active=True
         )
 
@@ -626,7 +628,7 @@ class TestFlextEntityFactory:
         """Test factory generates ID when not provided."""
         factory = FlextEntityFactory.create_entity_factory(SampleUser)
 
-        result = factory(  # type: ignore[operator]
+        result = factory(
             name="John", email="john@example.com"
         )
 
@@ -639,7 +641,7 @@ class TestFlextEntityFactory:
         """Test factory uses provided ID."""
         factory = FlextEntityFactory.create_entity_factory(SampleUser)
 
-        result = factory(  # type: ignore[operator]
+        result = factory(
             id="custom_id", name="John", email="john@example.com"
         )
 
@@ -652,7 +654,7 @@ class TestFlextEntityFactory:
         """Test factory handles empty ID by generating new one."""
         factory = FlextEntityFactory.create_entity_factory(SampleUser)
 
-        result = factory(  # type: ignore[operator]
+        result = factory(
             id="", name="John", email="john@example.com"
         )
 
@@ -665,7 +667,7 @@ class TestFlextEntityFactory:
         """Test factory sets default version."""
         factory = FlextEntityFactory.create_entity_factory(SampleUser)
 
-        result = factory(  # type: ignore[operator]
+        result = factory(
             name="John", email="john@example.com"
         )
 
@@ -678,7 +680,7 @@ class TestFlextEntityFactory:
         """Test factory uses provided version."""
         factory = FlextEntityFactory.create_entity_factory(SampleUser)
 
-        result = factory(  # type: ignore[operator]
+        result = factory(
             name="John", email="john@example.com", version=5
         )
 
@@ -691,7 +693,7 @@ class TestFlextEntityFactory:
         """Test factory with domain validation failure."""
         factory = FlextEntityFactory.create_entity_factory(SampleBadUser)
 
-        result = factory(  # type: ignore[operator]
+        result = factory(
             name="John", email="john@example.com"
         )
 
@@ -704,7 +706,7 @@ class TestFlextEntityFactory:
         factory = FlextEntityFactory.create_entity_factory(SampleUser)
 
         # Missing required field 'name'
-        result = factory(  # type: ignore[operator]
+        result = factory(
             email="john@example.com"
         )
 
@@ -722,7 +724,7 @@ class TestFlextEntityFactory:
             "model_validate",
             side_effect=TypeError("Type error"),
         ):
-            result = factory(  # type: ignore[operator]
+            result = factory(
                 name="John", email="john@example.com"
             )
 
@@ -739,7 +741,7 @@ class TestFlextEntityFactory:
             "flext_core.entities.FlextGenerators.generate_entity_id",
             side_effect=ImportError("Import error"),
         ):
-            result = factory(  # type: ignore[operator]
+            result = factory(
                 name="John", email="john@example.com"
             )
 
@@ -799,9 +801,9 @@ class TestEntityIntegration:
 
         # Create multiple entities
         results = [
-            factory(name="Alice", email="alice@example.com"),  # type: ignore[operator]
-            factory(name="Bob", email="bob@example.com", age=30),  # type: ignore[operator]
-            factory(  # type: ignore[operator]
+            factory(name="Alice", email="alice@example.com"),
+            factory(name="Bob", email="bob@example.com", age=30),
+            factory(
                 id="REDACTED_LDAP_BIND_PASSWORD",
                 name="Admin",
                 email="REDACTED_LDAP_BIND_PASSWORD@example.com",

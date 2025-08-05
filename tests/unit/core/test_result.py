@@ -259,14 +259,17 @@ class TestPipeFunction:
         """Test piping success result through functions."""
 
         # FlextCore.pipe creates a pipeline function
-        def to_upper(x: str) -> FlextResult[str]:
-            return FlextResult.ok(x.upper())
+        def to_upper(x: object) -> FlextResult[object]:
+            x_str = str(x)
+            return FlextResult.ok(x_str.upper())
 
-        def replace_spaces(x: str) -> FlextResult[str]:
-            return FlextResult.ok(x.replace(" ", "_"))
+        def replace_spaces(x: object) -> FlextResult[object]:
+            x_str = str(x)
+            return FlextResult.ok(x_str.replace(" ", "_"))
 
-        def to_lower(x: str) -> FlextResult[str]:
-            return FlextResult.ok(x.lower())
+        def to_lower(x: object) -> FlextResult[object]:
+            x_str = str(x)
+            return FlextResult.ok(x_str.lower())
 
         pipeline = FlextCore.pipe(
             to_upper,
@@ -283,11 +286,12 @@ class TestPipeFunction:
     def test_pipe_failure(self) -> None:
         """Test piping failure result."""
 
-        def failing_func(x: str) -> FlextResult[str]:
+        def failing_func(x: object) -> FlextResult[object]:
             return FlextResult.fail("error")
 
-        def another_func(x: str) -> FlextResult[str]:
-            return FlextResult.ok(x.upper())
+        def another_func(x: object) -> FlextResult[object]:
+            x_str = str(x)
+            return FlextResult.ok(x_str.upper())
 
         pipeline = FlextCore.pipe(
             failing_func,
@@ -303,7 +307,7 @@ class TestPipeFunction:
     def test_pipe_with_transformation_error(self) -> None:
         """Test pipe with transformation error."""
 
-        def failing_transform(x: str) -> FlextResult[str]:
+        def failing_transform(x: object) -> FlextResult[object]:
             msg = "Transform failed"
             return FlextResult.fail(msg)
 

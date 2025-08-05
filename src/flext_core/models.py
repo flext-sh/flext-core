@@ -438,7 +438,7 @@ class FlextDatabaseModel(FlextImmutableModel):
             raise ValueError(msg)
         return v.strip()
 
-    @computed_field  # type: ignore[prop-decorator]
+    @computed_field
     @property
     def connection_string(self) -> str:
         """Generate database connection string."""
@@ -483,7 +483,7 @@ class FlextOracleModel(FlextImmutableModel):
         return v
 
     @classmethod
-    def model_validate(cls, obj: dict[str, object]) -> FlextOracleModel:  # type: ignore[override]
+    def model_validate(cls, obj: dict[str, object]) -> FlextOracleModel:
         """Validate that either SID or service_name is provided."""
         instance = super().model_validate(obj)
         if not instance.service_name and not instance.sid:
@@ -491,7 +491,7 @@ class FlextOracleModel(FlextImmutableModel):
             raise ValueError(msg)
         return instance
 
-    @computed_field  # type: ignore[prop-decorator]
+    @computed_field
     @property
     def connection_string(self) -> str:
         """Generate Oracle connection string."""
@@ -658,7 +658,7 @@ class FlextServiceModel(FlextMutableModel):
     # Service discovery
     tags: list[str] = Field(default_factory=list, description="Service tags")
 
-    @computed_field  # type: ignore[prop-decorator]
+    @computed_field
     @property
     def service_url(self) -> str:
         """Generate full service URL."""
@@ -724,7 +724,7 @@ def create_database_model(**kwargs: object) -> FlextDatabaseModel:
             if key in config_data:
                 config_data[key] = value
 
-    return FlextDatabaseModel(**config_data)  # type: ignore[arg-type]
+    return FlextDatabaseModel(**config_data)
 
 
 def create_oracle_model(**kwargs: object) -> FlextOracleModel:
@@ -744,7 +744,7 @@ def create_oracle_model(**kwargs: object) -> FlextOracleModel:
             if key in config_data:
                 config_data[key] = value
 
-    return FlextOracleModel(**config_data)  # type: ignore[arg-type]
+    return FlextOracleModel(**config_data)
 
 
 def create_operation_model(
@@ -762,11 +762,13 @@ def create_operation_model(
 
     # Override with provided kwargs if they are valid
     if isinstance(kwargs, dict):
-        for key, value in kwargs.items():
-            if hasattr(FlextOperationModel, key):
-                config_data[key] = value  # type: ignore[assignment]  # noqa: PERF403
+        config_data.update({
+            key: value
+            for key, value in kwargs.items()
+            if hasattr(FlextOperationModel, key)
+        })
 
-    return FlextOperationModel(**config_data)  # type: ignore[arg-type]
+    return FlextOperationModel(**config_data)
 
 
 def create_singer_stream_model(
@@ -795,7 +797,7 @@ def create_singer_stream_model(
             },
         )
 
-    return FlextSingerStreamModel(**config_data)  # type: ignore[arg-type]
+    return FlextSingerStreamModel(**config_data)
 
 
 def create_service_model(
@@ -825,7 +827,7 @@ def create_service_model(
             },
         )
 
-    return FlextServiceModel(**config_data)  # type: ignore[arg-type]
+    return FlextServiceModel(**config_data)
 
 
 # =============================================================================
