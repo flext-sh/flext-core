@@ -371,7 +371,9 @@ def _build_file_configuration_data() -> TAnyDict:
     }
 
 
-def _load_configuration_from_file(temp_file_path: str) -> FlextResult[tuple[str, TAnyDict]]:
+def _load_configuration_from_file(
+    temp_file_path: str,
+) -> FlextResult[tuple[str, TAnyDict]]:
     """Load configuration from file and display contents."""
     print("\n2. Loading configuration from file:")
 
@@ -409,7 +411,9 @@ def _display_loaded_configuration(loaded_config: TAnyDict) -> None:
         print(log_message)
 
 
-def _validate_loaded_configuration(config_data: tuple[str, TAnyDict]) -> FlextResult[str]:
+def _validate_loaded_configuration(
+    config_data: tuple[str, TAnyDict],
+) -> FlextResult[str]:
     """Validate loaded configuration and return file path for cleanup."""
     print("\n3. Configuration validation:")
 
@@ -455,7 +459,7 @@ def _cleanup_configuration_file(temp_file_path: str) -> FlextResult[None]:
         return FlextResult.fail(error_message)
 
 
-def demonstrate_configuration_hierarchies() -> None:
+def demonstrate_configuration_hierarchies() -> None:  # noqa: PLR0915
     """Demonstrate configuration hierarchies using flext_core.types."""
     log_message: TLogMessage = "\n" + "=" * 80
     print(log_message)
@@ -535,7 +539,9 @@ def demonstrate_configuration_hierarchies() -> None:
         print(log_message)
 
         logging_config = dev_merged.get("logging", {})
-        log_level = logging_config.get("level") if isinstance(logging_config, dict) else "N/A"
+        log_level = (
+            logging_config.get("level") if isinstance(logging_config, dict) else "N/A"
+        )
         log_message = f"   Log level: {log_level}"
         print(log_message)
     # Note: merge_configs always returns dict, but keeping type safety
@@ -641,9 +647,8 @@ def _demonstrate_configuration_validation() -> FlextResult[None]:
     # Create complex configuration
     complex_config = _create_complex_configuration()
 
-    return (
-        _validate_configuration_structure(complex_config)
-        .flat_map(_display_validation_results)
+    return _validate_configuration_structure(complex_config).flat_map(
+        _display_validation_results
     )
 
 
@@ -668,7 +673,9 @@ def _create_complex_configuration() -> TAnyDict:
     }
 
 
-def _validate_configuration_structure(config: TAnyDict) -> FlextResult[tuple[bool, list[TErrorMessage]]]:
+def _validate_configuration_structure(
+    config: TAnyDict,
+) -> FlextResult[tuple[bool, list[TErrorMessage]]]:
     """Validate configuration structure and return validation results."""
     print("🔍 Validating configuration structure:")
 
@@ -685,13 +692,17 @@ def _validate_configuration_structure(config: TAnyDict) -> FlextResult[tuple[boo
     for field_path, expected_type in required_fields:
         validation_result = _validate_config_field(config, field_path, expected_type)
         if validation_result.is_failure:
-            validation_errors.append(validation_result.error or f"Validation failed for {field_path}")
+            validation_errors.append(
+                validation_result.error or f"Validation failed for {field_path}"
+            )
 
     is_valid = len(validation_errors) == 0
     return FlextResult.ok((is_valid, validation_errors))
 
 
-def _validate_config_field(config: TAnyDict, field_path: str, expected_type: type) -> FlextResult[None]:
+def _validate_config_field(
+    config: TAnyDict, field_path: str, expected_type: type
+) -> FlextResult[None]:
     """Validate a single configuration field."""
     # Navigate to nested field
     value: object = config
@@ -699,7 +710,9 @@ def _validate_config_field(config: TAnyDict, field_path: str, expected_type: typ
         if isinstance(value, dict):
             value = value.get(key)
         else:
-            return FlextResult.fail(f"Field path '{field_path}' not found in configuration")
+            return FlextResult.fail(
+                f"Field path '{field_path}' not found in configuration"
+            )
 
     # Validate type
     if not isinstance(value, expected_type):
@@ -712,7 +725,9 @@ def _validate_config_field(config: TAnyDict, field_path: str, expected_type: typ
     return FlextResult.ok(None)
 
 
-def _display_validation_results(validation_data: tuple[bool, list[TErrorMessage]]) -> FlextResult[None]:
+def _display_validation_results(
+    validation_data: tuple[bool, list[TErrorMessage]],
+) -> FlextResult[None]:
     """Display configuration validation results."""
     _is_valid, validation_errors = validation_data
 
@@ -733,9 +748,10 @@ def _demonstrate_configuration_transformation() -> FlextResult[None]:
     # Create transformation configuration
     transform_config = _create_transformation_configuration()
 
-    return (
-        _transform_to_connection_strings(transform_config)
-        .flat_map(lambda transformed: _display_transformed_configuration(transformed, transform_config))
+    return _transform_to_connection_strings(transform_config).flat_map(
+        lambda transformed: _display_transformed_configuration(
+            transformed, transform_config
+        )
     )
 
 
@@ -794,11 +810,15 @@ def _transform_redis_config(redis_config: TAnyDict) -> FlextResult[str]:
     if not all(key in redis_config for key in required_keys):
         return FlextResult.fail("Missing required Redis configuration keys")
 
-    redis_url = f"redis://{redis_config['host']}:{redis_config['port']}/{redis_config['db']}"
+    redis_url = (
+        f"redis://{redis_config['host']}:{redis_config['port']}/{redis_config['db']}"
+    )
     return FlextResult.ok(redis_url)
 
 
-def _display_transformed_configuration(transformed_config: TAnyDict, original_config: TAnyDict) -> FlextResult[None]:
+def _display_transformed_configuration(
+    transformed_config: TAnyDict, original_config: TAnyDict
+) -> FlextResult[None]:
     """Display transformed configuration with masked sensitive data."""
     print("🔄 Transformed configuration:")
 
@@ -829,9 +849,8 @@ def _demonstrate_configuration_composition() -> FlextResult[None]:
 
     config_sources = _create_configuration_sources()
 
-    return (
-        _compose_configuration_from_sources(config_sources)
-        .flat_map(_display_composed_configuration)
+    return _compose_configuration_from_sources(config_sources).flat_map(
+        _display_composed_configuration
     )
 
 
@@ -844,7 +863,9 @@ def _create_configuration_sources() -> list[tuple[str, TAnyDict]]:
     ]
 
 
-def _compose_configuration_from_sources(config_sources: list[tuple[str, TAnyDict]]) -> FlextResult[TAnyDict]:
+def _compose_configuration_from_sources(
+    config_sources: list[tuple[str, TAnyDict]],
+) -> FlextResult[TAnyDict]:
     """Compose configuration from multiple sources."""
     composed_config: TAnyDict = {}
 
@@ -923,7 +944,9 @@ def _demonstrate_domain_model_validation() -> FlextResult[TAnyDict]:
     return FlextResult.ok(user_service_config)
 
 
-def _demonstrate_REDACTED_LDAP_BIND_PASSWORD_user_validation(config: TAnyDict) -> FlextResult[tuple[TAnyDict, list[object]]]:
+def _demonstrate_REDACTED_LDAP_BIND_PASSWORD_user_validation(
+    config: TAnyDict,
+) -> FlextResult[tuple[TAnyDict, list[object]]]:
     """Demonstrate REDACTED_LDAP_BIND_PASSWORD user validation using shared domain models."""
     print("\n2. Validating REDACTED_LDAP_BIND_PASSWORD users with shared domain models:")
 
@@ -971,7 +994,9 @@ def _validate_single_REDACTED_LDAP_BIND_PASSWORD_user(user_data: object) -> Flex
     return FlextResult.fail(f"Validation failed: {user_result.error}")
 
 
-def _demonstrate_user_creation_from_config(validated_data: tuple[TAnyDict, list[object]]) -> FlextResult[tuple[TAnyDict, list[object], list[object]]]:
+def _demonstrate_user_creation_from_config(
+    validated_data: tuple[TAnyDict, list[object]],
+) -> FlextResult[tuple[TAnyDict, list[object], list[object]]]:
     """Demonstrate configuration-driven user creation."""
     print("\n3. Configuration-driven user creation:")
 
@@ -1015,7 +1040,9 @@ def _create_user_from_config(config: object) -> FlextResult[object]:
     return FlextResult.fail(f"Creation failed: {user_result.error}")
 
 
-def _demonstrate_domain_rule_validation(user_data: tuple[TAnyDict, list[object], list[object]]) -> FlextResult[tuple[TAnyDict, list[object], list[object]]]:
+def _demonstrate_domain_rule_validation(
+    user_data: tuple[TAnyDict, list[object], list[object]],
+) -> FlextResult[tuple[TAnyDict, list[object], list[object]]]:
     """Demonstrate configuration validation using domain rules."""
     print("\n4. Configuration validation using domain rules:")
 
@@ -1023,7 +1050,9 @@ def _demonstrate_domain_rule_validation(user_data: tuple[TAnyDict, list[object],
 
     validation_config_raw = config.get("user_validation", {})
     if isinstance(validation_config_raw, dict):
-        validation_config: dict[str, object] = cast("dict[str, object]", validation_config_raw)
+        validation_config: dict[str, object] = cast(
+            "dict[str, object]", validation_config_raw
+        )
         min_age = validation_config.get("min_age", 18)
         max_age = validation_config.get("max_age", 120)
     else:
@@ -1061,7 +1090,9 @@ def _validate_age_against_domain_rules(test_age: int) -> FlextResult[None]:
     return FlextResult.ok(None)
 
 
-def _demonstrate_feature_flag_configuration(validation_data: tuple[TAnyDict, list[object], list[object]]) -> FlextResult[None]:
+def _demonstrate_feature_flag_configuration(
+    validation_data: tuple[TAnyDict, list[object], list[object]],
+) -> FlextResult[None]:
     """Demonstrate configuration-based feature flags with domain context."""
     print("\n5. Configuration-based feature flags with domain context:")
 
@@ -1083,7 +1114,9 @@ def _demonstrate_feature_flag_configuration(validation_data: tuple[TAnyDict, lis
     return FlextResult.ok(None)
 
 
-def _configure_single_feature_flag(feature_name: str, enabled: object) -> FlextResult[None]:
+def _configure_single_feature_flag(
+    feature_name: str, enabled: object
+) -> FlextResult[None]:
     """Configure a single feature flag with domain logging."""
     if isinstance(enabled, bool):
         status = "✅ Enabled" if enabled else "❌ Disabled"

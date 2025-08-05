@@ -20,7 +20,7 @@ from __future__ import annotations
 import math
 import time
 from decimal import Decimal
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 # Import shared domain models to reduce duplication
 from shared_domain import (
@@ -592,9 +592,12 @@ def validate_customer_complete(
     # Extract and validate input data types
     input_result = _extract_and_validate_customer_input(customer_data)
     if input_result.is_failure:
-        return input_result
+        return FlextResult.fail(input_result.error or "Input validation failed")
 
-    name_value, email_value, age_value = input_result.data
+    if input_result.data is not None:
+        name_value, email_value, age_value = input_result.data
+    else:
+        return FlextResult.fail("Input validation returned None")
 
     # Create user with factory
     user_result = _create_user_with_factory(name_value, email_value, age_value)
@@ -604,7 +607,9 @@ def validate_customer_complete(
     user = user_result.data
 
     # Apply business validation
-    return _validate_and_finalize_customer(user)
+    if user is not None:
+        return _validate_and_finalize_customer(user)
+    return FlextResult.fail("User creation returned None")
 
 
 def _extract_and_validate_customer_input(
@@ -679,17 +684,19 @@ def validate_product_complete(
     # Validate fields using orchestrator pattern
     field_result = _validate_product_fields(product_data)
     if field_result.is_failure:
-        return field_result
+        return FlextResult.fail(field_result.error or "Field validation failed")
 
     # Extract and validate types
     type_result = _extract_and_validate_product_types(product_data)
     if type_result.is_failure:
-        return type_result
+        return FlextResult.fail(type_result.error or "Type validation failed")
 
     validated_data = type_result.data
 
     # Create and finalize product
-    return _create_and_finalize_product(validated_data)
+    if validated_data is not None:
+        return _create_and_finalize_product(validated_data)
+    return FlextResult.fail("Type validation returned None")
 
 
 def _validate_product_fields(product_data: TAnyObject) -> FlextResult[None]:
@@ -725,13 +732,15 @@ def _extract_and_validate_product_types(
     if not isinstance(stock, int):
         return FlextResult.fail("Product stock must be an integer")
 
-    return FlextResult.ok({
-        "name": name,
-        "price": price,
-        "category": category,
-        "stock": stock,
-        "product_id": product_id,
-    })
+    return FlextResult.ok(
+        {
+            "name": name,
+            "price": price,
+            "category": category,
+            "stock": stock,
+            "product_id": product_id,
+        }
+    )
 
 
 def _create_and_finalize_product(
@@ -749,7 +758,7 @@ def _create_and_finalize_product(
             price_amount=str(validated_data["price"]),
             currency="USD",
             category=str(validated_data["category"]),
-            in_stock=int(validated_data["stock"]) > 0,
+            in_stock=int(cast("int", validated_data["stock"])) > 0,
             id=validated_data["product_id"],
         )
 

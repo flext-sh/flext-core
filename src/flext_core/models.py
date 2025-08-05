@@ -33,7 +33,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from datetime import UTC, datetime
 from enum import StrEnum
-from typing import NotRequired, TypedDict
+from typing import ClassVar, NotRequired, Self, TypedDict
 
 # Removed Any import - using object instead for type safety
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -221,7 +221,11 @@ class FlextEntity(FlextModel, ABC):
 
     # Core identity with validation
     id: str = Field(description="Unique entity identifier")
-    version: int = Field(default=1, ge=1, description="Entity version for optimistic locking")
+    version: int = Field(
+        default=1,
+        ge=1,
+        description="Entity version for optimistic locking",
+    )
 
     # Domain events (placeholder for event sourcing)
     domain_events: list[dict[str, object]] = Field(default_factory=list, exclude=True)
@@ -251,25 +255,25 @@ class FlextEntity(FlextModel, ABC):
 
     def with_version(self, new_version: int) -> FlextEntity:
         """Create a new entity instance with specified version.
-        
+
         Args:
             new_version: The new version number (must be greater than current)
-            
+
         Returns:
             FlextEntity: New entity instance with updated version
-            
+
         Raises:
             FlextValidationError: If new version is not greater than current
+
         """
-        from flext_core.exceptions import FlextValidationError
-        
         if new_version <= self.version:
-            raise FlextValidationError("New version must be greater than current version")
-        
+            validation_error_msg = "New version must be greater than current version"
+            raise FlextValidationError(validation_error_msg)
+
         # Create a new instance with the same data but updated version
         entity_data = self.model_dump()
         entity_data["version"] = new_version
-        
+
         # Create new instance of the same type
         return type(self).model_validate(entity_data)
 
@@ -282,6 +286,41 @@ class FlextEntity(FlextModel, ABC):
         events = self.domain_events.copy()
         self.domain_events.clear()
         return events
+
+    def copy_with(self, **changes: object) -> FlextResult[Self]:
+        """Create copy with changes and auto-increment version.
+
+        Args:
+            **changes: Field changes to apply
+
+        Returns:
+            FlextResult[FlextEntity]: New entity instance with changes applied
+
+        """
+        try:
+            # Get current model data
+            entity_data = self.model_dump()
+
+            # Apply changes
+            entity_data.update(changes)
+
+            # Auto-increment version unless explicitly provided
+            if changes and "version" not in changes:
+                entity_data["version"] = self.version + 1
+
+            # Create new instance of the same type
+            new_entity = type(self).model_validate(entity_data)
+
+            # Validate business rules
+            validation_result = new_entity.validate_business_rules()
+            if validation_result.is_failure:
+                return FlextResult.fail(
+                    validation_result.error or "Business rule validation failed",
+                )
+
+            return FlextResult.ok(new_entity)
+        except Exception as e:
+            return FlextResult.fail(f"Failed to copy entity: {e}")
 
     @abstractmethod
     def validate_business_rules(self) -> FlextResult[None]:
@@ -340,6 +379,68 @@ class FlextFactory:
         - Extensible for project-specific needs
     """
 
+    # Registry for model classes and factory functions
+    _registry: ClassVar[dict[str, type[FlextModel] | object]] = {}
+
+    @classmethod
+    def register(cls, name: str, factory_or_class: type[FlextModel] | object) -> None:
+        """Register a model class or factory function with a name.
+
+        Args:
+            name: Registration name for the factory
+            factory_or_class: Model class or factory function to register
+
+        Example:
+            FlextFactory.register("user", User)
+            FlextFactory.register("pipeline", pipeline_factory)
+
+        """
+        cls._registry[name] = factory_or_class
+
+    @classmethod
+    def create(cls, name: str, **kwargs: object) -> FlextResult[object]:  # noqa: PLR0911
+        """Create model instance using registered factory.
+
+        Args:
+            name: Name of registered factory
+            **kwargs: Parameters for model creation
+
+        Returns:
+            FlextResult[object]: Created instance or error
+
+        Example:
+            result = FlextFactory.create("user", name="John", email="john@example.com")
+
+        """
+        if name not in cls._registry:
+            return FlextResult.fail(f"No factory registered for '{name}'")
+
+        factory = cls._registry[name]
+
+        try:
+            # Handle model class
+            if isinstance(factory, type) and issubclass(factory, FlextModel):
+                instance = factory(**kwargs)  # type: ignore[arg-type]
+                validation_result = instance.validate_business_rules()
+                if validation_result.is_failure:
+                    return FlextResult.fail(
+                        validation_result.error or "Business rule validation failed",
+                    )
+                return FlextResult.ok(instance)
+
+            # Handle callable factory function
+            if callable(factory):
+                try:
+                    instance = factory(**kwargs)
+                    return FlextResult.ok(instance)
+                except Exception as e:
+                    return FlextResult.fail(f"Factory function failed: {e}")
+
+            return FlextResult.fail(f"Invalid factory type for '{name}'")
+
+        except Exception as e:
+            return FlextResult.fail(f"Failed to create '{name}': {e}")
+
     @staticmethod
     def create_model[T: FlextModel](
         model_class: type[T],
@@ -360,7 +461,7 @@ class FlextFactory:
             validation_result = instance.validate_business_rules()
             if validation_result.is_failure:
                 return FlextResult.fail(
-                    validation_result.error or "Business rule validation failed"
+                    validation_result.error or "Business rule validation failed",
                 )
             return FlextResult.ok(instance)
         except Exception as e:
@@ -728,7 +829,7 @@ class FlextSingerStreamModel(FlextModel):
     stream_name: str = ""
     tap_name: str = ""
     schema_definition: dict[str, object] = Field(
-        default_factory=dict
+        default_factory=dict,
     )  # Add for test compatibility
     batch_size: int = 1000  # Add for test compatibility
     replication_method: str = "FULL_TABLE"  # Add for test compatibility
@@ -750,7 +851,9 @@ def create_oracle_model(**kwargs: object) -> FlextOracleModel:
 
 
 def create_operation_model(
-    operation_id: str, operation_type: str, **kwargs: object
+    operation_id: str,
+    operation_type: str,
+    **kwargs: object,
 ) -> FlextOperationModel:
     """Legacy factory - use FlextFactory.create_model instead."""
     # Legacy factory with relaxed typing for backward compatibility
@@ -764,7 +867,10 @@ def create_operation_model(
 
 
 def create_service_model(
-    service_name: str, host: str, port: int, **kwargs: object
+    service_name: str,
+    host: str,
+    port: int,
+    **kwargs: object,
 ) -> FlextServiceModel:
     """Legacy factory - use FlextFactory.create_model instead."""
     # Legacy factory with relaxed typing for backward compatibility
@@ -781,7 +887,9 @@ def create_service_model(
 
 
 def create_singer_stream_model(
-    stream_name: str, tap_name: str, **kwargs: object
+    stream_name: str,
+    tap_name: str,
+    **kwargs: object,
 ) -> FlextSingerStreamModel:
     """Legacy factory - use FlextFactory.create_model instead."""
     return FlextSingerStreamModel(stream_name=stream_name, tap_name=tap_name, **kwargs)  # type: ignore[arg-type]

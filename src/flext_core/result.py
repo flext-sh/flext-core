@@ -359,7 +359,7 @@ class FlextResult[T]:
         """Execute side effect function on success with non-None data, return self."""
         if self.is_success and self._data is not None:
             with contextlib.suppress(TypeError, ValueError, AttributeError):
-                func(cast("T", self._data))
+                func(self._data)
         return self
 
     def tap_error(self, func: Callable[[str], None]) -> FlextResult[T]:

@@ -1,296 +1,260 @@
-# FLEXT Core
+# flext-core
 
-[![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
-[![Version 0.9.0](https://img.shields.io/badge/version-0.9.0-orange.svg)](https://github.com/flext-sh/flext-core)
-[![MIT License](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)
-[![Development Status](https://img.shields.io/badge/status-beta-yellow.svg)](https://github.com/flext-sh/flext-core)
+**Type**: Foundation Library | **Status**: Development | **Dependencies**: None
 
-**The Architectural Foundation of the FLEXT Data Integration Ecosystem**
+Architectural foundation library providing consistent patterns, type-safe error handling, and enterprise design patterns for the FLEXT ecosystem.
 
-FLEXT Core is the foundational Python library that establishes consistent architectural patterns, type-safe error handling, and enterprise-grade design patterns used across all 32 projects in the FLEXT ecosystem. As a pure library with zero CLI dependencies, it serves as the cornerstone that enables the FLEXT platform to deliver reliable, scalable data integration solutions.
+> **⚠️ Development Status**: Core patterns stable (FlextResult, FlextContainer), domain patterns active development, 95% test coverage target
 
-## 🎯 Project Mission
+## Quick Start
 
-**Enable enterprise-grade data integration through consistent architectural patterns**
+```bash
+# Install dependencies
+poetry install
 
-FLEXT Core exists to solve the fundamental challenge of maintaining architectural consistency across a complex ecosystem of 32 interconnected projects. By providing battle-tested patterns for error handling, dependency injection, domain modeling, and configuration management, it ensures that every component in the FLEXT ecosystem follows the same enterprise-grade standards.
+# Test basic functionality
+python -c "from flext_core import FlextResult; result = FlextResult.ok('test'); print('✅ Working')"
 
-## 🏗️ Architecture Role in FLEXT Ecosystem
+# Development setup
+make setup
+```
 
-### **Foundation Layer**
+## Current Reality
 
-FLEXT Core sits at the foundation of the entire FLEXT ecosystem, providing essential patterns for:
+**What Actually Works:**
+
+- FlextResult[T] pattern for type-safe error handling
+- FlextContainer dependency injection system
+- Domain entities (FlextEntity, FlextValueObject, FlextAggregateRoot)
+- Configuration management with FlextBaseSettings
+- Structured logging with correlation IDs
+
+**What Needs Work:**
+
+- Event Sourcing implementation incomplete
+- CQRS patterns (Command/Query Bus missing)
+- Plugin architecture foundation missing
+- Cross-language bridge patterns (Python-Go)
+
+## Architecture Role in FLEXT Ecosystem
+
+### **Foundation Component**
+
+FLEXT Core provides base patterns used by all ecosystem projects:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                    FLEXT ECOSYSTEM (32 Projects)                 │
 ├─────────────────────────────────────────────────────────────────┤
-│ Services (3): FlexCore(Go) | client-a | client-b                    │
+│ Services: FlexCore(Go) | FLEXT Service(Go/Python) | Clients     │
 ├─────────────────────────────────────────────────────────────────┤
-│ Applications (6): API | Auth | Web | CLI | Quality | Plugin      │
+│ Applications: API | Auth | Web | CLI | Quality | Observability  │
 ├─────────────────────────────────────────────────────────────────┤
-│ Infrastructure (6): Oracle | LDAP | LDIF | WMS | gRPC | Meltano  │
+│ Infrastructure: Oracle | LDAP | LDIF | gRPC | Plugin | WMS      │
 ├─────────────────────────────────────────────────────────────────┤
-│ Singer Ecosystem (15): 5 Taps | 5 Targets | 4 DBT | 1 Extension │
-├─────────────────────────────────────────────────────────────────┤
-│ Go Binaries (4): flext | cli | server | demo                     │
+│ Singer Ecosystem: Taps(5) | Targets(5) | DBT(4) | Extensions(1) │
 ├═════════════════════════════════════════════════════════════════┤
-│              FLEXT CORE - ARCHITECTURAL FOUNDATION               │
-│  FlextResult | FlextContainer | Domain Patterns | Config        │
+│ Foundation: [FLEXT-CORE] (Patterns | Types | Domain Base)       │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
 ### **Core Responsibilities**
 
-1. **Type-Safe Error Handling**: FlextResult[T] pattern eliminates exceptions across all 32 projects
-2. **Dependency Injection**: FlextContainer provides consistent service location
-3. **Domain Modeling**: Enterprise DDD patterns (entities, value objects, aggregates)
-4. **Configuration Management**: Environment-aware settings with validation
-5. **Structured Logging**: Correlation ID support for distributed tracing
-6. **CQRS Foundation**: Command/handler patterns for enterprise applications
+1. **Pattern Foundation**: FlextResult, FlextContainer, domain patterns
+2. **Type System**: Base types and interfaces for ecosystem
+3. **Domain Modeling**: Clean Architecture and DDD base classes
 
-## 📊 Current Status (v0.9.0 Beta)
+## Key Features
 
-### ✅ **Production-Ready Components**
+### **Current Capabilities**
 
-- **FlextResult[T]**: Complete railway-oriented programming implementation
-- **FlextContainer**: Enterprise dependency injection with type safety
-- **Domain Patterns**: Entities, value objects, and aggregate roots
-- **Configuration System**: Pydantic-based settings with environment variables
-- **Structured Logging**: Advanced logging with context management
-- **Validation Framework**: Comprehensive input validation with guards
+- **FlextResult[T]**: Railway-oriented programming for error handling
+- **FlextContainer**: Enterprise dependency injection container
+- **Domain Patterns**: FlextEntity, FlextValueObject with business validation
+- **Configuration**: Environment-aware settings with Pydantic
 
-### 🚧 **In Development for 1.0.0 (December 2025)**
+### **Pattern Examples**
 
-- **Event Sourcing**: Complete event store with persistence and replay
-- **Advanced CQRS**: Query bus, middleware pipeline, handler discovery
-- **Plugin Architecture**: Hot-swappable components for ecosystem extensibility
-- **Cross-Language Bridge**: Python-Go integration for FlexCore services
-- **Enterprise Observability**: Distributed tracing and correlation propagation
+```python
+from flext_core import FlextResult, FlextContainer, FlextEntity
 
-## 🚀 Quick Start
+# Type-safe error handling
+def process_data(data: str) -> FlextResult[ProcessedData]:
+    if not data:
+        return FlextResult.fail("Empty data provided")
+    return FlextResult.ok(ProcessedData(data))
+
+# Dependency injection
+container = FlextContainer()
+container.register("service", UserService())
+service = container.get("service").unwrap()
+
+# Domain entities with validation
+class User(FlextEntity):
+    name: str
+    email: str
+
+    def validate_domain_rules(self) -> FlextResult[None]:
+        if "@" not in self.email:
+            return FlextResult.fail("Invalid email")
+        return FlextResult.ok(None)
+```
+
+## Installation & Usage
 
 ### Installation
 
 ```bash
-pip install flext-core
-```
+# Clone and install
+cd /path/to/flext-core
+poetry install
 
-**Requirements**: Python 3.13+ only (no backward compatibility)  
-**Dependencies**: Minimal (pydantic, pydantic-settings, structlog)
+# Development setup
+make setup
+```
 
 ### Basic Usage
 
 ```python
 from flext_core import FlextResult, FlextContainer
 
-# Type-safe error handling
-def divide(a: int, b: int) -> FlextResult[float]:
-    if b == 0:
-        return FlextResult.fail("Division by zero")
-    return FlextResult.ok(a / b)
-
 # Railway-oriented programming
 result = (
-    divide(10, 2)
-    .map(lambda x: x * 2)
-    .flat_map(lambda x: divide(x, 3))
+    validate_input(data)
+    .flat_map(process_data)
+    .map(format_output)
 )
 
 if result.success:
-    print(f"Result: {result.data}")  # Result: 3.33...
+    print(f"Result: {result.data}")
 else:
     print(f"Error: {result.error}")
-
-# Dependency injection
-container = FlextContainer()
-result = container.register("calculator", CalculatorService())
-assert result.success
-
-calculator = container.get("calculator").unwrap()
 ```
 
-### Domain Modeling
+## Development Commands
 
-```python
-from flext_core import FlextEntity, FlextValueObject, FlextResult
-
-class User(FlextEntity):
-    name: str
-    email: str
-    is_active: bool = False
-
-    def activate(self) -> FlextResult[None]:
-        if self.is_active:
-            return FlextResult.fail("User already active")
-
-        self.is_active = True
-        # Domain events collected (persistence in 1.0.0)
-        self.add_domain_event({"type": "UserActivated", "user_id": self.id})
-        return FlextResult.ok(None)
-
-class Email(FlextValueObject):
-    address: str
-
-    def __post_init__(self):
-        if "@" not in self.address:
-            raise ValueError("Invalid email format")
-```
-
-## 🛠️ Development
-
-### Setup
+### Quality Gates (Zero Tolerance)
 
 ```bash
-git clone https://github.com/flext-sh/flext-core.git
-cd flext-core
-make setup  # Install dependencies and pre-commit hooks
-```
-
-### Quality Gates (Required)
-
-```bash
-make validate      # Complete validation pipeline (all must pass)
-make check         # Quick lint + type check
-make test          # Run tests (95% coverage required)
-make format        # Code formatting
-make security      # Security scanning
+# Complete validation pipeline (run before commits)
+make validate              # Full validation (lint + type + security + test)
+make check                 # Quick lint + type check + test
+make test                  # Run all tests (95% coverage requirement)
+make lint                  # Code linting
+make type-check            # Type checking
+make format                # Code formatting
+make security              # Security scanning
 ```
 
 ### Testing
 
 ```bash
-make test                    # Full test suite with coverage
-make test-unit               # Unit tests only
-make test-integration        # Integration tests only
-pytest -m "not slow"         # Fast tests only
-pytest -m core               # Core framework tests
-pytest -m ddd                # Domain-driven design tests
+# Test categories
+make test-unit             # Unit tests only
+make test-integration      # Integration tests only
+make coverage-html         # Generate HTML coverage report
+
+# Specific test patterns
+pytest -m unit
+pytest -m integration
+pytest -m "not slow"       # Fast tests for quick feedback
 ```
 
-## 📈 Impact Metrics
+## Configuration
 
-### **Quality Standards**
+### Environment Variables
 
-- **Test Coverage**: 95% minimum (currently 95%+)
-- **Type Safety**: Strict MyPy with zero tolerance
-- **Security**: Bandit + pip-audit scanning
+```bash
+# Core library configuration
+export FLEXT_LOG_LEVEL="INFO"
+export FLEXT_DEBUG="false"
+
+# Development settings
+export PYTHONPATH="${PWD}/src:${PYTHONPATH}"
+```
+
+## Quality Standards
+
+### **Zero Tolerance Quality Gates**
+
+- **Coverage**: 95% test coverage enforced
+- **Type Safety**: Strict MyPy configuration
 - **Linting**: Ruff with comprehensive rules
-- **Line Length**: 79 characters (strict PEP8)
+- **Security**: Bandit + pip-audit scanning
 
-### **Ecosystem Integration**
+## Integration with FLEXT Ecosystem
 
-- **32 Projects**: Direct dependencies on FLEXT Core patterns
-- **Zero Downtime**: Changes require ecosystem-wide validation
-- **Consistent API**: FlextResult[T] used in 15,000+ function signatures
-- **Enterprise Ready**: Used in production data integration pipelines
+### **Pattern Usage Across Ecosystem**
 
-## 🗓️ Development Roadmap
+```python
+# All ecosystem projects use these patterns
+from flext_core import FlextResult, FlextContainer, FlextEntity
 
-### **Current Sprint (August 2025)**
+# Service operations return FlextResult
+async def service_operation() -> FlextResult[Data]:
+    return FlextResult.ok(processed_data)
 
-- ✅ Quality gate fixes (formatting, security)
-- 🔄 Enhanced test coverage and integration testing
-- 🔄 Security audit and vulnerability assessment
+# Dependency injection throughout ecosystem
+container = get_flext_container()
+service = container.get("service_name").unwrap()
+```
 
-### **Core Architecture (Sep-Oct 2025)**
+### **Foundation for All Projects**
 
-- Event Sourcing with PostgreSQL/SQLite persistence
-- Query Bus and CQRS middleware pipeline
-- Plugin architecture foundation with registry
-- Container performance optimization (10x improvement target)
+- **29 FLEXT Libraries**: Use FlextResult, domain patterns
+- **FlexCore (Go)**: Integrates via Python bridge
+- **Services**: Built on foundation patterns
 
-### **Enterprise Features (November 2025)**
+## Current Status
 
-- Python-Go bridge for FlexCore integration
-- Distributed tracing with OpenTelemetry
-- Advanced observability and metrics collection
-- Comprehensive integration test suites
+**Version**: 0.9.0 (Development)
 
-### **Production Readiness (December 2025)**
+**Completed**:
 
-- Performance benchmarking across ecosystem
-- Security hardening and audit
-- Complete documentation with real-world examples
-- 1.0.0 Release candidate and community validation
+- ✅ FlextResult pattern with railway-oriented programming
+- ✅ FlextContainer dependency injection system
+- ✅ Domain entity patterns (FlextEntity, FlextValueObject)
+- ✅ Configuration management with Pydantic
 
-## 🌐 Ecosystem Projects Using FLEXT Core
+**In Progress**:
 
-### **Infrastructure Libraries**
+- 🔄 Event Sourcing implementation
+- 🔄 CQRS patterns (Command/Query Bus)
+- 🔄 Plugin architecture foundation
 
-- **flext-db-oracle**: Oracle database connectivity with enterprise patterns
-- **flext-ldap**: LDAP directory services with domain modeling
-- **flext-ldif**: LDIF file processing with validation frameworks
-- **flext-oracle-wms**: Warehouse Management System integration
-- **flext-grpc**: gRPC communication with type-safe error handling
+**Planned**:
 
-### **Application Services**
+- 📋 Cross-language bridge patterns (Python-Go)
+- 📋 Advanced event-driven patterns
+- 📋 Distributed system patterns
 
-- **flext-api**: REST API services built on FlextResult patterns
-- **flext-auth**: Authentication services with domain entities
-- **flext-web**: Web interface using core configuration patterns
-- **flext-cli**: Command-line tools with consistent error handling
+## Contributing
 
-### **Data Integration (Singer Ecosystem)**
+### Development Standards
 
-- **15 Projects**: All Singer taps, targets, and DBT transformations use FLEXT Core
-- **Consistent Patterns**: FlextResult for data pipeline error handling
-- **Type Safety**: Domain models with Pydantic integration
+- **Pure Library**: No CLI dependencies, foundation patterns only
+- **Type Safety**: All code must pass MyPy strict mode
+- **Testing**: Maintain 95% coverage
+- **Ecosystem Impact**: Changes affect 32 dependent projects
 
-### **Core Services**
+### Development Workflow
 
-- **FlexCore (Go)**: Integrates via Python bridge for business logic
-- **client-a**: Oracle Unified Directory migration using core patterns
-- **client-b**: Meltano-native implementation with FLEXT patterns
+```bash
+# Setup and validate
+make setup
+make validate
+make test
+```
 
-## 📚 Documentation
+## License
 
-- [**Getting Started**](docs/getting-started/) - Installation and quickstart guides
-- [**Architecture Guide**](docs/architecture/) - Clean Architecture implementation
-- [**API Reference**](docs/api/) - Complete API documentation
-- [**Configuration**](docs/configuration/) - Settings and environment management
-- [**Examples**](examples/) - 17 comprehensive working examples
-- [**Development Guide**](docs/development/) - Contributing and best practices
-- [**TODO & Roadmap**](docs/TODO.md) - Current gaps and development timeline
+MIT License - See [LICENSE](LICENSE) file for details.
 
-## 🤝 Contributing
+## Links
 
-FLEXT Core welcomes contributions that enhance the foundational patterns used across the ecosystem:
-
-### **Priority Areas for Contribution**
-
-1. **Event Sourcing Implementation**: Help complete the event store foundation
-2. **Performance Optimization**: Container and handler performance improvements
-3. **Documentation**: Real-world examples and architectural decision records
-4. **Testing**: Integration test coverage and ecosystem validation
-
-### **Contribution Process**
-
-1. Fork repository and create feature branch
-2. Follow development standards: `make validate` must pass
-3. Maintain 95% test coverage with comprehensive test suites
-4. Submit pull request with ecosystem impact assessment
-
-### **Guidelines**
-
-- **Python 3.13 only** - no backward compatibility
-- **Type safety first** - comprehensive type hints required
-- **Railway-oriented** - use FlextResult for all error handling
-- **Ecosystem aware** - consider impact on 32 dependent projects
-
-## 📄 License
-
-MIT License - see [LICENSE](LICENSE) for details.
-
-## 🆘 Support
-
-- **Documentation**: [docs/](docs/)
-- **Issues**: [GitHub Issues](https://github.com/flext-sh/flext-core/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/flext-sh/flext-core/discussions)
-- **Security**: Report security issues privately to the maintainers
+- **[CLAUDE.md](CLAUDE.md)**: Development guidance
+- **[Documentation](docs/)**: Complete documentation
 
 ---
 
-**FLEXT Core v0.9.0** - The architectural foundation enabling enterprise-grade data integration across 32 interconnected projects. Beta software with solid foundations and clear roadmap to production readiness in December 2025.
-
-**Mission**: Provide the architectural foundation that enables the FLEXT ecosystem to deliver reliable, scalable, and maintainable data integration solutions for enterprise environments.
+_Foundation library for the FLEXT ecosystem - Enterprise data integration platform_

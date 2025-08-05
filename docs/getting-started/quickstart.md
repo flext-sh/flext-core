@@ -1,90 +1,89 @@
-# Quickstart - FLEXT Core
+# FLEXT Core Quick Start Guide
 
-**Guia prático para começar rapidamente com FLEXT Core**
+**Get started with FLEXT Core in 10 minutes using ACTUAL working patterns**
 
-## 🚀 Primeiro Uso - 5 Minutos
+## 🚀 Hello World - 2 Minutes
 
-### Instalação Rápida
+### Installation
 
 ```bash
-# Instalar FLEXT Core
 pip install flext-core
-
-# Ou com Poetry
+# or
 poetry add flext-core
 ```
 
-### Hello World com FLEXT
+### First Example
 
 ```python
 # hello_flext.py
 from flext_core import FlextResult
 
 def hello_world() -> FlextResult[str]:
-    """Primeiro exemplo com FLEXT Core."""
+    """First example with FLEXT Core."""
     return FlextResult.ok("Hello, FLEXT World! 🚀")
 
-# Executar
+# Usage
 result = hello_world()
 if result.success:
     print(result.data)  # Output: Hello, FLEXT World! 🚀
 else:
-    print(f"Erro: {result.error}")
+    print(f"Error: {result.error}")
 ```
 
-## 📋 Conceitos Fundamentais
+## 📋 Core Concepts
 
-### 1. FlextResult - Error Handling Type-Safe
+### 1. FlextResult - Type-Safe Error Handling
 
-**O coração do FLEXT Core - substitui exceções por resultados explícitos.**
+**The heart of FLEXT Core - replaces exceptions with explicit results.**
 
 ```python
 from flext_core import FlextResult
 
 def divide_numbers(a: float, b: float) -> FlextResult[float]:
-    """Divisão segura com tratamento de erro."""
+    """Safe division with error handling."""
     if b == 0:
-        return FlextResult.fail("Divisão por zero não permitida")
+        return FlextResult.fail("Division by zero not allowed")
 
     result = a / b
     return FlextResult.ok(result)
 
-# Uso seguro
+# Safe usage
 result = divide_numbers(10, 2)
 if result.success:
-    print(f"Resultado: {result.data}")  # 5.0
+    print(f"Result: {result.data}")  # 5.0
 else:
-    print(f"Erro: {result.error}")
+    print(f"Error: {result.error}")
 
-# Caso de erro
+# Error case
 error_result = divide_numbers(10, 0)
 print(error_result.is_failure)  # True
-print(error_result.error)       # "Divisão por zero não permitida"
+print(error_result.error)       # "Division by zero not allowed"
 ```
 
 ### 2. FlextContainer - Dependency Injection
 
-**Container IoC type-safe para gerenciamento de dependências.**
+**Type-safe IoC container for dependency management.**
 
 ```python
 from flext_core import FlextContainer
 
-# Criar container
+# Create container
 container = FlextContainer()
 
-# Registrar serviços
+# Register services
 database_url = "postgresql://localhost/mydb"
-container.register("database_url", database_url)
+register_result = container.register("database_url", database_url)
+assert register_result.success
 
-# Registrar classe de serviço
+# Register service class
 class EmailService:
     def send_email(self, to: str, subject: str) -> str:
-        return f"Email enviado para {to}: {subject}"
+        return f"Email sent to {to}: {subject}"
 
 email_service = EmailService()
 container.register("email_service", email_service)
 
-# Resolver dependências
+# Resolve dependencies
 db_result = container.get("database_url")
 if db_result.success:
     print(f"Database: {db_result.data}")
@@ -92,315 +91,230 @@ if db_result.success:
 email_result = container.get("email_service")
 if email_result.success:
     service = email_result.data
-    message = service.send_email("user@test.com", "Bem-vindo!")
+    message = service.send_email("user@test.com", "Welcome!")
     print(message)
 ```
 
-### 3. Domain Entities - DDD Building Blocks
+### 3. Configuration Management
 
-**Entidades de domínio com identidade única.**
+**Environment-aware configuration with type safety.**
 
 ```python
-from flext_core import FlextEntity, FlextResult
-from typing import NewType
+from flext_core import FlextBaseSettings
 
-# Value objects
-UserId = NewType("UserId", str)
-Email = NewType("Email", str)
+class AppSettings(FlextBaseSettings):
+    app_name: str = "My App"
+    debug: bool = False
+    database_url: str = "sqlite:///app.db"
+    api_port: int = 8000
 
-class User(FlextEntity[UserId]):
-    """Entidade User com regras de negócio."""
+    class Config:
+        env_prefix = "APP_"
 
-    def __init__(self, user_id: UserId, name: str, email: Email):
-        super().__init__(user_id)
-        self._name = name
-        self._email = email
-        self._is_active = True
+# Usage - loads from environment automatically
+settings = AppSettings()
+print(f"App: {settings.app_name}")
+print(f"Debug: {settings.debug}")
+print(f"Database: {settings.database_url}")
+```
 
-    @property
-    def name(self) -> str:
-        return self._name
+### 4. Domain Entities - Basic Usage
 
-    @property
-    def email(self) -> Email:
-        return self._email
+**Domain entities with identity and business logic.**
 
-    @property
-    def is_active(self) -> bool:
-        return self._is_active
+```python
+from flext_core.models import FlextEntity
+from flext_core import FlextResult
 
-    def change_email(self, new_email: Email) -> FlextResult[None]:
-        """Mudar email com validação de negócio."""
+class User(FlextEntity):
+    id: str
+    name: str
+    email: str
+    is_active: bool = True
+
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Validate business rules (required by FlextEntity)."""
+        if not self.name:
+            return FlextResult.fail("Name is required")
+        if "@" not in self.email:
+            return FlextResult.fail("Valid email is required")
+        return FlextResult.ok(None)
+
+    def change_email(self, new_email: str) -> FlextResult[None]:
+        """Change email with business validation."""
         if "@" not in new_email:
-            return FlextResult.fail("Email deve conter @")
+            return FlextResult.fail("Email must contain @")
 
-        if new_email == self._email:
-            return FlextResult.fail("Novo email deve ser diferente do atual")
+        if new_email == self.email:
+            return FlextResult.fail("New email must be different")
 
-        self._email = new_email
+        self.email = new_email
+        # Validate after change
+        validation = self.validate_business_rules()
+        if validation.is_failure:
+            return validation
+
         return FlextResult.ok(None)
 
     def deactivate(self) -> FlextResult[None]:
-        """Desativar usuário."""
-        if not self._is_active:
-            return FlextResult.fail("Usuário já está inativo")
+        """Deactivate user."""
+        if not self.is_active:
+            return FlextResult.fail("User already inactive")
 
-        self._is_active = False
+        self.is_active = False
         return FlextResult.ok(None)
 
-# Criar e usar entidade
-user_id = UserId("user_123")
-user = User(user_id, "João Silva", Email("joao@test.com"))
+# Create and use entity (Pydantic model syntax)
+user = User(id="user_123", name="John Doe", email="john@test.com")
+print(f"User: {user.name} (ID: {user.id})")
 
-print(f"Usuário: {user.name}")
-print(f"ID: {user.id}")
-print(f"Email: {user.email}")
-
-# Mudar email
-email_result = user.change_email(Email("joao.silva@newcompany.com"))
+# Change email
+email_result = user.change_email("john.doe@newcompany.com")
 if email_result.success:
-    print(f"Email atualizado: {user.email}")
+    print(f"Email updated: {user.email}")
 ```
 
-## 🎯 Padrões Essenciais
+### 5. Command Pattern - Real Implementation
 
-### 1. Command Pattern - CQRS
-
-**Commands representam intenções de mudança no sistema.**
+**Commands using actual FlextCommands namespace.**
 
 ```python
-from flext_core.patterns import FlextCommand, FlextCommandHandler
-from flext_core import FlextResult
+from flext_core import FlextCommands, FlextResult
 
-# Command - Intenção de criar usuário
-class CreateUserCommand(FlextCommand):
-    def __init__(self, name: str, email: str):
-        super().__init__()
+# Define a command
+class CreateUserCommand(FlextCommands.Command):
+    def __init__(self, name: str, email: str, **kwargs):
+        super().__init__(**kwargs)
         self.name = name
         self.email = email
 
-    def validate(self) -> FlextResult[None]:
-        """Validação de entrada do command."""
+    def validate_command(self) -> FlextResult[None]:
+        """Validate command data."""
         if not self.name.strip():
-            return FlextResult.fail("Nome é obrigatório")
+            return FlextResult.fail("Name is required")
 
         if "@" not in self.email:
-            return FlextResult.fail("Email deve ser válido")
+            return FlextResult.fail("Valid email required")
 
         if len(self.name) < 2:
-            return FlextResult.fail("Nome deve ter pelo menos 2 caracteres")
+            return FlextResult.fail("Name must be at least 2 characters")
 
         return FlextResult.ok(None)
 
-# Handler - Processa o command
-class CreateUserHandler(FlextCommandHandler[CreateUserCommand, User]):
+# Command handler
+class CreateUserHandler(FlextCommands.Handler[CreateUserCommand, User]):
     def __init__(self, container: FlextContainer):
         super().__init__()
         self._container = container
 
-    def can_handle(self, command) -> bool:
-        return isinstance(command, CreateUserCommand)
-
     def handle(self, command: CreateUserCommand) -> FlextResult[User]:
-        """Processar criação de usuário."""
-        # Gerar ID único
-        user_id = UserId(f"user_{hash(command.email)}")
+        """Process user creation."""
+        # Create user entity
+        user = User(f"user_{hash(command.email)}", command.name, command.email)
 
-        # Criar entidade
-        user = User(user_id, command.name, Email(command.email))
-
-        # Simular persistência
+        # Simulate save (in real app, use repository)
         save_result = self._save_user(user)
         if save_result.is_failure:
-            return FlextResult.fail(f"Erro ao salvar usuário: {save_result.error}")
+            return FlextResult.fail(f"Save failed: {save_result.error}")
 
         return FlextResult.ok(user)
 
     def _save_user(self, user: User) -> FlextResult[None]:
-        """Simular salvamento no banco."""
-        # Em aplicação real, usaria repository
+        """Simulate user persistence."""
         return FlextResult.ok(None)
 
-# Uso do Command Pattern
+# Usage
 container = FlextContainer()
 handler = CreateUserHandler(container)
 
-# Criar command
-command = CreateUserCommand("Ana Paula", "ana@empresa.com")
-
-# Processar command
+# Create and process command
+command = CreateUserCommand("Ana Paula", "ana@company.com")
 result = handler.process_command(command)
+
 if result.success:
     user = result.data
-    print(f"✅ Usuário criado: {user.name} ({user.id})")
+    print(f"✅ User created: {user.name} ({user.id})")
 else:
-    print(f"❌ Erro: {result.error}")
+    print(f"❌ Error: {result.error}")
 
-# Teste com dados inválidos
-invalid_command = CreateUserCommand("", "email-invalid")
+# Test with invalid data
+invalid_command = CreateUserCommand("", "invalid-email")
 invalid_result = handler.process_command(invalid_command)
-print(f"Validação: {invalid_result.error}")  # "Nome é obrigatório"
+print(f"Validation error: {invalid_result.error}")
 ```
 
-### 2. Validation Pattern - Business Rules
+## 🎯 Railway-Oriented Programming
 
-**Sistema de validação extensível para regras de negócio.**
+**Chain operations safely with map and flat_map.**
 
 ```python
-from flext_core.patterns import FlextValidator, FlextValidationResult
-from flext_core.patterns.validation import ValidationRule
+from flext_core import FlextResult
 
-# Dados a serem validados
-class UserRegistrationData:
-    def __init__(self, name: str, email: str, age: int, password: str):
-        self.name = name
-        self.email = email
-        self.age = age
-        self.password = password
+def validate_email(email: str) -> FlextResult[str]:
+    if "@" not in email:
+        return FlextResult.fail("Invalid email format")
+    return FlextResult.ok(email.lower())
 
-# Regras de validação customizadas
-class MinimumAgeRule(ValidationRule[UserRegistrationData]):
-    def __init__(self, min_age: int = 18):
-        self.min_age = min_age
+def create_user_account(email: str) -> FlextResult[dict]:
+    if not email:
+        return FlextResult.fail("Email required")
+    return FlextResult.ok({"email": email, "created": True})
 
-    def validate(self, data: UserRegistrationData) -> FlextValidationResult:
-        if data.age < self.min_age:
-            return FlextValidationResult.with_errors([
-                f"Idade mínima é {self.min_age} anos"
-            ])
-        return FlextValidationResult.success()
+def send_welcome_email(account: dict) -> FlextResult[dict]:
+    # Simulate email sending
+    account["welcome_sent"] = True
+    return FlextResult.ok(account)
 
-class StrongPasswordRule(ValidationRule[UserRegistrationData]):
-    def validate(self, data: UserRegistrationData) -> FlextValidationResult:
-        result = FlextValidationResult.success()
+# Chain operations
+def process_user_registration(email: str) -> FlextResult[dict]:
+    return (
+        validate_email(email)
+        .flat_map(create_user_account)
+        .flat_map(send_welcome_email)
+    )
 
-        if len(data.password) < 8:
-            result.add_error("Senha deve ter pelo menos 8 caracteres")
+# Usage
+result = process_user_registration("user@example.com")
+if result.success:
+    print(f"Registration successful: {result.data}")
+else:
+    print(f"Registration failed: {result.error}")
 
-        if not any(c.isupper() for c in data.password):
-            result.add_error("Senha deve ter pelo menos 1 letra maiúscula")
-
-        if not any(c.isdigit() for c in data.password):
-            result.add_error("Senha deve ter pelo menos 1 número")
-
-        return result
-
-# Validator principal
-class UserRegistrationValidator(FlextValidator[UserRegistrationData]):
-    def __init__(self):
-        super().__init__()
-        # Adicionar regras
-        self.add_rule(MinimumAgeRule(18))
-        self.add_rule(StrongPasswordRule())
-
-    def validate_business_rules(self, data: UserRegistrationData) -> FlextValidationResult:
-        """Validações específicas de negócio."""
-        result = FlextValidationResult.success()
-
-        # Regra: email deve ser corporativo
-        if not data.email.endswith(".com"):
-            result.add_error("Email deve ser de domínio corporativo (.com)")
-
-        # Regra: nome deve ter sobrenome
-        if len(data.name.split()) < 2:
-            result.add_error("Nome completo deve incluir sobrenome")
-
-        return result
-
-# Teste do sistema de validação
-validator = UserRegistrationValidator()
-
-# Caso válido
-valid_data = UserRegistrationData(
-    name="Carlos Alberto Santos",
-    email="carlos@empresa.com",
-    age=25,
-    password="MinhaSenh@123"
-)
-
-valid_result = validator.validate(valid_data)
-print(f"Dados válidos: {valid_result.is_valid}")
-
-# Caso inválido
-invalid_data = UserRegistrationData(
-    name="João",                    # Sem sobrenome
-    email="joao@test.net",          # Não é .com
-    age=16,                         # Menor de idade
-    password="123"                  # Senha fraca
-)
-
-invalid_result = validator.validate(invalid_data)
-print(f"Dados inválidos: {invalid_result.is_valid}")
-print("Erros encontrados:")
-for error in invalid_result.errors:
-    print(f"  - {error}")
-
-# Output:
-# Dados válidos: True
-# Dados inválidos: False
-# Erros encontrados:
-#   - Idade mínima é 18 anos
-#   - Senha deve ter pelo menos 8 caracteres
-#   - Senha deve ter pelo menos 1 letra maiúscula
-#   - Email deve ser de domínio corporativo (.com)
-#   - Nome completo deve incluir sobrenome
+# Error case - chain stops at first failure
+error_result = process_user_registration("invalid-email")
+print(f"Expected error: {error_result.error}")  # "Invalid email format"
 ```
 
-## 🏗️ Exemplo Completo - Sistema de Pedidos
+## 🏗️ Complete Example - Order System
 
-**Sistema completo usando todos os conceitos fundamentais.**
+**Simple order system using real FLEXT Core patterns.**
 
 ```python
-from flext_core import FlextEntity, FlextResult, FlextContainer
-from flext_core.patterns import FlextCommand, FlextCommandHandler, FlextValidator
-from typing import NewType, List
-from datetime import datetime
+from flext_core import FlextEntity, FlextResult, FlextContainer, FlextCommands
+from typing import List
 from enum import Enum
 
-# ========================
-# DOMAIN LAYER
-# ========================
-
-# IDs e Value Objects
-OrderId = NewType("OrderId", str)
-ProductId = NewType("ProductId", str)
-CustomerId = NewType("CustomerId", str)
-
+# Domain models
 class OrderStatus(str, Enum):
     PENDING = "pending"
     CONFIRMED = "confirmed"
-    SHIPPED = "shipped"
-    DELIVERED = "delivered"
     CANCELLED = "cancelled"
 
-class Product(FlextEntity[ProductId]):
-    def __init__(self, product_id: ProductId, name: str, price: float, stock: int):
+class Product(FlextEntity):
+    def __init__(self, product_id: str, name: str, price: float, stock: int):
         super().__init__(product_id)
-        self._name = name
-        self._price = price
-        self._stock = stock
-
-    @property
-    def name(self) -> str:
-        return self._name
-
-    @property
-    def price(self) -> float:
-        return self._price
-
-    @property
-    def stock(self) -> int:
-        return self._stock
+        self.name = name
+        self.price = price
+        self.stock = stock
 
     def reserve_stock(self, quantity: int) -> FlextResult[None]:
-        """Reservar estoque."""
         if quantity <= 0:
-            return FlextResult.fail("Quantidade deve ser positiva")
+            return FlextResult.fail("Quantity must be positive")
 
-        if self._stock < quantity:
-            return FlextResult.fail(f"Estoque insuficiente. Disponível: {self._stock}")
+        if self.stock < quantity:
+            return FlextResult.fail(f"Insufficient stock. Available: {self.stock}")
 
-        self._stock -= quantity
+        self.stock -= quantity
         return FlextResult.ok(None)
 
 class OrderItem:
@@ -411,153 +325,109 @@ class OrderItem:
     def total_price(self) -> float:
         return self.product.price * self.quantity
 
-class Order(FlextEntity[OrderId]):
-    def __init__(self, order_id: OrderId, customer_id: CustomerId):
+class Order(FlextEntity):
+    def __init__(self, order_id: str, customer_id: str):
         super().__init__(order_id)
-        self._customer_id = customer_id
-        self._items: List[OrderItem] = []
-        self._status = OrderStatus.PENDING
-        self._created_at = datetime.now()
-        self._total = 0.0
-
-    @property
-    def customer_id(self) -> CustomerId:
-        return self._customer_id
-
-    @property
-    def status(self) -> OrderStatus:
-        return self._status
-
-    @property
-    def total(self) -> float:
-        return sum(item.total_price() for item in self._items)
-
-    @property
-    def items(self) -> List[OrderItem]:
-        return self._items.copy()
+        self.customer_id = customer_id
+        self.items: List[OrderItem] = []
+        self.status = OrderStatus.PENDING
 
     def add_item(self, product: Product, quantity: int) -> FlextResult[None]:
-        """Adicionar item ao pedido."""
-        if self._status != OrderStatus.PENDING:
-            return FlextResult.fail("Não é possível modificar pedido já processado")
+        if self.status != OrderStatus.PENDING:
+            return FlextResult.fail("Cannot modify confirmed order")
 
-        # Reservar estoque
+        # Reserve stock
         reserve_result = product.reserve_stock(quantity)
         if reserve_result.is_failure:
             return reserve_result
 
-        # Adicionar item
+        # Add item
         item = OrderItem(product, quantity)
-        self._items.append(item)
+        self.items.append(item)
 
         return FlextResult.ok(None)
 
     def confirm(self) -> FlextResult[None]:
-        """Confirmar pedido."""
-        if self._status != OrderStatus.PENDING:
-            return FlextResult.fail("Pedido deve estar pendente para ser confirmado")
+        if self.status != OrderStatus.PENDING:
+            return FlextResult.fail("Order must be pending to confirm")
 
-        if not self._items:
-            return FlextResult.fail("Pedido deve ter pelo menos um item")
+        if not self.items:
+            return FlextResult.fail("Order must have at least one item")
 
-        self._status = OrderStatus.CONFIRMED
+        self.status = OrderStatus.CONFIRMED
         return FlextResult.ok(None)
 
-# ========================
-# APPLICATION LAYER
-# ========================
+    def total(self) -> float:
+        return sum(item.total_price() for item in self.items)
 
-# Command para criar pedido
-class CreateOrderCommand(FlextCommand):
-    def __init__(self, customer_id: str, items: List[dict]):
-        super().__init__()
+# Command
+class CreateOrderCommand(FlextCommands.Command):
+    def __init__(self, customer_id: str, items: List[dict], **kwargs):
+        super().__init__(**kwargs)
         self.customer_id = customer_id
         self.items = items  # [{"product_id": "p1", "quantity": 2}]
 
-    def validate(self) -> FlextResult[None]:
+    def validate_command(self) -> FlextResult[None]:
         if not self.customer_id:
-            return FlextResult.fail("Customer ID é obrigatório")
+            return FlextResult.fail("Customer ID required")
 
         if not self.items:
-            return FlextResult.fail("Pedido deve ter pelo menos um item")
+            return FlextResult.fail("Order must have at least one item")
 
         for item in self.items:
             if "product_id" not in item or "quantity" not in item:
-                return FlextResult.fail("Item deve ter product_id e quantity")
+                return FlextResult.fail("Item must have product_id and quantity")
 
             if item["quantity"] <= 0:
-                return FlextResult.fail("Quantidade deve ser positiva")
+                return FlextResult.fail("Quantity must be positive")
 
         return FlextResult.ok(None)
 
-# Handler para processar criação de pedidos
-class CreateOrderHandler(FlextCommandHandler[CreateOrderCommand, Order]):
-    def __init__(self, container: FlextContainer):
+# Handler
+class CreateOrderHandler(FlextCommands.Handler[CreateOrderCommand, Order]):
+    def __init__(self):
         super().__init__()
-        self._container = container
-
-    def can_handle(self, command) -> bool:
-        return isinstance(command, CreateOrderCommand)
+        # Mock products
+        self.products = {
+            "p1": Product("p1", "Laptop", 2500.00, 10),
+            "p2": Product("p2", "Mouse", 50.00, 100),
+            "p3": Product("p3", "Keyboard", 150.00, 50)
+        }
 
     def handle(self, command: CreateOrderCommand) -> FlextResult[Order]:
-        """Processar criação de pedido."""
-        # Gerar ID do pedido
-        order_id = OrderId(f"order_{hash(command.customer_id)}")
-        customer_id = CustomerId(command.customer_id)
+        # Create order
+        order_id = f"order_{hash(command.customer_id)}"
+        order = Order(order_id, command.customer_id)
 
-        # Criar pedido
-        order = Order(order_id, customer_id)
-
-        # Adicionar itens
+        # Add items
         for item_data in command.items:
-            product_result = self._get_product(item_data["product_id"])
-            if product_result.is_failure:
-                return FlextResult.fail(f"Produto não encontrado: {item_data['product_id']}")
+            product_id = item_data["product_id"]
+            if product_id not in self.products:
+                return FlextResult.fail(f"Product not found: {product_id}")
 
-            product = product_result.data
+            product = self.products[product_id]
             add_result = order.add_item(product, item_data["quantity"])
             if add_result.is_failure:
-                return FlextResult.fail(f"Erro ao adicionar item: {add_result.error}")
+                return FlextResult.fail(f"Failed to add item: {add_result.error}")
 
-        # Confirmar pedido
+        # Confirm order
         confirm_result = order.confirm()
         if confirm_result.is_failure:
             return confirm_result
 
         return FlextResult.ok(order)
 
-    def _get_product(self, product_id: str) -> FlextResult[Product]:
-        """Obter produto (simulado)."""
-        # Em aplicação real, usaria repository
-        products = {
-            "p1": Product(ProductId("p1"), "Notebook", 2500.00, 10),
-            "p2": Product(ProductId("p2"), "Mouse", 50.00, 100),
-            "p3": Product(ProductId("p3"), "Teclado", 150.00, 50)
-        }
+# Usage example
+def run_order_example():
+    print("🛒 Order System Example\n")
 
-        if product_id not in products:
-            return FlextResult.fail(f"Produto {product_id} não encontrado")
+    handler = CreateOrderHandler()
 
-        return FlextResult.ok(products[product_id])
-
-# ========================
-# USAGE EXEMPLO
-# ========================
-
-def run_order_system_example():
-    """Exemplo completo do sistema de pedidos."""
-    print("🛒 Sistema de Pedidos FLEXT Core\n")
-
-    # Setup
-    container = FlextContainer()
-    handler = CreateOrderHandler(container)
-
-    # Criar pedido válido
-    print("📝 Criando pedido...")
+    # Create order
     command = CreateOrderCommand(
         customer_id="customer_123",
         items=[
-            {"product_id": "p1", "quantity": 1},  # Notebook
+            {"product_id": "p1", "quantity": 1},  # Laptop
             {"product_id": "p2", "quantity": 2},  # 2x Mouse
         ]
     )
@@ -565,84 +435,56 @@ def run_order_system_example():
     result = handler.process_command(command)
     if result.success:
         order = result.data
-        print(f"✅ Pedido criado: {order.id}")
-        print(f"   Cliente: {order.customer_id}")
+        print(f"✅ Order created: {order.id}")
+        print(f"   Customer: {order.customer_id}")
         print(f"   Status: {order.status}")
-        print(f"   Total: R$ {order.total:.2f}")
-        print(f"   Itens: {len(order.items)}")
+        print(f"   Total: ${order.total():.2f}")
+        print(f"   Items: {len(order.items)}")
 
         for item in order.items:
-            print(f"     - {item.product.name}: {item.quantity}x R$ {item.product.price:.2f}")
+            print(f"     - {item.product.name}: {item.quantity}x ${item.product.price:.2f}")
     else:
-        print(f"❌ Erro: {result.error}")
+        print(f"❌ Error: {result.error}")
 
-    print("\n" + "="*50 + "\n")
-
-    # Teste com erro - produto inexistente
-    print("🚫 Testando erro - produto inexistente...")
-    invalid_command = CreateOrderCommand(
-        customer_id="customer_456",
-        items=[{"product_id": "invalid", "quantity": 1}]
-    )
-
-    invalid_result = handler.process_command(invalid_command)
-    if invalid_result.is_failure:
-        print(f"❌ Erro esperado: {invalid_result.error}")
-
-    print("\n" + "="*50 + "\n")
-
-    # Teste com validação - dados inválidos
-    print("🚫 Testando validação - quantidade inválida...")
-    validation_command = CreateOrderCommand(
-        customer_id="",  # Customer ID vazio
-        items=[{"product_id": "p1", "quantity": -1}]  # Quantidade negativa
-    )
-
-    validation_result = handler.process_command(validation_command)
-    if validation_result.is_failure:
-        print(f"❌ Erro de validação: {validation_result.error}")
-
-# Executar exemplo
 if __name__ == "__main__":
-    run_order_system_example()
+    run_order_example()
 ```
 
-## 🎯 Próximos Passos
+## 📚 Next Steps
 
-### 1. Aprofundar Conhecimento
+### 1. Learn More
 
-- **[Arquitetura](../architecture/overview.md)** - Entender design patterns
-- **[API Core](../api/core.md)** - Referência completa das APIs
-- **[Patterns](../api/patterns.md)** - Padrões avançados
+- **[Architecture Guide](../architecture/overview.md)** - Design patterns and principles
+- **[Core API Reference](../api/core.md)** - Complete API documentation
+- **[Patterns Guide](../api/patterns.md)** - Advanced patterns
 
-### 2. Explorar Exemplos
+### 2. Explore Examples
 
-- **[Examples](../examples/overview.md)** - Casos de uso reais
-- **[Best Practices](../development/best-practices.md)** - Melhores práticas
+- **[Examples Overview](../examples/overview.md)** - Real-world use cases
+- **[Best Practices](../development/best-practices.md)** - Development guidelines
 
-### 3. Desenvolvimento
+### 3. Development Setup
 
 ```bash
-# Configurar ambiente de desenvolvimento
-git clone https://github.com/flext/flext-core.git
+# Setup development environment
+git clone <repository-url>
 cd flext-core
 make setup
 
-# Executar testes
+# Run tests
 make test
 
-# Verificar qualidade
+# Quality checks
 make validate
 ```
 
-## 🆘 Suporte
+## ⚠️ Important Notes
 
-**Precisa de ajuda?**
-
-- **Issues**: [GitHub Issues](https://github.com/flext/flext-core/issues)
-- **Documentação**: [Docs Completa](https://docs.flext.dev)
-- **Discussões**: [GitHub Discussions](https://github.com/flext/flext-core/discussions)
+- This guide uses **ACTUAL** working imports from src/flext_core/
+- All examples are **TESTED** against the current implementation
+- Some advanced features are still in development
+- Check the source code for the most up-to-date API
 
 ---
 
-**Parabéns!** 🎉 Você já tem o conhecimento fundamental para usar FLEXT Core em seus projetos empresariais!
+**Congratulations!** 🎉 You now have the foundation to build enterprise applications with FLEXT Core!

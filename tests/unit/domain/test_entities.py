@@ -43,7 +43,7 @@ def create_test_entity(entity_class: type, **kwargs: object) -> object:
 
     # Additional domain validation for aggregate roots
     if isinstance(instance, FlextAggregateRoot):
-        validation_result = instance.validate_business_rules()
+        validation_result = instance.validate_domain_rules()
         if validation_result.is_failure:
             validation_msg: str = f"Domain validation failed for {entity_class.__name__}: {validation_result.error}"
             raise AssertionError(validation_msg)
@@ -97,7 +97,7 @@ class SampleEntity(FlextEntity):
     name: str
     status: str = "active"
 
-    def validate_business_rules(self) -> FlextResult[None]:
+    def validate_domain_rules(self) -> FlextResult[None]:
         """Validate test entity domain rules."""
         if not self.name.strip():
             return FlextResult.fail("Entity name cannot be empty")
@@ -124,7 +124,7 @@ class SampleAggregateRoot(FlextAggregateRoot):
     title: str
     description: str = ""
 
-    def validate_business_rules(self) -> FlextResult[None]:
+    def validate_domain_rules(self) -> FlextResult[None]:
         """Validate test aggregate root domain rules."""
 
         if not self.title.strip():

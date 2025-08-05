@@ -523,7 +523,7 @@ class FlextFactory:
             validation_result = instance.validate_business_rules()
             if validation_result.is_failure:
                 return FlextResult.fail(
-                    validation_result.error or "Business rule validation failed"
+                    validation_result.error or "Business rule validation failed",
                 )
             return FlextResult.ok(instance)
         except Exception as e:

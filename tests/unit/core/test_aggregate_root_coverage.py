@@ -13,7 +13,7 @@ class TestAggregateRoot(FlextAggregateRoot):
 
     name: str
 
-    def validate_business_rules(self) -> FlextResult[None]:
+    def validate_domain_rules(self) -> FlextResult[None]:
         """Validate domain rules."""
         return FlextResult.ok(None)
 

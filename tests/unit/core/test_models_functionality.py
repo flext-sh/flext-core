@@ -168,7 +168,9 @@ class TestModelInheritanceBehavior:
             def validate_business_rules(self) -> FlextResult[None]:
                 return FlextResult.ok(None)
 
-        model = MutableTest.model_validate({"id": "test", "name": "default", "value": 0})
+        model = MutableTest.model_validate(
+            {"id": "test", "name": "default", "value": 0}
+        )
         assert model.name == "default"
 
         # Should allow modification
@@ -205,7 +207,7 @@ class TestFlextDomainEntity:
         # Test equality functionality
         assert entity1 == entity3  # Same ID
         assert entity1 != entity2  # Different ID
-        assert entity1 != "not_an_entity"  # type: ignore[comparison-overlap]
+        assert entity1 != "not_an_entity"
 
     def test_domain_entity_version_increment(self) -> None:
         """Test version increment updates version and timestamp."""
@@ -274,7 +276,7 @@ class TestFlextDomainValueObject:
 
         # Should not be able to modify
         with pytest.raises((AttributeError, ValueError)):
-            vo.metadata = {"name": "modified"}  # Should fail on immutable object
+            vo.metadata = {"name": "modified"}  # type: ignore[misc]  # Testing immutability
 
 
 @pytest.mark.unit

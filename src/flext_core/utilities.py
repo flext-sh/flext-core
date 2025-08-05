@@ -71,10 +71,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import datetime
+import re
 import sys
 import time
 import traceback
 import uuid
+from datetime import UTC
 from typing import TYPE_CHECKING, Protocol, TypeGuard
 
 from flext_core.result import FlextResult, safe_call
@@ -469,6 +471,86 @@ def flext_safe_int_conversion_with_default(value: object, default: int) -> int:
 
 
 # =============================================================================
+# SEMANTIC PATTERN UTILITIES - Following domain-specific naming
+# =============================================================================
+
+
+def flext_core_generate_timestamp() -> float:
+    """Get current UTC timestamp."""
+    return datetime.datetime.now(UTC).timestamp()
+
+
+def flext_core_safe_get(
+    dictionary: dict[str, object],
+    key: str,
+    default: object = None,
+) -> object:
+    """Safely get value from dictionary with default."""
+    return dictionary.get(key, default)
+
+
+def flext_text_normalize_whitespace(text: str) -> str:
+    """Normalize whitespace in text."""
+    text = re.sub(r"\s+", " ", text)
+    return text.strip()
+
+
+def flext_text_slugify(text: str) -> str:
+    """Convert text to URL-safe slug."""
+    text = text.lower()
+    text = re.sub(r"[\s_]+", "-", text)
+    text = re.sub(r"[^a-z0-9-]", "", text)
+    text = re.sub(r"-+", "-", text)
+    return text.strip("-")
+
+
+def flext_text_mask_sensitive(
+    text: str,
+    visible_start: int = 4,
+    visible_end: int = 4,
+    mask_char: str = "*",
+) -> str:
+    """Mask sensitive information in text."""
+    if len(text) <= visible_start + visible_end:
+        return mask_char * len(text)
+
+    masked_length = len(text) - visible_start - visible_end
+    return text[:visible_start] + (mask_char * masked_length) + text[-visible_end:]
+
+
+def flext_time_format_duration(seconds: float) -> str:
+    """Format duration in human-readable form."""
+    seconds_per_minute = 60
+    seconds_per_hour = 3600
+    seconds_per_day = 86400
+
+    if seconds < seconds_per_minute:
+        return f"{seconds:.1f}s"
+    if seconds < seconds_per_hour:
+        minutes = seconds / seconds_per_minute
+        return f"{minutes:.1f}m"
+    if seconds < seconds_per_day:
+        hours = seconds / seconds_per_hour
+        return f"{hours:.1f}h"
+    days = seconds / seconds_per_day
+    return f"{days:.1f}d"
+
+
+def flext_data_safe_bool_conversion(value: object, *, default: bool = False) -> bool:
+    """Safely convert value to boolean."""
+    if value is None:
+        return default
+
+    if isinstance(value, str):
+        return value.lower() in {"true", "yes", "1", "on", "t", "y"}
+
+    if isinstance(value, (int, float)):
+        return value != 0
+
+    return bool(value)
+
+
+# =============================================================================
 # BACKWARD COMPATIBILITY ALIASES - Essential for existing tests
 # =============================================================================
 
@@ -635,6 +717,10 @@ __all__ = [
     "FlextUtilities",
     # Functions with flext_ prefix
     "flext_clear_performance_metrics",
+    # Semantic pattern utilities (domain-specific naming)
+    "flext_core_generate_timestamp",
+    "flext_core_safe_get",
+    "flext_data_safe_bool_conversion",
     "flext_generate_correlation_id",
     "flext_generate_id",
     "flext_get_performance_metrics",
@@ -643,6 +729,10 @@ __all__ = [
     "flext_safe_call",
     "flext_safe_int_conversion",
     "flext_safe_int_conversion_with_default",
+    "flext_text_mask_sensitive",
+    "flext_text_normalize_whitespace",
+    "flext_text_slugify",
+    "flext_time_format_duration",
     "flext_track_performance",
     "flext_truncate",
     # Backward compatibility functions

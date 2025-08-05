@@ -152,9 +152,9 @@ def demonstrate_validation_decorators() -> None:  # noqa: PLR0915
         """Create user profile with age validation."""
         return {"name": name, "age": age, "profile_created": True}
 
-    create_user_profile = FlextValidationDecorators.create_validation_decorator(validate_age)(
-        cast("_DecoratedFunction", _create_user_profile_impl)
-    )
+    create_user_profile = FlextValidationDecorators.create_validation_decorator(
+        validate_age
+    )(cast("_DecoratedFunction", _create_user_profile_impl))
 
     # Test valid age
     try:
@@ -356,9 +356,7 @@ def demonstrate_performance_decorators() -> None:
         time.sleep(0.01)  # Simulate processing
         return f"Processed data: {data_id}"
 
-    data_processor = cache_decorator(
-        cast("_DecoratedFunction", _data_processor_impl)
-    )
+    data_processor = cache_decorator(cast("_DecoratedFunction", _data_processor_impl))
 
     # First call
     result1 = data_processor("data_001")
@@ -451,8 +449,10 @@ def demonstrate_logging_decorators() -> None:  # noqa: PLR0915
         }
 
     # Apply decorators in sequence
-    comprehensive_service_with_exceptions = FlextLoggingDecorators.log_exceptions_decorator(
-        cast("_DecoratedFunction", _comprehensive_service_impl)
+    comprehensive_service_with_exceptions = (
+        FlextLoggingDecorators.log_exceptions_decorator(
+            cast("_DecoratedFunction", _comprehensive_service_impl)
+        )
     )
     comprehensive_service = FlextLoggingDecorators.log_calls_decorator(
         comprehensive_service_with_exceptions
@@ -643,13 +643,17 @@ def demonstrate_decorator_best_practices() -> None:  # noqa: PLR0915
     log_message = "\n1. Custom decorator with proper typing:"
     print(log_message)
 
-    def custom_decorator(func: Callable[..., object]) -> Callable[..., object]:
+    def custom_decorator(func: object) -> object:
         """Apply custom decorator with proper typing."""
 
         def wrapper(*args: object, **kwargs: object) -> object:
-            log_message = f"🔧 Custom decorator called: {func.__name__}"
+            func_name = getattr(func, "__name__", "unknown")
+            log_message = f"🔧 Custom decorator called: {func_name}"
             print(log_message)
-            return func(*args, **kwargs)
+            if callable(func):
+                return func(*args, **kwargs)
+            msg = "Not callable"
+            raise ValueError(msg)
 
         return wrapper
 
@@ -657,11 +661,9 @@ def demonstrate_decorator_best_practices() -> None:  # noqa: PLR0915
         """Documented function with custom decorator."""
         return x + y
 
-    documented_function = custom_decorator(
-_documented_function_impl
-    )
+    documented_function = custom_decorator(_documented_function_impl)
 
-    result = documented_function(5, 3)
+    result = documented_function(5, 3) if callable(documented_function) else 0
     log_message = f"✅ Custom decorator result: {result}"
     print(log_message)
 
@@ -691,9 +693,7 @@ _documented_function_impl
         """Set user age with validation."""
         return f"User age set to {age}"
 
-    set_user_age = age_validator(
-        cast("_DecoratedFunction", _set_user_age_impl)
-    )
+    set_user_age = age_validator(cast("_DecoratedFunction", _set_user_age_impl))
 
     def _set_completion_rate_impl(rate: int) -> str:
         """Set completion rate with validation."""
@@ -729,16 +729,21 @@ _documented_function_impl
     log_message = "\n3. Performance monitoring decorator:"
     print(log_message)
 
-    def performance_monitor(func: Callable[..., object]) -> Callable[..., object]:
+    def performance_monitor(func: object) -> object:
         """Monitor performance with decorator."""
 
         def wrapper(*args: object, **kwargs: object) -> object:
             start_time = time.time()
-            result = func(*args, **kwargs)
+            if callable(func):
+                result = func(*args, **kwargs)
+            else:
+                msg = "Not callable"
+                raise TypeError(msg)
             end_time = time.time()
 
             execution_time = end_time - start_time
-            log_message = f"⏱️ {func.__name__} executed in {execution_time:.4f}s"
+            func_name = getattr(func, "__name__", "unknown")
+            log_message = f"⏱️ {func_name} executed in {execution_time:.4f}s"
             print(log_message)
 
             return result
@@ -750,11 +755,9 @@ _documented_function_impl
         time.sleep(0.01 * complexity)  # Simulate work
         return complexity * 2
 
-    monitored_operation = performance_monitor(
-_monitored_operation_impl
-    )
+    monitored_operation = performance_monitor(_monitored_operation_impl)
 
-    result = monitored_operation(5)
+    result = monitored_operation(5) if callable(monitored_operation) else 0
     log_message = f"✅ Monitored operation result: {result}"
     print(log_message)
 
@@ -787,11 +790,13 @@ def _demonstrate_validation_decorators() -> FlextResult[None]:
 
     def _create_validated_user_impl(name: str, email: str, age: int) -> SharedUser:
         """Create validated user using shared domain models with decorators."""
-        return (
+        result = (
             SharedDomainFactory.create_user(name, email, age)
             .flat_map(lambda user: _log_user_creation(user, "validation+logging"))
-            .unwrap_or_raise("User creation returned None data")
         )
+        if result.success and result.data is not None:
+            return result.data
+        raise ValueError(result.error or "User creation failed")
 
     # Apply decorators in sequence
     create_validated_user_with_logging = FlextLoggingDecorators.log_calls_decorator(
@@ -801,13 +806,14 @@ def _demonstrate_validation_decorators() -> FlextResult[None]:
         create_validated_user_with_logging
     )
 
-    return (
-        _test_valid_user_creation(create_validated_user)
-        .flat_map(lambda _: _test_invalid_user_creation(create_validated_user))
+    return _test_valid_user_creation(create_validated_user).flat_map(
+        lambda _: _test_invalid_user_creation(create_validated_user)
     )
 
 
-def _log_user_creation(user: SharedUser, decorator_stack: str) -> FlextResult[SharedUser]:
+def _log_user_creation(
+    user: SharedUser, decorator_stack: str
+) -> FlextResult[SharedUser]:
     """Log user creation with decorator information."""
     log_domain_operation(
         "user_created_with_decorators",
@@ -900,20 +906,20 @@ def _demonstrate_error_handling_decorators() -> FlextResult[None]:
 
     def _activate_user_account_impl(user: SharedUser) -> SharedUser:
         """Activate user account with error handling decorators."""
-        return (
+        result = (
             _validate_user_not_active(user)
             .flat_map(lambda _: _perform_user_activation(user))
             .flat_map(lambda activated: _log_user_activation(user, activated))
-            .unwrap_or_raise("User activation returned None data")
         )
+        if result.success and result.data is not None:
+            return result.data
+        raise ValueError(result.error or "User activation failed")
 
     # Apply decorators in sequence
     activate_user_with_exceptions = FlextLoggingDecorators.log_exceptions_decorator(
         cast("_DecoratedFunction", _activate_user_account_impl)
     )
-    activate_user_account = FlextDecorators.safe_result(
-        activate_user_with_exceptions
-    )
+    activate_user_account = FlextDecorators.safe_result(activate_user_with_exceptions)
 
     return _test_user_activation_scenarios(activate_user_account)
 
@@ -937,7 +943,9 @@ def _perform_user_activation(user: SharedUser) -> FlextResult[SharedUser]:
     return FlextResult.fail("User activation returned None data")
 
 
-def _log_user_activation(user: SharedUser, activated_user: SharedUser) -> FlextResult[SharedUser]:
+def _log_user_activation(
+    user: SharedUser, activated_user: SharedUser
+) -> FlextResult[SharedUser]:
     """Log user activation event."""
     log_domain_operation(
         "user_activated_with_decorators",
@@ -951,18 +959,23 @@ def _log_user_activation(user: SharedUser, activated_user: SharedUser) -> FlextR
 
 def _test_user_activation_scenarios(activate_func: object) -> FlextResult[None]:
     """Test user activation scenarios."""
-    test_user_result = SharedDomainFactory.create_user("Test User", "test@example.com", 30)
+    test_user_result = SharedDomainFactory.create_user(
+        "Test User", "test@example.com", 30
+    )
     if not test_user_result.success:
         return FlextResult.fail("Failed to create test user")
 
     test_user = test_user_result.data
-    return (
-        _test_successful_activation(activate_func, test_user)
-        .flat_map(lambda activated: _test_duplicate_activation(activate_func, activated))
-    )
+    if test_user is not None:
+        return _test_successful_activation(activate_func, test_user).flat_map(
+            lambda activated: _test_duplicate_activation(activate_func, activated)
+        )
+    return FlextResult.fail("Test user creation returned None")
 
 
-def _test_successful_activation(activate_func: object, test_user: SharedUser) -> FlextResult[SharedUser]:
+def _test_successful_activation(
+    activate_func: object, test_user: SharedUser
+) -> FlextResult[SharedUser]:
     """Test successful user activation."""
     if not callable(activate_func):
         return FlextResult.fail("Invalid activation function")
@@ -981,7 +994,9 @@ def _test_successful_activation(activate_func: object, test_user: SharedUser) ->
         return FlextResult.fail(error_message)
 
 
-def _test_duplicate_activation(activate_func: object, activated_user: SharedUser) -> FlextResult[None]:
+def _test_duplicate_activation(
+    activate_func: object, activated_user: SharedUser
+) -> FlextResult[None]:
     """Test duplicate activation scenario (should fail)."""
     if not callable(activate_func):
         return FlextResult.ok(None)
@@ -1009,16 +1024,22 @@ def _demonstrate_domain_validation_decorators() -> FlextResult[None]:
             .unwrap_or(default=False)
         )
 
-    domain_validator = FlextValidationDecorators.create_validation_decorator(domain_user_validator)
+    domain_validator = FlextValidationDecorators.create_validation_decorator(
+        domain_user_validator
+    )
 
-    def _register_user_with_domain_validation_impl(user_data: dict[str, object]) -> SharedUser:
+    def _register_user_with_domain_validation_impl(
+        user_data: dict[str, object],
+    ) -> SharedUser:
         """Register user with domain-aware validation."""
-        return (
+        result = (
             _extract_user_data(user_data)
             .flat_map(_create_user_from_data)
             .flat_map(_log_user_registration)
-            .unwrap_or_raise("User registration returned None data")
         )
+        if result.success and result.data is not None:
+            return result.data
+        raise ValueError(result.error or "User registration failed")
 
     register_user_with_domain_validation = domain_validator(
         cast("_DecoratedFunction", _register_user_with_domain_validation_impl)
@@ -1036,23 +1057,31 @@ def _validate_user_data_structure(user_data: object) -> FlextResult[dict[str, ob
     email = user_data.get("email", "")
     age = user_data.get("age", 0)
 
-    if not isinstance(name, str) or not isinstance(email, str) or not isinstance(age, int):
+    if (
+        not isinstance(name, str)
+        or not isinstance(email, str)
+        or not isinstance(age, int)
+    ):
         return FlextResult.fail("Invalid data types in user data")
 
     return FlextResult.ok({"name": name, "email": email, "age": age})
 
 
-def _validate_with_domain_factory(user_data: dict[str, object]) -> FlextResult[FlextResult[SharedUser]]:
+def _validate_with_domain_factory(
+    user_data: dict[str, object],
+) -> FlextResult[FlextResult[SharedUser]]:
     """Validate user data with domain factory."""
     name = str(user_data["name"])
     email = str(user_data["email"])
-    age = int(user_data["age"])
+    age = int(cast("int", user_data["age"]))
 
     user_result = SharedDomainFactory.create_user(name, email, age)
     return FlextResult.ok(user_result)
 
 
-def _extract_user_data(user_data: dict[str, object]) -> FlextResult[tuple[str, str, int]]:
+def _extract_user_data(
+    user_data: dict[str, object],
+) -> FlextResult[tuple[str, str, int]]:
     """Extract and validate user data fields."""
     name = user_data.get("name", "")
     email = user_data.get("email", "")
@@ -1095,9 +1124,8 @@ def _log_user_registration(user: SharedUser) -> FlextResult[SharedUser]:
 
 def _test_domain_validation_scenarios(register_func: object) -> FlextResult[None]:
     """Test domain validation scenarios."""
-    return (
-        _test_valid_registration(register_func)
-        .flat_map(lambda _: _test_invalid_registration(register_func))
+    return _test_valid_registration(register_func).flat_map(
+        lambda _: _test_invalid_registration(register_func)
     )
 
 
@@ -1124,7 +1152,11 @@ def _test_invalid_registration(register_func: object) -> FlextResult[None]:
         return FlextResult.ok(None)
 
     try:
-        invalid_data = {"name": "", "email": "invalid", "age": 10}  # Invalid per domain rules
+        invalid_data = {
+            "name": "",
+            "email": "invalid",
+            "age": 10,
+        }  # Invalid per domain rules
         user = register_func(invalid_data)
         log_message = f"✅ Invalid registration: {getattr(user, 'name', 'N/A')}"
         print(log_message)

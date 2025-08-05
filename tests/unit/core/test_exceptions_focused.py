@@ -46,15 +46,25 @@ class TestFlextErrorCoverage:
 
     def test_error_to_dict_serialization(self) -> None:
         """Test error to_dict method."""
-        context = {"key": "value"}
+        context = {"field": "value", "count": 42}
         error = FlextError("Test", error_code="TEST_001", context=context)
 
         result = error.to_dict()
         assert result["type"] == "FlextError"
         assert result["message"] == "Test"
         assert result["error_code"] == "TEST_001"
-        assert result["context"] == context
+        assert result["context"] == context  # Non-sensitive keys should pass through
         assert "timestamp" in result
+        assert "serialization_version" in result
+
+        # Test sensitive key sanitization
+        sensitive_context = {"password": "secret123", "api_key": "key123"}
+        error_sensitive = FlextError(
+            "Test", error_code="TEST_001", context=sensitive_context
+        )
+        result_sensitive = error_sensitive.to_dict()
+        assert result_sensitive["context"]["password"] == "[REDACTED]"
+        assert result_sensitive["context"]["api_key"] == "[REDACTED]"
 
     def test_error_repr_method(self) -> None:
         """Test error __repr__ method."""

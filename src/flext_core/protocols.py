@@ -120,7 +120,8 @@ class AuthProtocol(Protocol):
     """
 
     def authenticate(
-        self, credentials: dict[str, object]
+        self,
+        credentials: dict[str, object],
     ) -> FlextResult[dict[str, object]]:
         """Authenticate user with provided credentials.
 
@@ -134,7 +135,9 @@ class AuthProtocol(Protocol):
         ...
 
     def authorize(
-        self, user_info: dict[str, object], resource: str
+        self,
+        user_info: dict[str, object],
+        resource: str,
     ) -> FlextResult[bool]:
         """Authorize user access to resource.
 
@@ -184,7 +187,10 @@ class ObservabilityProtocol(Protocol):
     """
 
     def record_metric(
-        self, name: str, value: float, tags: dict[str, str] | None = None
+        self,
+        name: str,
+        value: float,
+        tags: dict[str, str] | None = None,
     ) -> FlextResult[None]:
         """Record metric value.
 

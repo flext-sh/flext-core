@@ -29,7 +29,6 @@ from shared_domain import (
 from flext_core import (
     FlextCommands,
     FlextResult,
-    FlextTypes,
     FlextUtilities,
     TAnyObject,
     TEntityId,
@@ -203,24 +202,18 @@ class CreateUserCommand(FlextCommands.Command):
 
         # Validate name
         if not self.name or len(self.name.strip()) == 0:
-            error_message: TErrorMessage = "Name cannot be empty"
-            return FlextResult.fail(error_message)
+            return FlextResult.fail("Name cannot be empty")
 
         # Validate email format
         if "@" not in self.email:
-            error_message: TErrorMessage = f"Invalid email format: {self.email}"
-            return FlextResult.fail(error_message)
+            return FlextResult.fail(f"Invalid email format: {self.email}")
 
-        # Validate age
-        if not FlextTypes.TypeGuards.is_instance_of(self.age, int):
-            error_message: TErrorMessage = "Age must be an integer"
-            return FlextResult.fail(error_message)
-
+        # Validate age range
         if self.age < MIN_USER_AGE or self.age > MAX_USER_AGE:
-            error_message: TErrorMessage = (
+            age_error: TErrorMessage = (
                 f"Age must be between {MIN_USER_AGE} and {MAX_USER_AGE}"
             )
-            return FlextResult.fail(error_message)
+            return FlextResult.fail(age_error)
 
         print(f"✅ CreateUserCommand validation passed: {self.name}")
         return FlextResult.ok(None)
@@ -242,25 +235,21 @@ class UpdateUserCommand(FlextCommands.Command):
 
         # Validate user ID
         if not self.target_user_id:
-            error_message: TErrorMessage = "Target user ID cannot be empty"
-            return FlextResult.fail(error_message)
+            return FlextResult.fail("Target user ID cannot be empty")
 
         # Validate at least one field to update
         if not self.name and not self.email:
-            error_message: TErrorMessage = (
+            return FlextResult.fail(
                 "At least one field (name or email) must be provided"
             )
-            return FlextResult.fail(error_message)
 
         # Validate name if provided
         if self.name is not None and len(self.name.strip()) == 0:
-            error_message: TErrorMessage = "Name cannot be empty if provided"
-            return FlextResult.fail(error_message)
+            return FlextResult.fail("Name cannot be empty if provided")
 
         # Validate email if provided
         if self.email is not None and "@" not in self.email:
-            error_message: TErrorMessage = f"Invalid email format: {self.email}"
-            return FlextResult.fail(error_message)
+            return FlextResult.fail(f"Invalid email format: {self.email}")
 
         print(f"✅ UpdateUserCommand validation passed: {self.target_user_id}")
         return FlextResult.ok(None)
@@ -281,16 +270,14 @@ class DeleteUserCommand(FlextCommands.Command):
 
         # Validate user ID
         if not self.target_user_id:
-            error_message: TErrorMessage = "Target user ID cannot be empty"
-            return FlextResult.fail(error_message)
+            return FlextResult.fail("Target user ID cannot be empty")
 
         # Validate deletion reason
         if not self.reason or len(self.reason.strip()) < MIN_DELETION_REASON_LENGTH:
-            error_message: TErrorMessage = (
+            return FlextResult.fail(
                 f"Deletion reason must be at least"
                 f" {MIN_DELETION_REASON_LENGTH} characters"
             )
-            return FlextResult.fail(error_message)
 
         print(f"✅ DeleteUserCommand validation passed: {self.target_user_id}")
         return FlextResult.ok(None)
@@ -355,6 +342,8 @@ class CreateUserCommandHandler(
             return FlextResult.fail(f"User creation failed: {user_result.error}")
 
         shared_user = user_result.data
+        if shared_user is None:
+            return FlextResult.fail("User creation returned None data")
 
         try:
             # Log domain operation using shared user
@@ -374,7 +363,7 @@ class CreateUserCommandHandler(
             # Use helper to store domain event - DRY principle
             event_result = self.store_domain_event("UserCreated", query_projection)
             if event_result.is_failure:
-                return FlextResult.fail(event_result.error)
+                return FlextResult.fail(event_result.error or "Event storage failed")
 
             print(f"✅ User created successfully: {shared_user.id}")
             return FlextResult.ok(query_projection)
@@ -421,7 +410,7 @@ class UpdateUserCommandHandler(
         # Use helper to store domain event - DRY principle
         event_result = self.store_domain_event("UserUpdated", update_data)
         if event_result.is_failure:
-            return FlextResult.fail(event_result.error)
+            return FlextResult.fail(event_result.error or "Event storage failed")
 
         print(f"✅ User updated successfully: {command.target_user_id}")
         return FlextResult.ok(user_data)
@@ -469,7 +458,7 @@ class DeleteUserCommandHandler(
         # Use helper to store domain event - DRY principle
         event_result = self.store_domain_event("UserDeleted", deletion_data)
         if event_result.is_failure:
-            return FlextResult.fail(event_result.error)
+            return FlextResult.fail(event_result.error or "Event storage failed")
 
         print(f"✅ User deleted successfully: {command.target_user_id}")
         return FlextResult.ok(user_data)
@@ -522,9 +511,10 @@ class ListUsersQueryHandler(
                 continue
 
             # Apply age filters
-            if query.min_age is not None and user_data.get("age", 0) < query.min_age:
+            user_age = int(cast("int", user_data.get("age", 0)))
+            if query.min_age is not None and user_age < query.min_age:
                 continue
-            if query.max_age is not None and user_data.get("age", 0) > query.max_age:
+            if query.max_age is not None and user_age > query.max_age:
                 continue
 
             users.append(user_data)
@@ -631,7 +621,8 @@ class UserManagementApplicationService:
         print(log_message)
 
         command = CreateUserCommand(name=name, email=email, age=age)
-        return self.command_bus.execute(command)
+        result = self.command_bus.execute(command)
+        return result.map(lambda x: cast("TAnyObject", x))
 
     def update_user(
         self,
@@ -646,7 +637,8 @@ class UserManagementApplicationService:
         print(log_message)
 
         command = UpdateUserCommand(target_user_id=user_id, name=name, email=email)
-        return self.command_bus.execute(command)
+        result = self.command_bus.execute(command)
+        return result.map(lambda x: cast("TAnyObject", x))
 
     def delete_user(self, user_id: TEntityId, reason: str) -> FlextResult[TAnyObject]:
         """Delete user using TEntityId and TAnyObject types."""
@@ -654,7 +646,8 @@ class UserManagementApplicationService:
         print(log_message)
 
         command = DeleteUserCommand(target_user_id=user_id, reason=reason)
-        return self.command_bus.execute(command)
+        result = self.command_bus.execute(command)
+        return result.map(lambda x: cast("TAnyObject", x))
 
     def get_user(self, user_id: TEntityId) -> FlextResult[TAnyObject]:
         """Get user using TEntityId and TAnyObject types."""
@@ -734,8 +727,12 @@ class CQRSDemonstrator:
         query_handlers = setup_query_handlers(self.users_db)
 
         # Create application service
+        command_bus = command_bus_result.data
+        if command_bus is None:
+            return FlextResult.fail("Command bus setup returned None")
+
         self.app_service = UserManagementApplicationService(
-            command_bus_result.data, query_handlers
+            command_bus, query_handlers
         )
         return FlextResult.ok(None)
 
@@ -754,7 +751,7 @@ class CQRSDemonstrator:
         if create_result.success:
             user_data = create_result.data
             if isinstance(user_data, dict) and "id" in user_data:
-                user_id = user_data["id"]
+                user_id = str(user_data["id"])
                 # Use helper for consistent result handling with state update
                 DemonstrationFlowHelper.handle_result_with_state_update(
                     create_result,

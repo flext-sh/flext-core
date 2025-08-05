@@ -101,7 +101,7 @@ class Customer(SharedUser, FlextLoggableMixin):
             return base_validation
 
         # Validate credit limit
-        credit_validation = self.credit_limit.validate_domain_rules()
+        credit_validation = self.credit_limit.validate_business_rules()
         if credit_validation.is_failure:
             return FlextResult.fail(
                 f"Credit limit validation failed: {credit_validation.error}",
@@ -133,17 +133,19 @@ class Customer(SharedUser, FlextLoggableMixin):
 
         # Create new version with activation
         try:
-            activated_customer = cast("Customer", self.model_copy(update={"status": UserStatus.ACTIVE}))
+            activated_customer = self.model_copy(update={"status": UserStatus.ACTIVE})
         except Exception as e:
             return FlextResult.fail(f"Failed to create activated customer: {e}")
 
         # Add domain event
-        activated_customer.add_domain_event({
-            "event_type": "CustomerActivated",
-            "customer_id": self.id,
-            "activation_date": FlextUtilities.generate_iso_timestamp(),
-            "previous_status": "inactive",
-        })
+        activated_customer.add_domain_event(
+            "CustomerActivated",
+            {
+                "customer_id": self.id,
+                "activation_date": FlextUtilities.generate_iso_timestamp(),
+                "previous_status": "inactive",
+            },
+        )
 
         return FlextResult.ok(activated_customer)
 
@@ -183,20 +185,22 @@ class Customer(SharedUser, FlextLoggableMixin):
     def _create_deactivated_customer(self) -> FlextResult[Customer]:
         """Create new customer instance with inactive status."""
         try:
-            deactivated_customer = cast("Customer", self.model_copy(update={"status": UserStatus.INACTIVE}))
+            deactivated_customer = self.model_copy(update={"status": UserStatus.INACTIVE})
             return FlextResult.ok(deactivated_customer)
         except Exception as e:
             return FlextResult.fail(f"Failed to create deactivated customer: {e}")
 
     def _add_deactivation_event(self, customer: Customer, reason: str) -> FlextResult[Customer]:
         """Add domain event for customer deactivation."""
-        customer.add_domain_event({
-            "event_type": "CustomerDeactivated",
-            "customer_id": self.id,
-            "deactivation_date": FlextUtilities.generate_iso_timestamp(),
-            "reason": reason,
-            "previous_status": "active",
-        })
+        customer.add_domain_event(
+            "CustomerDeactivated",
+            {
+                "customer_id": self.id,
+                "deactivation_date": FlextUtilities.generate_iso_timestamp(),
+                "reason": reason,
+                "previous_status": "active",
+            },
+        )
 
         return FlextResult.ok(customer)
 
@@ -217,7 +221,7 @@ class Customer(SharedUser, FlextLoggableMixin):
 
     def _validate_new_address(self, new_address: Address) -> FlextResult[None]:
         """Validate new address meets domain requirements."""
-        validation = new_address.validate_domain_rules()
+        validation = new_address.validate_business_rules()
         if validation.is_failure:
             return FlextResult.fail(
                 f"New address validation failed: {validation.error}",
@@ -227,20 +231,22 @@ class Customer(SharedUser, FlextLoggableMixin):
     def _create_customer_with_updated_address(self, new_address: Address) -> FlextResult[Customer]:
         """Create new customer instance with updated address."""
         try:
-            updated_customer = cast("Customer", self.model_copy(update={"address": new_address}))
+            updated_customer = self.model_copy(update={"address": new_address})
             return FlextResult.ok(updated_customer)
         except Exception as e:
             return FlextResult.fail(f"Failed to create updated customer: {e}")
 
     def _add_address_update_event(self, customer: Customer, new_address: Address) -> FlextResult[Customer]:
         """Add domain event for address update."""
-        customer.add_domain_event({
-            "event_type": "CustomerAddressUpdated",
-            "customer_id": self.id,
-            "old_address": str(self.address),
-            "new_address": str(new_address),
-            "update_date": FlextUtilities.generate_iso_timestamp(),
-        })
+        customer.add_domain_event(
+            "CustomerAddressUpdated",
+            {
+                "customer_id": self.id,
+                "old_address": str(self.address),
+                "new_address": str(new_address),
+                "update_date": FlextUtilities.generate_iso_timestamp(),
+            },
+        )
 
         return FlextResult.ok(customer)
 
@@ -300,7 +306,7 @@ class Customer(SharedUser, FlextLoggableMixin):
     def _create_updated_customer(self, new_limit: Money) -> FlextResult[Customer]:
         """Create updated customer with new credit limit."""
         try:
-            updated_customer = cast("Customer", self.model_copy(update={"credit_limit": new_limit}))
+            updated_customer = self.model_copy(update={"credit_limit": new_limit})
             return FlextResult.ok(updated_customer)
         except Exception as e:
             return FlextResult.fail(f"Failed to create updated customer: {e}")
@@ -309,16 +315,18 @@ class Customer(SharedUser, FlextLoggableMixin):
         self, updated_customer: Customer
     ) -> FlextResult[Customer]:
         """Add domain event for credit limit increase."""
-        updated_customer.add_domain_event({
-            "event_type": "CustomerCreditLimitIncreased",
-            "customer_id": self.id,
-            "old_limit": str(self.credit_limit),
-            "new_limit": str(updated_customer.credit_limit),
-            "increase_amount": str(
-                updated_customer.credit_limit.amount - self.credit_limit.amount
-            ),
-            "update_date": FlextUtilities.generate_iso_timestamp(),
-        })
+        updated_customer.add_domain_event(
+            "CustomerCreditLimitIncreased",
+            {
+                "customer_id": self.id,
+                "old_limit": str(self.credit_limit),
+                "new_limit": str(updated_customer.credit_limit),
+                "increase_amount": str(
+                    updated_customer.credit_limit.amount - self.credit_limit.amount
+                ),
+                "update_date": FlextUtilities.generate_iso_timestamp(),
+            },
+        )
 
         return FlextResult.ok(updated_customer)
 
@@ -329,18 +337,20 @@ class Customer(SharedUser, FlextLoggableMixin):
 
         # Create new version with incremented order count
         try:
-            updated_customer = cast("Customer", self.model_copy(update={"total_orders": self.total_orders + 1}))
+            updated_customer = self.model_copy(update={"total_orders": self.total_orders + 1})
         except Exception as e:
             return FlextResult.fail(f"Failed to create updated customer: {e}")
 
         # Add domain event
-        updated_customer.add_domain_event({
-            "event_type": "CustomerOrderCountIncremented",
-            "customer_id": self.id,
-            "old_count": self.total_orders,
-            "new_count": self.total_orders + 1,
-            "update_date": FlextUtilities.generate_iso_timestamp(),
-        })
+        updated_customer.add_domain_event(
+            "CustomerOrderCountIncremented",
+            {
+                "customer_id": self.id,
+                "old_count": self.total_orders,
+                "new_count": self.total_orders + 1,
+                "update_date": FlextUtilities.generate_iso_timestamp(),
+            },
+        )
 
         return FlextResult.ok(updated_customer)
 
@@ -389,7 +399,7 @@ class Product(FlextEntity):
     def _validate_product_price(self) -> FlextResult[None]:
         """Validate product price requirements."""
         # Validate price domain rules first
-        price_validation = self.price.validate_domain_rules()
+        price_validation = self.price.validate_business_rules()
         if price_validation.is_failure:
             return FlextResult.fail(
                 f"Price validation failed: {price_validation.error}",
@@ -448,7 +458,7 @@ class Product(FlextEntity):
 
     def _validate_new_price(self, new_price: Money) -> FlextResult[None]:
         """Validate the new price meets business rules."""
-        validation = new_price.validate_domain_rules()
+        validation = new_price.validate_business_rules()
         if validation.is_failure:
             return FlextResult.fail(f"New price validation failed: {validation.error}")
 
@@ -470,7 +480,7 @@ class Product(FlextEntity):
     ) -> FlextResult[Product]:
         """Create new product instance with updated price."""
         try:
-            updated_product = cast("Product", self.model_copy(update={"price": new_price}))
+            updated_product = self.model_copy(update={"price": new_price})
             return FlextResult.ok(updated_product)
         except Exception as e:
             return FlextResult.fail(f"Failed to create updated product: {e}")
@@ -483,10 +493,10 @@ class Product(FlextEntity):
         """Add domain event for price update."""
         updated_product.add_domain_event({
             "event_type": "ProductPriceUpdated",
-            "product_id": self.id,
-            "old_price": str(self.price),
-            "new_price": str(new_price),
-            "update_date": FlextUtilities.generate_iso_timestamp(),
+                "product_id": self.id,
+                "old_price": str(self.price),
+                "new_price": str(new_price),
+                "update_date": FlextUtilities.generate_iso_timestamp(),
         })
 
         return FlextResult.ok(updated_product)
@@ -525,7 +535,7 @@ class Product(FlextEntity):
     def _create_updated_product_with_stock(self, new_stock: int) -> FlextResult[Product]:
         """Create new product instance with updated stock quantity."""
         try:
-            updated_product = cast("Product", self.model_copy(update={"stock_quantity": new_stock}))
+            updated_product = self.model_copy(update={"stock_quantity": new_stock})
             return FlextResult.ok(updated_product)
         except Exception as e:
             return FlextResult.fail(f"Failed to create updated product: {e}")
@@ -587,7 +597,7 @@ class Product(FlextEntity):
     def _create_unavailable_product(self) -> FlextResult[Product]:
         """Create new product instance with unavailable status."""
         try:
-            unavailable_product = cast("Product", self.model_copy(update={"is_available": False}))
+            unavailable_product = self.model_copy(update={"is_available": False})
             return FlextResult.ok(unavailable_product)
         except Exception as e:
             return FlextResult.fail(f"Failed to create unavailable product: {e}")
@@ -598,10 +608,10 @@ class Product(FlextEntity):
         """Add domain event for product unavailability."""
         unavailable_product.add_domain_event({
             "event_type": "ProductMadeUnavailable",
-            "product_id": self.id,
-            "reason": reason,
-            "stock_at_time": self.stock_quantity,
-            "update_date": FlextUtilities.generate_iso_timestamp(),
+                "product_id": self.id,
+                "reason": reason,
+                "stock_at_time": self.stock_quantity,
+                "update_date": FlextUtilities.generate_iso_timestamp(),
         })
 
         return FlextResult.ok(unavailable_product)
@@ -833,7 +843,7 @@ class OrderDomainService:
 
     def _validate_shipping_address(self, address: Address) -> FlextResult[None]:
         """Validate shipping address meets domain requirements."""
-        address_validation = address.validate_domain_rules()
+        address_validation = address.validate_business_rules()
         if address_validation.is_failure:
             return FlextResult.fail(
                 f"Shipping address validation failed: {address_validation.error}"
@@ -891,7 +901,7 @@ class OrderDomainService:
         )
 
         # Validate order item domain rules
-        item_validation = order_item.validate_domain_rules()
+        item_validation = order_item.validate_business_rules()
         if item_validation.is_failure:
             return FlextResult.fail(
                 f"Order item validation failed: {item_validation.error}"
@@ -962,7 +972,7 @@ class OrderDomainService:
         """Create order entity, add events, and persist."""
         # Create order entity using factory
         order_factory = create_order_factory()
-        order_result = order_factory(
+        order_result = order_factory(  # type: ignore[operator]
             customer_id=customer_id,
             items=order_items,
             shipping_address=shipping_address,
@@ -1001,15 +1011,17 @@ class OrderDomainService:
         self, order: Order, customer_id: str
     ) -> FlextResult[Order]:
         """Add domain event for order creation."""
-        order.add_domain_event({
-            "event_type": "OrderCreated",
-            "order_id": order.id,
-            "customer_id": customer_id,
-            "item_count": len(order.items),
-            "total_amount": str(getattr(order, "total_amount", "N/A")),
-            "shipping_address": str(order.shipping_address),
-            "creation_date": getattr(order, "order_date", None),
-        })
+        order.add_domain_event(
+            "OrderCreated",
+            {
+                "order_id": order.id,
+                "customer_id": customer_id,
+                "item_count": len(order.items),
+                "total_amount": str(getattr(order, "total_amount", "N/A")),
+                "shipping_address": str(order.shipping_address),
+                "creation_date": getattr(order, "order_date", None),
+            },
+        )
 
         return FlextResult.ok(order)
 
@@ -1120,7 +1132,7 @@ class OrderDomainService:
 # =============================================================================
 
 
-def create_customer_factory() -> Callable[..., FlextResult[Customer]]:
+def create_customer_factory() -> object:
     """Create factory for customers with defaults."""
     def factory(**kwargs: object) -> FlextResult[Customer]:
         try:
@@ -1151,7 +1163,7 @@ def create_customer_factory() -> Callable[..., FlextResult[Customer]]:
     return factory
 
 
-def create_product_factory() -> Callable[..., FlextResult[Product]]:
+def create_product_factory() -> object:
     """Create factory for products with defaults."""
     def factory(**kwargs: object) -> FlextResult[Product]:
         try:
@@ -1180,7 +1192,7 @@ def create_product_factory() -> Callable[..., FlextResult[Product]]:
     return factory
 
 
-def create_order_factory() -> Callable[..., FlextResult[Order]]:
+def create_order_factory() -> object:
     """Create factory for orders with defaults."""
     def factory(**kwargs: object) -> FlextResult[Order]:
         try:
@@ -1191,7 +1203,7 @@ def create_order_factory() -> Callable[..., FlextResult[Order]]:
                 "status": "pending",
             }
             # Update with provided values
-            defaults.update(kwargs)
+            defaults.update(kwargs)  # type: ignore[arg-type]
 
             # Create order instance
             order = Order(**defaults)  # type: ignore[arg-type]
@@ -1274,7 +1286,7 @@ def demonstrate_value_objects() -> None:
     print(f"  📧 Valid Email: {email1}")
 
     # Validate invalid email
-    validation = email2.validate_domain_rules()
+    validation = email2.validate_business_rules()
     if validation.is_failure:
         print(f"  ❌ Invalid Email '{email2}': {validation.error}")
 
@@ -1300,7 +1312,7 @@ def demonstrate_entity_lifecycle() -> None:
         ),
     }
 
-    customer_result = customer_factory(**customer_data)
+    customer_result = customer_factory(**customer_data)  # type: ignore[operator]
     if customer_result.is_failure:
         print(f"❌ Customer creation failed: {customer_result.error}")
         return
@@ -1373,7 +1385,7 @@ def _setup_aggregate_repositories() -> tuple[CustomerRepository, ProductReposito
 def _create_test_customer(customer_repo: CustomerRepository) -> Customer | None:
     """Create and save test customer for aggregate demonstration."""
     customer_factory = create_customer_factory()
-    customer_result = customer_factory(
+    customer_result = customer_factory(  # type: ignore[operator]
         name="Bob Smith",
         email_address=Email(email="bob@company.com"),
         address=Address(
@@ -1392,8 +1404,9 @@ def _create_test_customer(customer_repo: CustomerRepository) -> Customer | None:
     if customer is None:
         print("❌ Failed to create customer: None returned")
         return None
+    customer = cast("Customer", customer)
     customer_repo.save(customer)
-    return cast("Customer", customer)
+    return customer
 
 
 def _create_test_products(product_repo: ProductRepository) -> list[Product]:
@@ -1416,7 +1429,7 @@ def _create_test_products(product_repo: ProductRepository) -> list[Product]:
 
     products: list[Product] = []
     for product_data in products_data:
-        product_result = product_factory(**product_data)
+        product_result = product_factory(**product_data)  # type: ignore[operator]
         if product_result.success:
             product = product_result.data
             if product is not None:
@@ -1547,19 +1560,9 @@ def demonstrate_aggregate_patterns() -> None:
     _display_updated_stock(product_repo, products)
 
 
-def demonstrate_repository_patterns() -> None:
-    """Demonstrate repository patterns."""
-    print("\n🗄️ Repository Patterns Demonstration")
-    print("=" * 50)
-
-    # Create repositories
-    customer_repo = CustomerRepository()
-    product_repo = ProductRepository()
-
-    # Create and save customers
-    print("📋 Customer Repository Operations:")
+def _create_test_customers_for_repo(customer_repo: CustomerRepository) -> list[Customer]:
+    """Create test customers for repository demonstration."""
     customer_factory = create_customer_factory()
-
     customers_data = [
         {
             "name": "Alice Smith",
@@ -1585,14 +1588,17 @@ def demonstrate_repository_patterns() -> None:
 
     customers = []
     for customer_data in customers_data:
-        result = customer_factory(**customer_data)
+        result = customer_factory(**customer_data)  # type: ignore[operator]
         if result.success:
             customer = result.data
             if customer is not None:
                 customer_repo.save(customer)
                 customers.append(customer)
+    return customers
 
-    # Repository queries
+
+def _demonstrate_customer_queries(customer_repo: CustomerRepository, customers: list[Customer]) -> None:
+    """Demonstrate customer repository queries."""
     print("\n📋 Repository Queries:")
 
     # Find by email
@@ -1623,7 +1629,9 @@ def demonstrate_repository_patterns() -> None:
     active_customers = customer_repo.find_active_customers()
     print(f"  👥 Active customers after deactivation: {len(active_customers)}")
 
-    # Product repository operations
+
+def _demonstrate_product_operations(product_repo: ProductRepository) -> None:
+    """Demonstrate product repository operations."""
     print("\n📋 Product Repository Operations:")
     product_factory = create_product_factory()
 
@@ -1643,7 +1651,7 @@ def demonstrate_repository_patterns() -> None:
     ]
 
     for product_data in products_data:
-        product_result = product_factory(**product_data)
+        product_result = product_factory(**product_data)  # type: ignore[operator]
         if product_result.success:
             product = product_result.data
             if product is not None:
@@ -1655,6 +1663,26 @@ def demonstrate_repository_patterns() -> None:
         print(f"  ⚠️ Low stock: {product.name} ({product.stock_quantity} units)")
 
 
+def demonstrate_repository_patterns() -> None:
+    """Demonstrate repository patterns."""
+    print("\n🗄️ Repository Patterns Demonstration")
+    print("=" * 50)
+
+    # Create repositories
+    customer_repo = CustomerRepository()
+    product_repo = ProductRepository()
+
+    # Create and save customers
+    print("📋 Customer Repository Operations:")
+    customers = _create_test_customers_for_repo(customer_repo)
+
+    # Demonstrate customer queries
+    _demonstrate_customer_queries(customer_repo, customers)
+
+    # Demonstrate product operations
+    _demonstrate_product_operations(product_repo)
+
+
 def demonstrate_version_management() -> None:
     """Demonstrate optimistic locking and version management."""
     print("\n🔒 Version Management Demonstration")
@@ -1662,7 +1690,7 @@ def demonstrate_version_management() -> None:
 
     # Create product
     product_factory = create_product_factory()
-    product_result = product_factory(
+    product_result = product_factory(  # type: ignore[operator]
         name="Test Product",
         price=Money(amount=Decimal("100.0"), currency="USD"),
         category="electronics",
@@ -1723,7 +1751,7 @@ def demonstrate_performance_characteristics() -> None:
     start_time = time.time()
 
     for i in range(operations):
-        customer_factory(
+        customer_factory(  # type: ignore[operator]
             name=f"Customer {i}",
             email_address=Email(email=f"customer{i}@example.com"),
             address=Address(
@@ -1744,7 +1772,7 @@ def demonstrate_performance_characteristics() -> None:
     print("\n📋 Entity Operation Performance:")
 
     # Create a customer for operations
-    customer_result = customer_factory(
+    customer_result = customer_factory(  # type: ignore[operator]
         name="Performance Test Customer",
         email_address=Email(email="perf@example.com"),
         address=Address(

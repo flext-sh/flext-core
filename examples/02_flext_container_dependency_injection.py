@@ -70,7 +70,6 @@ from shared_domain import (
 from flext_core import (
     FlextContainer,
     FlextResult,
-    FlextTypes,
     FlextUtilities,
     TAnyObject,
     TConfigDict,
@@ -255,15 +254,16 @@ class UserManagementServiceFactoryCreator:
                 self._configurer, "create_user_management_service", None
             )
             if create_method is None:
-                raise RuntimeError("User management service factory not available")
+                msg = "User management service factory not available"
+                raise RuntimeError(msg)
             result = create_method()
             if result.is_failure:
-                raise RuntimeError(
-                    f"User management service creation failed: {result.error}"
-                )
+                msg = f"User management service creation failed: {result.error}"
+                raise RuntimeError(msg)
             service_data = result.data
             if service_data is None:
-                raise RuntimeError("User management service creation returned None")
+                msg = "User management service creation returned None"
+                raise RuntimeError(msg)
             return service_data
 
         return user_management_factory
@@ -597,11 +597,7 @@ class DatabaseConnectionFactory:
         )
         print(log_message)
 
-        # Validate configuration using type guards
-        if not FlextTypes.TypeGuards.is_dict_like(config):
-            error_message: TErrorMessage = "Configuration must be a dictionary"
-            return FlextResult.fail(error_message)
-
+        # Configuration is already validated as TConfigDict
         required_keys = ["host", "port", "database"]
         for key in required_keys:
             if key not in config:
@@ -632,15 +628,13 @@ class EmailServiceFactory:
         log_message: TLogMessage = f"🏭 Creating SMTP service with config: {config}"
         print(log_message)
 
-        # Validate configuration
-        if not FlextTypes.TypeGuards.is_dict_like(config):
-            error_message: TErrorMessage = "Configuration must be a dictionary"
-            return FlextResult.fail(error_message)
-
+        # Configuration is already validated as TConfigDict
         required_keys = ["smtp_host", "smtp_port"]
         for key in required_keys:
             if key not in config:
-                missing_smtp_key_error: TErrorMessage = f"Missing required config key: {key}"
+                missing_smtp_key_error: TErrorMessage = (
+                    f"Missing required config key: {key}"
+                )
                 return FlextResult.fail(missing_smtp_key_error)
 
         try:
@@ -823,7 +817,9 @@ class BaseServiceConfigurer:
         db_connection = db_result.data
         if db_connection is None:
             return FlextResult.fail("Database connection is None")
-        return FlextResult.ok(SharedDomainUserRepository(cast("DatabaseConnection", db_connection)))
+        return FlextResult.ok(
+            SharedDomainUserRepository(cast("DatabaseConnection", db_connection))
+        )
 
     def create_notification_service(self) -> FlextResult[NotificationService]:
         """Create notification service with dependencies - shared implementation."""
@@ -865,13 +861,15 @@ class BaseServiceConfigurer:
             return FlextResult.fail(error_msg)
 
         deps_data = result.data
-        if deps_data is None or len(deps_data) != 2:
+        if deps_data is None or len(deps_data) != 2:  # noqa: PLR2004
             return FlextResult.fail("Invalid notification dependencies")
         email_service, user_repository = deps_data
-        return FlextResult.ok((
-            cast("EmailService", email_service),
-            cast("UserRepository", user_repository)
-        ))
+        return FlextResult.ok(
+            (
+                cast("EmailService", email_service),
+                cast("UserRepository", user_repository),
+            )
+        )
 
     def _resolve_user_management_dependencies(
         self,
@@ -885,13 +883,15 @@ class BaseServiceConfigurer:
             return FlextResult.fail(error_msg)
 
         deps_data = result.data
-        if deps_data is None or len(deps_data) != 2:
+        if deps_data is None or len(deps_data) != 2:  # noqa: PLR2004
             return FlextResult.fail("Invalid user management dependencies")
         user_repository, notification_service = deps_data
-        return FlextResult.ok((
-            cast("UserRepository", user_repository),
-            cast("NotificationService", notification_service)
-        ))
+        return FlextResult.ok(
+            (
+                cast("UserRepository", user_repository),
+                cast("NotificationService", notification_service),
+            )
+        )
 
 
 class ProductionServiceConfigurer(BaseServiceConfigurer):
@@ -1082,7 +1082,9 @@ class TestServiceConfigurer:
                 result_data = registration_result.data
                 if result_data is not None:
                     return FlextResult.fail(result_data.message)
-                return FlextResult.fail("Mock service registration failed with no details")
+                return FlextResult.fail(
+                    "Mock service registration failed with no details"
+                )
 
         return FlextResult.ok(None)
 
@@ -1104,7 +1106,9 @@ class TestServiceConfigurer:
             "UserManagementService", user_management_factory
         )
         if factory_result.is_failure:
-            return FlextResult.fail(f"User management factory registration failed: {factory_result.error}")
+            return FlextResult.fail(
+                f"User management factory registration failed: {factory_result.error}"
+            )
         return FlextResult.ok(None)
 
 
@@ -1121,16 +1125,17 @@ class MockUserManagementServiceFactoryCreator:
             # FlextContainer expects factories to return services directly, not FlextResult
             user_repo_result = self._container.get("UserRepository")
             if user_repo_result.is_failure:
-                raise RuntimeError(f"UserRepository not available: {user_repo_result.error}")
+                msg = f"UserRepository not available: {user_repo_result.error}"
+                raise RuntimeError(msg)
 
             notification_result = self._container.get("NotificationService")
             if notification_result.is_failure:
-                raise RuntimeError(f"NotificationService not available: {notification_result.error}")
+                msg = f"NotificationService not available: {notification_result.error}"
+                raise RuntimeError(msg)
 
             user_repository = cast("UserRepository", user_repo_result.data)
             notification_service = cast("NotificationService", notification_result.data)
-            service = UserManagementService(user_repository, notification_service)
-            return service
+            return UserManagementService(user_repository, notification_service)
 
         return mock_user_management_factory
 
@@ -1183,22 +1188,33 @@ def check_container_health(container: FlextContainer) -> FlextResult[TAnyObject]
         if db_result.success:
             db_connection = cast("DatabaseConnection", db_result.data)
             connect_result = db_connection.connect()
-            services_dict["database"] = cast("TAnyObject", {
-                "status": "healthy" if connect_result.success else "unhealthy",
-                "error": connect_result.error if connect_result.is_failure else None,
-            })
+            services_dict["database"] = cast(
+                "TAnyObject",
+                {
+                    "status": "healthy" if connect_result.success else "unhealthy",
+                    "error": connect_result.error
+                    if connect_result.is_failure
+                    else None,
+                },
+            )
             if connect_result.success:
                 db_connection.close()
         else:
-            services_dict["database"] = cast("TAnyObject", {
-                "status": "unavailable",
-                "error": f"Service not found: {db_result.error or 'unknown error'}",
-            })
+            services_dict["database"] = cast(
+                "TAnyObject",
+                {
+                    "status": "unavailable",
+                    "error": f"Service not found: {db_result.error or 'unknown error'}",
+                },
+            )
     except (RuntimeError, ValueError, TypeError) as e:
-        services_dict["database"] = cast("TAnyObject", {
-            "status": "error",
-            "error": str(e),
-        })
+        services_dict["database"] = cast(
+            "TAnyObject",
+            {
+                "status": "error",
+                "error": str(e),
+            },
+        )
 
     # Check email service
     try:
@@ -1206,15 +1222,21 @@ def check_container_health(container: FlextContainer) -> FlextResult[TAnyObject]
         if email_result.success:
             services_dict["email"] = cast("TAnyObject", {"status": "healthy"})
         else:
-            services_dict["email"] = cast("TAnyObject", {
-                "status": "unavailable",
-                "error": f"Service not found: {email_result.error or 'unknown error'}",
-            })
+            services_dict["email"] = cast(
+                "TAnyObject",
+                {
+                    "status": "unavailable",
+                    "error": f"Service not found: {email_result.error or 'unknown error'}",
+                },
+            )
     except (RuntimeError, ValueError, TypeError) as e:
-        services_dict["email"] = cast("TAnyObject", {
-            "status": "error",
-            "error": str(e),
-        })
+        services_dict["email"] = cast(
+            "TAnyObject",
+            {
+                "status": "error",
+                "error": str(e),
+            },
+        )
 
     # Check user repository
     try:
@@ -1222,15 +1244,21 @@ def check_container_health(container: FlextContainer) -> FlextResult[TAnyObject]
         if repo_result.success:
             services_dict["user_repository"] = cast("TAnyObject", {"status": "healthy"})
         else:
-            services_dict["user_repository"] = cast("TAnyObject", {
-                "status": "unavailable",
-                "error": f"Service not found: {repo_result.error or 'unknown error'}",
-            })
+            services_dict["user_repository"] = cast(
+                "TAnyObject",
+                {
+                    "status": "unavailable",
+                    "error": f"Service not found: {repo_result.error or 'unknown error'}",
+                },
+            )
     except (RuntimeError, ValueError, TypeError) as e:
-        services_dict["user_repository"] = cast("TAnyObject", {
-            "status": "error",
-            "error": str(e),
-        })
+        services_dict["user_repository"] = cast(
+            "TAnyObject",
+            {
+                "status": "error",
+                "error": str(e),
+            },
+        )
 
     # Determine overall status
     unhealthy_services = [
@@ -1368,9 +1396,7 @@ class UserRegistrationStrategy:
             service_data = user_service_result.data
             if service_data is None:
                 return FlextResult.fail(f"{self._context_name} user service is None")
-            return FlextResult.ok(
-                cast("UserManagementService", service_data)
-            )
+            return FlextResult.ok(cast("UserManagementService", service_data))
         except (RuntimeError, ValueError, TypeError) as e:
             return FlextResult.fail(f"{self._context_name.title()} service error: {e}")
 
@@ -1526,7 +1552,9 @@ class ProductionContainerDemoCommand(DemonstrationCommand):
             error_message="Production container not initialized",
         )
         if prerequisite_result.is_failure:
-            error_msg = prerequisite_result.error or "Production container prerequisite failed"
+            error_msg = (
+                prerequisite_result.error or "Production container prerequisite failed"
+            )
             return FlextResult.fail(error_msg)
 
         # Create production user data

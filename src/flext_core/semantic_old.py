@@ -161,7 +161,9 @@ class FlextSemanticObservability:
             """Tracing interface using semantic constants."""
 
             def business_span(
-                self, operation_name: str, **context: object
+                self,
+                operation_name: str,
+                **context: object,
             ) -> AbstractContextManager[object]:
                 """Business operation span using semantic span types."""
 
@@ -229,7 +231,10 @@ class FlextSemanticObservability:
             # Dynamic import to avoid circular dependencies
             import importlib  # noqa: PLC0415
 
-            observability_module = importlib.import_module(".observability", package=__package__)
+            observability_module = importlib.import_module(
+                ".observability",
+                package=__package__,
+            )
             # Return observability instance - type will be checked at runtime
             return observability_module.get_observability()
 
@@ -243,9 +248,15 @@ class FlextSemanticObservability:
             # Dynamic import to avoid circular dependencies
             import importlib  # noqa: PLC0415
 
-            observability_module = importlib.import_module(".observability", package=__package__)
+            observability_module = importlib.import_module(
+                ".observability",
+                package=__package__,
+            )
             # Return configured observability instance - type will be checked at runtime
-            return observability_module.configure_minimal_observability(service_name, log_level=log_level)
+            return observability_module.configure_minimal_observability(
+                service_name,
+                log_level=log_level,
+            )
 
 
 # =============================================================================
@@ -365,7 +376,9 @@ class FlextSemanticError:
         ) -> FlextSemanticError.Hierarchy.FlextBusinessError:
             """Create business error using semantic constants."""
             return FlextSemanticError.Hierarchy.FlextBusinessError(
-                message, context=context, cause=cause
+                message,
+                context=context,
+                cause=cause,
             )
 
         @staticmethod
@@ -384,7 +397,8 @@ class FlextSemanticError:
                 validation_context["field_value"] = field_value
 
             return FlextSemanticError.Hierarchy.FlextValidationError(
-                message, context=validation_context
+                message,
+                context=validation_context,
             )
 
         @staticmethod
@@ -400,14 +414,20 @@ class FlextSemanticError:
             # Classify exception type using semantic constants
             if isinstance(exception, ValueError):
                 return FlextSemanticError.Hierarchy.FlextValidationError(
-                    error_message, context=context, cause=exception
+                    error_message,
+                    context=context,
+                    cause=exception,
                 )
             if isinstance(exception, ConnectionError):
                 return FlextSemanticError.Hierarchy.FlextTechnicalError(
-                    error_message, context=context, cause=exception
+                    error_message,
+                    context=context,
+                    cause=exception,
                 )
             return FlextSemanticError.Hierarchy.FlextError(
-                error_message, context=context, cause=exception
+                error_message,
+                context=context,
+                cause=exception,
             )
 
 

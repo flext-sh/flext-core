@@ -108,9 +108,17 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import re
 from typing import TYPE_CHECKING, NotRequired, TypedDict
 
-from pydantic import BaseModel, ConfigDict, Field, SecretStr, field_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    SecretStr,
+    field_validator,
+    model_validator,
+)
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 if TYPE_CHECKING:
@@ -887,6 +895,303 @@ def validate_config(config: FlextBaseConfigModel) -> bool:
 
 
 # =============================================================================
+# PLUGIN CONFIGURATION - Plugin System Configuration Models
+# =============================================================================
+
+
+class PluginConfigDict(TypedDict, total=False):
+    """Plugin configuration dictionary with plugin-specific settings.
+
+    TypedDict structure for plugin configuration providing type safety,
+    clear documentation, and flexible configuration patterns for FLEXT
+    plugin system integration.
+
+    Configuration Structure:
+        name: Unique plugin identifier for loading and management
+        version: Semantic version for compatibility and updates
+        enabled: Runtime activation control for plugins
+        priority: Loading/execution order for plugin coordination
+        settings: Plugin-specific configuration parameters
+        dependencies: Plugin dependency list for proper ordering
+        metadata: Additional plugin information and documentation
+
+    Usage Patterns:
+        plugin_config: PluginConfigDict = {
+            "name": "oracle-wms-plugin",
+            "version": "1.2.0",
+            "enabled": True,
+            "priority": 100,
+            "settings": {"connection_pool_size": 10},
+            "dependencies": ["oracle-base-plugin"],
+            "metadata": {"description": "Oracle WMS integration"}
+        }
+    """
+
+    name: str
+    version: str
+    enabled: bool
+    priority: int
+    settings: dict[str, object]
+    dependencies: list[str]
+    metadata: dict[str, str]
+
+
+class FlextPluginConfig(FlextBaseConfigModel):
+    """Plugin configuration model with validation and runtime management.
+
+    Pydantic model providing comprehensive plugin configuration with
+    validation, serialization, and integration with FLEXT plugin system.
+    Enables runtime plugin management, dependency resolution, and
+    configuration validation.
+
+    Configuration Features:
+        - Plugin identity management (name, version, description)
+        - Runtime control (enabled state, priority ordering)
+        - Dependency management with validation
+        - Flexible settings with type safety
+        - Metadata support for documentation and tooling
+        - Environment variable integration for deployment
+
+    Plugin Lifecycle Integration:
+        - Configuration validation during plugin loading
+        - Dependency resolution and ordering
+        - Runtime enable/disable control
+        - Version compatibility checking
+        - Settings validation and type coercion
+
+    Usage Patterns:
+        # Individual plugin configuration
+        plugin_config = FlextPluginConfig(
+            name="oracle-wms-plugin",
+            version="1.2.0",
+            description="Oracle WMS integration plugin",
+            enabled=True,
+            priority=100,
+            settings={"connection_pool_size": 10, "timeout": 30},
+            dependencies=["oracle-base-plugin"]
+        )
+
+        # Plugin registry configuration
+        plugins_config = [
+            FlextPluginConfig(name="base-plugin", version="1.0.0", priority=1),
+            FlextPluginConfig(name="oracle-plugin", version="1.1.0", priority=50),
+            FlextPluginConfig(name="wms-plugin", version="1.2.0", priority=100)
+        ]
+    """
+
+    name: str = Field(description="Unique plugin identifier for system registration")
+    version: str = Field(
+        default="1.0.0",
+        description="Semantic version for compatibility management",
+    )
+    description: str = Field(
+        default="",
+        description="Human-readable plugin description",
+    )
+    enabled: bool = Field(
+        default=True,
+        description="Runtime activation state for plugin",
+    )
+    priority: int = Field(
+        default=100,
+        ge=0,
+        le=1000,
+        description="Loading priority (0=highest, 1000=lowest)",
+    )
+    settings: dict[str, object] = Field(
+        default_factory=dict,
+        description="Plugin-specific configuration parameters",
+    )
+    dependencies: list[str] = Field(
+        default_factory=list,
+        description="Required plugin dependencies for proper ordering",
+    )
+    metadata: dict[str, str] = Field(
+        default_factory=dict,
+        description="Additional plugin metadata and documentation",
+    )
+
+    @field_validator("version")
+    @classmethod
+    def validate_version(cls, v: str) -> str:
+        """Validate semantic version format."""
+        pattern = r"^\d+\.\d+\.\d+(?:-[a-zA-Z0-9.-]+)?(?:\+[a-zA-Z0-9.-]+)?$"
+        if not re.match(pattern, v):
+            error_msg = "Version must follow semantic versioning (x.y.z)"
+            raise ValueError(error_msg)
+        return v
+
+    @field_validator("name")
+    @classmethod
+    def validate_name(cls, v: str) -> str:
+        """Validate plugin name format."""
+        pattern = r"^[a-z][a-z0-9-]*[a-z0-9]$"
+        if not re.match(pattern, v):
+            error_msg = (
+                "Plugin name must be lowercase with hyphens, "
+                "start with letter, end with letter/number"
+            )
+            raise ValueError(error_msg)
+        return v
+
+
+class FlextPluginRegistryConfig(FlextBaseConfigModel):
+    """Plugin registry configuration for managing multiple plugins.
+
+    Configuration model for plugin registry management providing
+    centralized plugin configuration, dependency resolution,
+    and lifecycle coordination across the FLEXT ecosystem.
+
+    Registry Features:
+        - Multiple plugin configuration management
+        - Automatic dependency resolution and ordering
+        - Global plugin settings and overrides
+        - Plugin discovery and loading configuration
+        - Registry-wide metadata and documentation
+
+    Usage Patterns:
+        registry_config = FlextPluginRegistryConfig(
+            plugins=[
+                FlextPluginConfig(name="base-plugin", priority=1),
+                FlextPluginConfig(name="oracle-plugin", priority=50),
+                FlextPluginConfig(name="wms-plugin", priority=100)
+            ],
+            auto_discovery=True,
+            discovery_paths=["/opt/flext/plugins", "./plugins"]
+        )
+    """
+
+    plugins: list[FlextPluginConfig] = Field(
+        default_factory=list,
+        description="List of configured plugins",
+    )
+    auto_discovery: bool = Field(
+        default=False,
+        description="Enable automatic plugin discovery",
+    )
+    discovery_paths: list[str] = Field(
+        default_factory=list,
+        description="Paths to search for plugins during auto-discovery",
+    )
+    global_settings: dict[str, object] = Field(
+        default_factory=dict,
+        description="Global settings applied to all plugins",
+    )
+
+    @model_validator(mode="after")
+    def validate_plugin_dependencies(self) -> FlextPluginRegistryConfig:
+        """Validate plugin dependencies are available."""
+        plugin_names = {plugin.name for plugin in self.plugins}
+        for plugin in self.plugins:
+            for dep in plugin.dependencies:
+                if dep not in plugin_names:
+                    error_msg = (
+                        f"Plugin '{plugin.name}' depends on missing plugin '{dep}'"
+                    )
+                    raise ValueError(error_msg)
+        return self
+
+
+# =============================================================================
+# PLUGIN CONFIGURATION FACTORY FUNCTIONS
+# =============================================================================
+
+
+def create_plugin_config(
+    name: str,
+    *,
+    config_options: dict[str, object] | None = None,
+) -> FlextPluginConfig:
+    """Create plugin configuration with validation.
+
+    Factory function for creating validated plugin configurations
+    with sensible defaults and proper type safety.
+
+    Args:
+        name: Unique plugin identifier
+        config_options: Optional configuration dictionary with keys:
+            - version: Plugin version (semantic versioning, default: "1.0.0")
+            - enabled: Whether plugin is enabled (default: True)
+            - priority: Plugin loading priority (default: 100)
+            - settings: Plugin-specific configuration (default: {})
+            - dependencies: Required plugin dependencies (default: [])
+
+    Returns:
+        Validated FlextPluginConfig instance
+
+    Example:
+        # Simple configuration
+        config = create_plugin_config("oracle-connector")
+
+        # Advanced configuration
+        config = create_plugin_config(
+            name="oracle-connector",
+            config_options={
+                "version": "2.1.0",
+                "enabled": True,
+                "priority": 200,
+                "settings": {"pool_size": 20},
+                "dependencies": ["oracle-base-plugin"]
+            }
+        )
+
+    """
+    options = config_options or {}
+    # Extract values with proper type casting
+    priority_value = options.get("priority", 100)
+    settings_value = options.get("settings")
+    dependencies_value = options.get("dependencies")
+
+    return FlextPluginConfig(
+        name=name,
+        version=str(options.get("version", "1.0.0")),
+        enabled=bool(options.get("enabled", True)),
+        priority=int(priority_value) if isinstance(priority_value, (int, str)) else 100,
+        settings=dict(settings_value) if isinstance(settings_value, dict) else {},
+        dependencies=list(dependencies_value)
+        if isinstance(dependencies_value, (list, tuple))
+        else [],
+    )
+
+
+def create_plugin_registry_config(
+    *,
+    plugins: list[FlextPluginConfig] | None = None,
+    auto_discovery: bool = False,
+    discovery_paths: list[str] | None = None,
+) -> FlextPluginRegistryConfig:
+    """Create plugin registry configuration.
+
+    Factory function for creating plugin registry configurations
+    with proper validation and dependency resolution.
+
+    Args:
+        plugins: List of plugin configurations
+        auto_discovery: Enable automatic plugin discovery
+        discovery_paths: Plugin discovery paths
+
+    Returns:
+        Validated FlextPluginRegistryConfig instance
+
+    Example:
+        registry = create_plugin_registry_config(
+            plugins=[
+                create_plugin_config("base-plugin", priority=1),
+                create_plugin_config("oracle-plugin", priority=50)
+            ],
+            auto_discovery=True,
+            discovery_paths=["./plugins"]
+        )
+
+    """
+    return FlextPluginRegistryConfig(
+        plugins=plugins or [],
+        auto_discovery=auto_discovery,
+        discovery_paths=discovery_paths or [],
+    )
+
+
+# =============================================================================
 # EXPORTS
 # =============================================================================
 
@@ -908,6 +1213,9 @@ __all__ = [
     "FlextObservabilityConfig",
     # Domain-specific models
     "FlextOracleConfig",
+    # Plugin configuration models
+    "FlextPluginConfig",
+    "FlextPluginRegistryConfig",
     "FlextRedisConfig",
     "FlextRedisSettings",
     "FlextSingerConfig",
@@ -915,12 +1223,15 @@ __all__ = [
     "LDAPConfigDict",
     "ObservabilityConfigDict",
     "OracleConfigDict",
+    "PluginConfigDict",
     "RedisConfigDict",
     "SingerConfigDict",
     # Factory functions
     "create_database_config",
     "create_ldap_config",
     "create_oracle_config",
+    "create_plugin_config",
+    "create_plugin_registry_config",
     "create_redis_config",
     # Utilities
     "load_config_from_env",

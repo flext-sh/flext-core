@@ -12,7 +12,7 @@ from __future__ import annotations
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
-from flext_core import FlextResult, FlextTypes
+from flext_core import FlextResult
 
 if TYPE_CHECKING:
     # Import shared domain to reduce duplication
@@ -42,23 +42,23 @@ def is_url(value: str) -> bool:
 
 
 def is_string(value: object) -> bool:
-    """Check if value is string using FlextTypes.TypeGuards."""
-    return FlextTypes.TypeGuards.is_instance_of(value, str)
+    """Check if value is string."""
+    return isinstance(value, str)
 
 
 def is_int(value: object) -> bool:
-    """Check if value is integer using FlextTypes.TypeGuards."""
-    return FlextTypes.TypeGuards.is_instance_of(value, int)
+    """Check if value is integer."""
+    return isinstance(value, int)
 
 
 def is_list(value: object) -> bool:
-    """Check if value is list using FlextTypes.TypeGuards."""
-    return FlextTypes.TypeGuards.is_instance_of(value, list)
+    """Check if value is list."""
+    return isinstance(value, list)
 
 
 def is_dict(value: object) -> bool:
-    """Check if value is dict using FlextTypes.TypeGuards."""
-    return FlextTypes.TypeGuards.is_instance_of(value, dict)
+    """Check if value is dict."""
+    return isinstance(value, dict)
 
 
 def is_non_empty_string(value: object) -> bool:

@@ -28,6 +28,7 @@ demonstrating the power and flexibility of the FlextLoggerFactory system.
 import time
 import traceback
 from types import TracebackType
+from typing import cast
 
 from flext_core import FlextConstants
 from flext_core.loggings import (
@@ -308,8 +309,8 @@ def demonstrate_exception_logging() -> None:  # noqa: PLR0915
 
     try:
         # Simulate type error
-        number = "not_a_number"
-        result = number + 10
+        number: str = "not_a_number"
+        result = int(number) + 10  # This will raise ValueError
         print(f"Result: {result}")
     except TypeError:
         error_logger.exception(
@@ -383,8 +384,10 @@ def demonstrate_exception_logging() -> None:  # noqa: PLR0915
     for i, test_case in enumerate(test_cases, 1):
         print(f"   Test case {i}: ${test_case['amount']} via {test_case['method']}")
         try:
-            result = process_payment(test_case["amount"], test_case["method"])
-            print(f"     Success: {result}")
+            amount = float(cast("float", test_case["amount"]))
+            method = str(cast("str", test_case["method"]))
+            result_dict = process_payment(amount, method)
+            print(f"     Success: {result_dict}")
         except (ValueError, ConnectionError, OSError, RuntimeError) as e:
             print(f"     Expected error: {type(e).__name__}: {e}")
 

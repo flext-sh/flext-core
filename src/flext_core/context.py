@@ -84,7 +84,8 @@ if TYPE_CHECKING:
 # Request correlation context
 _correlation_id: ContextVar[str | None] = ContextVar("correlation_id", default=None)
 _parent_correlation_id: ContextVar[str | None] = ContextVar(
-    "parent_correlation_id", default=None
+    "parent_correlation_id",
+    default=None,
 )
 
 # Service identification context
@@ -98,10 +99,12 @@ _request_id: ContextVar[str | None] = ContextVar("request_id", default=None)
 
 # Performance context
 _operation_start_time: ContextVar[datetime | None] = ContextVar(
-    "operation_start_time", default=None
+    "operation_start_time",
+    default=None,
 )
 _operation_metadata: ContextVar[dict[str, object] | None] = ContextVar(
-    "operation_metadata", default=None
+    "operation_metadata",
+    default=None,
 )
 
 
@@ -151,7 +154,8 @@ class FlextContext:
     @staticmethod
     @contextmanager
     def new_correlation(
-        correlation_id: str | None = None, parent_id: str | None = None
+        correlation_id: str | None = None,
+        parent_id: str | None = None,
     ) -> Generator[str]:
         """Create new correlation context scope.
 
@@ -235,7 +239,8 @@ class FlextContext:
     @staticmethod
     @contextmanager
     def service_context(
-        service_name: str, version: str | None = None
+        service_name: str,
+        version: str | None = None,
     ) -> Generator[None]:
         """Create service identification context scope.
 
@@ -415,7 +420,7 @@ class FlextContext:
             duration = (end_time - start_time).total_seconds()
             # Type-safe update
             operation_metadata.update(
-                {"end_time": end_time, "duration_seconds": duration}
+                {"end_time": end_time, "duration_seconds": duration},
             )
 
             # Restore previous context
@@ -481,13 +486,13 @@ class FlextContext:
 
         """
         correlation_id = context.get("X-Correlation-Id") or context.get(
-            "correlation_id"
+            "correlation_id",
         )
         if correlation_id and isinstance(correlation_id, str):
             _correlation_id.set(correlation_id)
 
         parent_id = context.get("X-Parent-Correlation-Id") or context.get(
-            "parent_correlation_id"
+            "parent_correlation_id",
         )
         if parent_id and isinstance(parent_id, str):
             _parent_correlation_id.set(parent_id)

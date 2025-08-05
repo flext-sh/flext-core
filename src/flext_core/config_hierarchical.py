@@ -24,8 +24,8 @@ Configuration Architecture Layers:
 
 Development Status (v0.9.0 → 1.0.0):
     ✅ Production Ready: Base configuration patterns, domain model composition
+    ✅ Implemented: Plugin configuration management with FlextPluginConfig and registry
     🔄 Enhancement: Advanced configuration validation and environment management
-    📋 TODO Integration: Plugin configuration management (Plugin Priority 3)
 
 Core Configuration Patterns:
     FlextHierarchicalConfigManager: Central configuration orchestration
@@ -130,6 +130,9 @@ from flext_core.config_models import (
     # Observability domain configurations
     FlextObservabilityConfig,
     FlextOracleConfig,
+    # Plugin configuration models
+    FlextPluginConfig,
+    FlextPluginRegistryConfig,
     FlextRedisConfig,
     FlextRedisSettings,
     # Data integration domain configurations
@@ -138,12 +141,15 @@ from flext_core.config_models import (
     LDAPConfigDict,
     ObservabilityConfigDict,
     OracleConfigDict,
+    PluginConfigDict,
     RedisConfigDict,
     SingerConfigDict,
     # Type-safe factory functions
     create_database_config,
     create_ldap_config,
     create_oracle_config,
+    create_plugin_config,
+    create_plugin_registry_config,
     create_redis_config,
     # Configuration utilities
     load_config_from_env,
@@ -168,6 +174,7 @@ def get_base_layer_imports() -> dict[str, object]:
         "JWTConfigDict": JWTConfigDict,
         "LDAPConfigDict": LDAPConfigDict,
         "OracleConfigDict": OracleConfigDict,
+        "PluginConfigDict": PluginConfigDict,
         "SingerConfigDict": SingerConfigDict,
         "ObservabilityConfigDict": ObservabilityConfigDict,
     }
@@ -183,6 +190,9 @@ def get_domain_layer_imports() -> dict[str, object]:
         "FlextLDAPConfig": FlextLDAPConfig,
         # Security domain
         "FlextJWTConfig": FlextJWTConfig,
+        # Plugin domain
+        "FlextPluginConfig": FlextPluginConfig,
+        "FlextPluginRegistryConfig": FlextPluginRegistryConfig,
         # Data integration domain
         "FlextSingerConfig": FlextSingerConfig,
         # Observability domain
@@ -220,6 +230,8 @@ def get_factory_layer_imports() -> dict[str, object]:
         "create_redis_config": create_redis_config,
         "create_oracle_config": create_oracle_config,
         "create_ldap_config": create_ldap_config,
+        "create_plugin_config": create_plugin_config,
+        "create_plugin_registry_config": create_plugin_registry_config,
         # Utilities
         "load_config_from_env": load_config_from_env,
         "merge_configs": merge_configs,
