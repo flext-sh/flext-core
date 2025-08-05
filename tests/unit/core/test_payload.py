@@ -696,7 +696,7 @@ class TestFlextPayloadCoverageImprovements:
 
         # Attempt to modify the payload directly should raise ValidationError
         with pytest.raises(ValidationError):
-            payload.data = "new_data"
+            payload.data = "new_data"  # type: ignore[misc] # Intentional read-only property test
 
         # Verify data hasn't changed
         assert payload.data == original_data

@@ -207,7 +207,7 @@ class TestGuardsSOLIDImplementation:
 
         # Test FlextValidationError is raised properly
         with pytest.raises(FlextValidationError) as exc_info:
-            StrictModel(name="test", value="not_an_int")
+            StrictModel(name="test", value="not_an_int")  # type: ignore[arg-type] # Intentional type error for testing
 
         # Error should be FlextValidationError with proper message
         error = exc_info.value
@@ -465,7 +465,7 @@ class TestSOLIDPrinciplesInGuards:
 
         # Still immutable despite flexible structure
         with pytest.raises(AttributeError):
-            flexible.name = "changed"
+            flexible.name = "changed"  # type: ignore[attr-defined] # Dynamic attribute access test
 
 
 class TestSOLIDCompliance:

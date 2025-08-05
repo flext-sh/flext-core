@@ -88,6 +88,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import contextlib
 import inspect
 from typing import TYPE_CHECKING, TypeVar, cast, overload
 
@@ -97,14 +98,15 @@ from flext_core.exceptions import FlextOperationError
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    # Import old types for backward compatibility during migration
     from flext_core.flext_types import TFactory
-
-# Import for runtime use
-import contextlib
 
 # Local type definitions for runtime use
 T = TypeVar("T")
 U = TypeVar("U")
+
+# Modern type aliases using new system (migration in progress)
+# Factory = FlextTypes.Core.Factory[T]  # Commented until types module is fixed
 
 
 # =============================================================================
@@ -213,7 +215,7 @@ class FlextResult[T]:
             # Apply function to data, even if it's None
             # None is a valid value for successful results
             # Type system guarantees that for success results, _data is of type T
-            result = func(cast("T", self._data))
+            result = func(self._data) if self._data is not None else func(None)  # type: ignore[arg-type]
             return FlextResult.ok(result)
         except (ImportError, MemoryError) as e:
             # Handle specific system and runtime exceptions
@@ -354,8 +356,8 @@ class FlextResult[T]:
             return FlextResult.fail(str(e))
 
     def tap(self, func: Callable[[T], None]) -> FlextResult[T]:
-        """Execute side effect function on success, return self."""
-        if self.is_success:
+        """Execute side effect function on success with non-None data, return self."""
+        if self.is_success and self._data is not None:
             with contextlib.suppress(TypeError, ValueError, AttributeError):
                 func(cast("T", self._data))
         return self
@@ -392,8 +394,13 @@ class FlextResult[T]:
             return FlextResult.fail(self._error or "First result failed")
         if other.is_failure:
             return FlextResult.fail(other._error or "Second result failed")
+
+        # Check for None data - treat as missing data
+        if self._data is None or other._data is None:
+            return FlextResult.fail("Missing data for zip operation")
+
         try:
-            result = func(cast("T", self._data), cast("U", other._data))
+            result = func(self._data, other._data)
             return FlextResult.ok(result)
         except (TypeError, ValueError, AttributeError, ZeroDivisionError) as e:
             return FlextResult.fail(str(e))

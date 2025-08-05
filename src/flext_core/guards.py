@@ -84,7 +84,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from functools import wraps
-from typing import TYPE_CHECKING, Self
+from typing import TYPE_CHECKING, Self, TypeVar
 
 from pydantic import BaseModel, ValidationError
 
@@ -95,6 +95,8 @@ from flext_core.mixins import FlextSerializableMixin, FlextValidatableMixin
 from flext_core.result import FlextResult
 from flext_core.utilities import FlextTypeGuards, FlextUtilities
 from flext_core.validation import FlextValidators
+
+T = TypeVar("T")
 
 Platform = FlextConstants.Platform
 
@@ -129,7 +131,7 @@ safe = FlextDecorators.safe_result
 
 
 # Define SOLID-compliant decorators with real functionality
-def immutable(cls: type) -> type:
+def immutable[T](cls: type[T]) -> type[T]:
     """Make class immutable using SOLID principles.
 
     Implements immutability through:
@@ -156,8 +158,8 @@ def immutable(cls: type) -> type:
 
     """
 
-    # Create immutable wrapper class
-    class ImmutableWrapper(cls):
+    # Create immutable wrapper class - using type ignore for dynamic inheritance
+    class ImmutableWrapper(cls):  # type: ignore[misc,valid-type]
         """Immutable wrapper class."""
 
         def __init__(self, *args: object, **kwargs: object) -> None:
@@ -251,12 +253,12 @@ def pure[T](func: T) -> T:
     # Use functools.wraps to properly preserve function metadata
     pure_wrapper = wraps(func)(pure_wrapper)
 
-    # Mark function as pure for introspection
-    pure_wrapper.__pure__ = True
-    pure_wrapper.__cache_size__ = lambda: len(cache)
-    pure_wrapper.__clear_cache__ = cache.clear
+    # Mark function as pure for introspection - using type ignore for custom attributes
+    pure_wrapper.__pure__ = True  # type: ignore[attr-defined]
+    pure_wrapper.__cache_size__ = lambda: len(cache)  # type: ignore[attr-defined]
+    pure_wrapper.__clear_cache__ = cache.clear  # type: ignore[attr-defined]
 
-    return pure_wrapper
+    return pure_wrapper  # type: ignore[return-value]
 
 
 # =============================================================================

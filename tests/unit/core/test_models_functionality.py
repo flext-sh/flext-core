@@ -91,11 +91,14 @@ class TestModelValidationRules:
         """Test base model validation functionality."""
 
         class TestModel(FlextBaseModel):
-            name: str
-            value: int
+            name: str = ""
+            value: int = 0
 
-        # Valid model creation
-        model = TestModel(name="test", value=42)
+            def validate_business_rules(self) -> FlextResult[None]:
+                return FlextResult.ok(None)
+
+        # Valid model creation using model_validate
+        model = TestModel.model_validate({"name": "test", "value": 42})
         assert model.name == "test"
         assert model.value == 42
 
@@ -115,21 +118,21 @@ class TestModelValidationRules:
         """Test semantic validation is actually called."""
 
         class ValidatingModel(FlextBaseModel):
-            name: str
+            name: str = ""
 
-            def validate_semantic_rules(self) -> FlextResult[None]:
+            def validate_business_rules(self) -> FlextResult[None]:
                 if self.name == "invalid":
                     return FlextResult.fail("Name cannot be 'invalid'")
                 return FlextResult.ok(None)
 
         # Test validation works
-        model = ValidatingModel(name="valid")
-        result = model.validate_semantic_rules()
+        model = ValidatingModel.model_validate({"name": "valid"})
+        result = model.validate_business_rules()
         assert result.success
 
         # Test validation fails appropriately
-        invalid_model = ValidatingModel(name="invalid")
-        result = invalid_model.validate_semantic_rules()
+        invalid_model = ValidatingModel.model_validate({"name": "invalid"})
+        result = invalid_model.validate_business_rules()
         assert result.is_failure
         assert "invalid" in (result.error or "")
 
@@ -142,10 +145,13 @@ class TestModelInheritanceBehavior:
         """Test immutable models actually prevent modification."""
 
         class ImmutableTest(FlextImmutableModel):
-            name: str
-            value: int
+            name: str = ""
+            value: int = 0
 
-        model = ImmutableTest(name="test", value=42)
+            def validate_business_rules(self) -> FlextResult[None]:
+                return FlextResult.ok(None)
+
+        model = ImmutableTest.model_validate({"name": "test", "value": 42})
         assert model.name == "test"
 
         # Should not be able to modify
@@ -159,7 +165,10 @@ class TestModelInheritanceBehavior:
             name: str = "default"
             value: int = 0
 
-        model = MutableTest()
+            def validate_business_rules(self) -> FlextResult[None]:
+                return FlextResult.ok(None)
+
+        model = MutableTest.model_validate({"id": "test", "name": "default", "value": 0})
         assert model.name == "default"
 
         # Should allow modification
@@ -196,7 +205,7 @@ class TestFlextDomainEntity:
         # Test equality functionality
         assert entity1 == entity3  # Same ID
         assert entity1 != entity2  # Different ID
-        assert entity1 != "not_an_entity"  # Different type
+        assert entity1 != "not_an_entity"  # type: ignore[comparison-overlap]
 
     def test_domain_entity_version_increment(self) -> None:
         """Test version increment updates version and timestamp."""
@@ -253,7 +262,7 @@ class TestFlextDomainValueObject:
         # Test equality
         assert vo1 == vo2  # Same attributes
         assert vo1 != vo3  # Different attributes
-        assert vo1 != "not_a_vo"  # Different type
+        assert vo1 != "not_a_vo"  # type: ignore[comparison-overlap]
 
         # Test hash (should be same for equal objects)
         assert hash(vo1) == hash(vo2)
@@ -265,7 +274,7 @@ class TestFlextDomainValueObject:
 
         # Should not be able to modify
         with pytest.raises((AttributeError, ValueError)):
-            vo.metadata = {"name": "modified"}
+            vo.metadata = {"name": "modified"}  # Should fail on immutable object
 
 
 @pytest.mark.unit
@@ -362,6 +371,7 @@ class TestDatabaseModelValidation:
         assert db_model.host == "db.example.com"
         assert db_model.port == 5432
         assert db_model.username == "user"
+        assert hasattr(db_model.password, "get_secret_value")
         assert db_model.password.get_secret_value() == "secret"
         assert db_model.database == "testdb"
 
@@ -378,7 +388,7 @@ class TestDatabaseModelValidation:
         )
 
         # Test connection string property
-        conn_str = db_model.connection_string
+        conn_str = db_model.connection_string()
         expected = "postgresql://user:pass@localhost:5432/db"
         assert conn_str == expected
 
@@ -439,7 +449,7 @@ class TestOracleModelValidation:
             password=SecretStr("pass"),
             service_name="TESTDB",
         )
-        assert oracle_model.connection_string == "localhost:1521/TESTDB"
+        assert oracle_model.connection_string() == "localhost:1521/TESTDB"
 
         # Test with SID
         oracle_sid_model = FlextOracleModel(
@@ -449,7 +459,7 @@ class TestOracleModelValidation:
             password=SecretStr("pass"),
             sid="TESTSID",
         )
-        assert oracle_sid_model.connection_string == "localhost:1521:TESTSID"
+        assert oracle_sid_model.connection_string() == "localhost:1521:TESTSID"
 
 
 @pytest.mark.unit

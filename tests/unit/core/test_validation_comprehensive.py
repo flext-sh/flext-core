@@ -517,7 +517,7 @@ class TestValidationModels:
         config = FlextValidationConfig(field_name="test")
 
         with pytest.raises(ValueError, match="frozen"):
-            config.field_name = "modified"
+            config.field_name = "modified"  # type: ignore[misc]
 
     def test_validation_result_creation(self) -> None:
         """Test FlextValidationResult creation."""
@@ -548,7 +548,7 @@ class TestValidationModels:
         result = FlextValidationResult(is_valid=True)
 
         with pytest.raises(ValueError, match="frozen"):
-            result.is_valid = False
+            result.is_valid = False  # type: ignore[misc]
 
 
 @pytest.mark.unit

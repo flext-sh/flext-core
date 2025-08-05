@@ -362,9 +362,11 @@ class TestFlextResultEnhanced:
         ]
 
         # Cast to FlextResult[object] for all_success method compatibility
-        if not FlextResult.all_success(*results):
+        if not FlextResult.all_success(
+            *[cast("FlextResult[object]", r) for r in results]
+        ):
             raise AssertionError(
-                f"Expected True, got {FlextResult.all_success(*results)}"
+                f"Expected True, got {FlextResult.all_success(*[cast('FlextResult[object]', r) for r in results])}"
             )
 
     def test_all_success_false(self) -> None:
@@ -376,9 +378,9 @@ class TestFlextResultEnhanced:
         ]
 
         # Cast to FlextResult[object] for all_success method compatibility
-        if FlextResult.all_success(*results):
+        if FlextResult.all_success(*[cast("FlextResult[object]", r) for r in results]):
             raise AssertionError(
-                f"Expected False, got {FlextResult.all_success(*results)}"
+                f"Expected False, got {FlextResult.all_success(*[cast('FlextResult[object]', r) for r in results])}"
             )
 
     def test_any_success_true(self) -> None:
@@ -390,9 +392,11 @@ class TestFlextResultEnhanced:
         ]
 
         # Cast to FlextResult[object] for any_success method compatibility
-        if not FlextResult.any_success(*results):
+        if not FlextResult.any_success(
+            *[cast("FlextResult[object]", r) for r in results]
+        ):
             raise AssertionError(
-                f"Expected True, got {FlextResult.any_success(*results)}"
+                f"Expected True, got {FlextResult.any_success(*[cast('FlextResult[object]', r) for r in results])}"
             )
 
     def test_any_success_false(self) -> None:
@@ -404,9 +408,9 @@ class TestFlextResultEnhanced:
         ]
 
         # Cast to FlextResult[object] for any_success method compatibility
-        if FlextResult.any_success(*results):
+        if FlextResult.any_success(*[cast("FlextResult[object]", r) for r in results]):
             raise AssertionError(
-                f"Expected False, got {FlextResult.any_success(*results)}"
+                f"Expected False, got {FlextResult.any_success(*[cast('FlextResult[object]', r) for r in results])}"
             )
 
     def test_first_success_found(self) -> None:

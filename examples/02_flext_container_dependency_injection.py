@@ -54,7 +54,10 @@ from __future__ import annotations
 
 import secrets
 from abc import ABC, abstractmethod
-from typing import cast
+from typing import TYPE_CHECKING, cast
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 # Import shared domain models to eliminate duplication
 from shared_domain import (
@@ -149,7 +152,9 @@ class ServiceRegistrationStrategy:
 class ServiceConfiguration:
     """Value object containing service configuration data."""
 
-    def __init__(self, name: str, factory_method: callable) -> None:
+    def __init__(
+        self, name: str, factory_method: Callable[[], FlextResult[object]]
+    ) -> None:
         self.name = name
         self.factory_method = factory_method
 
@@ -168,19 +173,35 @@ class ContainerSetupOrchestrator:
         return [
             ServiceConfiguration(
                 "DatabaseConnection",
-                getattr(self._configurer, "create_database_connection", lambda: None),
+                getattr(
+                    self._configurer,
+                    "create_database_connection",
+                    lambda: FlextResult.ok("mock_db_connection"),
+                ),
             ),
             ServiceConfiguration(
                 "EmailService",
-                getattr(self._configurer, "create_email_service", lambda: None),
+                getattr(
+                    self._configurer,
+                    "create_email_service",
+                    lambda: FlextResult.ok("mock_email_service"),
+                ),
             ),
             ServiceConfiguration(
                 "UserRepository",
-                getattr(self._configurer, "create_user_repository", lambda: None),
+                getattr(
+                    self._configurer,
+                    "create_user_repository",
+                    lambda: FlextResult.ok("mock_user_repository"),
+                ),
             ),
             ServiceConfiguration(
                 "NotificationService",
-                getattr(self._configurer, "create_notification_service", lambda: None),
+                getattr(
+                    self._configurer,
+                    "create_notification_service",
+                    lambda: FlextResult.ok("mock_notification_service"),
+                ),
             ),
         ]
 
@@ -196,7 +217,10 @@ class ContainerSetupOrchestrator:
                 )
             )
             if registration_result.is_failure:
-                return FlextResult.fail(registration_result.error)
+                result_data = registration_result.data
+                if result_data is not None:
+                    return FlextResult.fail(result_data.message)
+                return FlextResult.fail("Registration failed with no details")
 
         return FlextResult.ok(None)
 
@@ -222,23 +246,25 @@ class UserManagementServiceFactoryCreator:
     def __init__(self, configurer: object) -> None:
         self._configurer = configurer
 
-    def create_factory(self) -> callable:
+    def create_factory(self) -> Callable[[], object]:
         """Create factory function for UserManagementService."""
 
-        def user_management_factory() -> UserManagementService:
+        def user_management_factory() -> object:
+            # FlextContainer expects factories to return services directly, not FlextResult
             create_method = getattr(
                 self._configurer, "create_user_management_service", None
             )
             if create_method is None:
-                msg = "User management service factory not available"
-                raise RuntimeError(msg)
+                raise RuntimeError("User management service factory not available")
             result = create_method()
             if result.is_failure:
-                error_msg: str = (
+                raise RuntimeError(
                     f"User management service creation failed: {result.error}"
                 )
-                raise RuntimeError(error_msg)
-            return result.data
+            service_data = result.data
+            if service_data is None:
+                raise RuntimeError("User management service creation returned None")
+            return service_data
 
         return user_management_factory
 
@@ -370,7 +396,7 @@ class PostgreSQLConnection(DatabaseConnection):
         print(log_message)
 
         # Simulate connection with potential failure
-        if secrets.token_urlsafe(1) < CONNECTION_FAILURE_RATE:
+        if secrets.SystemRandom().random() < CONNECTION_FAILURE_RATE:
             error_message: TErrorMessage = (
                 f"Connection failed to {self.host}:{self.port}"
             )
@@ -462,14 +488,15 @@ class SharedDomainUserRepository(UserRepository):
         user_result = SharedDomainFactory.create_user(
             name=str(user_data.get("name", "")),
             email=str(user_data.get("email", "")),
-            age=int(user_data.get("age", 0)),
+            age=int(cast("int", user_data.get("age", 0))),
         )
 
         if user_result.is_failure:
             return FlextResult.fail(f"User creation failed: {user_result.error}")
 
         user = user_result.data
-        assert user is not None
+        if user is None:
+            return FlextResult.fail("Retrieved user is None")
 
         # Log domain operation using shared user
         log_domain_operation(
@@ -503,6 +530,8 @@ class SharedDomainUserRepository(UserRepository):
             )
 
         user = mock_user_result.data
+        if user is None:
+            return FlextResult.fail("Failed to create mock user")
         print(f"✅ Shared user entity retrieved: {user_id}")
         return FlextResult.ok(user)
 
@@ -576,13 +605,13 @@ class DatabaseConnectionFactory:
         required_keys = ["host", "port", "database"]
         for key in required_keys:
             if key not in config:
-                error_message: TErrorMessage = f"Missing required config key: {key}"
-                return FlextResult.fail(error_message)
+                missing_key_error: TErrorMessage = f"Missing required config key: {key}"
+                return FlextResult.fail(missing_key_error)
 
         try:
             connection = PostgreSQLConnection(
                 host=str(config["host"]),
-                port=int(config["port"]),
+                port=int(cast("int", config["port"])),
                 database=str(config["database"]),
             )
             print(
@@ -590,8 +619,8 @@ class DatabaseConnectionFactory:
             )
             return FlextResult.ok(connection)
         except (TypeError, ValueError) as e:
-            error_message: TErrorMessage = f"Invalid configuration: {e}"
-            return FlextResult.fail(error_message)
+            invalid_config_error: TErrorMessage = f"Invalid configuration: {e}"
+            return FlextResult.fail(invalid_config_error)
 
 
 class EmailServiceFactory:
@@ -611,19 +640,19 @@ class EmailServiceFactory:
         required_keys = ["smtp_host", "smtp_port"]
         for key in required_keys:
             if key not in config:
-                error_message: TErrorMessage = f"Missing required config key: {key}"
-                return FlextResult.fail(error_message)
+                missing_smtp_key_error: TErrorMessage = f"Missing required config key: {key}"
+                return FlextResult.fail(missing_smtp_key_error)
 
         try:
             service = SMTPEmailService(
                 smtp_host=str(config["smtp_host"]),
-                smtp_port=int(config["smtp_port"]),
+                smtp_port=int(cast("int", config["smtp_port"])),
             )
             print(f"✅ SMTP service factory created: {service.service_id}")
             return FlextResult.ok(service)
         except (TypeError, ValueError) as e:
-            error_message: TErrorMessage = f"Invalid configuration: {e}"
-            return FlextResult.fail(error_message)
+            invalid_smtp_config_error: TErrorMessage = f"Invalid configuration: {e}"
+            return FlextResult.fail(invalid_smtp_config_error)
 
 
 # =============================================================================
@@ -662,17 +691,22 @@ class UserManagementService:
         # Create user via repository
         create_result = self.user_repository.create_user(user_data)
         if create_result.is_failure:
-            return FlextResult.fail(create_result.error)
+            error_msg = create_result.error or "User creation failed"
+            return FlextResult.fail(error_msg)
 
         user_id = create_result.data
+        if user_id is None:
+            return FlextResult.fail("User creation returned None ID")
 
         # Get the enhanced user entity
         user_result = self.user_repository.get_user(user_id)
         if user_result.is_failure:
-            return FlextResult.fail(user_result.error)
+            error_msg = user_result.error or "User retrieval failed"
+            return FlextResult.fail(error_msg)
 
         user = user_result.data
-        assert user is not None
+        if user is None:
+            return FlextResult.fail("Retrieved user is None")
 
         # Send notification using shared user
         notification_result = self.notification_service.notify_user_created(user)
@@ -715,11 +749,48 @@ class ServiceConfigurationData:
         return self.data.get(key, default)
 
 
+class DependencyResolver:
+    """Generic dependency resolver following SOLID Single Responsibility Principle."""
+
+    def __init__(self, container: FlextContainer) -> None:
+        self._container = container
+
+    def resolve_single_dependency(self, service_name: str) -> FlextResult[TAnyObject]:
+        """Resolve a single dependency with error handling."""
+        result = self._container.get(service_name)
+        if result.is_failure:
+            error_msg = result.error or f"{service_name} not found"
+            return FlextResult.fail(f"{service_name} required: {error_msg}")
+        service_data = result.data
+        if service_data is None:
+            return FlextResult.fail(f"{service_name} returned None")
+        return FlextResult.ok(cast("TAnyObject", service_data))
+
+    def resolve_multiple_dependencies(
+        self, *service_names: str
+    ) -> FlextResult[tuple[TAnyObject, ...]]:
+        """Resolve multiple dependencies with early failure detection."""
+        resolved_services: list[TAnyObject] = []
+
+        for service_name in service_names:
+            result = self.resolve_single_dependency(service_name)
+            if result.is_failure:
+                error_msg = result.error or f"{service_name} resolution failed"
+                return FlextResult.fail(error_msg)
+            service_data = result.data
+            if service_data is None:
+                return FlextResult.fail(f"{service_name} resolved to None")
+            resolved_services.append(service_data)
+
+        return FlextResult.ok(tuple(resolved_services))
+
+
 class BaseServiceConfigurer:
     """Base class for service configurers using Template Method pattern - SOLID LSP."""
 
     def __init__(self, container: FlextContainer) -> None:
         self._container = container
+        self._dependency_resolver = DependencyResolver(container)
 
     def _get_database_config(self) -> ServiceConfigurationData:
         """Template method: Get database configuration - override in subclasses."""
@@ -747,25 +818,37 @@ class BaseServiceConfigurer:
         """Create user repository with database dependency - shared implementation."""
         db_result = self._container.get("DatabaseConnection")
         if db_result.is_failure:
-            return FlextResult.fail(f"Database connection required: {db_result.error}")
-        return FlextResult.ok(SharedDomainUserRepository(db_result.data))
+            error_msg = db_result.error or "Database connection not found"
+            return FlextResult.fail(f"Database connection required: {error_msg}")
+        db_connection = db_result.data
+        if db_connection is None:
+            return FlextResult.fail("Database connection is None")
+        return FlextResult.ok(SharedDomainUserRepository(cast("DatabaseConnection", db_connection)))
 
     def create_notification_service(self) -> FlextResult[NotificationService]:
         """Create notification service with dependencies - shared implementation."""
         dependencies = self._resolve_notification_dependencies()
         if dependencies.is_failure:
-            return dependencies
+            error_msg = dependencies.error or "Notification dependencies failed"
+            return FlextResult.fail(error_msg)
 
-        email_service, user_repository = dependencies.data
+        deps_data = dependencies.data
+        if deps_data is None:
+            return FlextResult.fail("Notification dependencies are None")
+        email_service, user_repository = deps_data
         return FlextResult.ok(EmailNotificationService(email_service, user_repository))
 
     def create_user_management_service(self) -> FlextResult[UserManagementService]:
         """Create user management service with dependencies - shared implementation."""
         dependencies = self._resolve_user_management_dependencies()
         if dependencies.is_failure:
-            return dependencies
+            error_msg = dependencies.error or "User management dependencies failed"
+            return FlextResult.fail(error_msg)
 
-        user_repository, notification_service = dependencies.data
+        deps_data = dependencies.data
+        if deps_data is None:
+            return FlextResult.fail("User management dependencies are None")
+        user_repository, notification_service = deps_data
         return FlextResult.ok(
             UserManagementService(user_repository, notification_service)
         )
@@ -773,36 +856,42 @@ class BaseServiceConfigurer:
     def _resolve_notification_dependencies(
         self,
     ) -> FlextResult[tuple[EmailService, UserRepository]]:
-        """Resolve notification service dependencies."""
-        email_result = self._container.get("EmailService")
-        if email_result.is_failure:
-            return FlextResult.fail(f"Email service required: {email_result.error}")
+        """Resolve notification service dependencies using DRY principle."""
+        result = self._dependency_resolver.resolve_multiple_dependencies(
+            "EmailService", "UserRepository"
+        )
+        if result.is_failure:
+            error_msg = result.error or "Notification dependency resolution failed"
+            return FlextResult.fail(error_msg)
 
-        user_repo_result = self._container.get("UserRepository")
-        if user_repo_result.is_failure:
-            return FlextResult.fail(
-                f"User repository required: {user_repo_result.error}"
-            )
-
-        return FlextResult.ok((email_result.data, user_repo_result.data))
+        deps_data = result.data
+        if deps_data is None or len(deps_data) != 2:
+            return FlextResult.fail("Invalid notification dependencies")
+        email_service, user_repository = deps_data
+        return FlextResult.ok((
+            cast("EmailService", email_service),
+            cast("UserRepository", user_repository)
+        ))
 
     def _resolve_user_management_dependencies(
         self,
     ) -> FlextResult[tuple[UserRepository, NotificationService]]:
-        """Resolve user management service dependencies."""
-        user_repo_result = self._container.get("UserRepository")
-        if user_repo_result.is_failure:
-            return FlextResult.fail(
-                f"User repository required: {user_repo_result.error}"
-            )
+        """Resolve user management service dependencies using DRY principle."""
+        result = self._dependency_resolver.resolve_multiple_dependencies(
+            "UserRepository", "NotificationService"
+        )
+        if result.is_failure:
+            error_msg = result.error or "User management dependency resolution failed"
+            return FlextResult.fail(error_msg)
 
-        notification_result = self._container.get("NotificationService")
-        if notification_result.is_failure:
-            return FlextResult.fail(
-                f"Notification service required: {notification_result.error}"
-            )
-
-        return FlextResult.ok((user_repo_result.data, notification_result.data))
+        deps_data = result.data
+        if deps_data is None or len(deps_data) != 2:
+            return FlextResult.fail("Invalid user management dependencies")
+        user_repository, notification_service = deps_data
+        return FlextResult.ok((
+            cast("UserRepository", user_repository),
+            cast("NotificationService", notification_service)
+        ))
 
 
 class ProductionServiceConfigurer(BaseServiceConfigurer):
@@ -948,6 +1037,8 @@ class MockUserRepository(UserRepository):
             )
 
         user = mock_user_result.data
+        if user is None:
+            return FlextResult.fail("Failed to create mock shared user")
         print(f"🧪 Mock shared user retrieved: {user_id}")
         return FlextResult.ok(user)
 
@@ -988,7 +1079,10 @@ class TestServiceConfigurer:
                 )
             )
             if registration_result.is_failure:
-                return FlextResult.fail(registration_result.error)
+                result_data = registration_result.data
+                if result_data is not None:
+                    return FlextResult.fail(result_data.message)
+                return FlextResult.fail("Mock service registration failed with no details")
 
         return FlextResult.ok(None)
 
@@ -1006,13 +1100,12 @@ class TestServiceConfigurer:
         factory_creator = MockUserManagementServiceFactoryCreator(self._container)
         user_management_factory = factory_creator.create_factory()
 
-        try:
-            self._container.register_factory(
-                "UserManagementService", user_management_factory
-            )
-            return FlextResult.ok(None)
-        except (RuntimeError, ValueError, TypeError) as e:
-            return FlextResult.fail(f"User management factory registration failed: {e}")
+        factory_result = self._container.register_factory(
+            "UserManagementService", user_management_factory
+        )
+        if factory_result.is_failure:
+            return FlextResult.fail(f"User management factory registration failed: {factory_result.error}")
+        return FlextResult.ok(None)
 
 
 class MockUserManagementServiceFactoryCreator:
@@ -1021,17 +1114,23 @@ class MockUserManagementServiceFactoryCreator:
     def __init__(self, container: FlextContainer) -> None:
         self._container = container
 
-    def create_factory(self) -> callable:
+    def create_factory(self) -> Callable[[], object]:
         """Create factory function for mock UserManagementService."""
 
-        def mock_user_management_factory() -> UserManagementService:
-            user_repository = cast(
-                "UserRepository", self._container.get("UserRepository").data
-            )
-            notification_service = cast(
-                "NotificationService", self._container.get("NotificationService").data
-            )
-            return UserManagementService(user_repository, notification_service)
+        def mock_user_management_factory() -> object:
+            # FlextContainer expects factories to return services directly, not FlextResult
+            user_repo_result = self._container.get("UserRepository")
+            if user_repo_result.is_failure:
+                raise RuntimeError(f"UserRepository not available: {user_repo_result.error}")
+
+            notification_result = self._container.get("NotificationService")
+            if notification_result.is_failure:
+                raise RuntimeError(f"NotificationService not available: {notification_result.error}")
+
+            user_repository = cast("UserRepository", user_repo_result.data)
+            notification_service = cast("NotificationService", notification_result.data)
+            service = UserManagementService(user_repository, notification_service)
+            return service
 
         return mock_user_management_factory
 
@@ -1073,9 +1172,10 @@ def check_container_health(container: FlextContainer) -> FlextResult[TAnyObject]
     health_data: TAnyObject = {
         "container_id": FlextUtilities.generate_entity_id(),
         "timestamp": FlextUtilities.generate_iso_timestamp(),
-        "services": {},
+        "services": cast("TAnyObject", {}),
         "overall_status": "healthy",
     }
+    services_dict = cast("dict[str, TAnyObject]", health_data["services"])
 
     # Check database connection
     try:
@@ -1083,52 +1183,60 @@ def check_container_health(container: FlextContainer) -> FlextResult[TAnyObject]
         if db_result.success:
             db_connection = cast("DatabaseConnection", db_result.data)
             connect_result = db_connection.connect()
-            health_data["services"]["database"] = {
+            services_dict["database"] = cast("TAnyObject", {
                 "status": "healthy" if connect_result.success else "unhealthy",
                 "error": connect_result.error if connect_result.is_failure else None,
-            }
+            })
             if connect_result.success:
                 db_connection.close()
         else:
-            health_data["services"]["database"] = {
+            services_dict["database"] = cast("TAnyObject", {
                 "status": "unavailable",
-                "error": f"Service not found: {db_result.error}",
-            }
+                "error": f"Service not found: {db_result.error or 'unknown error'}",
+            })
     except (RuntimeError, ValueError, TypeError) as e:
-        health_data["services"]["database"] = {
+        services_dict["database"] = cast("TAnyObject", {
             "status": "error",
             "error": str(e),
-        }
+        })
 
     # Check email service
     try:
-        cast("EmailService", container.get(EmailService))
-        health_data["services"]["email"] = {"status": "healthy"}
+        email_result = container.get("EmailService")
+        if email_result.success:
+            services_dict["email"] = cast("TAnyObject", {"status": "healthy"})
+        else:
+            services_dict["email"] = cast("TAnyObject", {
+                "status": "unavailable",
+                "error": f"Service not found: {email_result.error or 'unknown error'}",
+            })
     except (RuntimeError, ValueError, TypeError) as e:
-        health_data["services"]["email"] = {
+        services_dict["email"] = cast("TAnyObject", {
             "status": "error",
             "error": str(e),
-        }
+        })
 
     # Check user repository
     try:
-        cast("UserRepository", container.get(UserRepository))
-        health_data["services"]["user_repository"] = {"status": "healthy"}
+        repo_result = container.get("UserRepository")
+        if repo_result.success:
+            services_dict["user_repository"] = cast("TAnyObject", {"status": "healthy"})
+        else:
+            services_dict["user_repository"] = cast("TAnyObject", {
+                "status": "unavailable",
+                "error": f"Service not found: {repo_result.error or 'unknown error'}",
+            })
     except (RuntimeError, ValueError, TypeError) as e:
-        health_data["services"]["user_repository"] = {
+        services_dict["user_repository"] = cast("TAnyObject", {
             "status": "error",
             "error": str(e),
-        }
+        })
 
     # Determine overall status
     unhealthy_services = [
         service
-        for service in (
-            health_data["services"].values()
-            if isinstance(health_data.get("services"), dict)
-            else []
-        )
-        if service["status"] != "healthy"
+        for service in services_dict.values()
+        if isinstance(service, dict) and service.get("status") != "healthy"
     ]
     if unhealthy_services:
         health_data["overall_status"] = "unhealthy"
@@ -1238,10 +1346,12 @@ class UserRegistrationStrategy:
         """Register user using strategy pattern."""
         service_result = self._get_user_management_service()
         if service_result.is_failure:
-            return service_result
+            error_msg = service_result.error or "User management service not available"
+            return FlextResult.fail(error_msg)
 
         user_service = service_result.data
-        assert user_service is not None
+        if user_service is None:
+            return FlextResult.fail("User service is None")
         registration_result = user_service.register_user(user_data)
 
         return self._handle_registration_result(registration_result)
@@ -1251,12 +1361,15 @@ class UserRegistrationStrategy:
         try:
             user_service_result = self._container.get("UserManagementService")
             if user_service_result.is_failure:
+                error_msg = user_service_result.error or "service not found"
                 return FlextResult.fail(
-                    f"Failed to get {self._context_name} user service: "
-                    f"{user_service_result.error}"
+                    f"Failed to get {self._context_name} user service: {error_msg}"
                 )
+            service_data = user_service_result.data
+            if service_data is None:
+                return FlextResult.fail(f"{self._context_name} user service is None")
             return FlextResult.ok(
-                cast("UserManagementService", user_service_result.data)
+                cast("UserManagementService", service_data)
             )
         except (RuntimeError, ValueError, TypeError) as e:
             return FlextResult.fail(f"{self._context_name.title()} service error: {e}")
@@ -1271,9 +1384,9 @@ class UserRegistrationStrategy:
                 f"{registration_result.data}"
             )
             return FlextResult.ok(None)
+        error_msg = registration_result.error or "registration failed"
         return FlextResult.fail(
-            f"{self._context_name.title()} registration failed: "
-            f"{registration_result.error}"
+            f"{self._context_name.title()} registration failed: {error_msg}"
         )
 
 
@@ -1300,7 +1413,8 @@ class UserRegistrationTestCommand(DemonstrationCommand):
             error_message="Test container not initialized",
         )
         if prerequisite_result.is_failure:
-            return prerequisite_result
+            error_msg = prerequisite_result.error or "Prerequisite validation failed"
+            return FlextResult.fail(error_msg)
 
         # Print section header
         DemonstrationFormatter.print_section_header(self._section)
@@ -1313,16 +1427,14 @@ class UserRegistrationTestCommand(DemonstrationCommand):
         }
 
         # Register user
+        if self._container is None:
+            return FlextResult.fail("Container is None after validation")
         return self._demonstrator._register_user_with_container(
             self._container, test_user_data, self._context_name
         )
 
-    def run_health_check_demo(self) -> FlextResult[None]:
-        """Run health check demo using command pattern."""
-        command = HealthCheckDemoCommand(
-            self, self.test_container, DemonstrationSection(3, "Container Health Check")
-        )
-        return command.execute()
+    # Note: This method is duplicated and should be removed
+    # The correct run_health_check_demo is in ContainerDemonstrator
 
 
 class HealthCheckDemoCommand(DemonstrationCommand):
@@ -1346,34 +1458,37 @@ class HealthCheckDemoCommand(DemonstrationCommand):
             error_message="Test container not initialized",
         )
         if prerequisite_result.is_failure:
-            return prerequisite_result
+            error_msg = prerequisite_result.error or "Health check prerequisite failed"
+            return FlextResult.fail(error_msg)
 
         # Print section header
         DemonstrationFormatter.print_section_header(self._section)
 
         # Execute health check
+        if self._container is None:
+            return FlextResult.fail("Container is None after validation")
         health_result = check_container_health(self._container)
         if health_result.success:
-            self._display_health_results(health_result.data)
+            health_data = health_result.data
+            if health_data is not None:
+                self._display_health_results(health_data)
             return FlextResult.ok(None)
-        return FlextResult.fail(f"Health check failed: {health_result.error}")
+        error_msg = health_result.error or "Health check failed"
+        return FlextResult.fail(f"Health check failed: {error_msg}")
 
     def _display_health_results(self, health_data: TAnyObject) -> None:
         """Display health check results."""
-        print(f"🏥 Container health: {health_data['overall_status']}")
-        for service_name, service_health in (
-            health_data["services"].items()
-            if isinstance(health_data.get("services"), dict)
-            else []
-        ):
-            print(f"   {service_name}: {service_health['status']}")
+        overall_status = health_data.get("overall_status", "unknown")
+        print(f"🏥 Container health: {overall_status}")
+        services = health_data.get("services")
+        if isinstance(services, dict):
+            for service_name, service_health in services.items():
+                if isinstance(service_health, dict):
+                    status = service_health.get("status", "unknown")
+                    print(f"   {service_name}: {status}")
 
-    def run_production_container_demo(self) -> FlextResult[None]:
-        """Run production container demo using command pattern."""
-        command = ProductionContainerDemoCommand(
-            self, DemonstrationSection(4, "Production Container Setup")
-        )
-        return command.execute()
+    # Note: This method is duplicated and should be removed
+    # The correct run_production_container_demo is in ContainerDemonstrator
 
 
 class ProductionContainerDemoCommand(DemonstrationCommand):
@@ -1411,7 +1526,8 @@ class ProductionContainerDemoCommand(DemonstrationCommand):
             error_message="Production container not initialized",
         )
         if prerequisite_result.is_failure:
-            return prerequisite_result
+            error_msg = prerequisite_result.error or "Production container prerequisite failed"
+            return FlextResult.fail(error_msg)
 
         # Create production user data
         prod_user_data: TUserData = {
@@ -1421,6 +1537,8 @@ class ProductionContainerDemoCommand(DemonstrationCommand):
         }
 
         # Register user
+        if self._demonstrator.prod_container is None:
+            return FlextResult.fail("Production container is None after validation")
         return self._demonstrator._register_user_with_container(
             self._demonstrator.prod_container, prod_user_data, "production"
         )
@@ -1464,7 +1582,7 @@ class DemonstrationOrchestrator:
         print("🎉 FLEXT CONTAINER DEMONSTRATION COMPLETED")
         print("=" * 80)
 
-    def _create_demonstration_steps(self) -> list[callable]:
+    def _create_demonstration_steps(self) -> list[Callable[[], FlextResult[None]]]:
         """Create demonstration steps - SOLID OCP: Open for extension."""
         return [
             self._demonstrator.run_test_container_demo,

@@ -429,17 +429,11 @@ class FlextOracleConfig(FlextBaseConfigModel):
         """Validate connection identifier format."""
         return v
 
-    @classmethod
-    def model_validate(
-        cls,
-        obj: dict[str, object],
-    ) -> FlextOracleConfig:
+    def model_post_init(self, __context: object | None, /) -> None:
         """Validate that either SID or service_name is provided."""
-        instance = super().model_validate(obj)
-        if not instance.service_name and not instance.sid:
+        if not self.service_name and not self.sid:
             msg = "Either service_name or sid must be provided"
             raise ValueError(msg)
-        return instance
 
     def get_connection_string(self) -> str:
         """Generate Oracle connection string."""
@@ -739,14 +733,30 @@ def create_database_config(
         msg = "Database password is required"
         raise ValueError(msg)
 
-    return FlextDatabaseConfig(
-        host=host,
-        port=port,
-        username=username,
-        password=SecretStr(password),
-        database=database,
-        **kwargs,
+    # Create safe config data with explicit parameters
+    config_data = {
+        "host": host,
+        "port": port,
+        "username": username,
+        "password": SecretStr(password),
+        "database": database,
+    }
+
+    # Filter kwargs to only valid FlextDatabaseConfig fields
+    valid_fields = {
+        "pool_min",
+        "pool_max",
+        "pool_timeout",
+        "ssl_enabled",
+        "ssl_cert_path",
+        "encoding",
+        "autocommit",
+    }
+    config_data.update(
+        {key: value for key, value in kwargs.items() if key in valid_fields},
     )
+
+    return FlextDatabaseConfig(**config_data)  # type: ignore[arg-type]
 
 
 def create_redis_config(
@@ -757,13 +767,21 @@ def create_redis_config(
     **kwargs: object,
 ) -> FlextRedisConfig:
     """Factory function to create Redis configuration."""
-    return FlextRedisConfig(
-        host=host,
-        port=port,
-        password=SecretStr(password) if password else None,
-        database=database,
-        **kwargs,
+    # Create safe config data with explicit parameters
+    config_data = {
+        "host": host,
+        "port": port,
+        "password": SecretStr(password) if password else None,
+        "database": database,
+    }
+
+    # Filter kwargs to only valid FlextRedisConfig fields
+    valid_fields = {"ssl_enabled", "timeout"}
+    config_data.update(
+        {key: value for key, value in kwargs.items() if key in valid_fields},
     )
+
+    return FlextRedisConfig(**config_data)  # type: ignore[arg-type]
 
 
 def create_oracle_config(
@@ -803,13 +821,13 @@ def create_oracle_config(
         "sid": None,
     }
 
-    # Override with any provided kwargs
-    if isinstance(kwargs, dict):
-        for key, value in kwargs.items():
-            if key in config_data:
-                config_data[key] = value
+    # Filter kwargs to only valid FlextOracleConfig fields
+    valid_fields = {"port", "sid", "ssl_enabled"}
+    config_data.update(
+        {key: value for key, value in kwargs.items() if key in valid_fields},
+    )
 
-    return FlextOracleConfig(**config_data)
+    return FlextOracleConfig(**config_data)  # type: ignore[arg-type]
 
 
 def create_ldap_config(
@@ -821,14 +839,22 @@ def create_ldap_config(
     **kwargs: object,
 ) -> FlextLDAPConfig:
     """Factory function to create LDAP configuration."""
-    return FlextLDAPConfig(
-        host=host,
-        port=port,
-        base_dn=base_dn,
-        bind_dn=bind_dn,
-        bind_password=SecretStr(bind_password) if bind_password else None,
-        **kwargs,
+    # Create safe config data with explicit parameters
+    config_data = {
+        "host": host,
+        "port": port,
+        "base_dn": base_dn,
+        "bind_dn": bind_dn,
+        "bind_password": SecretStr(bind_password) if bind_password else None,
+    }
+
+    # Filter kwargs to only valid FlextLDAPConfig fields
+    valid_fields = {"use_ssl", "use_tls", "timeout", "pool_size"}
+    config_data.update(
+        {key: value for key, value in kwargs.items() if key in valid_fields},
     )
+
+    return FlextLDAPConfig(**config_data)  # type: ignore[arg-type]
 
 
 # =============================================================================

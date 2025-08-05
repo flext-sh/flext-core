@@ -33,7 +33,7 @@ class TestCleanArchitecturePatterns:
 
             email: str
 
-            def validate_domain_rules(self) -> FlextResult[None]:
+            def validate_business_rules(self) -> FlextResult[None]:
                 """Validate email domain rules."""
                 if "@" not in self.email:
                     return FlextResult.fail("Invalid email format")
@@ -45,11 +45,11 @@ class TestCleanArchitecturePatterns:
             name: str
             email_obj: UserEmail
 
-            def validate_domain_rules(self) -> FlextResult[None]:
+            def validate_business_rules(self) -> FlextResult[None]:
                 """Validate user domain rules."""
                 if not self.name.strip():
                     return FlextResult.fail("Name cannot be empty")
-                return self.email_obj.validate_domain_rules()
+                return self.email_obj.validate_business_rules()
 
         # Application Layer - Use Cases (Commands/Handlers)
         class CreateUserCommand(FlextCommands.Command):
@@ -69,7 +69,7 @@ class TestCleanArchitecturePatterns:
                 # Create domain objects
                 try:
                     email_obj = UserEmail(email=command.email)
-                    email_validation = email_obj.validate_domain_rules()
+                    email_validation = email_obj.validate_business_rules()
                     if email_validation.is_failure:
                         return FlextResult.fail(
                             f"Email validation failed: {email_validation.error}"
@@ -82,7 +82,7 @@ class TestCleanArchitecturePatterns:
                     id="user_123",
                     name=command.name,
                     email_obj=email_obj,
-                ).validate_domain_rules()
+                ).validate_business_rules()
 
                 if user_result.is_failure:
                     return FlextResult.fail(
@@ -120,7 +120,7 @@ class TestCleanArchitecturePatterns:
 
             value: str
 
-            def validate_domain_rules(self) -> FlextResult[None]:
+            def validate_business_rules(self) -> FlextResult[None]:
                 """Validate order ID format."""
                 if not self.value.startswith("ORD-"):
                     return FlextResult.fail("Order ID must start with ORD-")
@@ -132,7 +132,7 @@ class TestCleanArchitecturePatterns:
             amount: float
             currency: str = "USD"
 
-            def validate_domain_rules(self) -> FlextResult[None]:
+            def validate_business_rules(self) -> FlextResult[None]:
                 """Validate money rules."""
                 if self.amount < 0:
                     return FlextResult.fail("Amount cannot be negative")
@@ -153,19 +153,19 @@ class TestCleanArchitecturePatterns:
             total: object
             status: str = "pending"
 
-            def validate_domain_rules(self) -> FlextResult[None]:
+            def validate_business_rules(self) -> FlextResult[None]:
                 """Validate order business rules."""
                 # Validate value objects with type checking for serialization
-                if hasattr(self.order_id, "validate_domain_rules"):
-                    order_id_validation = self.order_id.validate_domain_rules()
+                if hasattr(self.order_id, "validate_business_rules"):
+                    order_id_validation = self.order_id.validate_business_rules()
                     if (
                         hasattr(order_id_validation, "is_failure")
                         and order_id_validation.is_failure
                     ):
                         return FlextResult.fail(str(order_id_validation.error))
 
-                if hasattr(self.total, "validate_domain_rules"):
-                    total_validation = self.total.validate_domain_rules()
+                if hasattr(self.total, "validate_business_rules"):
+                    total_validation = self.total.validate_business_rules()
                     if (
                         hasattr(total_validation, "is_failure")
                         and total_validation.is_failure
@@ -199,8 +199,8 @@ class TestCleanArchitecturePatterns:
     def _test_ddd_validation_and_behavior(self, order: object) -> None:
         """Test DDD validation and behavior."""
         # Test domain validation
-        if hasattr(order, "validate_domain_rules"):
-            validation_result = order.validate_domain_rules()
+        if hasattr(order, "validate_business_rules"):
+            validation_result = order.validate_business_rules()
             assert hasattr(validation_result, "success")
             assert validation_result.success
 
@@ -354,7 +354,7 @@ class TestEnterprisePatterns:
         assert config_result.success
         config = config_result.data
         assert isinstance(config, dict)
-        config_dict = cast("dict[str, object]", config)
+        config_dict = config  # Already dict[str, object] from assertion
         database_dict = cast("dict[str, object]", config_dict["database"])
         assert database_dict["host"] == "localhost"
         logging_dict = cast("dict[str, object]", config_dict["logging"])
@@ -407,7 +407,8 @@ class TestEnterprisePatterns:
         # Query entities
         start_time = time.time()
         for i in range(100):
-            result = repo.find_by_id(f"entity_{i}")
+            query_result: FlextResult[object] = repo.find_by_id(f"entity_{i}")
+            result = cast("FlextResult[None]", query_result)
             assert result.success
             entity_data = cast("dict[str, object]", result.data)
             assert entity_data["id"] == i
@@ -497,15 +498,15 @@ class TestEventDrivenPatterns:
     def test_observer_pattern_implementation(self) -> None:
         """Test Observer pattern implementation."""
         # Simple observer pattern test
-        observers = []
+        observers: list[dict[str, object]] = []
 
         def notify_all(state: str) -> None:
             for observer in observers:
                 observer["state"] = state
 
         # Create observers
-        obs1 = {"name": "Observer1", "state": None}
-        obs2 = {"name": "Observer2", "state": None}
+        obs1: dict[str, object] = {"name": "Observer1", "state": None}
+        obs2: dict[str, object] = {"name": "Observer2", "state": None}
         observers.extend([obs1, obs2])
 
         # Test notifications

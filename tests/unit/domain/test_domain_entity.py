@@ -99,7 +99,7 @@ class TestFlextEntityEquality:
         class AnotherEntity(FlextEntity):
             title: str
 
-            def validate_domain_rules(self) -> FlextResult[None]:
+            def validate_business_rules(self) -> FlextResult[None]:
                 return FlextResult.ok(None)
 
         entity_id = "test-entity-123"
@@ -303,12 +303,12 @@ class TestFlextEntityValidation:
         entity = ConcreteFlextEntity(id="test-id", name="Test")
 
         # Should not raise any exception for valid entity
-        result = entity.validate_domain_rules()
+        result = entity.validate_business_rules()
         assert result.success
 
         # Verify that invalid entities would return failure
         entity_invalid = ConcreteFlextEntity(id="test-id-2", name="")
-        result_invalid = entity_invalid.validate_domain_rules()
+        result_invalid = entity_invalid.validate_business_rules()
         assert result_invalid.is_failure
         if (
             result_invalid.error is None
@@ -322,7 +322,7 @@ class TestFlextEntityValidation:
         """Test integration with Pydantic field validation."""
         # Test that Pydantic validation works as expected
         with pytest.raises(ValidationError):
-            ConcreteFlextEntity()  # Missing required 'id' and 'name' fields
+            ConcreteFlextEntity()  # type: ignore[call-arg] # Missing required fields intentional test
 
         # Test successful creation with valid data
         entity = ConcreteFlextEntity(id="test-id", name="Valid Name")

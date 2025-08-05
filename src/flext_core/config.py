@@ -484,8 +484,8 @@ class FlextBaseSettings(PydanticBaseSettings):
                 final_config.update(kwargs)
 
             # Pydantic BaseSettings accepts dynamic **kwargs
-            # MyPy cannot verify dynamic dict keys against model fields
-            instance = cls(**final_config) if final_config else cls()
+            # Use type ignore for dynamic construction with unknown fields
+            instance = cls(**final_config) if final_config else cls()  # type: ignore[arg-type]
             return FlextResult.ok(instance)
 
         except (TypeError, ValueError, AttributeError) as e:

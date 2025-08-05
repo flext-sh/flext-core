@@ -1,4 +1,15 @@
-"""FLEXT Core Types - Foundation Layer Type System.
+"""FLEXT Core Types - Foundation Layer Type System (LEGACY/COMPATIBILITY).
+
+⚠️  LEGACY/COMPATIBILITY MODULE - USE types.py FOR NEW DEVELOPMENT ⚠️
+
+This module provides backward compatibility during migration to the new standardized
+type system in types.py. All new development should use the hierarchical FlextTypes
+class from the types.py module.
+
+Migration Status:
+    - ✅ New types.py with FlextTypes hierarchical system implemented
+    - 🔄 This module provides compatibility layer during transition
+    - 📋 Will be deprecated after ecosystem migration is complete
 
 Comprehensive type system providing the foundation for type-safe operations across
 all 32 projects in the FLEXT ecosystem. Establishes type contracts, protocols,
@@ -344,6 +355,31 @@ class FlextTypes:
             )
 
 
+# =============================================================================
+# FORWARD COMPATIBILITY - Support new types.py system
+# =============================================================================
+
+# Forward compatibility imports disabled to prevent circular imports
+# Will be enabled after complete migration to new types.py system
+
+FlextTypesNew: type[object] | None = None
+
+
+def get_domain_types() -> None:
+    """Get modern domain types from new system."""
+    return
+
+
+def get_core_types() -> None:
+    """Get modern core types from new system."""
+    return
+
+
+def get_protocols() -> None:
+    """Get modern protocols from new system."""
+    return
+
+
 # Export API - Alphabetically organized for ruff compliance
 __all__ = [
     "Comparable",
@@ -352,6 +388,7 @@ __all__ = [
     "FlextEntityId",
     "FlextSerializable",
     "FlextTypes",
+    "FlextTypesNew",
     "FlextValidatable",
     "FlextValidator",
     "P",
@@ -411,4 +448,7 @@ __all__ = [
     "U",
     "V",
     "Validatable",
+    "get_core_types",
+    "get_domain_types",
+    "get_protocols",
 ]

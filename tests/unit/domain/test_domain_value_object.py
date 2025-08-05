@@ -61,9 +61,9 @@ class TestFlextValueObjectEquality:
         vo = ConcreteValueObject(amount=Decimal("10.50"), currency="USD")
 
         # Test that value object is not equal to primitive types
-        assert vo != "not a value object"
-        assert vo != 42
-        assert vo != {"amount": Decimal("10.50"), "currency": "USD"}
+        assert vo != "not a value object"  # type: ignore[comparison-overlap]
+        assert vo != 42  # type: ignore[comparison-overlap]
+        assert vo != {"amount": Decimal("10.50"), "currency": "USD"}  # type: ignore[comparison-overlap]
         assert vo is not None
 
     def test_equality_with_different_value_object_types(self) -> None:
@@ -73,7 +73,7 @@ class TestFlextValueObjectEquality:
             amount: Decimal
             currency: str = "USD"
 
-            def validate_domain_rules(self) -> FlextResult[None]:
+            def validate_business_rules(self) -> FlextResult[None]:
                 return FlextResult.ok(None)
 
         vo1 = ConcreteValueObject(amount=Decimal("10.50"), currency="USD")
@@ -228,14 +228,14 @@ class TestFlextValueObjectDomainValidation:
         vo = ConcreteValueObject(amount=Decimal("10.50"), currency="USD")
 
         # Should return success for valid value object
-        result = vo.validate_domain_rules()
+        result = vo.validate_business_rules()
         assert result.success
 
     def test_domain_rules_validation_negative_amount(self) -> None:
         """Test domain rules validation with invalid amount."""
         vo = ConcreteValueObject(amount=Decimal("-5.00"), currency="USD")
 
-        result = vo.validate_domain_rules()
+        result = vo.validate_business_rules()
         assert result.is_failure
         assert "Amount cannot be negative" in (result.error or "")
 
@@ -243,7 +243,7 @@ class TestFlextValueObjectDomainValidation:
         """Test domain rules validation with invalid currency length."""
         vo = ConcreteValueObject(amount=Decimal("10.50"), currency="INVALID")
 
-        result = vo.validate_domain_rules()
+        result = vo.validate_business_rules()
         assert result.is_failure
         assert "Currency must be 3 characters" in (result.error or "")
 
@@ -251,7 +251,7 @@ class TestFlextValueObjectDomainValidation:
         """Test domain rules validation with lowercase currency."""
         vo = ConcreteValueObject(amount=Decimal("10.50"), currency="usd")
 
-        result = vo.validate_domain_rules()
+        result = vo.validate_business_rules()
         assert result.is_failure
         assert "Currency must be uppercase" in (result.error or "")
 
@@ -259,7 +259,7 @@ class TestFlextValueObjectDomainValidation:
         """Test domain rules validation with empty name."""
         vo = ComplexValueObject(name="", tags=[], metadata={})
 
-        result = vo.validate_domain_rules()
+        result = vo.validate_business_rules()
         assert result.is_failure
         assert "Name cannot be empty" in (result.error or "")
 
@@ -267,7 +267,7 @@ class TestFlextValueObjectDomainValidation:
         """Test domain rules validation with whitespace-only name."""
         vo = ComplexValueObject(name="   ", tags=[], metadata={})
 
-        result = vo.validate_domain_rules()
+        result = vo.validate_business_rules()
         assert result.is_failure
         assert "Name cannot be empty" in (result.error or "")
 
@@ -278,12 +278,12 @@ class TestFlextValueObjectPydanticIntegration:
     def test_pydantic_validation_required_fields(self) -> None:
         """Test Pydantic validation for required fields."""
         with pytest.raises(ValidationError):
-            ConcreteValueObject()
+            ConcreteValueObject()  # type: ignore[call-arg]
 
     def test_pydantic_validation_field_types(self) -> None:
         """Test Pydantic validation for field types."""
         with pytest.raises(ValidationError):
-            ConcreteValueObject(amount="not_a_decimal", currency="USD")
+            ConcreteValueObject(amount="not_a_decimal", currency="USD")  # type: ignore[arg-type]
 
     def test_pydantic_model_dump(self) -> None:
         """Test Pydantic model_dump functionality."""
@@ -309,10 +309,10 @@ class TestFlextValueObjectPydanticIntegration:
         vo = ConcreteValueObject(amount=Decimal("10.50"), currency="USD")
 
         with pytest.raises((ValidationError, AttributeError, TypeError)):
-            vo.amount = Decimal("20.00")
+            vo.amount = Decimal("20.00")  # type: ignore[misc]
 
         with pytest.raises((ValidationError, AttributeError, TypeError)):
-            vo.currency = "EUR"
+            vo.currency = "EUR"  # type: ignore[misc]
 
     def test_pydantic_default_values(self) -> None:
         """Test Pydantic default values work correctly."""
@@ -338,7 +338,7 @@ class TestFlextValueObjectPydanticIntegration:
     def test_pydantic_extra_fields_forbidden(self) -> None:
         """Test that extra fields are forbidden."""
         with pytest.raises(ValidationError):
-            ConcreteValueObject(
+            ConcreteValueObject(  # type: ignore[call-arg]
                 amount=Decimal("10.50"),
                 currency="USD",
                 extra_field="not allowed",
@@ -383,7 +383,9 @@ class TestFlextValueObjectEdgeCases:
     def test_large_data_structures(self) -> None:
         """Test value objects with large data structures."""
         large_tags = [f"tag_{i}" for i in range(100)]
-        large_metadata: dict[str, object] = {f"key_{i}": f"value_{i}" for i in range(50)}
+        large_metadata: dict[str, object] = {
+            f"key_{i}": f"value_{i}" for i in range(50)
+        }
 
         vo = ComplexValueObject(
             name="Large Object",

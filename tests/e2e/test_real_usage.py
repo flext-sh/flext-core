@@ -139,16 +139,20 @@ class TestRealUsagePatterns:
         assert duplicate_result.is_failure
         assert duplicate_result.error is not None
         if "already exists" not in duplicate_result.error:
-            msg: str = f"Expected {'already exists'} in {duplicate_result.error}"
-            raise AssertionError(msg)
+            duplicate_msg: str = (
+                f"Expected {'already exists'} in {duplicate_result.error}"
+            )
+            raise AssertionError(duplicate_msg)
 
         # Original user should be unchanged
         original_result = service.fetch_user("user-123")
         assert original_result.success
         assert original_result.data is not None
         if original_result.data.name != "John Doe":
-            msg: str = f"Expected {'John Doe'}, got {original_result.data.name}"
-            raise AssertionError(msg)
+            original_msg: str = (
+                f"Expected {'John Doe'}, got {original_result.data.name}"
+            )
+            raise AssertionError(original_msg)
 
     def test_dependency_injection_basic_usage(self) -> None:
         """Test basic dependency injection usage (most common pattern).

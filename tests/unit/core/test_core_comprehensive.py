@@ -658,9 +658,13 @@ class TestFlextCoreRailwayProgramming:
             "final: 45",
         ]
 
-    def test_complex_railway_pattern(self, clean_flext_core: FlextCore) -> None:
-        """Test complex railway programming pattern."""
-        logged_values = []
+    def _create_validation_functions(self) -> tuple[
+        Callable[[int], FlextResult[int]],
+        Callable[[int], FlextResult[int]],
+        Callable[[object], None],
+    ]:
+        """Create validation functions for railway pattern testing."""
+        logged_values: list[object] = []
 
         def validate_positive(x: int) -> FlextResult[int]:
             if x <= 0:
@@ -675,35 +679,90 @@ class TestFlextCoreRailwayProgramming:
         def log_value(x: object) -> None:
             logged_values.append(int(x) if isinstance(x, int) else x)
 
-        # Complex pipeline with conditional logic and side effects
+        # Store logged_values as instance variable for testing
+        self._logged_values = logged_values
+        return validate_positive, double_if_even, log_value
+
+    def _create_pipeline_wrappers(
+        self,
+        validate_positive: Callable[[int], FlextResult[int]],
+        double_if_even: Callable[[int], FlextResult[int]]
+    ) -> tuple[
+        Callable[[object], FlextResult[object]],
+        Callable[[object], FlextResult[object]]
+    ]:
+        """Create pipeline wrapper functions."""
+
+        def validate_positive_wrapper(x: object) -> FlextResult[object]:
+            x_int = x if isinstance(x, int) else int(cast("int", x))
+            result = validate_positive(x_int)
+            return (
+                FlextResult.ok(cast("object", result.data))
+                if result.success
+                else FlextResult.fail(cast("str", result.error))
+            )
+
+        def double_if_even_wrapper(x: object) -> FlextResult[object]:
+            x_int = x if isinstance(x, int) else int(cast("int", x))
+            result = double_if_even(x_int)
+            return (
+                FlextResult.ok(cast("object", result.data))
+                if result.success
+                else FlextResult.fail(cast("str", result.error))
+            )
+
+        return validate_positive_wrapper, double_if_even_wrapper
+
+    def test_complex_railway_pattern(self, clean_flext_core: FlextCore) -> None:
+        """Test complex railway programming pattern."""
+        # Create validation functions
+        validate_positive, double_if_even, log_value = self._create_validation_functions()
+
+        # Create pipeline wrappers
+        validate_wrapper, double_wrapper = self._create_pipeline_wrappers(
+            validate_positive, double_if_even
+        )
+
+        # Create pipeline
         pipeline = clean_flext_core.pipe(
-            lambda x: validate_positive(x if isinstance(x, int) else int(x)),
+            validate_wrapper,
             clean_flext_core.tap(log_value),
-            lambda x: double_if_even(x if isinstance(x, int) else int(x)),
+            double_wrapper,
             clean_flext_core.tap(log_value),
         )
 
-        # Test with even positive number
-        result1 = pipeline(4)
-        assert result1.success
-        if result1.data != EXPECTED_TOTAL_PAGES:  # 4 * 2
-            raise AssertionError(f"Expected {8}, got {result1.data}")
+        # Test cases
+        self._test_even_positive_number(pipeline)
+        self._test_odd_positive_number(pipeline)
+        self._test_negative_number(pipeline)
+        self._verify_logged_values()
 
-        # Test with odd positive number
-        result2 = pipeline(3)
-        assert result2.success
-        if result2.data != EXPECTED_DATA_COUNT:  # unchanged
-            raise AssertionError(f"Expected {3}, got {result2.data}")
+    def _test_even_positive_number(self, pipeline: Callable[[int], FlextResult[object]]) -> None:
+        """Test pipeline with even positive number."""
+        result = pipeline(4)
+        assert result.success
+        if result.data != EXPECTED_TOTAL_PAGES:  # 4 * 2 = 8
+            raise AssertionError(f"Expected {8}, got {result.data}")
 
-        # Test with negative number
-        result3 = pipeline(-1)
-        assert result3.is_failure
-        assert result3.error is not None
-        assert "positive" in result3.error, f"Expected 'positive' in {result3.error}"
+    def _test_odd_positive_number(self, pipeline: Callable[[int], FlextResult[object]]) -> None:
+        """Test pipeline with odd positive number."""
+        result = pipeline(3)
+        assert result.success
+        if result.data != EXPECTED_DATA_COUNT:  # unchanged = 3
+            raise AssertionError(f"Expected {3}, got {result.data}")
 
-        # Check logged values
-        if logged_values != [4, 8, 3, 3]:  # Before and after doubling
-            raise AssertionError(f"Expected {[4, 8, 3, 3]}, got {logged_values}")
+    def _test_negative_number(self, pipeline: Callable[[int], FlextResult[object]]) -> None:
+        """Test pipeline with negative number."""
+        result = pipeline(-1)
+        assert result.is_failure
+        assert result.error is not None
+        assert "positive" in result.error, f"Expected 'positive' in {result.error}"
+
+    def _verify_logged_values(self) -> None:
+        """Verify the logged values match expected pattern."""
+        expected = [4, 8, 3, 3]  # Before and after doubling
+        if self._logged_values != expected:
+            raise AssertionError(f"Expected {expected}, got {self._logged_values}")
 
 
 @pytest.mark.unit
@@ -844,7 +903,7 @@ class TestFlextCoreConvenienceFunction:
         # Retrieve through convenience function
         get_result = flext_core().get_service(service_key)
         assert get_result.success
-        service = get_result.data
+        service = cast("UserService", get_result.data)
         assert service is not None
         if service.name != "convenience_test":
             raise AssertionError(f"Expected {'convenience_test'}, got {service.name}")
@@ -941,18 +1000,21 @@ class TestFlextCoreIntegration:
         """Test error handling integration."""
 
         # Create a pipeline that will fail
-        def validate_input(x: str) -> FlextResult[str]:
-            if not x:
+        def validate_input(x: object) -> FlextResult[object]:
+            x_str = cast("str", x)
+            if not x_str:
                 return FlextResult.fail("Empty input")
-            return FlextResult.ok(x)
+            return FlextResult.ok(x_str)
 
-        def process_data(x: str) -> FlextResult[str]:
-            if x == "fail":
+        def process_data(x: object) -> FlextResult[object]:
+            x_str = cast("str", x)
+            if x_str == "fail":
                 return FlextResult.fail("Processing failed")
-            return FlextResult.ok(f"processed_{x}")
+            return FlextResult.ok(f"processed_{x_str}")
 
-        def save_result(x: str) -> FlextResult[str]:
-            return FlextResult.ok(f"saved_{x}")
+        def save_result(x: object) -> FlextResult[object]:
+            x_str = cast("str", x)
+            return FlextResult.ok(f"saved_{x_str}")
 
         pipeline = clean_flext_core.pipe(validate_input, process_data, save_result)
 

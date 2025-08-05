@@ -580,18 +580,42 @@ def demonstrate_predicate_composition() -> None:
 def validate_customer_complete(
     customer_data: TUserData,
 ) -> FlextResult[SharedUser]:
-    """Validate customer data using shared domain models and utility validation."""
+    """Validate customer data using shared domain models and utility validation.
+
+    Refactored to reduce complexity with single responsibility methods.
+    """
     log_message: TLogMessage = (
         f"🔍 Validating customer: {customer_data.get('name', 'Unknown')}"
     )
     print(log_message)
 
-    # Use SharedDomainFactory for robust validation with proper type casting
+    # Extract and validate input data types
+    input_result = _extract_and_validate_customer_input(customer_data)
+    if input_result.is_failure:
+        return input_result
+
+    name_value, email_value, age_value = input_result.data
+
+    # Create user with factory
+    user_result = _create_user_with_factory(name_value, email_value, age_value)
+    if user_result.is_failure:
+        return user_result
+
+    user = user_result.data
+
+    # Apply business validation
+    return _validate_and_finalize_customer(user)
+
+
+def _extract_and_validate_customer_input(
+    customer_data: TUserData,
+) -> FlextResult[tuple[str, str, int]]:
+    """Extract and validate customer input data types."""
     name_value = customer_data.get("name", "")
     email_value = customer_data.get("email", "")
     age_value = customer_data.get("age", 0)
 
-    # Type validation and casting
+    # Type validation
     if not isinstance(name_value, str):
         return FlextResult.fail("Name must be a string")
     if not isinstance(email_value, str):
@@ -599,36 +623,40 @@ def validate_customer_complete(
     if not isinstance(age_value, int):
         return FlextResult.fail("Age must be an integer")
 
+    return FlextResult.ok((name_value, email_value, age_value))
+
+
+def _create_user_with_factory(
+    name: str, email: str, age: int
+) -> FlextResult[SharedUser]:
+    """Create user using SharedDomainFactory with validation."""
     user_result = SharedDomainFactory.create_user(
-        name=name_value,
-        email=email_value,
-        age=age_value,
+        name=name,
+        email=email,
+        age=age,
     )
 
     if user_result.is_failure:
         return FlextResult.fail(f"User creation failed: {user_result.error}")
 
     user = user_result.data
-    assert user is not None
+    if user is None:
+        return FlextResult.fail("User creation returned None data")
+    return FlextResult.ok(user)
 
-    # Apply additional business rule validation using utility function
+
+def _validate_and_finalize_customer(user: SharedUser) -> FlextResult[SharedUser]:
+    """Apply business rules and finalize customer validation."""
     try:
         business_validation = validate_user_business_rules(user)
         if business_validation.is_failure:
             error_msg = business_validation.error or "Business validation failed"
             return FlextResult.fail(error_msg)
 
-        # Use shared user directly instead of creating local demo user
-        enhanced_user = user
-
-        # Log successful validation (shared domain user doesn't have logger)
-        log_message = f"Enhanced customer validation successful: {user.name}"
+        # Log successful validation
+        log_message = f"✅ Enhanced customer validation successful: {user.name}"
         print(log_message)
 
-        log_message = (
-            f"✅ Enhanced customer validation successful: {enhanced_user.name}"
-        )
-        print(log_message)
         return FlextResult.ok(user)
 
     except (RuntimeError, ValueError, TypeError) as e:
@@ -641,23 +669,46 @@ def validate_product_complete(
 ) -> FlextResult[SharedProduct]:
     """Validate product data completely using validation orchestrator.
 
-    Single return point for consistent error handling.
+    Refactored to reduce complexity with single responsibility methods.
     """
     log_message: TLogMessage = (
         f"🔍 Validating product: {product_data.get('name', 'Unknown')}"
     )
     print(log_message)
 
-    # Use orchestrator pattern to eliminate multiple returns
-    orchestrator = ProductValidationOrchestrator(product_data)
+    # Validate fields using orchestrator pattern
+    field_result = _validate_product_fields(product_data)
+    if field_result.is_failure:
+        return field_result
 
-    # Validate all fields using accumulator pattern
+    # Extract and validate types
+    type_result = _extract_and_validate_product_types(product_data)
+    if type_result.is_failure:
+        return type_result
+
+    validated_data = type_result.data
+
+    # Create and finalize product
+    return _create_and_finalize_product(validated_data)
+
+
+def _validate_product_fields(product_data: TAnyObject) -> FlextResult[None]:
+    """Validate product fields using orchestrator pattern."""
+    orchestrator = ProductValidationOrchestrator(product_data)
     field_validation = orchestrator.validate_all_fields()
+
     if field_validation.is_failure:
         error_msg = field_validation.error or "Field validation failed"
         return FlextResult.fail(error_msg)
 
-    # Extract validated fields for product creation with type checking
+    return FlextResult.ok(None)
+
+
+def _extract_and_validate_product_types(
+    product_data: TAnyObject,
+) -> FlextResult[dict[str, object]]:
+    """Extract and validate product data types."""
+    # Extract fields
     name = product_data.get("name")
     price = product_data.get("price")
     category = product_data.get("category")
@@ -674,25 +725,53 @@ def validate_product_complete(
     if not isinstance(stock, int):
         return FlextResult.fail("Product stock must be an integer")
 
-    # Create product using SharedDomainFactory - single path
+    return FlextResult.ok({
+        "name": name,
+        "price": price,
+        "category": category,
+        "stock": stock,
+        "product_id": product_id,
+    })
+
+
+def _create_and_finalize_product(
+    validated_data: dict[str, object],
+) -> FlextResult[SharedProduct]:
+    """Create product and perform final validation."""
     try:
+        # Create product using SharedDomainFactory
         product_result = SharedDomainFactory.create_product(
-            name=name,
-            description=f"Product {name} in {category} category",
-            price_amount=str(price),
+            name=str(validated_data["name"]),
+            description=(
+                f"Product {validated_data['name']} in "
+                f"{validated_data['category']} category"
+            ),
+            price_amount=str(validated_data["price"]),
             currency="USD",
-            category=category,
-            in_stock=stock > 0,
-            id=product_id,
+            category=str(validated_data["category"]),
+            in_stock=int(validated_data["stock"]) > 0,
+            id=validated_data["product_id"],
         )
 
         if product_result.is_failure:
             return FlextResult.fail(f"Product creation failed: {product_result.error}")
 
         shared_product = product_result.data
-        assert shared_product is not None
+        if shared_product is None:
+            return FlextResult.fail("Product creation returned None data")
 
-        # Create enhanced validation demo product
+        # Create enhanced demo product and validate inventory
+        return _create_enhanced_demo_product(shared_product)
+
+    except (RuntimeError, ValueError, TypeError) as e:
+        return FlextResult.fail(f"Product validation error: {e}")
+
+
+def _create_enhanced_demo_product(
+    shared_product: SharedProduct,
+) -> FlextResult[SharedProduct]:
+    """Create enhanced demo product and validate inventory."""
+    try:
         enhanced_product = ValidationDemoProduct(
             id=shared_product.id,
             name=shared_product.name,
@@ -776,7 +855,9 @@ def demonstrate_customer_validation() -> None:
         validation_result = validate_customer_complete(customer_data)
         if validation_result.success:
             customer = validation_result.data
-            assert customer is not None
+            if customer is None:
+                print("❌ Customer validation returned None data")
+                continue
             log_message = (
                 f"✅ Enhanced customer created: {customer.name} (ID: {customer.id})"
             )
@@ -849,7 +930,9 @@ def demonstrate_product_validation() -> None:
         validation_result = validate_product_complete(product_data)
         if validation_result.success:
             product = validation_result.data
-            assert product is not None
+            if product is None:
+                print("❌ Product validation returned None data")
+                continue
             log_message = (
                 f"✅ Enhanced product created: {product.name} (ID: {product.id})"
             )

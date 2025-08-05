@@ -80,17 +80,26 @@ from typing import TYPE_CHECKING, Protocol, TypeGuard
 from flext_core.result import FlextResult, safe_call
 from flext_core.validation import FlextValidators
 
+# Console handling with fallback
 try:
-    from rich.console import Console
-except ImportError:
-    # Fallback if Rich is not available
-    class _FallbackConsole:
-        def print(self, message: str) -> None:
-            sys.stdout.write(f"{message}\n")
-            sys.stdout.flush()
+    from rich.console import Console as _RichConsole
 
-    # Type alias for Console fallback
-    Console = _FallbackConsole  # type: ignore[assignment]
+    _CONSOLE_AVAILABLE = True
+except ImportError:
+    _CONSOLE_AVAILABLE = False
+    _RichConsole = None  # type: ignore[assignment,misc]
+
+
+# Fallback console implementation
+class _FallbackConsole:
+    def print(self, message: str) -> None:
+        sys.stdout.write(f"{message}\n")
+        sys.stdout.flush()
+
+
+# Export Console for external usage and testing
+Console = _RichConsole if _CONSOLE_AVAILABLE else _FallbackConsole
+
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -615,6 +624,8 @@ __all__ = [
     "PERFORMANCE_METRICS",
     "SECONDS_PER_HOUR",
     "SECONDS_PER_MINUTE",
+    # Console for CLI operations and testing
+    "Console",
     "DecoratedFunction",
     # Direct access to specialized classes (aliases to base classes)
     "FlextFormatters",

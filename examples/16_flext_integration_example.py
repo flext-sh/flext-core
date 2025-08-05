@@ -59,7 +59,15 @@ def main() -> None:  # noqa: PLR0915
         return
 
     customer = user_result.data
-    assert customer is not None
+
+
+    if customer is None:
+
+
+        print("❌ Operation returned None data")
+
+
+        return
     print(f"  Customer: {customer.name} ({customer.email_address.email})")
     print()
 
@@ -85,7 +93,15 @@ def main() -> None:  # noqa: PLR0915
         return
 
     order = order_result.data
-    assert order is not None
+
+
+    if order is None:
+
+
+        print("❌ Operation returned None data")
+
+
+        return
     print(f"  Order: {order.id}, Status: {order.status.value}")
     print(f"  Customer: {order.customer_id}")
     print(f"  Events: {len(order.domain_events)} domain events")
@@ -203,7 +219,12 @@ def main() -> None:  # noqa: PLR0915
 
     if order2_result.success:
         order2 = order2_result.data
-        assert order2 is not None
+
+        if order2 is None:
+
+            print("❌ Operation returned None data")
+
+            return
         repository.save(order2)
         print(f"  Created second order: {order2.id}")
 
@@ -214,8 +235,9 @@ def main() -> None:  # noqa: PLR0915
         if total1_result.success and total2_result.success:
             total1 = total1_result.data
             total2 = total2_result.data
-            assert total1 is not None
-            assert total2 is not None
+            if total1 is None or total2 is None:
+                print("❌ Total calculation returned None data")
+                return
 
             combined_amount = total1.amount + total2.amount
             print(f"  Order 1 total: {total1.amount} {total1.currency}")

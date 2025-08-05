@@ -1,4 +1,17 @@
-"""FLEXT Core Entities - Domain Layer Entity Implementation.
+"""FLEXT Core Entities - DEPRECATED Domain Layer Entity Implementation.
+
+⚠️  DEPRECATION NOTICE: This module is DEPRECATED as of v1.0.0
+
+    MIGRATE TO: flext_core.models.FlextEntity
+    REASON: Semantic pattern harmonization - single source of truth
+    TIMELINE: Will be removed in v2.0.0
+
+    OLD: from flext_core.entities import FlextEntity
+    NEW: from flext_core.models import FlextEntity
+
+    VALIDATION METHOD CHANGE:
+    OLD: validate_domain_rules() -> FlextResult[None]
+    NEW: validate_business_rules() -> FlextResult[None]
 
 Domain-Driven Design (DDD) entity implementation providing identity management, version
 tracking, and domain event integration across the 32-project FLEXT ecosystem. Foundation

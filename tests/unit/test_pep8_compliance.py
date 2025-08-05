@@ -59,7 +59,7 @@ def _run_ruff_command(command_args: list[str]) -> subprocess.CompletedProcess[st
     safe_command = [sys.executable, "-m", "ruff", *command_args]
 
     # Execute with safe parameters - subprocess call is secure due to input validation
-    return subprocess.run(  # noqa: S603
+    return subprocess.run(
         safe_command,
         check=False,
         capture_output=True,

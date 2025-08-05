@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+from typing import Protocol, cast
 
 import pytest
 from pydantic import Field, field_validator
@@ -25,6 +26,19 @@ from flext_core.guards import (
     safe,
 )
 from flext_core.result import FlextResult
+
+
+class FactoryProtocol(Protocol):
+    """Protocol for factory functions."""
+
+    def __call__(self, *args: object, **kwargs: object) -> object: ...
+
+
+class BuilderProtocol(Protocol):
+    """Protocol for builder functions."""
+
+    def __call__(self, *args: object, **kwargs: object) -> object: ...
+
 
 # Constants
 EXPECTED_BULK_SIZE = 2
@@ -251,7 +265,7 @@ class TestValidatedModel:
 
         # Test validation error
         with pytest.raises(FlextValidationError) as exc_info:
-            StrictModel(name="John", age="not_a_number")
+            StrictModel(name="John", age="not_a_number")  # type: ignore[arg-type] # Intentional type error for testing
 
         error = exc_info.value
         if "Invalid data" not in str(error):
@@ -355,13 +369,13 @@ class TestFactoryHelpers:
         assert callable(factory)
 
         # Use factory to create instances
-        obj1 = factory(42)
+        obj1 = cast("FactoryProtocol", factory)(42)
         if getattr(obj1, "value", None) != 42:
             msg_obj1: str = f"Expected {42}, got {getattr(obj1, 'value', None)}"
             raise AssertionError(msg_obj1)
         assert getattr(obj1, "name", None) == "default"
 
-        obj2 = factory(100, name="custom")
+        obj2 = cast("FactoryProtocol", factory)(100, name="custom")
         if getattr(obj2, "value", None) != 100:
             msg_obj2: str = f"Expected {100}, got {getattr(obj2, 'value', None)}"
             raise AssertionError(msg_obj2)
@@ -384,13 +398,13 @@ class TestFactoryHelpers:
         assert callable(builder)
 
         # Use builder to create instances
-        obj1 = builder()
+        obj1 = cast("BuilderProtocol", builder)()
         if getattr(obj1, "x", None) != 0:
             msg_builder1: str = f"Expected {0}, got {getattr(obj1, 'x', None)}"
             raise AssertionError(msg_builder1)
         assert getattr(obj1, "y", None) == 0
 
-        obj2 = builder(x=10, y=20)
+        obj2 = cast("BuilderProtocol", builder)(x=10, y=20)
         if getattr(obj2, "x", None) != 10:
             msg_builder2: str = f"Expected {10}, got {getattr(obj2, 'x', None)}"
             raise AssertionError(msg_builder2)
@@ -411,21 +425,21 @@ class TestFactoryHelpers:
         factory = make_factory(ComplexClass)
 
         # Test with positional arguments
-        obj1 = factory(1, 2, 3)
+        obj1 = cast("FactoryProtocol", factory)(1, 2, 3)
         if getattr(obj1, "args", None) != (1, 2, 3):
             msg_args1: str = f"Expected {(1, 2, 3)}, got {getattr(obj1, 'args', None)}"
             raise AssertionError(msg_args1)
         assert getattr(obj1, "kwargs", None) == {}
 
         # Test with keyword arguments
-        obj2 = factory(a=1, b=2)
+        obj2 = cast("FactoryProtocol", factory)(a=1, b=2)
         if getattr(obj2, "args", None) != ():
             msg_args2: str = f"Expected {()}, got {getattr(obj2, 'args', None)}"
             raise AssertionError(msg_args2)
         assert getattr(obj2, "kwargs", None) == {"a": 1, "b": 2}
 
         # Test with mixed arguments
-        obj3 = factory(1, 2, c=3, d=4)
+        obj3 = cast("FactoryProtocol", factory)(1, 2, c=3, d=4)
         if getattr(obj3, "args", None) != (1, 2):
             msg_args3: str = f"Expected {(1, 2)}, got {getattr(obj3, 'args', None)}"
             raise AssertionError(msg_args3)
@@ -653,13 +667,13 @@ class TestEdgeCases:
 
         # Factory should propagate exceptions
         with pytest.raises(ValueError, match="Construction failed"):
-            factory()
+            cast("FactoryProtocol", factory)()
 
         # Builder should work the same way
         builder = make_builder(FailingClass)
 
         with pytest.raises(ValueError, match="Construction failed"):
-            builder()
+            cast("BuilderProtocol", builder)()
 
     def test_validation_utilities_edge_cases(self) -> None:
         """Test validation utilities edge cases."""
@@ -746,13 +760,13 @@ class TestIntegrationAndComposition:
         factory = make_factory(ValidatedClass)
 
         # Valid creation
-        obj = factory(42)
+        obj = cast("FactoryProtocol", factory)(42)
         if getattr(obj, "value", None) != 42:
             raise AssertionError(f"Expected {42}, got {getattr(obj, 'value', None)}")
 
         # Invalid creation should raise exception
         with pytest.raises(FlextValidationError):
-            factory(-1)
+            cast("FactoryProtocol", factory)(-1)
 
     def test_decorator_composition(self) -> None:
         """Test composing multiple decorators."""
@@ -833,7 +847,7 @@ class TestPerformanceAndScalability:
         factory = make_factory(SimpleClass)
 
         # Create many instances
-        objects = [factory(i) for i in range(100)]
+        objects = [cast("FactoryProtocol", factory)(i) for i in range(100)]
         if len(objects) != 100:
             raise AssertionError(f"Expected {100}, got {len(objects)}")
         if not all(getattr(obj, "value", None) == i for i, obj in enumerate(objects)):

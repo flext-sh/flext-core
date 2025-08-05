@@ -529,14 +529,14 @@ class TestConfigValidation:
 
     def test_oracle_config_validation_no_identifier(self) -> None:
         """Test Oracle config validation without service_name or sid."""
-        # Create config without identifiers
-        config = FlextOracleConfig(
-            username="user",
-            password=SecretStr("pass"),
-        )
-        # Validation should fail when calling model_validate
-        with pytest.raises(ValueError, match="validation|identifier|service"):
-            config.model_validate(config.model_dump())
+        # Creating config without identifiers should fail at creation time
+        with pytest.raises(
+            ValueError, match="Either service_name or sid must be provided"
+        ):
+            FlextOracleConfig(
+                username="user",
+                password=SecretStr("pass"),
+            )
 
     def test_ldap_config_base_dn_validation_empty(self) -> None:
         """Test LDAP config base DN validation with empty value."""
