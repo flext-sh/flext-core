@@ -150,7 +150,7 @@ class TestModelInheritanceBehavior:
 
         # Should not be able to modify
         with pytest.raises((AttributeError, ValueError)):
-            model.name = "modified"  # type: ignore[misc]
+            model.name = "modified"
 
     def test_mutable_model_allows_modification(self) -> None:
         """Test mutable models actually allow modification."""
@@ -265,7 +265,7 @@ class TestFlextDomainValueObject:
 
         # Should not be able to modify
         with pytest.raises((AttributeError, ValueError)):
-            vo.metadata = {"name": "modified"}  # type: ignore[misc]
+            vo.metadata = {"name": "modified"}
 
 
 @pytest.mark.unit
@@ -550,10 +550,10 @@ class TestUtilityFunctions:
         assert result["id"] == "test"
 
         # Test with invalid input
-        result_none = model_to_dict_safe(None)  # type: ignore[arg-type]
+        result_none = model_to_dict_safe(None)
         assert result_none == {}
 
-        result_string = model_to_dict_safe("not_a_model")  # type: ignore[arg-type]
+        result_string = model_to_dict_safe("not_a_model")
         assert result_string == {}
 
     def test_validate_all_models(self) -> None:

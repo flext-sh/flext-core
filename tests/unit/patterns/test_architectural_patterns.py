@@ -7,6 +7,7 @@ Clean Architecture, DDD, CQRS, and enterprise design patterns.
 from __future__ import annotations
 
 import time
+from typing import cast
 
 import pytest
 from pydantic import BaseModel
@@ -157,13 +158,19 @@ class TestCleanArchitecturePatterns:
                 # Validate value objects with type checking for serialization
                 if hasattr(self.order_id, "validate_domain_rules"):
                     order_id_validation = self.order_id.validate_domain_rules()
-                    if order_id_validation.is_failure:
-                        return order_id_validation
+                    if (
+                        hasattr(order_id_validation, "is_failure")
+                        and order_id_validation.is_failure
+                    ):
+                        return FlextResult.fail(str(order_id_validation.error))
 
                 if hasattr(self.total, "validate_domain_rules"):
                     total_validation = self.total.validate_domain_rules()
-                    if total_validation.is_failure:
-                        return total_validation
+                    if (
+                        hasattr(total_validation, "is_failure")
+                        and total_validation.is_failure
+                    ):
+                        return FlextResult.fail(str(total_validation.error))
 
                 # Business rules
                 if self.status not in {"pending", "confirmed", "shipped", "delivered"}:
@@ -192,12 +199,16 @@ class TestCleanArchitecturePatterns:
     def _test_ddd_validation_and_behavior(self, order: object) -> None:
         """Test DDD validation and behavior."""
         # Test domain validation
-        validation_result = order.validate_domain_rules()
-        assert validation_result.success
+        if hasattr(order, "validate_domain_rules"):
+            validation_result = order.validate_domain_rules()
+            assert hasattr(validation_result, "success")
+            assert validation_result.success
 
         # Test domain behavior
-        confirm_result = order.confirm_order()
-        assert confirm_result.success
+        if hasattr(order, "confirm_order"):
+            confirm_result = order.confirm_order()
+            assert hasattr(confirm_result, "success")
+            assert confirm_result.success
 
     @pytest.mark.architecture
     def test_cqrs_pattern_implementation(self) -> None:
@@ -287,10 +298,12 @@ class TestEnterprisePatterns:
         # Test factory usage
         email_service = ServiceFactory.create_service("email")
         assert email_service.success
+        assert isinstance(email_service.data, dict)
         assert email_service.data["type"] == "email"
 
         sms_service = ServiceFactory.create_service("sms")
         assert sms_service.success
+        assert isinstance(sms_service.data, dict)
         assert sms_service.data["type"] == "sms"
 
         invalid_service = ServiceFactory.create_service("invalid")
@@ -340,9 +353,14 @@ class TestEnterprisePatterns:
 
         assert config_result.success
         config = config_result.data
-        assert config["database"]["host"] == "localhost"
-        assert config["logging"]["level"] == "INFO"
-        assert config["cache"]["enabled"]
+        assert isinstance(config, dict)
+        config_dict = cast("dict[str, object]", config)
+        database_dict = cast("dict[str, object]", config_dict["database"])
+        assert database_dict["host"] == "localhost"
+        logging_dict = cast("dict[str, object]", config_dict["logging"])
+        assert logging_dict["level"] == "INFO"
+        cache_dict = cast("dict[str, object]", config_dict["cache"])
+        assert cache_dict["enabled"]
 
     @pytest.mark.architecture
     @pytest.mark.performance
@@ -391,7 +409,8 @@ class TestEnterprisePatterns:
         for i in range(100):
             result = repo.find_by_id(f"entity_{i}")
             assert result.success
-            assert (result.data or {})["id"] == i
+            entity_data = cast("dict[str, object]", result.data)
+            assert entity_data["id"] == i
 
         query_duration = time.time() - start_time
 

@@ -7,6 +7,8 @@ for core FLEXT functionality, focusing on production performance characteristics
 from __future__ import annotations
 
 import time
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any, cast
 
 import pytest
 
@@ -15,6 +17,9 @@ from flext_core.core import FlextCore
 from flext_core.handlers import FlextHandlers
 from flext_core.loggings import FlextLogger, FlextLoggerFactory
 from flext_core.result import FlextResult
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class TestPerformanceBenchmarks:
@@ -34,7 +39,8 @@ class TestPerformanceBenchmarks:
                 .flat_map(lambda x: FlextResult.ok(f"{x}_final"))
             )
 
-        result = benchmark(create_and_chain_results)
+        benchmark_func = cast("Callable[[Any], Any]", benchmark)
+        result = benchmark_func(create_and_chain_results)
         assert result.success
         assert result.data == "initial_step1_step2_final"
 
@@ -61,7 +67,8 @@ class TestPerformanceBenchmarks:
                 return FlextResult.ok("all_retrieved")
             return FlextResult.fail("retrieval_failed")
 
-        result = benchmark(container_operations)
+        benchmark_func = cast("Callable[[Any], Any]", benchmark)
+        result = benchmark_func(container_operations)
         assert result.success
 
     @pytest.mark.performance

@@ -82,6 +82,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import re
 from abc import ABC, abstractmethod
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Self, cast
@@ -90,7 +91,7 @@ from zoneinfo import ZoneInfo
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core.flext_types import (
     R,
@@ -292,13 +293,19 @@ class FlextCommands:
             description="Correlation ID for tracking",
         )
 
-        @field_validator("command_type", mode="after")
-        @classmethod
-        def set_command_type(cls, v: TServiceName) -> TServiceName:
-            """Auto-set command type from class name if not provided."""
-            if not v:
-                return cls.__name__
-            return v
+        def model_post_init(self, __context: object, /) -> None:
+            """Set command_type from class name if not provided."""
+            if not self.command_type:
+                # Convert class name to snake_case: CreateUserCommand -> create_user
+                class_name = self.__class__.__name__
+                # Remove "Command" suffix
+                class_name = class_name.removesuffix("Command")
+
+                # Convert CamelCase to snake_case
+                snake_name = re.sub(r"(?<!^)(?=[A-Z])", "_", class_name).lower()
+
+                # Since the model is frozen, use object.__setattr__
+                object.__setattr__(self, "command_type", snake_name)
 
         def to_payload(self) -> FlextPayload[TAnyDict]:
             """Convert command to FlextPayload for transport."""

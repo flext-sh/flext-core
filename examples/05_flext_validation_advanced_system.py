@@ -910,9 +910,7 @@ def demonstrate_validation_performance() -> None:
     print(log_message)
 
     start_time = time.time()
-    type_results = [
-        isinstance(item, str) for item in test_data
-    ]
+    type_results = [isinstance(item, str) for item in test_data]
     end_time = time.time()
 
     type_check_time = end_time - start_time

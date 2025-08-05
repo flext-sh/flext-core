@@ -112,7 +112,7 @@ class BaseEntry(FlextValueObject):
     identifier: str
 
 
-class EntryValidator(Protocol[EntryT]):  # type: ignore[misc]
+class EntryValidator(Protocol[EntryT]):
     """Protocol for entry validation."""
 
     def is_valid(self, entry: EntryT) -> bool:
@@ -349,7 +349,7 @@ class BaseSorter[T]:
     def sort_entries(self, entries: list[T]) -> list[T]:
         """Sort entries using the configured key extractor."""
         try:
-            entries.sort(key=self.key_extractor)  # type: ignore[arg-type]
+            entries.sort(key=self.key_extractor)
             return entries
         except Exception:
             # Return unsorted if sort fails
@@ -393,7 +393,7 @@ class ProcessingPipeline[T, U]:
 
     def add_step(self, step: Callable[[T], FlextResult[U]]) -> ProcessingPipeline[T, U]:
         """Add processing step to pipeline."""
-        self.steps.append(step)  # type: ignore[arg-type]
+        self.steps.append(step)
         return self
 
     def process(self, input_data: T) -> FlextResult[U]:
@@ -402,6 +402,6 @@ class ProcessingPipeline[T, U]:
         for step in self.steps:
             result = step(current_data)
             if not result.success:
-                return result  # type: ignore[return-value]
-            current_data = result.data  # type: ignore[assignment]
-        return FlextResult.ok(current_data)  # type: ignore[arg-type]
+                return result
+            current_data = result.data
+        return FlextResult.ok(current_data)

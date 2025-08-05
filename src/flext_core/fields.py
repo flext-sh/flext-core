@@ -619,9 +619,40 @@ class FlextFieldMetadata(BaseModel):
             field_type=str(data.get("field_type", "string")),
             required=bool(data.get("required", True)),
             default_value=_safe_cast_default_value(data.get("default_value")),
-            # Additional fields that might be in data
+            # Validation constraints
+            min_value=_safe_cast_numeric(data.get("min_value")),
+            max_value=_safe_cast_numeric(data.get("max_value")),
+            min_length=_safe_cast_int(data.get("min_length")),
+            max_length=_safe_cast_int(data.get("max_length")),
+            pattern=str(data.get("pattern")) if data.get("pattern") else None,
+            allowed_values=(
+                list(allowed_vals)
+                if (allowed_vals := data.get("allowed_values"))
+                and isinstance(allowed_vals, (list, tuple))
+                else []
+            ),
+            # Documentation
             description=(
                 str(data.get("description", "")) if data.get("description") else None
+            ),
+            example=_safe_cast_default_value(data.get("example")),
+            tags=(
+                list(tags_vals)
+                if (tags_vals := data.get("tags"))
+                and isinstance(tags_vals, (list, tuple))
+                else []
+            ),
+            # System flags
+            deprecated=bool(data.get("deprecated", False)),
+            sensitive=bool(data.get("sensitive", False)),
+            indexed=bool(data.get("indexed", False)),
+            internal=bool(data.get("internal", False)),
+            unique=bool(data.get("unique", False)),
+            custom_properties=(
+                dict(custom_props)
+                if (custom_props := data.get("custom_properties"))
+                and isinstance(custom_props, dict)
+                else {}
             ),
         )
 
@@ -632,6 +663,37 @@ def _safe_cast_default_value(value: object) -> str | int | float | bool | None:
         return None
     if isinstance(value, (str, int, float, bool)):
         return value
+    return None
+
+
+def _safe_cast_numeric(value: object) -> int | float | None:
+    """Safely cast a value to numeric type."""
+    if value is None:
+        return None
+    if isinstance(value, (int, float)):
+        return value
+    if isinstance(value, str):
+        try:
+            # Try int first, then float
+            if "." in value:
+                return float(value)
+            return int(value)
+        except ValueError:
+            return None
+    return None
+
+
+def _safe_cast_int(value: object) -> int | None:
+    """Safely cast a value to int."""
+    if value is None:
+        return None
+    if isinstance(value, int):
+        return value
+    if isinstance(value, (float, str)):
+        try:
+            return int(value)
+        except (ValueError, TypeError):
+            return None
     return None
 
 

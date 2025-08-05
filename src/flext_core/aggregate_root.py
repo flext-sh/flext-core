@@ -250,7 +250,7 @@ class FlextAggregateRoot(FlextEntity):
 
         # Pydantic BaseModel accepts **kwargs with object values
         # MyPy doesn't understand the dynamic nature of Pydantic model construction
-        super().__init__(**init_data)  # type: ignore[arg-type]
+        super().__init__(**init_data)
 
     def add_domain_event(
         self,

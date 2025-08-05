@@ -89,7 +89,8 @@ except ImportError:
             sys.stdout.write(f"{message}\n")
             sys.stdout.flush()
 
-    Console = _FallbackConsole  # type: ignore[misc,assignment]
+    # Type alias for Console fallback
+    Console = _FallbackConsole  # type: ignore[assignment]
 
 if TYPE_CHECKING:
     from collections.abc import Callable

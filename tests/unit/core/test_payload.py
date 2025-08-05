@@ -474,7 +474,7 @@ class TestFlextPayloadCoverageImprovements:
         """Test enriching metadata with dictionary."""
         original = FlextPayload(data="test", metadata={"key1": "value1"})
 
-        additional_metadata = {
+        additional_metadata: dict[str, str | int | float | bool | None] = {
             "key2": "value2",
             "key3": 123,
             "key1": "updated_value1",  # Should override
@@ -696,7 +696,7 @@ class TestFlextPayloadCoverageImprovements:
 
         # Attempt to modify the payload directly should raise ValidationError
         with pytest.raises(ValidationError):
-            payload.data = "new_data"  # type: ignore[misc]
+            payload.data = "new_data"
 
         # Verify data hasn't changed
         assert payload.data == original_data

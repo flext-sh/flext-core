@@ -7,6 +7,7 @@ error handling and functional programming patterns.
 from __future__ import annotations
 
 import operator
+from typing import cast
 
 import pytest
 
@@ -187,7 +188,9 @@ class TestFlextResultEnhanced:
         def side_effect(error: str) -> None:
             side_effect_value.append(error)
 
-        result: FlextResult[str] = FlextResult.fail("error message").tap_error(side_effect)
+        result: FlextResult[str] = FlextResult.fail("error message").tap_error(
+            side_effect
+        )
 
         assert result.is_failure
         if side_effect_value != ["error message"]:
@@ -322,7 +325,8 @@ class TestFlextResultEnhanced:
         ]
 
         # Cast to FlextResult[object] for combine method compatibility
-        combined = FlextResult.combine(*results)
+        object_results = [cast("FlextResult[object]", r) for r in results]
+        combined = FlextResult.combine(*object_results)
         assert combined.success
         if combined.data != [1, 2, 3]:
             raise AssertionError(f"Expected {[1, 2, 3]}, got {combined.data}")
@@ -336,7 +340,8 @@ class TestFlextResultEnhanced:
         ]
 
         # Cast to FlextResult[object] for combine method compatibility
-        combined = FlextResult.combine(*results)
+        object_results = [cast("FlextResult[object]", r) for r in results]
+        combined = FlextResult.combine(*object_results)
         assert combined.is_failure
         if combined.error != "error":
             raise AssertionError(f"Expected {'error'}, got {combined.error}")

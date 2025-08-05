@@ -32,6 +32,7 @@ class TestCoreSOLIDImplementation:
         # Invalid type validation
         result = self.core.validate_type(123, str)
         assert result.is_failure
+        assert result.error is not None
         assert "Expected str, got int" in result.error
 
     def test_validate_dict_structure_functionality(self) -> None:
@@ -45,6 +46,7 @@ class TestCoreSOLIDImplementation:
         # Non-dictionary object
         result = self.core.validate_dict_structure("not_a_dict", str)
         assert result.is_failure
+        assert result.error is not None
         assert "Expected dictionary" in result.error
 
         # Dictionary with wrong value types (testing mixed types)
@@ -76,6 +78,7 @@ class TestCoreSOLIDImplementation:
             # Missing age parameter
         )
         assert result.is_failure
+        assert result.error is not None
         assert "Invalid data" in result.error or "Field required" in result.error
 
     def test_make_immutable_functionality(self) -> None:
@@ -174,6 +177,7 @@ class TestCoreSOLIDImplementation:
         # Invalid email is rejected by our custom validation
         result = self.core.create_validated_model(ExtendedModel, email="invalid_email")
         assert result.is_failure
+        assert result.error is not None
         assert "email format" in result.error
 
     def test_interface_segregation_principle(self) -> None:

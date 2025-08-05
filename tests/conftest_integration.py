@@ -48,10 +48,15 @@ def global_container_reset() -> Generator[None]:
 @pytest.fixture
 def sample_settings() -> FlextBaseSettings:
     """Provide sample FlextBaseSettings for testing."""
-    return FlextBaseSettings(
-        environment=FlextEnvironment.TESTING,
-        log_level=FlextLogLevel.DEBUG,
-        debug=True,
+
+    class TestSettings(FlextBaseSettings):
+        """Test-specific settings with required fields."""
+
+        environment: FlextEnvironment = FlextEnvironment.TESTING
+        log_level: FlextLogLevel = FlextLogLevel.DEBUG
+        debug: bool = True
+
+    return TestSettings(
         service_timeout=10,
         max_retries=2,
     )

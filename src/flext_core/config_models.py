@@ -430,7 +430,7 @@ class FlextOracleConfig(FlextBaseConfigModel):
         return v
 
     @classmethod
-    def model_validate(  # type: ignore[override]
+    def model_validate(
         cls,
         obj: dict[str, object],
     ) -> FlextOracleConfig:
@@ -745,7 +745,7 @@ def create_database_config(
         username=username,
         password=SecretStr(password),
         database=database,
-        **kwargs,  # type: ignore[arg-type]
+        **kwargs,
     )
 
 
@@ -762,7 +762,7 @@ def create_redis_config(
         port=port,
         password=SecretStr(password) if password else None,
         database=database,
-        **kwargs,  # type: ignore[arg-type]
+        **kwargs,
     )
 
 
@@ -809,7 +809,7 @@ def create_oracle_config(
             if key in config_data:
                 config_data[key] = value
 
-    return FlextOracleConfig(**config_data)  # type: ignore[arg-type]
+    return FlextOracleConfig(**config_data)
 
 
 def create_ldap_config(
@@ -827,7 +827,7 @@ def create_ldap_config(
         base_dn=base_dn,
         bind_dn=bind_dn,
         bind_password=SecretStr(bind_password) if bind_password else None,
-        **kwargs,  # type: ignore[arg-type]
+        **kwargs,
     )
 
 
