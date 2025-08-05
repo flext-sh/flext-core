@@ -208,7 +208,7 @@ class TestFlextContainerBasicOperations:
         """Test service registration with invalid names."""
         service = SampleService("test")
         # The container handles all invalid names through FlextResult
-        result = clean_container.register(invalid_name, service)
+        result = clean_container.register(invalid_name, service)  # type: ignore[arg-type] # Intentional invalid name test
 
         assert result.is_failure
         assert result.error is not None
@@ -403,7 +403,7 @@ class TestFlextContainerSingletonPattern:
         # This would be caught by type system, but test runtime behavior
         # We need to bypass type checking for this test case
         factory = "not_callable"
-        result = clean_container.register_factory("service", factory)
+        result = clean_container.register_factory("service", factory)  # type: ignore[arg-type] # Intentional invalid factory test
 
         assert result.is_failure
         assert result.error is not None

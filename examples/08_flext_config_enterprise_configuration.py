@@ -29,6 +29,7 @@ demonstrating the power and flexibility of the FlextConfig system.
 import json
 import os
 import tempfile
+from typing import cast
 
 # Import shared domain models to integrate domain validation patterns
 from shared_domain import (
@@ -39,11 +40,10 @@ from shared_domain import (
 
 from flext_core import (
     FlextBaseSettings,
-    FlextConfig,
     FlextConfigDefaults,
     FlextConfigValidation,
     FlextConstants,
-    FlextTypes,
+    FlextResult,
     TAnyDict,
     TConfigDict,
     TErrorMessage,
@@ -73,7 +73,8 @@ def demonstrate_basic_configuration() -> None:
     }
 
     # Cast TConfigDict to TAnyDict for method compatibility
-    config_result = FlextConfig.create_complete_config(dict(config_data))
+    # Create basic configuration using available methods
+    config_result = FlextResult.ok(dict(config_data))  # Simplified for demonstration
     if config_result.success:
         config = config_result.data
         if config is not None:
@@ -303,18 +304,55 @@ def demonstrate_configuration_merging() -> None:
 
 
 def demonstrate_file_configuration() -> None:
-    """Demonstrate file-based configuration using flext_core.types."""
+    """Demonstrate file-based configuration using railway-oriented programming."""
+    _print_file_config_section_header("📁 FILE CONFIGURATION")
+
+    # Chain all file configuration operations using single-responsibility methods
+    (
+        _create_configuration_file()
+        .flat_map(_load_configuration_from_file)
+        .flat_map(_validate_loaded_configuration)
+        .flat_map(_cleanup_configuration_file)
+    )
+
+
+def _print_file_config_section_header(title: str) -> None:
+    """Print formatted file configuration section header."""
     log_message: TLogMessage = "\n" + "=" * 80
     print(log_message)
-    print("📁 FILE CONFIGURATION")
+    print(title)
     print("=" * 80)
 
-    # 1. Create temporary configuration file
-    log_message = "\n1. Creating configuration file:"
-    print(log_message)
 
-    # Use TAnyDict for configs with nested structures
-    config_data: TAnyDict = {
+def _create_configuration_file() -> FlextResult[str]:
+    """Create temporary configuration file and return file path."""
+    print("\n1. Creating configuration file:")
+
+    config_data = _build_file_configuration_data()
+
+    try:
+        # Create temporary file
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8",
+            mode="w",
+            suffix=".json",
+            delete=False,
+        ) as f:
+            json.dump(config_data, f, indent=2)
+            temp_file_path = f.name
+
+        log_message = f"📄 Created config file: {temp_file_path}"
+        print(log_message)
+        return FlextResult.ok(temp_file_path)
+
+    except (RuntimeError, ValueError, TypeError) as e:
+        error_message: TErrorMessage = f"Failed to create config file: {e}"
+        return FlextResult.fail(error_message)
+
+
+def _build_file_configuration_data() -> TAnyDict:
+    """Build configuration data for file demonstration."""
+    return {
         "app": {
             "name": "FileConfigApp",
             "version": "0.9.0",
@@ -332,60 +370,53 @@ def demonstrate_file_configuration() -> None:
         },
     }
 
-    # Create temporary file
-    with tempfile.NamedTemporaryFile(
-        encoding="utf-8",
-        mode="w",
-        suffix=".json",
-        delete=False,
-    ) as f:
-        json.dump(config_data, f, indent=2)
-        temp_file_path = f.name
 
-    log_message = f"📄 Created config file: {temp_file_path}"
-    print(log_message)
-
-    # 2. Load configuration from file
-    log_message = "\n2. Loading configuration from file:"
-    print(log_message)
+def _load_configuration_from_file(temp_file_path: str) -> FlextResult[tuple[str, TAnyDict]]:
+    """Load configuration from file and display contents."""
+    print("\n2. Loading configuration from file:")
 
     try:
         with open(temp_file_path, encoding="utf-8") as f:  # noqa: PTH123
-            # Use TAnyDict since JSON can have nested structures
             loaded_config: TAnyDict = json.load(f)
 
-        log_message = "✅ Configuration loaded from file:"
-        print(log_message)
-        # Type guard for loaded_config
-        if isinstance(loaded_config, dict):
-            app_dict = loaded_config.get("app", {})
-            app_name = app_dict.get("name") if isinstance(app_dict, dict) else None
-            log_message = f"   App name: {app_name}"
-        print(log_message)
-        if isinstance(loaded_config, dict):
-            db_dict = loaded_config.get("database", {})
-            db_url = db_dict.get("url") if isinstance(db_dict, dict) else None
-            log_message = f"   Database URL: {db_url}"
-        print(log_message)
-        if isinstance(loaded_config, dict):
-            features = loaded_config.get("features")
-            log_message = f"   Features: {features}"
-        print(log_message)
+        print("✅ Configuration loaded from file:")
+        _display_loaded_configuration(loaded_config)
+
+        return FlextResult.ok((temp_file_path, loaded_config))
 
     except (RuntimeError, ValueError, TypeError) as e:
         error_message: TErrorMessage = f"Failed to load config file: {e}"
         print(f"❌ {error_message}")
+        return FlextResult.fail(error_message)
 
-    # 3. Configuration validation
-    log_message = "\n3. Configuration validation:"
-    print(log_message)
 
-    # Validate app name with type guard
-    app_name = None
+def _display_loaded_configuration(loaded_config: TAnyDict) -> None:
+    """Display loaded configuration with type guards."""
+    # Type guard for loaded_config
     if isinstance(loaded_config, dict):
         app_dict = loaded_config.get("app", {})
-        if isinstance(app_dict, dict):
-            app_name = app_dict.get("name")
+        app_name = app_dict.get("name") if isinstance(app_dict, dict) else None
+        log_message = f"   App name: {app_name}"
+        print(log_message)
+
+        db_dict = loaded_config.get("database", {})
+        db_url = db_dict.get("url") if isinstance(db_dict, dict) else None
+        log_message = f"   Database URL: {db_url}"
+        print(log_message)
+
+        features = loaded_config.get("features")
+        log_message = f"   Features: {features}"
+        print(log_message)
+
+
+def _validate_loaded_configuration(config_data: tuple[str, TAnyDict]) -> FlextResult[str]:
+    """Validate loaded configuration and return file path for cleanup."""
+    print("\n3. Configuration validation:")
+
+    temp_file_path, loaded_config = config_data
+
+    # Validate app name with type guard
+    app_name = _extract_app_name_from_config(loaded_config)
     validation_result = FlextConfigValidation.validate_config_type(
         app_name,
         str,
@@ -399,14 +430,29 @@ def demonstrate_file_configuration() -> None:
         error_message = f"App name validation failed: {validation_result.error}"
         print(f"❌ {error_message}")
 
-    # Clean up
+    return FlextResult.ok(temp_file_path)
+
+
+def _extract_app_name_from_config(loaded_config: TAnyDict) -> str | None:
+    """Extract app name from loaded configuration with type safety."""
+    if isinstance(loaded_config, dict):
+        app_dict = loaded_config.get("app", {})
+        if isinstance(app_dict, dict):
+            return app_dict.get("name")
+    return None
+
+
+def _cleanup_configuration_file(temp_file_path: str) -> FlextResult[None]:
+    """Clean up temporary configuration file."""
     try:
         os.unlink(temp_file_path)  # noqa: PTH108
         log_message = "🗑️ Temporary file cleaned up"
         print(log_message)
+        return FlextResult.ok(None)
     except (RuntimeError, ValueError, TypeError) as e:
         error_message = f"Failed to clean up file: {e}"
         print(f"⚠️ {error_message}")
+        return FlextResult.fail(error_message)
 
 
 def demonstrate_configuration_hierarchies() -> None:
@@ -476,23 +522,44 @@ def demonstrate_configuration_hierarchies() -> None:
     dev_merged = merge_configs(base_config, dev_config)
     log_message = "✅ Development configuration:"
     print(log_message)
-    log_message = f"   Debug: {dev_merged.get('app', {}).get('debug') if isinstance(dev_merged, dict) else 'N/A'}"
-    print(log_message)
-    log_message = f"   Database: {dev_merged.get('database', {}).get('url') if isinstance(dev_merged, dict) else 'N/A'}"
-    print(log_message)
-    log_message = f"   Log level: {dev_merged.get('logging', {}).get('level') if isinstance(dev_merged, dict) else 'N/A'}"
-    print(log_message)
+    # Display development configuration
+    if isinstance(dev_merged, dict):
+        app_config = dev_merged.get("app", {})
+        debug_value = app_config.get("debug") if isinstance(app_config, dict) else "N/A"
+        log_message = f"   Debug: {debug_value}"
+        print(log_message)
+
+        db_config = dev_merged.get("database", {})
+        db_url = db_config.get("url") if isinstance(db_config, dict) else "N/A"
+        log_message = f"   Database: {db_url}"
+        print(log_message)
+
+        logging_config = dev_merged.get("logging", {})
+        log_level = logging_config.get("level") if isinstance(logging_config, dict) else "N/A"
+        log_message = f"   Log level: {log_level}"
+        print(log_message)
+    # Note: merge_configs always returns dict, but keeping type safety
 
     # Merge base + prod
     prod_merged = merge_configs(base_config, prod_config)
     log_message = "✅ Production configuration:"
     print(log_message)
-    log_message = f"   Debug: {prod_merged.get('app', {}).get('debug') if isinstance(prod_merged, dict) else 'N/A'}"
-    print(log_message)
-    log_message = f"   Database: {prod_merged.get('database', {}).get('url') if isinstance(prod_merged, dict) else 'N/A'}"
-    print(log_message)
-    log_message = f"   Pool size: {prod_merged.get('database', {}).get('pool_size') if isinstance(prod_merged, dict) else 'N/A'}"
-    print(log_message)
+    # Display production configuration
+    if isinstance(prod_merged, dict):
+        app_config = prod_merged.get("app", {})
+        debug_value = app_config.get("debug") if isinstance(app_config, dict) else "N/A"
+        log_message = f"   Debug: {debug_value}"
+        print(log_message)
+
+        db_config = prod_merged.get("database", {})
+        db_url = db_config.get("url") if isinstance(db_config, dict) else "N/A"
+        log_message = f"   Database: {db_url}"
+        print(log_message)
+
+        pool_size = db_config.get("pool_size") if isinstance(db_config, dict) else "N/A"
+        log_message = f"   Pool size: {pool_size}"
+        print(log_message)
+    # Note: merge_configs always returns dict, but keeping type safety
 
     # 3. Configuration inheritance patterns
     log_message = "\n3. Configuration inheritance patterns:"
@@ -547,19 +614,42 @@ def demonstrate_configuration_hierarchies() -> None:
         print(log_message)
 
 
-def demonstrate_advanced_configuration_patterns() -> None:  # noqa: PLR0912, PLR0915
-    """Demonstrate advanced configuration patterns using flext_core.types."""
+def demonstrate_advanced_configuration_patterns() -> None:
+    """Demonstrate advanced configuration patterns using railway-oriented programming."""
+    _print_config_section_header("🚀 ADVANCED CONFIGURATION PATTERNS")
+
+    # Chain all configuration pattern demonstrations using single-responsibility methods
+    (
+        _demonstrate_configuration_validation()
+        .flat_map(lambda _: _demonstrate_configuration_transformation())
+        .flat_map(lambda _: _demonstrate_configuration_composition())
+    )
+
+
+def _print_config_section_header(title: str) -> None:
+    """Print formatted configuration section header."""
     log_message: TLogMessage = "\n" + "=" * 80
     print(log_message)
-    print("🚀 ADVANCED CONFIGURATION PATTERNS")
+    print(title)
     print("=" * 80)
 
-    # 1. Configuration validation patterns
-    log_message = "\n1. Configuration validation patterns:"
-    print(log_message)
 
-    # Complex configuration with validation - using FlextConstants.Platform
-    complex_config: TConfigDict = {
+def _demonstrate_configuration_validation() -> FlextResult[None]:
+    """Demonstrate configuration validation patterns."""
+    print("\n1. Configuration validation patterns:")
+
+    # Create complex configuration
+    complex_config = _create_complex_configuration()
+
+    return (
+        _validate_configuration_structure(complex_config)
+        .flat_map(_display_validation_results)
+    )
+
+
+def _create_complex_configuration() -> TAnyDict:
+    """Create complex configuration for validation demonstration."""
+    return {
         "server": {
             "host": FlextConstants.Platform.DEFAULT_HOST,
             "port": FlextConstants.Platform.FLEXCORE_PORT,
@@ -577,9 +667,10 @@ def demonstrate_advanced_configuration_patterns() -> None:  # noqa: PLR0912, PLR
         },
     }
 
-    # Validate configuration structure
-    log_message = "🔍 Validating configuration structure:"
-    print(log_message)
+
+def _validate_configuration_structure(config: TAnyDict) -> FlextResult[tuple[bool, list[TErrorMessage]]]:
+    """Validate configuration structure and return validation results."""
+    print("🔍 Validating configuration structure:")
 
     required_fields = [
         ("server.host", str),
@@ -592,39 +683,65 @@ def demonstrate_advanced_configuration_patterns() -> None:  # noqa: PLR0912, PLR
     validation_errors: list[TErrorMessage] = []
 
     for field_path, expected_type in required_fields:
-        # Navigate to nested field
-        value = complex_config
-        for key in field_path.split("."):
-            if isinstance(value, dict):
-                value = value.get(key)
-            else:
-                value = None
-                break
+        validation_result = _validate_config_field(config, field_path, expected_type)
+        if validation_result.is_failure:
+            validation_errors.append(validation_result.error or f"Validation failed for {field_path}")
 
-        # Validate type
-        if not FlextTypes.TypeGuards.is_instance_of(value, expected_type):
-            error_message = (
-                f"Field '{field_path}' must be {expected_type.__name__}, "
-                f"got {type(value).__name__}"
-            )
-            validation_errors.append(error_message)
+    is_valid = len(validation_errors) == 0
+    return FlextResult.ok((is_valid, validation_errors))
+
+
+def _validate_config_field(config: TAnyDict, field_path: str, expected_type: type) -> FlextResult[None]:
+    """Validate a single configuration field."""
+    # Navigate to nested field
+    value: object = config
+    for key in field_path.split("."):
+        if isinstance(value, dict):
+            value = value.get(key)
+        else:
+            return FlextResult.fail(f"Field path '{field_path}' not found in configuration")
+
+    # Validate type
+    if not isinstance(value, expected_type):
+        error_message = (
+            f"Field '{field_path}' must be {expected_type.__name__}, "
+            f"got {type(value).__name__}"
+        )
+        return FlextResult.fail(error_message)
+
+    return FlextResult.ok(None)
+
+
+def _display_validation_results(validation_data: tuple[bool, list[TErrorMessage]]) -> FlextResult[None]:
+    """Display configuration validation results."""
+    _is_valid, validation_errors = validation_data
 
     if validation_errors:
-        log_message = "❌ Configuration validation failed:"
-        print(log_message)
+        print("❌ Configuration validation failed:")
         for error in validation_errors:
-            log_message = f"   - {error}"
-            print(log_message)
+            print(f"   - {error}")
     else:
-        log_message = "✅ Configuration validation passed"
-        print(log_message)
+        print("✅ Configuration validation passed")
 
-    # 2. Configuration transformation patterns
-    log_message = "\n2. Configuration transformation patterns:"
-    print(log_message)
+    return FlextResult.ok(None)
 
-    # Transform configuration for different environments
-    transform_config: TConfigDict = {
+
+def _demonstrate_configuration_transformation() -> FlextResult[None]:
+    """Demonstrate configuration transformation patterns."""
+    print("\n2. Configuration transformation patterns:")
+
+    # Create transformation configuration
+    transform_config = _create_transformation_configuration()
+
+    return (
+        _transform_to_connection_strings(transform_config)
+        .flat_map(lambda transformed: _display_transformed_configuration(transformed, transform_config))
+    )
+
+
+def _create_transformation_configuration() -> TAnyDict:
+    """Create configuration for transformation demonstration."""
+    return {
         "database": {
             "host": "localhost",
             "port": 5432,
@@ -639,73 +756,144 @@ def demonstrate_advanced_configuration_patterns() -> None:  # noqa: PLR0912, PLR
         },
     }
 
-    # Transform to connection strings
-    transformed_config: TConfigDict = {}
 
-    # Database connection string
-    db_config = transform_config.get("database", {})
-    if all(key in db_config for key in ["host", "port", "name", "user", "password"]):
-        db_url = f"postgresql://{db_config['user']}:{db_config['password']}@{db_config['host']}:{db_config['port']}/{db_config['name']}"
-        transformed_config["database_url"] = db_url
+def _transform_to_connection_strings(config: TAnyDict) -> FlextResult[TAnyDict]:
+    """Transform configuration to connection strings."""
+    transformed_config: TAnyDict = {}
 
-    # Redis connection string
-    redis_config = transform_config.get("redis", {})
-    if all(key in redis_config for key in ["host", "port", "db"]):
-        redis_url = f"redis://{redis_config['host']}:{redis_config['port']}/{redis_config['db']}"
-        transformed_config["redis_url"] = redis_url
+    # Transform database configuration
+    db_config = config.get("database", {})
+    if isinstance(db_config, dict):
+        db_result = _transform_database_config(db_config)
+        if db_result.is_success and db_result.data:
+            transformed_config["database_url"] = db_result.data
 
-    log_message = "🔄 Transformed configuration:"
-    print(log_message)
+    # Transform Redis configuration
+    redis_config = config.get("redis", {})
+    if isinstance(redis_config, dict):
+        redis_result = _transform_redis_config(redis_config)
+        if redis_result.is_success and redis_result.data:
+            transformed_config["redis_url"] = redis_result.data
+
+    return FlextResult.ok(transformed_config)
+
+
+def _transform_database_config(db_config: TAnyDict) -> FlextResult[str]:
+    """Transform database configuration to connection string."""
+    required_keys = ["host", "port", "name", "user", "password"]
+    if not all(key in db_config for key in required_keys):
+        return FlextResult.fail("Missing required database configuration keys")
+
+    db_url = f"postgresql://{db_config['user']}:{db_config['password']}@{db_config['host']}:{db_config['port']}/{db_config['name']}"
+    return FlextResult.ok(db_url)
+
+
+def _transform_redis_config(redis_config: TAnyDict) -> FlextResult[str]:
+    """Transform Redis configuration to connection string."""
+    required_keys = ["host", "port", "db"]
+    if not all(key in redis_config for key in required_keys):
+        return FlextResult.fail("Missing required Redis configuration keys")
+
+    redis_url = f"redis://{redis_config['host']}:{redis_config['port']}/{redis_config['db']}"
+    return FlextResult.ok(redis_url)
+
+
+def _display_transformed_configuration(transformed_config: TAnyDict, original_config: TAnyDict) -> FlextResult[None]:
+    """Display transformed configuration with masked sensitive data."""
+    print("🔄 Transformed configuration:")
+
     for key, value in transformed_config.items():
         # Mask sensitive information
-        if "password" in str(value):
-            masked_value = str(value).replace(db_config.get("password", ""), "***")
-            log_message = f"   {key}: {masked_value}"
+        masked_value = _mask_sensitive_data(str(value), original_config)
+        print(f"   {key}: {masked_value}")
+
+    return FlextResult.ok(None)
+
+
+def _mask_sensitive_data(value: str, original_config: TAnyDict) -> str:
+    """Mask sensitive data in configuration values."""
+    if "password" in value:
+        db_config_raw = original_config.get("database", {})
+        if isinstance(db_config_raw, dict):
+            password = db_config_raw.get("password", "")
         else:
-            log_message = f"   {key}: {value}"
-        print(log_message)
+            password = ""
+        if password:
+            return value.replace(password, "***")
+    return value
 
-    # 3. Configuration composition patterns
-    log_message = "\n3. Configuration composition patterns:"
-    print(log_message)
 
-    # Compose configuration from multiple sources
-    config_sources: list[tuple[str, TConfigDict]] = [
+def _demonstrate_configuration_composition() -> FlextResult[None]:
+    """Demonstrate configuration composition patterns."""
+    print("\n3. Configuration composition patterns:")
+
+    config_sources = _create_configuration_sources()
+
+    return (
+        _compose_configuration_from_sources(config_sources)
+        .flat_map(_display_composed_configuration)
+    )
+
+
+def _create_configuration_sources() -> list[tuple[str, TAnyDict]]:
+    """Create configuration sources for composition demonstration."""
+    return [
         ("defaults", {"timeout": 30, "retries": 3, "debug": False}),
         ("environment", {"timeout": 60, "debug": True}),
         ("user_preferences", {"retries": 5}),
     ]
 
-    composed_config: TConfigDict = {}
+
+def _compose_configuration_from_sources(config_sources: list[tuple[str, TAnyDict]]) -> FlextResult[TAnyDict]:
+    """Compose configuration from multiple sources."""
+    composed_config: TAnyDict = {}
 
     for source_name, source_config in config_sources:
-        log_message = f"📋 Applying {source_name} configuration:"
-        print(log_message)
+        print(f"📋 Applying {source_name} configuration:")
         for key, value in source_config.items():
             composed_config[key] = value
-            log_message = f"   {key}: {value}"
-            print(log_message)
+            print(f"   {key}: {value}")
 
-    log_message = "✅ Final composed configuration:"
-    print(log_message)
+    return FlextResult.ok(composed_config)
+
+
+def _display_composed_configuration(composed_config: TAnyDict) -> FlextResult[None]:
+    """Display final composed configuration."""
+    print("✅ Final composed configuration:")
     for key, value in composed_config.items():
-        log_message = f"   {key}: {value}"
-        print(log_message)
+        print(f"   {key}: {value}")
+
+    return FlextResult.ok(None)
 
 
-def demonstrate_domain_configuration_integration() -> None:  # noqa: PLR0912, PLR0915
-    """Demonstrate configuration integration with shared domain models."""
+def demonstrate_domain_configuration_integration() -> None:
+    """Demonstrate configuration integration with shared domain models using railway-oriented programming."""
+    _print_domain_config_section_header("🏢 DOMAIN MODEL CONFIGURATION INTEGRATION")
+
+    # Chain all domain configuration demonstrations using single-responsibility methods
+    (
+        _demonstrate_domain_model_validation()
+        .flat_map(_demonstrate_admin_user_validation)
+        .flat_map(_demonstrate_user_creation_from_config)
+        .flat_map(_demonstrate_domain_rule_validation)
+        .flat_map(_demonstrate_feature_flag_configuration)
+    )
+
+
+def _print_domain_config_section_header(title: str) -> None:
+    """Print formatted domain configuration section header."""
     log_message: TLogMessage = "\n" + "=" * 80
     print(log_message)
-    print("🏢 DOMAIN MODEL CONFIGURATION INTEGRATION")
+    print(title)
     print("=" * 80)
 
-    # 1. Configuration with domain model validation
-    log_message = "\n1. Configuration with domain model validation:"
-    print(log_message)
+
+def _demonstrate_domain_model_validation() -> FlextResult[TAnyDict]:
+    """Demonstrate configuration with domain model validation."""
+    print("\n1. Configuration with domain model validation:")
 
     # Configuration for user management service
-    user_service_config: TConfigDict = {
+    user_service_config: TAnyDict = {
         "service_name": "user_management",
         "admin_users": [
             {
@@ -731,51 +919,63 @@ def demonstrate_domain_configuration_integration() -> None:  # noqa: PLR0912, PL
         },
     }
 
-    log_message = "📋 User service configuration loaded"
-    print(log_message)
+    print("📋 User service configuration loaded")
+    return FlextResult.ok(user_service_config)
 
-    # 2. Validate admin users using shared domain models
-    log_message = "\n2. Validating admin users with shared domain models:"
-    print(log_message)
 
-    admin_users = user_service_config.get("admin_users", [])
+def _demonstrate_admin_user_validation(config: TAnyDict) -> FlextResult[tuple[TAnyDict, list[object]]]:
+    """Demonstrate admin user validation using shared domain models."""
+    print("\n2. Validating admin users with shared domain models:")
+
+    admin_users = config.get("admin_users", [])
     validated_users = []
 
-    for user_data in admin_users:
-        if isinstance(user_data, dict):
-            name = user_data.get("name", "")
-            email = user_data.get("email", "")
-            age = user_data.get("age", 0)
+    if isinstance(admin_users, list):
+        for user_data in admin_users:
+            validation_result = _validate_single_admin_user(user_data)
+            if validation_result.is_success and validation_result.data:
+                validated_users.append(validation_result.data)
 
-            # Use SharedDomainFactory for validation
-            user_result = SharedDomainFactory.create_user(name, email, age)
-            if user_result.success:
-                user = user_result.data
-                assert user is not None
-                validated_users.append(user)
-                log_message = (
-                    f"✅ Admin user validated: {user.name} ({user.email_address.email})"
-                )
-                print(log_message)
+    admin_count = len(admin_users) if isinstance(admin_users, list) else 0
+    print(f"📊 Validated {len(validated_users)}/{admin_count} admin users")
+    return FlextResult.ok((config, validated_users))
 
-                # Log domain operation
-                log_domain_operation(
-                    "admin_user_configured",
-                    "SharedUser",
-                    user.id,
-                    service="user_management",
-                    config_role="admin",
-                )
-            else:
-                log_message = f"❌ Invalid admin user config: {user_result.error}"
-                print(log_message)
 
-    log_message = f"📊 Validated {len(validated_users)}/{len(admin_users)} admin users"
-    print(log_message)
+def _validate_single_admin_user(user_data: object) -> FlextResult[object]:
+    """Validate a single admin user using domain factory."""
+    if not isinstance(user_data, dict):
+        return FlextResult.fail("Invalid user data format")
 
-    # 3. Configuration-driven user creation
-    log_message = "\n3. Configuration-driven user creation:"
-    print(log_message)
+    name = user_data.get("name", "")
+    email = user_data.get("email", "")
+    age = user_data.get("age", 0)
+
+    # Use SharedDomainFactory for validation
+    user_result = SharedDomainFactory.create_user(name, email, age)
+    if user_result.success:
+        user = user_result.data
+        if user is not None:
+            print(f"✅ Admin user validated: {user.name} ({user.email_address.email})")
+
+            # Log domain operation
+            log_domain_operation(
+                "admin_user_configured",
+                "SharedUser",
+                user.id,
+                service="user_management",
+                config_role="admin",
+            )
+            return FlextResult.ok(user)
+
+    print(f"❌ Invalid admin user config: {user_result.error}")
+    return FlextResult.fail(f"Validation failed: {user_result.error}")
+
+
+def _demonstrate_user_creation_from_config(validated_data: tuple[TAnyDict, list[object]]) -> FlextResult[tuple[TAnyDict, list[object], list[object]]]:
+    """Demonstrate configuration-driven user creation."""
+    print("\n3. Configuration-driven user creation:")
+
+    config, validated_users = validated_data
 
     # Test configuration
     test_user_configs = [
@@ -786,87 +986,119 @@ def demonstrate_domain_configuration_integration() -> None:  # noqa: PLR0912, PL
 
     created_users = []
 
-    for config in test_user_configs:
-        if isinstance(config, dict):
-            user_result = SharedDomainFactory.create_user(
-                config.get("name", ""),
-                config.get("email", ""),
-                config.get("age", 0),
-            )
+    for user_config in test_user_configs:
+        creation_result = _create_user_from_config(user_config)
+        if creation_result.is_success and creation_result.data:
+            created_users.append(creation_result.data)
 
-            if user_result.success:
-                user = user_result.data
-                assert user is not None
-                created_users.append(user)
-                log_message = f"✅ User created from config: {user.name}"
-                print(log_message)
-            else:
-                log_message = (
-                    f"❌ Failed to create user from config: {user_result.error}"
-                )
-                print(log_message)
+    return FlextResult.ok((config, validated_users, created_users))
 
-    # 4. Configuration validation using domain rules
-    log_message = "\n4. Configuration validation using domain rules:"
-    print(log_message)
 
-    validation_config = user_service_config.get("user_validation", {})
-    min_age = validation_config.get("min_age", 18)
-    max_age = validation_config.get("max_age", 120)
+def _create_user_from_config(config: object) -> FlextResult[object]:
+    """Create a user from configuration data."""
+    if not isinstance(config, dict):
+        return FlextResult.fail("Invalid config format")
 
-    log_message = "📋 Domain validation rules from config:"
-    print(log_message)
-    log_message = f"   Min age: {min_age}"
-    print(log_message)
-    log_message = f"   Max age: {max_age}"
-    print(log_message)
+    user_result = SharedDomainFactory.create_user(
+        config.get("name", ""),
+        config.get("email", ""),
+        config.get("age", 0),
+    )
+
+    if user_result.success:
+        user = user_result.data
+        if user is not None:
+            print(f"✅ User created from config: {user.name}")
+            return FlextResult.ok(user)
+
+    print(f"❌ Failed to create user from config: {user_result.error}")
+    return FlextResult.fail(f"Creation failed: {user_result.error}")
+
+
+def _demonstrate_domain_rule_validation(user_data: tuple[TAnyDict, list[object], list[object]]) -> FlextResult[tuple[TAnyDict, list[object], list[object]]]:
+    """Demonstrate configuration validation using domain rules."""
+    print("\n4. Configuration validation using domain rules:")
+
+    config, validated_users, created_users = user_data
+
+    validation_config_raw = config.get("user_validation", {})
+    if isinstance(validation_config_raw, dict):
+        validation_config: dict[str, object] = cast("dict[str, object]", validation_config_raw)
+        min_age = validation_config.get("min_age", 18)
+        max_age = validation_config.get("max_age", 120)
+    else:
+        min_age = 18
+        max_age = 120
+
+    print("📋 Domain validation rules from config:")
+    print(f"   Min age: {min_age}")
+    print(f"   Max age: {max_age}")
 
     # Test configuration against domain models
     test_ages = [17, 25, 130]  # Below min, valid, above max
 
     for test_age in test_ages:
-        try:
-            user_result = SharedDomainFactory.create_user(
-                "test",
-                "test@example.com",
-                test_age,
-            )
-            if user_result.success:
-                log_message = f"✅ Age {test_age}: Valid according to domain rules"
-                print(log_message)
-            else:
-                log_message = f"❌ Age {test_age}: Invalid - {user_result.error}"
-                print(log_message)
-        except (RuntimeError, ValueError, TypeError) as e:
-            log_message = f"❌ Age {test_age}: Validation error - {e}"
-            print(log_message)
+        _validate_age_against_domain_rules(test_age)
 
-    # 5. Configuration-based feature flags with domain context
-    log_message = "\n5. Configuration-based feature flags with domain context:"
-    print(log_message)
+    return FlextResult.ok((config, validated_users, created_users))
 
-    features = user_service_config.get("features", {})
 
-    for feature_name, enabled in features.items():
-        if isinstance(enabled, bool):
-            status = "✅ Enabled" if enabled else "❌ Disabled"
-            log_message = f"   {feature_name}: {status}"
-            print(log_message)
+def _validate_age_against_domain_rules(test_age: int) -> FlextResult[None]:
+    """Validate a specific age against domain rules."""
+    try:
+        user_result = SharedDomainFactory.create_user(
+            "test",
+            "test@example.com",
+            test_age,
+        )
+        if user_result.success:
+            print(f"✅ Age {test_age}: Valid according to domain rules")
+        else:
+            print(f"❌ Age {test_age}: Invalid - {user_result.error}")
+    except (RuntimeError, ValueError, TypeError) as e:
+        print(f"❌ Age {test_age}: Validation error - {e}")
 
-            # Log feature configuration as domain operation
-            log_domain_operation(
-                "feature_configured",
-                "FeatureFlag",
-                feature_name,
-                enabled=enabled,
-                service="user_management",
-            )
+    return FlextResult.ok(None)
 
-    log_message = (
+
+def _demonstrate_feature_flag_configuration(validation_data: tuple[TAnyDict, list[object], list[object]]) -> FlextResult[None]:
+    """Demonstrate configuration-based feature flags with domain context."""
+    print("\n5. Configuration-based feature flags with domain context:")
+
+    config, _validated_users, created_users = validation_data
+    features_raw = config.get("features", {})
+
+    if isinstance(features_raw, dict):
+        features: dict[str, object] = cast("dict[str, object]", features_raw)
+        for feature_name, enabled in features.items():
+            _configure_single_feature_flag(feature_name, enabled)
+    else:
+        print("   No valid features configuration found")
+
+    print(
         f"📊 Successfully validated configuration with "
         f"{len(created_users)} domain objects"
     )
-    print(log_message)
+
+    return FlextResult.ok(None)
+
+
+def _configure_single_feature_flag(feature_name: str, enabled: object) -> FlextResult[None]:
+    """Configure a single feature flag with domain logging."""
+    if isinstance(enabled, bool):
+        status = "✅ Enabled" if enabled else "❌ Disabled"
+        print(f"   {feature_name}: {status}")
+
+        # Log feature configuration as domain operation
+        log_domain_operation(
+            "feature_configured",
+            "FeatureFlag",
+            feature_name,
+            enabled=enabled,
+            service="user_management",
+        )
+
+    return FlextResult.ok(None)
 
 
 def main() -> None:

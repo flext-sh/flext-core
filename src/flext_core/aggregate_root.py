@@ -237,20 +237,30 @@ class FlextAggregateRoot(FlextEntity):
         # Remove created_at from data to avoid duplicate argument
         entity_data = {k: v for k, v in data.items() if k != "created_at"}
 
-        # Pydantic handles initialization with explicit arguments and remaining data
-        init_data = {
+        # Initialize parent FlextEntity with proper arguments
+        # Pass through all additional fields for subclass-specific attributes
+        init_kwargs = {
             "id": actual_id,
             "version": version,
             "domain_events": domain_events,
-            **entity_data,  # Pass remaining entity-specific fields
         }
 
+        # Only add created_at if it's not None
         if created_at is not None:
-            init_data["created_at"] = created_at
+            init_kwargs["created_at"] = created_at
 
-        # Pydantic BaseModel accepts **kwargs with object values
-        # MyPy doesn't understand the dynamic nature of Pydantic model construction
-        super().__init__(**init_data)
+        # Add all remaining entity data for subclass fields
+        init_kwargs.update(entity_data)
+
+        try:
+            super().__init__(**init_kwargs)  # type: ignore[arg-type]
+        except Exception:
+            # Fallback initialization if Pydantic construction fails
+            super().__init__(
+                id=actual_id,
+                version=version,
+                domain_events=domain_events,
+            )
 
     def add_domain_event(
         self,

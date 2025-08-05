@@ -59,7 +59,10 @@ Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
 """
 
-from typing import cast
+from typing import TYPE_CHECKING, cast
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 import pytest
 
@@ -332,7 +335,10 @@ class TestTapFunction:
         side_effects: list[str] = []
 
         # FlextCore.tap creates a function that executes side effects
-        tap_func = FlextCore.tap(side_effects.append)
+        tap_func = cast(
+            "Callable[[object], FlextResult[object]]",
+            FlextCore.tap(side_effects.append),
+        )
         result = tap_func("test_data")
 
         if not result.success:
@@ -347,10 +353,13 @@ class TestTapFunction:
         side_effects: list[str] = []
 
         # For a failure result, we need to test the tap behavior with a pipeline
-        def failing_func(x: str) -> FlextResult[str]:
+        def failing_func(x: object) -> FlextResult[object]:
             return FlextResult.fail("error")
 
-        tap_func = FlextCore.tap(side_effects.append)
+        tap_func = cast(
+            "Callable[[object], FlextResult[object]]",
+            FlextCore.tap(side_effects.append),
+        )
         pipeline = FlextCore.pipe(
             failing_func,
             tap_func,
@@ -370,7 +379,10 @@ class TestTapFunction:
             msg = "Side effect failed"
             raise ValueError(msg)
 
-        tap_func = FlextCore.tap(failing_side_effect)
+        tap_func = cast(
+            "Callable[[object], FlextResult[object]]",
+            FlextCore.tap(failing_side_effect),
+        )
 
         # The current implementation doesn't catch exceptions in side effects
         # This is expected behavior - side effects should not fail
@@ -417,7 +429,7 @@ class TestWhenFunction:
         """Test when with failure result in pipeline."""
 
         # Test when function with a failing input via pipeline
-        def failing_func(x: str) -> FlextResult[str]:
+        def failing_func(x: object) -> FlextResult[object]:
             return FlextResult.fail("error")
 
         when_func = FlextCore.when(
@@ -467,15 +479,21 @@ class TestResultBaseCoverage:
         result3 = _BaseResult.ok("data3")
 
         # Test combine_results which calls chain_results (line 51)
-        combined = _BaseResultOperations.combine_results(result1, result2, result3)
+        combined = _BaseResultOperations.combine_results(
+            cast("FlextResult[object]", result1),
+            cast("FlextResult[object]", result2),
+            cast("FlextResult[object]", result3),
+        )
 
         assert combined.success
         assert combined.data == ["data1", "data2", "data3"]
 
         # Test with failure
-        result_fail = _BaseResult.fail("error")
+        result_fail: FlextResult[str] = _BaseResult.fail("error")
         combined_with_fail = _BaseResultOperations.combine_results(
-            result1, result_fail, result2
+            cast("FlextResult[object]", result1),
+            cast("FlextResult[object]", result_fail),
+            cast("FlextResult[object]", result2),
         )
 
         assert combined_with_fail.is_failure

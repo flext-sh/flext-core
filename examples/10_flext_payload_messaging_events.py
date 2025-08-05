@@ -33,6 +33,7 @@ from flext_core import (
     FlextEvent,
     FlextMessage,
     FlextPayload,
+    FlextResult,
     FlextTypes,
     TErrorMessage,
     TLogMessage,
@@ -356,16 +357,31 @@ def demonstrate_message_payloads() -> None:  # noqa: PLR0912, PLR0915
             print(log_message)
 
 
-def demonstrate_domain_events() -> None:  # noqa: PLR0912, PLR0915
-    """Demonstrate domain events with aggregate tracking using flext_core.types."""
+def demonstrate_domain_events() -> None:
+    """Demonstrate domain events with aggregate tracking using railway-oriented programming."""
+    _print_domain_events_section_header("🎯 DOMAIN EVENTS")
+
+    # Chain all domain event demonstrations using single-responsibility methods
+    (
+        _demonstrate_basic_domain_event_creation()
+        .flat_map(lambda _: _demonstrate_order_lifecycle_events())
+        .flat_map(lambda _: _demonstrate_inventory_management_events())
+        .flat_map(lambda _: _demonstrate_event_correlation_and_tracing())
+        .flat_map(lambda _: _demonstrate_event_validation_and_error_handling())
+    )
+
+
+def _print_domain_events_section_header(title: str) -> None:
+    """Print formatted domain events section header."""
     log_message: TLogMessage = "\n" + "=" * 80
     print(log_message)
-    print("🎯 DOMAIN EVENTS")
+    print(title)
     print("=" * 80)
 
-    # 1. Basic domain event creation
-    log_message = "\n1. Basic domain event creation:"
-    print(log_message)
+
+def _demonstrate_basic_domain_event_creation() -> FlextResult[None]:
+    """Demonstrate basic domain event creation patterns."""
+    print("\n1. Basic domain event creation:")
 
     # Create user registration event
     user_registration_data: TUserData = {
@@ -383,25 +399,37 @@ def demonstrate_domain_events() -> None:  # noqa: PLR0912, PLR0915
         source="user_service",
     )
 
+    return _display_user_registration_event(user_registration_event)
+
+
+def _display_user_registration_event(user_registration_event: FlextResult[object]) -> FlextResult[None]:
+    """Display user registration event details."""
     if user_registration_event.success:
         event = user_registration_event.data
-        if event is not None:
-            log_message = f"✅ User registration event: {event}"
-            print(log_message)
-            log_message = f"   Event type: {event.event_type}"
-            print(log_message)
-            log_message = f"   Aggregate ID: {event.aggregate_id}"
-            print(log_message)
-            log_message = f"   Aggregate type: {event.aggregate_type}"
-            print(log_message)
+        if event is not None and hasattr(event, "event_type"):
+            print(f"✅ User registration event: {event}")
+            print(f"   Event type: {event.event_type}")
+            print(f"   Aggregate ID: {event.aggregate_id}")
+            print(f"   Aggregate type: {event.aggregate_type}")
 
-    # 2. Order lifecycle events
-    log_message = "\n2. Order lifecycle events:"
-    print(log_message)
+    return FlextResult.ok(None)
+
+
+def _demonstrate_order_lifecycle_events() -> FlextResult[None]:
+    """Demonstrate order lifecycle event patterns."""
+    print("\n2. Order lifecycle events:")
 
     order_id = "order_789"
 
-    # Order created event
+    # Create both order events
+    order_created_event = _create_order_created_event(order_id)
+    order_confirmed_event = _create_order_confirmed_event(order_id)
+
+    return _display_order_lifecycle_events(order_created_event, order_confirmed_event)
+
+
+def _create_order_created_event(order_id: str) -> FlextResult[object]:
+    """Create order created event."""
     order_created_data: TUserData = {
         "order_id": order_id,
         "customer_id": "customer_123",
@@ -413,7 +441,7 @@ def demonstrate_domain_events() -> None:  # noqa: PLR0912, PLR0915
         "created_at": "2024-01-15T14:20:00Z",
     }
 
-    order_created_event = FlextEvent.create(
+    return FlextEvent.create(
         event_type="OrderCreated",
         aggregate_id=order_id,
         aggregate_type="Order",
@@ -422,7 +450,9 @@ def demonstrate_domain_events() -> None:  # noqa: PLR0912, PLR0915
         version=1,
     )
 
-    # Order confirmed event
+
+def _create_order_confirmed_event(order_id: str) -> FlextResult[object]:
+    """Create order confirmed event."""
     order_confirmed_data: TUserData = {
         "order_id": order_id,
         "confirmed_at": "2024-01-15T14:25:00Z",
@@ -430,7 +460,7 @@ def demonstrate_domain_events() -> None:  # noqa: PLR0912, PLR0915
         "payment_id": "pay_456",
     }
 
-    order_confirmed_event = FlextEvent.create(
+    return FlextEvent.create(
         event_type="OrderConfirmed",
         aggregate_id=order_id,
         aggregate_type="Order",
@@ -439,28 +469,43 @@ def demonstrate_domain_events() -> None:  # noqa: PLR0912, PLR0915
         version=2,
     )
 
+
+def _display_order_lifecycle_events(
+    order_created_event: FlextResult[object],
+    order_confirmed_event: FlextResult[object]
+) -> FlextResult[None]:
+    """Display order lifecycle event details."""
     if order_created_event.success and order_confirmed_event.success:
         created_event = order_created_event.data
         confirmed_event = order_confirmed_event.data
-        if created_event is not None and confirmed_event is not None:
-            log_message = (
+        if (created_event is not None and confirmed_event is not None and
+            hasattr(created_event, "version") and hasattr(confirmed_event, "version")):
+            print(
                 f"✅ Order created event (v{created_event.version}): "
                 f"{created_event.event_type}"
             )
-            print(log_message)
-            log_message = (
+            print(
                 f"✅ Order confirmed event (v{confirmed_event.version}): "
                 f"{confirmed_event.event_type}"
             )
-            print(log_message)
 
-    # 3. Inventory management events
-    log_message = "\n3. Inventory management events:"
-    print(log_message)
+    return FlextResult.ok(None)
+
+
+def _demonstrate_inventory_management_events() -> FlextResult[None]:
+    """Demonstrate inventory management event patterns."""
+    print("\n3. Inventory management events:")
 
     product_id = "product_123"
 
-    # Stock updated event
+    # Create stock updated event
+    stock_updated_event = _create_stock_updated_event(product_id)
+
+    return _handle_stock_updated_event(stock_updated_event, product_id)
+
+
+def _create_stock_updated_event(product_id: str) -> FlextResult[object]:
+    """Create stock updated event."""
     stock_updated_data: TUserData = {
         "product_id": product_id,
         "old_quantity": 50,
@@ -469,7 +514,7 @@ def demonstrate_domain_events() -> None:  # noqa: PLR0912, PLR0915
         "updated_at": "2024-01-15T15:00:00Z",
     }
 
-    stock_updated_event = FlextEvent.create(
+    return FlextEvent.create(
         event_type="StockUpdated",
         aggregate_id=product_id,
         aggregate_type="Product",
@@ -478,54 +523,66 @@ def demonstrate_domain_events() -> None:  # noqa: PLR0912, PLR0915
         version=1,
     )
 
-    # Low stock alert event
+
+def _handle_stock_updated_event(stock_updated_event: FlextResult[object], product_id: str) -> FlextResult[None]:
+    """Handle stock updated event and create low stock alert if needed."""
     if stock_updated_event.success:
         stock_event = stock_updated_event.data
-        if stock_event is not None:
+        if stock_event is not None and hasattr(stock_event, "data"):
             new_quantity = stock_event.data.get("new_quantity", 0)
             if (
                 FlextTypes.TypeGuards.is_instance_of(new_quantity, int)
                 and new_quantity <= LOW_STOCK_THRESHOLD
             ):
-                low_stock_data: TUserData = {
-                    "product_id": product_id,
-                    "current_quantity": new_quantity,
-                    "threshold": LOW_STOCK_THRESHOLD,
-                    "alert_level": "warning",
-                    "alerted_at": "2024-01-15T15:00:00Z",
-                }
+                return _create_and_display_low_stock_alert(product_id, new_quantity)
 
-                low_stock_event = FlextEvent.create(
-                    event_type="LowStockAlert",
-                    aggregate_id=product_id,
-                    aggregate_type="Product",
-                    data=low_stock_data,
-                    source="inventory_service",
-                    version=2,
-                )
+    return FlextResult.ok(None)
 
-                if low_stock_event.success:
-                    alert_event = low_stock_event.data
-                    if alert_event is not None:
-                        log_message = (
-                            f"✅ Low stock alert event: {alert_event.event_type}"
-                        )
-                        print(log_message)
-                        log_message = (
-                            f"   Current quantity: "
-                            f"{alert_event.data.get('current_quantity')}"
-                        )
-                        print(log_message)
 
-    # 4. Event correlation and tracing
-    log_message = "\n4. Event correlation and tracing:"
-    print(log_message)
+def _create_and_display_low_stock_alert(product_id: str, new_quantity: int) -> FlextResult[None]:
+    """Create and display low stock alert event."""
+    low_stock_data: TUserData = {
+        "product_id": product_id,
+        "current_quantity": new_quantity,
+        "threshold": LOW_STOCK_THRESHOLD,
+        "alert_level": "warning",
+        "alerted_at": "2024-01-15T15:00:00Z",
+    }
 
-    # Create correlated events for a business process
+    low_stock_event = FlextEvent.create(
+        event_type="LowStockAlert",
+        aggregate_id=product_id,
+        aggregate_type="Product",
+        data=low_stock_data,
+        source="inventory_service",
+        version=2,
+    )
+
+    if low_stock_event.success:
+        alert_event = low_stock_event.data
+        if alert_event is not None and hasattr(alert_event, "event_type"):
+            print(f"✅ Low stock alert event: {alert_event.event_type}")
+            print(f"   Current quantity: {alert_event.data.get('current_quantity')}")
+
+    return FlextResult.ok(None)
+
+
+def _demonstrate_event_correlation_and_tracing() -> FlextResult[None]:
+    """Demonstrate event correlation and tracing patterns."""
+    print("\n4. Event correlation and tracing:")
+
     process_id = "process_123"
 
-    # Process started event
-    process_started_event = FlextEvent.create(
+    # Create correlated events
+    process_started_event = _create_process_started_event(process_id)
+    step_completed_event = _create_step_completed_event(process_id)
+
+    return _display_correlated_events(process_started_event, step_completed_event)
+
+
+def _create_process_started_event(process_id: str) -> FlextResult[object]:
+    """Create process started event."""
+    return FlextEvent.create(
         event_type="ProcessStarted",
         aggregate_id=process_id,
         aggregate_type="BusinessProcess",
@@ -534,8 +591,10 @@ def demonstrate_domain_events() -> None:  # noqa: PLR0912, PLR0915
         correlation_id=process_id,
     )
 
-    # Process step completed event
-    step_completed_event = FlextEvent.create(
+
+def _create_step_completed_event(process_id: str) -> FlextResult[object]:
+    """Create process step completed event."""
+    return FlextEvent.create(
         event_type="ProcessStepCompleted",
         aggregate_id=process_id,
         aggregate_type="BusinessProcess",
@@ -549,23 +608,30 @@ def demonstrate_domain_events() -> None:  # noqa: PLR0912, PLR0915
         correlation_id=process_id,
     )
 
+
+def _display_correlated_events(
+    process_started_event: FlextResult[object],
+    step_completed_event: FlextResult[object]
+) -> FlextResult[None]:
+    """Display correlated event details."""
     if process_started_event.success and step_completed_event.success:
         started_event = process_started_event.data
         completed_event = step_completed_event.data
-        if started_event is not None and completed_event is not None:
-            log_message = f"✅ Process started: {started_event.correlation_id}"
-            print(log_message)
-            log_message = f"✅ Step completed: {completed_event.correlation_id}"
-            print(log_message)
-            log_message = (
+        if (started_event is not None and completed_event is not None and
+            hasattr(started_event, "correlation_id") and hasattr(completed_event, "correlation_id")):
+            print(f"✅ Process started: {started_event.correlation_id}")
+            print(f"✅ Step completed: {completed_event.correlation_id}")
+            print(
                 f"   Correlation match: "
                 f"{started_event.correlation_id == completed_event.correlation_id}"
             )
-            print(log_message)
 
-    # 5. Event validation and error handling
-    log_message = "\n5. Event validation and error handling:"
-    print(log_message)
+    return FlextResult.ok(None)
+
+
+def _demonstrate_event_validation_and_error_handling() -> FlextResult[None]:
+    """Demonstrate event validation and error handling patterns."""
+    print("\n5. Event validation and error handling:")
 
     # Test invalid event (missing required fields)
     invalid_event_result = FlextEvent.create(
@@ -576,16 +642,22 @@ def demonstrate_domain_events() -> None:  # noqa: PLR0912, PLR0915
         source="test_service",
     )
 
+    return _display_validation_results(invalid_event_result)
+
+
+def _display_validation_results(invalid_event_result: FlextResult[object]) -> FlextResult[None]:
+    """Display event validation results."""
     if invalid_event_result.success:
         invalid_event = invalid_event_result.data
         if invalid_event is not None:
-            log_message = f"✅ Invalid event created: {invalid_event}"
-            print(log_message)
+            print(f"✅ Invalid event created: {invalid_event}")
     else:
         error_message = (
             f"Invalid event rejected (expected): {invalid_event_result.error}"
         )
         print(f"❌ {error_message}")
+
+    return FlextResult.ok(None)
 
 
 def demonstrate_payload_serialization() -> None:  # noqa: PLR0915

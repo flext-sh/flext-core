@@ -533,8 +533,8 @@ def flext_cache_decorator(
 
     """
     return cast(
-        "Callable[[F], F]", 
-        _BasePerformanceDecorators.create_cache_decorator(max_size)
+        "Callable[[F], F]",
+        _BasePerformanceDecorators.create_cache_decorator(max_size),
     )
 
 
@@ -559,10 +559,10 @@ def flext_timing_decorator(func: F) -> F:
 
     """
     return cast(
-        "F", 
+        "F",
         _BasePerformanceDecorators.get_timing_decorator()(
-            cast("_DecoratedFunction", func)
-        )
+            cast("_DecoratedFunction", func),
+        ),
     )
 
 

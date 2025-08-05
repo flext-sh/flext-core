@@ -326,10 +326,10 @@ class TestFlextMixinDelegator:
 
         # Test property setter - cast to Any to handle dynamic delegation
         host_with_props = cast("object", host)
-        host_with_props.writable_property = "new_value"
-        if host_with_props.writable_property != "new_value":
+        host_with_props.writable_property = "new_value"  # type: ignore[attr-defined] # Dynamic delegation test
+        if host_with_props.writable_property != "new_value":  # type: ignore[attr-defined] # Dynamic delegation test
             raise AssertionError(
-                f"Expected {'new_value'}, got {host_with_props.writable_property}"
+                f"Expected {'new_value'}, got {host_with_props.writable_property}"  # type: ignore[attr-defined] # Dynamic delegation test
             )
 
     def test_property_delegation_readonly(self) -> None:
@@ -339,7 +339,7 @@ class TestFlextMixinDelegator:
 
         # Test readonly property (don't use hasattr with __getattr__)
         host_with_props = cast("object", host)
-        value = host_with_props.readonly_property
+        value = host_with_props.readonly_property  # type: ignore[attr-defined] # Dynamic delegation test
         if value != "readonly_value":
             raise AssertionError(f"Expected {'readonly_value'}, got {value}")
 
@@ -349,7 +349,7 @@ class TestFlextMixinDelegator:
             FlextOperationError,
             match="Property 'readonly_property' is read-only",
         ):
-            host_with_props.readonly_property = "new_value"
+            host_with_props.readonly_property = "new_value"  # type: ignore[attr-defined] # Dynamic delegation test
 
     def test_private_methods_not_delegated(self) -> None:
         """Test that private methods are not delegated."""
@@ -380,7 +380,7 @@ class TestFlextMixinDelegator:
             FlextOperationError,
             match="Delegation error in ErrorMixin.error_method",
         ):
-            cast("object", host).error_method()
+            cast("object", host).error_method()  # type: ignore[attr-defined] # Dynamic delegation test
 
     def test_method_signature_preservation(self) -> None:
         """Test that method signatures are preserved."""
@@ -646,8 +646,8 @@ class TestValidateDelegationSystem:
 
             def mock_create_delegator(host: object, *mixins: type) -> Mock:
                 # Use dynamic attribute access in test mocking
-                host.delegator = mock_delegator
-                host.is_valid = "not_a_bool"
+                host.delegator = mock_delegator  # type: ignore[attr-defined] # Dynamic delegation test
+                host.is_valid = "not_a_bool"  # type: ignore[attr-defined] # Dynamic delegation test
                 return mock_delegator
 
             mock_create.side_effect = mock_create_delegator
@@ -736,7 +736,7 @@ class TestDelegationSystemEdgeCases:
 
         # Should have the method from the last registered mixin - use cast for dynamic delegation
         host_with_methods = cast("object", host)
-        result = host_with_methods.conflict_method()
+        result = host_with_methods.conflict_method()  # type: ignore[attr-defined] # Dynamic delegation test
         # The actual behavior depends on the order of processing
         if result not in {"mixin1", "mixin2"}:
             msg: str = f"Expected {'mixin1', 'mixin2'}, got {result}"
@@ -825,7 +825,7 @@ class TestDelegationSystemEdgeCases:
             )
         host_with_props = cast("object", host)
         with pytest.raises(ValueError, match="Property getter error"):
-            _ = host_with_props.property_with_error
+            _ = host_with_props.property_with_error  # type: ignore[attr-defined] # Dynamic delegation test
 
     def test_mixin_registry_persistence(self) -> None:
         """Test that mixin registry persists across delegator instances."""

@@ -111,7 +111,7 @@ class TestCoreSOLIDImplementation:
         pure_func = self.core.make_pure(impure_function)
 
         # Should return a function-like object
-        assert callable(pure_func) or pure_func is impure_function
+        assert callable(pure_func) or pure_func is impure_function  # type: ignore[unreachable] # Testing function purity
 
         # Test that it works (implementation might be a placeholder)
         if callable(pure_func):

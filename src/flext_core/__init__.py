@@ -125,7 +125,7 @@ from flext_core.aggregate_root import FlextAggregateRoot
 from flext_core.commands import FlextCommands
 from flext_core.config import (
     FlextBaseSettings,
-    FlextConfig,
+    FlextConfig as FlextConfigLegacy,  # Avoid conflict with semantic FlextConfig
     FlextConfigDefaults,
     FlextConfigOps,
     FlextConfigValidation,
@@ -190,6 +190,7 @@ from flext_core.container import (
     get_typed,
     register_typed,
 )
+from flext_core.context import FlextContext
 from flext_core.core import FlextCore, flext_core
 from flext_core.decorators import (
     FlextDecorators,
@@ -200,7 +201,7 @@ from flext_core.decorators import (
     FlextValidationDecorators,
 )
 from flext_core.domain_services import FlextDomainService
-from flext_core.entities import FlextEntity, FlextEntityFactory
+from flext_core.entities import FlextEntity as FlextEntityDeprecated, FlextEntityFactory
 from flext_core.exceptions import (
     FlextAlreadyExistsError,
     FlextAuthenticationError,
@@ -220,18 +221,11 @@ from flext_core.exceptions import (
 )
 from flext_core.fields import FlextFieldCore, FlextFields
 
-# Smart core removed - experimental features
-# Smart validation removed - experimental features
+# Legacy flext_types compatibility imports (will be deprecated)
 from flext_core.flext_types import (
     Comparable,
-    E,
-    F,
     FlextEntityId,
-    FlextTypes,
-    P,
-    R,
     Serializable,
-    T,
     TAnyDict,
     TAnyList,
     TAnyObject,
@@ -258,9 +252,25 @@ from flext_core.flext_types import (
     TTransformer,
     TUserData,
     TValue,
-    U,
-    V,
     Validatable,
+)
+
+# ===== HARMONIZED FOUNDATION - New Single Source of Truth =====
+# Phase 1: Import from new foundation.py (10 harmonized items)
+from flext_core.foundation import (
+    FlextConfig as FlextConfigHarmonized,
+    # Semantic enums (4 items)
+    FlextConnectionType,
+    FlextDataFormat,
+    FlextEntity as FlextEntityHarmonized,
+    # Factory patterns (1 item)
+    FlextFactory as FlextFactoryHarmonized,
+    # Base classes (4 items)
+    FlextModel as FlextModelHarmonized,
+    FlextOperationStatus as FlextOperationStatusHarmonized,
+    # Semantic namespace (1 item)
+    FlextTypes as FlextTypesHarmonized,
+    FlextValue as FlextValueHarmonized,
 )
 from flext_core.guards import (
     ValidatedModel,
@@ -310,22 +320,29 @@ from flext_core.mixins import (
     FlextValueObjectMixin,
 )
 from flext_core.models import (
+    FlextAuth,
+    # LEGACY MODELS - Backward compatibility (will be deprecated)
     # Base models
     FlextBaseModel,
+    FlextConfig,
     # TypedDict definitions
     FlextConnectionDict,
-    # Core semantic enums
-    FlextConnectionType,
+    # Core semantic enums (moved to semantic_types.py)
+    FlextData,
     # Configuration models
     FlextDatabaseModel,
-    FlextDataFormat,
     # Domain models
     FlextDomainEntity,
     FlextDomainValueObject,
+    FlextEntity,
     FlextEntityDict,
     FlextEntityStatus,
+    FlextFactory,
     FlextImmutableModel,
+    # SEMANTIC PATTERN FOUNDATION - New Layer 0 types
+    FlextModel,
     FlextMutableModel,
+    FlextObs,
     FlextOperationDict,
     # Operation models
     FlextOperationModel,
@@ -335,6 +352,7 @@ from flext_core.models import (
     FlextServiceModel,
     # Data integration models
     FlextSingerStreamModel,
+    FlextValue,
     FlextValueObjectDict,
     # Factory functions
     create_database_model,
@@ -346,7 +364,22 @@ from flext_core.models import (
     model_to_dict_safe,
     validate_all_models,
 )
+
+# SEMANTIC PATTERN OBSERVABILITY - New Foundation Components
+from flext_core.observability import (
+    FlextLoggerProtocol,
+    FlextObservabilityProtocol,
+    configure_minimal_observability,
+    get_observability,
+)
 from flext_core.payload import FlextEvent, FlextMessage, FlextPayload
+
+# SEMANTIC PATTERN PROTOCOLS - Layer 1 contracts
+from flext_core.protocols import (
+    AuthProtocol,
+    ConnectionProtocol,
+    ObservabilityProtocol,
+)
 from flext_core.result import FlextResult, chain, safe_call
 
 # Schema Processing - Reusable components for LDIF/Schema/ACL processing
@@ -361,6 +394,29 @@ from flext_core.schema_processing import (
     EntryValidator,
     ProcessingPipeline,
     RegexProcessor,
+)
+
+# ===== UNIFIED SEMANTIC API - Single Source of Truth =====
+# New harmonized semantic architecture (replaces all fragmented patterns)
+from flext_core.semantic import (
+    FlextBusinessError as FlextSemanticBusinessError,
+    # Convenience exports for most common usage
+    FlextError as FlextSemanticError,
+    FlextSemantic,
+    FlextValidationError as FlextSemanticValidationError,
+    create_business_error as create_semantic_business_error,
+    create_validation_error as create_semantic_validation_error,
+)
+
+# SEMANTIC TYPE SYSTEM - New hierarchical type organization (PREFERRED)
+from flext_core.semantic_types import (
+    AuthProtocol as SemanticAuthProtocol,
+    ConnectionProtocol as SemanticConnectionProtocol,
+    FlextTypeExtension,
+    FlextTypeFactory,
+    FlextTypes,
+    ObservabilityProtocol as SemanticObservabilityProtocol,
+    SingerProtocol,
 )
 
 # Singer Protocol Base Exceptions - Eliminates duplication across Singer projects
@@ -379,6 +435,24 @@ from flext_core.testing_utilities import (
     create_api_test_response,
     create_ldap_test_config,
     create_oud_connection_config,
+)
+
+# Smart core removed - experimental features
+# Smart validation removed - experimental features
+# New standardized type system (Python 3.13) - Legacy compatibility
+from flext_core.types import (
+    E,
+    F,
+    FlextTypesCompat,
+    P,
+    R,
+    T,
+    TComparable,
+    TSerializable,
+    TValidatable,
+    U,
+    V,
+    migrate_from_flext_types,
 )
 from flext_core.utilities import FlextGenerators, FlextUtilities
 from flext_core.validation import FlextPredicates, FlextValidation, FlextValidators
@@ -412,6 +486,7 @@ __all__ = [
     "MAX_PYTHON_VERSION",
     "MIN_PYTHON_VERSION",
     "VERSION",
+    "AuthProtocol",
     "BaseConfigManager",
     "BaseEntry",
     "BaseFileWriter",
@@ -419,7 +494,7 @@ __all__ = [
     "BaseSorter",
     "Comparable",
     "ConfigAttributeValidator",
-    # Centralized config models
+    "ConnectionProtocol",
     "DatabaseConfigDict",
     "E",
     "EntryType",
@@ -428,6 +503,7 @@ __all__ = [
     "FlextAggregateRoot",
     "FlextAlreadyExistsError",
     "FlextApplicationConfig",
+    "FlextAuth",
     "FlextAuthenticationError",
     "FlextBaseConfigModel",
     "FlextBaseModel",
@@ -438,6 +514,8 @@ __all__ = [
     "FlextCompatibilityResult",
     "FlextConfig",
     "FlextConfigDefaults",
+    "FlextConfigHarmonized",
+    "FlextConfigLegacy",
     "FlextConfigOps",
     "FlextConfigValidation",
     "FlextConfigurable",
@@ -447,8 +525,10 @@ __all__ = [
     "FlextConnectionType",
     "FlextConstants",
     "FlextContainer",
+    "FlextContext",
     "FlextCore",
     "FlextCriticalError",
+    "FlextData",
     "FlextDataFormat",
     "FlextDataIntegrationConfig",
     "FlextDatabaseConfig",
@@ -459,8 +539,10 @@ __all__ = [
     "FlextDomainService",
     "FlextDomainValueObject",
     "FlextEntity",
+    "FlextEntityDeprecated",
     "FlextEntityDict",
     "FlextEntityFactory",
+    "FlextEntityHarmonized",
     "FlextEntityId",
     "FlextEntityMixin",
     "FlextEntityStatus",
@@ -470,6 +552,8 @@ __all__ = [
     "FlextEvent",
     "FlextEventPublisher",
     "FlextEventSubscriber",
+    "FlextFactory",
+    "FlextFactoryHarmonized",
     "FlextFieldCore",
     "FlextFieldType",
     "FlextFields",
@@ -488,16 +572,22 @@ __all__ = [
     "FlextLoggableMixin",
     "FlextLogger",
     "FlextLoggerFactory",
+    "FlextLoggerProtocol",
     "FlextLoggingDecorators",
     "FlextMessage",
     "FlextMiddleware",
+    "FlextModel",
+    "FlextModelHarmonized",
     "FlextMutableModel",
     "FlextNotFoundError",
+    "FlextObs",
     "FlextObservabilityConfig",
+    "FlextObservabilityProtocol",
     "FlextOperationDict",
     "FlextOperationError",
     "FlextOperationModel",
     "FlextOperationStatus",
+    "FlextOperationStatusHarmonized",
     "FlextOracleConfig",
     "FlextOracleModel",
     "FlextPayload",
@@ -511,6 +601,10 @@ __all__ = [
     "FlextRedisSettings",
     "FlextRepository",
     "FlextResult",
+    "FlextSemantic",
+    "FlextSemanticBusinessError",
+    "FlextSemanticError",
+    "FlextSemanticValidationError",
     "FlextSerializableMixin",
     "FlextService",
     "FlextServiceModel",
@@ -529,7 +623,11 @@ __all__ = [
     "FlextTimingMixin",
     "FlextTransformError",
     "FlextTypeError",
+    "FlextTypeExtension",
+    "FlextTypeFactory",
     "FlextTypes",
+    "FlextTypesCompat",
+    "FlextTypesHarmonized",
     "FlextUnitOfWork",
     "FlextUtilities",
     "FlextValidatableMixin",
@@ -539,6 +637,8 @@ __all__ = [
     "FlextValidationRule",
     "FlextValidator",
     "FlextValidators",
+    "FlextValue",
+    "FlextValueHarmonized",
     "FlextValueObject",
     "FlextValueObjectDict",
     "FlextValueObjectFactory",
@@ -547,20 +647,27 @@ __all__ = [
     "JWTConfigDict",
     "LDAPConfigDict",
     "ObservabilityConfigDict",
+    "ObservabilityProtocol",
     "OracleConfigDict",
     "P",
     "ProcessingPipeline",
     "R",
     "RedisConfigDict",
     "RegexProcessor",
+    "SemanticAuthProtocol",
+    "SemanticConnectionProtocol",
+    "SemanticObservabilityProtocol",
+    "SemanticOperationStatus",
     "Serializable",
     "ServiceKey",
     "SingerConfigDict",
+    "SingerProtocol",
     "T",
     "TAnyDict",
     "TAnyList",
     "TAnyObject",
     "TCommand",
+    "TComparable",
     "TConfigDict",
     "TConnectionString",
     "TData",
@@ -577,10 +684,12 @@ __all__ = [
     "TRequestId",
     "TResponse",
     "TResult",
+    "TSerializable",
     "TService",
     "TServiceName",
     "TTransformer",
     "TUserData",
+    "TValidatable",
     "TValue",
     "Timestamped",
     "U",
@@ -592,6 +701,7 @@ __all__ = [
     "check_python_compatibility",
     "compare_versions",
     "configure_flext_container",
+    "configure_minimal_observability",
     "create_api_test_response",
     "create_application_project_config",
     "create_context_exception_factory",
@@ -609,12 +719,15 @@ __all__ = [
     "create_oracle_model",
     "create_oud_connection_config",
     "create_redis_config",
+    "create_semantic_business_error",
+    "create_semantic_validation_error",
     "create_service_model",
     "create_singer_stream_model",
     "flext_core",
     "get_available_features",
     "get_flext_container",
     "get_logger",
+    "get_observability",
     "get_typed",
     "get_version_info",
     "get_version_string",
@@ -627,6 +740,7 @@ __all__ = [
     "make_builder",
     "make_factory",
     "merge_configs",
+    "migrate_from_flext_types",
     "model_to_dict_safe",
     "pure",
     "register_typed",

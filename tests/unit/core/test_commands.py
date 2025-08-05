@@ -56,7 +56,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from datetime import datetime
+from typing import TYPE_CHECKING, cast
 from zoneinfo import ZoneInfo
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 import pytest
 from pydantic import ValidationError
@@ -258,10 +262,10 @@ class TestFlextCommandsCommand:
 
         # Attempt to modify the command directly should raise ValidationError
         with pytest.raises(ValidationError):
-            command.name = "changed"
+            command.name = "changed"  # type: ignore[misc] # Intentional immutability test
 
         with pytest.raises(ValidationError):
-            command.value = 100
+            command.value = 100  # type: ignore[misc] # Intentional immutability test
 
         # Verify values haven't changed
         assert command.name == original_name
@@ -645,7 +649,7 @@ class TestFlextCommandsHandler:
         handler = SampleHandler()
         invalid_command = SampleCommandWithoutValidation(description="test")
 
-        result = handler.process_command(invalid_command)
+        result = handler.process_command(cast("SampleCommand", invalid_command))
         assert result.is_failure
         if "cannot process" not in (result.error or ""):
             msg = "Test assertion failed"
@@ -680,7 +684,7 @@ class TestFlextCommandsHandler:
         handler = SampleHandler()
         invalid_command = "not a command"
 
-        result = handler.execute(invalid_command)
+        result = handler.execute(cast("SampleCommand", invalid_command))
         assert result.is_failure
         if "cannot handle" not in (result.error or ""):
             msg = "Test assertion failed"
@@ -1029,7 +1033,7 @@ class TestFlextCommandsDecorators:
     def test_command_handler_decorator(self) -> None:
         """Test command handler decorator."""
 
-        @FlextCommands.Decorators.command_handler(SampleCommand)
+        @FlextCommands.Decorators.command_handler(SampleCommand)  # type: ignore[arg-type] # Generic decorator pattern
         def handle_test_command(command: SampleCommand) -> FlextResult[str]:
             return FlextResult.ok(f"Decorated: {command.name}")
 
@@ -1048,7 +1052,7 @@ class TestFlextCommandsDecorators:
     def test_command_handler_decorator_with_handler_instance(self) -> None:
         """Test command handler decorator handler instance."""
 
-        @FlextCommands.Decorators.command_handler(SampleCommand)
+        @FlextCommands.Decorators.command_handler(SampleCommand)  # type: ignore[arg-type] # Generic decorator pattern
         def handle_test_command(command: SampleCommand) -> FlextResult[str]:
             return FlextResult.ok(f"Decorated: {command.name}")
 
@@ -1064,7 +1068,7 @@ class TestFlextCommandsDecorators:
     def test_command_handler_decorator_non_result_return(self) -> None:
         """Test command handler decorator with non-FlextResult return."""
 
-        @FlextCommands.Decorators.command_handler(SampleCommand)
+        @FlextCommands.Decorators.command_handler(SampleCommand)  # type: ignore[arg-type] # Generic decorator pattern
         def handle_test_command(command: SampleCommand) -> str:
             return f"Simple: {command.name}"
 
@@ -1179,7 +1183,7 @@ class TestFlextCommandsQuery:
         query = SampleQuery(search_term="test")
 
         with pytest.raises((ValidationError, AttributeError)):
-            query.search_term = "changed"
+            query.search_term = "changed"  # type: ignore[misc] # Intentional immutability test
 
     def test_query_mixin_methods(self) -> None:
         """Test query mixin methods availability."""
@@ -1240,7 +1244,9 @@ class TestFlextCommandsFactoryMethods:
         def handler_func(command: SampleCommand) -> FlextResult[str]:
             return FlextResult.ok(f"Simple: {command.name}")
 
-        handler = FlextCommands.create_simple_handler(handler_func)
+        handler = FlextCommands.create_simple_handler(
+            cast("Callable[[object], object]", handler_func)
+        )
 
         assert isinstance(handler, FlextCommands.Handler)
 
@@ -1259,7 +1265,9 @@ class TestFlextCommandsFactoryMethods:
         def handler_func(command: SampleCommand) -> str:
             return f"Simple: {command.name}"
 
-        handler = FlextCommands.create_simple_handler(handler_func)
+        handler = FlextCommands.create_simple_handler(
+            cast("Callable[[object], object]", handler_func)
+        )
         command = SampleCommand(name="test", value=42)
 
         result = handler.handle(command)

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import time
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, cast
 
 import pytest
 
@@ -39,8 +39,8 @@ class TestPerformanceBenchmarks:
                 .flat_map(lambda x: FlextResult.ok(f"{x}_final"))
             )
 
-        benchmark_func = cast("Callable[[Any], Any]", benchmark)
-        result = benchmark_func(create_and_chain_results)
+        benchmark_func = cast("Callable[[object], object]", benchmark)
+        result = cast("FlextResult[str]", benchmark_func(create_and_chain_results))
         assert result.success
         assert result.data == "initial_step1_step2_final"
 
@@ -67,8 +67,8 @@ class TestPerformanceBenchmarks:
                 return FlextResult.ok("all_retrieved")
             return FlextResult.fail("retrieval_failed")
 
-        benchmark_func = cast("Callable[[Any], Any]", benchmark)
-        result = benchmark_func(container_operations)
+        benchmark_func = cast("Callable[[object], object]", benchmark)
+        result = cast("FlextResult[bool]", benchmark_func(container_operations))
         assert result.success
 
     @pytest.mark.performance

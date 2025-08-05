@@ -37,9 +37,9 @@ class MockEntry(FlextValueObject):
     original_content: str
     identifier: str
 
-    def validate_domain_rules(self) -> FlextResult[None]:
-        """Mock domain validation - always returns success."""
-        return FlextResult.ok(data=None)
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Mock business rules validation - always returns success."""
+        return FlextResult.ok(None)
 
 
 class ConcreteRegexProcessor(RegexProcessor[MockEntry]):
@@ -100,7 +100,7 @@ class ConcreteBaseProcessor(BaseProcessor[MockEntry]):
 class ConcreteBaseEntry(BaseEntry):
     """Concrete implementation of BaseEntry for testing."""
 
-    def validate_domain_rules(self) -> FlextResult[None]:
+    def validate_business_rules(self) -> FlextResult[None]:
         """Mock domain validation - always returns success."""
         return FlextResult.ok(data=None)
 
@@ -209,7 +209,7 @@ class TestBaseEntry:
         from pydantic_core import ValidationError
 
         with pytest.raises(ValidationError, match="Instance is frozen"):
-            entry.entry_type = "new_type"
+            entry.entry_type = "new_type"  # type: ignore[misc] # Intentional immutability test
 
 
 class TestConfigAttributeValidator:

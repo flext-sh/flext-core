@@ -263,7 +263,7 @@ class FlextValueObject(
         )
 
     @abstractmethod
-    def validate_domain_rules(self) -> FlextResult[None]:
+    def validate_business_rules(self) -> FlextResult[None]:
         """Validate value object-specific business rules.
 
         Must return FlextResult for consistent error handling.
@@ -279,7 +279,7 @@ class FlextValueObject(
 
         """
         # Use FlextValidation for comprehensive validation
-        validation_result = self.validate_domain_rules()
+        validation_result = self.validate_business_rules()
         if validation_result.is_failure:
             self.logger.warning(
                 "ValueObject validation failed",
@@ -373,7 +373,7 @@ class FlextValueObject(
         # COMPLEX ORCHESTRATION: Multiple base patterns combined
 
         # 1. Use base validators for pre-validation
-        domain_validation = self.validate_domain_rules()
+        domain_validation = self.validate_business_rules()
         if domain_validation.is_failure:
             self.logger.warning(
                 "Value object validation failed during payload conversion",
@@ -537,7 +537,7 @@ class FlextValueObjectFactory:
             try:
                 data = {**(defaults or {}), **kwargs}
                 instance = value_object_class(**data)
-                validation_result = instance.validate_domain_rules()
+                validation_result = instance.validate_business_rules()
                 if validation_result.is_failure:
                     return FlextResult.fail(
                         validation_result.error or "Validation failed",

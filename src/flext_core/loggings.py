@@ -211,13 +211,13 @@ def setup_custom_trace_level() -> None:
         # Note: _LEVEL_TO_NAME may not exist in all versions
         if hasattr(structlog.stdlib, "_LEVEL_TO_NAME"):
             # Use type ignore for dynamic attribute access
-            structlog.stdlib._LEVEL_TO_NAME[TRACE_LEVEL] = "trace"
+            structlog.stdlib._LEVEL_TO_NAME[TRACE_LEVEL] = "trace"  # type: ignore[attr-defined]
     elif hasattr(structlog.stdlib, "NAME_TO_LEVEL"):
         structlog.stdlib.NAME_TO_LEVEL["trace"] = TRACE_LEVEL
         # Some versions may not have LEVEL_TO_NAME
         if hasattr(structlog.stdlib, "LEVEL_TO_NAME"):
             # Use type ignore for dynamic attribute access
-            structlog.stdlib.LEVEL_TO_NAME[TRACE_LEVEL] = "trace"
+            structlog.stdlib.LEVEL_TO_NAME[TRACE_LEVEL] = "trace"  # type: ignore[attr-defined]
 
     # Add trace method to standard logger
     def trace_method(
@@ -230,7 +230,7 @@ def setup_custom_trace_level() -> None:
             self._log(TRACE_LEVEL, msg, args)
 
     # Use type ignore for dynamic attribute assignment
-    logging.Logger.trace = trace_method
+    logging.Logger.trace = trace_method  # type: ignore[attr-defined]
 
     # Add trace method to structlog BoundLogger
     def bound_trace_method(
@@ -239,10 +239,10 @@ def setup_custom_trace_level() -> None:
         **kwargs: object,
     ) -> object:
         # Use type ignore for dynamic attribute access
-        return self._proxy_to_logger("trace", event, **kwargs)
+        return self._proxy_to_logger("trace", event, **kwargs)  # type: ignore[attr-defined]
 
     # Use type ignore for dynamic attribute assignment
-    structlog.stdlib.BoundLogger.trace = bound_trace_method
+    structlog.stdlib.BoundLogger.trace = bound_trace_method  # type: ignore[attr-defined]
 
 
 # Initialize custom TRACE level
@@ -690,7 +690,7 @@ class FlextLogger:
         _ = log_level or _log_level or FlextLogLevel.INFO
 
         # Build processors list while preserving essential ones
-        # Use list of objects to handle structlog processor types
+        # Use proper structlog processor type
         processors: list[object] = [
             structlog.stdlib.filter_by_level,
             structlog.stdlib.add_logger_name,
@@ -715,7 +715,7 @@ class FlextLogger:
         # Reconfigure structlog with preserved essential functionality
         # Use type ignore for processor compatibility across structlog versions
         structlog.configure(
-            processors=processors,
+            processors=processors,  # type: ignore[arg-type]
             context_class=dict,
             logger_factory=structlog.stdlib.LoggerFactory(),
             wrapper_class=structlog.stdlib.BoundLogger,

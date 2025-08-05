@@ -43,7 +43,7 @@ def create_test_entity(entity_class: type, **kwargs: object) -> object:
 
     # Additional domain validation for aggregate roots
     if isinstance(instance, FlextAggregateRoot):
-        validation_result = instance.validate_domain_rules()
+        validation_result = instance.validate_business_rules()
         if validation_result.is_failure:
             validation_msg: str = f"Domain validation failed for {entity_class.__name__}: {validation_result.error}"
             raise AssertionError(validation_msg)
@@ -97,7 +97,7 @@ class SampleEntity(FlextEntity):
     name: str
     status: str = "active"
 
-    def validate_domain_rules(self) -> FlextResult[None]:
+    def validate_business_rules(self) -> FlextResult[None]:
         """Validate test entity domain rules."""
         if not self.name.strip():
             return FlextResult.fail("Entity name cannot be empty")
@@ -110,8 +110,8 @@ class SampleValueObject(FlextValueObject):
     amount: int
     currency: str = "USD"
 
-    def validate_domain_rules(self) -> FlextResult[None]:
-        """Validate test value object domain rules."""
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Validate test value object business rules."""
 
         if self.amount < 0:
             return FlextResult.fail("Amount cannot be negative")
@@ -124,7 +124,7 @@ class SampleAggregateRoot(FlextAggregateRoot):
     title: str
     description: str = ""
 
-    def validate_domain_rules(self) -> FlextResult[None]:
+    def validate_business_rules(self) -> FlextResult[None]:
         """Validate test aggregate root domain rules."""
 
         if not self.title.strip():
@@ -191,10 +191,10 @@ class TestFlextEntity:
         entity = cast("SampleEntity", entity_obj)
 
         with pytest.raises((ValidationError, AttributeError, TypeError)):
-            entity.name = "New Name"
+            entity.name = "New Name"  # type: ignore[misc] # Intentional immutability test
 
         with pytest.raises((ValidationError, AttributeError, TypeError)):
-            entity.id = "new-id"
+            entity.id = "new-id"  # type: ignore[misc] # Intentional immutability test
 
     def test_entity_equality_by_id(self) -> None:
         """Test that entities are equal based on ID."""
@@ -285,7 +285,7 @@ class TestFlextValueObject:
         vo = SampleValueObject(amount=100)
 
         with pytest.raises((ValidationError, AttributeError, TypeError)):
-            vo.amount = 200
+            vo.amount = 200  # type: ignore[misc] # Intentional immutability test
 
     def test_value_object_equality_by_value(self) -> None:
         """Test that value objects are equal based on all attributes."""
@@ -379,10 +379,10 @@ class TestFlextDomainEvent:
         )
 
         with pytest.raises((ValidationError, AttributeError, TypeError)):
-            event.action = "update"
+            event.action = "update"  # type: ignore[misc] # Intentional immutability test
 
         with pytest.raises((ValidationError, AttributeError, TypeError)):
-            event.timestamp = datetime.now(UTC)
+            event.timestamp = datetime.now(UTC)  # type: ignore[misc] # Intentional immutability test
 
     def test_domain_event_validation(self) -> None:
         """Test domain event validation."""
@@ -561,10 +561,10 @@ class TestFlextAggregateRoot:
         aggregate = cast("SampleAggregateRoot", aggregate_obj)
 
         with pytest.raises((ValidationError, AttributeError, TypeError)):
-            aggregate.title = "New Title"
+            aggregate.title = "New Title"  # type: ignore[misc] # Intentional immutability test
 
         with pytest.raises((ValidationError, AttributeError, TypeError)):
-            aggregate.version = 2
+            aggregate.version = 2  # type: ignore[misc] # Intentional immutability test
 
     def test_aggregate_root_inheritance_from_entity(self) -> None:
         """Test that aggregate root inherits entity behavior."""
@@ -828,7 +828,7 @@ class TestEntitiesIntegration:
 
         # All should be immutable
         with pytest.raises((ValidationError, AttributeError, TypeError)):
-            entity.id = "new-id"
+            entity.id = "new-id"  # type: ignore[misc] # Intentional immutability test
 
         # All should be serializable
         data = entity.model_dump()

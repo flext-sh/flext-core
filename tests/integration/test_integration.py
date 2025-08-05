@@ -31,8 +31,8 @@ class TestLibraryIntegration:
         # Test FlextEntityId
         entity_id: FlextEntityId = "entity-123"
         if entity_id != "entity-123":
-            msg: str = f"Expected {'entity-123'}, got {entity_id}"
-            raise AssertionError(msg)
+            entity_msg: str = f"Expected {'entity-123'}, got {entity_id}"
+            raise AssertionError(entity_msg)
 
         # Test FlextContainer
         container = FlextContainer()
@@ -42,8 +42,8 @@ class TestLibraryIntegration:
         service_result = container.get("service")
         assert service_result.success
         if service_result.data != "value":
-            msg: str = f"Expected {'value'}, got {service_result.data}"
-            raise AssertionError(msg)
+            service_msg: str = f"Expected {'value'}, got {service_result.data}"
+            raise AssertionError(service_msg)
 
         # Test global container
         global_container = get_flext_container()

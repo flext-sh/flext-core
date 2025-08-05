@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+from typing import cast
 
 import pytest
 from pydantic import ValidationError
@@ -103,7 +104,7 @@ class TestFlextFieldCore:
 
         # Should not be able to modify frozen model
         with pytest.raises((AttributeError, ValidationError)):
-            field.field_name = "new_name"
+            field.field_name = "new_name"  # type: ignore[misc] # Intentional read-only property test
 
     def test_field_pattern_validation(self) -> None:
         """Test regex pattern validation."""
@@ -782,7 +783,7 @@ class TestFlextFieldMetadata:
         metadata = FlextFieldMetadata(field_id="immutable")
 
         with pytest.raises((AttributeError, ValidationError)):
-            metadata.field_id = "new_id"
+            metadata.field_id = "new_id"  # type: ignore[misc] # Intentional immutability test
 
 
 class TestFlextFieldRegistry:
@@ -1530,7 +1531,7 @@ class TestFieldEdgeCases:
             field_id="perf_field",
             field_name="perf_name",
             field_type=FlextFieldType.STRING.value,
-            allowed_values=large_allowed_values,
+            allowed_values=cast("list[object]", large_allowed_values),
         )
 
         # Should handle large allowed values list efficiently

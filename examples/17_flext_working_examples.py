@@ -42,7 +42,15 @@ def main() -> None:  # noqa: PLR0915
         return
 
     user = user_result.data
-    assert user is not None
+
+
+    if user is None:
+
+
+        print("❌ Operation returned None data")
+
+
+        return
 
     print(
         f"  User: {user.name} ({user.email_address.email}), "
@@ -86,7 +94,12 @@ def main() -> None:  # noqa: PLR0915
     result = handler.execute(command)
     if result.success:
         created_user = result.data
-        assert created_user is not None
+
+        if created_user is None:
+
+            print("❌ Operation returned None data")
+
+            return
         print(f"  Created: {created_user.name} ({created_user.email_address.email})")
     print()
 

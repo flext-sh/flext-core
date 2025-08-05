@@ -1,453 +1,363 @@
-"""FLEXT Core Constants - Foundation Layer Constants Management.
+"""FLEXT Core Constants - HARMONIZED SINGLE SOURCE OF TRUTH.
 
-Centralized constants providing the foundational values used throughout all 32 projects
-in the FLEXT ecosystem. Establishes standardized error codes, environment settings,
-validation patterns, and system defaults that ensure consistent behavior across
-the entire architectural stack.
+AUTHORITY: This is the ONLY place where constants are defined in the FLEXT ecosystem.
+ALL other patterns (Pydantic, Config/CLI, etc.) CONSUME from here, NEVER define their own.
+
+ELIMINATES ALL DUPLICATIONS between Constants, Pydantic, Config/CLI patterns.
+Provides comprehensive constant categories covering ALL domains:
+Core, Models, Configuration, CLI, Infrastructure.
 
 Module Role in Architecture:
-    Foundation Layer → Constants → All Other Layers
+    Foundation Layer → SINGLE SOURCE → All Other Patterns
 
-    This module provides essential constants that enable:
-    - Standardized error codes across all FlextResult operations
-    - Environment-aware configuration for multi-deployment scenarios
-    - Validation patterns for data integrity across ecosystem projects
-    - System defaults for timeouts, pagination, and performance tuning
-    - Version management for ecosystem compatibility tracking
-
-Constant Categories by Usage:
-    Error Codes: Standardized classification for FlextResult error handling
-    Environment Types: Development, staging, production deployment contexts
-    Log Levels: Structured logging priorities aligned with enterprise monitoring
-    Field Types: Data validation constants for domain model validation
-    Timeout Values: Performance-tuned defaults for network and processing operations
-    Validation Patterns: Regex patterns for email, URLs, and data format validation
-
-Development Status (v0.9.0 → 1.0.0):
-    ✅ Production Ready: Error codes, environment types, validation patterns
-    🔄 Enhancement: Observability constants (Enhancement Priority 2)
-    📋 TODO Integration: Plugin architecture constants (Plugin Priority 3)
-
-Ecosystem Integration:
-    - Used by all 32 projects for consistent error classification
-    - Enables standardized monitoring and alerting across deployments
-    - Provides configuration defaults that work across different project types
-    - Supports version compatibility checking for ecosystem updates
-
-Usage Patterns Across Projects:
-    # Standardized error handling in Singer taps/targets
-    if connection_failed:
-        return FlextResult.fail(ERROR_CODES["CONNECTION_ERROR"])
-
-    # Environment-aware configuration in services
-    if FlextEnvironment.PRODUCTION:
-        timeout = DEFAULT_TIMEOUT * 2
-
-    # Validation in domain entities
-    if not EMAIL_PATTERN.match(email):
-        return FlextResult.fail(ERROR_CODES["VALIDATION_ERROR"])
-
-Design Principles:
-    - Single source of truth eliminates constant duplication
-    - Type-safe enums provide IDE support and runtime validation
-    - Backward compatibility ensures smooth ecosystem updates
-    - Performance-optimized for high-frequency access patterns
-    - Hierarchical organization supports different access patterns
+    This module provides UNIFIED constants that enable:
+    - SINGLE definition of timeouts, retries, limits across ALL patterns
+    - Configuration system constants (priorities, files, environments)
+    - CLI system constants (arguments, prefixes, formats)
+    - Model system constants (validation, serialization settings)
+    - Infrastructure constants (database ports, network settings)
 
 Quality Standards:
-    - All constants must be used by multiple ecosystem projects
-    - Error codes must align with FlextResult failure patterns
-    - Environment constants must support production deployment needs
-    - Validation patterns must be tested across real-world data
-
-See Also:
-    docs/python-module-organization.md: Constants architecture guidance
-    src/flext_core/exceptions.py: Related error hierarchy implementation
+    - ZERO duplications across any patterns
+    - ALL patterns must consume from this single source
+    - NO pattern-specific constant definitions allowed
+    - Complete type safety with ClassVar annotations
 
 Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
 
 from enum import Enum
-
-# =============================================================================
-# ERROR CODES - sem underscore conforme diretrizes
-# =============================================================================
-
-ERROR_CODES = {
-    "GENERIC_ERROR": "GENERIC_ERROR",
-    "VALIDATION_ERROR": "VALIDATION_ERROR",
-    "TYPE_ERROR": "TYPE_ERROR",
-    "UNWRAP_ERROR": "UNWRAP_ERROR",
-    "NULL_DATA_ERROR": "NULL_DATA_ERROR",
-    "EXPECTATION_ERROR": "EXPECTATION_ERROR",
-    "INVALID_ARGUMENT": "INVALID_ARGUMENT",
-    "OPERATION_ERROR": "OPERATION_ERROR",
-    "FILTER_ERROR": "FILTER_ERROR",
-    "EXCEPTION_ERROR": "EXCEPTION_ERROR",
-    "MULTIPLE_ERRORS": "MULTIPLE_ERRORS",
-    "CONTEXT_ERROR": "CONTEXT_ERROR",
-    "CONDITIONAL_ERROR": "CONDITIONAL_ERROR",
-    "SIDE_EFFECT_ERROR": "SIDE_EFFECT_ERROR",
-    "CHAIN_ERROR": "CHAIN_ERROR",
-    "MAP_ERROR": "MAP_ERROR",
-    "BIND_ERROR": "BIND_ERROR",
-    # New specialized error codes
-    "BUSINESS_RULE_ERROR": "BUSINESS_RULE_ERROR",
-    "RETRY_ERROR": "RETRY_ERROR",
-    "CIRCUIT_BREAKER_ERROR": "CIRCUIT_BREAKER_ERROR",
-    "CONCURRENCY_ERROR": "CONCURRENCY_ERROR",
-    "RESOURCE_ERROR": "RESOURCE_ERROR",
-    "SERIALIZATION_ERROR": "SERIALIZATION_ERROR",
-    "DATABASE_ERROR": "DATABASE_ERROR",
-    "API_ERROR": "API_ERROR",
-    "EVENT_ERROR": "EVENT_ERROR",
-    "TIMEOUT_ERROR": "TIMEOUT_ERROR",
-    "SECURITY_ERROR": "SECURITY_ERROR",
-    "CONFIGURATION_ERROR": "CONFIGURATION_ERROR",
-    # Additional error codes used in exceptions module
-    "AUTH_ERROR": "AUTH_ERROR",
-    "CONNECTION_ERROR": "CONNECTION_ERROR",
-    "CRITICAL_ERROR": "CRITICAL_ERROR",
-    "EXTERNAL_ERROR": "EXTERNAL_ERROR",
-    "MIGRATION_ERROR": "MIGRATION_ERROR",
-    "PERMISSION_ERROR": "PERMISSION_ERROR",
-    "PROCESSING_ERROR": "PROCESSING_ERROR",
-    "CHAINED_ERROR": "CHAINED_ERROR",
-    "RETRYABLE_ERROR": "RETRYABLE_ERROR",
-    "UNKNOWN_ERROR": "UNKNOWN_ERROR",
-    # Operation-specific error codes
-    "FALLBACK_FAILURE": "FALLBACK_FAILURE",
-    "OPERATION_AND_FALLBACK_FAILURE": "OPERATION_AND_FALLBACK_FAILURE",
-    "OPERATION_FAILURE": "OPERATION_FAILURE",
-    "NOT_FOUND": "NOT_FOUND",
-    "ALREADY_EXISTS": "ALREADY_EXISTS",
-    "CONFIG_ERROR": "CONFIG_ERROR",
-}
-
-# =============================================================================
-# MESSAGES - sem underscore conforme diretrizes
-# =============================================================================
-
-MESSAGES = {
-    "UNKNOWN_ERROR": "Unknown error occurred",
-    "FILTER_FAILED": "Filter condition not met",
-    "VALIDATION_FAILED": "Validation failed",
-    "OPERATION_FAILED": "Operation failed",
-    "UNWRAP_FAILED": "Cannot unwrap failed result",
-    "NULL_DATA": "Result data is None",
-    "INVALID_INPUT": "Invalid input provided",
-    "TYPE_MISMATCH": "Type mismatch error",
-    # Consolidated empty validation messages
-    "ENTITY_ID_EMPTY": "Entity ID cannot be empty",
-    "SERVICE_NAME_EMPTY": "Service name cannot be empty",
-    "NAME_EMPTY": "Name cannot be empty",
-    "MESSAGE_EMPTY": "Message cannot be empty",
-    "EVENT_TYPE_EMPTY": "Event type cannot be empty",
-    "VALUE_EMPTY": "Value cannot be empty",
-    # New specialized error messages
-    "BUSINESS_RULE_VIOLATED": "Business rule violated",
-    "RETRY_EXHAUSTED": "Retry attempts exhausted",
-    "CIRCUIT_BREAKER_OPEN": "Circuit breaker is open",
-    "CONCURRENT_MODIFICATION": "Concurrent modification detected",
-    "RESOURCE_UNAVAILABLE": "Resource is unavailable",
-    "SERIALIZATION_FAILED": "Serialization failed",
-    "DATABASE_CONNECTION_FAILED": "Database connection failed",
-    "API_CALL_FAILED": "API call failed",
-    "EVENT_PROCESSING_FAILED": "Event processing failed",
-    "OPERATION_TIMEOUT": "Operation timed out",
-    "SECURITY_VIOLATION": "Security violation detected",
-    "CONFIGURATION_INVALID": "Configuration is invalid",
-}
-
-# =============================================================================
-# STATUS CODES - sem underscore conforme diretrizes
-# =============================================================================
-
-STATUS_CODES = {
-    "SUCCESS": "SUCCESS",
-    "FAILURE": "FAILURE",
-    "PENDING": "PENDING",
-    "PROCESSING": "PROCESSING",
-    "CANCELLED": "CANCELLED",
-}
-
-# =============================================================================
-# LOG LEVELS - eliminado para usar apenas FlextLogLevel Enum
-# =============================================================================
-
-# LOG_LEVELS removido - usar FlextLogLevel.get_numeric_levels() para compatibilidade
-
-# =============================================================================
-# VALIDATION RULES - sem underscore conforme diretrizes
-# =============================================================================
-
-VALIDATION_RULES = {
-    "REQUIRED": "REQUIRED",
-    "OPTIONAL": "OPTIONAL",
-    "NULLABLE": "NULLABLE",
-    "NON_EMPTY": "NON_EMPTY",
-}
-
-# =============================================================================
-# ENUMS - sem underscore conforme diretrizes
-# =============================================================================
+from typing import ClassVar
 
 
-class FlextLogLevel(Enum):
-    """Log level constants for structured logging system.
+class FlextSemanticConstants:
+    """SINGLE SOURCE OF TRUTH for all FLEXT ecosystem constants.
 
-    Provides standard log level constants for use throughout the FLEXT Core
-    library. These levels correspond to standard logging practices with
-    consistent naming and priority ordering.
+    ELIMINATES ALL DUPLICATIONS between Constants, Pydantic, Config/CLI patterns.
+    Provides comprehensive constant categories covering ALL domains:
+    Core, Models, Configuration, CLI, Infrastructure.
 
-    Log Level Hierarchy (lowest to highest priority):
-        - TRACE: Most verbose debugging information for detailed tracing
-        - DEBUG: General debugging information for development
-        - INFO: General information about application flow
-        - WARNING: Potentially harmful situations that don't stop execution
-        - ERROR: Error events that allow application to continue
-        - CRITICAL: Very severe error events that may abort the application
-
-    Usage:
-        logger.set_level(FlextLogLevel.DEBUG)
-        if level == FlextLogLevel.ERROR:
-            handle_error()
+    AUTHORITY: This is the ONLY place where constants are defined.
+    ALL other patterns CONSUME from here, NEVER define their own.
     """
 
-    DEBUG = "DEBUG"
-    INFO = "INFO"
-    WARNING = "WARNING"
-    ERROR = "ERROR"
-    CRITICAL = "CRITICAL"
-    TRACE = "TRACE"
+    # Legacy compatibility - ERROR_CODES as class attribute
+    ERROR_CODES: ClassVar[dict[str, str]] = {}
+    
+    # Legacy compatibility - VERSION as direct attribute
+    VERSION: ClassVar[str] = "0.9.0"
 
-    def __hash__(self) -> int:
-        """Hash based on enum value."""
-        return hash(self.value)
+    class Core:
+        """Core system constants shared across ecosystem."""
 
-    def __eq__(self, other: object) -> bool:
-        """Support comparison with string values for test compatibility."""
-        if isinstance(other, str):
-            return self.value == other
-        return super().__eq__(other)
+        NAME = "FLEXT"
+        VERSION = "0.9.0"
+        ECOSYSTEM_SIZE = 33
+        PYTHON_VERSION = "3.13+"
+        ARCHITECTURE = "clean_architecture"
 
-    @classmethod
-    def get_numeric_levels(cls) -> dict[str, int]:
-        """Get numeric level values for logging compatibility.
+    class Errors:
+        """ALL error codes - SINGLE SOURCE for entire ecosystem."""
 
-        Returns:
-            Dictionary mapping level names to numeric values
+        GENERIC_ERROR = "GENERIC_ERROR"
+        VALIDATION_ERROR = "VALIDATION_ERROR"
+        CONNECTION_ERROR = "CONNECTION_ERROR"
+        AUTHENTICATION_ERROR = "AUTHENTICATION_ERROR"
+        BUSINESS_RULE_ERROR = "BUSINESS_RULE_ERROR"
+        TYPE_ERROR = "TYPE_ERROR"
+        UNWRAP_ERROR = "UNWRAP_ERROR"
+        CONFIGURATION_ERROR = "CONFIGURATION_ERROR"
+        CLI_ERROR = "CLI_ERROR"
+        NULL_DATA_ERROR = "NULL_DATA_ERROR"
+        EXPECTATION_ERROR = "EXPECTATION_ERROR"
+        INVALID_ARGUMENT = "INVALID_ARGUMENT"
+        OPERATION_ERROR = "OPERATION_ERROR"
+        FILTER_ERROR = "FILTER_ERROR"
+        EXCEPTION_ERROR = "EXCEPTION_ERROR"
+        MULTIPLE_ERRORS = "MULTIPLE_ERRORS"
+        CONTEXT_ERROR = "CONTEXT_ERROR"
+        CONDITIONAL_ERROR = "CONDITIONAL_ERROR"
+        SIDE_EFFECT_ERROR = "SIDE_EFFECT_ERROR"
+        CHAIN_ERROR = "CHAIN_ERROR"
+        MAP_ERROR = "MAP_ERROR"
+        BIND_ERROR = "BIND_ERROR"
+        RETRY_ERROR = "RETRY_ERROR"
+        CIRCUIT_BREAKER_ERROR = "CIRCUIT_BREAKER_ERROR"
+        CONCURRENCY_ERROR = "CONCURRENCY_ERROR"
+        RESOURCE_ERROR = "RESOURCE_ERROR"
+        SERIALIZATION_ERROR = "SERIALIZATION_ERROR"
+        DATABASE_ERROR = "DATABASE_ERROR"
+        API_ERROR = "API_ERROR"
+        EVENT_ERROR = "EVENT_ERROR"
+        TIMEOUT_ERROR = "TIMEOUT_ERROR"
+        SECURITY_ERROR = "SECURITY_ERROR"
+        AUTH_ERROR = "AUTH_ERROR"
+        CRITICAL_ERROR = "CRITICAL_ERROR"
+        EXTERNAL_ERROR = "EXTERNAL_ERROR"
+        MIGRATION_ERROR = "MIGRATION_ERROR"
+        PERMISSION_ERROR = "PERMISSION_ERROR"
+        PROCESSING_ERROR = "PROCESSING_ERROR"
+        CHAINED_ERROR = "CHAINED_ERROR"
+        RETRYABLE_ERROR = "RETRYABLE_ERROR"
+        UNKNOWN_ERROR = "UNKNOWN_ERROR"
+        FALLBACK_FAILURE = "FALLBACK_FAILURE"
+        OPERATION_AND_FALLBACK_FAILURE = "OPERATION_AND_FALLBACK_FAILURE"
+        OPERATION_FAILURE = "OPERATION_FAILURE"
+        NOT_FOUND = "NOT_FOUND"
+        ALREADY_EXISTS = "ALREADY_EXISTS"
+        CONFIG_ERROR = "CONFIG_ERROR"
 
-        """
-        return {
-            "CRITICAL": 50,
-            "ERROR": 40,
-            "WARNING": 30,
-            "INFO": 20,
-            "DEBUG": 10,
-            "TRACE": 5,
-        }
+    class Messages:
+        """ALL system messages - SINGLE SOURCE."""
 
-    def get_numeric_value(self) -> int:
-        """Get numeric value for this log level.
+        SUCCESS = "Operation completed successfully"
+        STARTED = "Operation started"
+        COMPLETED = "Operation completed"
+        FAILED = "Operation failed"
+        VALIDATING = "Validating input"
+        CONFIGURING = "Configuring system"
+        UNKNOWN_ERROR = "Unknown error occurred"
+        FILTER_FAILED = "Filter condition not met"
+        VALIDATION_FAILED = "Validation failed"
+        OPERATION_FAILED = "Operation failed"
+        UNWRAP_FAILED = "Cannot unwrap failed result"
+        NULL_DATA = "Result data is None"
+        INVALID_INPUT = "Invalid input provided"
+        TYPE_MISMATCH = "Type mismatch error"
+        ENTITY_ID_EMPTY = "Entity ID cannot be empty"
+        SERVICE_NAME_EMPTY = "Service name cannot be empty"
+        NAME_EMPTY = "Name cannot be empty"
+        MESSAGE_EMPTY = "Message cannot be empty"
+        EVENT_TYPE_EMPTY = "Event type cannot be empty"
+        VALUE_EMPTY = "Value cannot be empty"
+        BUSINESS_RULE_VIOLATED = "Business rule violated"
+        RETRY_EXHAUSTED = "Retry attempts exhausted"
+        CIRCUIT_BREAKER_OPEN = "Circuit breaker is open"
+        CONCURRENT_MODIFICATION = "Concurrent modification detected"
+        RESOURCE_UNAVAILABLE = "Resource is unavailable"
+        SERIALIZATION_FAILED = "Serialization failed"
+        DATABASE_CONNECTION_FAILED = "Database connection failed"
+        API_CALL_FAILED = "API call failed"
+        EVENT_PROCESSING_FAILED = "Event processing failed"
+        OPERATION_TIMEOUT = "Operation timed out"
+        SECURITY_VIOLATION = "Security violation detected"
+        CONFIGURATION_INVALID = "Configuration is invalid"
 
-        Returns:
-            Numeric priority value for this level
+    class Status:
+        """ALL status values - SINGLE SOURCE."""
 
-        """
-        return self.get_numeric_levels()[self.value]
+        ACTIVE = "active"
+        INACTIVE = "inactive"
+        PENDING = "pending"
+        COMPLETED = "completed"
+        FAILED = "failed"
+        RUNNING = "running"
+        CANCELLED = "cancelled"
+        SUCCESS = "SUCCESS"
+        FAILURE = "FAILURE"
+        PROCESSING = "PROCESSING"
 
+    class Patterns:
+        """ALL validation patterns - SINGLE SOURCE."""
 
-class FlextEnvironment(Enum):
-    """Environment constants for application deployment contexts.
-
-    Defines standard environment types for application configuration and
-    deployment strategies. Used throughout the system for environment-specific
-    behavior and configuration management.
-
-    Environment Types:
-        - DEVELOPMENT: Local development environment with debug features
-        - STAGING: Pre-production environment for testing and validation
-        - PRODUCTION: Live production environment with optimized settings
-        - TESTING: Automated testing environment with test-specific configuration
-
-    Usage:
-        if get_environment() == FlextEnvironment.PRODUCTION:
-            enable_performance_optimizations()
-    """
-
-    DEVELOPMENT = "development"
-    PRODUCTION = "production"
-    STAGING = "staging"
-    TESTING = "testing"
-
-
-class FlextFieldType(Enum):
-    """Field type constants for data validation and field definitions.
-
-    Defines standard field types for validation, schema definition, and
-    data processing operations. Used by validation system and field
-    definition components for type consistency.
-
-    Supported Field Types:
-        - STRING: Text and string data with length constraints
-        - INTEGER: Whole number values with range validation
-        - FLOAT: Decimal number values with precision handling
-        - BOOLEAN: True/false boolean values
-        - DATE: Date values without time component
-        - DATETIME: Date and time values with timezone support
-        - UUID: Universally unique identifier format
-        - EMAIL: Email address format with validation
-
-    Usage:
-        field = FlextFieldCore(
-            field_type=FlextFieldType.EMAIL,
-            pattern=EMAIL_PATTERN
-        )
-    """
-
-    STRING = "string"
-    INTEGER = "integer"
-    FLOAT = "float"
-    BOOLEAN = "boolean"
-    DATE = "date"
-    DATETIME = "datetime"
-    UUID = "uuid"
-    EMAIL = "email"
-
-
-# =============================================================================
-# MAIN CONSTANTS CLASS - consolidado sem base
-# =============================================================================
-
-
-class FlextConstants:
-    """Consolidated constants providing single source of truth.
-
-    Central repository for all system constants, patterns, defaults, and configuration
-    values. Eliminates base constant modules following the "deliver more with much less"
-    principle while maintaining comprehensive constant management.
-
-    Architecture:
-        - Single source of truth for all constant definitions across the system
-        - No underscore prefixes on public objects for clean API access
-        - Nested classes for logical grouping and namespace organization
-        - Direct access patterns for frequently used constants
-        - Legacy compatibility through wrapper classes for smooth migration
-        - Enterprise-grade constant management with validation and documentation
-
-    Constant Categories:
-        - ERROR_CODES: Standardized error classification codes for exception handling
-        - MESSAGES: Default error and status messages for user communication
-        - STATUS_CODES: Operation and process status indicators for workflow management
-        - LOG_LEVELS: Logging level definitions with numeric values for priority
-        - VALIDATION_RULES: Field validation rule identifiers for data integrity
-        - Regex patterns: Common validation patterns for data format verification
-        - Default values: System defaults for timeouts, sizes, and configuration
-        - Project metadata: Version, name, and project information for identification
-
-    Nested Classes:
-        - Prefixes: Common prefixes for naming conventions and code organization
-        - LogLevels: Legacy logging level access for backward compatibility
-        - Performance: Performance-related constants and thresholds for optimization
-        - Defaults: Default values for entities and operations with sensible fallbacks
-        - Limits: System limits and constraints for validation and security
-
-    Enterprise Features:
-        - Comprehensive error classification supporting operational monitoring
-        - Performance-tuned constants optimized for enterprise workloads
-        - Validation patterns ensuring data integrity across the system
-        - Environment-aware constants for multi-deployment scenarios
-        - Version management support for release tracking and compatibility
-
-    Usage Patterns:
-        # Direct access to frequently used constants
-        version = FlextConstants.VERSION
-        email_pattern = FlextConstants.EMAIL_PATTERN
-
-        # Nested class access for grouped constants
-        cache_size = FlextConstants.Performance.CACHE_SIZE_LARGE
-        max_events = FlextConstants.Limits.MAX_DOMAIN_EVENTS
-
-        # Error handling with standardized codes
-        return FlextResult.fail(
-            FlextConstants.MESSAGES["VALIDATION_FAILED"],
-            error_code=FlextConstants.ERROR_CODES["VALIDATION_ERROR"]
-        )
-
-        # Environment-specific configuration
-        if env == FlextConstants.PRODUCTION:
-            configure_production_settings()
-
-        # Performance optimization
-        cache = LRUCache(maxsize=FlextConstants.Performance.CACHE_SIZE_LARGE)
-    """
-
-    # Error codes e messages - objetos sem underscore
-    ERROR_CODES = ERROR_CODES
-    MESSAGES = MESSAGES
-    STATUS_CODES = STATUS_CODES
-    VALIDATION_RULES = VALIDATION_RULES
-
-    # Regex patterns
-    EMAIL_PATTERN = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
-    UUID_PATTERN = r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
-    URL_PATTERN = r"^https?://[^\s/$.?#].[^\s]*$"
-    IDENTIFIER_PATTERN = r"^[a-zA-Z_][a-zA-Z0-9_]*$"
-    SERVICE_NAME_PATTERN = r"^[a-zA-Z][a-zA-Z0-9_-]*$"
-
-    # Default values
-    DEFAULT_TIMEOUT = 30
-    DEFAULT_RETRIES = 3
-    DEFAULT_PAGE_SIZE = 100
-    DEFAULT_LOG_LEVEL = "INFO"
-
-    # Project metadata
-    VERSION = "0.9.0"
-    NAME = "flext-core"
-
-    class Prefixes:
-        """Common prefixes used in the system."""
-
-        PRIVATE_PREFIX = "_"
-        INTERNAL_PREFIX = "__"
-        PUBLIC_PREFIX = ""
-
-    # LogLevels class removida - usar FlextLogLevel Enum diretamente
-
-    class Performance:
-        """Performance-related constants."""
-
-        CACHE_SIZE_SMALL = 100
-        CACHE_SIZE_LARGE = 1000
-        TIMEOUT_SHORT = 5000  # ms
-        TIMEOUT_LONG = 30000  # ms
+        EMAIL_PATTERN = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+        UUID_PATTERN = r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        URL_PATTERN = r"^https?://.+"
+        PASSWORD_PATTERN = r"^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{8,}$"  # noqa: S105
+        IPV4_PATTERN = r"^(\d{1,3}\.){3}\d{1,3}$"
+        SEMANTIC_VERSION_PATTERN = r"^\d+\.\d+\.\d+(-\w+(\.\d+)?)?$"
+        IDENTIFIER_PATTERN = r"^[a-zA-Z_][a-zA-Z0-9_]*$"
+        SERVICE_NAME_PATTERN = r"^[a-zA-Z][a-zA-Z0-9_-]*$"
 
     class Defaults:
-        """Default values for entities and operations."""
+        """ALL default values - SINGLE SOURCE (includes Config/CLI/Model defaults)."""
 
-        ENTITY_VERSION = 1
-        MAX_DOMAIN_EVENTS = 1000
-        MAX_ENTITY_VERSION = 999999
-        CONFIG_VERSION = 1
+        # Network and timeouts (CONSOLIDATED - was duplicated across patterns)
+        TIMEOUT = 30
+        MAX_RETRIES = 3
+        CONNECTION_TIMEOUT = 10
+
+        # Pagination and limits
+        PAGE_SIZE = 100
+        MAX_PAGE_SIZE = 1000
+
+        # Configuration defaults (MOVED FROM Config pattern - ELIMINATES DUPLICATION)
+        CONFIG_TIMEOUT = 30
+        CONFIG_RETRIES = 3
+
+        # CLI defaults (MOVED FROM CLI pattern - ELIMINATES DUPLICATION)
+        CLI_HELP_WIDTH = 80
+        CLI_TIMEOUT = 30
+
+        # Model defaults (MOVED FROM Pydantic pattern - ELIMINATES DUPLICATION)
+        MODEL_TIMEOUT = 30
+        VALIDATION_TIMEOUT = 5
+
+        # Database defaults
+        DB_TIMEOUT = 30
+        DB_POOL_SIZE = 10
+
+        # Cache defaults
+        CACHE_TTL = 300  # 5 minutes
+        CACHE_MAX_SIZE = 1000
 
     class Limits:
-        """System limits and constraints."""
+        """ALL system limits - SINGLE SOURCE."""
 
-        MAX_DOMAIN_EVENTS = 1000
-        MAX_ENTITY_VERSION = 999999
-        MAX_STRING_LENGTH = 10000
+        MAX_STRING_LENGTH = 1000
         MAX_LIST_SIZE = 10000
-        MAX_ID_LENGTH = 255
+        MIN_PASSWORD_LENGTH = 8
+        MAX_PASSWORD_LENGTH = 128
+        MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
+        MAX_BATCH_SIZE = 10000
+        MIN_PORT = 1
+        MAX_PORT = 65535
+        MAX_THREADS = 100
 
-    # =============================================================================
-    # PLATFORM CONSTANTS - Single source of truth for entire FLEXT ecosystem
-    # =============================================================================
+    class Performance:
+        """ALL performance constants - SINGLE SOURCE."""
 
+        DEFAULT_BATCH_SIZE = 1000
+        MAX_BATCH_SIZE = 10000
+        CACHE_TTL = 300  # 5 minutes
+        CACHE_MAX_SIZE = 1000
+        POOL_SIZE = 10
+        MAX_CONNECTIONS = 100
+        KEEP_ALIVE_TIMEOUT = 60
+
+    # NEW: Configuration system constants (MOVED FROM Config/CLI patterns)
+    class Configuration:
+        """Configuration system constants - ELIMINATES Config pattern duplications."""
+
+        # Provider priorities (MOVED FROM Config pattern)
+        CLI_PRIORITY = 1
+        ENV_PRIORITY = 2
+        DOTENV_PRIORITY = 3
+        CONFIG_FILE_PRIORITY = 4
+        CONSTANTS_PRIORITY = 5
+
+        # Configuration files (MOVED FROM Config pattern)
+        DOTENV_FILES: ClassVar[list[str]] = [".env", ".env.local", ".env.production"]
+        CONFIG_FILES: ClassVar[list[str]] = [
+            "config.json",
+            "config.yaml",
+            "flext.config.json",
+        ]
+
+        # Environment types
+        ENVIRONMENTS: ClassVar[list[str]] = [
+            "development",
+            "staging",
+            "production",
+            "test",
+        ]
+        DEFAULT_ENVIRONMENT = "development"
+
+        # Configuration validation
+        REQUIRED_FIELDS: ClassVar[list[str]] = ["REQUIRED"]
+        OPTIONAL_FIELDS: ClassVar[list[str]] = ["OPTIONAL"]
+
+    # NEW: CLI system constants (MOVED FROM CLI pattern)
+    class Cli:
+        """CLI system constants - ELIMINATES CLI pattern duplications."""
+
+        # Standard arguments
+        HELP_ARGS: ClassVar[list[str]] = ["--help", "-h"]
+        VERSION_ARGS: ClassVar[list[str]] = ["--version", "-v"]
+        CONFIG_ARGS: ClassVar[list[str]] = ["--config", "-c"]
+        VERBOSE_ARGS: ClassVar[list[str]] = ["--verbose", "-vv"]
+
+        # Prefixes
+        LONG_PREFIX = "--"
+        SHORT_PREFIX = "-"
+
+        # Output formats
+        OUTPUT_FORMATS: ClassVar[list[str]] = ["json", "yaml", "table", "csv"]
+        DEFAULT_OUTPUT_FORMAT = "table"
+
+        # Exit codes
+        SUCCESS_EXIT_CODE = 0
+        ERROR_EXIT_CODE = 1
+        INVALID_USAGE_EXIT_CODE = 2
+
+    # NEW: Infrastructure constants (Database, Cache, etc.)
+    class Infrastructure:
+        """Infrastructure constants - Database, Cache, Network."""
+
+        # Database ports
+        DEFAULT_DB_PORT = 5432
+        DEFAULT_ORACLE_PORT = 1521
+        DEFAULT_REDIS_PORT = 6379
+        DEFAULT_MYSQL_PORT = 3306
+        DEFAULT_MONGODB_PORT = 27017
+
+        # Connection pools
+        DEFAULT_POOL_SIZE = 10
+        MAX_POOL_SIZE = 50
+        MIN_POOL_SIZE = 1
+
+        # Network
+        DEFAULT_HOST = "localhost"
+        LOCALHOST_ALIASES: ClassVar[list[str]] = ["localhost", "127.0.0.1", "::1"]
+        DEFAULT_PROTOCOL = "http"
+        SECURE_PROTOCOLS: ClassVar[list[str]] = ["https", "wss", "ssl"]
+
+    # NEW: Model system constants (MOVED FROM Pydantic pattern)
+    class Models:
+        """Model system constants - ELIMINATES Pydantic pattern duplications."""
+
+        # Validation settings (MOVED FROM Pydantic pattern)
+        VALIDATE_ASSIGNMENT = True
+        USE_ENUM_VALUES = True
+        STR_STRIP_WHITESPACE = True
+
+        # Serialization settings (MOVED FROM Pydantic pattern)
+        ARBITRARY_TYPES_ALLOWED = True
+        VALIDATE_DEFAULT = True
+
+        # Model behavior (MOVED FROM Pydantic pattern)
+        EXTRA_FORBID = "forbid"
+        EXTRA_ALLOW = "allow"
+        EXTRA_IGNORE = "ignore"
+
+        # Field types
+        FIELD_TYPES: ClassVar[list[str]] = [
+            "str",
+            "int",
+            "float",
+            "bool",
+            "list",
+            "dict",
+        ]
+
+        # Model states
+        MODEL_STATES: ClassVar[list[str]] = ["draft", "valid", "invalid", "frozen"]
+
+    # NEW: Observability constants (MOVED from observability patterns)
+    class Observability:
+        """Observability constants - MOVED from observability patterns."""
+
+        LOG_LEVELS: ClassVar[list[str]] = [
+            "TRACE",
+            "DEBUG",
+            "INFO",
+            "WARN",
+            "ERROR",
+            "FATAL",
+        ]
+        DEFAULT_LOG_LEVEL = "INFO"
+
+        SPAN_TYPES: ClassVar[list[str]] = ["business", "technical", "error"]
+        METRIC_TYPES: ClassVar[list[str]] = ["counter", "histogram", "gauge"]
+        ALERT_LEVELS: ClassVar[list[str]] = ["info", "warning", "error", "critical"]
+
+        CORRELATION_ID_HEADER = "X-Correlation-ID"
+        TRACE_ID_HEADER = "X-Trace-ID"
+
+    # NEW: Platform constants (FLEXT specific infrastructure)
     class Platform:
         """Platform-wide constants for the entire FLEXT ecosystem."""
 
@@ -520,109 +430,142 @@ class FlextConstants:
         MIN_PORT_NUMBER = 1
         MAX_PORT_NUMBER = 65535
 
+    # Backward compatibility: Add commonly used constants as class attributes
+    DEFAULT_TIMEOUT = Defaults.TIMEOUT
+
 
 # =============================================================================
-# DIRECT ACCESS CONSTANTS - objetos sem underscore
-# =============================================================================
-
-# Core constants - acesso direto
-VERSION = FlextConstants.VERSION
-NAME = FlextConstants.NAME
-DEFAULT_TIMEOUT = FlextConstants.DEFAULT_TIMEOUT
-DEFAULT_RETRIES = FlextConstants.DEFAULT_RETRIES
-DEFAULT_PAGE_SIZE = FlextConstants.DEFAULT_PAGE_SIZE
-DEFAULT_LOG_LEVEL = FlextConstants.DEFAULT_LOG_LEVEL
-
-# Patterns - acesso direto
-EMAIL_PATTERN = FlextConstants.EMAIL_PATTERN
-UUID_PATTERN = FlextConstants.UUID_PATTERN
-URL_PATTERN = FlextConstants.URL_PATTERN
-IDENTIFIER_PATTERN = FlextConstants.IDENTIFIER_PATTERN
-SERVICE_NAME_PATTERN = FlextConstants.SERVICE_NAME_PATTERN
-
-# =============================================================================
-# LEGACY NESTED ACCESS PATTERNS (mantém interface existente)
+# ENUMS - Field types and other enums that modules import
 # =============================================================================
 
 
-class Project:
-    """Project metadata constants for legacy compatibility.
+class FlextFieldType(Enum):
+    """Field type constants for data validation and field definitions.
 
-    Backward compatibility class providing access to project metadata
-    constants through legacy naming patterns.
-
-    Legacy Usage:
-        version = Project.VERSION
-        name = Project.NAME
+    Defines standard field types for validation, schema definition, and
+    data processing operations. Used by validation system and field
+    definition components for type consistency.
     """
 
-    VERSION = FlextConstants.VERSION
-    NAME = FlextConstants.NAME
+    STRING = "string"
+    INTEGER = "integer"
+    FLOAT = "float"
+    BOOLEAN = "boolean"
+    DATE = "date"
+    DATETIME = "datetime"
+    UUID = "uuid"
+    EMAIL = "email"
 
 
-class Environment:
-    """Environment configuration constants for legacy compatibility.
+class FlextLogLevel(Enum):
+    """Log level constants for structured logging system."""
 
-    Backward compatibility class providing access to environment constants
-    through legacy naming patterns and includes default environment setting.
+    DEBUG = "DEBUG"
+    INFO = "INFO"
+    WARNING = "WARNING"
+    ERROR = "ERROR"
+    CRITICAL = "CRITICAL"
+    TRACE = "TRACE"
 
-    Legacy Usage:
-        if environment == Environment.PRODUCTION:
-            configure_production_settings()
-    """
+    def __hash__(self) -> int:
+        """Hash based on enum value."""
+        return hash(self.value)
 
-    PRODUCTION = FlextEnvironment.PRODUCTION
-    DEVELOPMENT = FlextEnvironment.DEVELOPMENT
-    STAGING = FlextEnvironment.STAGING
-    TESTING = FlextEnvironment.TESTING
-    DEFAULT = FlextEnvironment.DEVELOPMENT
+    def __eq__(self, other: object) -> bool:
+        """Support comparison with string values for test compatibility."""
+        if isinstance(other, str):
+            return self.value == other
+        return super().__eq__(other)
 
+    @classmethod
+    def get_numeric_levels(cls) -> dict[str, int]:
+        """Get numeric level values for logging compatibility."""
+        return {
+            "CRITICAL": 50,
+            "ERROR": 40,
+            "WARNING": 30,
+            "INFO": 20,
+            "DEBUG": 10,
+            "TRACE": 5,
+        }
 
-class Defaults:
-    """System default values for legacy compatibility.
-
-    Backward compatibility class providing access to system default constants
-    through legacy naming patterns for timeout, retry, and pagination settings.
-
-    Legacy Usage:
-        timeout = Defaults.TIMEOUT
-        page_size = Defaults.PAGE_SIZE
-    """
-
-    TIMEOUT = FlextConstants.DEFAULT_TIMEOUT
-    RETRIES = FlextConstants.DEFAULT_RETRIES
-    PAGE_SIZE = FlextConstants.DEFAULT_PAGE_SIZE
-    LOG_LEVEL = FlextConstants.DEFAULT_LOG_LEVEL
+    def get_numeric_value(self) -> int:
+        """Get numeric value for this log level."""
+        return self.get_numeric_levels()[self.value]
 
 
-class Patterns:
-    """Validation patterns for legacy compatibility.
+class FlextEnvironment(Enum):
+    """Environment constants for application deployment contexts."""
 
-    Backward compatibility class providing access to regex validation patterns
-    through legacy naming conventions for common data format validation.
-
-    Legacy Usage:
-        if re.match(Patterns.EMAIL, email_address):
-            process_email(email_address)
-    """
-
-    EMAIL = FlextConstants.EMAIL_PATTERN
-    UUID = FlextConstants.UUID_PATTERN
-    URL = FlextConstants.URL_PATTERN
-    IDENTIFIER = FlextConstants.IDENTIFIER_PATTERN
-    SERVICE_NAME = FlextConstants.SERVICE_NAME_PATTERN
+    DEVELOPMENT = "development"
+    PRODUCTION = "production"
+    STAGING = "staging"
+    TESTING = "testing"
 
 
 # =============================================================================
-# EXPORTS - Clean public API seguindo diretrizes
+# BACKWARD COMPATIBILITY - Legacy flat constants (DEPRECATED)
+# =============================================================================
+
+# Legacy ERROR_CODES dict for backward compatibility
+ERROR_CODES = {
+    code_name: getattr(FlextSemanticConstants.Errors, code_name)
+    for code_name in dir(FlextSemanticConstants.Errors)
+    if not code_name.startswith("_")
+}
+
+# Populate the class-level ERROR_CODES for backward compatibility
+FlextSemanticConstants.ERROR_CODES = ERROR_CODES
+
+# Legacy MESSAGES dict for backward compatibility
+MESSAGES = {
+    message_name: getattr(FlextSemanticConstants.Messages, message_name)
+    for message_name in dir(FlextSemanticConstants.Messages)
+    if not message_name.startswith("_")
+}
+
+# Legacy STATUS_CODES dict for backward compatibility
+STATUS_CODES = {
+    status_name: getattr(FlextSemanticConstants.Status, status_name)
+    for status_name in dir(FlextSemanticConstants.Status)
+    if not status_name.startswith("_")
+}
+
+# Legacy VALIDATION_RULES for backward compatibility
+VALIDATION_RULES = {
+    "REQUIRED": "REQUIRED",
+    "OPTIONAL": "OPTIONAL",
+    "NULLABLE": "NULLABLE",
+    "NON_EMPTY": "NON_EMPTY",
+}
+
+# Legacy individual constants for backward compatibility
+DEFAULT_TIMEOUT = FlextSemanticConstants.Defaults.TIMEOUT
+DEFAULT_RETRIES = FlextSemanticConstants.Defaults.MAX_RETRIES
+DEFAULT_PAGE_SIZE = FlextSemanticConstants.Defaults.PAGE_SIZE
+VERSION = FlextSemanticConstants.Core.VERSION
+NAME = FlextSemanticConstants.Core.NAME
+
+# Legacy pattern aliases for backward compatibility
+EMAIL_PATTERN = FlextSemanticConstants.Patterns.EMAIL_PATTERN
+UUID_PATTERN = FlextSemanticConstants.Patterns.UUID_PATTERN
+URL_PATTERN = FlextSemanticConstants.Patterns.URL_PATTERN
+IDENTIFIER_PATTERN = FlextSemanticConstants.Patterns.IDENTIFIER_PATTERN
+SERVICE_NAME_PATTERN = FlextSemanticConstants.Patterns.SERVICE_NAME_PATTERN
+
+# Legacy class alias for backward compatibility
+FlextConstants = FlextSemanticConstants
+
+# =============================================================================
+# EXPORTS - Semantic constants + backward compatibility
 # =============================================================================
 
 __all__ = [
-    "DEFAULT_LOG_LEVEL",
     "DEFAULT_PAGE_SIZE",
     "DEFAULT_RETRIES",
     "DEFAULT_TIMEOUT",
     "EMAIL_PATTERN",
+    # LEGACY COMPATIBILITY: Flat constants (deprecated)
     "ERROR_CODES",
     "IDENTIFIER_PATTERN",
     "MESSAGES",
@@ -633,12 +576,12 @@ __all__ = [
     "UUID_PATTERN",
     "VALIDATION_RULES",
     "VERSION",
-    "Defaults",
-    "Environment",
+    # LEGACY COMPATIBILITY: Class alias
     "FlextConstants",
     "FlextEnvironment",
+    # ENUMS: Essential enums for other modules
     "FlextFieldType",
     "FlextLogLevel",
-    "Patterns",
-    "Project",
+    # MAIN EXPORT: Single source of truth
+    "FlextSemanticConstants",
 ]

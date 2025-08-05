@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import cast
+
 import pytest
 from pydantic import ValidationError
 
@@ -65,7 +67,7 @@ class TestFlextResult:
 
         # FlextResult should be frozen/immutable
         try:
-            result.data = "changed"  # This should fail
+            result.data = "changed"  # type: ignore[misc] # Intentional immutability test
             pytest.fail("FlextResult should be immutable")
         except (AttributeError, TypeError, ValidationError):
             pass  # Expected - frozen pydantic model
@@ -144,7 +146,9 @@ class TestFlextResult:
     def test_flat_map_chain_failure(self) -> None:
         """Test flat_map where chained operation fails."""
         result = FlextResult.ok("test")
-        chained = result.flat_map(lambda _: FlextResult.fail("chain error"))
+        chained: FlextResult[str] = result.flat_map(
+            lambda _: FlextResult.fail("chain error")
+        )
         assert chained.is_failure
         if chained.error != "chain error":
             raise AssertionError(f"Expected {'chain error'}, got {chained.error}")
@@ -205,7 +209,7 @@ class TestFlextResult:
         result = FlextResult.ok("test")
         with pytest.raises((AttributeError, ValidationError)):
             # Cannot set success directly on frozen model
-            result.success = False  # This should raise an exception
+            result.success = False  # type: ignore[misc] # Intentional immutability test
 
     def test_type_generic_behavior(self) -> None:
         """Test generic type behavior with different data types."""
@@ -243,7 +247,7 @@ class TestFlextResult:
     def test_map_with_none_data_on_success(self) -> None:
         """Test map behavior when success but data is None."""
         # This covers a specific branch in map method
-        result: FlextResult[str] = FlextResult.ok(None)
+        result: FlextResult[str] = FlextResult.ok(cast("str", None))
         mapped = result.map(lambda x: x.upper() if x else "default")
         assert mapped.success
         if mapped.data != "default":
@@ -254,7 +258,7 @@ class TestFlextResult:
         result = FlextResult.ok([1, 2, 3])
 
         # Test TypeError
-        mapped = result.map(lambda x: x + "string")  # Intentional TypeError
+        mapped = result.map(lambda x: x + "string")  # type: ignore[operator] # Intentional TypeError for testing
         assert mapped.is_failure
         assert mapped.error is not None
         if "Transformation failed:" not in mapped.error:
@@ -263,7 +267,7 @@ class TestFlextResult:
             )
 
         # Test AttributeError
-        mapped = result.map(lambda x: x.nonexistent_method())  # AttributeError
+        mapped = result.map(lambda x: x.nonexistent_method())  # type: ignore[attr-defined] # Intentional AttributeError for testing
         assert mapped.is_failure
         assert mapped.error is not None
         if "Transformation failed:" not in mapped.error:
@@ -272,7 +276,7 @@ class TestFlextResult:
             )
 
         # Test RuntimeError (now captured)
-        def raise_runtime_error(_: list) -> None:
+        def raise_runtime_error(_: list[int]) -> None:
             error_msg = "test"
             raise RuntimeError(error_msg)
 

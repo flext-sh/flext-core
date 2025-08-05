@@ -259,8 +259,8 @@ class FlextMixinDelegator:
             delegated_method.__doc__ = method.__doc__
             import inspect  # noqa: PLC0415
 
-            # Use type ignore for dynamic attribute assignment
-            delegated_method.__signature__ = inspect.signature(method)
+            # Use type ignore for dynamic attribute assignment on function object
+            delegated_method.__signature__ = inspect.signature(method)  # type: ignore[attr-defined]
         except (AttributeError, ValueError):
             pass
 
@@ -380,7 +380,8 @@ def _validate_delegation_info(
     if not hasattr(host, "delegator"):
         _raise_delegation_error("Host must have delegator attribute")
 
-    delegator = host.delegator
+    # Use type ignore for dynamic attribute access after hasattr check
+    delegator = host.delegator  # type: ignore[attr-defined]
     if not hasattr(delegator, "get_delegation_info"):
         _raise_delegation_error("Delegator must have get_delegation_info method")
 

@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 from flext_core import FlextEntityId, FlextPayload
 from flext_core.flext_types import (
@@ -82,7 +85,9 @@ class TestTypeProtocols:
             return "created"
 
         def use_factory(factory: TFactory[str]) -> str:
-            return factory()
+            # Cast to specific callable type for testing
+            no_arg_factory = cast("Callable[[], str]", factory)
+            return no_arg_factory()
 
         result = use_factory(string_factory)
         assert result == "created"

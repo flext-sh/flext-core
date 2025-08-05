@@ -4,12 +4,15 @@
 Advanced patterns and enterprise scenarios using FLEXT Core with shared domain models.
 """
 
+from decimal import Decimal
+
 # Import shared domain models to eliminate duplication
 from shared_domain import (
     EmailAddress,
     Money,
     Order as SharedOrder,
     SharedDomainFactory,
+    User as SharedUser,
 )
 
 from flext_core import (
@@ -27,16 +30,33 @@ from flext_core import (
 CURRENCY_CODE_LENGTH = 3  # Standard ISO 4217 currency code length
 
 
-def main() -> None:  # noqa: PLR0915
-    """Execute main function for advanced examples."""
+def main() -> None:
+    """Execute main function for advanced examples using railway-oriented programming."""
     print("=== FLEXT Core Advanced Examples ===\n")
 
-    # 1. Value Objects
+    # Chain all demonstration functions using railway-oriented programming
+    result = (
+        _demonstrate_value_objects()
+        .flat_map(lambda _: _demonstrate_aggregate_root())
+        .flat_map(lambda order: _demonstrate_query_pattern(order))
+        .flat_map(lambda _: _demonstrate_decorators())
+        .flat_map(lambda _: _demonstrate_logging())
+        .flat_map(lambda _: _demonstrate_configuration())
+    )
+
+    if result.success:
+        print("\n=== Advanced Examples Completed Successfully! ===")
+    else:
+        print(f"\n❌ Advanced examples failed: {result.error}")
+
+
+def _demonstrate_value_objects() -> FlextResult[None]:
+    """Demonstrate value objects using shared domain models."""
     print("1. FlextValueObject Examples (using shared domain):")
 
     # Use shared domain models instead of local definitions
     email = EmailAddress(email="user@example.com")
-    money = Money(amount=100.50, currency="USD")
+    money = Money(amount=Decimal("100.50"), currency="USD")
 
     print(f"  Email: {email.email}")
     print(f"  Money: {money.amount} {money.currency}")
@@ -46,12 +66,24 @@ def main() -> None:  # noqa: PLR0915
     print(f"  Email equality: {email == email2}")  # Should be True
     print()
 
-    # 2. Aggregate Root (using shared domain)
+    return FlextResult.ok(None)
+
+def _demonstrate_aggregate_root() -> FlextResult[SharedOrder]:
+    """Demonstrate aggregate root pattern using shared domain models."""
     print("2. FlextAggregateRoot Examples (using shared domain):")
 
-    # Use SharedOrder from shared_domain instead of local Order class
+    email = EmailAddress(email="user@example.com")
+    money = Money(amount=Decimal("100.50"), currency="USD")
 
-    # Create order using SharedDomainFactory
+    return (
+        _create_test_user(email)
+        .flat_map(lambda user: _create_test_order(user, money))
+        .flat_map(_display_order_information)
+    )
+
+
+def _create_test_user(email: EmailAddress) -> FlextResult[SharedUser]:
+    """Create test user for demonstration."""
     user_result = SharedDomainFactory.create_user(
         name="Test User",
         email=email.email,
@@ -60,45 +92,58 @@ def main() -> None:  # noqa: PLR0915
 
     if user_result.success:
         user = user_result.data
-        assert user is not None
-        order_items = [
-            {
-                "product_id": "product123",
-                "product_name": "Test Product",
-                "quantity": 1,
-                "unit_price": str(money.amount),
-                "currency": money.currency,
-            },
-        ]
+        if user is None:
+            return FlextResult.fail("User creation returned None data")
+        return FlextResult.ok(user)
+    return FlextResult.fail(f"Failed to create user: {user_result.error}")
 
-        order_result = SharedDomainFactory.create_order(
-            customer_id=user.id,
-            items=order_items,
-        )
 
-        if order_result.success:
-            order = order_result.data
-            assert order is not None
-        else:
-            print(f"Failed to create order: {order_result.error}")
-            return
-    else:
-        print(f"Failed to create user: {user_result.error}")
-        return
+def _create_test_order(user: SharedUser, money: Money) -> FlextResult[SharedOrder]:
+    """Create test order for demonstration."""
+    order_items = [
+        {
+            "product_id": "product123",
+            "product_name": "Test Product",
+            "quantity": 1,
+            "unit_price": str(money.amount),
+            "currency": money.currency,
+        },
+    ]
 
+    order_result = SharedDomainFactory.create_order(
+        customer_id=user.id,
+        items=order_items,
+    )
+
+    if order_result.success:
+        order = order_result.data
+        if order is None:
+            return FlextResult.fail("Order creation returned None data")
+        return FlextResult.ok(order)
+    return FlextResult.fail(f"Failed to create order: {order_result.error}")
+
+
+def _display_order_information(order: SharedOrder) -> FlextResult[SharedOrder]:
+    """Display order information and return order for chaining."""
     print(f"  Order: {order.id}, Status: {order.status.value}")
     print(f"  Customer: {order.customer_id}")
+
     total_result = order.calculate_total()
     if total_result.success:
         total = total_result.data
-        assert total is not None
+        if total is None:
+            return FlextResult.fail("Total calculation returned None data")
         print(f"  Total: {total.amount} {total.currency}")
 
     # SharedOrder has built-in domain events
     print(f"  Events: {len(order.domain_events)} domain events")
     print()
 
-    # 3. Query Pattern
+    return FlextResult.ok(order)
+
+
+def _demonstrate_query_pattern(_order: SharedOrder) -> FlextResult[None]:
+    """Demonstrate CQRS query pattern."""
     print("3. FlextCommands Query Examples:")
 
     class GetOrdersQuery(FlextCommands.Query):
@@ -130,7 +175,11 @@ def main() -> None:  # noqa: PLR0915
                 return FlextResult.fail(f"Failed to create user: {user_result.error}")
 
             user = user_result.data
-            assert user is not None
+
+
+            if user is None:
+                print("❌ Operation returned None data")
+                return FlextResult.fail("User creation returned None data")
 
             # Simulate database query with SharedOrder
             order1_result = SharedDomainFactory.create_order(
@@ -162,11 +211,17 @@ def main() -> None:  # noqa: PLR0915
             orders = []
             if order1_result.success:
                 order1 = order1_result.data
-                assert order1 is not None
+
+                if order1 is None:
+                    print("❌ Operation returned None data")
+                    return FlextResult.fail("Order creation returned None data")
                 orders.append(order1)
             if order2_result.success:
                 order2 = order2_result.data
-                assert order2 is not None
+
+                if order2 is None:
+                    print("❌ Operation returned None data")
+                    return FlextResult.fail("Order creation returned None data")
                 orders.append(order2)
 
             # Filter by status if provided
@@ -195,7 +250,10 @@ def main() -> None:  # noqa: PLR0915
         query_result = query_handler.handle(query)
         if query_result.success:
             orders = query_result.data
-            assert orders is not None
+
+            if orders is None:
+                print("❌ Operation returned None data")
+                return FlextResult.fail("Orders query returned None data")
             print(f"  Found {len(orders)} orders")
             for o in orders:
                 if hasattr(o, "total") and o.total is not None:
@@ -203,8 +261,11 @@ def main() -> None:  # noqa: PLR0915
                 else:
                     print(f"    Order {o.id}: {o.status} - No total available")
     print()
+    return FlextResult.ok(None)
 
-    # 4. Decorators
+
+def _demonstrate_decorators() -> FlextResult[None]:
+    """Demonstrate decorator patterns."""
     print("4. FlextDecorators Examples:")
 
     @FlextDecorators.safe_result
@@ -225,8 +286,11 @@ def main() -> None:  # noqa: PLR0915
         f"  Error handling: {getattr(error_result, 'is_failure', False)}, Error: {getattr(error_result, 'error', 'N/A')}"
     )
     print()
+    return FlextResult.ok(None)
 
-    # 5. Logging
+
+def _demonstrate_logging() -> FlextResult[None]:
+    """Demonstrate structured logging patterns."""
     print("5. FlextLogger Examples:")
 
     logger = get_logger("advanced_examples")
@@ -252,8 +316,10 @@ def main() -> None:  # noqa: PLR0915
 
     print("  Check logs above for structured logging output")
     print()
+    return FlextResult.ok(None)
 
-    # 6. Configuration
+def _demonstrate_configuration() -> FlextResult[None]:
+    """Demonstrate configuration management patterns."""
     print("6. FlextConfig Examples:")
 
     from flext_core.config import FlextBaseSettings  # noqa: PLC0415
@@ -277,13 +343,14 @@ def main() -> None:  # noqa: PLR0915
 
     if settings_result.success:
         settings = settings_result.data
-        assert settings is not None
+        if settings is None:
+            return FlextResult.fail("Configuration creation returned None data")
+
         print(f"  Database URL: {getattr(settings, 'database_url', 'N/A')}")
         print(f"  Debug mode: {getattr(settings, 'debug', 'N/A')}")
         print(f"  Max workers: {getattr(settings, 'max_workers', 'N/A')}")
     print()
-
-    print("=== Advanced Examples Completed Successfully! ===")
+    return FlextResult.ok(None)
 
 
 if __name__ == "__main__":

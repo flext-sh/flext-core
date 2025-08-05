@@ -56,10 +56,7 @@ def sample_settings() -> FlextBaseSettings:
         log_level: FlextLogLevel = FlextLogLevel.DEBUG
         debug: bool = True
 
-    return TestSettings(
-        service_timeout=10,
-        max_retries=2,
-    )
+    return TestSettings()
 
 
 @pytest.fixture
@@ -103,7 +100,7 @@ def mock_logger() -> MagicMock:
 @pytest.fixture(params=["user-123", "order-456", "product-789"])
 def entity_id_samples(request: pytest.FixtureRequest) -> TEntityId:
     """Parametrized fixture for different entity IDs."""
-    return request.param
+    return str(request.param)
 
 
 @pytest.fixture(params=["development", "testing", "staging", "production"])

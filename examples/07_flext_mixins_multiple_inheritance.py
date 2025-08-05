@@ -33,6 +33,7 @@ from flext_core import (
     FlextEntityMixin,
     FlextIdentifiableMixin,
     FlextLoggableMixin,
+    FlextResult,
     FlextSerializableMixin,
     FlextTimestampMixin,
     FlextTimingMixin,
@@ -219,17 +220,18 @@ class LoggableService(FlextLoggableMixin):
 
         except (RuntimeError, ValueError, TypeError) as e:
             self.logger.exception("Request failed", request_id=request_id)
-            return {
+            error_result: dict[str, object] = {
                 "request_id": request_id,
                 "status": "error",
                 "error": str(e),
             }
+            return error_result
 
     def health_check(self) -> dict[str, object]:
         """Perform health check with logging."""
         self.logger.debug("Performing health check")
 
-        health_status = {
+        health_status: dict[str, object] = {
             "service": self.service_name,
             "status": "healthy",
             "timestamp": FlextUtilities.generate_iso_timestamp(),
@@ -291,8 +293,9 @@ class CacheableCalculator(FlextCacheableMixin):
         # Check cache first
         cached_result = self.cache_get(cache_key)
         if cached_result is not None:
-            print(f"💰 Cache hit for fib({n}): {cached_result}")
-            return cached_result
+            cached_int = int(cached_result) if isinstance(cached_result, (int, float, str)) else 0
+            print(f"💰 Cache hit for fib({n}): {cached_int}")
+            return cached_int
 
         # Calculate if not cached
         print(f"🔢 Calculating fib({n})")
@@ -342,7 +345,9 @@ class AdvancedUser(
             raise ValueError(msg)
 
         shared_user = user_result.data
-        assert shared_user is not None
+        if shared_user is None:
+            error_msg = "User creation returned None data"
+            raise ValueError(error_msg)
 
         # Initialize with shared user data
         super().__init__(
@@ -443,7 +448,8 @@ class AdvancedUser(
 
     def get_user_info(self) -> dict[str, object]:
         """Get comprehensive user information."""
-        age_seconds = time.time() - (self.created_at or 0)
+        created_timestamp = self.created_at if isinstance(self.created_at, (int, float)) else time.time()
+        age_seconds = time.time() - created_timestamp
 
         return {
             "id": self.id,
@@ -495,7 +501,7 @@ class SmartDocument(
         if cached_view is not None:
             print(f"📄 Cached view for: {self.title}")
             self.view_count += 1
-            return cached_view
+            return cached_view if isinstance(cached_view, dict) else {}
 
         # Generate view data
         view_data = {
@@ -622,7 +628,7 @@ class EnterpriseService(
         cached_result = self.cache_get(cache_key)
         if cached_result is not None:
             self.logger.info("Cache hit for request", request_id=request_id)
-            return cached_result
+            return cached_result if isinstance(cached_result, dict) else {}
 
         # Time the operation
         start_time = self._start_timing()
@@ -787,7 +793,9 @@ def demonstrate_individual_mixins() -> None:
     user_result = SharedDomainFactory.create_user("john_doe", "john@example.com", 25)
     if user_result.success:
         shared_user = user_result.data
-        assert shared_user is not None
+        if shared_user is None:
+            print("❌ User creation returned None data")
+            return
         user = IdentifiableUser(
             id=shared_user.id,
             name=shared_user.name,
@@ -1113,93 +1121,151 @@ def demonstrate_performance_characteristics() -> None:
 
 
 def demonstrate_enterprise_patterns() -> None:
-    """Demonstrate enterprise patterns with mixins."""
+    """Demonstrate enterprise patterns with mixins using railway-oriented programming.
+
+    Refactored from complexity 37 to follow Single Responsibility Principle.
+    Each specialized demonstration method handles a specific pattern.
+    """
     print("\n🏭 Enterprise Patterns Demonstration")
     print("=" * 50)
 
-    # Repository pattern with mixins
+    # Create repository and service instances
+    user_repo = _create_enterprise_user_repository()
+    order_service = _create_enterprise_order_service(user_repo)
+
+    # Demonstrate each pattern separately
+    _demonstrate_repository_pattern(user_repo)
+    _demonstrate_service_pattern(order_service)
+
+
+def _create_enterprise_user_repository() -> object:
+    """Create UserRepository for enterprise patterns demonstration."""
+    # Repository pattern with mixins using FlextResult pattern
     class UserRepository(
         FlextLoggableMixin,
         FlextCacheableMixin,
         FlextTimingMixin,
     ):
-        """Repository with enterprise mixin composition."""
+        """Repository with enterprise mixin composition using railway-oriented programming."""
 
         def __init__(self) -> None:
             super().__init__()
             self.users: dict[str, dict[str, object]] = {}
 
-        def save_user(self, user_id: str, user_data: dict[str, object]) -> bool:
-            """Save user with caching and logging."""
-            start_time = self._start_timing()
-
+        def _execute_save_operation(
+            self,
+            user_id: str,
+            user_data: dict[str, object],
+        ) -> FlextResult[None]:
+            """Execute the actual save operation with error handling."""
             try:
                 self.users[user_id] = user_data
                 self.cache_set(f"user_{user_id}", user_data)
+                return FlextResult.ok(None)
+            except (RuntimeError, ValueError, TypeError) as e:
+                return FlextResult.fail(f"Failed to save user data: {e}")
 
-                _ = self._get_execution_time_seconds(start_time)  # Track execution time
+        def _log_save_result(
+            self,
+            user_id: str,
+            start_time: float,
+            result: FlextResult[None],
+        ) -> FlextResult[None]:
+            """Log the save operation result with execution time."""
+            _ = self._get_execution_time_seconds(start_time)
+            if result.is_success:
                 self.logger.info("User saved: %s", user_id)
+            else:
+                self.logger.error("Failed to save user: %s - %s", user_id, result.error)
+            return result
 
-                return True
-            except (RuntimeError, ValueError, TypeError):
-                _ = self._get_execution_time_seconds(start_time)  # Track execution time
-                self.logger.exception("Failed to save user: %s", user_id)
-                return False
+        def save_user(self, user_id: str, user_data: dict[str, object]) -> FlextResult[None]:
+            """Save user with caching and logging using railway-oriented programming."""
+            start_time = self._start_timing()
 
-        def find_user(self, user_id: str) -> dict[str, object] | None:
-            """Find user with caching and logging."""
-            self._start_timing()
+            return (
+                self._execute_save_operation(user_id, user_data)
+                .flat_map(lambda _: self._log_save_result(user_id, start_time, FlextResult.ok(None)))
+            )
 
-            # Check cache first
+        def _check_cache_for_user(self, user_id: str) -> FlextResult[dict[str, object] | None]:
+            """Check cache for user data."""
             cache_key = f"user:{user_id}"
             cached_user = self.cache_get(cache_key)
             if cached_user is not None:
                 self.logger.info("Cache hit for user: %s", user_id)
-                return cached_user
+                user_dict = cached_user if isinstance(cached_user, dict) else None
+                return FlextResult.ok(user_dict)
+            return FlextResult.ok(None)
 
-            # Check storage
+        def _check_storage_for_user(self, user_id: str) -> FlextResult[dict[str, object] | None]:
+            """Check storage for user data and update cache if found."""
             if user_id in self.users:
                 user_data = self.users[user_id]
+                cache_key = f"user:{user_id}"
                 self.cache_set(cache_key, user_data)
                 self.logger.info("User found in storage: %s", user_id)
-                return user_data
+                return FlextResult.ok(user_data)
+            return FlextResult.ok(None)
 
+        def _handle_user_not_found(self, user_id: str) -> FlextResult[dict[str, object] | None]:
+            """Handle case when user is not found."""
             self.logger.warning("User not found: %s", user_id)
-            return None
+            return FlextResult.ok(None)
 
-    # Domain service pattern
+        def find_user(self, user_id: str) -> FlextResult[dict[str, object] | None]:
+            """Find user with caching and logging using railway-oriented programming."""
+            self._start_timing()
+
+            # Try cache first, then storage, then handle not found
+            cache_result = self._check_cache_for_user(user_id)
+            if cache_result.is_success and cache_result.data is not None:
+                return cache_result
+
+            storage_result = self._check_storage_for_user(user_id)
+            if storage_result.is_success and storage_result.data is not None:
+                return storage_result
+
+            return self._handle_user_not_found(user_id)
+
+    return UserRepository()
+
+
+def _create_enterprise_order_service(user_repo: object) -> object:
+    """Create OrderService for enterprise patterns demonstration."""
+    # Domain service pattern with railway-oriented programming
     class OrderService(
         FlextIdentifiableMixin,
         FlextLoggableMixin,
         FlextValidatableMixin,
         FlextTimingMixin,
     ):
-        """Order service with comprehensive mixins."""
+        """Order service with comprehensive mixins using railway-oriented programming."""
 
-        def __init__(self, user_repo: UserRepository) -> None:
+        def __init__(self, user_repo: object) -> None:
             super().__init__()
             self.user_repo = user_repo
             self.orders: dict[str, dict[str, object]] = {}
             self.generate_id()
             # Validation state is initialized lazily via method calls
 
-        def create_order(
-            self,
-            user_id: str,
-            items: list[dict[str, object]],
-        ) -> dict[str, object] | None:
-            """Create order with validation and logging."""
-            start_time = self._start_timing()
-            self.logger.info("Creating order for user: %s", user_id)
+        def _validate_user_exists(self, user_id: str) -> FlextResult[dict[str, object]]:
+            """Validate that user exists in repository."""
+            user_result = self.user_repo.find_user(user_id)
+            if user_result.is_failure:
+                return FlextResult.fail(f"Failed to check user existence: {user_result.error}")
 
-            # Validate user exists
-            user = self.user_repo.find_user(user_id)
+            user = user_result.data
             if not user:
                 self.logger.error("Cannot create order: User not found: %s", user_id)
-                return None
+                return FlextResult.fail(f"User not found: {user_id}")
 
-            # Validate items
+            return FlextResult.ok(user)
+
+        def _validate_order_items(self, items: list[dict[str, object]]) -> FlextResult[None]:
+            """Validate order items format and content."""
             self.clear_validation_errors()
+
             if not items:
                 self.add_validation_error("Order must have at least one item")
 
@@ -1208,44 +1274,85 @@ def demonstrate_enterprise_patterns() -> None:
                     self.add_validation_error("Invalid item format")
 
             if not self.is_valid:
-                self.logger.error("Order validation failed")
-                return None
+                self.logger.error("Order validation failed: %s", self.validation_errors)
+                return FlextResult.fail(f"Order validation failed: {'; '.join(self.validation_errors)}")
 
-            # Create order
-            order_id = FlextUtilities.generate_entity_id()
-            order = {
-                "order_id": order_id,
-                "user_id": user_id,
-                "items": items,
-                "status": "pending",
-                "created_at": FlextUtilities.generate_iso_timestamp(),
-            }
+            return FlextResult.ok(None)
 
-            self.orders[order_id] = order
+        def _create_order_entity(
+            self,
+            user_id: str,
+            items: list[dict[str, object]],
+        ) -> FlextResult[dict[str, object]]:
+            """Create the order entity with all required fields."""
+            try:
+                order_id = FlextUtilities.generate_entity_id()
+                order = {
+                    "order_id": order_id,
+                    "user_id": user_id,
+                    "items": items,
+                    "status": "pending",
+                    "created_at": FlextUtilities.generate_iso_timestamp(),
+                }
+                self.orders[order_id] = order
+                return FlextResult.ok(order)
+            except (RuntimeError, ValueError, TypeError) as e:
+                return FlextResult.fail(f"Failed to create order entity: {e}")
 
-            _ = self._get_execution_time_seconds(start_time)  # Track execution time
-            self.logger.info("Order created: %s", order_id)
+        def _log_order_creation(
+            self,
+            start_time: float,
+            order: dict[str, object],
+        ) -> FlextResult[dict[str, object]]:
+            """Log successful order creation with execution time."""
+            _ = self._get_execution_time_seconds(start_time)
+            self.logger.info("Order created: %s", order["order_id"])
+            return FlextResult.ok(order)
 
-            return order
+        def create_order(
+            self,
+            user_id: str,
+            items: list[dict[str, object]],
+        ) -> FlextResult[dict[str, object]]:
+            """Create order with validation and logging using railway-oriented programming."""
+            start_time = self._start_timing()
+            self.logger.info("Creating order for user: %s", user_id)
 
-    # Demonstrate enterprise patterns
+            return (
+                self._validate_user_exists(user_id)
+                .flat_map(lambda _: self._validate_order_items(items))
+                .flat_map(lambda _: self._create_order_entity(user_id, items))
+                .flat_map(lambda order: self._log_order_creation(start_time, order))
+            )
+
+    return OrderService(user_repo)
+
+
+def _demonstrate_repository_pattern(user_repo: object) -> None:
+    """Demonstrate repository pattern with FlextResult."""
     print("📋 Enterprise Repository Pattern:")
-    user_repo = UserRepository()
 
-    # Save users
-    user_repo.save_user("user_001", {"name": "Alice", "email": "alice@example.com"})
-    user_repo.save_user("user_002", {"name": "Bob", "email": "bob@example.com"})
+    # Save users with FlextResult pattern
+    save_result_1 = user_repo.save_user("user_001", {"name": "Alice", "email": "alice@example.com"})
+    save_result_2 = user_repo.save_user("user_002", {"name": "Bob", "email": "bob@example.com"})
+    print(f"  💾 Save results: Alice={save_result_1.is_success}, Bob={save_result_2.is_success}")
 
-    # Find users (cache demo)
-    user1 = user_repo.find_user("user_001")  # From storage
+    # Find users (cache demo) with FlextResult pattern
+    user1_result = user_repo.find_user("user_001")  # From storage
     user_repo.find_user("user_001")  # From cache
-    print(f"  👤 Found user: {user1['name'] if user1 else 'None'}")
 
+    if user1_result.is_success and user1_result.data:
+        print(f"  👤 Found user: {user1_result.data['name']}")
+    else:
+        print("  ❌ User not found or error occurred")
+
+
+def _demonstrate_service_pattern(order_service: object) -> None:
+    """Demonstrate service pattern with FlextResult."""
     print("\n📋 Enterprise Service Pattern:")
-    order_service = OrderService(user_repo)
 
-    # Create valid order
-    order = order_service.create_order(
+    # Create valid order with FlextResult pattern
+    order_result = order_service.create_order(
         "user_001",
         [
             {"product_id": "prod_001", "quantity": 2},
@@ -1253,14 +1360,20 @@ def demonstrate_enterprise_patterns() -> None:
         ],
     )
 
-    if order:
+    if order_result.is_success and order_result.data:
+        order = order_result.data
         print(
             f"  📦 Order created: {order['order_id']} with {len(order['items'])} items",
         )
+    else:
+        print(f"  ❌ Order creation failed: {order_result.error}")
 
-    # Try invalid order
-    invalid_order = order_service.create_order("user_999", [])
-    print(f"  ❌ Invalid order result: {invalid_order}")
+    # Try invalid order with FlextResult pattern
+    invalid_order_result = order_service.create_order("user_999", [])
+    if invalid_order_result.is_failure:
+        print(f"  ❌ Invalid order result: {invalid_order_result.error}")
+    else:
+        print("  ⚠️ Unexpected success for invalid order")
 
 
 def main() -> None:
