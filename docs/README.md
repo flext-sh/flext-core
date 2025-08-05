@@ -1,170 +1,193 @@
 # FLEXT Core Documentation
 
-**Comprehensive documentation for the architectural foundation of the FLEXT ecosystem**
+**Documentação baseada na implementação atual**
 
-FLEXT Core documentation provides detailed guidance for developers working with the foundational patterns used across all 32 projects in the FLEXT data integration ecosystem. This documentation covers architectural patterns, implementation guides, and best practices for enterprise-grade development.
+## 🎯 Visão Geral
 
-## 📖 Documentation Structure
+FLEXT Core é uma biblioteca Python para padrões de arquitetura limpa, railway-oriented programming e dependency injection. Esta documentação reflete a implementação REAL em src/flext_core/.
+
+## 📖 Estrutura da Documentação
 
 ### 🚀 **Getting Started**
 
-- [**Installation Guide**](getting-started/installation.md) - Complete setup and environment configuration
-- [**Quick Start Guide**](getting-started/quickstart.md) - Essential patterns and basic usage examples
+- [**Installation Guide**](getting-started/installation.md) - Setup e configuração
+- [**Quick Start Guide**](getting-started/quickstart.md) - Uso básico
 
 ### 🏗️ **Architecture**
 
-- [**Architecture Overview**](architecture/overview.md) - Clean Architecture and DDD implementation
-- [**Component Hierarchy**](architecture/component-hierarchy.md) - Detailed analysis of architectural layers
+- [**Architecture Overview**](architecture/overview.md) - Visão geral da arquitetura
 
 ### 📚 **API Reference**
 
-- [**Core API**](api/core.md) - FlextResult, FlextContainer, FlextCoreSettings
-- [**Patterns API**](api/patterns.md) - Commands, Handlers, Validation, Domain Models
+- [**Core API**](api/core.md) - FlextResult, FlextContainer, FlextBaseSettings
+- [**Patterns API**](api/patterns.md) - Commands, Handlers, Validation
 
 ### ⚙️ **Configuration**
 
-- [**Configuration Overview**](configuration/overview.md) - Type-safe configuration management
-- [**Secrets Management**](configuration/secrets.md) - Secure handling of sensitive data
+- [**Configuration Overview**](configuration/overview.md) - Sistema de configuração
 
 ### 🛠️ **Development**
 
-- [**Best Practices**](development/best-practices.md) - Enterprise development patterns and guidelines
-
-### 🔄 **Migration**
-
-- [**Compatibility Guide**](migration/compatibility-guide.md) - Migration strategies and version compatibility
+- [**Best Practices**](development/best-practices.md) - Práticas recomendadas
 
 ### 💡 **Examples**
 
-- [**Examples Overview**](examples/overview.md) - Complete working applications and patterns
+- [**Examples Overview**](examples/overview.md) - Exemplos práticos validados
 
-### 🔧 **Troubleshooting**
+## 🔧 Core Patterns
 
-- [**Advanced Guide**](troubleshooting/advanced-guide.md) - Debugging, performance, and problem resolution
+### FlextResult[T] - Railway Pattern
 
-### 📋 **Project Management**
+```python
+from flext_core import FlextResult
 
-- [**TODO & Roadmap**](TODO.md) - Development priorities and timeline to 1.0.0
-- [**Base Hierarchy**](BASE_HIERARCHY.md) - Project structure and organization
+# Type-safe error handling
+def divide(a: float, b: float) -> FlextResult[float]:
+    if b == 0:
+        return FlextResult.fail("Division by zero")
+    return FlextResult.ok(a / b)
 
-## 🎯 Documentation Objectives
+result = divide(10, 2)
+if result.success:
+    print(f"Result: {result.data}")  # 5.0
+else:
+    print(f"Error: {result.error}")
+```
 
-### **For FLEXT Ecosystem Developers**
+### FlextContainer - Dependency Injection
 
-This documentation enables developers working on any of the 32 FLEXT projects to:
+```python
+from flext_core import FlextContainer
 
-1. **Understand Core Patterns**: Learn FlextResult, FlextContainer, and domain modeling patterns
-2. **Implement Consistently**: Use established patterns across different project types
-3. **Maintain Quality**: Follow enterprise-grade development standards
-4. **Handle Integration**: Understand how FLEXT Core integrates with services and libraries
+container = FlextContainer()
 
-### **For Enterprise Teams**
+# Register service
+database = DatabaseService("sqlite:///app.db")
+reg_result = container.register("database", database)
 
-Enterprise teams adopting FLEXT patterns will find:
+# Retrieve service
+service_result = container.get("database")
+if service_result.success:
+    db = service_result.data
+```
 
-1. **Architectural Guidance**: Clean Architecture and DDD implementation strategies
-2. **Configuration Patterns**: Environment-aware settings and secret management
-3. **Quality Standards**: 95% test coverage, type safety, and security requirements
-4. **Production Readiness**: Enterprise-grade patterns validated across 32 projects
+### FlextBaseSettings - Configuration
 
-### **For New Contributors**
+```python
+from flext_core import FlextBaseSettings
 
-Contributors to the FLEXT ecosystem can:
+class AppSettings(FlextBaseSettings):
+    app_name: str = "My App"
+    debug: bool = False
+    database_url: str = "sqlite:///app.db"
 
-1. **Learn the Foundation**: Understand the architectural principles behind FLEXT
-2. **Follow Standards**: Implement features that align with ecosystem patterns
-3. **Contribute Effectively**: Focus on areas that enhance the foundational library
-4. **Impact the Ecosystem**: Changes to FLEXT Core affect all 32 dependent projects
+    class Config:
+        env_prefix = "APP_"
 
-## 🗂️ Quick Navigation
+settings = AppSettings()  # Loads from env vars
+```
+
+## 🧪 Quick Start
+
+### 1. Install
+
+```bash
+pip install flext-core
+# or
+poetry add flext-core
+```
+
+### 2. Basic Usage
+
+```python
+from flext_core import FlextResult, FlextContainer
+
+# Railway pattern example
+def process_user(user_data: dict) -> FlextResult[dict]:
+    if not user_data.get("email"):
+        return FlextResult.fail("Email required")
+
+    processed = {
+        "email": user_data["email"].lower(),
+        "processed": True
+    }
+    return FlextResult.ok(processed)
+
+# DI example
+container = FlextContainer()
+container.register("config", {"db_url": "sqlite:///app.db"})
+
+config_result = container.get("config")
+if config_result.success:
+    config = config_result.data
+    print(f"Database: {config['db_url']}")
+```
+
+## 📊 Implementation Status
+
+### ✅ **Functional & Tested:**
+
+- FlextResult[T] railway pattern
+- FlextContainer dependency injection
+- FlextBaseSettings configuration
+- Basic logging support
+
+### 🔧 **Available API (In Development):**
+
+- Domain patterns (FlextEntity, FlextValueObject)
+- Command/Handler patterns (FlextCommands, FlextHandlers)
+- Validation patterns (FlextValidation)
+
+### 📋 **Planned:**
+
+- Complete CQRS implementation
+- Event sourcing system
+- Advanced domain patterns
+
+## 🎯 For Different Users
 
 ### **New to FLEXT Core?**
 
-1. Start with [**Installation Guide**](getting-started/installation.md) for environment setup
-2. Follow [**Quick Start Guide**](getting-started/quickstart.md) for basic usage
-3. Review [**Architecture Overview**](architecture/overview.md) for foundational concepts
-4. Explore [**Examples**](examples/overview.md) for practical implementations
+1. [**Installation Guide**](getting-started/installation.md) - Setup
+2. [**Examples**](examples/overview.md) - Working code samples
+3. [**Core API**](api/core.md) - Main patterns
 
-### **Implementing FLEXT Patterns?**
+### **Building Applications?**
 
-1. Study [**Core API**](api/core.md) for FlextResult and FlextContainer usage
-2. Review [**Patterns API**](api/patterns.md) for CQRS and domain modeling
-3. Follow [**Best Practices**](development/best-practices.md) for enterprise development
-4. Use [**Configuration Overview**](configuration/overview.md) for settings management
+1. [**Best Practices**](development/best-practices.md) - Development patterns
+2. [**Configuration**](configuration/overview.md) - Settings management
+3. [**Architecture**](architecture/overview.md) - Design principles
 
-### **Contributing to FLEXT Core?**
+### **Contributing?**
 
-1. Check [**TODO & Roadmap**](TODO.md) for current development priorities
-2. Review [**Architecture Overview**](architecture/overview.md) for design principles
-3. Follow [**Best Practices**](development/best-practices.md) for contribution guidelines
-4. Test across ecosystem using [**Compatibility Guide**](migration/compatibility-guide.md)
+1. Check src/flext_core/ for current implementation
+2. Review tests/ for expected behavior
+3. Follow existing patterns for consistency
 
-### **Troubleshooting Issues?**
+## ⚠️ Documentation Philosophy
 
-1. Start with [**Advanced Guide**](troubleshooting/advanced-guide.md) for common problems
-2. Review [**Examples**](examples/overview.md) for working implementations
-3. Check [**API Reference**](api/core.md) for correct usage patterns
-4. Consult [**TODO & Roadmap**](TODO.md) for known limitations
+**Esta documentação segue a filosofia "REALITY FIRST":**
 
-## 📊 Documentation Standards
+### ✅ **We Document:**
 
-All FLEXT Core documentation follows these enterprise standards:
+- Actual working code from src/flext_core/
+- Tested examples that compile and run
+- Current implementation status
+- Real API exports from **init**.py
 
-### **Content Quality**
+### ❌ **We Don't Document:**
 
-- **Professional Language**: Clear, concise, and technical accuracy
-- **Complete Examples**: Working code samples with proper error handling
-- **Type Annotations**: Full type hints and FlextResult usage in all examples
-- **Real-World Patterns**: Practical examples reflecting actual ecosystem usage
+- Planned features without implementation
+- Untested code examples
+- Inflated status claims
+- Theoretical architectures
 
-### **Code Standards**
+## 🔗 Navigation
 
-- **95% Test Coverage**: All documented code examples must be tested
-- **Type Safety**: Strict MyPy compliance in all code samples
-- **Error Handling**: FlextResult patterns in all examples
-- **Ecosystem Awareness**: Examples that work across 32 dependent projects
-
-### **Organization**
-
-- **Clear Navigation**: Logical structure with cross-references
-- **Progressive Complexity**: From basic usage to advanced patterns
-- **Ecosystem Context**: How each pattern fits into the larger FLEXT platform
-- **Up-to-Date Content**: Regular updates reflecting current implementation
-
-## 🤝 Contributing to Documentation
-
-We welcome contributions that enhance the foundational documentation:
-
-### **Priority Documentation Areas**
-
-1. **Real-World Examples**: Production scenarios using FLEXT Core patterns
-2. **Performance Guides**: Optimization strategies for enterprise applications
-3. **Integration Patterns**: How FLEXT Core integrates with Go services
-4. **Troubleshooting**: Common issues and resolution strategies
-
-### **Contribution Guidelines**
-
-1. **Follow Existing Format**: Maintain consistency with current documentation style
-2. **Include Working Examples**: All code must be tested and functional
-3. **Test Documentation**: Verify all code snippets and commands work
-4. **Consider Ecosystem Impact**: Changes should benefit all 32 projects
-
-### **Documentation Review Process**
-
-1. Submit pull request with comprehensive documentation changes
-2. Include working code examples with test validation
-3. Ensure ecosystem compatibility and impact assessment
-4. Update table of contents and cross-references as needed
-
-## 🔗 Related Resources
-
-- [**FLEXT Core Repository**](../README.md) - Main project documentation
-- [**FLEXT Ecosystem**](../../README.md) - Complete platform overview
-- [**GitHub Issues**](https://github.com/flext-sh/flext-core/issues) - Report documentation issues
-- [**GitHub Discussions**](https://github.com/flext-sh/flext-core/discussions) - Community questions
+- **Beginners**: Installation → Examples → Core API
+- **Developers**: Best Practices → Patterns API → Architecture
+- **Contributors**: Core API → Architecture → Current codebase
 
 ---
 
-**Documentation Mission**: Provide comprehensive, accurate, and practical guidance that enables developers to effectively use FLEXT Core patterns and contribute to the ecosystem of 32 interconnected projects.
-
-**Last Updated**: August 2025 | **Target 1.0.0**: December 2025
+**All documentation is validated against the current implementation in src/flext_core/**

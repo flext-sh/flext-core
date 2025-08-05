@@ -1,4 +1,26 @@
-"""Integration tests for pure library."""
+"""Integration tests for FLEXT Core foundation library.
+
+Enterprise-grade integration testing suite validating cross-component interactions,
+service integration patterns, and end-to-end functionality of the FLEXT Core
+foundation library.
+
+Architecture:
+    Integration Testing → Cross-Component Validation → Service Integration
+
+    This module validates:
+    - FlextResult integration with FlextContainer dependency injection
+    - Type system coherence across foundation patterns
+    - Service registration and retrieval workflows
+    - Mock-based external service integration patterns
+    - Performance characteristics of integrated components
+
+Integration Testing Strategy:
+    - Component Interaction: Test how core components work together
+    - Service Integration: Validate DI container with mocked services
+    - Type Safety: Ensure type system works across component boundaries
+    - Performance: Validate integrated workflows meet performance standards
+    - Error Handling: Test error propagation across component boundaries
+"""
 
 from __future__ import annotations
 
@@ -14,63 +36,124 @@ from flext_core import (
 )
 
 if TYPE_CHECKING:
+    from unittest.mock import MagicMock
+
     from flext_core.flext_types import FlextEntityId
 
 pytestmark = [pytest.mark.integration]
 
 
 class TestLibraryIntegration:
-    """Test library integration and main exports."""
+    """Integration tests for FLEXT Core library components.
 
-    def test_all_exports_work(self) -> None:
-        """Test that all main exports work together."""
-        # Test FlextResult
-        result = FlextResult.ok("test")
-        assert result.success
+    Validates that core foundation components work together correctly
+    and provide consistent behavior across the ecosystem.
+    """
 
-        # Test FlextEntityId
+    @pytest.mark.integration
+    @pytest.mark.core
+    def test_all_exports_work(
+        self,
+        clean_container: FlextContainer,
+        sample_data: dict[
+            str, str | int | float | bool | list[int] | dict[str, str] | None
+        ],
+    ) -> None:
+        """Test comprehensive integration of core library exports.
+
+        Validates that all primary exports work together seamlessly,
+        including FlextResult, FlextContainer, and type system integration.
+
+        Args:
+            clean_container: Isolated container fixture
+            sample_data: Test data fixture
+        """
+        # Arrange
+        test_value = sample_data["string"]
+
+        # Act - Test FlextResult creation
+        result = FlextResult.ok(test_value)
+
+        # Assert - FlextResult functionality
+        assert result.success is True
+        assert result.data == test_value
+
+        # Act - Test FlextEntityId type system
         entity_id: FlextEntityId = "entity-123"
-        if entity_id != "entity-123":
-            entity_msg: str = f"Expected {'entity-123'}, got {entity_id}"
-            raise AssertionError(entity_msg)
 
-        # Test FlextContainer
-        container = FlextContainer()
-        register_result = container.register("service", "value")
-        assert register_result.success
+        # Assert - Type system coherence
+        assert entity_id == "entity-123"
 
-        service_result = container.get("service")
-        assert service_result.success
-        if service_result.data != "value":
-            service_msg: str = f"Expected {'value'}, got {service_result.data}"
-            raise AssertionError(service_msg)
+        # Act - Test FlextContainer service registration
+        register_result = clean_container.register("test_service", test_value)
 
-        # Test global container
+        # Assert - Service registration success
+        assert register_result.success is True
+
+        # Act - Test service retrieval
+        service_result = clean_container.get("test_service")
+
+        # Assert - Service retrieval success
+        assert service_result.success is True
+        assert service_result.data == test_value
+
+        # Act - Test global container access
         global_container = get_flext_container()
+
+        # Assert - Global container availability
         assert isinstance(global_container, FlextContainer)
 
-    def test_flext_result_with_container(self) -> None:
-        """Test FlextResult working with DI container."""
-        container = FlextContainer()
+    @pytest.mark.integration
+    @pytest.mark.core
+    def test_flext_result_with_container(
+        self,
+        clean_container: FlextContainer,
+        mock_external_service: MagicMock,
+    ) -> None:
+        """Test FlextResult integration with DI container factory pattern.
+
+        Validates that FlextResult works seamlessly with dependency injection
+        factory patterns for service creation and result handling.
+
+        Args:
+            clean_container: Isolated container fixture
+            mock_external_service: Mock external service
+        """
+        # Arrange
+        expected_result_data = "container_result"
 
         def create_result() -> FlextResult[str]:
-            return FlextResult.ok("container_result")
+            # Simulate service processing with mock
+            mock_external_service.process.return_value = FlextResult.ok(
+                expected_result_data
+            )
+            return mock_external_service.process()  # type: ignore[no-any-return]
 
-        register_result = container.register_factory(
+        # Act - Register factory in container
+        register_result = clean_container.register_factory(
             "result_factory",
             create_result,
         )
-        assert register_result.success
 
-        # The container calls the factory and returns the result
-        factory_result = container.get("result_factory")
-        assert factory_result.success
+        # Assert - Factory registration success
+        assert register_result.success is True
 
+        # Act - Get factory result from container
+        factory_result = clean_container.get("result_factory")
+
+        # Assert - Factory retrieval success
+        assert factory_result.success is True
+
+        # Act - Verify factory produced FlextResult
         result = factory_result.data
+
+        # Assert - Result type and content validation
         assert isinstance(result, FlextResult)
-        if result.data != "container_result":
-            msg: str = f"Expected {'container_result'}, got {result.data}"
-            raise AssertionError(msg)
+        assert result.success is True
+        assert result.data == expected_result_data
+
+        # Assert - Mock service was called
+        mock_external_service.process.assert_called_once()
 
     def test_entity_id_in_flext_result(self) -> None:
         """Test FlextEntityId used in FlextResult."""

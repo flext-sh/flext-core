@@ -13,16 +13,16 @@ A API Core do FLEXT fornece os componentes fundamentais necessários para constr
 from flext_core import (
     FlextResult,           # Error handling type-safe
     FlextContainer,        # Dependency injection
-    FlextCoreSettings,     # Configuration management
+    FlextBaseSettings,     # Configuration management
     FlextEntity,           # Domain entities
     FlextValueObject,      # Immutable value objects
     FlextAggregateRoot,    # Domain aggregates
 )
 
-# Imports de compatibilidade (legado)
+# Imports legacy (if needed)
 from flext_core import (
-    FlextResult,         # ⚠️ Deprecated: use FlextResult
-    DIContainer,          # ⚠️ Deprecated: use FlextContainer
+    FlextResult,         # Railway-oriented programming pattern
+    FlextContainer,      # Dependency injection container
 )
 ```
 
@@ -75,12 +75,12 @@ result = fetch_user("123")
 
 if result.success:
     # result.data é garantidamente não-None quando success=True
-    user_data = result.datadict
+    user_data = result.data
     print(f"User: {user_data['name']}")
 
 if result.is_failure:
     # result.error é garantidamente não-None quando is_failure=True
-    error_msg = result.errorstr
+    error_msg = result.error
     print(f"Error: {error_msg}")
 ```
 

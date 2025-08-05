@@ -21,8 +21,8 @@ Interface Architecture Patterns:
 
 Development Status (v0.9.0 → 1.0.0):
     ✅ Production Ready: Validation, service, handler, repository interfaces
+    ✅ Implemented: Event sourcing interfaces (FlextDomainEvent, FlextEventStore, FlextEventStreamReader, FlextProjectionBuilder)
     🚧 Active Development: Plugin architecture foundation (Priority 3 - October 2025)
-    📋 TODO Integration: Event sourcing interfaces (Priority 1)
 
 Interface Categories:
     Validation Interfaces: FlextValidator protocol and FlextValidationRule ABC
@@ -642,24 +642,411 @@ class FlextEventSubscriber(ABC):
         ...
 
 
+# =============================================================================
+# EVENT SOURCING INTERFACES
+# =============================================================================
+
+
+@runtime_checkable
+class FlextDomainEvent(Protocol):
+    """Protocol for domain events in event sourcing architecture.
+
+    Runtime-checkable protocol defining the contract for domain events
+    that are captured and stored in an event stream. Supports structural
+    typing allowing any class with matching properties to be used as domain event.
+
+    Event Sourcing Features:
+        - Immutable event data for reliable event replay
+        - Aggregate identification for event stream partitioning
+        - Temporal ordering through sequence numbers
+        - Event metadata for debugging and monitoring
+        - Version compatibility for event schema evolution
+
+    Usage Patterns:
+        # Domain event implementation
+        @dataclass(frozen=True)
+        class UserRegistered:
+            aggregate_id: str
+            event_id: str
+            occurred_at: datetime
+            version: int
+            user_email: str
+            user_name: str
+
+        # Protocol compliance check
+        def handle_event(event: FlextDomainEvent):
+            if isinstance(event, FlextDomainEvent):
+                store_event(event.aggregate_id, event)
+    """
+
+    @property
+    def aggregate_id(self) -> str:
+        """Get aggregate identifier that produced this event.
+
+        Returns:
+            Unique identifier of the aggregate root that generated this event
+
+        """
+        ...
+
+    @property
+    def event_id(self) -> str:
+        """Get unique event identifier.
+
+        Returns:
+            Universally unique identifier for this specific event
+
+        """
+        ...
+
+    @property
+    def occurred_at(self) -> object:
+        """Get timestamp when event occurred.
+
+        Returns:
+            Timestamp when the event was generated (datetime or timestamp)
+
+        """
+        ...
+
+    @property
+    def version(self) -> int:
+        """Get event schema version.
+
+        Returns:
+            Version number for event schema compatibility
+
+        """
+        ...
+
+
+class FlextEventStore(ABC):
+    """Abstract interface for event store implementations.
+
+    Defines the contract for event storage systems supporting event sourcing
+    patterns with aggregate-based event streams, versioning, and replay capabilities.
+
+    Event Store Features:
+        - Aggregate-based event streams with optimistic concurrency
+        - Event versioning and schema evolution support
+        - Snapshot support for performance optimization
+        - Event replay capabilities for aggregate reconstruction
+        - Transaction support for consistency guarantees
+
+    Implementation Guidelines:
+        - Ensure append-only semantics for event immutability
+        - Support optimistic concurrency control through versioning
+        - Implement efficient event stream reading for replay
+        - Provide snapshot capabilities for large event streams
+        - Handle concurrent writes gracefully with proper error reporting
+
+    Usage Patterns:
+        # Event storage
+        result = event_store.append_events(
+            aggregate_id="user-123",
+            events=[UserRegistered(...), UserActivated(...)],
+            expected_version=0
+        )
+
+        # Event replay
+        events_result = event_store.get_events("user-123")
+        if events_result.success:
+            for event in events_result.data:
+                aggregate.apply_event(event)
+    """
+
+    @abstractmethod
+    def append_events(
+        self,
+        aggregate_id: str,
+        events: list[FlextDomainEvent],
+        expected_version: int | None = None,
+    ) -> FlextResult[None]:
+        """Append events to aggregate stream.
+
+        Appends new events to the event stream for the specified aggregate
+        with optimistic concurrency control through version checking.
+
+        Args:
+            aggregate_id: Unique identifier of the aggregate
+            events: List of domain events to append
+            expected_version: Expected current version for concurrency control
+
+        Returns:
+            Result indicating success or concurrency/validation errors
+
+        Raises:
+            FlextConcurrencyError: If expected_version doesn't match current version
+            FlextValidationError: If events are invalid or malformed
+
+        """
+        ...
+
+    @abstractmethod
+    def get_events(
+        self,
+        aggregate_id: str,
+        from_version: int = 0,
+        to_version: int | None = None,
+    ) -> FlextResult[list[FlextDomainEvent]]:
+        """Get events for aggregate from event stream.
+
+        Retrieves events for the specified aggregate within the given
+        version range, supporting both full replay and partial updates.
+
+        Args:
+            aggregate_id: Unique identifier of the aggregate
+            from_version: Starting version (inclusive)
+            to_version: Ending version (inclusive), None for latest
+
+        Returns:
+            Result containing list of events or empty list if none found
+
+        Implementation Notes:
+            - Events must be returned in version order
+            - Should handle non-existent aggregates gracefully
+            - Version ranges should be inclusive on both ends
+
+        """
+        ...
+
+    @abstractmethod
+    def get_current_version(self, aggregate_id: str) -> FlextResult[int]:
+        """Get current version of aggregate event stream.
+
+        Returns the current version number of the event stream for
+        the specified aggregate, used for optimistic concurrency control.
+
+        Args:
+            aggregate_id: Unique identifier of the aggregate
+
+        Returns:
+            Result containing current version number (0 if no events exist)
+
+        """
+        ...
+
+    @abstractmethod
+    def save_snapshot(
+        self,
+        aggregate_id: str,
+        snapshot: object,
+        version: int,
+    ) -> FlextResult[None]:
+        """Save aggregate snapshot for performance optimization.
+
+        Stores a snapshot of the aggregate state at a specific version
+        to optimize future event replay operations.
+
+        Args:
+            aggregate_id: Unique identifier of the aggregate
+            snapshot: Serializable snapshot of aggregate state
+            version: Version at which snapshot was taken
+
+        Returns:
+            Result indicating success or storage errors
+
+        """
+        ...
+
+    @abstractmethod
+    def get_snapshot(
+        self,
+        aggregate_id: str,
+    ) -> FlextResult[tuple[object, int] | None]:
+        """Get latest snapshot for aggregate.
+
+        Retrieves the most recent snapshot for the specified aggregate
+        along with the version at which it was taken.
+
+        Args:
+            aggregate_id: Unique identifier of the aggregate
+
+        Returns:
+            Result containing tuple of (snapshot, version) or None if no snapshot exists
+
+        """
+        ...
+
+
+class FlextEventStreamReader(ABC):
+    """Interface for reading event streams with advanced querying capabilities.
+
+    Provides advanced event stream reading capabilities including filtering,
+    pagination, and cross-aggregate queries for complex event sourcing scenarios.
+
+    Stream Reading Features:
+        - Cross-aggregate event streaming for projections
+        - Event filtering by type, timestamp, and custom criteria
+        - Pagination support for large event streams
+        - Real-time event streaming capabilities
+        - Event metadata querying and analysis
+
+    Usage Patterns:
+        # Stream all events from timestamp
+        result = reader.stream_events(
+            from_timestamp=datetime.now() - timedelta(hours=1),
+            event_types=["UserRegistered", "OrderCreated"]
+        )
+
+        # Paginated event reading
+        result = reader.get_events_page(
+            page_size=100,
+            cursor="event-cursor-123"
+        )
+    """
+
+    @abstractmethod
+    def stream_events(
+        self,
+        from_timestamp: object | None = None,
+        to_timestamp: object | None = None,
+        event_types: list[str] | None = None,
+        aggregate_ids: list[str] | None = None,
+    ) -> FlextResult[list[FlextDomainEvent]]:
+        """Stream events with filtering criteria.
+
+        Streams events across aggregates with optional filtering by
+        timestamp range, event types, and specific aggregates.
+
+        Args:
+            from_timestamp: Start timestamp (inclusive)
+            to_timestamp: End timestamp (inclusive)
+            event_types: List of event type names to include
+            aggregate_ids: List of specific aggregate IDs to include
+
+        Returns:
+            Result containing filtered list of events in temporal order
+
+        """
+        ...
+
+    @abstractmethod
+    def get_events_page(
+        self,
+        page_size: int = 100,
+        cursor: str | None = None,
+    ) -> FlextResult[tuple[list[FlextDomainEvent], str | None]]:
+        """Get paginated events with cursor-based navigation.
+
+        Retrieves a page of events with cursor-based pagination for
+        efficient processing of large event streams.
+
+        Args:
+            page_size: Maximum number of events to return
+            cursor: Pagination cursor for next page (None for first page)
+
+        Returns:
+            Result containing tuple of (events, next_cursor)
+            next_cursor is None if no more events available
+
+        """
+        ...
+
+
+class FlextProjectionBuilder(ABC):
+    """Interface for building read model projections from event streams.
+
+    Defines the contract for projection builders that create and maintain
+    read models from domain events, supporting both batch and real-time
+    projection updates.
+
+    Projection Features:
+        - Event-driven read model updates
+        - Projection versioning and rebuilding
+        - Error handling and recovery mechanisms
+        - Performance optimization through batching
+        - Projection state management and checkpointing
+
+    Usage Patterns:
+        # Build projection from events
+        result = builder.project_events(
+            events=[UserRegistered(...), UserActivated(...)],
+            projection_name="user_summary"
+        )
+
+        # Rebuild projection from scratch
+        result = builder.rebuild_projection("user_summary")
+    """
+
+    @abstractmethod
+    def project_events(
+        self,
+        events: list[FlextDomainEvent],
+        projection_name: str,
+    ) -> FlextResult[None]:
+        """Project events to update read model.
+
+        Processes domain events to update the specified projection
+        (read model) with new data from the events.
+
+        Args:
+            events: List of domain events to project
+            projection_name: Name of the projection to update
+
+        Returns:
+            Result indicating success or projection errors
+
+        """
+        ...
+
+    @abstractmethod
+    def rebuild_projection(
+        self,
+        projection_name: str,
+        from_timestamp: object | None = None,
+    ) -> FlextResult[None]:
+        """Rebuild projection from event stream.
+
+        Completely rebuilds the specified projection by replaying
+        all relevant events from the event store.
+
+        Args:
+            projection_name: Name of the projection to rebuild
+            from_timestamp: Starting timestamp for rebuild (None for all events)
+
+        Returns:
+            Result indicating success or rebuild errors
+
+        """
+        ...
+
+    @abstractmethod
+    def get_projection_status(
+        self,
+        projection_name: str,
+    ) -> FlextResult[Mapping[str, object]]:
+        """Get status information for projection.
+
+        Returns status information about the projection including
+        last processed event, error count, and performance metrics.
+
+        Args:
+            projection_name: Name of the projection
+
+        Returns:
+            Result containing projection status dictionary
+
+        """
+        ...
+
+
 # Export API
 __all__: list[str] = [
     "FlextConfigurable",
-    # Events
+    "FlextDomainEvent",
     "FlextEventPublisher",
+    "FlextEventStore",
+    "FlextEventStreamReader",
     "FlextEventSubscriber",
-    # Handlers
     "FlextHandler",
     "FlextMiddleware",
-    # Plugins
     "FlextPlugin",
     "FlextPluginContext",
-    # Repository
+    "FlextProjectionBuilder",
     "FlextRepository",
-    # Services
     "FlextService",
     "FlextUnitOfWork",
     "FlextValidationRule",
-    # Validation
     "FlextValidator",
 ]

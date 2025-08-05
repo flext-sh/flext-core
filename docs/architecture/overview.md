@@ -1,423 +1,255 @@
 # FLEXT Core Architecture Overview
 
-**The Comprehensive Architectural Foundation for Enterprise Data Integration**
+**Arquitetura baseada na implementação atual**
 
-FLEXT Core implements Clean Architecture and Domain-Driven Design principles to provide the foundational patterns used across all 33 projects in the FLEXT ecosystem. This architectural foundation enables enterprise-grade data integration solutions with consistent patterns, type safety, and reliability.
+## 🎯 Visão Geral
 
-## 🏗️ Ecosystem Architecture Context
+FLEXT Core é a biblioteca de fundação para padrões de arquitetura limpa e railway-oriented programming. Esta documentação reflete a implementação REAL em src/flext_core/.
 
-FLEXT Core serves as the architectural foundation for the complete FLEXT ecosystem, providing essential patterns that ensure consistency across all 33 projects:
+## 🏗️ Estrutura Real do Projeto
 
-```text
-┌─────────────────────────────────────────────────────────────────┐
-│                    FLEXT ECOSYSTEM (33 projects)                 │
-├─────────────────────────────────────────────────────────────────┤
-│ 🎯 Services (3): FlexCore(Go) | ALGAR | GrupoNos                │
-├─────────────────────────────────────────────────────────────────┤
-│ 📱 Applications (6): API | Auth | Web | CLI | Quality | Plugin  │
-├─────────────────────────────────────────────────────────────────┤
-│ 🔧 Infrastructure (6): Oracle | LDAP | LDIF | WMS | gRPC | Melt. │
-├─────────────────────────────────────────────────────────────────┤
-│ 🔄 Singer Ecosystem (15): 5 Taps | 5 Targets | 4 DBT | 1 Ext.  │
-├─────────────────────────────────────────────────────────────────┤
-│ ⚡ Go Binaries (4): flext | cli | server | demo                 │
-├═════════════════════════════════════════════════════════════════┤
-│              FLEXT CORE - ARCHITECTURAL FOUNDATION               │
-│    FlextResult | FlextContainer | Domain Patterns | Config      │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-## 📐 Layered Architecture Implementation
-
-FLEXT Core implements a **6-layer architectural hierarchy** that supports Clean Architecture, Domain-Driven Design, and railway-oriented programming across the entire ecosystem:
+**BASEADO EM src/flext_core/ - VALIDADO:**
 
 ```text
-┌─────────────────────────────────────────────────────────────────┐
-│                 FLEXT CORE LAYERED ARCHITECTURE                 │
-├─────────────────────────────────────────────────────────────────┤
-│  FOUNDATION LAYER - Type System & Core Contracts               │
-│  ├── flext_types.py    # Type system foundation                │
-│  ├── constants.py      # Ecosystem-wide constants              │
-│  ├── version.py        # Version management & compatibility     │
-│  └── __init__.py       # Public API gateway                    │
-├─────────────────────────────────────────────────────────────────┤
-│  CORE PATTERN LAYER - Railway-Oriented Programming             │
-│  ├── result.py         # FlextResult[T] - Railway pattern      │
-│  ├── container.py      # FlextContainer - DI system            │
-│  ├── exceptions.py     # Exception hierarchy                   │
-│  └── utilities.py      # Pure utility functions                │
-├─────────────────────────────────────────────────────────────────┤
-│  CONFIGURATION LAYER - System Integration & Logging            │
-│  ├── config.py         # FlextBaseSettings configuration       │
-│  ├── loggings.py       # Structured logging with correlation   │
-│  ├── payload.py        # Message/Event/Payload patterns        │
-│  └── interfaces.py     # Protocol definitions                  │
-├─────────────────────────────────────────────────────────────────┤
-│  DOMAIN LAYER - Domain-Driven Design Patterns                 │
-│  ├── entities.py       # FlextEntity - Rich domain entities    │
-│  ├── value_objects.py  # FlextValueObject - Immutable values   │
-│  ├── aggregate_root.py # FlextAggregateRoot - DDD aggregates    │
-│  └── domain_services.py# FlextDomainService - Domain services  │
-├─────────────────────────────────────────────────────────────────┤
-│  CQRS LAYER - Command Query Responsibility Segregation         │
-│  ├── commands.py       # Command pattern implementation        │
-│  ├── handlers.py       # Handler pattern implementation        │
-│  └── validation.py     # Input validation system               │
-├─────────────────────────────────────────────────────────────────┤
-│  EXTENSION LAYER - Reusable Behaviors & Cross-Cutting Concerns │
-│  ├── mixins.py         # Reusable behavior mixins              │
-│  ├── decorators.py     # Enterprise decorator patterns         │
-│  ├── fields.py         # Field metadata system                 │
-│  ├── guards.py         # Validation guards & builders          │
-│  └── core.py           # FlextCore main class                  │
-└─────────────────────────────────────────────────────────────────┘
+src/flext_core/
+├── __init__.py              # Public API gateway
+├── result.py                # FlextResult[T] - Railway pattern
+├── container.py             # FlextContainer - DI system
+├── config.py                # FlextBaseSettings
+├── entities.py              # FlextEntity - Domain entities
+├── value_objects.py         # FlextValueObject - Value objects
+├── aggregate_root.py        # FlextAggregateRoot - DDD aggregates
+├── commands.py              # FlextCommands namespace
+├── handlers.py              # FlextHandlers namespace
+├── validation.py            # FlextValidation namespace
+├── loggings.py              # Structured logging
+├── exceptions.py            # Exception hierarchy
+├── utilities.py             # Utility functions
+├── constants.py             # Core constants
+├── flext_types.py           # Type definitions
+├── version.py               # Version management
+├── interfaces.py            # Protocol definitions
+├── mixins.py                # Behavior mixins
+├── decorators.py            # Decorator patterns
+├── fields.py                # Field metadata
+├── guards.py                # Validation guards
+├── payload.py               # Message patterns
+├── core.py                  # FlextCore main class
+└── domain_services.py       # Domain services
 ```
 
-## 🏗️ Architectural Layer Responsibilities
+## 🔧 Core Patterns Implementados
 
-### **Layer 1: Foundation Layer** - Type System & Core Contracts
+### 1. FlextResult[T] - Railway Pattern
 
-**Module Role**: Establish foundational contracts that all other modules depend on.
-
-**Key Components**:
-
-- **flext_types.py**: Modern type system with generics, protocols, and type variables
-- **constants.py**: Ecosystem-wide constants for ports, levels, and configurations
-- **version.py**: Version management and compatibility checking across ecosystem
-- \***\*init**.py\*\*: Public API gateway with comprehensive exports
+**✅ FUNCIONAL** - O padrão central do FLEXT Core:
 
 ```python
-# Foundation Layer Usage
-from flext_core import FlextResult, FlextContainer, FlextEntity
-from flext_core.flext_types import TAnyDict, TLogMessage
-from flext_core.constants import FlextLogLevel, Platform
-from flext_core.version import get_version_info, is_feature_available
-```
+from flext_core import FlextResult
 
-**Ecosystem Integration**: This layer ensures type safety and compatibility across all 33 projects, providing the contracts that prevent breaking changes.
+# Success case
+result = FlextResult.ok("Success data")
+assert result.success
+assert result.data == "Success data"
 
-### **Layer 2: Core Pattern Layer** - Railway-Oriented Programming
+# Failure case
+result = FlextResult.fail("Error message")
+assert result.is_failure
+assert result.error == "Error message"
 
-**Module Role**: Provide railway-oriented programming foundation and dependency injection.
+# Chaining operations
+def validate_email(email: str) -> FlextResult[str]:
+    if "@" not in email:
+        return FlextResult.fail("Invalid email")
+    return FlextResult.ok(email.lower())
 
-**Key Components**:
-
-- **result.py**: FlextResult[T] pattern enabling functional error handling
-- **container.py**: FlextContainer for enterprise dependency injection
-- **exceptions.py**: Comprehensive exception hierarchy with business context
-- **utilities.py**: Pure utility functions for performance tracking and generation
-
-```python
-# Railway-Oriented Programming Pattern
-def process_data(data: dict) -> FlextResult[ProcessedData]:
+def create_user(email: str) -> FlextResult[dict]:
     return (
-        validate_input(data)
-        .map(transform_data)
-        .flat_map(save_to_database)
-        .map(format_response)
+        validate_email(email)
+        .map(lambda valid_email: {"email": valid_email, "created": True})
     )
-
-# Enterprise Dependency Injection
-container = get_flext_container()
-result = container.register("user_service", UserService())
-service = container.get("user_service").unwrap()
 ```
 
-**Ecosystem Integration**: FlextResult[T] is used in 15,000+ function signatures across all ecosystem projects, ensuring consistent error handling.
+### 2. FlextContainer - Dependency Injection
 
-### **Layer 3: Configuration Layer** - System Integration & Logging
-
-**Module Role**: Handle system configuration, logging, and external integration contracts.
-
-**Key Components**:
-
-- **config.py**: FlextBaseSettings for environment-aware configuration management
-- **loggings.py**: Structured logging with correlation ID support and enterprise observability
-- **payload.py**: Message/Event/Payload patterns for data exchange
-- **interfaces.py**: Protocol definitions for external system integration
+**✅ FUNCIONAL** - Sistema de DI type-safe:
 
 ```python
-# Configuration Management Pattern
+from flext_core import FlextContainer
+
+# Setup container
+container = FlextContainer()
+
+# Register services
+database_service = DatabaseService("sqlite:///app.db")
+result = container.register("database", database_service)
+assert result.success
+
+# Retrieve services
+service_result = container.get("database")
+if service_result.success:
+    db_service = service_result.data
+```
+
+### 3. Domain Patterns
+
+**🔧 DISPONÍVEL** - API disponível, implementação em desenvolvimento:
+
+```python
+from flext_core import FlextEntity, FlextValueObject, FlextAggregateRoot
+
+# Domain entity
+class User(FlextEntity):
+    def __init__(self, user_id: str, name: str, email: str):
+        super().__init__(user_id)
+        self.name = name
+        self.email = email
+
+# Value object
+class Email(FlextValueObject):
+    def __init__(self, address: str):
+        if "@" not in address:
+            raise ValueError("Invalid email")
+        self.address = address.lower()
+```
+
+### 4. Configuration Management
+
+**✅ FUNCIONAL** - Baseado em Pydantic:
+
+```python
+from flext_core import FlextBaseSettings
+
 class AppSettings(FlextBaseSettings):
-    database_url: str = "postgresql://localhost/app"
-    log_level: str = "INFO"
+    app_name: str = "My App"
+    debug: bool = False
+    database_url: str = "sqlite:///app.db"
 
     class Config:
         env_prefix = "APP_"
 
-# Enterprise Logging Pattern
-logger = get_logger(__name__, "INFO")
-with create_log_context(logger, request_id="123", user_id="456"):
-    logger.info("Processing request", operation="user_creation", duration_ms=45)
+settings = AppSettings()
 ```
 
-**Ecosystem Integration**: Configuration patterns are used by all infrastructure libraries (Oracle, LDAP, gRPC) for consistent environment management.
+## 🏛️ Architecture Layers
 
-### **Layer 4: Domain Layer** - Domain-Driven Design Patterns
+### Foundation Layer
 
-**Module Role**: Provide rich domain modeling patterns following DDD principles.
+- **result.py**: FlextResult[T] para error handling
+- **container.py**: FlextContainer para DI
+- **flext_types.py**: Type system definitions
+- **constants.py**: Core constants
 
-**Key Components**:
+### Domain Layer
 
-- **entities.py**: FlextEntity for rich domain entities with business logic
-- **value_objects.py**: FlextValueObject for immutable value types
-- **aggregate_root.py**: FlextAggregateRoot for DDD aggregates with invariants
-- **domain_services.py**: FlextDomainService for domain service patterns
+- **entities.py**: Rich domain entities
+- **value_objects.py**: Immutable value objects
+- **aggregate_root.py**: DDD aggregates
+- **domain_services.py**: Domain services
 
-```python
-# Domain Entity with Business Logic
-class User(FlextEntity):
-    name: str
-    email: str
-    is_active: bool = False
+### Application Layer
 
-    def activate(self) -> FlextResult[None]:
-        if self.is_active:
-            return FlextResult.fail("User already active")
+- **commands.py**: Command patterns (CQRS)
+- **handlers.py**: Handler patterns
+- **validation.py**: Input validation
 
-        self.is_active = True
-        self.add_domain_event({"type": "UserActivated", "user_id": self.id})
-        return FlextResult.ok(None)
+### Infrastructure Layer
 
-# Immutable Value Object
-class Email(FlextValueObject):
-    address: str
+- **config.py**: Configuration management
+- **loggings.py**: Structured logging
+- **interfaces.py**: External system contracts
 
-    def __post_init__(self):
-        if "@" not in self.address:
-            raise ValueError("Invalid email format")
-```
+## 🧪 Testability
 
-**Ecosystem Integration**: Domain patterns are used across all Singer projects, ALGAR migration, and enterprise applications for consistent business modeling.
-
-### **Layer 5: CQRS Layer** - Command Query Responsibility Segregation
-
-**Module Role**: Implement CQRS patterns for enterprise scalability.
-
-**Key Components**:
-
-- **commands.py**: Command pattern implementation with business operations
-- **handlers.py**: Handler pattern implementation for command/query processing
-- **validation.py**: Input validation system with business rule enforcement
+### Core Pattern Testing
 
 ```python
-# CQRS Command Pattern
-class CreateUserCommand(FlextCommand):
-    name: str
-    email: str
+import pytest
+from flext_core import FlextResult, FlextContainer
 
-class CreateUserHandler(FlextCommandHandler[CreateUserCommand, User]):
-    async def handle(self, command: CreateUserCommand) -> FlextResult[User]:
-        return (
-            self.validate_command(command)
-            .flat_map(lambda cmd: self.create_user_entity(cmd))
-            .flat_map(lambda user: self.save_user(user))
-        )
-```
-
-**Ecosystem Integration**: CQRS patterns enable scalable architectures in FlexCore (Go), FLEXT Service, and high-throughput data processing.
-
-### **Layer 6: Extension Layer** - Reusable Behaviors & Cross-Cutting Concerns
-
-**Module Role**: Provide reusable patterns and cross-cutting concerns.
-
-**Key Components**:
-
-- **mixins.py**: Reusable behavior mixins for common functionality
-- **decorators.py**: Enterprise decorator patterns for cross-cutting concerns
-- **fields.py**: Field metadata system for enhanced data modeling
-- **guards.py**: Validation guards and builders for type safety
-- **core.py**: FlextCore main class integrating all patterns
-
-```python
-# Mixin Pattern for Reusable Behavior
-class User(FlextEntity, TimestampMixin, SoftDeleteMixin):
-    name: str
-    email: str
-    # Automatically inherits: created_at, updated_at, deleted_at, is_deleted
-
-# Cross-Cutting Concerns with Decorators
-@with_correlation_id
-@with_performance_tracking("user_service.create_user")
-def create_user(self, data: dict) -> FlextResult[User]:
-    return self.validate(data).flat_map(self._create_user_impl)
-```
-
-**Ecosystem Integration**: Extension patterns reduce code duplication across all 33 projects while maintaining architectural consistency.
-
-## Design Principles
-
-### Principles Implementation
-
-**Single Responsibility Principle**:
-
-- Each class has one reason to change
-- Clear separation of concerns across layers
-- Focused interfaces and implementations
-
-**Open/Closed Principle**:
-
-- Extensible through inheritance and composition
-- Plugin architecture for domain services
-- Strategy pattern for varying behaviors
-
-**Liskov Substitution Principle**:
-
-- Consistent interfaces across implementations
-- Type-safe substitution with FlextResult
-- Behavioral contracts maintained
-
-**Interface Segregation Principle**:
-
-- Small, focused interfaces
-- Client-specific abstractions
-- No forced dependencies on unused methods
-
-**Dependency Inversion Principle**:
-
-- Depend on abstractions, not concretions
-- Infrastructure implements domain interfaces
-- Inward-pointing dependencies only
-
-### Clean Architecture Compliance
-
-**Dependency Rule**: Dependencies point inward only. Outer layers depend on inner layers, never the reverse.
-
-**Source Code Dependencies**: All source code dependencies point inward toward higher-level policies.
-
-**Data Flow**: Data crosses boundaries in simple data structures or through well-defined interfaces.
-
-**Framework Independence**: The architecture does not depend on frameworks or external tools.
-
-## Error Handling Strategy
-
-### FlextResult Pattern
-
-All operations return `FlextResult[T]` for explicit error handling:
-
-```python
-def complex_operation() -> FlextResult[ProcessedData]:
-    return (
-        validate_input()
-        .flat_map(process_data)
-        .flat_map(save_results)
-        .map(format_output)
-    )
-
-# Usage
-result = complex_operation()
-if result.success:
-    handle_success(result.data)
-else:
-    handle_error(result.error)
-```
-
-**Benefits**:
-
-- Explicit error handling in type signatures
-- Functional composition with map/flat_map
-- No hidden exceptions or side effects
-- Testable error paths
-
-### Error Propagation
-
-Errors propagate through the application layers:
-
-1. **Domain Layer**: Business rule violations
-2. **Application Layer**: Workflow coordination errors
-3. **Infrastructure Layer**: Technical failures
-4. **Presentation Layer**: Input validation errors
-
-## Testing Strategy
-
-### Layer-Specific Testing
-
-**Domain Layer Testing**:
-
-```python
-def test_user_activation():
-    user = User.create("John Doe", "john@example.com").unwrap()
-
-    result = user.activate()
-
+def test_result_pattern():
+    """Test FlextResult railway pattern."""
+    # Success path
+    result = FlextResult.ok("test")
     assert result.success
-    assert user.is_active
-    assert len(user.get_domain_events()) == 1
-```
+    assert result.data == "test"
 
-**Application Layer Testing**:
+    # Failure path
+    result = FlextResult.fail("error")
+    assert result.is_failure
+    assert result.error == "error"
 
-```python
-def test_user_registration_workflow():
-    service = UserApplicationService(mock_container)
-    command = RegisterUserCommand(name="John", email="john@example.com")
-
-    result = service.register_user(command)
-
-    assert result.success
-    assert isinstance(result.data, User)
-```
-
-**Infrastructure Layer Testing**:
-
-```python
-def test_container_service_registration():
+def test_container_pattern():
+    """Test dependency injection."""
     container = FlextContainer()
-    service = UserService()
+    service = "test_service"
 
-    result = container.register("user_service", service)
+    # Register
+    reg_result = container.register("test", service)
+    assert reg_result.success
 
-    assert result.success
-    retrieved = container.get("user_service")
-    assert retrieved.success
-    assert retrieved.data is service
+    # Retrieve
+    get_result = container.get("test")
+    assert get_result.success
+    assert get_result.data == service
 ```
 
-## Performance Considerations
+## 📊 Implementation Status
 
-### Memory Management
+### ✅ Production Ready
 
-- Immutable value objects reduce memory fragmentation
-- Lazy loading of services through FlextContainer
-- Event cleanup after processing domain events
+- **FlextResult[T]**: Complete railway-oriented programming
+- **FlextContainer**: Dependency injection system
+- **Configuration**: FlextBaseSettings with Pydantic
+- **Basic logging**: Structured logging support
 
-### Execution Performance
+### 🔧 In Development
 
-- Type-safe interfaces eliminate runtime type checking
-- FlextResult eliminates exception handling overhead
-- Dependency injection reduces object creation costs
+- **Domain patterns**: Entity/ValueObject/Aggregate APIs available
+- **CQRS**: Command/Handler namespace structure exists
+- **Validation**: Basic validation patterns
 
-### Scalability Patterns
+### 📋 Planned
 
-- Stateless service design enables horizontal scaling
-- Event-driven architecture supports loose coupling
-- Clear layer boundaries enable independent scaling
+- **Event Sourcing**: Complete event sourcing implementation
+- **Advanced CQRS**: Query bus and auto-discovery
+- **Plugin Architecture**: Hot-pluggable components
 
-## Integration Points
+## 🔗 Integration Points
 
-### External Systems
+### Framework Compatibility
 
-The architecture provides clear integration points:
+- **Pydantic V2**: Configuration and validation
+- **Standard Library**: Minimal external dependencies
+- **Type System**: Python 3.13+ type hints
 
-**Inbound Adapters** (Primary/Driving):
+### Ecosystem Integration
 
-- REST API controllers
-- CLI command handlers
-- Message queue consumers
+FLEXT Core serves as foundation for related projects in the workspace.
 
-**Outbound Adapters** (Secondary/Driven):
+## ⚠️ Reality Check
 
-- Database repositories
-- External service clients
-- File system adapters
+**Esta documentação reflete o código ATUAL em src/flext_core/**
 
-### Framework Integration
+### What EXISTS
 
-FLEXT Core integrates with popular frameworks:
+- FlextResult pattern fully implemented
+- FlextContainer dependency injection working
+- Configuration system functional
+- Domain pattern APIs available
 
-- **FastAPI**: Type-safe API development
-- **Django**: Enterprise web applications
-- **SQLAlchemy**: Database integration
-- **Pydantic**: Data validation and serialization
+### What's PLANNED
 
-This architectural foundation provides the stability and flexibility needed for enterprise applications while maintaining clean separation of concerns and testability.
+- Complete CQRS implementation
+- Event sourcing system
+- Advanced domain patterns
+
+### What DOESN'T exist (yet)
+
+- "33 projects ecosystem" (not validated)
+- Complete framework integrations
+- Production-ready event sourcing
+
+---
+
+**Para informações detalhadas, consulte o código em src/flext_core/ e os testes em tests/**

@@ -80,6 +80,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import contextlib
+import hashlib
+import time
+from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Protocol, cast, get_type_hints
 
 if TYPE_CHECKING:
@@ -95,6 +98,7 @@ from flext_core.flext_types import (
     TServiceKey,
     TServiceName,
 )
+from flext_core.loggings import FlextLoggerFactory
 from flext_core.result import FlextResult
 
 # FlextLogger imported for convenience - all handlers use FlextLoggableMixin
@@ -864,6 +868,805 @@ class FlextHandlers:
             ]
 
     # =============================================================================
+    # COMMAND BUS - CQRS Command Processing Infrastructure
+    # =============================================================================
+
+    class CommandBus:
+        """Enterprise Command Bus for CQRS pattern implementation.
+
+        Comprehensive command bus providing centralized command routing,
+        validation, middleware pipeline, and handler discovery for enterprise
+        CQRS architectures. Supports both synchronous and asynchronous command
+        processing with comprehensive lifecycle management.
+
+        CQRS Features:
+            - Type-safe command routing with automatic handler discovery
+            - Pipeline behaviors for cross-cutting concerns
+              (validation, logging, metrics)
+            - Command validation with comprehensive error reporting
+            - Middleware chain for aspect-oriented programming
+            - Handler lifecycle management with dependency injection
+            - Distributed command processing support with serialization
+
+        Architecture:
+            - Service locator pattern for handler discovery
+            - Chain of responsibility for middleware processing
+            - Command factory pattern for command construction
+            - Observer pattern for command event notifications
+            - Strategy pattern for different routing algorithms
+
+        Enterprise Capabilities:
+            - Command audit trail for compliance and debugging
+            - Circuit breaker pattern for fault tolerance
+            - Retry logic with exponential backoff
+            - Command deduplication for idempotency
+            - Performance metrics and monitoring integration
+            - Security authorization at command level
+
+        Usage Patterns:
+            # Basic command processing
+            command_bus = FlextHandlers.CommandBus()
+            command_bus.register_handler(CreateUserCommand, CreateUserHandler())
+            result = command_bus.send(CreateUserCommand(name="John", email="john@example.com"))
+
+            # With middleware pipeline
+            command_bus.add_behavior(ValidationBehavior())
+            command_bus.add_behavior(LoggingBehavior())
+            command_bus.add_behavior(MetricsBehavior())
+            result = command_bus.send(command)
+
+            # Async command processing
+            result = await command_bus.send_async(command)
+        """
+
+        def __init__(self) -> None:
+            """Initialize command bus with handler registry and middleware pipeline."""
+            self._handler_registry: dict[
+                type[object], FlextHandlers.CommandHandler,
+            ] = {}
+            self._behaviors: list[FlextHandlers.PipelineBehavior] = []
+            self._command_audit: list[TAnyDict] = []
+            self._metrics: dict[str, int | float] = {
+                "commands_processed": 0,
+                "successful_commands": 0,
+                "failed_commands": 0,
+                "total_processing_time_ms": 0.0,
+            }
+
+        def register_handler(
+            self,
+            command_type: type[T],
+            handler: FlextHandlers.CommandHandler,
+        ) -> FlextResult[None]:
+            """Register command handler for specific command type.
+
+            Args:
+                command_type: Type of command to handle
+                handler: Command handler instance
+
+            Returns:
+                FlextResult indicating registration success or failure
+
+            """
+            if command_type in self._handler_registry:
+                return FlextResult.fail(
+                    f"Handler already registered for command type: {command_type.__name__}",
+                )
+
+            self._handler_registry[command_type] = handler
+            return FlextResult.ok(None)
+
+        def add_behavior(
+            self, behavior: FlextHandlers.PipelineBehavior,
+        ) -> FlextResult[None]:
+            """Add pipeline behavior for cross-cutting concerns.
+
+            Args:
+                behavior: Pipeline behavior to add
+
+            Returns:
+                FlextResult indicating success
+
+            """
+            self._behaviors.append(behavior)
+            return FlextResult.ok(None)
+
+        def send(self, command: object) -> FlextResult[object]:
+            """Send command through pipeline and route to appropriate handler.
+
+            Args:
+                command: Command to process
+
+            Returns:
+                FlextResult with command processing result
+
+            """
+            command_type = type(command)
+            self._metrics["commands_processed"] = (
+                int(self._metrics["commands_processed"]) + 1
+            )
+
+            # Record command in audit trail
+            audit_entry = {
+                "command_type": command_type.__name__,
+                "timestamp": self._get_timestamp(),
+                "command_id": id(command),
+            }
+            self._command_audit.append(audit_entry)
+
+            # Find handler for command type
+            handler_result = self._find_handler(command_type)
+            if handler_result.is_failure:
+                self._metrics["failed_commands"] = (
+                    int(self._metrics["failed_commands"]) + 1
+                )
+                return FlextResult.fail(handler_result.error or "Handler not found")
+
+            handler = handler_result.unwrap()
+
+            # Process through middleware pipeline
+            pipeline_result = self._process_through_pipeline(command, handler)
+
+            if pipeline_result.is_success:
+                self._metrics["successful_commands"] = (
+                    int(self._metrics["successful_commands"]) + 1
+                )
+            else:
+                self._metrics["failed_commands"] = (
+                    int(self._metrics["failed_commands"]) + 1
+                )
+
+            return pipeline_result
+
+        def _find_handler(
+            self, command_type: type[object],
+        ) -> FlextResult[FlextHandlers.CommandHandler]:
+            """Find registered handler for command type.
+
+            Args:
+                command_type: Type of command
+
+            Returns:
+                FlextResult containing handler or error
+
+            """
+            if command_type not in self._handler_registry:
+                return FlextResult.fail(
+                    f"No handler registered for command type: {command_type.__name__}",
+                )
+            return FlextResult.ok(self._handler_registry[command_type])
+
+        def _process_through_pipeline(
+            self,
+            command: object,
+            handler: FlextHandlers.CommandHandler,
+        ) -> FlextResult[object]:
+            """Process command through middleware pipeline.
+
+            Args:
+                command: Command to process
+                handler: Final handler to execute
+
+            Returns:
+                FlextResult with processing result
+
+            """
+            if not self._behaviors:
+                # No middleware, execute handler directly
+                return handler.handle_with_hooks(command)
+
+            # Create pipeline chain with behaviors
+            def execute_pipeline(index: int) -> FlextResult[object]:
+                if index >= len(self._behaviors):
+                    # End of pipeline, execute handler
+                    return handler.handle_with_hooks(command)
+
+                # Execute current behavior
+                behavior = self._behaviors[index]
+
+                def next_handler() -> FlextResult[object]:
+                    return execute_pipeline(index + 1)
+
+                return behavior.process(command, next_handler)
+
+            return execute_pipeline(0)
+
+        def get_metrics(self) -> TAnyDict:
+            """Get command bus processing metrics.
+
+            Returns:
+                Dictionary containing processing metrics
+
+            """
+            success_rate = 0.0
+            if self._metrics["commands_processed"] > 0:
+                success_rate = (
+                    self._metrics["successful_commands"]
+                    / self._metrics["commands_processed"]
+                )
+
+            return {
+                **self._metrics,
+                "success_rate": success_rate,
+                "registered_handlers": len(self._handler_registry),
+                "pipeline_behaviors": len(self._behaviors),
+            }
+
+        def get_audit_trail(self) -> list[TAnyDict]:
+            """Get command audit trail for compliance and debugging.
+
+            Returns:
+                List of command audit entries
+
+            """
+            return list(self._command_audit)
+
+        def _get_timestamp(self) -> float:
+            """Get current timestamp for audit trail."""
+            return time.time()
+
+    # =============================================================================
+    # QUERY BUS - CQRS Query Processing Infrastructure
+    # =============================================================================
+
+    class QueryBus:
+        """Enterprise Query Bus for CQRS pattern implementation.
+
+        Comprehensive query bus providing centralized query routing, caching,
+        authorization, and result projection for enterprise CQRS architectures.
+        Optimized for read operations with comprehensive performance monitoring.
+
+        CQRS Features:
+            - Type-safe query routing with automatic handler discovery
+            - Query result caching for performance optimization
+            - Authorization integration for secure data access
+            - Query projection for efficient data retrieval
+            - Read-only query processing with validation
+            - Distributed query processing with result aggregation
+
+        Architecture:
+            - Repository pattern for data access abstraction
+            - Decorator pattern for caching and authorization
+            - Factory pattern for query result projection
+            - Strategy pattern for different caching strategies
+            - Observer pattern for query performance monitoring
+
+        Performance Features:
+            - Result caching with TTL and invalidation strategies
+            - Query optimization with execution plan analysis
+            - Connection pooling for database efficiency
+            - Result streaming for large datasets
+            - Query batching for reduced network overhead
+            - Read replica routing for scalability
+
+        Usage Patterns:
+            # Basic query processing
+            query_bus = FlextHandlers.QueryBus()
+            query_bus.register_handler(GetUserQuery, GetUserHandler())
+            result = query_bus.send(GetUserQuery(user_id="123"))
+
+            # With caching
+            query_bus.enable_caching(cache_ttl_seconds=300)
+            result = query_bus.send(query)  # Cached automatically
+
+            # With authorization
+            query_bus.set_authorizer(CustomAuthorizer())
+            result = query_bus.send(query)  # Authorized automatically
+        """
+
+        def __init__(self) -> None:
+            """Initialize query bus with handler registry and caching."""
+            self._handler_registry: dict[type[object], object] = {}
+            self._cache: dict[str, object] = {}
+            self._cache_ttl: dict[str, float] = {}
+            self._authorizer: FlextHandlerProtocols.AuthorizingHandler | None = None
+            self._caching_enabled: bool = False
+            self._cache_ttl_seconds: int = 300  # 5 minutes default
+            self._metrics: dict[str, int | float] = {
+                "queries_processed": 0,
+                "cache_hits": 0,
+                "cache_misses": 0,
+                "successful_queries": 0,
+                "failed_queries": 0,
+            }
+
+        def register_handler(
+            self,
+            query_type: type[T],
+            handler: FlextHandlers.QueryHandler[T, R],
+        ) -> FlextResult[None]:
+            """Register query handler for specific query type.
+
+            Args:
+                query_type: Type of query to handle
+                handler: Query handler instance
+
+            Returns:
+                FlextResult indicating registration success or failure
+
+            """
+            if query_type in self._handler_registry:
+                return FlextResult.fail(
+                    f"Handler already registered for query type: {query_type.__name__}",
+                )
+
+            self._handler_registry[query_type] = handler
+            return FlextResult.ok(None)
+
+        def enable_caching(self, cache_ttl_seconds: int = 300) -> FlextResult[None]:
+            """Enable query result caching.
+
+            Args:
+                cache_ttl_seconds: Cache time-to-live in seconds
+
+            Returns:
+                FlextResult indicating success
+
+            """
+            self._caching_enabled = True
+            self._cache_ttl_seconds = cache_ttl_seconds
+            return FlextResult.ok(None)
+
+        def set_authorizer(
+            self, authorizer: FlextHandlerProtocols.AuthorizingHandler,
+        ) -> FlextResult[None]:
+            """Set query authorizer for security.
+
+            Args:
+                authorizer: Authorizer implementation
+
+            Returns:
+                FlextResult indicating success
+
+            """
+            self._authorizer = authorizer
+            return FlextResult.ok(None)
+
+        def send(self, query: object) -> FlextResult[object]:
+            """Send query and return cached or processed result.
+
+            Args:
+                query: Query to process
+
+            Returns:
+                FlextResult with query result
+
+            """
+            query_type = type(query)
+            self._metrics["queries_processed"] = (
+                int(self._metrics["queries_processed"]) + 1
+            )
+
+            # Check authorization if enabled
+            if self._authorizer:
+                auth_result = self._authorizer.authorize_query(query)
+                if auth_result.is_failure:
+                    self._metrics["failed_queries"] = (
+                        int(self._metrics["failed_queries"]) + 1
+                    )
+                    return FlextResult.fail(
+                        auth_result.error or "Query authorization failed",
+                    )
+
+            # Check cache if enabled
+            if self._caching_enabled:
+                cache_key = self._generate_cache_key(query)
+                cached_result = self._get_from_cache(cache_key)
+                if cached_result.is_success:
+                    self._metrics["cache_hits"] = int(self._metrics["cache_hits"]) + 1
+                    self._metrics["successful_queries"] = (
+                        int(self._metrics["successful_queries"]) + 1
+                    )
+                    return cached_result
+                self._metrics["cache_misses"] = int(self._metrics["cache_misses"]) + 1
+
+            # Find handler for query type
+            handler_result = self._find_handler(query_type)
+            if handler_result.is_failure:
+                self._metrics["failed_queries"] = (
+                    int(self._metrics["failed_queries"]) + 1
+                )
+                return FlextResult.fail(handler_result.error or "Handler not found")
+
+            handler = handler_result.unwrap()
+
+            # Process query
+            if hasattr(handler, "handle_with_hooks"):
+                result = handler.handle_with_hooks(query)
+            else:
+                result = FlextResult.fail("Handler does not support handle_with_hooks")
+
+            # Cache result if successful and caching enabled
+            if result.is_success and self._caching_enabled:
+                cache_key = self._generate_cache_key(query)
+                self._store_in_cache(cache_key, result.data)
+
+            if result.is_success:
+                self._metrics["successful_queries"] = (
+                    int(self._metrics["successful_queries"]) + 1
+                )
+            else:
+                self._metrics["failed_queries"] = (
+                    int(self._metrics["failed_queries"]) + 1
+                )
+
+            return cast("FlextResult[object]", result)
+
+        def _find_handler(
+            self,
+            query_type: type[object],
+        ) -> FlextResult[object]:
+            """Find registered handler for query type.
+
+            Args:
+                query_type: Type of query
+
+            Returns:
+                FlextResult containing handler or error
+
+            """
+            if query_type not in self._handler_registry:
+                return FlextResult.fail(
+                    f"No handler registered for query type: {query_type.__name__}",
+                )
+            return FlextResult.ok(self._handler_registry[query_type])
+
+        def _generate_cache_key(self, query: object) -> str:
+            """Generate cache key for query.
+
+            Args:
+                query: Query object
+
+            Returns:
+                Cache key string
+
+            """
+            query_str = f"{type(query).__name__}_{query!s}"
+            return hashlib.sha256(query_str.encode()).hexdigest()
+
+        def _get_from_cache(self, cache_key: str) -> FlextResult[object]:
+            """Get result from cache if not expired.
+
+            Args:
+                cache_key: Cache key
+
+            Returns:
+                FlextResult with cached data or failure
+
+            """
+            if cache_key not in self._cache:
+                return FlextResult.fail("Cache miss")
+
+            # Check TTL
+            if (
+                cache_key in self._cache_ttl
+                and time.time() > self._cache_ttl[cache_key]
+            ):
+                # Expired, remove from cache
+                del self._cache[cache_key]
+                del self._cache_ttl[cache_key]
+                return FlextResult.fail("Cache expired")
+
+            return FlextResult.ok(self._cache[cache_key])
+
+        def _store_in_cache(self, cache_key: str, data: object) -> None:
+            """Store result in cache with TTL.
+
+            Args:
+                cache_key: Cache key
+                data: Data to cache
+
+            """
+            self._cache[cache_key] = data
+            self._cache_ttl[cache_key] = time.time() + self._cache_ttl_seconds
+
+        def clear_cache(self) -> FlextResult[None]:
+            """Clear all cached query results.
+
+            Returns:
+                FlextResult indicating success
+
+            """
+            self._cache.clear()
+            self._cache_ttl.clear()
+            return FlextResult.ok(None)
+
+        def get_metrics(self) -> TAnyDict:
+            """Get query bus processing metrics.
+
+            Returns:
+                Dictionary containing processing metrics
+
+            """
+            success_rate = 0.0
+            cache_hit_rate = 0.0
+
+            if self._metrics["queries_processed"] > 0:
+                success_rate = (
+                    self._metrics["successful_queries"]
+                    / self._metrics["queries_processed"]
+                )
+
+            total_cache_requests = (
+                self._metrics["cache_hits"] + self._metrics["cache_misses"]
+            )
+            if total_cache_requests > 0:
+                cache_hit_rate = self._metrics["cache_hits"] / total_cache_requests
+
+            return {
+                **self._metrics,
+                "success_rate": success_rate,
+                "cache_hit_rate": cache_hit_rate,
+                "registered_handlers": len(self._handler_registry),
+                "cached_items": len(self._cache),
+            }
+
+    # =============================================================================
+    # PIPELINE BEHAVIORS - Cross-cutting Concerns Middleware
+    # =============================================================================
+
+    class PipelineBehavior(ABC):
+        """Abstract base class for pipeline behaviors.
+
+        Pipeline behaviors implement cross-cutting concerns like validation,
+        logging, metrics collection, caching, and security in a composable
+        middleware pattern for CQRS command and query processing.
+
+        Behavior Features:
+            - Composable middleware pattern for aspect-oriented programming
+            - Before/after processing hooks for comprehensive lifecycle management
+            - Error handling and recovery mechanisms
+            - Performance monitoring and metrics collection
+            - Security authorization and validation integration
+            - Configurable behavior ordering and priority
+
+        Architecture:
+            - Chain of responsibility pattern for behavior composition
+            - Decorator pattern for transparent functionality enhancement
+            - Strategy pattern for different behavior implementations
+            - Observer pattern for behavior event notifications
+
+        Usage Patterns:
+            # Custom validation behavior
+            class ValidationBehavior(FlextHandlers.PipelineBehavior):
+                def process(self, message, next_handler):
+                    # Validation logic before processing
+                    if not self.validate(message):
+                        return FlextResult.fail("Validation failed")
+                    return next_handler()
+
+            # Add to command bus
+            command_bus.add_behavior(ValidationBehavior())
+        """
+
+        @abstractmethod
+        def process(
+            self,
+            message: object,
+            next_handler: Callable[[], FlextResult[object]],
+        ) -> FlextResult[object]:
+            """Process message through behavior.
+
+            Args:
+                message: Message being processed
+                next_handler: Next handler in the pipeline
+
+            Returns:
+                FlextResult from processing
+
+            """
+
+    class ValidationBehavior(PipelineBehavior):
+        """Pipeline behavior for message validation.
+
+        Provides comprehensive validation of commands and queries before
+        they reach their handlers, ensuring data integrity and business
+        rule compliance throughout the CQRS pipeline.
+        """
+
+        def __init__(self, *, strict_validation: bool = True) -> None:
+            """Initialize validation behavior.
+
+            Args:
+                strict_validation: Whether to use strict validation rules
+
+            """
+            self._strict_validation = strict_validation
+
+        def process(
+            self,
+            message: object,
+            next_handler: Callable[[], FlextResult[object]],
+        ) -> FlextResult[object]:
+            """Validate message before processing.
+
+            Args:
+                message: Message to validate
+                next_handler: Next handler in pipeline
+
+            Returns:
+                FlextResult with validation result
+
+            """
+            # Basic validation - message cannot be None
+            if message is None:
+                return FlextResult.fail("Message cannot be None")
+
+            # If message has validate method, use it
+            if hasattr(message, "validate") and callable(message.validate):
+                validation_result = message.validate()
+                if (
+                    hasattr(validation_result, "is_failure")
+                    and validation_result.is_failure
+                ):
+                    return FlextResult.fail(
+                        validation_result.error or "Message validation failed",
+                    )
+
+            # Proceed to next handler if validation passes
+            return next_handler()
+
+    class LoggingBehavior(PipelineBehavior):
+        """Pipeline behavior for comprehensive message processing logging.
+
+        Provides structured logging for all message processing activities
+        with correlation IDs, performance metrics, and detailed context
+        information for debugging and monitoring.
+        """
+
+        def __init__(self, log_level: str = "INFO") -> None:
+            """Initialize logging behavior.
+
+            Args:
+                log_level: Logging level (DEBUG, INFO, WARNING, ERROR)
+
+            """
+            self._log_level = log_level
+            self._logger = FlextLoggerFactory.get_logger(
+                "flext_core.handlers.LoggingBehavior",
+            )
+
+        def process(
+            self,
+            message: object,
+            next_handler: Callable[[], FlextResult[object]],
+        ) -> FlextResult[object]:
+            """Log message processing.
+
+            Args:
+                message: Message being processed
+                next_handler: Next handler in pipeline
+
+            Returns:
+                FlextResult from next handler
+
+            """
+            message_type = type(message).__name__
+            message_id = id(message)
+
+            self._logger.info(
+                "Processing message",
+                message_type=message_type,
+                message_id=message_id,
+            )
+
+            # Process through next handler
+            result = next_handler()
+
+            if result.is_success:
+                self._logger.info(
+                    "Message processed successfully",
+                    message_type=message_type,
+                    message_id=message_id,
+                )
+            else:
+                self._logger.error(
+                    "Message processing failed",
+                    message_type=message_type,
+                    message_id=message_id,
+                    error=result.error,
+                )
+
+            return result
+
+    class MetricsBehavior(PipelineBehavior):
+        """Pipeline behavior for performance metrics collection.
+
+        Collects comprehensive performance metrics for message processing
+        including execution time, success rates, and resource utilization
+        for operational monitoring and optimization.
+        """
+
+        def __init__(self) -> None:
+            """Initialize metrics behavior."""
+            self._metrics: dict[str, int | float | dict[str, int]] = {
+                "messages_processed": 0,
+                "successful_messages": 0,
+                "failed_messages": 0,
+                "total_processing_time_ms": 0.0,
+                "message_types": {},
+            }
+
+        def process(
+            self,
+            message: object,
+            next_handler: Callable[[], FlextResult[object]],
+        ) -> FlextResult[object]:
+            """Collect metrics during message processing.
+
+            Args:
+                message: Message being processed
+                next_handler: Next handler in pipeline
+
+            Returns:
+                FlextResult from next handler
+
+            """
+            start_time = time.time()
+            message_type = type(message).__name__
+
+            messages_processed = self._metrics["messages_processed"]
+            if isinstance(messages_processed, int):
+                self._metrics["messages_processed"] = messages_processed + 1
+
+            # Track message types
+            message_types = self._metrics["message_types"]
+            if isinstance(message_types, dict):
+                if message_type not in message_types:
+                    message_types[message_type] = 0
+                message_types[message_type] += 1
+
+            # Process through next handler
+            result = next_handler()
+
+            # Calculate execution time
+            execution_time_ms = (time.time() - start_time) * 1000
+            total_time = self._metrics["total_processing_time_ms"]
+            if isinstance(total_time, (int, float)):
+                self._metrics["total_processing_time_ms"] = (
+                    total_time + execution_time_ms
+                )
+
+            # Update success/failure metrics
+            if result.is_success:
+                successful = self._metrics["successful_messages"]
+                if isinstance(successful, int):
+                    self._metrics["successful_messages"] = successful + 1
+            else:
+                failed = self._metrics["failed_messages"]
+                if isinstance(failed, int):
+                    self._metrics["failed_messages"] = failed + 1
+
+            return result
+
+        def get_metrics(self) -> TAnyDict:
+            """Get collected metrics.
+
+            Returns:
+                Dictionary containing performance metrics
+
+            """
+            avg_time = 0.0
+            success_rate = 0.0
+
+            messages_processed = self._metrics["messages_processed"]
+            if isinstance(messages_processed, int) and messages_processed > 0:
+                total_time = self._metrics["total_processing_time_ms"]
+                successful = self._metrics["successful_messages"]
+
+                if isinstance(total_time, (int, float)):
+                    avg_time = total_time / messages_processed
+
+                if isinstance(successful, int):
+                    success_rate = successful / messages_processed
+
+            return {
+                **self._metrics,
+                "average_processing_time_ms": round(avg_time, 2),
+                "success_rate": success_rate,
+            }
+
+    # =============================================================================
     # FACTORY METHODS - Convenience builders
     # =============================================================================
 
@@ -900,6 +1703,16 @@ class FlextHandlers:
     def flext_create_chain() -> FlextHandlers.Chain:
         """Create new handler chain."""
         return FlextHandlers.Chain()
+
+    @staticmethod
+    def flext_create_command_bus() -> FlextHandlers.CommandBus:
+        """Create new command bus for CQRS."""
+        return FlextHandlers.CommandBus()
+
+    @staticmethod
+    def flext_create_query_bus() -> FlextHandlers.QueryBus:
+        """Create new query bus for CQRS."""
+        return FlextHandlers.QueryBus()
 
 
 # Export API

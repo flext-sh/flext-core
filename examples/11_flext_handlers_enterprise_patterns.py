@@ -29,14 +29,16 @@ demonstrating the power and flexibility of the FlextHandlers system.
 
 import time
 import traceback
-from collections.abc import Callable
 from dataclasses import dataclass
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 from flext_core.entities import FlextEntity
 from flext_core.handlers import FlextHandlers
 from flext_core.loggings import FlextLogger, FlextLoggerFactory
 from flext_core.result import FlextResult
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 # =============================================================================
 # HANDLER CONSTANTS - Validation and business rule constraints
@@ -84,7 +86,9 @@ class UserEntity(FlextEntity):
     def validate_domain_rules(self) -> FlextResult[None]:
         """Validate domain rules for user entity."""
         if not self.name or len(self.name) < MIN_NAME_LENGTH:
-            return FlextResult.fail(f"Name must be at least {MIN_NAME_LENGTH} characters")
+            return FlextResult.fail(
+                f"Name must be at least {MIN_NAME_LENGTH} characters"
+            )
         if "@" not in self.email:
             return FlextResult.fail("Invalid email format")
         return FlextResult.ok(None)
@@ -95,10 +99,7 @@ class UserEntity(FlextEntity):
             return FlextResult.fail("User is already active")
         # Since entities are frozen, we need to create a new instance
         activated_user = UserEntity(
-            id=self.id,
-            name=self.name,
-            email=self.email,
-            is_active=True
+            id=self.id, name=self.name, email=self.email, is_active=True
         )
         return FlextResult.ok(activated_user)
 
@@ -614,7 +615,9 @@ def demonstrate_command_handlers() -> None:  # noqa: PLR0912, PLR0915
             return
         # Type guard and cast
         if isinstance(user_data, User):
-            print(f"✅ User created: {user_data.name} ({user_data.email}) - ID: {user_data.id}")
+            print(
+                f"✅ User created: {user_data.name} ({user_data.email}) - ID: {user_data.id}"
+            )
         else:
             print(f"✅ User created: {user_data}")
     else:
@@ -661,7 +664,9 @@ def demonstrate_command_handlers() -> None:  # noqa: PLR0912, PLR0915
             return
         # Type guard and cast
         if isinstance(updated_user_data, User):
-            print(f"✅ User updated: {updated_user_data.name} ({updated_user_data.email})")
+            print(
+                f"✅ User updated: {updated_user_data.name} ({updated_user_data.email})"
+            )
         else:
             print(f"✅ User updated: {updated_user_data}")
     else:
@@ -714,7 +719,9 @@ def demonstrate_query_handlers() -> None:  # noqa: PLR0912, PLR0915
             return
         # Type guard and cast
         if isinstance(user_data, User):
-            print(f"✅ User found: {user_data.name} ({user_data.email}) - Active: {user_data.is_active}")
+            print(
+                f"✅ User found: {user_data.name} ({user_data.email}) - Active: {user_data.is_active}"
+            )
         else:
             print(f"✅ User found: {user_data}")
     else:
@@ -908,16 +915,31 @@ def demonstrate_handler_registry() -> None:  # noqa: PLR0912, PLR0915
     user_created_handler = UserCreatedEventHandler()
 
     # Register by string keys - cast handlers to expected type
-    registry.register("create_user", cast("FlextHandlers.Handler[object, object]", create_handler))
-    registry.register("get_user", cast("FlextHandlers.Handler[object, object]", get_handler))
-    registry.register("user_created_event", cast("FlextHandlers.Handler[object, object]", user_created_handler))
+    registry.register(
+        "create_user", cast("FlextHandlers.Handler[object, object]", create_handler)
+    )
+    registry.register(
+        "get_user", cast("FlextHandlers.Handler[object, object]", get_handler)
+    )
+    registry.register(
+        "user_created_event",
+        cast("FlextHandlers.Handler[object, object]", user_created_handler),
+    )
 
     print("✅ Handlers registered by string keys")
 
     # Register by type - cast handlers to expected type
-    registry.register_for_type(CreateUserCommand, cast("FlextHandlers.Handler[CreateUserCommand, object]", create_handler))
-    registry.register_for_type(GetUserQuery, cast("FlextHandlers.Handler[GetUserQuery, object]", get_handler))
-    registry.register_for_type(UserCreatedEvent, cast("FlextHandlers.Handler[UserCreatedEvent, object]", user_created_handler))
+    registry.register_for_type(
+        CreateUserCommand,
+        cast("FlextHandlers.Handler[CreateUserCommand, object]", create_handler),
+    )
+    registry.register_for_type(
+        GetUserQuery, cast("FlextHandlers.Handler[GetUserQuery, object]", get_handler)
+    )
+    registry.register_for_type(
+        UserCreatedEvent,
+        cast("FlextHandlers.Handler[UserCreatedEvent, object]", user_created_handler),
+    )
 
     print("✅ Handlers registered by message types")
 
@@ -1122,11 +1144,16 @@ def demonstrate_function_handlers() -> None:  # noqa: PLR0912, PLR0915
         return FlextResult.ok(number * 2)
 
     # Create handlers from functions with proper type annotations
-    message_handler: FlextHandlers.Handler[object, object] = FlextHandlers.flext_create_function_handler(
-        cast("Callable[[object], object]", process_simple_message),
+    message_handler: FlextHandlers.Handler[object, object] = (
+        FlextHandlers.flext_create_function_handler(
+            cast("Callable[[object], object]", process_simple_message),
+        )
     )
-    number_handler: FlextHandlers.Handler[object, object] = FlextHandlers.flext_create_function_handler(
-        cast("Callable[[object], object]", process_number))
+    number_handler: FlextHandlers.Handler[object, object] = (
+        FlextHandlers.flext_create_function_handler(
+            cast("Callable[[object], object]", process_number)
+        )
+    )
 
     print("✅ Function handlers created")
 
@@ -1204,8 +1231,10 @@ def demonstrate_function_handlers() -> None:  # noqa: PLR0912, PLR0915
 
         return FlextResult.ok(result)
 
-    order_handler: FlextHandlers.Handler[object, object] = FlextHandlers.flext_create_function_handler(
-        cast("Callable[[object], object]", process_order_total)
+    order_handler: FlextHandlers.Handler[object, object] = (
+        FlextHandlers.flext_create_function_handler(
+            cast("Callable[[object], object]", process_order_total)
+        )
     )
 
     # Test complex handler - use handle() directly

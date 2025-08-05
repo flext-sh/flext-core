@@ -775,8 +775,8 @@ class TestFlextResultFilter:
 
         filtered = result.filter(is_not_none)
         assert filtered.is_failure
-        if filtered.error != "No data to filter":
-            msg: str = f"Expected {'No data to filter'}, got {filtered.error}"
+        if filtered.error != "Filter predicate failed":
+            msg: str = f"Expected {'Filter predicate failed'}, got {filtered.error}"
             raise AssertionError(msg)
 
     def test_filter_with_predicate_exception(self) -> None:

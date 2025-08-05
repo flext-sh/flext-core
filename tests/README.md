@@ -126,14 +126,27 @@ pytest tests/ --cov=src/flext_core --cov-report=html
 
 Available pytest markers for selective test execution:
 
+### Core Test Categories
+
 - `unit` - Unit tests (isolated components)
 - `integration` - Integration tests (component interactions)
 - `e2e` - End-to-end tests (complete workflows)
-- `pep8` - PEP8 compliance validation
-- `core` - Core framework functionality
+- `slow` - Slow tests (can be excluded with `-m "not slow"`)
+
+### Architecture and Quality
+
+- `core` - Core framework functionality tests
 - `architecture` - Architectural pattern tests
 - `ddd` - Domain-driven design tests
-- `slow` - Slow tests (can be excluded)
+- `pep8` - PEP8 compliance validation tests
+- `performance` - Performance benchmark tests
+
+### Test Flow Categories
+
+- `happy_path` - Success path testing
+- `error_path` - Error handling and failure scenarios
+- `boundary` - Boundary conditions and edge cases
+- `regression` - Regression prevention tests
 
 ## Configuration
 
@@ -151,13 +164,30 @@ Available pytest markers for selective test execution:
 
 ## Best Practices
 
-1. **Test Organization**: Each module has corresponding test file(s)
-2. **Naming Convention**: `test_{module_name}.py`
-3. **Marker Usage**: Always mark tests with appropriate markers
-4. **Fast Tests**: Keep unit tests under 100ms
-5. **Isolation**: Unit tests should not depend on external services
-6. **Coverage**: Maintain 95% minimum test coverage
-7. **Documentation**: Document complex test scenarios
+### Modern Pytest Patterns
+
+1. **AAA Structure**: All tests follow Arrange-Act-Assert pattern
+2. **Fixture Usage**: Leverage fixtures for clean test isolation
+3. **Type Safety**: All test functions properly typed with return annotations
+4. **Marker Usage**: Every test marked with appropriate category markers
+5. **Descriptive Docstrings**: Clear test purpose and validation documented
+
+### Test Quality Standards
+
+1. **Test Organization**: Each module has corresponding comprehensive test file(s)
+2. **Naming Convention**: `test_{module_name}.py` with descriptive test method names
+3. **Performance**: Keep unit tests under 100ms, integration tests under 1s
+4. **Isolation**: Unit tests use fixtures and mocks, no external dependencies
+5. **Coverage**: Maintain 95% minimum test coverage across all modules
+6. **Error Testing**: Comprehensive error path coverage with proper exception testing
+
+### Enterprise Integration Patterns
+
+1. **Mock Integration**: Proper mock setup and verification patterns
+2. **Service Testing**: Container-based service integration with lifecycle management
+3. **Performance Validation**: Threshold-based performance testing
+4. **Error Propagation**: Cross-component error handling validation
+5. **Type System Testing**: Generic type safety validation across boundaries
 
 ## Dependencies
 

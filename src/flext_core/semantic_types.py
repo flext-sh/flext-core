@@ -275,14 +275,36 @@ class FlextTypes:
     class Bridge:
         """Go-Python bridge and cross-language integration types."""
 
-        # Bridge communication types
-        type BridgeMessage = dict[str, object]
+        # Message Types (following pattern documentation)
+        type MessageId = str
+        type MessageType = str
+        type MessagePayload = dict[str, object]
+
+        # Protocol Types
+        type RequestId = str
+        type ResponseId = str
+        type ErrorCode = str
+
+        # Serialization Types
+        type SerializedData = bytes
+        type EncodingType = Literal["json", "msgpack", "protobuf"]
+
+        # Contract Types
+        type ServiceName = str
+        type MethodName = str
+        type ServiceContract = dict[MethodName, dict[str, object]]
+
+        # Bridge Message Structure (enhanced from pattern docs)
+        type BridgeMessage = dict[
+            str,
+            object,
+        ]  # Complete structure defined in protocols
         type BridgeRequest = dict[str, object]
         type BridgeResponse = dict[str, object]
         type BridgeError = dict[str, str]
         type BridgeContext = dict[str, object]
 
-        # Serialization types for cross-language
+        # Cross-language compatibility types
         type SerializableType = (
             str | int | float | bool | None | dict[str, object] | list[object]
         )
@@ -293,7 +315,6 @@ class FlextTypes:
         # Service integration types
         type ServiceProxy = object  # Protocol-based
         type ServiceAdapter = object  # Protocol-based
-        type ServiceContract = dict[str, object]
         type ApiContract = dict[str, object]
         type MessageContract = dict[str, object]
 
@@ -302,7 +323,13 @@ class FlextTypes:
 
         # HTTP types
         type HttpMethod = Literal[
-            "GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"
+            "GET",
+            "POST",
+            "PUT",
+            "DELETE",
+            "PATCH",
+            "HEAD",
+            "OPTIONS",
         ]
         type HttpStatus = int
         type HttpHeaders = dict[str, str]
@@ -374,7 +401,8 @@ class AuthProtocol(Protocol):
     """Protocol for authentication providers."""
 
     def authenticate(
-        self, credentials: FlextTypes.Auth.LoginCredentials
+        self,
+        credentials: FlextTypes.Auth.LoginCredentials,
     ) -> FlextTypes.Auth.AuthenticatedUser | None:
         """Authenticate user with credentials."""
         ...
@@ -388,7 +416,10 @@ class ObservabilityProtocol(Protocol):
     """Protocol for observability components."""
 
     def log(
-        self, level: FlextTypes.Observability.LogLevel, message: str, **context: object
+        self,
+        level: FlextTypes.Observability.LogLevel,
+        message: str,
+        **context: object,
     ) -> None:
         """Log message with context."""
         ...
@@ -407,7 +438,8 @@ class SingerProtocol(Protocol):
     """Protocol for Singer taps and targets."""
 
     def discover(
-        self, config: FlextTypes.Singer.SingerConfig
+        self,
+        config: FlextTypes.Singer.SingerConfig,
     ) -> FlextTypes.Singer.SingerCatalog:
         """Discover available streams."""
         ...

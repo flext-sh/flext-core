@@ -386,9 +386,9 @@ class FlextFieldCore(
         """Convert value based on field type for serialization."""
         if field_type_str == "string":
             return str(value)
-        if field_type_str == "integer" and isinstance(value, int | float):
+        if field_type_str == "integer" and isinstance(value, (int, float)):
             return int(value)
-        if field_type_str == "float" and isinstance(value, int | float):
+        if field_type_str == "float" and isinstance(value, (int, float)):
             return float(value)
         if field_type_str == "boolean":
             return self._serialize_boolean_value(value)
@@ -436,7 +436,7 @@ class FlextFieldCore(
         """Deserialize integer value with type conversion."""
         if (isinstance(value, str) and value.isdigit()) or isinstance(
             value,
-            int | float,
+            (int, float),
         ):
             return int(value)
         return value
@@ -448,7 +448,7 @@ class FlextFieldCore(
                 return float(value)
             except ValueError:
                 return value
-        if isinstance(value, int | float):
+        if isinstance(value, (int, float)):
             return float(value)
         return value
 
@@ -458,9 +458,9 @@ class FlextFieldCore(
             return value
         if isinstance(value, str):
             return value.lower() in {"true", "1", "yes", "on"}
-        if isinstance(value, int | float):
+        if isinstance(value, (int, float)):
             return bool(value)
-        if isinstance(value, list | dict | tuple | set):
+        if isinstance(value, (list, dict, tuple, set)):
             msg = "Cannot deserialize"
             raise FlextTypeError(msg, expected_type="bool", actual_type=type(value))
         return bool(value)

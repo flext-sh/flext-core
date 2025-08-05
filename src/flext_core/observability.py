@@ -150,7 +150,9 @@ class FlextTracerProtocol(Protocol):
 
     @contextmanager
     def business_span(
-        self, operation_name: str, **context: object
+        self,
+        operation_name: str,
+        **context: object,
     ) -> Generator[FlextSpanProtocol]:
         """Create span for business operation with context."""
         ...
@@ -185,19 +187,28 @@ class FlextMetricsProtocol(Protocol):
     """Protocol for metrics collection components."""
 
     def increment(
-        self, metric_name: str, value: int = 1, tags: dict[str, str] | None = None
+        self,
+        metric_name: str,
+        value: int = 1,
+        tags: dict[str, str] | None = None,
     ) -> None:
         """Increment counter metric with tags."""
         ...
 
     def histogram(
-        self, metric_name: str, value: float, tags: dict[str, str] | None = None
+        self,
+        metric_name: str,
+        value: float,
+        tags: dict[str, str] | None = None,
     ) -> None:
         """Record histogram value with tags."""
         ...
 
     def gauge(
-        self, metric_name: str, value: float, tags: dict[str, str] | None = None
+        self,
+        metric_name: str,
+        value: float,
+        tags: dict[str, str] | None = None,
     ) -> None:
         """Set gauge value with tags."""
         ...
@@ -233,6 +244,23 @@ class FlextAlertsProtocol(Protocol):
 
 
 @runtime_checkable
+class FlextHealthProtocol(Protocol):
+    """Health monitoring and status checking protocol."""
+
+    def health_check(self) -> dict[str, object]:
+        """Check component health status."""
+        ...
+
+    def ready_check(self) -> bool:
+        """Check if component is ready to serve requests."""
+        ...
+
+    def live_check(self) -> bool:
+        """Check if component is alive."""
+        ...
+
+
+@runtime_checkable
 class FlextObservabilityProtocol(Protocol):
     """Complete observability protocol combining all components."""
 
@@ -256,6 +284,11 @@ class FlextObservabilityProtocol(Protocol):
         """Access to alerts component."""
         ...
 
+    @property
+    def health(self) -> FlextHealthProtocol:
+        """Access to health monitoring component."""
+        ...
+
 
 # =============================================================================
 # MINIMAL IMPLEMENTATIONS (DEVELOPMENT/TESTING)
@@ -271,7 +304,7 @@ class ConsoleLogger:
         if not self._logger.handlers:
             handler = logging.StreamHandler()
             formatter = logging.Formatter(
-                "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+                "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
             )
             handler.setFormatter(formatter)
             self._logger.addHandler(handler)
@@ -334,7 +367,10 @@ class ConsoleLogger:
         self._log_with_context("INFO", f"[AUDIT] {message}", audit_context)
 
     def _log_with_context(
-        self, level: str, message: str, context: dict[str, object]
+        self,
+        level: str,
+        message: str,
+        context: dict[str, object],
     ) -> None:
         """Log message with context."""
         correlation_id = FlextContext.get_correlation_id()
@@ -365,7 +401,9 @@ class NoOpTracer:
 
     @contextmanager
     def business_span(
-        self, operation_name: str, **context: object
+        self,
+        operation_name: str,
+        **context: object,
     ) -> Generator[FlextSpanProtocol]:
         """Create no-op business span."""
         _ = operation_name, context  # Acknowledge unused parameters
@@ -417,14 +455,20 @@ class InMemoryMetrics:
         self._gauges: dict[str, float] = {}
 
     def increment(
-        self, metric_name: str, value: int = 1, tags: dict[str, str] | None = None
+        self,
+        metric_name: str,
+        value: int = 1,
+        tags: dict[str, str] | None = None,
     ) -> None:
         """Increment counter metric."""
         key = self._build_key(metric_name, tags)
         self._counters[key] = self._counters.get(key, 0) + value
 
     def histogram(
-        self, metric_name: str, value: float, tags: dict[str, str] | None = None
+        self,
+        metric_name: str,
+        value: float,
+        tags: dict[str, str] | None = None,
     ) -> None:
         """Record histogram value."""
         key = self._build_key(metric_name, tags)
@@ -433,7 +477,10 @@ class InMemoryMetrics:
         self._histograms[key].append(value)
 
     def gauge(
-        self, metric_name: str, value: float, tags: dict[str, str] | None = None
+        self,
+        metric_name: str,
+        value: float,
+        tags: dict[str, str] | None = None,
     ) -> None:
         """Set gauge value."""
         key = self._build_key(metric_name, tags)
@@ -471,7 +518,7 @@ class SimpleAlerts:
         if not self._logger.handlers:
             handler = logging.StreamHandler()
             formatter = logging.Formatter(
-                "%(asctime)s - ALERT[%(levelname)s] - %(message)s"
+                "%(asctime)s - ALERT[%(levelname)s] - %(message)s",
             )
             handler.setFormatter(formatter)
             self._logger.addHandler(handler)
@@ -511,6 +558,31 @@ class SimpleAlerts:
         getattr(self._logger, level.lower())(full_message)
 
 
+class SimpleHealth:
+    """Simple health monitoring implementation for development and testing."""
+
+    def health_check(self) -> dict[str, object]:
+        """Check component health status."""
+        return {
+            "status": "healthy",
+            "timestamp": datetime.now(UTC).isoformat(),
+            "version": "dev",
+            "checks": {
+                "memory": "ok",
+                "disk": "ok",
+                "network": "ok",
+            },
+        }
+
+    def ready_check(self) -> bool:
+        """Check if component is ready to serve requests."""
+        return True
+
+    def live_check(self) -> bool:
+        """Check if component is alive."""
+        return True
+
+
 class MinimalObservability:
     """Minimal observability implementation for development and testing."""
 
@@ -519,6 +591,7 @@ class MinimalObservability:
         self._trace = NoOpTracer()
         self._metrics = InMemoryMetrics()
         self._alerts = SimpleAlerts()
+        self._health = SimpleHealth()
 
     @property
     def log(self) -> FlextLoggerProtocol:
@@ -539,6 +612,11 @@ class MinimalObservability:
     def alerts(self) -> FlextAlertsProtocol:
         """Access to alerts component."""
         return self._alerts
+
+    @property
+    def health(self) -> FlextHealthProtocol:
+        """Access to health monitoring component."""
+        return self._health
 
 
 # =============================================================================
@@ -569,7 +647,9 @@ def get_observability(
 
 
 def configure_minimal_observability(
-    service_name: str, *, log_level: str = "INFO"
+    service_name: str,
+    *,
+    log_level: str = "INFO",
 ) -> FlextObservabilityProtocol:
     """Configure minimal observability for development/testing.
 
@@ -650,6 +730,7 @@ def configure_observability(  # noqa: PLR0913
 __all__ = [
     "ConsoleLogger",
     "FlextAlertsProtocol",
+    "FlextHealthProtocol",
     "FlextLoggerProtocol",
     "FlextMetricsProtocol",
     "FlextObs",
@@ -660,6 +741,7 @@ __all__ = [
     "MinimalObservability",
     "NoOpSpan",
     "NoOpTracer",
+    "SimpleHealth",
     "configure_minimal_observability",
     "configure_observability",
     "get_observability",

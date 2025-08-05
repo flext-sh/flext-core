@@ -1,186 +1,304 @@
 # FLEXT Core Advanced Types
 
-Sistema de tipos avançados para redução de boilerplate em aplicações.
+**Reality-Based Type System Documentation**
 
-## Tipos Funcionais
+FLEXT Core's type system is based on the actual implementation in `src/flext_core/types.py` and related modules.
 
-### Either[T, R]
+## 📊 Current Type System Status
 
-Representa sucesso ou erro sem exceções:
+**ACTUAL IMPLEMENTATION**: FLEXT Core has multiple type modules in transition:
+
+- `types.py` - Legacy type system (being migrated)
+- `flext_types.py` - Legacy/compatibility module
+- `semantic_types.py` - Unified semantic patterns (new development)
+
+## 🏗️ FlextTypes Hierarchical Structure
+
+Based on the actual `types.py` implementation:
 
 ```python
-from flext_core import Either
+from flext_core.types import FlextTypes
 
-# Criar valores
-success = Either.right("dados")
-error = Either.left("erro")
-
-# Usar com chaining
-result = (
-    Either.right("hello")
-    .map(str.upper)
-    .map(lambda x: f"{x}!")
-)
+# Access hierarchical type categories
+core_types = FlextTypes.Core
+domain_types = FlextTypes.Domain
+cqrs_types = FlextTypes.CQRS
+data_types = FlextTypes.Data
+infra_types = FlextTypes.Infrastructure
+singer_types = FlextTypes.Singer
+protocols = FlextTypes.Protocols
 ```
 
-### Pipe[T, R]
+## 🔧 Available Protocols
 
-Pipeline type-safe para transformações:
+### Comparable Protocol
 
-```python
-from flext_core import Pipe, FlextResult
-
-def double(x: int) -> FlextResult[int]:
-    return FlextResult.ok(x * 2)
-
-def add_one(x: int) -> FlextResult[int]:
-    return FlextResult.ok(x + 1)
-
-pipe = Pipe(double).then(Pipe(add_one))
-result = pipe(5)  # 11
-```
-
-## Protocols Estruturais
-
-### Identifiable
-
-Para objetos com ID:
+For objects that can be compared:
 
 ```python
-from flext_core import Identifiable, is_identifiable
+from flext_core.types import FlextTypes
 
 class User:
-    def __init__(self, user_id: str):
-        self.id = user_id
+    def __init__(self, age: int):
+        self.age = age
 
-user = User("123")
-assert is_identifiable(user)  # True
+    def __lt__(self, other: object) -> bool:
+        if isinstance(other, User):
+            return self.age < other.age
+        return NotImplemented
+
+    def __le__(self, other: object) -> bool:
+        if isinstance(other, User):
+            return self.age <= other.age
+        return NotImplemented
+
+    def __gt__(self, other: object) -> bool:
+        if isinstance(other, User):
+            return self.age > other.age
+        return NotImplemented
+
+    def __ge__(self, other: object) -> bool:
+        if isinstance(other, User):
+            return self.age >= other.age
+        return NotImplemented
+
+# User now satisfies FlextTypes.Protocols.Comparable
 ```
 
-### Serializable
+### Serializable Protocol
 
-Para objetos serializáveis:
+For objects that can be serialized:
 
 ```python
-from flext_core import Serializable, is_serializable
+from flext_core.types import FlextTypes
+import json
 
 class Config:
-    def to_dict(self) -> dict:
-        return {"key": "value"}
+    def __init__(self, name: str, value: str):
+        self.name = name
+        self.value = value
 
-    @classmethod
-    def from_dict(cls, data: dict):
-        return cls()
+    def to_dict(self) -> dict[str, object]:
+        return {"name": self.name, "value": self.value}
 
-config = Config()
-assert is_serializable(config)  # True
+    def to_json(self) -> str:
+        return json.dumps(self.to_dict())
+
+# Config now satisfies FlextTypes.Protocols.Serializable
 ```
 
-## Utilitários de Conversão
+### Validatable Protocol
 
-### ensure_result
-
-Garante que valor seja FlextResult:
+For objects with validation:
 
 ```python
-from flext_core import ensure_result
+from flext_core.types import FlextTypes
 
-# Com valor regular
-result = ensure_result("data")
-assert result.success
+class EmailAddress:
+    def __init__(self, email: str):
+        self.email = email
 
-# Com FlextResult existente (não modifica)
-existing = FlextResult.ok("data")
-result = ensure_result(existing)
-assert result is existing
+    def validate(self) -> object:
+        if "@" not in self.email:
+            raise ValueError("Invalid email format")
+        return self
+
+    def is_valid(self) -> bool:
+        try:
+            self.validate()
+            return True
+        except ValueError:
+            return False
+
+# EmailAddress now satisfies FlextTypes.Protocols.Validatable
 ```
 
-### ensure_list
+### Timestamped Protocol
 
-Garante que valor seja lista:
+For objects with timestamps:
 
 ```python
-from flext_core import ensure_list
+from flext_core.types import FlextTypes
+from datetime import datetime
 
-assert ensure_list("single") == ["single"]
-assert ensure_list(["already", "list"]) == ["already", "list"]
-assert ensure_list(("a", "b")) == ["a", "b"]
+class AuditableEntity:
+    def __init__(self):
+        self.created_at = datetime.now()
+        self.updated_at = datetime.now()
+
+# AuditableEntity satisfies FlextTypes.Protocols.Timestamped
 ```
 
-### ensure_dict
+## 🔄 Type System Migration
 
-Garante que valor seja dicionário:
+### Current Migration Status
+
+Based on the actual code comments:
 
 ```python
-from flext_core import ensure_dict
+# LEGACY (flext_types.py) - backward compatibility only
+from flext_core.flext_types import SomeOldType  # ⚠️ Being deprecated
 
-# Com objeto tendo to_dict
-class Obj:
-    def to_dict(self):
-        return {"key": "value"}
+# CURRENT (types.py) - hierarchical system
+from flext_core.types import FlextTypes
 
-assert ensure_dict(Obj()) == {"key": "value"}
-
-# Fallback
-assert ensure_dict("simple") == {"value": "simple"}
+# FUTURE (semantic_types.py) - unified patterns
+from flext_core.semantic_types import FlextTypes as NewFlextTypes
 ```
 
-## Type Aliases Semânticos
-
-Reduza boilerplate usando types semânticos:
+### Migration Example
 
 ```python
-from flext_core import EntityId, UserId, FlextDict, MetadataDict
+# Old approach (being phased out)
+from flext_core.flext_types import TData, TEntity
 
-def process_user(
-    user_id: UserId,
-    data: FlextDict,
-    metadata: MetadataDict
-) -> FlextResult[dict]:
-    # Código mais claro e type-safe
+def process_old(data: TData) -> TEntity:
+    pass
+
+# Current approach (types.py)
+from flext_core.types import FlextTypes
+
+def process_current(data: FlextTypes.Data.Input) -> FlextTypes.Domain.Entity:
+    pass
+
+# Future approach (semantic_types.py - when available)
+from flext_core.semantic_types import FlextTypes
+
+def process_future(data: FlextTypes.Data.Connection) -> FlextTypes.Core.Predicate:
     pass
 ```
 
-## Tipos Genéricos
+## 🎯 Core TypeVars Available
 
-### Repository[T]
-
-Protocol para repositórios:
+From the actual `types.py` implementation:
 
 ```python
-from flext_core import Repository, FlextResult
+from flext_core.types import T, U, V, R, E, P, F
 
-class UserRepository(Repository[User]):
-    def find_by_id(self, entity_id: str) -> FlextResult[User]:
-        # implementação
-        pass
+# Generic programming with actual TypeVars
+def transform_data(data: T, transformer: Callable[[T], U]) -> U:
+    return transformer(data)
 
-    def save(self, entity: User) -> FlextResult[None]:
-        # implementação
-        pass
+def handle_result(result: R, error_handler: Callable[[E], R]) -> R:
+    # Result handling pattern
+    pass
+
+def process_payload(payload: P) -> R:
+    # Payload processing
+    pass
 ```
 
-### Factory[T]
+## 💡 Practical Usage Patterns
 
-Protocol para factories:
+### Type-Safe Data Processing
 
 ```python
-from flext_core import Factory, FlextResult
+from flext_core import FlextResult
+from flext_core.types import T, U
 
-class UserFactory(Factory[User]):
-    def create(self, **kwargs) -> FlextResult[User]:
-        return FlextResult.ok(User(**kwargs))
+def safe_transform(data: T, func: Callable[[T], U]) -> FlextResult[U]:
+    """Type-safe transformation with error handling."""
+    try:
+        result = func(data)
+        return FlextResult.ok(result)
+    except Exception as e:
+        return FlextResult.fail(f"Transform failed: {e}")
+
+# Usage
+def double_number(x: int) -> int:
+    return x * 2
+
+result = safe_transform(5, double_number)  # FlextResult[int]
 ```
 
-## Importação
-
-Todos os tipos estão disponíveis na raiz:
+### Protocol-Based Design
 
 ```python
-from flext_core import (
-    Either, Pipe, Repository, Factory,
-    Identifiable, Serializable, Timestamped,
-    ensure_result, ensure_list, ensure_dict,
-    EntityId, UserId, FlextDict, MetadataDict
-)
+from flext_core.types import FlextTypes
+from typing import TypeVar
+
+T_Comparable = TypeVar('T_Comparable', bound=FlextTypes.Protocols.Comparable)
+
+def find_max(items: list[T_Comparable]) -> T_Comparable | None:
+    """Find maximum item using Comparable protocol."""
+    if not items:
+        return None
+
+    max_item = items[0]
+    for item in items[1:]:
+        if item > max_item:
+            max_item = item
+    return max_item
 ```
+
+## ⚠️ Current Limitations
+
+Based on actual implementation analysis:
+
+1. **Migration in Progress**: Multiple type modules exist simultaneously
+2. **Incomplete Documentation**: Some type categories may be placeholders
+3. **API Instability**: Type system is actively being refactored
+4. **Limited Advanced Types**: Complex types like `Either`, `Maybe` don't exist yet
+
+## 🔍 What's Actually Available
+
+### Confirmed Available (from actual code)
+
+```python
+# Core TypeVars
+from flext_core.types import T, U, V, R, E, P, F
+
+# Hierarchical type access
+from flext_core.types import FlextTypes
+types = FlextTypes.Core      # ✅ Exists
+types = FlextTypes.Domain    # ✅ Exists
+types = FlextTypes.CQRS      # ✅ Exists
+types = FlextTypes.Data      # ✅ Exists
+
+# Protocols
+FlextTypes.Protocols.Comparable    # ✅ Exists
+FlextTypes.Protocols.Serializable  # ✅ Exists
+FlextTypes.Protocols.Validatable   # ✅ Exists
+FlextTypes.Protocols.Timestamped   # ✅ Exists
+```
+
+### NOT Available (common misconceptions)
+
+```python
+# These DON'T exist in current implementation:
+from flext_core import Either        # ❌ Not implemented
+from flext_core import Pipe          # ❌ Not implemented
+from flext_core import Repository    # ❌ Not implemented
+from flext_core import Factory       # ❌ Not implemented
+```
+
+## 📚 Recommended Usage
+
+For new development, use the hierarchical FlextTypes system:
+
+```python
+from flext_core import FlextResult
+from flext_core.types import FlextTypes, T
+
+class DataProcessor:
+    """Example using actual available types."""
+
+    def process(self, data: T) -> FlextResult[T]:
+        """Process data with type safety."""
+        if not data:
+            return FlextResult.fail("Empty data provided")
+
+        return FlextResult.ok(data)
+
+    def validate_serializable(self, obj: FlextTypes.Protocols.Serializable) -> bool:
+        """Validate object can be serialized."""
+        try:
+            obj.to_dict()
+            return True
+        except Exception:
+            return False
+```
+
+---
+
+**This documentation reflects the ACTUAL type system implementation in FLEXT Core as of the current version. For the most up-to-date information, always refer to the source code in `src/flext_core/types.py`.**

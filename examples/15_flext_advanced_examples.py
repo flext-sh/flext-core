@@ -38,7 +38,7 @@ def main() -> None:
     result = (
         _demonstrate_value_objects()
         .flat_map(lambda _: _demonstrate_aggregate_root())
-        .flat_map(lambda order: _demonstrate_query_pattern(order))
+        .flat_map(_demonstrate_query_pattern)
         .flat_map(lambda _: _demonstrate_decorators())
         .flat_map(lambda _: _demonstrate_logging())
         .flat_map(lambda _: _demonstrate_configuration())
@@ -67,6 +67,7 @@ def _demonstrate_value_objects() -> FlextResult[None]:
     print()
 
     return FlextResult.ok(None)
+
 
 def _demonstrate_aggregate_root() -> FlextResult[SharedOrder]:
     """Demonstrate aggregate root pattern using shared domain models."""
@@ -175,7 +176,6 @@ def _demonstrate_query_pattern(_order: SharedOrder) -> FlextResult[None]:
                 return FlextResult.fail(f"Failed to create user: {user_result.error}")
 
             user = user_result.data
-
 
             if user is None:
                 print("❌ Operation returned None data")
@@ -317,6 +317,7 @@ def _demonstrate_logging() -> FlextResult[None]:
     print("  Check logs above for structured logging output")
     print()
     return FlextResult.ok(None)
+
 
 def _demonstrate_configuration() -> FlextResult[None]:
     """Demonstrate configuration management patterns."""

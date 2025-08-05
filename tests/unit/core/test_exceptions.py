@@ -95,9 +95,9 @@ class TestFlextError:
         """Test basic FlextError creation."""
         error = FlextError("Test error message")
 
-        if str(error) != "[GENERIC_ERROR] Test error message":
+        if str(error) != "[FLEXT_0001] Test error message":
             raise AssertionError(
-                f"Expected {'[GENERIC_ERROR] Test error message'}, got {error!s}"
+                f"Expected {'[FLEXT_0001] Test error message'}, got {error!s}"
             )
         assert error.message == "Test error message"
         if error.error_code != ERROR_CODES["GENERIC_ERROR"]:
@@ -179,7 +179,7 @@ class TestFlextError:
         error = FlextError(
             "Serialization test",
             error_code=ERROR_CODES["OPERATION_ERROR"],
-            context={"test_key": "test_value"},
+            context={"test_field": "test_value"},
         )
 
         serialized = error.to_dict()
@@ -194,8 +194,10 @@ class TestFlextError:
             raise AssertionError(f"Expected {'context'} in {serialized}")
         context = serialized["context"]
         assert isinstance(context, dict)
-        if context["test_key"] != "test_value":
-            raise AssertionError(f"Expected {'test_value'}, got {context['test_key']}")
+        if context["test_field"] != "test_value":
+            raise AssertionError(
+                f"Expected {'test_value'}, got {context['test_field']}"
+            )
         if "timestamp" not in serialized:
             raise AssertionError(f"Expected {'timestamp'} in {serialized}")
         assert isinstance(serialized["timestamp"], float)
@@ -208,9 +210,9 @@ class TestFlextError:
         if "String test error" not in str_repr:
             raise AssertionError(f"Expected {'String test error'} in {str_repr}")
         assert isinstance(str_repr, str)
-        if str_repr != "[GENERIC_ERROR] String test error":
+        if str_repr != "[FLEXT_0001] String test error":
             raise AssertionError(
-                f"Expected {'[GENERIC_ERROR] String test error'}, got {str_repr}"
+                f"Expected {'[FLEXT_0001] String test error'}, got {str_repr}"
             )
 
     def test_flext_error_repr_representation(self) -> None:

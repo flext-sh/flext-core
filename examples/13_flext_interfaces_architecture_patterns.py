@@ -619,13 +619,13 @@ class MockLogger:
         print(f"[CRITICAL] {message}")
 
     # Mock the other methods that BoundLogger might have
-    def bind(self, **_kwargs: object) -> "MockLogger":
+    def bind(self, **_kwargs: object) -> "BoundLogger":
         """Bind additional context (mock implementation)."""
-        return self
+        return self  # type: ignore[return-value]  # Mock implementation
 
-    def unbind(self, *_keys: str) -> "MockLogger":
+    def unbind(self, *_keys: str) -> "BoundLogger":
         """Unbind context keys (mock implementation)."""
-        return self
+        return self  # type: ignore[return-value]  # Mock implementation
 
 
 class SimplePluginContext:
@@ -646,7 +646,7 @@ class SimplePluginContext:
     def logger(self) -> "BoundLogger":
         """Get logger for plugin (simplified)."""
         # Return MockLogger which implements BoundLogger interface
-        return self._logger
+        return self._logger  # type: ignore[return-value]  # Mock implementation
 
     @property
     def config(self) -> Mapping[str, object]:

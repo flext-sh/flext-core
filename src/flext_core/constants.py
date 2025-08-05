@@ -1,7 +1,8 @@
 """FLEXT Core Constants - HARMONIZED SINGLE SOURCE OF TRUTH.
 
 AUTHORITY: This is the ONLY place where constants are defined in the FLEXT ecosystem.
-ALL other patterns (Pydantic, Config/CLI, etc.) CONSUME from here, NEVER define their own.
+ALL other patterns (Pydantic, Config/CLI, etc.) CONSUME from here, NEVER define
+their own.
 
 ELIMINATES ALL DUPLICATIONS between Constants, Pydantic, Config/CLI patterns.
 Provides comprehensive constant categories covering ALL domains:
@@ -46,7 +47,7 @@ class FlextSemanticConstants:
 
     # Legacy compatibility - ERROR_CODES as class attribute
     ERROR_CODES: ClassVar[dict[str, str]] = {}
-    
+
     # Legacy compatibility - VERSION as direct attribute
     VERSION: ClassVar[str] = "0.9.0"
 
@@ -62,14 +63,31 @@ class FlextSemanticConstants:
     class Errors:
         """ALL error codes - SINGLE SOURCE for entire ecosystem."""
 
-        GENERIC_ERROR = "GENERIC_ERROR"
-        VALIDATION_ERROR = "VALIDATION_ERROR"
-        CONNECTION_ERROR = "CONNECTION_ERROR"
-        AUTHENTICATION_ERROR = "AUTHENTICATION_ERROR"
-        BUSINESS_RULE_ERROR = "BUSINESS_RULE_ERROR"
+        # Error Code Ranges
+        BUSINESS_ERROR_RANGE = (1000, 1999)
+        TECHNICAL_ERROR_RANGE = (2000, 2999)
+        VALIDATION_ERROR_RANGE = (3000, 3999)
+        SECURITY_ERROR_RANGE = (4000, 4999)
+
+        # Common Error Codes (following pattern structure)
+        GENERIC_ERROR = "FLEXT_0001"
+        VALIDATION_ERROR = "FLEXT_3001"
+        BUSINESS_RULE_VIOLATION = "FLEXT_1001"
+        AUTHORIZATION_DENIED = "FLEXT_4001"
+        AUTHENTICATION_FAILED = "FLEXT_4002"
+        RESOURCE_NOT_FOUND = "FLEXT_1004"
+        DUPLICATE_RESOURCE = "FLEXT_1005"
+        CONNECTION_ERROR = "FLEXT_2001"
+        TIMEOUT_ERROR = "FLEXT_2002"
+        CONFIGURATION_ERROR = "FLEXT_2003"
+        SERIALIZATION_ERROR = "FLEXT_2004"
+        EXTERNAL_SERVICE_ERROR = "FLEXT_2005"
+
+        # Legacy compatibility (existing ecosystem)
+        BUSINESS_RULE_ERROR = "BUSINESS_RULE_ERROR"  # Referenced by semantic.py
+        AUTHENTICATION_ERROR = "AUTHENTICATION_ERROR"  # Referenced by semantic.py
         TYPE_ERROR = "TYPE_ERROR"
         UNWRAP_ERROR = "UNWRAP_ERROR"
-        CONFIGURATION_ERROR = "CONFIGURATION_ERROR"
         CLI_ERROR = "CLI_ERROR"
         NULL_DATA_ERROR = "NULL_DATA_ERROR"
         EXPECTATION_ERROR = "EXPECTATION_ERROR"
@@ -88,11 +106,9 @@ class FlextSemanticConstants:
         CIRCUIT_BREAKER_ERROR = "CIRCUIT_BREAKER_ERROR"
         CONCURRENCY_ERROR = "CONCURRENCY_ERROR"
         RESOURCE_ERROR = "RESOURCE_ERROR"
-        SERIALIZATION_ERROR = "SERIALIZATION_ERROR"
         DATABASE_ERROR = "DATABASE_ERROR"
         API_ERROR = "API_ERROR"
         EVENT_ERROR = "EVENT_ERROR"
-        TIMEOUT_ERROR = "TIMEOUT_ERROR"
         SECURITY_ERROR = "SECURITY_ERROR"
         AUTH_ERROR = "AUTH_ERROR"
         CRITICAL_ERROR = "CRITICAL_ERROR"
@@ -109,6 +125,20 @@ class FlextSemanticConstants:
         NOT_FOUND = "NOT_FOUND"
         ALREADY_EXISTS = "ALREADY_EXISTS"
         CONFIG_ERROR = "CONFIG_ERROR"
+
+        # Error Messages
+        MESSAGES: ClassVar[dict[str, str]] = {
+            GENERIC_ERROR: "An error occurred",
+            VALIDATION_ERROR: "Validation failed",
+            BUSINESS_RULE_VIOLATION: "Business rule violation",
+            AUTHORIZATION_DENIED: "Authorization denied",
+            AUTHENTICATION_FAILED: "Authentication failed",
+            RESOURCE_NOT_FOUND: "Resource not found",
+            DUPLICATE_RESOURCE: "Resource already exists",
+            CONNECTION_ERROR: "Connection failed",
+            TIMEOUT_ERROR: "Operation timed out",
+            CONFIGURATION_ERROR: "Configuration error",
+        }
 
     class Messages:
         """ALL system messages - SINGLE SOURCE."""
@@ -163,14 +193,38 @@ class FlextSemanticConstants:
     class Patterns:
         """ALL validation patterns - SINGLE SOURCE."""
 
-        EMAIL_PATTERN = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+        # Identifiers
         UUID_PATTERN = r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
-        URL_PATTERN = r"^https?://.+"
-        PASSWORD_PATTERN = r"^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{8,}$"  # noqa: S105
-        IPV4_PATTERN = r"^(\d{1,3}\.){3}\d{1,3}$"
-        SEMANTIC_VERSION_PATTERN = r"^\d+\.\d+\.\d+(-\w+(\.\d+)?)?$"
+        SLUG_PATTERN = r"^[a-z0-9]+(?:-[a-z0-9]+)*$"
         IDENTIFIER_PATTERN = r"^[a-zA-Z_][a-zA-Z0-9_]*$"
         SERVICE_NAME_PATTERN = r"^[a-zA-Z][a-zA-Z0-9_-]*$"
+
+        # Authentication
+        EMAIL_PATTERN = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+        USERNAME_PATTERN = r"^[a-zA-Z0-9_-]{3,32}$"
+        PASSWORD_PATTERN = (  # nosec B105
+            r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"  # noqa: S105
+        )
+
+        # Network
+        IPV4_PATTERN = (
+            r"^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}"
+            r"(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"
+        )
+        HOSTNAME_PATTERN = (
+            r"^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?"
+            r"(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"
+        )
+        URL_PATTERN = r"^https?://.+"
+
+        # Versioning
+        SEMVER_PATTERN = (
+            r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)"
+            r"(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)"
+            r"(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))"
+            r"?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$"
+        )
+        SEMANTIC_VERSION_PATTERN = r"^\d+\.\d+\.\d+(-\w+(\.\d+)?)?$"
 
     class Defaults:
         """ALL default values - SINGLE SOURCE (includes Config/CLI/Model defaults)."""
@@ -227,6 +281,16 @@ class FlextSemanticConstants:
         POOL_SIZE = 10
         MAX_CONNECTIONS = 100
         KEEP_ALIVE_TIMEOUT = 60
+
+        # Performance Thresholds (from pattern documentation)
+        SLOW_QUERY_THRESHOLD = 1.0  # seconds
+        SLOW_REQUEST_THRESHOLD = 2.0  # seconds
+        HIGH_MEMORY_THRESHOLD = 0.8  # 80%
+        HIGH_CPU_THRESHOLD = 0.8  # 80%
+
+        # Monitoring
+        METRICS_INTERVAL = 60  # seconds
+        HEALTH_CHECK_INTERVAL = 30  # seconds
 
     # NEW: Configuration system constants (MOVED FROM Config/CLI patterns)
     class Configuration:

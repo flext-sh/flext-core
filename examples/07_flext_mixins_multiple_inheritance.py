@@ -18,6 +18,7 @@ Features demonstrated:
 from __future__ import annotations
 
 import time
+from typing import Protocol
 
 # Import shared domain models to reduce duplication
 from shared_domain import (
@@ -41,6 +42,31 @@ from flext_core import (
     FlextValidatableMixin,
     FlextValueObjectMixin,
 )
+
+# =============================================================================
+# PROTOCOL DEFINITIONS - Type protocols for enterprise patterns
+# =============================================================================
+
+
+class UserRepositoryProtocol(Protocol):
+    """Protocol for user repository interface."""
+
+    def find_user(self, user_id: str) -> FlextResult[dict[str, object] | None]:
+        """Find user by ID."""
+        ...
+
+    def save_user(self, user_id: str, user_data: dict[str, object]) -> FlextResult[None]:
+        """Save user data."""
+        ...
+
+
+class OrderServiceProtocol(Protocol):
+    """Protocol for order service interface."""
+
+    def create_order(self, user_id: str, items: list[dict[str, object]]) -> FlextResult[dict[str, object]]:
+        """Create order for user."""
+        ...
+
 
 # =============================================================================
 # VALIDATION CONSTANTS - Mixin validation constraints
@@ -208,7 +234,7 @@ class LoggableService(FlextLoggableMixin):
             # Simulate processing
             time.sleep(0.001)  # Minimal processing time
 
-            result = {
+            result: dict[str, object] = {
                 "request_id": request_id,
                 "status": "success",
                 "processed_at": FlextUtilities.generate_iso_timestamp(),
@@ -293,7 +319,11 @@ class CacheableCalculator(FlextCacheableMixin):
         # Check cache first
         cached_result = self.cache_get(cache_key)
         if cached_result is not None:
-            cached_int = int(cached_result) if isinstance(cached_result, (int, float, str)) else 0
+            cached_int = (
+                int(cached_result)
+                if isinstance(cached_result, (int, float, str))
+                else 0
+            )
             print(f"💰 Cache hit for fib({n}): {cached_int}")
             return cached_int
 
@@ -448,7 +478,7 @@ class AdvancedUser(
 
     def get_user_info(self) -> dict[str, object]:
         """Get comprehensive user information."""
-        created_timestamp = self.created_at if isinstance(self.created_at, (int, float)) else time.time()
+        created_timestamp = self.created_at.timestamp()
         age_seconds = time.time() - created_timestamp
 
         return {
@@ -537,9 +567,6 @@ class SmartDocument(
 
     def compare_with(self, other: SmartDocument) -> dict[str, object]:
         """Compare documents using comparable mixin."""
-        if not isinstance(other, SmartDocument):
-            return {"error": "Can only compare with other SmartDocument instances"}
-
         return {
             "title_match": self.title == other.title,
             "category_match": self.category == other.category,
@@ -637,7 +664,7 @@ class EnterpriseService(
             # Simulate processing
             time.sleep(0.001)
 
-            result = {
+            result: dict[str, object] = {
                 "request_id": request_id,
                 "service_id": self.id,
                 "status": "success",
@@ -955,7 +982,9 @@ def demonstrate_composite_mixins() -> None:
         {"status": "premium", "last_login": FlextUtilities.generate_iso_timestamp()},
     )
     updated_info = entity.get_entity_info()
-    print(f"  🔄 Entity updated: {len(updated_info['data'])} fields")
+    data_field = updated_info["data"]
+    field_count = len(data_field) if hasattr(data_field, "__len__") else 0
+    print(f"  🔄 Entity updated: {field_count} fields")
 
     # Value object using FlextValueObjectMixin
     print("\n📋 Value Objects (FlextValueObjectMixin):")
@@ -1092,15 +1121,15 @@ def demonstrate_performance_characteristics() -> None:
     # Test single mixin class
     start_time = time.time()
     for i in range(operations):
-        obj = SingleMixinClass(f"test_{i}")
-        obj.operation()
+        single_obj = SingleMixinClass(f"test_{i}")
+        single_obj.operation()
     single_time = time.time() - start_time
 
     # Test multiple mixin class
     start_time = time.time()
     for i in range(operations):
-        obj = MultipleMixinClass(f"test_{i}")
-        obj.operation()
+        multi_obj = MultipleMixinClass(f"test_{i}")
+        multi_obj.operation()
     multiple_time = time.time() - start_time
 
     print(f"📋 Performance Comparison ({operations} operations):")
@@ -1138,8 +1167,9 @@ def demonstrate_enterprise_patterns() -> None:
     _demonstrate_service_pattern(order_service)
 
 
-def _create_enterprise_user_repository() -> object:
+def _create_enterprise_user_repository() -> UserRepositoryProtocol:
     """Create UserRepository for enterprise patterns demonstration."""
+
     # Repository pattern with mixins using FlextResult pattern
     class UserRepository(
         FlextLoggableMixin,
@@ -1179,16 +1209,21 @@ def _create_enterprise_user_repository() -> object:
                 self.logger.error("Failed to save user: %s - %s", user_id, result.error)
             return result
 
-        def save_user(self, user_id: str, user_data: dict[str, object]) -> FlextResult[None]:
+        def save_user(
+            self, user_id: str, user_data: dict[str, object]
+        ) -> FlextResult[None]:
             """Save user with caching and logging using railway-oriented programming."""
             start_time = self._start_timing()
 
-            return (
-                self._execute_save_operation(user_id, user_data)
-                .flat_map(lambda _: self._log_save_result(user_id, start_time, FlextResult.ok(None)))
+            return self._execute_save_operation(user_id, user_data).flat_map(
+                lambda _: self._log_save_result(
+                    user_id, start_time, FlextResult.ok(None)
+                )
             )
 
-        def _check_cache_for_user(self, user_id: str) -> FlextResult[dict[str, object] | None]:
+        def _check_cache_for_user(
+            self, user_id: str
+        ) -> FlextResult[dict[str, object] | None]:
             """Check cache for user data."""
             cache_key = f"user:{user_id}"
             cached_user = self.cache_get(cache_key)
@@ -1198,7 +1233,9 @@ def _create_enterprise_user_repository() -> object:
                 return FlextResult.ok(user_dict)
             return FlextResult.ok(None)
 
-        def _check_storage_for_user(self, user_id: str) -> FlextResult[dict[str, object] | None]:
+        def _check_storage_for_user(
+            self, user_id: str
+        ) -> FlextResult[dict[str, object] | None]:
             """Check storage for user data and update cache if found."""
             if user_id in self.users:
                 user_data = self.users[user_id]
@@ -1208,7 +1245,9 @@ def _create_enterprise_user_repository() -> object:
                 return FlextResult.ok(user_data)
             return FlextResult.ok(None)
 
-        def _handle_user_not_found(self, user_id: str) -> FlextResult[dict[str, object] | None]:
+        def _handle_user_not_found(
+            self, user_id: str
+        ) -> FlextResult[dict[str, object] | None]:
             """Handle case when user is not found."""
             self.logger.warning("User not found: %s", user_id)
             return FlextResult.ok(None)
@@ -1231,8 +1270,9 @@ def _create_enterprise_user_repository() -> object:
     return UserRepository()
 
 
-def _create_enterprise_order_service(user_repo: object) -> object:
+def _create_enterprise_order_service(user_repo: UserRepositoryProtocol) -> OrderServiceProtocol:
     """Create OrderService for enterprise patterns demonstration."""
+
     # Domain service pattern with railway-oriented programming
     class OrderService(
         FlextIdentifiableMixin,
@@ -1242,7 +1282,7 @@ def _create_enterprise_order_service(user_repo: object) -> object:
     ):
         """Order service with comprehensive mixins using railway-oriented programming."""
 
-        def __init__(self, user_repo: object) -> None:
+        def __init__(self, user_repo: UserRepositoryProtocol) -> None:
             super().__init__()
             self.user_repo = user_repo
             self.orders: dict[str, dict[str, object]] = {}
@@ -1253,7 +1293,9 @@ def _create_enterprise_order_service(user_repo: object) -> object:
             """Validate that user exists in repository."""
             user_result = self.user_repo.find_user(user_id)
             if user_result.is_failure:
-                return FlextResult.fail(f"Failed to check user existence: {user_result.error}")
+                return FlextResult.fail(
+                    f"Failed to check user existence: {user_result.error}"
+                )
 
             user = user_result.data
             if not user:
@@ -1262,7 +1304,9 @@ def _create_enterprise_order_service(user_repo: object) -> object:
 
             return FlextResult.ok(user)
 
-        def _validate_order_items(self, items: list[dict[str, object]]) -> FlextResult[None]:
+        def _validate_order_items(
+            self, items: list[dict[str, object]]
+        ) -> FlextResult[None]:
             """Validate order items format and content."""
             self.clear_validation_errors()
 
@@ -1275,7 +1319,9 @@ def _create_enterprise_order_service(user_repo: object) -> object:
 
             if not self.is_valid:
                 self.logger.error("Order validation failed: %s", self.validation_errors)
-                return FlextResult.fail(f"Order validation failed: {'; '.join(self.validation_errors)}")
+                return FlextResult.fail(
+                    f"Order validation failed: {'; '.join(self.validation_errors)}"
+                )
 
             return FlextResult.ok(None)
 
@@ -1287,7 +1333,7 @@ def _create_enterprise_order_service(user_repo: object) -> object:
             """Create the order entity with all required fields."""
             try:
                 order_id = FlextUtilities.generate_entity_id()
-                order = {
+                order: dict[str, object] = {
                     "order_id": order_id,
                     "user_id": user_id,
                     "items": items,
@@ -1328,14 +1374,20 @@ def _create_enterprise_order_service(user_repo: object) -> object:
     return OrderService(user_repo)
 
 
-def _demonstrate_repository_pattern(user_repo: object) -> None:
+def _demonstrate_repository_pattern(user_repo: UserRepositoryProtocol) -> None:
     """Demonstrate repository pattern with FlextResult."""
     print("📋 Enterprise Repository Pattern:")
 
     # Save users with FlextResult pattern
-    save_result_1 = user_repo.save_user("user_001", {"name": "Alice", "email": "alice@example.com"})
-    save_result_2 = user_repo.save_user("user_002", {"name": "Bob", "email": "bob@example.com"})
-    print(f"  💾 Save results: Alice={save_result_1.is_success}, Bob={save_result_2.is_success}")
+    save_result_1 = user_repo.save_user(
+        "user_001", {"name": "Alice", "email": "alice@example.com"}
+    )
+    save_result_2 = user_repo.save_user(
+        "user_002", {"name": "Bob", "email": "bob@example.com"}
+    )
+    print(
+        f"  💾 Save results: Alice={save_result_1.is_success}, Bob={save_result_2.is_success}"
+    )
 
     # Find users (cache demo) with FlextResult pattern
     user1_result = user_repo.find_user("user_001")  # From storage
@@ -1347,7 +1399,7 @@ def _demonstrate_repository_pattern(user_repo: object) -> None:
         print("  ❌ User not found or error occurred")
 
 
-def _demonstrate_service_pattern(order_service: object) -> None:
+def _demonstrate_service_pattern(order_service: OrderServiceProtocol) -> None:
     """Demonstrate service pattern with FlextResult."""
     print("\n📋 Enterprise Service Pattern:")
 
@@ -1362,8 +1414,10 @@ def _demonstrate_service_pattern(order_service: object) -> None:
 
     if order_result.is_success and order_result.data:
         order = order_result.data
+        items = order["items"]
+        item_count = len(items) if hasattr(items, "__len__") else 0
         print(
-            f"  📦 Order created: {order['order_id']} with {len(order['items'])} items",
+            f"  📦 Order created: {order['order_id']} with {item_count} items",
         )
     else:
         print(f"  ❌ Order creation failed: {order_result.error}")

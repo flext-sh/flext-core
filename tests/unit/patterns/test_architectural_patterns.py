@@ -34,7 +34,7 @@ class TestCleanArchitecturePatterns:
             email: str
 
             def validate_business_rules(self) -> FlextResult[None]:
-                """Validate email domain rules."""
+                """Validate email business rules."""
                 if "@" not in self.email:
                     return FlextResult.fail("Invalid email format")
                 return FlextResult.ok(None)
@@ -45,7 +45,7 @@ class TestCleanArchitecturePatterns:
             name: str
             email_obj: UserEmail
 
-            def validate_business_rules(self) -> FlextResult[None]:
+            def validate_domain_rules(self) -> FlextResult[None]:
                 """Validate user domain rules."""
                 if not self.name.strip():
                     return FlextResult.fail("Name cannot be empty")
@@ -78,11 +78,12 @@ class TestCleanArchitecturePatterns:
                     return FlextResult.fail(f"Email creation failed: {e}")
 
                 # Create entity
-                user_result = User(
+                user = User(
                     id="user_123",
                     name=command.name,
                     email_obj=email_obj,
-                ).validate_business_rules()
+                )
+                user_result = user.validate_domain_rules()
 
                 if user_result.is_failure:
                     return FlextResult.fail(
@@ -153,7 +154,7 @@ class TestCleanArchitecturePatterns:
             total: object
             status: str = "pending"
 
-            def validate_business_rules(self) -> FlextResult[None]:
+            def validate_domain_rules(self) -> FlextResult[None]:
                 """Validate order business rules."""
                 # Validate value objects with type checking for serialization
                 if hasattr(self.order_id, "validate_business_rules"):

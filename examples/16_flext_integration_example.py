@@ -5,6 +5,9 @@ Comprehensive example showing all FLEXT components working together with shared
 domain models.
 """
 
+from decimal import Decimal
+from typing import cast
+
 # Import shared domain models to eliminate duplication
 from shared_domain import (
     EmailAddress,
@@ -28,7 +31,7 @@ from flext_core import (
 MIN_EMAIL_LENGTH = 5  # Minimum characters for basic email validation
 
 
-def main() -> None:  # noqa: PLR0915
+def main() -> None:  # noqa: PLR0915, PLR0912
     """Execute main function for integration example."""
     print("=== FLEXT Core Complete Integration Example ===\n")
 
@@ -39,7 +42,7 @@ def main() -> None:  # noqa: PLR0915
     # 1. Use Shared Domain Value Objects
     # Using EmailAddress and Money from shared_domain instead of local definitions
     email = EmailAddress(email="customer@example.com")
-    money = Money(amount=100.0, currency="USD")
+    money = Money(amount=Decimal("100.0"), currency="USD")
 
     print("1. Shared Domain Value Objects:")
     print(f"  Email: {email.email}")
@@ -60,12 +63,8 @@ def main() -> None:  # noqa: PLR0915
 
     customer = user_result.data
 
-
     if customer is None:
-
-
         print("❌ Operation returned None data")
-
 
         return
     print(f"  Customer: {customer.name} ({customer.email_address.email})")
@@ -85,7 +84,7 @@ def main() -> None:  # noqa: PLR0915
 
     order_result = SharedDomainFactory.create_order(
         customer_id=customer.id,
-        items=order_items,
+        items=cast("list[dict[str, object]]", order_items),
     )
 
     if order_result.is_failure:
@@ -94,12 +93,8 @@ def main() -> None:  # noqa: PLR0915
 
     order = order_result.data
 
-
     if order is None:
-
-
         print("❌ Operation returned None data")
-
 
         return
     print(f"  Order: {order.id}, Status: {order.status.value}")
@@ -136,7 +131,7 @@ def main() -> None:  # noqa: PLR0915
 
     class OrderRepository:
         def __init__(self) -> None:
-            self.orders = {}
+            self.orders: dict[str, object] = {}
 
         def save(self, order: object) -> FlextResult[object]:
             if hasattr(order, "id"):
@@ -178,7 +173,10 @@ def main() -> None:  # noqa: PLR0915
     if repo_result.success and customer_result.success:
         print("  Services registered and retrieved successfully")
         retrieved_customer = customer_result.data
-        print(f"  Retrieved customer: {retrieved_customer.name}")
+        if hasattr(retrieved_customer, "name"):
+            print(f"  Retrieved customer: {retrieved_customer.name}")
+        else:
+            print(f"  Retrieved customer: {retrieved_customer}")
     print()
 
     # 7. Field Validation Example
@@ -221,7 +219,6 @@ def main() -> None:  # noqa: PLR0915
         order2 = order2_result.data
 
         if order2 is None:
-
             print("❌ Operation returned None data")
 
             return

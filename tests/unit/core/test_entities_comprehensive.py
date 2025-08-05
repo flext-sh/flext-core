@@ -49,7 +49,7 @@ class SampleUser(FlextEntity):
         """Check if user is adult."""
         return self.age >= 18
 
-    def validate_business_rules(self) -> FlextResult[None]:
+    def validate_domain_rules(self) -> FlextResult[None]:
         """Validate domain rules for user entity."""
         if self.age < 0:
             return FlextResult.fail("Age cannot be negative")
@@ -65,7 +65,7 @@ class SampleBadUser(FlextEntity):
     email: str
     age: int = -1  # Invalid default age
 
-    def validate_business_rules(self) -> FlextResult[None]:
+    def validate_domain_rules(self) -> FlextResult[None]:
         """Validate domain rules for bad user entity."""
         # This entity intentionally has validation issues
         return FlextResult.fail("Always fails")
@@ -847,7 +847,7 @@ class TestEntityCoverageImprovements:
         class EntityWithInternalFields(FlextEntity):
             name: str
 
-            def validate_business_rules(self) -> FlextResult[None]:
+            def validate_domain_rules(self) -> FlextResult[None]:
                 """Validate domain rules."""
                 return FlextResult.ok(None)
 

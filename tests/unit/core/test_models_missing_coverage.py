@@ -108,16 +108,15 @@ class TestOracleModelValidation:
         oracle = FlextOracleModel.model_validate(data)
         assert oracle.service_name == "TEST"
 
-        # Test validation failure
-        invalid_data = {
-            "username": "user",
-            "password": "pass",
+        # Test validation failure via validate_semantic_rules
+        invalid_model = FlextOracleModel(
+            username="user",
+            password="pass",
             # No service_name or sid
-        }
-        with pytest.raises(
-            ValueError, match="Either service_name or sid must be provided"
-        ):
-            FlextOracleModel.model_validate(invalid_data)
+        )
+        validation_result = invalid_model.validate_semantic_rules()
+        assert validation_result.is_failure
+        assert "Either service_name or sid must be provided" in validation_result.error
 
     def test_oracle_model_connection_string(self) -> None:
         """Test Oracle model connection string property."""
@@ -129,7 +128,7 @@ class TestOracleModelValidation:
             password=SecretStr("pass"),
             service_name="TEST",
         )
-        assert oracle.connection_string == "localhost:1521/TEST"
+        assert oracle.connection_string() == "localhost:1521/TEST"
 
         # Test with SID
         oracle_sid = FlextOracleModel(
@@ -139,7 +138,7 @@ class TestOracleModelValidation:
             password=SecretStr("pass"),
             sid="TESTSID",
         )
-        assert oracle_sid.connection_string == "localhost:1521:TESTSID"
+        assert oracle_sid.connection_string() == "localhost:1521:TESTSID"
 
 
 @pytest.mark.unit

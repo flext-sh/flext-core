@@ -658,7 +658,9 @@ class TestFlextCoreRailwayProgramming:
             "final: 45",
         ]
 
-    def _create_validation_functions(self) -> tuple[
+    def _create_validation_functions(
+        self,
+    ) -> tuple[
         Callable[[int], FlextResult[int]],
         Callable[[int], FlextResult[int]],
         Callable[[object], None],
@@ -686,10 +688,9 @@ class TestFlextCoreRailwayProgramming:
     def _create_pipeline_wrappers(
         self,
         validate_positive: Callable[[int], FlextResult[int]],
-        double_if_even: Callable[[int], FlextResult[int]]
+        double_if_even: Callable[[int], FlextResult[int]],
     ) -> tuple[
-        Callable[[object], FlextResult[object]],
-        Callable[[object], FlextResult[object]]
+        Callable[[object], FlextResult[object]], Callable[[object], FlextResult[object]]
     ]:
         """Create pipeline wrapper functions."""
 
@@ -716,7 +717,9 @@ class TestFlextCoreRailwayProgramming:
     def test_complex_railway_pattern(self, clean_flext_core: FlextCore) -> None:
         """Test complex railway programming pattern."""
         # Create validation functions
-        validate_positive, double_if_even, log_value = self._create_validation_functions()
+        validate_positive, double_if_even, log_value = (
+            self._create_validation_functions()
+        )
 
         # Create pipeline wrappers
         validate_wrapper, double_wrapper = self._create_pipeline_wrappers(
@@ -737,21 +740,27 @@ class TestFlextCoreRailwayProgramming:
         self._test_negative_number(pipeline)
         self._verify_logged_values()
 
-    def _test_even_positive_number(self, pipeline: Callable[[int], FlextResult[object]]) -> None:
+    def _test_even_positive_number(
+        self, pipeline: Callable[[int], FlextResult[object]]
+    ) -> None:
         """Test pipeline with even positive number."""
         result = pipeline(4)
         assert result.success
         if result.data != EXPECTED_TOTAL_PAGES:  # 4 * 2 = 8
             raise AssertionError(f"Expected {8}, got {result.data}")
 
-    def _test_odd_positive_number(self, pipeline: Callable[[int], FlextResult[object]]) -> None:
+    def _test_odd_positive_number(
+        self, pipeline: Callable[[int], FlextResult[object]]
+    ) -> None:
         """Test pipeline with odd positive number."""
         result = pipeline(3)
         assert result.success
         if result.data != EXPECTED_DATA_COUNT:  # unchanged = 3
             raise AssertionError(f"Expected {3}, got {result.data}")
 
-    def _test_negative_number(self, pipeline: Callable[[int], FlextResult[object]]) -> None:
+    def _test_negative_number(
+        self, pipeline: Callable[[int], FlextResult[object]]
+    ) -> None:
         """Test pipeline with negative number."""
         result = pipeline(-1)
         assert result.is_failure

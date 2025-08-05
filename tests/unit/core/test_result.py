@@ -77,21 +77,45 @@ pytestmark = [pytest.mark.unit, pytest.mark.core]
 class TestFlextResult:
     """Test FlextResult class."""
 
+    @pytest.mark.unit
+    @pytest.mark.happy_path
     def test_success_creation(self) -> None:
-        """Test creating success result."""
-        result = FlextResult.ok("test_data")
-        assert result.success, f"Expected True, got {result.success}"
-        assert result.data == "test_data", f"Expected {'test_data'}, got {result.data}"
+        """Test FlextResult successful creation with data.
+
+        Validates that FlextResult.ok() creates a successful result
+        with proper data assignment and state flags.
+        """
+        # Arrange
+        test_data = "test_data"
+
+        # Act
+        result = FlextResult.ok(test_data)
+
+        # Assert
+        assert result.success is True
+        assert result.is_failure is False
+        assert result.data == test_data
         assert result.error is None
 
+    @pytest.mark.unit
+    @pytest.mark.error_path
     def test_failure_creation(self) -> None:
-        """Test creating failure result."""
-        result: FlextResult[str] = FlextResult.fail("test_error")
-        assert result.is_failure, f"Expected True, got {result.is_failure}"
+        """Test FlextResult failure creation with error message.
+
+        Validates that FlextResult.fail() creates a failure result
+        with proper error assignment and state flags.
+        """
+        # Arrange
+        test_error = "test_error"
+
+        # Act
+        result: FlextResult[str] = FlextResult.fail(test_error)
+
+        # Assert
+        assert result.is_failure is True
+        assert result.success is False
         assert result.data is None
-        assert result.error == "test_error", (
-            f"Expected {'test_error'}, got {result.error}"
-        )
+        assert result.error == test_error
 
     def test_success_with_metadata(self) -> None:
         """Test creating success result with metadata."""
@@ -107,57 +131,138 @@ class TestFlextResult:
             f"Expected {'test_error'}, got {result.error}"
         )
 
+    @pytest.mark.unit
+    @pytest.mark.core
     def test_boolean_conversion(self) -> None:
-        """Test boolean conversion."""
-        success_result = FlextResult.ok("data")
-        failure_result: FlextResult[str] = FlextResult.fail("error")
+        """Test FlextResult boolean conversion for control flow.
 
-        assert bool(success_result), f"Expected True, got {bool(success_result)}"
-        assert not bool(failure_result), f"Expected False, got {bool(failure_result)}"
+        Validates that FlextResult instances can be used in boolean contexts,
+        with success results evaluating to True and failures to False.
+        """
+        # Arrange
+        success_data = "data"
+        error_message = "error"
 
+        # Act
+        success_result = FlextResult.ok(success_data)
+        failure_result: FlextResult[str] = FlextResult.fail(error_message)
+
+        # Assert
+        assert bool(success_result) is True
+        assert bool(failure_result) is False
+
+    @pytest.mark.unit
+    @pytest.mark.happy_path
     def test_unwrap_success(self) -> None:
-        """Test unwrapping success result."""
-        data = "test_data"
-        result = FlextResult.ok(data)
-        assert result.unwrap() == data, f"Expected {data}, got {result.unwrap()}"
+        """Test unwrapping data from successful result.
 
+        Validates that successful results can safely unwrap their data
+        without raising exceptions.
+        """
+        # Arrange
+        test_data = "test_data"
+        result = FlextResult.ok(test_data)
+
+        # Act
+        unwrapped_data = result.unwrap()
+
+        # Assert
+        assert unwrapped_data == test_data
+
+    @pytest.mark.unit
+    @pytest.mark.error_path
     def test_unwrap_failure_raises(self) -> None:
-        """Test unwrapping failure result raises exception."""
+        """Test unwrapping failure result raises FlextOperationError.
 
-        result: FlextResult[str] = FlextResult.fail("test_error")
-        with pytest.raises(FlextOperationError, match="test_error"):
+        Validates that attempting to unwrap a failure result raises
+        the appropriate exception with the error message.
+        """
+        # Arrange
+        error_message = "test_error"
+        result: FlextResult[str] = FlextResult.fail(error_message)
+
+        # Act & Assert
+        with pytest.raises(FlextOperationError, match=error_message):
             result.unwrap()
 
+    @pytest.mark.unit
+    @pytest.mark.happy_path
     def test_unwrap_or_success(self) -> None:
-        """Test unwrap_or with success result."""
-        data = "test_data"
-        result = FlextResult.ok(data)
-        assert result.unwrap_or("default") == data, (
-            f"Expected {data}, got {result.unwrap_or('default')}"
-        )
+        """Test unwrap_or returns data from successful result.
 
+        Validates that unwrap_or returns the actual data when called
+        on a successful result, ignoring the default value.
+        """
+        # Arrange
+        test_data = "test_data"
+        default_value = "default"
+        result = FlextResult.ok(test_data)
+
+        # Act
+        unwrapped_value = result.unwrap_or(default_value)
+
+        # Assert
+        assert unwrapped_value == test_data
+
+    @pytest.mark.unit
+    @pytest.mark.error_path
     def test_unwrap_or_failure(self) -> None:
-        """Test unwrap_or with failure result."""
-        result: FlextResult[str] = FlextResult.fail("error")
-        assert result.unwrap_or("default") == "default", (
-            f"Expected {'default'}, got {result.unwrap_or('default')}"
-        )
+        """Test unwrap_or returns default value from failure result.
 
+        Validates that unwrap_or returns the default value when called
+        on a failure result, providing safe fallback behavior.
+        """
+        # Arrange
+        error_message = "error"
+        default_value = "default"
+        result: FlextResult[str] = FlextResult.fail(error_message)
+
+        # Act
+        unwrapped_value = result.unwrap_or(default_value)
+
+        # Assert
+        assert unwrapped_value == default_value
+
+    @pytest.mark.unit
+    @pytest.mark.core
+    @pytest.mark.happy_path
     def test_map_success(self) -> None:
-        """Test map with success result."""
-        result = FlextResult.ok("hello")
-        mapped = result.map(lambda x: x.upper())
-        assert mapped.success, f"Expected True, got {mapped.success}"
-        assert mapped.data == "HELLO", f"Expected {'HELLO'}, got {mapped.data}"
+        """Test map transforms data in successful result.
 
+        Validates that map applies the transformation function to successful
+        results while preserving the success state.
+        """
+        # Arrange
+        initial_data = "hello"
+        expected_data = "HELLO"
+        result = FlextResult.ok(initial_data)
+
+        # Act
+        mapped_result = result.map(lambda x: x.upper())
+
+        # Assert
+        assert mapped_result.success is True
+        assert mapped_result.data == expected_data
+
+    @pytest.mark.unit
+    @pytest.mark.core
+    @pytest.mark.error_path
     def test_map_failure(self) -> None:
-        """Test map with failure result."""
-        result: FlextResult[str] = FlextResult.fail("error")
-        mapped = result.map(lambda x: x.upper())
-        if not (mapped.is_failure):
-            raise AssertionError(f"Expected True, got {mapped.is_failure}")
-        if mapped.error != "error":
-            raise AssertionError(f"Expected {'error'}, got {mapped.error}")
+        """Test map preserves failure state without transformation.
+
+        Validates that map operations on failure results preserve
+        the failure state and error message without applying transformations.
+        """
+        # Arrange
+        error_message = "error"
+        result: FlextResult[str] = FlextResult.fail(error_message)
+
+        # Act
+        mapped_result = result.map(lambda x: x.upper())
+
+        # Assert
+        assert mapped_result.is_failure is True
+        assert mapped_result.error == error_message
 
     def test_flat_map_success(self) -> None:
         """Test flat_map with success result."""

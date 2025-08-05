@@ -28,13 +28,13 @@ demonstrating the power and flexibility of the FlextPayload system.
 """
 
 import time
+from collections.abc import Mapping
 
 from flext_core import (
     FlextEvent,
     FlextMessage,
     FlextPayload,
     FlextResult,
-    FlextTypes,
     TErrorMessage,
     TLogMessage,
     TUserData,
@@ -209,7 +209,7 @@ def demonstrate_message_payloads() -> None:  # noqa: PLR0912, PLR0915
         source="database_service",
     )
 
-    error_message = FlextMessage.create(
+    error_message_result = FlextMessage.create(
         "Payment processing failed",
         level="error",
         source="payment_service",
@@ -231,8 +231,8 @@ def demonstrate_message_payloads() -> None:  # noqa: PLR0912, PLR0915
             log_message = f"✅ Warning message: {warning_payload}"
             print(log_message)
 
-    if error_message.success:
-        error_payload = error_message.data
+    if error_message_result.success:
+        error_payload = error_message_result.data
         if error_payload is not None:
             log_message = f"✅ Error message: {error_payload}"
             print(log_message)
@@ -302,9 +302,9 @@ def demonstrate_message_payloads() -> None:  # noqa: PLR0912, PLR0915
 
     for msg_data in messages_data:
         message_result = FlextMessage.create(
-            msg_data["text"],
-            level=msg_data["level"],
-            source=msg_data["source"],
+            str(msg_data["text"]),
+            level=str(msg_data["level"]),
+            source=str(msg_data["source"]),
         )
         if message_result.success:
             message = message_result.data
@@ -402,11 +402,13 @@ def _demonstrate_basic_domain_event_creation() -> FlextResult[None]:
     return _display_user_registration_event(user_registration_event)
 
 
-def _display_user_registration_event(user_registration_event: FlextResult[object]) -> FlextResult[None]:
+def _display_user_registration_event(
+    user_registration_event: FlextResult[FlextPayload[Mapping[str, object]]],
+) -> FlextResult[None]:
     """Display user registration event details."""
     if user_registration_event.success:
         event = user_registration_event.data
-        if event is not None and hasattr(event, "event_type"):
+        if event is not None:
             print(f"✅ User registration event: {event}")
             print(f"   Event type: {event.event_type}")
             print(f"   Aggregate ID: {event.aggregate_id}")
@@ -428,7 +430,7 @@ def _demonstrate_order_lifecycle_events() -> FlextResult[None]:
     return _display_order_lifecycle_events(order_created_event, order_confirmed_event)
 
 
-def _create_order_created_event(order_id: str) -> FlextResult[object]:
+def _create_order_created_event(order_id: str) -> FlextResult[FlextPayload[Mapping[str, object]]]:
     """Create order created event."""
     order_created_data: TUserData = {
         "order_id": order_id,
@@ -451,7 +453,7 @@ def _create_order_created_event(order_id: str) -> FlextResult[object]:
     )
 
 
-def _create_order_confirmed_event(order_id: str) -> FlextResult[object]:
+def _create_order_confirmed_event(order_id: str) -> FlextResult[FlextPayload[Mapping[str, object]]]:
     """Create order confirmed event."""
     order_confirmed_data: TUserData = {
         "order_id": order_id,
@@ -471,15 +473,19 @@ def _create_order_confirmed_event(order_id: str) -> FlextResult[object]:
 
 
 def _display_order_lifecycle_events(
-    order_created_event: FlextResult[object],
-    order_confirmed_event: FlextResult[object]
+    order_created_event: FlextResult[FlextPayload[Mapping[str, object]]],
+    order_confirmed_event: FlextResult[FlextPayload[Mapping[str, object]]]
 ) -> FlextResult[None]:
     """Display order lifecycle event details."""
     if order_created_event.success and order_confirmed_event.success:
         created_event = order_created_event.data
         confirmed_event = order_confirmed_event.data
-        if (created_event is not None and confirmed_event is not None and
-            hasattr(created_event, "version") and hasattr(confirmed_event, "version")):
+        if (
+            created_event is not None
+            and confirmed_event is not None
+            and hasattr(created_event, "version")
+            and hasattr(confirmed_event, "version")
+        ):
             print(
                 f"✅ Order created event (v{created_event.version}): "
                 f"{created_event.event_type}"
@@ -504,7 +510,7 @@ def _demonstrate_inventory_management_events() -> FlextResult[None]:
     return _handle_stock_updated_event(stock_updated_event, product_id)
 
 
-def _create_stock_updated_event(product_id: str) -> FlextResult[object]:
+def _create_stock_updated_event(product_id: str) -> FlextResult[FlextPayload[Mapping[str, object]]]:
     """Create stock updated event."""
     stock_updated_data: TUserData = {
         "product_id": product_id,
@@ -524,14 +530,16 @@ def _create_stock_updated_event(product_id: str) -> FlextResult[object]:
     )
 
 
-def _handle_stock_updated_event(stock_updated_event: FlextResult[object], product_id: str) -> FlextResult[None]:
+def _handle_stock_updated_event(
+    stock_updated_event: FlextResult[FlextPayload[Mapping[str, object]]], product_id: str
+) -> FlextResult[None]:
     """Handle stock updated event and create low stock alert if needed."""
     if stock_updated_event.success:
         stock_event = stock_updated_event.data
-        if stock_event is not None and hasattr(stock_event, "data"):
+        if stock_event is not None and hasattr(stock_event, "data") and stock_event.data is not None:
             new_quantity = stock_event.data.get("new_quantity", 0)
             if (
-                FlextTypes.TypeGuards.is_instance_of(new_quantity, int)
+                isinstance(new_quantity, int)
                 and new_quantity <= LOW_STOCK_THRESHOLD
             ):
                 return _create_and_display_low_stock_alert(product_id, new_quantity)
@@ -539,7 +547,9 @@ def _handle_stock_updated_event(stock_updated_event: FlextResult[object], produc
     return FlextResult.ok(None)
 
 
-def _create_and_display_low_stock_alert(product_id: str, new_quantity: int) -> FlextResult[None]:
+def _create_and_display_low_stock_alert(
+    product_id: str, new_quantity: int
+) -> FlextResult[None]:
     """Create and display low stock alert event."""
     low_stock_data: TUserData = {
         "product_id": product_id,
@@ -562,7 +572,8 @@ def _create_and_display_low_stock_alert(product_id: str, new_quantity: int) -> F
         alert_event = low_stock_event.data
         if alert_event is not None and hasattr(alert_event, "event_type"):
             print(f"✅ Low stock alert event: {alert_event.event_type}")
-            print(f"   Current quantity: {alert_event.data.get('current_quantity')}")
+            if alert_event.data is not None:
+                print(f"   Current quantity: {alert_event.data.get('current_quantity')}")
 
     return FlextResult.ok(None)
 
@@ -580,7 +591,7 @@ def _demonstrate_event_correlation_and_tracing() -> FlextResult[None]:
     return _display_correlated_events(process_started_event, step_completed_event)
 
 
-def _create_process_started_event(process_id: str) -> FlextResult[object]:
+def _create_process_started_event(process_id: str) -> FlextResult[FlextPayload[Mapping[str, object]]]:
     """Create process started event."""
     return FlextEvent.create(
         event_type="ProcessStarted",
@@ -592,7 +603,7 @@ def _create_process_started_event(process_id: str) -> FlextResult[object]:
     )
 
 
-def _create_step_completed_event(process_id: str) -> FlextResult[object]:
+def _create_step_completed_event(process_id: str) -> FlextResult[FlextPayload[Mapping[str, object]]]:
     """Create process step completed event."""
     return FlextEvent.create(
         event_type="ProcessStepCompleted",
@@ -610,15 +621,19 @@ def _create_step_completed_event(process_id: str) -> FlextResult[object]:
 
 
 def _display_correlated_events(
-    process_started_event: FlextResult[object],
-    step_completed_event: FlextResult[object]
+    process_started_event: FlextResult[FlextPayload[Mapping[str, object]]],
+    step_completed_event: FlextResult[FlextPayload[Mapping[str, object]]],
 ) -> FlextResult[None]:
     """Display correlated event details."""
     if process_started_event.success and step_completed_event.success:
         started_event = process_started_event.data
         completed_event = step_completed_event.data
-        if (started_event is not None and completed_event is not None and
-            hasattr(started_event, "correlation_id") and hasattr(completed_event, "correlation_id")):
+        if (
+            started_event is not None
+            and completed_event is not None
+            and hasattr(started_event, "correlation_id")
+            and hasattr(completed_event, "correlation_id")
+        ):
             print(f"✅ Process started: {started_event.correlation_id}")
             print(f"✅ Step completed: {completed_event.correlation_id}")
             print(
@@ -645,7 +660,9 @@ def _demonstrate_event_validation_and_error_handling() -> FlextResult[None]:
     return _display_validation_results(invalid_event_result)
 
 
-def _display_validation_results(invalid_event_result: FlextResult[object]) -> FlextResult[None]:
+def _display_validation_results(
+    invalid_event_result: FlextResult[FlextPayload[Mapping[str, object]]],
+) -> FlextResult[None]:
     """Display event validation results."""
     if invalid_event_result.success:
         invalid_event = invalid_event_result.data
@@ -756,11 +773,11 @@ def demonstrate_payload_serialization() -> None:  # noqa: PLR0915
     # Simulate receiving service
     received_payload = FlextPayload.from_dict(transport_data)
     if received_payload.success:
-        payload = received_payload.data
-        if payload is not None:
-            log_message = f"✅ Received payload: {payload}"
+        received_data = received_payload.data
+        if received_data is not None:
+            log_message = f"✅ Received payload: {received_data}"
             print(log_message)
-            log_message = f"   Source: {payload.metadata.get('source')}"
+            log_message = f"   Source: {received_data.metadata.get('source')}"
             print(log_message)
     else:
         error_message = f"Payload deserialization failed: {received_payload.error}"
@@ -851,10 +868,12 @@ def demonstrate_enterprise_messaging_patterns() -> None:  # noqa: PLR0912, PLR09
         },
     )
 
-    log_message = f"✅ Request payload: {request_payload.data.get('request_id')}"
-    print(log_message)
-    log_message = f"✅ Response payload: {response_payload.data.get('request_id')}"
-    print(log_message)
+    if request_payload.data is not None:
+        log_message = f"✅ Request payload: {request_payload.data.get('request_id')}"
+        print(log_message)
+    if response_payload.data is not None:
+        log_message = f"✅ Response payload: {response_payload.data.get('request_id')}"
+        print(log_message)
 
     # 2. Event-driven pattern
     log_message = "\n2. Event-driven pattern:"
@@ -972,7 +991,8 @@ def demonstrate_enterprise_messaging_patterns() -> None:  # noqa: PLR0912, PLR09
     for message in routing_messages:
         priority = message.metadata.get("priority", "normal")
         route_to = message.metadata.get("route_to", "default")
-        log_message = f"   {priority} priority -> {route_to}: {message.text[:30]}..."
+        message_text = str(message.text)[:30] if message.text else "(empty)"
+        log_message = f"   {priority} priority -> {route_to}: {message_text}..."
         print(log_message)
 
     # 4. Message correlation and tracing
@@ -1036,9 +1056,13 @@ def demonstrate_enterprise_messaging_patterns() -> None:  # noqa: PLR0912, PLR09
     if problematic_message_result.success:
         problematic_message = problematic_message_result.data
         if problematic_message is not None:
-            retry_count = problematic_message.metadata.get("retry_count", 0)
-            max_retries = problematic_message.metadata.get("max_retries", 0)
-            dead_letter = problematic_message.metadata.get("dead_letter", False)
+            retry_count_obj = problematic_message.metadata.get("retry_count", 0)
+            max_retries_obj = problematic_message.metadata.get("max_retries", 0)
+            dead_letter_obj = problematic_message.metadata.get("dead_letter", False)
+
+            retry_count = int(retry_count_obj) if isinstance(retry_count_obj, (int, str)) else 0
+            max_retries = int(max_retries_obj) if isinstance(max_retries_obj, (int, str)) else 0
+            dead_letter = bool(dead_letter_obj)
 
             log_message = "✅ Problematic message created"
             print(log_message)

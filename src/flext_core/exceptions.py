@@ -23,8 +23,8 @@ Exception Architecture Patterns:
 
 Development Status (v0.9.0 → 1.0.0):
     ✅ Production Ready: Base hierarchy, context management, error codes
+    ✅ Implemented: Cross-service error serialization with from_dict/to_dict methods
     🚧 Active Development: Module-specific error factories (Priority 2)
-    📋 TODO Integration: Cross-service error serialization (Enhancement 2)
 
 Exception Factory Patterns:
     create_module_exception_classes(): DRY pattern for 32 projects
@@ -403,14 +403,208 @@ class FlextError(Exception):
         )
 
     def to_dict(self) -> dict[str, object]:
-        """Convert exception to dictionary for serialization."""
+        """Convert exception to dictionary for cross-service serialization.
+
+        Provides comprehensive serialization for cross-service error propagation
+        including type information, context, and metadata required for proper
+        error reconstruction in remote services.
+
+        Serialization Features:
+            - Complete type information for proper deserialization
+            - Sanitized context (removes sensitive data, truncates large values)
+            - Timestamp preservation for distributed tracing
+            - Module information for proper exception reconstruction
+            - Error code mapping for standardized handling
+
+        Returns:
+            Dictionary suitable for JSON serialization and cross-service transport
+
+        Usage:
+            # Serialize for Go service communication
+            error_dict = exception.to_dict()
+            json_payload = json.dumps(error_dict)
+
+            # Send via REST API or message queue
+            response = send_to_service(json_payload)
+
+        """
         return {
             "type": self.__class__.__name__,
+            "module": self.__class__.__module__,
             "message": self.message,
             "error_code": self.error_code,
-            "context": self.context,
+            "context": self._sanitize_context(self.context),
             "timestamp": self.timestamp,
+            "serialization_version": "1.0",
         }
+
+    def _sanitize_context(self, context: dict[str, object]) -> dict[str, object]:
+        """Sanitize context for safe serialization.
+
+        Removes sensitive information and truncates large values to prevent
+        log pollution and security leaks in cross-service communication.
+
+        Args:
+            context: Original context dictionary
+
+        Returns:
+            Sanitized context safe for serialization
+
+        """
+        if not context:
+            return {}
+
+        # Constants for sanitization thresholds
+        max_list_size = 10
+        max_dict_size = 20
+
+        sanitized: dict[str, object] = {}
+        sensitive_keys = {
+            "password",
+            "token",
+            "secret",
+            "key",
+            "auth",
+            "credential",
+            "api_key",
+        }
+        max_value_length = 500  # Prevent huge values in logs
+
+        for key, value in context.items():
+            # Skip sensitive keys
+            if any(sensitive in key.lower() for sensitive in sensitive_keys):
+                sanitized[key] = "[REDACTED]"
+                continue
+
+            # Truncate large values
+            if isinstance(value, str) and len(value) > max_value_length:
+                sanitized[key] = value[:max_value_length] + "... [TRUNCATED]"
+            elif isinstance(value, (list, tuple)) and len(value) > max_list_size:
+                sanitized[key] = (
+                    f"[{type(value).__name__} with {len(value)} items - TRUNCATED]"
+                )
+            elif isinstance(value, dict) and len(value) > max_dict_size:
+                sanitized[key] = f"[Dict with {len(value)} keys - TRUNCATED]"
+            else:
+                sanitized[key] = value
+
+        return sanitized
+
+    @classmethod
+    def from_dict(cls, error_dict: dict[str, object]) -> FlextError:
+        """Reconstruct exception from dictionary for cross-service deserialization.
+
+        Creates FlextError instances from serialized error dictionaries,
+        enabling proper error propagation across service boundaries and
+        maintaining error context and type information.
+
+        Deserialization Features:
+            - Type-safe reconstruction with proper error class resolution
+            - Context restoration with validation
+            - Timestamp preservation for distributed tracing
+            - Backward compatibility with different serialization versions
+            - Fallback to base FlextError for unknown types
+
+        Args:
+            error_dict: Serialized error dictionary from to_dict()
+
+        Returns:
+            Reconstructed FlextError instance with original context
+
+        Raises:
+            FlextValidationError: If error_dict is malformed or missing required fields
+
+        Usage:
+            # Deserialize from Go service response
+            error_dict = json.loads(response_payload)
+            exception = FlextError.from_dict(error_dict)
+
+            # Re-raise with original context preserved
+            raise exception
+
+        """
+        # Validate required fields
+        required_fields = {"type", "message", "error_code"}
+        missing_fields = required_fields - set(error_dict.keys())
+        if missing_fields:
+            msg = f"Invalid error dictionary: missing fields {missing_fields}"
+            raise FlextValidationError(
+                msg,
+                validation_details={"missing_fields": list(missing_fields)},
+            )
+
+        # Extract fields with defaults
+        error_type = str(error_dict["type"])
+        message = str(error_dict["message"])
+        error_code = str(error_dict["error_code"])
+        context_data = error_dict.get("context", {})
+        context = dict(context_data) if isinstance(context_data, dict) else {}
+        timestamp = error_dict.get("timestamp")
+
+        # Attempt to resolve the correct exception class
+        exception_class = cls._resolve_exception_class(error_type)
+
+        # Create instance with appropriate constructor
+        try:
+            # Try to create with the specific class
+            if exception_class != FlextError:
+                return exception_class(
+                    message=message,
+                    error_code=error_code,
+                    context=context,
+                )
+            # Fallback to base FlextError
+            instance = cls(message=message, error_code=error_code, context=context)
+            # Preserve original timestamp if available
+            if timestamp and isinstance(timestamp, (int, float)):
+                instance.timestamp = float(timestamp)
+            return instance
+
+        except Exception as e:
+            # Fallback: create base FlextError with enhanced context
+            fallback_context = {
+                **context,
+                "original_type": error_type,
+                "reconstruction_error": str(e),
+            }
+            instance = cls(
+                message=f"[{error_type}] {message}",
+                error_code=error_code,
+                context=fallback_context,
+            )
+            if timestamp and isinstance(timestamp, (int, float)):
+                instance.timestamp = float(timestamp)
+            return instance
+
+    @staticmethod
+    def _resolve_exception_class(error_type: str) -> type[FlextError]:
+        """Resolve exception class from type name.
+
+        Args:
+            error_type: Exception class name
+
+        Returns:
+            Exception class or FlextError as fallback
+
+        """
+        # Map of known exception types (will be populated at module level)
+        exception_mapping = {
+            "FlextError": FlextError,
+            "FlextValidationError": FlextValidationError,
+            "FlextTypeError": FlextTypeError,
+            "FlextOperationError": FlextOperationError,
+            "FlextConfigurationError": FlextConfigurationError,
+            "FlextConnectionError": FlextConnectionError,
+            "FlextAuthenticationError": FlextAuthenticationError,
+            "FlextPermissionError": FlextPermissionError,
+            "FlextNotFoundError": FlextNotFoundError,
+            "FlextAlreadyExistsError": FlextAlreadyExistsError,
+            "FlextTimeoutError": FlextTimeoutError,
+            "FlextProcessingError": FlextProcessingError,
+            "FlextCriticalError": FlextCriticalError,
+        }
+
+        return exception_mapping.get(error_type, FlextError)
 
 
 class FlextValidationError(FlextError):

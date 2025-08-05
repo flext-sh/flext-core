@@ -23,7 +23,7 @@ def main() -> None:  # noqa: PLR0915
     success_result = FlextResult.ok("Operation successful")
     print(f"  Success: {success_result.success}, Data: {success_result.data}")
 
-    error_result = FlextResult.fail("Something went wrong")
+    error_result: FlextResult[str] = FlextResult.fail("Something went wrong")
     print(f"  Error: {error_result.is_failure}, Error: {error_result.error}")
     print()
 
@@ -43,12 +43,8 @@ def main() -> None:  # noqa: PLR0915
 
     user = user_result.data
 
-
     if user is None:
-
-
         print("❌ Operation returned None data")
-
 
         return
 
@@ -96,7 +92,6 @@ def main() -> None:  # noqa: PLR0915
         created_user = result.data
 
         if created_user is None:
-
             print("❌ Operation returned None data")
 
             return
@@ -113,7 +108,7 @@ def main() -> None:  # noqa: PLR0915
         def create_user(self, email: str, name: str) -> SharedUser:
             # Use SharedDomainFactory for consistent user creation
             result = SharedDomainFactory.create_user(name=name, email=email, age=25)
-            if result.success:
+            if result.success and result.data is not None:
                 return result.data
             # Fallback - this shouldn't happen in practice
             msg: str = f"Failed to create user: {result.error}"
@@ -121,7 +116,7 @@ def main() -> None:  # noqa: PLR0915
 
     class UserRepository:
         def __init__(self) -> None:
-            self.users = {}
+            self.users: dict[str, SharedUser] = {}
 
         def save(self, user: SharedUser) -> SharedUser:
             self.users[user.id] = user
@@ -141,8 +136,11 @@ def main() -> None:  # noqa: PLR0915
     service_result = container.get("user_service")
     if service_result.success:
         user_service = service_result.data
-        new_user = user_service.create_user("bob@example.com", "Bob Wilson")
-        print(f"  Service created: {new_user.name} ({new_user.email_address.email})")
+        if hasattr(user_service, "create_user"):
+            new_user = user_service.create_user("bob@example.com", "Bob Wilson")
+            print(f"  Service created: {new_user.name} ({new_user.email_address.email})")
+        else:
+            print("  Service creation failed: no create_user method")
     print()
 
     # 5. FlextFields - Field Validation
@@ -180,7 +178,10 @@ def main() -> None:  # noqa: PLR0915
     bus_result = bus.execute(command)
     if bus_result.success:
         bus_user = bus_result.data
-        print(f"  Bus executed: {bus_user.name} created")
+        if hasattr(bus_user, "name"):
+            print(f"  Bus executed: {bus_user.name} created")
+        else:
+            print(f"  Bus executed: {bus_user}")
     print()
 
     print("=== All Examples Completed Successfully! ===")

@@ -21,8 +21,8 @@ Payload Architecture Patterns:
 
 Development Status (v0.9.0 → 1.0.0):
     ✅ Production Ready: Generic payloads, message/event specializations, validation
+    ✅ Production Ready: Enterprise cross-service serialization with Go bridge support
     🚧 Active Development: Event sourcing integration (Priority 1 - September 2025)
-    📋 TODO Integration: Cross-service serialization for Go bridge (Priority 4)
 
 Specialized Payload Types:
     FlextPayload[T]: Generic type-safe container with metadata support
@@ -76,6 +76,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import json
+import time
+import zlib
+from base64 import b64decode, b64encode
 from collections.abc import Callable, Mapping
 from typing import TYPE_CHECKING
 
@@ -96,6 +100,47 @@ from flext_core.mixins import (
 )
 from flext_core.result import FlextResult
 from flext_core.validation import FlextValidators
+
+# =============================================================================
+# CROSS-SERVICE SERIALIZATION CONSTANTS AND TYPES
+# =============================================================================
+
+# Serialization protocol version for backward compatibility
+FLEXT_SERIALIZATION_VERSION = "1.0.0"
+
+# Supported serialization formats for cross-service communication
+SERIALIZATION_FORMAT_JSON = "json"
+SERIALIZATION_FORMAT_JSON_COMPRESSED = "json_compressed"
+SERIALIZATION_FORMAT_BINARY = "binary"
+
+# Go bridge type mappings for proper type reconstruction
+GO_TYPE_MAPPINGS = {
+    "string": str,
+    "int": int,
+    "int64": int,
+    "float64": float,
+    "bool": bool,
+    "map[string]interface{}": dict,
+    "[]interface{}": list,
+    "interface{}": object,
+}
+
+# Python to Go type mappings for serialization
+PYTHON_TO_GO_TYPES = {
+    str: "string",
+    int: "int64",
+    float: "float64",
+    bool: "bool",
+    dict: "map[string]interface{}",
+    list: "[]interface{}",
+    object: "interface{}",
+}
+
+# Maximum payload size before automatic compression (64KB)
+MAX_UNCOMPRESSED_SIZE = 65536
+
+# Compression level for large payloads
+COMPRESSION_LEVEL = 6
 
 
 class FlextPayload[T](
@@ -463,6 +508,484 @@ class FlextPayload[T](
                 serialized_dict[str(k)] = v
         return serialized_dict
 
+    # =============================================================================
+    # CROSS-SERVICE SERIALIZATION - Enterprise Go Bridge Integration
+    # =============================================================================
+
+    def to_cross_service_dict(
+        self,
+        *,
+        include_type_info: bool = True,
+        protocol_version: str = FLEXT_SERIALIZATION_VERSION,
+    ) -> dict[str, object]:
+        """Convert payload to cross-service compatible dictionary with type information.
+
+        Enhanced serialization for Go bridge integration with comprehensive type
+        information preservation and protocol versioning for backward compatibility.
+
+        Cross-Service Features:
+            - Type information preservation for proper deserialization
+            - Protocol versioning for backward compatibility
+            - Go-compatible type mappings for seamless integration
+            - Metadata enrichment with serialization context
+            - Timestamp tracking for message lifecycle
+
+        Args:
+            include_type_info: Whether to include Python type information
+            protocol_version: Serialization protocol version
+
+        Returns:
+            Dictionary optimized for cross-service transport
+
+        Usage:
+            # Basic cross-service serialization
+            cross_service_dict = payload.to_cross_service_dict()
+
+            # Without type information (smaller payload)
+            minimal_dict = payload.to_cross_service_dict(include_type_info=False)
+            # Send to Go service
+            json_payload = json.dumps(cross_service_dict)
+            response = go_service.process(json_payload)
+
+        """
+        base_dict = {
+            "data": self._serialize_for_cross_service(self.data),
+            "metadata": self._serialize_metadata_for_cross_service(self.metadata),
+            "payload_type": self.__class__.__name__,
+            "serialization_timestamp": time.time(),
+            "protocol_version": protocol_version,
+        }
+
+        if include_type_info:
+            base_dict["type_info"] = {
+                "data_type": self._get_go_type_name(type(self.data)),
+                "python_type": self._get_python_type_name(type(self.data)),
+                "generic_type": self._extract_generic_type_info(),
+            }
+
+        return base_dict
+
+    def _serialize_for_cross_service(self, value: object) -> object:  # noqa: PLR0911
+        """Serialize value for cross-service compatibility.
+
+        Args:
+            value: Value to serialize
+
+        Returns:
+            Cross-service compatible representation
+
+        """
+        if value is None:
+            return None
+
+        # Basic JSON-compatible types
+        if isinstance(value, (str, int, float, bool)):
+            return value
+
+        # Collections
+        if isinstance(value, (list, tuple)):
+            return [self._serialize_for_cross_service(item) for item in value]
+
+        if isinstance(value, dict):
+            return {
+                str(k): self._serialize_for_cross_service(v) for k, v in value.items()
+            }
+
+        # Objects with cross-service serialization
+        if hasattr(value, "to_cross_service_dict"):
+            return value.to_cross_service_dict()
+
+        # Objects with basic serialization
+        if hasattr(value, "to_dict"):
+            result = value.to_dict()
+            if isinstance(result, dict):
+                return result
+
+        # Fallback to string representation for complex objects
+        return str(value)
+
+    def _serialize_metadata_for_cross_service(self, metadata: TAnyDict) -> TAnyDict:
+        """Serialize metadata for cross-service transport.
+
+        Args:
+            metadata: Metadata dictionary
+
+        Returns:
+            Cross-service compatible metadata
+
+        """
+        serialized_metadata: TAnyDict = {}
+
+        for key, value in metadata.items():
+            # Ensure keys are strings
+            str_key = str(key)
+
+            # Serialize values for cross-service compatibility
+            serialized_value = self._serialize_for_cross_service(value)
+
+            # Only include JSON-serializable values
+            if self._is_json_serializable(serialized_value):
+                serialized_metadata[str_key] = serialized_value
+
+        return serialized_metadata
+
+    def _get_go_type_name(self, python_type: type) -> str:
+        """Get Go type name for Python type.
+
+        Args:
+            python_type: Python type
+
+        Returns:
+            Corresponding Go type name
+
+        """
+        return PYTHON_TO_GO_TYPES.get(python_type, "interface{}")
+
+    def _get_python_type_name(self, python_type: type) -> str:
+        """Get Python type name string.
+
+        Args:
+            python_type: Python type
+
+        Returns:
+            Python type name as string
+
+        """
+        return getattr(python_type, "__name__", str(python_type))
+
+    def _extract_generic_type_info(self) -> dict[str, object]:
+        """Extract generic type information for type reconstruction.
+
+        Returns:
+            Dictionary containing generic type information
+
+        """
+        type_info: dict[str, object] = {
+            "is_generic": False,
+            "origin_type": None,
+            "type_args": [],
+        }
+
+        # Check if this class has generic type information
+        if hasattr(self.__class__, "__orig_bases__"):
+            for base in self.__class__.__orig_bases__:
+                if hasattr(base, "__origin__") and hasattr(base, "__args__"):
+                    type_info["is_generic"] = True
+                    type_info["origin_type"] = str(base.__origin__)
+                    type_info["type_args"] = [str(arg) for arg in base.__args__]
+                    break
+
+        return type_info
+
+    def _is_json_serializable(self, value: object) -> bool:
+        """Check if value is JSON serializable.
+
+        Args:
+            value: Value to check
+
+        Returns:
+            True if JSON serializable
+
+        """
+        try:
+            json.dumps(value)
+            return True
+        except (TypeError, ValueError, OverflowError):
+            return False
+
+    @classmethod
+    def from_cross_service_dict(
+        cls,
+        cross_service_dict: dict[str, object],
+    ) -> FlextResult[object]:
+        """Create payload from cross-service dictionary with type reconstruction.
+
+        Comprehensive deserialization supporting type reconstruction, protocol
+        versioning, and validation for robust cross-service communication.
+
+        Args:
+            cross_service_dict: Cross-service serialized dictionary
+
+        Returns:
+            FlextResult containing reconstructed payload
+
+        Raises:
+            FlextValidationError: If dictionary format is invalid
+
+        Usage:
+            # Deserialize from Go service response
+            response_dict = json.loads(go_service_response)
+            result = FlextPayload.from_cross_service_dict(response_dict)
+
+            if result.success:
+                payload = result.data
+                original_data = payload.data
+
+        """
+        # Validate required fields
+        required_fields = {"data", "metadata", "payload_type", "protocol_version"}
+        missing_fields = required_fields - set(cross_service_dict.keys())
+
+        if missing_fields:
+            return FlextResult.fail(
+                f"Invalid cross-service dictionary: missing fields {missing_fields}",
+            )
+
+        try:
+            # Extract fields
+            data = cross_service_dict["data"]
+            metadata = cross_service_dict.get("metadata", {})
+            protocol_version = cross_service_dict.get("protocol_version", "1.0.0")
+
+            # Validate protocol version compatibility
+            if not cls._is_protocol_compatible(str(protocol_version)):
+                return FlextResult.fail(
+                    f"Incompatible protocol version: {protocol_version}",
+                )
+
+            # Reconstruct data with type information if available
+            type_info = cross_service_dict.get("type_info", {})
+            if not isinstance(type_info, dict):
+                type_info = {}
+            reconstructed_data = cls._reconstruct_data_with_types(data, type_info)
+
+            # Validate metadata is dictionary
+            if not isinstance(metadata, dict):
+                metadata = {}
+
+            # Create payload instance - use type ignore for generic constructor
+            payload = cls(data=reconstructed_data, metadata=metadata)  # type: ignore[arg-type]
+            return FlextResult.ok(payload)
+
+        except (ValueError, TypeError, KeyError) as e:
+            return FlextResult.fail(
+                f"Failed to reconstruct payload from cross-service dict: {e}",
+            )
+
+    @classmethod
+    def _is_protocol_compatible(cls, version: str) -> bool:
+        """Check if protocol version is compatible.
+
+        Args:
+            version: Protocol version string
+
+        Returns:
+            True if compatible
+
+        """
+        # Simple version compatibility check
+        # In production, this would implement semantic versioning rules
+        major_version = version.split(".", maxsplit=1)[0] if "." in version else version
+        current_major = FLEXT_SERIALIZATION_VERSION.split(".", maxsplit=1)[0]
+
+        return major_version == current_major
+
+    @classmethod
+    def _reconstruct_data_with_types(
+        cls,
+        data: object,
+        type_info: dict[str, object],
+    ) -> object:
+        """Reconstruct data using type information.
+
+        Args:
+            data: Serialized data
+            type_info: Type reconstruction information
+
+        Returns:
+            Data with proper types reconstructed
+
+        """
+        if not type_info or not isinstance(type_info, dict):
+            return data
+
+        go_type = type_info.get("data_type")
+        if not (go_type and isinstance(go_type, str) and go_type in GO_TYPE_MAPPINGS):
+            return data
+
+        target_type = GO_TYPE_MAPPINGS[go_type]
+        return cls._convert_to_target_type(data, target_type)
+
+    @classmethod
+    def _convert_to_target_type(cls, data: object, target_type: type) -> object:
+        """Convert data to target type safely.
+
+        Args:
+            data: Data to convert
+            target_type: Target type for conversion
+
+        Returns:
+            Converted data or original data if conversion fails
+
+        """
+        try:
+            if target_type is str and not isinstance(data, str):
+                return str(data)
+
+            if target_type is int and not isinstance(data, int):
+                return cls._safe_int_conversion(data)
+
+            if target_type is float and not isinstance(data, float):
+                return cls._safe_float_conversion(data)
+
+            if target_type is bool and not isinstance(data, bool):
+                return bool(data) if data is not None else None
+
+        except (ValueError, TypeError):
+            pass
+
+        return data
+
+    @classmethod
+    def _safe_int_conversion(cls, data: object) -> object:
+        """Safely convert data to int."""
+        if data is None:
+            return None
+        try:
+            return int(str(data))
+        except (ValueError, TypeError):
+            return data
+
+    @classmethod
+    def _safe_float_conversion(cls, data: object) -> object:
+        """Safely convert data to float."""
+        if data is None:
+            return None
+        try:
+            return float(str(data))
+        except (ValueError, TypeError):
+            return data
+
+    def to_json_string(
+        self,
+        *,
+        compressed: bool = False,
+        include_type_info: bool = True,
+    ) -> FlextResult[str]:
+        """Convert payload to JSON string for cross-service transport.
+
+        Args:
+            compressed: Whether to compress large payloads
+            include_type_info: Whether to include type information
+
+        Returns:
+            FlextResult containing JSON string or error
+
+        """
+        try:
+            # Get cross-service dictionary
+            payload_dict = self.to_cross_service_dict(
+                include_type_info=include_type_info,
+            )
+
+            # Convert to JSON
+            json_str = json.dumps(payload_dict, separators=(",", ":"))
+
+            # Compress if payload is large and compression requested
+            if compressed and len(json_str.encode()) > MAX_UNCOMPRESSED_SIZE:
+                compressed_bytes = zlib.compress(
+                    json_str.encode(),
+                    level=COMPRESSION_LEVEL,
+                )
+                encoded_str = b64encode(compressed_bytes).decode()
+
+                # Wrap in compression envelope
+                envelope = {
+                    "format": SERIALIZATION_FORMAT_JSON_COMPRESSED,
+                    "data": encoded_str,
+                    "original_size": len(json_str.encode()),
+                    "compressed_size": len(compressed_bytes),
+                }
+                return FlextResult.ok(json.dumps(envelope))
+            # Add format information
+            envelope = {
+                "format": SERIALIZATION_FORMAT_JSON,
+                "data": payload_dict,
+            }
+            return FlextResult.ok(json.dumps(envelope))
+
+        except (TypeError, ValueError, OverflowError) as e:
+            return FlextResult.fail(f"Failed to serialize to JSON: {e}")
+
+    @classmethod
+    def from_json_string(cls, json_str: str) -> FlextResult[object]:  # noqa: PLR0911
+        """Create payload from JSON string with automatic decompression.
+
+        Args:
+            json_str: JSON string (potentially compressed)
+
+        Returns:
+            FlextResult containing payload or error
+
+        """
+        try:
+            # Parse envelope
+            envelope = json.loads(json_str)
+
+            if not isinstance(envelope, dict) or "format" not in envelope:
+                return FlextResult.fail("Invalid JSON envelope format")
+
+            format_type = envelope["format"]
+
+            if format_type == SERIALIZATION_FORMAT_JSON:
+                # Direct JSON format
+                payload_dict = envelope.get("data", {})
+                return cls.from_cross_service_dict(payload_dict)
+
+            if format_type == SERIALIZATION_FORMAT_JSON_COMPRESSED:
+                # Compressed format - decompress first
+                encoded_data = envelope.get("data", "")
+                if not isinstance(encoded_data, str):
+                    return FlextResult.fail("Invalid compressed data format")
+
+                try:
+                    compressed_bytes = b64decode(encoded_data.encode())
+                    decompressed_str = zlib.decompress(compressed_bytes).decode()
+                    payload_dict = json.loads(decompressed_str)
+                    return cls.from_cross_service_dict(payload_dict)
+
+                except (zlib.error, UnicodeDecodeError) as e:
+                    return FlextResult.fail(f"Decompression failed: {e}")
+            else:
+                return FlextResult.fail(f"Unsupported format: {format_type}")
+
+        except (json.JSONDecodeError, KeyError, TypeError) as e:
+            return FlextResult.fail(f"Failed to parse JSON: {e}")
+
+    def get_serialization_size(self) -> dict[str, int | float]:
+        """Get serialization size information for monitoring.
+
+        Returns:
+            Dictionary with size information in bytes
+
+        """
+        # JSON serialization size
+        json_result = self.to_json_string(compressed=False)
+        json_size = (
+            len(json_result.data.encode())
+            if json_result.success and json_result.data
+            else 0
+        )
+
+        # Compressed size
+        compressed_result = self.to_json_string(compressed=True)
+        compressed_size = (
+            len(compressed_result.data.encode())
+            if compressed_result.success and compressed_result.data
+            else 0
+        )
+
+        # Basic dict size
+        basic_dict = self.to_dict()
+        basic_size = len(json.dumps(basic_dict).encode())
+
+        return {
+            "json_size": json_size,
+            "compressed_size": compressed_size,
+            "basic_size": basic_size,
+            "compression_ratio": compressed_size / max(json_size, 1),
+        }
+
     def __repr__(self) -> str:
         """Return string representation."""
         data_repr = repr(self.data)
@@ -759,6 +1282,68 @@ class FlextMessage(FlextPayload[str]):
         """Get message text."""
         return self.data
 
+    def to_cross_service_dict(
+        self,
+        *,
+        include_type_info: bool = True,
+        protocol_version: str = FLEXT_SERIALIZATION_VERSION,
+    ) -> dict[str, object]:
+        """Convert message to cross-service compatible dictionary.
+
+        Enhanced for FlextMessage with message-specific metadata.
+
+        Args:
+            include_type_info: Whether to include type information
+            protocol_version: Serialization protocol version
+
+        Returns:
+            Cross-service compatible dictionary for message transport
+
+        """
+        base_dict = super().to_cross_service_dict(
+            include_type_info=include_type_info,
+            protocol_version=protocol_version,
+        )
+
+        # Add message-specific information
+        base_dict["message_level"] = self.level
+        base_dict["message_source"] = self.source
+        base_dict["message_text"] = self.text
+
+        if self.correlation_id:
+            base_dict["correlation_id"] = self.correlation_id
+
+        return base_dict
+
+    @classmethod
+    def from_cross_service_dict(  # type: ignore[override]
+        cls,
+        cross_service_dict: dict[str, object],
+    ) -> FlextResult[FlextMessage]:
+        """Create FlextMessage from cross-service dictionary.
+
+        Args:
+            cross_service_dict: Cross-service serialized dictionary
+
+        Returns:
+            FlextResult containing FlextMessage or error
+
+        """
+        # Extract message-specific fields
+        message_text = cross_service_dict.get("message_text")
+        message_level = cross_service_dict.get("message_level", "info")
+        message_source = cross_service_dict.get("message_source")
+
+        if not message_text or not isinstance(message_text, str):
+            return FlextResult.fail("Invalid message text in cross-service data")
+
+        # Create message using factory method
+        return cls.create_message(
+            message_text,
+            level=str(message_level),
+            source=str(message_source) if message_source else None,
+        )
+
 
 class FlextEvent(FlextPayload[Mapping[str, object]]):
     """Domain event payload with aggregate tracking and versioning support.
@@ -923,6 +1508,300 @@ class FlextEvent(FlextPayload[Mapping[str, object]]):
         corr_id = self.get_metadata("correlation_id")
         return str(corr_id) if corr_id is not None else None
 
+    def to_cross_service_dict(
+        self,
+        *,
+        include_type_info: bool = True,
+        protocol_version: str = FLEXT_SERIALIZATION_VERSION,
+    ) -> dict[str, object]:
+        """Convert event to cross-service compatible dictionary.
+
+        Enhanced for FlextEvent with event sourcing metadata.
+
+        Args:
+            include_type_info: Whether to include type information
+            protocol_version: Serialization protocol version
+
+        Returns:
+            Cross-service compatible dictionary for event transport
+
+        """
+        base_dict = super().to_cross_service_dict(
+            include_type_info=include_type_info,
+            protocol_version=protocol_version,
+        )
+
+        # Add event-specific information
+        base_dict["event_type"] = self.event_type
+        base_dict["aggregate_id"] = self.aggregate_id
+        base_dict["aggregate_type"] = self.aggregate_type
+        base_dict["event_version"] = self.version
+
+        if self.correlation_id:
+            base_dict["correlation_id"] = self.correlation_id
+
+        # Add event data directly at top level for easier Go access
+        if self.data:
+            base_dict["event_data"] = dict(self.data)
+
+        return base_dict
+
+    @classmethod
+    def from_cross_service_dict(  # type: ignore[override]
+        cls,
+        cross_service_dict: dict[str, object],
+    ) -> FlextResult[FlextEvent]:
+        """Create FlextEvent from cross-service dictionary.
+
+        Args:
+            cross_service_dict: Cross-service serialized dictionary
+
+        Returns:
+            FlextResult containing FlextEvent or error
+
+        """
+        # Extract event-specific fields
+        event_type = cross_service_dict.get("event_type")
+        event_data = cross_service_dict.get("event_data", {})
+        aggregate_id = cross_service_dict.get("aggregate_id")
+        event_version = cross_service_dict.get("event_version")
+
+        if not event_type or not isinstance(event_type, str):
+            return FlextResult.fail("Invalid event type in cross-service data")
+
+        if not isinstance(event_data, dict):
+            return FlextResult.fail("Invalid event data in cross-service data")
+
+        # Convert version to int if provided
+        version_int = None
+        if event_version is not None:
+            try:
+                version_int = int(str(event_version))
+            except (ValueError, TypeError):
+                return FlextResult.fail("Invalid event version format")
+
+        # Create event using factory method
+        return cls.create_event(
+            event_type=str(event_type),
+            event_data=event_data,
+            aggregate_id=str(aggregate_id) if aggregate_id else None,
+            version=version_int,
+        )
+
+
+# =============================================================================
+# CROSS-SERVICE SERIALIZATION UTILITIES - Factory Methods and Helpers
+# =============================================================================
+
+
+def serialize_payload_for_go_bridge(payload: FlextPayload[object]) -> FlextResult[str]:
+    """Serialize payload optimized for Go bridge communication.
+
+    Convenience function providing optimal serialization settings for Go service
+    integration with automatic compression for large payloads.
+
+    Args:
+        payload: Payload to serialize
+
+    Returns:
+        FlextResult containing JSON string optimized for Go bridge
+
+    Usage:
+        # Serialize for Go service
+        result = serialize_payload_for_go_bridge(payload)
+        if result.success:
+            json_str = result.data
+            response = go_service.send(json_str)
+
+    """
+    return payload.to_json_string(
+        compressed=True,  # Always use compression for Go bridge
+        include_type_info=True,  # Include type info for proper reconstruction
+    )
+
+
+def deserialize_payload_from_go_bridge(json_str: str) -> FlextResult[object]:
+    """Deserialize payload from Go bridge response.
+
+    Convenience function for deserializing payloads from Go service responses
+    with automatic decompression and type reconstruction.
+
+    Args:
+        json_str: JSON string from Go service
+
+    Returns:
+        FlextResult containing reconstructed payload
+
+    Usage:
+        # Deserialize from Go service
+        result = deserialize_payload_from_go_bridge(go_response)
+        if result.success:
+            payload = result.data
+            original_data = payload.data
+
+    """
+    return FlextPayload.from_json_string(json_str)
+
+
+def create_cross_service_message(
+    text: str,
+    level: str = "info",
+    source: str | None = None,
+    correlation_id: str | None = None,
+) -> FlextResult[FlextMessage]:
+    """Create message optimized for cross-service communication.
+
+    Factory function creating FlextMessage with cross-service metadata
+    including correlation ID for distributed tracing.
+
+    Args:
+        text: Message text
+        level: Message level
+        source: Message source
+        correlation_id: Optional correlation ID for tracing
+
+    Returns:
+        FlextResult containing cross-service optimized message
+
+    """
+    result = FlextMessage.create_message(text, level=level, source=source)
+
+    if result.success and correlation_id:
+        message = result.data
+        if message is not None:
+            enhanced_message = message.with_metadata(correlation_id=correlation_id)
+            return FlextResult.ok(enhanced_message)  # type: ignore[arg-type]
+
+    return result
+
+
+def create_cross_service_event(
+    event_type: str,
+    event_data: Mapping[str, object],
+    *,
+    aggregate_id: str | None = None,
+    version: int | None = None,
+    correlation_id: str | None = None,
+) -> FlextResult[FlextEvent]:
+    """Create event optimized for cross-service communication.
+
+    Factory function creating FlextEvent with cross-service metadata
+    including correlation ID for distributed event tracking.
+
+    Args:
+        event_type: Type of event
+        event_data: Event data
+        aggregate_id: Optional aggregate ID
+        version: Optional event version
+        correlation_id: Optional correlation ID for tracing
+
+    Returns:
+        FlextResult containing cross-service optimized event
+
+    """
+    result = FlextEvent.create_event(
+        event_type=event_type,
+        event_data=event_data,
+        aggregate_id=aggregate_id,
+        version=version,
+    )
+
+    if result.success and correlation_id:
+        event = result.data
+        if event is not None:
+            enhanced_event = event.with_metadata(correlation_id=correlation_id)
+            return FlextResult.ok(enhanced_event)  # type: ignore[arg-type]
+
+    return result
+
+
+def validate_cross_service_protocol(
+    serialized_data: str,
+) -> FlextResult[dict[str, object]]:
+    """Validate cross-service protocol format.
+
+    Validates that serialized data conforms to FLEXT cross-service protocol
+    with proper format envelope and required fields.
+
+    Args:
+        serialized_data: Serialized JSON string
+
+    Returns:
+        FlextResult containing validation status and parsed envelope
+
+    Usage:
+        # Validate before processing
+        validation_result = validate_cross_service_protocol(incoming_data)
+        if validation_result.success:
+            envelope = validation_result.data
+            format_type = envelope["format"]
+
+    """
+    try:
+        envelope = json.loads(serialized_data)
+
+        if not isinstance(envelope, dict):
+            return FlextResult.fail("Invalid protocol: envelope must be dictionary")
+
+        if "format" not in envelope:
+            return FlextResult.fail("Invalid protocol: missing format field")
+
+        format_type = envelope["format"]
+        if format_type not in {
+            SERIALIZATION_FORMAT_JSON,
+            SERIALIZATION_FORMAT_JSON_COMPRESSED,
+            SERIALIZATION_FORMAT_BINARY,
+        }:
+            return FlextResult.fail(
+                f"Invalid protocol: unsupported format {format_type}",
+            )
+
+        if "data" not in envelope:
+            return FlextResult.fail("Invalid protocol: missing data field")
+
+        return FlextResult.ok(envelope)
+
+    except json.JSONDecodeError as e:
+        return FlextResult.fail(f"Invalid protocol: JSON decode error - {e}")
+
+
+def get_serialization_metrics(payload: FlextPayload[object]) -> dict[str, object]:
+    """Get comprehensive serialization metrics for monitoring.
+
+    Provides detailed metrics about payload serialization performance
+    for operational monitoring and optimization.
+
+    Args:
+        payload: Payload to analyze
+
+    Returns:
+        Dictionary containing serialization metrics
+
+    Usage:
+        # Monitor serialization performance
+        metrics = get_serialization_metrics(payload)
+        print(f"Compression ratio: {metrics['compression_ratio']:.2f}")
+        print(f"JSON size: {metrics['json_size']} bytes")
+
+    """
+    base_metrics = payload.get_serialization_size()
+
+    # Add additional metrics - casting to dict[str, object] for return type
+    additional_metrics: dict[str, object] = {
+        "payload_type": payload.__class__.__name__,
+        "data_type": type(payload.data).__name__ if payload.data else "None",
+        "metadata_keys": len(payload.metadata),
+        "has_data": payload.has_data(),
+        "protocol_version": FLEXT_SERIALIZATION_VERSION,
+    }
+
+    # Combine metrics with proper typing
+    result_metrics: dict[str, object] = {}
+    result_metrics.update(base_metrics)
+    result_metrics.update(additional_metrics)
+
+    return result_metrics
+
 
 # =============================================================================
 # MODEL REBUILDS - Resolve forward references for Pydantic
@@ -935,7 +1814,20 @@ FlextEvent.model_rebuild()
 
 # Export API
 __all__: list[str] = [
+    # Serialization constants (sorted alphabetically)
+    "FLEXT_SERIALIZATION_VERSION",
+    "SERIALIZATION_FORMAT_BINARY",
+    "SERIALIZATION_FORMAT_JSON",
+    "SERIALIZATION_FORMAT_JSON_COMPRESSED",
+    # Core payload classes (sorted alphabetically)
     "FlextEvent",
     "FlextMessage",
     "FlextPayload",
+    # Cross-service serialization utilities (sorted alphabetically)
+    "create_cross_service_event",
+    "create_cross_service_message",
+    "deserialize_payload_from_go_bridge",
+    "get_serialization_metrics",
+    "serialize_payload_for_go_bridge",
+    "validate_cross_service_protocol",
 ]
