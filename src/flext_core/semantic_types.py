@@ -100,14 +100,14 @@ class FlextTypes:
         type Transformer[T, R] = Callable[[T], R]
         type AsyncTransformer[T, R] = Callable[[T], Awaitable[R]]
         type Validator[T] = Callable[[T], bool | str]
-        type Serializer[T] = Callable[[T], str | bytes | dict[str, object]]
-        type Deserializer[T] = Callable[[str | bytes | dict[str, object]], T]
+        type Serializer[T] = Callable[[T], str | bytes | JsonDict]
+        type Deserializer[T] = Callable[[str | bytes | JsonDict], T]
 
         # Container and dependency types
         type Container = Mapping[str, object]
         type ServiceLocator = Callable[[str], object]
         type ServiceFactory[T] = Callable[[], T]
-        type ServiceRegistry = dict[str, object]
+        type ServiceRegistry = JsonDict
 
         # Result and error handling types
         type Result[T, E] = T | E
@@ -124,8 +124,9 @@ class FlextTypes:
         type MessageQueue[T] = Sequence[T]
 
         # Metadata and configuration types
-        type Metadata = dict[str, object]
-        type Settings = dict[str, object]
+        type JsonDict = dict[str, object]  # Standard JSON-compatible dictionary
+        type Metadata = JsonDict
+        type Settings = JsonDict
         type Configuration = Mapping[str, object]
         type Environment = dict[str, str]
 
@@ -138,29 +139,29 @@ class FlextTypes:
         type ConnectionPool = Sequence[object]
         type DatabaseConnection = object
         type Credentials = dict[str, str]
-        type ConnectionConfig = dict[str, object]
+        type ConnectionConfig = JsonDict
 
         # Data processing types
-        type Record = dict[str, object]
-        type RecordBatch = Sequence[dict[str, object]]
-        type Schema = dict[str, object]
-        type DataStream = Iterable[dict[str, object]] | Generator[dict[str, object]]
+        type Record = JsonDict
+        type RecordBatch = Sequence[JsonDict]
+        type Schema = JsonDict
+        type DataStream = Iterable[JsonDict] | Generator[JsonDict]
         type DataReader[T] = Callable[[], Iterable[T]]
         type DataWriter[T] = Callable[[Iterable[T]], None]
 
         # Query and operation types
-        type Query = str | dict[str, object]
-        type QueryParams = dict[str, object]
-        type QueryResult = Sequence[dict[str, object]]
+        type Query = str | JsonDict
+        type QueryParams = JsonDict
+        type QueryResult = Sequence[JsonDict]
         type Operation = Callable[[], object]
         type Transaction = Callable[[], object]
         type Cursor = object
 
         # Serialization and format types
         type Serializable = (
-            dict[str, object] | list[object] | str | int | float | bool | None
+            JsonDict | list[object] | str | int | float | bool | None
         )
-        type JsonData = dict[str, object] | list[object]
+        type JsonData = JsonDict | list[object]
         type CsvData = Sequence[Sequence[str]]
         type XmlData = str
         type BinaryData = bytes
@@ -185,21 +186,21 @@ class FlextTypes:
 
         # Authentication types
         type AuthProvider = object  # Protocol-based
-        type AuthenticatedUser = dict[str, object]
+        type AuthenticatedUser = JsonDict
         type LoginCredentials = dict[str, str]
-        type AuthContext = dict[str, object]
-        type AuthSession = dict[str, object]
+        type AuthContext = JsonDict
+        type AuthSession = JsonDict
 
         # Authorization types
         type Permission = str
         type Role = str
         type Scope = str | Sequence[str]
-        type Policy = dict[str, object]
-        type AuthorizationContext = dict[str, object]
+        type Policy = JsonDict
+        type AuthorizationContext = JsonDict
 
         # Security types
-        type SecurityContext = dict[str, object]
-        type SecurityPolicy = dict[str, object]
+        type SecurityContext = JsonDict
+        type SecurityPolicy = JsonDict
         type CryptographicKey = bytes | str
         type Certificate = str | bytes
         type Signature = str | bytes
@@ -211,18 +212,18 @@ class FlextTypes:
         type Logger = object  # Protocol-based
         type LogLevel = Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
         type LogMessage = str
-        type LogContext = dict[str, object]
-        type LogEntry = dict[str, object]
-        type LogHandler = Callable[[dict[str, object]], None]
+        type LogContext = JsonDict
+        type LogEntry = JsonDict
+        type LogHandler = Callable[[JsonDict], None]
 
         # Metrics types
-        type Metric = dict[str, object]
+        type Metric = JsonDict
         type MetricValue = int | float
         type MetricTags = dict[str, str]
         type Counter = int
         type Gauge = float
         type Histogram = Sequence[float]
-        type MetricCollector = Callable[[], dict[str, object]]
+        type MetricCollector = Callable[[], JsonDict]
 
         # Tracing types
         type Tracer = object  # Protocol-based
@@ -231,11 +232,11 @@ class FlextTypes:
         type TraceId = str
         type SpanId = str
         type CorrelationId = str
-        type TraceContext = dict[str, object]
+        type TraceContext = JsonDict
 
         # Alerting types
-        type Alert = dict[str, object]
-        type AlertHandler = Callable[[dict[str, object]], None]
+        type Alert = JsonDict
+        type AlertHandler = Callable[[JsonDict], None]
         type AlertLevel = Literal["INFO", "WARNING", "ERROR", "CRITICAL"]
         type AlertCondition = Callable[[object], bool]
         type NotificationChannel = object
@@ -244,33 +245,33 @@ class FlextTypes:
         """Singer protocol and data integration domain types."""
 
         # Singer specification types
-        type SingerStream = dict[str, object]
-        type SingerRecord = dict[str, object]
-        type SingerSchema = dict[str, object]
-        type SingerCatalog = dict[str, object]
-        type SingerConfig = dict[str, object]
-        type SingerState = dict[str, object]
+        type SingerStream = JsonDict
+        type SingerRecord = JsonDict
+        type SingerSchema = JsonDict
+        type SingerCatalog = JsonDict
+        type SingerConfig = JsonDict
+        type SingerState = JsonDict
 
         # Tap and target types
         type Tap = object  # Protocol-based
         type Target = object  # Protocol-based
-        type TapConfig = dict[str, object]
-        type TargetConfig = dict[str, object]
+        type TapConfig = JsonDict
+        type TargetConfig = JsonDict
         type StreamName = str
         type TableName = str
 
         # Replication types
         type ReplicationKey = str
         type ReplicationMethod = Literal["FULL_TABLE", "INCREMENTAL", "LOG_BASED"]
-        type BookmarkProperties = dict[str, object]
-        type SelectionCriteria = dict[str, object]
+        type BookmarkProperties = JsonDict
+        type SelectionCriteria = JsonDict
 
         # DBT integration types
-        type DbtModel = dict[str, object]
-        type DbtProject = dict[str, object]
-        type DbtProfile = dict[str, object]
-        type DbtManifest = dict[str, object]
-        type DbtRunResult = dict[str, object]
+        type DbtModel = JsonDict
+        type DbtProject = JsonDict
+        type DbtProfile = JsonDict
+        type DbtManifest = JsonDict
+        type DbtRunResult = JsonDict
 
     class Bridge:
         """Go-Python bridge and cross-language integration types."""
@@ -278,7 +279,7 @@ class FlextTypes:
         # Message Types (following pattern documentation)
         type MessageId = str
         type MessageType = str
-        type MessagePayload = dict[str, object]
+        type MessagePayload = JsonDict
 
         # Protocol Types
         type RequestId = str
@@ -292,21 +293,21 @@ class FlextTypes:
         # Contract Types
         type ServiceName = str
         type MethodName = str
-        type ServiceContract = dict[MethodName, dict[str, object]]
+        type ServiceContract = dict[MethodName, JsonDict]
 
         # Bridge Message Structure (enhanced from pattern docs)
         type BridgeMessage = dict[
             str,
             object,
         ]  # Complete structure defined in protocols
-        type BridgeRequest = dict[str, object]
-        type BridgeResponse = dict[str, object]
+        type BridgeRequest = JsonDict
+        type BridgeResponse = JsonDict
         type BridgeError = dict[str, str]
-        type BridgeContext = dict[str, object]
+        type BridgeContext = JsonDict
 
         # Cross-language compatibility types
         type SerializableType = (
-            str | int | float | bool | None | dict[str, object] | list[object]
+            str | int | float | bool | None | JsonDict | list[object]
         )
         type GoCompatibleType = SerializableType
         type PythonToGoType = SerializableType
@@ -315,8 +316,8 @@ class FlextTypes:
         # Service integration types
         type ServiceProxy = object  # Protocol-based
         type ServiceAdapter = object  # Protocol-based
-        type ApiContract = dict[str, object]
-        type MessageContract = dict[str, object]
+        type ApiContract = JsonDict
+        type MessageContract = JsonDict
 
     class Web:
         """Web and HTTP domain types."""
@@ -333,24 +334,24 @@ class FlextTypes:
         ]
         type HttpStatus = int
         type HttpHeaders = dict[str, str]
-        type HttpRequest = dict[str, object]
-        type HttpResponse = dict[str, object]
-        type HttpHandler = Callable[[dict[str, object]], dict[str, object]]
+        type HttpRequest = JsonDict
+        type HttpResponse = JsonDict
+        type HttpHandler = Callable[[JsonDict], JsonDict]
 
         # API types
         type ApiEndpoint = str
-        type ApiResponse = dict[str, object]
-        type ApiError = dict[str, object]
+        type ApiResponse = JsonDict
+        type ApiError = JsonDict
         type RestClient = object  # Protocol-based
         type GraphQLQuery = str
-        type GraphQLVariables = dict[str, object]
+        type GraphQLVariables = JsonDict
 
         # Web application types
         type Route = str
-        type RouteHandler = Callable[[dict[str, object]], dict[str, object]]
-        type Middleware = Callable[[dict[str, object]], dict[str, object]]
-        type WebContext = dict[str, object]
-        type Session = dict[str, object]
+        type RouteHandler = Callable[[JsonDict], JsonDict]
+        type Middleware = Callable[[JsonDict], JsonDict]
+        type WebContext = JsonDict
+        type Session = JsonDict
 
     class CLI:
         """Command-line interface domain types."""
@@ -358,9 +359,9 @@ class FlextTypes:
         # Command types
         type Command = str
         type CommandArgs = Sequence[str]
-        type CommandOptions = dict[str, object]
+        type CommandOptions = JsonDict
         type CommandHandler = Callable[[Sequence[str]], int]
-        type CliContext = dict[str, object]
+        type CliContext = JsonDict
 
         # Input/Output types
         type CliInput = str
@@ -370,10 +371,10 @@ class FlextTypes:
         type CliFormatter = Callable[[object], str]
 
         # Configuration types
-        type CliConfig = dict[str, object]
-        type CliCommand = dict[str, object]
-        type CliOption = dict[str, object]
-        type CliArgument = dict[str, object]
+        type CliConfig = JsonDict
+        type CliCommand = JsonDict
+        type CliOption = JsonDict
+        type CliArgument = JsonDict
 
 
 # =============================================================================
@@ -582,11 +583,11 @@ class FlextLogLevel(StrEnum):
 # =============================================================================
 
 # Legacy type aliases for backward compatibility (will be deprecated)
-TDict = dict[str, object]
+TDict = JsonDict
 TList = list[object]
 TOptional = object | None
 TCallable = Callable[[object], object]
-TAnyDict = dict[str, object]
+TAnyDict = JsonDict
 TStringDict = dict[str, str]
 
 # Legacy function type aliases

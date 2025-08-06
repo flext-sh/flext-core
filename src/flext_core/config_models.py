@@ -890,7 +890,7 @@ def validate_config(config: FlextBaseConfigModel) -> bool:
     try:
         config.model_validate(config.model_dump())
         return True
-    except Exception:
+    except (RuntimeError, ValueError, TypeError, KeyError):
         return False
 
 
@@ -1225,6 +1225,7 @@ __all__ = [
     "OracleConfigDict",
     "PluginConfigDict",
     "RedisConfigDict",
+    "SettingsConfigDict",
     "SingerConfigDict",
     # Factory functions
     "create_database_config",

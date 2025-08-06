@@ -79,8 +79,11 @@ import uuid
 from datetime import UTC
 from typing import TYPE_CHECKING, Protocol, TypeGuard
 
+from flext_core.loggings import get_logger
 from flext_core.result import FlextResult, safe_call
 from flext_core.validation import FlextValidators
+
+logger = get_logger(__name__)
 
 
 class Console:
@@ -325,15 +328,19 @@ class FlextUtilities:
         if isinstance(value, str) and value.isdigit():
             try:
                 return int(value)
-            except ValueError:
-                return None
+            except ValueError as e:
+                # Log debug information but continue with other conversion methods
+                logger.debug(f"String digit conversion failed for '{value}': {e}")
+                # Fall through to try other methods
 
         # Float truncation
         if isinstance(value, float):
             try:
                 return int(value)
-            except (ValueError, OverflowError):
-                return None
+            except (ValueError, OverflowError) as e:
+                # Log debug information but continue with fallback
+                logger.debug(f"Float truncation failed for '{value}': {e}")
+                # Fall through to try other methods
 
         return None
 
@@ -342,7 +349,9 @@ class FlextUtilities:
         """Try string-based conversion as fallback."""
         try:
             return int(str(value))
-        except (ValueError, TypeError, OverflowError):
+        except (ValueError, TypeError, OverflowError) as e:
+            # Log debug information for final fallback failure
+            logger.debug(f"String conversion fallback failed for '{value}': {e}")
             return None
 
     @classmethod

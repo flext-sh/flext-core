@@ -161,6 +161,7 @@ from flext_core.config_models import (
     ObservabilityConfigDict,
     OracleConfigDict,
     RedisConfigDict,
+    SettingsConfigDict,
     SingerConfigDict,
     # Factory functions
     create_database_config,
@@ -660,6 +661,7 @@ __all__ = [
     "SemanticOperationStatus",
     "Serializable",
     "ServiceKey",
+    "SettingsConfigDict",
     "SingerConfigDict",
     "SingerProtocol",
     "T",

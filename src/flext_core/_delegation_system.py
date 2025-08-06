@@ -59,6 +59,7 @@ from flext_core._mixins_base import (
     _BaseValidatableMixin,
 )
 from flext_core.exceptions import FlextOperationError, FlextTypeError
+from flext_core.loggings import get_logger
 from flext_core.result import FlextResult
 
 
@@ -261,7 +262,9 @@ class FlextMixinDelegator:
 
             # Use type ignore for dynamic attribute assignment on function object
             delegated_method.__signature__ = inspect.signature(method)  # type: ignore[attr-defined]
-        except (AttributeError, ValueError):
+        except (AttributeError, ValueError) as e:
+            logger = get_logger(__name__)
+            logger.warning(f"Failed to set signature for delegated method {method_name}: {e}")
             pass
 
         # Store for access via host

@@ -28,6 +28,7 @@ demonstrating the power and flexibility of the FlextConfig system.
 
 import json
 import os
+import pathlib
 import tempfile
 from typing import cast
 
@@ -449,7 +450,7 @@ def _extract_app_name_from_config(loaded_config: TAnyDict) -> str | None:
 def _cleanup_configuration_file(temp_file_path: str) -> FlextResult[None]:
     """Clean up temporary configuration file."""
     try:
-        os.unlink(temp_file_path)
+        pathlib.Path(temp_file_path).unlink()
         log_message = "🗑️ Temporary file cleaned up"
         print(log_message)
         return FlextResult.ok(None)
@@ -621,7 +622,9 @@ def demonstrate_configuration_hierarchies() -> None:
 
 
 def demonstrate_advanced_configuration_patterns() -> None:
-    """Demonstrate advanced configuration patterns using railway-oriented programming."""
+    """Demonstrate advanced configuration patterns using railway-oriented
+    programming.
+    """
     _print_config_section_header("🚀 ADVANCED CONFIGURATION PATTERNS")
 
     # Chain all configuration pattern demonstrations using single-responsibility methods
@@ -888,7 +891,9 @@ def _display_composed_configuration(composed_config: TAnyDict) -> FlextResult[No
 
 
 def demonstrate_domain_configuration_integration() -> None:
-    """Demonstrate configuration integration with shared domain models using railway-oriented programming."""
+    """Demonstrate configuration integration with shared domain models using
+    railway-oriented programming.
+    """
     _print_domain_config_section_header("🏢 DOMAIN MODEL CONFIGURATION INTEGRATION")
 
     # Chain all domain configuration demonstrations using single-responsibility methods

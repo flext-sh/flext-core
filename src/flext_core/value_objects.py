@@ -93,7 +93,7 @@ from pydantic import BaseModel, ConfigDict
 from flext_core.exceptions import FlextValidationError
 from flext_core.fields import FlextFields
 from flext_core.flext_types import TAnyDict
-from flext_core.loggings import FlextLoggerFactory
+from flext_core.loggings import FlextLoggerFactory, get_logger
 from flext_core.mixins import FlextLoggableMixin, FlextValueObjectMixin
 from flext_core.payload import FlextPayload
 from flext_core.result import FlextResult
@@ -432,52 +432,93 @@ class FlextValueObject(
 
         return payload_result.unwrap()
 
-    def _extract_serializable_attributes(self) -> dict[str, str | int | float | bool | None]:
+    def _extract_serializable_attributes(
+        self,
+    ) -> dict[str, str | int | float | bool | None]:
         """Extract only serializable attributes from value object.
 
         Proper implementation without fallback - uses type-safe introspection.
         """
+        # Try Pydantic serialization first
+        pydantic_result = self._try_pydantic_serialization()
+        if pydantic_result:
+            return pydantic_result
+
+        # Fallback to manual extraction
+        manual_result = self._try_manual_extraction()
+        return manual_result or self._get_fallback_info()
+
+    def _try_pydantic_serialization(
+        self,
+    ) -> dict[str, str | int | float | bool | None] | None:
+        """Try Pydantic model serialization."""
+        if not hasattr(self, "model_dump"):
+            return None
+
+        try:
+            dumped = self.model_dump()
+            return self._process_serializable_values(dumped)
+        except Exception as e:
+            logger = FlextLoggerFactory.get_logger(__name__)
+            logger.debug("Failed to serialize Pydantic attributes: %s", e)
+            return None
+
+    def _try_manual_extraction(
+        self,
+    ) -> dict[str, str | int | float | bool | None]:
+        """Try manual attribute extraction."""
         serializable: dict[str, str | int | float | bool | None] = {}
 
-        # Use model_dump for Pydantic models with proper serialization
-        if hasattr(self, "model_dump"):
-            try:
-                dumped = self.model_dump()
-                for key, value in dumped.items():
-                    if isinstance(value, (str, int, float, bool)) or value is None:
-                        serializable[key] = value
-                    else:
-                        # Convert complex types to string representation
-                        serializable[key] = str(value)
-                return serializable
-            except Exception as e:
-                # Log serialization errors for debugging
-                logger = FlextLoggerFactory.get_logger(__name__)
-                logger.debug(f"Failed to serialize Pydantic attributes: {e}")
-
-        # Manual extraction for non-Pydantic objects
         for attr_name in dir(self):
-            if not attr_name.startswith("_") and not callable(getattr(self, attr_name)):
-                try:
-                    value = getattr(self, attr_name)
-                    if isinstance(value, (str, int, float, bool)) or value is None:
-                        serializable[attr_name] = value
-                    elif hasattr(value, "__str__"):
-                        serializable[attr_name] = str(value)
-                except Exception as e:
-                    # Log attribute extraction errors for debugging
-                    logger = FlextLoggerFactory.get_logger(__name__)
-                    logger.debug(f"Failed to extract attribute {attr_name}: {e}")
-                    continue
-
-        # Ensure we have at least basic info
-        if not serializable:
-            serializable = {
-                "class_name": self.__class__.__name__,
-                "module": self.__class__.__module__,
-            }
+            if self._should_include_attribute(attr_name):
+                value = self._safely_get_attribute(attr_name)
+                if value is not None:
+                    serializable[attr_name] = value
 
         return serializable
+
+    def _process_serializable_values(
+        self,
+        data: dict[str, object],
+    ) -> dict[str, str | int | float | bool | None]:
+        """Process values to ensure they are serializable."""
+        serializable: dict[str, str | int | float | bool | None] = {}
+
+        for key, value in data.items():
+            if isinstance(value, (str, int, float, bool)) or value is None:
+                serializable[key] = value
+            else:
+                # Convert complex types to string representation
+                serializable[key] = str(value)
+
+        return serializable
+
+    def _should_include_attribute(self, attr_name: str) -> bool:
+        """Check if attribute should be included in serialization."""
+        return not attr_name.startswith("_") and not callable(
+            getattr(self, attr_name, None),
+        )
+
+    def _safely_get_attribute(self, attr_name: str) -> str | int | float | bool | None:
+        """Safely get and convert attribute value."""
+        try:
+            value = getattr(self, attr_name)
+            if isinstance(value, (str, int, float, bool)) or value is None:
+                return value
+            if hasattr(value, "__str__"):
+                return str(value)
+        except Exception as e:
+            logger = FlextLoggerFactory.get_logger(__name__)
+            logger.debug("Failed to extract attribute %s: %s", attr_name, e)
+
+        return None
+
+    def _get_fallback_info(self) -> dict[str, str | int | float | bool | None]:
+        """Get fallback information when no attributes can be extracted."""
+        return {
+            "class_name": self.__class__.__name__,
+            "module": self.__class__.__module__,
+        }
 
 
 # =============================================================================
@@ -554,7 +595,7 @@ class FlextValueObjectFactory:
 
         # Handle factory creation errors
         if price_result.is_failure:
-            logger.error(f"Failed to create price: {price_result.error}")
+            logger.error("Failed to create price: %s", price_result.error)
 
     Factory Pattern Benefits:
         - Consistent value object creation with validation

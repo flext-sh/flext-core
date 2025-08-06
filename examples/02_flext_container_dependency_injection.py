@@ -249,7 +249,8 @@ class UserManagementServiceFactoryCreator:
         """Create factory function for UserManagementService."""
 
         def user_management_factory() -> object:
-            # FlextContainer expects factories to return services directly, not FlextResult
+            # FlextContainer expects factories to return services directly,
+            # not FlextResult
             create_method = getattr(
                 self._configurer, "create_user_management_service", None
             )
@@ -1122,7 +1123,7 @@ class MockUserManagementServiceFactoryCreator:
         """Create factory function for mock UserManagementService."""
 
         def mock_user_management_factory() -> object:
-            # FlextContainer expects factories to return services directly, not FlextResult
+            # FlextContainer expects factories to return services directly,\n            # not FlextResult
             user_repo_result = self._container.get("UserRepository")
             if user_repo_result.is_failure:
                 msg = f"UserRepository not available: {user_repo_result.error}"

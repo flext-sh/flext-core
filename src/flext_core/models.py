@@ -38,6 +38,7 @@ from typing import ClassVar, NotRequired, Self, TypedDict
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from flext_core.exceptions import FlextValidationError
+from flext_core.loggings import get_logger
 from flext_core.result import FlextResult
 
 # =============================================================================
@@ -322,7 +323,7 @@ class FlextEntity(FlextModel, ABC):
                 )
 
             return FlextResult.ok(new_entity)
-        except Exception as e:
+        except (RuntimeError, ValueError, TypeError, KeyError, AttributeError) as e:
             return FlextResult.fail(f"Failed to copy entity: {e}")
 
     @abstractmethod
@@ -438,12 +439,18 @@ class FlextFactory:
                     # REAL SOLUTION: Type-safe factory function execution
                     instance = factory(**kwargs)
                     return FlextResult.ok(instance)
-                except Exception as e:
+                except (
+                    RuntimeError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                ) as e:
                     return FlextResult.fail(f"Factory function failed: {e}")
 
             return FlextResult.fail(f"Invalid factory type for '{name}'")
 
-        except Exception as e:
+        except (RuntimeError, ValueError, TypeError, KeyError, AttributeError) as e:
             return FlextResult.fail(f"Failed to create '{name}': {e}")
 
     @staticmethod
@@ -470,7 +477,7 @@ class FlextFactory:
                     validation_result.error or "Business rule validation failed",
                 )
             return FlextResult.ok(instance)
-        except Exception as e:
+        except (RuntimeError, ValueError, TypeError, KeyError, AttributeError) as e:
             return FlextResult.fail(f"Failed to create {model_class.__name__}: {e}")
 
 
@@ -923,7 +930,9 @@ def model_to_dict_safe(model: object) -> dict[str, object]:
     """Legacy utility - simplified for compatibility."""
     try:
         return model.to_dict() if hasattr(model, "to_dict") else {}
-    except Exception:
+    except Exception as e:
+        logger = get_logger(__name__)
+        logger.warning(f"Failed to serialize model {type(model).__name__} to dict: {e}")
         return {}
 
 

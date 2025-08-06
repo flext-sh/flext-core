@@ -93,7 +93,9 @@ class TestNoOpTracer:
         """Test error span context manager."""
         tracer = NoOpTracer()
 
-        with tracer.error_span("failed-operation", error_message="Operation failed") as span:
+        with tracer.error_span(
+            "failed-operation", error_message="Operation failed"
+        ) as span:
             assert span is not None
 
 

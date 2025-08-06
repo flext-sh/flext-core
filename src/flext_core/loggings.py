@@ -75,13 +75,13 @@ from __future__ import annotations
 import logging
 import os
 import sys
+import time
 import traceback
 from typing import TYPE_CHECKING, ClassVar, TypedDict
 
 import structlog
 
 from flext_core.constants import FlextConstants, FlextLogLevel
-from flext_core.utilities import FlextGenerators
 
 Platform = FlextConstants.Platform
 
@@ -268,7 +268,7 @@ def _add_to_log_store(
     logger_name = str(event_dict.get("logger", getattr(logger, "name", "unknown")))
 
     log_entry: FlextLogEntry = {
-        "timestamp": event_dict.get("timestamp", FlextGenerators.generate_timestamp()),
+        "timestamp": event_dict.get("timestamp", time.time()),
         "level": str(event_dict.get("level", "INFO")).upper(),
         "logger": logger_name,
         "message": str(event_dict.get("event", "")),
@@ -496,8 +496,16 @@ class FlextLogger:
     def _should_log(self, level: str) -> bool:
         """Check if message should be logged based on level."""
         numeric_levels = FlextLogLevel.get_numeric_levels()
-        # Handle both string and enum inputs
-        level_str = level.value if hasattr(level, "value") else str(level).upper()
+        # Handle both string and enum inputs safely
+        try:
+            # Try to get value attribute first (for enums)
+            if hasattr(level, "value"):
+                level_str = level.value.upper()
+            else:
+                level_str = str(level).upper()
+        except AttributeError:
+            # Fallback to string conversion
+            level_str = str(level).upper()
         level_value = numeric_levels.get(level_str, numeric_levels["INFO"])
         return level_value >= self._level_value
 

@@ -86,7 +86,9 @@ from typing import TYPE_CHECKING, cast
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from flext_core.exceptions import FlextAttributeError, FlextValidationError
-from flext_core.loggings import FlextLoggerFactory
+
+# Import types for runtime usage (not just TYPE_CHECKING)
+from flext_core.loggings import FlextLoggerFactory, get_logger
 from flext_core.mixins import (
     FlextLoggableMixin,
     FlextSerializableMixin,
@@ -96,7 +98,7 @@ from flext_core.result import FlextResult
 from flext_core.validation import FlextValidators
 
 if TYPE_CHECKING:
-    from flext_core.flext_types import T, TData, TValue
+    from flext_core.flext_types import T, TValue
 
 # =============================================================================
 # CROSS-SERVICE SERIALIZATION CONSTANTS AND TYPES
@@ -236,7 +238,7 @@ class FlextPayload[T](
     )
 
     data: T | None = Field(default=None, description="Payload data")
-    metadata: TData = Field(
+    metadata: dict[str, object] = Field(
         default_factory=dict,
         description="Optional metadata",
     )
@@ -264,9 +266,8 @@ class FlextPayload[T](
         )
 
         try:
-            # Cast metadata to TData type for type safety
-            typed_metadata = cast("TData", metadata)
-            payload = cls(data=data, metadata=typed_metadata)
+            # Metadata is already dict[str, object] from **kwargs
+            payload = cls(data=data, metadata=metadata)
             logger.debug("Payload created successfully", payload_id=id(payload))
             return FlextResult.ok(payload)
         except (ValidationError, FlextValidationError) as e:
@@ -287,7 +288,7 @@ class FlextPayload[T](
         new_metadata = {**self.metadata, **additional}
         return FlextPayload(data=self.data, metadata=new_metadata)
 
-    def enrich_metadata(self, additional: TData) -> FlextPayload[T]:
+    def enrich_metadata(self, additional: dict[str, object]) -> FlextPayload[T]:
         """Create new payload with enriched metadata from dictionary.
 
         Args:
@@ -605,7 +606,7 @@ class FlextPayload[T](
             "Complex object cannot be serialized for cross-service transport",
             object_type=type(value).__name__,
             has_to_dict=hasattr(value, "to_dict"),
-            has_dict=hasattr(value, "__dict__")
+            has_dict=hasattr(value, "__dict__"),
         )
         # Return detailed type information instead of string representation
         return {
@@ -613,11 +614,12 @@ class FlextPayload[T](
             "module": getattr(type(value), "__module__", "unknown"),
             "serialization_error": "Complex object not serializable",
             "has_to_dict": hasattr(value, "to_dict"),
-            "has_dict": hasattr(value, "__dict__")
+            "has_dict": hasattr(value, "__dict__"),
         }
 
     def _serialize_metadata_for_cross_service(
-        self, metadata: TData
+        self,
+        metadata: dict[str, object],
     ) -> dict[str, object]:
         """Serialize metadata for cross-service transport.
 
@@ -704,7 +706,9 @@ class FlextPayload[T](
         try:
             json.dumps(value)
             return True
-        except (TypeError, ValueError, OverflowError):
+        except (TypeError, ValueError, OverflowError) as e:
+            logger = get_logger(__name__)
+            logger.warning(f"Value not JSON serializable: {type(value).__name__} - {e}")
             return False
 
     @classmethod
@@ -845,7 +849,9 @@ class FlextPayload[T](
             if target_type is bool and not isinstance(data, bool):
                 return bool(data) if data is not None else None
 
-        except (ValueError, TypeError):
+        except (ValueError, TypeError) as e:
+            logger = get_logger(__name__)
+            logger.warning(f"Type conversion failed for {type(data).__name__} to {target_type.__name__}: {e}")
             pass
 
         return data
@@ -1134,18 +1140,9 @@ class FlextPayload[T](
         return False
 
     def get(self, key: str, default: object | None = None) -> object | None:
-        """Get field value from extra fields with default.
-
-        Args:
-            key: Field name to get
-            default: Default value if key not found
-
-        Returns:
-            Field value or default
-
-        """
+        """Get field value from extra fields with default."""
         if hasattr(self, "__pydantic_extra__") and self.__pydantic_extra__:
-            return self.__pydantic_extra__.get(key, default)
+            return cast("object | None", self.__pydantic_extra__.get(key, default))
         return default
 
     def keys(self) -> list[str]:
@@ -1260,7 +1257,7 @@ class FlextMessage(FlextPayload[str]):
             logger.warning("Invalid message level, using 'info'", level=level)
             level = "info"
 
-        metadata: TData = {"level": level}
+        metadata: dict[str, object] = {"level": level}
         if source:
             metadata["source"] = source
 
@@ -1473,7 +1470,7 @@ class FlextEvent(FlextPayload[Mapping[str, object]]):
             logger.error("Invalid event version", version=version)
             return FlextResult.fail("Event version must be non-negative")
 
-        metadata: TData = {"event_type": event_type}
+        metadata: dict[str, object] = {"event_type": event_type}
         if aggregate_id:
             metadata["aggregate_id"] = aggregate_id
         if version is not None:
@@ -1832,13 +1829,23 @@ def get_serialization_metrics(payload: FlextPayload[object]) -> dict[str, object
 # MODEL REBUILDS - Resolve forward references for Pydantic
 # =============================================================================
 
-# CRITICAL: Model rebuild disabled - TAnyDict import conflicts resolved by design
-# The models work correctly without explicit rebuild as Pydantic handles
-# forward references automatically during runtime validation.
-# Original error resolved by using proper type imports and avoiding circular deps.
-# FlextPayload.model_rebuild()
-# FlextMessage.model_rebuild()
-# FlextEvent.model_rebuild()
+# CRITICAL: Model rebuild enabled for test compatibility
+# The models need explicit rebuild to work correctly with generic types
+# in test environment to avoid "not fully defined" errors.
+try:
+    FlextPayload.model_rebuild()
+    FlextMessage.model_rebuild()
+    FlextEvent.model_rebuild()
+except Exception as e:
+    # Log rebuild errors but maintain runtime compatibility
+    import structlog
+
+    logger = structlog.get_logger(__name__)
+    logger.warning(
+        "Model rebuild failed, continuing with runtime compatibility",
+        error=str(e),
+        models=["FlextPayload", "FlextMessage", "FlextEvent"],
+    )
 
 # Export API
 __all__: list[str] = [

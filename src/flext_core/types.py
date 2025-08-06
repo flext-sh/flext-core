@@ -440,7 +440,7 @@ class FlextTypesCompat:
     TConfigDict = FlextTypes.Data.ConfigDict
 
     # Legacy service aliases
-    TService = FlextTypes.Core.ServiceInstance
+    TService = TypeVar("TService")  # Explicitly define as TypeVar
     TServiceName = FlextTypes.Core.ServiceName
     TServiceKey = FlextTypes.Core.ServiceKey
 
@@ -533,7 +533,7 @@ def migrate_from_flext_types() -> dict[str, object]:
         "TValue": FlextTypes.Data.Value,
         "TAnyDict": FlextTypes.Data.Dict,
         # Service types
-        "TService": FlextTypes.Core.ServiceInstance,
+        "TService": TypeVar("TService"),  # Explicitly define as TypeVar
         "TServiceName": FlextTypes.Core.ServiceName,
         # Function types
         "TPredicate": FlextTypes.Core.Predicate,

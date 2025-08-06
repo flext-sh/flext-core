@@ -371,7 +371,7 @@ class FlextHandlers:
                 self._logger.debug(
                     "Handler has no type hints for message parameter - using strict validation",
                     handler_class=self.__class__.__name__,
-                    message_type=type(message).__name__
+                    message_type=type(message).__name__,
                 )
                 return False
 
@@ -381,7 +381,7 @@ class FlextHandlers:
                     "Type analysis failed for handler - rejecting message",
                     handler_class=self.__class__.__name__,
                     error=str(e),
-                    message_type=type(message).__name__
+                    message_type=type(message).__name__,
                 )
                 return False
 
@@ -418,6 +418,8 @@ class FlextHandlers:
                 "handler_id": self.handler_id,
                 "handler_name": self.handler_name,
                 "handler_class": self.__class__.__name__,
+                "handler_type": self.__class__.__name__,
+                "documentation": getattr(self.__class__, "__doc__", ""),
             }
 
         def process_message(self, message: object) -> FlextResult[object]:
@@ -1420,6 +1422,108 @@ class FlextHandlers:
             }
 
     # =============================================================================
+    # EVENT BUS - Event Processing Infrastructure
+    # =============================================================================
+
+    class EventBus:
+        """Enterprise Event Bus for event processing and publish/subscribe patterns."""
+
+        def __init__(self) -> None:
+            """Initialize event bus with subscribers and metrics."""
+            self._subscribers: dict[type[object], list[object]] = {}
+            self._event_history: list[object] = []
+            self._metrics: dict[str, object] = {
+                "events_published": 0,
+                "events_processed": 0,
+                "successful_events": 0,
+                "failed_events": 0,
+            }
+
+        def subscribe(
+            self,
+            event_type: type[object],
+            handler: object,
+        ) -> FlextResult[None]:
+            """Subscribe handler to event type.
+
+            Args:
+                event_type: Type of events to subscribe to
+                handler: Handler that will process the events
+
+            Returns:
+                FlextResult indicating subscription success or failure
+
+            """
+            if event_type not in self._subscribers:
+                self._subscribers[event_type] = []
+
+            if handler not in self._subscribers[event_type]:
+                self._subscribers[event_type].append(handler)
+
+            return FlextResult.ok(None)
+
+        def publish(self, event: object) -> FlextResult[None]:
+            """Publish event to all subscribed handlers.
+
+            Args:
+                event: Event to publish
+
+            Returns:
+                FlextResult indicating publish success or failure
+
+            """
+            self._update_publish_metrics()
+            self._event_history.append(event)
+            self._process_event_handlers(event)
+            return FlextResult.ok(None)
+
+        def _update_publish_metrics(self) -> None:
+            """Update metrics for event publishing."""
+            if isinstance(self._metrics["events_published"], int):
+                self._metrics["events_published"] += 1
+
+        def _process_event_handlers(self, event: object) -> None:
+            """Process event through all registered handlers."""
+            event_type = type(event)
+            if event_type not in self._subscribers:
+                return
+
+            for handler in self._subscribers[event_type]:
+                self._process_single_handler(handler, event)
+
+        def _process_single_handler(self, handler: object, event: object) -> None:
+            """Process event through a single handler."""
+            try:
+                if hasattr(handler, "handle"):
+                    result = handler.handle(event)
+                    self._update_handler_metrics(result)
+                self._update_processed_metrics()
+            except Exception:
+                self._update_failed_metrics()
+
+        def _update_handler_metrics(self, result: object) -> None:
+            """Update metrics based on handler result."""
+            if hasattr(result, "success") and result.success:
+                if isinstance(self._metrics["successful_events"], int):
+                    self._metrics["successful_events"] += 1
+            elif isinstance(self._metrics["failed_events"], int):
+                self._metrics["failed_events"] += 1
+
+        def _update_processed_metrics(self) -> None:
+            """Update processed event metrics."""
+            if isinstance(self._metrics["events_processed"], int):
+                self._metrics["events_processed"] += 1
+
+        def _update_failed_metrics(self) -> None:
+            """Update failed event metrics."""
+            if isinstance(self._metrics["failed_events"], int):
+                self._metrics["failed_events"] += 1
+
+        def get_metrics(self) -> TAnyDict:
+            """Get event bus metrics."""
+            return dict(self._metrics)
+
+    # =============================================================================
     # PIPELINE BEHAVIORS - Cross-cutting Concerns Middleware
     # =============================================================================
 
@@ -1731,6 +1835,11 @@ class FlextHandlers:
     def flext_create_query_bus() -> FlextHandlers.QueryBus:
         """Create new query bus for CQRS."""
         return FlextHandlers.QueryBus()
+
+    @staticmethod
+    def flext_create_event_bus() -> FlextHandlers.EventBus:
+        """Create new event bus for event processing."""
+        return FlextHandlers.EventBus()
 
 
 # Export API

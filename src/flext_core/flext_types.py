@@ -80,6 +80,8 @@ from abc import abstractmethod
 from collections.abc import Callable
 from typing import Protocol, TypeVar
 
+from flext_core.loggings import get_logger
+
 # =============================================================================
 # CORE TYPE VARIABLES - Generic programming foundation
 # =============================================================================
@@ -304,7 +306,10 @@ class FlextTypes:
             """
             try:
                 return isinstance(obj, expected_type)
-            except (TypeError, AttributeError):
+            except (TypeError, AttributeError) as e:
+                # Log type check error but maintain API contract
+                logger = get_logger(__name__)
+                logger.warning(f"Type check failed for {obj} against {expected_type}: {e}")
                 return False
 
         @staticmethod

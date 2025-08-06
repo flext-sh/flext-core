@@ -581,7 +581,7 @@ class FlextEntityFactory:
 
         # Handle factory creation errors
         if REDACTED_LDAP_BIND_PASSWORD_result.is_failure:
-            logger.error(f"Failed to create REDACTED_LDAP_BIND_PASSWORD: {REDACTED_LDAP_BIND_PASSWORD_result.error}")
+            logger.error("Failed to create REDACTED_LDAP_BIND_PASSWORD: %s", REDACTED_LDAP_BIND_PASSWORD_result.error)
 
     Factory Pattern Benefits:
         - Consistent entity creation with validation

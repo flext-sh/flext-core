@@ -70,10 +70,7 @@ class TestFlextPayload:
 
     def test_payload_from_dict(self) -> None:
         """Test creating payload from dictionary."""
-        data_dict = {
-            "data": {"key": "value"},
-            "metadata": {"source": "test"}
-        }
+        data_dict = {"data": {"key": "value"}, "metadata": {"source": "test"}}
         result = FlextPayload.from_dict(data_dict)
         assert result.success is True
         payload = result.data
@@ -221,7 +218,7 @@ class TestFlextEvent:
         result = FlextEvent.create_event(
             "OrderPlaced",
             {"order_id": "456", "amount": 100.0},
-            aggregate_id="order_456"
+            aggregate_id="order_456",
         )
         assert result.success is True
         event = result.data
@@ -230,9 +227,7 @@ class TestFlextEvent:
     def test_event_create_with_version(self) -> None:
         """Test event creation with version."""
         result = FlextEvent.create_event(
-            "ProductUpdated",
-            {"product_id": "789"},
-            version=2
+            "ProductUpdated", {"product_id": "789"}, version=2
         )
         assert result.success is True
         event = result.data
@@ -262,7 +257,7 @@ class TestFlextEvent:
             "ItemAdded",
             {"item_id": "123", "quantity": 5},
             aggregate_id="cart_456",
-            version=3
+            version=3,
         )
         event = result.data
 
@@ -277,7 +272,7 @@ class TestFlextEvent:
             "PaymentProcessed",
             {"amount": 50.0, "currency": "USD"},
             aggregate_id="payment_789",
-            version=1
+            version=1,
         )
         event = result.data
 
@@ -293,7 +288,19 @@ class TestEdgeCases:
 
     def test_payload_create_validation_error(self) -> None:
         """Test payload creation with validation error."""
-        with patch.object(FlextPayload, "__init__", side_effect=ValidationError(errors=[], model=FlextPayload)):
+        # Create a proper ValidationError for Pydantic v2
+        validation_error = ValidationError.from_exception_data(
+            "FlextPayload",
+            [
+                {
+                    "type": "missing",
+                    "loc": ("required_field",),
+                    "msg": "Field required",
+                    "input": {},
+                }
+            ],
+        )
+        with patch.object(FlextPayload, "__init__", side_effect=validation_error):
             result = FlextPayload.create({"data": "test"})
             assert result.success is False
 
@@ -314,7 +321,7 @@ class TestEdgeCases:
         cross_dict = {
             "message_text": "Test message",
             "message_level": "warning",
-            "message_source": "test-service"
+            "message_source": "test-service",
         }
         result = FlextMessage.from_cross_service_dict(cross_dict)
         assert result.success is True
@@ -331,7 +338,7 @@ class TestEdgeCases:
             "event_type": "TestEvent",
             "event_data": {"key": "value"},
             "aggregate_id": "agg_123",
-            "event_version": 1
+            "event_version": 1,
         }
         result = FlextEvent.from_cross_service_dict(cross_dict)
         assert result.success is True
@@ -344,7 +351,9 @@ class TestEdgeCases:
 
     def test_payload_json_serialization_round_trip(self) -> None:
         """Test JSON serialization round trip."""
-        original_payload = FlextPayload(data={"test": "value"}, metadata={"key": "metadata"})
+        original_payload = FlextPayload(
+            data={"test": "value"}, metadata={"key": "metadata"}
+        )
 
         # Serialize to JSON
         json_result = original_payload.to_json_string()
@@ -388,9 +397,7 @@ class TestEdgeCases:
 
         # Test cross-service event creation
         event_result = create_cross_service_event(
-            "TestEvent",
-            {"key": "value"},
-            correlation_id="456"
+            "TestEvent", {"key": "value"}, correlation_id="456"
         )
         assert event_result.success is True
 

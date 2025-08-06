@@ -459,6 +459,9 @@ class TestFlextHandlersEventHandler:
             def process_event_impl(self, event: object) -> None:
                 pass
 
+            def can_handle(self, message: object) -> bool:
+                return True  # Accept any event for testing
+
         handler = _TestEventHandler()
         event = _TestEvent("user_updated")
 
@@ -510,6 +513,9 @@ class TestFlextHandlersEventHandler:
 
             def process_event_impl(self, event: object) -> None:
                 pass
+
+            def can_handle(self, message: object) -> bool:
+                return True  # Accept any event for testing
 
         handler = FailingEventHandler()
         event = _TestEvent("test")
