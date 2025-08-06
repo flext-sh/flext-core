@@ -71,6 +71,10 @@ class SampleBadUser(FlextEntity):
         return FlextResult.fail("Always fails")
 
 
+# Test models work without explicit model_rebuild
+# as Pydantic handles forward references automatically
+
+
 @pytest.mark.unit
 class TestFlextEntity:
     """Test FlextEntity functionality."""

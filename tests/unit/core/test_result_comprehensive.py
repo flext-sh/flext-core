@@ -239,7 +239,7 @@ class TestFlextResultFlatMapExceptions:
 
         def failing_func(x: str) -> FlextResult[int]:
             # This will raise AttributeError when accessing non-existent method
-            x.non_existent_method()  # type: ignore[attr-defined]
+            x.non_existent_method()
             return FlextResult.ok(42)  # Never reached
 
         mapped = result.flat_map(failing_func)

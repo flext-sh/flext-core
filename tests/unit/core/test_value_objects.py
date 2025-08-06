@@ -145,7 +145,7 @@ class TestValueObjectCoverageImprovements:
         money = Money(amount=100.0, currency="USD")
 
         # Different types should not be equal
-        assert email != money  # type: ignore[comparison-overlap]
+        assert email != money
 
     def test_value_object_hash_functionality(self) -> None:
         """Test hash functionality for value objects."""
@@ -183,7 +183,7 @@ class TestValueObjectCoverageImprovements:
             EmailAddress
         )
 
-        result = email_factory(email="test@example.com")  # type: ignore[operator]
+        result = email_factory(email="test@example.com")
 
         assert result.success
         assert isinstance(result.data, EmailAddress)
@@ -197,7 +197,7 @@ class TestValueObjectCoverageImprovements:
         )
 
         # Invalid email format
-        result = email_factory(email="invalid")  # type: ignore[operator]
+        result = email_factory(email="invalid")
 
         assert result.is_failure
         assert "validation" in result.error.lower() or "string" in result.error.lower()
@@ -267,7 +267,7 @@ class TestFlextValueObject:
         # Test Pydantic immutability
         # ValidationError or AttributeError for frozen model
         with pytest.raises((AttributeError, ValueError)):
-            email.email = "new@example.com"  # type: ignore[misc]
+            email.email = "new@example.com"
 
     def test_email_value_object_invalid_email(self) -> None:
         """Test email value object with invalid email."""
@@ -505,7 +505,7 @@ class TestFlextValueObjectFactory:
         email_factory = FlextValueObjectFactory.create_value_object_factory(
             EmailAddress,
         )
-        email_result = email_factory(email="test@example.com")  # type: ignore[operator]
+        email_result = email_factory(email="test@example.com")
 
         if email_result.success:
             email = email_result.data
@@ -522,14 +522,14 @@ class TestFlextValueObjectFactory:
         email_factory = FlextValueObjectFactory.create_value_object_factory(
             EmailAddress,
         )
-        email_result = email_factory(email="invalid-email")  # type: ignore[operator]
+        email_result = email_factory(email="invalid-email")
         assert email_result.is_failure
 
     def test_factory_money_creation(self) -> None:
         """Test factory creation of money value objects."""
         # Create factory for Money
         money_factory = FlextValueObjectFactory.create_value_object_factory(Money)
-        money_result = money_factory(amount=100.0, currency="USD")  # type: ignore[operator]
+        money_result = money_factory(amount=100.0, currency="USD")
 
         if money_result.success:
             money = money_result.data
@@ -543,7 +543,7 @@ class TestFlextValueObjectFactory:
         """Test factory with invalid money."""
         # Create factory for Money
         money_factory = FlextValueObjectFactory.create_value_object_factory(Money)
-        money_result = money_factory(amount=-100.0, currency="USD")  # type: ignore[operator]
+        money_result = money_factory(amount=-100.0, currency="USD")
         assert money_result.is_failure
 
 
@@ -613,7 +613,7 @@ class TestValueObjectEdgeCases:
         # Test operations that might fail
         # Add with invalid object
         with pytest.raises((AttributeError, TypeError)):
-            money.add(None)  # type: ignore[arg-type]
+            money.add(None)
 
     def test_value_object_performance(self) -> None:
         """Test performance characteristics of value objects."""

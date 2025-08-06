@@ -24,6 +24,17 @@ if TYPE_CHECKING:
     FlextServiceName = str
 
 
+# Rebuild Pydantic models to resolve forward references
+# Make types available in the global namespace for model_rebuild()
+from flext_core.flext_types import TData
+
+globals()["TAnyDict"] = TAnyDict
+globals()["TData"] = TData
+
+# Now safely call model_rebuild() with types in scope
+FlextPayload.model_rebuild()
+
+
 class TestTypeProtocols:
     """Test type protocols from types module."""
 

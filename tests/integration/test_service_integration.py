@@ -164,12 +164,12 @@ class TestServiceIntegrationPatterns:
             notification_service = notification_service_result.data
 
             # Get user data first
-            user_result = user_service.get_user(user_id)  # type: ignore[attr-defined]
+            user_result = user_service.get_user(user_id)
             if not user_result.success:
                 return FlextResult.fail("User not found")
 
             # Send notification
-            return notification_service.send(user_result.data["email"])  # type: ignore[attr-defined,no-any-return]
+            return notification_service.send(user_result.data["email"])
 
         # Act - Execute workflow
         user_id = str(test_user_data["id"])
@@ -235,9 +235,9 @@ class TestServiceIntegrationPatterns:
         config = config_fetch_result.data
 
         # Act - Test service lifecycle
-        init_result = service.initialize(config)  # type: ignore[attr-defined]
-        health_status = service.is_healthy()  # type: ignore[attr-defined]
-        shutdown_result = service.shutdown()  # type: ignore[attr-defined]
+        init_result = service.initialize(config)
+        health_status = service.is_healthy()
+        shutdown_result = service.shutdown()
 
         # Assert - Lifecycle operations
         assert init_result.success is True
@@ -245,9 +245,9 @@ class TestServiceIntegrationPatterns:
         assert shutdown_result.success is True
 
         # Verify lifecycle method calls
-        service.initialize.assert_called_once_with(config)  # type: ignore[attr-defined]
-        service.is_healthy.assert_called_once()  # type: ignore[attr-defined]
-        service.shutdown.assert_called_once()  # type: ignore[attr-defined]
+        service.initialize.assert_called_once_with(config)
+        service.is_healthy.assert_called_once()
+        service.shutdown.assert_called_once()
 
         # Act - Clear container
         clean_container.clear()

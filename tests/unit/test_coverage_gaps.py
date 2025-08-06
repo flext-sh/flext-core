@@ -14,6 +14,9 @@ from flext_core.result import FlextResult as FlextResultDirect
 # Constants
 EXPECTED_DATA_COUNT = 3
 
+# Test models work without explicit model_rebuild
+# as Pydantic handles forward references automatically
+
 if TYPE_CHECKING:
     from flext_core.flext_types import FlextEntityId
 

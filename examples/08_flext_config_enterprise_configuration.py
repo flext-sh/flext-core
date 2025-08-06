@@ -378,7 +378,7 @@ def _load_configuration_from_file(
     print("\n2. Loading configuration from file:")
 
     try:
-        with open(temp_file_path, encoding="utf-8") as f:  # noqa: PTH123
+        with open(temp_file_path, encoding="utf-8") as f:
             loaded_config: TAnyDict = json.load(f)
 
         print("✅ Configuration loaded from file:")
@@ -449,7 +449,7 @@ def _extract_app_name_from_config(loaded_config: TAnyDict) -> str | None:
 def _cleanup_configuration_file(temp_file_path: str) -> FlextResult[None]:
     """Clean up temporary configuration file."""
     try:
-        os.unlink(temp_file_path)  # noqa: PTH108
+        os.unlink(temp_file_path)
         log_message = "🗑️ Temporary file cleaned up"
         print(log_message)
         return FlextResult.ok(None)
@@ -459,7 +459,7 @@ def _cleanup_configuration_file(temp_file_path: str) -> FlextResult[None]:
         return FlextResult.fail(error_message)
 
 
-def demonstrate_configuration_hierarchies() -> None:  # noqa: PLR0915
+def demonstrate_configuration_hierarchies() -> None:
     """Demonstrate configuration hierarchies using flext_core.types."""
     log_message: TLogMessage = "\n" + "=" * 80
     print(log_message)

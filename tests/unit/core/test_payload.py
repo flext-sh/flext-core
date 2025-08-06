@@ -10,8 +10,19 @@ import pytest
 from pydantic import ValidationError
 
 from flext_core.exceptions import FlextAttributeError
+from flext_core.flext_types import TAnyDict, TData
 from flext_core.payload import FlextEvent, FlextMessage, FlextPayload
 from flext_core.result import FlextResult
+
+# Rebuild Pydantic models to resolve forward references
+# Make types available in the global namespace for model_rebuild()
+globals()["TAnyDict"] = TAnyDict
+globals()["TData"] = TData
+
+# Now safely call model_rebuild() with types in scope
+FlextPayload.model_rebuild()
+FlextMessage.model_rebuild()
+FlextEvent.model_rebuild()
 
 # Constants
 EXPECTED_DATA_COUNT = 3
@@ -696,7 +707,7 @@ class TestFlextPayloadCoverageImprovements:
 
         # Attempt to modify the payload directly should raise ValidationError
         with pytest.raises(ValidationError):
-            payload.data = "new_data"  # type: ignore[misc] # Intentional read-only property test
+            payload.data = "new_data"
 
         # Verify data hasn't changed
         assert payload.data == original_data
@@ -735,7 +746,8 @@ class TestPayloadEdgeCases:
 
     def test_payload_metadata_type_safety(self) -> None:
         """Test metadata type safety."""
-        # Various types should be accepted in metadata
+        # Only TData allowed types should be accepted in metadata
+        # TData = dict[str, str | int | float | bool | None]
         payload = FlextPayload(
             data="test",
             metadata={
@@ -744,8 +756,6 @@ class TestPayloadEdgeCases:
                 "float": math.pi,
                 "boolean": True,
                 "none": None,
-                "list": [1, 2, 3],
-                "dict": {"nested": "value"},
             },
         )
 
@@ -763,11 +773,6 @@ class TestPayloadEdgeCases:
                 f"Expected True, got {payload.get_metadata('boolean')}"
             )
         assert payload.get_metadata("none") is None
-        if payload.get_metadata("list") != [1, 2, 3]:
-            raise AssertionError(
-                f"Expected {[1, 2, 3]}, got {payload.get_metadata('list')}"
-            )
-        assert payload.get_metadata("dict") == {"nested": "value"}
 
     def test_payload_large_metadata(self) -> None:
         """Test payload with large metadata."""

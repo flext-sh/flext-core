@@ -125,7 +125,7 @@ if TYPE_CHECKING:
     from flext_core.flext_types import TAnyDict
 else:
     # Runtime import for models that need TAnyDict at runtime
-    from flext_core.flext_types import TAnyDict  # noqa: TC001
+    pass
 
 # =============================================================================
 # TYPED DICT DEFINITIONS - Type-safe dictionaries for configuration
@@ -764,7 +764,7 @@ def create_database_config(
         {key: value for key, value in kwargs.items() if key in valid_fields},
     )
 
-    return FlextDatabaseConfig(**config_data)  # type: ignore[arg-type]
+    return FlextDatabaseConfig.model_validate(config_data)
 
 
 def create_redis_config(
@@ -789,7 +789,7 @@ def create_redis_config(
         {key: value for key, value in kwargs.items() if key in valid_fields},
     )
 
-    return FlextRedisConfig(**config_data)  # type: ignore[arg-type]
+    return FlextRedisConfig.model_validate(config_data)
 
 
 def create_oracle_config(
@@ -835,7 +835,7 @@ def create_oracle_config(
         {key: value for key, value in kwargs.items() if key in valid_fields},
     )
 
-    return FlextOracleConfig(**config_data)  # type: ignore[arg-type]
+    return FlextOracleConfig.model_validate(config_data)
 
 
 def create_ldap_config(
@@ -862,7 +862,7 @@ def create_ldap_config(
         {key: value for key, value in kwargs.items() if key in valid_fields},
     )
 
-    return FlextLDAPConfig(**config_data)  # type: ignore[arg-type]
+    return FlextLDAPConfig.model_validate(config_data)
 
 
 # =============================================================================

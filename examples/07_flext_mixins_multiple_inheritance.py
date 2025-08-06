@@ -55,7 +55,9 @@ class UserRepositoryProtocol(Protocol):
         """Find user by ID."""
         ...
 
-    def save_user(self, user_id: str, user_data: dict[str, object]) -> FlextResult[None]:
+    def save_user(
+        self, user_id: str, user_data: dict[str, object]
+    ) -> FlextResult[None]:
         """Save user data."""
         ...
 
@@ -63,7 +65,9 @@ class UserRepositoryProtocol(Protocol):
 class OrderServiceProtocol(Protocol):
     """Protocol for order service interface."""
 
-    def create_order(self, user_id: str, items: list[dict[str, object]]) -> FlextResult[dict[str, object]]:
+    def create_order(
+        self, user_id: str, items: list[dict[str, object]]
+    ) -> FlextResult[dict[str, object]]:
         """Create order for user."""
         ...
 
@@ -1270,7 +1274,9 @@ def _create_enterprise_user_repository() -> UserRepositoryProtocol:
     return UserRepository()
 
 
-def _create_enterprise_order_service(user_repo: UserRepositoryProtocol) -> OrderServiceProtocol:
+def _create_enterprise_order_service(
+    user_repo: UserRepositoryProtocol,
+) -> OrderServiceProtocol:
     """Create OrderService for enterprise patterns demonstration."""
 
     # Domain service pattern with railway-oriented programming
@@ -1432,7 +1438,7 @@ def _demonstrate_service_pattern(order_service: OrderServiceProtocol) -> None:
 
 def main() -> None:
     """Run comprehensive FlextMixins demonstration."""
-    from shared_example_helpers import run_example_demonstration  # noqa: PLC0415
+    from shared_example_helpers import run_example_demonstration
 
     examples = [
         ("Individual Mixin Patterns", demonstrate_individual_mixins),

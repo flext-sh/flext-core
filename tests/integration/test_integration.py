@@ -127,7 +127,7 @@ class TestLibraryIntegration:
             mock_external_service.process.return_value = FlextResult.ok(
                 expected_result_data
             )
-            return mock_external_service.process()  # type: ignore[no-any-return]
+            return mock_external_service.process()
 
         # Act - Register factory in container
         register_result = clean_container.register_factory(

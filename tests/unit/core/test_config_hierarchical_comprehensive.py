@@ -7,7 +7,6 @@ classes, and layer organization patterns.
 import pytest
 
 # Force import of the module to ensure coverage tracking
-import flext_core.config_hierarchical  # noqa: F401
 from flext_core.config_hierarchical import (
     FlextHierarchicalConfigManager,
     create_application_project_config,

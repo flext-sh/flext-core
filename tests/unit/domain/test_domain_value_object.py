@@ -61,9 +61,9 @@ class TestFlextValueObjectEquality:
         vo = ConcreteValueObject(amount=Decimal("10.50"), currency="USD")
 
         # Test that value object is not equal to primitive types
-        assert vo != "not a value object"  # type: ignore[comparison-overlap]
-        assert vo != 42  # type: ignore[comparison-overlap]
-        assert vo != {"amount": Decimal("10.50"), "currency": "USD"}  # type: ignore[comparison-overlap]
+        assert vo != "not a value object"
+        assert vo != 42
+        assert vo != {"amount": Decimal("10.50"), "currency": "USD"}
         assert vo is not None
 
     def test_equality_with_different_value_object_types(self) -> None:
@@ -278,12 +278,12 @@ class TestFlextValueObjectPydanticIntegration:
     def test_pydantic_validation_required_fields(self) -> None:
         """Test Pydantic validation for required fields."""
         with pytest.raises(ValidationError):
-            ConcreteValueObject()  # type: ignore[call-arg]
+            ConcreteValueObject()
 
     def test_pydantic_validation_field_types(self) -> None:
         """Test Pydantic validation for field types."""
         with pytest.raises(ValidationError):
-            ConcreteValueObject(amount="not_a_decimal", currency="USD")  # type: ignore[arg-type]
+            ConcreteValueObject(amount="not_a_decimal", currency="USD")
 
     def test_pydantic_model_dump(self) -> None:
         """Test Pydantic model_dump functionality."""
@@ -309,10 +309,10 @@ class TestFlextValueObjectPydanticIntegration:
         vo = ConcreteValueObject(amount=Decimal("10.50"), currency="USD")
 
         with pytest.raises((ValidationError, AttributeError, TypeError)):
-            vo.amount = Decimal("20.00")  # type: ignore[misc]
+            vo.amount = Decimal("20.00")
 
         with pytest.raises((ValidationError, AttributeError, TypeError)):
-            vo.currency = "EUR"  # type: ignore[misc]
+            vo.currency = "EUR"
 
     def test_pydantic_default_values(self) -> None:
         """Test Pydantic default values work correctly."""
@@ -338,7 +338,7 @@ class TestFlextValueObjectPydanticIntegration:
     def test_pydantic_extra_fields_forbidden(self) -> None:
         """Test that extra fields are forbidden."""
         with pytest.raises(ValidationError):
-            ConcreteValueObject(  # type: ignore[call-arg]
+            ConcreteValueObject(
                 amount=Decimal("10.50"),
                 currency="USD",
                 extra_field="not allowed",

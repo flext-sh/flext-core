@@ -534,7 +534,7 @@ class TestBaseRailwayUtils:
         # Define function that raises TypeError
         def failing_function(x: str) -> FlextResult[object]:
             # This will raise TypeError when called with string
-            return FlextResult.ok(int(x + None))  # type: ignore[operator] # Intentional error for testing
+            return FlextResult.ok(int(x + None))
 
         # Execute bind operation
         result = _BaseRailway.bind(initial_result, failing_function)

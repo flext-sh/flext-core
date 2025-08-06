@@ -22,12 +22,11 @@ from __future__ import annotations
 import importlib
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-if TYPE_CHECKING:
-    from contextlib import AbstractContextManager
-
-# Import foundation layers (each owns their domain)
 from .constants import FlextSemanticConstants
 from .result import FlextResult
+
+if TYPE_CHECKING:
+    from contextlib import AbstractContextManager
 
 # =============================================================================
 # LAYER 1: MODEL SEMANTICS - Domain Foundation

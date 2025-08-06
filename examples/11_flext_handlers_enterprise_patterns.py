@@ -324,7 +324,7 @@ class UpdateUserHandler(FlextHandlers.CommandHandler):
 # =============================================================================
 
 
-class GetUserHandler(FlextHandlers.QueryHandler):  # type: ignore[type-arg]
+class GetUserHandler(FlextHandlers.QueryHandler):
     """Handler for retrieving individual users."""
 
     def __init__(self, user_storage: dict[str, User]) -> None:
@@ -391,7 +391,7 @@ class GetUserHandler(FlextHandlers.QueryHandler):  # type: ignore[type-arg]
         return FlextResult.ok(user)
 
 
-class ListUsersHandler(FlextHandlers.QueryHandler):  # type: ignore[type-arg]
+class ListUsersHandler(FlextHandlers.QueryHandler):
     """Handler for listing users with filtering."""
 
     def __init__(self, user_storage: dict[str, User]) -> None:
@@ -444,7 +444,7 @@ class ListUsersHandler(FlextHandlers.QueryHandler):  # type: ignore[type-arg]
 # =============================================================================
 
 
-class UserCreatedEventHandler(FlextHandlers.EventHandler):  # type: ignore[type-arg]
+class UserCreatedEventHandler(FlextHandlers.EventHandler):
     """Handler for user created events."""
 
     def __init__(self) -> None:
@@ -492,7 +492,7 @@ class UserCreatedEventHandler(FlextHandlers.EventHandler):  # type: ignore[type-
         return FlextResult.ok(None)
 
 
-class UserUpdatedEventHandler(FlextHandlers.EventHandler):  # type: ignore[type-arg]
+class UserUpdatedEventHandler(FlextHandlers.EventHandler):
     """Handler for user updated events."""
 
     def __init__(self) -> None:
@@ -536,7 +536,7 @@ class UserUpdatedEventHandler(FlextHandlers.EventHandler):  # type: ignore[type-
         return FlextResult.ok(None)
 
 
-class OrderCreatedEventHandler(FlextHandlers.EventHandler):  # type: ignore[type-arg]
+class OrderCreatedEventHandler(FlextHandlers.EventHandler):
     """Handler for order created events."""
 
     def __init__(self) -> None:
@@ -591,7 +591,7 @@ class OrderCreatedEventHandler(FlextHandlers.EventHandler):  # type: ignore[type
 # =============================================================================
 
 
-def demonstrate_command_handlers() -> None:  # noqa: PLR0912, PLR0915
+def demonstrate_command_handlers() -> None:
     """Demonstrate CQRS command handlers with validation."""
     print("\n" + "=" * 80)
     print("⚡ COMMAND HANDLERS - CQRS PATTERN")
@@ -686,7 +686,7 @@ def demonstrate_command_handlers() -> None:  # noqa: PLR0912, PLR0915
     print(f"   Handler type: {update_metrics.get('handler_type', 'Unknown')}")
 
 
-def demonstrate_query_handlers() -> None:  # noqa: PLR0912, PLR0915
+def demonstrate_query_handlers() -> None:
     """Demonstrate CQRS query handlers with authorization."""
     print("\n" + "=" * 80)
     print("🔍 QUERY HANDLERS - READ OPERATIONS")
@@ -899,7 +899,7 @@ def demonstrate_event_handlers() -> None:
     print(f"   Handler type: {order_created_metrics.get('handler_type', 'Unknown')}")
 
 
-def demonstrate_handler_registry() -> None:  # noqa: PLR0912, PLR0915
+def demonstrate_handler_registry() -> None:
     """Demonstrate handler registry for service location."""
     print("\n" + "=" * 80)
     print("📋 HANDLER REGISTRY - SERVICE LOCATION")
@@ -1122,7 +1122,7 @@ def demonstrate_handler_chain() -> None:
     _process_event_through_all_handlers(chain)
 
 
-def demonstrate_function_handlers() -> None:  # noqa: PLR0912, PLR0915
+def demonstrate_function_handlers() -> None:
     """Demonstrate function-based handler creation."""
     print("\n" + "=" * 80)
     print("🔧 FUNCTION HANDLERS - FUNCTIONAL STYLE")

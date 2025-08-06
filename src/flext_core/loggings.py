@@ -88,13 +88,7 @@ Platform = FlextConstants.Platform
 if TYPE_CHECKING:
     from structlog.typing import EventDict
 
-    from flext_core.flext_types import TAnyDict, TAnyList, TContextDict, TLogMessage
-else:
-    # Runtime aliases for when TYPE_CHECKING is False
-    TAnyDict = dict[str, object]
-    TAnyList = list[object]
-    TContextDict = dict[str, object]
-    TLogMessage = str
+    from flext_core.flext_types import TAnyDict, TContextDict, TLogMessage
 
 # =============================================================================
 # DOMAIN-SPECIFIC TYPES - Logging Pattern Specializations

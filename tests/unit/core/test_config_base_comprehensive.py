@@ -714,7 +714,7 @@ class TestBaseConfigDefaults:
         # Test with non-dict defaults to trigger early validation
         bad_defaults = "not a dict"
 
-        result = _BaseConfigDefaults.apply_defaults({}, bad_defaults)  # type: ignore[arg-type] # Intentional type error for testing
+        result = _BaseConfigDefaults.apply_defaults({}, bad_defaults)
 
         assert result.is_failure
         if "Defaults must be a dictionary" not in (result.error or ""):
@@ -764,7 +764,7 @@ class TestBaseConfigDefaults:
         config1: dict[str, object] = {"key1": "value1"}
         config2 = "not a dict"
 
-        result = _BaseConfigDefaults.merge_configs(config1, config2)  # type: ignore[arg-type] # Intentional type error for testing
+        result = _BaseConfigDefaults.merge_configs(config1, config2)
 
         assert result.is_failure
         if "Configuration 1 must be a dictionary" not in (result.error or ""):
@@ -839,7 +839,7 @@ class TestBaseConfigDefaults:
 
     def test_filter_config_keys_config_not_dict(self) -> None:
         """Test filter_config_keys with non-dictionary config."""
-        result = _BaseConfigDefaults.filter_config_keys("not dict", ["key1"])  # type: ignore[arg-type] # Intentional type error for testing
+        result = _BaseConfigDefaults.filter_config_keys("not dict", ["key1"])
 
         assert result.is_failure
         if "Configuration must be a dictionary" not in (result.error or ""):
@@ -850,7 +850,7 @@ class TestBaseConfigDefaults:
         """Test filter_config_keys with non-list allowed keys."""
         config: dict[str, object] = {"key1": "value1"}
 
-        result = _BaseConfigDefaults.filter_config_keys(config, "not list")  # type: ignore[arg-type] # Intentional type error for testing
+        result = _BaseConfigDefaults.filter_config_keys(config, "not list")
 
         assert result.is_failure
         if "Allowed keys must be a list" not in (result.error or ""):
@@ -863,7 +863,7 @@ class TestBaseConfigDefaults:
         # Test with non-dict config to trigger early validation
         bad_config = "not a dict"
 
-        result = _BaseConfigDefaults.filter_config_keys(bad_config, ["key1"])  # type: ignore[arg-type] # Intentional type error for testing
+        result = _BaseConfigDefaults.filter_config_keys(bad_config, ["key1"])
 
         assert result.is_failure
         if "Configuration must be a dictionary" not in (result.error or ""):

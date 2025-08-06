@@ -416,8 +416,10 @@ class TestFlextHandlersCommandHandler:
         handler = FlextHandlers.CommandHandler()
         logger = handler.logger
 
-        # Logger might be None in the current implementation
-        assert logger is None
+        # Logger should be accessible and properly configured
+        assert logger is not None
+        assert hasattr(logger, "debug")
+        assert hasattr(logger, "info")
 
 
 class TestFlextHandlersEventHandler:
@@ -1299,7 +1301,7 @@ class TestBaseHandlerClasses:
         """Test that base handler is abstract and cannot be instantiated."""
         # _BaseHandler is abstract and should not be instantiated directly
         try:
-            _BaseHandler()  # type: ignore[abstract] # Intentional abstract class instantiation test
+            _BaseHandler()
             # If we get here, the handler was instantiated (shouldn't happen)
             msg = "Abstract handler should not be instantiable"
             raise AssertionError(msg)

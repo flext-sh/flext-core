@@ -483,8 +483,9 @@ class FlextBaseSettings(PydanticBaseSettings):
             if kwargs:
                 final_config.update(kwargs)
 
-            # Pydantic BaseSettings accepts dynamic **kwargs
-            # Use type ignore for dynamic construction with unknown fields
+            # Pydantic BaseSettings accepts dynamic **kwargs for model construction
+            # This is safe as Pydantic handles validation internally
+            # Type: ignore is necessary here for dynamic kwargs unpacking
             instance = cls(**final_config) if final_config else cls()  # type: ignore[arg-type]
             return FlextResult.ok(instance)
 

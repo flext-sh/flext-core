@@ -74,7 +74,9 @@ class FlextUserProfile(FlextValue):
 
         min_name_length = 2
         if len(self.full_name.strip()) < min_name_length:
-            return FlextResult.fail(f"Full name must be at least {min_name_length} characters")
+            return FlextResult.fail(
+                f"Full name must be at least {min_name_length} characters"
+            )
 
         return FlextResult.ok(None)
 
@@ -92,7 +94,9 @@ class FlextDataPipeline(FlextEntity):
         """Unified entity validation with domain logic."""
         min_pipeline_name_length = 3
         if len(self.name.strip()) < min_pipeline_name_length:
-            return FlextResult.fail(f"Pipeline name must be at least {min_pipeline_name_length} characters")
+            return FlextResult.fail(
+                f"Pipeline name must be at least {min_pipeline_name_length} characters"
+            )
 
         if self.processed_records < 0:
             return FlextResult.fail("Processed records cannot be negative")
@@ -371,7 +375,9 @@ def demonstrate_semantic_types() -> None:
         )
 
 
-def demonstrate_domain_services(service: FlextPipelineService, pipeline: FlextDataPipeline) -> None:
+def demonstrate_domain_services(
+    service: FlextPipelineService, pipeline: FlextDataPipeline
+) -> None:
     """Demonstrate Layer 2: Domain Services."""
     print("\n⚙️ Layer 2: Domain Services (Business Logic)")
 
@@ -402,12 +408,14 @@ def demonstrate_utilities(service: FlextPipelineService) -> None:
         enhanced = data.copy()
         success_rate = enhanced.get("success_rate")
         if isinstance(success_rate, (int, float)):
-            enhanced["success_percentage"] = (
-                f"{float(success_rate) * 100:.1f}%"
-            )
+            enhanced["success_percentage"] = f"{float(success_rate) * 100:.1f}%"
         errors = enhanced.get("errors", 0)
         max_healthy_errors = 10
-        enhanced["status"] = "healthy" if isinstance(errors, (int, float)) and errors < max_healthy_errors else "warning"
+        enhanced["status"] = (
+            "healthy"
+            if isinstance(errors, (int, float)) and errors < max_healthy_errors
+            else "warning"
+        )
         return enhanced
 
     transform_result = FlextUnifiedUtilities.safe_transform_data(

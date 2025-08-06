@@ -145,7 +145,7 @@ class EmailAddress(FlextValueObject):
 
     email: str
 
-    def validate_business_rules(self) -> FlextResult[None]:  # noqa: PLR0911
+    def validate_business_rules(self) -> FlextResult[None]:
         """Validate email address business rules."""
         if not self.email or not isinstance(self.email, str):
             return FlextResult.fail("Email must be a non-empty string")
@@ -335,7 +335,7 @@ class User(FlextEntity):
     phone: PhoneNumber | None = None
     address: Address | None = None
 
-    def validate_domain_rules(self) -> FlextResult[None]:  # noqa: PLR0911
+    def validate_domain_rules(self) -> FlextResult[None]:
         """Validate user business rules."""
         if not self.name or len(self.name.strip()) < MIN_NAME_LENGTH:
             return FlextResult.fail(

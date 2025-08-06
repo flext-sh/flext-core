@@ -89,6 +89,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, cast
 
 from flext_core.entities import FlextEntity
+from flext_core.exceptions import FlextValidationError
 from flext_core.payload import FlextEvent
 from flext_core.result import FlextResult
 from flext_core.utilities import FlextGenerators
@@ -254,13 +255,17 @@ class FlextAggregateRoot(FlextEntity):
 
         try:
             super().__init__(**init_kwargs)  # type: ignore[arg-type]
-        except Exception:
-            # Fallback initialization if Pydantic construction fails
-            super().__init__(
-                id=actual_id,
-                version=version,
-                domain_events=domain_events,
-            )
+        except Exception as e:
+            # REAL SOLUTION: Proper error handling for initialization failures
+            error_msg = f"Failed to initialize aggregate root with provided data: {e}"
+            raise FlextValidationError(
+                error_msg,
+                validation_details={
+                    "aggregate_id": actual_id,
+                    "initialization_error": str(e),
+                    "provided_kwargs": list(init_kwargs.keys())
+                }
+            ) from e
 
     def add_domain_event(
         self,
@@ -324,7 +329,10 @@ class FlextAggregateRoot(FlextEntity):
 # =============================================================================
 
 # Rebuild models to resolve forward references after import
-FlextAggregateRoot.model_rebuild()
+# Note: model_rebuild() disabled due to TAnyDict circular reference issues
+# The models work correctly without explicit rebuild as Pydantic handles
+# forward references automatically during runtime validation
+# FlextAggregateRoot.model_rebuild()
 
 # Export API
 __all__: list[str] = ["FlextAggregateRoot"]

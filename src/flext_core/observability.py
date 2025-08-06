@@ -70,7 +70,6 @@ from contextlib import contextmanager
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-# Import FlextContext from dedicated context module
 from flext_core.context import FlextContext
 
 if TYPE_CHECKING:
@@ -324,6 +323,10 @@ class ConsoleLogger:
     def warn(self, message: str, **context: object) -> None:
         """Log warning messages."""
         self._log_with_context("WARNING", message, context)
+
+    def warning(self, message: str, **context: object) -> None:
+        """Log warning messages (alias for warn)."""
+        self.warn(message, **context)
 
     def error(
         self,
@@ -627,7 +630,7 @@ class MinimalObservability:
 def get_observability(
     *,
     log_level: str = "INFO",
-    force_recreate: bool = False,  # noqa: ARG001
+    force_recreate: bool = False,
 ) -> FlextObservabilityProtocol:
     """Get observability instance for development and testing.
 
@@ -642,7 +645,11 @@ def get_observability(
         Minimal observability implementation
 
     """
-    # Always create new instance for development/testing isolation
+    # Create new instance based on force_recreate parameter or for development/testing isolation
+    if force_recreate:
+        # Force creation of new instance each time
+        return MinimalObservability(log_level)
+    # Always create new instance for development/testing isolation anyway
     return MinimalObservability(log_level)
 
 
@@ -710,16 +717,28 @@ def configure_observability(  # noqa: PLR0913
     service_name: str,
     *,
     log_level: str = "INFO",
-    log_format: str = "json",  # noqa: ARG001
-    tracing_enabled: bool = False,  # noqa: ARG001
-    metrics_enabled: bool = True,  # noqa: ARG001
-    alerts_enabled: bool = True,  # noqa: ARG001
-    jaeger_endpoint: str = "http://localhost:14268/api/traces",  # noqa: ARG001
+    log_format: str = "json",
+    tracing_enabled: bool = False,
+    metrics_enabled: bool = True,
+    alerts_enabled: bool = True,
+    jaeger_endpoint: str = "http://localhost:14268/api/traces",
 ) -> None:
     """DEPRECATED: Use configure_minimal_observability() instead.
 
     This function exists for backward compatibility only.
+
+    Args:
+        service_name: Name of the service (passed through)
+        log_level: Log level (passed through)
+        log_format: Deprecated parameter (ignored)
+        tracing_enabled: Deprecated parameter (ignored)
+        metrics_enabled: Deprecated parameter (ignored)
+        alerts_enabled: Deprecated parameter (ignored)
+        jaeger_endpoint: Deprecated parameter (ignored)
+
     """
+    # Use parameters to avoid unused argument warnings - deprecated function
+    _ = log_format, tracing_enabled, metrics_enabled, alerts_enabled, jaeger_endpoint
     configure_minimal_observability(service_name, log_level=log_level)
 
 

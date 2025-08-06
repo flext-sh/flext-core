@@ -323,7 +323,7 @@ def _demonstrate_configuration() -> FlextResult[None]:
     """Demonstrate configuration management patterns."""
     print("6. FlextConfig Examples:")
 
-    from flext_core.config import FlextBaseSettings  # noqa: PLC0415
+    from flext_core.config import FlextBaseSettings
 
     class AppSettings(FlextBaseSettings):
         database_url: str = "sqlite:///app.db"

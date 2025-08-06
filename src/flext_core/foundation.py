@@ -519,7 +519,8 @@ class FlextFactory:
 
         """
         try:
-            instance = model_class(**kwargs)  # type: ignore[arg-type]
+            # Use model_validate for type-safe construction with dict
+            instance = model_class.model_validate(kwargs)
             validation_result = instance.validate_business_rules()
             if validation_result.is_failure:
                 return FlextResult.fail(

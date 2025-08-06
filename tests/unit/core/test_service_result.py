@@ -67,7 +67,7 @@ class TestFlextResult:
 
         # FlextResult should be frozen/immutable
         try:
-            result.data = "changed"  # type: ignore[misc] # Intentional immutability test
+            result.data = "changed"
             pytest.fail("FlextResult should be immutable")
         except (AttributeError, TypeError, ValidationError):
             pass  # Expected - frozen pydantic model
@@ -209,7 +209,7 @@ class TestFlextResult:
         result = FlextResult.ok("test")
         with pytest.raises((AttributeError, ValidationError)):
             # Cannot set success directly on frozen model
-            result.success = False  # type: ignore[misc] # Intentional immutability test
+            result.success = False
 
     def test_type_generic_behavior(self) -> None:
         """Test generic type behavior with different data types."""
@@ -258,7 +258,7 @@ class TestFlextResult:
         result = FlextResult.ok([1, 2, 3])
 
         # Test TypeError
-        mapped = result.map(lambda x: x + "string")  # type: ignore[operator] # Intentional TypeError for testing
+        mapped = result.map(lambda x: x + "string")
         assert mapped.is_failure
         assert mapped.error is not None
         if "Transformation failed:" not in mapped.error:
@@ -267,7 +267,7 @@ class TestFlextResult:
             )
 
         # Test AttributeError
-        mapped = result.map(lambda x: x.nonexistent_method())  # type: ignore[attr-defined] # Intentional AttributeError for testing
+        mapped = result.map(lambda x: x.nonexistent_method())
         assert mapped.is_failure
         assert mapped.error is not None
         if "Transformation failed:" not in mapped.error:

@@ -31,7 +31,7 @@ from flext_core import (
 MIN_EMAIL_LENGTH = 5  # Minimum characters for basic email validation
 
 
-def main() -> None:  # noqa: PLR0915, PLR0912
+def main() -> None:
     """Execute main function for integration example."""
     print("=== FLEXT Core Complete Integration Example ===\n")
 

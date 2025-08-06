@@ -96,12 +96,13 @@ from flext_core.result import FlextResult
 from flext_core.utilities import FlextTypeGuards, FlextUtilities
 from flext_core.validation import FlextValidators
 
+if TYPE_CHECKING:
+    from flext_core.flext_types import TFactory
+
 T = TypeVar("T")
 
 Platform = FlextConstants.Platform
 
-if TYPE_CHECKING:
-    from flext_core.flext_types import TFactory
 
 # =============================================================================
 # TYPE GUARDS - Re-exported from FlextUtilities for backward compatibility
@@ -159,7 +160,7 @@ def immutable[T](cls: type[T]) -> type[T]:
     """
 
     # Create immutable wrapper class - using type ignore for dynamic inheritance
-    class ImmutableWrapper(cls):  # type: ignore[misc,valid-type]
+    class ImmutableWrapper(cls):  # type: ignore[valid-type, misc]
         """Immutable wrapper class."""
 
         def __init__(self, *args: object, **kwargs: object) -> None:
