@@ -91,6 +91,7 @@ from typing import TYPE_CHECKING
 from pydantic import BaseModel, ConfigDict
 
 from flext_core.result import FlextResult
+from flext_core.types import FlextTypes
 
 if TYPE_CHECKING:
     from flext_core.flext_types import TPredicate
@@ -347,11 +348,11 @@ def _validate_service_name(name: str) -> bool:
 type TValidationRule = str  # Validation rule identifier
 type TValidationError = str  # Validation error message
 type TValidationResult = FlextResult[object]  # Validation result with data
-type TValidationContext = dict[str, object]  # Validation context data
+type TValidationContext = FlextTypes.Core.JsonDict  # Validation context data
 type TValidatorName = str  # Validator instance name
-type TValidationConfig = dict[str, object]  # Validator configuration
+type TValidationConfig = FlextTypes.Core.JsonDict  # Validator configuration
 type TValidationConstraint = object  # Validation constraint value
-type TValidationSchema = dict[str, object]  # Schema definition for validation
+type TValidationSchema = FlextTypes.Core.JsonDict  # Schema definition for validation
 
 # Field validation types
 type TFieldName = str  # Field name for validation
@@ -574,8 +575,7 @@ class FlextValidation(FlextValidators):
 # API RE-EXPOSURE - FlextPredicates and FlextValidationResult already defined above
 # =============================================================================
 
-# FlextPredicates = _BasePredicates (already defined above)
-# FlextValidationResult = _ValidationResult (already defined above)
+
 # All functionality properly exposed through direct assignment
 
 # =============================================================================

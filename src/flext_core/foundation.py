@@ -527,7 +527,7 @@ class FlextFactory:
                     validation_result.error or "Business rule validation failed",
                 )
             return FlextResult.ok(instance)
-        except Exception as e:
+        except (RuntimeError, ValueError, TypeError, KeyError, AttributeError) as e:
             return FlextResult.fail(f"Failed to create {model_class.__name__}: {e}")
 
     @staticmethod

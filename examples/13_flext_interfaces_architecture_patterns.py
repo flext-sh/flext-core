@@ -621,11 +621,13 @@ class MockLogger:
     # Mock the other methods that BoundLogger might have
     def bind(self, **_kwargs: object) -> "BoundLogger":
         """Bind additional context (mock implementation)."""
-        return self
+        # Return a new MockLogger to satisfy BoundLogger interface
+        return MockLogger()
 
     def unbind(self, *_keys: str) -> "BoundLogger":
         """Unbind context keys (mock implementation)."""
-        return self
+        # Return a new MockLogger to satisfy BoundLogger interface
+        return MockLogger()
 
 
 class SimplePluginContext:

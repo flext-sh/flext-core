@@ -263,8 +263,8 @@ class FlextAggregateRoot(FlextEntity):
                 validation_details={
                     "aggregate_id": actual_id,
                     "initialization_error": str(e),
-                    "provided_kwargs": list(init_kwargs.keys())
-                }
+                    "provided_kwargs": list(init_kwargs.keys()),
+                },
             ) from e
 
     def add_domain_event(

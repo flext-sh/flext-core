@@ -553,7 +553,7 @@ class TestFlextFieldCore:
             raise AssertionError(f"Expected approximately {math.pi}, got {pi_value}")
         # Test float deserialization from string - expect exact value
         pi_str_result = float_field.deserialize_value("3.14")
-        expected_314 = 3.14  # Compare with actual value, not math.pi
+        expected_314 = 3.14  # Expect the actual string value converted to float
         if pi_str_result != expected_314:
             raise AssertionError(f"Expected {expected_314}, got {pi_str_result}")
         if float_field.deserialize_value(42) != 42.0:

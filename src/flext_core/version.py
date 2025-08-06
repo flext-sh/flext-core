@@ -71,6 +71,8 @@ from __future__ import annotations
 import sys
 from typing import TYPE_CHECKING, NamedTuple
 
+from flext_core.loggings import get_logger
+
 if TYPE_CHECKING:
     from flext_core.flext_types import TAnyList
 
@@ -238,7 +240,7 @@ def get_version_string() -> str:
     Usage:
         version_str = get_version_string()
         print(f"Starting {version_str}")
-        logger.info(f"Application version: {version_str}")
+        logger.info("Application version: %s", version_str)
 
     """
     info = get_version_info()
@@ -424,7 +426,10 @@ def validate_version_format(version: str) -> bool:
                 return False
             if int(part) < 0:
                 return False
-    except (ValueError, AttributeError):
+    except (ValueError, AttributeError) as e:
+        # Log validation error but maintain API contract
+        logger = get_logger(__name__)
+        logger.warning(f"Version validation failed for '{version}': {e}")
         return False
     else:
         return True

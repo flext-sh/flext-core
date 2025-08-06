@@ -48,6 +48,13 @@ Ecosystem Usage Patterns:
 
     # Repository Pattern (DDD)
     class UserRepository(FlextRepository):
+        def save(self, entity: FlextEntity) -> FlextResult[FlextEntity]:
+            return FlextResult.ok(entity)
+
+Repository Interfaces: Comprehensive data access contracts for domain-driven design
+    FlextRepository: Generic repository interface for entity persistence
+    FlextUnitOfWork: Transaction boundary for aggregate operations
+    FlextQueryRepository: Read-optimized repository for query operations
         def find_by_id(self, entity_id: str) -> FlextResult[object]: ...
 
 Clean Architecture Benefits:
@@ -1029,24 +1036,3 @@ class FlextProjectionBuilder(ABC):
 
         """
         ...
-
-
-# Export API
-__all__: list[str] = [
-    "FlextConfigurable",
-    "FlextDomainEvent",
-    "FlextEventPublisher",
-    "FlextEventStore",
-    "FlextEventStreamReader",
-    "FlextEventSubscriber",
-    "FlextHandler",
-    "FlextMiddleware",
-    "FlextPlugin",
-    "FlextPluginContext",
-    "FlextProjectionBuilder",
-    "FlextRepository",
-    "FlextService",
-    "FlextUnitOfWork",
-    "FlextValidationRule",
-    "FlextValidator",
-]

@@ -581,7 +581,7 @@ class FlextEntityFactory:
 
         # Handle factory creation errors
         if admin_result.is_failure:
-            logger.error(f"Failed to create admin: {admin_result.error}")
+            logger.error("Failed to create admin: %s", admin_result.error)
 
     Factory Pattern Benefits:
         - Consistent entity creation with validation

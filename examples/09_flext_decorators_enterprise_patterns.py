@@ -763,7 +763,9 @@ def demonstrate_decorator_best_practices() -> None:
 
 
 def demonstrate_domain_model_decorators() -> None:
-    """Demonstrate decorators with shared domain models integration using railway-oriented programming."""
+    """Demonstrate decorators with shared domain models integration using
+    railway-oriented programming.
+    """
     _print_section_header("🏢 DOMAIN MODEL DECORATORS INTEGRATION")
 
     # Chain all demonstration patterns using single-responsibility methods
@@ -828,7 +830,10 @@ def _test_valid_user_creation(create_user_func: object) -> FlextResult[None]:
     try:
         if callable(create_user_func):
             user = create_user_func("Alice Johnson", "alice@example.com", 28)
-            log_message = f"✅ User created with decorators: {getattr(user, 'name', 'N/A')} (ID: {getattr(user, 'id', 'N/A')})"
+            log_message = (
+                f"✅ User created with decorators: {getattr(user, 'name', 'N/A')} "
+                f"(ID: {getattr(user, 'id', 'N/A')})"
+            )
             print(log_message)
             return FlextResult.ok(None)
         return FlextResult.fail("Invalid create_user_func provided")

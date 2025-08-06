@@ -91,6 +91,7 @@ from typing import cast
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from flext_core.constants import FlextFieldType
+from flext_core.loggings import get_logger
 from flext_core.exceptions import FlextTypeError, FlextValidationError
 from flext_core.flext_types import (
     FlextValidator,
@@ -681,7 +682,10 @@ def _safe_cast_numeric(value: object) -> int | float | None:
             if "." in value:
                 return float(value)
             return int(value)
-        except ValueError:
+        except ValueError as e:
+            # Log numeric conversion error but maintain API contract
+            logger = get_logger(__name__)
+            logger.warning(f"Numeric conversion failed for value '{value}': {e}")
             return None
     return None
 
@@ -695,7 +699,10 @@ def _safe_cast_int(value: object) -> int | None:
     if isinstance(value, (float, str)):
         try:
             return int(value)
-        except (ValueError, TypeError):
+        except (ValueError, TypeError) as e:
+            # Log int conversion error but maintain API contract  
+            logger = get_logger(__name__)
+            logger.warning(f"Int conversion failed for value '{value}': {e}")
             return None
     return None
 

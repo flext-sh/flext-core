@@ -94,6 +94,7 @@ from typing import TYPE_CHECKING, TypeVar, cast, overload
 
 from flext_core.constants import ERROR_CODES
 from flext_core.exceptions import FlextOperationError
+from flext_core.loggings import get_logger
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -301,7 +302,9 @@ class FlextResult[T]:
                     try:
                         attrs = tuple(sorted(self._data.__dict__.items()))
                         return hash((True, attrs))
-                    except (TypeError, AttributeError):
+                    except (TypeError, AttributeError) as e:
+                        logger = get_logger(__name__)
+                        logger.warning(f"Failed to hash object attributes for {type(self._data).__name__}: {e}")
                         pass
 
                 # For complex objects, use a combination of type and memory ID
