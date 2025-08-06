@@ -14,7 +14,7 @@ from flext_core import (
 )
 
 
-def main() -> None:  # noqa: PLR0915
+def main() -> None:
     """Execute main function for working examples."""
     print("=== FLEXT Core Working Examples ===\n")
 
@@ -138,7 +138,9 @@ def main() -> None:  # noqa: PLR0915
         user_service = service_result.data
         if hasattr(user_service, "create_user"):
             new_user = user_service.create_user("bob@example.com", "Bob Wilson")
-            print(f"  Service created: {new_user.name} ({new_user.email_address.email})")
+            print(
+                f"  Service created: {new_user.name} ({new_user.email_address.email})"
+            )
         else:
             print("  Service creation failed: no create_user method")
     print()

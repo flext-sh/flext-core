@@ -48,7 +48,7 @@ from flext_core import (
 LOW_STOCK_THRESHOLD = 10  # Minimum quantity before low stock alert
 
 
-def demonstrate_generic_payloads() -> None:  # noqa: PLR0915
+def demonstrate_generic_payloads() -> None:
     """Demonstrate generic payload containers with type safety."""
     log_message: TLogMessage = "\n" + "=" * 80
     print(log_message)
@@ -185,7 +185,7 @@ def demonstrate_generic_payloads() -> None:  # noqa: PLR0915
         print(f"❌ {error_message}")
 
 
-def demonstrate_message_payloads() -> None:  # noqa: PLR0912, PLR0915
+def demonstrate_message_payloads() -> None:
     """Demonstrate message payloads with level validation using flext_core.types."""
     log_message: TLogMessage = "\n" + "=" * 80
     print(log_message)
@@ -353,7 +353,7 @@ def demonstrate_message_payloads() -> None:  # noqa: PLR0912, PLR0915
             print(log_message)
             log_message = f"✅ Response message: {response_msg.correlation_id}"
             print(log_message)
-            log_message = f"   Correlation match: {request_msg.correlation_id == response_msg.correlation_id}"  # noqa: E501
+            log_message = f"   Correlation match: {request_msg.correlation_id == response_msg.correlation_id}"
             print(log_message)
 
 
@@ -430,7 +430,9 @@ def _demonstrate_order_lifecycle_events() -> FlextResult[None]:
     return _display_order_lifecycle_events(order_created_event, order_confirmed_event)
 
 
-def _create_order_created_event(order_id: str) -> FlextResult[FlextPayload[Mapping[str, object]]]:
+def _create_order_created_event(
+    order_id: str,
+) -> FlextResult[FlextPayload[Mapping[str, object]]]:
     """Create order created event."""
     order_created_data: TUserData = {
         "order_id": order_id,
@@ -453,7 +455,9 @@ def _create_order_created_event(order_id: str) -> FlextResult[FlextPayload[Mappi
     )
 
 
-def _create_order_confirmed_event(order_id: str) -> FlextResult[FlextPayload[Mapping[str, object]]]:
+def _create_order_confirmed_event(
+    order_id: str,
+) -> FlextResult[FlextPayload[Mapping[str, object]]]:
     """Create order confirmed event."""
     order_confirmed_data: TUserData = {
         "order_id": order_id,
@@ -474,7 +478,7 @@ def _create_order_confirmed_event(order_id: str) -> FlextResult[FlextPayload[Map
 
 def _display_order_lifecycle_events(
     order_created_event: FlextResult[FlextPayload[Mapping[str, object]]],
-    order_confirmed_event: FlextResult[FlextPayload[Mapping[str, object]]]
+    order_confirmed_event: FlextResult[FlextPayload[Mapping[str, object]]],
 ) -> FlextResult[None]:
     """Display order lifecycle event details."""
     if order_created_event.success and order_confirmed_event.success:
@@ -510,7 +514,9 @@ def _demonstrate_inventory_management_events() -> FlextResult[None]:
     return _handle_stock_updated_event(stock_updated_event, product_id)
 
 
-def _create_stock_updated_event(product_id: str) -> FlextResult[FlextPayload[Mapping[str, object]]]:
+def _create_stock_updated_event(
+    product_id: str,
+) -> FlextResult[FlextPayload[Mapping[str, object]]]:
     """Create stock updated event."""
     stock_updated_data: TUserData = {
         "product_id": product_id,
@@ -531,17 +537,19 @@ def _create_stock_updated_event(product_id: str) -> FlextResult[FlextPayload[Map
 
 
 def _handle_stock_updated_event(
-    stock_updated_event: FlextResult[FlextPayload[Mapping[str, object]]], product_id: str
+    stock_updated_event: FlextResult[FlextPayload[Mapping[str, object]]],
+    product_id: str,
 ) -> FlextResult[None]:
     """Handle stock updated event and create low stock alert if needed."""
     if stock_updated_event.success:
         stock_event = stock_updated_event.data
-        if stock_event is not None and hasattr(stock_event, "data") and stock_event.data is not None:
+        if (
+            stock_event is not None
+            and hasattr(stock_event, "data")
+            and stock_event.data is not None
+        ):
             new_quantity = stock_event.data.get("new_quantity", 0)
-            if (
-                isinstance(new_quantity, int)
-                and new_quantity <= LOW_STOCK_THRESHOLD
-            ):
+            if isinstance(new_quantity, int) and new_quantity <= LOW_STOCK_THRESHOLD:
                 return _create_and_display_low_stock_alert(product_id, new_quantity)
 
     return FlextResult.ok(None)
@@ -573,7 +581,9 @@ def _create_and_display_low_stock_alert(
         if alert_event is not None and hasattr(alert_event, "event_type"):
             print(f"✅ Low stock alert event: {alert_event.event_type}")
             if alert_event.data is not None:
-                print(f"   Current quantity: {alert_event.data.get('current_quantity')}")
+                print(
+                    f"   Current quantity: {alert_event.data.get('current_quantity')}"
+                )
 
     return FlextResult.ok(None)
 
@@ -591,7 +601,9 @@ def _demonstrate_event_correlation_and_tracing() -> FlextResult[None]:
     return _display_correlated_events(process_started_event, step_completed_event)
 
 
-def _create_process_started_event(process_id: str) -> FlextResult[FlextPayload[Mapping[str, object]]]:
+def _create_process_started_event(
+    process_id: str,
+) -> FlextResult[FlextPayload[Mapping[str, object]]]:
     """Create process started event."""
     return FlextEvent.create(
         event_type="ProcessStarted",
@@ -603,7 +615,9 @@ def _create_process_started_event(process_id: str) -> FlextResult[FlextPayload[M
     )
 
 
-def _create_step_completed_event(process_id: str) -> FlextResult[FlextPayload[Mapping[str, object]]]:
+def _create_step_completed_event(
+    process_id: str,
+) -> FlextResult[FlextPayload[Mapping[str, object]]]:
     """Create process step completed event."""
     return FlextEvent.create(
         event_type="ProcessStepCompleted",
@@ -677,7 +691,7 @@ def _display_validation_results(
     return FlextResult.ok(None)
 
 
-def demonstrate_payload_serialization() -> None:  # noqa: PLR0915
+def demonstrate_payload_serialization() -> None:
     """Demonstrate payload serialization for cross-service communication.
 
     Using flext_core.types for type safety.
@@ -816,7 +830,7 @@ def demonstrate_payload_serialization() -> None:  # noqa: PLR0915
         print(f"❌ {error_message}")
 
 
-def demonstrate_enterprise_messaging_patterns() -> None:  # noqa: PLR0912, PLR0915
+def demonstrate_enterprise_messaging_patterns() -> None:
     """Demonstrate enterprise messaging patterns using flext_core.types."""
     log_message: TLogMessage = "\n" + "=" * 80
     print(log_message)
@@ -1060,8 +1074,12 @@ def demonstrate_enterprise_messaging_patterns() -> None:  # noqa: PLR0912, PLR09
             max_retries_obj = problematic_message.metadata.get("max_retries", 0)
             dead_letter_obj = problematic_message.metadata.get("dead_letter", False)
 
-            retry_count = int(retry_count_obj) if isinstance(retry_count_obj, (int, str)) else 0
-            max_retries = int(max_retries_obj) if isinstance(max_retries_obj, (int, str)) else 0
+            retry_count = (
+                int(retry_count_obj) if isinstance(retry_count_obj, (int, str)) else 0
+            )
+            max_retries = (
+                int(max_retries_obj) if isinstance(max_retries_obj, (int, str)) else 0
+            )
             dead_letter = bool(dead_letter_obj)
 
             log_message = "✅ Problematic message created"

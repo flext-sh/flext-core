@@ -731,9 +731,7 @@ class CQRSDemonstrator:
         if command_bus is None:
             return FlextResult.fail("Command bus setup returned None")
 
-        self.app_service = UserManagementApplicationService(
-            command_bus, query_handlers
-        )
+        self.app_service = UserManagementApplicationService(command_bus, query_handlers)
         return FlextResult.ok(None)
 
     def demonstrate_user_creation(self) -> FlextResult[TEntityId]:

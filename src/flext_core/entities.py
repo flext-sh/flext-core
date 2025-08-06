@@ -644,7 +644,10 @@ class FlextEntityFactory:
 # =============================================================================
 
 # Rebuild models to resolve forward references after import
-FlextEntity.model_rebuild()
+# Note: model_rebuild() disabled due to TAnyDict circular reference issues
+# The models work correctly without explicit rebuild as Pydantic handles
+# forward references automatically during runtime validation
+# FlextEntity.model_rebuild()
 
 # Export API
 __all__ = ["FlextEntity", "FlextEntityFactory"]

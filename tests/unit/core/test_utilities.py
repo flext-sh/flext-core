@@ -535,8 +535,8 @@ class TestPerformanceTracking:
         flext_clear_performance_metrics()
 
         # Record some metrics
-        flext_record_performance("test", "function1", 1.5, success=True)
-        flext_record_performance("test", "function2", 2.3, success=False)
+        flext_record_performance("test", "function1", 1.5, _success=True)
+        flext_record_performance("test", "function2", 2.3, _success=False)
 
         # Check that metrics were recorded
         metrics = flext_get_performance_metrics()
@@ -557,7 +557,7 @@ class TestPerformanceTracking:
     def test_flext_clear_performance_metrics(self) -> None:
         """Test clearing performance metrics."""
         # Add some metrics
-        flext_record_performance("test", "function", 1.0, success=True)
+        flext_record_performance("test", "function", 1.0, _success=True)
 
         # Verify metrics exist
         metrics = flext_get_performance_metrics()
@@ -802,7 +802,7 @@ class TestEdgeCases:
     def test_performance_tracking_edge_cases(self) -> None:
         """Test performance tracking edge cases."""
         # Test with empty category/function names
-        flext_record_performance("", "", 1.0, success=True)
+        flext_record_performance("", "", 1.0, _success=True)
         metrics = flext_get_performance_metrics()
         if "." not in metrics["metrics"]:  # Empty category + empty function = "."
             raise AssertionError(
@@ -810,7 +810,7 @@ class TestEdgeCases:
             )  # Empty category + empty function = "."
 
         # Test with special characters
-        flext_record_performance("cat@gory", "func-tion", 2.0, success=True)
+        flext_record_performance("cat@gory", "func-tion", 2.0, _success=True)
         metrics = flext_get_performance_metrics()
         if "cat@gory.func-tion" not in metrics["metrics"]:
             raise AssertionError(

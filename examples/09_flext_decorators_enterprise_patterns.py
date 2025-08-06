@@ -71,7 +71,7 @@ MAX_REASONABLE_AGE = 150  # Maximum reasonable age for validation
 MAX_RETRY_ATTEMPTS = 3  # Maximum number of retry attempts before success
 
 
-def demonstrate_validation_decorators() -> None:  # noqa: PLR0915
+def demonstrate_validation_decorators() -> None:
     """Demonstrate validation decorators with automatic argument checking.
 
     Using flext_core.types for type safety.
@@ -175,7 +175,7 @@ def demonstrate_validation_decorators() -> None:  # noqa: PLR0915
         print(f"❌ {error_message}")
 
 
-def demonstrate_error_handling_decorators() -> None:  # noqa: PLR0915
+def demonstrate_error_handling_decorators() -> None:
     """Demonstrate error handling decorators with automatic exception management.
 
     Using flext_core.types for type safety.
@@ -369,7 +369,7 @@ def demonstrate_performance_decorators() -> None:
     print(log_message)
 
 
-def demonstrate_logging_decorators() -> None:  # noqa: PLR0915
+def demonstrate_logging_decorators() -> None:
     """Demonstrate logging decorators with structured logging using flext_core.types."""
     log_message: TLogMessage = "\n" + "=" * 80
     print(log_message)
@@ -632,7 +632,7 @@ def demonstrate_functional_decorators() -> None:
     print(log_message)
 
 
-def demonstrate_decorator_best_practices() -> None:  # noqa: PLR0915
+def demonstrate_decorator_best_practices() -> None:
     """Demonstrate decorator best practices using flext_core.types."""
     log_message: TLogMessage = "\n" + "=" * 80
     print(log_message)
@@ -790,9 +790,8 @@ def _demonstrate_validation_decorators() -> FlextResult[None]:
 
     def _create_validated_user_impl(name: str, email: str, age: int) -> SharedUser:
         """Create validated user using shared domain models with decorators."""
-        result = (
-            SharedDomainFactory.create_user(name, email, age)
-            .flat_map(lambda user: _log_user_creation(user, "validation+logging"))
+        result = SharedDomainFactory.create_user(name, email, age).flat_map(
+            lambda user: _log_user_creation(user, "validation+logging")
         )
         if result.success and result.data is not None:
             return result.data

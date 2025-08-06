@@ -126,7 +126,7 @@ class Customer(SharedUser, FlextLoggableMixin):
         """Check if customer is active based on status."""
         return self.status == UserStatus.ACTIVE
 
-    def activate(self) -> FlextResult[Customer]:  # type: ignore[override]
+    def activate(self) -> FlextResult[Customer]:
         """Activate customer account."""
         if self.is_active:
             return FlextResult.fail("Customer is already active")
@@ -163,9 +163,8 @@ class Customer(SharedUser, FlextLoggableMixin):
                 return FlextResult.fail(result.error or "Validation failed")
 
         # Execute deactivation process
-        return (
-            self._create_deactivated_customer()
-            .flat_map(lambda customer: self._add_deactivation_event(customer, reason))
+        return self._create_deactivated_customer().flat_map(
+            lambda customer: self._add_deactivation_event(customer, reason)
         )
 
     def _validate_customer_is_active_for_deactivation(self) -> FlextResult[None]:
@@ -185,12 +184,16 @@ class Customer(SharedUser, FlextLoggableMixin):
     def _create_deactivated_customer(self) -> FlextResult[Customer]:
         """Create new customer instance with inactive status."""
         try:
-            deactivated_customer = self.model_copy(update={"status": UserStatus.INACTIVE})
+            deactivated_customer = self.model_copy(
+                update={"status": UserStatus.INACTIVE}
+            )
             return FlextResult.ok(deactivated_customer)
         except Exception as e:
             return FlextResult.fail(f"Failed to create deactivated customer: {e}")
 
-    def _add_deactivation_event(self, customer: Customer, reason: str) -> FlextResult[Customer]:
+    def _add_deactivation_event(
+        self, customer: Customer, reason: str
+    ) -> FlextResult[Customer]:
         """Add domain event for customer deactivation."""
         customer.add_domain_event(
             "CustomerDeactivated",
@@ -210,7 +213,9 @@ class Customer(SharedUser, FlextLoggableMixin):
             self._validate_customer_active_for_address_update()
             .flat_map(lambda _: self._validate_new_address(new_address))
             .flat_map(lambda _: self._create_customer_with_updated_address(new_address))
-            .flat_map(lambda customer: self._add_address_update_event(customer, new_address))
+            .flat_map(
+                lambda customer: self._add_address_update_event(customer, new_address)
+            )
         )
 
     def _validate_customer_active_for_address_update(self) -> FlextResult[None]:
@@ -228,7 +233,9 @@ class Customer(SharedUser, FlextLoggableMixin):
             )
         return FlextResult.ok(None)
 
-    def _create_customer_with_updated_address(self, new_address: Address) -> FlextResult[Customer]:
+    def _create_customer_with_updated_address(
+        self, new_address: Address
+    ) -> FlextResult[Customer]:
         """Create new customer instance with updated address."""
         try:
             updated_customer = self.model_copy(update={"address": new_address})
@@ -236,7 +243,9 @@ class Customer(SharedUser, FlextLoggableMixin):
         except Exception as e:
             return FlextResult.fail(f"Failed to create updated customer: {e}")
 
-    def _add_address_update_event(self, customer: Customer, new_address: Address) -> FlextResult[Customer]:
+    def _add_address_update_event(
+        self, customer: Customer, new_address: Address
+    ) -> FlextResult[Customer]:
         """Add domain event for address update."""
         customer.add_domain_event(
             "CustomerAddressUpdated",
@@ -337,7 +346,9 @@ class Customer(SharedUser, FlextLoggableMixin):
 
         # Create new version with incremented order count
         try:
-            updated_customer = self.model_copy(update={"total_orders": self.total_orders + 1})
+            updated_customer = self.model_copy(
+                update={"total_orders": self.total_orders + 1}
+            )
         except Exception as e:
             return FlextResult.fail(f"Failed to create updated customer: {e}")
 
@@ -491,13 +502,15 @@ class Product(FlextEntity):
         new_price: Money,
     ) -> FlextResult[Product]:
         """Add domain event for price update."""
-        updated_product.add_domain_event({
-            "event_type": "ProductPriceUpdated",
+        updated_product.add_domain_event(
+            {
+                "event_type": "ProductPriceUpdated",
                 "product_id": self.id,
                 "old_price": str(self.price),
                 "new_price": str(new_price),
                 "update_date": FlextUtilities.generate_iso_timestamp(),
-        })
+            }
+        )
 
         return FlextResult.ok(updated_product)
 
@@ -511,7 +524,11 @@ class Product(FlextEntity):
             self._validate_stock_adjustment_reason(reason)
             .flat_map(lambda _: self._validate_stock_availability(quantity_change))
             .flat_map(self._create_updated_product_with_stock)
-            .flat_map(lambda product: self._add_stock_adjustment_event(product, quantity_change, reason))
+            .flat_map(
+                lambda product: self._add_stock_adjustment_event(
+                    product, quantity_change, reason
+                )
+            )
         )
 
     def _validate_stock_adjustment_reason(self, reason: str) -> FlextResult[None]:
@@ -532,7 +549,9 @@ class Product(FlextEntity):
             )
         return FlextResult.ok(new_stock)
 
-    def _create_updated_product_with_stock(self, new_stock: int) -> FlextResult[Product]:
+    def _create_updated_product_with_stock(
+        self, new_stock: int
+    ) -> FlextResult[Product]:
         """Create new product instance with updated stock quantity."""
         try:
             updated_product = self.model_copy(update={"stock_quantity": new_stock})
@@ -553,17 +572,19 @@ class Product(FlextEntity):
         )
 
         # Add domain event
-        updated_product.add_domain_event({
-            "event_type": event_type,
-            "product_id": self.id,
-            "old_stock": self.stock_quantity,
-            "new_stock": updated_product.stock_quantity,
-            "quantity_change": quantity_change,
-            "reason": reason,
-            "is_low_stock": updated_product.is_low_stock(),
-            "is_out_of_stock": updated_product.is_out_of_stock(),
-            "update_date": FlextUtilities.generate_iso_timestamp(),
-        })
+        updated_product.add_domain_event(
+            {
+                "event_type": event_type,
+                "product_id": self.id,
+                "old_stock": self.stock_quantity,
+                "new_stock": updated_product.stock_quantity,
+                "quantity_change": quantity_change,
+                "reason": reason,
+                "is_low_stock": updated_product.is_low_stock(),
+                "is_out_of_stock": updated_product.is_out_of_stock(),
+                "update_date": FlextUtilities.generate_iso_timestamp(),
+            }
+        )
 
         return FlextResult.ok(updated_product)
 
@@ -606,13 +627,15 @@ class Product(FlextEntity):
         self, unavailable_product: Product, reason: str
     ) -> FlextResult[Product]:
         """Add domain event for product unavailability."""
-        unavailable_product.add_domain_event({
-            "event_type": "ProductMadeUnavailable",
+        unavailable_product.add_domain_event(
+            {
+                "event_type": "ProductMadeUnavailable",
                 "product_id": self.id,
                 "reason": reason,
                 "stock_at_time": self.stock_quantity,
                 "update_date": FlextUtilities.generate_iso_timestamp(),
-        })
+            }
+        )
 
         return FlextResult.ok(unavailable_product)
 
@@ -803,7 +826,9 @@ class OrderDomainService:
         # Validate prerequisites
         customer_result = self._validate_customer_for_order(customer_id)
         if customer_result.is_failure:
-            return FlextResult.fail(customer_result.error or "Customer validation failed")
+            return FlextResult.fail(
+                customer_result.error or "Customer validation failed"
+            )
 
         address_result = self._validate_shipping_address(shipping_address)
         if address_result.is_failure:
@@ -812,7 +837,9 @@ class OrderDomainService:
         # Process order items
         items_result = self._create_and_validate_order_items(product_orders)
         if items_result.is_failure:
-            return FlextResult.fail(items_result.error or "Order items validation failed")
+            return FlextResult.fail(
+                items_result.error or "Order items validation failed"
+            )
 
         if items_result.data is None:
             return FlextResult.fail("Order items creation returned None")
@@ -860,7 +887,9 @@ class OrderDomainService:
         for product_id, quantity in product_orders:
             item_result = self._create_single_order_item(product_id, quantity)
             if item_result.is_failure:
-                return FlextResult.fail(item_result.error or "Failed to create order item")
+                return FlextResult.fail(
+                    item_result.error or "Failed to create order item"
+                )
 
             order_item = item_result.data
             if order_item is None:
@@ -870,7 +899,9 @@ class OrderDomainService:
             # Update total amount
             total_result = self._add_item_to_total(order_item, total_amount)
             if total_result.is_failure:
-                return FlextResult.fail(total_result.error or "Failed to calculate total")
+                return FlextResult.fail(
+                    total_result.error or "Failed to calculate total"
+                )
 
             new_total = total_result.data
             if new_total is None:
@@ -939,9 +970,7 @@ class OrderDomainService:
         if hasattr(order_item, "total_price"):
             item_total_result = order_item.total_price()
         else:
-            item_total_result = FlextResult.fail(
-                "total_price method not available"
-            )
+            item_total_result = FlextResult.fail("total_price method not available")
 
         if item_total_result.is_failure:
             return FlextResult.fail(
@@ -967,12 +996,12 @@ class OrderDomainService:
         customer_id: str,
         order_items: list[OrderItem],
         shipping_address: Address,
-        total_amount: Money
+        total_amount: Money,
     ) -> FlextResult[Order]:
         """Create order entity, add events, and persist."""
         # Create order entity using factory
         order_factory = create_order_factory()
-        order_result = order_factory(  # type: ignore[operator]
+        order_result = order_factory(
             customer_id=customer_id,
             items=order_items,
             shipping_address=shipping_address,
@@ -1037,9 +1066,17 @@ class OrderDomainService:
             self._find_order_for_fulfillment(order_id)
             .flat_map(self._confirm_order_safely)
             .flat_map(self._save_confirmed_order)
-            .flat_map(lambda confirmed_order: self._ship_order_safely(confirmed_order, tracking_number))
+            .flat_map(
+                lambda confirmed_order: self._ship_order_safely(
+                    confirmed_order, tracking_number
+                )
+            )
             .flat_map(self._save_shipped_order)
-            .flat_map(lambda shipped_order: self._update_product_stock_for_order(shipped_order, order_id))
+            .flat_map(
+                lambda shipped_order: self._update_product_stock_for_order(
+                    shipped_order, order_id
+                )
+            )
         )
 
     def _find_order_for_fulfillment(self, order_id: str) -> FlextResult[Order]:
@@ -1080,7 +1117,9 @@ class OrderDomainService:
             )
         return FlextResult.ok(confirmed_order)
 
-    def _ship_order_safely(self, confirmed_order: Order, tracking_number: str) -> FlextResult[Order]:
+    def _ship_order_safely(
+        self, confirmed_order: Order, tracking_number: str
+    ) -> FlextResult[Order]:
         """Ship order safely, handling missing methods."""
         try:
             if hasattr(confirmed_order, "ship_order"):
@@ -1108,7 +1147,9 @@ class OrderDomainService:
             )
         return FlextResult.ok(shipped_order)
 
-    def _update_product_stock_for_order(self, shipped_order: Order, order_id: str) -> FlextResult[Order]:
+    def _update_product_stock_for_order(
+        self, shipped_order: Order, order_id: str
+    ) -> FlextResult[Order]:
         """Update product stock for all items in the order."""
         # Update product stock
         for item in shipped_order.items:
@@ -1134,6 +1175,7 @@ class OrderDomainService:
 
 def create_customer_factory() -> object:
     """Create factory for customers with defaults."""
+
     def factory(**kwargs: object) -> FlextResult[Customer]:
         try:
             # Set defaults
@@ -1149,12 +1191,14 @@ def create_customer_factory() -> object:
             defaults.update(kwargs)
 
             # Create customer instance
-            customer = Customer(**defaults)  # type: ignore[arg-type]
+            customer = Customer(**defaults)
 
             # Validate the customer
             validation = customer.validate_business_rules()
             if validation.is_failure:
-                return FlextResult.fail(f"Customer validation failed: {validation.error}")
+                return FlextResult.fail(
+                    f"Customer validation failed: {validation.error}"
+                )
 
             return FlextResult.ok(customer)
         except Exception as e:
@@ -1165,6 +1209,7 @@ def create_customer_factory() -> object:
 
 def create_product_factory() -> object:
     """Create factory for products with defaults."""
+
     def factory(**kwargs: object) -> FlextResult[Product]:
         try:
             # Set defaults
@@ -1178,12 +1223,14 @@ def create_product_factory() -> object:
             defaults.update(kwargs)
 
             # Create product instance
-            product = Product(**defaults)  # type: ignore[arg-type]
+            product = Product(**defaults)
 
             # Validate the product
             validation = product.validate_business_rules()
             if validation.is_failure:
-                return FlextResult.fail(f"Product validation failed: {validation.error}")
+                return FlextResult.fail(
+                    f"Product validation failed: {validation.error}"
+                )
 
             return FlextResult.ok(product)
         except Exception as e:
@@ -1194,6 +1241,7 @@ def create_product_factory() -> object:
 
 def create_order_factory() -> object:
     """Create factory for orders with defaults."""
+
     def factory(**kwargs: object) -> FlextResult[Order]:
         try:
             # Set defaults
@@ -1203,10 +1251,10 @@ def create_order_factory() -> object:
                 "status": "pending",
             }
             # Update with provided values
-            defaults.update(kwargs)  # type: ignore[arg-type]
+            defaults.update(kwargs)
 
             # Create order instance
-            order = Order(**defaults)  # type: ignore[arg-type]
+            order = Order(**defaults)
 
             # Validate the order
             validation = order.validate_domain_rules()
@@ -1256,7 +1304,7 @@ def demonstrate_value_objects() -> None:
     # Multiplication
     doubled_result = usd_10.multiply(Decimal("2.0"))
     if doubled_result.success:
-        print(f"  ✅ {usd_10} × 2 = {doubled_result.data}")  # noqa: RUF001
+        print(f"  ✅ {usd_10} × 2 = {doubled_result.data}")
 
     # Address value objects
     print("\n📋 Address Value Objects:")
@@ -1312,7 +1360,7 @@ def demonstrate_entity_lifecycle() -> None:
         ),
     }
 
-    customer_result = customer_factory(**customer_data)  # type: ignore[operator]
+    customer_result = customer_factory(**customer_data)
     if customer_result.is_failure:
         print(f"❌ Customer creation failed: {customer_result.error}")
         return
@@ -1377,7 +1425,9 @@ def demonstrate_entity_lifecycle() -> None:
         print(f"     Data: {event.data}")
 
 
-def _setup_aggregate_repositories() -> tuple[CustomerRepository, ProductRepository, OrderRepository]:
+def _setup_aggregate_repositories() -> tuple[
+    CustomerRepository, ProductRepository, OrderRepository
+]:
     """Setup repositories for aggregate demonstration."""
     return CustomerRepository(), ProductRepository(), OrderRepository()
 
@@ -1385,7 +1435,7 @@ def _setup_aggregate_repositories() -> tuple[CustomerRepository, ProductReposito
 def _create_test_customer(customer_repo: CustomerRepository) -> Customer | None:
     """Create and save test customer for aggregate demonstration."""
     customer_factory = create_customer_factory()
-    customer_result = customer_factory(  # type: ignore[operator]
+    customer_result = customer_factory(
         name="Bob Smith",
         email_address=Email(email="bob@company.com"),
         address=Address(
@@ -1429,7 +1479,7 @@ def _create_test_products(product_repo: ProductRepository) -> list[Product]:
 
     products: list[Product] = []
     for product_data in products_data:
-        product_result = product_factory(**product_data)  # type: ignore[operator]
+        product_result = product_factory(**product_data)
         if product_result.success:
             product = product_result.data
             if product is not None:
@@ -1499,7 +1549,7 @@ def _process_order_lifecycle(
 
     # Deliver order (method may not exist in Order class)
     try:
-        deliver_result = fulfilled_order.deliver_order()  # type: ignore[attr-defined]
+        deliver_result = fulfilled_order.deliver_order()
         if deliver_result.success:
             delivered_order = deliver_result.data
             if delivered_order is None:
@@ -1512,7 +1562,9 @@ def _process_order_lifecycle(
         print("✅ Order delivered (simulated): Status delivered")
 
 
-def _display_updated_stock(product_repo: ProductRepository, products: list[Product]) -> None:
+def _display_updated_stock(
+    product_repo: ProductRepository, products: list[Product]
+) -> None:
     """Display updated product stock after order processing."""
     print("\n📋 Updated Product Stock:")
     for product in products:
@@ -1560,7 +1612,9 @@ def demonstrate_aggregate_patterns() -> None:
     _display_updated_stock(product_repo, products)
 
 
-def _create_test_customers_for_repo(customer_repo: CustomerRepository) -> list[Customer]:
+def _create_test_customers_for_repo(
+    customer_repo: CustomerRepository,
+) -> list[Customer]:
     """Create test customers for repository demonstration."""
     customer_factory = create_customer_factory()
     customers_data = [
@@ -1588,7 +1642,7 @@ def _create_test_customers_for_repo(customer_repo: CustomerRepository) -> list[C
 
     customers = []
     for customer_data in customers_data:
-        result = customer_factory(**customer_data)  # type: ignore[operator]
+        result = customer_factory(**customer_data)
         if result.success:
             customer = result.data
             if customer is not None:
@@ -1597,7 +1651,9 @@ def _create_test_customers_for_repo(customer_repo: CustomerRepository) -> list[C
     return customers
 
 
-def _demonstrate_customer_queries(customer_repo: CustomerRepository, customers: list[Customer]) -> None:
+def _demonstrate_customer_queries(
+    customer_repo: CustomerRepository, customers: list[Customer]
+) -> None:
     """Demonstrate customer repository queries."""
     print("\n📋 Repository Queries:")
 
@@ -1651,7 +1707,7 @@ def _demonstrate_product_operations(product_repo: ProductRepository) -> None:
     ]
 
     for product_data in products_data:
-        product_result = product_factory(**product_data)  # type: ignore[operator]
+        product_result = product_factory(**product_data)
         if product_result.success:
             product = product_result.data
             if product is not None:
@@ -1690,7 +1746,7 @@ def demonstrate_version_management() -> None:
 
     # Create product
     product_factory = create_product_factory()
-    product_result = product_factory(  # type: ignore[operator]
+    product_result = product_factory(
         name="Test Product",
         price=Money(amount=Decimal("100.0"), currency="USD"),
         category="electronics",
@@ -1734,8 +1790,12 @@ def demonstrate_version_management() -> None:
                     # Show version progression
                     print("\n📊 Version History:")
                     print(f"  📝 Original: Version {product.version}")
-                    print(f"  📝 After price update: Version {updated_product_1.version}")
-                    print(f"  📝 After stock update: Version {updated_product_2.version}")
+                    print(
+                        f"  📝 After price update: Version {updated_product_1.version}"
+                    )
+                    print(
+                        f"  📝 After stock update: Version {updated_product_2.version}"
+                    )
 
 
 def demonstrate_performance_characteristics() -> None:
@@ -1751,7 +1811,7 @@ def demonstrate_performance_characteristics() -> None:
     start_time = time.time()
 
     for i in range(operations):
-        customer_factory(  # type: ignore[operator]
+        customer_factory(
             name=f"Customer {i}",
             email_address=Email(email=f"customer{i}@example.com"),
             address=Address(
@@ -1772,7 +1832,7 @@ def demonstrate_performance_characteristics() -> None:
     print("\n📋 Entity Operation Performance:")
 
     # Create a customer for operations
-    customer_result = customer_factory(  # type: ignore[operator]
+    customer_result = customer_factory(
         name="Performance Test Customer",
         email_address=Email(email="perf@example.com"),
         address=Address(
@@ -1829,7 +1889,7 @@ def demonstrate_performance_characteristics() -> None:
 
 def main() -> None:
     """Run comprehensive FlextEntity/ValueObject DDD demonstration."""
-    from shared_example_helpers import run_example_demonstration  # noqa: PLC0415
+    from shared_example_helpers import run_example_demonstration
 
     examples = [
         ("Value Object Patterns", demonstrate_value_objects),

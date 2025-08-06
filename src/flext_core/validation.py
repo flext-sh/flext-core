@@ -95,9 +95,6 @@ from flext_core.result import FlextResult
 if TYPE_CHECKING:
     from flext_core.flext_types import TPredicate
 
-# DRY pattern: Remove get_logger import to break circular dependency
-# Validation logging moved to specific validator implementations when needed
-
 # =============================================================================
 # BASIC VALIDATION CLASSES
 # =============================================================================

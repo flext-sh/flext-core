@@ -621,11 +621,11 @@ class MockLogger:
     # Mock the other methods that BoundLogger might have
     def bind(self, **_kwargs: object) -> "BoundLogger":
         """Bind additional context (mock implementation)."""
-        return self  # type: ignore[return-value]  # Mock implementation
+        return self
 
     def unbind(self, *_keys: str) -> "BoundLogger":
         """Unbind context keys (mock implementation)."""
-        return self  # type: ignore[return-value]  # Mock implementation
+        return self
 
 
 class SimplePluginContext:
@@ -646,7 +646,7 @@ class SimplePluginContext:
     def logger(self) -> "BoundLogger":
         """Get logger for plugin (simplified)."""
         # Return MockLogger which implements BoundLogger interface
-        return self._logger  # type: ignore[return-value]  # Mock implementation
+        return self._logger
 
     @property
     def config(self) -> Mapping[str, object]:
@@ -1153,7 +1153,7 @@ def demonstrate_handler_interfaces() -> None:
     print("✅ Handler interfaces demonstration completed")
 
 
-def demonstrate_repository_interfaces() -> None:  # noqa: PLR0912, PLR0915
+def demonstrate_repository_interfaces() -> None:
     """Demonstrate repository and unit of work interfaces."""
     print("\n" + "=" * 80)
     print("💾 REPOSITORY INTERFACES - DATA ACCESS PATTERNS")

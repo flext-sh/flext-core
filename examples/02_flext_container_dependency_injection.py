@@ -452,7 +452,7 @@ class SMTPEmailService(EmailService):
         )
         print(log_message)
 
-    def send_email(self, to: str, subject: str, body: str) -> FlextResult[str]:  # noqa: ARG002
+    def send_email(self, to: str, subject: str, body: str) -> FlextResult[str]:
         """Send email and return message ID."""
         log_message: TLogMessage = f"📧 Sending email to {to}: {subject}"
         print(log_message)
@@ -861,7 +861,7 @@ class BaseServiceConfigurer:
             return FlextResult.fail(error_msg)
 
         deps_data = result.data
-        if deps_data is None or len(deps_data) != 2:  # noqa: PLR2004
+        if deps_data is None or len(deps_data) != 2:
             return FlextResult.fail("Invalid notification dependencies")
         email_service, user_repository = deps_data
         return FlextResult.ok(
@@ -883,7 +883,7 @@ class BaseServiceConfigurer:
             return FlextResult.fail(error_msg)
 
         deps_data = result.data
-        if deps_data is None or len(deps_data) != 2:  # noqa: PLR2004
+        if deps_data is None or len(deps_data) != 2:
             return FlextResult.fail("Invalid user management dependencies")
         user_repository, notification_service = deps_data
         return FlextResult.ok(
@@ -999,7 +999,7 @@ class MockEmailService(EmailService):
 class MockUserRepository(UserRepository):
     """Mock user repository implementation for testing."""
 
-    def create_user(self, user_data: TUserData) -> FlextResult[TEntityId]:  # noqa: ARG002
+    def create_user(self, user_data: TUserData) -> FlextResult[TEntityId]:
         """Create a mock user.
 
         Args:

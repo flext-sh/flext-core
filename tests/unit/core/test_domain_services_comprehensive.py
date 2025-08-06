@@ -151,17 +151,17 @@ class TestFlextDomainService:
         service = SampleCalculationService()
 
         with pytest.raises(ValueError, match=".*"):  # ValidationError or AttributeError
-            service.value = 20.0  # type: ignore[misc] # Intentional immutability test
+            service.value = 20.0
 
     def test_domain_service_extra_fields_forbidden(self) -> None:
         """Test domain service forbids extra fields."""
         with pytest.raises(ValueError, match=".*"):  # ValidationError
-            SampleCalculationService(value=10.0, extra_field="not allowed")  # type: ignore[call-arg] # Intentional extra field test
+            SampleCalculationService(value=10.0, extra_field="not allowed")
 
     def test_execute_method_is_abstract(self) -> None:
         """Test that execute method is abstract."""
         with pytest.raises(TypeError, match="Can't instantiate abstract class"):
-            FlextDomainService()  # type: ignore[abstract] # Intentional abstract class test
+            FlextDomainService()
 
     def test_execute_success(self) -> None:
         """Test successful service execution."""

@@ -216,8 +216,11 @@ class FlextFieldCore(
     indexed: bool = Field(default=False, description="Should be indexed")
     tags: list[str] = Field(default_factory=list, description="Field tags")
 
-    # Validator (placeholder for custom validation function)
-    validator: object = Field(default=None, description="Custom validator function")
+    # Custom validator function for field validation
+    validator: object = Field(
+        default=None,
+        description="Callable validator function for custom field validation",
+    )
 
     # Mixin functionality is now inherited properly:
     # - Validation methods from FlextValidatableMixin

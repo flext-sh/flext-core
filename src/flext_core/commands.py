@@ -498,10 +498,10 @@ class FlextCommands:
         def fail(
             cls,
             error: str,
-            error_code: str | None = None,  # noqa: ARG003
+            error_code: str | None = None,
             error_data: dict[str, object] | None = None,
         ) -> FlextCommands.Result[T]:
-            """Create failed result with metadata."""
+            """Create failed result with metadata and optional error code."""
             # Convert error_data to TAnyDict for metadata compatibility
             metadata: TAnyDict | None = None
             if error_data is not None:
@@ -510,6 +510,13 @@ class FlextCommands:
                     for k, v in error_data.items()
                     if isinstance(v, (str, int, float, bool, type(None)))
                 }
+
+            # Include error_code in metadata if provided
+            if error_code is not None:
+                if metadata is None:
+                    metadata = {}
+                metadata["error_code"] = error_code
+
             return cls(error=error, metadata=metadata)
 
     # =============================================================================
@@ -1033,8 +1040,8 @@ class FlextCommands:
 # =============================================================================
 
 # Rebuild nested models to resolve forward references after import
-FlextCommands.Command.model_rebuild()
-FlextCommands.Query.model_rebuild()
+# FlextCommands.Command.model_rebuild()  # Disabled due to TAnyDict import issues
+# FlextCommands.Query.model_rebuild()    # Disabled due to TAnyDict import issues
 
 # Export API
 __all__ = ["FlextCommands"]

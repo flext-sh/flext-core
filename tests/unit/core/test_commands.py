@@ -262,10 +262,10 @@ class TestFlextCommandsCommand:
 
         # Attempt to modify the command directly should raise ValidationError
         with pytest.raises(ValidationError):
-            command.name = "changed"  # type: ignore[misc] # Intentional immutability test
+            command.name = "changed"
 
         with pytest.raises(ValidationError):
-            command.value = 100  # type: ignore[misc] # Intentional immutability test
+            command.value = 100
 
         # Verify values haven't changed
         assert command.name == original_name
@@ -1033,7 +1033,7 @@ class TestFlextCommandsDecorators:
     def test_command_handler_decorator(self) -> None:
         """Test command handler decorator."""
 
-        @FlextCommands.Decorators.command_handler(SampleCommand)  # type: ignore[arg-type] # Generic decorator pattern
+        @FlextCommands.Decorators.command_handler(SampleCommand)
         def handle_test_command(command: SampleCommand) -> FlextResult[str]:
             return FlextResult.ok(f"Decorated: {command.name}")
 
@@ -1052,7 +1052,7 @@ class TestFlextCommandsDecorators:
     def test_command_handler_decorator_with_handler_instance(self) -> None:
         """Test command handler decorator handler instance."""
 
-        @FlextCommands.Decorators.command_handler(SampleCommand)  # type: ignore[arg-type] # Generic decorator pattern
+        @FlextCommands.Decorators.command_handler(SampleCommand)
         def handle_test_command(command: SampleCommand) -> FlextResult[str]:
             return FlextResult.ok(f"Decorated: {command.name}")
 
@@ -1068,7 +1068,7 @@ class TestFlextCommandsDecorators:
     def test_command_handler_decorator_non_result_return(self) -> None:
         """Test command handler decorator with non-FlextResult return."""
 
-        @FlextCommands.Decorators.command_handler(SampleCommand)  # type: ignore[arg-type] # Generic decorator pattern
+        @FlextCommands.Decorators.command_handler(SampleCommand)
         def handle_test_command(command: SampleCommand) -> str:
             return f"Simple: {command.name}"
 
@@ -1183,7 +1183,7 @@ class TestFlextCommandsQuery:
         query = SampleQuery(search_term="test")
 
         with pytest.raises((ValidationError, AttributeError)):
-            query.search_term = "changed"  # type: ignore[misc] # Intentional immutability test
+            query.search_term = "changed"
 
     def test_query_mixin_methods(self) -> None:
         """Test query mixin methods availability."""

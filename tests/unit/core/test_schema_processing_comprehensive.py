@@ -209,7 +209,7 @@ class TestBaseEntry:
         from pydantic_core import ValidationError
 
         with pytest.raises(ValidationError, match="Instance is frozen"):
-            entry.entry_type = "new_type"  # type: ignore[misc] # Intentional immutability test
+            entry.entry_type = "new_type"
 
 
 class TestConfigAttributeValidator:

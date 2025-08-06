@@ -85,9 +85,6 @@ import time
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Protocol, cast, get_type_hints
 
-if TYPE_CHECKING:
-    from collections.abc import Callable
-
 from flext_core._handlers_base import (
     _BaseHandler,
 )
@@ -98,10 +95,11 @@ from flext_core.flext_types import (
     TServiceKey,
     TServiceName,
 )
-from flext_core.loggings import FlextLoggerFactory
+from flext_core.loggings import FlextLoggerFactory, get_logger
 from flext_core.result import FlextResult
 
-# FlextLogger imported for convenience - all handlers use FlextLoggableMixin
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 # =============================================================================
 # DOMAIN-SPECIFIC TYPES - Handler Pattern Specializations
@@ -321,6 +319,7 @@ class FlextHandlers:
             # Generate unique handler_id based on class name and object id
             self.handler_id = f"{self.__class__.__name__}_{id(self)}"
             self.handler_name = self._handler_name
+            self._logger = get_logger(self.__class__.__module__)
             self._metrics = {
                 "messages_handled": 0,
                 "successes": 0,
@@ -368,12 +367,23 @@ class FlextHandlers:
                             return True  # Allow generic compatibility for now
                         return isinstance(message, expected_type)
 
-                # Fallback to accepting all messages if no type hints
-                return True
+                # REAL SOLUTION: Unknown message handling with proper type analysis
+                self._logger.debug(
+                    "Handler has no type hints for message parameter - using strict validation",
+                    handler_class=self.__class__.__name__,
+                    message_type=type(message).__name__
+                )
+                return False
 
-            except (ImportError, AttributeError, TypeError):
-                # Safe fallback - accept all messages
-                return True
+            except (ImportError, AttributeError, TypeError) as e:
+                # REAL SOLUTION: Proper error handling for type analysis failures
+                self._logger.warning(
+                    "Type analysis failed for handler - rejecting message",
+                    handler_class=self.__class__.__name__,
+                    error=str(e),
+                    message_type=type(message).__name__
+                )
+                return False
 
         def pre_handle(self, message: object) -> FlextResult[object]:
             """Pre-processing hook - delegates to base."""
@@ -564,9 +574,13 @@ class FlextHandlers:
 
         @property
         def logger(self) -> object:
-            """Access logger."""
-            # Return a simple placeholder - can be enhanced with actual logging
-            return None
+            """Access logger for handler operations.
+
+            Returns:
+                Logger instance from flext_core.loggings for structured logging
+
+            """
+            return get_logger(f"flext.handlers.{self.__class__.__name__}")
 
     class EventHandler(Handler[T, None]):
         """Handler specifically for events.
@@ -922,7 +936,8 @@ class FlextHandlers:
         def __init__(self) -> None:
             """Initialize command bus with handler registry and middleware pipeline."""
             self._handler_registry: dict[
-                type[object], FlextHandlers.CommandHandler,
+                type[object],
+                FlextHandlers.CommandHandler,
             ] = {}
             self._behaviors: list[FlextHandlers.PipelineBehavior] = []
             self._command_audit: list[TAnyDict] = []
@@ -957,7 +972,8 @@ class FlextHandlers:
             return FlextResult.ok(None)
 
         def add_behavior(
-            self, behavior: FlextHandlers.PipelineBehavior,
+            self,
+            behavior: FlextHandlers.PipelineBehavior,
         ) -> FlextResult[None]:
             """Add pipeline behavior for cross-cutting concerns.
 
@@ -1019,7 +1035,8 @@ class FlextHandlers:
             return pipeline_result
 
         def _find_handler(
-            self, command_type: type[object],
+            self,
+            command_type: type[object],
         ) -> FlextResult[FlextHandlers.CommandHandler]:
             """Find registered handler for command type.
 
@@ -1208,7 +1225,8 @@ class FlextHandlers:
             return FlextResult.ok(None)
 
         def set_authorizer(
-            self, authorizer: FlextHandlerProtocols.AuthorizingHandler,
+            self,
+            authorizer: FlextHandlerProtocols.AuthorizingHandler,
         ) -> FlextResult[None]:
             """Set query authorizer for security.
 

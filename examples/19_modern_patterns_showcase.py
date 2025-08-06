@@ -160,7 +160,9 @@ class Product(FlextEntity):
         # Validate price
         price_validation = self.price.validate_business_rules()
         if price_validation.is_failure:
-            return FlextResult.fail(f"Price validation failed: {price_validation.error}")
+            return FlextResult.fail(
+                f"Price validation failed: {price_validation.error}"
+            )
 
         return FlextResult.ok(None)
 
@@ -186,7 +188,9 @@ class OrderItem(FlextValueObject):
         # Validate unit price
         price_validation = self.unit_price.validate_business_rules()
         if price_validation.is_failure:
-            return FlextResult.fail(f"Unit price validation failed: {price_validation.error}")
+            return FlextResult.fail(
+                f"Unit price validation failed: {price_validation.error}"
+            )
 
         return FlextResult.ok(None)
 
@@ -255,7 +259,9 @@ class Order(FlextEntity):
         for i, item in enumerate(self.items):
             item_validation = item.validate_business_rules()
             if item_validation.is_failure:
-                return FlextResult.fail(f"Item {i + 1} validation failed: {item_validation.error}")
+                return FlextResult.fail(
+                    f"Item {i + 1} validation failed: {item_validation.error}"
+                )
 
         # Validate total is consistent
         calculated_total = self._calculate_total(self.items)
@@ -328,12 +334,14 @@ def create_customer(name: str, email_address: str) -> FlextResult[Customer]:
         lambda e: e.validate_business_rules().map(lambda _: e)
     )
 
-    return email_result.map(lambda email: Customer(
-        id=FlextUtilities.generate_entity_id(),
-        name=name,
-        email_address=email,
-        age=Age(value=25)  # Default age
-    ))
+    return email_result.map(
+        lambda email: Customer(
+            id=FlextUtilities.generate_entity_id(),
+            name=name,
+            email_address=email,
+            age=Age(value=25),  # Default age
+        )
+    )
 
 
 def create_product(
@@ -353,7 +361,7 @@ def create_product(
             name=name,
             price=price,
             stock_quantity=stock,
-            category=category
+            category=category,
         )
     )
 
@@ -371,7 +379,9 @@ class OrderProcessingService:
         self.payment = PaymentService()
         self.notifications = NotificationService()
 
-    def process_order(self, customer_id: str, order_data: dict[str, object]) -> FlextResult[Order]:
+    def process_order(
+        self, customer_id: str, order_data: dict[str, object]
+    ) -> FlextResult[Order]:
         """Process complete order with automatic error handling.
 
         Traditional approach would require 50+ lines of try/catch boilerplate.
@@ -387,9 +397,13 @@ class OrderProcessingService:
             .tap(self._log_success)
         )
 
-    def _create_order(self, customer_id: str, order_data: dict[str, object]) -> FlextResult[Order]:  # noqa: PLR0911
+    def _create_order(
+        self, customer_id: str, order_data: dict[str, object]
+    ) -> FlextResult[Order]:
         """Create order from raw data."""
-        order = Order(id=FlextUtilities.generate_entity_id(), customer_id=customer_id, items=[])
+        order = Order(
+            id=FlextUtilities.generate_entity_id(), customer_id=customer_id, items=[]
+        )
 
         # Add items to order
         items_data = order_data.get("items", [])
@@ -490,7 +504,7 @@ class OrderProcessingService:
 # =============================================================================
 
 
-def demonstrate_modern_patterns() -> None:  # noqa: PLR0915
+def demonstrate_modern_patterns() -> None:
     """Demonstrate the power of modern FLEXT patterns."""
     print("🚀 FLEXT Modern Patterns Showcase")
     print("=" * 50)
@@ -529,7 +543,9 @@ def demonstrate_modern_patterns() -> None:  # noqa: PLR0915
             container.register(key, product)
             print(f"✅ Product created: {product.name} - {product.price}")
         else:
-            print(f"❌ Product creation failed: {product_result.error or 'No data returned'}")
+            print(
+                f"❌ Product creation failed: {product_result.error or 'No data returned'}"
+            )
 
     # Process order (railway-oriented programming)
     print("\n🔄 Processing Order...")
@@ -554,7 +570,9 @@ def demonstrate_modern_patterns() -> None:  # noqa: PLR0915
         print("❌ No products available for order")
         return
 
-    order_data: dict[str, object] = {"items": [{"product_id": laptop_id, "quantity": 1}]}
+    order_data: dict[str, object] = {
+        "items": [{"product_id": laptop_id, "quantity": 1}]
+    }
 
     # Single call processes entire order with automatic error handling!
     order_result = order_service.process_order(customer.id, order_data)

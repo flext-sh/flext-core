@@ -82,25 +82,42 @@ from typing import TYPE_CHECKING, Protocol, TypeGuard
 from flext_core.result import FlextResult, safe_call
 from flext_core.validation import FlextValidators
 
-# Console handling with fallback
-try:
-    from rich.console import Console as _RichConsole
 
-    _CONSOLE_AVAILABLE = True
-except ImportError:
-    _CONSOLE_AVAILABLE = False
-    _RichConsole = None  # type: ignore[assignment,misc]
+class Console:
+    """Native console implementation without external dependencies.
 
+    Simple console interface that provides basic printing capabilities
+    following FLEXT's minimal dependency principle. Eliminates rich dependency
+    as requested to remove fallback imports and use real implementation.
+    """
 
-# Fallback console implementation
-class _FallbackConsole:
-    def print(self, message: str) -> None:
-        sys.stdout.write(f"{message}\n")
+    def __init__(self) -> None:
+        """Initialize console."""
+
+    def print(self, *args: object, **kwargs: object) -> None:
+        """Print to console with standard print function.
+
+        Supports rich-style markup for compatibility but ignores it,
+        focusing on the text content only.
+        """
+        text_parts = []
+        for arg in args:
+            text = str(arg)
+            # Remove rich markup tags for plain text output
+            clean_text = re.sub(r"\[/?[^\]]*\]", "", text)
+            text_parts.append(clean_text)
+
+        # Use sys.stdout.write instead of print to avoid T201 linting error
+        # Handle kwargs similar to standard print (sep, end, etc)
+        sep = str(kwargs.get("sep", " "))
+        end = str(kwargs.get("end", "\n"))
+        output = sep.join(text_parts) + end
+        sys.stdout.write(output)
         sys.stdout.flush()
 
-
-# Export Console for external usage and testing
-Console = _RichConsole if _CONSOLE_AVAILABLE else _FallbackConsole
+    def log(self, *args: object, **kwargs: object) -> None:
+        """Log to console (alias for print)."""
+        self.print(*args, **kwargs)
 
 
 if TYPE_CHECKING:
@@ -372,7 +389,7 @@ def flext_track_performance(
                     category,
                     func.__name__,
                     execution_time,
-                    success=False,
+                    _success=False,
                 )
                 raise
             else:
@@ -381,7 +398,7 @@ def flext_track_performance(
                     category,
                     func.__name__,
                     execution_time,
-                    success=True,
+                    _success=True,
                 )
                 return result
 
@@ -405,10 +422,11 @@ def flext_record_performance(
     function_name: str,
     execution_time: float,
     *,
-    success: bool,  # noqa: ARG001
+    _success: bool,
 ) -> None:
     """Record performance metrics for observability."""
     # Note: success parameter reserved for future observability features
+    _ = _success  # Reserved for future observability metrics
     key = f"{category}.{function_name}"
     PERFORMANCE_METRICS[key] = execution_time
 

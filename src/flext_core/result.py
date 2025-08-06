@@ -98,15 +98,11 @@ from flext_core.exceptions import FlextOperationError
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    # Import old types for backward compatibility during migration
     from flext_core.flext_types import TFactory
 
 # Local type definitions for runtime use
 T = TypeVar("T")
 U = TypeVar("U")
-
-# Modern type aliases using new system (migration in progress)
-# Factory = FlextTypes.Core.Factory[T]  # Commented until types module is fixed
 
 
 # =============================================================================
@@ -215,7 +211,9 @@ class FlextResult[T]:
             # Apply function to data, even if it's None
             # None is a valid value for successful results
             # Type system guarantees that for success results, _data is of type T
-            result = func(self._data) if self._data is not None else func(None)  # type: ignore[arg-type]
+            # Apply function to data - type system guarantees _data is T for success
+            # Cast is safe here because for successful results, _data must be T
+            result = func(cast("T", self._data))
             return FlextResult.ok(result)
         except (ImportError, MemoryError) as e:
             # Handle specific system and runtime exceptions
@@ -296,8 +294,18 @@ class FlextResult[T]:
             try:
                 return hash((True, self._data))
             except TypeError:
-                # If data is not hashable, use id() as fallback
-                return hash((True, id(self._data)))
+                # REAL SOLUTION: Proper handling of non-hashable data
+                # Use type-safe approach based on data characteristics
+                if hasattr(self._data, "__dict__"):
+                    # For objects with __dict__, hash their attributes
+                    try:
+                        attrs = tuple(sorted(self._data.__dict__.items()))
+                        return hash((True, attrs))
+                    except (TypeError, AttributeError):
+                        pass
+
+                # For complex objects, use a combination of type and memory ID
+                return hash((True, type(self._data).__name__, id(self._data)))
         else:
             # For failure, hash the error message and code
             return hash((False, self._error, self._error_code))

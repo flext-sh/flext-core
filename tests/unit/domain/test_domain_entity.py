@@ -322,7 +322,7 @@ class TestFlextEntityValidation:
         """Test integration with Pydantic field validation."""
         # Test that Pydantic validation works as expected
         with pytest.raises(ValidationError):
-            ConcreteFlextEntity()  # type: ignore[call-arg] # Missing required fields intentional test
+            ConcreteFlextEntity()
 
         # Test successful creation with valid data
         entity = ConcreteFlextEntity(id="test-id", name="Valid Name")

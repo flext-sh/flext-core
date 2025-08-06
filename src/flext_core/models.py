@@ -35,7 +35,6 @@ from datetime import UTC, datetime
 from enum import StrEnum
 from typing import ClassVar, NotRequired, Self, TypedDict
 
-# Removed Any import - using object instead for type safety
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from flext_core.exceptions import FlextValidationError
@@ -227,8 +226,12 @@ class FlextEntity(FlextModel, ABC):
         description="Entity version for optimistic locking",
     )
 
-    # Domain events (placeholder for event sourcing)
-    domain_events: list[dict[str, object]] = Field(default_factory=list, exclude=True)
+    # Domain events for event sourcing pattern
+    domain_events: list[dict[str, object]] = Field(
+        default_factory=list,
+        exclude=True,
+        description="Domain events collected during entity operations for event sourcing",
+    )
 
     @field_validator("id")
     @classmethod
@@ -420,7 +423,8 @@ class FlextFactory:
         try:
             # Handle model class
             if isinstance(factory, type) and issubclass(factory, FlextModel):
-                instance = factory(**kwargs)  # type: ignore[arg-type]
+                # Use model_validate for type-safe construction with dict
+                instance = factory.model_validate(kwargs)
                 validation_result = instance.validate_business_rules()
                 if validation_result.is_failure:
                     return FlextResult.fail(
@@ -431,6 +435,7 @@ class FlextFactory:
             # Handle callable factory function
             if callable(factory):
                 try:
+                    # REAL SOLUTION: Type-safe factory function execution
                     instance = factory(**kwargs)
                     return FlextResult.ok(instance)
                 except Exception as e:
@@ -457,7 +462,8 @@ class FlextFactory:
 
         """
         try:
-            instance = model_class(**kwargs)  # type: ignore[arg-type]
+            # Use model_validate for type-safe construction
+            instance = model_class.model_validate(kwargs)
             validation_result = instance.validate_business_rules()
             if validation_result.is_failure:
                 return FlextResult.fail(
@@ -842,12 +848,14 @@ class FlextSingerStreamModel(FlextModel):
 # Legacy factory functions (simplified)
 def create_database_model(**kwargs: object) -> FlextDatabaseModel:
     """Legacy factory - use FlextFactory.create_model instead."""
-    return FlextDatabaseModel(**kwargs)  # type: ignore[arg-type]
+    # Cast kwargs for Pydantic compatibility
+    return FlextDatabaseModel.model_validate(kwargs)
 
 
 def create_oracle_model(**kwargs: object) -> FlextOracleModel:
     """Legacy factory - use FlextFactory.create_model instead."""
-    return FlextOracleModel(**kwargs)  # type: ignore[arg-type]
+    # Cast kwargs for Pydantic compatibility
+    return FlextOracleModel.model_validate(kwargs)
 
 
 def create_operation_model(
@@ -892,7 +900,9 @@ def create_singer_stream_model(
     **kwargs: object,
 ) -> FlextSingerStreamModel:
     """Legacy factory - use FlextFactory.create_model instead."""
-    return FlextSingerStreamModel(stream_name=stream_name, tap_name=tap_name, **kwargs)  # type: ignore[arg-type]
+    # Use model_validate with complete data dict
+    model_data = {"stream_name": stream_name, "tap_name": tap_name, **kwargs}
+    return FlextSingerStreamModel.model_validate(model_data)
 
 
 # Legacy utility functions

@@ -984,15 +984,15 @@ class TestFlextLogContextManager:
         """Test context manager properly cleans up even when exception occurs."""
         logger_instance.set_context({"base": "context"})
 
+        def _raise_test_exception() -> None:
+            """Helper function to raise test exception."""
+            msg = "Test exception"
+            raise ValueError(msg)
+
         try:
             with FlextLogContextManager(logger_instance, temp="value"):
                 logger_instance.info("Before exception")
-
-                def raise_test_exception() -> None:
-                    msg = "Test exception"
-                    raise ValueError(msg)  # noqa: TRY301
-
-                raise_test_exception()
+                _raise_test_exception()
         except ValueError:
             pass
 

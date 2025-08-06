@@ -202,7 +202,7 @@ class FlextSemanticConstants:
         # Authentication
         EMAIL_PATTERN = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
         USERNAME_PATTERN = r"^[a-zA-Z0-9_-]{3,32}$"
-        PASSWORD_PATTERN = (  # nosec B105
+        PASSWORD_PATTERN = (  # nosec B105  # noqa: S105
             r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"  # noqa: S105
         )
 

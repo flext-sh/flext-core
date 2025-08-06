@@ -147,14 +147,14 @@ def process_user_data_traditional(data: dict[str, object]) -> dict[str, object]:
                 "age": data["age"],
             }
             # Simulate user creation logic
-            user_id = f"user_{random.randint(1000, 9999)}"  # noqa: S311
+            user_id = f"user_{random.randint(1000, 9999)}"
         except Exception as e:
             msg = f"User creation failed: {e}"
             raise RuntimeError(msg) from e
 
         # Database operations with exception handling
         try:
-            if random.random() < FAILURE_RATE:  # noqa: S311
+            if random.random() < FAILURE_RATE:
                 _raise_database_timeout()
             # Simulate save
             print(f"Saved user: {user_id}")
@@ -164,7 +164,7 @@ def process_user_data_traditional(data: dict[str, object]) -> dict[str, object]:
 
         # Email with nested exception handling
         try:
-            if random.random() < FAILURE_RATE:  # noqa: S311
+            if random.random() < FAILURE_RATE:
                 _raise_email_service_error()
             print(f"Welcome email sent to: {data['email']}")
         except RuntimeError as e:
@@ -214,7 +214,7 @@ def save_user_to_database(user: SharedUser) -> FlextResult[TEntityId]:
     """🚀 ZERO-BOILERPLATE database simulation using FlextResult."""
     return (
         FlextResult.ok(user.id)
-        .filter(lambda _: random.random() >= FAILURE_RATE, "Database timeout")  # noqa: S311
+        .filter(lambda _: random.random() >= FAILURE_RATE, "Database timeout")
         .tap(lambda uid: print(f"✅ Saved: {uid}"))
     )
 
@@ -222,7 +222,7 @@ def save_user_to_database(user: SharedUser) -> FlextResult[TEntityId]:
 def send_welcome_email(user: SharedUser) -> FlextResult[bool]:
     """🚀 ONE-LINE email sending with built-in validation."""
     return (
-        FlextResult.ok(True)  # noqa: FBT003
+        FlextResult.ok(True)
         .filter(
             lambda _: "@invalid.com" not in user.email_address.email, "Invalid domain"
         )
@@ -239,8 +239,12 @@ def process_user_registration(data: TUserData) -> FlextResult[dict[str, object]]
         .flat_map(
             lambda user: FlextResult.combine(
                 save_user_to_database(user).map(lambda x: cast("object", x)),
-                send_welcome_email(user).map(lambda x: cast("object", x))
-            ).map(lambda _: cast("dict[str, object]", {"user_id": user.id, "status": "registered"}))
+                send_welcome_email(user).map(lambda x: cast("object", x)),
+            ).map(
+                lambda _: cast(
+                    "dict[str, object]", {"user_id": user.id, "status": "registered"}
+                )
+            )
         )
         .tap(lambda _: print("🎉 Registration completed!"))
     )
@@ -275,7 +279,7 @@ def process_with_retry(
     for attempt in range(1, max_retries + 1):
         result = process_user_registration(data)
         if result.success:
-            return result.tap(lambda _: print(f"✅ Succeeded on attempt {attempt + 1}"))  # noqa: B023
+            return result.tap(lambda _: print(f"✅ Succeeded on attempt {attempt + 1}"))
     error_result: TAnyObject = {
         "status": "failed_after_retries",
         "error": "All attempts failed",

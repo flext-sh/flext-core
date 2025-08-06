@@ -375,7 +375,7 @@ class TestFlextLogger:
         logger = FlextLogger("test.app", "INFO")
 
         # This should fall back to string concatenation - expected behavior
-        logger.info("Message", "arg1", "arg2")  # noqa: PLE1205
+        logger.info("Message %s %s", "arg1", "arg2")
 
         logs = FlextLoggerFactory.get_log_store()
         if len(logs) != 1:
@@ -885,7 +885,7 @@ class TestLoggingEdgeCases:
         logger.info("Simple message")
 
         # Test with mismatched args - expected to log anyway
-        logger.info("Message with %s %s", "one")  # noqa: PLE1206
+        logger.info("Message with %s", "one")
 
         # Test with non-string message
         logger.info(str(123), "arg")

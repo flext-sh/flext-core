@@ -47,6 +47,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import contextlib
+import inspect
 from typing import TYPE_CHECKING, ClassVar
 
 if TYPE_CHECKING:
@@ -257,7 +258,6 @@ class FlextMixinDelegator:
         try:
             delegated_method.__name__ = method_name
             delegated_method.__doc__ = method.__doc__
-            import inspect  # noqa: PLC0415
 
             # Use type ignore for dynamic attribute assignment on function object
             delegated_method.__signature__ = inspect.signature(method)  # type: ignore[attr-defined]

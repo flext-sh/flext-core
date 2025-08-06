@@ -143,7 +143,7 @@ class DatabaseConnection:
 
         # Demo credentials - in production use secure authentication
         demo_username = "admin"
-        demo_password = "secret"  # noqa: S105
+        demo_password = "secret"
         if username != demo_username or password != demo_password:
             msg = "Invalid database credentials"
             raise FlextAuthenticationError(
@@ -164,7 +164,7 @@ class DatabaseConnection:
 class UserValidationService:
     """User validation service demonstrating validation exceptions."""
 
-    def validate_user_data(self, data: dict[str, object]) -> FlextResult[User]:  # noqa: PLR0915
+    def validate_user_data(self, data: dict[str, object]) -> FlextResult[User]:
         """Validate user data and create a User instance.
 
         Raises validation and type errors for invalid input.
@@ -1002,7 +1002,7 @@ def demonstrate_configuration_exceptions() -> None:
     print("✅ Configuration exceptions demonstration completed")
 
 
-def demonstrate_connection_exceptions() -> None:  # noqa: PLR0915
+def demonstrate_connection_exceptions() -> None:
     """Demonstrate connection and timeout exceptions."""
     print("\n" + "=" * 80)
     print("🌐 CONNECTION EXCEPTIONS - NETWORK AND TIMEOUTS")
@@ -1078,7 +1078,7 @@ def demonstrate_connection_exceptions() -> None:  # noqa: PLR0915
     print("✅ Connection exceptions demonstration completed")
 
 
-def demonstrate_exception_patterns() -> None:  # noqa: PLR0915
+def demonstrate_exception_patterns() -> None:
     """Demonstrate enterprise exception handling patterns."""
     print("\n" + "=" * 80)
     print("🏢 ENTERPRISE EXCEPTION PATTERNS")

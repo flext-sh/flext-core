@@ -264,7 +264,7 @@ class TestFlextDomainValueObject:
         # Test equality
         assert vo1 == vo2  # Same attributes
         assert vo1 != vo3  # Different attributes
-        assert vo1 != "not_a_vo"  # type: ignore[comparison-overlap]
+        assert vo1 != "not_a_vo"
 
         # Test hash (should be same for equal objects)
         assert hash(vo1) == hash(vo2)
@@ -276,7 +276,7 @@ class TestFlextDomainValueObject:
 
         # Should not be able to modify
         with pytest.raises((AttributeError, ValueError)):
-            vo.metadata = {"name": "modified"}  # type: ignore[misc]  # Testing immutability
+            vo.metadata = {"name": "modified"}
 
 
 @pytest.mark.unit

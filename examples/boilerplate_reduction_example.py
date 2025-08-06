@@ -154,7 +154,7 @@ def demonstrate_boilerplate_reduction() -> None:
         host="localhost",
         port=1521,
         username="oracle",
-        password="secret",  # noqa: S106
+        password="secret",
     )
 
     # Manual validation and error handling
@@ -176,7 +176,7 @@ def demonstrate_boilerplate_reduction() -> None:
         host="localhost",
         port=1521,
         username="oracle",
-        password="secret",  # noqa: S106
+        password="secret",
     )
 
     # Automatic validation and error handling
@@ -278,7 +278,7 @@ def demonstrate_ldap_service() -> None:
         host="ldap.example.com",
         port=389,
         bind_dn="cn=admin,dc=example,dc=com",
-        password="admin123",  # noqa: S106
+        password="admin123",
         base_dn="dc=example,dc=com",
         use_ssl=False,
     )

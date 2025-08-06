@@ -20,9 +20,17 @@ from flext_core.fields import (
     flext_create_integer_field,
     flext_create_string_field,
 )
+from flext_core.flext_types import TAnyDict
 
 # Constants
 EXPECTED_BULK_SIZE = 2
+
+# Rebuild Pydantic models to resolve forward references
+# Make TAnyDict available in the global namespace for model_rebuild()
+globals()["TAnyDict"] = TAnyDict
+
+# Rebuild field-related models if needed
+# FlextFields models don't seem to need rebuild based on error, but keeping ready
 EXPECTED_DATA_COUNT = 3
 
 
@@ -104,7 +112,7 @@ class TestFlextFieldCore:
 
         # Should not be able to modify frozen model
         with pytest.raises((AttributeError, ValidationError)):
-            field.field_name = "new_name"  # type: ignore[misc] # Intentional read-only property test
+            field.field_name = "new_name"
 
     def test_field_pattern_validation(self) -> None:
         """Test regex pattern validation."""
@@ -545,7 +553,7 @@ class TestFlextFieldCore:
             raise AssertionError(f"Expected approximately {math.pi}, got {pi_value}")
         # Test float deserialization from string - expect exact value
         pi_str_result = float_field.deserialize_value("3.14")
-        expected_314 = math.pi
+        expected_314 = 3.14  # Compare with actual value, not math.pi
         if pi_str_result != expected_314:
             raise AssertionError(f"Expected {expected_314}, got {pi_str_result}")
         if float_field.deserialize_value(42) != 42.0:
@@ -783,7 +791,7 @@ class TestFlextFieldMetadata:
         metadata = FlextFieldMetadata(field_id="immutable")
 
         with pytest.raises((AttributeError, ValidationError)):
-            metadata.field_id = "new_id"  # type: ignore[misc] # Intentional immutability test
+            metadata.field_id = "new_id"
 
 
 class TestFlextFieldRegistry:

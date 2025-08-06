@@ -112,7 +112,7 @@ class TestFlextFieldCoreInteger:
 
         # Field doesn't have serialize_value method directly - using delegated method
         # This test needs to be adjusted based on actual field API
-        # result = field.serialize_value(42)  # noqa: ERA001
+        # result = field.serialize_value(42)
 
     def test_metadata_creation_with_defaults(self) -> None:
         """Test metadata creation with default values."""

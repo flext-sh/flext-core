@@ -503,7 +503,7 @@ class FlextError(Exception):
             - Context restoration with validation
             - Timestamp preservation for distributed tracing
             - Backward compatibility with different serialization versions
-            - Fallback to base FlextError for unknown types
+            - Strict type resolution without fallback behavior
 
         Args:
             error_dict: Serialized error dictionary from to_dict()
@@ -553,7 +553,7 @@ class FlextError(Exception):
                     error_code=error_code,
                     context=context,
                 )
-            # Fallback to base FlextError
+            # Use base FlextError as the final constructor
             instance = cls(message=message, error_code=error_code, context=context)
             # Preserve original timestamp if available
             if timestamp and isinstance(timestamp, (int, float)):
@@ -561,20 +561,18 @@ class FlextError(Exception):
             return instance
 
         except Exception as e:
-            # Fallback: create base FlextError with enhanced context
-            fallback_context = {
+            # REAL SOLUTION: Proper reconstruction error handling
+            enhanced_context = {
                 **context,
                 "original_type": error_type,
                 "reconstruction_error": str(e),
             }
-            instance = cls(
-                message=f"[{error_type}] {message}",
-                error_code=error_code,
-                context=fallback_context,
-            )
-            if timestamp and isinstance(timestamp, (int, float)):
-                instance.timestamp = float(timestamp)
-            return instance
+            error_msg = f"Failed to reconstruct {error_type}: {e}"
+            raise FlextValidationError(
+                error_msg,
+                validation_details={"original_type": error_type},
+                context=enhanced_context,
+            ) from e
 
     @staticmethod
     def _resolve_exception_class(error_type: str) -> type[FlextError]:
@@ -584,7 +582,7 @@ class FlextError(Exception):
             error_type: Exception class name
 
         Returns:
-            Exception class or FlextError as fallback
+            Exception class with strict type resolution
 
         """
         # Map of known exception types (will be populated at module level)
