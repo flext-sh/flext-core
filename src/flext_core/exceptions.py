@@ -1146,5 +1146,7 @@ __all__ = [
     "FlextTypeError",
     "FlextValidationError",
     "clear_exception_metrics",
+    "create_context_exception_factory",
+    "create_module_exception_classes",
     "get_exception_metrics",
 ]

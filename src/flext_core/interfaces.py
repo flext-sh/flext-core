@@ -482,25 +482,64 @@ class FlextUnitOfWork(ABC):
 
 
 # =============================================================================
-# PLUGIN INTERFACES
+# PLUGIN INTERFACES - PURE ABSTRACTIONS
 # =============================================================================
+
+# Core Plugin Abstractions - These are pure interfaces with no implementation.
+# Concrete implementations belong in flext-plugin or specialized projects.
+# This separation ensures clean architecture boundaries.
 
 
 class FlextPlugin(ABC):
-    """Base interface for plugins.
+    """Pure abstract interface for all FLEXT plugins.
 
-    Args:
-        **kwargs: Additional keyword arguments
+    This is the foundational plugin interface that all plugins in the FLEXT
+    ecosystem must implement. It defines the basic lifecycle and metadata
+    requirements without any concrete implementation details.
 
+    Plugin Architecture Principles:
+        - Pure abstraction: No implementation logic in this interface
+        - Lifecycle management: Initialize and shutdown hooks
+        - Metadata provision: Name and version for registry
+        - Context injection: Receive services via context
+        - Error handling: All operations return FlextResult
+
+    Implementation Guidelines:
+        - Concrete plugins should extend this interface
+        - Use flext-plugin for domain entities and registries
+        - Specialized plugins (Meltano, Oracle) extend with additional methods
+        - Never mix concrete logic in abstract interfaces
+
+    Example Implementation:
+        class MyDataPlugin(FlextPlugin):
+            def __init__(self):
+                self._name = "my-data-plugin"
+                self._version = "1.0.0"
+
+            @property
+            def name(self) -> str:
+                return self._name
+
+            @property
+            def version(self) -> str:
+                return self._version
+
+            def initialize(self, context: FlextPluginContext) -> FlextResult[None]:
+                # Plugin initialization logic
+                return FlextResult.ok(None)
+
+            def shutdown(self) -> FlextResult[None]:
+                # Cleanup logic
+                return FlextResult.ok(None)
     """
 
     @property
     @abstractmethod
     def name(self) -> str:
-        """Plugin name.
+        """Get the unique plugin name.
 
         Returns:
-            Unique plugin name
+            Unique plugin identifier used for registration and discovery
 
         """
         ...
@@ -508,33 +547,130 @@ class FlextPlugin(ABC):
     @property
     @abstractmethod
     def version(self) -> str:
-        """Plugin version.
+        """Get the plugin version.
 
         Returns:
-            Semantic version string
+            Semantic version string (e.g., "1.0.0")
 
         """
         ...
 
     @abstractmethod
     def initialize(self, context: FlextPluginContext) -> FlextResult[None]:
-        """Initialize plugin with context.
+        """Initialize plugin with provided context.
 
         Args:
-            context: Plugin context
+            context: Plugin context providing logger, config, and services
 
         Returns:
-            Result of initialization
+            FlextResult indicating success or initialization failure
 
         """
         ...
 
     @abstractmethod
     def shutdown(self) -> FlextResult[None]:
-        """Shutdown plugin cleanly.
+        """Shutdown plugin and release resources.
 
         Returns:
-            Result of shutdown
+            FlextResult indicating success or shutdown errors
+
+        """
+        ...
+
+
+class FlextExecutablePlugin(FlextPlugin):
+    """Abstract interface for plugins that can execute operations.
+
+    Extends the base plugin interface with execution capabilities.
+    This is for plugins that perform operations beyond initialization.
+    """
+
+    @abstractmethod
+    def execute(
+        self,
+        operation: str,
+        params: Mapping[str, object],
+    ) -> FlextResult[object]:
+        """Execute a plugin operation.
+
+        Args:
+            operation: Name of the operation to execute
+            params: Parameters for the operation
+
+        Returns:
+            FlextResult containing operation result or error
+
+        """
+        ...
+
+    @abstractmethod
+    def get_supported_operations(self) -> list[str]:
+        """Get list of supported operations.
+
+        Returns:
+            List of operation names this plugin can execute
+
+        """
+        ...
+
+
+class FlextDataPlugin(FlextPlugin):
+    """Abstract interface for data processing plugins.
+
+    Specialized plugin interface for data extraction, transformation,
+    and loading operations. Base for Singer taps and targets.
+    """
+
+    @abstractmethod
+    def validate_config(self, config: Mapping[str, object]) -> FlextResult[None]:
+        """Validate plugin configuration.
+
+        Args:
+            config: Configuration to validate
+
+        Returns:
+            FlextResult indicating validation success or errors
+
+        """
+        ...
+
+    @abstractmethod
+    def test_connection(self) -> FlextResult[None]:
+        """Test connection to data source/destination.
+
+        Returns:
+            FlextResult indicating connection success or failure
+
+        """
+        ...
+
+
+class FlextTransformPlugin(FlextPlugin):
+    """Abstract interface for data transformation plugins.
+
+    Plugin interface for DBT and other transformation frameworks.
+    """
+
+    @abstractmethod
+    def transform(self, data: object) -> FlextResult[object]:
+        """Transform input data.
+
+        Args:
+            data: Input data to transform
+
+        Returns:
+            FlextResult containing transformed data or error
+
+        """
+        ...
+
+    @abstractmethod
+    def get_schema(self) -> FlextResult[Mapping[str, object]]:
+        """Get transformation schema.
+
+        Returns:
+            FlextResult containing schema definition
 
         """
         ...
@@ -542,14 +678,18 @@ class FlextPlugin(ABC):
 
 @runtime_checkable
 class FlextPluginContext(Protocol):
-    """Protocol for plugin context."""
+    """Protocol for plugin runtime context.
+
+    Provides plugins with access to system services, configuration,
+    and logging. This is a protocol to allow flexible implementations.
+    """
 
     @property
     def logger(self) -> BoundLogger:
         """Get logger for plugin.
 
         Returns:
-            Logger for plugin
+            Structured logger bound to plugin context
 
         """
         ...
@@ -559,19 +699,106 @@ class FlextPluginContext(Protocol):
         """Get plugin configuration.
 
         Returns:
-            Plugin configuration
+            Plugin-specific configuration settings
 
         """
         ...
 
     def get_service(self, service_name: str) -> FlextResult[object]:
-        """Get service by name.
+        """Get service by name from container.
 
         Args:
-            service_name: Name of service
+            service_name: Name of service to retrieve
 
         Returns:
-            FlextResult with service or error
+            FlextResult with service instance or not found error
+
+        """
+        ...
+
+
+@runtime_checkable
+class FlextPluginRegistry(Protocol):
+    """Protocol for plugin registry operations.
+
+    Defines the contract for plugin registration and discovery.
+    Concrete implementations belong in flext-plugin.
+    """
+
+    def register(self, plugin: FlextPlugin) -> FlextResult[None]:
+        """Register a plugin.
+
+        Args:
+            plugin: Plugin instance to register
+
+        Returns:
+            FlextResult indicating registration success or failure
+
+        """
+        ...
+
+    def unregister(self, plugin_name: str) -> FlextResult[None]:
+        """Unregister a plugin by name.
+
+        Args:
+            plugin_name: Name of plugin to unregister
+
+        Returns:
+            FlextResult indicating success or not found error
+
+        """
+        ...
+
+    def get_plugin(self, plugin_name: str) -> FlextResult[FlextPlugin]:
+        """Get plugin by name.
+
+        Args:
+            plugin_name: Name of plugin to retrieve
+
+        Returns:
+            FlextResult containing plugin or not found error
+
+        """
+        ...
+
+    def list_plugins(self) -> list[str]:
+        """List all registered plugin names.
+
+        Returns:
+            List of registered plugin names
+
+        """
+        ...
+
+
+@runtime_checkable
+class FlextPluginLoader(Protocol):
+    """Protocol for plugin loading operations.
+
+    Defines the contract for dynamic plugin loading.
+    Concrete implementations belong in flext-plugin.
+    """
+
+    def load_plugin(self, plugin_path: str) -> FlextResult[FlextPlugin]:
+        """Load plugin from path.
+
+        Args:
+            plugin_path: Path to plugin module or package
+
+        Returns:
+            FlextResult containing loaded plugin or load error
+
+        """
+        ...
+
+    def discover_plugins(self, search_path: str) -> FlextResult[list[str]]:
+        """Discover available plugins in path.
+
+        Args:
+            search_path: Directory to search for plugins
+
+        Returns:
+            FlextResult containing list of discovered plugin paths
 
         """
         ...

@@ -541,7 +541,15 @@ class FlextLogger:
         }
 
         # Handle both string and enum inputs for level mapping
-        level_str = level.value if hasattr(level, "value") else str(level).upper()
+        try:
+            # Try to get value attribute first (for enums)
+            if hasattr(level, "value") and not isinstance(level, str):
+                level_str = level.value.upper()
+            else:
+                level_str = str(level).upper()
+        except AttributeError:
+            # Fallback to string conversion
+            level_str = str(level).upper()
         structlog_level = level_mapping.get(level_str, "info")
         log_method = getattr(self._structlog_logger, structlog_level)
 

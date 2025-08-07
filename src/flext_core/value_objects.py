@@ -93,7 +93,7 @@ from pydantic import BaseModel, ConfigDict
 from flext_core.exceptions import FlextValidationError
 from flext_core.fields import FlextFields
 from flext_core.flext_types import TAnyDict
-from flext_core.loggings import FlextLoggerFactory, get_logger
+from flext_core.loggings import FlextLoggerFactory
 from flext_core.mixins import FlextLoggableMixin, FlextValueObjectMixin
 from flext_core.payload import FlextPayload
 from flext_core.result import FlextResult

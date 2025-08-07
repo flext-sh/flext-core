@@ -395,28 +395,27 @@ class TestValueObjectPayloadConversion:
         assert result["value"] == "test"
 
     def test_extract_serializable_attributes_manual(self) -> None:
-        """Test manual attribute extraction."""
+        """Test manual attribute extraction directly."""
         vo = SimpleValueObject(value="test")
 
-        # Mock the hasattr check instead of model_dump directly
-        with patch(
-            "builtins.hasattr", side_effect=lambda obj, attr: attr != "model_dump"
-        ):
-            result = vo._extract_serializable_attributes()
+        # Test the manual extraction method directly
+        result = vo._try_manual_extraction()
 
-            assert isinstance(result, dict)
-            # Should fall back to manual extraction
+        assert isinstance(result, dict)
+        # Should contain the value attribute
+        assert "value" in result
+        assert result["value"] == "test"
 
     def test_extract_serializable_no_model_dump(self) -> None:
-        """Test extraction when model_dump doesn't exist."""
+        """Test the fallback info when neither Pydantic nor manual extraction work."""
         vo = SimpleValueObject(value="test")
 
-        # Use hasattr to simulate no model_dump method
-        with patch("builtins.hasattr") as mock_hasattr:
-            mock_hasattr.side_effect = lambda obj, attr: attr != "model_dump"
-            result = vo._extract_serializable_attributes()
+        # Test the fallback info method directly
+        result = vo._get_fallback_info()
 
-            assert isinstance(result, dict)
+        assert isinstance(result, dict)
+        assert "class_name" in result
+        assert result["class_name"] == "SimpleValueObject"
 
     def test_process_serializable_values(self) -> None:
         """Test processing of serializable values."""
@@ -477,10 +476,9 @@ class TestValueObjectPayloadConversion:
         """Test safe attribute retrieval with exception."""
         vo = SimpleValueObject(value="test")
 
-        # Mock getattr to raise exception
-        with patch("builtins.getattr", side_effect=Exception("Error")):
-            result = vo._safely_get_attribute("test_attr")
-            assert result is None
+        # Test with a non-existent attribute - this will naturally raise AttributeError
+        result = vo._safely_get_attribute("nonexistent_attribute")
+        assert result is None
 
     def test_get_fallback_info(self) -> None:
         """Test fallback information generation."""

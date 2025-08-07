@@ -64,6 +64,9 @@ K = TypeVar("K")
 V = TypeVar("V")
 E = TypeVar("E", bound=Exception)
 
+# Type alias for JSON-compatible dictionary
+JsonDict = dict[str, object]
+
 # =============================================================================
 # HARMONIZED FOUNDATION CLASSES - Single Source of Truth
 # =============================================================================
@@ -107,7 +110,7 @@ class FlextModel(BaseModel):
     )
 
     # Universal metadata for extensibility
-    metadata: dict[str, object] = Field(
+    metadata: JsonDict = Field(
         default_factory=dict,
         description="Model metadata for cross-project extensibility",
     )
@@ -126,11 +129,11 @@ class FlextModel(BaseModel):
         """
         return FlextResult.ok(None)
 
-    def to_dict(self) -> dict[str, object]:
+    def to_dict(self) -> JsonDict:
         """Convert to dictionary representation for serialization."""
         return self.model_dump()
 
-    def to_typed_dict(self) -> dict[str, object]:
+    def to_typed_dict(self) -> JsonDict:
         """Convert to typed dictionary excluding unset values."""
         return self.model_dump(exclude_unset=True)
 
@@ -247,7 +250,7 @@ class FlextEntity(FlextModel, ABC):
     version: int = Field(default=1, description="Entity version for optimistic locking")
 
     # Domain events for event sourcing
-    domain_events: list[dict[str, object]] = Field(default_factory=list, exclude=True)
+    domain_events: list[JsonDict] = Field(default_factory=list, exclude=True)
 
     def __hash__(self) -> int:
         """Hash based on entity ID (identity-based equality)."""
@@ -263,11 +266,11 @@ class FlextEntity(FlextModel, ABC):
         """Increment version for optimistic locking."""
         self.version += 1
 
-    def add_domain_event(self, event: dict[str, object]) -> None:
+    def add_domain_event(self, event: JsonDict) -> None:
         """Add domain event for event sourcing."""
         self.domain_events.append(event)
 
-    def clear_domain_events(self) -> list[dict[str, object]]:
+    def clear_domain_events(self) -> list[JsonDict]:
         """Clear and return domain events."""
         events = self.domain_events.copy()
         self.domain_events.clear()
@@ -345,7 +348,7 @@ class FlextTypes:
         type Factory[T] = Callable[[], T] | Callable[[object], T]
         type Transformer[T, R] = Callable[[T], R]
         type Validator[T] = Callable[[T], bool | str]
-        type Serializer[T] = Callable[[T], str | bytes | dict[str, object]]
+        type Serializer[T] = Callable[[T], str | bytes | JsonDict]
 
         # Result and error handling types
         type Result[T, E] = T | E
@@ -363,8 +366,9 @@ class FlextTypes:
         type MessageHandler[T] = Callable[[T], object]
 
         # Metadata and configuration types
-        type Metadata = dict[str, object]
-        type Settings = dict[str, object]
+        type JsonDict = dict[str, object]  # Standard JSON-compatible dictionary
+        type Metadata = JsonDict
+        type Settings = JsonDict
         type Configuration = Mapping[str, object]
 
     class Data:
@@ -377,16 +381,14 @@ class FlextTypes:
         type Credentials = dict[str, str]
 
         # Data processing types
-        type Record = dict[str, object]
-        type RecordBatch = Sequence[dict[str, object]]
-        type Schema = dict[str, object]
-        type Query = str | dict[str, object]
+        type Record = JsonDict
+        type RecordBatch = Sequence[JsonDict]
+        type Schema = JsonDict
+        type Query = str | JsonDict
 
         # Serialization types
-        type Serializable = (
-            dict[str, object] | list[object] | str | int | float | bool | None
-        )
-        type JsonData = dict[str, object] | list[object]
+        type Serializable = JsonDict | list[object] | str | int | float | bool | None
+        type JsonData = JsonDict | list[object]
 
     class Auth:
         """Authentication and authorization domain types."""
@@ -400,14 +402,14 @@ class FlextTypes:
 
         # Authentication types
         type AuthProvider = object  # Protocol-based
-        type AuthenticatedUser = dict[str, object]
+        type AuthenticatedUser = JsonDict
         type LoginCredentials = dict[str, str]
-        type AuthContext = dict[str, object]
+        type AuthContext = JsonDict
 
         # Authorization types
         type Permission = str
         type Role = str
-        type Policy = dict[str, object]
+        type Policy = JsonDict
 
     class Observability:
         """Monitoring and observability domain types."""
@@ -416,10 +418,10 @@ class FlextTypes:
         type Logger = object  # Protocol-based
         type LogLevel = str
         type LogMessage = str
-        type LogContext = dict[str, object]
+        type LogContext = JsonDict
 
         # Metrics types
-        type Metric = dict[str, object]
+        type Metric = JsonDict
         type MetricValue = int | float
         type Counter = int
         type Gauge = float

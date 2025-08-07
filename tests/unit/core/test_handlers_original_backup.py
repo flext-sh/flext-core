@@ -1,44 +1,18 @@
-"""Advanced tests for FlextHandlers - Refactored with modern pytest patterns.
-
-This module demonstrates complete refactoring using advanced pytest features:
-- Parametrized fixtures from conftest with TestCase structures
-- Factory patterns for handler creation and validation
-- Performance monitoring integration with tracemalloc
-- Property-based testing with Hypothesis strategies
-- Advanced mocking with pytest-mock integration
-- Integration tests with multiple fixture combinations
-
-Architectural Patterns Demonstrated:
-- Enterprise-grade parametrized testing with structured TestCase objects
-- Advanced fixture composition using conftest infrastructure
-- Handler pattern validation with business rule enforcement
-- Hypothesis property-based testing for edge case discovery
-- Mock factories for dependency isolation
-
-Usage of New Conftest Infrastructure:
-- test_builder: Fluent builder pattern for complex test data construction
-- assert_helpers: Advanced assertion helpers with FlextResult validation
-- performance_monitor: Function execution monitoring with memory tracking
-- hypothesis_strategies: Property-based testing with domain-specific strategies
-"""
+"""Comprehensive tests for FlextHandlers and handler functionality."""
 
 from __future__ import annotations
 
+# Use flext-core modern type definitions
 from typing import TYPE_CHECKING
-
-import pytest
 
 from flext_core._handlers_base import (
     _BaseCommandHandler,
     _BaseEventHandler,
+    _BaseHandler,
     _BaseQueryHandler,
 )
 from flext_core.handlers import FlextHandlers
 from flext_core.result import FlextResult
-from tests.conftest import TestCase, TestScenario
-
-# Test markers for organized execution
-pytestmark = [pytest.mark.unit, pytest.mark.core]
 
 # Constants
 EXPECTED_BULK_SIZE = 2
@@ -115,181 +89,94 @@ class _TestQuery:
         self.parameters = parameters or {}
 
 
-# ============================================================================
-# Advanced Parametrized Testing with TestCase Structures
-# ============================================================================
+class TestBaseHandler:
+    """Test FlextHandlers.Handler base functionality."""
 
+    def test_handler_creation(self) -> None:
+        """Test basic handler creation."""
+        handler: FlextHandlers.Handler[object, object] = FlextHandlers.Handler(
+            "test_handler"
+        )
 
-class TestFlextHandlersAdvanced:
-    """Advanced handler testing with structured parametrization."""
+        if handler.handler_name != "test_handler":
+            raise AssertionError(
+                f"Expected {'test_handler'}, got {handler.handler_name}"
+            )
+        assert handler.handler_id.startswith("Handler_")
+        assert hasattr(handler, "_metrics")
+        if handler._metrics["messages_handled"] != 0:
+            raise AssertionError(
+                f"Expected {0}, got {handler._metrics['messages_handled']}"
+            )
 
-    @pytest.fixture
-    def handler_creation_test_cases(self) -> list[TestCase]:
-        """Define structured test cases for handler creation scenarios."""
-        return [
-            TestCase(
-                id="basic_handler",
-                description="Create basic handler with minimal config",
-                input_data={
-                    "handler_name": "test_handler",
-                },
-                expected_output={
-                    "handler_name": "test_handler",
-                    "handler_id_prefix": "Handler_",
-                    "messages_handled": 0,
-                },
-                scenario=TestScenario.HAPPY_PATH,
-            ),
-            TestCase(
-                id="named_handler",
-                description="Create handler with specific name",
-                input_data={
-                    "handler_name": "advanced_handler",
-                },
-                expected_output={
-                    "handler_name": "advanced_handler",
-                    "handler_id_prefix": "Handler_",
-                    "messages_handled": 0,
-                },
-                scenario=TestScenario.HAPPY_PATH,
-            ),
-        ]
+    def test_handler_default_name(self) -> None:
+        """Test handler creation with default name."""
+        handler: FlextHandlers.Handler[object, object] = FlextHandlers.Handler()
 
-    @pytest.mark.parametrize_advanced
-    def test_handler_creation_scenarios(
-        self, handler_creation_test_cases: list[TestCase], assert_helpers
-    ) -> None:
-        """Test handler creation using structured test cases."""
-        for test_case in handler_creation_test_cases:
-            # Create handler using test case input data
-            handler = FlextHandlers.Handler(**test_case.input_data)
+        if handler.handler_name != "Handler":
+            raise AssertionError(f"Expected {'Handler'}, got {handler.handler_name}")
+        assert handler._handler_name == "Handler"
 
-            # Validate handler creation
-            assert_helpers.assert_result_ok(FlextResult.ok(handler))
+    def test_handler_can_handle_default(self) -> None:
+        """Test default can_handle implementation."""
+        handler: FlextHandlers.Handler[object, object] = FlextHandlers.Handler()
+        message = _TestMessage("test")
 
-            # Verify expected output attributes
-            expected = test_case.expected_output
-            assert handler.handler_name == expected["handler_name"]
-            assert handler.handler_id.startswith(expected["handler_id_prefix"])
-            assert hasattr(handler, "_metrics")
-            assert handler._metrics["messages_handled"] == expected["messages_handled"]
+        # Default implementation should return True
+        if not (handler.can_handle(message)):
+            raise AssertionError(f"Expected True, got {handler.can_handle(message)}")
+        assert handler.can_handle(None) is True
+        if not (handler.can_handle("string")):
+            raise AssertionError(f"Expected True, got {handler.can_handle('string')}")
 
-    @pytest.fixture
-    def handler_behavior_test_cases(self) -> list[TestCase]:
-        """Define test cases for handler behavior validation."""
-        return [
-            TestCase(
-                id="default_name",
-                description="Handler with default name",
-                input_data={},
-                expected_output={"handler_name": "Handler"},
-                scenario=TestScenario.HAPPY_PATH,
-            ),
-            TestCase(
-                id="can_handle_message",
-                description="Handler can handle test message",
-                input_data={"message": _TestMessage("test")},
-                expected_output={"can_handle": True},
-                scenario=TestScenario.HAPPY_PATH,
-            ),
-            TestCase(
-                id="can_handle_none",
-                description="Handler can handle None",
-                input_data={"message": None},
-                expected_output={"can_handle": True},
-                scenario=TestScenario.HAPPY_PATH,
-            ),
-            TestCase(
-                id="handle_message",
-                description="Handler processes message successfully",
-                input_data={"message": _TestMessage("test")},
-                expected_output={"handle_success": True},
-                scenario=TestScenario.HAPPY_PATH,
-            ),
-            TestCase(
-                id="validate_valid_message",
-                description="Handler validates valid message",
-                input_data={"message": _TestMessage("test")},
-                expected_output={"validation_success": True},
-                scenario=TestScenario.HAPPY_PATH,
-            ),
-            TestCase(
-                id="validate_none_message",
-                description="Handler rejects None message",
-                input_data={"message": None},
-                expected_output={
-                    "validation_success": False,
-                    "error_contains": "cannot be None",
-                },
-                scenario=TestScenario.ERROR_CASE,
-            ),
-        ]
+    def test_handler_handle_default(self) -> None:
+        """Test default handle implementation."""
+        handler: FlextHandlers.Handler[object, object] = FlextHandlers.Handler()
+        message = _TestMessage("test")
 
-    @pytest.mark.parametrize_advanced
-    def test_handler_behavior_scenarios(
-        self, handler_behavior_test_cases: list[TestCase], assert_helpers
-    ) -> None:
-        """Test handler behavior using structured test cases."""
-        for test_case in handler_behavior_test_cases:
-            handler = FlextHandlers.Handler()
-            input_data = test_case.input_data
-            expected = test_case.expected_output
+        result = handler.handle(message)
+        assert isinstance(result, FlextResult)
+        assert result.success
+        if result.data != message:
+            raise AssertionError(f"Expected {message}, got {result.data}")
 
-            if "handler_name" in expected:
-                assert handler.handler_name == expected["handler_name"]
+    def test_handler_validate_message(self) -> None:
+        """Test message validation."""
+        handler: FlextHandlers.Handler[object, object] = FlextHandlers.Handler()
 
-            if "message" in input_data:
-                message = input_data["message"]
+        # Valid message
+        message = _TestMessage("test")
+        result = handler.validate_message(message)
+        assert result.success
+        if result.data != message:
+            raise AssertionError(f"Expected {message}, got {result.data}")
 
-                if "can_handle" in expected:
-                    assert handler.can_handle(message) == expected["can_handle"]
+        # Invalid message (None)
+        result = handler.validate_message(None)
+        assert result.is_failure
+        assert result.error is not None
+        assert result.error is not None
+        if "cannot be None" not in (result.error or ""):
+            raise AssertionError(f"Expected 'cannot be None' in {result.error}")
 
-                if "handle_success" in expected:
-                    result = handler.handle(message)
-                    assert isinstance(result, FlextResult)
-                    if expected["handle_success"]:
-                        assert_helpers.assert_result_ok(result)
-                        assert result.data == message
-                    else:
-                        assert_helpers.assert_result_fail(result)
-
-                if "validation_success" in expected:
-                    result = handler.validate_message(message)
-                    if expected["validation_success"]:
-                        assert_helpers.assert_result_ok(result)
-                        assert result.data == message
-                    else:
-                        assert_helpers.assert_result_fail(
-                            result, expected.get("error_contains")
-                        )
-
-    @pytest.mark.parametrize(
-        ("handler_name", "expected_metadata"),
-        [
-            (
-                "test_handler",
-                {"handler_name": "test_handler", "handler_class": "Handler"},
-            ),
-            (
-                "metadata_test",
-                {"handler_name": "metadata_test", "handler_class": "Handler"},
-            ),
-        ],
-    )
-    def test_handler_metadata(
-        self, handler_name: str, expected_metadata: dict, assert_helpers
-    ) -> None:
-        """Test handler metadata extraction."""
-        handler = FlextHandlers.Handler(handler_name)
+    def test_handler_get_handler_metadata(self) -> None:
+        """Test handler metadata."""
+        handler: FlextHandlers.Handler[object, object] = FlextHandlers.Handler(
+            "test_handler"
+        )
         metadata = handler.get_handler_metadata()
 
         assert isinstance(metadata, dict)
-        for key, value in expected_metadata.items():
-            assert metadata[key] == value
-        assert "handler_id" in metadata
+        if metadata["handler_name"] != "test_handler":
+            raise AssertionError(
+                f"Expected {'test_handler'}, got {metadata['handler_name']}"
+            )
+        assert metadata["handler_class"] == "Handler"
+        if "handler_id" not in metadata:
+            raise AssertionError(f"Expected {'handler_id'} in {metadata}")
 
-    def test_handler_message_processing_workflow(self, assert_helpers) -> None:
-        """Test complete message processing workflow."""
+    def test_handler_process_message(self) -> None:
+        """Test message processing workflow."""
 
         class TestHandler(FlextHandlers.Handler[object, object]):
             def handle(self, message: object) -> FlextResult[object]:
@@ -301,8 +188,7 @@ class TestFlextHandlersAdvanced:
         message = _TestMessage("hello")
 
         result = handler.process_message(message)
-        assert_helpers.assert_result_ok(result)
-        assert "Processed: hello" in str(result.data)
+        assert result.success
         if result.data != "Processed: hello":
             raise AssertionError(f"Expected {'Processed: hello'}, got {result.data}")
 
@@ -392,88 +278,46 @@ class TestFlextHandlersAdvanced:
         assert logger is not None or logger is None
 
 
-# ============================================================================
-# Command Handler Advanced Testing with Performance Monitoring
-# ============================================================================
+class TestFlextHandlersCommandHandler:
+    """Test FlextHandlers.CommandHandler functionality - DRY REFACTORED."""
 
+    def test_command_handler_creation(self) -> None:
+        """Test command handler creation."""
+        handler = FlextHandlers.CommandHandler("test_command_handler")
 
-class TestFlextCommandHandlerAdvanced:
-    """Advanced command handler testing with enterprise patterns."""
-
-    @pytest.fixture
-    def command_handler_test_cases(self) -> list[TestCase]:
-        """Define structured test cases for command handler scenarios."""
-        return [
-            TestCase(
-                id="named_handler",
-                description="Create command handler with specific name",
-                input_data={"handler_name": "test_command_handler"},
-                expected_output={"handler_name": "test_command_handler"},
-                scenario=TestScenario.HAPPY_PATH,
-            ),
-            TestCase(
-                id="default_handler",
-                description="Create command handler with default name",
-                input_data={},
-                expected_output={"handler_name": "CommandHandler"},
-                scenario=TestScenario.HAPPY_PATH,
-            ),
-            TestCase(
-                id="validate_command",
-                description="Validate test command successfully",
-                input_data={"command": _TestCommand("create_user")},
-                expected_output={"validation_success": True},
-                scenario=TestScenario.HAPPY_PATH,
-            ),
-            TestCase(
-                id="handle_command",
-                description="Handle test command successfully",
-                input_data={"command": _TestCommand("test_action")},
-                expected_output={"handle_success": True, "returns_command": True},
-                scenario=TestScenario.HAPPY_PATH,
-            ),
-        ]
-
-    @pytest.mark.parametrize_advanced
-    def test_command_handler_scenarios(
-        self, command_handler_test_cases: list[TestCase], assert_helpers
-    ) -> None:
-        """Test command handler using structured test cases."""
-        for test_case in command_handler_test_cases:
-            input_data = test_case.input_data
-            expected = test_case.expected_output
-
-            # Create handler with optional name
-            handler_name = input_data.get("handler_name")
-            handler = (
-                FlextHandlers.CommandHandler(handler_name)
-                if handler_name
-                else FlextHandlers.CommandHandler()
+        if handler._handler_name != "test_command_handler":
+            raise AssertionError(
+                f"Expected {'test_command_handler'}, got {handler._handler_name}"
             )
 
-            # Validate handler name
-            if "handler_name" in expected:
-                assert handler._handler_name == expected["handler_name"]
+    def test_command_handler_default_name(self) -> None:
+        """Test command handler with default name - SOLID refactored version."""
+        handler = FlextHandlers.CommandHandler()
 
-            # Test command operations
-            if "command" in input_data:
-                command = input_data["command"]
+        # After SOLID refactoring, default name is the class name
+        assert handler._handler_name == "CommandHandler"
 
-                if "validation_success" in expected:
-                    result = handler.validate_command(command)
-                    if expected["validation_success"]:
-                        assert_helpers.assert_result_ok(result)
-                    else:
-                        assert_helpers.assert_result_fail(result)
+    def test_command_handler_validate_command(self) -> None:
+        """Test command validation."""
+        handler = FlextHandlers.CommandHandler()
+        command = _TestCommand("create_user")
 
-                if "handle_success" in expected:
-                    result = handler.handle(command)
-                    if expected["handle_success"]:
-                        assert_helpers.assert_result_ok(result)
-                        if expected.get("returns_command"):
-                            assert result.data == command
-                    else:
-                        assert_helpers.assert_result_fail(result)
+        result = handler.validate_command(command)
+        assert result.success
+
+    def test_command_handler_handle_default(self) -> None:
+        """Test default command handling."""
+        handler = FlextHandlers.CommandHandler()
+        command = _TestCommand("test_action")
+
+        result = handler.handle(command)
+        assert result.success
+        if result.data != command:
+            raise AssertionError(f"Expected {command}, got {result.data}")
+
+    def test_command_handler_can_handle(self) -> None:
+        """Test command handler can_handle."""
+        handler = FlextHandlers.CommandHandler()
 
         if not (handler.can_handle(_TestCommand("test"))):
             raise AssertionError(
@@ -578,74 +422,86 @@ class TestFlextCommandHandlerAdvanced:
         assert hasattr(logger, "info")
 
 
-# ============================================================================
-# Event Handler Advanced Testing
-# ============================================================================
+class TestFlextHandlersEventHandler:
+    """Test FlextHandlers.EventHandler functionality - DRY REFACTORED."""
 
+    def test_event_handler_creation(self) -> None:
+        """Test event handler creation."""
 
-class TestFlextEventHandlerAdvanced:
-    """Advanced event handler testing with consolidated patterns."""
-
-    @pytest.mark.parametrize(
-        ("handler_name", "event_type", "should_succeed"),
-        [
-            ("test_event_handler", "user_created", True),
-            ("event_processor", "order_processed", True),
-            ("default_handler", "system_event", True),
-        ]
-    )
-    def test_event_handler_complete_workflow(
-        self, handler_name: str, event_type: str, should_succeed, assert_helpers
-    ) -> None:
-        """Test complete event handler workflow with parametrized scenarios."""
-
-        class TestEventHandler(FlextHandlers.EventHandler[object]):
+        class TestEventHandlerImpl(FlextHandlers.EventHandler[object]):
             def process_event_impl(self, event: object) -> None:
                 pass
 
-        handler = TestEventHandler(handler_name)
-        event = _TestEvent(event_type)
+        handler = TestEventHandlerImpl("test_event_handler")
+        if handler.handler_name != "test_event_handler":
+            raise AssertionError(
+                f"Expected {'test_event_handler'}, got {handler.handler_name}"
+            )
 
-        # Test creation
-        assert handler.handler_name == handler_name
+    def test_event_handler_handle(self) -> None:
+        """Test event handling."""
 
-        # Test handling
+        class _TestEventHandler(FlextHandlers.EventHandler[object]):
+            def process_event_impl(self, event: object) -> None:
+                pass
+
+        handler = _TestEventHandler()
+        event = _TestEvent("user_created")
+
         result = handler.handle(event)
-        if should_succeed:
-            assert_helpers.assert_result_ok(result)
-            assert result.data is None
-        else:
-            assert_helpers.assert_result_fail(result)
+        assert result.success
+        assert result.data is None
 
-    @pytest.mark.parametrize(
-        ("event_input", "can_handle_result", "should_succeed", "error_contains"),
-        [
-            (_TestEvent("user_updated"), True, True, None),
-            (None, True, False, "cannot be None"),
-            ("not an event", False, False, "cannot process this event"),
-        ]
-    )
-    def test_event_processing_scenarios(
-        self, event_input, can_handle_result, should_succeed, error_contains, assert_helpers
-    ) -> None:
-        """Test event processing with all scenarios in one parametrized test."""
+    def test_event_handler_process_event(self) -> None:
+        """Test event processing."""
 
-        class TestEventHandler(FlextHandlers.EventHandler[object]):
+        class _TestEventHandler(FlextHandlers.EventHandler[object]):
             def process_event_impl(self, event: object) -> None:
                 pass
 
             def can_handle(self, message: object) -> bool:
-                if message is None:
-                    return True  # Let validation handle None
-                return can_handle_result
+                return True  # Accept any event for testing
 
-        handler = TestEventHandler()
-        result = handler.process_event(event_input)
+        handler = _TestEventHandler()
+        event = _TestEvent("user_updated")
 
-        if should_succeed:
-            assert_helpers.assert_result_ok(result)
-        else:
-            assert_helpers.assert_result_fail(result, error_contains)
+        result = handler.process_event(event)
+        assert result.success
+
+    def test_event_handler_process_event_validation_failure(self) -> None:
+        """Test event processing with validation failure."""
+
+        class _TestEventHandler(FlextHandlers.EventHandler[object]):
+            def process_event_impl(self, event: object) -> None:
+                pass
+
+        handler = _TestEventHandler()
+
+        result = handler.process_event(None)
+        assert result.is_failure
+        assert result.error is not None
+        if "cannot be None" not in (result.error or ""):
+            raise AssertionError(f"Expected 'cannot be None' in {result.error}")
+
+    def test_event_handler_process_event_cannot_handle(self) -> None:
+        """Test event processing when handler cannot handle."""
+
+        class SelectiveEventHandler(FlextHandlers.EventHandler[object]):
+            def can_handle(self, message: object) -> bool:
+                return isinstance(message, _TestEvent)
+
+            def process_event_impl(self, event: object) -> None:
+                pass
+
+        handler = SelectiveEventHandler()
+
+        result = handler.process_event("not an event")
+        assert result.is_failure
+        assert result.error is not None
+        if "cannot process this event" not in (result.error or ""):
+            raise AssertionError(
+                f"Expected 'cannot process this event' in {result.error}"
+            )
 
     def test_event_handler_process_event_exception(self) -> None:
         """Test event processing with exception."""
@@ -1300,6 +1156,497 @@ class TestFactoryMethods:
             raise AssertionError(f"Expected {0}, got {len(chain._handlers)}")
 
 
-# All edge cases, base handler classes, and coverage tests have been
-# consolidated into the advanced parametrized test classes above.
-# This reduces code duplication while maintaining comprehensive test coverage.
+class TestHandlerEdgeCases:
+    """Test edge cases and error conditions."""
+
+    def test_handler_with_none_message(self) -> None:
+        """Test handler with None message."""
+        handler: FlextHandlers.Handler[object, object] = FlextHandlers.Handler()
+
+        # Validation should catch None
+        result = handler.process_message(None)
+        assert result.is_failure
+
+    def test_handler_metadata_with_complex_names(self) -> None:
+        """Test handler metadata with complex names."""
+        handler: FlextHandlers.Handler[object, object] = FlextHandlers.Handler(
+            "complex-handler_name.with.dots"
+        )
+        metadata = handler.get_handler_metadata()
+
+        if "handler_name" not in metadata:
+            raise AssertionError(f"Expected {'handler_name'} in {metadata}")
+        if metadata["handler_name"] != "complex-handler_name.with.dots":
+            raise AssertionError(
+                f"Expected {'complex-handler_name.with.dots'}, got {metadata['handler_name']}"
+            )
+
+    def test_registry_with_handler_without_id(self) -> None:
+        """Test registry with handler that doesn't have handler_id."""
+        registry = FlextHandlers.Registry()
+
+        # Create a mock handler without handler_id attribute
+        class MockHandler:
+            def handle(self, message: object) -> FlextResult[object]:
+                return FlextResult.ok(message)
+
+        mock_handler = MockHandler()
+        result = registry.register(mock_handler)
+
+        # Should still register successfully using class name
+        assert result.success
+
+    def test_chain_with_mixed_handler_types(self) -> None:
+        """Test chain with different handler types."""
+        chain = FlextHandlers.Chain()
+
+        # Add different types of handlers
+        base_handler: FlextHandlers.Handler[object, object] = FlextHandlers.Handler(
+            "base"
+        )
+        FlextHandlers.CommandHandler("command")
+
+        # Note: We need to create a concrete EventHandler
+        class ConcreteEventHandler(FlextHandlers.EventHandler[object]):
+            def process_event_impl(self, event: object) -> None:
+                pass
+
+        ConcreteEventHandler("event")
+
+        chain.add_handler(base_handler)
+        # Note: CommandHandler and EventHandler might not be compatible with Chain
+        # due to type signature differences. Test what actually works.
+
+        message = _TestMessage("test")
+        result = chain.process(message)
+
+        # Should work with base handler
+        assert result.success
+
+    def test_handler_inheritance_behavior(self) -> None:
+        """Test handler inheritance behavior."""
+
+        class CustomHandler(FlextHandlers.Handler[object, object]):
+            def __init__(self, name: str) -> None:
+                super().__init__(name)
+                self.custom_attribute = "custom_value"
+
+            def handle(self, message: object) -> FlextResult[object]:
+                if isinstance(message, _TestMessage):
+                    return FlextResult.ok(f"Custom: {message.content}")
+                return super().handle(message)
+
+        handler = CustomHandler("custom_handler")
+
+        if handler.custom_attribute != "custom_value":
+            raise AssertionError(
+                f"Expected {'custom_value'}, got {handler.custom_attribute}"
+            )
+        assert handler.handler_name == "custom_handler"
+
+        message = _TestMessage("test")
+        result = handler.handle(message)
+
+        assert result.success
+        if result.data != "Custom: test":
+            raise AssertionError(f"Expected {'Custom: test'}, got {result.data}")
+
+    def test_performance_with_many_handlers(self) -> None:
+        """Test performance characteristics with many handlers."""
+        registry = FlextHandlers.Registry()
+
+        # Register many handlers
+        handlers = []
+        for i in range(100):
+            handler: FlextHandlers.Handler[object, object] = FlextHandlers.Handler(
+                f"handler_{i}"
+            )
+            handlers.append(handler)
+            registry.register(handler)
+
+        if len(registry.get_all_handlers()) != 100:
+            raise AssertionError(
+                f"Expected {100}, got {len(registry.get_all_handlers())}"
+            )
+
+        # Test finding handlers
+        message = _TestMessage("test")
+        found_handlers = registry.find_handlers(message)
+
+        # All handlers should be found since default can_handle returns True
+        if len(found_handlers) != 100:
+            raise AssertionError(f"Expected {100}, got {len(found_handlers)}")
+
+    def test_thread_safety_basic(self) -> None:
+        """Test basic thread safety of handlers."""
+        handler: FlextHandlers.Handler[object, object] = FlextHandlers.Handler(
+            "thread_test"
+        )
+
+        # Process multiple messages to test for basic issues
+        messages = [_TestMessage(f"message_{i}") for i in range(10)]
+
+        results = []
+        for message in messages:
+            result = handler.process_message(message)
+            results.append(result)
+
+        # All should succeed
+        if not all(result.success for result in results):
+            raise AssertionError(
+                f"Expected all results to be successful, got {results}"
+            )
+        if len(results) != 10:
+            raise AssertionError(f"Expected {10}, got {len(results)}")
+
+
+class TestBaseHandlerClasses:
+    """Test base handler classes for better coverage."""
+
+    def test_base_handler_abstract_methods(self) -> None:
+        """Test that base handler is abstract and cannot be instantiated."""
+        # _BaseHandler is abstract and should not be instantiated directly
+        try:
+            _BaseHandler()
+            # If we get here, the handler was instantiated (shouldn't happen)
+            msg = "Abstract handler should not be instantiable"
+            raise AssertionError(msg)
+        except TypeError:
+            # This is expected - abstract class cannot be instantiated
+            pass
+
+    def test_concrete_handler_implementations(self) -> None:
+        """Test concrete handler implementations."""
+
+        # Create concrete implementations to test the base classes
+        class TestCommandHandler(_BaseCommandHandler[str, str]):
+            def handle(self, command: str) -> FlextResult[str]:
+                return FlextResult.ok(f"Handled command: {command}")
+
+        class TestEventHandler(_BaseEventHandler[str]):
+            def handle(self, event: str) -> FlextResult[None]:
+                # Event handlers return None
+                return FlextResult.ok(None)
+
+            def process_event(self, event: str) -> None:
+                # Process the event (abstract method implementation)
+                pass
+
+        class TestQueryHandler(_BaseQueryHandler[str, str]):
+            def handle(self, query: str) -> FlextResult[str]:
+                return FlextResult.ok(f"Query result: {query}")
+
+        # Test command handler
+        cmd_handler = TestCommandHandler()
+        cmd_result = cmd_handler.handle("test_command")
+        assert cmd_result.success
+        assert cmd_result.data == "Handled command: test_command"
+
+        # Test event handler
+        event_handler = TestEventHandler()
+        event_result = event_handler.handle("test_event")
+        assert event_result.success
+        assert event_result.data is None
+
+        # Test query handler
+        query_handler = TestQueryHandler()
+        query_result = query_handler.handle("test_query")
+        assert query_result.success
+        assert query_result.data == "Query result: test_query"
+
+    def test_handler_timing_mixin(self) -> None:
+        """Test timing functionality from base handler mixin."""
+
+        class TimedCommandHandler(_BaseCommandHandler[str, str]):
+            def handle(self, command: str) -> FlextResult[str]:
+                return FlextResult.ok(f"Timed: {command}")
+
+        handler = TimedCommandHandler()
+
+        # The handler should have timing capabilities from the mixin
+        # Test that we can call handle and get timing information
+        result = handler.handle("timing_test")
+        assert result.success
+        assert result.data is not None
+        assert "Timed: timing_test" in result.data
+
+
+class TestHandlerBaseCoverage:
+    """Test cases specifically for improving coverage of _handlers_base.py module."""
+
+    def test_handler_can_handle_fallback_path(self) -> None:
+        """Test can_handle method fallback behavior (line 141)."""
+
+        class SimpleHandler(_BaseCommandHandler[str, str]):
+            def handle(self, command: str) -> FlextResult[str]:
+                return FlextResult.ok(f"Handled: {command}")
+
+        handler = SimpleHandler("simple_handler")
+
+        # Test fallback when type checking fails - should return True
+        result = handler.can_handle("any_message")
+        assert result is True
+
+    def test_handler_pre_handle_with_validation_failure(self) -> None:
+        """Test pre_handle with message validation failure (lines 152-163)."""
+
+        # Use base handler directly since command handler overrides pre_handle
+        class ValidatingHandler(_BaseHandler[object, str]):
+            def handle(self, command: object) -> FlextResult[str]:
+                return FlextResult.ok("handled")
+
+        handler = ValidatingHandler("validating_handler")
+
+        # Create a message with a failing validate method
+        class InvalidMessage:
+            def __init__(self) -> None:
+                self.validate_called = False
+
+            def validate(self) -> FlextResult[None]:
+                self.validate_called = True
+                failed_result: FlextResult[object] = FlextResult.fail(
+                    "Message validation failed"
+                )
+                # Verify our test setup is correct
+                assert failed_result.is_failure
+                assert hasattr(failed_result, "is_failure")
+                return FlextResult.fail(failed_result.error or "Validation failed")
+
+        invalid_msg = InvalidMessage()
+        result = handler.pre_handle(invalid_msg)
+
+        # Debug: Check if validate was called
+        assert invalid_msg.validate_called, "validate() method should have been called"
+
+        assert result.is_failure
+        if "Message validation failed" not in (result.error or ""):
+            raise AssertionError(
+                f"Expected 'Message validation failed' in {result.error}"
+            )
+
+    def test_handler_post_handle_failure_tracking(self) -> None:
+        """Test post_handle method with failure tracking (lines 177-178)."""
+
+        class FailureHandler(_BaseCommandHandler[str, str]):
+            def handle(self, command: str) -> FlextResult[str]:
+                return FlextResult.ok("success")
+
+        handler = FailureHandler("failure_handler")
+
+        # Test post_handle with failure result
+        failure_result: FlextResult[str] = FlextResult.fail("Test failure")
+        processed_result = handler.post_handle(failure_result)
+
+        assert processed_result.is_failure
+        if processed_result.error != "Test failure":
+            raise AssertionError(
+                f"Expected 'Test failure', got {processed_result.error}"
+            )
+
+        # Check metrics updated
+        metrics = handler.get_metrics()
+        if metrics["failures"] != 1:
+            raise AssertionError(f"Expected 1 failure, got {metrics['failures']}")
+
+    def test_handler_cannot_handle_error_path(self) -> None:
+        """Test handle_with_hooks when handler cannot handle message (lines 198-200)."""
+
+        class RestrictiveHandler(_BaseCommandHandler[str, str]):
+            def handle(self, command: str) -> FlextResult[str]:
+                return FlextResult.ok("handled")
+
+            def can_handle(self, message: object) -> bool:
+                return False  # Always reject
+
+        handler = RestrictiveHandler("restrictive_handler")
+
+        result = handler.handle_with_hooks("test_message")
+        assert result.is_failure
+        if "cannot handle" not in (result.error or ""):
+            raise AssertionError(f"Expected 'cannot handle' in {result.error}")
+
+    def test_handler_pre_processing_failure_path(self) -> None:
+        """Test handle_with_hooks when pre-processing fails (lines 205-209)."""
+
+        class PreFailHandler(_BaseCommandHandler[str, str]):
+            def handle(self, command: str) -> FlextResult[str]:
+                return FlextResult.ok("handled")
+
+            def pre_handle(self, message: str) -> FlextResult[str]:
+                return FlextResult.fail("Pre-processing failed")
+
+        handler = PreFailHandler("pre_fail_handler")
+
+        result = handler.handle_with_hooks("test_message")
+        assert result.is_failure
+        if "Pre-processing failed" not in (result.error or ""):
+            raise AssertionError(f"Expected 'Pre-processing failed' in {result.error}")
+
+
+class TestBaseHandlersCoverage:
+    """Tests for covering base handlers functionality (lines 371, 376, 381, etc)."""
+
+    def test_base_command_handler_validate_default(self) -> None:
+        """Test default validate_command method (line 371)."""
+        handler = _BaseTestCommandHandler()
+
+        # Default validate_command should return success
+        result = handler.validate_command("test_command")
+        assert result.success
+
+    def test_base_command_handler_handle_default(self) -> None:
+        """Test default handle method (line 376)."""
+        handler = _BaseTestCommandHandler()
+
+        # Test successful handling
+        result = handler.handle({"test": "command"})
+        assert result.success
+        assert "Handled:" in str(result.data)
+
+        # Test failure path
+        result = handler.handle({"should_fail": True})
+        assert result.is_failure
+        assert result.error is not None
+        assert "Test command failed" in result.error
+
+    def test_base_command_handler_can_handle_default(self) -> None:
+        """Test command handler pre_handle method (line 381)."""
+        handler = _BaseTestCommandHandler()
+
+        # Test pre_handle method that uses validate_command
+        result = handler.pre_handle("any_command")
+        assert result.success
+        assert result.data == "any_command"
+
+    def test_base_event_handler_functionality(self) -> None:
+        """Test base event handler functionality."""
+        handler = _BaseTestEventHandler()
+
+        # Test handle method (event handlers return None)
+        result = handler.handle({"event": "test"})
+        assert result.success
+        assert result.data is None  # Events return None
+
+    def test_base_query_handler_functionality(self) -> None:
+        """Test base query handler functionality."""
+        handler = _BaseTestQueryHandler()
+
+        # Test authorize_query method
+        result = handler.authorize_query({"query": "data"})
+        assert result.success
+
+        # Test handle method
+        handle_result: FlextResult[object] = handler.handle({"query": "search"})
+        assert handle_result.success
+        assert "Query result:" in str(handle_result.data)
+
+        # Test pre_handle method
+        result2: FlextResult[object] = handler.pre_handle({"query": "test"})
+        assert result2.success
+
+    def test_command_handler_validate_command_override(self) -> None:
+        """Test command handler validate_command method override (lines 255-256)."""
+
+        class ValidatingCommandHandler(_BaseCommandHandler[str, str]):
+            def handle(self, command: str) -> FlextResult[str]:
+                return FlextResult.ok(f"Handled: {command}")
+
+            def validate_command(self, command: str) -> FlextResult[None]:
+                if len(command) < 3:
+                    return FlextResult.fail("Command too short")
+                return FlextResult.ok(None)
+
+        handler = ValidatingCommandHandler("validating_cmd_handler")
+
+        # Test with invalid command
+        result = handler.pre_handle("hi")
+        assert result.is_failure
+        if "Command too short" not in (result.error or ""):
+            raise AssertionError(f"Expected 'Command too short' in {result.error}")
+
+        # Test with valid command
+        result = handler.pre_handle("hello")
+        assert result.success
+        if result.data != "hello":
+            raise AssertionError(f"Expected 'hello', got {result.data}")
+
+    def test_command_handler_pre_handle_validation_failure(self) -> None:
+        """Test command handler pre_handle with validation failure (lines 260-265)."""
+
+        class FailingValidationHandler(_BaseCommandHandler[str, str]):
+            def handle(self, command: str) -> FlextResult[str]:
+                return FlextResult.ok("handled")
+
+            def validate_command(self, command: str) -> FlextResult[None]:
+                return FlextResult.fail("Always fails validation")
+
+        handler = FailingValidationHandler("failing_validation_handler")
+
+        result = handler.pre_handle("test")
+        assert result.is_failure
+        if "Always fails validation" not in (result.error or ""):
+            raise AssertionError(
+                f"Expected 'Always fails validation' in {result.error}"
+            )
+
+    def test_event_handler_process_event_call(self) -> None:
+        """Test event handler process_event method call (lines 273-274)."""
+
+        class ProcessingEventHandler(_BaseEventHandler[str]):
+            def __init__(self, name: str | None = None) -> None:
+                super().__init__(name)
+                self.processed_events: list[str] = []
+
+            def process_event(self, event: str) -> None:
+                self.processed_events.append(event)
+
+        handler = ProcessingEventHandler("processing_event_handler")
+
+        result = handler.handle("test_event")
+        assert result.success
+        assert result.data is None
+        if "test_event" not in handler.processed_events:
+            raise AssertionError(f"Expected 'test_event' in {handler.processed_events}")
+
+    def test_query_handler_authorize_query_override(self) -> None:
+        """Test query handler authorize_query method override (lines 286-287)."""
+
+        class AuthorizingQueryHandler(_BaseQueryHandler[str, str]):
+            def handle(self, query: str) -> FlextResult[str]:
+                return FlextResult.ok(f"Result: {query}")
+
+            def authorize_query(self, query: str) -> FlextResult[None]:
+                if query.startswith("secret"):
+                    return FlextResult.fail("Unauthorized")
+                return FlextResult.ok(None)
+
+        handler = AuthorizingQueryHandler("authorizing_query_handler")
+
+        # Test unauthorized query
+        result = handler.pre_handle("secret_data")
+        assert result.is_failure
+        if "Unauthorized" not in (result.error or ""):
+            raise AssertionError(f"Expected 'Unauthorized' in {result.error}")
+
+        # Test authorized query
+        result = handler.pre_handle("public_data")
+        assert result.success
+        if result.data != "public_data":
+            raise AssertionError(f"Expected 'public_data', got {result.data}")
+
+    def test_query_handler_pre_handle_authorization_failure(self) -> None:
+        """Test query handler pre_handle with authorization failure (lines 291-296)."""
+
+        class FailingAuthHandler(_BaseQueryHandler[str, str]):
+            def handle(self, query: str) -> FlextResult[str]:
+                return FlextResult.ok("handled")
+
+            def authorize_query(self, query: str) -> FlextResult[None]:
+                return FlextResult.fail("Authorization failed")
+
+        handler = FailingAuthHandler("failing_auth_handler")
+
+        result = handler.pre_handle("test")
+        assert result.is_failure
+        if "Authorization failed" not in (result.error or ""):
+            raise AssertionError(f"Expected 'Authorization failed' in {result.error}")
