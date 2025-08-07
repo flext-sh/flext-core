@@ -309,7 +309,9 @@ class FlextTypes:
             except (TypeError, AttributeError) as e:
                 # Log type check error but maintain API contract
                 logger = get_logger(__name__)
-                logger.warning(f"Type check failed for {obj} against {expected_type}: {e}")
+                logger.warning(
+                    f"Type check failed for {obj} against {expected_type}: {e}",
+                )
                 return False
 
         @staticmethod

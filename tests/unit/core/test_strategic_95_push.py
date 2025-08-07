@@ -73,7 +73,11 @@ class TestPayloadStrategicCoverage:
 
     def test_message_event_comprehensive(self) -> None:
         """Comprehensive message and event testing."""
-        # Message testing
+        self._test_message_comprehensive()
+        self._test_event_comprehensive()
+
+    def _test_message_comprehensive(self) -> None:
+        """Comprehensive message testing."""
         message_test_data = [
             "Simple message",
             {"structured": "message", "level": "INFO"},
@@ -83,29 +87,38 @@ class TestPayloadStrategicCoverage:
         for msg_data in message_test_data:
             try:
                 message = FlextMessage(data=msg_data)
-
-                # Exercise all possible methods
                 str(message)
                 repr(message)
-
-                # Test message-specific functionality
-                methods_to_try = [
-                    "get_level", "set_level", "get_severity", "set_severity",
-                    "format", "render", "to_dict", "to_json", "serialize",
-                    "get_timestamp", "set_timestamp", "get_category"
-                ]
-
-                for method in methods_to_try:
-                    try:
-                        if hasattr(message, method):
-                            getattr(message, method)()
-                    except Exception:
-                        assert True
-
+                self._test_message_all_methods(message)
             except Exception:
                 assert True
 
-        # Event testing
+    def _test_message_all_methods(self, message: FlextMessage) -> None:
+        """Test all message methods."""
+        methods_to_try = [
+            "get_level",
+            "set_level",
+            "get_severity",
+            "set_severity",
+            "format",
+            "render",
+            "to_dict",
+            "to_json",
+            "serialize",
+            "get_timestamp",
+            "set_timestamp",
+            "get_category",
+        ]
+
+        for method in methods_to_try:
+            try:
+                if hasattr(message, method):
+                    getattr(message, method)()
+            except Exception:
+                assert True
+
+    def _test_event_comprehensive(self) -> None:
+        """Comprehensive event testing."""
         event_test_data = [
             {"event_type": "test", "data": "simple"},
             {"event_type": "complex", "payload": {"nested": "data"}},
@@ -115,24 +128,33 @@ class TestPayloadStrategicCoverage:
         for event_data in event_test_data:
             try:
                 event = FlextEvent(data=event_data)
-
-                # Exercise event methods
                 str(event)
                 repr(event)
+                self._test_event_all_methods(event)
+            except Exception:
+                assert True
 
-                methods_to_try = [
-                    "get_event_id", "set_event_id", "get_event_type", "set_event_type",
-                    "get_source", "set_source", "get_version", "set_version",
-                    "add_attribute", "remove_attribute", "to_dict", "serialize"
-                ]
+    def _test_event_all_methods(self, event: FlextEvent) -> None:
+        """Test all event methods."""
+        methods_to_try = [
+            "get_event_id",
+            "set_event_id",
+            "get_event_type",
+            "set_event_type",
+            "get_source",
+            "set_source",
+            "get_version",
+            "set_version",
+            "add_attribute",
+            "remove_attribute",
+            "to_dict",
+            "serialize",
+        ]
 
-                for method in methods_to_try:
-                    try:
-                        if hasattr(event, method):
-                            getattr(event, method)()
-                    except Exception:
-                        assert True
-
+        for method in methods_to_try:
+            try:
+                if hasattr(event, method):
+                    getattr(event, method)()
             except Exception:
                 assert True
 
@@ -142,9 +164,21 @@ class TestPayloadStrategicCoverage:
 
         # Try all possible serialization methods
         serialization_methods = [
-            "to_dict", "to_json", "to_yaml", "to_xml", "to_csv",
-            "serialize", "marshal", "encode", "compress", "encrypt",
-            "to_bytes", "to_string", "export", "dump", "save"
+            "to_dict",
+            "to_json",
+            "to_yaml",
+            "to_xml",
+            "to_csv",
+            "serialize",
+            "marshal",
+            "encode",
+            "compress",
+            "encrypt",
+            "to_bytes",
+            "to_string",
+            "export",
+            "dump",
+            "save",
         ]
 
         for method in serialization_methods:
@@ -157,9 +191,20 @@ class TestPayloadStrategicCoverage:
 
         # Test deserialization paths
         deserialization_methods = [
-            "from_dict", "from_json", "from_yaml", "from_xml",
-            "deserialize", "unmarshal", "decode", "decompress", "decrypt",
-            "from_bytes", "from_string", "import_data", "load", "restore"
+            "from_dict",
+            "from_json",
+            "from_yaml",
+            "from_xml",
+            "deserialize",
+            "unmarshal",
+            "decode",
+            "decompress",
+            "decrypt",
+            "from_bytes",
+            "from_string",
+            "import_data",
+            "load",
+            "restore",
         ]
 
         for method in deserialization_methods:
@@ -209,9 +254,7 @@ class TestFoundationStrategicCoverage:
 
         # Test invalid constructor arguments
         result = FoundationFactory.create_model(
-            ProblematicModel,
-            nonexistent_field="value",
-            another_invalid="field"
+            ProblematicModel, nonexistent_field="value", another_invalid="field"
         )
         assert result.is_failure
 
@@ -305,12 +348,16 @@ class TestExceptionsStrategicCoverage:
                 repr(exc)
 
                 # Test in different contexts
-                raise exc
+                self._raise_exception(exc)
 
             except FlextError:
                 assert True
             except Exception:
                 assert True
+
+    def _raise_exception(self, exc: FlextError) -> None:
+        """Helper to raise exception."""
+        raise exc
 
 
 class TestConfigModelsStrategicCoverage:
@@ -328,8 +375,11 @@ class TestConfigModelsStrategicCoverage:
                 FlextDatabaseConfig(),  # Default config
                 FlextDatabaseConfig(host="localhost", port=5432),  # Custom config
                 FlextDatabaseConfig(
-                    host="remote", port=3306, database="custom",
-                    username="user", password="pass"
+                    host="remote",
+                    port=3306,
+                    database="custom",
+                    username="user",
+                    password="pass",
                 ),  # Full config
             ]
 
@@ -357,49 +407,67 @@ class TestConfigModelsStrategicCoverage:
 
     def test_config_validation_edge_cases(self) -> None:
         """Test configuration validation edge cases."""
+        config_classes = self._get_config_classes()
 
-        # Test various configuration scenarios that might trigger edge cases
+        for config_class in config_classes:
+            self._test_config_class(config_class)
+
+    def _get_config_classes(self) -> list[type]:
+        """Get all config classes from config_models module."""
         from flext_core import config_models
 
-        # Get all config classes from the module
         config_classes = []
         for attr_name in dir(config_models):
             attr = getattr(config_models, attr_name)
-            if isinstance(attr, type) and attr_name.startswith("Flext") and attr_name.endswith("Config"):
+            if (
+                isinstance(attr, type)
+                and attr_name.startswith("Flext")
+                and attr_name.endswith("Config")
+            ):
                 config_classes.append(attr)
+        return config_classes
 
-        # Test each config class
-        for config_class in config_classes:
+    def _test_config_class(self, config_class: type) -> None:
+        """Test a single config class."""
+        try:
+            # Test default construction
+            config = config_class()
+            str(config)
+
+            # Test with various parameters
+            if hasattr(config_class, "__annotations__"):
+                self._test_config_with_params(config_class)
+
+        except Exception:
+            # Construction failure is also a valid path
+            assert True
+
+    def _test_config_with_params(self, config_class: type) -> None:
+        """Test config class with various parameters."""
+        annotations = getattr(config_class, "__annotations__", {})
+        test_kwargs = self._build_test_kwargs(annotations)
+
+        if test_kwargs:
             try:
-                # Test default construction
-                config = config_class()
-                str(config)
-
-                # Test with various parameters
-                if hasattr(config_class, "__annotations__"):
-                    # Try to construct with some parameters
-                    annotations = getattr(config_class, "__annotations__", {})
-                    test_kwargs = {}
-
-                    for field_name, field_type in annotations.items():
-                        if field_name.startswith("_"):
-                            continue
-
-                        # Provide test values based on type
-                        if "str" in str(field_type):
-                            test_kwargs[field_name] = "test_value"
-                        elif "int" in str(field_type):
-                            test_kwargs[field_name] = 42
-                        elif "bool" in str(field_type):
-                            test_kwargs[field_name] = True
-
-                    if test_kwargs:
-                        try:
-                            config_with_params = config_class(**test_kwargs)
-                            str(config_with_params)
-                        except Exception:
-                            assert True
-
+                config_with_params = config_class(**test_kwargs)
+                str(config_with_params)
             except Exception:
-                # Construction failure is also a valid path
                 assert True
+
+    def _build_test_kwargs(self, annotations: dict) -> dict:
+        """Build test kwargs based on annotations."""
+        test_kwargs = {}
+
+        for field_name, field_type in annotations.items():
+            if field_name.startswith("_"):
+                continue
+
+            # Provide test values based on type
+            if "str" in str(field_type):
+                test_kwargs[field_name] = "test_value"
+            elif "int" in str(field_type):
+                test_kwargs[field_name] = 42
+            elif "bool" in str(field_type):
+                test_kwargs[field_name] = True
+
+        return test_kwargs

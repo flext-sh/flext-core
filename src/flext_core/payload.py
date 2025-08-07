@@ -851,8 +851,9 @@ class FlextPayload[T](
 
         except (ValueError, TypeError) as e:
             logger = get_logger(__name__)
-            logger.warning(f"Type conversion failed for {type(data).__name__} to {target_type.__name__}: {e}")
-            pass
+            logger.warning(
+                f"Type conversion failed for {type(data).__name__} to {target_type.__name__}: {e}",
+            )
 
         return data
 
@@ -1515,7 +1516,9 @@ class FlextEvent(FlextPayload[Mapping[str, object]]):
             return None
         try:
             return int(str(version))
-        except (ValueError, TypeError):
+        except (ValueError, TypeError) as e:
+            logger = get_logger(__name__)
+            logger.warning(f"Failed to convert version to int: {version} - {e}")
             return None
 
     @property

@@ -264,8 +264,9 @@ class FlextMixinDelegator:
             delegated_method.__signature__ = inspect.signature(method)  # type: ignore[attr-defined]
         except (AttributeError, ValueError) as e:
             logger = get_logger(__name__)
-            logger.warning(f"Failed to set signature for delegated method {method_name}: {e}")
-            pass
+            logger.warning(
+                f"Failed to set signature for delegated method {method_name}: {e}",
+            )
 
         # Store for access via host
         self._delegated_methods[method_name] = delegated_method

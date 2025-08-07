@@ -59,6 +59,9 @@ TEvent = TypeVar("TEvent")
 TCommand = TypeVar("TCommand")
 TQuery = TypeVar("TQuery")
 
+# Core type alias for JSON-compatible dictionary
+JsonDict = dict[str, object]
+
 # =============================================================================
 # FLEXT SEMANTIC TYPE SYSTEM - Hierarchical namespace organization
 # =============================================================================
@@ -158,9 +161,7 @@ class FlextTypes:
         type Cursor = object
 
         # Serialization and format types
-        type Serializable = (
-            JsonDict | list[object] | str | int | float | bool | None
-        )
+        type Serializable = JsonDict | list[object] | str | int | float | bool | None
         type JsonData = JsonDict | list[object]
         type CsvData = Sequence[Sequence[str]]
         type XmlData = str
@@ -583,11 +584,11 @@ class FlextLogLevel(StrEnum):
 # =============================================================================
 
 # Legacy type aliases for backward compatibility (will be deprecated)
-TDict = JsonDict
+TDict = dict[str, object]
 TList = list[object]
 TOptional = object | None
 TCallable = Callable[[object], object]
-TAnyDict = JsonDict
+TAnyDict = dict[str, object]
 TStringDict = dict[str, str]
 
 # Legacy function type aliases

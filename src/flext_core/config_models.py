@@ -121,6 +121,8 @@ from pydantic import (
 )
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from flext_core.loggings import get_logger
+
 if TYPE_CHECKING:
     from flext_core.flext_types import TAnyDict
 else:
@@ -890,7 +892,11 @@ def validate_config(config: FlextBaseConfigModel) -> bool:
     try:
         config.model_validate(config.model_dump())
         return True
-    except (RuntimeError, ValueError, TypeError, KeyError):
+    except (RuntimeError, ValueError, TypeError, KeyError) as e:
+        logger = get_logger(__name__)
+        logger.warning(
+            f"Configuration validation failed for {type(config).__name__}: {e}",
+        )
         return False
 
 

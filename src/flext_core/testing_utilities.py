@@ -86,10 +86,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from .types import FlextTypes
 
-
-def create_oud_connection_config() -> FlextTypes.Core.JsonDict:
+def create_oud_connection_config() -> dict[str, object]:
     """Create standardized OUD connection configuration for testing.
 
     Provides consistent OUD connection parameters across all FLEXT tests
@@ -111,7 +109,7 @@ def create_oud_connection_config() -> FlextTypes.Core.JsonDict:
     }
 
 
-def create_ldap_test_config() -> FlextTypes.Core.JsonDict:
+def create_ldap_test_config() -> dict[str, object]:
     """Create standardized LDAP test configuration.
 
     Returns:
@@ -133,7 +131,7 @@ def create_api_test_response(
     *,
     success: bool = True,
     data: object = None,
-) -> FlextTypes.Core.JsonDict:
+) -> dict[str, object]:
     """Create standardized API test response.
 
     Args:

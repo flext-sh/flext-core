@@ -278,7 +278,7 @@ class TestModelsUltraCoverage:
         service = MicroService()
         assert service.service_name == "auth-service"
         assert service.version == "1.0.0"
-        assert "/health" in [service.health_check_url]
+        assert service.health_check_url == "/health"
         assert len(service.endpoints) == 2
 
 

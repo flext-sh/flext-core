@@ -54,8 +54,8 @@ class TestPayloadFinal100Percent:
                 result = FlextPayload.from_dict(test_data)
                 # If we get a result, check it's a failure
                 if hasattr(result, "is_failure") and result.is_failure:
-                        # Successfully hit error path
-                        assert "Failed to create payload from dict" in str(result.error)
+                    # Successfully hit error path
+                    assert "Failed to create payload from dict" in str(result.error)
             except (RuntimeError, ValueError, TypeError, AttributeError):
                 # Exception raised - also hits the code path
                 assert True

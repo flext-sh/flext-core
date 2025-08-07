@@ -304,8 +304,9 @@ class FlextResult[T]:
                         return hash((True, attrs))
                     except (TypeError, AttributeError) as e:
                         logger = get_logger(__name__)
-                        logger.warning(f"Failed to hash object attributes for {type(self._data).__name__}: {e}")
-                        pass
+                        logger.warning(
+                            f"Failed to hash object attributes for {type(self._data).__name__}: {e}",
+                        )
 
                 # For complex objects, use a combination of type and memory ID
                 return hash((True, type(self._data).__name__, id(self._data)))
