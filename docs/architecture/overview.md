@@ -1,21 +1,21 @@
 # FLEXT Core Architecture Overview
 
-**Arquitetura baseada na implementação atual**
+Reality-based architecture overview aligned with current implementation
 
-## 🎯 Visão Geral
+## 🎯 Overview
 
-FLEXT Core é a biblioteca de fundação para padrões de arquitetura limpa e railway-oriented programming. Esta documentação reflete a implementação REAL em src/flext_core/.
+FLEXT Core is the foundation library for clean architecture patterns and railway-oriented programming. This documentation reflects the ACTUAL implementation in `src/flext_core/`.
 
-## 🏗️ Estrutura Real do Projeto
+## 🏗️ Actual Project Structure
 
-**BASEADO EM src/flext_core/ - VALIDADO:**
+Based on `src/flext_core/` — validated:
 
 ```text
 src/flext_core/
 ├── __init__.py              # Public API gateway
 ├── result.py                # FlextResult[T] - Railway pattern
 ├── container.py             # FlextContainer - DI system
-├── config.py                # FlextBaseSettings
+├── config.py                # FlextSettings
 ├── entities.py              # FlextEntity - Domain entities
 ├── value_objects.py         # FlextValueObject - Value objects
 ├── aggregate_root.py        # FlextAggregateRoot - DDD aggregates
@@ -26,9 +26,9 @@ src/flext_core/
 ├── exceptions.py            # Exception hierarchy
 ├── utilities.py             # Utility functions
 ├── constants.py             # Core constants
-├── flext_types.py           # Type definitions
-├── version.py               # Version management
-├── interfaces.py            # Protocol definitions
+├── typings.py               # Centralized type definitions
+├── __version__.py           # Version management & compatibility
+├── protocols.py             # Protocol definitions
 ├── mixins.py                # Behavior mixins
 ├── decorators.py            # Decorator patterns
 ├── fields.py                # Field metadata
@@ -38,11 +38,11 @@ src/flext_core/
 └── domain_services.py       # Domain services
 ```
 
-## 🔧 Core Patterns Implementados
+## 🔧 Implemented Core Patterns
 
 ### 1. FlextResult[T] - Railway Pattern
 
-**✅ FUNCIONAL** - O padrão central do FLEXT Core:
+Functional — the central pattern of FLEXT Core:
 
 ```python
 from flext_core import FlextResult
@@ -72,7 +72,7 @@ def create_user(email: str) -> FlextResult[dict]:
 
 ### 2. FlextContainer - Dependency Injection
 
-**✅ FUNCIONAL** - Sistema de DI type-safe:
+Functional — type-safe DI system:
 
 ```python
 from flext_core import FlextContainer
@@ -93,10 +93,11 @@ if service_result.success:
 
 ### 3. Domain Patterns
 
-**🔧 DISPONÍVEL** - API disponível, implementação em desenvolvimento:
+Available — API present, implementation evolving:
 
 ```python
-from flext_core import FlextEntity, FlextValueObject, FlextAggregateRoot
+from flext_core import FlextValueObject, FlextAggregateRoot
+from flext_core.models import FlextEntity
 
 # Domain entity
 class User(FlextEntity):
@@ -115,12 +116,12 @@ class Email(FlextValueObject):
 
 ### 4. Configuration Management
 
-**✅ FUNCIONAL** - Baseado em Pydantic:
+Functional — based on Pydantic:
 
 ```python
-from flext_core import FlextBaseSettings
+from flext_core import FlextSettings
 
-class AppSettings(FlextBaseSettings):
+class AppSettings(FlextSettings):
     app_name: str = "My App"
     debug: bool = False
     database_url: str = "sqlite:///app.db"
@@ -135,9 +136,9 @@ settings = AppSettings()
 
 ### Foundation Layer
 
-- **result.py**: FlextResult[T] para error handling
-- **container.py**: FlextContainer para DI
-- **flext_types.py**: Type system definitions
+- **result.py**: FlextResult[T] for error handling
+- **container.py**: FlextContainer for DI
+- **typings.py**: Centralized type system
 - **constants.py**: Core constants
 
 ### Domain Layer
@@ -157,7 +158,7 @@ settings = AppSettings()
 
 - **config.py**: Configuration management
 - **loggings.py**: Structured logging
-- **interfaces.py**: External system contracts
+- **protocols.py**: External system contracts
 
 ## 🧪 Testability
 
@@ -200,7 +201,7 @@ def test_container_pattern():
 
 - **FlextResult[T]**: Complete railway-oriented programming
 - **FlextContainer**: Dependency injection system
-- **Configuration**: FlextBaseSettings with Pydantic
+- **Configuration**: FlextSettings with Pydantic
 - **Basic logging**: Structured logging support
 
 ### 🔧 In Development
@@ -225,11 +226,11 @@ def test_container_pattern():
 
 ### Ecosystem Integration
 
-FLEXT Core serves as foundation for related projects in the workspace.
+FLEXT Core serves as the foundation for related projects in the workspace.
 
 ## ⚠️ Reality Check
 
-**Esta documentação reflete o código ATUAL em src/flext_core/**
+This documentation reflects the CURRENT code in `src/flext_core/`.
 
 ### What EXISTS
 
@@ -252,4 +253,4 @@ FLEXT Core serves as foundation for related projects in the workspace.
 
 ---
 
-**Para informações detalhadas, consulte o código em src/flext_core/ e os testes em tests/**
+For details, check the code in `src/flext_core/` and tests in `tests/`.

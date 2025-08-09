@@ -1,85 +1,13 @@
-"""FLEXT Core Value Objects - Domain Layer Value Implementation.
+"""Immutable value objects with attribute-based equality.
 
-Domain-Driven Design (DDD) value object implementation providing immutability, rich
-behavior composition, and attribute-based equality across the 32-project FLEXT
-ecosystem. Foundation for domain modeling with comprehensive validation and formatting
-capabilities in data integration value types.
+Provides DDD value object implementation with immutability,
+rich behaviors, and comprehensive validation patterns.
 
-Module Role in Architecture:
-    Domain Layer → Value Modeling → Domain Value Types
-
-    This module provides DDD value object patterns used throughout FLEXT projects:
-    - Attribute-based equality distinguishing values from entities
-    - Immutable value objects preventing modification after creation
-    - Rich domain behaviors through multiple inheritance composition
-    - Business rule validation ensuring value object integrity
-
-Value Object Architecture Patterns:
-    Immutable Design: Frozen Pydantic models preventing modification
-    Attribute Equality: Structural equality based on content, not identity
-    Rich Behaviors: Multiple inheritance from utility and mixin classes
-    Domain Validation: Abstract validate_domain_rules enforcement
-
-Development Status (v0.9.0 → 1.0.0):
-    ✅ Production Ready: Immutable values, attribute equality, validation, utilities
-    🚧 Active Development: Rich domain behaviors (Enhancement 3 - Priority Medium)
-    📋 TODO Integration: Value object serialization for Go bridge (Priority 4)
-
-Domain Value Features:
-    FlextValueObject: Abstract base with immutability and validation
-    FlextValueObjectFactory: Type-safe creation with validation and defaults
-    Utility Integration: Direct inheritance from formatters and generators
-    Payload Conversion: Rich payload creation for transport and persistence
-
-Ecosystem Usage Patterns:
-    # FLEXT Service Value Objects
-    class EmailAddress(FlextValueObject):
-        address: str
-
-        def validate_domain_rules(self) -> FlextResult[None]:
-            if '@' not in self.address or '.' not in self.address.split('@')[1]:
-                return FlextResult.fail("Invalid email format")
-            return FlextResult.ok(None)
-
-    # Singer Tap/Target Values
-    class OracleConnectionString(FlextValueObject):
-        host: str
-        port: int
-        service_name: str
-
-        def validate_domain_rules(self) -> FlextResult[None]:
-            if not (1 <= self.port <= 65535):
-                return FlextResult.fail("Port must be between 1 and 65535")
-            return FlextResult.ok(None)
-
-    # client-a Migration Values
-    class LdapDN(FlextValueObject):
-        distinguished_name: str
-
-        def validate_domain_rules(self) -> FlextResult[None]:
-            if '=' not in self.distinguished_name:
-                return FlextResult.fail("Invalid DN format")
-            return FlextResult.ok(None)
-
-Value Object Principles:
-    - Immutability ensuring values cannot be modified after creation
-    - Attribute-based equality comparing structural content
-    - Rich behaviors through utility and mixin inheritance
-    - Domain validation through validate_domain_rules abstract method
-
-Quality Standards:
-    - All value objects must be immutable (frozen Pydantic models)
-    - Equality must be based on attributes, not identity
-    - All value objects must implement validate_domain_rules
-    - Value objects should encapsulate related formatting and validation logic
-
-See Also:
-    docs/TODO.md: Enhancement 3 - Rich domain behavior development
-    entities.py: Entity patterns with identity-based equality
-    mixins.py: Behavior composition through mixin inheritance
-
-Copyright (c) 2025 FLEXT Contributors
-SPDX-License-Identifier: MIT
+Classes:
+    FlextValueObject: Abstract base for immutable values.
+    FlextValueObjectFactory: Type-safe creation with validation.
+    ValueObjectValidator: Validation patterns for values.
+    ValueObjectFormatter: Formatting utilities.
 
 """
 
@@ -92,15 +20,15 @@ from pydantic import BaseModel, ConfigDict
 
 from flext_core.exceptions import FlextValidationError
 from flext_core.fields import FlextFields
-from flext_core.flext_types import TAnyDict
 from flext_core.loggings import FlextLoggerFactory
 from flext_core.mixins import FlextLoggableMixin, FlextValueObjectMixin
 from flext_core.payload import FlextPayload
 from flext_core.result import FlextResult
+from flext_core.typings import TAnyDict
 from flext_core.utilities import FlextFormatters, FlextGenerators
 
 if TYPE_CHECKING:
-    from flext_core.flext_types import TAnyDict
+    from flext_core.typings import TAnyDict
 
 
 # =============================================================================
@@ -108,7 +36,7 @@ if TYPE_CHECKING:
 # =============================================================================
 
 
-class FlextValueObject(
+class FlextValueObject(  # type: ignore[misc]
     BaseModel,
     FlextValueObjectMixin,
     FlextLoggableMixin,
@@ -119,98 +47,8 @@ class FlextValueObject(
     """Abstract DDD value object with immutability, validation, and rich behavior.
 
     Comprehensive value object implementation providing attribute-based equality,
-    immutable design, and rich behavior composition through multiple inheritance.
-    Combines Pydantic validation with DDD principles and utility integration.
-
-    Architecture:
-        - Abstract base class enforcing domain validation implementation
-        - Pydantic BaseModel for automatic validation and serialization
-        - Multiple inheritance from specialized mixin and utility classes
-        - Frozen configuration for immutability and thread safety
-        - Rich behavior composition through utility class inheritance
-
-    Value Object Principles:
-        - Attribute-based equality rather than identity-based comparison
-        - Immutability preventing modification after creation
-        - Value semantics with structural equality comparisons
-        - Rich domain behaviors through method composition
-        - Business rule validation through abstract method enforcement
-
-    Multiple Inheritance Composition:
-        - FlextValueObjectMixin: Value object specific behaviors and equality
-        - FlextLoggableMixin: Structured logging with context management
-        - FlextFormatters: Direct access to data formatting utilities
-        - FlextGenerators: Direct access to ID and timestamp generation
-        - ABC: Abstract base class pattern for interface enforcement
-
-    Validation Integration:
-        - Abstract validate_domain_rules method enforcing implementation
-        - validate_flext method for comprehensive validation with logging
-        - FlextResult pattern for type-safe error handling
-        - Automatic validation integration with factory methods
-        - Business rule validation separate from data validation
-
-    Usage Patterns:
-        # Define domain value object
-        class EmailAddress(FlextValueObject):
-            email: str
-
-            def validate_domain_rules(self) -> FlextResult[None]:
-                if not self.email or "@" not in self.email:
-                    return FlextResult.fail("Invalid email format")
-                if len(self.email) > 254:
-                    return FlextResult.fail("Email too long")
-                return FlextResult.ok(None)
-
-        class Money(FlextValueObject):
-            amount: Decimal
-            currency: str = "USD"
-
-            def validate_domain_rules(self) -> FlextResult[None]:
-                if self.amount < 0:
-                    return FlextResult.fail("Amount cannot be negative")
-                if self.currency not in ["USD", "EUR", "GBP"]:
-                    return FlextResult.fail("Unsupported currency")
-                return FlextResult.ok(None)
-
-            def add(self, other: Money) -> FlextResult[Money]:
-                if self.currency != other.currency:
-                    return FlextResult.fail("Currency mismatch")
-                return FlextResult.ok(Money(
-                    amount=self.amount + other.amount,
-                    currency=self.currency
-                ))
-
-        # Create value objects
-        email_result = EmailAddress(email="user@example.com").validate_flext()
-        if email_result.success:
-            email = email_result.data
-
-        # Value object equality
-        money1 = Money(amount=Decimal("10.00"))
-        money2 = Money(amount=Decimal("10.00"))
-        if money1 != money2:  # Attribute-based equality
-            raise AssertionError(
-                f"Expected {money2}, got {money1}"
-            )
-
-        # Payload conversion for transport
-        payload = email.to_payload()
-        # Rich metadata and formatting included
-
-    Utility Integration:
-        - Direct access to formatting methods from FlextFormatters
-        - Direct access to generation methods from FlextGenerators
-        - Inherited string representation with formatted output
-        - Logging integration with automatic context management
-        - Validation integration with comprehensive error reporting
-
-    Payload Conversion:
-        - Rich payload creation with metadata enrichment
-        - Correlation ID generation for request tracking
-        - Validation status inclusion in payload metadata
-        - Formatted data presentation through inherited utilities
-        - Fallback payload creation for error scenarios
+    immutable design, and rich behavior composition. Combines Pydantic validation
+    with DDD principles and utility integration for enterprise domain modeling.
     """
 
     model_config = ConfigDict(
@@ -363,6 +201,11 @@ class FlextValueObject(
         fields = self.format_dict(self.model_dump())
         return f"{self.__class__.__name__}({fields})"
 
+    # Back-compat helper relied on by tests for simple dict view
+    def to_dict_basic(self) -> dict[str, object]:
+        """Return basic dict view of the value object (public fields only)."""
+        return {k: v for k, v in self.model_dump().items() if not k.startswith("_")}
+
     def to_payload(self) -> FlextPayload[dict[str, str | int | float | bool | None]]:
         """Convert to FlextPayload for transport using orchestrated patterns.
 
@@ -426,7 +269,10 @@ class FlextValueObject(
             corrected_result = FlextPayload.create(data=serializable_data)
             if corrected_result.is_failure:
                 # If still failing, there's a deeper architectural issue
-                error_msg = f"Cannot serialize value object {self.__class__.__name__}: {corrected_result.error}"
+                error_msg = (
+                    f"Cannot serialize value object {self.__class__.__name__}: "
+                    f"{corrected_result.error}"
+                )
                 raise FlextValidationError(error_msg)
             return corrected_result.unwrap()
 
@@ -532,78 +378,6 @@ class FlextValueObjectFactory:
     Comprehensive factory implementation providing type-safe value object creation with
     default value management and domain validation. Implements factory pattern with
     FlextResult integration for consistent error handling and reliability.
-
-    Architecture:
-        - Static factory methods for stateless value object creation
-        - Default value support for consistent value object initialization
-        - Type-safe factory functions with generic return types
-        - Domain validation integration through value object validate_domain_rules
-        - FlextResult pattern integration for error handling
-
-    Factory Features:
-        - Dynamic factory function creation for any value object type
-        - Default value merging with parameter override capability
-        - Automatic domain validation execution before value object return
-        - Error handling with detailed failure messages and type information
-        - Type-safe creation with compile-time verification
-
-    Value Object Creation Process:
-        - Default value application for consistent initialization
-        - Parameter override support for customization and specialization
-        - Value object instantiation with merged parameters
-        - Domain validation execution ensuring business rule compliance
-        - FlextResult wrapping for type-safe error handling and reporting
-        - Comprehensive error messages including type and validation information
-
-    Usage Patterns:
-        # Create factory for EmailAddress value object
-        email_factory = FlextValueObjectFactory.create_value_object_factory(
-            EmailAddress,
-            defaults={
-                "domain_validation": True,
-                "normalize": True
-            }
-        )
-
-        # Use factory to create value objects
-        email_result = email_factory(
-            email="john@example.com"
-        )
-
-        if email_result.success:
-            email_address = email_result.data
-            # Domain validation already executed
-            # Defaults applied automatically
-
-        # Factory for Money value object with currency defaults
-        money_factory = FlextValueObjectFactory.create_value_object_factory(
-            Money,
-            defaults={
-                "currency": "USD",
-                "precision": 2
-            }
-        )
-
-        # Create money with default currency
-        price_result = money_factory(amount=Decimal("29.99"))
-
-        # Override defaults when needed
-        euro_result = money_factory(
-            amount=Decimal("25.50"),
-            currency="EUR"  # Overrides USD default
-        )
-
-        # Handle factory creation errors
-        if price_result.is_failure:
-            logger.error("Failed to create price: %s", price_result.error)
-
-    Factory Pattern Benefits:
-        - Consistent value object creation with validation
-        - Default value management across value object instances
-        - Type-safe creation with compile-time verification
-        - Error handling with detailed failure information
-        - Reduced boilerplate code for value object instantiation
-        - Centralized validation and creation logic
     """
 
     @staticmethod

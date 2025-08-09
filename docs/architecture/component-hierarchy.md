@@ -1,22 +1,22 @@
 # Component Hierarchy - FLEXT Core Architecture
 
-**Reality-Based Component Analysis**
+Reality-based component analysis
 
 This document provides an analysis of FLEXT Core's actual component hierarchy based on the real implementation in `src/flext_core/`.
 
-## 🏗️ Actual Module Structure (48 Python Files)
+## 🏗️ Actual Module Structure (48 Python files)
 
 Based on file count and real directory listing:
 
-### **Level 1: Foundation (Zero Dependencies)**
+### **Level 1: Foundation (Zero dependencies)**
 
 **Core Types and Constants**
 
 - `constants.py` - Core enums and constants
-- `version.py` - Version management
+- `__version__.py` - Version management & compatibility helpers
 - `py.typed` - Type information marker
 
-### **Level 2: Railway Pattern Foundation**
+### **Level 2: Railway pattern foundation**
 
 **FlextResult Pattern** (`result.py`)
 
@@ -43,7 +43,7 @@ class FlextResult[T]:
     # Note: map/flat_map methods exist but not captured in this grep
 ```
 
-### **Level 3: Dependency Injection**
+### **Level 3: Dependency injection**
 
 **FlextContainer** (`container.py`)
 
@@ -51,16 +51,16 @@ class FlextResult[T]:
 - Service registration and retrieval
 - Based on FlextResult pattern
 
-### **Level 4: Configuration Management**
+### **Level 4: Configuration management**
 
 **Configuration Modules**
 
-- `config.py` - FlextBaseSettings implementation
-- `config_hierarchical.py` - Hierarchical configuration
+- `config.py` - FlextSettings implementation
+- (config_hierarchical.py was removed in the current codebase)
 - `config_models.py` - Configuration data models
 - `payload.py` - Message/payload patterns
 
-### **Level 5: Domain Layer**
+### **Level 5: Domain layer**
 
 **Domain-Driven Design Components**
 
@@ -70,18 +70,17 @@ class FlextResult[T]:
 - `domain_services.py` - Domain services
 - `models.py` - General models
 
-### **Level 6: Architectural Patterns**
+### **Level 6: Architectural patterns**
 
 **CQRS and Validation**
 
 - `commands.py` - Command pattern
 - `handlers.py` - Handler patterns
 - `validation.py` - Validation framework
-- `interfaces.py` - Protocol definitions
-- `protocols.py` - Additional protocols
+- `protocols.py` - Protocol definitions
 - `guards.py` - Type guards
 
-### **Level 7: Cross-Cutting Concerns**
+### **Level 7: Cross-cutting concerns**
 
 **Utilities and Extensions**
 
@@ -92,31 +91,28 @@ class FlextResult[T]:
 - `exceptions.py` - Exception hierarchy
 - `loggings.py` - Logging utilities
 
-### **Level 8: Type System**
+### **Level 8: Type system**
 
 **Type Definitions**
 
-- `types.py` - Legacy type system
-- `flext_types.py` - Compatibility types
-- `semantic_types.py` - Unified semantic patterns
-- `semantic.py` - Semantic patterns
-- `semantic_old.py` - Legacy semantic
+- `typings.py` - Centralized type system (single source of truth)
+- `types.py` - Thin compatibility re-export
 
-### **Level 9: Base Implementations**
+### **Level 9: Base implementations**
 
-**Internal Base Classes**
+**Internal Base Classes (modernized)**
 
-- `_result_base.py` - Result pattern base
-- `_config_base.py` - Configuration base
-- `_decorators_base.py` - Decorator base
-- `_handlers_base.py` - Handler base
-- `_mixins_base.py` - Mixin base
-- `_railway_base.py` - Railway pattern base
-- `_builder_base.py` - Builder pattern
-- `_delegation_system.py` - Delegation system
-- `foundation.py` - Foundation patterns
+- `base_commands.py`
+- `base_decorators.py`
+- `base_exceptions.py`
+- `base_handlers.py`
+- `base_mixins.py`
+- `base_testing.py`
+- `base_utilities.py`
+- `delegation_system.py`
+- `legacy.py`
 
-### **Level 10: Integration and Specialized**
+### **Level 10: Integration and specialized**
 
 **Framework Integration**
 
@@ -136,7 +132,7 @@ FlextResult (result.py)
     ↓
 FlextContainer (container.py) - uses FlextResult
     ↓
-FlextBaseSettings (config.py) - uses FlextResult and FlextContainer
+FlextSettings (config.py) - uses FlextResult and FlextContainer
     ↓
 Domain Classes (entities.py, etc.) - use all above
     ↓
@@ -170,11 +166,11 @@ FlextResult.fail(...) -> FlextResult[T]
 result.unwrap() -> T  # May raise if failure
 ```
 
-### FlextBaseSettings (From config.py)
+### FlextSettings (From config.py)
 
 ```python
 # Environment integration
-class AppSettings(FlextBaseSettings):
+class AppSettings(FlextSettings):
     field: str = Field(default="value")
 
     class Config:
@@ -216,7 +212,7 @@ container.get_service_info() # Not confirmed in FlextContainer
 
 - **48 Python modules** with mixed documentation quality
 - **Multiple type systems** in transition (types.py → semantic_types.py)
-- **Legacy modules** marked for compatibility (flext_types.py)
+- **Legacy modules** marked for compatibility (types.py)
 - **Base implementations** suggest ongoing refactoring
 
 ### Architectural Decisions

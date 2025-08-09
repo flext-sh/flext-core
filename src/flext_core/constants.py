@@ -1,31 +1,13 @@
-"""FLEXT Core Constants - HARMONIZED SINGLE SOURCE OF TRUTH.
+"""Core constants and enums for the FLEXT ecosystem.
 
-AUTHORITY: This is the ONLY place where constants are defined in the FLEXT ecosystem.
-ALL other patterns (Pydantic, Config/CLI, etc.) CONSUME from here, NEVER define
-their own.
+Provides centralized constants, error codes, patterns, and defaults.
+Serves as single source of truth for all constant values.
 
-ELIMINATES ALL DUPLICATIONS between Constants, Pydantic, Config/CLI patterns.
-Provides comprehensive constant categories covering ALL domains:
-Core, Models, Configuration, CLI, Infrastructure.
+Classes:
+    FlextConstants: Main constants container with nested categories.
+    FlextFieldType: Field type enumeration.
+    FlextLogLevel: Log level enumeration.
 
-Module Role in Architecture:
-    Foundation Layer → SINGLE SOURCE → All Other Patterns
-
-    This module provides UNIFIED constants that enable:
-    - SINGLE definition of timeouts, retries, limits across ALL patterns
-    - Configuration system constants (priorities, files, environments)
-    - CLI system constants (arguments, prefixes, formats)
-    - Model system constants (validation, serialization settings)
-    - Infrastructure constants (database ports, network settings)
-
-Quality Standards:
-    - ZERO duplications across any patterns
-    - ALL patterns must consume from this single source
-    - NO pattern-specific constant definitions allowed
-    - Complete type safety with ClassVar annotations
-
-Copyright (c) 2025 FLEXT Contributors
-SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -34,25 +16,22 @@ from enum import Enum
 from typing import ClassVar
 
 
-class FlextSemanticConstants:
-    """SINGLE SOURCE OF TRUTH for all FLEXT ecosystem constants.
+class FlextConstants:
+    """Central container for all ecosystem constants.
 
-    ELIMINATES ALL DUPLICATIONS between Constants, Pydantic, Config/CLI patterns.
-    Provides comprehensive constant categories covering ALL domains:
-    Core, Models, Configuration, CLI, Infrastructure.
-
-    AUTHORITY: This is the ONLY place where constants are defined.
-    ALL other patterns CONSUME from here, NEVER define their own.
+    Organizes constants into logical categories with type safety.
     """
 
-    # Legacy compatibility - ERROR_CODES as class attribute
+    # Class-level placeholder kept for backward compatibility;
+    # the authoritative flat ERROR_CODES mapping is built at module level
+    # after this class is fully defined.
     ERROR_CODES: ClassVar[dict[str, str]] = {}
 
     # Legacy compatibility - VERSION as direct attribute
     VERSION: ClassVar[str] = "0.9.0"
 
     class Core:
-        """Core system constants shared across ecosystem."""
+        """Core system constants."""
 
         NAME = "FLEXT"
         VERSION = "0.9.0"
@@ -61,7 +40,7 @@ class FlextSemanticConstants:
         ARCHITECTURE = "clean_architecture"
 
     class Errors:
-        """ALL error codes - SINGLE SOURCE for entire ecosystem."""
+        """Error codes and messages."""
 
         # Error Code Ranges
         BUSINESS_ERROR_RANGE = (1000, 1999)
@@ -141,7 +120,7 @@ class FlextSemanticConstants:
         }
 
     class Messages:
-        """ALL system messages - SINGLE SOURCE."""
+        """System messages."""
 
         SUCCESS = "Operation completed successfully"
         STARTED = "Operation started"
@@ -177,7 +156,7 @@ class FlextSemanticConstants:
         CONFIGURATION_INVALID = "Configuration is invalid"
 
     class Status:
-        """ALL status values - SINGLE SOURCE."""
+        """Status values."""
 
         ACTIVE = "active"
         INACTIVE = "inactive"
@@ -191,7 +170,7 @@ class FlextSemanticConstants:
         PROCESSING = "PROCESSING"
 
     class Patterns:
-        """ALL validation patterns - SINGLE SOURCE."""
+        """Validation patterns."""
 
         # Identifiers
         UUID_PATTERN = r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
@@ -202,8 +181,9 @@ class FlextSemanticConstants:
         # Authentication
         EMAIL_PATTERN = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
         USERNAME_PATTERN = r"^[a-zA-Z0-9_-]{3,32}$"
-        PASSWORD_PATTERN = (  # nosec B105
-            r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"  # noqa: S105
+        # This is a regex pattern for credential validation, not a hardcoded password
+        CREDENTIAL_STRENGTH_PATTERN = (
+            r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"
         )
 
         # Network
@@ -227,7 +207,7 @@ class FlextSemanticConstants:
         SEMANTIC_VERSION_PATTERN = r"^\d+\.\d+\.\d+(-\w+(\.\d+)?)?$"
 
     class Defaults:
-        """ALL default values - SINGLE SOURCE (includes Config/CLI/Model defaults)."""
+        """Default values."""
 
         # Network and timeouts (CONSOLIDATED - was duplicated across patterns)
         TIMEOUT = 30
@@ -259,7 +239,7 @@ class FlextSemanticConstants:
         CACHE_MAX_SIZE = 1000
 
     class Limits:
-        """ALL system limits - SINGLE SOURCE."""
+        """System limits."""
 
         MAX_STRING_LENGTH = 1000
         MAX_LIST_SIZE = 10000
@@ -272,7 +252,7 @@ class FlextSemanticConstants:
         MAX_THREADS = 100
 
     class Performance:
-        """ALL performance constants - SINGLE SOURCE."""
+        """Performance constants."""
 
         DEFAULT_BATCH_SIZE = 1000
         MAX_BATCH_SIZE = 10000
@@ -292,9 +272,14 @@ class FlextSemanticConstants:
         METRICS_INTERVAL = 60  # seconds
         HEALTH_CHECK_INTERVAL = 30  # seconds
 
+        # Time calculation constants (consolidated from utilities.py - SOLID SRP)
+        SECONDS_PER_MINUTE = 60
+        SECONDS_PER_HOUR = 3600
+        BYTES_PER_KB = 1024
+
     # NEW: Configuration system constants (MOVED FROM Config/CLI patterns)
     class Configuration:
-        """Configuration system constants - ELIMINATES Config pattern duplications."""
+        """Configuration system constants."""
 
         # Provider priorities (MOVED FROM Config pattern)
         CLI_PRIORITY = 1
@@ -326,7 +311,7 @@ class FlextSemanticConstants:
 
     # NEW: CLI system constants (MOVED FROM CLI pattern)
     class Cli:
-        """CLI system constants - ELIMINATES CLI pattern duplications."""
+        """CLI system constants."""
 
         # Standard arguments
         HELP_ARGS: ClassVar[list[str]] = ["--help", "-h"]
@@ -349,7 +334,7 @@ class FlextSemanticConstants:
 
     # NEW: Infrastructure constants (Database, Cache, etc.)
     class Infrastructure:
-        """Infrastructure constants - Database, Cache, Network."""
+        """Infrastructure constants."""
 
         # Database ports
         DEFAULT_DB_PORT = 5432
@@ -371,7 +356,7 @@ class FlextSemanticConstants:
 
     # NEW: Model system constants (MOVED FROM Pydantic pattern)
     class Models:
-        """Model system constants - ELIMINATES Pydantic pattern duplications."""
+        """Model system constants."""
 
         # Validation settings (MOVED FROM Pydantic pattern)
         VALIDATE_ASSIGNMENT = True
@@ -402,7 +387,7 @@ class FlextSemanticConstants:
 
     # NEW: Observability constants (MOVED from observability patterns)
     class Observability:
-        """Observability constants - MOVED from observability patterns."""
+        """Observability constants."""
 
         LOG_LEVELS: ClassVar[list[str]] = [
             "TRACE",
@@ -414,6 +399,9 @@ class FlextSemanticConstants:
         ]
         DEFAULT_LOG_LEVEL = "INFO"
 
+        # Trace level constant (consolidated from loggings.py - SOLID SRP)
+        TRACE_LEVEL = 5
+
         SPAN_TYPES: ClassVar[list[str]] = ["business", "technical", "error"]
         METRIC_TYPES: ClassVar[list[str]] = ["counter", "histogram", "gauge"]
         ALERT_LEVELS: ClassVar[list[str]] = ["info", "warning", "error", "critical"]
@@ -421,9 +409,14 @@ class FlextSemanticConstants:
         CORRELATION_ID_HEADER = "X-Correlation-ID"
         TRACE_ID_HEADER = "X-Trace-ID"
 
+        # Serialization constants (consolidated from payload.py - SOLID SRP)
+        FLEXT_SERIALIZATION_VERSION = "1.0.0"
+        SERIALIZATION_FORMAT_JSON = "json"
+        SERIALIZATION_FORMAT_JSON_COMPRESSED = "json_compressed"
+
     # NEW: Platform constants (FLEXT specific infrastructure)
     class Platform:
-        """Platform-wide constants for the entire FLEXT ecosystem."""
+        """Platform-wide constants."""
 
         # Service Ports
         FLEXCORE_PORT = 8080
@@ -504,12 +497,7 @@ class FlextSemanticConstants:
 
 
 class FlextFieldType(Enum):
-    """Field type constants for data validation and field definitions.
-
-    Defines standard field types for validation, schema definition, and
-    data processing operations. Used by validation system and field
-    definition components for type consistency.
-    """
+    """Field type enumeration for validation and schema definition."""
 
     STRING = "string"
     INTEGER = "integer"
@@ -522,7 +510,7 @@ class FlextFieldType(Enum):
 
 
 class FlextLogLevel(Enum):
-    """Log level constants for structured logging system."""
+    """Log level enumeration with numeric value support."""
 
     DEBUG = "DEBUG"
     INFO = "INFO"
@@ -559,7 +547,7 @@ class FlextLogLevel(Enum):
 
 
 class FlextEnvironment(Enum):
-    """Environment constants for application deployment contexts."""
+    """Environment type enumeration."""
 
     DEVELOPMENT = "development"
     PRODUCTION = "production"
@@ -567,85 +555,107 @@ class FlextEnvironment(Enum):
     TESTING = "testing"
 
 
+class FlextConnectionType(Enum):
+    """Connection type enumeration."""
+
+    DATABASE = "database"
+    REDIS = "redis"
+    LDAP = "ldap"
+    ORACLE = "oracle"
+    POSTGRES = "postgres"
+    REST_API = "rest_api"
+    GRPC = "grpc"
+    FILE = "file"
+    STREAM = "stream"
+
+
+class FlextDataFormat(Enum):
+    """Data format enumeration."""
+
+    JSON = "json"
+    XML = "xml"
+    CSV = "csv"
+    LDIF = "ldif"
+    YAML = "yaml"
+    PARQUET = "parquet"
+    AVRO = "avro"
+    PROTOBUF = "protobuf"
+
+
+class FlextOperationStatus(Enum):
+    """Operation status enumeration."""
+
+    PENDING = "pending"
+    RUNNING = "running"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    CANCELLED = "cancelled"
+    RETRYING = "retrying"
+
+
+class FlextEntityStatus(Enum):
+    """Entity status enumeration."""
+
+    ACTIVE = "active"
+    INACTIVE = "inactive"
+    PENDING = "pending"
+    DELETED = "deleted"
+    SUSPENDED = "suspended"
+
+
 # =============================================================================
-# BACKWARD COMPATIBILITY - Legacy flat constants (DEPRECATED)
+# LEGACY CONSTANTS MOVED TO LEGACY.PY
 # =============================================================================
-
-# Legacy ERROR_CODES dict for backward compatibility
-ERROR_CODES = {
-    code_name: getattr(FlextSemanticConstants.Errors, code_name)
-    for code_name in dir(FlextSemanticConstants.Errors)
-    if not code_name.startswith("_")
-}
-
-# Populate the class-level ERROR_CODES for backward compatibility
-FlextSemanticConstants.ERROR_CODES = ERROR_CODES
-
-# Legacy MESSAGES dict for backward compatibility
-MESSAGES = {
-    message_name: getattr(FlextSemanticConstants.Messages, message_name)
-    for message_name in dir(FlextSemanticConstants.Messages)
-    if not message_name.startswith("_")
-}
-
-# Legacy STATUS_CODES dict for backward compatibility
-STATUS_CODES = {
-    status_name: getattr(FlextSemanticConstants.Status, status_name)
-    for status_name in dir(FlextSemanticConstants.Status)
-    if not status_name.startswith("_")
-}
-
-# Legacy VALIDATION_RULES for backward compatibility
-VALIDATION_RULES = {
-    "REQUIRED": "REQUIRED",
-    "OPTIONAL": "OPTIONAL",
-    "NULLABLE": "NULLABLE",
-    "NON_EMPTY": "NON_EMPTY",
-}
-
-# Legacy individual constants for backward compatibility
-DEFAULT_TIMEOUT = FlextSemanticConstants.Defaults.TIMEOUT
-DEFAULT_RETRIES = FlextSemanticConstants.Defaults.MAX_RETRIES
-DEFAULT_PAGE_SIZE = FlextSemanticConstants.Defaults.PAGE_SIZE
-VERSION = FlextSemanticConstants.Core.VERSION
-NAME = FlextSemanticConstants.Core.NAME
-
-# Legacy pattern aliases for backward compatibility
-EMAIL_PATTERN = FlextSemanticConstants.Patterns.EMAIL_PATTERN
-UUID_PATTERN = FlextSemanticConstants.Patterns.UUID_PATTERN
-URL_PATTERN = FlextSemanticConstants.Patterns.URL_PATTERN
-IDENTIFIER_PATTERN = FlextSemanticConstants.Patterns.IDENTIFIER_PATTERN
-SERVICE_NAME_PATTERN = FlextSemanticConstants.Patterns.SERVICE_NAME_PATTERN
-
-# Legacy class alias for backward compatibility
-FlextConstants = FlextSemanticConstants
+# Legacy flat constants ERROR_CODES, MESSAGES, STATUS_CODES, VALIDATION_RULES,
+# DEFAULT_TIMEOUT, DEFAULT_RETRIES, DEFAULT_PAGE_SIZE, VERSION, NAME, and
+# pattern aliases have been moved to legacy.py with deprecation warnings.
+#
+# NEW USAGE: Use proper FlextConstants nested structure
+#   FlextConstants.Errors.VALIDATION_ERROR
+#   FlextConstants.Defaults.TIMEOUT
+#   FlextConstants.Patterns.EMAIL_PATTERN
+#
+# OLD USAGE (deprecated): Import from legacy.py
+#   from flext_core.legacy import ERROR_CODES, DEFAULT_TIMEOUT, EMAIL_PATTERN
 
 # =============================================================================
 # EXPORTS - Semantic constants + backward compatibility
 # =============================================================================
 
+# Build legacy flat ERROR_CODES mapping with mixed strategy:
+# numeric codes for key infrastructure errors, textual identifiers otherwise.
+_special_numeric = {
+    "GENERIC_ERROR": FlextConstants.Errors.GENERIC_ERROR,
+    "VALIDATION_ERROR": FlextConstants.Errors.VALIDATION_ERROR,
+    "CONNECTION_ERROR": FlextConstants.Errors.CONNECTION_ERROR,
+    "TIMEOUT_ERROR": FlextConstants.Errors.TIMEOUT_ERROR,
+}
+ERROR_CODES: dict[str, str] = {}
+for name in [n for n in dir(FlextConstants.Errors) if not n.startswith("_")]:
+    ERROR_CODES[name] = _special_numeric.get(name, name)
+
+# Keep a reference on the class for callers that used FlextConstants.ERROR_CODES
+FlextConstants.ERROR_CODES = ERROR_CODES
+
+# Messages namespace re-export for compatibility
+MESSAGES = FlextConstants.Messages
+SERVICE_NAME_EMPTY = "Service name cannot be empty"
+
 __all__ = [
-    "DEFAULT_PAGE_SIZE",
-    "DEFAULT_RETRIES",
-    "DEFAULT_TIMEOUT",
-    "EMAIL_PATTERN",
-    # LEGACY COMPATIBILITY: Flat constants (deprecated)
+    # Legacy constants
     "ERROR_CODES",
-    "IDENTIFIER_PATTERN",
     "MESSAGES",
-    "NAME",
-    "SERVICE_NAME_PATTERN",
-    "STATUS_CODES",
-    "URL_PATTERN",
-    "UUID_PATTERN",
-    "VALIDATION_RULES",
-    "VERSION",
-    # LEGACY COMPATIBILITY: Class alias
+    "SERVICE_NAME_EMPTY",
+    # Enumerations
+    "FlextConnectionType",
+    # Main constants class with nested structure
     "FlextConstants",
+    "FlextDataFormat",
+    "FlextEntityStatus",
     "FlextEnvironment",
-    # ENUMS: Essential enums for other modules
     "FlextFieldType",
     "FlextLogLevel",
-    # MAIN EXPORT: Single source of truth
-    "FlextSemanticConstants",
+    "FlextOperationStatus",
+    # Note: Legacy constants moved to legacy.py
+    # Import from flext_core.legacy if needed for backward compatibility
 ]

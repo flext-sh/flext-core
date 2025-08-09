@@ -930,7 +930,7 @@ class TestFlextCoreConvenienceFunction:
 class TestFlextCoreIntegration:
     """Test FlextCore integration scenarios."""
 
-    def test_full_workflow_integration(self, clean_flext_core: FlextCore) -> None:  # noqa: C901
+    def test_full_workflow_integration(self, clean_flext_core: FlextCore) -> None:
         """Test complete workflow integration."""
         # 1. Configure logging
         clean_flext_core.configure_logging(log_level="INFO")

@@ -48,22 +48,23 @@ else:
     print(f"Error: {result.error}")
 ```
 
-### Domain Modeling
+### Domain Modeling (models API)
 
 ```python
-from flext_core import FlextEntity, FlextResult
+from flext_core.models import FlextEntity
+from flext_core import FlextResult
 
 class User(FlextEntity):
-    def __init__(self, user_id: str, name: str, email: str):
-        super().__init__(user_id)
-        self.name = name
-        self.email = email
-        self.is_active = False
+    id: str
+    name: str
+    email: str
+    is_active: bool = False
 
-    def activate(self) -> FlextResult[None]:
-        if self.is_active:
-            return FlextResult.fail("Already activated")
-        self.is_active = True
+    def validate_business_rules(self) -> FlextResult[None]:
+        if "@" not in self.email:
+            return FlextResult.fail("Invalid email")
+        if not self.name.strip():
+            return FlextResult.fail("Name required")
         return FlextResult.ok(None)
 ```
 
@@ -87,15 +88,15 @@ Understand the design principles and patterns.
 
 Complete reference for FLEXT Core components.
 
-- [**Core API**](api/core.md) - FlextResult, FlextContainer, FlextBaseSettings
-- [**Patterns API**](api/patterns.md) - Commands, Handlers, Domain patterns
+- [**Core API**](api/core.md) - FlextResult, FlextContainer, FlextSettings
+- [**Patterns API**](api/patterns.md) - Commands, Handlers, Validation
 
 ### ⚙️ **Configuration**
 
 Environment-aware configuration management.
 
 - [**Configuration Overview**](configuration/overview.md) - Settings patterns
-- [**Secrets Management**](configuration/secrets.md) - Secure configuration
+- Secrets Management (planned)
 
 ### 🛠️ **Development**
 
@@ -141,7 +142,7 @@ FLEXT Core implements Clean Architecture principles:
 
 - FlextResult[T] for type-safe error handling
 - FlextContainer for dependency injection
-- FlextBaseSettings for configuration
+- FlextSettings for configuration
 - FlextEntity for domain modeling
 - Basic logging support
 
@@ -230,9 +231,9 @@ make validate  # Run all quality checks
 
 ## ⚠️ Important Notes
 
-- This documentation reflects the **current implementation** in src/flext_core/
-- All examples are **tested** against the actual codebase
-- Some features mentioned are in active development
+- This documentation reflects the current implementation in `src/flext_core/`
+- Examples are aligned to real exports in `src/flext_core/__init__.py`
+- Some features are in active development (see status sections)
 - Check the source code for the most up-to-date API
 
 ---

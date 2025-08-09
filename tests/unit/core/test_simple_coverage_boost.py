@@ -10,12 +10,14 @@ from unittest.mock import Mock
 
 import pytest
 
-from flext_core.exceptions import FlextError
-from flext_core.foundation import FlextFactory
-from flext_core.models import FlextFactory as ModelsFactory
-from flext_core.result import FlextResult
-from flext_core.utilities import flext_safe_int_conversion
-from flext_core.value_objects import FlextValueObject
+from flext_core import (
+    FlextError,
+    FlextFactory,
+    FlextFactory as ModelsFactory,
+    FlextResult,
+    FlextValueObject,
+)
+from flext_core.utilities import safe_int_conversion_with_default
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 
@@ -50,17 +52,17 @@ class TestSimpleCoverageBoost:
             try:
                 instance = ModelsFactory.create_instance()
                 assert instance is not None
-            except Exception:  # noqa: S110
+            except (TypeError, AttributeError, KeyError):
                 # Expected for some factory methods that require parameters
                 pass
 
     def test_utility_edge_cases(self) -> None:
         """Test utility function edge cases."""
         # Test safe int conversion with edge cases
-        assert flext_safe_int_conversion("123", 0) == 123
-        assert flext_safe_int_conversion("invalid", 42) == 42
-        assert flext_safe_int_conversion(None, None) is None
-        assert flext_safe_int_conversion("", 10) == 10
+        assert safe_int_conversion_with_default("123", 0) == 123
+        assert safe_int_conversion_with_default("invalid", 42) == 42
+        assert safe_int_conversion_with_default(None, 10) == 10
+        assert safe_int_conversion_with_default("", 10) == 10
 
     def test_exception_edge_cases(self) -> None:
         """Test exception handling edge cases."""
@@ -122,7 +124,7 @@ class TestSimpleCoverageBoost:
 
     def test_version_info_coverage(self) -> None:
         """Test version info coverage."""
-        from flext_core.version import get_version_info
+        from flext_core.__version__ import get_version_info
 
         version_info = get_version_info()
         assert version_info.major >= 0
@@ -131,9 +133,9 @@ class TestSimpleCoverageBoost:
 
     def test_config_edge_cases(self) -> None:
         """Test config edge cases."""
-        from flext_core.config import FlextBaseSettings
+        from flext_core.config import FlextSettings
 
-        class TestSettings(FlextBaseSettings):
+        class TestSettings(FlextSettings):
             test_field: str = "default"
 
         settings = TestSettings()
@@ -169,7 +171,7 @@ class TestSimpleCoverageBoost:
             try:
                 field = FlextFields.create_field("test_field", str)
                 assert field is not None
-            except Exception:  # noqa: S110
+            except (TypeError, AttributeError, KeyError):
                 # Some methods might require additional parameters
                 pass
 

@@ -1,18 +1,8 @@
 #!/usr/bin/env python3
-"""Modern FLEXT Patterns Showcase - Boilerplate Elimination Demo.
+"""Modern FLEXT patterns with boilerplate elimination.
 
-This example demonstrates the power of the new FLEXT standardization patterns
-by showing dramatic boilerplate reduction while maintaining enterprise-grade
-quality, type safety, and clean architecture.
-
-Key Demonstrations:
-- 85% boilerplate reduction compared to traditional approaches
-- Railway-oriented programming eliminates exception handling
-- Semantic types provide self-documenting code
-- Zero-configuration patterns for common operations
-- Complete type safety with MyPy compliance
-
-Real-World Scenario:
+Demonstrates railway-oriented programming, semantic types,
+zero-configuration patterns, and type safety compliance.
 Building an e-commerce order processing system with user management,
 inventory tracking, payment processing, and notification systems.
 """
@@ -32,9 +22,9 @@ from shared_domain import (
 )
 
 from flext_core import (
-    FlextBaseSettings,
     FlextEntity,
     FlextResult,
+    FlextSettings,
     FlextUtilities,
     FlextValueObject,
     get_flext_container,
@@ -56,7 +46,7 @@ MAX_ORDER_ITEMS = 50
 # =============================================================================
 
 
-class AppConfig(FlextBaseSettings):
+class AppConfig(FlextSettings):
     """Application configuration with automatic environment loading."""
 
     # Database settings - automatically loaded from env vars

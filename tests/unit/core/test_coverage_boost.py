@@ -18,14 +18,14 @@ from unittest.mock import Mock
 
 import pytest
 
+from flext_core.__version__ import get_version_info
 from flext_core.container import FlextContainer
 from flext_core.exceptions import FlextError
-from flext_core.foundation import FlextFactory
+from flext_core.models import FlextFactory
 from flext_core.payload import FlextPayload
 from flext_core.result import FlextResult
 from flext_core.utilities import flext_safe_int_conversion
 from flext_core.value_objects import FlextValueObject
-from flext_core.version import get_version_info
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 

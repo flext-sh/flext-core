@@ -1,13 +1,8 @@
 #!/usr/bin/env python3
-"""FLEXT Logging Structured System Example.
+"""Structured logging system with FlextLoggerFactory.
 
-Comprehensive demonstration of FlextLoggerFactory system showing enterprise-grade
-structured logging with context management, level filtering, and observability.
-
-Features demonstrated:
-    - Core structured logging with FlextLogger
-    - Logger factory pattern with caching and global configuration
-    - Context management with scoped logging and automatic cleanup
+Demonstrates context management, level filtering, observability,
+and factory patterns for enterprise logging.
     - Level-based filtering with performance optimization
     - Global log store for testing and observability
     - Context inheritance and hierarchical logging

@@ -8,8 +8,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_core.foundation import FlextFactory as FoundationFactory
-from flext_core.models import (
+from flext_core import (
     FlextAuth,
     FlextConfig,
     FlextData,
@@ -18,15 +17,16 @@ from flext_core.models import (
     FlextDomainValueObject,
     FlextEntity,
     FlextFactory,
+    FlextFactory as FoundationFactory,
     FlextModel,
     FlextObs,
     FlextOperationModel,
     FlextOracleModel,
+    FlextResult,
     FlextServiceModel,
     FlextValue,
+    FlextValueObject,
 )
-from flext_core.result import FlextResult
-from flext_core.value_objects import FlextValueObject
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 
@@ -407,7 +407,7 @@ class TestUtilityModulesCoverage:
 
     def test_version_comprehensive(self) -> None:
         """Test version module comprehensively."""
-        from flext_core.version import get_version_info
+        from flext_core.__version__ import get_version_info
 
         version_info = get_version_info()
 

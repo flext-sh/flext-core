@@ -1,53 +1,312 @@
-"""Version information for FLEXT Core.
+"""Version management and compatibility for FLEXT ecosystem.
 
-This file reads version from pyproject.toml metadata.
-All version references should import from this file.
+Provides semantic versioning, feature detection, and Python compatibility
+validation for distributed deployment across 32 FLEXT projects.
+
+Classes:
+    FlextVersionInfo: Structured version metadata access.
+    FlextCompatibilityResult: Compatibility validation results.
+
+Functions:
+    get_version_info: Complete version and metadata information.
+    check_python_compatibility: Python version validation.
+    is_feature_available: Feature availability detection.
+    compare_versions: Semantic version comparison.
 """
 
-import importlib.metadata
+from __future__ import annotations
 
-# Get metadata from the installed package
-_metadata = importlib.metadata.metadata("flext-core")
-__version__ = _metadata["Version"]
-__project__ = _metadata["Name"]
-__description__ = _metadata["Summary"]
-__author__ = _metadata["Author"]
-__author_email__ = (
-    _metadata["Author-email"].split("<")[1].rstrip(">")
-    if "<" in _metadata.get("Author-email", "")
-    else ""
-)
-__maintainer__ = _metadata.get("Maintainer", __author__)
-__maintainer_email__ = _metadata.get("Maintainer-email", __author_email__)
-__license__ = _metadata.get("License", "MIT")
+import sys
+from typing import TYPE_CHECKING, NamedTuple
 
-# Parse version info
-_parts = __version__.split(".")
-__version_info__ = tuple(int(p) if p.isdigit() else p for p in _parts)
-__version_tuple__ = __version_info__
+from flext_core.loggings import FlextLoggerFactory
 
-# Fixed metadata
-__copyright__ = "Copyright (c) 2025 FLEXT Team. All rights reserved."
+if TYPE_CHECKING:
+    from flext_core.typings import TAnyList
 
-# Build information (can be populated by CI/CD)
-__build__ = ""
-__commit__ = ""
-__branch__ = ""
+# =============================================================================
+# VERSION INFORMATION - Single source of truth for FLEXT Core version
+# =============================================================================
 
-# All exported symbols
+# Get version from package metadata
+try:
+    from importlib.metadata import version as _pkg_version
+
+    __version__ = _pkg_version("flext-core")
+except Exception:
+    # Fallback for development installs or any metadata error
+    __version__ = "0.9.0"
+
+# Version metadata for programmatic access
+VERSION_MAJOR = 0
+VERSION_MINOR = 9
+VERSION_PATCH = 0
+
+# Semantic version format constants
+SEMVER_PARTS_COUNT = 3  # major.minor.patch
+
+# Release information
+RELEASE_NAME = "Foundation"
+RELEASE_DATE = "2025-06-27"
+BUILD_TYPE = "stable"
+
+# Compatibility information
+MIN_PYTHON_VERSION = (3, 13, 0)
+MAX_PYTHON_VERSION = (3, 14, 0)
+
+# Feature availability matrix
+AVAILABLE_FEATURES = {
+    "core_validation": True,
+    "dependency_injection": True,
+    "domain_driven_design": True,
+    "railway_programming": True,
+    "enterprise_logging": True,
+    "performance_tracking": True,
+    "advanced_decorators": True,
+    "type_safety": True,
+    "configuration_management": True,
+    "plugin_architecture": False,  # Future release
+    "event_sourcing": False,  # Future release
+    "distributed_tracing": False,  # Future release
+}
+
+
+# =============================================================================
+# VERSION UTILITIES - Programmatic version handling and compatibility
+# =============================================================================
+
+
+class FlextVersionInfo(NamedTuple):
+    """Structured version information for programmatic access.
+
+    Provides structured access to version components with comparison support
+    and feature availability detection for FLEXT applications.
+    """
+
+    major: int
+    minor: int
+    patch: int
+    release_name: str
+    release_date: str
+    build_type: str
+
+
+class FlextCompatibilityResult(NamedTuple):
+    """Result of compatibility checking operations.
+
+    Structured compatibility information for Python version validation
+    with detailed error reporting and actionable recommendations.
+    """
+
+    is_compatible: bool
+    current_version: tuple[int, ...]
+    required_version: tuple[int, ...]
+    error_message: str
+    recommendations: TAnyList
+
+
+def get_version_tuple() -> tuple[int, int, int]:
+    """Get version as tuple for programmatic comparison.
+
+    Returns:
+        Tuple containing (major, minor, patch) version components.
+
+    """
+    return (VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH)
+
+
+def get_version_info() -> FlextVersionInfo:
+    """Get comprehensive version information.
+
+    Returns:
+        FlextVersionInfo with complete version and metadata information.
+
+    """
+    return FlextVersionInfo(
+        major=VERSION_MAJOR,
+        minor=VERSION_MINOR,
+        patch=VERSION_PATCH,
+        release_name=RELEASE_NAME,
+        release_date=RELEASE_DATE,
+        build_type=BUILD_TYPE,
+    )
+
+
+def get_version_string() -> str:
+    """Get formatted version string for display.
+
+    Returns:
+        Formatted version string with release information.
+
+    """
+    info = get_version_info()
+    return f"{__version__} ({info.release_name})"
+
+
+def check_python_compatibility() -> FlextCompatibilityResult:
+    """Check Python version compatibility.
+
+    Returns:
+        FlextCompatibilityResult with compatibility status and recommendations.
+
+    """
+    current_version = sys.version_info[:3]
+
+    if current_version < MIN_PYTHON_VERSION:
+        return FlextCompatibilityResult(
+            is_compatible=False,
+            current_version=current_version,
+            required_version=MIN_PYTHON_VERSION,
+            error_message=(
+                f"Python {'.'.join(map(str, current_version))} is too old. "
+                f"Minimum required: {'.'.join(map(str, MIN_PYTHON_VERSION))}"
+            ),
+            recommendations=[
+                f"Upgrade Python to {'.'.join(map(str, MIN_PYTHON_VERSION))} or newer",
+                "Use pyenv or conda to manage multiple Python versions",
+                "Check FLEXT documentation for installation guides",
+            ],
+        )
+
+    if current_version >= MAX_PYTHON_VERSION:
+        return FlextCompatibilityResult(
+            is_compatible=False,
+            current_version=current_version,
+            required_version=MAX_PYTHON_VERSION,
+            error_message=(
+                f"Python {'.'.join(map(str, current_version))} is too new. "
+                f"Maximum supported: {'.'.join(map(str, MAX_PYTHON_VERSION))}"
+            ),
+            recommendations=[
+                f"Use Python {'.'.join(map(str, MIN_PYTHON_VERSION))}"
+                f" to {'.'.join(map(str, MAX_PYTHON_VERSION))}",
+                "Check for newer FLEXT Core version with broader Python support",
+                "Use pyenv or conda to install compatible Python version",
+            ],
+        )
+
+    return FlextCompatibilityResult(
+        is_compatible=True,
+        current_version=current_version,
+        required_version=MIN_PYTHON_VERSION,
+        error_message="",
+        recommendations=[],
+    )
+
+
+def is_feature_available(feature_name: str) -> bool:
+    """Check if a specific feature is available in current version.
+
+    Enables feature-based conditional logic allowing graceful handling
+    of version-dependent functionality with clear feature names.
+
+    Args:
+        feature_name: Name of feature to check availability
+
+    Returns:
+        True if feature is available, False otherwise.
+
+    """
+    return AVAILABLE_FEATURES.get(feature_name, False)
+
+
+def get_available_features() -> TAnyList:
+    """Get list of available features in current version.
+
+    Returns list of feature names available in current version enabling
+    dynamic feature discovery and capability reporting.
+
+    Returns:
+        List of available feature names.
+
+    """
+    return [name for name, available in AVAILABLE_FEATURES.items() if available]
+
+
+def compare_versions(version1: str, version2: str) -> int:
+    """Compare two semantic version strings.
+
+    Compares semantic version strings following SemVer 2.0.0 specification
+    returning standard comparison result for version ordering.
+
+    Args:
+        version1: First version string to compare
+        version2: Second version string to compare
+
+    Returns:
+        -1 if version1 < version2, 0 if equal, 1 if version1 > version2.
+
+    """
+
+    def parse_version(version: str) -> tuple[int, ...]:
+        """Parse version string into comparable tuple."""
+        return tuple(int(part) for part in version.split("."))
+
+    v1_tuple = parse_version(version1)
+    v2_tuple = parse_version(version2)
+
+    if v1_tuple < v2_tuple:
+        return -1
+    if v1_tuple > v2_tuple:
+        return 1
+    return 0
+
+
+def validate_version_format(version: str) -> bool:
+    """Validate semantic version string format.
+
+    Validates version string against semantic versioning format requirements
+    ensuring compliance with SemVer 2.0.0 specification.
+
+    Args:
+        version: Version string to validate
+
+    Returns:
+        True if version format is valid, False otherwise.
+
+    """
+    try:
+        parts = version.split(".")
+        if len(parts) != SEMVER_PARTS_COUNT:
+            return False
+
+        for part in parts:
+            if not part.isdigit():
+                return False
+            if int(part) < 0:
+                return False
+    except (ValueError, AttributeError) as e:
+        # Log validation error but maintain API contract
+        logger = FlextLoggerFactory.get_logger(__name__)
+        logger.warning(f"Version validation failed for '{version}': {e}")
+        return False
+    else:
+        return True
+
+
+# =============================================================================
+# EXPORTS - Clean public API
+# =============================================================================
+
 __all__ = [
-    "__author__",
-    "__author_email__",
-    "__branch__",
-    "__build__",
-    "__commit__",
-    "__copyright__",
-    "__description__",
-    "__license__",
-    "__maintainer__",
-    "__maintainer_email__",
-    "__project__",
+    "AVAILABLE_FEATURES",
+    "BUILD_TYPE",
+    "MAX_PYTHON_VERSION",
+    "MIN_PYTHON_VERSION",
+    "RELEASE_DATE",
+    "RELEASE_NAME",
+    "VERSION_MAJOR",
+    "VERSION_MINOR",
+    "VERSION_PATCH",
+    "FlextCompatibilityResult",
+    "FlextVersionInfo",
     "__version__",
-    "__version_info__",
-    "__version_tuple__",
+    "check_python_compatibility",
+    "compare_versions",
+    "get_available_features",
+    "get_version_info",
+    "get_version_string",
+    "get_version_tuple",
+    "is_feature_available",
+    "validate_version_format",
 ]

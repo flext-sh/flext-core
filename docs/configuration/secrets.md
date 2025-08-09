@@ -1,22 +1,22 @@
 # Secret Management with FLEXT Core
 
-**Reality-Based Secret Management using FlextBaseSettings**
+**Reality-Based Secret Management using FlextSettings**
 
-This guide covers secret management using FLEXT Core's actual implementation - `FlextBaseSettings` class from `src/flext_core/config.py`.
+This guide covers secret management using FLEXT Core's actual implementation - `FlextSettings` class from `src/flext_core/config.py`.
 
 ## 🔐 Core Concepts
 
-FLEXT Core provides secret management through Pydantic's `SecretStr` and `SecretBytes` types, integrated with our `FlextBaseSettings` configuration system.
+FLEXT Core provides secret management through Pydantic's `SecretStr` and `SecretBytes` types, integrated with our `FlextSettings` configuration system.
 
-### FlextBaseSettings with Secrets
+### FlextSettings with Secrets
 
 Based on the actual implementation in `src/flext_core/config.py`:
 
 ```python
-from flext_core import FlextBaseSettings
+from flext_core import FlextSettings
 from pydantic import SecretStr, Field
 
-class DatabaseSettings(FlextBaseSettings):
+class DatabaseSettings(FlextSettings):
     """Database configuration with secret management."""
 
     # Regular fields - visible in logs
@@ -50,10 +50,10 @@ password = settings.password.get_secret_value()  # "super_secret_password"
 ### SecretStr for String Secrets
 
 ```python
-from flext_core import FlextBaseSettings
+from flext_core import FlextSettings
 from pydantic import SecretStr
 
-class APISettings(FlextBaseSettings):
+class APISettings(FlextSettings):
     """API configuration with string secrets."""
 
     api_key: SecretStr = Field(..., description="API authentication key")
@@ -73,10 +73,10 @@ print(settings.model_dump())  # All SecretStr fields show as '**********'
 ### SecretBytes for Binary Secrets
 
 ```python
-from flext_core import FlextBaseSettings
+from flext_core import FlextSettings
 from pydantic import SecretStr, SecretBytes
 
-class CryptoSettings(FlextBaseSettings):
+class CryptoSettings(FlextSettings):
     """Cryptographic configuration with binary secrets."""
 
     # String secrets
@@ -96,11 +96,11 @@ class CryptoSettings(FlextBaseSettings):
 ### Environment-Based Secret Loading
 
 ```python
-from flext_core import FlextBaseSettings
+from flext_core import FlextSettings
 from pydantic import SecretStr, field_validator
 import os
 
-class AppSettings(FlextBaseSettings):
+class AppSettings(FlextSettings):
     """Application settings with environment-aware secrets."""
 
     # Database secrets
@@ -134,11 +134,11 @@ settings = AppSettings()
 ### Development vs Production Secrets
 
 ```python
-from flext_core import FlextBaseSettings
+from flext_core import FlextSettings
 from pydantic import SecretStr
 import os
 
-class SecureSettings(FlextBaseSettings):
+class SecureSettings(FlextSettings):
     """Settings with development/production secret handling."""
 
     # Required in all environments
@@ -172,7 +172,7 @@ class SecureSettings(FlextBaseSettings):
 
 ```python
 import pytest
-from flext_core import FlextBaseSettings
+from flext_core import FlextSettings
 from pydantic import SecretStr
 from unittest.mock import patch
 
@@ -182,7 +182,7 @@ class TestSecrets:
     def test_secret_masking(self):
         """Test that secrets are properly masked."""
 
-        class TestSettings(FlextBaseSettings):
+        class TestSettings(FlextSettings):
             password: SecretStr = Field(..., description="Test password")
 
         settings = TestSettings(password="super_secret")
@@ -195,7 +195,7 @@ class TestSecrets:
     def test_secret_access(self):
         """Test accessing secret values."""
 
-        class TestSettings(FlextBaseSettings):
+        class TestSettings(FlextSettings):
             api_key: SecretStr = Field(..., description="API key")
 
         settings = TestSettings(api_key="sk-1234567890")
@@ -207,7 +207,7 @@ class TestSecrets:
     def test_environment_secret_loading(self):
         """Test loading secrets from environment."""
 
-        class TestSettings(FlextBaseSettings):
+        class TestSettings(FlextSettings):
             password: SecretStr = Field(..., description="Password")
 
             class Config:
@@ -232,12 +232,12 @@ def test_secrets():
 
 ```python
 # ✅ Good - properly protected
-class Settings(FlextBaseSettings):
+class Settings(FlextSettings):
     password: SecretStr = Field(..., description="Database password")
     api_key: SecretStr = Field(..., description="API key")
 
 # ❌ Bad - exposed in logs
-class Settings(FlextBaseSettings):
+class Settings(FlextSettings):
     password: str = Field(..., description="Database password")  # Visible!
     api_key: str = Field(..., description="API key")  # Visible!
 ```
@@ -245,7 +245,7 @@ class Settings(FlextBaseSettings):
 ### 2. Validate Secret Format and Strength
 
 ```python
-class Settings(FlextBaseSettings):
+class Settings(FlextSettings):
     password: SecretStr = Field(..., description="Database password")
 
     @field_validator("password")
@@ -262,7 +262,7 @@ class Settings(FlextBaseSettings):
 ### 3. Use Environment Variables with Prefixes
 
 ```python
-class Settings(FlextBaseSettings):
+class Settings(FlextSettings):
     db_password: SecretStr = Field(..., description="Database password")
     api_key: SecretStr = Field(..., description="API key")
 
@@ -283,7 +283,7 @@ print(f"Password is: {settings.password.get_secret_value()}")  # Never do this!
 
 ## ⚠️ Current Limitations
 
-Based on the actual FlextBaseSettings implementation:
+Based on the actual FlextSettings implementation:
 
 1. **No Built-in External Secret Store Integration** - You need to implement AWS Secrets Manager, Vault, etc. integration yourself
 2. **No Built-in Secret Rotation** - Rotation must be handled at the application level
@@ -294,10 +294,10 @@ Based on the actual FlextBaseSettings implementation:
 Secrets work seamlessly with other FLEXT Core patterns:
 
 ```python
-from flext_core import FlextBaseSettings, FlextResult, FlextContainer
+from flext_core import FlextSettings, FlextResult, FlextContainer
 from pydantic import SecretStr
 
-class DatabaseConfig(FlextBaseSettings):
+class DatabaseConfig(FlextSettings):
     password: SecretStr = Field(..., description="DB password")
 
     def get_connection_string(self) -> FlextResult[str]:
@@ -324,4 +324,4 @@ def setup_database_service(container: FlextContainer) -> FlextResult[None]:
 
 ---
 
-**This secret management guide is based on the actual FlextBaseSettings implementation in `src/flext_core/config.py`.**
+**This secret management guide is based on the actual FlextSettings implementation in `src/flext_core/config.py`.**

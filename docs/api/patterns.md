@@ -1,47 +1,50 @@
 # API Patterns - FLEXT Core
 
-**Padrões disponíveis baseados na implementação atual**
+**Available patterns based on the current implementation**
 
-## 🎯 Visão Geral
+## 🎯 Overview
 
-Esta documentação cobre os padrões de design REAIS implementados no FLEXT Core. Todas as importações e exemplos foram validados contra o código atual em src/flext_core/.
+This documentation covers REAL design patterns implemented in FLEXT Core. All imports and examples were validated against the current code in src/flext_core/.
 
-## 📦 Importações Disponíveis
+## 📦 Available Imports
 
-**VALIDADO** - Baseado no código atual:
+**VALIDATED** - Based on current code:
 
 ### Core Patterns
 
 ```python
-# Core patterns - FUNCTIONAL
+# Core patterns - Functional
 from flext_core import FlextResult, FlextContainer
 
-# Commands e Handlers - IMPLEMENTADOS
-from flext_core import commands, handlers, validation
-
-# Acesso via classes namespace
+# Commands and Handlers - Implemented
 from flext_core.commands import FlextCommands
-from flext_core.handlers import FlextHandlers
+from flext_core.handlers import (
+    FlextBaseHandler,
+    FlextValidatingHandler,
+    FlextAuthorizingHandler,
+    FlextEventHandler,
+    FlextMetricsHandler,
+)
 from flext_core.validation import FlextValidation
 ```
 
 ### Domain Patterns
 
 ```python
-# Domain patterns - DISPONÍVEIS
+# Domain patterns - Available
 from flext_core import FlextEntity, FlextValueObject, FlextAggregateRoot
 ```
 
 ## 🎭 Command Pattern
 
-**BASEADO EM src/flext_core/commands.py:**
+**BASED ON src/flext_core/commands.py:**
 
 ### Basic Command Usage
 
 ```python
 """
-Exemplo real usando o sistema de commands do FLEXT Core.
-Baseado na implementação atual.
+Real example using FLEXT Core's command system.
+Based on the current implementation.
 """
 
 from flext_core import FlextResult
@@ -59,10 +62,10 @@ class CreateUserCommand:
     def validate_command(self) -> FlextResult[None]:
         """Validate command data."""
         if not self.name or not self.name.strip():
-            return FlextResult.fail("Nome é obrigatório")
+            return FlextResult.fail("Name is required")
 
         if not self.email or "@" not in self.email:
-            return FlextResult.fail("Email inválido")
+            return FlextResult.fail("Invalid email")
 
         return FlextResult.ok(None)
 
@@ -119,7 +122,7 @@ if __name__ == "__main__":
     handler = CreateUserHandler(repository)
 
     # Create and process command
-    command = CreateUserCommand("João Silva", "joao@example.com")
+    command = CreateUserCommand("John Smith", "john@example.com")
 
     if handler.can_handle(command):
         result = handler.handle(command)
@@ -131,31 +134,30 @@ if __name__ == "__main__":
 
 ## 🎪 Handler Pattern
 
-**BASEADO EM src/flext_core/handlers.py:**
+**BASED ON src/flext_core/handlers.py:**
 
 ### Handler Implementation
 
 ```python
 """
-Sistema de handlers baseado na implementação real do FLEXT Core.
+Handler system based on FLEXT Core's real implementation.
 """
 
 from flext_core import FlextResult
-from flext_core.handlers import FlextHandlers
+from flext_core.handlers import FlextBaseHandler
 
 # Message handler example
-class EmailNotificationHandler:
+class EmailNotificationHandler(FlextBaseHandler):
     """Handler for email notifications."""
 
     def __init__(self, email_service):
         self.email_service = email_service
         self.handler_id = "email_notification_handler"
 
-    def can_handle(self, message) -> bool:
-        """Check if this handler can process the message."""
-        return isinstance(message, dict) and message.get("type") == "email_notification"
+    def can_handle(self, message_type: type) -> bool:
+        return True  # simplified for example
 
-    def handle_message(self, message: dict) -> FlextResult[str]:
+    def process_message(self, message: dict) -> FlextResult[str]:
         """Process email notification message."""
         # Validate message
         if not message.get("recipient"):
@@ -176,22 +178,14 @@ class EmailNotificationHandler:
             return FlextResult.fail(f"Email send failed: {str(e)}")
 
 # Handler registry
-class HandlerRegistry:
+from flext_core.handlers import FlextHandlerRegistry as HandlerRegistry
     """Registry for managing handlers."""
 
     def __init__(self):
         self.handlers = []
 
     def register(self, handler) -> FlextResult[None]:
-        """Register a handler."""
-        if not hasattr(handler, 'can_handle'):
-            return FlextResult.fail("Handler must have can_handle method")
-
-        if not hasattr(handler, 'handler_id'):
-            return FlextResult.fail("Handler must have handler_id")
-
-        self.handlers.append(handler)
-        return FlextResult.ok(None)
+        return self._registry.register(handler.__class__.__name__, handler)
 
     def find_handlers(self, message) -> list:
         """Find handlers that can process a message."""
@@ -244,7 +238,7 @@ if __name__ == "__main__":
 
 ```python
 """
-Sistema de validação baseado na implementação real do FLEXT Core.
+Validation system based on FLEXT Core's real implementation.
 """
 
 from flext_core import FlextResult
@@ -254,37 +248,37 @@ from flext_core.validation import FlextValidation
 def validate_email(email: str) -> FlextResult[str]:
     """Validate email format."""
     if not email:
-        return FlextResult.fail("Email é obrigatório")
+        return FlextResult.fail("Email is required")
 
     if "@" not in email:
-        return FlextResult.fail("Email deve conter @")
+        return FlextResult.fail("Email must contain @")
 
     if len(email) > 254:
-        return FlextResult.fail("Email muito longo")
+        return FlextResult.fail("Email is too long")
 
     return FlextResult.ok(email.lower())
 
 def validate_name(name: str) -> FlextResult[str]:
     """Validate name format."""
     if not name:
-        return FlextResult.fail("Nome é obrigatório")
+        return FlextResult.fail("Name is required")
 
     cleaned_name = name.strip()
     if len(cleaned_name) < 2:
-        return FlextResult.fail("Nome deve ter pelo menos 2 caracteres")
+        return FlextResult.fail("Name must be at least 2 characters")
 
     if len(cleaned_name) > 100:
-        return FlextResult.fail("Nome muito longo")
+        return FlextResult.fail("Name is too long")
 
     return FlextResult.ok(cleaned_name)
 
 def validate_age(age: int) -> FlextResult[int]:
     """Validate age range."""
     if age < 0:
-        return FlextResult.fail("Idade não pode ser negativa")
+        return FlextResult.fail("Age cannot be negative")
 
     if age > 150:
-        return FlextResult.fail("Idade deve ser realista")
+        return FlextResult.fail("Age must be realistic")
 
     return FlextResult.ok(age)
 
@@ -339,7 +333,7 @@ class UserValidator:
 
         # Business rule validation
         if user_data.get("age", 0) < 18:
-            result.add_warning("Usuário menor de idade")
+            result.add_warning("User is underage")
 
         return result
 
@@ -349,18 +343,18 @@ if __name__ == "__main__":
 
     # Valid user
     valid_user = {
-        "name": "João Silva",
-        "email": "joao@example.com",
+        "name": "John",
+        "email": "john@example.com",
         "age": 30
     }
 
     result = validator.validate(valid_user)
     if result.is_valid:
-        print("✅ Dados válidos")
+        print("✅ Valid data")
         if result.warnings:
             print(f"⚠️ Warnings: {result.warnings}")
     else:
-        print(f"❌ Erros: {result.errors}")
+        print(f"❌ Errors: {result.errors}")
 
     # Invalid user
     invalid_user = {
@@ -370,7 +364,7 @@ if __name__ == "__main__":
     }
 
     result = validator.validate(invalid_user)
-    print(f"❌ Erros esperados: {result.errors}")
+    print(f"❌ Expected errors: {result.errors}")
 ```
 
 ## 🧪 Testing Patterns
@@ -391,7 +385,7 @@ def test_command_validation():
 
     result = command.validate_command()
     assert result.is_failure
-    assert "Nome é obrigatório" in result.error
+    assert "Name is required" in result.error
 
 def test_handler_processing():
     """Test handler processing."""
@@ -400,18 +394,18 @@ def test_handler_processing():
             return FlextResult.ok(data)
 
     handler = CreateUserHandler(MockRepo())
-    command = CreateUserCommand("João", "joao@test.com")
+    command = CreateUserCommand("John", "john@test.com")
 
     result = handler.handle(command)
     assert result.success
-    assert result.data["name"] == "João"
+    assert result.data["name"] == "John"
 
 def test_validation_patterns():
     """Test validation patterns."""
     validator = UserValidator()
 
     # Valid data
-    valid_data = {"name": "João", "email": "joao@test.com", "age": 25}
+    valid_data = {"name": "John", "email": "john@test.com", "age": 25}
     result = validator.validate(valid_data)
     assert result.is_valid
 
@@ -424,36 +418,36 @@ def test_validation_patterns():
 
 ## 🎯 Real Implementation Status
 
-**BASEADO NO CÓDIGO ATUAL** em src/flext_core/:
+**BASED ON CURRENT CODE** in src/flext_core/:
 
-### ✅ Disponível e Funcional
+### ✅ Available and Functional
 
 - **FlextResult**: Totalmente implementado e testado
 - **FlextContainer**: Sistema de DI funcional
-- **Commands namespace**: FlextCommands disponível
-- **Handlers namespace**: FlextHandlers disponível
-- **Validation namespace**: FlextValidation disponível
+- **Commands namespace**: FlextCommands available
+- **Handlers namespace**: FlextHandlers available
+- **Validation namespace**: FlextValidation available
 
-### 🔧 Em Desenvolvimento
+### 🔧 In Development
 
-- **CQRS completo**: Command bus e handlers avançados
-- **Event handling**: Padrões de eventos de domínio
-- **Query bus**: Separação completa de read/write
+- **Full CQRS**: Command bus and advanced handlers
+- **Event handling**: Domain event patterns
+- **Query bus**: Full read/write separation
 
-### 📋 Planejado
+### 📋 Planned
 
-- **Auto-discovery**: Registro automático de handlers
+- **Auto-discovery**: Automatic handler registration
 - **Middleware pipeline**: Cross-cutting concerns
-- **Advanced validation**: Regras de negócio complexas
+- **Advanced validation**: Complex business rules
 
-## ⚠️ Importante
+## ⚠️ Important
 
-Esta documentação reflete a implementação ATUAL do FLEXT Core. Para funcionalidades mais avançadas, consulte:
+This documentation reflects the CURRENT implementation of FLEXT Core. For more advanced functionality, see:
 
-1. **Código atual**: src/flext_core/{commands,handlers,validation}.py
-2. **Testes**: tests/ para exemplos funcionais
-3. **Examples**: examples/ para casos de uso reais
+1. **Current code**: src/flext_core/{commands,handlers,validation}.py
+2. **Tests**: tests/ for functional examples
+3. **Examples**: examples/ for real use cases
 
 ---
 
-**Todos os exemplos foram validados contra a implementação atual em src/flext_core/**
+**All examples were validated against the current implementation in src/flext_core/**

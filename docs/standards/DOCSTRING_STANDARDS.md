@@ -8,7 +8,7 @@ This document establishes docstring standards for FLEXT Core's actual implementa
 
 **REAL COUNT**: 48 Python files in src/flext_core/  
 **DOCUMENTATION STATUS**: Mixed - some modules have comprehensive docstrings, others minimal  
-**LANGUAGE**: Mixed Portuguese/English - needs standardization to English
+**LANGUAGE**: English-only (standardized across repository)
 
 ## 🏗️ **Standard Docstring Template**
 
@@ -53,12 +53,11 @@ Based on actual files in src/flext_core/:
 - `result.py` - FlextResult pattern implementation
 - `container.py` - Dependency injection container
 - `constants.py` - Core constants and enums
-- `version.py` - Version information
+- `__version__.py` - Version & compatibility information
 
-### **Configuration** (4 modules)
+### **Configuration** (3+ modules)
 
-- `config.py` - FlextBaseSettings base class
-- `config_hierarchical.py` - Hierarchical configuration
+- `config.py` - FlextSettings (base configuration)
 - `config_models.py` - Configuration data models
 - `payload.py` - Message/payload patterns
 
@@ -75,9 +74,8 @@ Based on actual files in src/flext_core/:
 - `commands.py` - Command pattern
 - `handlers.py` - Handler patterns
 - `validation.py` - Validation framework
-- `interfaces.py` - Protocol definitions
+- `protocols.py` - Protocol definitions
 - `guards.py` - Type guards and validators
-- `protocols.py` - Additional protocols
 
 ### **Utilities & Extensions** (8 modules)
 
@@ -85,24 +83,24 @@ Based on actual files in src/flext_core/:
 - `decorators.py` - Decorator patterns
 - `mixins.py` - Mixin classes
 - `fields.py` - Field definitions
-- `types.py` - Type definitions
-- `flext_types.py` - FLEXT-specific types
+- `typings.py` - Centralized type system
+- `types.py` - Thin compatibility re-export
 - `exceptions.py` - Exception hierarchy
 - `loggings.py` - Logging utilities
 
-### **Base Implementations** (9 modules)
+### **Base Implementations** (modernized)
 
-- `_result_base.py` - Result pattern base
-- `_config_base.py` - Configuration base
-- `_decorators_base.py` - Decorator base
-- `_handlers_base.py` - Handler base
-- `_mixins_base.py` - Mixin base
-- `_railway_base.py` - Railway pattern base
-- `_builder_base.py` - Builder pattern base
-- `_delegation_system.py` - Delegation system
-- `foundation.py` - Foundation patterns
+- `base_commands.py`
+- `base_decorators.py`
+- `base_exceptions.py`
+- `base_handlers.py`
+- `base_mixins.py`
+- `base_testing.py`
+- `base_utilities.py`
+- `delegation_system.py`
+- `legacy.py`
 
-### **Integration & Specialized** (11 modules)
+### **Integration & Specialized**
 
 - `core.py` - FlextCore main class
 - `context.py` - Context management
@@ -111,9 +109,6 @@ Based on actual files in src/flext_core/:
 - `singer_base.py` - Singer integration base
 - `testing_utilities.py` - Testing support
 - `semantic.py` - Semantic patterns
-- `semantic_types.py` - Semantic type system
-- `semantic_old.py` - Legacy semantic patterns
-- `constants_backup.py` - Constants backup
 - `py.typed` - Type information marker
 
 ## 🎯 **Documentation Improvement Plan**
@@ -123,7 +118,7 @@ Based on actual files in src/flext_core/:
 - [ ] Verify all **init**.py exports have proper docstrings
 - [ ] Ensure result.py documents actual FlextResult API
 - [ ] Check container.py documents real container methods
-- [ ] Validate config.py shows actual FlextBaseSettings
+- [ ] Validate config.py shows actual FlextSettings
 
 ### **Priority 2: Standard Template Application**
 

@@ -1,10 +1,7 @@
-"""Comprehensive tests for FlextContext context management system.
+"""Tests for FlextContext context management system.
 
-This test suite provides complete coverage of the context management functionality
-including correlation IDs, service identification, request metadata, performance
-tracking, and context serialization capabilities.
-
-Coverage Target: context.py 38% → 95%+
+Tests context management functionality including correlation IDs,
+service identification, request metadata, and serialization.
 """
 
 from __future__ import annotations

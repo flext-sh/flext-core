@@ -1,48 +1,48 @@
 # Configuration Management Overview
 
-**Sistema de configuração baseado na implementação atual do FLEXT Core**
+Reality-based configuration system aligned with the current FLEXT Core implementation
 
-## 🎯 Visão Geral
+## 🎯 Overview
 
-FLEXT Core fornece um sistema de configuração type-safe baseado em Pydantic V2. Esta documentação reflete a implementação REAL disponível em src/flext_core/config.py.
+FLEXT Core provides a type-safe configuration system based on Pydantic v2. This documentation reflects the ACTUAL implementation in `src/flext_core/config.py`.
 
-## 📦 Funcionalidades Disponíveis
+## 📦 Available Features
 
-**VALIDADO** - Baseado no código atual:
+Validated — based on the current code:
 
-- ✅ **Type Safety**: Validação completa com Pydantic V2
-- ✅ **Environment Variables**: Carregamento automático com prefixos
-- ✅ **Multi-Environment**: Diferentes ambientes de deployment
-- 🔧 **Framework Integration**: Singer, CLI (em desenvolvimento)
-- 📋 **Advanced Features**: Multi-file configs (planejado)
+- ✅ Type Safety: Full validation with Pydantic v2
+- ✅ Environment Variables: Automatic loading with prefixes
+- ✅ Multi-Environment: Different deployment environments
+- 🔧 Framework Integration: Singer, CLI (in development)
+- 📋 Advanced Features: Multi-file configs (planned)
 
-## 🔧 API Atual
+## 🔧 Current API
 
-### Importações Disponíveis
+### Available Imports
 
 ```python
-# CORRETO - Baseado na implementação atual
-from flext_core import FlextBaseSettings
+# Correct — based on the current implementation
+from flext_core import FlextSettings
 
-# Configuração avançada - disponível
+# Advanced configuration — available
 from flext_core.config import FlextConfig
 from flext_core.config_models import FlextDatabaseConfig, FlextRedisConfig
 ```
 
-### Uso Básico
+### Basic Usage
 
-**VALIDADO** - Funciona com a implementação atual:
+Validated — works with the current implementation:
 
 ```python
 """
-Exemplo real de configuração usando FLEXT Core.
-Baseado em src/flext_core/config.py
+Real configuration example using FLEXT Core.
+Based on src/flext_core/config.py
 """
 
-from flext_core import FlextBaseSettings
+from flext_core import FlextSettings
 from typing import Optional
 
-class AppSettings(FlextBaseSettings):
+class AppSettings(FlextSettings):
     """Configuration for your application."""
 
     # Basic settings with defaults
@@ -92,7 +92,7 @@ if __name__ == "__main__":
 
 ### Environment Variables
 
-**Como configurar variáveis de ambiente:**
+How to configure environment variables:
 
 ```bash
 # Basic settings
@@ -112,18 +112,18 @@ export MYAPP_REDIS_URL="redis://localhost:6379"
 export MYAPP_ENABLE_METRICS=true
 ```
 
-### Configuração com Validação
+### Configuration with Validation
 
 ```python
 """
-Configuração com validação customizada.
+Configuration with custom validation.
 """
 
-from flext_core import FlextBaseSettings
+from flext_core import FlextSettings
 from pydantic import field_validator, Field
 from typing import Optional
 
-class DatabaseSettings(FlextBaseSettings):
+class DatabaseSettings(FlextSettings):
     """Database configuration with validation."""
 
     host: str = Field("localhost", description="Database host")
@@ -183,11 +183,11 @@ if __name__ == "__main__":
 Configuration for multiple services.
 """
 
-from flext_core import FlextBaseSettings
+from flext_core import FlextSettings
 from pydantic import Field
 from typing import Optional
 
-class ServiceConfig(FlextBaseSettings):
+class ServiceConfig(FlextSettings):
     """Base configuration for services."""
 
     service_name: str = Field(..., description="Service name")
@@ -286,12 +286,12 @@ Testing configuration patterns.
 
 import pytest
 import os
-from flext_core import FlextBaseSettings
+from flext_core import FlextSettings
 
 def test_default_configuration():
     """Test default configuration values."""
 
-    class TestSettings(FlextBaseSettings):
+    class TestSettings(FlextSettings):
         app_name: str = "test-app"
         debug: bool = True
         port: int = 8000
@@ -304,7 +304,7 @@ def test_default_configuration():
 def test_environment_override():
     """Test environment variable override."""
 
-    class TestSettings(FlextBaseSettings):
+    class TestSettings(FlextSettings):
         app_name: str = "test-app"
         port: int = 8000
 
@@ -327,7 +327,7 @@ def test_environment_override():
 def test_validation_error():
     """Test configuration validation."""
 
-    class TestSettings(FlextBaseSettings):
+    class TestSettings(FlextSettings):
         port: int = Field(..., ge=1, le=65535)
 
     # This should fail validation
@@ -345,35 +345,35 @@ if __name__ == "__main__":
     print("✅ All configuration tests passed")
 ```
 
-## 📋 Status da Implementação
+## 📋 Implementation Status
 
-**BASEADO NO CÓDIGO ATUAL** em src/flext_core/config.py:
+Based on the ACTUAL code in `src/flext_core/config.py`:
 
-### ✅ Funcional
+### ✅ Functional
 
-- **FlextBaseSettings**: Configuração base com Pydantic V2
-- **Environment Variables**: Carregamento automático
-- **Type Safety**: Validação completa de tipos
-- **Field Validation**: Validação customizada
+- FlextSettings: Base configuration with Pydantic v2
+- Environment Variables: Automatic loading
+- Type Safety: Full type validation
+- Field Validation: Custom validation
 
-### 🔧 Em Desenvolvimento
+### 🔧 In Development
 
-- **Framework Integration**: Singer/CLI integrations
-- **Secret Management**: Gerenciamento seguro de secrets
-- **Multi-file Configuration**: Configuração distribuída
+- Framework Integration: Singer/CLI integrations
+- Secret Management: Secure secret management
+- Multi-file Configuration: Distributed configuration
 
-### 📋 Planejado
+### 📋 Planned
 
-- **Dynamic Configuration**: Configuração dinâmica em runtime
-- **Configuration Templates**: Templates para diferentes ambientes
-- **Validation Rules**: Regras de validação avançadas
+- Dynamic Configuration: Runtime configuration
+- Configuration Templates: Templates for different environments
+- Validation Rules: Advanced validation rules
 
-## ⚠️ Importante
+## ⚠️ Important
 
-- Use `FlextBaseSettings` (não `FlextCoreSettings`)
-- Todos os exemplos foram testados contra a implementação atual
-- Para funcionalidades avançadas, consulte src/flext_core/config.py
+- Use `FlextSettings` (not `FlextCoreSettings`)
+- All examples were tested against the current implementation
+- For advanced features, check `src/flext_core/config.py`
 
 ---
 
-**Esta documentação reflete a implementação REAL em src/flext_core/config.py**
+This documentation reflects the ACTUAL implementation in `src/flext_core/config.py`.

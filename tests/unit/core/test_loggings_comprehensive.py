@@ -29,7 +29,7 @@ from flext_core.loggings import (
 )
 
 if TYPE_CHECKING:
-    from flext_core.flext_types import TAnyDict
+    from flext_core.typings import TAnyDict
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 

@@ -1,7 +1,7 @@
-"""Comprehensive tests for config_models.py module.
+"""Tests for configuration model classes.
 
-Tests for FlextBaseConfigModel, FlextDatabaseConfig, FlextRedisConfig, and
-related configuration classes to achieve near 100% coverage.
+Tests FlextBaseConfigModel, database configs, and related
+configuration classes for comprehensive coverage.
 """
 
 from __future__ import annotations

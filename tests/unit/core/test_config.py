@@ -10,11 +10,11 @@ from typing import TYPE_CHECKING, cast
 from pydantic_settings import SettingsConfigDict
 
 from flext_core.config import (
-    FlextBaseSettings,
     FlextConfig,
     FlextConfigDefaults,
     FlextConfigOps,
     FlextConfigValidation,
+    FlextSettings,
     merge_configs,
     safe_get_env_var,
     safe_load_json_file,
@@ -248,13 +248,13 @@ class TestFlextConfigValidation:
         assert "Value must be string" in result.error
 
 
-class TestFlextBaseSettings:
-    """Test FlextBaseSettings Pydantic integration."""
+class TestFlextSettings:
+    """Test FlextSettings Pydantic integration."""
 
     def test_base_settings_creation(self) -> None:
-        """Test FlextBaseSettings creation."""
+        """Test FlextSettings creation."""
 
-        class TestSettings(FlextBaseSettings):
+        class TestSettings(FlextSettings):
             model_config = SettingsConfigDict(
                 env_file=None,  # Don't read any .env file
                 extra="ignore",  # Ignore extra environment variables
@@ -272,9 +272,9 @@ class TestFlextBaseSettings:
         assert not settings.debug, f"Expected False, got {settings.debug}"
 
     def test_base_settings_with_values(self) -> None:
-        """Test FlextBaseSettings with explicit values."""
+        """Test FlextSettings with explicit values."""
 
-        class TestSettings(FlextBaseSettings):
+        class TestSettings(FlextSettings):
             model_config = SettingsConfigDict(
                 env_file=None,  # Don't read any .env file
                 extra="ignore",  # Ignore extra environment variables

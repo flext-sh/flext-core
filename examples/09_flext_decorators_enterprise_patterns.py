@@ -1,19 +1,14 @@
 #!/usr/bin/env python3
-"""FLEXT Decorators Enterprise Patterns Example.
+"""Enterprise decorator patterns with FlextDecorators.
 
-Comprehensive demonstration of FlextDecorators system showing enterprise-grade
-decorator patterns for validation, error handling, performance optimization,
-logging, and immutability enforcement.
-
-Features demonstrated:
-    - Validation decorators with automatic argument checking
-    - Error handling decorators with automatic exception management
+Demonstrates validation, error handling, performance optimization,
+logging, and immutability enforcement decorators.
     - Performance decorators with timing, caching, and memoization
     - Logging decorators with structured call and exception logging
     - Immutability decorators with argument and result protection
     - Functional decorators with composition and orchestration
     - Complete decorator orchestration for enterprise applications
-    - Maximum type safety using flext_core.types
+    - Maximum type safety using flext_core.typings
 
 Key Components:
     - FlextDecorators: Main consolidated decorator interface
@@ -33,7 +28,7 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING, cast
 
 if TYPE_CHECKING:
-    from flext_core._decorators_base import _DecoratedFunction
+    from flext_core.base_decorators import _DecoratedFunction
 
 # Import shared domain models to demonstrate decorator patterns with domain objects
 from shared_domain import (
@@ -74,7 +69,7 @@ MAX_RETRY_ATTEMPTS = 3  # Maximum number of retry attempts before success
 def demonstrate_validation_decorators() -> None:
     """Demonstrate validation decorators with automatic argument checking.
 
-    Using flext_core.types for type safety.
+    Using flext_core.typings for type safety.
     """
     log_message: TLogMessage = "\n" + "=" * 80
     print(log_message)
@@ -87,7 +82,7 @@ def demonstrate_validation_decorators() -> None:
 
     # Apply validation decorator with proper casting
     def _validate_user_data_impl(name: str, email: str, age: int) -> TUserData:
-        """Validate user data using flext_core.types."""
+        """Validate user data using flext_core.typings."""
         return {"name": name, "email": email, "age": age, "status": "validated"}
 
     validate_user_data = FlextValidationDecorators.validate_arguments(
@@ -145,7 +140,7 @@ def demonstrate_validation_decorators() -> None:
     print(log_message)
 
     def validate_age(age: object) -> bool:
-        """Validate age using flext_core.types."""
+        """Validate age using flext_core.typings."""
         return isinstance(age, int) and 0 <= age <= MAX_REASONABLE_AGE
 
     def _create_user_profile_impl(name: str, age: int) -> TUserData:
@@ -178,7 +173,7 @@ def demonstrate_validation_decorators() -> None:
 def demonstrate_error_handling_decorators() -> None:
     """Demonstrate error handling decorators with automatic exception management.
 
-    Using flext_core.types for type safety.
+    Using flext_core.typings for type safety.
     """
     log_message: TLogMessage = "\n" + "=" * 80
     print(log_message)
@@ -251,7 +246,7 @@ def demonstrate_error_handling_decorators() -> None:
     print(log_message)
 
     def custom_error_handler(exception: Exception) -> str:
-        """Handle custom errors using flext_core.types."""
+        """Handle custom errors using flext_core.typings."""
         error_message: TErrorMessage = (
             f"Custom handler caught: {type(exception).__name__}"
         )
@@ -284,7 +279,7 @@ def demonstrate_error_handling_decorators() -> None:
 def demonstrate_performance_decorators() -> None:
     """Demonstrate performance decorators with timing and caching.
 
-    Using flext_core.types for type safety.
+    Using flext_core.typings for type safety.
     """
     log_message: TLogMessage = "\n" + "=" * 80
     print(log_message)
@@ -370,7 +365,7 @@ def demonstrate_performance_decorators() -> None:
 
 
 def demonstrate_logging_decorators() -> None:
-    """Demonstrate logging decorators with structured logging using flext_core.types."""
+    """Demonstrate logging decorators with structured logging using flext_core.typings."""
     log_message: TLogMessage = "\n" + "=" * 80
     print(log_message)
     print("📝 LOGGING DECORATORS")
@@ -476,7 +471,7 @@ def demonstrate_logging_decorators() -> None:
 def demonstrate_immutability_decorators() -> None:
     """Demonstrate immutability decorators with data protection.
 
-    Using flext_core.types for type safety.
+    Using flext_core.typings for type safety.
     """
     log_message: TLogMessage = "\n" + "=" * 80
     print(log_message)
@@ -539,7 +534,7 @@ def demonstrate_immutability_decorators() -> None:
 
 
 def demonstrate_functional_decorators() -> None:
-    """Demonstrate functional decorators with composition using flext_core.types."""
+    """Demonstrate functional decorators with composition using flext_core.typings."""
     log_message: TLogMessage = "\n" + "=" * 80
     print(log_message)
     print("🔗 FUNCTIONAL DECORATORS")
@@ -633,7 +628,7 @@ def demonstrate_functional_decorators() -> None:
 
 
 def demonstrate_decorator_best_practices() -> None:
-    """Demonstrate decorator best practices using flext_core.types."""
+    """Demonstrate decorator best practices using flext_core.typings."""
     log_message: TLogMessage = "\n" + "=" * 80
     print(log_message)
     print("📚 DECORATOR BEST PRACTICES")
@@ -675,7 +670,7 @@ def demonstrate_decorator_best_practices() -> None:
         min_val: int,
         max_val: int,
     ) -> Callable[[object], bool]:
-        """Create range validator using flext_core.types."""
+        """Create range validator using flext_core.typings."""
 
         def range_validator(value: object) -> bool:
             return isinstance(value, int) and min_val <= value <= max_val

@@ -16,15 +16,19 @@ import pytest
 from pydantic import Field
 
 from flext_core.exceptions import FlextValidationError
-from flext_core.foundation import FlextFactory as FoundationFactory
-from flext_core.models import FlextConfig, FlextEntity, FlextFactory, FlextValue
+from flext_core.models import (
+    FlextConfig,
+    FlextEntity,
+    FlextFactory,
+    FlextFactory as FoundationFactory,
+    FlextValue,
+)
 from flext_core.payload import FlextEvent, FlextMessage, FlextPayload
 from flext_core.result import FlextResult
 from flext_core.utilities import (
-    flext_generate_correlation_id,
+    FlextTextProcessor,
     flext_safe_int_conversion,
-    flext_text_normalize_whitespace,
-    flext_text_slugify,
+    generate_correlation_id,
     generate_id,
     generate_uuid,
     is_not_none,
@@ -451,22 +455,22 @@ class TestUtilitiesFinal100Percent:
         assert flext_safe_int_conversion("", 0) == 0
         assert flext_safe_int_conversion(None, 0) == 0
 
-        # Test flext_text_normalize_whitespace
-        result = flext_text_normalize_whitespace("  multiple   spaces  ")
+        # Test FlextTextProcessor.normalize_whitespace
+        result = FlextTextProcessor.normalize_whitespace("  multiple   spaces  ")
         assert "multiple spaces" in result
 
-        result = flext_text_normalize_whitespace("")
+        result = FlextTextProcessor.normalize_whitespace("")
         assert result == ""
 
-        # Test flext_text_slugify
-        result = flext_text_slugify("Hello World!")
+        # Test FlextTextProcessor.slugify
+        result = FlextTextProcessor.slugify("Hello World!")
         assert result == "hello-world"
 
-        result = flext_text_slugify("")
+        result = FlextTextProcessor.slugify("")
         assert result == ""
 
         # Test ID generation functions
-        correlation_id = flext_generate_correlation_id()
+        correlation_id = generate_correlation_id()
         assert isinstance(correlation_id, str)
         assert len(correlation_id) > 0
 
@@ -521,12 +525,12 @@ class TestUtilitiesFinal100Percent:
                 assert True
 
             try:
-                flext_text_normalize_whitespace(error_input)
+                FlextTextProcessor.normalize_whitespace(error_input)
             except Exception:
                 assert True
 
             try:
-                flext_text_slugify(error_input)
+                FlextTextProcessor.slugify(error_input)
             except Exception:
                 assert True
 

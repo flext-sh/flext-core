@@ -1,18 +1,8 @@
 #!/usr/bin/env python3
-"""FLEXT Commands - CQRS Pattern Example.
+"""CQRS pattern implementation using FlextCommands.
 
-Demonstrates Command Query Responsibility Segregation (CQRS) using FlextCommands
-with command handling, event sourcing, and real-world patterns.
-
-Features demonstrated:
-- CQRS command and query separation
-- Command handlers with business logic
-- Command bus for routing and execution
-- Event sourcing integration
-- Command validation and metadata
-- Performance monitoring and metrics
-- Type-safe command patterns
-- Maximum type safety using flext_core.types
+Demonstrates command and query separation with handlers, routing,
+validation, and event sourcing integration.
 """
 
 from __future__ import annotations
@@ -62,7 +52,7 @@ MIN_DELETION_REASON_LENGTH = 10  # Minimum characters for deletion justification
 
 
 class DomainEvent:
-    """Base domain event for event sourcing using flext_core.types."""
+    """Base domain event for event sourcing using flext_core.typings."""
 
     def __init__(self, event_type: str, data: TAnyObject) -> None:
         """Initialize domain event with type and data using TAnyObject."""
@@ -84,7 +74,7 @@ class DomainEvent:
 
 
 class EventStore:
-    """Simple event store for demonstration using flext_core.types."""
+    """Simple event store for demonstration using flext_core.typings."""
 
     def __init__(self) -> None:
         """Initialize empty event store."""
@@ -189,7 +179,7 @@ class DemonstrationFlowHelper:
 
 
 class CreateUserCommand(FlextCommands.Command):
-    """Command to create a new user using flext_core.types."""
+    """Command to create a new user using flext_core.typings."""
 
     name: str
     email: str
@@ -220,7 +210,7 @@ class CreateUserCommand(FlextCommands.Command):
 
 
 class UpdateUserCommand(FlextCommands.Command):
-    """Command to update an existing user using flext_core.types."""
+    """Command to update an existing user using flext_core.typings."""
 
     target_user_id: TEntityId
     name: str | None = None
@@ -256,7 +246,7 @@ class UpdateUserCommand(FlextCommands.Command):
 
 
 class DeleteUserCommand(FlextCommands.Command):
-    """Command to delete a user using flext_core.types."""
+    """Command to delete a user using flext_core.typings."""
 
     target_user_id: TEntityId
     reason: str
@@ -289,13 +279,13 @@ class DeleteUserCommand(FlextCommands.Command):
 
 
 class GetUserQuery(FlextCommands.Query):
-    """Query to get a specific user using flext_core.types."""
+    """Query to get a specific user using flext_core.typings."""
 
     target_user_id: TEntityId
 
 
 class ListUsersQuery(FlextCommands.Query):
-    """Query to list users with filtering using flext_core.types."""
+    """Query to list users with filtering using flext_core.typings."""
 
     active_only: bool = True
     min_age: int | None = None
@@ -303,7 +293,7 @@ class ListUsersQuery(FlextCommands.Query):
 
 
 class GetUserEventsQuery(FlextCommands.Query):
-    """Query to get events for a user using flext_core.types."""
+    """Query to get events for a user using flext_core.typings."""
 
     correlation_id: str
 
@@ -317,7 +307,7 @@ class CreateUserCommandHandler(
     BaseCommandHandler,
     FlextCommands.Handler[CreateUserCommand, TAnyObject],
 ):
-    """Handler for CreateUserCommand using flext_core.types."""
+    """Handler for CreateUserCommand using flext_core.typings."""
 
     def __init__(self) -> None:
         """Initialize command handler."""
@@ -376,7 +366,7 @@ class UpdateUserCommandHandler(
     BaseCommandHandler,
     FlextCommands.Handler[UpdateUserCommand, TAnyObject],
 ):
-    """Handler for UpdateUserCommand using flext_core.types."""
+    """Handler for UpdateUserCommand using flext_core.typings."""
 
     def __init__(self, users_db: dict[TEntityId, TUserData]) -> None:
         """Initialize command handler with user database."""
@@ -420,7 +410,7 @@ class DeleteUserCommandHandler(
     BaseCommandHandler,
     FlextCommands.Handler[DeleteUserCommand, TAnyObject],
 ):
-    """Handler for DeleteUserCommand using flext_core.types."""
+    """Handler for DeleteUserCommand using flext_core.typings."""
 
     def __init__(self, users_db: dict[TEntityId, TUserData]) -> None:
         """Initialize command handler with user database."""
@@ -470,7 +460,7 @@ class DeleteUserCommandHandler(
 
 
 class GetUserQueryHandler(FlextCommands.QueryHandler[GetUserQuery, TAnyObject]):
-    """Handler for GetUserQuery using flext_core.types."""
+    """Handler for GetUserQuery using flext_core.typings."""
 
     def __init__(self, users_db: dict[TEntityId, TUserData]) -> None:
         """Initialize query handler with user database."""
@@ -493,7 +483,7 @@ class GetUserQueryHandler(FlextCommands.QueryHandler[GetUserQuery, TAnyObject]):
 class ListUsersQueryHandler(
     FlextCommands.QueryHandler[ListUsersQuery, list[TAnyObject]],
 ):
-    """Handler for ListUsersQuery using flext_core.types."""
+    """Handler for ListUsersQuery using flext_core.typings."""
 
     def __init__(self, users_db: dict[TEntityId, TUserData]) -> None:
         """Initialize query handler with user database."""
@@ -526,7 +516,7 @@ class ListUsersQueryHandler(
 class GetUserEventsQueryHandler(
     FlextCommands.QueryHandler[GetUserEventsQuery, list[TAnyObject]],
 ):
-    """Handler for GetUserEventsQuery using flext_core.types."""
+    """Handler for GetUserEventsQuery using flext_core.typings."""
 
     def handle(self, query: GetUserEventsQuery) -> FlextResult[list[TAnyObject]]:
         """Handle get user events query using list[TAnyObject] return type."""
@@ -550,7 +540,7 @@ class GetUserEventsQueryHandler(
 
 
 def setup_command_bus() -> FlextResult[FlextCommands.Bus]:
-    """Setups command bus with handlers using flext_core.types."""
+    """Setups command bus with handlers using flext_core.typings."""
     log_message: TLogMessage = "🚌 Setting up command bus..."
     print(log_message)
 
@@ -574,7 +564,7 @@ def setup_command_bus() -> FlextResult[FlextCommands.Bus]:
 
 
 def setup_query_handlers(users_db: dict[TEntityId, TUserData]) -> dict[str, object]:
-    """Setups query handlers using flext_core.types."""
+    """Setups query handlers using flext_core.typings."""
     log_message: TLogMessage = "🔍 Setting up query handlers..."
     print(log_message)
 
@@ -594,7 +584,7 @@ def setup_query_handlers(users_db: dict[TEntityId, TUserData]) -> dict[str, obje
 
 
 class UserManagementApplicationService:
-    """Application service for user management using flext_core.types."""
+    """Application service for user management using flext_core.typings."""
 
     def __init__(
         self,

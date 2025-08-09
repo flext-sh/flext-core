@@ -1,20 +1,7 @@
 """FLEXT Harmonized Semantic Architecture - Single Source of Truth.
 
-This module REPLACES and CONSOLIDATES all previous semantic patterns:
-- Constants patterns → FlextSemanticConstants
-- Model patterns → FlextSemanticModel
-- Observability patterns → FlextSemanticObservability
-- Error patterns → FlextSemanticError
-
-ELIMINATES ALL DUPLICATIONS and provides unified semantic architecture.
-
-Version: 4.0.0
-Status: UNIFIED STANDARD
-Coverage: All 33 FLEXT Ecosystem Projects
-Authority: SINGLE SOURCE OF TRUTH
-
-Copyright (c) 2025 FLEXT Contributors
-SPDX-License-Identifier: MIT
+Provides unified semantic patterns for constants, models, observability,
+and error handling across the FLEXT ecosystem.
 """
 
 from __future__ import annotations
@@ -22,7 +9,7 @@ from __future__ import annotations
 import importlib
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from .constants import FlextSemanticConstants
+from .constants import FlextConstants
 from .result import FlextResult
 
 if TYPE_CHECKING:
@@ -38,47 +25,49 @@ class FlextSemanticModel:
 
     # FOUNDATION CLASSES - 4 core types using semantic constants
     class Foundation:
-        """Core model types using semantic constants for consistency."""
+        """Core domain modeling patterns."""
 
         @staticmethod
         def get_base_config() -> dict[str, object]:
-            """Base model configuration using semantic constants."""
+            """Get base model configuration using semantic constants."""
             return {
-                "extra": FlextSemanticConstants.Models.EXTRA_FORBID,
-                "validate_assignment": FlextSemanticConstants.Models.VALIDATE_ASSIGNMENT,
-                "use_enum_values": FlextSemanticConstants.Models.USE_ENUM_VALUES,
-                "str_strip_whitespace": FlextSemanticConstants.Models.STR_STRIP_WHITESPACE,
-                "str_max_length": FlextSemanticConstants.Limits.MAX_STRING_LENGTH,
-                "arbitrary_types_allowed": FlextSemanticConstants.Models.ARBITRARY_TYPES_ALLOWED,
-                "validate_default": FlextSemanticConstants.Models.VALIDATE_DEFAULT,
+                "extra": FlextConstants.Models.EXTRA_FORBID,
+                "validate_assignment": FlextConstants.Models.VALIDATE_ASSIGNMENT,
+                "use_enum_values": FlextConstants.Models.USE_ENUM_VALUES,
+                "str_strip_whitespace": FlextConstants.Models.STR_STRIP_WHITESPACE,
+                "str_max_length": FlextConstants.Limits.MAX_STRING_LENGTH,
+                "arbitrary_types_allowed": (
+                    FlextConstants.Models.ARBITRARY_TYPES_ALLOWED
+                ),
+                "validate_default": FlextConstants.Models.VALIDATE_DEFAULT,
             }
 
     # NAMESPACE ORGANIZATION - Semantic grouping
     class Namespace:
-        """Semantic namespaces for domain organization."""
+        """Domain organization namespaces."""
 
         class FlextData:
-            """Data-related models - extended by data projects."""
+            """Data-related model namespace."""
 
         class FlextAuth:
-            """Authentication models - extended by auth projects."""
+            """Authentication model namespace."""
 
         class FlextService:
-            """Service models - extended by service projects."""
+            """Service model namespace."""
 
         class FlextInfrastructure:
-            """Infrastructure models - extended by infra projects."""
+            """Infrastructure model namespace."""
 
     # FACTORY PATTERNS - Semantic creation
     class Factory:
-        """Semantic model factory using constants."""
+        """Model creation with semantic defaults."""
 
         @staticmethod
         def create_model_with_defaults(**kwargs: object) -> dict[str, object]:
             """Create model data with semantic defaults."""
             return {
-                "timeout": FlextSemanticConstants.Defaults.TIMEOUT,
-                "status": FlextSemanticConstants.Status.ACTIVE,
+                "timeout": FlextConstants.Defaults.TIMEOUT,
+                "status": FlextConstants.Status.ACTIVE,
                 **kwargs,
             }
 
@@ -164,7 +153,7 @@ class FlextSemanticObservability:
                 operation_name: str,
                 **context: object,
             ) -> AbstractContextManager[object]:
-                """Business operation span using semantic span types."""
+                """Create business operation span using semantic span types."""
 
             def technical_span(
                 self,
@@ -238,7 +227,7 @@ class FlextSemanticObservability:
         def configure_observability(
             service_name: str,
             *,
-            log_level: str = FlextSemanticConstants.Observability.DEFAULT_LOG_LEVEL,
+            log_level: str = FlextConstants.Observability.DEFAULT_LOG_LEVEL,
         ) -> object:
             """Configure observability using semantic constants."""
             # Dynamic import to avoid circular dependencies
@@ -271,7 +260,7 @@ class FlextSemanticError:
                 self,
                 message: str,
                 *,
-                error_code: str = FlextSemanticConstants.Errors.GENERIC_ERROR,
+                error_code: str = FlextConstants.Errors.GENERIC_ERROR,
                 context: dict[str, object] | None = None,
                 cause: Exception | None = None,
             ) -> None:
@@ -294,7 +283,7 @@ class FlextSemanticError:
                 )
                 super().__init__(
                     message,
-                    error_code=FlextSemanticConstants.Errors.BUSINESS_RULE_ERROR,
+                    error_code=FlextConstants.Errors.BUSINESS_RULE_ERROR,
                     context=context_dict,
                     cause=cause_exception,
                 )
@@ -311,7 +300,7 @@ class FlextSemanticError:
                 )
                 super().__init__(
                     message,
-                    error_code=FlextSemanticConstants.Errors.CONNECTION_ERROR,
+                    error_code=FlextConstants.Errors.CONNECTION_ERROR,
                     context=context_dict,
                     cause=cause_exception,
                 )
@@ -328,7 +317,7 @@ class FlextSemanticError:
                 )
                 super().__init__(
                     message,
-                    error_code=FlextSemanticConstants.Errors.VALIDATION_ERROR,
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
                     context=context_dict,
                     cause=cause_exception,
                 )
@@ -345,7 +334,7 @@ class FlextSemanticError:
                 )
                 super().__init__(
                     message,
-                    error_code=FlextSemanticConstants.Errors.AUTHENTICATION_ERROR,
+                    error_code=FlextConstants.Errors.AUTHENTICATION_ERROR,
                     context=context_dict,
                     cause=cause_exception,
                 )
@@ -433,26 +422,12 @@ class FlextSemantic:
     """Unified semantic API for entire FLEXT ecosystem.
 
     Single entry point providing access to all semantic patterns:
-    - Constants: Single source of truth for all values
-    - Models: Domain modeling with semantic consistency
-    - Observability: Interface-based observability patterns
-    - Errors: Hierarchical error handling with semantic codes
-
-    Usage:
-        from flext_core.semantic import FlextSemantic
-
-        # Access constants
-        timeout = FlextSemantic.Constants.Defaults.TIMEOUT
-
-        # Get observability
-        obs = FlextSemantic.Observability.Factory.get_minimal_observability()
-
-        # Handle errors
-        error = FlextSemantic.Errors.Factory.create_validation_error("Invalid input")
+    constants, domain models, observability interfaces, and hierarchical
+    error handling with semantic consistency across the ecosystem.
     """
 
     # Layer 0: Constants (Single source of truth)
-    Constants = FlextSemanticConstants
+    Constants = FlextConstants
 
     # Layer 1: Models (Domain foundation)
     Models = FlextSemanticModel

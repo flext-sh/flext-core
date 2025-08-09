@@ -95,25 +95,21 @@ from flext_core import (
     # Core patterns (WORKING)
     FlextResult,
     FlextContainer,
-    FlextBaseSettings,
+    FlextSettings,
 
     # Domain patterns (AVAILABLE)
-    FlextEntity,
     FlextValueObject,
     FlextAggregateRoot,
 
-    # Commands and handlers (AVAILABLE)
+    # Commands (AVAILABLE)
     FlextCommands,
-    FlextHandlers,
 
     # Configuration (WORKING)
     FlextConfig,
-    FlextDatabaseConfig,
-
-    # Utilities (WORKING)
-    FlextUtilities,
-    FlextValidators,
 )
+from flext_core.models import FlextEntity
+from flext_core.validation import FlextValidators
+from flext_core.utilities import FlextUtilities
 
 def test_imports():
     """Test that all core imports work."""
@@ -127,12 +123,12 @@ def test_imports():
     print("✅ FlextContainer import working")
 
     # Configuration
-    class TestSettings(FlextBaseSettings):
+    class TestSettings(FlextSettings):
         test_field: str = "default"
 
     settings = TestSettings()
     assert settings.test_field == "default"
-    print("✅ FlextBaseSettings import working")
+    print("✅ FlextSettings import working")
 
     print("🎉 All core imports verified")
 
@@ -178,9 +174,9 @@ my_project/
 
 ```python
 # config.py
-from flext_core import FlextBaseSettings
+from flext_core import FlextSettings
 
-class AppSettings(FlextBaseSettings):
+class AppSettings(FlextSettings):
     app_name: str = "My App"
     debug: bool = False
     database_url: str = "sqlite:///app.db"
@@ -229,10 +225,10 @@ if config_result.success:
     print(f"Database: {config['db_url']}")
 ```
 
-### 3. Domain Entity
+### 3. Domain Entity (models API)
 
 ```python
-from flext_core import FlextEntity
+from flext_core.models import FlextEntity
 
 class User(FlextEntity):
     def __init__(self, user_id: str, name: str, email: str):

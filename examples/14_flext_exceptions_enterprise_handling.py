@@ -1,13 +1,8 @@
 #!/usr/bin/env python3
-"""FLEXT Exceptions Enterprise Handling Example.
+"""Enterprise exception handling with FlextExceptions.
 
-Comprehensive demonstration of FlextExceptions system showing enterprise-grade
-exception handling with observability, metrics tracking, and structured context
-management for robust error handling across the application.
-
-Features demonstrated:
-    - Base exception hierarchy with FlextError foundation
-    - Specialized exceptions with enhanced context information
+Demonstrates exception hierarchy, observability, metrics tracking,
+and structured context management for robust error handling.
     - Exception factory methods for consistent creation patterns
     - Observability integration with automatic metrics tracking
     - Structured context capture for debugging and error resolution

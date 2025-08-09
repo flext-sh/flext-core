@@ -1,108 +1,16 @@
-"""FLEXT Core Configuration Models - Configuration Layer Individual Model Definitions.
+"""Domain-specific configuration models using config_base abstractions.
 
-Centralized configuration model definitions providing individual configuration models
-across the entire 32-project FLEXT ecosystem with Python 3.13+ type safety,
-domain-specific validation, and enterprise-grade configuration management patterns.
+Provides concrete configuration models for database, cache, authentication,
+and integration systems. Uses config_base.py abstractions following SOLID
+principles to eliminate duplication.
 
-Module Role in Architecture:
-    Configuration Layer → Individual Model Definitions → Standardized Types
-
-    This module defines individual configuration models for specific domains:
-    - Database connection models (PostgreSQL, Oracle) with pooling and SSL
-    - Cache configuration models (Redis) with clustering and persistence
-    - Authentication models (JWT, OAuth) with security validation
-    - Integration models (LDAP, Singer) with protocol-specific options
-    - Observability models with structured logging and tracing
-    - Composite models combining multiple configuration domains
-
-Configuration Model Patterns:
-    TypedDict Definitions: Type-safe dictionaries for configuration interchange
-    Base Configuration Models: Common patterns with validation and serialization
-    Domain-Specific Models: Oracle, LDAP, JWT, Redis with specialized validation
-    Settings Integration: Environment variable binding with pydantic-settings
-    Factory Functions: Type-safe model creation with sensible defaults
-
-Development Status (v0.9.0 → 1.0.0):
-    ✅ Production Ready: Database, Redis, Oracle, LDAP, JWT, Singer, Observability
-    🚧 Enhancement: Advanced SSL validation, connection testing utilities (GAP 1)
-    📋 TODO Integration: Configuration validation framework, environment
-        overrides (GAP 2)
-
-Configuration Categories by Domain:
-    Core Infrastructure:
-        - FlextDatabaseConfig: PostgreSQL with pooling, SSL, timeouts
-        - FlextRedisConfig: Redis with clustering, persistence, health checks
-
-    Data Integration:
-        - FlextOracleConfig: Oracle with service_name/SID, WMS optimizations
-        - FlextLDAPConfig: LDAP/LDAPS with authentication, directory operations
-        - FlextSingerConfig: Singer tap/target with schema validation
-
-    Security & Authentication:
-        - FlextJWTConfig: JWT with algorithm validation, secure key requirements
-
-    Observability:
-        - FlextObservabilityConfig: Structured logging, metrics, distributed tracing
-
-Ecosystem Usage Patterns:
-    # FlexCore (Go) service configuration
-    database_config = FlextDatabaseConfig(
-        host="internal.invalid",
-        port=5433,
-        username="flexcore_user",
-        password=SecretStr(os.getenv("FLEXCORE_DB_PASSWORD")),
-        database="flexcore_db",
-        pool_max=20
-    )
-
-    # Oracle WMS integration across flext-oracle-wms, flext-tap-oracle-wms
-    oracle_config = FlextOracleConfig(
-        host="oracle-wms.enterprise.com",
-        service_name="WMS_PROD",
-        username="wms_integration",
-        ssl_enabled=True,
-        pool_max=50  # High concurrency for WMS operations
-    )
-
-    # Singer ecosystem configuration (15 taps/targets/DBT projects)
-    singer_config = FlextSingerConfig(
-        stream_name="oracle_inventory",
-        stream_schema={"type": "object", "properties": {...}},
-        batch_size=5000,  # Optimized for Oracle WMS data volumes
-        catalog=meltano_catalog
-    )
-
-    # Cross-service observability (flext-observability integration)
-    observability_config = FlextObservabilityConfig(
-        service_name="flext-tap-oracle-wms",
-        correlation_id_header="X-FLEXT-Correlation-ID",
-        tracing_enabled=True,
-        log_level="INFO"
-    )
-
-Configuration Philosophy:
-    Each model represents a specific configuration domain with:
-    - Type-safe defaults appropriate for development and production
-    - Comprehensive validation including business rule validation
-    - Environment variable integration through pydantic-settings
-    - Serialization methods for cross-language compatibility (Go bridge)
-    - Factory functions for common configuration scenarios
-    - Immutable configuration for thread safety across services
-
-Quality Standards:
-    - Comprehensive field validation with appropriate ranges and formats
-    - Secret handling through pydantic SecretStr for passwords and keys
-    - TypedDict definitions for type-safe dictionary interchange
-    - Business rule validation through semantic validation methods
-    - Environment variable integration with secure defaults
-
-See Also:
-    docs/TODO.md: Configuration validation framework (GAP 2), SSL enhancements (GAP 1)
-    config_hierarchical.py: Hierarchical configuration composition and inheritance
-    examples/08_flext_config_enterprise_configuration.py: Configuration usage patterns
-
-Copyright (c) 2025 FLEXT Contributors
-SPDX-License-Identifier: MIT
+Classes:
+    FlextDatabaseConfig: Database connection configuration.
+    FlextRedisConfig: Redis cache configuration.
+    FlextJWTConfig: JWT authentication configuration.
+    FlextOracleConfig: Oracle database configuration.
+    FlextLDAPConfig: LDAP directory configuration.
+    FlextConfigFactory: Static factory for configuration creation.
 
 """
 
@@ -112,30 +20,29 @@ import re
 from typing import TYPE_CHECKING, NotRequired, TypedDict
 
 from pydantic import (
-    BaseModel,
     ConfigDict,
     Field,
     SecretStr,
     field_validator,
     model_validator,
 )
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import SettingsConfigDict
 
-from flext_core.loggings import get_logger
+from flext_core.config import FlextSettings
+from flext_core.config_base import FlextAbstractConfig
+from flext_core.loggings import FlextLoggerFactory
+from flext_core.result import FlextResult
 
 if TYPE_CHECKING:
-    from flext_core.flext_types import TAnyDict
-else:
-    # Runtime import for models that need TAnyDict at runtime
-    pass
+    from flext_core.typings import TAnyDict
 
 # =============================================================================
 # TYPED DICT DEFINITIONS - Type-safe dictionaries for configuration
 # =============================================================================
 
 
-class DatabaseConfigDict(TypedDict):
-    """TypedDict for database configuration with optional fields."""
+class FlextDatabaseConfigDict(TypedDict):
+    """Database configuration dictionary type."""
 
     host: str
     port: int
@@ -150,8 +57,8 @@ class DatabaseConfigDict(TypedDict):
     encoding: NotRequired[str]
 
 
-class RedisConfigDict(TypedDict):
-    """TypedDict for Redis configuration with optional fields."""
+class FlextRedisConfigDict(TypedDict):
+    """Redis configuration dictionary type."""
 
     host: str
     port: int
@@ -162,8 +69,8 @@ class RedisConfigDict(TypedDict):
     timeout: NotRequired[int]
 
 
-class JWTConfigDict(TypedDict):
-    """TypedDict for JWT configuration with optional fields."""
+class FlextJWTConfigDict(TypedDict):
+    """JWT configuration dictionary type."""
 
     secret_key: str
     algorithm: NotRequired[str]
@@ -173,8 +80,8 @@ class JWTConfigDict(TypedDict):
     audience: NotRequired[str | None]
 
 
-class LDAPConfigDict(TypedDict):
-    """TypedDict for LDAP configuration with optional fields."""
+class FlextLDAPConfigDict(TypedDict):
+    """LDAP configuration dictionary type."""
 
     host: str
     port: int
@@ -187,8 +94,8 @@ class LDAPConfigDict(TypedDict):
     pool_size: NotRequired[int]
 
 
-class OracleConfigDict(TypedDict):
-    """TypedDict for Oracle configuration with optional fields."""
+class FlextOracleConfigDict(TypedDict):
+    """Oracle configuration dictionary type."""
 
     host: str
     port: int
@@ -204,8 +111,8 @@ class OracleConfigDict(TypedDict):
     ssl_enabled: NotRequired[bool]
 
 
-class SingerConfigDict(TypedDict):
-    """TypedDict for Singer tap/target configuration."""
+class FlextSingerConfigDict(TypedDict):
+    """Singer configuration dictionary type."""
 
     stream_name: str
     stream_schema: dict[str, object]
@@ -215,8 +122,8 @@ class SingerConfigDict(TypedDict):
     batch_size: NotRequired[int]
 
 
-class ObservabilityConfigDict(TypedDict):
-    """TypedDict for observability configuration."""
+class FlextObservabilityConfigDict(TypedDict):
+    """Observability configuration dictionary type."""
 
     log_level: str
     log_format: NotRequired[str]
@@ -231,8 +138,12 @@ class ObservabilityConfigDict(TypedDict):
 # =============================================================================
 
 
-class FlextBaseConfigModel(BaseModel):
-    """Base configuration model with common settings for all FLEXT projects."""
+class FlextBaseConfigModel(FlextAbstractConfig):
+    """Base configuration model with common settings using base abstractions.
+
+    Extends FlextAbstractConfig to provide domain-specific configuration
+    patterns with validation and serialization capabilities.
+    """
 
     model_config = ConfigDict(
         extra="forbid",
@@ -241,17 +152,27 @@ class FlextBaseConfigModel(BaseModel):
         frozen=True,
     )
 
-    def to_dict(self) -> TAnyDict:
-        """Convert to dictionary representation."""
-        return self.model_dump()
+    def validate_config(self) -> FlextResult[None]:
+        """Validate configuration specifics - base implementation.
+
+        Returns:
+            FlextResult indicating validation success.
+
+        """
+        return FlextResult.ok(None)
 
     def to_typed_dict(self) -> TAnyDict:
-        """Convert to typed dictionary representation."""
+        """Convert to typed dictionary representation.
+
+        Returns:
+            Dictionary representation excluding unset values.
+
+        """
         return self.model_dump(exclude_unset=True)
 
 
 class FlextDatabaseConfig(FlextBaseConfigModel):
-    """Centralized database configuration for PostgreSQL and Oracle."""
+    """Database configuration with connection pooling and SSL."""
 
     host: str = Field("localhost", description="Database host address")
     port: int = Field(5432, description="Database port", ge=1, le=65535)
@@ -295,9 +216,9 @@ class FlextDatabaseConfig(FlextBaseConfigModel):
         password = self.password.get_secret_value()
         return f"{driver}://{self.username}:{password}@{self.host}:{self.port}/{self.database}"
 
-    def to_database_dict(self) -> DatabaseConfigDict:
-        """Convert to DatabaseConfigDict."""
-        return DatabaseConfigDict(
+    def to_database_dict(self) -> FlextDatabaseConfigDict:
+        """Convert to FlextDatabaseConfigDict."""
+        return FlextDatabaseConfigDict(
             host=self.host,
             port=self.port,
             username=self.username,
@@ -313,7 +234,7 @@ class FlextDatabaseConfig(FlextBaseConfigModel):
 
 
 class FlextRedisConfig(FlextBaseConfigModel):
-    """Centralized Redis configuration for caching and sessions."""
+    """Redis configuration with pooling and SSL support."""
 
     host: str = Field("localhost", description="Redis host address")
     port: int = Field(6379, description="Redis port", ge=1, le=65535)
@@ -339,9 +260,9 @@ class FlextRedisConfig(FlextBaseConfigModel):
             return f"redis://:{password}@{self.host}:{self.port}/{self.database}"
         return f"redis://{self.host}:{self.port}/{self.database}"
 
-    def to_redis_dict(self) -> RedisConfigDict:
-        """Convert to RedisConfigDict."""
-        return RedisConfigDict(
+    def to_redis_dict(self) -> FlextRedisConfigDict:
+        """Convert to FlextRedisConfigDict."""
+        return FlextRedisConfigDict(
             host=self.host,
             port=self.port,
             password=self.password.get_secret_value() if self.password else None,
@@ -353,7 +274,7 @@ class FlextRedisConfig(FlextBaseConfigModel):
 
 
 class FlextJWTConfig(FlextBaseConfigModel):
-    """Centralized JWT configuration for authentication."""
+    """JWT configuration with algorithm validation."""
 
     secret_key: SecretStr = Field(description="JWT signing secret key")
     algorithm: str = Field("HS256", description="JWT signing algorithm")
@@ -393,9 +314,9 @@ class FlextJWTConfig(FlextBaseConfigModel):
             raise ValueError(msg)
         return v
 
-    def to_jwt_dict(self) -> JWTConfigDict:
-        """Convert to JWTConfigDict."""
-        return JWTConfigDict(
+    def to_jwt_dict(self) -> FlextJWTConfigDict:
+        """Convert to FlextJWTConfigDict."""
+        return FlextJWTConfigDict(
             secret_key=self.secret_key.get_secret_value(),
             algorithm=self.algorithm,
             access_token_expire_minutes=self.access_token_expire_minutes,
@@ -411,7 +332,7 @@ class FlextJWTConfig(FlextBaseConfigModel):
 
 
 class FlextOracleConfig(FlextBaseConfigModel):
-    """Centralized Oracle database configuration."""
+    """Oracle database configuration with service name or SID."""
 
     host: str = Field("localhost", description="Oracle host address")
     port: int = Field(1521, description="Oracle port", ge=1, le=65535)
@@ -453,9 +374,9 @@ class FlextOracleConfig(FlextBaseConfigModel):
             return f"{self.host}:{self.port}:{self.sid}"
         return f"{self.host}:{self.port}"
 
-    def to_oracle_dict(self) -> OracleConfigDict:
-        """Convert to OracleConfigDict."""
-        return OracleConfigDict(
+    def to_oracle_dict(self) -> FlextOracleConfigDict:
+        """Convert to FlextOracleConfigDict."""
+        return FlextOracleConfigDict(
             host=self.host,
             port=self.port,
             username=self.username,
@@ -472,7 +393,7 @@ class FlextOracleConfig(FlextBaseConfigModel):
 
 
 class FlextLDAPConfig(FlextBaseConfigModel):
-    """Centralized LDAP configuration."""
+    """LDAP configuration with SSL/TLS support."""
 
     host: str = Field("localhost", description="LDAP host address")
     port: int = Field(389, description="LDAP port", ge=1, le=65535)
@@ -507,9 +428,9 @@ class FlextLDAPConfig(FlextBaseConfigModel):
         protocol = "ldaps" if self.use_ssl else "ldap"
         return f"{protocol}://{self.host}:{self.port}"
 
-    def to_ldap_dict(self) -> LDAPConfigDict:
-        """Convert to LDAPConfigDict."""
-        return LDAPConfigDict(
+    def to_ldap_dict(self) -> FlextLDAPConfigDict:
+        """Convert to FlextLDAPConfigDict."""
+        return FlextLDAPConfigDict(
             host=self.host,
             port=self.port,
             base_dn=self.base_dn,
@@ -525,7 +446,7 @@ class FlextLDAPConfig(FlextBaseConfigModel):
 
 
 class FlextSingerConfig(FlextBaseConfigModel):
-    """Centralized Singer tap/target configuration."""
+    """Singer tap/target configuration with schema validation."""
 
     stream_name: str = Field(description="Singer stream name")
     stream_schema: dict[str, object] = Field(
@@ -554,9 +475,9 @@ class FlextSingerConfig(FlextBaseConfigModel):
             raise ValueError(msg)
         return v.strip()
 
-    def to_singer_dict(self) -> SingerConfigDict:
-        """Convert to SingerConfigDict."""
-        return SingerConfigDict(
+    def to_singer_dict(self) -> FlextSingerConfigDict:
+        """Convert to FlextSingerConfigDict."""
+        return FlextSingerConfigDict(
             stream_name=self.stream_name,
             stream_schema=self.stream_schema,
             stream_config=self.stream_config,
@@ -567,7 +488,7 @@ class FlextSingerConfig(FlextBaseConfigModel):
 
 
 class FlextObservabilityConfig(FlextBaseConfigModel):
-    """Centralized observability configuration."""
+    """Observability configuration for logging and tracing."""
 
     log_level: str = Field("INFO", description="Logging level")
     log_format: str = Field("json", description="Log format (json, text)")
@@ -597,16 +518,26 @@ class FlextObservabilityConfig(FlextBaseConfigModel):
             raise ValueError(msg)
         return v_upper
 
-    def to_observability_dict(self) -> ObservabilityConfigDict:
-        """Convert to ObservabilityConfigDict."""
-        return ObservabilityConfigDict(
-            log_level=self.log_level,
-            log_format=self.log_format,
-            metrics_enabled=self.metrics_enabled,
-            tracing_enabled=self.tracing_enabled,
-            correlation_id_header=self.correlation_id_header,
-            service_name=self.service_name,
-        )
+
+class FlextPerformanceConfig(FlextBaseConfigModel):
+    """Performance configuration for optimization settings."""
+
+    enable_caching: bool = Field(default=True, description="Enable caching")
+    cache_size: int = Field(1000, description="Cache size limit", ge=1)
+    enable_profiling: bool = Field(
+        default=False,
+        description="Enable performance profiling",
+    )
+    max_connections: int = Field(100, description="Maximum connections", ge=1, le=10000)
+
+    def to_performance_dict(self) -> dict[str, object]:
+        """Convert to performance dictionary representation."""
+        return {
+            "enable_caching": self.enable_caching,
+            "cache_size": self.cache_size,
+            "enable_profiling": self.enable_profiling,
+            "max_connections": self.max_connections,
+        }
 
 
 # =============================================================================
@@ -615,7 +546,7 @@ class FlextObservabilityConfig(FlextBaseConfigModel):
 
 
 class FlextApplicationConfig(FlextBaseConfigModel):
-    """Composite application configuration combining multiple domains."""
+    """Application configuration combining all domain configs."""
 
     # Core infrastructure
     database: FlextDatabaseConfig = Field(default_factory=FlextDatabaseConfig)
@@ -641,7 +572,7 @@ class FlextApplicationConfig(FlextBaseConfigModel):
 
 
 class FlextDataIntegrationConfig(FlextBaseConfigModel):
-    """Composite configuration for data integration projects."""
+    """Configuration for data integration with Oracle/LDAP."""
 
     # Data sources
     oracle: FlextOracleConfig | None = Field(None, description="Oracle configuration")
@@ -660,20 +591,12 @@ class FlextDataIntegrationConfig(FlextBaseConfigModel):
 # =============================================================================
 
 
-class FlextBaseSettings(BaseSettings):
-    """Base settings class with environment variable integration."""
-
-    model_config = SettingsConfigDict(
-        env_file=".env",
-        env_file_encoding="utf-8",
-        case_sensitive=False,
-        extra="ignore",
-        validate_assignment=True,
-    )
+# FlextSettings imported from config.py - single source of truth
+# Following SOLID Single Responsibility Principle
 
 
-class FlextDatabaseSettings(FlextBaseSettings):
-    """Database settings with environment variable support."""
+class FlextDatabaseSettings(FlextSettings):
+    """Database settings with environment variables."""
 
     model_config = SettingsConfigDict(
         env_prefix="FLEXT_DATABASE_",
@@ -691,8 +614,8 @@ class FlextDatabaseSettings(FlextBaseSettings):
     database: str = Field("flext", description="Database name")
 
 
-class FlextRedisSettings(FlextBaseSettings):
-    """Redis settings with environment variable support."""
+class FlextRedisSettings(FlextSettings):
+    """Redis settings with environment variables."""
 
     model_config = SettingsConfigDict(
         env_prefix="FLEXT_REDIS_",
@@ -714,190 +637,198 @@ class FlextRedisSettings(FlextBaseSettings):
 # =============================================================================
 
 
-def create_database_config(
-    host: str = "localhost",
-    port: int = 5432,
-    username: str = "postgres",
-    password: str | None = None,
-    database: str = "flext",
-    **kwargs: object,
-) -> FlextDatabaseConfig:
-    """Factory function to create database configuration.
-
-    Args:
-        host: Database host address
-        port: Database port number
-        username: Database username
-        password: Database password (required)
-        database: Database name
-        **kwargs: Additional configuration parameters
-
-    Returns:
-        FlextDatabaseConfig: Configured database configuration
-
-    Raises:
-        ValueError: If password is not provided
-
-    """
-    if password is None:
-        msg = "Database password is required"
-        raise ValueError(msg)
-
-    # Create safe config data with explicit parameters
-    config_data = {
-        "host": host,
-        "port": port,
-        "username": username,
-        "password": SecretStr(password),
-        "database": database,
-    }
-
-    # Filter kwargs to only valid FlextDatabaseConfig fields
-    valid_fields = {
-        "pool_min",
-        "pool_max",
-        "pool_timeout",
-        "ssl_enabled",
-        "ssl_cert_path",
-        "encoding",
-        "autocommit",
-    }
-    config_data.update(
-        {key: value for key, value in kwargs.items() if key in valid_fields},
-    )
-
-    return FlextDatabaseConfig.model_validate(config_data)
-
-
-def create_redis_config(
-    host: str = "localhost",
-    port: int = 6379,
-    password: str | None = None,
-    database: int = 0,
-    **kwargs: object,
-) -> FlextRedisConfig:
-    """Factory function to create Redis configuration."""
-    # Create safe config data with explicit parameters
-    config_data = {
-        "host": host,
-        "port": port,
-        "password": SecretStr(password) if password else None,
-        "database": database,
-    }
-
-    # Filter kwargs to only valid FlextRedisConfig fields
-    valid_fields = {"ssl_enabled", "timeout"}
-    config_data.update(
-        {key: value for key, value in kwargs.items() if key in valid_fields},
-    )
-
-    return FlextRedisConfig.model_validate(config_data)
-
-
-def create_oracle_config(
-    host: str = "localhost",
-    username: str = "oracle",
-    password: str | None = None,
-    service_name: str | None = None,
-    **kwargs: object,
-) -> FlextOracleConfig:
-    """Factory function to create Oracle configuration.
-
-    Args:
-        host: Oracle database host address
-        username: Oracle database username
-        password: Oracle database password (required)
-        service_name: Oracle service name (optional)
-        **kwargs: Additional configuration parameters
-
-    Returns:
-        FlextOracleConfig: Configured Oracle configuration
-
-    Raises:
-        ValueError: If password is not provided
-
-    """
-    if password is None:
-        msg = "Oracle password is required"
-        raise ValueError(msg)
-
-    # Create config data with defaults
-    config_data = {
-        "host": host,
-        "port": 1521,
-        "username": username,
-        "password": SecretStr(password),
-        "service_name": service_name,
-        "sid": None,
-    }
-
-    # Filter kwargs to only valid FlextOracleConfig fields
-    valid_fields = {"port", "sid", "ssl_enabled"}
-    config_data.update(
-        {key: value for key, value in kwargs.items() if key in valid_fields},
-    )
-
-    return FlextOracleConfig.model_validate(config_data)
-
-
-def create_ldap_config(
-    host: str = "localhost",
-    port: int = 389,
-    base_dn: str = "dc=example,dc=com",
-    bind_dn: str | None = None,
-    bind_password: str | None = None,
-    **kwargs: object,
-) -> FlextLDAPConfig:
-    """Factory function to create LDAP configuration."""
-    # Create safe config data with explicit parameters
-    config_data = {
-        "host": host,
-        "port": port,
-        "base_dn": base_dn,
-        "bind_dn": bind_dn,
-        "bind_password": SecretStr(bind_password) if bind_password else None,
-    }
-
-    # Filter kwargs to only valid FlextLDAPConfig fields
-    valid_fields = {"use_ssl", "use_tls", "timeout", "pool_size"}
-    config_data.update(
-        {key: value for key, value in kwargs.items() if key in valid_fields},
-    )
-
-    return FlextLDAPConfig.model_validate(config_data)
-
-
 # =============================================================================
-# CONFIGURATION UTILITIES
+# FLEXT CONFIG FACTORY - Static class for config creation functions
 # =============================================================================
 
 
-def load_config_from_env(config_class: type[FlextBaseSettings]) -> FlextBaseSettings:
-    """Load configuration from environment variables."""
-    return config_class()
+class FlextConfigFactory:
+    """Factory methods for configuration creation and validation."""
 
+    @staticmethod
+    def create_database_config(
+        host: str = "localhost",
+        port: int = 5432,
+        username: str = "postgres",
+        password: str | None = None,
+        database: str = "flext",
+        **kwargs: object,
+    ) -> FlextDatabaseConfig:
+        """Create database configuration.
 
-def merge_configs(*configs: FlextBaseConfigModel) -> dict[str, object]:
-    """Merge multiple configuration objects."""
-    merged: dict[str, object] = {}
-    for config in configs:
-        config_dict = config.to_dict()
-        # Update with type conversion to object
-        merged.update(config_dict)
-    return merged
+        Args:
+            host: Database host address
+            port: Database port number
+            username: Database username
+            password: Database password (required)
+            database: Database name
+            **kwargs: Additional configuration parameters
 
+        Returns:
+            FlextDatabaseConfig: Configured database configuration
 
-def validate_config(config: FlextBaseConfigModel) -> bool:
-    """Validate configuration object."""
-    try:
-        config.model_validate(config.model_dump())
-        return True
-    except (RuntimeError, ValueError, TypeError, KeyError) as e:
-        logger = get_logger(__name__)
-        logger.warning(
-            f"Configuration validation failed for {type(config).__name__}: {e}",
+        Raises:
+            ValueError: If password is not provided
+
+        """
+        if password is None:
+            msg = "Database password is required"
+            raise ValueError(msg)
+
+        # Create safe config data with explicit parameters
+        config_data = {
+            "host": host,
+            "port": port,
+            "username": username,
+            "password": SecretStr(password),
+            "database": database,
+        }
+
+        # Filter kwargs to only valid FlextDatabaseConfig fields
+        valid_fields = {
+            "pool_min",
+            "pool_max",
+            "pool_timeout",
+            "ssl_enabled",
+            "ssl_cert_path",
+            "encoding",
+            "autocommit",
+        }
+        config_data.update(
+            {key: value for key, value in kwargs.items() if key in valid_fields},
         )
-        return False
+
+        return FlextDatabaseConfig.model_validate(config_data)
+
+    @staticmethod
+    def create_redis_config(
+        host: str = "localhost",
+        port: int = 6379,
+        password: str | None = None,
+        database: int = 0,
+        **kwargs: object,
+    ) -> FlextRedisConfig:
+        """Create Redis configuration."""
+        # Create safe config data with explicit parameters
+        config_data = {
+            "host": host,
+            "port": port,
+            "password": SecretStr(password) if password else None,
+            "database": database,
+        }
+
+        # Filter kwargs to only valid FlextRedisConfig fields
+        valid_fields = {"ssl_enabled", "timeout"}
+        config_data.update(
+            {key: value for key, value in kwargs.items() if key in valid_fields},
+        )
+
+        return FlextRedisConfig.model_validate(config_data)
+
+    @staticmethod
+    def create_oracle_config(
+        host: str = "localhost",
+        username: str = "oracle",
+        password: str | None = None,
+        service_name: str | None = None,
+        **kwargs: object,
+    ) -> FlextOracleConfig:
+        """Create Oracle configuration.
+
+        Args:
+            host: Oracle database host address
+            username: Oracle database username
+            password: Oracle database password (required)
+            service_name: Oracle service name (optional)
+            **kwargs: Additional configuration parameters
+
+        Returns:
+            FlextOracleConfig: Configured Oracle configuration
+
+        Raises:
+            ValueError: If password is not provided
+
+        """
+        if password is None:
+            msg = "Oracle password is required"
+            raise ValueError(msg)
+
+        # Create config data with defaults
+        config_data = {
+            "host": host,
+            "port": 1521,
+            "username": username,
+            "password": SecretStr(password),
+            "service_name": service_name,
+            "sid": None,
+        }
+
+        # Filter kwargs to only valid FlextOracleConfig fields
+        valid_fields = {"port", "sid", "ssl_enabled"}
+        config_data.update(
+            {key: value for key, value in kwargs.items() if key in valid_fields},
+        )
+
+        return FlextOracleConfig.model_validate(config_data)
+
+    @staticmethod
+    def create_ldap_config(
+        host: str = "localhost",
+        port: int = 389,
+        base_dn: str = "dc=example,dc=com",
+        bind_dn: str | None = None,
+        bind_password: str | None = None,
+        **kwargs: object,
+    ) -> FlextLDAPConfig:
+        """Create LDAP configuration."""
+        # Create safe config data with explicit parameters
+        config_data = {
+            "host": host,
+            "port": port,
+            "base_dn": base_dn,
+            "bind_dn": bind_dn,
+            "bind_password": SecretStr(bind_password) if bind_password else None,
+        }
+
+        # Filter kwargs to only valid FlextLDAPConfig fields
+        valid_fields = {"use_ssl", "use_tls", "timeout", "pool_size"}
+        config_data.update(
+            {key: value for key, value in kwargs.items() if key in valid_fields},
+        )
+
+        return FlextLDAPConfig.model_validate(config_data)
+
+    # =============================================================================
+    # CONFIGURATION UTILITIES
+    # =============================================================================
+
+    @staticmethod
+    def load_config_from_env(config_class: type[FlextSettings]) -> FlextSettings:
+        """Load configuration from environment variables."""
+        return config_class()
+
+    @staticmethod
+    def merge_configs(*configs: FlextBaseConfigModel) -> dict[str, object]:
+        """Merge multiple configuration objects."""
+        merged: dict[str, object] = {}
+        for config in configs:
+            config_dict = config.to_dict()
+            # Update with type conversion to object
+            merged.update(config_dict)
+        return merged
+
+    @staticmethod
+    def validate_config(config: FlextBaseConfigModel) -> bool:
+        """Validate configuration object."""
+        try:
+            config.model_validate(config.model_dump())
+            return True
+        except (RuntimeError, ValueError, TypeError, KeyError) as e:
+            logger = FlextLoggerFactory.get_logger(__name__)
+            logger.warning(
+                f"Configuration validation failed for {type(config).__name__}: {e}",
+            )
+            return False
 
 
 # =============================================================================
@@ -905,33 +836,8 @@ def validate_config(config: FlextBaseConfigModel) -> bool:
 # =============================================================================
 
 
-class PluginConfigDict(TypedDict, total=False):
-    """Plugin configuration dictionary with plugin-specific settings.
-
-    TypedDict structure for plugin configuration providing type safety,
-    clear documentation, and flexible configuration patterns for FLEXT
-    plugin system integration.
-
-    Configuration Structure:
-        name: Unique plugin identifier for loading and management
-        version: Semantic version for compatibility and updates
-        enabled: Runtime activation control for plugins
-        priority: Loading/execution order for plugin coordination
-        settings: Plugin-specific configuration parameters
-        dependencies: Plugin dependency list for proper ordering
-        metadata: Additional plugin information and documentation
-
-    Usage Patterns:
-        plugin_config: PluginConfigDict = {
-            "name": "oracle-wms-plugin",
-            "version": "1.2.0",
-            "enabled": True,
-            "priority": 100,
-            "settings": {"connection_pool_size": 10},
-            "dependencies": ["oracle-base-plugin"],
-            "metadata": {"description": "Oracle WMS integration"}
-        }
-    """
+class FlextPluginConfigDict(TypedDict, total=False):
+    """Plugin configuration dictionary type."""
 
     name: str
     version: str
@@ -942,48 +848,12 @@ class PluginConfigDict(TypedDict, total=False):
     metadata: dict[str, str]
 
 
+# Removed duplicate FlextObservabilityConfig - using the more complete
+# implementation at line 490 instead
+
+
 class FlextPluginConfig(FlextBaseConfigModel):
-    """Plugin configuration model with validation and runtime management.
-
-    Pydantic model providing comprehensive plugin configuration with
-    validation, serialization, and integration with FLEXT plugin system.
-    Enables runtime plugin management, dependency resolution, and
-    configuration validation.
-
-    Configuration Features:
-        - Plugin identity management (name, version, description)
-        - Runtime control (enabled state, priority ordering)
-        - Dependency management with validation
-        - Flexible settings with type safety
-        - Metadata support for documentation and tooling
-        - Environment variable integration for deployment
-
-    Plugin Lifecycle Integration:
-        - Configuration validation during plugin loading
-        - Dependency resolution and ordering
-        - Runtime enable/disable control
-        - Version compatibility checking
-        - Settings validation and type coercion
-
-    Usage Patterns:
-        # Individual plugin configuration
-        plugin_config = FlextPluginConfig(
-            name="oracle-wms-plugin",
-            version="1.2.0",
-            description="Oracle WMS integration plugin",
-            enabled=True,
-            priority=100,
-            settings={"connection_pool_size": 10, "timeout": 30},
-            dependencies=["oracle-base-plugin"]
-        )
-
-        # Plugin registry configuration
-        plugins_config = [
-            FlextPluginConfig(name="base-plugin", version="1.0.0", priority=1),
-            FlextPluginConfig(name="oracle-plugin", version="1.1.0", priority=50),
-            FlextPluginConfig(name="wms-plugin", version="1.2.0", priority=100)
-        ]
-    """
+    """Plugin configuration with validation and dependency management."""
 
     name: str = Field(description="Unique plugin identifier for system registration")
     version: str = Field(
@@ -1042,30 +912,7 @@ class FlextPluginConfig(FlextBaseConfigModel):
 
 
 class FlextPluginRegistryConfig(FlextBaseConfigModel):
-    """Plugin registry configuration for managing multiple plugins.
-
-    Configuration model for plugin registry management providing
-    centralized plugin configuration, dependency resolution,
-    and lifecycle coordination across the FLEXT ecosystem.
-
-    Registry Features:
-        - Multiple plugin configuration management
-        - Automatic dependency resolution and ordering
-        - Global plugin settings and overrides
-        - Plugin discovery and loading configuration
-        - Registry-wide metadata and documentation
-
-    Usage Patterns:
-        registry_config = FlextPluginRegistryConfig(
-            plugins=[
-                FlextPluginConfig(name="base-plugin", priority=1),
-                FlextPluginConfig(name="oracle-plugin", priority=50),
-                FlextPluginConfig(name="wms-plugin", priority=100)
-            ],
-            auto_discovery=True,
-            discovery_paths=["/opt/flext/plugins", "./plugins"]
-        )
-    """
+    """Plugin registry configuration with dependency resolution."""
 
     plugins: list[FlextPluginConfig] = Field(
         default_factory=list,
@@ -1097,151 +944,143 @@ class FlextPluginRegistryConfig(FlextBaseConfigModel):
                     raise ValueError(error_msg)
         return self
 
+    # =============================================================================
+    # PLUGIN CONFIGURATION FACTORY FUNCTIONS
+    # =============================================================================
 
-# =============================================================================
-# PLUGIN CONFIGURATION FACTORY FUNCTIONS
-# =============================================================================
+    @staticmethod
+    def create_plugin_config(
+        name: str,
+        *,
+        config_options: dict[str, object] | None = None,
+    ) -> FlextPluginConfig:
+        """Create plugin configuration with validation.
 
+        Factory function for creating validated plugin configurations
+        with sensible defaults and proper type safety.
 
-def create_plugin_config(
-    name: str,
-    *,
-    config_options: dict[str, object] | None = None,
-) -> FlextPluginConfig:
-    """Create plugin configuration with validation.
+        Args:
+            name: Unique plugin identifier
+            config_options: Optional configuration dictionary with keys:
+                - version: Plugin version (semantic versioning, default: "1.0.0")
+                - enabled: Whether plugin is enabled (default: True)
+                - priority: Plugin loading priority (default: 100)
+                - settings: Plugin-specific configuration (default: {})
+                - dependencies: Required plugin dependencies (default: [])
 
-    Factory function for creating validated plugin configurations
-    with sensible defaults and proper type safety.
+        Returns:
+            Validated FlextPluginConfig instance
 
-    Args:
-        name: Unique plugin identifier
-        config_options: Optional configuration dictionary with keys:
-            - version: Plugin version (semantic versioning, default: "1.0.0")
-            - enabled: Whether plugin is enabled (default: True)
-            - priority: Plugin loading priority (default: 100)
-            - settings: Plugin-specific configuration (default: {})
-            - dependencies: Required plugin dependencies (default: [])
+        """
+        options = config_options or {}
+        # Extract values with proper type casting
+        priority_value = options.get("priority", 100)
+        settings_value = options.get("settings")
+        dependencies_value = options.get("dependencies")
 
-    Returns:
-        Validated FlextPluginConfig instance
-
-    Example:
-        # Simple configuration
-        config = create_plugin_config("oracle-connector")
-
-        # Advanced configuration
-        config = create_plugin_config(
-            name="oracle-connector",
-            config_options={
-                "version": "2.1.0",
-                "enabled": True,
-                "priority": 200,
-                "settings": {"pool_size": 20},
-                "dependencies": ["oracle-base-plugin"]
-            }
+        return FlextPluginConfig(
+            name=name,
+            version=str(options.get("version", "1.0.0")),
+            enabled=bool(options.get("enabled", True)),
+            priority=int(priority_value)
+            if isinstance(priority_value, (int, str))
+            else 100,
+            settings=dict(settings_value) if isinstance(settings_value, dict) else {},
+            dependencies=list(dependencies_value)
+            if isinstance(dependencies_value, (list, tuple))
+            else [],
         )
 
-    """
-    options = config_options or {}
-    # Extract values with proper type casting
-    priority_value = options.get("priority", 100)
-    settings_value = options.get("settings")
-    dependencies_value = options.get("dependencies")
+    @staticmethod
+    def create_plugin_registry_config(
+        *,
+        plugins: list[FlextPluginConfig] | None = None,
+        auto_discovery: bool = False,
+        discovery_paths: list[str] | None = None,
+    ) -> FlextPluginRegistryConfig:
+        """Create plugin registry configuration.
 
-    return FlextPluginConfig(
-        name=name,
-        version=str(options.get("version", "1.0.0")),
-        enabled=bool(options.get("enabled", True)),
-        priority=int(priority_value) if isinstance(priority_value, (int, str)) else 100,
-        settings=dict(settings_value) if isinstance(settings_value, dict) else {},
-        dependencies=list(dependencies_value)
-        if isinstance(dependencies_value, (list, tuple))
-        else [],
-    )
+        Factory function for creating plugin registry configurations
+        with proper validation and dependency resolution.
 
+        Args:
+            plugins: List of plugin configurations
+            auto_discovery: Enable automatic plugin discovery
+            discovery_paths: Plugin discovery paths
 
-def create_plugin_registry_config(
-    *,
-    plugins: list[FlextPluginConfig] | None = None,
-    auto_discovery: bool = False,
-    discovery_paths: list[str] | None = None,
-) -> FlextPluginRegistryConfig:
-    """Create plugin registry configuration.
+        Returns:
+            Validated FlextPluginRegistryConfig instance.
 
-    Factory function for creating plugin registry configurations
-    with proper validation and dependency resolution.
-
-    Args:
-        plugins: List of plugin configurations
-        auto_discovery: Enable automatic plugin discovery
-        discovery_paths: Plugin discovery paths
-
-    Returns:
-        Validated FlextPluginRegistryConfig instance
-
-    Example:
-        registry = create_plugin_registry_config(
-            plugins=[
-                create_plugin_config("base-plugin", priority=1),
-                create_plugin_config("oracle-plugin", priority=50)
-            ],
-            auto_discovery=True,
-            discovery_paths=["./plugins"]
+        """
+        return FlextPluginRegistryConfig(
+            plugins=plugins or [],
+            auto_discovery=auto_discovery,
+            discovery_paths=discovery_paths or [],
         )
-
-    """
-    return FlextPluginRegistryConfig(
-        plugins=plugins or [],
-        auto_discovery=auto_discovery,
-        discovery_paths=discovery_paths or [],
-    )
 
 
 # =============================================================================
 # EXPORTS
 # =============================================================================
 
-__all__ = [
-    # TypedDict definitions
-    "DatabaseConfigDict",
-    # Composite models
-    "FlextApplicationConfig",
+__all__ = [  # noqa: RUF022
     # Base models
     "FlextBaseConfigModel",
-    "FlextBaseSettings",
+    # Composite models
+    "FlextApplicationConfig",
     "FlextDataIntegrationConfig",
     # Core infrastructure models
     "FlextDatabaseConfig",
+    "FlextRedisConfig",
+    # Domain-specific models
+    "FlextOracleConfig",
+    "FlextPerformanceConfig",
+    # Main factory class (SOLID-compliant organization)
+    "FlextConfigFactory",
+    # Plugin configuration models
+    "FlextPluginConfig",
+    "FlextPluginRegistryConfig",
     # Settings classes
     "FlextDatabaseSettings",
     "FlextJWTConfig",
     "FlextLDAPConfig",
     "FlextObservabilityConfig",
-    # Domain-specific models
-    "FlextOracleConfig",
-    # Plugin configuration models
-    "FlextPluginConfig",
-    "FlextPluginRegistryConfig",
-    "FlextRedisConfig",
     "FlextRedisSettings",
+    "FlextSettings",
+    # Singer model
     "FlextSingerConfig",
-    "JWTConfigDict",
-    "LDAPConfigDict",
-    "ObservabilityConfigDict",
-    "OracleConfigDict",
-    "PluginConfigDict",
-    "RedisConfigDict",
+    # TypedDict definitions (sorted)
+    "FlextDatabaseConfigDict",
+    "FlextObservabilityConfigDict",
+    "FlextOracleConfigDict",
+    "FlextPluginConfigDict",
+    "FlextRedisConfigDict",
+    "FlextSingerConfigDict",
+    # Third-party re-exports
     "SettingsConfigDict",
-    "SingerConfigDict",
-    # Factory functions
+    # Compatibility aliases (maintain API contracts)
     "create_database_config",
     "create_ldap_config",
     "create_oracle_config",
     "create_plugin_config",
     "create_plugin_registry_config",
     "create_redis_config",
-    # Utilities
     "load_config_from_env",
     "merge_configs",
     "validate_config",
 ]
+
+# =============================================================================
+# COMPATIBILITY ALIASES - For backward compatibility
+# =============================================================================
+
+# Module-level aliases for loose functions now organized in FlextConfigFactory
+create_database_config = FlextConfigFactory.create_database_config
+create_redis_config = FlextConfigFactory.create_redis_config
+create_oracle_config = FlextConfigFactory.create_oracle_config
+create_ldap_config = FlextConfigFactory.create_ldap_config
+load_config_from_env = FlextConfigFactory.load_config_from_env
+merge_configs = FlextConfigFactory.merge_configs
+validate_config = FlextConfigFactory.validate_config
+create_plugin_config = FlextPluginRegistryConfig.create_plugin_config
+create_plugin_registry_config = FlextPluginRegistryConfig.create_plugin_registry_config

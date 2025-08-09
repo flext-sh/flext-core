@@ -4379,7 +4379,7 @@
           "missing_lines": [367, 368, 369, 370, 371, 372, 373, 374],
           "excluded_lines": []
         },
-        "FlextBaseSettings.create_with_validation": {
+        "FlextSettings.create_with_validation": {
           "executed_lines": [],
           "summary": {
             "covered_lines": 0,
@@ -4472,7 +4472,7 @@
           ],
           "excluded_lines": []
         },
-        "FlextBaseSettings": {
+        "FlextSettings": {
           "executed_lines": [],
           "summary": {
             "covered_lines": 0,

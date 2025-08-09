@@ -1,36 +1,36 @@
-# Exemplos Práticos - FLEXT Core
+# Practical Examples - FLEXT Core
 
-**Exemplos baseados no código real de src/flext_core**
+Examples based on the real code in `src/flext_core`.
 
-## 🎯 Visão Geral
+## 🎯 Overview
 
-Esta seção apresenta exemplos práticos usando componentes REAIS do FLEXT Core. Todos os exemplos foram validados contra o código atual em src/flext_core/**init**.py e funcionam com a implementação atual.
+This section shows practical examples using REAL components from FLEXT Core. All examples were validated against the current code in `src/flext_core/__init__.py`.
 
-## 📦 Importações Disponíveis
+## 📦 Available Imports
 
-**Baseado em src/flext_core/**init**.py:**
+Based on `src/flext_core/__init__.py`:
 
 ```python
 # Core patterns (FUNCTIONAL)
 from flext_core import FlextResult, FlextContainer
 
-# Domain patterns (DISPONÍVEL)
+# Domain patterns (Available)
 from flext_core import FlextEntity, FlextValueObject, FlextAggregateRoot
 
 # Configuration (FUNCTIONAL)
-from flext_core import FlextBaseSettings
+from flext_core import FlextSettings
 
 # Other exports - check __init__.py for current status
 ```
 
-## 🔄 Exemplo 1: FlextResult Railway Pattern
+## 🔄 Example 1: FlextResult Railway Pattern
 
-**VALIDADO** - Baseado na implementação real:
+Validated against the actual implementation:
 
 ```python
 """
-Exemplo real usando FlextResult - o padrão central do FLEXT Core.
-Este exemplo funciona com a implementação atual.
+Real example using FlextResult — the central pattern of FLEXT Core.
+This example works with the current implementation.
 """
 
 from flext_core import FlextResult
@@ -38,10 +38,10 @@ from flext_core import FlextResult
 def validate_email(email: str) -> FlextResult[str]:
     """Validate email format."""
     if not email:
-        return FlextResult.fail("Email é obrigatório")
+        return FlextResult.fail("Email is required")
 
     if "@" not in email:
-        return FlextResult.fail("Email deve conter @")
+        return FlextResult.fail("Email must contain @")
 
     return FlextResult.ok(email.lower())
 
@@ -83,14 +83,14 @@ if __name__ == "__main__":
     print(f"❌ Expected error: {error_result.error}")
 ```
 
-## 🏗️ Exemplo 2: FlextContainer Dependency Injection
+## 🏗️ Example 2: FlextContainer Dependency Injection
 
-**VALIDADO** - Baseado na implementação real:
+Validated against the actual implementation:
 
 ```python
 """
-Exemplo real usando FlextContainer - sistema de DI do FLEXT Core.
-Este exemplo funciona com a implementação atual.
+Real example using FlextContainer — FLEXT Core's DI system.
+This example works with the current implementation.
 """
 
 from flext_core import FlextContainer, FlextResult
@@ -148,7 +148,7 @@ if __name__ == "__main__":
         user_service = service_result.data
 
         # Use service
-        create_result = user_service.create_user("João", "joao@test.com")
+        create_result = user_service.create_user("John", "john@test.com")
         if create_result.success:
             print(f"✅ User created: {create_result.data}")
         else:
@@ -157,14 +157,14 @@ if __name__ == "__main__":
         print(f"❌ Service not found: {service_result.error}")
 ```
 
-## 🏛️ Exemplo 3: FlextEntity Domain Pattern
+## 🏛️ Example 3: FlextEntity Domain Pattern
 
-**VALIDADO** - Domain entities usando API atual:
+Validated — Domain entities using the current API:
 
 ```python
 """
-Exemplo usando FlextEntity - padrão de domínio do FLEXT Core.
-CORRETO - Usando API atual de models.py.
+Example using FlextEntity — FLEXT Core's domain pattern.
+Correct — Using the current models.py API.
 """
 
 from flext_core.models import FlextEntity
@@ -241,20 +241,20 @@ if __name__ == "__main__":
     print(f"❌ Expected failure: {login_after_deactivate.error}")
 ```
 
-## ⚙️ Exemplo 4: FlextBaseSettings Configuration
+## ⚙️ Example 4: FlextSettings Configuration
 
-**VALIDADO** - Sistema de configuração funcional:
+Validated — Working configuration system:
 
 ```python
 """
-Exemplo usando FlextBaseSettings - sistema de configuração do FLEXT Core.
-Baseado na implementação atual disponível.
+Example using FlextSettings — FLEXT Core configuration system.
+Based on the current implementation.
 """
 
-from flext_core import FlextBaseSettings
+from flext_core import FlextSettings
 from typing import Optional
 
-class AppSettings(FlextBaseSettings):
+class AppSettings(FlextSettings):
     """Application configuration using FLEXT Core settings."""
 
     # Basic settings with defaults
@@ -290,50 +290,50 @@ if __name__ == "__main__":
         print("🚀 Running in production mode")
 ```
 
-## 🧪 Como Executar os Exemplos
+## 🧪 How to Run the Examples
 
-### 1. Verificar Dependências
+### 1. Check Dependencies
 
 ```bash
-# Verificar se FLEXT Core está instalado
+# Verify FLEXT Core is installed
 python -c "from flext_core import FlextResult, FlextContainer; print('✅ Imports working')"
 ```
 
-### 2. Executar Exemplos
+### 2. Run Examples
 
 ```bash
-# Salvar qualquer exemplo como arquivo .py e executar
-python exemplo_railway.py
-python exemplo_container.py
-python exemplo_entity.py
-python exemplo_config.py
+# Save any example as a .py file and run
+python railway_example.py
+python container_example.py
+python entity_example.py
+python config_example.py
 ```
 
-### 3. Testar Modificações
+### 3. Test Modifications
 
 ```bash
-# Modificar exemplos para suas necessidades
-# Todos os exemplos usam apenas a API pública documentada
+# Modify examples for your needs
+# All examples use only the documented public API
 ```
 
-## 🎯 Próximos Passos
+## 🎯 Next Steps
 
-1. **[Quickstart](../getting-started/quickstart.md)** - Começar com FLEXT Core
-2. **[API Core](../api/core.md)** - Referência completa da API
-3. **[Arquitetura](../architecture/overview.md)** - Entender os padrões
+1. **[Quickstart](../getting-started/quickstart.md)** — Get started with FLEXT Core
+2. **[Core API](../api/core.md)** — Complete API reference
+3. **[Architecture](../architecture/overview.md)** — Understand the patterns
 
-## ⚠️ Nota Importante
+## ⚠️ Important Note
 
-Estes exemplos são baseados na implementação ATUAL em src/flext_core/. Para exemplos mais elaborados, consulte o código nos testes (tests/) e o diretório examples/ do projeto.
+These examples are based on the CURRENT implementation in `src/flext_core/`. For more elaborate examples, check the tests (`tests/`) and the project's `examples/` directory.
 
-**Status dos Componentes** (baseado no código atual):
+Component status (based on current code):
 
-- ✅ **FlextResult**: Totalmente funcional
-- ✅ **FlextContainer**: Implementado e testado
-- 🔧 **FlextEntity**: API disponível, funcionalidade pode estar em desenvolvimento
-- 🔧 **FlextBaseSettings**: Baseado em Pydantic, funcional
-- 📋 **Patterns avançados**: Consultar código atual para status
+- ✅ **FlextResult**: Fully functional
+- ✅ **FlextContainer**: Implemented and tested
+- 🔧 **FlextEntity**: API available, functionality may be evolving
+- 🔧 **FlextSettings**: Pydantic-based, functional
+- 📋 **Advanced patterns**: Check current code for status
 
 ---
 
-**Todos os exemplos aqui foram validados contra o código em src/flext_core/**init**.py**
+All examples here were validated against the code in `src/flext_core/__init__.py`.

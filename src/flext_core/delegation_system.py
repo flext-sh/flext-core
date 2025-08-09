@@ -1,46 +1,11 @@
-"""FLEXT Core Delegation System - Internal Implementation Module.
+"""Internal delegation system for mixin composition patterns.
 
-Internal implementation providing the foundational logic for mixin delegation patterns.
-This module is part of the Internal Implementation Layer and should not be imported
-directly by ecosystem projects. Use the public API through mixins module instead.
+Provides automatic method delegation and proxy patterns for mixins.
+Internal module - use public API through mixins module.
 
-Module Role in Architecture:
-    Internal Implementation Layer → Delegation System → Public API Layer
-
-    This internal module provides:
-    - Automatic mixin delegation with dynamic method discovery
-    - Intelligent proxy system preserving signatures and types
-    - Automatic state initialization through composition patterns
-    - Comprehensive validation and testing infrastructure
-
-Implementation Patterns:
-    Delegation Pattern: Composition over inheritance with automatic discovery
-    Proxy System: Type-safe method and property delegation
-
-Design Principles:
-    - Single responsibility for internal delegation implementation concerns
-    - No external dependencies beyond standard library and sibling modules
-    - Performance-optimized implementations for public API consumption
-    - Type safety maintained through internal validation
-
-Access Restrictions:
-    - This module is internal and not exported in __init__.py
-    - Use mixins module for all external access to delegation functionality
-    - Breaking changes may occur without notice in internal modules
-    - No compatibility guarantees for internal implementation details
-
-Quality Standards:
-    - Internal implementation must maintain public API contracts
-    - Performance optimizations must not break type safety
-    - Code must be thoroughly tested through public API surface
-    - Internal changes must not affect public behavior
-
-See Also:
-    mixins: Public API for mixin delegation and composition patterns
-    docs/python-module-organization.md: Internal module architecture
-
-Copyright (c) 2025 FLEXT Contributors
-SPDX-License-Identifier: MIT
+Note:
+    This is an internal implementation module. Use the public API
+    through the mixins module instead.
 
 """
 
@@ -50,20 +15,19 @@ import contextlib
 import inspect
 from typing import TYPE_CHECKING, ClassVar
 
+from flext_core.exceptions import FlextOperationError, FlextTypeError
+from flext_core.loggings import FlextLoggerFactory
+from flext_core.mixins import (
+    FlextSerializableMixin as _BaseSerializableMixin,
+    FlextValidatableMixin as _BaseValidatableMixin,
+)
+from flext_core.result import FlextResult
+
 if TYPE_CHECKING:
     from collections.abc import Callable
 
 
-from flext_core._mixins_base import (
-    _BaseSerializableMixin,
-    _BaseValidatableMixin,
-)
-from flext_core.exceptions import FlextOperationError, FlextTypeError
-from flext_core.loggings import get_logger
-from flext_core.result import FlextResult
-
-
-class DelegatedProperty:
+class FlextDelegatedProperty:
     def __init__(
         self,
         prop_name: str,
@@ -98,14 +62,6 @@ class FlextMixinDelegator:
     Elimina completamente múltiplas heranças através de composição inteligente
     e delegação automática. Garante funcionalidade 100% compatível com a
     herança múltipla original mas com arquitetura limpa e testável.
-
-    Features:
-        - Delegação automática de TODOS os métodos de mixin
-        - Inicialização automática de state interno dos mixins
-        - Preservação de type hints e signatures
-        - Sistema de cache para performance otimizada
-        - Validação automática de funcionamento correto
-        - Debugging e observability built-in
     """
 
     # Registry global de mixins disponíveis
@@ -220,7 +176,7 @@ class FlextMixinDelegator:
         """Create a delegated property with getter/setter preservation."""
         prop = getattr(type(mixin_instance), prop_name)
         has_setter = prop.fset is not None
-        delegated_prop = DelegatedProperty(
+        delegated_prop = FlextDelegatedProperty(
             prop_name,
             mixin_instance,
             has_setter=has_setter,
@@ -263,7 +219,7 @@ class FlextMixinDelegator:
             # Use type ignore for dynamic attribute assignment on function object
             delegated_method.__signature__ = inspect.signature(method)  # type: ignore[attr-defined]
         except (AttributeError, ValueError) as e:
-            logger = get_logger(__name__)
+            logger = FlextLoggerFactory.get_logger(__name__)
             logger.warning(
                 f"Failed to set signature for delegated method {method_name}: {e}",
             )

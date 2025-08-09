@@ -1,13 +1,7 @@
-"""Advanced tests for FLEXT Core Commands - Refactored with modern pytest patterns.
+"""Tests for FLEXT Core Commands with modern pytest patterns.
 
-This module demonstrates complete refactoring using advanced pytest features:
-- Parametrized fixtures from conftest with TestCase structures
-- Property-based testing with Hypothesis integration
-- Performance monitoring with tracemalloc
-- Factory patterns for command testing
-- Comprehensive CQRS scenario coverage
-
-Architectural Patterns Demonstrated:
+Advanced tests using parametrized fixtures, property-based testing,
+performance monitoring, and comprehensive CQRS coverage.
 - Enterprise-grade parametrized testing with structured TestCase objects
 - Advanced fixture composition using conftest infrastructure
 - Command validation testing with business logic enforcement
@@ -134,20 +128,28 @@ class TestFlextCommandsAdvanced:
                 id="command_validation_empty_name",
                 description="Command validation failure - empty name",
                 input_data={"name": "", "value": 42},
-                expected_output={"validation_success": False, "error": "Name cannot be empty"},
+                expected_output={
+                    "validation_success": False,
+                    "error": "Name cannot be empty",
+                },
                 scenario=TestScenario.ERROR_CASE,
             ),
             TestCase(
                 id="command_validation_negative_value",
                 description="Command validation failure - negative value",
                 input_data={"name": "test", "value": -1},
-                expected_output={"validation_success": False, "error": "Value cannot be negative"},
+                expected_output={
+                    "validation_success": False,
+                    "error": "Value cannot be negative",
+                },
                 scenario=TestScenario.ERROR_CASE,
             ),
         ]
 
     @pytest.mark.parametrize_advanced
-    def test_command_scenarios(self, command_test_cases: list[TestCase], assert_helpers) -> None:
+    def test_command_scenarios(
+        self, command_test_cases: list[TestCase], assert_helpers
+    ) -> None:
         """Test commands using structured parametrized approach."""
         for test_case in command_test_cases:
             input_data = test_case.input_data
@@ -176,7 +178,9 @@ class TestFlextCommandsAdvanced:
                 assert (command.command_id is not None) == expected["has_command_id"]
 
             if "has_timestamp" in expected:
-                assert isinstance(command.timestamp, datetime) == expected["has_timestamp"]
+                assert (
+                    isinstance(command.timestamp, datetime) == expected["has_timestamp"]
+                )
 
             if "validation_success" in expected:
                 result = command.validate_command()
@@ -236,7 +240,9 @@ class TestFlextCommandsAdvanced:
         ]
 
     @pytest.mark.parametrize_advanced
-    def test_payload_conversion_scenarios(self, payload_conversion_cases: list[TestCase]) -> None:
+    def test_payload_conversion_scenarios(
+        self, payload_conversion_cases: list[TestCase]
+    ) -> None:
         """Test payload conversion scenarios."""
         for test_case in payload_conversion_cases:
             input_data = test_case.input_data
@@ -261,7 +267,9 @@ class TestFlextCommandsAdvanced:
             else:
                 # Payload to command test
                 payload_data = input_data["payload_data"]
-                payload = FlextPayload.create(data=payload_data, type="SampleCommand").unwrap()
+                payload = FlextPayload.create(
+                    data=payload_data, type="SampleCommand"
+                ).unwrap()
 
                 result = SampleCommand.from_payload(payload)
 
@@ -298,20 +306,28 @@ class TestFlextCommandsComplexValidation:
                 id="complex_validation_invalid_email",
                 description="Complex validation - invalid email",
                 input_data={"email": "invalid-email", "age": 25},
-                expected_output={"validation_success": False, "error": "Invalid email format"},
+                expected_output={
+                    "validation_success": False,
+                    "error": "Invalid email format",
+                },
                 scenario=TestScenario.ERROR_CASE,
             ),
             TestCase(
                 id="complex_validation_age_too_young",
                 description="Complex validation - age too young",
                 input_data={"email": "user@example.com", "age": 17},
-                expected_output={"validation_success": False, "error": "Age must be 18 or older"},
+                expected_output={
+                    "validation_success": False,
+                    "error": "Age must be 18 or older",
+                },
                 scenario=TestScenario.ERROR_CASE,
             ),
         ]
 
     @pytest.mark.parametrize_advanced
-    def test_complex_validation_scenarios(self, complex_validation_cases: list[TestCase]) -> None:
+    def test_complex_validation_scenarios(
+        self, complex_validation_cases: list[TestCase]
+    ) -> None:
         """Test complex validation scenarios."""
         for test_case in complex_validation_cases:
             input_data = test_case.input_data
@@ -357,6 +373,7 @@ class TestFlextCommandsPerformance:
 
     def test_command_creation_performance(self, performance_monitor) -> None:
         """Test command creation performance."""
+
         def create_commands():
             commands = []
             for i in range(1000):

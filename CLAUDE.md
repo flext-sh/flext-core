@@ -6,14 +6,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 FLEXT Core is the **architectural foundation** for the FLEXT data integration ecosystem - currently **IN ACTIVE DEVELOPMENT** implementing Clean Architecture, Domain-Driven Design (DDD), and railway-oriented programming patterns. This pure library serves as the foundation for multiple interconnected projects.
 
-**CURRENT STATUS (2025-08-04):**
+**CURRENT STATUS (2025-08-08):**
 
-- **33 FLEXT Projects** exist in various development stages
+- **32+ FLEXT Projects** exist in various development stages
 - **FlextResult[T]** pattern working across core modules
 - **FOUNDATION LIBRARY** - Core patterns stable, dependent projects in active development
-- **Quality Status**: 2 lint errors (C901 complexity + E501 line length)
-- **Type Safety**: MyPy errors resolved in recent development cycles
-- **Testing**: Core functionality tested, coverage varies by module
+- **Quality Status**: Actively maintained with comprehensive quality gates
+- **Type Safety**: MyPy strict mode configuration with ongoing improvements
+- **Testing**: Core functionality tested with 95% coverage target
 
 **Key Architectural Characteristics:**
 
@@ -62,8 +62,8 @@ make test-fast             # Tests without coverage (faster feedback)
 make coverage-html         # Generate HTML coverage report
 
 # Run specific tests
-poetry run pytest tests/test_result.py -v
-poetry run pytest tests/test_container.py -v
+poetry run pytest tests/unit/core/test_result.py -v
+poetry run pytest tests/unit/core/test_container.py -v
 poetry run pytest tests/unit/core/test_result_comprehensive.py -v
 
 # Test with markers (configured in pyproject.toml)
@@ -79,6 +79,11 @@ poetry run pytest -m performance       # Performance tests
 
 # Exclude slow tests for fast feedback
 poetry run pytest -m "not slow" -v
+
+# Test specific modules
+poetry run pytest tests/unit/core/test_result.py -v
+poetry run pytest tests/unit/core/test_container.py -v
+poetry run pytest tests/integration/test_integration.py -v
 ```
 
 ### Additional Development Tools
@@ -117,13 +122,15 @@ FLEXT Core implements Clean Architecture with Domain-Driven Design patterns:
 ```
 src/flext_core/
 ├── __init__.py              # Unified modern public API with comprehensive exports
+├── __version__.py           # Version management
 ├── result.py                # FlextResult[T] - type-safe error handling
 ├── container.py             # FlextContainer - enterprise DI system
-├── config.py                # FlextBaseSettings - configuration management
-├── config_hierarchical.py  # Hierarchical configuration management system
+├── config.py                # FlextConfig/FlextSettings - configuration management
+├── config_base.py           # Base configuration patterns
 ├── config_models.py         # Configuration models and TypedDict definitions
 ├── constants.py             # Core enums and constants
-├── flext_types.py           # Modern type definitions and type system
+├── types.py                 # Modern type definitions and type system
+├── typings.py               # Type utilities and advanced typing patterns
 ├── payload.py               # FlextPayload/FlextEvent/FlextMessage
 ├── exceptions.py            # FLEXT exception hierarchy
 ├── entities.py              # FlextEntity - DDD entities
@@ -132,22 +139,30 @@ src/flext_core/
 ├── domain_services.py       # FlextDomainService - domain services
 ├── commands.py              # Command pattern (CQRS)
 ├── handlers.py              # Handler patterns
+├── handlers_base.py         # Base handler implementations
+├── base_handlers.py         # Shared handler base classes
 ├── validation.py            # Validation system
+├── validation_base.py       # Base validation patterns
 ├── loggings.py              # Structured logging with structlog
 ├── fields.py                # Field metadata system
 ├── mixins.py                # Reusable behavior mixins
 ├── decorators.py            # Enterprise decorator patterns
 ├── interfaces.py            # Protocol definitions
+├── protocols.py             # Protocol and interface definitions
 ├── guards.py                # Validation guards and builders
 ├── utilities.py             # Utility functions
 ├── core.py                  # FlextCore main class
+├── context.py               # Context management patterns
 ├── models.py                # Common model definitions
 ├── schema_processing.py     # Schema processing utilities
+├── semantic.py              # Semantic processing utilities
+├── observability.py         # Observability and monitoring patterns
 ├── singer_base.py           # Singer specification base classes
 ├── testing_utilities.py     # Testing utilities and fixtures
-├── version.py               # Version management and compatibility
+├── delegation_system.py     # Delegation and proxy patterns
+├── legacy.py                # Legacy support patterns
 ├── py.typed                 # Type information marker
-└── _*_base.py               # Base implementation modules (internal)
+└── README.md                # Module-level documentation
 ```
 
 ### Core Patterns

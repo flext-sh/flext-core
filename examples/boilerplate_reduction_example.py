@@ -1,10 +1,7 @@
-"""Example demonstrating boilerplate reduction using enhanced FlextDomainService.
+"""Boilerplate reduction using FlextDomainService.
 
-This example shows how to use the enhanced FlextDomainService to reduce
-boilerplate code across FLEXT projects.
-
-Copyright (c) 2025 FLEXT Contributors
-SPDX-License-Identifier: MIT
+Demonstrates reducing repetitive code patterns across FLEXT projects
+using enhanced domain service patterns.
 """
 
 from __future__ import annotations
@@ -13,7 +10,7 @@ from datetime import UTC, datetime
 from typing import cast
 
 from flext_core import FlextDomainService, FlextResult, get_logger
-from flext_core.flext_types import TAnyDict
+from flext_core.typings import TAnyDict
 
 logger = get_logger(__name__)
 

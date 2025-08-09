@@ -1,18 +1,8 @@
 #!/usr/bin/env python3
-"""Shared Domain Models - Modern FLEXT Patterns Showcase.
+"""Shared domain models for examples.
 
-🚀 Zero-Boilerplate Domain Modeling
-
-This module demonstrates the power of modern FLEXT patterns through
-clean, concise domain models that eliminate traditional DDD boilerplate
-while maintaining enterprise-grade functionality.
-
-Modern Features Demonstrated:
-- FlextEntity with automatic ID, timestamps, versioning
-- FlextValueObject with built-in validation
-- FlextFactory with zero-configuration creation
-- Railway-oriented business logic
-- Type-safe domain operations
+Provides reusable domain entities and value objects with built-in validation,
+factory patterns, and type-safe operations for example demonstrations.
 - Event sourcing foundation
 
 Traditional DDD Problems Solved:

@@ -1,13 +1,7 @@
-"""Advanced tests for FLEXT Core Validation - Refactored with modern pytest patterns.
+"""Tests for FLEXT Core Validation with modern pytest patterns.
 
-This module demonstrates complete refactoring using advanced pytest features:
-- Parametrized fixtures from conftest with TestCase structures
-- Property-based testing with Hypothesis integration
-- Performance monitoring with tracemalloc
-- Factory patterns for validation testing
-- Comprehensive validation scenario coverage
-
-Architectural Patterns Demonstrated:
+Advanced validation tests using parametrized fixtures, property-based testing,
+performance monitoring, and comprehensive scenario coverage.
 - Enterprise-grade parametrized testing with structured TestCase objects
 - Advanced fixture composition using conftest infrastructure
 - Validation rule testing with business logic enforcement
@@ -169,7 +163,9 @@ class TestFlextValidatorsAdvanced:
         ]
 
     @pytest.mark.parametrize_advanced
-    def test_validator_scenarios(self, validator_test_cases: list[TestCase], assert_helpers) -> None:
+    def test_validator_scenarios(
+        self, validator_test_cases: list[TestCase], assert_helpers
+    ) -> None:
         """Test validators using structured parametrized approach."""
         for test_case in validator_test_cases:
             input_data = test_case.input_data
@@ -263,7 +259,9 @@ class TestFlextValidatorsAdvanced:
         ]
 
     @pytest.mark.parametrize_advanced
-    def test_email_validation_scenarios(self, email_validation_cases: list[TestCase]) -> None:
+    def test_email_validation_scenarios(
+        self, email_validation_cases: list[TestCase]
+    ) -> None:
         """Test email validation with comprehensive scenarios."""
         for test_case in email_validation_cases:
             email = test_case.input_data["email"]
@@ -282,28 +280,44 @@ class TestFlextValidatorsAdvanced:
             TestCase(
                 id="has_min_length_valid",
                 description="Valid minimum length",
-                input_data={"validator": "has_min_length", "value": "hello", "min_length": 3},
+                input_data={
+                    "validator": "has_min_length",
+                    "value": "hello",
+                    "min_length": 3,
+                },
                 expected_output=True,
                 scenario=TestScenario.HAPPY_PATH,
             ),
             TestCase(
                 id="has_min_length_invalid",
                 description="Invalid minimum length",
-                input_data={"validator": "has_min_length", "value": "hi", "min_length": 5},
+                input_data={
+                    "validator": "has_min_length",
+                    "value": "hi",
+                    "min_length": 5,
+                },
                 expected_output=False,
                 scenario=TestScenario.ERROR_CASE,
             ),
             TestCase(
                 id="has_max_length_valid",
                 description="Valid maximum length",
-                input_data={"validator": "has_max_length", "value": "hi", "max_length": 5},
+                input_data={
+                    "validator": "has_max_length",
+                    "value": "hi",
+                    "max_length": 5,
+                },
                 expected_output=True,
                 scenario=TestScenario.HAPPY_PATH,
             ),
             TestCase(
                 id="has_max_length_invalid",
                 description="Invalid maximum length",
-                input_data={"validator": "has_max_length", "value": "hello world", "max_length": 5},
+                input_data={
+                    "validator": "has_max_length",
+                    "value": "hello world",
+                    "max_length": 5,
+                },
                 expected_output=False,
                 scenario=TestScenario.ERROR_CASE,
             ),
@@ -325,7 +339,10 @@ class TestFlextValidatorsAdvanced:
             TestCase(
                 id="is_uuid_valid",
                 description="Valid UUID",
-                input_data={"validator": "is_uuid", "value": "123e4567-e89b-12d3-a456-426614174000"},
+                input_data={
+                    "validator": "is_uuid",
+                    "value": "123e4567-e89b-12d3-a456-426614174000",
+                },
                 expected_output=True,
                 scenario=TestScenario.HAPPY_PATH,
             ),
@@ -339,7 +356,9 @@ class TestFlextValidatorsAdvanced:
         ]
 
     @pytest.mark.parametrize_advanced
-    def test_numeric_validation_scenarios(self, numeric_validation_cases: list[TestCase]) -> None:
+    def test_numeric_validation_scenarios(
+        self, numeric_validation_cases: list[TestCase]
+    ) -> None:
         """Test additional validation scenarios."""
         for test_case in numeric_validation_cases:
             input_data = test_case.input_data
@@ -352,9 +371,13 @@ class TestFlextValidatorsAdvanced:
             # Handle validators that need extra parameters
             if validator_name in {"has_min_length", "has_max_length"}:
                 if validator_name == "has_min_length":
-                    result = validator_method(value=value, min_length=input_data["min_length"])
+                    result = validator_method(
+                        value=value, min_length=input_data["min_length"]
+                    )
                 elif validator_name == "has_max_length":
-                    result = validator_method(value=value, max_length=input_data["max_length"])
+                    result = validator_method(
+                        value=value, max_length=input_data["max_length"]
+                    )
             else:
                 result = validator_method(value=value)
 

@@ -1,11 +1,7 @@
-"""Advanced tests for FlextResult using modern pytest patterns.
+"""Advanced tests for FlextResult with modern patterns.
 
-This module demonstrates best practices for testing with:
-- Parametrized testing with complex scenarios
-- Property-based testing with Hypothesis
-- Performance benchmarking
-- Snapshot testing
-- Advanced fixtures from conftest
+Tests using parametrized scenarios, property-based testing,
+performance benchmarking, and advanced fixtures.
 """
 
 from __future__ import annotations

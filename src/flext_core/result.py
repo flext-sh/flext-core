@@ -1,109 +1,30 @@
-"""FLEXT Core Result - Core Pattern Layer Railway-Oriented Programming.
+"""Railway-oriented programming result type.
 
-Implementation of the FlextResult[T] pattern that serves as the foundation for type-safe
-error handling across all 32 projects in the FLEXT ecosystem. Enables railway-oriented
-programming where operations chain together, automatically propagating errors without
-exception handling.
+Provides FlextResult[T] for type-safe error handling without exceptions.
+Enables function composition through map/flat_map chaining operations.
 
-Module Role in Architecture:
-    Core Pattern Layer → Railway-Oriented Programming → All Business Logic
+Classes:
+    FlextResult: Generic result container with success/failure states.
+    FlextResultOperations: Additional utility operations.
 
-    FlextResult[T] is used in 15,000+ function signatures across the ecosystem:
-    - All Singer taps and targets use FlextResult for data pipeline operations
-    - Domain entities return FlextResult from business logic methods
-    - Service operations chain FlextResult for complex workflows
-    - Configuration validation uses FlextResult for startup safety
-    - Cross-language bridge uses FlextResult for Go-Python integration
-
-Railway-Oriented Programming Patterns:
-    Success Path: Operations continue when results are successful
-    Failure Path: Errors propagate automatically without exception handling
-    Chaining: Multiple operations combine through map() and flat_map()
-    Type Safety: Generic T parameter ensures compile-time type checking
-
-Development Status (v0.9.0 → 1.0.0):
-    ✅ Production Ready: Core railway operations, type safety, monadic chaining
-    🔄 Enhancement: Performance optimization (Enhancement Priority 1)
-    📋 TODO Integration: Event sourcing result types (Event Sourcing Priority 1)
-
-Core Operations:
-    ok(value): Create successful result containing typed value
-    fail(error): Create failure result with error message
-    map(func): Transform success value, propagate failures
-    flat_map(func): Chain operations returning FlextResult
-    unwrap(): Extract value or raise exception (use sparingly)
-
-Ecosystem Usage Patterns:
-    # Singer tap data extraction
-    def extract_records(source: DataSource) -> FlextResult[List[Record]]:
-        return (
-            validate_connection(source)
-            .flat_map(lambda conn: query_data(conn))
-            .map(lambda raw_data: transform_to_records(raw_data))
-        )
-
-    # Domain entity business logic
-    class User(FlextEntity):
-        def activate(self) -> FlextResult[None]:
-            if self.is_active:
-                return FlextResult.fail("User already active")
-            self.is_active = True
-            return FlextResult.ok(None)
-
-    # Service layer composition
-    def process_user_registration(data: dict) -> FlextResult[User]:
-        return (
-            validate_user_data(data)
-            .flat_map(lambda valid_data: create_user(valid_data))
-            .flat_map(lambda user: send_welcome_email(user))
-        )
-
-Performance Characteristics:
-    - Zero-cost abstractions when chaining operations
-    - Memory efficient with single allocation per result
-    - Type erasure prevents runtime overhead
-    - Container performance ~100x slower than FlextResult (optimization needed)
-
-Error Handling Philosophy:
-    - Never use exceptions for business logic failures
-    - Always return FlextResult for operations that can fail
-    - Chain operations to avoid nested error checking
-    - Use unwrap() only when failure is impossible
-    - Provide meaningful error messages for debugging
-
-Quality Standards:
-    - All public functions must return FlextResult for error cases
-    - Error messages must be actionable and contextual
-    - Type safety must be maintained through all operations
-    - Performance must not degrade with operation chaining
-
-See Also:
-    docs/TODO.md: Performance optimization roadmap (Enhancement Priority 1)
-    examples/01_flext_result_railway_pattern.py: Comprehensive usage examples
-
-Copyright (c) 2025 FLEXT Contributors
-SPDX-License-Identifier: MIT
+Functions:
+    safe_call: Execute functions with automatic error handling.
 
 """
 
 from __future__ import annotations
 
 import contextlib
-import inspect
-from typing import TYPE_CHECKING, TypeVar, cast, overload
+from typing import TYPE_CHECKING, TypeVar, cast
 
 from flext_core.constants import ERROR_CODES
 from flext_core.exceptions import FlextOperationError
-from flext_core.loggings import get_logger
+from flext_core.loggings import FlextLoggerFactory
+
+T = TypeVar("T")
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-
-    from flext_core.flext_types import TFactory
-
-# Local type definitions for runtime use
-T = TypeVar("T")
-U = TypeVar("U")
 
 
 # =============================================================================
@@ -112,7 +33,14 @@ U = TypeVar("U")
 
 
 class FlextResult[T]:
-    """Simple result type for railway-oriented programming."""
+    """Result type for railway-oriented programming.
+
+    Container that represents either success (with data) or failure
+    (with error). Supports functional composition via map/flat_map.
+
+    Type Parameters:
+        T: Type of the success value.
+    """
 
     def __init__(
         self,
@@ -121,7 +49,15 @@ class FlextResult[T]:
         error_code: str | None = None,
         error_data: dict[str, object] | None = None,
     ) -> None:
-        """Initialize result."""
+        """Initialize result with data or error.
+
+        Args:
+            data: Success value if no error.
+            error: Error message if failed.
+            error_code: Optional error code.
+            error_data: Optional error metadata.
+
+        """
         self._data = data
         self._error = error
         self._error_code = error_code
@@ -134,7 +70,7 @@ class FlextResult[T]:
 
     @property
     def success(self) -> bool:
-        """Alias for is_success for consistency."""
+        """Alias for is_success."""
         return self._error is None
 
     @property
@@ -144,12 +80,12 @@ class FlextResult[T]:
 
     @property
     def is_fail(self) -> bool:
-        """Alias for is_failure for consistency."""
+        """Alias for is_failure."""
         return self._error is not None
 
     @property
     def data(self) -> T | None:
-        """Get result data."""
+        """Get success data."""
         return self._data
 
     @property
@@ -164,13 +100,38 @@ class FlextResult[T]:
 
     @property
     def error_data(self) -> dict[str, object]:
-        """Get error data."""
+        """Get error metadata."""
         return self._error_data
 
     @classmethod
     def ok(cls, data: T) -> FlextResult[T]:
-        """Create successful result."""
+        """Create successful result.
+
+        Args:
+            data: The success value.
+
+        Returns:
+            Result containing the data.
+
+        """
         return cls(data=data)
+
+    # Backward-compat classmethod without shadowing property access
+    @classmethod
+    def success_factory(cls, data: T) -> FlextResult[T]:
+        """Compatibility alias for ok() - renamed to avoid property conflict."""
+        return cls.ok(data)
+
+    @classmethod
+    def failure(
+        cls,
+        error: str,
+        *,
+        error_code: str | None = None,
+        error_data: dict[str, object] | None = None,
+    ) -> FlextResult[T]:
+        """Backward-compat alias for fail()."""
+        return cls.fail(error, error_code=error_code, error_data=error_data)
 
     @classmethod
     def fail(
@@ -179,15 +140,49 @@ class FlextResult[T]:
         error_code: str | None = None,
         error_data: dict[str, object] | None = None,
     ) -> FlextResult[T]:
-        """Create failed result."""
+        """Create failed result.
+
+        Args:
+            error: Error message.
+            error_code: Optional error code.
+            error_data: Optional error metadata.
+
+        Returns:
+            Result containing the error.
+
+        """
         # Provide default error message for empty strings
         actual_error = error.strip() if error else ""
         if not actual_error:
             actual_error = "Unknown error occurred"
         return cls(error=actual_error, error_code=error_code, error_data=error_data)
 
+    # Compatibility operations expected by tests
+    @staticmethod
+    def chain_results(*results: FlextResult[object]) -> FlextResult[list[object]]:
+        """Chain multiple results into list, failing on first failure.
+
+        If no results are provided, returns success with empty list.
+        """
+        if not results:
+            return FlextResult.ok([])
+        aggregated: list[object] = []
+        for res in results:
+            if res.is_failure:
+                return FlextResult.fail(res.error or "error")
+            aggregated.append(res.data)
+        return FlextResult.ok(aggregated)
+
     def unwrap(self) -> T:
-        """Get data or raise exception."""
+        """Extract value or raise exception.
+
+        Returns:
+            The success value.
+
+        Raises:
+            FlextOperationError: If result is failure.
+
+        """
         if self.is_failure:
             error_msg = self._error or "Unwrap failed"
             raise FlextOperationError(
@@ -200,8 +195,16 @@ class FlextResult[T]:
         # Type system guarantees that for success results, _data is of type T
         return cast("T", self._data)
 
-    def map(self, func: Callable[[T], U]) -> FlextResult[U]:
-        """Map successful result."""
+    def map[U](self, func: Callable[[T], U]) -> FlextResult[U]:
+        """Transform success value with function.
+
+        Args:
+            func: Function to apply to success value.
+
+        Returns:
+            New result with transformed value or original error.
+
+        """
         if self.is_failure:
             return FlextResult.fail(
                 self._error or "Unknown",
@@ -216,10 +219,10 @@ class FlextResult[T]:
             # Cast is safe here because for successful results, _data must be T
             result = func(cast("T", self._data))
             return FlextResult.ok(result)
-        except (ImportError, MemoryError) as e:
-            # Handle specific system and runtime exceptions
+        except (ValueError, TypeError, AttributeError) as e:
+            # Handle specific transformation exceptions
             return FlextResult.fail(
-                f"System error during transformation: {e}",
+                f"Transformation error: {e}",
                 error_code=ERROR_CODES["EXCEPTION_ERROR"],
                 error_data={"exception_type": type(e).__name__, "exception": str(e)},
             )
@@ -231,8 +234,16 @@ class FlextResult[T]:
                 error_data={"exception_type": type(e).__name__, "exception": str(e)},
             )
 
-    def flat_map(self, func: Callable[[T], FlextResult[U]]) -> FlextResult[U]:
-        """Flat map for chaining results."""
+    def flat_map[U](self, func: Callable[[T], FlextResult[U]]) -> FlextResult[U]:
+        """Chain operations that return results.
+
+        Args:
+            func: Function that returns a FlextResult.
+
+        Returns:
+            Result from the chained operation or original error.
+
+        """
         if self.is_failure:
             return FlextResult.fail(
                 self._error or "Unknown",
@@ -251,13 +262,6 @@ class FlextResult[T]:
                 error_code=ERROR_CODES["BIND_ERROR"],
                 error_data={"exception_type": type(e).__name__, "exception": str(e)},
             )
-        except (ImportError, MemoryError) as e:
-            # Handle specific system and runtime exceptions
-            return FlextResult.fail(
-                f"System error during chaining: {e}",
-                error_code=ERROR_CODES["EXCEPTION_ERROR"],
-                error_data={"exception_type": type(e).__name__, "exception": str(e)},
-            )
         except Exception as e:
             # Handle any other unexpected exceptions
             return FlextResult.fail(
@@ -270,7 +274,9 @@ class FlextResult[T]:
         """Boolean conversion - True for success, False for failure."""
         return self.is_success
 
-    def unwrap_or(self, default: U) -> T | U:
+    # Compatibility boolean methods as callables removed - use properties instead
+
+    def unwrap_or[U](self, default: U) -> T | U:
         """Get data or return default if failure."""
         if self.is_failure:
             return default
@@ -303,9 +309,10 @@ class FlextResult[T]:
                         attrs = tuple(sorted(self._data.__dict__.items()))
                         return hash((True, attrs))
                     except (TypeError, AttributeError) as e:
-                        logger = get_logger(__name__)
+                        logger = FlextLoggerFactory.get_logger(__name__)
                         logger.warning(
-                            f"Failed to hash object attributes for {type(self._data).__name__}: {e}",
+                            f"Failed to hash object attributes for "
+                            f"{type(self._data).__name__}: {e}",
                         )
 
                 # For complex objects, use a combination of type and memory ID
@@ -321,12 +328,12 @@ class FlextResult[T]:
         return f"FlextResult(data=None, is_success=False, error={self._error!r})"
 
     # Enhanced methods for railway pattern
-    def then(self, func: Callable[[T], FlextResult[U]]) -> FlextResult[U]:
+    def then[U](self, func: Callable[[T], FlextResult[U]]) -> FlextResult[U]:
         """Alias for flat_map."""
         return self.flat_map(func)
 
-    def bind(self, func: Callable[[T], FlextResult[U]]) -> FlextResult[U]:
-        """Alias for flat_map."""
+    def bind[U](self, func: Callable[[T], FlextResult[U]]) -> FlextResult[U]:
+        """Alias for flat_map (monadic bind)."""
         return self.flat_map(func)
 
     def or_else(self, alternative: FlextResult[T]) -> FlextResult[T]:
@@ -396,7 +403,7 @@ class FlextResult[T]:
         except (TypeError, ValueError, AttributeError) as e:
             return FlextResult.fail(str(e))
 
-    def zip_with(
+    def zip_with[U](
         self,
         other: FlextResult[U],
         func: Callable[[T, U], object],
@@ -429,7 +436,7 @@ class FlextResult[T]:
             return None
 
         error_msg = self._error or "Result failed"
-        return FlextOperationError(error_msg)
+        return FlextOperationError(error_msg, error_code=ERROR_CODES["OPERATION_ERROR"])
 
     @staticmethod
     def from_exception(func: Callable[[], T]) -> FlextResult[T]:
@@ -452,17 +459,41 @@ class FlextResult[T]:
 
     @staticmethod
     def all_success(*results: FlextResult[object]) -> bool:
-        """Check if all results are successful."""
+        """Check if all results are successful.
+
+        Args:
+            *results: Results to check.
+
+        Returns:
+            True if all results succeeded.
+
+        """
         return all(result.is_success for result in results)
 
     @staticmethod
     def any_success(*results: FlextResult[object]) -> bool:
-        """Check if any result is successful."""
+        """Check if any result is successful.
+
+        Args:
+            *results: Results to check.
+
+        Returns:
+            True if any result succeeded.
+
+        """
         return any(result.is_success for result in results)
 
     @staticmethod
     def first_success(*results: FlextResult[T]) -> FlextResult[T]:
-        """Return first successful result."""
+        """Return first successful result.
+
+        Args:
+            *results: Results to search.
+
+        Returns:
+            First successful result or failure.
+
+        """
         last_error = "No successful results found"
         for result in results:
             if result.is_success:
@@ -472,7 +503,15 @@ class FlextResult[T]:
 
     @staticmethod
     def try_all(*funcs: Callable[[], T]) -> FlextResult[T]:
-        """Try all functions until one succeeds."""
+        """Try functions until one succeeds.
+
+        Args:
+            *funcs: Functions to try.
+
+        Returns:
+            First successful result or failure.
+
+        """
         if not funcs:
             return FlextResult.fail("No functions provided")
         last_error = "All functions failed"
@@ -492,85 +531,39 @@ class FlextResult[T]:
 
 
 # =============================================================================
-# RAILWAY OPERATIONS - Module level functions for backward compatibility
+# MIGRATION NOTICE - Legacy functions moved to legacy.py
 # =============================================================================
 
-
-def chain(*results: FlextResult[object]) -> FlextResult[list[object]]:
-    """Chain multiple results together with early failure detection.
-
-    Args:
-        *results: Variable number of results to chain together
-
-    Returns:
-        FlextResult[list[object]] with all data or first failure encountered
-
-    """
-    data: list[object] = []
-    for result in results:
-        if result.is_failure:
-            return FlextResult.fail(result.error or "Chain failed")
-        if result.data is not None:
-            data.append(result.data)
-    return FlextResult.ok(data)
-
-
-def compose(*results: FlextResult[object]) -> FlextResult[list[object]]:
-    """Compose multiple results - alias for chain."""
-    return chain(*results)
-
-
-@overload
-def safe_call[T](func: Callable[[], T]) -> FlextResult[T]: ...
-
-
-@overload
-def safe_call[T](func: Callable[[object], T]) -> FlextResult[T]: ...
-
-
-def safe_call[T](func: TFactory[T]) -> FlextResult[T]:
-    """Safely call function with FlextResult error handling.
-
-    Convenience function providing direct access to safe execution patterns
-    with comprehensive exception handling and error context preservation.
-
-    Unlike from_callable, this uses the actual exception message as the main
-    error for better debugging information.
-
-    Args:
-        func: Function to execute safely (with 0 or 1 arguments)
-
-    Returns:
-        FlextResult[T] with function result or captured exception
-
-    """
-    try:
-        # Check function signature to determine how to call it
-        sig = inspect.signature(func)
-        if len(sig.parameters) == 0:
-            result = cast("Callable[[], T]", func)()
-        else:
-            result = cast("Callable[[object], T]", func)(object())
-        return FlextResult.ok(result)
-    except Exception as e:
-        # Use actual exception message for better debugging
-        return FlextResult.fail(
-            str(e) or "Operation failed",
-            error_data={
-                "exception": str(e),
-                "exception_type": type(e).__name__,
-            },
-        )
+# IMPORTANT: The following functions have been moved to legacy.py:
+#   - chain() - Use FlextResult.chain() static method instead
+#   - compose() - Use FlextResult.chain() static method instead
+#   - safe_call() - Use FlextResult.from_callable() static method instead
+#
+# Import from legacy.py if needed for backward compatibility:
+#   from flext_core.legacy import chain, compose, safe_call
 
 
 # =============================================================================
 # EXPORTS - Clean public API
 # =============================================================================
 
+
+def safe_call[T](func: Callable[[], T]) -> FlextResult[T]:
+    """Safely call a function and wrap result in FlextResult (compat)."""
+    try:
+        return FlextResult.ok(func())
+    except Exception as e:
+        return FlextResult.fail(str(e))
+
+# Backward compatibility alias
+FlextResultOperations = FlextResult
+
 __all__ = [
     # Main result class
     "FlextResult",
-    # Convenience functions
-    "chain",
+    # Backward compatibility alias
+    "FlextResultOperations",
+    # Legacy function for backward compatibility
     "safe_call",
+    # Note: Other legacy functions (chain, compose) moved to legacy.py
 ]

@@ -1,7 +1,7 @@
-"""Formatting Constants and Helper Functions.
+"""Formatting constants and helper functions.
 
-Provides enterprise-grade constants and utility functions for data formatting,
-validation, and type-safe operations following SOLID principles.
+Provides constants and utility functions for data formatting,
+validation, and type-safe operations.
 
 Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT

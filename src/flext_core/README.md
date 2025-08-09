@@ -15,9 +15,9 @@ Core foundational contracts that all other modules depend on.
 | Module                             | Purpose             | Key Exports                                          |
 | ---------------------------------- | ------------------- | ---------------------------------------------------- |
 | [`__init__.py`](__init__.py)       | Public API gateway  | `FlextResult`, `FlextContainer`, `FlextEntity`, etc. |
-| [`flext_types.py`](flext_types.py) | Modern type system  | `TAnyDict`, `TLogMessage`, type variables            |
+| [`typings.py`](typings.py)         | Centralized types   | `FlextTypes`, `TAnyDict`, `TLogMessage`, all types   |
 | [`constants.py`](constants.py)     | Ecosystem constants | `FlextLogLevel`, `Platform`, port definitions        |
-| [`version.py`](version.py)         | Version management  | `get_version_info()`, `is_feature_available()`       |
+| [`__version__.py`](__version__.py) | Version management  | `get_version_info()`, `is_feature_available()`       |
 
 ### **Core Pattern Layer** - Railway-Oriented Programming
 
@@ -36,7 +36,7 @@ Configuration, logging, and external integration contracts.
 
 | Module                                             | Purpose              | Key Exports                                          |
 | -------------------------------------------------- | -------------------- | ---------------------------------------------------- |
-| [`config.py`](config.py)                           | Base configuration   | `FlextBaseSettings`, environment integration         |
+| [`config.py`](config.py)                           | Base configuration   | `FlextSettings`, environment integration         |
 | [`loggings.py`](loggings.py)                       | Structured logging   | `FlextLogger`, `get_logger()`, correlation IDs       |
 | [`payload.py`](payload.py)                         | Message patterns     | `FlextPayload`, `FlextEvent`, `FlextMessage`         |
 | [`interfaces.py`](interfaces.py)                   | Protocol definitions | `FlextValidator`, `FlextService`, Clean Architecture |
@@ -94,7 +94,7 @@ Specialized processing components and legacy compatibility.
 ```python
 # Essential imports for all FLEXT projects
 from flext_core import FlextResult, FlextContainer, FlextEntity
-from flext_core.flext_types import TAnyDict, TLogMessage
+from flext_core.typings import FlextTypes, TAnyDict, TLogMessage
 from flext_core.constants import FlextLogLevel, Platform
 ```
 
@@ -132,7 +132,7 @@ class User(FlextEntity):
 
 ```python
 # Environment-aware configuration management
-class AppSettings(FlextBaseSettings):
+class AppSettings(FlextSettings):
     database_url: str = "postgresql://localhost/app"
     log_level: str = "INFO"
 

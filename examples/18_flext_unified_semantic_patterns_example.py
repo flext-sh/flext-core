@@ -1,17 +1,8 @@
 #!/usr/bin/env python3
-"""FLEXT Unified Semantic Patterns - Complete Working Example.
+"""Unified semantic patterns for FLEXT ecosystem.
 
-This example demonstrates the harmonized FLEXT semantic pattern system
-that eliminates duplication and provides consistent architecture across
-the entire FLEXT ecosystem.
-
-Key Achievements:
-- Unified pattern system (4 separate systems → 1 harmonized system)
-- Zero duplication across 33+ projects
-- Consistent Flext[Domain][Type][Context] naming
-- Complete type safety and business rule validation
-
-Architecture: FLEXT_UNIFIED_SEMANTIC_PATTERNS.md
+Demonstrates harmonized pattern system with consistent naming,
+type safety, and business rule validation across projects.
 """
 
 from __future__ import annotations
@@ -25,7 +16,8 @@ if TYPE_CHECKING:
 from pydantic import Field, SecretStr
 
 from flext_core import FlextResult
-from flext_core.models import FlextConfig, FlextEntity, FlextFactory, FlextValue
+from flext_core.config import FlextConfig
+from flext_core.models import FlextEntity, FlextFactory, FlextValue
 
 # =============================================================================
 # LAYER 0: FOUNDATION PATTERNS - Core Pydantic Models

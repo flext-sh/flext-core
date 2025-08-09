@@ -5,7 +5,7 @@ EXPECTED_TOTAL_PAGES = 8
 EXPECTED_DATA_COUNT = 3
 
 This test suite provides complete coverage of the configuration system,
-testing all aspects including FlextConfig, FlextBaseSettings, configuration
+testing all aspects including FlextConfig, FlextSettings, configuration
 operations, validation, and integration patterns to achieve near 100% coverage.
 """
 
@@ -22,11 +22,11 @@ from unittest.mock import patch
 import pytest
 
 from flext_core.config import (
-    FlextBaseSettings,
     FlextConfig,
     FlextConfigDefaults,
     FlextConfigOps,
     FlextConfigValidation,
+    FlextSettings,
     merge_configs,
     safe_get_env_var,
     safe_load_json_file,
@@ -37,7 +37,7 @@ from flext_core.result import FlextResult
 if TYPE_CHECKING:
     from collections.abc import Generator
 
-    from flext_core.flext_types import TAnyDict
+    from flext_core.typings import TAnyDict
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 
@@ -621,13 +621,13 @@ class TestFlextConfig:
 
 
 @pytest.mark.unit
-class TestFlextBaseSettings:
-    """Test FlextBaseSettings class functionality."""
+class TestFlextSettings:
+    """Test FlextSettings class functionality."""
 
     def test_create_settings_basic(self) -> None:
         """Test basic settings creation."""
 
-        class TestSettings(FlextBaseSettings):
+        class TestSettings(FlextSettings):
             debug: bool = False
             timeout: int = 30
 
@@ -642,7 +642,7 @@ class TestFlextBaseSettings:
     def test_create_with_validation_success(self) -> None:
         """Test create_with_validation with valid data."""
 
-        class TestSettings(FlextBaseSettings):
+        class TestSettings(FlextSettings):
             debug: bool = False
             timeout: int = 30
 
@@ -660,7 +660,7 @@ class TestFlextBaseSettings:
     def test_create_with_validation_overrides_only(self) -> None:
         """Test create_with_validation with overrides only."""
 
-        class TestSettings(FlextBaseSettings):
+        class TestSettings(FlextSettings):
             debug: bool = False
             timeout: int = 30
 
@@ -681,7 +681,7 @@ class TestFlextBaseSettings:
     def test_create_with_validation_kwargs_only(self) -> None:
         """Test create_with_validation with kwargs only."""
 
-        class TestSettings(FlextBaseSettings):
+        class TestSettings(FlextSettings):
             debug: bool = False
             timeout: int = 30
 
@@ -699,7 +699,7 @@ class TestFlextBaseSettings:
     def test_create_with_validation_no_params(self) -> None:
         """Test create_with_validation with no parameters."""
 
-        class TestSettings(FlextBaseSettings):
+        class TestSettings(FlextSettings):
             debug: bool = False
             timeout: int = 30
 
@@ -715,7 +715,7 @@ class TestFlextBaseSettings:
     def test_create_with_validation_merging_priority(self) -> None:
         """Test create_with_validation merging priority."""
 
-        class TestSettings(FlextBaseSettings):
+        class TestSettings(FlextSettings):
             debug: bool = False
             timeout: int = 30
 
@@ -736,7 +736,7 @@ class TestFlextBaseSettings:
     def test_settings_model_config(self) -> None:
         """Test settings model configuration."""
 
-        class TestSettings(FlextBaseSettings):
+        class TestSettings(FlextSettings):
             debug: bool = False
             timeout: int = 30
 
@@ -761,7 +761,7 @@ class TestFlextBaseSettings:
     def test_settings_environment_integration(self) -> None:
         """Test settings environment integration."""
 
-        class TestSettings(FlextBaseSettings):
+        class TestSettings(FlextSettings):
             debug: bool = False
             timeout: int = 30
 
@@ -998,7 +998,7 @@ class TestConfigIntegration:
     def test_settings_with_config_integration(self) -> None:
         """Test settings integration with FlextConfig."""
 
-        class TestSettings(FlextBaseSettings):
+        class TestSettings(FlextSettings):
             debug: bool = False
             timeout: int = 30
 
@@ -1210,7 +1210,7 @@ class TestConfigEdgeCases:
     def test_settings_validation_edge_cases(self) -> None:
         """Test settings validation edge cases."""
 
-        class StrictSettings(FlextBaseSettings):
+        class StrictSettings(FlextSettings):
             required_int: int
             optional_str: str = "default"
 

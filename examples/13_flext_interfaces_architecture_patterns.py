@@ -1,13 +1,8 @@
 #!/usr/bin/env python3
-"""FLEXT Interfaces Architecture Patterns Example.
+"""Architecture patterns with FlextInterfaces.
 
-Comprehensive demonstration of FlextInterfaces system showing enterprise-grade
-architecture patterns with Clean Architecture, Domain-Driven Design, and
-extensibility through protocols and abstract base classes.
-
-Features demonstrated:
-    - Validation interfaces with protocols and abstract base classes
-    - Service interfaces with lifecycle management and configuration
+Demonstrates Clean Architecture, Domain-Driven Design,
+and extensibility through protocols and abstract base classes.
     - Handler interfaces with middleware pipeline patterns
     - Repository interfaces with Unit of Work pattern
     - Plugin interfaces with extensibility and context management
@@ -38,8 +33,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from structlog.stdlib import BoundLogger
 
-from flext_core.flext_types import TAnyDict
-from flext_core.interfaces import (
+from flext_core.protocols import (
     FlextConfigurable,
     FlextEventPublisher,
     FlextEventSubscriber,
@@ -54,6 +48,7 @@ from flext_core.interfaces import (
     FlextValidator,
 )
 from flext_core.result import FlextResult
+from flext_core.typings import TAnyDict
 
 # =============================================================================
 # INTERFACE CONSTANTS - Network and system constraints

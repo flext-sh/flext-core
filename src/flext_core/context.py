@@ -1,67 +1,15 @@
-"""FLEXT Core Context Management - Correlation IDs and Request Context.
+"""Context management for correlation IDs and request tracking.
 
-Context management system providing correlation ID propagation, request tracing,
-and service identification across the FLEXT ecosystem. Foundation for distributed
-operations tracking and cross-service communication.
+Provides thread-safe context variables for service identification,
+correlation ID propagation, and distributed operation tracking.
 
-Module Role in Architecture:
-    Core Pattern Layer → Context Management → Request Correlation Foundation
+Classes:
+    FlextContext: Context management with correlation IDs.
+    FlextRequestContext: Request-scoped context information.
 
-    This module provides context management patterns used by all FLEXT projects:
-    - Correlation ID propagation across service boundaries
-    - Request context preservation throughout operation chains
-    - Service identification and metadata management
-    - Thread-safe context isolation using contextvars
-
-Context Architecture Patterns:
-    Context Variables: Thread-safe context isolation
-    Correlation Propagation: Automatic ID inheritance in operations
-    Service Metadata: Service name and version tracking
-    Request Boundaries: Clear context scoping for operations
-
-Integration Points:
-    - FlextObs integration: Automatic correlation in logs and traces
-    - FlextResult integration: Context propagation in result chains
-    - Cross-service calls: HTTP header and bridge context passing
-    - Exception handling: Context preservation in error scenarios
-
-Usage Patterns:
-    # Automatic correlation ID generation
-    with FlextContext.new_correlation() as correlation_id:
-        FlextObs.Log.info("Operation started")  # Auto-includes correlation_id
-
-    # Manual correlation ID setting
-    FlextContext.set_correlation_id("external-request-id")
-
-    # Service context management
-    FlextContext.set_service_name("flext-api")
-    FlextContext.set_service_version("1.2.0")
-
-    # Request metadata
-    FlextContext.set_user_id("user123")
-    FlextContext.set_operation_name("create_user")
-
-Enterprise Features:
-    - Thread-safe context isolation for concurrent operations
-    - Automatic context inheritance in async operations
-    - Context serialization for cross-service communication
-    - Request tracing with operation hierarchies
-    - User context for audit trails
-    - Performance context for monitoring
-
-Quality Standards:
-    - All context operations must be thread-safe
-    - Context must be preserved across async boundaries
-    - No context pollution between concurrent requests
-    - Serializable context for cross-language communication
-
-See Also:
-    observability.py: FlextObs integration with context
-    result.py: FlextResult context propagation
-    exceptions.py: Exception context preservation
-
-Copyright (c) 2025 FLEXT Contributors
-SPDX-License-Identifier: MIT
+Functions:
+    get_correlation_id: Get current correlation ID.
+    set_correlation_id: Set correlation ID in context.
 
 """
 

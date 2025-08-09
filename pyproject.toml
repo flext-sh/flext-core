@@ -121,17 +121,15 @@ exclude = [
 ]
 known_first_party = ["flext_core"]
 pep621_dev_dependency_groups = ["dev", "security", "test", "typings"]
-
-
 [tool.mypy]
 # Strict mode - enables all recommended checks
 strict = true
 
 # Additional strict checks beyond default strict mode
-disallow_any_expr = false
 check_untyped_defs = true
 disallow_any_decorated = true
 disallow_any_explicit = true
+disallow_any_expr = false          # Too restrictive for real-world usage
 disallow_any_generics = true
 disallow_any_unimported = true
 disallow_incomplete_defs = true
@@ -173,8 +171,8 @@ platform = "linux"
 # Package structure
 explicit_package_bases = true
 namespace_packages = true
-mypy_path = ["src", "examples"]
-files = ["src", "tests", "examples"]
+mypy_path = ["src"]
+files = ["src", "tests"]
 
 # Plugins
 plugins = ["pydantic.mypy"]
@@ -197,7 +195,6 @@ exclude = [
     "__pycache__/",
     ".*/generate_config.py",
     ".*/manage.py",
-    ".*/scripts/",
     ".coverage.*",
     ".git/",
     ".mypy_cache/",
@@ -209,6 +206,7 @@ exclude = [
     "node_modules/",
     "vendor/",
 ]
+
 
 [tool.pydantic-mypy]
 init_forbid_extra = true

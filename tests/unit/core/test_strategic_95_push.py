@@ -20,8 +20,7 @@ from flext_core.exceptions import (
     FlextError,
     FlextValidationError,
 )
-from flext_core.foundation import FlextFactory as FoundationFactory
-from flext_core.models import FlextValue
+from flext_core.models import FlextFactory as FoundationFactory, FlextValue
 from flext_core.payload import FlextEvent, FlextMessage, FlextPayload
 from flext_core.result import FlextResult
 
@@ -260,7 +259,7 @@ class TestFoundationStrategicCoverage:
 
         # Test with None model class
         try:
-            result = FoundationFactory.create_model(None, field="test")  # type: ignore[arg-type]
+            result = FoundationFactory.create_model(None, field="test")
             assert result.is_failure
         except Exception:
             assert True

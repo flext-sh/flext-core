@@ -1,11 +1,10 @@
-"""Comprehensive tests for _config_base.py module.
+"""Tests for configuration base system.
 
 # Constants
 EXPECTED_TOTAL_PAGES = 8
 EXPECTED_DATA_COUNT = 3
 
-This test suite provides complete coverage of the configuration base system,
-testing all aspects including configuration operations, validation, defaults,
+Tests configuration operations, validation, defaults,
 and utilities to achieve near 100% coverage.
 """
 
@@ -23,17 +22,17 @@ from unittest.mock import patch
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator
 
-    from flext_core.flext_types import TAnyDict
+    from flext_core.typings import TAnyDict
 
 import pytest
 
-from flext_core._config_base import (
-    _BaseConfig,
-    _BaseConfigDefaults,
-    _BaseConfigOps,
-    _BaseConfigValidation,
-    _ObservabilityConfig,
-    _PerformanceConfig,
+from flext_core.config import (
+    FlextConfig as _BaseConfig,
+    FlextConfigDefaults as _BaseConfigDefaults,
+    FlextConfigOps as _BaseConfigOps,
+    FlextConfigValidation as _BaseConfigValidation,
+    FlextObservabilityConfig as _ObservabilityConfig,
+    FlextPerformanceConfig as _PerformanceConfig,
 )
 from flext_core.constants import FlextConstants
 

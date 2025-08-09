@@ -9,7 +9,8 @@ from __future__ import annotations
 import pytest
 
 from flext_core.exceptions import FlextOperationError
-from flext_core.result import FlextResult, chain, compose, safe_call
+from flext_core.legacy import chain, compose
+from flext_core.result import FlextResult, safe_call
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 

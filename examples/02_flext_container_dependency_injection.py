@@ -1,53 +1,8 @@
 #!/usr/bin/env python3
-"""FLEXT Container Dependency Injection - Foundation Example 02.
+"""Dependency injection using FlextContainer.
 
-Enterprise-grade dependency injection demonstration using FlextContainer
-for type-safe service management across complex application architectures.
-
-Module Role in Architecture:
-    Examples Layer → Foundation Examples → Dependency Injection Implementation
-
-    This example demonstrates essential patterns that enable:
-    - Type-safe service registration used across 32 ecosystem projects
-    - Service lifecycle management for enterprise applications
-    - Factory patterns for complex service creation with dependencies
-    - Configuration-driven container setup for environment flexibility
-
-Dependency Injection Features:
-    ✅ Type-Safe Registration: Service registration with full type validation
-    ✅ Factory Patterns: Dynamic service creation with dependency resolution
-    ✅ Service Lifecycle: Proper initialization and cleanup patterns
-    ✅ Dependency Chains: Complex dependency graph resolution
-    ✅ Configuration Integration: Environment-aware service configuration
-    ✅ Health Monitoring: Service health validation and monitoring
-
-Enterprise Applications:
-    - Database connection management with connection pooling
-    - Cache service configuration with TTL management
-    - Logger service setup with structured logging
-    - Authentication service with LDAP integration
-    - Monitoring service with metrics collection
-
-Real-World Usage Context:
-    This container pattern is fundamental to all FLEXT services, providing
-    reliable dependency management across distributed microservices and
-    library integrations without tight coupling.
-
-Architecture Benefits:
-    - Inversion of Control: Decoupled service dependencies
-    - Testability: Easy mocking and testing with container isolation
-    - Configuration Flexibility: Environment-specific service setup
-    - Performance Optimization: Lazy loading and singleton patterns
-
-See Also:
-    - src/flext_core/container.py: FlextContainer implementation
-    - src/flext_core/config.py: Configuration management integration
-    - examples/03_flext_commands_cqrs_pattern.py: Next architectural example
-    - tests/unit/core/test_container.py: Comprehensive container tests
-
-Copyright (c) 2025 FLEXT Contributors
-SPDX-License-Identifier: MIT
-
+Demonstrates type-safe service management with factory patterns,
+lifecycle management, and configuration-driven container setup.
 """
 
 from __future__ import annotations
@@ -325,7 +280,7 @@ class PrerequisiteValidator:
 
 
 class DatabaseConnection(ABC):
-    """Abstract database connection interface using flext_core.types."""
+    """Abstract database connection interface using flext_core.typings."""
 
     @abstractmethod
     def connect(self) -> FlextResult[bool]:
@@ -341,7 +296,7 @@ class DatabaseConnection(ABC):
 
 
 class EmailService(ABC):
-    """Abstract email service interface using flext_core.types."""
+    """Abstract email service interface using flext_core.typings."""
 
     @abstractmethod
     def send_email(self, to: str, subject: str, body: str) -> FlextResult[str]:
@@ -374,7 +329,7 @@ class NotificationService(ABC):
 
 
 class PostgreSQLConnection(DatabaseConnection):
-    """PostgreSQL database connection implementation using flext_core.types."""
+    """PostgreSQL database connection implementation using flext_core.typings."""
 
     def __init__(self, host: str, port: int, database: str) -> None:
         """Initialize PostgreSQL connection with host, port and database."""
@@ -440,7 +395,7 @@ class PostgreSQLConnection(DatabaseConnection):
 
 
 class SMTPEmailService(EmailService):
-    """SMTP email service implementation using flext_core.types."""
+    """SMTP email service implementation using flext_core.typings."""
 
     def __init__(self, smtp_host: str, smtp_port: int) -> None:
         """Initialize SMTP service with host and port."""
@@ -586,7 +541,7 @@ class EmailNotificationService(NotificationService):
 
 
 class DatabaseConnectionFactory:
-    """Factory for creating database connections using flext_core.types."""
+    """Factory for creating database connections using flext_core.typings."""
 
     @staticmethod
     def create_postgresql_connection(
@@ -621,7 +576,7 @@ class DatabaseConnectionFactory:
 
 
 class EmailServiceFactory:
-    """Factory for creating email services using flext_core.types."""
+    """Factory for creating email services using flext_core.typings."""
 
     @staticmethod
     def create_smtp_service(config: TConfigDict) -> FlextResult[EmailService]:

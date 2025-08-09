@@ -20,14 +20,15 @@ from flext_core import FlextResult
 
 def hello_world() -> FlextResult[str]:
     """First example with FLEXT Core."""
-    return FlextResult.ok("Hello, FLEXT World! 🚀")
+    return FlextResult.ok("Hello, FLEXT World!")
 
 # Usage
-result = hello_world()
-if result.success:
-    print(result.data)  # Output: Hello, FLEXT World! 🚀
-else:
-    print(f"Error: {result.error}")
+if __name__ == "__main__":
+    result = hello_world()
+    if result.success:
+        print(result.data)  # Output: Hello, FLEXT World!
+    else:
+        print(f"Error: {result.error}")
 ```
 
 ## 📋 Core Concepts
@@ -100,9 +101,9 @@ if email_result.success:
 **Environment-aware configuration with type safety.**
 
 ```python
-from flext_core import FlextBaseSettings
+from flext_core import FlextSettings
 
-class AppSettings(FlextBaseSettings):
+class AppSettings(FlextSettings):
     app_name: str = "My App"
     debug: bool = False
     database_url: str = "sqlite:///app.db"
@@ -203,9 +204,8 @@ class CreateUserCommand(FlextCommands.Command):
 
 # Command handler
 class CreateUserHandler(FlextCommands.Handler[CreateUserCommand, User]):
-    def __init__(self, container: FlextContainer):
+    def __init__(self):
         super().__init__()
-        self._container = container
 
     def handle(self, command: CreateUserCommand) -> FlextResult[User]:
         """Process user creation."""
@@ -224,8 +224,7 @@ class CreateUserHandler(FlextCommands.Handler[CreateUserCommand, User]):
         return FlextResult.ok(None)
 
 # Usage
-container = FlextContainer()
-handler = CreateUserHandler(container)
+handler = CreateUserHandler()
 
 # Create and process command
 command = CreateUserCommand("Ana Paula", "ana@company.com")
@@ -290,7 +289,8 @@ print(f"Expected error: {error_result.error}")  # "Invalid email format"
 **Simple order system using real FLEXT Core patterns.**
 
 ```python
-from flext_core import FlextEntity, FlextResult, FlextContainer, FlextCommands
+from flext_core import FlextResult, FlextContainer, FlextCommands
+from flext_core.models import FlextEntity
 from typing import List
 from enum import Enum
 

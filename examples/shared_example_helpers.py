@@ -1,10 +1,7 @@
-"""Shared Example Helpers for FLEXT Demonstrations.
+"""Shared utilities for example demonstrations.
 
-Common utilities to eliminate duplication across example files, following
-DRY principles and SOLID patterns.
-
-Copyright (c) 2025 FLEXT Contributors
-SPDX-License-Identifier: MIT
+Common helper functions and utilities to eliminate duplication
+across example files following DRY principles.
 """
 
 from __future__ import annotations

@@ -8,21 +8,36 @@ from typing import TYPE_CHECKING, cast
 
 from pydantic import BaseModel, Field
 
-from flext_core._decorators_base import (
-    _BaseDecoratorUtils,
-    _BaseErrorHandlingDecorators,
-    _BasePerformanceDecorators,
-    _BaseValidationDecorators,
-    _DecoratedFunction,
+from flext_core import (
+    FlextDecorators,
+    FlextResult,
 )
 from flext_core.decorators import (
-    FlextDecorators,
-    flext_cache_decorator,
-    flext_safe_call,
-    flext_safe_decorator,
-    flext_timing_decorator,
+    FlextDecoratorUtils,
+    FlextErrorHandlingDecorators,
+    FlextLoggingDecorators,
+    FlextPerformanceDecorators,
+    FlextValidationDecorators,
 )
-from flext_core.result import FlextResult
+from flext_core.protocols import FlextDecoratedFunction
+
+# Aliases for compatibility
+_BaseDecoratorUtils = FlextDecoratorUtils
+_BaseValidationDecorators = FlextValidationDecorators
+_BaseErrorHandlingDecorators = FlextErrorHandlingDecorators
+_BasePerformanceDecorators = FlextPerformanceDecorators
+_BaseLoggingDecorators = FlextLoggingDecorators
+_DecoratedFunction = FlextDecoratedFunction
+
+# Simple decorator functions
+flext_safe_call = FlextDecorators.safe_result
+flext_cache_decorator = FlextPerformanceDecorators.create_cache_decorator
+flext_safe_decorator = FlextErrorHandlingDecorators.create_safe_decorator
+flext_timing_decorator = FlextPerformanceDecorators.get_timing_decorator
+
+# Internal decorator functions from base_decorators
+_safe_call_decorator = FlextErrorHandlingDecorators.create_safe_decorator
+_validate_input_decorator = FlextValidationDecorators.create_validation_decorator
 
 # Constants
 EXPECTED_BULK_SIZE = 2
@@ -599,7 +614,9 @@ class TestDecoratorCoverageImprovements:
 
     def test_immutability_decorators_coverage(self) -> None:
         """Test immutability decorator methods (lines 161, 276, 281)."""
-        from flext_core._decorators_base import _BaseImmutabilityDecorators
+        from flext_core.base_decorators import (
+            FlextImmutabilityDecorators as _BaseImmutabilityDecorators,
+        )
 
         def sample_function(x: int) -> int:
             return x * 2
@@ -618,7 +635,9 @@ class TestDecoratorCoverageImprovements:
 
     def test_functional_decorators_coverage(self) -> None:
         """Test functional decorator methods (lines 290, 295)."""
-        from flext_core._decorators_base import _BaseFunctionalDecorators
+        from flext_core.base_decorators import (
+            FlextFunctionalDecorators as _BaseFunctionalDecorators,
+        )
 
         def sample_function(x: int) -> int:
             return x * 2
@@ -639,7 +658,9 @@ class TestDecoratorCoverageImprovements:
         """Test logging decorator exception handling (lines 222-236)."""
         import pytest
 
-        from flext_core._decorators_base import _BaseLoggingDecorators
+        from flext_core.base_decorators import (
+            FlextLoggingDecorators as _BaseLoggingDecorators,
+        )
 
         def failing_function() -> None:
             msg = "Test runtime error"
@@ -657,7 +678,9 @@ class TestDecoratorCoverageImprovements:
         """Test logging decorator with TypeError (lines 222-236)."""
         import pytest
 
-        from flext_core._decorators_base import _BaseLoggingDecorators
+        from flext_core.base_decorators import (
+            FlextLoggingDecorators as _BaseLoggingDecorators,
+        )
 
         def type_error_function() -> None:
             msg = "Type error occurred"
@@ -674,7 +697,9 @@ class TestDecoratorCoverageImprovements:
         """Test logging decorator with ValueError (lines 222-236)."""
         import pytest
 
-        from flext_core._decorators_base import _BaseLoggingDecorators
+        from flext_core.base_decorators import (
+            FlextLoggingDecorators as _BaseLoggingDecorators,
+        )
 
         def value_error_function() -> None:
             msg = "Value error occurred"
@@ -691,7 +716,9 @@ class TestDecoratorCoverageImprovements:
         """Test log_exceptions_decorator exception handling (lines 246-267)."""
         import pytest
 
-        from flext_core._decorators_base import _BaseLoggingDecorators
+        from flext_core.base_decorators import (
+            FlextLoggingDecorators as _BaseLoggingDecorators,
+        )
 
         def failing_function() -> None:
             msg = "Exception for logging test"
@@ -708,7 +735,9 @@ class TestDecoratorCoverageImprovements:
         """Test log_exceptions_decorator with different exception types (lines 246-267)."""
         import pytest
 
-        from flext_core._decorators_base import _BaseLoggingDecorators
+        from flext_core.base_decorators import (
+            FlextLoggingDecorators as _BaseLoggingDecorators,
+        )
 
         def type_error_function() -> None:
             msg = "Type error in log_exceptions test"
@@ -733,7 +762,7 @@ class TestDecoratorCoverageImprovements:
 
     def test_safe_call_decorator_with_error_handler(self) -> None:
         """Test safe_call_decorator with error handler (lines 325-326)."""
-        from flext_core._decorators_base import _safe_call_decorator
+        from flext_core.base_decorators import _safe_call_decorator
 
         error_handled = False
 
@@ -757,7 +786,7 @@ class TestDecoratorCoverageImprovements:
         """Test validation decorator with validation failure (lines 377-388)."""
         import pytest
 
-        from flext_core._decorators_base import _validate_input_decorator
+        from flext_core.base_decorators import _validate_input_decorator
         from flext_core.exceptions import FlextValidationError
 
         def always_false_validator(arg: object) -> bool:
@@ -776,7 +805,7 @@ class TestDecoratorCoverageImprovements:
         """Test validation decorator with multiple arguments (lines 377-388)."""
         import pytest
 
-        from flext_core._decorators_base import _validate_input_decorator
+        from flext_core.base_decorators import _validate_input_decorator
         from flext_core.exceptions import FlextValidationError
 
         def validator_requiring_positive(arg: object) -> bool:
@@ -798,7 +827,9 @@ class TestDecoratorCoverageImprovements:
 
     def test_decorator_factory_methods_coverage(self) -> None:
         """Test decorator factory methods (lines 401, 408, 413, 420)."""
-        from flext_core._decorators_base import _BaseDecoratorFactory
+        from flext_core.base_decorators import (
+            FlextDecoratorFactory as _BaseDecoratorFactory,
+        )
 
         # Test create_cache_decorator - line 401
         cache_decorator = _BaseDecoratorFactory.create_cache_decorator(64)
@@ -823,7 +854,9 @@ class TestDecoratorCoverageImprovements:
 
     def test_error_handling_decorator_retry_method(self) -> None:
         """Test retry_decorator method (line 161)."""
-        from flext_core._decorators_base import _BaseErrorHandlingDecorators
+        from flext_core.base_decorators import (
+            FlextErrorHandlingDecorators as _BaseErrorHandlingDecorators,
+        )
 
         def sample_function(x: int) -> int:
             return x * 2

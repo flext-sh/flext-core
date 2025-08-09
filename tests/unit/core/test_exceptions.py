@@ -1,57 +1,7 @@
-"""Core Exception System Test Suite - Unit Testing Layer Error Foundation.
+"""Tests for FLEXT exception hierarchy and error handling.
 
-Comprehensive unit test suite for FLEXT exception hierarchy and error handling
-that validates enterprise-grade error management across the entire ecosystem.
-
-Module Role in Architecture:
-    Testing Layer → Unit Tests → Exception System Validation
-
-    This module provides comprehensive unit testing that ensures:
-    - Exception hierarchy provides appropriate granularity for error handling
-    - Error codes and classification work consistently across 32 projects
-    - Exception metrics collection enables proper observability
-    - Error serialization supports distributed system requirements
-
-Testing Strategy Coverage:
-    ✅ Exception Hierarchy: All FlextError subclasses and inheritance patterns
-    ✅ Error Classification: Proper error code assignment and categorization
-    ✅ Exception Metrics: Collection and reporting of error statistics
-    ✅ Error Serialization: JSON conversion for logging and monitoring
-    ✅ Context Preservation: Exception context and stack trace handling
-    ✅ Performance Impact: Exception overhead measurement and validation
-
-Enterprise Quality Standards:
-    - Test Coverage: 95%+ coverage of exception functionality
-    - Performance: < 100ms per test, minimal exception overhead
-    - Isolation: Pure unit tests with controlled error scenarios
-    - Observability: Comprehensive metrics validation
-
-Real-World Usage Validation:
-    # Enterprise error handling pattern
-    try:
-        result = process_critical_operation()
-        if result.is_failure:
-            raise FlextProcessingError(
-                message=result.error,
-                context={"operation": "data_transformation"}
-            )
-    except FlextError as e:
-        log_error_with_metrics(e)
-
-Test Architecture Patterns:
-    - Exception Classification Testing: Each error type tested independently
-    - Metrics Collection Testing: Error statistics validation
-    - Serialization Testing: JSON conversion validation
-    - Context Preservation Testing: Exception context validation
-
-See Also:
-    - src/flext_core/exceptions.py: FLEXT exception implementation
-    - src/flext_core/constants.py: ERROR_CODES definitions
-    - src/flext_core/result.py: FlextResult alternative to exceptions
-    - tests/integration/: Cross-module exception handling tests
-
-Copyright (c) 2025 FLEXT Contributors
-SPDX-License-Identifier: MIT
+Unit tests validating exception classification, error codes, metrics collection,
+and serialization for enterprise error management.
 """
 
 from __future__ import annotations

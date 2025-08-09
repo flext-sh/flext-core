@@ -1,7 +1,7 @@
-"""Performance benchmarks and advanced testing for FLEXT Core.
+"""Performance benchmarks for FLEXT Core.
 
-This module contains comprehensive performance tests, benchmarks, and stress tests
-for core FLEXT functionality, focusing on production performance characteristics.
+Performance tests, benchmarks, and stress tests
+for core FLEXT functionality.
 """
 
 from __future__ import annotations

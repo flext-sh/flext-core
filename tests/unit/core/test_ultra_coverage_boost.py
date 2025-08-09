@@ -11,7 +11,6 @@ from __future__ import annotations
 import pytest
 from pydantic import Field
 
-from flext_core.foundation import FlextFactory as FoundationFactory
 from flext_core.models import (
     FlextAuth,
     FlextConfig,
@@ -20,6 +19,7 @@ from flext_core.models import (
     FlextDomainEntity,
     FlextEntity,
     FlextFactory,
+    FlextFactory as FoundationFactory,
     FlextModel,
     FlextObs,
     FlextOperationModel,
@@ -199,7 +199,7 @@ class TestModelsUltraCoverage:
             children: list[str] = Field(default_factory=list)
             metadata: dict[str, object] = Field(default_factory=dict)
 
-            def __init__(self, **data):
+            def __init__(self, **data: object) -> None:
                 # Initialize with safe defaults
                 data.setdefault("children", [])
                 data.setdefault("metadata", {})
@@ -223,7 +223,7 @@ class TestModelsUltraCoverage:
             primary_key: str = "id"
             columns: list[str] = Field(default=["id", "name", "email"])
 
-            def __init__(self, **data):
+            def __init__(self, **data: object) -> None:
                 data.setdefault("columns", ["id", "name", "email"])
                 super().__init__(**data)
 
@@ -253,7 +253,7 @@ class TestModelsUltraCoverage:
             steps: list[str] = Field(default=["extract", "transform", "load"])
             timeout_seconds: int = 3600
 
-            def __init__(self, **data):
+            def __init__(self, **data: object) -> None:
                 data.setdefault("steps", ["extract", "transform", "load"])
                 super().__init__(**data)
 
@@ -271,7 +271,7 @@ class TestModelsUltraCoverage:
             endpoints: list[str] = Field(default=["/login", "/logout"])
             health_check_url: str = "/health"
 
-            def __init__(self, **data):
+            def __init__(self, **data: object) -> None:
                 data.setdefault("endpoints", ["/login", "/logout"])
                 super().__init__(**data)
 
@@ -292,7 +292,7 @@ class TestFoundationUltraCoverage:
             value: str = ""
             config: dict[str, object] = Field(default_factory=dict)
 
-            def __init__(self, **data):
+            def __init__(self, **data: object) -> None:
                 data.setdefault("config", {})
                 super().__init__(**data)
 
@@ -332,7 +332,7 @@ class TestFoundationUltraCoverage:
             )
             computed_field: str = ""
 
-            def __init__(self, **data):
+            def __init__(self, **data: object) -> None:
                 data.setdefault("nested_data", {})
                 # Compute derived field
                 if data.get("nested_data"):
@@ -370,7 +370,7 @@ class TestFoundationUltraCoverage:
             zero_value: int = 0
             false_value: bool = False
 
-            def __init__(self, **data):
+            def __init__(self, **data: object) -> None:
                 data.setdefault("empty_list", [])
                 super().__init__(**data)
 

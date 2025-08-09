@@ -265,7 +265,7 @@ class TestFlextResultValidation:
 class TestValidationIntegration:
     """Integration tests for validation system."""
 
-    def test_complex_validation_scenario(self) -> None:  # noqa: C901
+    def test_complex_validation_scenario(self) -> None:
         """Test complex validation using available utilities."""
 
         def validate_user_data(
@@ -338,7 +338,7 @@ class TestValidationIntegration:
         if "list" not in result.error.lower():
             raise AssertionError(f"Expected {'list'} in {result.error.lower()}")
 
-    def test_validation_chaining(self) -> None:  # noqa: C901
+    def test_validation_chaining(self) -> None:
         """Test chaining multiple validations."""
 
         def validate_step1(value: str) -> FlextResult[str]:

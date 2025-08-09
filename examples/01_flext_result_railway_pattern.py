@@ -1,70 +1,8 @@
 #!/usr/bin/env python3
-"""FLEXT Railway Pattern - Boilerplate Elimination Showcase.
+"""Railway-oriented programming with FlextResult patterns.
 
-🚀 BEFORE vs AFTER: Demonstrating 90% Boilerplate Reduction
-
-This example shows the revolutionary impact of railway-oriented programming
-through FlextResult patterns - eliminating exception handling chaos while
-providing type-safe error propagation.
-
-## Traditional Approach Problems (BEFORE):
-```python
-def process_user_data(data: dict):
-    try:
-        if not data.get("email"):
-            raise ValueError("Email required")
-
-        try:
-            user = validate_user(data)
-        except ValidationError as e:
-            logger.error(f"Validation failed: {e}")
-            return {"success": False, "error": str(e)}
-
-        try:
-            saved_user = save_user(user)
-        except DatabaseError as e:
-            logger.error(f"Save failed: {e}")
-            return {"success": False, "error": str(e)}
-
-        try:
-            send_welcome_email(saved_user)
-        except EmailError as e:
-            logger.warning(f"Email failed: {e}")
-            # Continue anyway
-
-        return {"success": True, "user": saved_user}
-    except Exception as e:
-        logger.error(f"Unexpected error: {e}")
-        return {"success": False, "error": "Internal error"}
-```
-**Result: 25+ lines, 4 exception handlers, complex error paths**
-
-## Modern FLEXT Approach (AFTER):
-```python
-def process_user_data(data: dict) -> FlextResult[User]:
-    return (
-        validate_input(data)
-        .flat_map(create_user)
-        .flat_map(save_user)
-        .tap(send_welcome_email)  # Non-blocking side effect
-    )
-```
-**Result: 4 lines, automatic error propagation, type-safe composition!**
-
-🎯 Benefits Demonstrated:
-• 90% less exception handling boilerplate
-• Type-safe error composition
-• Predictable error propagation
-• Composable operation chains
-• Zero try/catch blocks needed
-
-Real-World Impact:
-Used across 15,000+ function signatures in the FLEXT ecosystem,
-eliminating thousands of lines of exception handling code.
-
-Copyright (c) 2025 FLEXT Contributors
-SPDX-License-Identifier: MIT
-
+Demonstrates type-safe error handling and composable operation chains
+using FlextResult for predictable error propagation without exceptions.
 """
 
 from __future__ import annotations
@@ -82,11 +20,11 @@ from shared_domain import (
 from flext_core import (
     FlextResult,
     FlextValidation,
-    TAnyObject,
-    TEntityId,
-    TUserData,
-    safe_call,
 )
+
+# Legacy types for backward compatibility (use FlextTypes in new code)
+from flext_core.legacy import TAnyObject, TEntityId, TUserData
+from flext_core.result import safe_call
 
 # Constants to avoid magic numbers
 FAILURE_RATE = 0.2  # 20% chance of failure
@@ -147,14 +85,14 @@ def process_user_data_traditional(data: dict[str, object]) -> dict[str, object]:
                 "age": data["age"],
             }
             # Simulate user creation logic
-            user_id = f"user_{random.randint(1000, 9999)}"  # noqa: S311
+            user_id = f"user_{random.randint(1000, 9999)}"
         except Exception as e:
             msg = f"User creation failed: {e}"
             raise RuntimeError(msg) from e
 
         # Database operations with exception handling
         try:
-            if random.random() < FAILURE_RATE:  # noqa: S311
+            if random.random() < FAILURE_RATE:
                 _raise_database_timeout()
             # Simulate save
             print(f"Saved user: {user_id}")
@@ -164,7 +102,7 @@ def process_user_data_traditional(data: dict[str, object]) -> dict[str, object]:
 
         # Email with nested exception handling
         try:
-            if random.random() < FAILURE_RATE:  # noqa: S311
+            if random.random() < FAILURE_RATE:
                 _raise_email_service_error()
             print(f"Welcome email sent to: {data['email']}")
         except RuntimeError as e:
@@ -214,7 +152,7 @@ def save_user_to_database(user: SharedUser) -> FlextResult[TEntityId]:
     """🚀 ZERO-BOILERPLATE database simulation using FlextResult."""
     return (
         FlextResult.ok(user.id)
-        .filter(lambda _: random.random() >= FAILURE_RATE, "Database timeout")  # noqa: S311
+        .filter(lambda _: random.random() >= FAILURE_RATE, "Database timeout")
         .tap(lambda uid: print(f"✅ Saved: {uid}"))
     )
 

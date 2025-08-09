@@ -43,7 +43,7 @@ This directory contains 17 comprehensive working examples that demonstrate prope
 
 ### Supporting Files
 
-- `shared_domain.py` - Shared domain models used across examples
+- `shared_domain.py` - Shared domain models used across examples. Import using `from examples.shared_domain import ...`.
 - `shared_example_helpers.py` - Common helper functions
 - `boilerplate_reduction_example.py` - Boilerplate reduction techniques
 

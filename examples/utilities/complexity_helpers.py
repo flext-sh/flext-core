@@ -1,7 +1,7 @@
-"""Complexity Reduction Helpers Following SOLID Principles.
+"""Helper classes for reducing complexity.
 
-Helper classes that implement Single Responsibility Principle (SRP) to reduce
-repetitive patterns and cognitive complexity in demonstration code.
+Implements Single Responsibility Principle to reduce repetitive patterns
+and cognitive complexity in demonstration code.
 
 Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT

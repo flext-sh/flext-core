@@ -1,8 +1,7 @@
-"""Advanced tests for FlextUtilities - Refactored with modern pytest patterns.
+"""Tests for FlextUtilities with modern pytest patterns.
 
-This module demonstrates complete refactoring using advanced pytest features:
-- Parametrized fixtures from conftest
-- Factory patterns for test data
+Advanced tests using parametrized fixtures and factory patterns
+for comprehensive utility function validation.
 - Performance monitoring integration
 - Snapshot testing for complex outputs
 - Property-based testing with Hypothesis
@@ -11,6 +10,7 @@ This module demonstrates complete refactoring using advanced pytest features:
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 from unittest.mock import Mock, patch
 
 import pytest
@@ -34,7 +34,18 @@ from flext_core.utilities import (
     is_not_none,
     truncate,
 )
-from tests.conftest import TestCase, TestScenario, assert_performance
+from tests.conftest import (
+    AssertHelpers,
+    MockFactory,
+    PerformanceMonitor,
+    TestBuilder,
+    TestCase,
+    TestScenario,
+    assert_performance,
+)
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 # Test markers
 pytestmark = [pytest.mark.unit, pytest.mark.core]
@@ -76,7 +87,7 @@ class TestFlextUtilitiesParametrized:
         ]
 
     @pytest.mark.parametrize_advanced
-    def test_utility_constants(self, constant_test_cases: list[TestCase]):
+    def test_utility_constants(self, constant_test_cases: list[TestCase]) -> None:
         """Test utility constants using structured test cases."""
         for test_case in constant_test_cases:
             constant = test_case.input_data["constant"]
@@ -98,8 +109,8 @@ class TestFlextUtilitiesParametrized:
         generator_method: str,
         prefix: str,
         min_length: int,
-        assert_helpers,
-    ):
+        assert_helpers: AssertHelpers,
+    ) -> None:
         """Test generator methods with parametrized validation."""
         method = getattr(FlextUtilities, generator_method)
         result1 = method()
@@ -131,7 +142,7 @@ class TestFlextUtilitiesParametrized:
         max_length: int,
         expected_length: int,
         should_end_with: str,
-    ):
+    ) -> None:
         """Test text truncation with various scenarios."""
         result = FlextUtilities.truncate(text, max_length)
 
@@ -158,14 +169,14 @@ class TestFlextUtilitiesPropertyBased:
             min_value=4, max_value=100
         ),  # Min 4 to accommodate "..." suffix
     )
-    def test_truncate_properties(self, text: str, max_length: int):
+    def test_truncate_properties(self, text: str, max_length: int) -> None:
         """Property: truncate never exceeds max_length (with reasonable minimums)."""
         result = FlextUtilities.truncate(text, max_length)
         assert len(result) <= max_length
 
     @pytest.mark.hypothesis
     @given(seconds=st.floats(min_value=0.0, max_value=86400.0, allow_nan=False))
-    def test_format_duration_properties(self, seconds: float):
+    def test_format_duration_properties(self, seconds: float) -> None:
         """Property: format_duration always returns valid string."""
         result = FlextUtilities.format_duration(seconds)
         assert isinstance(result, str)
@@ -184,7 +195,7 @@ class TestFlextUtilitiesPropertyBased:
             st.dictionaries(st.text(), st.text()),
         )
     )
-    def test_type_guard_properties(self, obj):
+    def test_type_guard_properties(self, obj: object) -> None:
         """Property: type guards are consistent."""
         # is_not_none_guard should be opposite of obj is None
         assert FlextUtilities.is_not_none_guard(obj) == (obj is not None)
@@ -201,12 +212,12 @@ class TestFlextUtilitiesPerformance:
     @pytest.mark.benchmark
     def test_id_generation_performance(
         self,
-        performance_monitor,
-        performance_threshold,
-    ):
+        performance_monitor: PerformanceMonitor,
+        performance_threshold: float,
+    ) -> None:
         """Benchmark ID generation performance."""
 
-        def generate_thousand_ids():
+        def generate_thousand_ids() -> list[str]:
             return [FlextUtilities.generate_id() for _ in range(1000)]
 
         metrics = performance_monitor(generate_thousand_ids)
@@ -219,11 +230,14 @@ class TestFlextUtilitiesPerformance:
         assert len(set(metrics["result"])) == 1000
 
     @pytest.mark.benchmark
-    def test_truncate_performance(self, performance_monitor):
+    def test_truncate_performance(
+        self,
+        performance_monitor: PerformanceMonitor,
+    ) -> None:
         """Benchmark truncation performance with large texts."""
         large_text = "x" * 10000
 
-        def truncate_many():
+        def truncate_many() -> list[str]:
             return [
                 FlextUtilities.truncate(large_text, length)
                 for length in range(10, 100, 10)
@@ -235,12 +249,12 @@ class TestFlextUtilitiesPerformance:
         assert len(metrics["result"]) == 9
 
     @pytest.mark.benchmark
-    def test_performance_tracking_overhead(self):
+    def test_performance_tracking_overhead(self) -> None:
         """Test performance tracking decorator overhead."""
         flext_clear_performance_metrics()
 
         @flext_track_performance("test_category")
-        def simple_operation():
+        def simple_operation() -> int:
             return sum(range(100))
 
         # Test with performance assertion
@@ -257,7 +271,7 @@ class TestFlextUtilitiesPerformance:
 class TestFlextUtilitiesWithFixtures:
     """Tests using advanced fixtures from conftest."""
 
-    def test_utilities_with_mock_factory(self, mock_factory):
+    def test_utilities_with_mock_factory(self, mock_factory: MockFactory) -> None:
         """Test utilities with mock factory fixture."""
         # Create mock external service
         service = mock_factory("external_service")
@@ -271,7 +285,7 @@ class TestFlextUtilitiesWithFixtures:
         assert result.data == "processed_id_123"
         service.process_id.assert_called_once_with(generated_id)
 
-    def test_utilities_with_test_builder(self, test_builder):
+    def test_utilities_with_test_builder(self, test_builder: TestBuilder) -> None:
         """Test utilities with test data builder."""
         # Build test data with utilities
         data = (
@@ -286,7 +300,11 @@ class TestFlextUtilitiesWithFixtures:
         assert data["correlation_id"].startswith("corr_")
         assert isinstance(data["timestamp"], float)
 
-    def test_utilities_with_sample_data(self, sample_data, validators):
+    def test_utilities_with_sample_data(
+        self,
+        sample_data: dict[str, str],
+        validators: dict[str, Callable[[str], bool]],
+    ) -> None:
         """Test utilities with sample data and validators."""
         # Use sample data to test truncation
         text = sample_data["string"]
@@ -300,10 +318,10 @@ class TestFlextUtilitiesWithFixtures:
         uuid_str = sample_data["uuid"]
         assert validators["is_valid_uuid"](uuid_str)
 
-    def test_utilities_with_error_context(self, error_context):
+    def test_utilities_with_error_context(self, error_context: dict[str, str]) -> None:
         """Test utilities error handling with error context."""
 
-        def failing_operation():
+        def failing_operation() -> None:
             raise ValueError(error_context["error_code"])
 
         result = FlextUtilities.safe_call(failing_operation)
@@ -355,7 +373,7 @@ class TestFlextUtilitiesErrorHandling:
 
     @pytest.mark.error_path
     @pytest.mark.parametrize_advanced
-    def test_cli_error_handling(self, error_test_cases: list[TestCase]):
+    def test_cli_error_handling(self, error_test_cases: list[TestCase]) -> None:
         """Test CLI error handling with structured test cases."""
         for test_case in error_test_cases:
             exception_type = test_case.input_data["exception"]
@@ -382,7 +400,7 @@ class TestFlextUtilitiesErrorHandling:
                     )
 
     @pytest.mark.happy_path
-    def test_cli_success_handling(self):
+    def test_cli_success_handling(self) -> None:
         """Test CLI success case."""
         cli_function = Mock()
         FlextUtilities.handle_cli_main_errors(cli_function)
@@ -398,7 +416,10 @@ class TestFlextUtilitiesSnapshot:
     """Snapshot tests for complex utility outputs."""
 
     @pytest.mark.snapshot
-    def test_performance_metrics_snapshot(self, snapshot_manager):
+    def test_performance_metrics_snapshot(
+        self,
+        snapshot_manager,  # Type: SnapshotManager (annotation removed to fix F821)
+    ) -> None:
         """Test performance metrics structure with snapshot."""
         flext_clear_performance_metrics()
 
@@ -412,7 +433,7 @@ class TestFlextUtilitiesSnapshot:
         snapshot_manager("performance_metrics", metrics)
 
     @pytest.mark.snapshot
-    def test_generator_output_snapshot(self, snapshot_manager):
+    def test_generator_output_snapshot(self, snapshot_manager) -> None:
         """Test generator outputs with snapshot."""
         # Generate various IDs and timestamps
         output = {
@@ -455,13 +476,13 @@ class TestFlextUtilitiesIntegration:
 
     def test_complete_workflow_integration(
         self,
-        test_builder,
-        assert_helpers,
-        performance_monitor,
-    ):
+        test_builder: TestBuilder,
+        assert_helpers: AssertHelpers,
+        performance_monitor: PerformanceMonitor,
+    ) -> None:
         """Test complete workflow using multiple utilities."""
 
-        def create_entity_workflow():
+        def create_entity_workflow() -> FlextResult[dict[str, object]]:
             # Generate IDs
             entity_id = FlextUtilities.generate_entity_id()
             correlation_id = FlextUtilities.generate_correlation_id()
@@ -508,12 +529,12 @@ class TestFlextUtilitiesIntegration:
         assert len(description) <= 50
 
     @pytest.mark.integration
-    def test_performance_tracking_integration(self):
+    def test_performance_tracking_integration(self) -> None:
         """Test integration of performance tracking with other utilities."""
         flext_clear_performance_metrics()
 
         @flext_track_performance("integration")
-        def complex_operation():
+        def complex_operation() -> dict[str, list[str] | list[float] | str]:
             # Use multiple utilities
             ids = [FlextUtilities.generate_id() for _ in range(10)]
             timestamps = [FlextUtilities.generate_timestamp() for _ in range(5)]
@@ -571,7 +592,7 @@ class TestFlextUtilitiesEdgeCases:
         max_length: int,
         suffix: str,
         description: str,
-    ):
+    ) -> None:
         """Test truncation edge cases with various scenarios."""
         result = FlextUtilities.truncate(text, max_length, suffix)
 
@@ -591,7 +612,7 @@ class TestFlextUtilitiesEdgeCases:
             assert len(result) <= max_length
 
     @pytest.mark.boundary
-    def test_duration_formatting_edge_cases(self):
+    def test_duration_formatting_edge_cases(self) -> None:
         """Test duration formatting edge cases."""
         # Test extreme values
         test_cases = [
@@ -611,7 +632,7 @@ class TestFlextUtilitiesEdgeCases:
                 pass
 
     @pytest.mark.boundary
-    def test_type_guards_edge_cases(self):
+    def test_type_guards_edge_cases(self) -> None:
         """Test type guard edge cases."""
         # Test with None
         assert not FlextTypeGuards.has_attribute(None, "attr")
@@ -650,10 +671,10 @@ class TestFlextUtilitiesBackwardCompatibility:
     )
     def test_backward_compatibility_equivalence(
         self,
-        old_function,
-        new_method,
-        args,
-    ):
+        old_function: Callable[..., object],
+        new_method: Callable[..., object],
+        args: tuple[object, ...],
+    ) -> None:
         """Test that old functions produce equivalent results to new methods."""
         old_result = old_function(*args)
         new_result = new_method(*args)
