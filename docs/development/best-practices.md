@@ -1,38 +1,38 @@
-# Boas Práticas - FLEXT Core
+# FLEXT Core Best Practices
 
-**Práticas recomendadas baseadas na implementação atual**
+Reality-based recommendations aligned with the current implementation.
 
-## 🎯 Princípios Fundamentais
+## 🎯 Core Principles
 
 ### 1. Type Safety First
 
-**SEMPRE use type hints - obrigatório no FLEXT Core.**
+Always use type hints — this is mandatory in FLEXT Core.
 
 ```python
-# ✅ Correto - Type hints baseados na API atual
+# ✅ Correct – Type hints aligned with the current API
 from flext_core import FlextResult
 
 def process_user_data(user_id: str, data: dict[str, object]) -> FlextResult[dict]:
     """Process user data with type safety."""
     if not user_id:
-        return FlextResult.fail("User ID é obrigatório")
+        return FlextResult.fail("User ID is required")
 
     processed_data = {"user_id": user_id, "data": data}
     return FlextResult.ok(processed_data)
 
-# ❌ Evite - Sem type hints
+# ❌ Avoid – Missing type hints
 def process_user_data(user_id, data):
     pass
 ```
 
 ### 2. FlextResult Pattern
 
-**Use FlextResult para error handling - padrão central do FLEXT Core.**
+Use `FlextResult` for error handling — this is the core pattern of FLEXT Core.
 
 ```python
 from flext_core import FlextResult
 
-# ✅ Correto - Railway-oriented programming
+# ✅ Correct – Railway-oriented programming
 def divide_numbers(a: float, b: float) -> FlextResult[float]:
     """Divide numbers with explicit error handling."""
     if b == 0:
@@ -47,21 +47,21 @@ if result.success:
 else:
     print(f"Error: {result.error}")
 
-# ❌ Evite - Exceções para fluxo de controle business
+# ❌ Avoid – Exceptions for business control flow
 def divide_numbers_bad(a: float, b: float) -> float:
     if b == 0:
-        raise ValueError("Division by zero")  # Não use para business logic
+        raise ValueError("Division by zero")  # Do not use for business logic
     return a / b
 ```
 
 ### 3. Dependency Injection
 
-**Use FlextContainer para gerenciar dependências.**
+Use `FlextContainer` to manage dependencies.
 
 ```python
 from flext_core import FlextContainer, FlextResult
 
-# ✅ Correto - Setup proper do container
+# ✅ Correct – Proper container setup
 def setup_dependencies() -> FlextContainer:
     """Configure application dependencies."""
     container = FlextContainer()
@@ -75,17 +75,17 @@ def setup_dependencies() -> FlextContainer:
 
     return container
 
-# ❌ Evite - Hard-coded dependencies
+# ❌ Avoid – Hard-coded dependencies
 class UserService:
     def __init__(self):
         self.database = DatabaseService()  # Hard-coded
 ```
 
-## 🔧 Padrões de Desenvolvimento
+## 🔧 Development Patterns
 
 ### 1. Validation Strategy
 
-**Valide dados em múltiplas camadas.**
+Validate data at multiple layers.
 
 ```python
 from flext_core import FlextResult
@@ -93,33 +93,33 @@ from flext_core import FlextResult
 def validate_email(email: str) -> FlextResult[str]:
     """Input validation layer."""
     if not email:
-        return FlextResult.fail("Email é obrigatório")
+        return FlextResult.fail("Email is required")
 
     if "@" not in email:
-        return FlextResult.fail("Email deve conter @")
+        return FlextResult.fail("Email must contain @")
 
     if len(email) > 254:
-        return FlextResult.fail("Email muito longo")
+        return FlextResult.fail("Email is too long")
 
     return FlextResult.ok(email.lower())
 
 def validate_business_rules(email: str, domain: str) -> FlextResult[None]:
     """Business validation layer."""
     if not email.endswith(f"@{domain}"):
-        return FlextResult.fail(f"Email deve ser do domínio {domain}")
+        return FlextResult.fail(f"Email must belong to domain {domain}")
 
     return FlextResult.ok(None)
 ```
 
 ### 2. Error Handling Chain
 
-**Chain operations com FlextResult.**
+Chain operations with `FlextResult`.
 
 ```python
 from flext_core import FlextResult
 
 def create_user_account(email: str, name: str, company_domain: str) -> FlextResult[dict]:
-    """Complete user creation with error handling chain."""
+    """Complete user creation with an error-handling chain."""
 
     # Validate input
     email_result = validate_email(email)
@@ -138,7 +138,7 @@ def create_user_account(email: str, name: str, company_domain: str) -> FlextResu
         "email": validated_email,
         "name": name,
         "domain": company_domain,
-        "created": True
+        "created": True,
     }
 
     return FlextResult.ok(account_data)
@@ -146,7 +146,7 @@ def create_user_account(email: str, name: str, company_domain: str) -> FlextResu
 
 ### 3. Service Pattern
 
-**Organize services com dependency injection.**
+Organize services with dependency injection.
 
 ```python
 from flext_core import FlextContainer, FlextResult
@@ -193,7 +193,7 @@ def setup_user_service(container: FlextContainer) -> FlextResult[UserService]:
 
 ### 1. FlextResult Testing
 
-**Test both success and failure paths.**
+Test both success and failure paths.
 
 ```python
 import pytest
@@ -229,7 +229,7 @@ def test_divide_numbers_error_type():
 
 ### 2. Container Testing
 
-**Test dependency injection setup.**
+Test dependency injection setup.
 
 ```python
 import pytest
@@ -253,19 +253,19 @@ def test_container_missing_service():
 
     result = container.get("nonexistent")
     assert result.is_failure
-    assert "not found" in result.error.lower()
+    assert "not found" in (result.error or "").lower()
 ```
 
 ## 🚀 Performance Practices
 
 ### 1. Efficient Error Handling
 
-**Use FlextResult without exception overhead.**
+Use `FlextResult` without exception overhead.
 
 ```python
 from flext_core import FlextResult
 
-# ✅ Efficient - No exception overhead
+# ✅ Efficient – No exception overhead
 def process_batch_data(items: list[dict]) -> FlextResult[list[dict]]:
     """Process items efficiently with FlextResult."""
     processed_items = []
@@ -281,25 +281,25 @@ def process_batch_data(items: list[dict]) -> FlextResult[list[dict]]:
 
     return FlextResult.ok(processed_items)
 
-# ❌ Avoid - Exception overhead in loops
+# ❌ Avoid – Exception overhead in loops
 def process_batch_data_bad(items: list[dict]) -> list[dict]:
     """Inefficient exception handling."""
     processed_items = []
     for item in items:
         if not item.get("id"):
-            raise ValueError(f"Item missing ID")  # Exception overhead
+            raise ValueError("Item missing ID")  # Exception overhead
         processed_items.append(item)
     return processed_items
 ```
 
 ### 2. Container Efficiency
 
-**Register services once, reuse container.**
+Register services once and reuse the container.
 
 ```python
 from flext_core import FlextContainer
 
-# ✅ Efficient - Single container setup
+# ✅ Efficient – Single container setup
 _application_container: FlextContainer | None = None
 
 def get_container() -> FlextContainer:
@@ -320,10 +320,10 @@ def setup_services(container: FlextContainer) -> None:
     user_service = UserService(database)
     container.register("user_service", user_service)
 
-# ❌ Avoid - Creating container repeatedly
+# ❌ Avoid – Creating a container repeatedly
 def get_user_service_bad():
-    """Inefficient - new container every time."""
-    container = FlextContainer()  # Created every call
+    """Inefficient – new container every time."""
+    container = FlextContainer()  # Created on every call
     setup_services(container)
     return container.get("user_service").data
 ```
@@ -332,7 +332,7 @@ def get_user_service_bad():
 
 ### 1. Module Structure
 
-**Organize code following Clean Architecture.**
+Organize code following Clean Architecture.
 
 ```python
 # ✅ Good structure following FLEXT patterns
@@ -354,7 +354,7 @@ class DatabaseService:
         # Database operations
         pass
 
-# main.py - composition root
+# main.py – composition root
 from flext_core import FlextContainer
 
 def main():
@@ -379,17 +379,19 @@ def main():
 
 ### ❌ Avoid These Patterns
 
-1. **Mixed error handling approaches:**
+1. Mixed error handling approaches:
 
 ```python
-# Don't mix FlextResult with exceptions in business logic
+# Don't mix exceptions with FlextResult in business logic
+from flext_core import FlextResult
+
 def bad_example(data: str) -> FlextResult[str]:
     if not data:
         raise ValueError("Bad data")  # ❌ Mixed approaches
     return FlextResult.ok(data.upper())
 ```
 
-2. **Direct dependency creation:**
+2. Direct dependency creation:
 
 ```python
 # Don't create dependencies directly
@@ -398,7 +400,7 @@ class UserService:
         self.database = DatabaseService()  # ❌ Hard-coded
 ```
 
-3. **Ignoring FlextResult errors:**
+3. Ignoring FlextResult errors:
 
 ```python
 # Don't ignore FlextResult failure paths
@@ -428,4 +430,4 @@ data = result.data  # ❌ What if result.is_failure?
 
 ---
 
-**Estas práticas são baseadas na implementação atual do FLEXT Core e foram validadas contra o código em src/flext_core/.**
+These practices are based on the current FLEXT Core implementation and have been validated against the code in `src/flext_core/`. 

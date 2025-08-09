@@ -1,112 +1,25 @@
-"""FLEXT Core Commands - CQRS Layer Command Implementation.
+"""CQRS command patterns for write operations.
 
-Command Query Responsibility Segregation (CQRS) implementation providing command
-processing, validation, and routing across the 32-project FLEXT ecosystem. Foundation
-for write operations with side effects, business logic encapsulation, and distributed
-system coordination in data integration pipelines.
-
-Module Role in Architecture:
-    CQRS Layer → Command Processing → Write Operations with Side Effects
-
-    This module provides CQRS command patterns used throughout FLEXT projects:
-    - Command definitions for write operations with business logic validation
-    - Command handlers for processing business operations with error handling
-    - Command bus for routing and middleware processing with cross-cutting concerns
-    - Query separation ensuring read/write operation distinction
-
-Command Architecture Patterns:
-    CQRS Separation: Clear distinction between commands (write) and queries (read)
-    Command Bus: Centralized routing with middleware pipeline support
-    Type Safety: Generic type parameters for compile-time command/handler safety
-    Immutable Commands: Frozen models ensuring command integrity during processing
-
-Development Status (v0.9.0 → 1.0.0):
-    ✅ Production Ready: Command base, handler interface, validation
-    🚧 Active Development: Complete CQRS implementation (Priority 2 - October 2025)
-    📋 TODO Integration: Query Bus and auto-discovery (Priority 2)
-
-CQRS Command Features:
-    FlextCommands.Command: Base command with metadata and correlation tracking
-    FlextCommands.Handler: Generic command handler with lifecycle management
-    FlextCommands.Bus: Command routing with middleware and execution tracking
-    FlextCommands.Query: Read-only query operations with pagination support
-
-Ecosystem Usage Patterns:
-    # FLEXT Service Commands
-    class CreateUserCommand(FlextCommands.Command):
-        name: str
-        email: str
-
-        def validate_command(self) -> FlextResult[None]:
-            if '@' not in self.email:
-                return FlextResult.fail("Invalid email format")
-            return FlextResult.ok(None)
-
-    class CreateUserHandler(FlextCommands.Handler[CreateUserCommand, User]):
-        def handle(self, command: CreateUserCommand) -> FlextResult[User]:
-            user = User(name=command.name, email=command.email)
-            return self.user_repository.save(user)
-
-    # Singer Tap/Target Commands
-    class ExtractOracleDataCommand(FlextCommands.Command):
-        table_name: str
-        batch_size: int
-
-    # ALGAR Migration Commands
-    class MigrateLdapUsersCommand(FlextCommands.Command):
-        source_dn: str
-        target_dn: str
-        batch_size: int = 100
-
-CQRS Patterns Implementation:
-    - Commands: Write operations with side effects and state changes
-    - Handlers: Business logic processing with validation and error handling
-    - Bus: Routing infrastructure with middleware pipeline support
-    - Correlation Tracking: Request tracing across distributed services
-
-Quality Standards:
-    - All commands must implement validate_command for business validation
-    - Command handlers must be stateless and thread-safe
-    - Commands must be immutable (frozen models) to prevent modification
-    - Correlation IDs must be used for distributed request tracking
-
-See Also:
-    docs/TODO.md: Priority 2 - Complete CQRS implementation
-    handlers.py: Handler patterns and execution lifecycle
-    interfaces.py: FlextHandler interface definitions
-
-Copyright (c) 2025 FLEXT Contributors
-SPDX-License-Identifier: MIT
-
+Provides command definitions, handlers, and bus for CQRS pattern
+implementation with validation and routing capabilities.
 """
 
 from __future__ import annotations
 
 import re
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Self, cast
 from zoneinfo import ZoneInfo
 
-if TYPE_CHECKING:
-    from collections.abc import Callable
-
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core.flext_types import (
-    R,
-    T,
-    TAnyDict,
-    TAnyList,
-    TCommand,
-    TCorrelationId,
-    TEntityId,
-    TResult,
-    TServiceName,
-    TUserId,
+from flext_core.base_commands import (
+    FlextAbstractCommand,
+    FlextAbstractCommandBus,
+    FlextAbstractCommandHandler,
+    FlextAbstractQueryHandler,
 )
-
-# Base mixins now imported from proper public API
 from flext_core.loggings import FlextLoggerFactory
 from flext_core.mixins import (
     FlextLoggableMixin,
@@ -116,9 +29,22 @@ from flext_core.mixins import (
 )
 from flext_core.payload import FlextPayload
 from flext_core.result import FlextResult
+from flext_core.typings import (
+    R,
+    T,
+    TAnyDict,
+    TCommand,
+    TCorrelationId,
+    TEntityId,
+    TResult,
+    TServiceName,
+    TUserId,
+)
 from flext_core.utilities import FlextGenerators, FlextTypeGuards
 from flext_core.validation import FlextValidators
 
+if TYPE_CHECKING:
+    from collections.abc import Callable
 # FlextLogger imported for class methods only - instance methods use FlextLoggableMixin
 
 # =============================================================================
@@ -126,24 +52,8 @@ from flext_core.validation import FlextValidators
 # =============================================================================
 
 # Command pattern specific types for better domain modeling
-type TCommandId = TCorrelationId  # Command instance identifier
-type TCommandType = str  # Command type name for routing
-type THandlerName = TServiceName  # Command handler service name
-type TCommandPayload = TAnyDict  # Command data payload
-type TCommandResult = FlextResult[object]  # Command execution result
-type TCommandMetadata = TAnyDict  # Command metadata for middleware
-type TMiddlewareName = str  # Middleware component name
-type TValidationRule = str  # Command validation rule identifier
-type TCommandBusId = str  # Command bus instance identifier
-type TCommandPriority = int  # Command execution priority (1-10)
 
 # Query pattern specific types
-type TQueryId = TCorrelationId  # Query instance identifier
-type TQueryType = str  # Query type name for routing
-type TQueryResult[T] = FlextResult[T]  # Query result with type parameter
-type TQueryCriteria = TAnyDict  # Query filtering criteria
-type TQueryProjection = TAnyList  # Query result projection fields
-type TPaginationToken = str  # Query pagination continuation token
 
 # =============================================================================
 # FLEXT COMMANDS - Unified command pattern
@@ -151,113 +61,26 @@ type TPaginationToken = str  # Query pagination continuation token
 
 
 class FlextCommands:
-    """Comprehensive CQRS implementation with command and query processing.
+    """CQRS implementation with command and query processing.
 
-    Unified command pattern framework providing organized access to all FLEXT command
-    patterns including CQRS command processing, query handling, and command bus routing.
-    Serves as the primary namespace for command-related functionality with nested class
-    organization.
-
-    Architecture:
-        - CQRS (Command Query Responsibility Segregation) pattern implementation
-        - Namespace organization with nested classes for related functionality
-        - Command and query separation with distinct handler interfaces
-        - Command bus pattern for centralized routing and middleware
-        - Type-safe command and handler interfaces with generic constraints
-        - Integration with event sourcing through correlation tracking
-
-    CQRS Components:
-        - Command: Write operations with side effects and state changes
-        - Handler: Command processing logic with validation and lifecycle management
-        - Bus: Command routing infrastructure with middleware pipeline
-        - Query: Read operations without side effects with pagination support
-        - QueryHandler: Query processing interface for read-only operations
-        - Decorators: Function-based handler registration utilities
-
-    Enterprise Features:
-        - Type-safe command interfaces with compile-time verification
-        - Automatic validation through Pydantic integration
-        - Correlation ID tracking for distributed system observability
-        - Command serialization for transport and persistence
-        - Middleware pipeline for cross-cutting concerns
-        - Comprehensive logging and metrics collection
-
-    Usage Patterns:
-        # Define domain command using shared domain models
-
-        class CreateOrderCommand(FlextCommands.Command):
-            customer_id: str
-            items: list[dict[str, str]]  # Use generic dict for compatibility
-
-            def validate_command(self) -> FlextResult[None]:
-                if not self.items:
-                    return FlextResult.fail("Order must have items")
-                return FlextResult.ok(None)
-
-        # Implement command handler using SharedDomainFactory
-        class CreateOrderHandler(FlextCommands.Handler[CreateOrderCommand, Order]):
-            def handle(self, command: CreateOrderCommand) -> FlextResult[Order]:
-                # Use SharedDomainFactory for consistent object creation
-                order_result = SharedDomainFactory.create_order(
-                    customer_id=command.customer_id,
-                    items=command.items
-                )
-                return order_result  # Already returns FlextResult[Order]
-
-        # Register and execute through bus
-        bus = FlextCommands.create_command_bus()
-        handler = CreateOrderHandler()
-        bus.register_handler(CreateOrderCommand, handler)
-
-        command = CreateOrderCommand(
-            customer_id="cust_123",
-            items=[{
-                "product_id": "prod_456",
-                "product_name": "Product",
-                "quantity": "2",
-                "unit_price": "100.0",
-                "currency": "USD"
-            }]
-        )
-        result = bus.execute(command)
-
-        # Query pattern for read operations
-        class GetOrdersQuery(FlextCommands.Query):
-            customer_id: str
-            status: str | None = None
-
-        class GetOrdersHandler(FlextCommands.QueryHandler[GetOrdersQuery, list[Order]]):
-            def handle(self, query: GetOrdersQuery) -> FlextResult[list[Order]]:
-                orders = self.order_repository.find_by_customer(
-                    query.customer_id,
-                    status=query.status,
-                    page_size=query.page_size,
-                    page_number=query.page_number
-                )
-                return FlextResult.ok(orders)
-
-    Design Pattern Integration:
-        - Command Pattern: Encapsulating requests as objects
-        - Mediator Pattern: Command bus as communication mediator
-        - Chain of Responsibility: Middleware pipeline processing
-        - Template Method: Handler lifecycle with customizable hooks
-        - Factory Method: Command and handler creation utilities
+    Unified framework for CQRS patterns including command processing,
+    query handling, and command bus routing.
     """
 
     # =============================================================================
     # BASE COMMAND - Foundation for all commands
     # =============================================================================
 
-    class Command(
+    class Command(  # type: ignore[misc]
         BaseModel,
+        FlextAbstractCommand,
         FlextSerializableMixin,
         FlextValidatableMixin,
         FlextLoggableMixin,
     ):
         """Base command with validation and metadata.
 
-        Commands represent intentions to change system state.
-        Uses Pydantic for automatic validation and FLEXT mixins.
+        Implements FlextAbstractCommand.
         """
 
         model_config = ConfigDict(
@@ -293,6 +116,9 @@ class FlextCommands:
             description="Correlation ID for tracking",
         )
 
+        # Accept legacy 'mixin_setup' injections from tests without failing
+        mixin_setup: object | None = Field(default=None, exclude=True)  # type: ignore[assignment]
+
         def model_post_init(self, __context: object, /) -> None:
             """Set command_type from class name if not provided."""
             if not self.command_type:
@@ -304,8 +130,15 @@ class FlextCommands:
                 # Convert CamelCase to snake_case
                 snake_name = re.sub(r"(?<!^)(?=[A-Z])", "_", class_name).lower()
 
-                # Since the model is frozen, use object.__setattr__
-                object.__setattr__(self, "command_type", snake_name)
+                # Since the model is frozen, use object.__setattr__ if needed
+                try:
+                    object.__setattr__(self, "command_type", snake_name)
+                except Exception:
+                    # If field has no setter and is default, fallback to build new
+                    data = self.model_dump()
+                    data["command_type"] = snake_name
+                    new_inst = type(self).model_validate(data)
+                    object.__setattr__(self, "__dict__", new_inst.__dict__)
 
         def to_payload(self) -> FlextPayload[TAnyDict]:
             """Convert command to FlextPayload for transport."""
@@ -524,17 +357,11 @@ class FlextCommands:
     # =============================================================================
 
     class Handler[TCommand, TResult](
-        ABC,
+        FlextAbstractCommandHandler[TCommand, TResult],
         FlextLoggableMixin,
         FlextTimingMixin,
     ):
-        """Base command handler interface.
-
-        Handlers execute commands and return results.
-        Uses FlextResult, FlextLogger, FlextTypes extensively.
-        Uses FlextLoggableMixin to eliminate logger duplication (DRY).
-        Uses FlextTimingMixin to eliminate timing duplication (DRY).
-        """
+        """Base command handler interface - implements FlextAbstractCommandHandler."""
 
         def __init__(
             self,
@@ -544,8 +371,23 @@ class FlextCommands:
             """Initialize handler with logging."""
             self._handler_name = handler_name or self.__class__.__name__
             self.handler_id = handler_id or f"{self.__class__.__name__}_{id(self)}"
-            self.handler_name = self._handler_name
             # Logger now provided by FlextLoggableMixin - DRY principle applied
+
+        @property
+        def handler_name(self) -> str:
+            """Get handler name - implements abstract method."""
+            return self._handler_name
+
+        def validate_command(self, command: TCommand) -> FlextResult[None]:
+            """Validate command before handling - implements abstract method."""
+            # Default implementation delegates to command's validation
+            if hasattr(command, "validate_command"):
+                result = command.validate_command()
+                # Ensure we return FlextResult[None] type
+                if isinstance(result, FlextResult):
+                    return result
+                return FlextResult.ok(None)
+            return FlextResult.ok(None)
 
         @abstractmethod
         def handle(self, command: TCommand) -> FlextResult[TResult]:
@@ -569,8 +411,17 @@ class FlextCommands:
                 FlextResult with processing result or error
 
             """
-            # Validate command first
-            if hasattr(command, "validate_command"):
+            # Validate command first via injected validator or command's own method
+            if hasattr(self, "_validator") and self._validator is not None:
+                try:
+                    validate_method = getattr(self._validator, "validate_message", None)
+                    if callable(validate_method):
+                        vres = validate_method(command)
+                        if hasattr(vres, "is_failure") and vres.is_failure:
+                            return FlextResult.fail(vres.error or "Command validation failed")
+                except Exception as e:
+                    return FlextResult.fail(f"Command validation failed: {e}")
+            elif hasattr(command, "validate_command"):
                 validation_result = command.validate_command()
                 if validation_result.is_failure:
                     error = validation_result.error or "Command validation failed"
@@ -581,14 +432,20 @@ class FlextCommands:
                 error = f"{self.handler_name} cannot process {type(command).__name__}"
                 return FlextResult.fail(error)
 
-            # Handle the command
+            # Handle the command and collect simple metrics when available
             try:
-                return self.handle(command)
+                result = self.handle(command)
+                # Simple metrics update when collector injected
+                if hasattr(self, "_metrics") and self._metrics is not None:
+                    metrics = getattr(self._metrics, "get_metrics", None)
+                    if callable(metrics):
+                        _ = metrics()
+                return result
             except (RuntimeError, OSError) as e:
                 return FlextResult.fail(f"Command processing failed: {e}")
 
         def can_handle(self, command: object) -> bool:
-            """Check if handler can process this command.
+            """Check if handler can process this command - implements abstract method.
 
             Uses FlextUtilities type guards for validation.
             """
@@ -665,12 +522,10 @@ class FlextCommands:
     # COMMAND BUS - Command routing and execution
     # =============================================================================
 
-    class Bus(FlextLoggableMixin):
+    class Bus(FlextAbstractCommandBus, FlextLoggableMixin):
         """Command bus for routing commands to handlers.
 
-        Implements command pattern with automatic handler discovery.
-        Uses FlextContainer internally for dependency injection.
-        Uses FlextLoggableMixin to eliminate logger duplication (DRY principle).
+        Implements FlextAbstractCommandBus.
         """
 
         def __init__(self) -> None:
@@ -686,10 +541,47 @@ class FlextCommands:
 
         def register_handler(
             self,
+            command_type: str,
+            handler: FlextAbstractCommandHandler[object, object],
+        ) -> None:
+            """Register command handler - implements abstract method.
+
+            Args:
+                command_type: Command type to register
+                handler: Handler instance
+
+            """
+            # Validate inputs
+            if not FlextValidators.is_not_none(command_type):
+                raise ValueError("Command type cannot be None")
+            if not FlextValidators.is_not_none(handler):
+                raise ValueError("Handler cannot be None")
+
+            # Check if already registered
+            if command_type in self._handlers:
+                self.logger.warning(
+                    "Handler already registered",
+                    command_type=command_type,
+                    existing_handler=self._handlers[command_type].__class__.__name__,
+                )
+                return
+
+            # Register handler
+            self._handlers[command_type] = handler
+
+            self.logger.info(
+                "Handler registered successfully",
+                command_type=command_type,
+                handler_type=handler.__class__.__name__,
+                total_handlers=len(self._handlers),
+            )
+
+        def register_handler_flexible(
+            self,
             handler_or_command_type: object | type[TCommand],
             handler: FlextCommands.Handler[TCommand, TResult] | None = None,
         ) -> FlextResult[None]:
-            """Register handler with flexible arguments.
+            """Register handler with flexible arguments (backward compatibility).
 
             Args:
                 handler_or_command_type: Handler instance or command type
@@ -892,6 +784,23 @@ class FlextCommands:
                     return handler
             return None
 
+        def unregister_handler(self, command_type: str) -> bool:
+            """Unregister command handler - implements abstract method."""
+            # Find handler by command type string
+            for key, _handler in list(self._handlers.items()):
+                if (hasattr(key, "__name__") and key.__name__ == command_type) or str(key) == command_type:
+                    del self._handlers[key]
+                    return True
+            return False
+
+        def send_command(self, command: FlextAbstractCommand) -> FlextResult[object]:
+            """Send command - implements abstract method."""
+            return self.execute(command)
+
+        def get_registered_handlers(self) -> dict[str, object]:
+            """Get registered handlers - implements abstract method."""
+            return {str(k): v for k, v in self._handlers.items()}
+
     # =============================================================================
     # COMMAND DECORATORS - Convenience decorators
     # =============================================================================
@@ -905,11 +814,12 @@ class FlextCommands:
         ) -> Callable[[Callable[[object], object]], Callable[[object], object]]:
             """Mark a function as command handler.
 
-            Usage:
-                @FlextCommands.Decorators.command_handler(CreateUserCommand)
-                def handle_create_user(command: CreateUserCommand) -> FlextResult[User]:
-                    # Handle command
-                    return FlextResult.ok(user)
+            Args:
+                command_type: Command type to handle
+
+            Returns:
+                Decorator function for command handler registration.
+
             """
 
             def decorator(
@@ -942,16 +852,12 @@ class FlextCommands:
     # QUERY PATTERNS - Read-only operations
     # =============================================================================
 
-    class Query(
+    class Query(  # type: ignore[misc]
         BaseModel,
         FlextValidatableMixin,
         FlextSerializableMixin,
     ):
-        """Base query for read operations without side effects.
-
-        Queries represent requests for data without side effects.
-        Uses proper mixin inheritance for validation and serialization functionality.
-        """
+        """Base query for read operations without side effects."""
 
         model_config = ConfigDict(
             frozen=True,
@@ -967,25 +873,22 @@ class FlextCommands:
         sort_order: TServiceName = "asc"
 
         def validate_query(self) -> FlextResult[None]:
-            """Validate query with business logic using proper mixin interface."""
-            # Clear previous errors
-            self.clear_validation_errors()
+            """Validate query with business logic."""
+            errors: list[str] = []
 
             # Perform business validation
             if self.page_size <= 0:
-                self.add_validation_error("Page size must be positive")
+                errors.append("Page size must be positive")
             if self.page_number <= 0:
-                self.add_validation_error("Page number must be positive")
+                errors.append("Page number must be positive")
             if self.sort_order not in {"asc", "desc"}:
-                self.add_validation_error("Sort order must be 'asc' or 'desc'")
+                errors.append("Sort order must be 'asc' or 'desc'")
 
             # Check validation results
-            if self.has_validation_errors():
-                errors = "; ".join(self.validation_errors)
-                return FlextResult.fail(f"Query validation failed: {errors}")
+            if errors:
+                error_message = "; ".join(errors)
+                return FlextResult.fail(f"Query validation failed: {error_message}")
 
-            # Mark as valid
-            self.mark_valid()
             return FlextResult.ok(None)
 
         # Mixin methods are now available through proper inheritance:
@@ -995,8 +898,30 @@ class FlextCommands:
         # - to_dict_basic() method (from FlextSerializableMixin)
         # - All serialization methods (from FlextSerializableMixin)
 
-    class QueryHandler[T, R](ABC):
-        """Base query handler interface."""
+    class QueryHandler[T, R](FlextAbstractQueryHandler[T, R]):
+        """Base query handler built on abstract base.
+
+        Provides default implementations using centralized base.
+        """
+
+        def __init__(self, handler_name: str | None = None) -> None:
+            """Initialize query handler with optional name."""
+            self._handler_name = handler_name or self.__class__.__name__
+
+        @property
+        def handler_name(self) -> str:
+            """Get handler name for this query handler."""
+            return self._handler_name
+
+        def can_handle(self, query: object) -> bool:  # noqa: ARG002
+            """Check if handler can handle query (always True for generic handler)."""
+            return True
+
+        def validate_query(self, query: T) -> FlextResult[None]:
+            """Validate query object using its own validation method if available."""
+            if hasattr(query, "validate_query"):
+                return query.validate_query()  # type: ignore[no-any-return]
+            return FlextResult.ok(None)
 
         @abstractmethod
         def handle(self, query: T) -> FlextResult[R]:

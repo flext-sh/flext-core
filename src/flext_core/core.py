@@ -1,82 +1,10 @@
-"""FLEXT Core Main - Extension Layer Central Orchestration.
+"""Central orchestration for unified FLEXT Core system access.
 
-Central orchestration point providing unified access to all FLEXT Core functionality
-through a single, cohesive interface across the 32-project FLEXT ecosystem. Foundation
-for application-wide consistency, subsystem coordination, and enterprise integration
-patterns in distributed data integration platforms.
+Provides singleton-based orchestration, facade patterns, and type-safe
+dependency injection for application-wide consistency and subsystem coordination.
 
-Module Role in Architecture:
-    Extension Layer → Central Orchestration → Unified System Access
-
-    This module provides unified system access patterns used throughout FLEXT projects:
-    - Singleton pattern for application-wide consistency and state management
-    - Facade pattern hiding complex subsystem interactions
-    - Type-safe operations with comprehensive dependency injection
-    - Railway-oriented programming utilities for functional composition
-
-Core Architecture Patterns:
-    Singleton Pattern: Application-wide consistency with global state management
-    Facade Pattern: Subsystem complexity hiding through unified interface
-    Dependency Injection: Type-safe service registration and retrieval
-    Railway Programming: Functional composition with FlextResult integration
-
-Development Status (v0.9.0 → 1.0.0):
-    ✅ Production Ready: Singleton orchestration, facade interface, DI integration
-    🚧 Active Development: Advanced orchestration patterns (Enhancement 5 - Low)
-    📋 TODO Integration: Plugin system orchestration (Priority 3)
-
-Core Orchestration Features:
-    FlextCore: Main singleton providing unified system access
-    Container Integration: Type-safe dependency injection with service management
-    Logging Configuration: Centralized logging setup and context management
-    Result Pattern Integration: Railway-oriented programming for error handling
-    Configuration Management: Settings caching with environment variable support
-
-Ecosystem Usage Patterns:
-    # FLEXT Service Applications
-    from flext_core import FlextCore
-
-    core = FlextCore.get_instance()
-    container = core.get_container()
-    logger = core.get_logger(__name__)
-
-    # Service registration
-    container.register("user_service", user_service_instance)
-
-    # FLEXT Applications
-    class FlextApplication:
-        def __init__(self):
-            self.core = FlextCore.get_instance()
-            self.setup_dependencies()
-
-        def setup_dependencies(self):
-            self.core.configure_logging(level="INFO")
-            self.core.register_services()
-
-    # Singer Tap/Target Integration
-    core = FlextCore.get_instance()
-    oracle_service = core.get_service("oracle_client")
-    result = oracle_service.extract_data("users")
-
-Enterprise Integration Benefits:
-    - Application-wide consistency through singleton pattern
-    - Subsystem coordination through facade interface
-    - Type-safe dependency management with compile-time validation
-    - Functional programming support for data processing pipelines
-
-Quality Standards:
-    - Singleton instance must be thread-safe for concurrent access
-    - Facade interface must remain stable across version updates
-    - Service registration must be type-safe with proper error handling
-    - Configuration management must support environment-specific settings
-
-See Also:
-    docs/TODO.md: Enhancement 5 - Advanced orchestration pattern development
-    container.py: Dependency injection implementation details
-    result.py: Railway-oriented programming pattern implementation
-
-Copyright (c) 2025 FLEXT Contributors
-SPDX-License-Identifier: MIT
+Classes:
+    FlextCore: Main singleton providing unified system access.
 
 """
 
@@ -87,10 +15,8 @@ from typing import TYPE_CHECKING
 from flext_core.constants import FlextConstants
 from flext_core.container import (
     FlextContainer,
-    ServiceKey,
-    get_flext_container,
-    get_typed,
-    register_typed,
+    FlextServiceKey as ServiceKey,
+    get_flext_container,  # re-export for test patching
 )
 from flext_core.guards import ValidatedModel, immutable, is_dict_of, pure
 from flext_core.loggings import FlextLogger, FlextLoggerFactory
@@ -101,68 +27,10 @@ if TYPE_CHECKING:
 
 
 class FlextCore:
-    """Central orchestration class providing unified access to FLEXT Core functionality.
+    """Singleton facade providing unified access to FLEXT functionality.
 
-    Implements facade pattern to provide simple, unified interface to complex subsystems
-    while maintaining type safety and error handling. Serves as the
-    primary entry point for all FLEXT Core operations.
-
-    Architecture:
-        - Singleton pattern ensuring single global instance
-        - Facade pattern hiding complex subsystem interactions
-        - Type-safe service registration and retrieval
-        - Railway-oriented programming utilities for functional composition
-        - Settings caching for performance optimization
-
-    Core Subsystem Integration:
-        - Container: Type-safe dependency injection with FlextContainer
-        - Logging: Structured logging with FlextLogger integration
-        - Result: Railway-oriented programming with FlextResult patterns
-        - Configuration: Settings management with caching
-        - Constants: System-wide constants access through FlextConstants
-
-    Enterprise Features:
-        - Type-safe service registration using ServiceKey[T] pattern
-        - Railway programming utilities for functional data processing
-        - Structured logging with automatic context management
-        - Configuration caching for performance optimization
-        - Error handling without exception propagation
-
-    Usage Patterns:
-        # Singleton access
-        flext = FlextCore.get_instance()
-
-        # Type-safe service management
-        USER_SERVICE_KEY = ServiceKey[UserService]("user_service")
-        flext.register_service(USER_SERVICE_KEY, UserService())
-        user_service_result = flext.get_service(USER_SERVICE_KEY)
-
-        # Structured logging
-        logger = flext.get_logger("myapp.service")
-        logger.info("Service started", service="user", version="1.0")
-
-        # Railway programming
-        pipeline = flext.pipe(
-            validate_input,
-            transform_data,
-            save_to_database
-        )
-        result = pipeline(input_data)
-
-        # Conditional processing
-        conditional_processor = flext.when(
-            lambda x: x > 0,
-            lambda x: flext.ok(x * 2),
-            lambda x: flext.fail("Negative value")
-        )
-
-        # Side effects in pipelines
-        logged_pipeline = flext.pipe(
-            validate_input,
-            flext.tap(lambda x: logger.info("Validated", data=x)),
-            process_data,
-            flext.tap(lambda x: logger.info("Processed", result=x))
-        )
+    Manages container, logging, configuration, and validation subsystems.
+    Thread-safe with lazy initialization of components.
     """
 
     _instance: FlextCore | None = None
@@ -197,7 +65,7 @@ class FlextCore:
 
     def register_service[S](
         self,
-        key: ServiceKey[S],
+        key: ServiceKey,
         service: S,
     ) -> FlextResult[None]:
         """Register typed service in container.
@@ -210,9 +78,12 @@ class FlextCore:
             Result of registration
 
         """
-        return register_typed(self._container, key, service)
+        return self._container.register(
+            str(key) if not isinstance(key, str) else key,
+            service,
+        )
 
-    def get_service[S](self, key: ServiceKey[S]) -> FlextResult[S]:
+    def get_service[S](self, key: ServiceKey) -> FlextResult[S]:
         """Get typed service from container.
 
         Args:
@@ -222,7 +93,14 @@ class FlextCore:
             Result containing service or error
 
         """
-        return get_typed(self._container, key)
+        # Use container method directly for type safety
+        key_str = str(key) if not isinstance(key, str) else key
+        # Get the service without type checking since S is already constrained
+        result = self._container.get(key_str)
+        if result.is_failure:
+            return FlextResult.fail(result.error or "Service not found")
+        # Cast the result to the expected type
+        return FlextResult.ok(result.data)  # type: ignore[arg-type]
 
     # =========================================================================
     # LOGGING ACCESS
@@ -486,16 +364,6 @@ def flext_core() -> FlextCore:
 
     Returns:
         Global FlextCore singleton instance
-
-    Usage:
-        # Convenient access
-        flext = flext_core()
-
-        # Equivalent to
-        flext = FlextCore.get_instance()
-
-        # Direct usage in functional style
-        result = flext_core().ok("success").map(str.upper)
 
     """
     return FlextCore.get_instance()

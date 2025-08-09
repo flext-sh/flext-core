@@ -1,31 +1,7 @@
-"""Pytest configuration for FLEXT Core test suite - Advanced Enterprise Edition.
+"""Pytest configuration for FLEXT Core test suite.
 
-Ultra-modern pytest configuration implementing advanced testing patterns:
-- Parametrized fixture factories with type safety
-- Hypothesis integration for property-based testing
-- Performance benchmarking with pytest-benchmark
-- Async testing support with pytest-asyncio
-- Mock factories with pytest-mock integration
-- Snapshot testing for complex data structures
-- Parallel execution with pytest-xdist
-- BDD support with pytest-bdd integration
-
-Architecture Layers:
-    Testing Foundation → Fixture Factories → Test Builders → Quality Gates
-
-    Advanced Patterns:
-    - Factory Pattern: Dynamic fixture generation
-    - Builder Pattern: Fluent test data construction
-    - Strategy Pattern: Pluggable test behaviors
-    - Observer Pattern: Test event monitoring
-    - Decorator Pattern: Enhanced test capabilities
-
-Quality Standards:
-    - Zero Cross-Test Contamination: Complete isolation
-    - Type Safety: 100% typed with generics
-    - Performance: Sub-millisecond fixture creation
-    - Determinism: Reproducible test execution
-    - Coverage: Automatic branch coverage tracking
+Provides fixtures, factories, and testing utilities with type safety,
+isolation, and reproducible test execution.
 """
 
 import asyncio
@@ -47,31 +23,13 @@ from unittest.mock import AsyncMock, MagicMock, Mock
 import pytest
 import structlog
 from _pytest.fixtures import SubRequest
-
-# Conditional imports for optional dependencies
-try:
-    from hypothesis import strategies as st
-
-    HAS_HYPOTHESIS = True
-except ImportError:
-    HAS_HYPOTHESIS = False
-    st = None  # type: ignore[assignment]
-
-try:
-    from pytest_mock import MockerFixture
-
-    HAS_PYTEST_MOCK = True
-except ImportError:
-    HAS_PYTEST_MOCK = False
-    MockerFixture = Any  # type: ignore[misc]
+from hypothesis import strategies as st
 
 from flext_core.aggregate_root import FlextAggregateRoot
 from flext_core.commands import FlextCommands
 from flext_core.container import FlextContainer
 from flext_core.entities import FlextEntity
-
-# Guards module doesn't export FlextGuard
-from flext_core.handlers import FlextHandlers
+from flext_core.handlers import FlextBaseHandler
 from flext_core.loggings import FlextLoggerFactory
 from flext_core.models import FlextEntityStatus, FlextOperationStatus
 from flext_core.payload import FlextEvent
@@ -215,7 +173,7 @@ class TestDataBuilder[T]:
         """Add status to test data."""
         return self.with_field("status", status)
 
-    def build(self) -> dict[str, Any]:
+    def build(self) -> dict[str, object]:
         """Build the test data dictionary."""
         return self._data.copy()
 
@@ -246,7 +204,7 @@ class TestCase[T]:
 
     id: str
     description: str
-    input_data: Any
+    input_data: object
     expected_output: T | None
     expected_error: str | None = None
     scenario: TestScenario = TestScenario.HAPPY_PATH
@@ -259,9 +217,9 @@ class TestCase[T]:
 
 
 @pytest.fixture
-def fixture_factory() -> Callable[[str, Any], Any]:
+def fixture_factory() -> Callable[[str, object], object]:
     """Factory for creating dynamic fixtures."""
-    created_fixtures: dict[str, Any] = {}
+    created_fixtures: dict[str, object] = {}
 
     def _create_fixture(name: str, value: Any) -> Any:
         if name not in created_fixtures:
@@ -278,7 +236,7 @@ def fixture_factory() -> Callable[[str, Any], Any]:
         {"type": "complex", "fields": 10},
     ]
 )
-def parametrized_data(request: SubRequest) -> dict[str, Any]:
+def parametrized_data(request: SubRequest) -> dict[str, object]:
     """Parametrized fixture providing various data complexities."""
     config = request.param
     data = {f"field_{i}": f"value_{i}" for i in range(config["fields"])}
@@ -287,7 +245,7 @@ def parametrized_data(request: SubRequest) -> dict[str, Any]:
 
 
 @pytest.fixture
-def sample_data() -> dict[str, Any]:
+def sample_data() -> dict[str, object]:
     """Provide deterministic sample data for tests.
 
     Enterprise-grade test data factory providing consistent, typed sample data
@@ -310,10 +268,8 @@ def sample_data() -> dict[str, Any]:
 
 
 @pytest.fixture
-def hypothesis_strategies() -> dict[str, Any]:
+def hypothesis_strategies() -> dict[str, object]:
     """Hypothesis strategies for property-based testing."""
-    if not HAS_HYPOTHESIS:
-        pytest.skip("Hypothesis not installed")
 
     return {
         "valid_email": st.emails(),
@@ -331,7 +287,7 @@ def hypothesis_strategies() -> dict[str, Any]:
 
 
 @pytest.fixture
-def sample_metadata() -> dict[str, str | float | list[str]]:
+def sample_metadata() -> dict[str, str | float | list[str] | None]:
     """Provide sample metadata for comprehensive testing.
 
     Metadata factory for testing message payloads, audit trails,
@@ -373,7 +329,7 @@ def error_context() -> dict[str, str | None]:
 
 
 @pytest.fixture
-def test_user_data() -> dict[str, str | int | bool | list[str]]:
+def test_user_data() -> dict[str, str | int | bool | list[str] | None]:
     """Provide consistent user data for domain testing.
 
     User data factory aligned with shared domain patterns
@@ -396,22 +352,13 @@ def test_user_data() -> dict[str, str | int | bool | list[str]]:
 @pytest.fixture
 def mock_factory() -> Callable[[str], Mock]:
     """Advanced mock factory with automatic cleanup."""
-    if not HAS_PYTEST_MOCK:
-        # Fallback without pytest-mock
-        def _create_mock(name: str, **kwargs) -> Mock:
-            mock = MagicMock(name=name, **kwargs)
-            mock.is_healthy.return_value = True
-            mock.validate.return_value = FlextResult.ok(None)
-            mock.process.return_value = FlextResult.ok("processed")
-            return mock
-    else:
 
-        def _create_mock(name: str, **kwargs) -> Mock:
-            mock = MagicMock(name=name, **kwargs)
-            mock.is_healthy.return_value = True
-            mock.validate.return_value = FlextResult.ok(None)
-            mock.process.return_value = FlextResult.ok("processed")
-            return mock
+    def _create_mock(name: str, **kwargs) -> Mock:
+        mock = MagicMock(name=name, **kwargs)
+        mock.is_healthy.return_value = True
+        mock.validate.return_value = FlextResult.ok(None)
+        mock.process.return_value = FlextResult.ok("processed")
+        return mock
 
     return _create_mock
 
@@ -944,21 +891,22 @@ def command_factory() -> Callable[[str, dict[str, Any]], FlextCommands.Command]:
 
 
 @pytest.fixture
-def handler_factory() -> Callable[[Callable], FlextHandlers.Handler]:
+def handler_factory() -> Callable[[Callable], FlextBaseHandler]:
     """Factory for creating test handlers."""
 
-    class TestHandler(FlextHandlers.Handler):
+    class TestHandler(FlextBaseHandler):
         def __init__(self, handler_func: Callable):
+            super().__init__("test_handler")
             self.handler_func = handler_func
 
-        def handle(self, command: FlextCommands.Command) -> FlextResult[Any]:
+        def process_message(self, message: object) -> FlextResult[object]:
             try:
-                result = self.handler_func(command)
+                result = self.handler_func(message)
                 return FlextResult.ok(result)
             except Exception as e:
                 return FlextResult.fail(str(e))
 
-    def _create_handler(handler_func: Callable) -> FlextHandlers.Handler:
+    def _create_handler(handler_func: Callable) -> FlextBaseHandler:
         return TestHandler(handler_func)
 
     return _create_handler
@@ -1049,3 +997,87 @@ def pytest_collection_modifyitems(config, items):
             item.add_marker(pytest.mark.benchmark)
         if "test_async" in item.name:
             item.add_marker(pytest.mark.asyncio)
+
+
+# =============================================================================
+# MISSING TEST UTILITIES - Backward compatibility
+# =============================================================================
+
+
+class AssertHelpers:
+    """Helper utilities for test assertions."""
+
+    @staticmethod
+    def assert_result_success(result):
+        """Assert that a result is successful."""
+        assert result.is_success, f"Expected success but got: {result.error}"
+
+    @staticmethod
+    def assert_result_failure(result):
+        """Assert that a result is a failure."""
+        assert result.is_failure, f"Expected failure but got: {result.data}"
+
+
+class MockFactory:
+    """Factory for creating mock objects."""
+
+    @staticmethod
+    def create_mock_config(**kwargs):
+        """Create a mock configuration."""
+        return type("MockConfig", (), kwargs)()
+
+
+class PerformanceMonitor:
+    """Monitor performance during tests."""
+
+    def __init__(self):
+        self.start_time = None
+        self.end_time = None
+
+    def start(self):
+        """Start timing."""
+        import time
+
+        self.start_time = time.time()
+
+    def stop(self):
+        """Stop timing."""
+        import time
+
+        self.end_time = time.time()
+
+    @property
+    def duration(self):
+        """Get duration in seconds."""
+        if self.start_time and self.end_time:
+            return self.end_time - self.start_time
+        return 0
+
+
+class TestBuilder:
+    """Builder for creating test objects."""
+
+    def __init__(self):
+        self.data = {}
+
+    def with_field(self, name, value):
+        """Add a field to the test object."""
+        self.data[name] = value
+        return self
+
+    def build(self):
+        """Build the test object."""
+        return type("TestObject", (), self.data)()
+
+
+def assert_function_performance(func, max_duration=1.0):
+    """Assert that a function executes within time limit."""
+    import time
+
+    start = time.time()
+    result = func()
+    duration = time.time() - start
+    assert duration <= max_duration, (
+        f"Function took {duration}s, max allowed {max_duration}s"
+    )
+    return result

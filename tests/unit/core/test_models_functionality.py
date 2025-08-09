@@ -1,12 +1,7 @@
-"""Advanced tests for flext_core.models - Refactored with modern pytest patterns.
+"""Tests for flext_core.models with modern pytest patterns.
 
-This module demonstrates complete refactoring using advanced pytest features:
-- Parametrized fixtures from conftest
-- Factory patterns for test data
-- Performance monitoring integration
-- Snapshot testing for complex model outputs
-- Property-based testing with Hypothesis
-- Advanced mocking with pytest-mock integration
+Advanced tests using parametrized fixtures, factory patterns,
+performance monitoring, and property-based testing.
 """
 
 from __future__ import annotations

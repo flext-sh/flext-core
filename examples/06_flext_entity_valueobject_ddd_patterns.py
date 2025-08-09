@@ -1,13 +1,8 @@
 #!/usr/bin/env python3
-"""FLEXT Entity/ValueObject - Domain-Driven Design Patterns Example.
+"""Domain-Driven Design patterns with FlextEntity.
 
-Demonstrates comprehensive Domain-Driven Design (DDD) patterns using FlextEntity
-with entity lifecycle management, value objects, domain events, and aggregates.
-
-Features demonstrated:
-- Entity creation with domain validation and business rules
-- Value object patterns for domain modeling
-- Domain event handling and event sourcing
+Demonstrates entity lifecycle management, value objects,
+domain events, and aggregate patterns.
 - Version management and optimistic locking
 - Entity lifecycle operations with state transitions
 - Aggregate patterns and bounded contexts

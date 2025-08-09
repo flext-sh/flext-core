@@ -12,8 +12,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_core.handlers import FlextHandlers
-from flext_core.result import FlextResult
+from flext_core import FlextHandlers, FlextResult
 
 
 class TestSOLIDPrinciples:
@@ -225,7 +224,7 @@ class TestSOLIDPrinciples:
         # Test that handlers implement expected protocols
         handler = FlextHandlers.CommandHandler("protocol_test")
 
-        # Should implement MessageHandler protocol
+        # Should implement FlextMessageHandler protocol
         assert hasattr(handler, "handle")
         assert hasattr(handler, "can_handle")
 

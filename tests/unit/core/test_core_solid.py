@@ -1,9 +1,7 @@
-"""Tests for SOLID principles implementation in FlextCore.
+"""Tests for SOLID principles in FlextCore.
 
-Tests specifically for the SOLID refactoring of core.py:
-- Validation and Guards functionality implementation
-- Dependency Inversion Principle (DIP) compliance
-- Single Responsibility Principle (SRP) adherence
+Tests validation, guards functionality, and SOLID principle compliance
+in core module implementation.
 """
 
 from __future__ import annotations

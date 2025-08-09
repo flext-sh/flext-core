@@ -38,7 +38,7 @@ from flext_core import (
 if TYPE_CHECKING:
     from unittest.mock import MagicMock
 
-    from flext_core.flext_types import FlextEntityId
+    from flext_core.typings import FlextEntityId
 
 pytestmark = [pytest.mark.integration]
 

@@ -18,7 +18,7 @@ EXPECTED_DATA_COUNT = 3
 # as Pydantic handles forward references automatically
 
 if TYPE_CHECKING:
-    from flext_core.flext_types import FlextEntityId
+    from flext_core.typings import FlextEntityId
 
 
 class TestCoverageGaps:

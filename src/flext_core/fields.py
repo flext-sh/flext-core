@@ -1,85 +1,7 @@
-r"""FLEXT Core Fields - Extension Layer Field Definition System.
+"""Field definition and validation system with metadata support.
 
-Comprehensive field definition and validation system for enterprise data management
-with metadata support, registry patterns, and type-safe operations across the
-32-project FLEXT ecosystem. Foundation for structured data modeling, form validation,
-and schema definition in data integration and business logic components.
-
-Module Role in Architecture:
-    Extension Layer → Field Definition System → Structured Data Modeling
-
-    This module provides field definition patterns used throughout FLEXT projects:
-    - Type-safe field creation with compile-time verification
-    - Comprehensive metadata support for field description and categorization
-    - Registry pattern for centralized field management and conflict resolution
-    - Validation integration with enterprise-grade error handling
-
-Field Architecture Patterns:
-    Factory Pattern: Type-safe field creation with comprehensive validation
-    Registry Singleton: Centralized field management with conflict detection
-    Immutable Design: Frozen Pydantic models for thread safety
-    Metadata Enrichment: Comprehensive field metadata for enterprise applications
-
-Development Status (v0.9.0 → 1.0.0):
-    ✅ Production Ready: Field definitions, registry, factory methods, validation
-    🚧 Active Development: Dynamic field validation (Enhancement 4 - Priority Medium)
-    📋 TODO Integration: Schema-based field generation (Priority 3)
-
-Field System Components:
-    FlextFieldCore: Immutable field definition with comprehensive validation
-    FlextFieldRegistry: Thread-safe centralized field registration and lookup
-    FlextFields: Factory methods and unified public API interface
-    Type Definitions: Strong typing for field properties and metadata
-    Validation Integration: Type-specific validation with FlextValidators
-
-Ecosystem Usage Patterns:
-    # FLEXT Service Data Models
-    from flext_core.fields import FlextFields
-
-    # Field registration and validation
-    user_name_field = FlextFields.string_field(
-        name="user_name",
-        description="User's full name",
-        required=True,
-        min_length=2,
-        max_length=100
-    )
-
-    # Singer Tap/Target Schema Fields
-    oracle_column_field = FlextFields.database_field(
-        name="employee_id",
-        column_type="NUMBER(10)",
-        nullable=False,
-        primary_key=True
-    )
-
-    # ALGAR Migration Fields
-    ldap_attribute_field = FlextFields.ldap_field(
-        name="uid",
-        attribute_type="string",
-        required=True,
-        indexed=True
-    )
-
-Field Validation Strategy:
-    - Type-specific validation methods for string, integer, boolean, and custom types
-    - Metadata validation ensuring field definitions meet enterprise requirements
-    - Registry validation preventing field name conflicts and ensuring uniqueness
-    - Cross-field validation for complex business rules and dependencies
-
-Quality Standards:
-    - All field definitions must be immutable after creation
-    - Field names must be unique within their registration scope
-    - Field validation must provide actionable error messages
-    - Metadata must be comprehensive and support introspection
-
-See Also:
-    docs/TODO.md: Enhancement 4 - Dynamic field validation development
-    validation.py: FlextValidators integration for field validation
-    entities.py: Entity patterns using field definitions
-
-Copyright (c) 2025 FLEXT Contributors
-SPDX-License-Identifier: MIT
+Provides immutable field definitions with validation, centralized field management,
+and factory methods for creating strongly-typed field definitions.
 
 """
 
@@ -92,26 +14,26 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from flext_core.constants import FlextFieldType
 from flext_core.exceptions import FlextTypeError, FlextValidationError
-from flext_core.flext_types import (
+from flext_core.loggings import FlextLoggerFactory
+from flext_core.mixins import FlextSerializableMixin, FlextValidatableMixin
+from flext_core.result import FlextResult
+from flext_core.typings import (
+    FlextFieldId,
+    FlextFieldName,
+    FlextFieldTypeStr,
     FlextValidator,
     TAnyDict,
-    TEntityId,
     TFieldInfo,
     TFieldMetadata,
 )
-from flext_core.loggings import get_logger
-from flext_core.mixins import FlextSerializableMixin, FlextValidatableMixin
-from flext_core.result import FlextResult
 from flext_core.validation import FlextValidators
 
 # =============================================================================
 # TYPE DEFINITIONS - Consolidados sem underscore
 # =============================================================================
 
-# Type aliases consolidados - Python 3.13 + objetos sem underscore
-type FlextFieldId = TEntityId
-type FlextFieldName = str
-type FlextFieldTypeStr = str
+# Type aliases moved to typings.py for centralization
+# Import from flext_core.typings: FlextFieldId, FlextFieldName, FlextFieldTypeStr
 
 
 # =============================================================================
@@ -119,47 +41,15 @@ type FlextFieldTypeStr = str
 # =============================================================================
 
 
-class FlextFieldCore(
+class FlextFieldCore(  # type: ignore[misc]
     BaseModel,
     FlextValidatableMixin,
     FlextSerializableMixin,
 ):
-    """Core field definition with comprehensive validation and metadata.
+    """Immutable field definition with validation and metadata.
 
-    Consolidated field implementation serving as single source of truth for all
-    field functionality. Combines Pydantic validation with custom field logic.
-
-    Architecture:
-        - Pydantic BaseModel for automatic validation and serialization
-        - Mixin delegation for serializable and validatable behaviors
-        - Frozen model for immutability and thread safety
-        - Type-specific validation methods for different field types
-
-    Validation Features:
-        - Automatic type validation through Pydantic
-        - Custom regex pattern validation for strings
-        - Range validation for numeric types
-        - Length constraints for string types
-        - Allowed values enumeration support
-
-    Metadata Support:
-        - Field description and examples
-        - Deprecation and sensitivity markers
-        - Indexing hints for database optimization
-        - Custom tags for field categorization
-
-    Usage:
-        field = FlextFieldCore(
-            field_id="user_email",
-            field_name="email",
-            field_type=FlextFieldType.STRING,
-            pattern=EMAIL_PATTERN,
-            required=True
-        )
-
-        result = field.validate_value("user@example.com")
-        if result.success:
-            validated_value = result.data
+    Thread-safe field definition supporting registry integration
+    and comprehensive validation rules.
     """
 
     model_config = ConfigDict(
@@ -515,32 +405,6 @@ class FlextFieldMetadata(BaseModel):
     Consolidated metadata container for field properties, validation rules,
     and descriptive information. Serves as a standardized interface for
     field introspection and documentation.
-
-    Architecture:
-        - Immutable metadata container with Pydantic validation
-        - Direct mapping from FlextFieldCore properties
-        - Standardized access patterns for field information
-        - JSON-serializable structure for API and documentation
-
-    Metadata Categories:
-        - Core identification: field_id, field_name, field_type
-        - Behavior settings: required, default_value
-        - Validation constraints: min/max values, length, pattern, allowed_values
-        - Documentation: description, example, tags
-        - System flags: deprecated, sensitive, indexed
-
-    Usage:
-        field = FlextFieldCore(...)
-        metadata = FlextFieldMetadata.from_field(field)
-
-        # Access metadata properties
-        if metadata.field_name != "user_email":
-            raise AssertionError(f"Expected {"user_email"}, got {metadata.field_name}")
-        if not (metadata.required):
-            raise AssertionError(f"Expected True, got {metadata.required}")
-        if metadata.description != "User email address":
-            expected = "User email address"
-            raise AssertionError(f"Expected {expected}, got {metadata.description}")
     """
 
     model_config = ConfigDict(frozen=True)
@@ -684,7 +548,7 @@ def _safe_cast_numeric(value: object) -> int | float | None:
             return int(value)
         except ValueError as e:
             # Log numeric conversion error but maintain API contract
-            logger = get_logger(__name__)
+            logger = FlextLoggerFactory.get_logger(__name__)
             logger.warning(f"Numeric conversion failed for value '{value}': {e}")
             return None
     return None
@@ -701,7 +565,7 @@ def _safe_cast_int(value: object) -> int | None:
             return int(value)
         except (ValueError, TypeError) as e:
             # Log int conversion error but maintain API contract
-            logger = get_logger(__name__)
+            logger = FlextLoggerFactory.get_logger(__name__)
             logger.warning(f"Int conversion failed for value '{value}': {e}")
             return None
     return None
@@ -717,33 +581,6 @@ class FlextFieldRegistry(BaseModel):
 
     Provides thread-safe registration and lookup of field instances with
     conflict detection and resolution capabilities.
-
-    Architecture:
-        - Pydantic BaseModel for validation and serialization
-        - Mixin delegation for serializable and validatable behaviors
-        - Dual indexing by field ID and field name
-        - FlextResult pattern for all operations that can fail
-        - Thread-safe operations for concurrent access
-
-    Registry Features:
-        - Unique field ID enforcement
-        - Unique field name enforcement within registry
-        - Efficient lookup by ID or name
-        - Registry statistics and management operations
-
-    Conflict Resolution:
-        - Prevents duplicate field IDs
-        - Prevents duplicate field names
-        - Clear error messages for registration conflicts
-        - Safe removal operations with cleanup
-
-    Usage:
-        registry = FlextFieldRegistry()
-        field = FlextFieldCore(field_id="user_id", field_name="user_id", ...)
-
-        result = registry.register_field(field)
-        if result.success:
-            lookup_result = registry.get_field_by_name("user_id")
     """
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
@@ -921,44 +758,8 @@ class FlextFields:
     management. Combines factory methods with registry operations in a
     unified interface.
 
-    Architecture:
-        - Factory pattern for type-safe field creation
-        - Singleton registry for global field management
-        - FlextResult pattern for all fallible operations
-        - Type-specific factory methods for common field types
-
-    Factory Methods:
-        - create_string_field: String fields with pattern and length validation
-        - create_integer_field: Integer fields with range validation
-        - create_boolean_field: Boolean fields with type validation
-        - Extensible pattern for additional field types
-
-    Registry Integration:
-        - Automatic registration option for convenience functions
-        - Direct registry access for advanced operations
-        - Centralized field lookup and management
-        - Registry statistics and maintenance operations
-
-    Design Pattern:
-        - Static methods for stateless factory operations
-        - Class-level registry singleton for global state
-        - Consistent parameter patterns across field types
-        - Backward compatibility through aliases
-
-    Usage:
-        # Create and register field
-        field = FlextFields.create_string_field(
-            field_id="email",
-            field_name="user_email",
-            pattern=EMAIL_PATTERN,
-            required=True
-        )
-
-        # Register manually
-        result = FlextFields.register_field(field)
-
-        # Lookup field
-        field_result = FlextFields.get_field_by_name("user_email")
+    Comprehensive field factory providing type-safe field creation,
+    registration, and lookup capabilities following SOLID principles.
     """
 
     # Registry singleton
@@ -1103,6 +904,22 @@ class FlextFields:
         """Clear all registered fields."""
         cls._registry.clear_registry()
 
+    # Backward-compat convenience wrappers expected by legacy layer/tests
+    @classmethod
+    def string_field(cls, name: str, **kwargs: object) -> FlextFieldCore:
+        """Create string field with name (backward compatibility)."""
+        return cls.create_string_field(field_id=name, field_name=name, **kwargs)
+
+    @classmethod
+    def integer_field(cls, name: str, **kwargs: object) -> FlextFieldCore:
+        """Create integer field with name (backward compatibility)."""
+        return cls.create_integer_field(field_id=name, field_name=name, **kwargs)
+
+    @classmethod
+    def boolean_field(cls, name: str, **kwargs: object) -> FlextFieldCore:
+        """Create boolean field with name (backward compatibility)."""
+        return cls.create_boolean_field(field_id=name, field_name=name, **kwargs)
+
 
 # =============================================================================
 # CONVENIENCE ALIASES E FUNÇÕES - Mantendo compatibilidade
@@ -1111,101 +928,19 @@ class FlextFields:
 # No legacy aliases - only Flext prefixed classes
 
 
-# Convenience functions with automatic registration and flext_ prefix
-def flext_create_string_field(
-    field_id: str,
-    field_name: str,
-    **config: object,
-) -> FlextFieldCore:
-    """Create and automatically register string field.
+# =============================================================================
+# MIGRATION NOTICE - Legacy convenience functions moved to legacy.py
+# =============================================================================
 
-    Convenience function that combines field creation with automatic registry
-    registration. Raises ValueError if registration fails due to conflicts.
-
-    Args:
-        field_id: Unique identifier for the field
-        field_name: Human-readable field name
-        **config: Additional field configuration parameters
-
-    Returns:
-        Created and registered FlextFieldCore instance
-
-    Raises:
-        ValueError: If field registration fails due to ID or name conflicts
-
-    """
-    field = FlextFields.create_string_field(field_id, field_name, **config)
-    result = FlextFields.register_field(field)
-    if result.is_failure:
-        raise FlextValidationError(
-            result.error or "Field registration failed",
-            validation_details={"field_id": field_id, "field_name": field_name},
-        )
-    return field
-
-
-def flext_create_integer_field(
-    field_id: str,
-    field_name: str,
-    **config: object,
-) -> FlextFieldCore:
-    """Create and automatically register integer field.
-
-    Convenience function that combines field creation with automatic registry
-    registration. Raises ValueError if registration fails due to conflicts.
-
-    Args:
-        field_id: Unique identifier for the field
-        field_name: Human-readable field name
-        **config: Additional field configuration parameters
-
-    Returns:
-        Created and registered FlextFieldCore instance
-
-    Raises:
-        ValueError: If field registration fails due to ID or name conflicts
-
-    """
-    field = FlextFields.create_integer_field(field_id, field_name, **config)
-    result = FlextFields.register_field(field)
-    if result.is_failure:
-        raise FlextValidationError(
-            result.error or "Field registration failed",
-            validation_details={"field_id": field_id, "field_name": field_name},
-        )
-    return field
-
-
-def flext_create_boolean_field(
-    field_id: str,
-    field_name: str,
-    **config: object,
-) -> FlextFieldCore:
-    """Create and automatically register boolean field.
-
-    Convenience function that combines field creation with automatic registry
-    registration. Raises ValueError if registration fails due to conflicts.
-
-    Args:
-        field_id: Unique identifier for the field
-        field_name: Human-readable field name
-        **config: Additional field configuration parameters
-
-    Returns:
-        Created and registered FlextFieldCore instance
-
-    Raises:
-        ValueError: If field registration fails due to ID or name conflicts
-
-    """
-    field = FlextFields.create_boolean_field(field_id, field_name, **config)
-    result = FlextFields.register_field(field)
-    if result.is_failure:
-        raise FlextValidationError(
-            result.error or "Field registration failed",
-            validation_details={"field_id": field_id, "field_name": field_name},
-        )
-    return field
+# IMPORTANT: Legacy convenience functions have been moved to legacy.py
+#
+# Migration guide:
+# OLD: from flext_core.fields import flext_create_string_field
+# NEW: from flext_core.legacy import flext_create_string_field
+#      (with deprecation warning)
+# MODERN: from flext_core import FlextFields; FlextFields.create_string_field()
+#
+# For new code, use FlextFields factory methods directly
 
 
 # =============================================================================
@@ -1225,7 +960,27 @@ def flext_create_boolean_field(
 FlextFieldCoreMetadata = FlextFieldMetadata
 
 # =============================================================================
-# EXPORTS - Clean public API seguindo diretrizes
+# LEGACY FIELD CREATION FUNCTIONS - Backward compatibility
+# =============================================================================
+
+
+def flext_create_string_field(name: str, **kwargs: object) -> FlextFieldCore:
+    """Create string field (legacy function)."""
+    return FlextFields.string_field(name, **kwargs)
+
+
+def flext_create_integer_field(name: str, **kwargs: object) -> FlextFieldCore:
+    """Create integer field (legacy function)."""
+    return FlextFields.integer_field(name, **kwargs)
+
+
+def flext_create_boolean_field(name: str, **kwargs: object) -> FlextFieldCore:
+    """Create boolean field (legacy function)."""
+    return FlextFields.boolean_field(name, **kwargs)
+
+
+# =============================================================================
+# EXPORTS - Clean public API following guidelines
 # =============================================================================
 
 __all__: list[str] = [
@@ -1238,7 +993,10 @@ __all__: list[str] = [
     "FlextFieldTypeStr",
     "FlextFields",
     "FlextValidator",
+    # Legacy field creation functions
     "flext_create_boolean_field",
     "flext_create_integer_field",
     "flext_create_string_field",
+    # NOTE: Legacy convenience functions moved to legacy.py
+    # Import from flext_core.legacy if needed for backward compatibility
 ]

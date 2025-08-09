@@ -1,99 +1,27 @@
-"""FLEXT Core Validation - CQRS Layer Validation System.
+"""Domain validation implementations for FLEXT ecosystem.
 
-Unified validation system providing auto-detection, fluent interfaces, type guards,
-and structured validation across the 32-project FLEXT ecosystem. Foundation for
-business rule validation, input sanitization, and data integrity enforcement in
-command/query processing and data integration pipelines.
+Concrete validation implementations using validation_base abstractions.
+Provides business-specific validators and domain validation logic.
 
-Module Role in Architecture:
-    CQRS Layer → Validation System → Business Rule Enforcement
-
-    This module provides validation patterns used throughout FLEXT projects:
-    - Auto-detection validation with intelligent type inference
-    - Fluent interfaces for complex validation chains and rules
-    - Type guards for compile-time and runtime type safety
-    - Railway-oriented error handling with FlextResult integration
-
-Validation Architecture Patterns:
-    Auto-Detection: AutoValidator.check(value) with intelligent type inference
-    Fluent Interface: Chainable validation with method composition
-    Type Guards: Runtime type checking with static analysis benefits
-    Structured Validation: Schema-based validation for complex objects
-
-Development Status (v0.9.0 → 1.0.0):
-    ✅ Production Ready: Foundation validators, predicates, type guards
-    🚧 Active Development: Fluent validation chains (Enhancement 4 - Priority Medium)
-    📋 TODO Integration: Schema-based validation with Pydantic (Priority 3)
-
-Validation System Components:
-    FlextValidators: Foundation validation functions for common data types
-    FlextPredicates: Functional predicates for filtering and data processing
-    FlextValidation: Main orchestration class for complex validation scenarios
-    AutoValidator: Intelligent validation with automatic type detection
-    FluentValidator: Chainable validation interface for complex rules
-
-Ecosystem Usage Patterns:
-    # FLEXT Service Validation
-    if FlextValidators.is_non_empty_string(user_input):
-        process_user_input(user_input)
-
-    # Singer Tap/Target Validation
-    connection_result = (
-        FluentValidator.string(connection_string)
-        .min_length(10)
-        .contains("oracle://")
-        .validate()
-    )
-
-    # ALGAR Migration Validation
-    dn_result = AutoValidator.check(ldap_dn)
-    if dn_result.is_success:
-        process_ldap_dn(ldap_dn)
-
-    # Complex Schema Validation
-    user_validation = FlextValidation.validate_object(
-        user_data,
-        {
-            "name": FlextValidators.is_non_empty_string,
-            "email": FlextValidators.is_email,
-            "age": lambda x: isinstance(x, int) and 18 <= x <= 120
-        }
-    )
-
-Validation Pattern Categories:
-    - Foundation Validation: Basic type checking and common patterns
-    - Business Rule Validation: Domain-specific validation logic
-    - Input Sanitization: Data cleaning and normalization
-    - Schema Validation: Structured validation for complex objects
-
-Quality Standards:
-    - All validation functions must return FlextResult for consistent error handling
-    - Validation errors must provide actionable feedback for users
-    - Type guards must support both runtime checking and static analysis
-    - Complex validation must be composable through fluent interfaces
-
-See Also:
-    docs/TODO.md: Enhancement 4 - Fluent validation chain development
-    result.py: FlextResult pattern for validation error handling
-    interfaces.py: FlextValidator protocol definitions
-
-Copyright (c) 2025 FLEXT Contributors
-SPDX-License-Identifier: MIT
+Classes:
+    FlextValidators: Foundation validation functions.
+    FlextValidation: Main validation orchestrator.
 
 """
 
 from __future__ import annotations
 
 import re
-from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, ConfigDict
 
+from flext_core.protocols import FlextValidationRule as _FlextValidationRuleProtocol
 from flext_core.result import FlextResult
+from flext_core.validation_base import FlextAbstractValidator
 
 if TYPE_CHECKING:
-    from flext_core.flext_types import TPredicate
+    from collections.abc import Callable
 
 # =============================================================================
 # BASIC VALIDATION CLASSES
@@ -344,24 +272,10 @@ def _validate_service_name(name: str) -> bool:
 # =============================================================================
 
 # Validation specific types for better domain modeling
-type TValidationRule = str  # Validation rule identifier
-type TValidationError = str  # Validation error message
-type TValidationResult = FlextResult[object]  # Validation result with data
-type TValidationContext = dict[str, object]  # Validation context data
-type TValidatorName = str  # Validator instance name
-type TValidationConfig = dict[str, object]  # Validator configuration
-type TValidationConstraint = object  # Validation constraint value
-type TValidationSchema = dict[str, object]  # Schema definition for validation
 
 # Field validation types
-type TFieldName = str  # Field name for validation
-type TFieldValue = object  # Field value to validate
-type TFieldRule = str  # Field-specific validation rule
-type TFieldError = str  # Field-specific error message
 
 # Custom validation types
-type TCustomValidator = Callable[[object], FlextResult[object]]  # Custom validator
-type TValidationPipeline = list[TCustomValidator]  # Chain of validators
 
 # =============================================================================
 # FLEXT VALIDATION MODELS - Direct exposure from base with clean names
@@ -412,47 +326,8 @@ class FlextValidation(FlextValidators):
     """Main validation interface providing comprehensive validation capabilities.
 
     Serves as the primary external API for all validation operations, inheriting
-    complete functionality from FlextValidators (which is _BaseValidators) while adding
-    composition and high-level validation patterns.
-
-    Architecture:
-        - Inherits all basic validation methods from FlextValidators (_BaseValidators)
-        - Adds validator composition methods for complex scenarios
-        - Provides validation configuration creation
-        - Maintains clean separation between predicates and validators
-
-    Inherited Validation Methods:
-        - is_not_none, is_string, is_non_empty_string: Basic type checks
-        - is_email, is_uuid, is_url: Pattern-specific validations
-        - has_min_length, has_max_length: String length validations
-        - matches_pattern: Regular expression pattern matching
-
-    Composition Features:
-        - chain: AND logic for multiple validators
-        - any_of: OR logic for alternative validators
-        - create_validation_config: Pydantic-based configuration
-        - safe_validate: FlextResult integration for error handling
-
-    Usage:
-        # Basic validation (inherited methods)
-        if FlextValidation.is_email("user@example.com"):
-            process_email()
-
-        # Composed validation
-        email_validator = FlextValidation.chain(
-            FlextValidation.is_string,
-            FlextValidation.is_email
-        )
-
-        # Configuration-based validation
-        config = FlextValidation.create_validation_config(
-            field_name="password",
-            min_length=8,
-            max_length=128
-        )
-
-        # Safe validation with FlextResult
-        result = FlextValidation.safe_validate(data, FlextValidation.is_email)
+    complete functionality from FlextValidators while adding composition and
+    high-level validation patterns for complex validation scenarios.
     """
 
     # All basic validation methods inherited from FlextValidators (_BaseValidators)
@@ -486,7 +361,7 @@ class FlextValidation(FlextValidators):
         return FlextResult.ok(value)
 
     @staticmethod
-    def chain(*validators: TPredicate[object]) -> TPredicate[object]:
+    def chain(*validators: Callable[[object], bool]) -> Callable[[object], bool]:
         """Chain multiple validators together with AND logic.
 
         Args:
@@ -503,7 +378,7 @@ class FlextValidation(FlextValidators):
         return chained_validator
 
     @staticmethod
-    def any_of(*validators: TPredicate[object]) -> TPredicate[object]:
+    def any_of(*validators: Callable[[object], bool]) -> Callable[[object], bool]:
         """Chain multiple validators together with OR logic.
 
         Args:
@@ -546,7 +421,7 @@ class FlextValidation(FlextValidators):
     def safe_validate(
         cls,
         value: object,
-        validator: TPredicate[object],
+        validator: Callable[[object], bool],
     ) -> FlextResult[object]:
         """Safely validate value with FlextResult error handling.
 
@@ -596,12 +471,7 @@ def flext_validate_required(
         field_name: Name of field for error messages and debugging
 
     Returns:
-        FlextValidationResult with is_valid boolean and error details
-
-    Usage:
-        result = validate_required(user_input, "username")
-        if not result.is_valid:
-            return error_response(result.error_message)
+        FlextValidationResult with is_valid boolean and error details.
 
     """
     return flext_validate_required_field(value, field_name)
@@ -625,12 +495,7 @@ def flext_validate_string(
         max_length: Maximum allowed length (inclusive, None for unlimited)
 
     Returns:
-        FlextValidationResult with is_valid boolean and detailed error information
-
-    Usage:
-        result = validate_string(password, "password", min_length=8, max_length=128)
-        if result.is_valid:
-            store_password(password)
+        FlextValidationResult with is_valid boolean and detailed error information.
 
     """
     return flext_validate_string_field(value, field_name, min_length, max_length)
@@ -654,12 +519,7 @@ def flext_validate_numeric(
         max_val: Maximum allowed value (inclusive, None for no maximum)
 
     Returns:
-        FlextValidationResult with is_valid boolean and range error details
-
-    Usage:
-        result = validate_numeric(age, "age", min_val=0, max_val=150)
-        if result.is_valid:
-            process_age(age)
+        FlextValidationResult with is_valid boolean and range error details.
 
     """
     return flext_validate_numeric_field(value, field_name, min_val, max_val)
@@ -679,14 +539,7 @@ def flext_validate_email(
         field_name: Name of field for error messages and debugging
 
     Returns:
-        FlextValidationResult with is_valid boolean and format error details
-
-    Usage:
-        result = validate_email(email_input, "user_email")
-        if result.is_valid:
-            send_confirmation_email(email_input)
-        else:
-            show_error("Invalid email format")
+        FlextValidationResult with is_valid boolean and format error details.
 
     """
     return flext_validate_email_field(value, field_name)
@@ -702,51 +555,65 @@ def flext_validate_service_name(name: str) -> bool:
         name: Service name to validate
 
     Returns:
-        True if valid service name, False otherwise
-
-    Usage:
-        if flext_validate_service_name(service_name):
-            container.register(service_name, service_instance)
-        else:
-
-            raise FlextValidationError(
-                "Invalid service name",
-                validation_details={
-                    "field": "service_name",
-                    "value": service_name,
-                    "rules": ["service_name_format"],
-                },
-            )
+        True if valid service name, False otherwise.
 
     """
     return _validate_service_name(name)
 
 
 # =============================================================================
-# CONVENIENCE FUNCTIONS
+# MIGRATION NOTICE - Legacy functions moved to legacy.py
 # =============================================================================
 
-
-def validate_smart(value: object, **_context: object) -> FlextResult[object]:
-    """Validate value with type detection."""
-    return FlextValidation.validate(value)
-
-
-def is_valid_data(value: object) -> bool:
-    """Check if value is valid."""
-    return FlextValidation.validate(value).is_success
+# IMPORTANT: Legacy functions validate_smart and is_valid_data have been
+# completely moved to legacy.py. Import them from there if needed:
+#   from flext_core.legacy import validate_smart, is_valid_data
+#
+# These functions are NOT re-exported here to avoid circular imports.
 
 
 # =============================================================================
 # EXPORTS - Clean public API
 # =============================================================================
 
+# =============================================================================
+# BASE VALIDATORS - Moved from base_validation.py (eliminating facade)
+# =============================================================================
+
+
+class FlextDomainValidator(FlextAbstractValidator[object]):
+    """Domain-specific validation with business rules.
+
+    SOLID compliance: Single responsibility for domain validation.
+    """
+
+    def __init__(self, business_rules: list[object] | None = None) -> None:
+        """Initialize domain validator with business rules."""
+        self.business_rules = business_rules or []
+
+    def validate_value(self, value: object) -> FlextResult[object]:
+        """Validate value against business rules (Strategy pattern)."""
+        for rule in self.business_rules:
+            if callable(rule) and not rule(value):
+                return FlextResult.fail("Business rule validation failed")
+        return FlextResult.ok(value)
+
+    # Backward-compatible method name maintained during migration
+    def validate(self, value: object) -> FlextResult[object]:
+        """Alias to validate_value for compatibility with legacy code."""
+        return self.validate_value(value)
+
+
 __all__ = [
+    # Base validators
+    "FlextBaseValidator",
+    "FlextDomainValidator",
     "FlextPredicates",
     "FlextValidation",
     "FlextValidationConfig",
     "FlextValidationResult",
     "FlextValidators",
+    # Validation functions
     "flext_validate_email",
     "flext_validate_email_field",
     "flext_validate_entity_id",
@@ -758,6 +625,19 @@ __all__ = [
     "flext_validate_service_name",
     "flext_validate_string",
     "flext_validate_string_field",
-    "is_valid_data",
-    "validate_smart",
+    # Note: Legacy functions (is_valid_data, validate_smart) moved to legacy.py
+    # Import from flext_core.legacy if needed for backward compatibility
 ]
+
+# Backward-compatibility alias: prefer FlextAbstractValidator from validation_base
+FlextBaseValidator = FlextAbstractValidator
+
+# Re-export protocol name for convenience
+FlextValidationRule = _FlextValidationRuleProtocol
+
+
+# =============================================================================
+# LEGACY VALIDATION FUNCTIONS - Backward compatibility
+# Note: These functions are already defined above. This section is for
+# backward compatibility imports only.
+# =============================================================================

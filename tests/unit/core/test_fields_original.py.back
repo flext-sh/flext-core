@@ -20,7 +20,7 @@ from flext_core.fields import (
     flext_create_integer_field,
     flext_create_string_field,
 )
-from flext_core.flext_types import TAnyDict
+from flext_core.types import TAnyDict
 
 # Constants
 EXPECTED_BULK_SIZE = 2
@@ -112,7 +112,7 @@ class TestFlextFieldCore:
 
         # Should not be able to modify frozen model
         with pytest.raises((AttributeError, ValidationError)):
-            field.field_name = "new_name"  # type: ignore[misc]
+            field.field_name = "new_name"
 
     def test_field_pattern_validation(self) -> None:
         """Test regex pattern validation."""
@@ -363,7 +363,7 @@ class TestFlextFieldCore:
         if result.data != "default_value":
             raise AssertionError(f"Expected {'default_value'}, got {result.data}")
 
-    def test_field_metadata_methods(self) -> None:  # noqa: C901
+    def test_field_metadata_methods(self) -> None:
         """Test field metadata access methods."""
         field = FlextFieldCore(
             field_id="meta_field",
@@ -424,7 +424,7 @@ class TestFlextFieldCore:
         if "metadata" not in info:
             raise AssertionError(f"Expected {'metadata'} in {info}")
 
-    def test_field_serialization(self) -> None:  # noqa: C901
+    def test_field_serialization(self) -> None:
         """Test field value serialization."""
         string_field = FlextFieldCore(
             field_id="string_field",
@@ -496,7 +496,7 @@ class TestFlextFieldCore:
                 f"Expected False, got {bool_field.serialize_value('no')}"
             )
 
-    def test_field_deserialization(self) -> None:  # noqa: C901
+    def test_field_deserialization(self) -> None:
         """Test field value deserialization."""
         # String deserialization
         string_field = FlextFieldCore(
@@ -675,7 +675,7 @@ class TestFlextFieldMetadata:
             raise AssertionError(f"Expected {[]}, got {metadata.allowed_values}")
         assert metadata.custom_properties == {}
 
-    def test_metadata_from_field(self) -> None:  # noqa: C901
+    def test_metadata_from_field(self) -> None:
         """Test creating metadata from field."""
         field = FlextFieldCore(
             field_id="source_field",
@@ -791,7 +791,7 @@ class TestFlextFieldMetadata:
         metadata = FlextFieldMetadata(field_id="immutable")
 
         with pytest.raises((AttributeError, ValidationError)):
-            metadata.field_id = "new_id"  # type: ignore[misc]
+            metadata.field_id = "new_id"
 
 
 class TestFlextFieldRegistry:
@@ -954,7 +954,7 @@ class TestFlextFieldRegistry:
                 f"Expected {registry.fields_dict}, got {registry._fields}"
             )
 
-    def test_registry_management_methods(self) -> None:  # noqa: C901
+    def test_registry_management_methods(self) -> None:
         """Test registry management methods."""
         registry = FlextFieldRegistry()
         field1 = FlextFieldCore(

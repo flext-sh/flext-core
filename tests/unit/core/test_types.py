@@ -8,13 +8,13 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
 from flext_core import FlextEntityId, FlextPayload
-from flext_core.flext_types import (
-    Comparable,
+from flext_core.typings import (
     FlextTypes,
-    Serializable,
     TAnyDict,
     TAnyList,
+    TComparable,
     TFactory,
+    TSerializable,
 )
 
 if TYPE_CHECKING:
@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 
 # Rebuild Pydantic models to resolve forward references
 # Make types available in the global namespace for model_rebuild()
-from flext_core.flext_types import TData
+from flext_core.typings import TData
 
 globals()["TAnyDict"] = TAnyDict
 globals()["TData"] = TData
@@ -39,17 +39,17 @@ class TestTypeProtocols:
     """Test type protocols from types module."""
 
     def test_comparable_protocol(self) -> None:
-        """Test Comparable protocol usage."""
+        """Test TComparable protocol usage."""
 
         # Test with strings (which implement __lt__)
-        def use_comparable(obj: Comparable) -> bool:
+        def use_comparable(obj: TComparable) -> bool:
             return hasattr(obj, "__lt__")
 
         # Use cast to bypass strict typing for protocol testing
         from typing import cast
 
-        assert use_comparable(cast("Comparable", "test"))
-        assert use_comparable(cast("Comparable", 42))
+        assert use_comparable(cast("TComparable", "test"))
+        assert use_comparable(cast("TComparable", 42))
 
     def test_type_aliases_usage(self) -> None:
         """Test type aliases from types module."""
@@ -68,19 +68,19 @@ class TestTypeProtocols:
         assert len(test_list) == 3
 
     def test_serializable_protocol(self) -> None:
-        """Test Serializable protocol usage."""
+        """Test TSerializable protocol usage."""
 
-        # Create a class that implements Serializable protocol
-        class TestSerializable:
+        # Create a class that implements TSerializable protocol
+        class TestTSerializable:
             def __init__(self, data: dict[str, object]) -> None:
                 self.data = data
 
             def serialize(self) -> dict[str, object]:
                 return self.data.copy()
 
-        serializable_obj = TestSerializable({"key": "value", "data": "test"})
+        serializable_obj = TestTSerializable({"key": "value", "data": "test"})
 
-        def use_serializable(obj: Serializable) -> dict[str, object]:
+        def use_serializable(obj: TSerializable) -> dict[str, object]:
             return obj.serialize()
 
         result = use_serializable(serializable_obj)
@@ -315,30 +315,30 @@ class TestProtocolDefinitions:
     """Test protocol interface definitions."""
 
     def test_comparable_protocol_interface(self) -> None:
-        """Test Comparable protocol interface requirements."""
+        """Test TComparable protocol interface requirements."""
 
-        # Create a class that implements Comparable
-        class ComparableInt:
+        # Create a class that implements TComparable
+        class TComparableInt:
             def __init__(self, value: int) -> None:
                 self.value = value
 
             def __lt__(self, other: object) -> bool:
-                return isinstance(other, ComparableInt) and self.value < other.value
+                return isinstance(other, TComparableInt) and self.value < other.value
 
             def __le__(self, other: object) -> bool:
-                return isinstance(other, ComparableInt) and self.value <= other.value
+                return isinstance(other, TComparableInt) and self.value <= other.value
 
             def __gt__(self, other: object) -> bool:
-                return isinstance(other, ComparableInt) and self.value > other.value
+                return isinstance(other, TComparableInt) and self.value > other.value
 
             def __ge__(self, other: object) -> bool:
-                return isinstance(other, ComparableInt) and self.value >= other.value
+                return isinstance(other, TComparableInt) and self.value >= other.value
 
-        obj1 = ComparableInt(5)
-        obj2 = ComparableInt(10)
+        obj1 = TComparableInt(5)
+        obj2 = TComparableInt(10)
 
         # Test that objects implement the protocol
-        def use_comparable(obj: Comparable) -> bool:
+        def use_comparable(obj: TComparable) -> bool:
             required_methods = ["__lt__", "__le__", "__gt__", "__ge__"]
             return all(hasattr(obj, method) for method in required_methods)
 
@@ -346,10 +346,10 @@ class TestProtocolDefinitions:
         assert use_comparable(obj2) is True
 
     def test_flext_serializable_protocol_interface(self) -> None:
-        """Test FlextSerializable protocol interface requirements."""
+        """Test FlextTSerializable protocol interface requirements."""
 
-        # Create a class that implements FlextSerializable
-        class SerializableData:
+        # Create a class that implements FlextTSerializable
+        class TSerializableData:
             def __init__(self, data: dict[str, object]) -> None:
                 self.data = data
 
@@ -361,7 +361,7 @@ class TestProtocolDefinitions:
 
                 return json.dumps(self.data)
 
-        serializable_obj = SerializableData({"key": "value", "number": 42})
+        serializable_obj = TSerializableData({"key": "value", "number": 42})
 
         # Test protocol methods
         result_dict = serializable_obj.to_dict()
@@ -379,7 +379,7 @@ class TestTypeAliasComprehensive:
 
     def test_entity_type_aliases(self) -> None:
         """Test entity-related type aliases."""
-        from flext_core.flext_types import TEntityId
+        from flext_core.typings import TEntityId
 
         # TEntityId usage
         user_id: TEntityId = "user-123"
@@ -392,7 +392,7 @@ class TestTypeAliasComprehensive:
 
     def test_cqrs_type_aliases(self) -> None:
         """Test CQRS-related type aliases."""
-        from flext_core.flext_types import (
+        from flext_core.typings import (
             TCorrelationId,
             TRequestId,
             TUserId,
@@ -409,7 +409,7 @@ class TestTypeAliasComprehensive:
 
     def test_business_type_aliases(self) -> None:
         """Test business domain type aliases."""
-        from flext_core.flext_types import (
+        from flext_core.typings import (
             TBusinessCode,
             TBusinessId,
             TBusinessName,
@@ -431,7 +431,7 @@ class TestTypeAliasComprehensive:
 
     def test_cache_type_aliases(self) -> None:
         """Test cache-related type aliases."""
-        from flext_core.flext_types import TCacheKey, TCacheTTL, TCacheValue
+        from flext_core.typings import TCacheKey, TCacheTTL, TCacheValue
 
         cache_key: TCacheKey = "user:123:profile"
         cache_value: TCacheValue = (
@@ -474,7 +474,7 @@ class TestTypeAliasComprehensive:
 
     def test_infrastructure_type_aliases(self) -> None:
         """Test infrastructure-related type aliases."""
-        from flext_core.flext_types import (
+        from flext_core.typings import (
             TConfigDict,
             TConfigValue,
             TConnectionString,
@@ -501,7 +501,7 @@ class TestTypesCoverageImprovements:
 
     def test_is_instance_exception_handling(self) -> None:
         """Test is_instance method exception handling (lines 256-257)."""
-        from flext_core.flext_types import FlextTypes
+        from flext_core.typings import FlextTypes
 
         # Test with invalid type that causes TypeError/AttributeError
         class BadType:

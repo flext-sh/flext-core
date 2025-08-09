@@ -1,18 +1,8 @@
 #!/usr/bin/env python3
-"""FLEXT Mixins - Multiple Inheritance and Composition Patterns Example.
+"""Multiple inheritance and composition patterns with mixins.
 
-Demonstrates comprehensive mixin usage with multiple inheritance patterns,
-composition strategies, and enterprise-grade cross-cutting concerns integration.
-
-Features demonstrated:
-- Individual mixin patterns for specific behaviors
-- Multiple inheritance composition with method resolution order
-- Composite mixin patterns for common architectural use cases
-- Cross-cutting concerns: logging, timing, caching, validation
-- Enterprise service patterns with mixin combinations
-- Performance characteristics of mixin overhead
-- Method resolution order and conflict resolution
-- Mixin design patterns and best practices
+Demonstrates cross-cutting concerns integration, method resolution order,
+and enterprise service patterns using mixin combinations.
 """
 
 from __future__ import annotations

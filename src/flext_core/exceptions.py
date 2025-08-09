@@ -1,80 +1,31 @@
-"""FLEXT Core Exceptions - Core Pattern Layer Exception Hierarchy.
+"""Enterprise-grade exception hierarchy for FLEXT.
 
-Enterprise-grade exception hierarchy providing structured error handling, rich
-context management, and operational monitoring support for the 32-project FLEXT
-ecosystem. Foundation for type-safe error propagation throughout distributed
-data integration pipelines.
+Provides structured error handling, context management, and
+cross-service serialization for distributed data integration
+pipelines following SOLID principles.
 
-Module Role in Architecture:
-    Core Pattern Layer → Exception Management → Error Handling Foundation
-
-    This module provides the foundational exception hierarchy used by all FLEXT
-    projects for consistent error handling:
-    - FlextResult pattern error propagation (result.py integration)
-    - Service boundary error serialization (cross-project communication)
-    - Structured logging and monitoring (flext-observability integration)
-    - Ecosystem-wide error categorization and standardization
-
-Exception Architecture Patterns:
-    Hierarchical Design: Base FlextError with specialized error types
-    Context Enhancement: Automatic debugging information capture
-    Error Categorization: Structured error codes for monitoring/alerting
-    Cross-Service Serialization: JSON-compatible error transport
-
-Development Status (v0.9.0 → 1.0.0):
-    ✅ Production Ready: Base hierarchy, context management, error codes
-    ✅ Implemented: Cross-service error serialization with from_dict/to_dict methods
-    🚧 Active Development: Module-specific error factories (Priority 2)
-
-Exception Factory Patterns:
-    create_module_exception_classes(): DRY pattern for 32 projects
-    FlextExceptions factory: Convenient exception creation interface
-    Context factories: Eliminate 85+ duplication points in ecosystem
-
-Ecosystem Usage Patterns:
-    # FLEXT API Services
-    from flext_core.exceptions import FlextValidationError
-    raise FlextValidationError("Invalid user data", field="email", value="bad-email")
-
-    # Singer Taps/Targets
-    from flext_core.exceptions import FlextConnectionError
-    raise FlextConnectionError("Oracle connection failed", endpoint="db.example:1521")
-
-    # Go Service Integration
-    error_dict = exception.to_dict()  # JSON serialization for FlexCore bridge
-
-Enterprise Error Management:
-    - Comprehensive categorization for 24/7 operational monitoring
-    - Security-conscious context (sensitive data truncation/masking)
-    - Performance-optimized with bounded context sizes
-    - Multi-language serialization for Go service integration
-
-Quality Standards:
-    - Zero tolerance for unhandled exceptions in business logic
-    - All exceptions must include actionable context information
-    - Error messages must be user-friendly and developer-debuggable
-    - 95%+ test coverage requirement with edge case validation
-
-See Also:
-    docs/TODO.md: Priority 2 - Module-specific error factories
-    result.py: FlextResult pattern integration
-    constants.py: Structured error code definitions
-
-Copyright (c) 2025 FLEXT Contributors
-SPDX-License-Identifier: MIT
-
+Concrete implementations of abstract exception patterns from base_exceptions.py.
 """
 
 from __future__ import annotations
 
 import time
 import traceback
+from collections.abc import Mapping
 from typing import TYPE_CHECKING
 
+from flext_core.base_exceptions import (
+    FlextAbstractBusinessError,
+    FlextAbstractConfigurationError,
+    FlextAbstractError,
+    FlextAbstractErrorFactory,
+    FlextAbstractInfrastructureError,
+    FlextAbstractValidationError,
+)
 from flext_core.constants import ERROR_CODES
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping
+    from flext_core.typings import TAnyDict
 
 
 def _create_base_error_class(module_name: str) -> type:
@@ -145,7 +96,11 @@ def _create_configuration_error_class(module_name: str) -> type:
             context = dict(kwargs)
             if config_key is not None:
                 context["config_key"] = config_key
-            super().__init__(f"{module_name} config: {message}", **context)
+            super().__init__(
+                f"{module_name} config: {message}",
+                config_key=config_key,
+                **context,
+            )
 
     return ModuleConfigurationError
 
@@ -169,7 +124,11 @@ def _create_connection_error_class(module_name: str) -> type:
                 context["service_name"] = service_name
             if endpoint is not None:
                 context["endpoint"] = endpoint
-            super().__init__(f"{module_name} connection: {message}", **context)
+            super().__init__(
+                f"{module_name} connection: {message}",
+                service=f"{module_name}_connection",
+                **context,
+            )
 
     return ModuleConnectionError
 
@@ -193,7 +152,11 @@ def _create_processing_error_class(module_name: str) -> type:
                 context["operation"] = operation
             if file_path is not None:
                 context["file_path"] = file_path
-            super().__init__(f"{module_name} processing: {message}", **context)
+            super().__init__(
+                f"{module_name} processing: {message}",
+                business_rule="processing",
+                **context,
+            )
 
     return ModuleProcessingError
 
@@ -217,7 +180,11 @@ def _create_authentication_error_class(module_name: str) -> type:
                 context["username"] = username
             if auth_method is not None:
                 context["auth_method"] = auth_method
-            super().__init__(f"{module_name}: {message}", **context)
+            super().__init__(
+                f"{module_name}: {message}",
+                service=f"{module_name}_auth",
+                **context,
+            )
 
     return ModuleAuthenticationError
 
@@ -241,7 +208,11 @@ def _create_timeout_error_class(module_name: str) -> type:
                 context["timeout_duration"] = timeout_duration
             if operation is not None:
                 context["operation"] = operation
-            super().__init__(f"{module_name}: {message}", **context)
+            super().__init__(
+                f"{module_name}: {message}",
+                service=f"{module_name}_timeout",
+                **context,
+            )
 
     return ModuleTimeoutError
 
@@ -269,17 +240,7 @@ def create_context_exception_factory(
         **default_context: Default context keys with their parameter names
 
     Returns:
-        Dictionary with factory configuration
-
-    Example:
-        # Instead of 18 lines of duplicated __init__ code:
-        api_factory = create_context_exception_factory(
-            "API request",
-            "API request error",
-            method=None,
-            endpoint=None,
-            status_code=None,
-        )
+        Dictionary with factory configuration.
 
     """
     return {
@@ -302,12 +263,7 @@ def create_module_exception_classes(module_name: str) -> dict[str, type]:
         module_name: Name of the module (e.g., "flext_auth", "algar_oud_mig")
 
     Returns:
-        Dictionary of exception classes ready for use
-
-    Example:
-        exceptions = create_module_exception_classes("flext_auth")
-        FlextAuthError = exceptions["FlextAuthError"]
-        FlextAuthValidationError = exceptions["FlextAuthValidationError"]
+        Dictionary of exception classes ready for use.
 
     """
     module_prefix = _get_module_prefix(module_name)
@@ -329,35 +285,11 @@ def create_module_exception_classes(module_name: str) -> dict[str, type]:
     }
 
 
-class FlextError(Exception):
-    """Base exception for all FLEXT Core errors.
+class FlextError(FlextAbstractError):
+    """Base exception for all FLEXT Core errors - implements FlextAbstractError.
 
-    Foundational exception class providing structured error information
-    and rich context for debugging and monitoring.
-
-    Architecture:
-        - Standard Exception inheritance for compatibility
-        - Rich context information with timestamps
-        - Structured error codes for categorization
-        - Stack trace capture for debugging
-
-    Error Information:
-        - Human-readable message for users and logs
-        - Machine-readable error code for programmatic handling
-        - Context dictionary for additional debugging information
-        - Timestamp for temporal analysis and correlation
-        - Stack trace for development and debugging
-
-    Usage:
-        # Basic usage
-        raise FlextError("Something went wrong")
-
-        # With error code and context
-        raise FlextError(
-            "Validation failed",
-            error_code=ERROR_CODES["VALIDATION_ERROR"],
-            context={"field": "email", "value": "invalid"}
-        )
+    Provides structured error information with context, error codes,
+    and cross-service serialization capabilities following SOLID principles.
     """
 
     def __init__(
@@ -366,7 +298,7 @@ class FlextError(Exception):
         error_code: str | None = None,
         context: Mapping[str, object] | None = None,
     ) -> None:
-        """Initialize error with enhanced debugging.
+        """Initialize error with context and debugging info.
 
         Args:
             message: Error message
@@ -374,26 +306,30 @@ class FlextError(Exception):
             context: Additional context information
 
         """
-        super().__init__(message)
-        self.message = message
-        self.error_code = error_code or ERROR_CODES["GENERIC_ERROR"]
-        self.context = dict(context) if context else {}
+        # Convert Mapping to dict for abstract base class
+        context_dict = dict(context) if context else {}
+        super().__init__(message, error_code, context_dict)
+
+        # Additional FlextError-specific attributes
         self.timestamp = time.time()
         self.stack_trace = traceback.format_stack()
 
         # Safely limit context size to prevent memory issues
         max_size = 1000
         if self.context and len(str(self.context)) > max_size:
-            self.context = {
+            self._context = {
                 "_truncated": True,
                 "_original_size": len(str(self.context)),
             }
 
-    def __str__(self) -> str:
-        """Return formatted error string."""
-        if self.error_code:
-            return f"[{self.error_code}] {self.message}"
-        return self.message
+    @property
+    def error_category(self) -> str:
+        """Get error category - implements abstract method."""
+        return "GENERAL"
+
+    def _get_default_error_code(self) -> str:
+        """Get default error code - implements abstract method."""
+        return ERROR_CODES["GENERIC_ERROR"]
 
     def __repr__(self) -> str:
         """Return detailed error representation."""
@@ -402,47 +338,27 @@ class FlextError(Exception):
             f"(message='{self.message}', code='{self.error_code}')"
         )
 
-    def to_dict(self) -> dict[str, object]:
-        """Convert exception to dictionary for cross-service serialization.
-
-        Provides comprehensive serialization for cross-service error propagation
-        including type information, context, and metadata required for proper
-        error reconstruction in remote services.
-
-        Serialization Features:
-            - Complete type information for proper deserialization
-            - Sanitized context (removes sensitive data, truncates large values)
-            - Timestamp preservation for distributed tracing
-            - Module information for proper exception reconstruction
-            - Error code mapping for standardized handling
+    def to_dict(self) -> TAnyDict:
+        """Convert exception to dictionary - implements abstract method.
 
         Returns:
-            Dictionary suitable for JSON serialization and cross-service transport
-
-        Usage:
-            # Serialize for Go service communication
-            error_dict = exception.to_dict()
-            json_payload = json.dumps(error_dict)
-
-            # Send via REST API or message queue
-            response = send_to_service(json_payload)
+            Dictionary suitable for JSON serialization
 
         """
         return {
+            "error_type": "FlextError",
+            "error_code": self.error_code,
+            "error_category": self.error_category,
+            "message": self.message,
+            "context": self._sanitize_context(self.context),
+            "timestamp": getattr(self, "timestamp", time.time()),
             "type": self.__class__.__name__,
             "module": self.__class__.__module__,
-            "message": self.message,
-            "error_code": self.error_code,
-            "context": self._sanitize_context(self.context),
-            "timestamp": self.timestamp,
             "serialization_version": "1.0",
         }
 
     def _sanitize_context(self, context: dict[str, object]) -> dict[str, object]:
         """Sanitize context for safe serialization.
-
-        Removes sensitive information and truncates large values to prevent
-        log pollution and security leaks in cross-service communication.
 
         Args:
             context: Original context dictionary
@@ -492,35 +408,16 @@ class FlextError(Exception):
 
     @classmethod
     def from_dict(cls, error_dict: dict[str, object]) -> FlextError:
-        """Reconstruct exception from dictionary for cross-service deserialization.
-
-        Creates FlextError instances from serialized error dictionaries,
-        enabling proper error propagation across service boundaries and
-        maintaining error context and type information.
-
-        Deserialization Features:
-            - Type-safe reconstruction with proper error class resolution
-            - Context restoration with validation
-            - Timestamp preservation for distributed tracing
-            - Backward compatibility with different serialization versions
-            - Strict type resolution without fallback behavior
+        """Reconstruct exception from dictionary.
 
         Args:
             error_dict: Serialized error dictionary from to_dict()
 
         Returns:
-            Reconstructed FlextError instance with original context
+            Reconstructed FlextError instance
 
         Raises:
-            FlextValidationError: If error_dict is malformed or missing required fields
-
-        Usage:
-            # Deserialize from Go service response
-            error_dict = json.loads(response_payload)
-            exception = FlextError.from_dict(error_dict)
-
-            # Re-raise with original context preserved
-            raise exception
+            FlextValidationError: If error_dict is malformed
 
         """
         # Validate required fields
@@ -602,34 +499,15 @@ class FlextError(Exception):
             "FlextCriticalError": FlextCriticalError,
         }
 
-        return exception_mapping.get(error_type, FlextError)
+        return exception_mapping.get(error_type, FlextError)  # type: ignore[return-value]
 
 
-class FlextValidationError(FlextError):
+class FlextValidationError(FlextAbstractValidationError, FlextError):
     """Validation failure exception with field-specific context.
 
     Specialized exception for validation failures providing detailed information
     about field validation errors, failed rules, and problematic values.
-
-    Architecture:
-        - Inherits from FlextError for base functionality
-        - Enhanced context with field-specific information
-        - Automatic validation error categorization
-        - Rich debugging information for development
-
-    Validation Context:
-        - Field name identification for multi-field validation
-        - Value truncation for safe logging (prevents log pollution)
-        - Failed rules enumeration for debugging
-        - Enhanced context merging with base error context
-
-    Usage:
-        raise FlextValidationError(
-            "Email format is invalid",
-            field="email",
-            value="not-an-email",
-            rules=["email_format", "non_empty"]
-        )
+    Implements FlextAbstractValidationError.
     """
 
     def __init__(
@@ -643,24 +521,26 @@ class FlextValidationError(FlextError):
         """Initialize validation error with validation details."""
         # Extract validation details
         details = validation_details or {}
-        self.field = details.get("field")
-        self.value = details.get("value")
-        self.rules = details.get("rules", [])
+        field = details.get("field")
 
         # Build enhanced context
         enhanced_context = dict(context) if context else {}
-        if self.field is not None:
-            enhanced_context["field"] = self.field
-        if self.value is not None:
-            enhanced_context["value"] = str(self.value)[:100]  # Limit value length
-        if self.rules:
-            enhanced_context["failed_rules"] = self.rules
+        if details:
+            enhanced_context.update(details)
 
-        super().__init__(
-            message=message,
+        # Initialize abstract validation error first
+        FlextAbstractValidationError.__init__(
+            self,
+            message,
+            field=str(field) if field else None,
+            validation_details=dict(validation_details) if validation_details else None,
             error_code=error_code or ERROR_CODES["VALIDATION_ERROR"],
             context=enhanced_context,
         )
+
+        # Initialize FlextError attributes
+        self.timestamp = time.time()
+        self.stack_trace = traceback.format_stack()
 
 
 class FlextTypeError(FlextError):
@@ -668,25 +548,6 @@ class FlextTypeError(FlextError):
 
     Specialized exception for type-related errors providing clear information
     about expected versus actual types for debugging and error resolution.
-
-    Architecture:
-        - Inherits from FlextError for base functionality
-        - Type information enhancement in context
-        - Automatic type error categorization
-        - Clear type mismatch messaging
-
-    Type Context:
-        - Expected type documentation for requirements
-        - Actual type identification for debugging
-        - String representation for logging safety
-        - Enhanced context with type information
-
-    Usage:
-        raise FlextTypeError(
-            "Expected string but got integer",
-            expected_type=str,
-            actual_type=int
-        )
     """
 
     def __init__(
@@ -721,28 +582,6 @@ class FlextAttributeError(FlextError):
 
     Specialized exception for attribute-related errors providing clear information
     about missing attributes and available alternatives for debugging.
-
-    Architecture:
-        - Inherits from FlextError for base functionality
-        - Attribute context enhancement for debugging
-        - Available attribute suggestions for resolution
-        - Clear attribute access messaging
-
-    Attribute Context:
-        - Class name for context identification
-        - Attribute name that was attempted
-        - Available attributes for suggestions
-        - Enhanced error reporting
-
-    Usage:
-        raise FlextAttributeError(
-            "Object has no attribute 'missing_attr'",
-            attribute_context={
-                "class_name": "MyClass",
-                "attribute_name": "missing_attr",
-                "available_extra_fields": ["field1", "field2"]
-            }
-        )
     """
 
     def __init__(
@@ -771,25 +610,6 @@ class FlextOperationError(FlextError):
 
     Specialized exception for operation failures providing detailed information
     about operation context, execution stage, and failure circumstances.
-
-    Architecture:
-        - Inherits from FlextError for base functionality
-        - Operation-specific context enhancement
-        - Stage-based failure tracking
-        - Process flow debugging support
-
-    Operation Context:
-        - Operation name identification for categorization
-        - Execution stage tracking for pinpointing failures
-        - Enhanced context with operation metadata
-        - Process flow debugging information
-
-    Usage:
-        raise FlextOperationError(
-            "Database connection failed",
-            operation="user_creation",
-            stage="database_insert"
-        )
     """
 
     def __init__(
@@ -824,76 +644,136 @@ class FlextOperationError(FlextError):
 # =============================================================================
 
 
-class FlextConfigurationError(FlextError):
-    """Configuration-related errors with context capture."""
+class FlextConfigurationError(FlextAbstractConfigurationError, FlextError):
+    """Configuration-related errors with context capture.
 
-    def __init__(self, message: str = "Configuration error", **kwargs: object) -> None:
+    Implements FlextAbstractConfigurationError.
+    """
+
+    def __init__(
+        self,
+        message: str = "Configuration error",
+        config_key: str | None = None,
+        **kwargs: object,
+    ) -> None:
         """Initialize configuration error with context.
 
         Args:
             message: Descriptive error message
+            config_key: Configuration key that failed
             **kwargs: Additional context information
 
         """
-        super().__init__(
+        FlextAbstractConfigurationError.__init__(
+            self,
             message,
+            config_key=config_key,
             error_code=ERROR_CODES["CONFIG_ERROR"],
-            context=kwargs,
+            **kwargs,
         )
 
+        # Initialize FlextError attributes
+        self.timestamp = time.time()
+        self.stack_trace = traceback.format_stack()
 
-class FlextConnectionError(FlextError):
-    """Connection-related errors with network context."""
 
-    def __init__(self, message: str = "Connection error", **kwargs: object) -> None:
+class FlextConnectionError(FlextAbstractInfrastructureError, FlextError):
+    """Connection-related errors with network context.
+
+    Implements FlextAbstractInfrastructureError for connection issues.
+    """
+
+    def __init__(
+        self,
+        message: str = "Connection error",
+        service: str | None = None,
+        **kwargs: object,
+    ) -> None:
         """Initialize connection error with context.
 
         Args:
             message: Descriptive error message
+            service: Service name for connection
             **kwargs: Additional context information (host, port, etc.)
 
         """
-        super().__init__(
+        FlextAbstractInfrastructureError.__init__(
+            self,
             message,
+            service=service,
             error_code=ERROR_CODES["CONNECTION_ERROR"],
-            context=kwargs,
+            **kwargs,
         )
 
+        # Initialize FlextError attributes
+        self.timestamp = time.time()
+        self.stack_trace = traceback.format_stack()
 
-class FlextAuthenticationError(FlextError):
-    """Authentication-related errors with security context."""
+
+class FlextAuthenticationError(FlextAbstractInfrastructureError, FlextError):
+    """Authentication-related errors with security context.
+
+    Implements FlextAbstractInfrastructureError for auth services.
+    """
 
     def __init__(
         self,
         message: str = "Authentication failed",
+        service: str | None = None,
         **kwargs: object,
     ) -> None:
         """Initialize authentication error with context.
 
         Args:
             message: Descriptive error message
+            service: Authentication service name
             **kwargs: Additional context information (user, method, etc.)
 
         """
-        super().__init__(message, error_code=ERROR_CODES["AUTH_ERROR"], context=kwargs)
+        FlextAbstractInfrastructureError.__init__(
+            self,
+            message,
+            service=service or "authentication",
+            error_code=ERROR_CODES["AUTH_ERROR"],
+            **kwargs,
+        )
+
+        # Initialize FlextError attributes
+        self.timestamp = time.time()
+        self.stack_trace = traceback.format_stack()
 
 
-class FlextPermissionError(FlextError):
-    """Permission-related errors with authorization context."""
+class FlextPermissionError(FlextAbstractInfrastructureError, FlextError):
+    """Permission-related errors with authorization context.
 
-    def __init__(self, message: str = "Permission denied", **kwargs: object) -> None:
+    Implements FlextAbstractInfrastructureError for authorization services.
+    """
+
+    def __init__(
+        self,
+        message: str = "Permission denied",
+        service: str | None = None,
+        **kwargs: object,
+    ) -> None:
         """Initialize permission error with context.
 
         Args:
             message: Descriptive error message
+            service: Authorization service name
             **kwargs: Additional context information (resource, action, etc.)
 
         """
-        super().__init__(
+        FlextAbstractInfrastructureError.__init__(
+            self,
             message,
+            service=service or "authorization",
             error_code=ERROR_CODES["PERMISSION_ERROR"],
-            context=kwargs,
+            **kwargs,
         )
+
+        # Initialize FlextError attributes
+        self.timestamp = time.time()
+        self.stack_trace = traceback.format_stack()
 
 
 class FlextNotFoundError(FlextError):
@@ -932,58 +812,103 @@ class FlextAlreadyExistsError(FlextError):
         )
 
 
-class FlextTimeoutError(FlextError):
-    """Timeout-related errors with timing context."""
+class FlextTimeoutError(FlextAbstractInfrastructureError, FlextError):
+    """Timeout-related errors with timing context.
 
-    def __init__(self, message: str = "Operation timed out", **kwargs: object) -> None:
+    Implements FlextAbstractInfrastructureError for timeout services.
+    """
+
+    def __init__(
+        self,
+        message: str = "Operation timed out",
+        service: str | None = None,
+        **kwargs: object,
+    ) -> None:
         """Initialize timeout error with context.
 
         Args:
             message: Descriptive error message
+            service: Service that timed out
             **kwargs: Additional context information (timeout, duration, etc.)
 
         """
-        super().__init__(
+        FlextAbstractInfrastructureError.__init__(
+            self,
             message,
+            service=service or "timeout_service",
             error_code=ERROR_CODES["TIMEOUT_ERROR"],
-            context=kwargs,
+            **kwargs,
         )
 
+        # Initialize FlextError attributes
+        self.timestamp = time.time()
+        self.stack_trace = traceback.format_stack()
 
-class FlextProcessingError(FlextError):
-    """Processing-related errors with operation context."""
 
-    def __init__(self, message: str = "Processing failed", **kwargs: object) -> None:
+class FlextProcessingError(FlextAbstractBusinessError, FlextError):
+    """Processing-related errors with operation context.
+
+    Implements FlextAbstractBusinessError for processing operations.
+    """
+
+    def __init__(
+        self,
+        message: str = "Processing failed",
+        business_rule: str | None = None,
+        **kwargs: object,
+    ) -> None:
         """Initialize processing error with context.
 
         Args:
             message: Descriptive error message
+            business_rule: Business rule that failed
             **kwargs: Additional context information (data, stage, etc.)
 
         """
-        super().__init__(
+        FlextAbstractBusinessError.__init__(
+            self,
             message,
+            business_rule=business_rule or "data_processing",
             error_code=ERROR_CODES["PROCESSING_ERROR"],
-            context=kwargs,
+            **kwargs,
         )
 
+        # Initialize FlextError attributes
+        self.timestamp = time.time()
+        self.stack_trace = traceback.format_stack()
 
-class FlextCriticalError(FlextError):
-    """Critical system errors requiring immediate attention."""
 
-    def __init__(self, message: str = "Critical error", **kwargs: object) -> None:
+class FlextCriticalError(FlextAbstractInfrastructureError, FlextError):
+    """Critical system errors requiring immediate attention.
+
+    Implements FlextAbstractInfrastructureError for critical system issues.
+    """
+
+    def __init__(
+        self,
+        message: str = "Critical error",
+        service: str | None = None,
+        **kwargs: object,
+    ) -> None:
         """Initialize critical error with context.
 
         Args:
             message: Descriptive error message
+            service: Critical service that failed
             **kwargs: Additional context information (system, component, etc.)
 
         """
-        super().__init__(
+        FlextAbstractInfrastructureError.__init__(
+            self,
             message,
+            service=service or "critical_system",
             error_code=ERROR_CODES["CRITICAL_ERROR"],
-            context=kwargs,
+            **kwargs,
         )
+
+        # Initialize FlextError attributes
+        self.timestamp = time.time()
+        self.stack_trace = traceback.format_stack()
 
 
 # =============================================================================
@@ -1028,15 +953,59 @@ def _record_exception(exception_type: str) -> None:
 # =============================================================================
 
 
-class FlextExceptions:
+class FlextExceptions(FlextAbstractErrorFactory):
     """Unified factory interface for creating FLEXT exceptions.
 
     Provides convenient factory methods for creating all types of FLEXT exceptions
     with appropriate default context and error codes.
+    Implements FlextAbstractErrorFactory.
     """
 
-    @staticmethod
     def create_validation_error(
+        self,
+        message: str,
+        **kwargs: object,
+    ) -> FlextAbstractValidationError:
+        """Create validation error - implements abstract method."""
+        field_obj = kwargs.pop("field", None)
+        field = str(field_obj) if field_obj is not None else None
+        value = kwargs.pop("value", None)
+        rules_obj = kwargs.pop("rules", None)
+        rules = list(rules_obj) if isinstance(rules_obj, (list, tuple)) else None
+        context_obj = kwargs.pop("context", None)
+        context = dict(context_obj) if isinstance(context_obj, Mapping) else None
+        return self.create_validation_error_with_field(
+            message, field=field, value=value, rules=rules, context=context,
+        )
+
+    def create_business_error(
+        self, message: str, **kwargs: object,
+    ) -> FlextAbstractBusinessError:
+        """Create business error - implements abstract method."""
+        business_rule_obj = kwargs.pop("business_rule", None)
+        business_rule = (
+            str(business_rule_obj) if business_rule_obj is not None else None
+        )
+        return FlextProcessingError(message, business_rule=business_rule, **kwargs)
+
+    def create_infrastructure_error(
+        self, message: str, **kwargs: object,
+    ) -> FlextAbstractInfrastructureError:
+        """Create infrastructure error - implements abstract method."""
+        service_obj = kwargs.pop("service", None)
+        service = str(service_obj) if service_obj is not None else None
+        return FlextConnectionError(message, service=service, **kwargs)
+
+    def create_configuration_error(
+        self, message: str, **kwargs: object,
+    ) -> FlextAbstractConfigurationError:
+        """Create configuration error - implements abstract method."""
+        config_key_obj = kwargs.pop("config_key", None)
+        config_key = str(config_key_obj) if config_key_obj is not None else None
+        return FlextConfigurationError(message, config_key=config_key, **kwargs)
+
+    @staticmethod
+    def create_validation_error_with_field(
         message: str,
         *,
         field: str | None = None,
@@ -1085,23 +1054,6 @@ class FlextExceptions:
         return FlextOperationError(
             message,
             operation=operation_name,
-            context=context,
-        )
-
-    @staticmethod
-    def create_configuration_error(
-        message: str,
-        *,
-        config_key: str | None = None,
-        context: Mapping[str, object] | None = None,
-    ) -> FlextConfigurationError:
-        """Create configuration error with config context."""
-        config_context = {}
-        if config_key is not None:
-            config_context["config_key"] = config_key
-        return FlextConfigurationError(
-            message,
-            config_context=config_context,
             context=context,
         )
 

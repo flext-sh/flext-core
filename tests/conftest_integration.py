@@ -11,7 +11,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from flext_core.config import FlextBaseSettings
+from flext_core.config import FlextSettings
 from flext_core.constants import FlextEnvironment, FlextLogLevel
 from flext_core.container import FlextContainer, get_flext_container
 
@@ -46,10 +46,10 @@ def global_container_reset() -> Generator[None]:
 
 
 @pytest.fixture
-def sample_settings() -> FlextBaseSettings:
-    """Provide sample FlextBaseSettings for testing."""
+def sample_settings() -> FlextSettings:
+    """Provide sample FlextSettings for testing."""
 
-    class TestSettings(FlextBaseSettings):
+    class TestSettings(FlextSettings):
         """Test-specific settings with required fields."""
 
         environment: FlextEnvironment = FlextEnvironment.TESTING

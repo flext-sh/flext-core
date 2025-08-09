@@ -1,95 +1,16 @@
-"""FLEXT Core Aggregate Root - Domain Layer Aggregate Implementation.
+"""Domain-Driven Design aggregate root implementation.
 
-Domain-Driven Design (DDD) aggregate root implementation providing transactional
-boundaries, domain event management, and consistency enforcement across the 32-project
-FLEXT ecosystem. Foundation for business aggregate modeling with event sourcing and
-transactional consistency in data integration domains.
-
-Module Role in Architecture:
-    Domain Layer → Aggregate Modeling → Business Transaction Boundaries
-
-    This module provides DDD aggregate root patterns used throughout FLEXT projects:
-    - Transactional boundaries defining consistency scope within aggregates
-    - Domain event collection for cross-aggregate communication
-    - Business invariant enforcement through aggregate operations
-    - Entity coordination and lifecycle management within aggregate boundaries
-
-Aggregate Architecture Patterns:
-    Transactional Boundaries: Consistency enforcement within aggregate scope
-    Domain Event Collection: Event-driven communication between aggregates
-    Business Invariants: Rule enforcement through aggregate operations
-    Entity Coordination: Lifecycle management of contained entities
-
-Development Status (v0.9.0 → 1.0.0):
-    ✅ Production Ready: Aggregate boundaries, event collection, entity inheritance
-    🚧 Active Development: Event sourcing foundation (Priority 1 - September 2025)
-    📋 TODO Integration: Complete event store integration (Priority 1)
-
-Aggregate Root Features:
-    FlextAggregateRoot: Base aggregate with transactional boundaries and events
-    Domain Event Collection: Event storage during business operations
-    Business Operations: Encapsulated aggregate behaviors with validation
-    Cross-Aggregate Communication: Event publishing coordination
-
-Ecosystem Usage Patterns:
-    # FLEXT Service Aggregates
-    class UserAggregate(FlextAggregateRoot):
-        name: str
-        email: str
-        orders: List[Order] = []
-
-        def place_order(self, order_data: dict) -> FlextResult[Order]:
-            # Business operation with event generation
-            order = Order(**order_data)
-            self.orders.append(order)
-            self.add_domain_event("OrderPlaced", {"order_id": order.id})
-            return FlextResult.ok(order)
-
-    # Singer Tap/Target Aggregates
-    class OracleTableAggregate(FlextAggregateRoot):
-        schema_name: str
-        table_name: str
-        columns: List[Column] = []
-
-        def add_column(self, column_data: dict) -> FlextResult[None]:
-            column = Column(**column_data)
-            self.columns.append(column)
-            self.add_domain_event("ColumnAdded", {"column_name": column.name})
-            return FlextResult.ok(None)
-
-    # ALGAR Migration Aggregates
-    class LdapDirectoryAggregate(FlextAggregateRoot):
-        base_dn: str
-        users: List[LdapUser] = []
-
-Transactional Consistency Features:
-    - Aggregate invariant enforcement through business operations
-    - Cross-entity validation within aggregate boundaries
-    - Atomic changes across all entities within aggregate
-    - Event-driven communication with external aggregates
-
-Quality Standards:
-    - All business operations must maintain aggregate invariants
-    - Domain events must be collected during state changes
-    - Transactional boundaries must be respected (no cross-aggregate transactions)
-    - Event clearing must occur after successful publishing
-
-See Also:
-    docs/TODO.md: Priority 1 - Event sourcing foundation implementation
-    entities.py: FlextEntity inheritance for identity and versioning
-    payload.py: FlextEvent for domain event structure
-
-Copyright (c) 2025 FLEXT Contributors
-SPDX-License-Identifier: MIT
-
+Provides DDD aggregate root pattern with transactional boundaries,
+domain event management, and business logic encapsulation for the
+FLEXT data integration ecosystem.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
-from flext_core.entities import FlextEntity
 from flext_core.exceptions import FlextValidationError
+from flext_core.models import FlextEntity
 from flext_core.payload import FlextEvent
 from flext_core.result import FlextResult
 from flext_core.utilities import FlextGenerators
@@ -97,115 +18,14 @@ from flext_core.utilities import FlextGenerators
 if TYPE_CHECKING:
     from datetime import datetime
 
-    from flext_core.flext_types import TAnyDict
+    from flext_core.typings import TAnyDict
 
 
 class FlextAggregateRoot(FlextEntity):
-    """DDD aggregate root with transactional boundaries and event sourcing capabilities.
+    """DDD aggregate root with transactional boundaries and event management.
 
-    Comprehensive aggregate root implementation providing transactional consistency,
-    domain event management, and business logic encapsulation. Extends FlextEntity with
-    aggregate-specific capabilities including event collection, publishing coordination,
-    and invariant enforcement.
-
-    Architecture:
-        - Inheritance from FlextEntity for identity, versioning, and validation
-        - Domain event collection with internal events list management
-        - Transactional boundary enforcement for aggregate consistency
-        - Business operation encapsulation within aggregate boundaries
-        - Event publishing coordination for cross-aggregate communication
-
-    Transactional Boundaries:
-        - Aggregate consistency enforcement through business operations
-        - Invariant validation across all entities within aggregate
-        - Atomic changes within aggregate boundary scope
-        - Cross-aggregate communication through domain events
-        - Business rule enforcement at aggregate level
-
-    Domain Event Management:
-        - Event collection during business operation execution
-        - Event lifecycle management from creation to publishing
-        - Event clearing after successful publishing to external systems
-        - Support for both structured events and event objects
-        - Batch event publishing coordination for performance
-
-    Usage Patterns:
-        # Define domain aggregate
-        class Order(FlextAggregateRoot):
-            customer_id: str
-            items: list[OrderItem]
-            status: str = "DRAFT"
-            total_amount: float = 0.0
-
-            def validate_domain_rules(self) -> FlextResult[None]:
-                if not self.items:
-                    return FlextResult.fail("Order must have items")
-                if self.total_amount < 0:
-                    return FlextResult.fail("Total amount cannot be negative")
-                return FlextResult.ok(None)
-
-            def add_item(self, item: OrderItem) -> FlextResult[Order]:
-                if self.status != "DRAFT":
-                    return FlextResult.fail("Cannot modify confirmed order")
-
-                # Create new aggregate with added item
-                new_items = self.items + [item]
-                new_total = self.total_amount + item.price
-
-                result = self.copy_with(
-                    items=new_items,
-                    total_amount=new_total
-                )
-
-                if result.success:
-                    updated_order = result.data
-                    # Add domain event
-                    updated_order.add_domain_event(
-                        "OrderItemAdded",
-                        {
-                            "order_id": self.id,
-                            "item_id": item.id,
-                            "new_total": new_total
-                        }
-                    )
-                    return FlextResult.ok(updated_order)
-
-                return result
-
-        # Create and use aggregate
-        order = Order(
-            customer_id="cust_123",
-            items=[],
-            status="DRAFT"
-        )
-
-        # Execute business operations
-        item = OrderItem(id="item_456", price=29.99)
-        updated_result = order.add_item(item)
-
-        if updated_result.success:
-            updated_order = updated_result.data
-
-            # Collect events for publishing
-            events = updated_order.get_domain_events()
-            # Publish events to event store/message bus
-
-            # Clear events after publishing
-            updated_order.clear_domain_events()
-
-    Event Publishing Integration:
-        - Event collection during aggregate operations
-        - Batch publishing for performance optimization
-        - Event clearing after successful publishing
-        - Event store integration for persistence
-        - Message bus integration for cross-aggregate communication
-
-    Consistency Management:
-        - Aggregate invariant enforcement through validation
-        - Business rule validation during operations
-        - Version tracking for optimistic concurrency control
-        - Atomic changes within aggregate boundaries
-        - Cross-aggregate eventual consistency through events
+    Extends FlextEntity with aggregate-specific capabilities for business
+    operations, domain events, and transactional consistency.
     """
 
     def __init__(
@@ -254,7 +74,33 @@ class FlextAggregateRoot(FlextEntity):
         init_kwargs.update(entity_data)
 
         try:
-            super().__init__(**init_kwargs)  # type: ignore[arg-type]
+            # Pydantic BaseModel accepts **kwargs, but MyPy needs explicit params
+            # Extract known FlextEntity parameters with proper typing
+            entity_id_raw = init_kwargs.pop("id", actual_id)
+            entity_id = cast("str", entity_id_raw if entity_id_raw else actual_id)
+
+            entity_version_raw = init_kwargs.pop("version", version)
+            entity_version = cast(
+                "int",
+                entity_version_raw if entity_version_raw else version,
+            )
+
+            entity_domain_events_raw = init_kwargs.pop("domain_events", domain_events)
+            entity_domain_events = cast(
+                "list[dict[str, object]]",
+                entity_domain_events_raw if entity_domain_events_raw else domain_events,
+            )
+
+            # Initialize parent class with explicit parameters
+            super().__init__(
+                id=entity_id,
+                version=entity_version,
+                domain_events=entity_domain_events,
+            )
+
+            # Set any additional attributes after initialization
+            for key, value in init_kwargs.items():
+                setattr(self, key, value)
         except Exception as e:
             # REAL SOLUTION: Proper error handling for initialization failures
             error_msg = f"Failed to initialize aggregate root with provided data: {e}"
@@ -267,12 +113,23 @@ class FlextAggregateRoot(FlextEntity):
                 },
             ) from e
 
-    def add_domain_event(
+    def add_domain_event(self, event: dict[str, object]) -> None:  # type: ignore[override]
+        """Add domain event to be published after persistence.
+
+        Override from FlextEntity to maintain compatibility.
+
+        Args:
+            event: Event dictionary
+
+        """
+        self.domain_events.append(event)
+
+    def add_typed_domain_event(
         self,
         event_type: str,
         event_data: TAnyDict,
     ) -> FlextResult[None]:
-        """Add domain event to be published after persistence.
+        """Add typed domain event with validation.
 
         Args:
             event_type: Type of domain event
@@ -292,7 +149,9 @@ class FlextAggregateRoot(FlextEntity):
             if event_result.is_failure:
                 return FlextResult.fail(f"Failed to create event: {event_result.error}")
 
-            self.domain_events.append(event_result.unwrap())
+            # Convert FlextEvent to dict for compatibility with FlextEntity
+            event = event_result.unwrap()
+            self.domain_events.append(event.model_dump())
             return FlextResult.ok(None)
         except (TypeError, ValueError, AttributeError) as e:
             return FlextResult.fail(f"Failed to add domain event: {e}")
@@ -304,20 +163,28 @@ class FlextAggregateRoot(FlextEntity):
             event: Domain event object to add
 
         """
-        self.domain_events.append(event)
+        # Convert FlextEvent to dict for compatibility with FlextEntity
+        self.domain_events.append(event.model_dump())
 
-    def get_domain_events(self) -> list[FlextEvent]:
+    def get_domain_events(self) -> list[dict[str, object]]:
         """Get all unpublished domain events.
 
         Returns:
-            List of domain events
+            List of domain events as dictionaries
 
         """
         return list(self.domain_events)
 
-    def clear_domain_events(self) -> None:
-        """Clear all domain events after publishing."""
+    def clear_domain_events(self) -> list[dict[str, object]]:
+        """Clear all domain events after publishing.
+
+        Returns:
+            The cleared domain events list
+
+        """
+        events = self.domain_events.copy()
         self.domain_events.clear()
+        return events
 
     def has_domain_events(self) -> bool:
         """Check if aggregate has unpublished events."""

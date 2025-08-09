@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from flext_core import __version__
-from flext_core.version import (
+from flext_core.__version__ import (
     check_python_compatibility,
     compare_versions,
     get_available_features,

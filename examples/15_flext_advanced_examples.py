@@ -323,9 +323,9 @@ def _demonstrate_configuration() -> FlextResult[None]:
     """Demonstrate configuration management patterns."""
     print("6. FlextConfig Examples:")
 
-    from flext_core.config import FlextBaseSettings
+    from flext_core.config import FlextSettings
 
-    class AppSettings(FlextBaseSettings):
+    class AppSettings(FlextSettings):
         database_url: str = "sqlite:///app.db"
         debug: bool = False
         max_workers: int = 4

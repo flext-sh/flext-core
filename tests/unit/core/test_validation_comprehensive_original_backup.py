@@ -17,8 +17,9 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
 from flext_core.constants import FlextConstants
-from flext_core.flext_types import TPredicate  # This should hit line 42
+from flext_core.legacy import is_valid_data, validate_smart
 from flext_core.result import FlextResult
+from flext_core.types import TPredicate  # This should hit line 42
 from flext_core.validation import (
     FlextPredicates,
     FlextValidation,
@@ -36,8 +37,6 @@ from flext_core.validation import (
     flext_validate_service_name,
     flext_validate_string,
     flext_validate_string_field,
-    is_valid_data,
-    validate_smart,
 )
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]

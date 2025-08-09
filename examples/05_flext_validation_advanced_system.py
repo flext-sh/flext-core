@@ -1,18 +1,13 @@
 #!/usr/bin/env python3
-"""FLEXT Validation - Advanced Validation System Example.
+"""Advanced validation system using FlextValidators.
 
-Demonstrates comprehensive validation using FlextValidators with enterprise-grade
-validation patterns, functional predicates, and structured validation results.
-
-Features demonstrated:
-- Comprehensive data validation with FlextValidators
-- Functional predicates with composition patterns
-- Structured validation results with detailed error reporting
+Demonstrates comprehensive data validation with functional predicates,
+composition patterns, and structured error reporting.
 - Enterprise validation workflows with complex business rules
 - Performance validation patterns and optimization
 - Custom validator creation and composition
 - Multi-field validation with dependency checks
-- Maximum type safety using flext_core.types
+- Maximum type safety using flext_core.typings
 """
 
 from __future__ import annotations
@@ -308,7 +303,7 @@ def validate_user_business_rules(user: SharedUser) -> FlextResult[None]:
 
 
 def demonstrate_basic_validations() -> None:
-    """Demonstrate basic validation patterns using flext_core.types."""
+    """Demonstrate basic validation patterns using flext_core.typings."""
     log_message: TLogMessage = "\n" + "=" * 60
     print(log_message)
     print("📋 EXAMPLE 1: Basic Validations")
@@ -359,7 +354,7 @@ def demonstrate_basic_validations() -> None:
 
 
 def demonstrate_format_validations() -> None:
-    """Demonstrate format validation patterns using flext_core.types."""
+    """Demonstrate format validation patterns using flext_core.typings."""
     log_message: TLogMessage = "\n" + "=" * 60
     print(log_message)
     print("📋 EXAMPLE 2: Format Validations")
@@ -426,7 +421,7 @@ def demonstrate_format_validations() -> None:
 
 
 def demonstrate_functional_predicates() -> None:
-    """Demonstrate functional predicates using flext_core.types."""
+    """Demonstrate functional predicates using flext_core.typings."""
     log_message: TLogMessage = "\n" + "=" * 60
     print(log_message)
     print("📋 EXAMPLE 3: Functional Predicates")
@@ -499,7 +494,7 @@ def demonstrate_functional_predicates() -> None:
 
 
 def demonstrate_predicate_composition() -> None:
-    """Demonstrate predicate composition patterns using flext_core.types."""
+    """Demonstrate predicate composition patterns using flext_core.typings."""
     log_message: TLogMessage = "\n" + "=" * 60
     print(log_message)
     print("📋 EXAMPLE 4: Predicate Composition")
@@ -809,7 +804,7 @@ def _create_enhanced_demo_product(
 
 
 def demonstrate_customer_validation() -> None:
-    """Demonstrate customer validation workflows using flext_core.types."""
+    """Demonstrate customer validation workflows using flext_core.typings."""
     log_message: TLogMessage = "\n" + "=" * 60
     print(log_message)
     print("📋 EXAMPLE 5: Customer Validation")
@@ -881,7 +876,7 @@ def demonstrate_customer_validation() -> None:
 
 
 def demonstrate_product_validation() -> None:
-    """Demonstrate product validation workflows using flext_core.types."""
+    """Demonstrate product validation workflows using flext_core.typings."""
     log_message: TLogMessage = "\n" + "=" * 60
     print(log_message)
     print("📋 EXAMPLE 6: Product Validation")
@@ -961,7 +956,7 @@ def demonstrate_product_validation() -> None:
 
 
 def demonstrate_validation_performance() -> None:
-    """Demonstrate validation performance patterns using flext_core.types."""
+    """Demonstrate validation performance patterns using flext_core.typings."""
     log_message: TLogMessage = "\n" + "=" * 60
     print(log_message)
     print("📋 EXAMPLE 7: Validation Performance")

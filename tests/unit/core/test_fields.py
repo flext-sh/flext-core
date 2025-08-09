@@ -1,13 +1,7 @@
-"""Advanced tests for FlextFields - Refactored with modern pytest patterns.
+"""Tests for FlextFields with modern pytest patterns.
 
-This module demonstrates complete refactoring using advanced pytest features:
-- Parametrized fixtures from conftest with TestCase structures
-- Factory patterns for test data construction and validation
-- Performance monitoring integration with tracemalloc
-- Snapshot testing for complex field configurations
-- Property-based testing with Hypothesis strategies
-- Advanced mocking with pytest-mock integration
-- Integration tests with multiple fixture combinations
+Advanced tests using parametrized fixtures, factory patterns,
+performance monitoring, and property-based testing.
 
 Architectural Patterns Demonstrated:
 - Enterprise-grade parametrized testing with structured TestCase objects

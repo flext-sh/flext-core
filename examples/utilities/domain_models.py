@@ -1,20 +1,13 @@
-"""Enhanced Domain Models with FLEXT Mixins.
+"""Enhanced domain models with FLEXT mixins.
 
-Demonstrates enterprise patterns using shared domain models enhanced with
-FLEXT mixins for caching, serialization, and advanced functionality.
+Demonstrates shared domain models enhanced with mixins
+for caching, serialization, and advanced functionality.
 
 Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
-
-# Import shared domain models to reduce duplication
-from shared_domain import (
-    Order as SharedOrder,
-    Product as SharedProduct,
-    User as SharedUser,
-)
 
 from flext_core import (
     FlextCacheableMixin,
@@ -26,6 +19,11 @@ from flext_core import (
     TAnyObject,
 )
 
+from ..shared_domain import (  # noqa: TID252
+    Order as SharedOrder,
+    Product as SharedProduct,
+    User as SharedUser,
+)
 from .formatting_helpers import (
     ADULT_AGE_THRESHOLD,
     MIDDLE_AGED_THRESHOLD,

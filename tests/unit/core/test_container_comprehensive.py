@@ -1,8 +1,7 @@
-"""Comprehensive tests for FlextContainer system - achieving near 100% coverage.
+"""Comprehensive tests for FlextContainer system.
 
-This test suite fills gaps in existing container tests to achieve comprehensive
-coverage of all FlextContainer functionality including edge cases, error conditions,
-and advanced features.
+Tests container functionality including edge cases, error conditions,
+and advanced features for complete coverage.
 """
 
 from __future__ import annotations

@@ -20,7 +20,7 @@ This guide helps migrate existing Python applications to use FLEXT Core patterns
 1. **Install FLEXT Core** and verify basic functionality
 2. **Migrate error handling** to FlextResult pattern
 3. **Replace dependency injection** with FlextContainer
-4. **Update configuration** with FlextBaseSettings
+4. **Update configuration** with FlextSettings
 5. **Adopt domain patterns** where applicable
 
 ## 🔧 Error Handling Migration
@@ -191,7 +191,7 @@ if service_result.success:
 
 ## ⚙️ Configuration Migration
 
-### From Manual Environment Variables to FlextBaseSettings
+### From Manual Environment Variables to FlextSettings
 
 **Before (Manual configuration):**
 
@@ -213,13 +213,13 @@ class Config:
 config = Config()
 ```
 
-**After (FlextBaseSettings):**
+**After (FlextSettings):**
 
 ```python
-from flext_core import FlextBaseSettings
+from flext_core import FlextSettings
 from typing import Optional
 
-class AppSettings(FlextBaseSettings):
+class AppSettings(FlextSettings):
     """Type-safe application configuration."""
 
     # Database configuration
@@ -289,7 +289,8 @@ class UserService:
 **After (FlextEntity with business logic):**
 
 ```python
-from flext_core import FlextEntity, FlextResult
+from flext_core.models import FlextEntity
+from flext_core import FlextResult
 
 class User(FlextEntity):
     """User domain entity with business logic."""
@@ -426,7 +427,7 @@ def test_configuration_migration():
     os.environ["TEST_API_KEY"] = "test_key_123"
 
     try:
-        class TestSettings(FlextBaseSettings):
+        class TestSettings(FlextSettings):
             api_key: str
             debug: bool = False
 

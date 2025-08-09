@@ -1,7 +1,7 @@
-"""Main Demonstration Runner for FLEXT Utilities.
+"""Main demonstration runner for FLEXT utilities.
 
-Orchestrates all utility demonstrations in a clean, modular way following
-SOLID principles and using the helper classes to reduce complexity.
+Orchestrates utility demonstrations following SOLID principles
+with helper classes to reduce complexity.
 
 Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT

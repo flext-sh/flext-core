@@ -1,23 +1,18 @@
 #!/usr/bin/env python3
-"""FLEXT Config Enterprise Configuration Example.
+"""Enterprise configuration management with FlextConfig.
 
-Comprehensive demonstration of FlextConfig system showing enterprise-grade
-configuration management with environment integration, validation, and merging.
-
-Features demonstrated:
-    - Environment variable configuration loading
-    - Configuration validation with type safety
-    - Configuration merging and override patterns
+Demonstrates environment integration, validation, merging,
+and override patterns for configuration management.
     - Default value management and fallbacks
     - File-based configuration loading
     - Configuration validation and error handling
     - Enterprise configuration patterns
     - Configuration hierarchies and inheritance
-    - Maximum type safety using flext_core.types
+    - Maximum type safety using flext_core.typings
 
 Key Components:
     - FlextConfig: Main configuration management class
-    - FlextBaseSettings: Pydantic-based settings with environment loading
+    - FlextSettings: Pydantic-based settings with environment loading
     - FlextConfigDefaults: Default configuration management
     - FlextConfigOps: Configuration operations and transformations
     - Configuration validation with comprehensive error reporting
@@ -40,11 +35,11 @@ from shared_domain import (
 )
 
 from flext_core import (
-    FlextBaseSettings,
     FlextConfigDefaults,
     FlextConfigValidation,
     FlextConstants,
     FlextResult,
+    FlextSettings,
     TAnyDict,
     TConfigDict,
     TErrorMessage,
@@ -56,7 +51,7 @@ from flext_core import (
 def demonstrate_basic_configuration() -> None:
     """Demonstrate basic configuration patterns with FlextConfig.
 
-    Using flext_core.types for type safety.
+    Using flext_core.typings for type safety.
     """
     log_message: TLogMessage = "\n" + "=" * 80
     print(log_message)
@@ -137,7 +132,7 @@ def demonstrate_basic_configuration() -> None:
 
 
 def demonstrate_environment_integration() -> None:
-    """Demonstrate environment variable integration using flext_core.types."""
+    """Demonstrate environment variable integration using flext_core.typings."""
     log_message: TLogMessage = "\n" + "=" * 80
     print(log_message)
     print("🌍 ENVIRONMENT INTEGRATION")
@@ -147,8 +142,8 @@ def demonstrate_environment_integration() -> None:
     log_message = "\n1. Environment-based settings:"
     print(log_message)
 
-    class MyAppSettings(FlextBaseSettings):
-        """Application settings with environment loading using flext_core.types."""
+    class MyAppSettings(FlextSettings):
+        """Application settings with environment loading using flext_core.typings."""
 
         debug: bool = True
         max_connections: int = 100
@@ -219,7 +214,7 @@ def demonstrate_environment_integration() -> None:
 
 
 def demonstrate_configuration_merging() -> None:
-    """Demonstrate configuration merging patterns using flext_core.types."""
+    """Demonstrate configuration merging patterns using flext_core.typings."""
     log_message: TLogMessage = "\n" + "=" * 80
     print(log_message)
     print("🔄 CONFIGURATION MERGING")
@@ -461,7 +456,7 @@ def _cleanup_configuration_file(temp_file_path: str) -> FlextResult[None]:
 
 
 def demonstrate_configuration_hierarchies() -> None:
-    """Demonstrate configuration hierarchies using flext_core.types."""
+    """Demonstrate configuration hierarchies using flext_core.typings."""
     log_message: TLogMessage = "\n" + "=" * 80
     print(log_message)
     print("🏗️ CONFIGURATION HIERARCHIES")

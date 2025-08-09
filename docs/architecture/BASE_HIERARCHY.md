@@ -1,84 +1,91 @@
 # FLEXT Core - Base Module Hierarchy
 
-**VALIDADO**: 2025-07-27 - ZERO dependências circulares ✅
+Validated against current source tree in `src/flext_core/`.
 
-## Hierarquia Validada de Módulos Base
+## Purpose
 
-Os módulos base seguem hierarquia rígida para EVITAR dependências circulares:
+This document captures the layering and import rules for FLEXT Core's
+"base" modules and surrounding layers, reflecting the actual modules in
+this repository today.
 
-### NÍVEL 0: Fundação (Zero Dependências)
+## Layered Structure (Reality-Based)
 
-- `_constants_base.py` - Constantes fundamentais
+### Level 0: Foundation (no dependencies)
+- `constants.py` — Core enums and constants
+- `__version__.py` — Version metadata and compatibility utilities
 
-### NÍVEL 1: Tipos (Depende: constants)
+### Level 1: Railway Pattern
+- `result.py` — FlextResult[T] (central error-handling pattern)
 
-- `_types_base.py` - TypeVars e type aliases
+### Level 2: Dependency Injection
+- `container.py` — FlextContainer and container utilities
 
-### NÍVEL 2: Validação (Depende: types)
+### Level 3: Configuration
+- `config.py` — FlextSettings and config management
+- `config_base.py` — Base configuration building blocks
+- `config_models.py` — Shared configuration models
 
-- `_validation_base.py` - Validações básicas
+### Level 4: Domain Model Layer
+- `models.py` — Shared model primitives
+- `entities.py` — FlextEntity
+- `value_objects.py` — FlextValueObject
+- `aggregate_root.py` — FlextAggregateRoot
+- `domain_services.py` — Domain service patterns
 
-### NÍVEL 3: Utilitários (Depende: validation)
+### Level 5: Architectural Patterns
+- `commands.py` — FlextCommands namespace
+- `handlers.py` — Handler patterns
+- `handlers_base.py` — Base handler support
+- `validation.py` — Validation system
+- `validation_base.py` — Base validation support
+- `protocols.py` — Protocol/interface definitions
+- `guards.py` — Guard helpers and validators
 
-- `_utilities_base.py` - Funções utilitárias
+### Level 6: Cross-Cutting Concerns
+- `loggings.py` — Structured logging
+- `decorators.py` — Decorator utilities
+- `mixins.py` — Reusable mixins
+- `fields.py` — Field metadata
+- `utilities.py` — Utility helpers
+- `observability.py` — Observability helpers
+- `schema_processing.py` — Schema processing
+- `payload.py` — Messaging primitives
 
-### NÍVEL 4: Result (Depende: types, constants)
+### Level 7: Type System
+- `typings.py` — Hierarchical types and protocols
+- `types.py` — Thin compatibility surface (re-exports)
 
-- `_result_base.py` - Railway-oriented programming
+### Level 8: Base Implementations (Internal building blocks)
+- `base_commands.py`
+- `base_decorators.py`
+- `base_exceptions.py`
+- `base_handlers.py`
+- `base_mixins.py`
+- `base_testing.py`
+- `base_utilities.py`
+- `delegation_system.py`
+- `legacy.py`
 
-### NÍVEL 5: Configuração (Depende: result, utilities)
+### Level 9: Integration / Composition
+- `core.py` — Composition utilities for higher-level use
+- `context.py` — Context management patterns
+- `singer_base.py` — Singer-related base helpers
+- `testing_utilities.py` — Testing helpers
 
-- `_config_base.py` - Configurações base
+## Import Rules (Enforced by Convention)
+1. Lower levels must not import from higher levels.
+2. Base modules (Level 8) are internal building blocks; avoid importing
+   them from application code. Prefer public, higher-level modules.
+3. Keep domain/business logic free of infrastructure concerns.
+4. Favor `FlextResult` return types over exceptions in business logic.
 
-### NÍVEL 6: Logging (Depende: constants, validation)
+## Rationale
+- The order above mirrors real dependencies observed in the source code.
+- Clean separation makes it easier to evolve advanced patterns (CQRS,
+  plugins, event sourcing) without breaking the foundation.
 
-- `_loggings_base.py` - Sistema de logging
-
-### NÍVEL 7: Exceções (Depende: constants, types)
-
-- `_exceptions_base.py` - Hierarquia de exceções
-
-### NÍVEL 8: Decorators (Depende: types)
-
-- `_decorators_base.py` - Decoradores funcionais
-
-### NÍVEL 9: Mixins (Depende: validation, types)
-
-- `_mixins_base.py` - Classes mixin reutilizáveis
-
-### NÍVEL 10: Field Config (Depende: mixins)
-
-- `_field_config_base.py` - Configurações de campo
-
-## Regras OBRIGATÓRIAS
-
-1. **NUNCA** importar módulos públicos em módulos base
-2. **SEMPRE** importar apenas módulos de níveis inferiores
-3. **TODOS** os módulos base usam prefixo `_` e classes/funções privadas
-4. **ZERO** tolerância para dependências circulares
-
-## Validação de Importação
-
-```bash
-# Verificar se não há importações circulares
-python -c "
-import sys
-sys.path.insert(0, 'src')
-
-# Importar módulos na ordem hierárquica
-from flext_core._constants_base import *
-from flext_core._types_base import *
-from flext_core._validation_base import *
-from flext_core._utilities_base import *
-from flext_core._result_base import *
-from flext_core._config_base import *
-from flext_core._loggings_base import *
-from flext_core._exceptions_base import *
-from flext_core._decorators_base import *
-from flext_core._mixins_base import *
-from flext_core._field_config_base import *
-print('✅ HIERARQUIA VALIDADA - Zero dependências circulares!')
-"
-```
-
-## Status: ✅ VALIDADO e FUNCIONAL
+## Status
+- This hierarchy reflects the CURRENT repository contents and naming.
+- Private legacy `_..._base.py` modules referenced in older docs no
+  longer exist; the modern equivalents are the `base_*.py` modules
+  listed under Level 8.

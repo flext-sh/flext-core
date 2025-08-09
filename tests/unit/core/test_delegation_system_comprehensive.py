@@ -12,7 +12,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from flext_core._delegation_system import (
+from flext_core.delegation_system import (
     FlextMixinDelegator,
     create_mixin_delegator,
     validate_delegation_system,

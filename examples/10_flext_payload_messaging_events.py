@@ -1,19 +1,14 @@
 #!/usr/bin/env python3
-"""FLEXT Payload Messaging and Events Example.
+"""Messaging and events using FlextPayload.
 
-Comprehensive demonstration of FlextPayload system showing enterprise-grade
-message and event patterns for structured data transport, validation, and
-metadata management.
-
-Features demonstrated:
-    - Generic payload containers with type safety
-    - Message payloads with level validation and source tracking
+Demonstrates structured data transport, validation,
+and metadata management for message patterns.
     - Domain event payloads with aggregate tracking and versioning
     - Metadata management and enrichment patterns
     - Payload validation and error handling
     - Enterprise messaging patterns for distributed systems
     - Event sourcing foundations for domain-driven design
-    - Maximum type safety using flext_core.types
+    - Maximum type safety using flext_core.typings
 
 Key Components:
     - FlextPayload[T]: Generic type-safe payload container
@@ -186,7 +181,7 @@ def demonstrate_generic_payloads() -> None:
 
 
 def demonstrate_message_payloads() -> None:
-    """Demonstrate message payloads with level validation using flext_core.types."""
+    """Demonstrate message payloads with level validation using flext_core.typings."""
     log_message: TLogMessage = "\n" + "=" * 80
     print(log_message)
     print("💬 MESSAGE PAYLOADS")
@@ -694,7 +689,7 @@ def _display_validation_results(
 def demonstrate_payload_serialization() -> None:
     """Demonstrate payload serialization for cross-service communication.
 
-    Using flext_core.types for type safety.
+    Using flext_core.typings for type safety.
     """
     log_message: TLogMessage = "\n" + "=" * 80
     print(log_message)
@@ -831,7 +826,7 @@ def demonstrate_payload_serialization() -> None:
 
 
 def demonstrate_enterprise_messaging_patterns() -> None:
-    """Demonstrate enterprise messaging patterns using flext_core.types."""
+    """Demonstrate enterprise messaging patterns using flext_core.typings."""
     log_message: TLogMessage = "\n" + "=" * 80
     print(log_message)
     print("🏭 ENTERPRISE MESSAGING PATTERNS")

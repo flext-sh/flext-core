@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_core._delegation_system import (
+from flext_core.delegation_system import (
     FlextMixinDelegator,
 )
 

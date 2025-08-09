@@ -1,10 +1,7 @@
-"""Tests for SOLID principles implementation in guards module.
+"""Tests for SOLID principles in guards module.
 
-Tests specifically for the SOLID refactoring of guards.py:
-- immutable decorator with real immutability enforcement
-- pure function decorator with memoization and side-effect detection
-- Dependency Inversion Principle (DIP) compliance
-- Interface Segregation Principle (ISP) adherence
+Tests guard decorators and validation patterns following SOLID principles
+with immutability enforcement and dependency inversion compliance.
 """
 
 from __future__ import annotations

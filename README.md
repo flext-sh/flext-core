@@ -26,7 +26,7 @@ make setup
 - FlextResult[T] pattern for type-safe error handling
 - FlextContainer dependency injection system
 - Domain entities (FlextEntity, FlextValueObject, FlextAggregateRoot)
-- Configuration management with FlextBaseSettings
+- Configuration management with FlextSettings
 - Structured logging with correlation IDs
 
 **What Needs Work:**

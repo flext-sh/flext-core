@@ -13,7 +13,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from flext_core.constants import FlextSemanticConstants
+from flext_core.constants import FlextConstants
 from flext_core.result import FlextResult
 from flext_core.semantic import (
     FlextSemantic,
@@ -46,28 +46,20 @@ class TestFlextSemanticModel:
         assert set(config.keys()) == expected_keys
 
         # Verify specific values from constants
-        assert config["extra"] == FlextSemanticConstants.Models.EXTRA_FORBID
+        assert config["extra"] == FlextConstants.Models.EXTRA_FORBID
         assert (
-            config["validate_assignment"]
-            == FlextSemanticConstants.Models.VALIDATE_ASSIGNMENT
+            config["validate_assignment"] == FlextConstants.Models.VALIDATE_ASSIGNMENT
         )
+        assert config["use_enum_values"] == FlextConstants.Models.USE_ENUM_VALUES
         assert (
-            config["use_enum_values"] == FlextSemanticConstants.Models.USE_ENUM_VALUES
+            config["str_strip_whitespace"] == FlextConstants.Models.STR_STRIP_WHITESPACE
         )
-        assert (
-            config["str_strip_whitespace"]
-            == FlextSemanticConstants.Models.STR_STRIP_WHITESPACE
-        )
-        assert (
-            config["str_max_length"] == FlextSemanticConstants.Limits.MAX_STRING_LENGTH
-        )
+        assert config["str_max_length"] == FlextConstants.Limits.MAX_STRING_LENGTH
         assert (
             config["arbitrary_types_allowed"]
-            == FlextSemanticConstants.Models.ARBITRARY_TYPES_ALLOWED
+            == FlextConstants.Models.ARBITRARY_TYPES_ALLOWED
         )
-        assert (
-            config["validate_default"] == FlextSemanticConstants.Models.VALIDATE_DEFAULT
-        )
+        assert config["validate_default"] == FlextConstants.Models.VALIDATE_DEFAULT
 
     def test_namespace_classes_exist(self) -> None:
         """Test namespace classes are properly defined."""
@@ -95,8 +87,8 @@ class TestFlextSemanticModel:
 
         assert "timeout" in defaults
         assert "status" in defaults
-        assert defaults["timeout"] == FlextSemanticConstants.Defaults.TIMEOUT
-        assert defaults["status"] == FlextSemanticConstants.Status.ACTIVE
+        assert defaults["timeout"] == FlextConstants.Defaults.TIMEOUT
+        assert defaults["status"] == FlextConstants.Status.ACTIVE
 
         # Test with additional kwargs
         custom_data = FlextSemanticModel.Factory.create_model_with_defaults(
@@ -106,8 +98,8 @@ class TestFlextSemanticModel:
         )
 
         # Should contain both defaults and custom data
-        assert custom_data["timeout"] == FlextSemanticConstants.Defaults.TIMEOUT
-        assert custom_data["status"] == FlextSemanticConstants.Status.ACTIVE
+        assert custom_data["timeout"] == FlextConstants.Defaults.TIMEOUT
+        assert custom_data["status"] == FlextConstants.Status.ACTIVE
         assert custom_data["name"] == "test_model"
         assert custom_data["version"] == "1.0.0"
         assert custom_data["custom_field"] == 123
@@ -283,7 +275,7 @@ class TestFlextSemanticError:
         error = FlextSemanticError.Hierarchy.FlextError("Simple error")
 
         assert str(error) == "Simple error"
-        assert error.error_code == FlextSemanticConstants.Errors.GENERIC_ERROR
+        assert error.error_code == FlextConstants.Errors.GENERIC_ERROR
         assert error.cause is None
         assert error.context == {}
 
@@ -295,7 +287,7 @@ class TestFlextSemanticError:
         )
 
         assert str(error) == "Business rule violation"
-        assert error.error_code == FlextSemanticConstants.Errors.BUSINESS_RULE_ERROR
+        assert error.error_code == FlextConstants.Errors.BUSINESS_RULE_ERROR
         assert error.context["business_rule"] == "user_must_be_active"
         assert error.context["entity_id"] == "user-123"
         assert isinstance(error, FlextSemanticError.Hierarchy.FlextError)
@@ -311,7 +303,7 @@ class TestFlextSemanticError:
         )
 
         assert str(error) == "Database connection failed"
-        assert error.error_code == FlextSemanticConstants.Errors.CONNECTION_ERROR
+        assert error.error_code == FlextConstants.Errors.CONNECTION_ERROR
         assert error.context["system_component"] == "database"
         assert error.context["error_details"] == {"host": "localhost", "port": 5432}
 
@@ -327,7 +319,7 @@ class TestFlextSemanticError:
         )
 
         assert str(error) == "Invalid email format"
-        assert error.error_code == FlextSemanticConstants.Errors.VALIDATION_ERROR
+        assert error.error_code == FlextConstants.Errors.VALIDATION_ERROR
         assert error.context["field_name"] == "email"
         assert error.context["field_value"] == "invalid-email"
         assert error.context["validation_rule"] == "email_format"
@@ -344,7 +336,7 @@ class TestFlextSemanticError:
         )
 
         assert str(error) == "Unauthorized access attempt"
-        assert error.error_code == FlextSemanticConstants.Errors.AUTHENTICATION_ERROR
+        assert error.error_code == FlextConstants.Errors.AUTHENTICATION_ERROR
         assert error.context["user_id"] == "malicious-user"
         assert error.context["resource"] == "admin-panel"
         assert error.context["action"] == "access"
@@ -445,34 +437,23 @@ class TestSemanticIntegration:
         security_error = FlextSemanticError.Hierarchy.FlextSecurityError("Test")
 
         # Verify error codes come from constants
-        assert (
-            business_error.error_code
-            == FlextSemanticConstants.Errors.BUSINESS_RULE_ERROR
-        )
-        assert (
-            technical_error.error_code == FlextSemanticConstants.Errors.CONNECTION_ERROR
-        )
-        assert (
-            validation_error.error_code
-            == FlextSemanticConstants.Errors.VALIDATION_ERROR
-        )
-        assert (
-            security_error.error_code
-            == FlextSemanticConstants.Errors.AUTHENTICATION_ERROR
-        )
+        assert business_error.error_code == FlextConstants.Errors.BUSINESS_RULE_ERROR
+        assert technical_error.error_code == FlextConstants.Errors.CONNECTION_ERROR
+        assert validation_error.error_code == FlextConstants.Errors.VALIDATION_ERROR
+        assert security_error.error_code == FlextConstants.Errors.AUTHENTICATION_ERROR
 
     def test_model_factory_uses_constants(self) -> None:
         """Test that model factory uses semantic constants."""
         defaults = FlextSemanticModel.Factory.create_model_with_defaults()
 
         # Verify values come from constants
-        assert defaults["timeout"] == FlextSemanticConstants.Defaults.TIMEOUT
-        assert defaults["status"] == FlextSemanticConstants.Status.ACTIVE
+        assert defaults["timeout"] == FlextConstants.Defaults.TIMEOUT
+        assert defaults["status"] == FlextConstants.Status.ACTIVE
 
     def test_observability_uses_constants(self) -> None:
         """Test that observability uses semantic constants."""
         # This tests that the constants are referenced correctly
-        default_log_level = FlextSemanticConstants.Observability.DEFAULT_LOG_LEVEL
+        default_log_level = FlextConstants.Observability.DEFAULT_LOG_LEVEL
         assert default_log_level is not None
 
         # The configure method should use this constant as default

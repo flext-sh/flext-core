@@ -1,7 +1,7 @@
-"""Validation and Type Checking Utilities.
+"""Validation and type checking utilities.
 
-Enterprise-grade validation functions using FlextTypes for maximum type safety
-and comprehensive data validation following SOLID principles.
+Validation functions using FlextTypes for type safety
+and comprehensive data validation.
 
 Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT

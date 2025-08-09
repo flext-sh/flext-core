@@ -58,7 +58,7 @@
 ✅ **Reality-Based File Updates**:
 
 - `docs/standards/DOCSTRING_STANDARDS.md` - Based on actual 48 modules (not 38)
-- `docs/configuration/secrets.md` - Uses real FlextBaseSettings API
+- `docs/configuration/secrets.md` - Uses real FlextSettings API
 - `docs/development/types_advanced.md` - Based on actual type system
 - `docs/architecture/component-hierarchy.md` - Real module structure
 - `docs/getting-started/installation.md` - Tested and working examples

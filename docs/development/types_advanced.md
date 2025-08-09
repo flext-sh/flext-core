@@ -2,22 +2,18 @@
 
 **Reality-Based Type System Documentation**
 
-FLEXT Core's type system is based on the actual implementation in `src/flext_core/types.py` and related modules.
+FLEXT Core's type system is based on the actual implementation in `src/flext_core/typings.py` and related modules.
 
 ## 📊 Current Type System Status
 
-**ACTUAL IMPLEMENTATION**: FLEXT Core has multiple type modules in transition:
-
-- `types.py` - Legacy type system (being migrated)
-- `flext_types.py` - Legacy/compatibility module
-- `semantic_types.py` - Unified semantic patterns (new development)
+**ACTUAL IMPLEMENTATION**: Centralized in `typings.py` (single source of truth). A thin `types.py` remains as compatibility re-export.
 
 ## 🏗️ FlextTypes Hierarchical Structure
 
-Based on the actual `types.py` implementation:
+Based on the actual `typings.py` implementation:
 
 ```python
-from flext_core.types import FlextTypes
+from flext_core.typings import FlextTypes
 
 # Access hierarchical type categories
 core_types = FlextTypes.Core
@@ -36,7 +32,7 @@ protocols = FlextTypes.Protocols
 For objects that can be compared:
 
 ```python
-from flext_core.types import FlextTypes
+from flext_core.typings import FlextTypes
 
 class User:
     def __init__(self, age: int):
@@ -70,7 +66,7 @@ class User:
 For objects that can be serialized:
 
 ```python
-from flext_core.types import FlextTypes
+from flext_core.typings import FlextTypes
 import json
 
 class Config:
@@ -136,21 +132,15 @@ class AuditableEntity:
 Based on the actual code comments:
 
 ```python
-# LEGACY (flext_types.py) - backward compatibility only
-from flext_core.flext_types import SomeOldType  # ⚠️ Being deprecated
-
-# CURRENT (types.py) - hierarchical system
-from flext_core.types import FlextTypes
-
-# FUTURE (semantic_types.py) - unified patterns
-from flext_core.semantic_types import FlextTypes as NewFlextTypes
+# CURRENT (typings.py) - hierarchical system
+from flext_core.typings import FlextTypes
 ```
 
 ### Migration Example
 
 ```python
 # Old approach (being phased out)
-from flext_core.flext_types import TData, TEntity
+from flext_core.types import TData, TEntity
 
 def process_old(data: TData) -> TEntity:
     pass
@@ -173,7 +163,7 @@ def process_future(data: FlextTypes.Data.Connection) -> FlextTypes.Core.Predicat
 From the actual `types.py` implementation:
 
 ```python
-from flext_core.types import T, U, V, R, E, P, F
+from flext_core.typings import T, U, V, R, E, P, F
 
 # Generic programming with actual TypeVars
 def transform_data(data: T, transformer: Callable[[T], U]) -> U:
@@ -194,7 +184,7 @@ def process_payload(payload: P) -> R:
 
 ```python
 from flext_core import FlextResult
-from flext_core.types import T, U
+from flext_core.typings import T, U
 
 def safe_transform(data: T, func: Callable[[T], U]) -> FlextResult[U]:
     """Type-safe transformation with error handling."""
@@ -214,7 +204,7 @@ result = safe_transform(5, double_number)  # FlextResult[int]
 ### Protocol-Based Design
 
 ```python
-from flext_core.types import FlextTypes
+from flext_core.typings import FlextTypes
 from typing import TypeVar
 
 T_Comparable = TypeVar('T_Comparable', bound=FlextTypes.Protocols.Comparable)

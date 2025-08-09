@@ -1,38 +1,38 @@
 # FLEXT Core Documentation
 
-**Documentação baseada na implementação atual**
+Reality-based documentation aligned with the current implementation
 
-## 🎯 Visão Geral
+## 🎯 Overview
 
-FLEXT Core é uma biblioteca Python para padrões de arquitetura limpa, railway-oriented programming e dependency injection. Esta documentação reflete a implementação REAL em src/flext_core/.
+FLEXT Core is a Python library for clean architecture patterns, railway-oriented programming, and dependency injection. This documentation reflects the ACTUAL implementation in `src/flext_core/`.
 
-## 📖 Estrutura da Documentação
+## 📖 Documentation Structure
 
 ### 🚀 **Getting Started**
 
-- [**Installation Guide**](getting-started/installation.md) - Setup e configuração
-- [**Quick Start Guide**](getting-started/quickstart.md) - Uso básico
+- [**Installation Guide**](getting-started/installation.md) - Setup and configuration
+- [**Quick Start Guide**](getting-started/quickstart.md) - Basic usage
 
 ### 🏗️ **Architecture**
 
-- [**Architecture Overview**](architecture/overview.md) - Visão geral da arquitetura
+- [**Architecture Overview**](architecture/overview.md) - Architecture overview
 
 ### 📚 **API Reference**
 
-- [**Core API**](api/core.md) - FlextResult, FlextContainer, FlextBaseSettings
+- [**Core API**](api/core.md) - FlextResult, FlextContainer, FlextSettings
 - [**Patterns API**](api/patterns.md) - Commands, Handlers, Validation
 
 ### ⚙️ **Configuration**
 
-- [**Configuration Overview**](configuration/overview.md) - Sistema de configuração
+- [**Configuration Overview**](configuration/overview.md) - Configuration system
 
 ### 🛠️ **Development**
 
-- [**Best Practices**](development/best-practices.md) - Práticas recomendadas
+- [**Best Practices**](development/best-practices.md) - Recommended practices
 
 ### 💡 **Examples**
 
-- [**Examples Overview**](examples/overview.md) - Exemplos práticos validados
+- [**Examples Overview**](examples/overview.md) - Validated practical examples
 
 ## 🔧 Core Patterns
 
@@ -71,12 +71,12 @@ if service_result.success:
     db = service_result.data
 ```
 
-### FlextBaseSettings - Configuration
+### FlextSettings - Configuration
 
 ```python
-from flext_core import FlextBaseSettings
+from flext_core import FlextSettings
 
-class AppSettings(FlextBaseSettings):
+class AppSettings(FlextSettings):
     app_name: str = "My App"
     debug: bool = False
     database_url: str = "sqlite:///app.db"
@@ -129,7 +129,7 @@ if config_result.success:
 
 - FlextResult[T] railway pattern
 - FlextContainer dependency injection
-- FlextBaseSettings configuration
+- FlextSettings configuration
 - Basic logging support
 
 ### 🔧 **Available API (In Development):**
@@ -166,14 +166,14 @@ if config_result.success:
 
 ## ⚠️ Documentation Philosophy
 
-**Esta documentação segue a filosofia "REALITY FIRST":**
+This documentation follows a "REALITY FIRST" philosophy:
 
 ### ✅ **We Document:**
 
-- Actual working code from src/flext_core/
+- Actual working code from `src/flext_core/`
 - Tested examples that compile and run
 - Current implementation status
-- Real API exports from **init**.py
+- Real API exports from `src/flext_core/__init__.py`
 
 ### ❌ **We Don't Document:**
 
@@ -190,4 +190,4 @@ if config_result.success:
 
 ---
 
-**All documentation is validated against the current implementation in src/flext_core/**
+**All documentation is validated against the current implementation in `src/flext_core/`**

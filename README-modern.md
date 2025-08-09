@@ -61,9 +61,9 @@ class UserEntity:
 
 ```python
 # NEW: Zero-configuration settings
-from flext_core import FlextBaseSettings
+from flext_core import FlextSettings
 
-class AppConfig(FlextBaseSettings):
+class AppConfig(FlextSettings):
     database_url: str
     redis_url: str = "redis://localhost"
     # Automatic: env loading, validation, type conversion!
@@ -387,7 +387,7 @@ from datetime import datetime
 import uuid
 
 # NEW: Single import with everything
-from flext_core import FlextEntity, FlextResult, FlextBaseSettings
+from flext_core import FlextEntity, FlextResult, FlextSettings
 ```
 
 ### Step 2: Convert Entities

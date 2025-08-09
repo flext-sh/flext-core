@@ -1,49 +1,45 @@
-# API Core - FLEXT Core
+# Core API - FLEXT Core
 
-**Referência completa das APIs fundamentais do FLEXT Core**
+Complete reference for the fundamental APIs of FLEXT Core
 
-## 🎯 Visão Geral
+## 🎯 Overview
 
-A API Core do FLEXT fornece os componentes fundamentais necessários para construir aplicações empresariais robustas. Todos os componentes são type-safe, testáveis e seguem padrões de arquitetura limpa.
+The Core API provides the foundational components to build robust applications. All components are type-safe, testable, and follow clean architecture patterns.
 
-## 📦 Imports Principais
+## 📦 Primary Imports
 
 ```python
-# Imports modernos recomendados
+# Recommended modern imports
 from flext_core import (
     FlextResult,           # Error handling type-safe
     FlextContainer,        # Dependency injection
-    FlextBaseSettings,     # Configuration management
+    FlextSettings,         # Configuration management
     FlextEntity,           # Domain entities
     FlextValueObject,      # Immutable value objects
     FlextAggregateRoot,    # Domain aggregates
 )
 
-# Imports legacy (if needed)
-from flext_core import (
-    FlextResult,         # Railway-oriented programming pattern
-    FlextContainer,      # Dependency injection container
-)
+# Legacy imports (compat re-exports still available via __init__)
 ```
 
-## 🎭 FlextResult[T] - Error Handling Type-Safe
+## 🎭 FlextResult[T] - Type-Safe Error Handling
 
-**Substitui exceções por resultados explícitos e type-safe.**
+Replaces exceptions with explicit, type-safe results.
 
-### Criação de Resultados
+### Creating Results
 
 ```python
 from flext_core import FlextResult
 
-# Resultado de sucesso
+# Success result
 def fetch_user(user_id: str) -> FlextResult[dict]:
-    user_data = {"id": user_id, "name": "João"}
+    user_data = {"id": user_id, "name": "John"}
     return FlextResult.ok(user_data)
 
-# Resultado de erro
+# Error result
 def validate_email(email: str) -> FlextResult[str]:
     if "@" not in email:
-        return FlextResult.fail("Email deve conter @")
+        return FlextResult.fail("Email must contain @")
     return FlextResult.ok(email)
 
 # Factory methods
@@ -51,62 +47,62 @@ success_result = FlextResult.ok("success data")
 error_result = FlextResult.fail("error message")
 ```
 
-### Verificação de Status
+### Checking Status
 
 ```python
 result = fetch_user("123")
 
-# Verificação de sucesso/erro
+# Success/failure check
 if result.success:
-    print(f"Dados: {result.data}")
+    print(f"Data: {result.data}")
 else:
-    print(f"Erro: {result.error}")
+    print(f"Error: {result.error}")
 
-# Propriedades booleanas
-assert result.success == True
-assert result.is_failure == False
+# Boolean properties
+assert result.success is True
+assert result.is_failure is False
 ```
 
-### Tratamento de Dados
+### Data Handling
 
 ```python
-# Acesso seguro aos dados
+# Safe data access
 result = fetch_user("123")
 
 if result.success:
-    # result.data é garantidamente não-None quando success=True
+    # result.data is guaranteed non-None when success=True
     user_data = result.data
     print(f"User: {user_data['name']}")
 
 if result.is_failure:
-    # result.error é garantidamente não-None quando is_failure=True
+    # result.error is guaranteed non-None when is_failure=True
     error_msg = result.error
     print(f"Error: {error_msg}")
 ```
 
-### Composição e Encadeamento
+### Composition and Chaining
 
 ```python
 def create_and_save_user(name: str, email: str) -> FlextResult[str]:
-    # Validação
+    # Validation
     email_result = validate_email(email)
     if email_result.is_failure:
-        return email_result  # Propaga o erro
+        return email_result  # Propagate error
 
-    # Criação
+    # Creation
     user_result = create_user(name, email_result.data)
     if user_result.is_failure:
-        return FlextResult.fail(f"Falha na criação: {user_result.error}")
+        return FlextResult.fail(f"Creation failed: {user_result.error}")
 
-    # Salvamento
+    # Save
     save_result = save_user(user_result.data)
     if save_result.is_failure:
-        return FlextResult.fail(f"Falha no salvamento: {save_result.error}")
+        return FlextResult.fail(f"Save failed: {save_result.error}")
 
-    return FlextResult.ok("Usuário criado com sucesso")
+    return FlextResult.ok("User created successfully")
 ```
 
-### API Completa
+### Complete API
 
 ```python
 class FlextResult[T]:
@@ -148,76 +144,76 @@ class FlextResult[T]:
 
 ## 🏗️ FlextContainer - Dependency Injection
 
-**Container de injeção de dependência type-safe e enterprise-grade.**
+**Type-safe, enterprise-grade dependency injection container.**
 
-### Registro de Serviços
+### Service Registration
 
 ```python
 from flext_core import FlextContainer
 
-# Criação do container
+# Create container
 container = FlextContainer()
 
-# Registro básico
+# Basic registration
 result = container.register("database", DatabaseService())
 if result.success:
-    print("Serviço registrado com sucesso")
+    print("Service registered successfully")
 
-# Registro com factory
+# Factory registration
 def create_email_service() -> EmailService:
     return EmailService(smtp_host="localhost", port=587)
 
 container.register_factory("email", create_email_service)
 
-# Registro com singleton (padrão)
+# Singleton registration (default)
 container.register("cache", RedisCache(), singleton=True)
 ```
 
-### Resolução de Dependências
+### Dependency Resolution
 
 ```python
-# Obter serviço registrado
+# Get registered service
 db_result = container.get("database")
 if db_result.success:
-    database = db_result.dataDatabaseService
+    database = db_result.data  # type: DatabaseService
     users = database.fetch_users()
 
-# Resolução com type hint
-email_service = container.get_typed("email", EmailService)
-if email_service.success:
-    service = email_service.dataEmailService
+# Resolution with type hint
+email_service_result = container.get_typed("email", EmailService)
+if email_service_result.success:
+    service = email_service_result.data
     service.send_email("test@example.com", "Hello")
 ```
 
-### Injeção Automática
+### Automatic Injection
 
 ```python
-# Classe com dependências
+# Class with dependencies
 class UserService:
     def __init__(self, database: DatabaseService, email: EmailService):
         self.database = database
         self.email = email
 
     def create_user(self, name: str, email_addr: str) -> FlextResult[str]:
-        # Lógica usando as dependências
+        # Logic using dependencies
         user = {"name": name, "email": email_addr}
         save_result = self.database.save_user(user)
 
         if save_result.success:
             self.email.send_welcome_email(email_addr)
-            return FlextResult.ok("Usuário criado")
+            return FlextResult.ok("User created")
         else:
-            return FlextResult.fail("Falha ao salvar usuário")
+            return FlextResult.fail("Failed to save user")
 
-# Registro com auto-wiring
-container.register("user_service", UserService)
-# Container automaticamente resolve DatabaseService e EmailService
+# Explicit instance registration (advanced auto-wiring not available)
+user_service = UserService(database, email_service)
+container.register("user_service", user_service)
 ```
 
-### Configuração e Lifecycle
+### Configuration and Lifecycle
 
 ```python
-# Configuração do container
+# Container configuration
 container.configure(
     auto_wire=True,           # Auto-resolve dependencies
     strict_mode=True,         # Fail on missing dependencies
@@ -228,14 +224,14 @@ container.configure(
 # Lifecycle management
 result = container.start()   # Initialize all services
 if result.success:
-    print("Container iniciado")
+    print("Container started")
 
 # Cleanup
 container.stop()            # Cleanup resources
 container.clear()           # Remove all registrations
 ```
 
-### API Completa
+### Complete API
 
 ```python
 class FlextContainer:
@@ -284,94 +280,64 @@ class FlextContainer:
         """Clear all registrations."""
 ```
 
-## ⚙️ FlextCoreSettings - Configuration Management
+## ⚙️ FlextSettings - Configuration Management
 
-**Gerenciamento centralizado de configurações com Pydantic.**
+**Centralized configuration management with Pydantic v2.**
 
-### Configuração Básica
+### Basic Configuration
 
 ```python
-from flext_core import FlextCoreSettings
+from flext_core import FlextSettings
 
-# Configuração padrão
-settings = FlextCoreSettings()
+class AppSettings(FlextSettings):
+    debug: bool = False
+    environment: str = "production"
+    log_level: str = "INFO"
+    database_url: str | None = None
 
-# Configuração customizada
-settings = FlextCoreSettings(
-    debug=True,
-    environment="development",
-    log_level="DEBUG",
-    max_connections=100,
-    cache_ttl=3600,
-    database_url="postgresql://localhost/flext"
-)
+    class Config:
+        env_prefix = "APP_"
+        case_sensitive = False
+
+# Instance
+settings = AppSettings()
 ```
 
-### Carregamento de Variáveis de Ambiente
+### Environment Variables
 
-```python
-# Carrega automaticamente de variáveis de ambiente
-# FLEXT_DEBUG=true
-# FLEXT_LOG_LEVEL=INFO
-# FLEXT_MAX_CONNECTIONS=50
-
-settings = FlextCoreSettings()  # Auto-load from env
-print(settings.debug)           # True
-print(settings.log_level)       # "INFO"
-print(settings.max_connections) # 50
+```bash
+export APP_DEBUG=true
+export APP_LOG_LEVEL=DEBUG
+export APP_DATABASE_URL="postgresql://localhost/flext"
 ```
 
-### Validação de Configuração
+```python
+settings = AppSettings()
+print(settings.debug)        # True
+print(settings.log_level)    # "DEBUG"
+print(settings.database_url) # Value from env
+```
+
+### Configuration Validation
 
 ```python
-# Validação automática via Pydantic
+from pydantic import Field, ValidationError
+
+class StrictSettings(FlextSettings):
+    max_connections: int = Field(10, ge=1, le=1000)
+
 try:
-    settings = FlextCoreSettings(
-        max_connections=-1,  # Invalid: must be positive
-        log_level="INVALID"  # Invalid: not in allowed values
-    )
+    StrictSettings(max_connections=-1)
 except ValidationError as e:
     print(f"Configuration error: {e}")
 ```
 
-### Configurações Disponíveis
+## 🏛️ Domain Layer - Entities and Value Objects
+
+### FlextEntity[TId] - Domain Entities (models API)
 
 ```python
-class FlextCoreSettings(BaseSettings):
-    """Core configuration settings."""
-
-    # Environment
-    debug: bool = False
-    environment: str = "production"
-
-    # Logging
-    log_level: str = "INFO"
-    log_format: str = "json"
-
-    # Performance
-    max_connections: int = 10
-    cache_ttl: int = 3600
-    max_retry_attempts: int = 3
-
-    # Database
-    database_url: str | None = None
-    connection_timeout: int = 30
-
-    # Security
-    secret_key: str | None = None
-    token_expiry: int = 86400
-
-    class Config:
-        env_prefix = "FLEXT_"
-        case_sensitive = False
-```
-
-## 🏛️ Domain Layer - Entidades e Value Objects
-
-### FlextEntity[TId] - Domain Entities
-
-```python
-from flext_core import FlextEntity
+from flext_core.models import FlextEntity
 
 # ID types
 UserId = NewType('UserId', str)
@@ -396,7 +362,7 @@ class User(FlextEntity[UserId]):
     def change_name(self, new_name: str) -> FlextResult[None]:
         """Business logic for name change."""
         if not new_name.strip():
-            return FlextResult.fail("Nome não pode ser vazio")
+            return FlextResult.fail("Name cannot be empty")
 
         self._name = new_name
         return FlextResult.ok(None)
@@ -406,10 +372,10 @@ class User(FlextEntity[UserId]):
 
 # Usage
 user_id = UserId("user_123")
-user = User(user_id, "João Silva", "joao@example.com")
+user = User(user_id, "John Smith", "john@example.com")
 
 # Identity comparison
-other_user = User(user_id, "João Santos", "joao2@example.com")
+other_user = User(user_id, "John Jones", "john2@example.com")
 assert user == other_user  # Same ID = same entity
 ```
 
@@ -475,7 +441,7 @@ money2 = Money(50.0, "BRL")
 total = money1.add(money2)  # Money(150.0, "BRL")
 ```
 
-### FlextAggregateRoot - Domain Aggregates
+### FlextAggregateRoot - Domain Aggregates (models API)
 
 ```python
 from flext_core import FlextAggregateRoot
@@ -621,9 +587,9 @@ class Order(FlextAggregateRoot[OrderId]):
         pass
 ```
 
-## 🔗 Compatibilidade e Migração
+## 🔗 Compatibility and Migration
 
-### Migração de FlextResult para FlextResult
+### FlextResult migration
 
 ```python
 # Old (deprecated)
@@ -639,7 +605,7 @@ def new_function() -> FlextResult[str]:
     return FlextResult.ok("data")
 ```
 
-### Migração de DIContainer para FlextContainer
+### Migration from DIContainer to FlextContainer
 
 ```python
 # Old (deprecated)
@@ -661,4 +627,4 @@ if service_result.success:
 
 ---
 
-Esta API Core fornece todos os componentes fundamentais necessários para construir aplicações empresariais robustas e type-safe com FLEXT Core.
+This Core API provides all fundamental components needed to build robust, type-safe enterprise applications with FLEXT Core.
