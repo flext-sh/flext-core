@@ -18,7 +18,7 @@ from decimal import Decimal
 from typing import TYPE_CHECKING, cast
 
 # Import shared domain models to reduce duplication
-from shared_domain import (
+from .shared_domain import (
     Money,
     Product as SharedProduct,
     SharedDemonstrationPattern,

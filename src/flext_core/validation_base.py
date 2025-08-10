@@ -135,7 +135,7 @@ def chain_flext_validators[T](
 
 
 # Export API
-__all__ = [
+__all__: list[str] = [
     "FlextAbstractValidationRule",
     "FlextAbstractValidator",
     "FlextCompositeValidator",

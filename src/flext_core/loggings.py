@@ -125,11 +125,17 @@ def setup_custom_trace_level() -> None:
 
     # Update structlog's internal mappings safely using getattr/setattr
     # This avoids direct attribute access issues
+
+    # Try both possible attribute names for structlog compatibility
     name_to_level = getattr(structlog.stdlib, "_NAME_TO_LEVEL", None)
+    if name_to_level is None:
+        name_to_level = getattr(structlog.stdlib, "NAME_TO_LEVEL", None)
     if name_to_level is not None and isinstance(name_to_level, dict):
         name_to_level["trace"] = TRACE_LEVEL
 
     level_to_name = getattr(structlog.stdlib, "_LEVEL_TO_NAME", None)
+    if level_to_name is None:
+        level_to_name = getattr(structlog.stdlib, "LEVEL_TO_NAME", None)
     if level_to_name is not None and isinstance(level_to_name, dict):
         level_to_name[TRACE_LEVEL] = "trace"
 
@@ -831,7 +837,8 @@ def get_logger(name: str = "flext", level: str = "INFO") -> FlextLogger:
 
 
 def create_log_context(
-    logger: FlextLogger | str | None = None, **context: object,
+    logger: FlextLogger | str | None = None,
+    **context: object,
 ) -> FlextLogContextManager:
     """Create log context manager for structured logging."""
     selected = (
@@ -849,7 +856,7 @@ def create_log_context(
 # EXPORTS - Clean public API following guidelines
 # =============================================================================
 
-__all__ = [
+__all__: list[str] = [
     "FlextLogContext",
     "FlextLogContextManager",
     "FlextLogEntry",

@@ -458,7 +458,7 @@ create_validation_error = FlextSemanticError.Factory.create_validation_error
 # EXPORTS - Minimal unified API
 # =============================================================================
 
-__all__ = [
+__all__: list[str] = [
     "FlextBusinessError",
     "FlextError",
     "FlextSemantic",

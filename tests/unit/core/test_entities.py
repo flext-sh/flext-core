@@ -49,8 +49,8 @@ class SampleUser(FlextEntity):
         """Check if user is adult."""
         return self.age >= 18
 
-    def validate_domain_rules(self) -> FlextResult[None]:
-        """Validate domain rules for user entity."""
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Validate business rules for user entity."""
         if self.age < 0:
             return FlextResult.fail("Age cannot be negative")
         if not self.email or "@" not in self.email:
@@ -65,8 +65,8 @@ class SampleBadUser(FlextEntity):
     email: str
     age: int = -1  # Invalid default age
 
-    def validate_domain_rules(self) -> FlextResult[None]:
-        """Validate domain rules for bad user entity."""
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Validate business rules for bad user entity."""
         # This entity intentionally has validation issues
         return FlextResult.fail("Always fails")
 
@@ -387,7 +387,7 @@ class TestFlextEntity:
         mock_field.validate_value.return_value = FlextResult.ok(None)
 
         with patch(
-            "flext_core.entities.FlextFields.get_field_by_name",
+            "flext_core.fields.FlextFields.get_field_by_name",
             return_value=FlextResult.ok(mock_field),
         ):
             result = user.validate_field("name", "John")
@@ -403,7 +403,7 @@ class TestFlextEntity:
         mock_field.validate_value.return_value = FlextResult.fail("Validation failed")
 
         with patch(
-            "flext_core.entities.FlextFields.get_field_by_name",
+            "flext_core.fields.FlextFields.get_field_by_name",
             return_value=FlextResult.ok(mock_field),
         ):
             result = user.validate_field("name", "")
@@ -418,7 +418,7 @@ class TestFlextEntity:
 
         # Mock FlextFields.get_field_by_name to return failure (no field found)
         with patch(
-            "flext_core.entities.FlextFields.get_field_by_name",
+            "flext_core.fields.FlextFields.get_field_by_name",
             return_value=FlextResult.fail("Field not found"),
         ):
             result = user.validate_field("unknown_field", "value")
@@ -431,7 +431,7 @@ class TestFlextEntity:
 
         # Mock FlextFields.get_field_by_name to raise exception
         with patch(
-            "flext_core.entities.FlextFields.get_field_by_name",
+            "flext_core.fields.FlextFields.get_field_by_name",
             side_effect=ImportError("Import failed"),
         ):
             result = user.validate_field("name", "John")
@@ -449,7 +449,7 @@ class TestFlextEntity:
         mock_field.validate_value.return_value = FlextResult.ok(None)
 
         with patch(
-            "flext_core.entities.FlextFields.get_field_by_name",
+            "flext_core.fields.FlextFields.get_field_by_name",
             return_value=FlextResult.ok(mock_field),
         ):
             result = user.validate_all_fields()
@@ -472,7 +472,7 @@ class TestFlextEntity:
             return FlextResult.ok(mock_field)
 
         with patch(
-            "flext_core.entities.FlextFields.get_field_by_name",
+            "flext_core.fields.FlextFields.get_field_by_name",
             side_effect=mock_get_field,
         ):
             result = user.validate_all_fields()
@@ -491,7 +491,7 @@ class TestFlextEntity:
 
         # Mock FlextFields.get_field_by_name to always return failure (no fields found)
         with patch(
-            "flext_core.entities.FlextFields.get_field_by_name",
+            "flext_core.fields.FlextFields.get_field_by_name",
             return_value=FlextResult.fail("Field not found"),
         ):
             result = user.validate_all_fields()

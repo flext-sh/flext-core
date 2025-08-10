@@ -604,7 +604,7 @@ class FlextDomainValidator(FlextAbstractValidator[object]):
         return self.validate_value(value)
 
 
-__all__ = [
+__all__: list[str] = [
     # Base validators
     "FlextBaseValidator",
     "FlextDomainValidator",

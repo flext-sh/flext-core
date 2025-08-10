@@ -216,7 +216,7 @@ class FlextRegexProcessor(FlextBaseProcessor[EntryT]):
         return FlextResult.ok(match.group(1))
 
 
-class ConfigAttributeValidator:
+class FlextConfigAttributeValidator:
     """Utility for validating configuration attributes."""
 
     @staticmethod
@@ -245,17 +245,19 @@ class ConfigAttributeValidator:
         # Simple validation: check if all required keys are present
         missing = [field for field in required if field not in config_dict]
         if missing:
-            return FlextResult.fail(f"Missing required fields: {', '.join(missing)}")
-        return FlextResult.ok(data=True)
+            return FlextResult.fail(
+                f"Missing required attributes: {', '.join(missing)}"
+            )
+        return FlextResult.ok(True)
 
 
-class BaseConfigManager:
+class FlextBaseConfigManager:
     """Base configuration manager with attribute validation."""
 
     def __init__(self, config: object) -> None:
         """Initialize with configuration object."""
         self.config = config
-        self.validator = ConfigAttributeValidator()
+        self.validator = FlextConfigAttributeValidator()
 
     def get_config_value(self, key: str, default: object = None) -> object:
         """Get configuration value with optional default."""
@@ -273,10 +275,10 @@ class BaseConfigManager:
                 self.config,
                 required_attrs,
             )
-        return FlextResult.ok(data=True)
+        return FlextResult.ok(True)
 
 
-class BaseSorter[T]:
+class FlextBaseSorter[T]:
     """Base sorter for entries with configurable sort key extraction."""
 
     def __init__(self, key_extractor: Callable[[T], object] | None = None) -> None:
@@ -329,7 +331,8 @@ class FlextProcessingPipeline[T, U]:
         self.steps: list[Callable[[object], FlextResult[object]]] = []
 
     def add_step(
-        self, step: Callable[[T], FlextResult[U]],
+        self,
+        step: Callable[[T], FlextResult[U]],
     ) -> FlextProcessingPipeline[T, U]:
         """Add processing step to pipeline."""
         self.steps.append(step)  # type: ignore[arg-type]
@@ -350,7 +353,7 @@ class FlextProcessingPipeline[T, U]:
 # EXPORTS
 # =============================================================================
 
-__all__ = [
+__all__: list[str] = [
     # Backward-compat export names expected by tests
     "BaseEntry",
     "BaseFileWriter",
@@ -375,3 +378,6 @@ BaseProcessor = FlextBaseProcessor
 ProcessingPipeline = FlextProcessingPipeline
 BaseFileWriter = FlextBaseFileWriter
 RegexProcessor = FlextRegexProcessor
+ConfigAttributeValidator = FlextConfigAttributeValidator
+BaseConfigManager = FlextBaseConfigManager
+BaseSorter = FlextBaseSorter

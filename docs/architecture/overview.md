@@ -1,256 +1,450 @@
-# FLEXT Core Architecture Overview
+# Architecture Overview
 
-Reality-based architecture overview aligned with current implementation
+## Clean Architecture Implementation
 
-## 🎯 Overview
+FLEXT Core implements Clean Architecture principles with clear separation of concerns and dependency rules that ensure the system remains maintainable, testable, and adaptable.
 
-FLEXT Core is the foundation library for clean architecture patterns and railway-oriented programming. This documentation reflects the ACTUAL implementation in `src/flext_core/`.
+### Dependency Rule
 
-## 🏗️ Actual Project Structure
+Dependencies only point inward - outer layers depend on inner layers, never the reverse:
 
-Based on `src/flext_core/` — validated:
-
-```text
-src/flext_core/
-├── __init__.py              # Public API gateway
-├── result.py                # FlextResult[T] - Railway pattern
-├── container.py             # FlextContainer - DI system
-├── config.py                # FlextSettings
-├── entities.py              # FlextEntity - Domain entities
-├── value_objects.py         # FlextValueObject - Value objects
-├── aggregate_root.py        # FlextAggregateRoot - DDD aggregates
-├── commands.py              # FlextCommands namespace
-├── handlers.py              # FlextHandlers namespace
-├── validation.py            # FlextValidation namespace
-├── loggings.py              # Structured logging
-├── exceptions.py            # Exception hierarchy
-├── utilities.py             # Utility functions
-├── constants.py             # Core constants
-├── typings.py               # Centralized type definitions
-├── __version__.py           # Version management & compatibility
-├── protocols.py             # Protocol definitions
-├── mixins.py                # Behavior mixins
-├── decorators.py            # Decorator patterns
-├── fields.py                # Field metadata
-├── guards.py                # Validation guards
-├── payload.py               # Message patterns
-├── core.py                  # FlextCore main class
-└── domain_services.py       # Domain services
+```
+External World → Infrastructure → Application → Domain → Core
 ```
 
-## 🔧 Implemented Core Patterns
+## Layer Organization
 
-### 1. FlextResult[T] - Railway Pattern
+### 1. Core/Foundation Layer (Innermost)
 
-Functional — the central pattern of FLEXT Core:
+The fundamental patterns that everything else builds upon:
+
+```python
+# src/flext_core/
+├── result.py           # FlextResult[T] - Railway-oriented programming
+├── container.py        # FlextContainer - Dependency injection
+├── constants.py        # Core enums and constants
+├── typings.py          # Type system and utilities
+└── exceptions.py       # Exception hierarchy
+```
+
+**Key Patterns:**
 
 ```python
 from flext_core import FlextResult
 
-# Success case
-result = FlextResult.ok("Success data")
-assert result.success
-assert result.data == "Success data"
+# All operations return FlextResult for composability
+def divide(a: float, b: float) -> FlextResult[float]:
+    if b == 0:
+        return FlextResult.fail("Division by zero")
+    return FlextResult.ok(a / b)
 
-# Failure case
-result = FlextResult.fail("Error message")
-assert result.is_failure
-assert result.error == "Error message"
+# Chain operations without exception handling
+result = (
+    divide(10, 2)
+    .map(lambda x: x * 2)
+    .flat_map(lambda x: divide(x, 4))
+)
+```
 
-# Chaining operations
-def validate_email(email: str) -> FlextResult[str]:
-    if "@" not in email:
-        return FlextResult.fail("Invalid email")
-    return FlextResult.ok(email.lower())
+### 2. Domain Layer
 
-def create_user(email: str) -> FlextResult[dict]:
+Business logic and domain models, independent of frameworks:
+
+```python
+# src/flext_core/
+├── entities.py         # FlextEntity - Entities with identity
+├── value_objects.py    # FlextValueObject - Immutable values
+├── aggregate_root.py   # FlextAggregateRoot - Consistency boundaries
+└── domain_services.py  # FlextDomainService - Domain operations
+```
+
+**Domain Modeling Example:**
+
+```python
+from flext_core import FlextEntity, FlextValueObject, FlextAggregateRoot
+from decimal import Decimal
+
+class Money(FlextValueObject):
+    """Value object - compared by value, immutable."""
+    amount: Decimal
+    currency: str
+    
+    def add(self, other: Money) -> FlextResult[Money]:
+        if self.currency != other.currency:
+            return FlextResult.fail("Currency mismatch")
+        return FlextResult.ok(Money(
+            amount=self.amount + other.amount,
+            currency=self.currency
+        ))
+
+class Account(FlextEntity):
+    """Entity - has identity, mutable state."""
+    account_number: str
+    balance: Money
+    owner_id: str
+    
+    def withdraw(self, amount: Money) -> FlextResult[None]:
+        result = self.balance.subtract(amount)
+        if result.success:
+            self.balance = result.unwrap()
+            self.add_domain_event("MoneyWithdrawn", {
+                "account_id": self.id,
+                "amount": str(amount.amount)
+            })
+            return FlextResult.ok(None)
+        return result.map(lambda _: None)
+
+class BankingContext(FlextAggregateRoot):
+    """Aggregate root - consistency boundary."""
+    accounts: list[Account]
+    
+    def transfer(self, from_id: str, to_id: str, 
+                 amount: Money) -> FlextResult[None]:
+        # Ensures transactional consistency
+        from_account = self.find_account(from_id)
+        to_account = self.find_account(to_id)
+        
+        withdraw_result = from_account.withdraw(amount)
+        if withdraw_result.is_failure:
+            return withdraw_result
+            
+        deposit_result = to_account.deposit(amount)
+        if deposit_result.is_failure:
+            # Rollback logic here
+            return deposit_result
+            
+        self.add_domain_event("TransferCompleted", {
+            "from": from_id,
+            "to": to_id,
+            "amount": str(amount.amount)
+        })
+        return FlextResult.ok(None)
+```
+
+### 3. Application Layer
+
+Use case orchestration and application services:
+
+```python
+# src/flext_core/
+├── commands.py         # Command patterns (CQRS)
+├── handlers.py         # Command/query handlers
+├── validation.py       # Business validation rules
+└── interfaces.py       # Port interfaces
+```
+
+**CQRS Pattern Example:**
+
+```python
+from flext_core import FlextCommand, FlextHandler, FlextResult
+
+class TransferMoneyCommand(FlextCommand):
+    """Command - represents intent to change state."""
+    from_account: str
+    to_account: str
+    amount: Decimal
+    currency: str
+
+class TransferMoneyHandler(FlextHandler[TransferMoneyCommand, None]):
+    """Handler - executes business logic."""
+    
+    def __init__(self, repository, event_bus):
+        self.repository = repository
+        self.event_bus = event_bus
+    
+    def handle(self, command: TransferMoneyCommand) -> FlextResult[None]:
+        # Load aggregate
+        banking = self.repository.get_banking_context()
+        
+        # Execute domain logic
+        money = Money(amount=command.amount, currency=command.currency)
+        result = banking.transfer(
+            command.from_account,
+            command.to_account,
+            money
+        )
+        
+        # Persist changes
+        if result.success:
+            self.repository.save(banking)
+            # Publish domain events
+            for event in banking.get_uncommitted_events():
+                self.event_bus.publish(event)
+                
+        return result
+```
+
+### 4. Infrastructure Layer
+
+External concerns and framework integrations:
+
+```python
+# src/flext_core/
+├── config.py           # Configuration management
+├── loggings.py         # Structured logging
+├── payload.py          # Event/message infrastructure
+├── observability.py    # Monitoring and metrics
+└── protocols.py        # External system protocols
+```
+
+**Infrastructure Example:**
+
+```python
+from flext_core import FlextSettings, get_logger
+
+class DatabaseSettings(FlextSettings):
+    """Configuration with environment support."""
+    database_url: str
+    pool_size: int = 5
+    timeout: int = 30
+    
+    class Config:
+        env_prefix = "DB_"
+
+# Structured logging with correlation
+logger = get_logger(__name__)
+
+def connect_database(settings: DatabaseSettings) -> FlextResult[Connection]:
+    logger.info("Connecting to database", 
+                url=settings.database_url,
+                pool_size=settings.pool_size)
+    try:
+        conn = create_connection(settings.database_url)
+        return FlextResult.ok(conn)
+    except Exception as e:
+        logger.error("Database connection failed", error=str(e))
+        return FlextResult.fail(f"Connection failed: {e}")
+```
+
+## Architectural Patterns
+
+### Railway-Oriented Programming
+
+All operations return `FlextResult[T]`, enabling functional composition without exceptions:
+
+```python
+def process_order(order_data: dict) -> FlextResult[Order]:
     return (
-        validate_email(email)
-        .map(lambda valid_email: {"email": valid_email, "created": True})
+        validate_order_data(order_data)
+        .flat_map(create_order)
+        .flat_map(calculate_pricing)
+        .flat_map(apply_discounts)
+        .flat_map(save_order)
+        .map(send_confirmation_email)
     )
 ```
 
-### 2. FlextContainer - Dependency Injection
+### Dependency Injection
 
-Functional — type-safe DI system:
+Global container pattern for service management:
 
 ```python
-from flext_core import FlextContainer
+from flext_core import get_flext_container
 
-# Setup container
-container = FlextContainer()
+# Register services at startup
+container = get_flext_container()
+container.register("database", DatabaseService())
+container.register("cache", CacheService())
+container.register("email", EmailService())
 
-# Register services
-database_service = DatabaseService("sqlite:///app.db")
-result = container.register("database", database_service)
-assert result.success
-
-# Retrieve services
-service_result = container.get("database")
-if service_result.success:
-    db_service = service_result.data
+# Inject dependencies
+class OrderService:
+    def __init__(self):
+        self.db = container.get("database").unwrap()
+        self.cache = container.get("cache").unwrap()
+        self.email = container.get("email").unwrap()
 ```
 
-### 3. Domain Patterns
+### Domain Event Pattern
 
-Available — API present, implementation evolving:
+Domain events for decoupled communication:
 
 ```python
-from flext_core import FlextValueObject, FlextAggregateRoot
-from flext_core.models import FlextEntity
-
-# Domain entity
-class User(FlextEntity):
-    def __init__(self, user_id: str, name: str, email: str):
-        super().__init__(user_id)
-        self.name = name
-        self.email = email
-
-# Value object
-class Email(FlextValueObject):
-    def __init__(self, address: str):
-        if "@" not in address:
-            raise ValueError("Invalid email")
-        self.address = address.lower()
+class OrderPlaced(FlextDomainEvent):
+    order_id: str
+    customer_id: str
+    total: Decimal
+    
+class Order(FlextAggregateRoot):
+    def place(self) -> FlextResult[None]:
+        # Business logic
+        self.status = "placed"
+        
+        # Raise domain event
+        self.add_domain_event(OrderPlaced(
+            order_id=self.id,
+            customer_id=self.customer_id,
+            total=self.total
+        ))
+        
+        return FlextResult.ok(None)
 ```
 
-### 4. Configuration Management
+## Design Principles
 
-Functional — based on Pydantic:
+### SOLID Principles
 
-```python
-from flext_core import FlextSettings
+1. **Single Responsibility**: Each module has one reason to change
+2. **Open/Closed**: Open for extension via inheritance and composition
+3. **Liskov Substitution**: All FlextResult operations are substitutable
+4. **Interface Segregation**: Small, focused protocols
+5. **Dependency Inversion**: Depend on abstractions (protocols)
 
-class AppSettings(FlextSettings):
-    app_name: str = "My App"
-    debug: bool = False
-    database_url: str = "sqlite:///app.db"
+### DDD Tactical Patterns
 
-    class Config:
-        env_prefix = "APP_"
+- **Entities**: Objects with identity (`FlextEntity`)
+- **Value Objects**: Immutable values (`FlextValueObject`)
+- **Aggregates**: Consistency boundaries (`FlextAggregateRoot`)
+- **Domain Services**: Stateless operations (`FlextDomainService`)
+- **Domain Events**: State change notifications
 
-settings = AppSettings()
-```
+### Functional Patterns
 
-## 🏛️ Architecture Layers
+- **Railway-Oriented**: Two-track error handling
+- **Monadic Composition**: map, flat_map, map_error
+- **Immutability**: Value objects and frozen configs
+- **Pure Functions**: No side effects in domain logic
 
-### Foundation Layer
+## Testing Architecture
 
-- **result.py**: FlextResult[T] for error handling
-- **container.py**: FlextContainer for DI
-- **typings.py**: Centralized type system
-- **constants.py**: Core constants
+### Unit Testing
 
-### Domain Layer
-
-- **entities.py**: Rich domain entities
-- **value_objects.py**: Immutable value objects
-- **aggregate_root.py**: DDD aggregates
-- **domain_services.py**: Domain services
-
-### Application Layer
-
-- **commands.py**: Command patterns (CQRS)
-- **handlers.py**: Handler patterns
-- **validation.py**: Input validation
-
-### Infrastructure Layer
-
-- **config.py**: Configuration management
-- **loggings.py**: Structured logging
-- **protocols.py**: External system contracts
-
-## 🧪 Testability
-
-### Core Pattern Testing
+Test individual components in isolation:
 
 ```python
-import pytest
-from flext_core import FlextResult, FlextContainer
-
-def test_result_pattern():
-    """Test FlextResult railway pattern."""
-    # Success path
-    result = FlextResult.ok("test")
+def test_money_addition():
+    money1 = Money(amount=Decimal("10.00"), currency="USD")
+    money2 = Money(amount=Decimal("20.00"), currency="USD")
+    
+    result = money1.add(money2)
+    
     assert result.success
-    assert result.data == "test"
+    assert result.unwrap().amount == Decimal("30.00")
 
-    # Failure path
-    result = FlextResult.fail("error")
+def test_money_currency_mismatch():
+    money1 = Money(amount=Decimal("10.00"), currency="USD")
+    money2 = Money(amount=Decimal("20.00"), currency="EUR")
+    
+    result = money1.add(money2)
+    
     assert result.is_failure
-    assert result.error == "error"
-
-def test_container_pattern():
-    """Test dependency injection."""
-    container = FlextContainer()
-    service = "test_service"
-
-    # Register
-    reg_result = container.register("test", service)
-    assert reg_result.success
-
-    # Retrieve
-    get_result = container.get("test")
-    assert get_result.success
-    assert get_result.data == service
+    assert "Currency mismatch" in result.error
 ```
 
-## 📊 Implementation Status
+### Integration Testing
 
-### ✅ Production Ready
+Test component interactions:
 
-- **FlextResult[T]**: Complete railway-oriented programming
-- **FlextContainer**: Dependency injection system
-- **Configuration**: FlextSettings with Pydantic
-- **Basic logging**: Structured logging support
+```python
+def test_transfer_between_accounts(container):
+    # Setup
+    container.register("repository", InMemoryRepository())
+    container.register("event_bus", InMemoryEventBus())
+    
+    handler = TransferMoneyHandler(
+        container.get("repository").unwrap(),
+        container.get("event_bus").unwrap()
+    )
+    
+    # Execute
+    command = TransferMoneyCommand(
+        from_account="123",
+        to_account="456",
+        amount=Decimal("100.00"),
+        currency="USD"
+    )
+    result = handler.handle(command)
+    
+    # Verify
+    assert result.success
+    events = container.get("event_bus").unwrap().get_events()
+    assert any(e.type == "TransferCompleted" for e in events)
+```
 
-### 🔧 In Development
+## Performance Considerations
 
-- **Domain patterns**: Entity/ValueObject/Aggregate APIs available
-- **CQRS**: Command/Handler namespace structure exists
-- **Validation**: Basic validation patterns
+### Optimization Strategies
 
-### 📋 Planned
+1. **Lazy Loading**: Aggregates load entities on demand
+2. **Caching**: Container caches service instances
+3. **Batch Operations**: Process multiple items in single result
+4. **Async Support**: Future async/await integration planned
 
-- **Event Sourcing**: Complete event sourcing implementation
-- **Advanced CQRS**: Query bus and auto-discovery
-- **Plugin Architecture**: Hot-pluggable components
+### Memory Management
 
-## 🔗 Integration Points
+- Value objects are immutable and shareable
+- Entities track changes for efficient persistence
+- Events are lightweight data carriers
 
-### Framework Compatibility
+## Migration Path
 
-- **Pydantic V2**: Configuration and validation
-- **Standard Library**: Minimal external dependencies
-- **Type System**: Python 3.13+ type hints
+### From Exception-Based Code
 
-### Ecosystem Integration
+```python
+# Before: Exception-based
+def old_divide(a: float, b: float) -> float:
+    if b == 0:
+        raise ValueError("Division by zero")
+    return a / b
 
-FLEXT Core serves as the foundation for related projects in the workspace.
+# After: Railway-oriented
+def new_divide(a: float, b: float) -> FlextResult[float]:
+    if b == 0:
+        return FlextResult.fail("Division by zero")
+    return FlextResult.ok(a / b)
+```
 
-## ⚠️ Reality Check
+### From Procedural to Domain-Driven
 
-This documentation reflects the CURRENT code in `src/flext_core/`.
+```python
+# Before: Procedural
+def transfer_money(from_id, to_id, amount):
+    from_account = db.get_account(from_id)
+    to_account = db.get_account(to_id)
+    
+    if from_account.balance < amount:
+        return False
+        
+    from_account.balance -= amount
+    to_account.balance += amount
+    
+    db.save(from_account)
+    db.save(to_account)
+    return True
 
-### What EXISTS
+# After: Domain-driven
+def transfer_money(command: TransferMoneyCommand) -> FlextResult[None]:
+    return (
+        repository.get_banking_context()
+        .flat_map(lambda banking: banking.transfer(
+            command.from_account,
+            command.to_account,
+            Money(command.amount, command.currency)
+        ))
+        .flat_map(lambda _: repository.save(banking))
+    )
+```
 
-- FlextResult pattern fully implemented
-- FlextContainer dependency injection working
-- Configuration system functional
-- Domain pattern APIs available
+## Future Architecture
 
-### What's PLANNED
+### Planned Enhancements
 
-- Complete CQRS implementation
-- Event sourcing system
-- Advanced domain patterns
+1. **Event Sourcing**: Complete event store implementation
+2. **CQRS Bus**: Auto-discovery and routing
+3. **Plugin System**: Dynamic module loading
+4. **Async/Await**: Full async support
+5. **Distributed Patterns**: Saga orchestration
 
-### What DOESN'T exist (yet)
+### Ecosystem Growth
 
-- "33 projects ecosystem" (not validated)
-- Complete framework integrations
-- Production-ready event sourcing
+FLEXT Core serves as the foundation for 32+ projects, ensuring consistent patterns across:
+
+- Data extraction (Singer taps)
+- Data loading (Singer targets)
+- Data transformation (DBT)
+- API services (FastAPI)
+- Background workers (Celery)
 
 ---
 
-For details, check the code in `src/flext_core/` and tests in `tests/`.
+**Architecture Philosophy**: Make the right thing easy and the wrong thing hard.

@@ -31,13 +31,13 @@ from typing import TYPE_CHECKING, cast
 from pydantic import Field
 
 from flext_core import (
+    FlextEntity,
     FlextResult,
     FlextUtilities,
+    FlextValueObject,
     TEntityId,
     get_logger,
 )
-from flext_core.entities import FlextEntity  # Usando implementação funcional
-from flext_core.value_objects import FlextValueObject
 
 if TYPE_CHECKING:
     from collections.abc import Callable

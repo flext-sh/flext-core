@@ -4,6 +4,8 @@ This module provides Singer-specific base patterns and utilities for data integr
 Currently provides stubs for backward compatibility during refactoring.
 """
 
+from __future__ import annotations
+
 from flext_core.models import FlextModel
 from flext_core.result import FlextResult
 
@@ -32,7 +34,7 @@ class FlextSingerTarget(FlextSingerBase):
     """Base class for Singer targets (loaders)."""
 
 
-__all__ = [
+__all__: list[str] = [
     "FlextSingerBase",
     "FlextSingerTap",
     "FlextSingerTarget",

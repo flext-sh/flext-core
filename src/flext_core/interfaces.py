@@ -4,6 +4,8 @@ Backward compatibility module that re-exports protocols as interfaces.
 This module exists to maintain compatibility with existing tests.
 """
 
+from __future__ import annotations
+
 # Re-export everything from protocols for backward compatibility
 from flext_core.protocols import (
     FlextAuthProtocol,
@@ -23,7 +25,7 @@ from flext_core.protocols import (
     FlextValidator,
 )
 
-__all__ = [
+__all__: list[str] = [
     "FlextAuthProtocol",
     "FlextConfigurable",
     "FlextConnectionProtocol",

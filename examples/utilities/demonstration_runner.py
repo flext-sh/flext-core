@@ -13,8 +13,7 @@ import math
 import time
 from decimal import Decimal
 
-# Import shared domain models
-from shared_domain import (
+from ..shared_domain import (
     SharedDomainFactory,
 )
 

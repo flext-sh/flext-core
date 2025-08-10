@@ -19,7 +19,7 @@ from flext_core.config_base import (
 # Test compatibility shim removed due to type checking issues
 
 
-__all__ = [
+__all__: list[str] = [
     "_BaseConfigDefaults",
     "_BaseConfigOps",
     "_BaseConfigValidation",

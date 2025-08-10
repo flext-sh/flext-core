@@ -24,6 +24,7 @@ Usage of New Conftest Infrastructure:
 from __future__ import annotations
 
 import math
+from collections.abc import Callable
 from typing import Any
 
 import pytest
@@ -54,7 +55,7 @@ class TestFlextFieldCoreAdvanced:
     """Advanced field core testing with structured parametrization."""
 
     @pytest.fixture
-    def field_creation_test_cases(self) -> list[TestCase]:
+    def field_creation_test_cases(self) -> list[TestCase[dict[str, object]]]:
         """Define structured test cases for field creation scenarios."""
         return [
             TestCase(
@@ -130,8 +131,10 @@ class TestFlextFieldCoreAdvanced:
 
     @pytest.mark.parametrize_advanced
     def test_field_creation_scenarios(
-        self, field_creation_test_cases: list[TestCase], assert_helpers
-    ):
+        self,
+        field_creation_test_cases: list[TestCase[dict[str, object]]],
+        assert_helpers: object,
+    ) -> None:
         """Test field creation using structured test cases."""
         for test_case in field_creation_test_cases:
             # Create field using test case input data
@@ -149,7 +152,7 @@ class TestFlextFieldCoreAdvanced:
                 )
 
     @pytest.fixture
-    def validation_test_cases(self) -> list[TestCase]:
+    def validation_test_cases(self) -> list[TestCase[dict[str, object]]]:
         """Define validation test cases for different field types and values."""
         return [
             TestCase(
@@ -222,8 +225,10 @@ class TestFlextFieldCoreAdvanced:
 
     @pytest.mark.parametrize_advanced
     def test_field_validation_scenarios(
-        self, validation_test_cases: list[TestCase], assert_helpers
-    ):
+        self,
+        validation_test_cases: list[TestCase[dict[str, object]]],
+        assert_helpers: object,
+    ) -> None:
         """Test field validation using structured test cases."""
         for test_case in validation_test_cases:
             field_config = test_case.input_data["field_config"]
@@ -256,8 +261,8 @@ class TestFlextFieldCoreAdvanced:
         field_type: FlextFieldType,
         test_values: list[Any],
         expected_valid: list[bool],
-        assert_helpers,
-    ):
+        assert_helpers: object,
+    ) -> None:
         """Test validation matrix for different field types and values."""
         field = FlextFieldCore(
             field_id=f"{field_type.value}_field",
@@ -294,7 +299,7 @@ class TestFlextFieldCorePropertyBased:
     )
     def test_string_field_length_properties(
         self, field_name: str, min_length: int, max_length: int
-    ):
+    ) -> None:
         """Property: string field validation respects length constraints."""
         # Ensure min_length < max_length (strict inequality required by validation)
         if min_length >= max_length:
@@ -324,7 +329,7 @@ class TestFlextFieldCorePropertyBased:
     )
     def test_integer_field_range_properties(
         self, min_value: int, max_value: int, test_value: int
-    ):
+    ) -> None:
         """Property: integer field validation respects range constraints."""
         field = FlextFieldCore(
             field_id="property_int_field",
@@ -353,7 +358,7 @@ class TestFlextFieldCorePropertyBased:
         ),
         test_value=st.text(min_size=1, max_size=10),
     )
-    def test_allowed_values_property(self, allowed_values: list[str], test_value: str):
+    def test_allowed_values_property(self, allowed_values: list[str], test_value: str) -> None:
         """Property: field with allowed values only accepts values from the list."""
         field = FlextFieldCore(
             field_id="allowed_values_field",
@@ -385,8 +390,8 @@ class TestFlextFieldCorePerformance:
 
     @pytest.mark.benchmark
     def test_field_creation_performance(
-        self, performance_monitor, performance_threshold
-    ):
+        self, performance_monitor: Callable[[Callable[[], object]], dict[str, object]], performance_threshold: dict[str, float]
+    ) -> None:
         """Benchmark field creation performance."""
 
         def create_hundred_fields():
@@ -412,7 +417,7 @@ class TestFlextFieldCorePerformance:
         assert metrics["memory_used"] < 1_000_000  # 1MB for 100 fields
 
     @pytest.mark.benchmark
-    def test_validation_performance(self, performance_monitor):
+    def test_validation_performance(self, performance_monitor: Callable[[Callable[[], object]], dict[str, object]]) -> None:
         """Benchmark validation performance with complex constraints."""
         # Create complex field
         field = FlextFieldCore(
@@ -439,7 +444,7 @@ class TestFlextFieldCorePerformance:
         assert len(metrics["result"]) == 100
 
     @pytest.mark.benchmark
-    def test_registry_performance(self, performance_monitor):
+    def test_registry_performance(self, performance_monitor: Callable[[Callable[[], object]], dict[str, object]]):
         """Benchmark registry operations performance."""
         registry = FlextFieldRegistry()
 
@@ -479,7 +484,7 @@ class TestFlextFieldCorePerformance:
 class TestFlextFieldCoreWithFixtures:
     """Tests demonstrating advanced fixture usage from conftest."""
 
-    def test_fields_with_test_builder(self, test_builder, assert_helpers):
+    def test_fields_with_test_builder(self, test_builder: Callable[[], object], assert_helpers: object) -> None:
         """Test field creation using test data builder pattern."""
         # Build complex field configuration using fluent builder
         field_config = (
@@ -542,7 +547,7 @@ class TestFlextFieldCoreWithFixtures:
         assert uuid_result.success
         assert validators["is_valid_uuid"](sample_data["uuid"])
 
-    def test_fields_with_mock_factory(self, mock_factory):
+    def test_fields_with_mock_factory(self, mock_factory: Callable[[str], object]) -> None:
         """Test field integration with external services using mock factory."""
         # Create mock external validation service
         validator_service = mock_factory("field_validator_service")
@@ -987,31 +992,28 @@ class TestFlextFieldCoreBackwardCompatibility:
         [
             (
                 flext_create_string_field,
-                FlextFields.create_string_field,
+                FlextFields.string_field,
                 {
-                    "field_id": "compat_string",
-                    "field_name": "compat_name",
+                    "name": "compat_name",
                     "min_length": 1,
                     "max_length": 50,
                 },
             ),
             (
                 flext_create_integer_field,
-                FlextFields.create_integer_field,
+                FlextFields.integer_field,
                 {
-                    "field_id": "compat_integer",
-                    "field_name": "compat_age",
+                    "name": "compat_age",
                     "min_value": 0,
                     "max_value": 150,
                 },
             ),
             (
                 flext_create_boolean_field,
-                FlextFields.create_boolean_field,
+                FlextFields.boolean_field,
                 {
-                    "field_id": "compat_boolean",
-                    "field_name": "compat_flag",
-                    "default_value": False,
+                    "name": "compat_flag",
+                    "default": False,
                 },
             ),
         ],

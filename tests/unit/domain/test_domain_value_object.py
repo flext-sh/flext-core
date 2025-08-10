@@ -181,8 +181,8 @@ class TestFlextValueObjectStringRepresentation:
 
         str_repr = str(vo)
 
-        if "ConcreteValueObject" not in str_repr:
-            raise AssertionError(f"Expected {'ConcreteValueObject'} in {str_repr}")
+        if "TestMoney" not in str_repr:
+            raise AssertionError(f"Expected {'TestMoney'} in {str_repr}")
         assert "10.50" in str_repr
         if "USD" not in str_repr:
             raise AssertionError(f"Expected {'USD'} in {str_repr}")
@@ -199,8 +199,8 @@ class TestFlextValueObjectStringRepresentation:
 
         str_repr = str(vo)
 
-        if "ConcreteValueObject" not in str_repr:
-            raise AssertionError(f"Expected {'ConcreteValueObject'} in {str_repr}")
+        if "TestMoney" not in str_repr:
+            raise AssertionError(f"Expected {'TestMoney'} in {str_repr}")
         # Should show first 3 fields with ellipsis if there are more
         field_count = str_repr.count("=")
         assert field_count <= 3

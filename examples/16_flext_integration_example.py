@@ -9,7 +9,7 @@ from decimal import Decimal
 from typing import cast
 
 # Import shared domain models to eliminate duplication
-from shared_domain import (
+from .shared_domain import (
     EmailAddress,
     Money,
     SharedDomainFactory,

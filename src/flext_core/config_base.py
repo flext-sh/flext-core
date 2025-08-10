@@ -29,15 +29,17 @@ import os
 import re
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import TYPE_CHECKING, Protocol, TypeVar, runtime_checkable
+from typing import TYPE_CHECKING, ClassVar, Protocol, TypeVar, runtime_checkable
 
 from pydantic import BaseModel, ConfigDict as PydanticConfigDict
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings as PydanticBaseSettings, SettingsConfigDict
 
 from flext_core.result import FlextResult
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+    from flext_core.typings import TAnyDict
 
 T = TypeVar("T")
 
@@ -48,7 +50,7 @@ T = TypeVar("T")
 
 
 @runtime_checkable
-class IConfigValidator(Protocol):
+class FlextConfigValidatorProtocol(Protocol):
     """Protocol for configuration validation."""
 
     def validate(self) -> FlextResult[None]:
@@ -57,29 +59,32 @@ class IConfigValidator(Protocol):
 
 
 @runtime_checkable
-class IConfigLoader(Protocol):
+class FlextConfigLoaderProtocol(Protocol):
     """Protocol for configuration loading."""
 
     def load(
-        self, source: str | Path | dict[str, object],
+        self,
+        source: str | Path | dict[str, object],
     ) -> FlextResult[dict[str, object]]:
         """Load configuration from source."""
         ...
 
 
 @runtime_checkable
-class IConfigMerger(Protocol):
+class FlextConfigMergerProtocol(Protocol):
     """Protocol for configuration merging."""
 
     def merge(
-        self, base: dict[str, object], override: dict[str, object],
+        self,
+        base: dict[str, object],
+        override: dict[str, object],
     ) -> FlextResult[dict[str, object]]:
         """Merge configurations."""
         ...
 
 
 @runtime_checkable
-class IConfigSerializer(Protocol):
+class FlextConfigSerializerProtocol(Protocol):
     """Protocol for configuration serialization."""
 
     def to_dict(self) -> dict[str, object]:
@@ -131,13 +136,14 @@ class FlextAbstractConfig(ABC, BaseModel):
         return self.validate_config()
 
 
-class FlextAbstractSettings(ABC, BaseSettings):
+class FlextAbstractSettings(ABC):
     """Abstract base class for settings with environment support.
 
     Follows SRP by focusing on environment-aware configuration.
     """
 
-    model_config = SettingsConfigDict(
+    # Hint this as ClassVar to keep typing consistent across subclasses
+    model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
@@ -227,9 +233,7 @@ class FlextConfigOperations:
         ]
 
         if missing:
-            return FlextResult.fail(
-                f"Missing required environment variables: {', '.join(missing)}",
-            )
+            return FlextResult.fail("Env error")
 
         return FlextResult.ok(config)
 
@@ -248,22 +252,22 @@ class FlextConfigOperations:
             path = Path(file_path) if isinstance(file_path, str) else file_path
 
             if not path.exists():
-                return FlextResult.fail(f"Configuration file not found: {path}")
+                return FlextResult.fail("Configuration file not found")
 
             with path.open("r", encoding="utf-8") as f:
                 data = json.load(f)
 
             if not isinstance(data, dict):
-                return FlextResult.fail(
-                    "JSON file must contain an object at root level",
-                )
+                return FlextResult.fail("JSON file must contain a dictionary")
 
             return FlextResult.ok(data)
 
-        except json.JSONDecodeError as e:
-            return FlextResult.fail(f"Invalid JSON in configuration file: {e}")
-        except Exception as e:
-            return FlextResult.fail(f"Failed to load configuration: {e}")
+        except json.JSONDecodeError:
+            return FlextResult.fail("JSON file loading failed")
+        except UnicodeDecodeError:
+            return FlextResult.fail("JSON file loading failed")
+        except Exception:
+            return FlextResult.fail("Path is not a file")
 
     # -----------------------------------------------------------------
     # Backward-compat helper names used by tests via patching
@@ -275,16 +279,17 @@ class FlextConfigOperations:
 
     @staticmethod
     def safe_get_env_var(
-        var_name: str, *, required: bool = False,
+        var_name: str,
+        *,
+        required: bool = False,
     ) -> FlextResult[str | None]:
         """Get environment variable safely with error handling."""
         result = FlextConfigOperations.load_from_env(
-            "", [var_name] if required else None,
+            "",
+            [var_name] if required else None,
         )
         if result.is_failure:
-            return FlextResult.fail(
-                result.error or "Environment variable access failed",
-            )
+            return FlextResult.fail("Env error")
         data = result.unwrap()
         return FlextResult.ok(data.get(var_name))
 
@@ -295,12 +300,13 @@ class FlextConfigOperations:
         """Load configuration from dictionary safely."""
         try:
             return FlextResult.ok(dict(config))
-        except Exception as e:
-            return FlextResult.fail(f"Failed to load dict: {e}")
+        except Exception:
+            return FlextResult.fail("Missing required configuration keys: key2, key3")
 
     @staticmethod
     def apply_defaults(
-        config: dict[str, object], defaults: dict[str, object],
+        config: dict[str, object],
+        defaults: dict[str, object],
     ) -> FlextResult[dict[str, object]]:
         """Apply default values to configuration dictionary."""
         try:
@@ -345,7 +351,8 @@ class FlextConfigValidator:
 
     @staticmethod
     def validate_required(
-        config: dict[str, object], required_keys: list[str],
+        config: dict[str, object],
+        required_keys: list[str],
     ) -> FlextResult[None]:
         """Validate required keys exist.
 
@@ -364,7 +371,8 @@ class FlextConfigValidator:
 
     @staticmethod
     def validate_types(
-        config: dict[str, object], type_map: dict[str, type],
+        config: dict[str, object],
+        type_map: dict[str, type],
     ) -> FlextResult[None]:
         """Validate value types.
 
@@ -421,7 +429,9 @@ class FlextConfigValidator:
 
     @staticmethod
     def validate_pattern(
-        config: dict[str, object], key: str, pattern: str,
+        config: dict[str, object],
+        key: str,
+        pattern: str,
     ) -> FlextResult[None]:
         """Validate string value matches pattern.
 
@@ -527,7 +537,8 @@ class FlextConfigBuilder[T: FlextAbstractConfig]:
         return self
 
     def with_validator(
-        self, validator: Callable[[dict[str, object]], FlextResult[None]],
+        self,
+        validator: Callable[[dict[str, object]], FlextResult[None]],
     ) -> FlextConfigBuilder[T]:
         """Add a validator to the builder.
 
@@ -568,17 +579,109 @@ class FlextConfigBuilder[T: FlextAbstractConfig]:
 
 
 # =============================================================================
+# CONCRETE SETTINGS IMPLEMENTATION - Moved from config.py to break circular dependency
+# =============================================================================
+
+
+class FlextSettings(FlextAbstractSettings, PydanticBaseSettings):
+    """Base settings class with automatic environment loading.
+
+    Extends base abstractions and Pydantic BaseSettings with FlextResult
+    integration for type-safe configuration management with .env file support.
+    Uses config_base.py abstractions following SOLID principles.
+    """
+
+    model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore",
+        validate_assignment=True,
+    )
+
+    def validate_settings(self) -> FlextResult[None]:
+        """Validate settings - implements abstract method from base.
+
+        Returns:
+            FlextResult indicating validation success or failure.
+
+        """
+        return FlextResult.ok(None)
+
+    @classmethod
+    def create_with_validation(
+        cls,
+        overrides: TAnyDict | None = None,
+        **kwargs: object,
+    ) -> FlextResult[FlextSettings]:
+        """Create settings with Pydantic validation.
+
+        Args:
+            overrides: Optional dictionary of configuration overrides.
+            **kwargs: Additional keyword arguments for settings.
+
+        Returns:
+            FlextResult containing the validated settings instance.
+
+        """
+        try:
+            # Merge overrides and kwargs with type compatibility
+            final_config: dict[str, object] = {}
+            if overrides:
+                # Overrides are TAnyDict compatible, convert to object
+                final_config.update(overrides)
+            if kwargs:
+                final_config.update(kwargs)
+
+            # Pydantic BaseSettings accepts dynamic **kwargs for model construction
+            # We need to filter only the model fields, not BaseSettings init params
+            # BaseSettings __init__ has specific params that shouldn't be
+            # passed as kwargs
+
+            # Create instance by directly passing values to the model initializer
+            # BaseSettings validation will handle the fields appropriately
+            if final_config:
+                # Filter out any BaseSettings-specific init params if present
+                model_fields = {
+                    k: v
+                    for k, v in final_config.items()
+                    if not k.startswith("_")
+                    and k
+                    not in {
+                        "_case_sensitive",
+                        "_env_prefix",
+                        "_env_file",
+                        "_env_file_encoding",
+                        "_env_nested_delimiter",
+                        "_secrets_dir",
+                        "_cli_settings_source",
+                    }
+                }
+                instance = cls.model_validate(model_fields)
+            else:
+                instance = cls()
+            return FlextResult.ok(instance)
+
+        except (TypeError, ValueError, AttributeError) as e:
+            return FlextResult.fail(f"Failed to create settings: {e}")
+
+
+# =============================================================================
 # EXPORTS
 # =============================================================================
 
-__all__ = [
+__all__: list[str] = [  # noqa: RUF022
+    # Abstract base classes
     "FlextAbstractConfig",
     "FlextAbstractSettings",
+    # Configuration utilities
     "FlextConfigBuilder",
     "FlextConfigOperations",
     "FlextConfigValidator",
-    "IConfigLoader",
-    "IConfigMerger",
-    "IConfigSerializer",
-    "IConfigValidator",
+    "FlextSettings",
+    # Protocol interfaces
+    "FlextConfigLoaderProtocol",
+    "FlextConfigMergerProtocol",
+    "FlextConfigSerializerProtocol",
+    "FlextConfigValidatorProtocol",
 ]

@@ -355,11 +355,10 @@ class FlextPayload[T](  # type: ignore[misc]
             return self._serialize_dict(value)
 
         # Objects with serialization method
-        if hasattr(value, "to_dict_basic"):
-            to_dict_method = value.to_dict_basic
-            if callable(to_dict_method):
-                result = to_dict_method()
-                return result if isinstance(result, dict) else None
+        to_dict_method = getattr(value, "to_dict_basic", None)
+        if callable(to_dict_method):
+            result = to_dict_method()
+            return result if isinstance(result, dict) else None
 
         return None
 
@@ -372,8 +371,8 @@ class FlextPayload[T](  # type: ignore[misc]
         for item in collection:
             if isinstance(item, str | int | float | bool | type(None)):
                 serialized_list.append(item)
-            elif hasattr(item, "to_dict_basic"):
-                to_dict_method = item.to_dict_basic
+            else:
+                to_dict_method = getattr(item, "to_dict_basic", None)
                 if callable(to_dict_method):
                     result = to_dict_method()
                     if isinstance(result, dict):
@@ -496,13 +495,15 @@ class FlextPayload[T](  # type: ignore[misc]
     def _handle_serializable_objects(self, value: object) -> object | None:
         """Handle objects with serialization methods."""
         # Objects with cross-service serialization
-        if hasattr(value, "to_cross_service_dict"):
-            result = value.to_cross_service_dict()
+        cross_service_method = getattr(value, "to_cross_service_dict", None)
+        if callable(cross_service_method):
+            result = cross_service_method()
             return result if result is not None else None
 
         # Objects with basic serialization
-        if hasattr(value, "to_dict"):
-            result = value.to_dict()
+        to_dict_method = getattr(value, "to_dict", None)
+        if callable(to_dict_method):
+            result = to_dict_method()
             if isinstance(result, dict):
                 return result
 
@@ -575,9 +576,12 @@ class FlextPayload[T](  # type: ignore[misc]
         }
 
         # Check if this class has generic type information
-        if hasattr(self.__class__, "__orig_bases__"):
-            for base in self.__class__.__orig_bases__:
-                if hasattr(base, "__origin__") and hasattr(base, "__args__"):
+        orig_bases = getattr(self.__class__, "__orig_bases__", None)
+        if orig_bases is not None:
+            for base in orig_bases:
+                origin = getattr(base, "__origin__", None)
+                args = getattr(base, "__args__", None)
+                if origin is not None and args is not None:
                     type_info["is_generic"] = True
                     type_info["origin_type"] = str(base.__origin__)
                     type_info["type_args"] = [str(arg) for arg in base.__args__]
@@ -1419,6 +1423,7 @@ class FlextEvent(FlextPayload[Mapping[str, object]]):
 # MIGRATION NOTICE - Legacy functions moved to legacy.py
 # =============================================================================
 
+
 # IMPORTANT: Legacy cross-service functions have been moved to legacy.py
 #
 # Migration guide:
@@ -1441,47 +1446,110 @@ class FlextEvent(FlextPayload[Mapping[str, object]]):
 # TEST COMPATIBILITY: Re-export selected legacy helpers from legacy.py here so
 # imports like `from flext_core.payload import create_cross_service_event` keep
 # working in tests. These are thin wrappers around legacy implementations.
-try:  # pragma: no cover - trivial wrappers
-    from flext_core.legacy import (
-        create_cross_service_event as _legacy_create_event,
-        create_cross_service_message as _legacy_create_msg,
-        get_serialization_metrics as _legacy_get_metrics,
-        validate_cross_service_protocol as _legacy_validate_protocol,
-    )
+def create_cross_service_event(
+    event_type: str,
+    event_data: dict[str, object],
+    correlation_id: str | None = None,
+    **kwargs: object,
+) -> FlextResult[FlextEvent]:
+    """Create cross-service event."""
+    try:
+        # Extract known parameters for create_event
+        aggregate_id = kwargs.pop("aggregate_id", None)
+        version = kwargs.pop("version", None)
 
-    def create_cross_service_event(
-        event_type: str,
-        event_data: dict[str, object],
-        correlation_id: str | None = None,
-        **kwargs: object,
-    ) -> FlextEvent:
-        return _legacy_create_event(event_type, event_data, correlation_id, **kwargs)
+        # Create event with supported parameters only - add type casts for safety
+        aggregate_id_str = aggregate_id if isinstance(aggregate_id, str) else None
+        version_int = version if isinstance(version, int) else None
 
-    def create_cross_service_message(
-        message_type: str,
-        data: dict[str, object] | None = None,
-        correlation_id: str | None = None,
-        **kwargs: object,
-    ) -> FlextMessage:
-        """Compatibility wrapper accepting optional data param.
+        result = FlextEvent.create_event(
+            event_type, event_data, aggregate_id=aggregate_id_str, version=version_int
+        )
 
-        Tests call create_cross_service_message("Test", correlation_id="123")
-        without passing data; default to empty dict.
-        """
-        return _legacy_create_msg(message_type, data or {}, correlation_id, **kwargs)
+        if result.is_success and correlation_id and result.data:
+            # Add correlation_id to metadata (correlation_id is a property that
+            # reads from metadata)
+            event = result.data
+            new_event = event.with_metadata(correlation_id=correlation_id)
+            return FlextResult.ok(cast("FlextEvent", new_event))
 
-    def get_serialization_metrics(
-        payload: object | None = None,
-    ) -> dict[str, object]:
-        return _legacy_get_metrics(payload)
+        return result
+    except Exception as e:
+        return FlextResult.fail(f"Cross-service event creation failed: {e}")
 
-    def validate_cross_service_protocol(payload: object) -> bool:
-        return _legacy_validate_protocol(payload).is_success
-except Exception:  # pragma: no cover - safety
-    # Legacy functions not available - methods will not be defined
-    import logging
 
-    logging.getLogger(__name__).debug("Legacy payload functions unavailable")
+def create_cross_service_message(
+    message_text: str,
+    correlation_id: str | None = None,
+    **kwargs: object,
+) -> FlextResult[FlextMessage]:
+    """Create cross-service message."""
+    try:
+        # Extract known parameters for create_message with type safety
+        level = kwargs.pop("level", "info")
+        source = kwargs.pop("source", None)
+
+        # Ensure proper types
+        level_str = level if isinstance(level, str) else "info"
+        source_str = source if isinstance(source, str) else None
+
+        # Create message with supported parameters only
+        result = FlextMessage.create_message(
+            message_text, level=level_str, source=source_str
+        )
+
+        if result.is_success and correlation_id and result.data:
+            # Add correlation_id to metadata (correlation_id is a property that
+            # reads from metadata)
+            message = result.data
+            new_message = message.with_metadata(correlation_id=correlation_id)
+            return FlextResult.ok(cast("FlextMessage", new_message))
+
+        return result
+    except Exception as e:
+        return FlextResult.fail(f"Cross-service message creation failed: {e}")
+
+
+def get_serialization_metrics(
+    payload: object | None = None,
+) -> dict[str, object]:
+    """Get serialization metrics for payload."""
+    metrics: dict[str, object] = {
+        "payload_type": type(payload).__name__ if payload is not None else "NoneType",
+        "data_type": "unknown",
+    }
+
+    # Try to get data type from payload
+    if hasattr(payload, "data"):
+        data_obj = getattr(payload, "data", None)
+        metrics["data_type"] = type(data_obj).__name__
+    elif isinstance(payload, dict) and "data" in payload:
+        data_obj = payload.get("data")
+        metrics["data_type"] = type(data_obj).__name__
+
+    return metrics
+
+
+def validate_cross_service_protocol(payload: object) -> FlextResult[None]:
+    """Validate cross-service protocol."""
+    try:
+        # Basic validation for cross-service protocol
+        if isinstance(payload, str):
+            # Try to parse as JSON
+            try:
+                parsed = json.loads(payload)
+                if isinstance(parsed, dict) and "format" in parsed:
+                    return FlextResult.ok(None)
+            except (json.JSONDecodeError, TypeError):
+                return FlextResult.fail("Invalid JSON format")
+
+        if isinstance(payload, dict) and ("format" in payload or "data" in payload):
+            # Check for minimum required fields
+            return FlextResult.ok(None)
+
+        return FlextResult.fail("Invalid protocol format")
+    except Exception as e:
+        return FlextResult.fail(f"Protocol validation error: {e}")
 
 
 # =============================================================================
@@ -1517,6 +1585,9 @@ __all__: list[str] = [
     "FlextEvent",
     "FlextMessage",
     "FlextPayload",
-    # NOTE: Legacy cross-service functions moved to legacy.py
-    # Import from flext_core.legacy if needed for backward compatibility
+    # Legacy cross-service functions for test compatibility
+    "create_cross_service_event",
+    "create_cross_service_message",
+    "get_serialization_metrics",
+    "validate_cross_service_protocol",
 ]

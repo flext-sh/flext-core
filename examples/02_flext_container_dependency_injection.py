@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
 # Import shared domain models to eliminate duplication
-from shared_domain import (
+from .shared_domain import (
     SharedDomainFactory,
     User as SharedUser,
     log_domain_operation,
@@ -410,7 +410,9 @@ class SMTPEmailService(EmailService):
 
     def send_email(self, to: str, subject: str, body: str) -> FlextResult[str]:
         """Send email and return message ID."""
-        log_message: TLogMessage = f"📧 Sending email to {to}: {subject}"
+        preview_len = 30
+        preview = (body[:preview_len] + "...") if len(body) > preview_len else body
+        log_message: TLogMessage = f"📧 Sending email to {to}: {subject} | {preview}"
         print(log_message)
 
         # Simulate email sending
@@ -817,7 +819,8 @@ class BaseServiceConfigurer:
             return FlextResult.fail(error_msg)
 
         deps_data = result.data
-        if deps_data is None or len(deps_data) != 2:
+        expected_deps = 2
+        if deps_data is None or len(deps_data) != expected_deps:
             return FlextResult.fail("Invalid notification dependencies")
         email_service, user_repository = deps_data
         return FlextResult.ok(
@@ -839,7 +842,8 @@ class BaseServiceConfigurer:
             return FlextResult.fail(error_msg)
 
         deps_data = result.data
-        if deps_data is None or len(deps_data) != 2:
+        expected_deps = 2
+        if deps_data is None or len(deps_data) != expected_deps:
             return FlextResult.fail("Invalid user management dependencies")
         user_repository, notification_service = deps_data
         return FlextResult.ok(
@@ -955,7 +959,7 @@ class MockEmailService(EmailService):
 class MockUserRepository(UserRepository):
     """Mock user repository implementation for testing."""
 
-    def create_user(self, user_data: TUserData) -> FlextResult[TEntityId]:
+    def create_user(self, _user_data: TUserData) -> FlextResult[TEntityId]:
         """Create a mock user.
 
         Args:
@@ -1336,7 +1340,9 @@ class UserRegistrationStrategy:
         user_service = service_result.data
         if user_service is None:
             return FlextResult.fail("User service is None")
-        registration_result = user_service.register_user(user_data)
+        registration_result: FlextResult[TAnyObject] = user_service.register_user(
+            user_data
+        )
 
         return self._handle_registration_result(registration_result)
 

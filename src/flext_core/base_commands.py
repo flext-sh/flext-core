@@ -129,7 +129,9 @@ class FlextAbstractCommandBus(ABC):
 
     @abstractmethod
     def register_handler(
-        self, command_type: str, handler: FlextAbstractCommandHandler[object, object],
+        self,
+        command_type: str,
+        handler: FlextAbstractCommandHandler[object, object],
     ) -> None:
         """Register command handler - must be implemented by subclasses."""
         ...
@@ -154,7 +156,7 @@ class FlextAbstractCommandBus(ABC):
 # EXPORTS - Clean public API
 # =============================================================================
 
-__all__ = [
+__all__: list[str] = [
     "FlextAbstractCommand",
     "FlextAbstractCommandBus",
     "FlextAbstractCommandHandler",

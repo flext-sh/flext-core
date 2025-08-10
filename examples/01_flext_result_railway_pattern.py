@@ -8,11 +8,11 @@ using FlextResult for predictable error propagation without exceptions.
 from __future__ import annotations
 
 import json
-import random
-from typing import cast
+import secrets
 
-# Import ALL domain models from shared_domain - NO local domain models
-from shared_domain import (
+from typing import TYPE_CHECKING, cast
+
+from .shared_domain import (
     SharedDomainFactory,
     User as SharedUser,
 )
@@ -21,10 +21,10 @@ from flext_core import (
     FlextResult,
     FlextValidation,
 )
-
-# Legacy types for backward compatibility (use FlextTypes in new code)
-from flext_core.legacy import TAnyObject, TEntityId, TUserData
 from flext_core.result import safe_call
+
+if TYPE_CHECKING:
+    from flext_core.typings import TAnyObject, TEntityId, TUserData
 
 # Constants to avoid magic numbers
 FAILURE_RATE = 0.2  # 20% chance of failure
@@ -85,14 +85,15 @@ def process_user_data_traditional(data: dict[str, object]) -> dict[str, object]:
                 "age": data["age"],
             }
             # Simulate user creation logic
-            user_id = f"user_{random.randint(1000, 9999)}"
+            sysrand = secrets.SystemRandom()
+            user_id = f"user_{sysrand.randrange(1000, 10000)}"
         except Exception as e:
             msg = f"User creation failed: {e}"
             raise RuntimeError(msg) from e
 
         # Database operations with exception handling
         try:
-            if random.random() < FAILURE_RATE:
+            if secrets.SystemRandom().random() < FAILURE_RATE:
                 _raise_database_timeout()
             # Simulate save
             print(f"Saved user: {user_id}")
@@ -102,7 +103,7 @@ def process_user_data_traditional(data: dict[str, object]) -> dict[str, object]:
 
         # Email with nested exception handling
         try:
-            if random.random() < FAILURE_RATE:
+            if secrets.SystemRandom().random() < FAILURE_RATE:
                 _raise_email_service_error()
             print(f"Welcome email sent to: {data['email']}")
         except RuntimeError as e:
@@ -152,7 +153,10 @@ def save_user_to_database(user: SharedUser) -> FlextResult[TEntityId]:
     """🚀 ZERO-BOILERPLATE database simulation using FlextResult."""
     return (
         FlextResult.ok(user.id)
-        .filter(lambda _: random.random() >= FAILURE_RATE, "Database timeout")
+        .filter(
+            lambda _: secrets.SystemRandom().random() >= FAILURE_RATE,
+            "Database timeout",
+        )
         .tap(lambda uid: print(f"✅ Saved: {uid}"))
     )
 
@@ -160,7 +164,7 @@ def save_user_to_database(user: SharedUser) -> FlextResult[TEntityId]:
 def send_welcome_email(user: SharedUser) -> FlextResult[bool]:
     """🚀 ONE-LINE email sending with built-in validation."""
     return (
-        FlextResult.ok(True)
+        FlextResult.ok(data=True)
         .filter(
             lambda _: "@invalid.com" not in user.email_address.email, "Invalid domain"
         )
@@ -217,7 +221,12 @@ def process_with_retry(
     for attempt in range(1, max_retries + 1):
         result = process_user_registration(data)
         if result.success:
-            return result.tap(lambda _: print(f"✅ Succeeded on attempt {attempt + 1}"))
+            msg = f"✅ Succeeded on attempt {attempt + 1}"
+
+            def _printer(_: object, _m: str = msg) -> None:
+                print(_m)
+
+            return result.tap(_printer)
     error_result: TAnyObject = {
         "status": "failed_after_retries",
         "error": "All attempts failed",

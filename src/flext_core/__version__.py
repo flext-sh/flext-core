@@ -288,7 +288,7 @@ def validate_version_format(version: str) -> bool:
 # EXPORTS - Clean public API
 # =============================================================================
 
-__all__ = [
+__all__: list[str] = [
     "AVAILABLE_FEATURES",
     "BUILD_TYPE",
     "MAX_PYTHON_VERSION",

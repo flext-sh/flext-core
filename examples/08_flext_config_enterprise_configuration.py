@@ -28,7 +28,7 @@ import tempfile
 from typing import cast
 
 # Import shared domain models to integrate domain validation patterns
-from shared_domain import (
+from .shared_domain import (
     SharedDemonstrationPattern,
     SharedDomainFactory,
     log_domain_operation,
@@ -374,7 +374,7 @@ def _load_configuration_from_file(
     print("\n2. Loading configuration from file:")
 
     try:
-        with open(temp_file_path, encoding="utf-8") as f:
+        with pathlib.Path(temp_file_path).open(encoding="utf-8") as f:
             loaded_config: TAnyDict = json.load(f)
 
         print("✅ Configuration loaded from file:")
@@ -456,11 +456,11 @@ def _cleanup_configuration_file(temp_file_path: str) -> FlextResult[None]:
 
 
 def demonstrate_configuration_hierarchies() -> None:
-    """Demonstrate configuration hierarchies using flext_core.typings."""
-    log_message: TLogMessage = "\n" + "=" * 80
-    print(log_message)
-    print("🏗️ CONFIGURATION HIERARCHIES")
-    print("=" * 80)
+    """Demonstrate configuration hierarchies.
+
+    Shows how defaults, environment and user configs merge.
+    """
+    _print_config_section_header("🏗️ CONFIGURATION HIERARCHIES")
 
     # 1. Configuration hierarchy levels
     log_message = "\n1. Configuration hierarchy levels:"
@@ -617,8 +617,9 @@ def demonstrate_configuration_hierarchies() -> None:
 
 
 def demonstrate_advanced_configuration_patterns() -> None:
-    """Demonstrate advanced configuration patterns using railway-oriented
-    programming.
+    """Demonstrate advanced configuration patterns.
+
+    Uses railway-oriented programming to compose configuration steps.
     """
     _print_config_section_header("🚀 ADVANCED CONFIGURATION PATTERNS")
 
@@ -886,8 +887,9 @@ def _display_composed_configuration(composed_config: TAnyDict) -> FlextResult[No
 
 
 def demonstrate_domain_configuration_integration() -> None:
-    """Demonstrate configuration integration with shared domain models using
-    railway-oriented programming.
+    """Demonstrate configuration integration with domain models.
+
+    Shows integration with shared domain models using railway-oriented programming.
     """
     _print_domain_config_section_header("🏢 DOMAIN MODEL CONFIGURATION INTEGRATION")
 

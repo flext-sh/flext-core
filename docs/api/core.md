@@ -1,288 +1,191 @@
-# Core API - FLEXT Core
+# Core API Reference
 
-Complete reference for the fundamental APIs of FLEXT Core
+Complete reference for FLEXT Core's fundamental APIs.
 
-## 🎯 Overview
+## FlextResult[T] - Railway-Oriented Programming
 
-The Core API provides the foundational components to build robust applications. All components are type-safe, testable, and follow clean architecture patterns.
+Type-safe error handling that replaces exceptions with explicit results.
 
-## 📦 Primary Imports
-
-```python
-# Recommended modern imports
-from flext_core import (
-    FlextResult,           # Error handling type-safe
-    FlextContainer,        # Dependency injection
-    FlextSettings,         # Configuration management
-    FlextEntity,           # Domain entities
-    FlextValueObject,      # Immutable value objects
-    FlextAggregateRoot,    # Domain aggregates
-)
-
-# Legacy imports (compat re-exports still available via __init__)
-```
-
-## 🎭 FlextResult[T] - Type-Safe Error Handling
-
-Replaces exceptions with explicit, type-safe results.
-
-### Creating Results
+### Basic Usage
 
 ```python
 from flext_core import FlextResult
 
-# Success result
-def fetch_user(user_id: str) -> FlextResult[dict]:
-    user_data = {"id": user_id, "name": "John"}
-    return FlextResult.ok(user_data)
+def divide(a: float, b: float) -> FlextResult[float]:
+    """Safe division without exceptions."""
+    if b == 0:
+        return FlextResult.fail("Cannot divide by zero")
+    return FlextResult.ok(a / b)
 
-# Error result
-def validate_email(email: str) -> FlextResult[str]:
-    if "@" not in email:
-        return FlextResult.fail("Email must contain @")
-    return FlextResult.ok(email)
-
-# Factory methods
-success_result = FlextResult.ok("success data")
-error_result = FlextResult.fail("error message")
-```
-
-### Checking Status
-
-```python
-result = fetch_user("123")
-
-# Success/failure check
+# Use the result
+result = divide(10, 2)
 if result.success:
-    print(f"Data: {result.data}")
+    print(f"Result: {result.unwrap()}")  # Result: 5.0
 else:
     print(f"Error: {result.error}")
-
-# Boolean properties
-assert result.success is True
-assert result.is_failure is False
 ```
 
-### Data Handling
+### Chaining Operations
 
 ```python
-# Safe data access
-result = fetch_user("123")
+# Railway-oriented composition
+result = (
+    divide(10, 2)                    # FlextResult.ok(5.0)
+    .map(lambda x: x * 2)            # Transform: 10.0
+    .flat_map(lambda x: divide(x, 4)) # Chain: 2.5
+    .map_error(lambda e: f"Math error: {e}")  # Transform errors
+)
 
-if result.success:
-    # result.data is guaranteed non-None when success=True
-    user_data = result.data
-    print(f"User: {user_data['name']}")
-
-if result.is_failure:
-    # result.error is guaranteed non-None when is_failure=True
-    error_msg = result.error
-    print(f"Error: {error_msg}")
+# Alternative chaining
+def process_number(n: float) -> FlextResult[str]:
+    return (
+        validate_positive(n)
+        .map(lambda x: x ** 2)
+        .map(lambda x: f"Result: {x}")
+        .or_else(lambda _: FlextResult.ok("Using default"))
+    )
 ```
 
-### Composition and Chaining
-
-```python
-def create_and_save_user(name: str, email: str) -> FlextResult[str]:
-    # Validation
-    email_result = validate_email(email)
-    if email_result.is_failure:
-        return email_result  # Propagate error
-
-    # Creation
-    user_result = create_user(name, email_result.data)
-    if user_result.is_failure:
-        return FlextResult.fail(f"Creation failed: {user_result.error}")
-
-    # Save
-    save_result = save_user(user_result.data)
-    if save_result.is_failure:
-        return FlextResult.fail(f"Save failed: {save_result.error}")
-
-    return FlextResult.ok("User created successfully")
-```
-
-### Complete API
+### API Methods
 
 ```python
 class FlextResult[T]:
-    """Type-safe result container."""
-
     # Factory methods
     @classmethod
     def ok(cls, data: T) -> FlextResult[T]:
-        """Create success result."""
-
+        """Create success result with data."""
+    
     @classmethod
     def fail(cls, error: str) -> FlextResult[T]:
-        """Create failure result."""
-
+        """Create failure result with error message."""
+    
     # Properties
     @property
     def success(self) -> bool:
-        """True if result represents success."""
-
+        """True if result is successful."""
+    
     @property
     def is_failure(self) -> bool:
-        """True if result represents failure."""
-
+        """True if result is failure."""
+    
     @property
     def data(self) -> T | None:
         """Success data (None if failure)."""
-
+    
     @property
     def error(self) -> str | None:
         """Error message (None if success)."""
-
-    # Methods
-    def get_data_or(self, default: T) -> T:
-        """Get data or return default if failure."""
-
-    def get_error_or(self, default: str) -> str:
-        """Get error or return default if success."""
+    
+    # Transformation methods
+    def map(self, func: Callable[[T], U]) -> FlextResult[U]:
+        """Transform success value, pass through errors."""
+    
+    def flat_map(self, func: Callable[[T], FlextResult[U]]) -> FlextResult[U]:
+        """Chain operations that return FlextResult."""
+    
+    def map_error(self, func: Callable[[str], str]) -> FlextResult[T]:
+        """Transform error message, pass through success."""
+    
+    def or_else(self, func: Callable[[str], FlextResult[T]]) -> FlextResult[T]:
+        """Provide alternative on failure."""
+    
+    # Extraction methods
+    def unwrap(self) -> T:
+        """Extract value (raises if failure)."""
+    
+    def unwrap_or(self, default: T) -> T:
+        """Extract value or return default."""
+    
+    def unwrap_or_else(self, func: Callable[[str], T]) -> T:
+        """Extract value or compute default from error."""
 ```
 
-## 🏗️ FlextContainer - Dependency Injection
+## FlextContainer - Dependency Injection
 
-**Type-safe, enterprise-grade dependency injection container.**
+Global singleton container for service management.
 
 ### Service Registration
 
 ```python
-from flext_core import FlextContainer
+from flext_core import get_flext_container
 
-# Create container
-container = FlextContainer()
+# Get global container
+container = get_flext_container()
 
-# Basic registration
-result = container.register("database", DatabaseService())
-if result.success:
-    print("Service registered successfully")
+# Register service instance
+class DatabaseService:
+    def connect(self) -> str:
+        return "Connected"
 
-# Factory registration
-def create_email_service() -> EmailService:
-    return EmailService(smtp_host="localhost", port=587)
+container.register("database", DatabaseService())
 
-container.register_factory("email", create_email_service)
+# Register factory function
+def create_cache():
+    return CacheService(ttl=300)
 
-# Singleton registration (default)
-container.register("cache", RedisCache(), singleton=True)
+container.register_factory("cache", create_cache)
+
+# Register with parameters
+container.register("config", {"api_key": "secret", "timeout": 30})
 ```
 
-### Dependency Resolution
+### Service Resolution
 
 ```python
-# Get registered service
+# Get service with error handling
 db_result = container.get("database")
 if db_result.success:
-    database = db_result.data  # type: DatabaseService
-    users = database.fetch_users()
+    db = db_result.unwrap()
+    print(db.connect())
 
-# Resolution with type hint
-email_service_result = container.get_typed("email", EmailService)
-if email_service_result.success:
-    service = email_service_result.data
-    service.send_email("test@example.com", "Hello")
+# Check if service exists
+if container.has("cache"):
+    cache = container.get("cache").unwrap()
+
+# Get all registered services
+services = container.list_services()
+print(f"Registered: {services}")  # ["database", "cache", "config"]
+
+# Remove service
+container.unregister("cache")
 ```
 
-### Automatic Injection
-
-```python
-# Class with dependencies
-class UserService:
-    def __init__(self, database: DatabaseService, email: EmailService):
-        self.database = database
-        self.email = email
-
-    def create_user(self, name: str, email_addr: str) -> FlextResult[str]:
-        # Logic using dependencies
-        user = {"name": name, "email": email_addr}
-        save_result = self.database.save_user(user)
-
-        if save_result.success:
-            self.email.send_welcome_email(email_addr)
-            return FlextResult.ok("User created")
-        else:
-            return FlextResult.fail("Failed to save user")
-
-# Explicit instance registration (advanced auto-wiring not available)
-user_service = UserService(database, email_service)
-container.register("user_service", user_service)
-```
-
-### Configuration and Lifecycle
-
-```python
-# Container configuration
-container.configure(
-    auto_wire=True,           # Auto-resolve dependencies
-    strict_mode=True,         # Fail on missing dependencies
-    lazy_loading=False,       # Eager instantiation
-    cache_instances=True      # Cache resolved instances
-)
-
-# Lifecycle management
-result = container.start()   # Initialize all services
-if result.success:
-    print("Container started")
-
-# Cleanup
-container.stop()            # Cleanup resources
-container.clear()           # Remove all registrations
-```
-
-### Complete API
+### API Methods
 
 ```python
 class FlextContainer:
-    """Dependency injection container."""
-
-    def register(
-        self,
-        key: str,
-        instance: object,
-        singleton: bool = True
-    ) -> FlextResult[None]:
+    # Registration
+    def register(self, key: str, instance: Any) -> FlextResult[None]:
         """Register service instance."""
-
-    def register_factory(
-        self,
-        key: str,
-        factory: Callable[[], Any]
-    ) -> FlextResult[None]:
+    
+    def register_factory(self, key: str, factory: Callable[[], Any]) -> FlextResult[None]:
         """Register service factory."""
-
+    
+    # Resolution
     def get(self, key: str) -> FlextResult[Any]:
-        """Resolve service by key."""
-
-    def get_typed(self, key: str, expected_type: type[T]) -> FlextResult[T]:
-        """Resolve service with type checking."""
-
+        """Get service by key."""
+    
     def has(self, key: str) -> bool:
         """Check if service is registered."""
-
-    def remove(self, key: str) -> FlextResult[None]:
+    
+    # Management
+    def unregister(self, key: str) -> FlextResult[None]:
         """Remove service registration."""
-
-    def get_all_keys(self) -> list[str]:
+    
+    def list_services(self) -> list[str]:
         """Get all registered service keys."""
-
-    def configure(self, **options) -> None:
-        """Configure container behavior."""
-
-    def start(self) -> FlextResult[None]:
-        """Initialize container and services."""
-
-    def stop(self) -> FlextResult[None]:
-        """Stop container and cleanup."""
-
+    
     def clear(self) -> None:
-        """Clear all registrations."""
+        """Remove all registrations."""
+
+# Global container access
+def get_flext_container() -> FlextContainer:
+    """Get global singleton container."""
 ```
 
-## ⚙️ FlextSettings - Configuration Management
+## FlextSettings - Configuration Management
 
-**Centralized configuration management with Pydantic v2.**
+Environment-aware configuration with Pydantic validation.
 
 ### Basic Configuration
 
@@ -290,341 +193,315 @@ class FlextContainer:
 from flext_core import FlextSettings
 
 class AppSettings(FlextSettings):
+    """Application configuration."""
+    app_name: str = "MyApp"
     debug: bool = False
-    environment: str = "production"
-    log_level: str = "INFO"
-    database_url: str | None = None
-
+    database_url: str = "sqlite:///app.db"
+    api_port: int = 8000
+    api_key: str | None = None
+    
     class Config:
-        env_prefix = "APP_"
+        env_prefix = "APP_"  # Read from APP_DEBUG, APP_DATABASE_URL, etc.
+        env_file = ".env"    # Load from .env file
         case_sensitive = False
 
-# Instance
+# Automatic environment loading
 settings = AppSettings()
+print(f"Debug: {settings.debug}")
+print(f"Database: {settings.database_url}")
 ```
 
-### Environment Variables
-
-```bash
-export APP_DEBUG=true
-export APP_LOG_LEVEL=DEBUG
-export APP_DATABASE_URL="postgresql://localhost/flext"
-```
+### Advanced Configuration
 
 ```python
-settings = AppSettings()
-print(settings.debug)        # True
-print(settings.log_level)    # "DEBUG"
-print(settings.database_url) # Value from env
-```
+from pydantic import Field, validator
 
-### Configuration Validation
-
-```python
-from pydantic import Field, ValidationError
-
-class StrictSettings(FlextSettings):
-    max_connections: int = Field(10, ge=1, le=1000)
-
-try:
-    StrictSettings(max_connections=-1)
-except ValidationError as e:
-    print(f"Configuration error: {e}")
-```
-
-## 🏛️ Domain Layer - Entities and Value Objects
-
-### FlextEntity[TId] - Domain Entities (models API)
-
-```python
-from flext_core.models import FlextEntity
-
-# ID types
-UserId = NewType('UserId', str)
-
-class User(FlextEntity[UserId]):
-    """Domain entity with identity."""
-
-    def __init__(self, user_id: UserId, name: str, email: str):
-        super().__init__(user_id)
-        self._name = name
-        self._email = email
-        self._created_at = datetime.now()
-
+class DatabaseSettings(FlextSettings):
+    """Database configuration with validation."""
+    host: str = "localhost"
+    port: int = Field(5432, ge=1, le=65535)
+    username: str
+    password: str = Field(..., min_length=8)
+    database: str = "myapp"
+    pool_size: int = Field(5, ge=1, le=100)
+    
+    @validator("username")
+    def validate_username(cls, v):
+        if not v.isalnum():
+            raise ValueError("Username must be alphanumeric")
+        return v
+    
     @property
-    def name(self) -> str:
-        return self._name
+    def connection_url(self) -> str:
+        """Build connection URL."""
+        return f"postgresql://{self.username}:{self.password}@{self.host}:{self.port}/{self.database}"
+    
+    class Config:
+        env_prefix = "DB_"
+        env_file = ".env"
+        env_file_encoding = "utf-8"
+```
 
-    @property
-    def email(self) -> str:
-        return self._email
+## Domain Patterns
 
-    def change_name(self, new_name: str) -> FlextResult[None]:
-        """Business logic for name change."""
-        if not new_name.strip():
-            return FlextResult.fail("Name cannot be empty")
+### FlextEntity - Domain Entities
 
-        self._name = new_name
+Entities with identity and business logic.
+
+```python
+from flext_core import FlextEntity
+
+class User(FlextEntity):
+    """User entity with business logic."""
+    username: str
+    email: str
+    is_active: bool = True
+    created_at: datetime
+    
+    def activate(self) -> FlextResult[None]:
+        """Activate user account."""
+        if self.is_active:
+            return FlextResult.fail("User already active")
+        
+        self.is_active = True
+        self.add_domain_event("UserActivated", {
+            "user_id": self.id,
+            "activated_at": datetime.now().isoformat()
+        })
         return FlextResult.ok(None)
-
-    def __str__(self) -> str:
-        return f"User(id={self.id}, name={self.name})"
-
-# Usage
-user_id = UserId("user_123")
-user = User(user_id, "John Smith", "john@example.com")
-
-# Identity comparison
-other_user = User(user_id, "John Jones", "john2@example.com")
-assert user == other_user  # Same ID = same entity
+    
+    def change_email(self, new_email: str) -> FlextResult[None]:
+        """Change user email with validation."""
+        if "@" not in new_email:
+            return FlextResult.fail("Invalid email format")
+        
+        old_email = self.email
+        self.email = new_email
+        
+        self.add_domain_event("EmailChanged", {
+            "user_id": self.id,
+            "old_email": old_email,
+            "new_email": new_email
+        })
+        return FlextResult.ok(None)
 ```
 
 ### FlextValueObject - Immutable Values
 
+Value objects for domain concepts.
+
 ```python
 from flext_core import FlextValueObject
-
-class Email(FlextValueObject):
-    """Immutable email value object."""
-
-    def __init__(self, value: str):
-        if not self._is_valid_email(value):
-            raise ValueError(f"Invalid email: {value}")
-        self._value = value.lower()
-
-    @property
-    def value(self) -> str:
-        return self._value
-
-    @property
-    def domain(self) -> str:
-        return self._value.split("@")[1]
-
-    def _is_valid_email(self, email: str) -> bool:
-        return "@" in email and "." in email.split("@")[1]
-
-    def __str__(self) -> str:
-        return self._value
+from decimal import Decimal
 
 class Money(FlextValueObject):
-    """Money value object with currency."""
-
-    def __init__(self, amount: float, currency: str = "BRL"):
-        if amount < 0:
-            raise ValueError("Amount cannot be negative")
-        self._amount = amount
-        self._currency = currency
-
-    @property
-    def amount(self) -> float:
-        return self._amount
-
-    @property
-    def currency(self) -> str:
-        return self._currency
-
-    def add(self, other: 'Money') -> 'Money':
-        if self._currency != other._currency:
-            raise ValueError("Cannot add different currencies")
-        return Money(self._amount + other._amount, self._currency)
-
+    """Immutable money value object."""
+    amount: Decimal
+    currency: str
+    
+    def add(self, other: 'Money') -> FlextResult['Money']:
+        """Add money amounts with same currency."""
+        if self.currency != other.currency:
+            return FlextResult.fail(f"Currency mismatch: {self.currency} != {other.currency}")
+        
+        return FlextResult.ok(Money(
+            amount=self.amount + other.amount,
+            currency=self.currency
+        ))
+    
+    def multiply(self, factor: Decimal) -> 'Money':
+        """Multiply money amount."""
+        return Money(
+            amount=self.amount * factor,
+            currency=self.currency
+        )
+    
     def __str__(self) -> str:
-        return f"{self._amount:.2f} {self._currency}"
+        return f"{self.currency} {self.amount:.2f}"
 
-# Usage
-email = Email("joao@EXAMPLE.com")  # Normalized to lowercase
-print(email.value)     # "joao@example.com"
-print(email.domain)    # "example.com"
-
-money1 = Money(100.0, "BRL")
-money2 = Money(50.0, "BRL")
-total = money1.add(money2)  # Money(150.0, "BRL")
+class Email(FlextValueObject):
+    """Email value object with validation."""
+    address: str
+    
+    def __init__(self, **data):
+        address = data.get('address', '')
+        if "@" not in address or "." not in address.split("@")[1]:
+            raise ValueError(f"Invalid email: {address}")
+        data['address'] = address.lower()  # Normalize
+        super().__init__(**data)
+    
+    @property
+    def domain(self) -> str:
+        """Get email domain."""
+        return self.address.split("@")[1]
+    
+    @property
+    def username(self) -> str:
+        """Get email username."""
+        return self.address.split("@")[0]
 ```
 
-### FlextAggregateRoot - Domain Aggregates (models API)
+### FlextAggregateRoot - Consistency Boundaries
+
+Aggregates that maintain consistency.
 
 ```python
 from flext_core import FlextAggregateRoot
 
-class Order(FlextAggregateRoot[OrderId]):
-    """Order aggregate root."""
-
-    def __init__(self, order_id: OrderId, customer_id: CustomerId):
-        super().__init__(order_id)
-        self._customer_id = customer_id
-        self._items: list[OrderItem] = []
-        self._status = OrderStatus.PENDING
-        self._total = Money(0.0)
-
-    def add_item(self, product_id: ProductId, quantity: int, price: Money) -> FlextResult[None]:
-        """Add item to order with business rules."""
-        if self._status != OrderStatus.PENDING:
-            return FlextResult.fail("Cannot modify confirmed order")
-
+class ShoppingCart(FlextAggregateRoot):
+    """Shopping cart aggregate."""
+    customer_id: str
+    items: list[CartItem] = []
+    status: str = "active"
+    
+    def add_item(self, product_id: str, quantity: int, 
+                 price: Money) -> FlextResult[None]:
+        """Add item to cart with validation."""
+        if self.status != "active":
+            return FlextResult.fail("Cannot modify inactive cart")
+        
         if quantity <= 0:
             return FlextResult.fail("Quantity must be positive")
-
-        item = OrderItem(product_id, quantity, price)
-        self._items.append(item)
-        self._recalculate_total()
-
-        # Domain event
-        self._add_domain_event(ItemAddedEvent(self.id, product_id, quantity))
-
+        
+        # Check for existing item
+        for item in self.items:
+            if item.product_id == product_id:
+                item.quantity += quantity
+                self.add_domain_event("ItemQuantityUpdated", {
+                    "cart_id": self.id,
+                    "product_id": product_id,
+                    "new_quantity": item.quantity
+                })
+                return FlextResult.ok(None)
+        
+        # Add new item
+        self.items.append(CartItem(
+            product_id=product_id,
+            quantity=quantity,
+            price=price
+        ))
+        
+        self.add_domain_event("ItemAddedToCart", {
+            "cart_id": self.id,
+            "product_id": product_id,
+            "quantity": quantity,
+            "price": str(price.amount)
+        })
+        
         return FlextResult.ok(None)
-
-    def confirm(self) -> FlextResult[None]:
-        """Confirm order with business invariants."""
-        if not self._items:
-            return FlextResult.fail("Cannot confirm empty order")
-
-        if self._total.amount == 0:
-            return FlextResult.fail("Order total cannot be zero")
-
-        self._status = OrderStatus.CONFIRMED
-
-        # Domain event
-        self._add_domain_event(OrderConfirmedEvent(self.id, self._total))
-
-        return FlextResult.ok(None)
-
-    def _recalculate_total(self) -> None:
-        """Private method to maintain invariants."""
-        total_amount = sum(item.total.amount for item in self._items)
-        self._total = Money(total_amount)
-
-# Usage
-order = Order(OrderId("order_123"), CustomerId("customer_456"))
-
-# Business operations
-result = order.add_item(ProductId("prod_1"), 2, Money(50.0))
-if result.success:
-    print("Item added successfully")
-
-confirm_result = order.confirm()
-if confirm_result.success:
-    print("Order confirmed")
+    
+    def checkout(self) -> FlextResult[Money]:
+        """Checkout cart and calculate total."""
+        if not self.items:
+            return FlextResult.fail("Cart is empty")
+        
+        if self.status != "active":
+            return FlextResult.fail("Cart already checked out")
+        
+        total = Money(amount=Decimal("0"), currency="USD")
+        for item in self.items:
+            item_total = item.price.multiply(Decimal(item.quantity))
+            add_result = total.add(item_total)
+            if add_result.is_failure:
+                return add_result
+            total = add_result.unwrap()
+        
+        self.status = "checked_out"
+        self.add_domain_event("CartCheckedOut", {
+            "cart_id": self.id,
+            "total": str(total.amount),
+            "items_count": len(self.items)
+        })
+        
+        return FlextResult.ok(total)
 ```
 
-## 📝 Best Practices
+## Utility Functions
 
-### 1. Error Handling
+### Logging
 
 ```python
-# ✅ Always use FlextResult for operations that can fail
-def save_user(user: User) -> FlextResult[None]:
-    try:
-        # Save operation
-        return FlextResult.ok(None)
-    except DatabaseError as e:
-        return FlextResult.fail(f"Database error: {e}")
+from flext_core import get_logger
 
-# ✅ Check results before using data
-result = fetch_user("123")
-if result.success:
-    process_user(result.data)  # Safe to use
-else:
-    log_error(result.error)
+# Get configured logger
+logger = get_logger(__name__)
+
+# Structured logging
+logger.info("Processing request", 
+            request_id="123",
+            user_id="456",
+            action="create_order")
+
+logger.error("Operation failed",
+             error="Database connection lost",
+             retry_count=3)
 ```
 
-### 2. Dependency Injection
+### ID Generation
 
 ```python
-# ✅ Register dependencies at startup
-def setup_container() -> FlextContainer:
-    container = FlextContainer()
+from flext_core.utilities import generate_id, generate_uuid
 
-    # Infrastructure
-    container.register("database", DatabaseService())
-    container.register("cache", RedisCache())
-
-    # Application services
-    container.register("user_service", UserService)
-
-    return container
-
-# ✅ Resolve dependencies when needed
-container = setup_container()
-user_service = container.get("user_service").data
+# Generate unique IDs
+entity_id = generate_id("user")  # "user_1234567890abcdef"
+request_id = generate_uuid()     # "550e8400-e29b-41d4-a716-446655440000"
 ```
 
-### 3. Configuration
+## Error Handling Patterns
+
+### Graceful Degradation
 
 ```python
-# ✅ Use environment-specific settings
-settings = FlextCoreSettings()
-
-if settings.debug:
-    logging.getLogger().setLevel(logging.DEBUG)
-
-# ✅ Validate configuration early
-try:
-    settings = FlextCoreSettings()
-except ValidationError as e:
-    print(f"Invalid configuration: {e}")
-    exit(1)
+def get_user_with_fallback(user_id: str) -> FlextResult[User]:
+    """Get user with cache fallback."""
+    # Try primary source
+    result = database.get_user(user_id)
+    if result.success:
+        return result
+    
+    # Try cache
+    cache_result = cache.get_user(user_id)
+    if cache_result.success:
+        logger.warning("Using cached user data", user_id=user_id)
+        return cache_result
+    
+    # Return error
+    return FlextResult.fail(f"User {user_id} not found")
 ```
 
-### 4. Domain Modeling
+### Error Aggregation
 
 ```python
-# ✅ Use value objects for complex values
-class UserEmail(FlextValueObject):
-    def __init__(self, value: str):
-        # Validation in constructor
-        pass
-
-# ✅ Keep business logic in entities
-class User(FlextEntity[UserId]):
-    def change_email(self, new_email: UserEmail) -> FlextResult[None]:
-        # Business rules here
-        pass
-
-# ✅ Use aggregates for consistency boundaries
-class Order(FlextAggregateRoot[OrderId]):
-    def add_item(self, item: OrderItem) -> FlextResult[None]:
-        # Maintain order invariants
-        pass
+def validate_order(order: Order) -> FlextResult[Order]:
+    """Validate order with multiple checks."""
+    errors = []
+    
+    if not order.items:
+        errors.append("Order has no items")
+    
+    if order.total.amount <= 0:
+        errors.append("Order total must be positive")
+    
+    if not order.customer_id:
+        errors.append("Customer ID is required")
+    
+    if errors:
+        return FlextResult.fail("; ".join(errors))
+    
+    return FlextResult.ok(order)
 ```
 
-## 🔗 Compatibility and Migration
+## Best Practices
 
-### FlextResult migration
-
-```python
-# Old (deprecated)
-from flext_core import FlextResult
-
-def old_function() -> FlextResult[str]:
-    return FlextResult.success("data")
-
-# New (recommended)
-from flext_core import FlextResult
-
-def new_function() -> FlextResult[str]:
-    return FlextResult.ok("data")
-```
-
-### Migration from DIContainer to FlextContainer
-
-```python
-# Old (deprecated)
-from flext_core import DIContainer
-
-container = DIContainer()
-container.set("service", service)
-service = container.get("service")
-
-# New (recommended)
-from flext_core import FlextContainer
-
-container = FlextContainer()
-container.register("service", service)
-service_result = container.get("service")
-if service_result.success:
-    service = service_result.data
-```
+1. **Always use FlextResult** for operations that can fail
+2. **Check success before unwrap** to avoid exceptions
+3. **Use map/flat_map** for composing operations
+4. **Register services early** in application lifecycle
+5. **Validate configuration** at startup
+6. **Keep domain logic** in entities and value objects
+7. **Use aggregates** for consistency boundaries
+8. **Raise domain events** for important state changes
 
 ---
 
-This Core API provides all fundamental components needed to build robust, type-safe enterprise applications with FLEXT Core.
+For more examples, see the [Examples Guide](../examples/overview.md).

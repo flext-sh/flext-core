@@ -310,7 +310,7 @@ class TestPerformanceContext:
 
     def test_add_operation_metadata_existing(self) -> None:
         """Test adding to existing metadata."""
-        initial = {"existing": "value"}
+        initial: dict[str, object] = {"existing": "value"}
         FlextContext.set_operation_metadata(initial)
 
         FlextContext.add_operation_metadata("new_key", "new_value")
@@ -350,7 +350,9 @@ class TestPerformanceContext:
             sleep(0.001)  # Very small delay
 
         assert "duration_seconds" in metadata
-        assert metadata["duration_seconds"] >= 0
+        duration = metadata["duration_seconds"]
+        assert isinstance(duration, (int, float))
+        assert duration >= 0
 
 
 class TestContextSerialization:
@@ -388,7 +390,7 @@ class TestContextSerialization:
         FlextContext.set_request_id("req-012")
 
         start_time = datetime.now(UTC)
-        metadata = {"key": "value"}
+        metadata: dict[str, object] = {"key": "value"}
         FlextContext.set_operation_start_time(start_time)
         FlextContext.set_operation_metadata(metadata)
 

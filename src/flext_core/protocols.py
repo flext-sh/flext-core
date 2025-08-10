@@ -29,8 +29,8 @@ T = TypeVar("T")
 # TYPE ALIASES - Service factory types
 # =============================================================================
 
-FlextServiceFactory = Callable[[], object]
-FlextHandler = "FlextMessageHandler"
+type FlextServiceFactory = Callable[[], object]
+type FlextHandler = FlextMessageHandler
 
 # =============================================================================
 # CORE ECOSYSTEM PROTOCOLS - Layer 1 foundational protocols
@@ -780,7 +780,7 @@ class FlextAsyncMiddleware(Protocol):
 # EXPORTS - All centralized protocols
 # =============================================================================
 
-__all__ = [
+__all__: list[str] = [
     "FlextAlertsProtocol",
     "FlextAsyncFactory",
     "FlextAsyncHandler",

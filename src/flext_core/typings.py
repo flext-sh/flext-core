@@ -15,9 +15,12 @@ from __future__ import annotations
 import warnings
 from collections.abc import Callable, Mapping
 from datetime import datetime
-from typing import TypeVar
+from typing import TYPE_CHECKING, TypeVar
 
 from flext_core.loggings import FlextLoggerFactory
+
+if TYPE_CHECKING:
+    from flext_core.protocols import FlextLoggerProtocol
 
 # =============================================================================
 # CORE TYPE VARIABLES - Foundation building blocks
@@ -80,6 +83,8 @@ class FlextTypes:
         type AnyDict = dict[str, object]
         type AnyList = list[object]
         type StringDict = dict[str, str]
+        # Explicit JSON dictionary alias used widely externally
+        type JsonDict = dict[str, object]
 
         # Legacy aliases
         type Dict = AnyDict  # Backward compatibility
@@ -119,7 +124,7 @@ class FlextTypes:
         type FlextMessageHandler[T] = Callable[[T], object]
 
         # Metadata and configuration types
-        JsonDict = dict[str, object]  # Standard JSON-compatible dictionary
+        type JsonDict = dict[str, object]  # Standard JSON-compatible dictionary
         type Metadata = dict[str, object]
         type Settings = dict[str, object]
         type Configuration = Mapping[str, object]
@@ -255,6 +260,9 @@ class FlextTypes:
         type EnvironmentName = str  # Environment identifier
         type DeploymentStage = str  # Deployment stage (staging, production)
         type ConfigVersion = str  # Configuration version for tracking
+        # File system types (legacy)
+        type DirectoryPath = str
+        type FilePath = str
 
         # Legacy compatibility
         type EnvVar = str
@@ -381,7 +389,11 @@ class FlextTypes:
             """Check if object is dict-like."""
             try:
                 return isinstance(obj, dict) or (
-                    hasattr(obj, "keys") and hasattr(obj, "__getitem__")
+                    hasattr(obj, "keys")
+                    and (
+                        hasattr(obj, "__getitem__")
+                        or (hasattr(obj, "values") and hasattr(obj, "items"))
+                    )
                 )
             except Exception:
                 return False
@@ -514,6 +526,22 @@ TValidationPipeline = FlextTypes.Validation.ValidationPipeline
 
 # Logging types (from loggings.py)
 TLoggerName = FlextTypes.Logging.LoggerName
+
+# Business types (legacy/testing convenience)
+TBusinessId = str
+TBusinessName = str
+TBusinessCode = str
+TBusinessStatus = str
+TBusinessType = str
+
+# Cache types (legacy/testing convenience)
+TCacheKey = str
+TCacheValue = str | int | float | bool | None
+TCacheTTL = int
+
+# Filesystem aliases
+TDirectoryPath = FlextTypes.Config.DirectoryPath
+TFilePath = FlextTypes.Config.FilePath
 TLogLevel = FlextTypes.Logging.LogLevel
 TLogFormat = FlextTypes.Logging.LogFormat
 TLogHandler = FlextTypes.Logging.LogHandler
@@ -557,8 +585,20 @@ FlextValidator = FlextTypes.Protocols.Validator[object]
 # Entity identifier alias for backward compatibility
 FlextEntityId = TEntityId
 
-# Logger instance for compatibility warnings
-logger = FlextLoggerFactory.get_logger(__name__)
+# Lazy logger to avoid circular imports
+_logger: FlextLoggerProtocol | None = None
+
+
+def _get_logger() -> FlextLoggerProtocol:
+    """Get logger instance with lazy loading to avoid circular imports."""
+    # Avoid global mutation warnings by reassigning via local then assign back
+    logger = _logger
+    if logger is None:
+        logger = FlextLoggerFactory.get_logger(__name__)
+    # Cache for subsequent calls
+    globals()["_logger"] = logger
+    return logger
+
 
 # =============================================================================
 # DEPRECATION WARNING SYSTEM - Encourage migration to centralized types
@@ -588,15 +628,17 @@ def get_centralized_types_usage_info() -> str:
 # EXPORTS - Comprehensive centralized type system
 # =============================================================================
 
-__all__ = [
-    "Cacheable",
+__all__: list[str] = [
     # Protocol aliases
+    "Cacheable",
     "Comparable",
     "Configurable",
+    # Core type variables
     "E",
-    # Schema processing
+    # Schema processing types
     "EntryT",
     "F",
+    # FlextEntity compatibility
     "FlextEntityId",
     "FlextSerializable",
     # Hierarchical type system (preferred)
@@ -606,14 +648,17 @@ __all__ = [
     "P",
     "R",
     "Serializable",
-    # Core type variables
     "T",
+    # Legacy T* aliases - Domain types
     "TAggregateId",
+    # Legacy T* aliases - Core types
     "TAnyDict",
     "TAnyList",
+    # TypeVar entities
     "TAnyObject",
     "TCallable",
     "TCommand",
+    # Legacy T* aliases - CQRS types
     "TCommandBusId",
     "TCommandId",
     "TCommandMetadata",
@@ -621,9 +666,9 @@ __all__ = [
     "TCommandPriority",
     "TCommandResult",
     "TCommandType",
-    # Constrained generics
     "TComparable",
     "TConfig",
+    # Legacy T* aliases - Config types
     "TConfigDefaults",
     "TConfigDict",
     "TConfigEnv",
@@ -635,11 +680,15 @@ __all__ = [
     "TConfigValidationRule",
     "TConfigValue",
     "TConfigVersion",
+    # Legacy T* aliases - Infrastructure types
     "TConnection",
     "TConnectionString",
+    # Legacy T* aliases - Auth types
     "TContextDict",
+    # Legacy T* aliases - Service types
     "TCorrelationId",
     "TCredentials",
+    # Legacy T* aliases - Validation types
     "TCustomValidator",
     "TData",
     "TDeploymentStage",
@@ -647,11 +696,9 @@ __all__ = [
     "TDomainEventData",
     "TDomainEventType",
     "TDomainEvents",
-    # TypeVar entities
     "TEntity",
     "TEntityChanges",
     "TEntityDefaults",
-    # Legacy T* aliases (complete backward compatibility)
     "TEntityId",
     "TEntityMetadata",
     "TEntityRule",
@@ -675,6 +722,7 @@ __all__ = [
     "TFieldValue",
     "THandlerName",
     "TList",
+    # Legacy T* aliases - Logging types
     "TLogConfiguration",
     "TLogFilter",
     "TLogFormat",

@@ -127,10 +127,11 @@ class FlextAbstractValidatableMixin(FlextAbstractMixin):
         """Validate entity - must be implemented by subclasses."""
         ...
 
+    @property
     @abstractmethod
-    def is_valid(self) -> bool:
+    def is_valid(self) -> bool:  # pragma: no cover - abstract property declaration
         """Check if entity is valid - must be implemented by subclasses."""
-        ...
+        raise NotImplementedError
 
     def mixin_setup(self) -> None:
         """Set up validatable mixin."""
@@ -228,7 +229,7 @@ class FlextAbstractTimingMixin(FlextAbstractMixin):
 # EXPORTS - Clean public API
 # =============================================================================
 
-__all__ = [
+__all__: list[str] = [
     "FlextAbstractEntityMixin",
     "FlextAbstractIdentifiableMixin",
     "FlextAbstractLoggableMixin",

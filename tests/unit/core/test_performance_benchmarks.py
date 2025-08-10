@@ -99,14 +99,16 @@ class TestPerformanceBenchmarks:
     def test_handler_chain_performance(self) -> None:
         """Test handler chain performance with multiple handlers."""
 
-        class FastHandler(FlextHandlers.Handler[str, str]):
+        class FastHandler(FlextHandlers.Handler):
             """Fast processing handler."""
 
             def handle(self, message: object) -> FlextResult[object]:
                 return FlextResult.ok(f"processed_{message}")
 
         # Create handler chain
-        chain = FlextHandlers.flext_create_chain()
+        from flext_core.handlers import FlextHandlerChain
+
+        chain = FlextHandlerChain()
 
         # Add multiple handlers
         for handler_id in range(10):

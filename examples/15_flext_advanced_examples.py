@@ -7,7 +7,7 @@ Advanced patterns and enterprise scenarios using FLEXT Core with shared domain m
 from decimal import Decimal
 
 # Import shared domain models to eliminate duplication
-from shared_domain import (
+from .shared_domain import (
     EmailAddress,
     Money,
     Order as SharedOrder,

@@ -81,7 +81,8 @@ class FlextConsole:
         self.print(*args, **kwargs)
 
 
-# Backward-compat simple Console symbol for tests that patch flext_core.utilities.Console
+# Backward-compat simple Console symbol for tests that patch
+# flext_core.utilities.Console
 Console = FlextConsole
 
 
@@ -894,7 +895,10 @@ def flext_record_performance(
         success if success is not None else (_success if _success is not None else True)
     )
     FlextPerformance.record_performance(
-        category, function_name, execution_time, _success=bool(flag),
+        category,
+        function_name,
+        execution_time,
+        _success=bool(flag),
     )
 
 
@@ -914,7 +918,7 @@ def generate_iso_timestamp() -> str:
 # EXPORTS - Clean public API seguindo diretrizes
 # =============================================================================
 
-__all__ = [
+__all__: list[str] = [
     "FlextBaseFactory",  # Factory patterns following SOLID principles
     "FlextConversions",  # Type conversions
     "FlextFormatters",  # Text formatting

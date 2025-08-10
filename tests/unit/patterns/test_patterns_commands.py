@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
+import pytest
+
 from flext_core.commands import FlextCommands
 from flext_core.result import FlextResult
 
@@ -11,6 +13,21 @@ if TYPE_CHECKING:
     # Type aliases for command patterns
     FlextCommandId = str
     FlextCommandType = str
+    # Import the runtime types for model_rebuild
+    from flext_core.typings import (
+        TCorrelationId,
+        TEntityId,
+        TResult,
+        TServiceName,
+        TUserId,
+    )
+else:
+    # Define runtime aliases to prevent NameError during model_rebuild
+    TCorrelationId = str
+    TEntityId = str
+    TResult = object
+    TServiceName = str
+    TUserId = str
 
 # =============================================================================
 # Extract classes from FlextCommands
@@ -500,19 +517,15 @@ class TestFlextCommandBus:
         """Test registering invalid handler."""
         bus = FlextCommandBus()
 
-        # Register a string that will fail when trying to call handler methods
-        bus.register_handler("not_a_handler")
+        # Register a string that will fail - should raise TypeError immediately
+        with pytest.raises(TypeError) as exc_info:
+            bus.register_handler("not_a_handler")
 
-        # The failure will happen when trying to execute a command
-        command = CreateUserCommand(username="test", email="test@example.com")
+        # Verify the exception message contains expected content
+        assert "Invalid handler" in str(exc_info.value)
 
-        # This should fail because "not_a_handler" string doesn't have required methods
-        try:
-            result = bus.execute(command)
-            # If we get here, there might be no handlers or the string handler failed
-            assert result.is_failure
-        except AttributeError:
-            pass  # Expected - string doesn't have can_handle method
+        # Verify no handlers were registered
+        assert len(bus.get_all_handlers()) == 0
 
     def test_execute_command_success(self) -> None:
         """Test successful command execution."""

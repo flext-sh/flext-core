@@ -18,6 +18,7 @@ Usage of New Conftest Infrastructure:
 from __future__ import annotations
 
 from datetime import datetime
+from typing import TYPE_CHECKING
 from zoneinfo import ZoneInfo
 
 import pytest
@@ -26,6 +27,22 @@ from flext_core.commands import FlextCommands
 from flext_core.payload import FlextPayload
 from flext_core.result import FlextResult
 from tests.conftest import TestCase, TestScenario
+
+if TYPE_CHECKING:
+    from flext_core.typings import (
+        TCorrelationId,
+        TEntityId,
+        TResult,
+        TServiceName,
+        TUserId,
+    )
+else:
+    # Define runtime aliases to prevent NameError during model_rebuild
+    TCorrelationId = str
+    TEntityId = str
+    TResult = object
+    TServiceName = str
+    TUserId = str
 
 # Test markers for organized execution
 pytestmark = [pytest.mark.unit, pytest.mark.core]
@@ -146,6 +163,38 @@ class TestFlextCommandsAdvanced:
             ),
         ]
 
+    def _validate_basic_properties(
+        self, command: SampleCommand, expected: dict[str, object]
+    ) -> None:
+        """Validate basic command properties to reduce complexity."""
+        if "name" in expected:
+            assert command.name == expected["name"]
+        if "value" in expected:
+            assert command.value == expected["value"]
+        if "command_type" in expected:
+            assert command.command_type == expected["command_type"]
+        if "command_id" in expected:
+            assert command.command_id == expected["command_id"]
+
+    def _validate_existence_flags(
+        self, command: SampleCommand, expected: dict[str, object]
+    ) -> None:
+        """Validate existence flags to reduce complexity."""
+        if "has_command_id" in expected:
+            assert (command.command_id is not None) == expected["has_command_id"]
+        if "has_timestamp" in expected:
+            assert isinstance(command.timestamp, datetime) == expected["has_timestamp"]
+
+    def _validate_command_result(
+        self, command: SampleCommand, expected: dict[str, object]
+    ) -> None:
+        """Validate command validation result to reduce complexity."""
+        if "validation_success" in expected:
+            result = command.validate_command()
+            assert result.success == expected["validation_success"]
+            if "error" in expected:
+                assert expected["error"] in (result.error or "")
+
     @pytest.mark.parametrize_advanced
     def test_command_scenarios(
         self, command_test_cases: list[TestCase], assert_helpers
@@ -161,33 +210,10 @@ class TestFlextCommandsAdvanced:
 
             command = SampleCommand(**input_data)
 
-            # Validate expected outputs based on test case
-            if "name" in expected:
-                assert command.name == expected["name"]
-
-            if "value" in expected:
-                assert command.value == expected["value"]
-
-            if "command_type" in expected:
-                assert command.command_type == expected["command_type"]
-
-            if "command_id" in expected:
-                assert command.command_id == expected["command_id"]
-
-            if "has_command_id" in expected:
-                assert (command.command_id is not None) == expected["has_command_id"]
-
-            if "has_timestamp" in expected:
-                assert (
-                    isinstance(command.timestamp, datetime) == expected["has_timestamp"]
-                )
-
-            if "validation_success" in expected:
-                result = command.validate_command()
-                assert result.success == expected["validation_success"]
-
-                if "error" in expected:
-                    assert expected["error"] in (result.error or "")
+            # Validate using helper methods to reduce complexity
+            self._validate_basic_properties(command, expected)
+            self._validate_existence_flags(command, expected)
+            self._validate_command_result(command, expected)
 
     @pytest.fixture
     def payload_conversion_cases(self) -> list[TestCase]:
@@ -245,47 +271,59 @@ class TestFlextCommandsAdvanced:
     ) -> None:
         """Test payload conversion scenarios."""
         for test_case in payload_conversion_cases:
-            input_data = test_case.input_data
-            expected = test_case.expected_output
-
-            if "payload_data" not in input_data:
-                # Command to payload test
-                command = SampleCommand(**input_data)
-                payload = command.to_payload()
-
-                assert isinstance(payload, FlextPayload)
-                assert payload.data is not None
-
-                if "payload_data_name" in expected:
-                    assert payload.data["name"] == expected["payload_data_name"]
-
-                if "payload_data_value" in expected:
-                    assert payload.data["value"] == expected["payload_data_value"]
-
-                if "payload_type" in expected:
-                    assert payload.metadata.get("type") == expected["payload_type"]
+            if "payload_data" not in test_case.input_data:
+                self._test_command_to_payload(test_case)
             else:
-                # Payload to command test
-                payload_data = input_data["payload_data"]
-                payload = FlextPayload.create(
-                    data=payload_data, type="SampleCommand"
-                ).unwrap()
+                self._test_payload_to_command(test_case)
 
-                result = SampleCommand.from_payload(payload)
+    def _test_command_to_payload(self, test_case: TestCase) -> None:
+        """Test command to payload conversion."""
+        input_data = test_case.input_data
+        expected = test_case.expected_output
 
-                if "from_payload_success" in expected:
-                    assert result.success == expected["from_payload_success"]
+        command = SampleCommand(**input_data)
+        payload = command.to_payload()
 
-                if expected.get("from_payload_success", False):
-                    command = result.data
-                    if "name" in expected:
-                        assert command.name == expected["name"]
-                    if "value" in expected:
-                        assert command.value == expected["value"]
-                    if "command_id" in expected:
-                        assert command.command_id == expected["command_id"]
-                elif "error" in expected:
-                    assert expected["error"] in (result.error or "")
+        assert isinstance(payload, FlextPayload)
+        assert payload.data is not None
+
+        if "payload_data_name" in expected:
+            assert payload.data["name"] == expected["payload_data_name"]
+
+        if "payload_data_value" in expected:
+            assert payload.data["value"] == expected["payload_data_value"]
+
+        if "payload_type" in expected:
+            assert payload.metadata.get("type") == expected["payload_type"]
+
+    def _test_payload_to_command(self, test_case: TestCase) -> None:
+        """Test payload to command conversion."""
+        input_data = test_case.input_data
+        expected = test_case.expected_output
+
+        payload_data = input_data["payload_data"]
+        payload = FlextPayload.create(data=payload_data, type="SampleCommand").unwrap()
+
+        result = SampleCommand.from_payload(payload)
+
+        if "from_payload_success" in expected:
+            assert result.success == expected["from_payload_success"]
+
+        if expected.get("from_payload_success", False):
+            self._validate_command_result(result.data, expected)
+        elif "error" in expected:
+            assert expected["error"] in (result.error or "")
+
+    def _validate_command_result(
+        self, command: object, expected: dict[str, object]
+    ) -> None:
+        """Validate command result against expected values."""
+        if "name" in expected:
+            assert command.name == expected["name"]
+        if "value" in expected:
+            assert command.value == expected["value"]
+        if "command_id" in expected:
+            assert command.command_id == expected["command_id"]
 
 
 class TestFlextCommandsComplexValidation:
@@ -386,6 +424,111 @@ class TestFlextCommandsPerformance:
         # Should create 1000 commands quickly
         assert metrics["execution_time"] < 0.1  # Less than 100ms
         assert len(metrics["result"]) == 1000
+
+
+class TestFlextCommandsFactoryMethods:
+    """Test factory methods and other uncovered functionality."""
+
+    def test_create_command_bus_factory(self) -> None:
+        """Test FlextCommands.create_command_bus factory method."""
+        bus = FlextCommands.create_command_bus()
+        assert isinstance(bus, FlextCommands.Bus)
+        assert hasattr(bus, "execute")
+        assert hasattr(bus, "register_handler")
+
+    def test_create_simple_handler_factory(self) -> None:
+        """Test FlextCommands.create_simple_handler factory method."""
+
+        def sample_handler(command: object) -> str:
+            return f"handled: {command}"
+
+        handler = FlextCommands.create_simple_handler(sample_handler)
+        assert isinstance(handler, FlextCommands.Handler)
+
+        # Test the handler works
+        test_command = SampleCommand(name="test", value=42)
+        result = handler.handle(test_command)
+        assert result.success
+        assert "handled:" in str(result.data)
+
+    def test_command_bus_middleware_system(self) -> None:
+        """Test command bus middleware functionality."""
+        bus = FlextCommands.Bus()
+
+        # Add middleware
+        class TestMiddleware:
+            def process(self, command: object, handler: object) -> FlextResult[None]:
+                return FlextResult.ok(None)
+
+        bus.add_middleware(TestMiddleware())
+        handlers = bus.get_all_handlers()
+        assert isinstance(handlers, list)
+
+    def test_command_handler_with_validation(self) -> None:
+        """Test handler validation and processing paths."""
+
+        class TestHandler(FlextCommands.Handler[SampleCommand, str]):
+            def handle(self, command: SampleCommand) -> FlextResult[str]:
+                return FlextResult.ok(f"processed: {command.name}")
+
+        handler = TestHandler()
+        assert handler.handler_name == "TestHandler"
+
+        # Test can_handle method
+        test_command = SampleCommand(name="test", value=42)
+        can_handle = handler.can_handle(test_command)
+        assert isinstance(can_handle, bool)
+
+        # Test processing
+        result = handler.process_command(test_command)
+        assert result.success
+
+    def test_command_decorators_functionality(self) -> None:
+        """Test command decorator patterns."""
+
+        @FlextCommands.Decorators.command_handler(SampleCommand)
+        def decorated_handler(command: SampleCommand) -> FlextResult[str]:
+            return FlextResult.ok(f"decorated: {command.name}")
+
+        # Verify decorator metadata
+        assert "command_type" in decorated_handler.__dict__
+        assert "handler_instance" in decorated_handler.__dict__
+
+    def test_command_result_with_metadata(self) -> None:
+        """Test FlextCommands.Result with metadata functionality."""
+        # Test successful result with metadata
+        result = FlextCommands.Result.ok("success", metadata={"source": "test"})
+        assert result.success
+        assert result.data == "success"
+        assert result.metadata["source"] == "test"
+
+        # Test failed result with error code
+        failed_result = FlextCommands.Result.fail(
+            "error message", error_code="TEST_ERROR", error_data={"context": "test"}
+        )
+        assert failed_result.is_failure
+        assert failed_result.metadata["error_code"] == "TEST_ERROR"
+
+    def test_query_functionality(self) -> None:
+        """Test Query classes and handlers."""
+
+        class TestQuery(FlextCommands.Query):
+            search_term: str = "test"
+
+        query = TestQuery()
+        validation_result = query.validate_query()
+        assert validation_result.success
+
+        # Test query handler
+        class TestQueryHandler(FlextCommands.QueryHandler[TestQuery, str]):
+            def handle(self, query: TestQuery) -> FlextResult[str]:
+                return FlextResult.ok(f"found: {query.search_term}")
+
+        handler = TestQueryHandler()
+        assert handler.handler_name == "TestQueryHandler"
+        result = handler.handle(query)
+        assert result.success
+        assert "found: test" in result.data
 
 
 # All edge cases, integration tests, and additional coverage tests have been

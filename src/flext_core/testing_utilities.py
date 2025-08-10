@@ -132,7 +132,9 @@ class FlextTestUtilities:
             AssertionError: If result is not successful.
 
         """
-        assert result.is_success, f"Expected success but got failure: {result.error}"  # nosec B101
+        if not result.is_success:
+            msg = f"Expected success but got failure: {result.error}"
+            raise AssertionError(msg)
         return result.unwrap()
 
     @staticmethod
@@ -149,7 +151,9 @@ class FlextTestUtilities:
             AssertionError: If result is not a failure.
 
         """
-        assert result.is_failure, f"Expected failure but got success: {result.unwrap()}"  # nosec B101
+        if not result.is_failure:
+            msg = f"Expected failure but got success: {result.unwrap()}"
+            raise AssertionError(msg)
         return result.error or "Unknown error"
 
     @staticmethod
@@ -633,7 +637,7 @@ def create_api_test_response(
 # EXPORTS
 # =============================================================================
 
-__all__ = [
+__all__: list[str] = [
     "FlextTestAssertion",
     "FlextTestConfig",
     "FlextTestFactory",

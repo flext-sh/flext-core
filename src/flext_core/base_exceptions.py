@@ -48,7 +48,9 @@ class FlextAbstractError(ABC, Exception):
 
     def __str__(self) -> str:  # pragma: no cover - trivial
         """Return human-readable exception message."""
-        return f"[{self.error_code}] {self.message}"
+        if self.error_code:
+            return f"[{self.error_code}] {self.message}"
+        return self.message
 
     @property
     @abstractmethod
@@ -170,28 +172,36 @@ class FlextAbstractErrorFactory(ABC):
 
     @abstractmethod
     def create_validation_error(
-        self, message: str, **kwargs: object,
+        self,
+        message: str,
+        **kwargs: object,
     ) -> FlextAbstractValidationError:
         """Create validation error - must be implemented by subclasses."""
         ...
 
     @abstractmethod
     def create_business_error(
-        self, message: str, **kwargs: object,
+        self,
+        message: str,
+        **kwargs: object,
     ) -> FlextAbstractBusinessError:
         """Create business error - must be implemented by subclasses."""
         ...
 
     @abstractmethod
     def create_infrastructure_error(
-        self, message: str, **kwargs: object,
+        self,
+        message: str,
+        **kwargs: object,
     ) -> FlextAbstractInfrastructureError:
         """Create infrastructure error - must be implemented by subclasses."""
         ...
 
     @abstractmethod
     def create_configuration_error(
-        self, message: str, **kwargs: object,
+        self,
+        message: str,
+        **kwargs: object,
     ) -> FlextAbstractConfigurationError:
         """Create configuration error - must be implemented by subclasses."""
         ...
@@ -201,7 +211,7 @@ class FlextAbstractErrorFactory(ABC):
 # EXPORTS - Clean public API
 # =============================================================================
 
-__all__ = [
+__all__: list[str] = [
     "FlextAbstractBusinessError",
     "FlextAbstractConfigurationError",
     "FlextAbstractError",

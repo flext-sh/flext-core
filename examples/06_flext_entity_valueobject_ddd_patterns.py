@@ -19,7 +19,7 @@ from decimal import Decimal
 from typing import TYPE_CHECKING, cast
 
 # Import shared domain models to eliminate duplication
-from shared_domain import (
+from .shared_domain import (
     Address,
     Age,
     EmailAddress as Email,
@@ -1299,7 +1299,7 @@ def demonstrate_value_objects() -> None:
     # Multiplication
     doubled_result = usd_10.multiply(Decimal("2.0"))
     if doubled_result.success:
-        print(f"  ✅ {usd_10} × 2 = {doubled_result.data}")
+        print(f"  ✅ {usd_10} x 2 = {doubled_result.data}")
 
     # Address value objects
     print("\n📋 Address Value Objects:")
@@ -1884,7 +1884,7 @@ def demonstrate_performance_characteristics() -> None:
 
 def main() -> None:
     """Run comprehensive FlextEntity/ValueObject DDD demonstration."""
-    from shared_example_helpers import run_example_demonstration
+    from .shared_example_helpers import run_example_demonstration  # noqa: PLC0415
 
     examples = [
         ("Value Object Patterns", demonstrate_value_objects),

@@ -10,7 +10,6 @@ and utilities to achieve near 100% coverage.
 
 from __future__ import annotations
 
-import contextlib
 import json
 import os
 import tempfile
@@ -39,24 +38,7 @@ from flext_core.constants import FlextConstants
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 
 
-@pytest.fixture
-def temp_json_file() -> Generator[str]:
-    """Create a temporary JSON file for testing."""
-    with tempfile.NamedTemporaryFile(
-        encoding="utf-8",
-        mode="w",
-        suffix=".json",
-        delete=False,
-    ) as f:
-        test_data = {"key1": "value1", "key2": 42, "nested": {"key3": "value3"}}
-        json.dump(test_data, f)
-        temp_path = f.name
-
-    yield temp_path
-
-    # Cleanup
-    with contextlib.suppress(FileNotFoundError):
-        Path(temp_path).unlink()
+# temp_json_file fixture now centralized in conftest.py
 
 
 @pytest.fixture
