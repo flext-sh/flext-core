@@ -555,15 +555,16 @@ def safe_call[T](func: Callable[[], T]) -> FlextResult[T]:
     except Exception as e:
         return FlextResult.fail(str(e))
 
+
 # Backward compatibility alias
 FlextResultOperations = FlextResult
 
-__all__ = [
+__all__: list[str] = [
     # Main result class
     "FlextResult",
     # Backward compatibility alias
     "FlextResultOperations",
-    # Legacy function for backward compatibility
+    # Utility functions
     "safe_call",
     # Note: Other legacy functions (chain, compose) moved to legacy.py
 ]

@@ -3,7 +3,7 @@
 [![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
 [![Version 2.0.0](https://img.shields.io/badge/version-2.0.0-brightgreen.svg)](https://github.com/flext-sh/flext-core)
 [![MIT License](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)
-[![Production Ready](https://img.shields.io/badge/status-production--ready-brightgreen.svg)](https://github.com/flext-sh/flext-core)
+[![Status](https://img.shields.io/badge/status-active--development-yellow.svg)](https://github.com/flext-sh/flext-core)
 
 **The Modern Foundation - Zero Boilerplate, Maximum Clarity**
 

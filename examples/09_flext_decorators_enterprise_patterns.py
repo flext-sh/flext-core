@@ -27,11 +27,7 @@ import time
 from collections.abc import Callable
 from typing import TYPE_CHECKING, cast
 
-if TYPE_CHECKING:
-    from flext_core.base_decorators import _DecoratedFunction
-
-# Import shared domain models to demonstrate decorator patterns with domain objects
-from shared_domain import (
+from .shared_domain import (
     SharedDomainFactory,
     User as SharedUser,
     log_domain_operation,
@@ -40,7 +36,6 @@ from shared_domain import (
 from flext_core import (
     FlextDecorators,
     FlextErrorHandlingDecorators,
-    FlextImmutabilityDecorators,
     FlextLoggingDecorators,
     FlextPerformanceDecorators,
     FlextResult,
@@ -51,6 +46,10 @@ from flext_core import (
     TUserData,
 )
 from flext_core.exceptions import FlextValidationError
+
+if TYPE_CHECKING:
+    from flext_core.base_decorators import _DecoratedFunction
+
 
 # Constants to avoid magic numbers
 MAX_RETRY_ATTEMPTS = 3  # Maximum number of retry attempts

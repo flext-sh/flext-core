@@ -58,7 +58,9 @@ class FlextConsoleLogger:
     def trace(self, message: str, **kwargs: object) -> None:
         """Log trace message to console."""
         self._logger.debug(
-            "TRACE: %s %s", message, json.dumps(kwargs) if kwargs else "",
+            "TRACE: %s %s",
+            message,
+            json.dumps(kwargs) if kwargs else "",
         )
 
     def debug(self, message: str, **kwargs: object) -> None:
@@ -223,20 +225,29 @@ class FlextInMemoryMetrics:
 
     # Back-compat simple API expected by tests
     def increment(
-        self, name: str, value: int = 1, tags: dict[str, str] | None = None,
+        self,
+        name: str,
+        value: int = 1,
+        tags: dict[str, str] | None = None,
     ) -> None:
         """Increment counter by value."""
         key = self._make_key(name, tags)
         self._counters[key] = self._counters.get(key, 0) + int(value)
 
     def gauge(
-        self, name: str, value: float, tags: dict[str, str] | None = None,
+        self,
+        name: str,
+        value: float,
+        tags: dict[str, str] | None = None,
     ) -> None:
         """Record gauge value."""
         self.record_gauge(name, value, tags)
 
     def histogram(
-        self, name: str, value: float, tags: dict[str, str] | None = None,
+        self,
+        name: str,
+        value: float,
+        tags: dict[str, str] | None = None,
     ) -> None:
         """Record histogram value."""
         self.record_histogram(name, value, tags)
@@ -318,7 +329,7 @@ class FlextSimpleObservability:
 # =============================================================================
 
 
-class SimpleAlerts:
+class FlextSimpleAlerts:
     """Minimal alerts component for legacy API compatibility."""
 
     def info(self, message: str, **kwargs: object) -> None:
@@ -351,7 +362,7 @@ class _SimpleHealth:
         return True
 
 
-class MinimalObservability:
+class FlextMinimalObservability:
     """Composite with legacy-friendly attributes and methods.
 
     Provides `.log`, `.trace`, `.metrics`, `.alerts`, `.health` attributes
@@ -364,12 +375,15 @@ class MinimalObservability:
         self.log = FlextConsoleLogger()
         self.trace = FlextNoOpTracer()
         self.metrics = FlextInMemoryMetrics()
-        self.alerts = SimpleAlerts()
+        self.alerts = FlextSimpleAlerts()
         self.health = _SimpleHealth()
 
     # Protocol compliance helpers
     def record_metric(
-        self, name: str, value: float, tags: dict[str, str] | None = None,
+        self,
+        name: str,
+        value: float,
+        tags: dict[str, str] | None = None,
     ) -> FlextResult[None]:
         """Record metric with gauge value."""
         try:
@@ -454,10 +468,10 @@ def get_simple_observability(
 # =============================================================================
 
 
-_global_observability: MinimalObservability | None = None
+_global_observability: FlextMinimalObservability | None = None
 
 
-def get_global_observability() -> MinimalObservability:
+def get_global_observability() -> FlextMinimalObservability:
     """Get global observability instance (singleton).
 
     Returns:
@@ -466,7 +480,7 @@ def get_global_observability() -> MinimalObservability:
     """
     global _global_observability  # noqa: PLW0603
     if _global_observability is None:
-        _global_observability = MinimalObservability()
+        _global_observability = FlextMinimalObservability()
     return _global_observability
 
 
@@ -477,8 +491,10 @@ def reset_global_observability() -> None:
 
 
 def get_observability(
-    *, log_level: str = "INFO", force_recreate: bool = False,
-) -> MinimalObservability:
+    *,
+    log_level: str = "INFO",
+    force_recreate: bool = False,
+) -> FlextMinimalObservability:
     """Legacy-friendly factory returning a process-wide singleton.
 
     Args:
@@ -489,7 +505,7 @@ def get_observability(
     del log_level
     global _global_observability  # noqa: PLW0603
     if force_recreate or _global_observability is None:
-        _global_observability = MinimalObservability()
+        _global_observability = FlextMinimalObservability()
     return _global_observability
 
 
@@ -497,12 +513,14 @@ def get_observability(
 # EXPORTS - Foundation implementations only
 # =============================================================================
 
-__all__ = [
+__all__: list[str] = [
     "ConsoleLogger",
     "FlextConsoleLogger",
     "FlextInMemoryMetrics",
+    "FlextMinimalObservability",
     "FlextNoOpSpan",
     "FlextNoOpTracer",
+    "FlextSimpleAlerts",
     "FlextSimpleObservability",
     "InMemoryMetrics",
     "MinimalObservability",
@@ -526,3 +544,5 @@ __all__ = [
 ConsoleLogger = FlextConsoleLogger
 NoOpTracer = FlextNoOpTracer
 InMemoryMetrics = FlextInMemoryMetrics
+SimpleAlerts = FlextSimpleAlerts
+MinimalObservability = FlextMinimalObservability

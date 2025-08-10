@@ -230,13 +230,12 @@ class TestFlextCoreContainerIntegration:
         clean_flext_core: FlextCore,
     ) -> None:
         """Test service registration failure handling."""
-        # Mock container to simulate failure
-        with (
-            patch.object(clean_flext_core, "_container"),
-            patch("flext_core.core.register_typed") as mock_register,
-        ):
-            mock_register.return_value = FlextResult.fail("Registration failed")
-
+        # Mock container register method to simulate failure
+        with patch.object(
+            clean_flext_core._container,
+            "register",
+            return_value=FlextResult.fail("Registration failed"),
+        ) as mock_register:
             service_key = ServiceKey[Mock]("test_service")
             result = clean_flext_core.register_service(service_key, Mock())
 
@@ -245,6 +244,9 @@ class TestFlextCoreContainerIntegration:
                 raise AssertionError(
                     f"Expected 'Registration failed' in {result.error}"
                 )
+
+            # Verify register was called
+            mock_register.assert_called_once()
 
 
 @pytest.mark.unit
@@ -932,13 +934,27 @@ class TestFlextCoreIntegration:
 
     def test_full_workflow_integration(self, clean_flext_core: FlextCore) -> None:
         """Test complete workflow integration."""
-        # 1. Configure logging
+        # Setup phase
+        self._setup_integration_test(clean_flext_core)
+
+        # Service registration phase
+        user_key, data_key = self._register_services(clean_flext_core)
+
+        # Pipeline execution phase
+        result, logged_steps = self._execute_integration_pipeline(
+            clean_flext_core, user_key, data_key
+        )
+
+        # Validation phase
+        self._validate_integration_results(result, logged_steps)
+
+    def _setup_integration_test(self, clean_flext_core: FlextCore) -> None:
+        """Setup logging and basic configuration for integration test."""
         clean_flext_core.configure_logging(log_level="INFO")
+        _ = clean_flext_core.get_logger("integration.test")
 
-        # 2. Get logger
-        _ = clean_flext_core.get_logger("integration.test")  # Test logger creation
-
-        # 3. Register services
+    def _register_services(self, clean_flext_core: FlextCore) -> tuple[object, object]:
+        """Register user and data services."""
         user_service = UserService("integration_user")
         data_service = DataService("integration_db")
 
@@ -951,32 +967,31 @@ class TestFlextCoreIntegration:
         assert user_reg_result.success
         assert data_reg_result.success
 
-        # 4. Create processing pipeline
+        return user_key, data_key
+
+    def _execute_integration_pipeline(
+        self, clean_flext_core: FlextCore, user_key: object, data_key: object
+    ) -> tuple[object, list[str]]:
+        """Execute the full integration pipeline with logging."""
+        logged_steps: list[str] = []
+
         def get_user_data(user_id: object) -> FlextResult[object]:
             user_result = clean_flext_core.get_service(user_key)
             if user_result.is_failure:
                 return FlextResult.fail("User service not available")
-
             user_service = user_result.data
             assert user_service is not None
-            user_id_str = str(user_id)
-            user_data = user_service.get_user(user_id_str)
+            user_data = user_service.get_user(str(user_id))
             return FlextResult.ok(user_data)
 
         def save_user_data(user_data: object) -> FlextResult[object]:
             data_result = clean_flext_core.get_service(data_key)
             if data_result.is_failure:
                 return FlextResult.fail("Data service not available")
-
             data_service = data_result.data
             assert data_service is not None
-
-            user_data_str = str(user_data)
-            save_result = data_service.save_data(user_data_str)
+            save_result = data_service.save_data(str(user_data))
             return FlextResult.ok(save_result)
-
-        # 5. Execute pipeline with railway programming
-        logged_steps = []
 
         def log_step(step_name: str) -> Callable[[object], FlextResult[object]]:
             def logger_func(data: object) -> None:
@@ -993,7 +1008,12 @@ class TestFlextCoreIntegration:
         )
 
         result = pipeline("user123")
+        return result, logged_steps
 
+    def _validate_integration_results(
+        self, result: object, logged_steps: list[str]
+    ) -> None:
+        """Validate the integration test results."""
         assert result.success
         if not (result.data):
             raise AssertionError(f"Expected True, got {result.data}")

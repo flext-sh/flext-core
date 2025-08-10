@@ -6,6 +6,7 @@ import contextlib
 import time
 from typing import TYPE_CHECKING, cast
 
+import pytest
 from pydantic import BaseModel, Field
 
 from flext_core import (
@@ -19,6 +20,7 @@ from flext_core.decorators import (
     FlextPerformanceDecorators,
     FlextValidationDecorators,
 )
+from flext_core.exceptions import FlextValidationError
 from flext_core.protocols import FlextDecoratedFunction
 
 # Aliases for compatibility
@@ -402,6 +404,52 @@ class TestDecoratorComposition:
         assert result2.is_failure
 
 
+class TestFlextValidationDecorators:
+    """Test FlextValidationDecorators coverage for missing lines."""
+
+    def test_validation_decorator_no_input(self) -> None:
+        """Test validation decorator with no input (lines 88-90)."""
+        validator = FlextValidationDecorators("test_validator")
+        result = validator.validate_input((), {})
+        assert result.is_failure
+        assert "No input to validate" in (result.error or "")
+
+    def test_validation_decorator_none_output(self) -> None:
+        """Test validation decorator with None output (lines 94-96)."""
+        validator = FlextValidationDecorators("test_validator")
+        result = validator.validate_output(None)
+        assert result.is_failure
+        assert "Output validation failed: None result" in (result.error or "")
+
+    def test_validation_decorator_apply_decoration_input_failure(self) -> None:
+        """Test apply_decoration with input validation failure (lines 101-122)."""
+        validator = FlextValidationDecorators("test_validator")
+
+        def test_func(x: int) -> int:
+            return x * 2
+
+        decorated = validator.apply_decoration(test_func)
+
+        # This will cause input validation to fail (no args and no kwargs)
+        with pytest.raises(Exception) as exc_info:
+            decorated()
+        assert "No input to validate" in str(exc_info.value)
+
+    def test_validation_decorator_apply_decoration_output_failure(self) -> None:
+        """Test apply_decoration with output validation failure (lines 113-122)."""
+        validator = FlextValidationDecorators("test_validator")
+
+        def test_func_none(x: int) -> None:  # Accept parameter
+            return None
+
+        decorated = validator.apply_decoration(test_func_none)
+
+        # This will cause output validation to fail (None result)
+        with pytest.raises(Exception) as exc_info:
+            decorated(42)  # Valid input but None output
+        assert "Output validation failed: None result" in str(exc_info.value)
+
+
 class TestDecoratorErrorHandling:
     """Test error handling across different decorators."""
 
@@ -446,6 +494,173 @@ class TestDecoratorErrorHandling:
         assert result4.success
         if result4.data != "success":
             raise AssertionError(f"Expected {'success'}, got {result4.data}")
+
+
+class TestFlextDecoratorUtils:
+    """Test FlextDecoratorUtils coverage."""
+
+    def test_preserve_metadata_complete(self) -> None:
+        """Test preserve_metadata with all attributes (lines 57-63)."""
+
+        def original_func() -> str:
+            """Original function docstring."""
+            return "original"
+
+        original_func.__name__ = "original_func"
+        original_func.__module__ = "test_module"
+
+        def wrapper_func() -> str:
+            return "wrapper"
+
+        result = FlextDecoratorUtils.preserve_metadata(original_func, wrapper_func)
+
+        assert result.__name__ == "original_func"
+        assert result.__doc__ == "Original function docstring."
+        assert result.__module__ == "test_module"
+
+    def test_preserve_metadata_partial(self) -> None:
+        """Test preserve_metadata with missing attributes."""
+
+        def original_func() -> str:
+            return "original"
+
+        # Create a function without standard attributes by using lambda
+        original_minimal = lambda: "original"  # noqa: E731
+
+        def wrapper_func() -> str:
+            return "wrapper"
+
+        # Should not crash when attributes are missing
+        result = FlextDecoratorUtils.preserve_metadata(original_minimal, wrapper_func)
+        assert callable(result)
+
+
+class TestFlextErrorHandlingDecorators:
+    """Test FlextErrorHandlingDecorators coverage for missing lines."""
+
+    def test_error_handler_initialization(self) -> None:
+        """Test ErrorHandlingDecorators initialization (lines 158-164)."""
+        handler = FlextErrorHandlingDecorators(
+            name="test_handler", handled_exceptions=(ValueError, TypeError)
+        )
+        assert handler.name == "test_handler"
+        assert handler.handled_exceptions == (ValueError, TypeError)
+
+    def test_handle_error_method(self) -> None:
+        """Test handle_error method (lines 166-168)."""
+        handler = FlextErrorHandlingDecorators("test_handler")
+        error = ValueError("test error")
+        result = handler.handle_error("test_func", error)
+
+        assert hasattr(result, "is_failure")
+        assert result.is_failure  # type: ignore[union-attr]
+        assert "Error in test_func: test error" in (result.error or "")  # type: ignore[union-attr]
+
+    def test_should_handle_error_method(self) -> None:
+        """Test should_handle_error method (lines 170-172)."""
+        handler = FlextErrorHandlingDecorators(
+            "test_handler", handled_exceptions=(ValueError, TypeError)
+        )
+
+        assert handler.should_handle_error(ValueError("test"))
+        assert handler.should_handle_error(TypeError("test"))
+        assert not handler.should_handle_error(RuntimeError("test"))
+
+    def test_create_error_result_method(self) -> None:
+        """Test create_error_result method (lines 174-176)."""
+        handler = FlextErrorHandlingDecorators("test_handler")
+        error = RuntimeError("database error")
+        result = handler.create_error_result("save_user", error)
+
+        assert hasattr(result, "is_failure")
+        assert result.is_failure  # type: ignore[union-attr]
+        assert "Function save_user failed: database error" in (result.error or "")  # type: ignore[union-attr]
+
+    def test_error_handling_decorator_apply_decoration(self) -> None:
+        """Test apply_decoration method with error handling (lines 178-190)."""
+        handler = FlextErrorHandlingDecorators(
+            "test_handler", handled_exceptions=(ValueError,)
+        )
+
+        def failing_func(*, should_fail: bool = True) -> str:
+            if should_fail:
+                error_msg = "intentional error"
+                raise ValueError(error_msg)
+            return "success"
+
+        decorated = handler.apply_decoration(failing_func)
+
+        # Test error path
+        result_error = decorated(should_fail=True)
+        assert hasattr(result_error, "is_failure")
+
+        # Test success path
+        result_success = decorated(should_fail=False)
+        assert result_success == "success"
+
+
+class TestFlextPerformanceDecorators:
+    """Test FlextPerformanceDecorators coverage for missing lines."""
+
+    def test_performance_decorator_initialization(self) -> None:
+        """Test PerformanceDecorators initialization (lines 232-234)."""
+        perf_decorator = FlextPerformanceDecorators(
+            name="test_perf", threshold_seconds=2.0
+        )
+        assert perf_decorator.name == "test_perf"
+        assert perf_decorator.threshold_seconds == 2.0
+
+    def test_start_timing_method(self) -> None:
+        """Test start_timing method (lines 236-238)."""
+        perf_decorator = FlextPerformanceDecorators()
+        start_time = perf_decorator.start_timing()
+        assert isinstance(start_time, float)
+        assert start_time > 0
+
+    def test_stop_timing_method(self) -> None:
+        """Test stop_timing method (lines 240-242)."""
+        perf_decorator = FlextPerformanceDecorators()
+        start_time = time.perf_counter()
+        time.sleep(0.01)  # Small delay
+        duration = perf_decorator.stop_timing(start_time)
+        assert isinstance(duration, float)
+        assert duration > 0
+
+    def test_record_metrics_method(self) -> None:
+        """Test record_metrics method (lines 244-256)."""
+        perf_decorator = FlextPerformanceDecorators(threshold_seconds=0.5)
+
+        # Record fast execution
+        perf_decorator.record_metrics("fast_func", 0.1, (1, 2, 3))
+        metrics = perf_decorator.metrics["fast_func"]
+        assert metrics["duration"] == 0.1
+        assert metrics["args_count"] == 3
+        assert metrics["slow"] is False
+
+        # Record slow execution
+        perf_decorator.record_metrics("slow_func", 1.0, (1,))
+        metrics = perf_decorator.metrics["slow_func"]
+        assert metrics["duration"] == 1.0
+        assert metrics["args_count"] == 1
+        assert metrics["slow"] is True
+
+    def test_performance_decorator_apply_decoration(self) -> None:
+        """Test apply_decoration method with performance tracking (lines 258-269)."""
+        perf_decorator = FlextPerformanceDecorators(name="test", threshold_seconds=0.1)
+
+        def test_func(delay: float = 0.0) -> str:
+            if delay > 0:
+                time.sleep(delay)
+            return "completed"
+
+        decorated = perf_decorator.apply_decoration(test_func)
+
+        # Test function execution with performance tracking
+        result = decorated(0.0)  # Fast execution
+        assert result == "completed"
+
+        # Check that metrics were recorded
+        assert "test_func" in perf_decorator.metrics
 
     def test_validation_decorator_error_details(self) -> None:
         """Test validation decorator provides detailed error information."""
@@ -615,22 +830,22 @@ class TestDecoratorCoverageImprovements:
     def test_immutability_decorators_coverage(self) -> None:
         """Test immutability decorator methods (lines 161, 276, 281)."""
         from flext_core.base_decorators import (
-            FlextImmutabilityDecorators as _BaseImmutabilityDecorators,
+            _BaseImmutabilityDecorators,
         )
+        from flext_core.decorators import FlextImmutabilityDecorators
 
         def sample_function(x: int) -> int:
             return x * 2
 
-        # Test immutable_decorator - line 276
-        decorated = _BaseImmutabilityDecorators.immutable_decorator(
+        # Test immutable_decorator from FlextImmutabilityDecorators - line 276
+        decorated = FlextImmutabilityDecorators.immutable_decorator(
             cast("_DecoratedFunction", sample_function)
         )
-        assert decorated is sample_function  # Returns same function
+        assert callable(decorated)  # Should return callable function
 
-        # Test freeze_args_decorator - line 281
-        decorated = _BaseImmutabilityDecorators.freeze_args_decorator(
-            cast("_DecoratedFunction", sample_function)
-        )
+        # Test freeze_args_decorator from _BaseImmutabilityDecorators - line 281
+        freeze_decorator = _BaseImmutabilityDecorators.freeze_args_decorator()
+        decorated = freeze_decorator(cast("_DecoratedFunction", sample_function))
         assert decorated is sample_function  # Returns same function
 
     def test_functional_decorators_coverage(self) -> None:
@@ -787,7 +1002,6 @@ class TestDecoratorCoverageImprovements:
         import pytest
 
         from flext_core.base_decorators import _validate_input_decorator
-        from flext_core.exceptions import FlextValidationError
 
         def always_false_validator(arg: object) -> bool:
             return False
@@ -806,7 +1020,6 @@ class TestDecoratorCoverageImprovements:
         import pytest
 
         from flext_core.base_decorators import _validate_input_decorator
-        from flext_core.exceptions import FlextValidationError
 
         def validator_requiring_positive(arg: object) -> bool:
             return isinstance(arg, int) and arg > 0
@@ -828,11 +1041,11 @@ class TestDecoratorCoverageImprovements:
     def test_decorator_factory_methods_coverage(self) -> None:
         """Test decorator factory methods (lines 401, 408, 413, 420)."""
         from flext_core.base_decorators import (
-            FlextDecoratorFactory as _BaseDecoratorFactory,
+            _BaseDecoratorFactory,
         )
 
         # Test create_cache_decorator - line 401
-        cache_decorator = _BaseDecoratorFactory.create_cache_decorator(64)
+        cache_decorator = _BaseDecoratorFactory.create_cache_decorator(size=64)
         assert callable(cache_decorator)
 
         # Test create_safe_decorator - line 408

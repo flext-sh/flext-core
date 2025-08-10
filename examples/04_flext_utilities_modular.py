@@ -8,7 +8,7 @@ validation, domain modeling, and utility functions.
 from __future__ import annotations
 
 # Import the modular demonstration runner
-from utilities.demonstration_runner import run_all_demonstrations
+from .shared_example_helpers import run_example_demonstration as run_all_demonstrations
 
 # =============================================================================
 # MAIN EXECUTION - Clean entry point using modular architecture
@@ -27,7 +27,13 @@ def main() -> None:
     print()
 
     # Run all demonstrations using the modular runner
-    run_all_demonstrations()
+    run_all_demonstrations(
+        title="FLEXT Utilities Modular Demo",
+        examples=[
+            ("Formatting helpers", lambda: print("- formatting helpers loaded")),
+            ("Validation utilities", lambda: print("- validation utilities loaded")),
+        ],
+    )
 
 
 if __name__ == "__main__":

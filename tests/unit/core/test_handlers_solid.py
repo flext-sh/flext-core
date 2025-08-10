@@ -54,9 +54,9 @@ class TestSOLIDPrinciples:
 
         # Test validation works
         long_message = "x" * 101
-        validation_result = command_handler.validate_command(long_message)
+        validation_result = command_handler.validate(long_message)
         assert validation_result.is_failure
-        assert "too long" in (validation_result.error or "")
+        assert "Message too long" in (validation_result.error or "")
 
         # Test authorization works
         REDACTED_LDAP_BIND_PASSWORD_query = {"REDACTED_LDAP_BIND_PASSWORD_only": True}
@@ -141,7 +141,7 @@ class TestSOLIDPrinciples:
         )
 
         # Validation uses injected dependency
-        validation_result = handler.validate_command("test")
+        validation_result = handler.validate("test")
         assert validation_result.is_failure
         assert "Mock validation failed" in (validation_result.error or "")
 

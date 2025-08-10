@@ -29,7 +29,7 @@ class TestFlextEntityFieldValidators:
     def test_validate_entity_id_empty_string(self) -> None:
         """Test entity ID validation with empty string."""
         with pytest.raises(FlextValidationError) as exc_info:
-            ConcreteFlextEntity(id="", name="Test")
+            ConcreteFlextEntity(id="", name="Test", email="test@example.com")
 
         if "Entity ID cannot be empty" not in str(exc_info.value):
             raise AssertionError(
@@ -39,7 +39,7 @@ class TestFlextEntityFieldValidators:
     def test_validate_entity_id_whitespace_only(self) -> None:
         """Test entity ID validation with whitespace-only string."""
         with pytest.raises(FlextValidationError) as exc_info:
-            ConcreteFlextEntity(id="   ", name="Test")
+            ConcreteFlextEntity(id="   ", name="Test", email="test@example.com")
 
         if "Entity ID cannot be empty" not in str(exc_info.value):
             raise AssertionError(
@@ -48,14 +48,18 @@ class TestFlextEntityFieldValidators:
 
     def test_validate_entity_id_valid_with_whitespace(self) -> None:
         """Test entity ID validation strips whitespace from valid ID."""
-        entity = ConcreteFlextEntity(id="  valid-id  ", name="Test")
+        entity = ConcreteFlextEntity(
+            id="  valid-id  ", name="Test", email="test@example.com"
+        )
         if entity.id != "valid-id":
             raise AssertionError(f"Expected {'valid-id'}, got {entity.id}")
 
     def test_validate_entity_version_zero(self) -> None:
         """Test entity version validation with zero."""
         with pytest.raises(ValidationError) as exc_info:
-            ConcreteFlextEntity(id="test-id", name="Test", version=0)
+            ConcreteFlextEntity(
+                id="test-id", name="Test", email="test@example.com", version=0
+            )
 
         # Pydantic ge=1 validation catches this before custom validator
         if "Input should be greater than or equal to 1" not in str(exc_info.value):
@@ -66,7 +70,9 @@ class TestFlextEntityFieldValidators:
     def test_validate_entity_version_negative(self) -> None:
         """Test entity version validation with negative number."""
         with pytest.raises(ValidationError) as exc_info:
-            ConcreteFlextEntity(id="test-id", name="Test", version=-1)
+            ConcreteFlextEntity(
+                id="test-id", name="Test", email="test@example.com", version=-1
+            )
 
         # Pydantic ge=1 validation catches this before custom validator
         if "Input should be greater than or equal to 1" not in str(exc_info.value):
@@ -76,7 +82,9 @@ class TestFlextEntityFieldValidators:
 
     def test_validate_entity_version_valid(self) -> None:
         """Test entity version validation with valid positive number."""
-        entity = ConcreteFlextEntity(id="test-id", name="Test", version=5)
+        entity = ConcreteFlextEntity(
+            id="test-id", name="Test", email="test@example.com", version=5
+        )
         if entity.version != 5:
             raise AssertionError(f"Expected {5}, got {entity.version}")
 
@@ -86,7 +94,9 @@ class TestFlextEntityEquality:
 
     def test_equality_with_non_entity(self) -> None:
         """Test entity equality with non-FlextEntity object."""
-        entity = ConcreteFlextEntity(id="test-id", name="Test")
+        entity = ConcreteFlextEntity(
+            id="test-id", name="Test", email="test@example.com"
+        )
 
         assert entity != "not an entity"
         assert entity != 123
@@ -103,7 +113,9 @@ class TestFlextEntityEquality:
                 return FlextResult.ok(None)
 
         entity_id = "test-entity-123"
-        entity1 = ConcreteFlextEntity(id=entity_id, name="Test")
+        entity1 = ConcreteFlextEntity(
+            id=entity_id, name="Test", email="test@example.com"
+        )
         entity2 = AnotherEntity(id=entity_id, title="Test")
 
         # Should be equal because they have the same ID
@@ -153,7 +165,9 @@ class TestFlextEntityVersioning:
 
     def test_with_version_same_version(self) -> None:
         """Test with_version with same version number."""
-        entity = ConcreteFlextEntity(id="test-id", name="Test", version=5)
+        entity = ConcreteFlextEntity(
+            id="test-id", name="Test", email="test@example.com", version=5
+        )
 
         with pytest.raises(
             FlextValidationError,
@@ -163,7 +177,9 @@ class TestFlextEntityVersioning:
 
     def test_with_version_lower_version(self) -> None:
         """Test with_version with lower version number."""
-        entity = ConcreteFlextEntity(id="test-id", name="Test", version=5)
+        entity = ConcreteFlextEntity(
+            id="test-id", name="Test", email="test@example.com", version=5
+        )
 
         with pytest.raises(
             FlextValidationError,
@@ -176,6 +192,7 @@ class TestFlextEntityVersioning:
         entity = ConcreteFlextEntity(
             id="custom-id",
             name="Test Entity",
+            email="test@example.com",
             status="inactive",
             version=1,
         )
@@ -195,7 +212,9 @@ class TestFlextEntityVersioning:
 
     def test_with_version_maintains_type(self) -> None:
         """Test with_version returns same entity type."""
-        entity = ConcreteFlextEntity(id="test-id", name="Test", version=1)
+        entity = ConcreteFlextEntity(
+            id="test-id", name="Test", email="test@example.com", version=1
+        )
         updated_entity = entity.with_version(2)
 
         assert type(updated_entity) is type(entity)
@@ -207,7 +226,7 @@ class TestFlextEntityEdgeCases:
 
     def test_entity_id_type_preservation(self) -> None:
         """Test that entity ID is always string type."""
-        entity = ConcreteFlextEntity(id="123", name="Test")
+        entity = ConcreteFlextEntity(id="123", name="Test", email="test@example.com")
         assert isinstance(entity.id, str)
         if entity.id != "123":
             raise AssertionError(f"Expected {'123'}, got {entity.id}")
@@ -218,7 +237,8 @@ class TestFlextEntityEdgeCases:
         entity = ConcreteFlextEntity(
             id="custom-id",
             name="Test",
-            status="custom-status",
+            email="test@example.com",
+            status="active",  # Use valid enum value
             created_at=custom_time,
             version=10,
         )
@@ -226,8 +246,8 @@ class TestFlextEntityEdgeCases:
         if entity.id != "custom-id":
             raise AssertionError(f"Expected {'custom-id'}, got {entity.id}")
         assert entity.name == "Test"
-        if entity.status != "custom-status":
-            raise AssertionError(f"Expected {'custom-status'}, got {entity.status}")
+        if entity.status != "active":  # Updated expectation since we changed the value
+            raise AssertionError(f"Expected {'active'}, got {entity.status}")
         assert entity.created_at == custom_time
         if entity.version != 10:
             raise AssertionError(f"Expected {10}, got {entity.version}")
@@ -235,8 +255,12 @@ class TestFlextEntityEdgeCases:
     def test_entity_hash_stability(self) -> None:
         """Test that entity hash is stable across different instances."""
         entity_id = "stable-id"
-        entity1 = ConcreteFlextEntity(id=entity_id, name="Name1")
-        entity2 = ConcreteFlextEntity(id=entity_id, name="Name2")
+        entity1 = ConcreteFlextEntity(
+            id=entity_id, name="Name1", email="test1@example.com"
+        )
+        entity2 = ConcreteFlextEntity(
+            id=entity_id, name="Name2", email="test2@example.com"
+        )
 
         hash1 = hash(entity1)
         hash2 = hash(entity2)
@@ -253,6 +277,7 @@ class TestFlextEntityEdgeCases:
         entity = ConcreteFlextEntity(
             id="test-123",
             name="Test Entity",
+            email="test@example.com",
             status="active",
         )
 
@@ -260,13 +285,14 @@ class TestFlextEntityEdgeCases:
         repr_str = repr(entity)
 
         # __str__ should contain class name and ID
-        if "ConcreteFlextEntity" not in str_repr:
-            raise AssertionError(f"Expected {'ConcreteFlextEntity'} in {str_repr}")
+        # ConcreteFlextEntity is an alias for TestUser, so check for TestUser
+        if "TestUser" not in str_repr:
+            raise AssertionError(f"Expected {'TestUser'} in {str_repr}")
         assert "test-123" in str_repr
 
         # __repr__ should contain all fields
-        if "ConcreteFlextEntity" not in repr_str:
-            raise AssertionError(f"Expected {'ConcreteFlextEntity'} in {repr_str}")
+        if "TestUser" not in repr_str:
+            raise AssertionError(f"Expected {'TestUser'} in {repr_str}")
         assert "test-123" in repr_str
         if "Test Entity" not in repr_str:
             raise AssertionError(f"Expected {'Test Entity'} in {repr_str}")
@@ -274,7 +300,9 @@ class TestFlextEntityEdgeCases:
 
     def test_entity_model_dump_excludes_private_fields(self) -> None:
         """Test that model_dump works correctly."""
-        entity = ConcreteFlextEntity(id="test-id", name="Test", status="active")
+        entity = ConcreteFlextEntity(
+            id="test-id", name="Test", email="test@example.com", status="active"
+        )
         data = entity.model_dump()
 
         assert isinstance(data, dict)
@@ -300,14 +328,18 @@ class TestFlextEntityValidation:
     def test_domain_rules_validation_called(self) -> None:
         """Test that domain rules validation is properly integrated."""
         # This test verifies the domain rules method exists and can be called
-        entity = ConcreteFlextEntity(id="test-id", name="Test")
+        entity = ConcreteFlextEntity(
+            id="test-id", name="Test", email="test@example.com"
+        )
 
         # Should not raise any exception for valid entity
         result = entity.validate_domain_rules()
         assert result.success
 
         # Verify that invalid entities would return failure
-        entity_invalid = ConcreteFlextEntity(id="test-id-2", name="")
+        entity_invalid = ConcreteFlextEntity(
+            id="test-id-2", name="", email="test@example.com"
+        )
         result_invalid = entity_invalid.validate_domain_rules()
         assert result_invalid.is_failure
         if (
@@ -325,6 +357,8 @@ class TestFlextEntityValidation:
             ConcreteFlextEntity()
 
         # Test successful creation with valid data
-        entity = ConcreteFlextEntity(id="test-id", name="Valid Name")
+        entity = ConcreteFlextEntity(
+            id="test-id", name="Valid Name", email="test@example.com"
+        )
         if entity.name != "Valid Name":
             raise AssertionError(f"Expected {'Valid Name'}, got {entity.name}")

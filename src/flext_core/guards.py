@@ -182,7 +182,7 @@ class FlextGuards:
 # =============================================================================
 
 
-class ValidatedModel(  # type: ignore[misc]
+class FlextValidatedModel(  # type: ignore[misc]
     BaseModel,
     FlextValidatableMixin,
     FlextSerializableMixin,
@@ -315,17 +315,21 @@ require_positive = FlextValidationUtils.require_positive
 require_in_range = FlextValidationUtils.require_in_range
 require_non_empty = FlextValidationUtils.require_non_empty
 
+# Backward compatibility alias for validated model
+ValidatedModel = FlextValidatedModel
+
 
 # =============================================================================
 # EXPORTS - Clean public API
 # =============================================================================
 
-__all__: list[str] = [
+__all__: list[str] = [  # noqa: RUF022
     # Main static class
     "FlextGuards",
     # Utility classes
     "FlextValidationUtils",
     # Base classes
+    "FlextValidatedModel",
     "ValidatedModel",
     # Compatibility aliases for functions
     "immutable",

@@ -15,7 +15,8 @@ from typing import TYPE_CHECKING
 from flext_core.constants import FlextConstants
 from flext_core.container import (
     FlextContainer,
-    FlextServiceKey as ServiceKey,
+    FlextServiceKey,
+    ServiceKey,
     get_flext_container,  # re-export for test patching
 )
 from flext_core.guards import ValidatedModel, immutable, is_dict_of, pure
@@ -65,7 +66,7 @@ class FlextCore:
 
     def register_service[S](
         self,
-        key: ServiceKey,
+        key: FlextServiceKey[S] | ServiceKey[S],
         service: S,
     ) -> FlextResult[None]:
         """Register typed service in container.
@@ -83,7 +84,7 @@ class FlextCore:
             service,
         )
 
-    def get_service[S](self, key: ServiceKey) -> FlextResult[S]:
+    def get_service[S](self, key: FlextServiceKey[S] | ServiceKey[S]) -> FlextResult[S]:
         """Get typed service from container.
 
         Args:
@@ -370,7 +371,7 @@ def flext_core() -> FlextCore:
 
 
 # Export API
-__all__ = [
+__all__: list[str] = [
     "FlextCore",
     "flext_core",
 ]

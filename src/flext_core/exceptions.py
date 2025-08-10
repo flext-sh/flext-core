@@ -317,7 +317,7 @@ class FlextError(FlextAbstractError):
         # Safely limit context size to prevent memory issues
         max_size = 1000
         if self.context and len(str(self.context)) > max_size:
-            self._context = {
+            self.context = {
                 "_truncated": True,
                 "_original_size": len(str(self.context)),
             }
@@ -541,6 +541,21 @@ class FlextValidationError(FlextAbstractValidationError, FlextError):
         # Initialize FlextError attributes
         self.timestamp = time.time()
         self.stack_trace = traceback.format_stack()
+
+    @property
+    def rules(self) -> list[str] | None:
+        """Get validation rules from validation_details."""
+        rules = (
+            self.validation_details.get("rules") if self.validation_details else None
+        )
+        if isinstance(rules, list):
+            return rules
+        return None
+
+    @property
+    def value(self) -> object | None:
+        """Get value from validation_details."""
+        return self.validation_details.get("value") if self.validation_details else None
 
 
 class FlextTypeError(FlextError):
@@ -961,8 +976,9 @@ class FlextExceptions(FlextAbstractErrorFactory):
     Implements FlextAbstractErrorFactory.
     """
 
+    @classmethod
     def create_validation_error(
-        self,
+        cls,
         message: str,
         **kwargs: object,
     ) -> FlextAbstractValidationError:
@@ -974,12 +990,18 @@ class FlextExceptions(FlextAbstractErrorFactory):
         rules = list(rules_obj) if isinstance(rules_obj, (list, tuple)) else None
         context_obj = kwargs.pop("context", None)
         context = dict(context_obj) if isinstance(context_obj, Mapping) else None
-        return self.create_validation_error_with_field(
-            message, field=field, value=value, rules=rules, context=context,
+        return cls.create_validation_error_with_field(
+            message,
+            field=field,
+            value=value,
+            rules=rules,
+            context=context,
         )
 
+    @staticmethod
     def create_business_error(
-        self, message: str, **kwargs: object,
+        message: str,
+        **kwargs: object,
     ) -> FlextAbstractBusinessError:
         """Create business error - implements abstract method."""
         business_rule_obj = kwargs.pop("business_rule", None)
@@ -988,20 +1010,33 @@ class FlextExceptions(FlextAbstractErrorFactory):
         )
         return FlextProcessingError(message, business_rule=business_rule, **kwargs)
 
+    @staticmethod
     def create_infrastructure_error(
-        self, message: str, **kwargs: object,
+        message: str,
+        **kwargs: object,
     ) -> FlextAbstractInfrastructureError:
         """Create infrastructure error - implements abstract method."""
         service_obj = kwargs.pop("service", None)
         service = str(service_obj) if service_obj is not None else None
         return FlextConnectionError(message, service=service, **kwargs)
 
+    @staticmethod
     def create_configuration_error(
-        self, message: str, **kwargs: object,
+        message: str,
+        **kwargs: object,
     ) -> FlextAbstractConfigurationError:
         """Create configuration error - implements abstract method."""
         config_key_obj = kwargs.pop("config_key", None)
         config_key = str(config_key_obj) if config_key_obj is not None else None
+
+        # Add config_key to context if provided
+        if config_key is not None:
+            raw_ctx = kwargs.get("context")
+            context: dict[str, object]
+            context = dict(raw_ctx) if isinstance(raw_ctx, dict) else {}
+            context["config_key"] = config_key
+            kwargs["context"] = context
+
         return FlextConfigurationError(message, config_key=config_key, **kwargs)
 
     @staticmethod
@@ -1079,7 +1114,7 @@ class FlextExceptions(FlextAbstractErrorFactory):
 # EXPORTS - Clean public API
 # =============================================================================
 
-__all__ = [
+__all__: list[str] = [
     "FlextAlreadyExistsError",
     "FlextAttributeError",
     "FlextAuthenticationError",

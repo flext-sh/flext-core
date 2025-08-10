@@ -4,35 +4,35 @@ This module provides reusable test fixtures, domain models, and utilities
 that can be shared across all test modules, eliminating code duplication and
 promoting consistent testing patterns.
 
-Features:
-- Common test fixtures and domain models
-- Shared test utilities and helper functions
-- Consistent domain model creation patterns
-- Integration with examples shared_domain
-- Factory patterns for test object creation
+ARCHITECTURE CHANGE: This module now uses test-specific domain models
+instead of importing from examples/, eliminating circular import issues.
 """
 
 from __future__ import annotations
 
-import sys
 from decimal import Decimal
-from pathlib import Path
 
-# Add examples directory to path to import shared domain
-examples_path = Path(__file__).parent.parent / "examples"
-sys.path.insert(0, str(examples_path))
-
-# Import must be after path modification
-# ruff: noqa: E402
-from shared_domain import (
-    ComplexValueObject,
-    ConcreteFlextEntity,
-    ConcreteValueObject,
+# Import from test-specific shared domain - NO MORE CIRCULAR IMPORTS
+# =============================================================================
+# BACKWARD COMPATIBILITY ALIASES
+# =============================================================================
+# These aliases maintain compatibility with existing tests while using
+# the new test-specific domain models
+# Import the actual value objects for proper aliases
+from tests.test_shared_domain import (
+    TestComplexValueObject,
     TestDomainFactory,
+    TestMoney,
+    TestUser,
 )
 
+# Entity aliases for backward compatibility
+ConcreteFlextEntity = TestUser
+ConcreteValueObject = TestMoney  # Using TestMoney as a proper value object
+ComplexValueObject = TestComplexValueObject  # Using TestComplexValueObject properly
 
-def create_test_entity_safe(name: str, **kwargs: object) -> ConcreteFlextEntity:
+
+def create_test_entity_safe(name: str, **kwargs: object) -> TestUser:
     """Create test entity with error handling."""
     status = str(kwargs.get("status", "active"))
     result = TestDomainFactory.create_concrete_entity(name=name, status=status)
@@ -49,7 +49,7 @@ def create_test_value_object_safe(
     amount: str,
     currency: str = "USD",
     **kwargs: object,
-) -> ConcreteValueObject:
+) -> object:
     """Create test value object with error handling."""
     result = TestDomainFactory.create_concrete_value_object(
         amount=Decimal(amount),
@@ -69,7 +69,7 @@ def create_complex_test_value_object_safe(
     name: str,
     tags: list[str],
     metadata: dict[str, object],
-) -> ComplexValueObject:
+) -> object:
     """Create complex test value object with error handling."""
     result = TestDomainFactory.create_complex_value_object(
         name=name,

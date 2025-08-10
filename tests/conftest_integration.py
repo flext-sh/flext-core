@@ -13,7 +13,7 @@ import pytest
 
 from flext_core.config import FlextSettings
 from flext_core.constants import FlextEnvironment, FlextLogLevel
-from flext_core.container import FlextContainer, get_flext_container
+from flext_core.container import get_flext_container
 
 if TYPE_CHECKING:
     from collections.abc import Generator
@@ -22,16 +22,8 @@ if TYPE_CHECKING:
     from flext_core import TEntityId
 
 
-@pytest.fixture
-def clean_container() -> Generator[FlextContainer]:
-    """Provide a clean FlextContainer for each test.
-
-    Automatically cleans up after test completion.
-    """
-    container = FlextContainer()
-    yield container
-    # Cleanup is handled by container.clear() in teardown
-    container.clear()
+# NOTE: clean_container fixture removed to eliminate duplication with main conftest.py
+# Integration tests should import it from the main conftest.py
 
 
 @pytest.fixture

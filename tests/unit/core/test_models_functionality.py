@@ -46,7 +46,7 @@ class TestFlextModelEnumsAdvanced:
     """Advanced enum testing using structured test cases and fixtures."""
 
     @pytest.fixture
-    def enum_test_cases(self) -> list[TestCase]:
+    def enum_test_cases(self) -> list[TestCase[str]]:
         """Define comprehensive test cases for all enum types."""
         return [
             # Entity Status Cases
@@ -107,12 +107,17 @@ class TestFlextModelEnumsAdvanced:
         ]
 
     @pytest.mark.parametrize_advanced
-    def test_enum_values_structured(self, enum_test_cases: list[TestCase]):
+    def test_enum_values_structured(self, enum_test_cases: list[TestCase[str]]) -> None:
         """Test enum values using structured test cases."""
         for test_case in enum_test_cases:
-            enum_value = test_case.input_data["enum"]
+            input_data = test_case.input_data
+            assert isinstance(input_data, dict), "input_data should be dict"
+            enum_value = input_data["enum"]
             expected = test_case.expected_output
 
+            assert hasattr(enum_value, "value"), (
+                f"Enum should have value attribute: {enum_value}"
+            )
             assert enum_value.value == expected, f"Test case {test_case.id} failed"
 
             # Additional validation for file formats
@@ -132,20 +137,27 @@ class TestFlextModelEnumsAdvanced:
             ("data_format", list(FlextDataFormat), "Data serialization and formats"),
         ],
     )
-    def test_enum_completeness(self, enum_type: str, enum_values: list, context: str):
+    def test_enum_completeness(
+        self, enum_type: str, enum_values: list[object], context: str
+    ) -> None:
         """Test enum completeness and consistency."""
         # All enums should have values
         assert len(enum_values) > 0, f"No values defined for {enum_type}"
 
         # All enum values should be strings
         for enum_val in enum_values:
+            assert hasattr(enum_val, "value"), (
+                f"Enum should have value attribute: {enum_val}"
+            )
             assert isinstance(enum_val.value, str), (
                 f"Non-string value in {enum_type}: {enum_val}"
             )
             assert len(enum_val.value) > 0, f"Empty value in {enum_type}: {enum_val}"
 
         # Values should be unique
-        values = [enum_val.value for enum_val in enum_values]
+        values = [
+            enum_val.value for enum_val in enum_values if hasattr(enum_val, "value")
+        ]
         assert len(values) == len(set(values)), f"Duplicate values in {enum_type}"
 
 
@@ -158,7 +170,7 @@ class TestFlextModelValidationAdvanced:
     """Advanced model validation testing using modern pytest patterns."""
 
     @pytest.fixture
-    def validation_test_cases(self) -> list[TestCase]:
+    def validation_test_cases(self) -> list[TestCase[dict[str, object]]]:
         """Define validation test cases for model testing."""
         return [
             TestCase(
@@ -186,8 +198,11 @@ class TestFlextModelValidationAdvanced:
         ]
 
     def test_base_model_with_fixtures(
-        self, test_builder, assert_helpers, validation_test_cases: list[TestCase]
-    ):
+        self,
+        test_builder: object,
+        assert_helpers: object,
+        validation_test_cases: list[TestCase[dict[str, object]]],
+    ) -> None:
         """Test base model validation using advanced fixtures."""
 
         class TestModel(FlextBaseModel):
@@ -992,7 +1007,7 @@ class TestUtilityFunctionsAdvanced:
         [
             (
                 FlextDomainEntity(id="test_entity"),
-                {"id": "test_entity", "version": 1, "status": "active"},
+                {"id": "test_entity", "version": 1, "status": FlextEntityStatus.ACTIVE},
                 "Valid entity conversion",
             ),
             (None, {}, "None input handling"),

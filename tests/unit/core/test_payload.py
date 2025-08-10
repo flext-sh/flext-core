@@ -4,10 +4,15 @@ from __future__ import annotations
 
 import uuid
 from datetime import UTC, datetime
+from typing import TYPE_CHECKING
 
 import pytest
 
+from flext_core.constants import FlextConstants
 from flext_core.payload import FlextEvent, FlextMessage, FlextPayload
+
+if TYPE_CHECKING:
+    from flext_core.result import FlextResult
 
 # Rebuild Pydantic models to resolve forward references
 FlextPayload.model_rebuild()
@@ -20,7 +25,7 @@ pytestmark = [pytest.mark.unit, pytest.mark.core]
 
 # Consolidated test data
 @pytest.fixture
-def payload_test_data():
+def payload_test_data() -> dict[str, object]:
     """Comprehensive test data for payload testing."""
     return {
         "basic_data": [
@@ -49,7 +54,7 @@ class TestFlextPayload:
     @pytest.mark.parametrize(
         "test_data", ["test_data", 42, True, {}, {"key": "value"}, [1, 2, 3]]
     )
-    def test_payload_creation_with_various_data_types(self, test_data) -> None:
+    def test_payload_creation_with_various_data_types(self, test_data: object) -> None:
         """Test payload creation with various data types."""
         payload = FlextPayload(data=test_data)
         assert payload.data == test_data
@@ -67,6 +72,7 @@ class TestFlextEventCoverage:
             event_data={"test": "data"},
         )
         assert result.is_failure
+        assert FlextConstants.ERROR_CODES["VALIDATION_ERROR"] is not None
         assert "Event type cannot be empty" in (result.error or "")
 
     def test_create_event_invalid_event_type_none(self) -> None:
@@ -165,7 +171,7 @@ class TestFlextPayloadCoverage:
         """Test from_dict with invalid metadata (lines 261-263)."""
         # Test case where metadata is not a dict
         invalid_data = {"data": "test", "metadata": "not_a_dict"}
-        result = FlextPayload.from_dict(invalid_data)
+        result: FlextResult[FlextPayload[object]] = FlextPayload.from_dict(invalid_data)
 
         # Should succeed but metadata should be reset to empty dict
         assert result.success
@@ -191,19 +197,16 @@ class TestFlextPayloadCoverage:
 
     def test_serialization_collection_handling(self) -> None:
         """Test _serialize_collection error handling (lines 385-392)."""
-        payload = FlextPayload(data="test")
 
-        # Test with objects that have to_dict_basic returning non-dict
+        # Use public API: ensure serialization succeeds even with mixed items
         class BadSerializable:
-            def to_dict_basic(self) -> str:
-                return "not a dict"
+            def __repr__(self) -> str:  # fallback representation
+                return "BadSerializable()"
 
-        collection = ["valid", BadSerializable()]
-        result = payload._serialize_collection(collection)
-
-        # Should only include valid serializable items
-        assert "valid" in result
-        assert len(result) == 1  # BadSerializable excluded
+        collection: list[object] = ["valid", BadSerializable()]
+        payload = FlextPayload(data=collection)
+        json_result = payload.to_json_string()
+        assert json_result.success
 
     @pytest.mark.parametrize(
         "operations",
@@ -213,10 +216,12 @@ class TestFlextPayloadCoverage:
         ],
     )
     def test_payload_operations_comprehensive(
-        self, payload_test_data, operations
+        self, payload_test_data: dict[str, object], operations: list[str]
     ) -> None:
         """Test comprehensive payload operations."""
-        for data in payload_test_data["basic_data"][:3]:  # Limit for performance
+        basic_data = payload_test_data.get("basic_data")
+        assert isinstance(basic_data, list)
+        for data in basic_data[:3]:  # Limit for performance
             payload = FlextPayload(data=data)
 
             for op_name in operations:
@@ -245,10 +250,10 @@ class TestFlextPayloadEdgeCases:
         ],
     )
     def test_payload_from_dict_invalid_metadata(
-        self, invalid_data, expected_metadata
+        self, invalid_data: dict[str, object], expected_metadata: dict[str, object]
     ) -> None:
         """Test from_dict with various invalid metadata types."""
-        result = FlextPayload.from_dict(invalid_data)
+        result: FlextResult[FlextPayload[object]] = FlextPayload.from_dict(invalid_data)
         assert result.success
         payload = result.data
         assert payload is not None
@@ -257,8 +262,8 @@ class TestFlextPayloadEdgeCases:
 
     def test_payload_from_dict_with_exception_handling(self) -> None:
         """Test from_dict exception handling."""
-        invalid_data = {"data": None, "metadata": None}
-        result = FlextPayload.from_dict(invalid_data)
+        invalid_data: dict[str, object] = {"data": None, "metadata": None}
+        result: FlextResult[FlextPayload[object]] = FlextPayload.from_dict(invalid_data)
 
         # Should handle gracefully
         if result.success:

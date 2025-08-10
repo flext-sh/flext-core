@@ -45,7 +45,8 @@ class TestProtocolInterfaces:
         # These tests will cover the TYPE_CHECKING import lines
 
         # Test protocol structure - covers TYPE_CHECKING imports
-        assert FlextConfigurable.__module__ == "flext_core.interfaces", (
-            f"Expected {'flext_core.interfaces'}, got {FlextConfigurable.__module__}"
+        # Note: FlextConfigurable is now defined in protocols.py but re-exported through interfaces.py
+        assert FlextConfigurable.__module__ == "flext_core.protocols", (
+            f"Expected {'flext_core.protocols'}, got {FlextConfigurable.__module__}"
         )
-        assert FlextValidator.__module__ == "flext_core.interfaces"
+        assert FlextValidator.__module__ == "flext_core.protocols"

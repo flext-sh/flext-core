@@ -4,7 +4,7 @@
 Comprehensive examples demonstrating all major FLEXT Core functionality.
 """
 
-from shared_domain import SharedDomainFactory, User as SharedUser
+from .shared_domain import SharedDomainFactory, User as SharedUser
 
 from flext_core import (
     FlextCommands,

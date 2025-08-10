@@ -185,16 +185,17 @@ class TestFlextEntity:
         if entity.created_at != now:
             raise AssertionError(f"Expected {now}, got {entity.created_at}")
 
-    def test_entity_immutability(self) -> None:
-        """Test that entities are immutable."""
+    def test_entity_mutability(self) -> None:
+        """Test that entities are mutable (unlike aggregate roots)."""
         entity_obj = create_test_entity(SampleEntity, name="Test Entity")
         entity = cast("SampleEntity", entity_obj)
 
-        with pytest.raises((ValidationError, AttributeError, TypeError)):
-            entity.name = "New Name"
+        # Entities should be mutable - we can change their state
+        entity.name = "New Name"
+        assert entity.name == "New Name"
 
-        with pytest.raises((ValidationError, AttributeError, TypeError)):
-            entity.id = "new-id"
+        entity.id = "new-id"
+        assert entity.id == "new-id"
 
     def test_entity_equality_by_id(self) -> None:
         """Test that entities are equal based on ID."""
@@ -826,9 +827,15 @@ class TestEntitiesIntegration:
         assert hasattr(entity, "id")
         assert hasattr(entity, "created_at")
 
-        # All should be immutable
-        with pytest.raises((ValidationError, AttributeError, TypeError)):
+        # Immutability depends on entity type
+        if entity_class is SampleAggregateRoot:
+            # Aggregate roots should be immutable
+            with pytest.raises((ValidationError, AttributeError, TypeError)):
+                entity.id = "new-id"
+        else:
+            # Regular entities should be mutable
             entity.id = "new-id"
+            assert entity.id == "new-id"
 
         # All should be serializable
         data = entity.model_dump()

@@ -12,7 +12,6 @@ from typing import cast
 import pytest
 from pydantic import BaseModel
 
-from flext_core.commands import FlextCommands
 from flext_core.core import flext_core
 from flext_core.entities import FlextEntity
 from flext_core.handlers import FlextHandlers
@@ -52,7 +51,7 @@ class TestCleanArchitecturePatterns:
                 return self.email_obj.validate_business_rules()
 
         # Application Layer - Use Cases (Commands/Handlers)
-        class CreateUserCommand(FlextCommands.Command):
+        class CreateUserCommand(BaseModel):
             """Application command."""
 
             name: str
@@ -216,7 +215,7 @@ class TestCleanArchitecturePatterns:
         """Test CQRS (Command Query Responsibility Segregation) pattern."""
 
         # Commands (Write Operations)
-        class UpdateUserCommand(FlextCommands.Command):
+        class UpdateUserCommand(BaseModel):
             """Command to update user information."""
 
             user_id: str
@@ -237,7 +236,7 @@ class TestCleanArchitecturePatterns:
                 return FlextResult.ok(f"User {command.user_id} updated")
 
         # Queries (Read Operations)
-        class GetUserQuery(FlextCommands.Query):
+        class GetUserQuery(BaseModel):
             """Query to get user information."""
 
             user_id: str

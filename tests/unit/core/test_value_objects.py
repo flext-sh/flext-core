@@ -1,656 +1,767 @@
-"""Comprehensive tests for FlextValueObject and value object functionality."""
+"""Comprehensive tests for value_objects.py module.
+
+This test suite provides complete coverage of the value object functionality
+including abstract base class behavior, validation patterns, factory methods,
+serialization capabilities, and complex payload conversion scenarios.
+
+Coverage Target: value_objects.py 63% → 95%+
+"""
 
 from __future__ import annotations
 
-import pytest
-from pydantic import Field, ValidationError
+import math
+from decimal import Decimal
 
+# Removed explicit Any - using object instead
+from unittest.mock import Mock, patch
+
+import pytest
+from pydantic import ValidationError
+
+from flext_core.exceptions import FlextValidationError
+from flext_core.payload import FlextPayload
 from flext_core.result import FlextResult
 from flext_core.value_objects import FlextValueObject, FlextValueObjectFactory
 
-# Constants
-EXPECTED_BULK_SIZE = 2
+pytestmark = [pytest.mark.unit, pytest.mark.core]
 
 
-class EmailAddress(FlextValueObject):
-    """Test email value object."""
-
-    email: str = Field(min_length=5, pattern=r"^[^@]+@[^@]+\.[^@]+$")
-
-    def validate_business_rules(self) -> FlextResult[None]:
-        """Validate email business rules."""
-        if not self.email or "@" not in self.email:
-            return FlextResult.fail("Email must contain @ symbol")
-
-        domain = self.email.split("@")[1]
-        if "." not in domain:
-            return FlextResult.fail("Email domain must contain a dot")
-
-        return FlextResult.ok(None)
+# =============================================================================
+# TEST VALUE OBJECTS - Concrete implementations for testing
+# =============================================================================
 
 
-class Money(FlextValueObject):
-    """Test money value object with real business operations - DRY REAL."""
-
-    amount: float = Field(ge=0)
-    currency: str = Field(min_length=3, max_length=3)
-
-    def validate_business_rules(self) -> FlextResult[None]:
-        """Validate money business rules."""
-        if self.amount < 0:
-            return FlextResult.fail("Amount cannot be negative")
-        if self.currency.upper() not in {"USD", "EUR", "GBP"}:
-            return FlextResult.fail("Unsupported currency")
-        return FlextResult.ok(None)
-
-    def add(self, other: Money) -> FlextResult[Money]:
-        """Add two money values with currency validation - DRY REAL."""
-        if self.currency != other.currency:
-            return FlextResult.fail("Currency mismatch")
-        try:
-            new_amount = self.amount + other.amount
-            return FlextResult.ok(Money(amount=new_amount, currency=self.currency))
-        except (ValueError, TypeError) as e:
-            return FlextResult.fail(f"Addition failed: {e}")
-
-
-class TestValueObjectsCoverage:
-    """Test cases for improving coverage of value_objects.py - DRY REFACTORED."""
-
-    def test_validate_field_with_field_definition_found(self) -> None:
-        """Test validate_field when field definition is found (lines 289-293)."""
-
-        # Create a value object with field
-        money = Money(amount=100.0, currency="USD")
-
-        # Note: Registry created but not used for this basic validation test
-
-        # Test field validation success path (lines 291-292)
-        # This tests the success branch of field validation
-        result = money.validate_field("currency", "USD")
-        # Should succeed (though it might not find the field def, that's OK)
-        assert result.success
-
-    def test_value_object_fallback_payload_creation(self) -> None:
-        """Test fallback payload creation (lines 391-400) - DRY REAL."""
-        money = Money(amount=50.0, currency="EUR")
-
-        # Access the to_payload method which uses fallback
-        payload = money.to_payload()
-
-        # DRY REAL: to_payload returns FlextPayload directly, not FlextResult
-        assert payload.data is not None
-        # Test that fallback data is created
-        assert isinstance(payload.data, dict)
-
-    def test_value_object_error_handling_paths(self) -> None:
-        """Test various error handling paths covering missing lines - DRY REAL."""
-        # Test line 80 (TYPE_CHECKING import usage)
-        money = Money(amount=25.0, currency="GBP")
-
-        # Test domain validation (actual method that exists)
-        domain_result = money.validate_business_rules()
-        assert domain_result.success
-
-        # Test flext validation
-        flext_result = money.validate_flext()
-        assert flext_result.data == money
-
-    def test_create_from_errors_edge_cases(self) -> None:
-        """Test error edge cases covering lines 318, 322, 325 - DRY REAL."""
-        import pytest
-        from pydantic_core import ValidationError
-
-        # Test with invalid money value (negative amount) - Pydantic should catch this
-        with pytest.raises(ValidationError) as exc_info:
-            Money(amount=-10.0, currency="USD")
-
-        # Verify the validation error is for amount
-        assert "amount" in str(exc_info.value)
-        assert "greater than or equal to 0" in str(exc_info.value)
-
-    def test_value_object_to_dict_edge_cases(self) -> None:
-        """Test to_dict edge cases covering line 356 - DRY REAL."""
-        money = Money(amount=75.0, currency="USD")
-
-        # Test model_dump method (actual Pydantic method)
-        dict_result = money.model_dump()
-        assert isinstance(dict_result, dict)
-        assert "amount" in dict_result
-        assert "currency" in dict_result
-
-        # Test basic dict conversion from mixin
-        basic_dict = money.to_dict_basic()
-        assert isinstance(basic_dict, dict)
-
-    # Remove this duplicate method - it's already in Money class above
-
-
-class InvalidValueObject(FlextValueObject):
-    """Test value object with validation issues."""
+class SimpleValueObject(FlextValueObject):
+    """Simple value object for basic testing."""
 
     value: str
 
     def validate_business_rules(self) -> FlextResult[None]:
-        """Return failure for testing purposes."""
-        return FlextResult.fail("This value object is always invalid")
+        """Simple validation - value cannot be empty."""
+        if not self.value or not self.value.strip():
+            return FlextResult.fail("Value cannot be empty")
+        return FlextResult.ok(None)
 
 
-class TestValueObjectCoverageImprovements:
-    """Test cases specifically for improving coverage of value_objects.py module."""
+class EmailAddress(FlextValueObject):
+    """Email address value object for testing."""
 
-    def test_value_object_equality_different_types(self) -> None:
-        """Test equality with different types (line 80)."""
-        email = EmailAddress(email="test@example.com")
-        money = Money(amount=100.0, currency="USD")
+    address: str
 
-        # Different types should not be equal
-        assert email != money
-
-    def test_value_object_hash_functionality(self) -> None:
-        """Test hash functionality for value objects."""
-        email1 = EmailAddress(email="test@example.com")
-        email2 = EmailAddress(email="test@example.com")
-        email3 = EmailAddress(email="other@example.com")
-
-        # Same values should have same hash
-        assert hash(email1) == hash(email2)
-
-        # Different values should have different hash
-        assert hash(email1) != hash(email3)
-
-        # Should be usable in sets
-        email_set = {email1, email2, email3}
-        assert len(email_set) == 2  # email1 and email2 are duplicates
-
-    def test_value_object_string_representation(self) -> None:
-        """Test string representation methods."""
-        email = EmailAddress(email="test@example.com")
-
-        # Test __repr__
-        repr_str = repr(email)
-        assert "EmailAddress" in repr_str
-        assert "test@example.com" in repr_str
-
-        # Test __str__
-        str_str = str(email)
-        assert isinstance(str_str, str)
-
-    def test_value_object_factory_create_success(self) -> None:
-        """Test factory create method with valid data."""
-        # Use the static method to create a factory function
-        email_factory = FlextValueObjectFactory.create_value_object_factory(
-            EmailAddress
-        )
-
-        result = email_factory(email="test@example.com")
-
-        assert result.success
-        assert isinstance(result.data, EmailAddress)
-        assert result.data.email == "test@example.com"
-
-    def test_value_object_factory_create_validation_error(self) -> None:
-        """Test factory create with validation error."""
-        # Use the static method to create a factory function
-        email_factory = FlextValueObjectFactory.create_value_object_factory(
-            EmailAddress
-        )
-
-        # Invalid email format
-        result = email_factory(email="invalid")
-
-        assert result.is_failure
-        assert "validation" in result.error.lower() or "string" in result.error.lower()
-
-    def test_value_object_is_valid_property(self) -> None:
-        """Test is_valid property (not method)."""
-        # Valid email - starts as False until validation is performed
-        valid_email = EmailAddress(email="test@example.com")
-        assert valid_email.is_valid is False  # Starts as False (None -> False)
-
-        # After marking as valid
-        valid_email.mark_valid()
-        assert valid_email.is_valid is True
-
-        # Test money with invalid currency (domain rule)
-        # Note: XXX is not in supported currencies list, but Pydantic allows 3-char strings
-        # money = Money(amount=100.0, currency="XXX")  # Valid Pydantic, invalid domain  # Unreachable code removed
-        # assert money.is_valid is False
-
-    def test_value_object_validation_errors_property(self) -> None:
-        """Test validation_errors property."""
-        # Test with valid object
-        valid_money = Money(amount=100.0, currency="USD")
-        errors = valid_money.validation_errors
-        assert isinstance(errors, list)
-        assert len(errors) == 0
-
-        # Test with invalid object (domain rules) - create object first then test
-        invalid_money = Money(amount=100.0, currency="XXX")  # Invalid currency
-        errors = invalid_money.validation_errors
-        assert isinstance(errors, list)
-        # Domain validation might not be executed automatically
-
-    def test_validate_field_not_found(self) -> None:
-        """Test validate_field with field not in registry (covers default path)."""
-        email = EmailAddress(email="test@example.com")
-
-        # Test with non-existent field (should return success - line 298)
-        result = email.validate_field("nonexistent_field", "any_value")
-        assert result.success
-
-    def test_validate_all_fields_success_path(self) -> None:
-        """Test validate_all_fields success path (line 327)."""
-        email = EmailAddress(email="test@example.com")
-
-        # This should return success (line 327)
-        result = email.validate_all_fields()
-        assert result.success
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Validate email format."""
+        if "@" not in self.address:
+            return FlextResult.fail("Invalid email format")
+        if "." not in self.address.split("@")[1]:
+            return FlextResult.fail("Invalid domain format")
+        return FlextResult.ok(None)
 
 
-class TestFlextValueObject:
-    """Test FlextValueObject base functionality."""
+class MoneyAmount(FlextValueObject):
+    """Money amount value object for testing."""
 
-    def test_email_value_object_creation(self) -> None:
-        """Test creating valid email value object."""
-        email = EmailAddress(email="test@example.com")
+    amount: Decimal
+    currency: str = "USD"
 
-        assert email.email == "test@example.com", (
-            f"Expected {'test@example.com'}, got {email.email}"
-        )
-        assert isinstance(email, EmailAddress)
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Validate money amount."""
+        if self.amount < 0:
+            return FlextResult.fail("Amount cannot be negative")
+        if self.currency not in {"USD", "EUR", "GBP"}:
+            return FlextResult.fail("Unsupported currency")
+        return FlextResult.ok(None)
 
-        # Test validation
-        validation_result = email.validate_business_rules()
-        assert validation_result.success
 
-        # Test Pydantic immutability
-        # ValidationError or AttributeError for frozen model
-        with pytest.raises((AttributeError, ValueError)):
-            email.email = "new@example.com"
+class ComplexValueObject(FlextValueObject):
+    """Complex value object with nested data for testing."""
 
-    def test_email_value_object_invalid_email(self) -> None:
-        """Test email value object with invalid email."""
-        # Test Pydantic validation failure
+    name: str
+    metadata: dict[str, object]
+    tags: list[str]
+    settings: dict[str, bool]
+
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Complex validation."""
+        if len(self.name) < 2:
+            return FlextResult.fail("Name too short")
+        if not self.metadata:
+            return FlextResult.fail("Metadata required")
+        return FlextResult.ok(None)
+
+
+class InvalidValueObject(FlextValueObject):
+    """Value object that always fails validation for testing."""
+
+    data: str
+
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Always fails validation."""
+        return FlextResult.fail("Always invalid")
+
+
+class SerializationTestValueObject(FlextValueObject):
+    """Value object with problematic serialization for testing."""
+
+    name: str
+    callback: object = None  # This will cause serialization issues
+
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Simple validation."""
+        if not self.name:
+            return FlextResult.fail("Name required")
+        return FlextResult.ok(None)
+
+
+# =============================================================================
+# BASIC FUNCTIONALITY TESTS
+# =============================================================================
+
+
+class TestFlextValueObjectBasics:
+    """Test basic FlextValueObject functionality."""
+
+    def test_value_object_creation_success(self) -> None:
+        """Test successful value object creation."""
+        vo = SimpleValueObject(value="test")
+        assert vo.value == "test"
+        assert isinstance(vo, FlextValueObject)
+
+    def test_value_object_creation_with_validation(self) -> None:
+        """Test value object creation with validation."""
+        email = EmailAddress(address="user@example.com")
+        assert email.address == "user@example.com"
+
+    def test_value_object_immutability(self) -> None:
+        """Test that value objects are immutable."""
+        vo = SimpleValueObject(value="test")
 
         with pytest.raises(ValidationError):
-            EmailAddress(email="invalid-email")
-
-        # Test domain rule validation failure
-        # Create with minimal validation passing, then test domain rules
-        try:
-            email = EmailAddress(email="test@invalid")
-            validation_result = email.validate_business_rules()
-            assert validation_result.is_failure
-            assert validation_result.error is not None
-            assert "domain must contain a dot" in validation_result.error, (
-                f"Expected {'domain must contain a dot'}, got {validation_result.error}"
-            )
-        except (ValidationError, ValueError):
-            # If Pydantic validation prevents creation, that's also valid
-            pytest.skip("Pydantic validation prevents object creation")
-
-    def test_money_value_object_operations(self) -> None:
-        """Test money value object with operations."""
-        money1 = Money(amount=100.0, currency="USD")
-        money2 = Money(amount=50.0, currency="USD")
-
-        # Test basic properties
-        assert money1.amount == 100.0, f"Expected {100.0}, got {money1.amount}"
-        assert money1.currency == "USD"
-
-        # Test domain validation
-        validation_result = money1.validate_business_rules()
-        assert validation_result.success
-
-        # Test addition operation
-        add_result = money1.add(money2)
-        assert add_result.success
-        assert add_result.data is not None
-        result_money = add_result.data
-        assert result_money.amount == 150.0, (
-            f"Expected {150.0}, got {result_money.amount}"
-        )
-        assert result_money.currency == "USD"
-
-    def test_money_value_object_currency_mismatch(self) -> None:
-        """Test money addition with different currencies."""
-        money_usd = Money(amount=100.0, currency="USD")
-        money_eur = Money(amount=50.0, currency="EUR")
-
-        add_result = money_usd.add(money_eur)
-        assert add_result.is_failure
-        assert add_result.error is not None
-        assert "Currency mismatch" in add_result.error, (
-            f"Expected {'Currency mismatch'} in {add_result.error}"
-        )
+            vo.value = "changed"  # Should fail due to frozen=True
 
     def test_value_object_equality(self) -> None:
-        """Test value object equality based on attributes."""
-        email1 = EmailAddress(email="test@example.com")
-        email2 = EmailAddress(email="test@example.com")
-        email3 = EmailAddress(email="other@example.com")
+        """Test attribute-based equality."""
+        vo1 = SimpleValueObject(value="test")
+        vo2 = SimpleValueObject(value="test")
+        vo3 = SimpleValueObject(value="different")
 
-        # Value objects should be equal based on content
-        assert email1 == email2, f"Expected {email2}, got {email1}"
-        assert email1 != email3
+        assert vo1 == vo2  # Same values
+        assert vo1 != vo3  # Different values
+        assert vo1 is not vo2  # Different instances
 
-        # Test hash consistency
-        assert hash(email1) == hash(email2), (
-            f"Expected {hash(email2)}, got {hash(email1)}"
+    def test_value_object_hash_consistency(self) -> None:
+        """Test hash consistency for value objects."""
+        vo1 = SimpleValueObject(value="test")
+        vo2 = SimpleValueObject(value="test")
+        vo3 = SimpleValueObject(value="different")
+
+        assert hash(vo1) == hash(vo2)  # Same values, same hash
+        assert hash(vo1) != hash(vo3)  # Different values, different hash
+
+    def test_complex_value_object_hash(self) -> None:
+        """Test hash with complex nested data."""
+        vo = ComplexValueObject(
+            name="test",
+            metadata={"key": "value", "nested": {"a": 1}},
+            tags=["tag1", "tag2"],
+            settings={"enabled": True, "debug": False},
         )
-        assert hash(email1) != hash(email3)
 
-    def test_value_object_string_representation(self) -> None:
-        """Test string representation of value objects."""
-        email = EmailAddress(email="test@example.com")
-        str_repr = str(email)
+        # Should be able to hash complex structures
+        hash_value = hash(vo)
+        assert isinstance(hash_value, int)
 
-        assert "EmailAddress" in str_repr, f"Expected {'EmailAddress'} in {str_repr}"
-        assert "test@example.com" in str_repr
 
-    def test_value_object_logging_capability(self) -> None:
-        """Test value object logging capabilities."""
-        email = EmailAddress(email="test@example.com")
+# =============================================================================
+# VALIDATION TESTS
+# =============================================================================
 
-        # Test logger access (inherited from FlextLoggableMixin)
-        logger = email.logger
-        assert logger is not None
 
-    def test_value_object_validation_mixin(self) -> None:
-        """Test value object validation mixin functionality."""
-        email = EmailAddress(email="test@example.com")
+class TestValueObjectValidation:
+    """Test value object validation functionality."""
 
-        # Test validation state (inherited from FlextValueObjectMixin)
-        # Note: is_valid may start as None until validation is performed
-        validation_result = email.validate_business_rules()
-        assert validation_result.success
+    def test_validate_business_rules_success(self) -> None:
+        """Test successful business rule validation."""
+        vo = SimpleValueObject(value="test")
+        result = vo.validate_business_rules()
+        assert result.success is True
 
-    def test_value_object_hash_complex_data(self) -> None:
-        """Test hash with complex data structures including sets and nested dicts."""
-        # Test the make_hashable function with sets, lists, and nested dicts
-        complex_data = Money(amount=100.0, currency="USD")
+    def test_validate_business_rules_failure(self) -> None:
+        """Test business rule validation failure."""
+        vo = SimpleValueObject(value="")
+        result = vo.validate_business_rules()
+        assert result.success is False
+        assert "cannot be empty" in result.error
 
-        # Create another money object with same values for hash consistency
-        complex_data2 = Money(amount=100.0, currency="USD")
+    def test_validate_flext_success(self) -> None:
+        """Test FlextValidation success."""
+        vo = SimpleValueObject(value="test")
+        result = vo.validate_flext()
+        assert result.success is True
+        assert result.data is vo
 
-        # Test hash consistency
-        if hash(complex_data) != hash(complex_data2):
-            msg = "Expected same hash for equal objects"
-            raise AssertionError(msg)
+    def test_validate_flext_failure(self) -> None:
+        """Test FlextValidation failure."""
+        vo = SimpleValueObject(value="")
+        result = vo.validate_flext()
+        assert result.success is False
+        assert "cannot be empty" in result.error
 
-        # Test with different currency
-        different_currency = Money(amount=100.0, currency="EUR")
-        assert hash(complex_data) != hash(different_currency)
+    def test_validate_flext_with_logging(self) -> None:
+        """Test FlextValidation with logging output."""
+        vo = InvalidValueObject(data="test")
 
-    def test_value_object_subclass_tracking(self) -> None:
-        """Test ValueObject subclass tracking functionality."""
+        # Patch the logger factory instead of the instance logger
+        with patch(
+            "flext_core.loggings.FlextLoggerFactory.get_logger"
+        ) as mock_get_logger:
+            mock_logger = Mock()
+            mock_get_logger.return_value = mock_logger
+            result = vo.validate_flext()
+            assert result.success is False
 
-        # This test covers the __init_subclass__ method
-        class CustomValueObject(FlextValueObject):
-            """Test custom value object for subclass tracking."""
+    def test_validate_field_with_registry(self) -> None:
+        """Test field validation using registry."""
+        vo = SimpleValueObject(value="test")
 
-            value: str
+        # Test with non-existent field (should pass)
+        result = vo.validate_field("unknown_field", "value")
+        assert result.success is True
 
-            def validate_business_rules(self) -> FlextResult[None]:
-                if not self.value:
-                    return FlextResult.fail("Value cannot be empty")
-                return FlextResult.ok(None)
+    def test_validate_all_fields(self) -> None:
+        """Test validation of all fields."""
+        vo = SimpleValueObject(value="test")
+        result = vo.validate_all_fields()
+        assert result.success is True  # No registered fields to validate
 
-        # Create instance to trigger subclass tracking
-        custom_vo = CustomValueObject(value="test")
-        assert custom_vo.value == "test"
+    def test_validate_all_fields_with_internal_fields(self) -> None:
+        """Test field validation skips internal fields."""
 
-        # Verify domain validation works
-        validation_result = custom_vo.validate_business_rules()
-        assert validation_result.success
+        # Create mock object with internal field
+        class TestVO(SimpleValueObject):
+            _internal: str = "private"
 
-    def test_value_object_utility_inheritance(self) -> None:
-        """Test utility inheritance in value objects."""
-        email = EmailAddress(email="test@example.com")
+        vo = TestVO(value="test")
+        result = vo.validate_all_fields()
+        assert result.success is True
 
-        # Test generator utility (inherited from FlextGenerators)
-        entity_id = email.generate_entity_id()
-        assert isinstance(entity_id, str)
-        assert len(entity_id) > 0
 
-        # Test timestamp generation
-        timestamp = email.generate_timestamp()
-        assert isinstance(timestamp, float)
-        assert timestamp > 0
+# =============================================================================
+# STRING REPRESENTATION AND FORMATTING TESTS
+# =============================================================================
 
-    def test_value_object_payload_conversion(self) -> None:
-        """Test payload conversion functionality."""
-        email = EmailAddress(email="test@example.com")
 
-        payload = email.to_payload()
-        assert payload is not None
+class TestValueObjectFormatting:
+    """Test value object string formatting."""
 
+    def test_format_dict_simple(self) -> None:
+        """Test dictionary formatting."""
+        vo = SimpleValueObject(value="test")
+        data = {"name": "test", "count": 42, "active": True}
+        formatted = vo.format_dict(data)
+
+        assert "name='test'" in formatted
+        assert "count=42" in formatted
+        assert "active=True" in formatted
+
+    def test_format_dict_complex(self) -> None:
+        """Test formatting complex dictionary."""
+        vo = SimpleValueObject(value="test")
+        data = {
+            "string": "value",
+            "number": 123,
+            "boolean": False,
+            "none_val": None,
+            "list": [1, 2, 3],
+        }
+        formatted = vo.format_dict(data)
+
+        assert "string='value'" in formatted
+        assert "number=123" in formatted
+        assert "boolean=False" in formatted
+
+    def test_str_representation(self) -> None:
+        """Test string representation."""
+        vo = SimpleValueObject(value="test")
+        str_repr = str(vo)
+
+        assert "SimpleValueObject" in str_repr
+        assert "value='test'" in str_repr
+
+    def test_str_representation_complex(self) -> None:
+        """Test string representation with complex data."""
+        vo = ComplexValueObject(
+            name="test",
+            metadata={"key": "value"},
+            tags=["tag1", "tag2"],
+            settings={"enabled": True},
+        )
+        str_repr = str(vo)
+
+        assert "ComplexValueObject" in str_repr
+        assert "name='test'" in str_repr
+
+
+# =============================================================================
+# PAYLOAD CONVERSION TESTS
+# =============================================================================
+
+
+class TestValueObjectPayloadConversion:
+    """Test value object payload conversion."""
+
+    def test_to_payload_success(self) -> None:
+        """Test successful payload conversion."""
+        vo = SimpleValueObject(value="test")
+
+        payload = vo.to_payload()
+
+        assert isinstance(payload, FlextPayload)
         payload_data = payload.data
-        assert payload_data is not None
-        assert "value_object_data" in payload_data, (
-            f"Expected {'value_object_data'} in {payload_data}"
-        )
+        assert "value_object_data" in payload_data
+        assert "class_info" in payload_data
         assert "validation_status" in payload_data
-        assert "class_info" in payload_data, (
-            f"Expected {'class_info'} in {payload_data}"
-        )
 
-        # Check validation status
-        validation_status = payload_data["validation_status"]
-        assert validation_status in {"valid", "invalid"}
+    def test_to_payload_with_validation_failure(self) -> None:
+        """Test payload conversion with validation failure."""
+        # Use a simple value object that will pass payload creation
+        vo = SimpleValueObject(value="test")
 
-    def test_value_object_field_validation(self) -> None:
-        """Test field validation functionality."""
-        email = EmailAddress(email="test@example.com")
+        # Create a mock payload with expected data structure
+        mock_payload_data = {
+            "value_object_data": {"value": "test"},
+            "class_info": f"{vo.__class__.__module__}.{vo.__class__.__name__}",
+            "validation_status": "invalid",
+        }
+        mock_payload = Mock()
+        mock_payload.data = mock_payload_data
 
-        # Test individual field validation
-        field_result = email.validate_field("email", "valid@example.com")
-        # Result depends on field registry availability
-        assert isinstance(field_result, FlextResult)
+        # Mock both validation and payload creation to avoid generic type issues
+        with (
+            patch.object(
+                SimpleValueObject,
+                "validate_business_rules",
+                return_value=FlextResult.fail("Validation failed"),
+            ),
+            patch.object(
+                FlextPayload, "create", return_value=FlextResult.ok(mock_payload)
+            ),
+        ):
+            payload = vo.to_payload()
 
-        # Test all fields validation
-        all_fields_result = email.validate_all_fields()
-        assert isinstance(all_fields_result, FlextResult)
+            # Should still create payload but mark as invalid
+            assert payload is not None
+            payload_data = payload.data
+            assert payload_data["validation_status"] == "invalid"
 
-    def test_invalid_value_object(self) -> None:
-        """Test value object that fails domain validation."""
-        invalid_obj = InvalidValueObject(value="test")
+    def test_to_payload_serialization_fallback(self) -> None:
+        """Test payload conversion with serialization fallback."""
+        vo = SerializationTestValueObject(name="test", callback=lambda x: x)
 
-        # Domain validation should fail
-        validation_result = invalid_obj.validate_business_rules()
-        assert validation_result.is_failure
-        assert validation_result.error is not None
-        assert "always invalid" in validation_result.error, (
-            f"Expected {'always invalid'} in {validation_result.error}"
-        )
+        # Mock FlextPayload.create to fail first time, succeed second
+        original_create = FlextPayload.create
+        call_count = 0
 
-        # Validate_flext should also reflect this
-        flext_validation = invalid_obj.validate_flext()
-        assert flext_validation.is_failure
+        def mock_create(data, **kwargs):
+            nonlocal call_count
+            call_count += 1
+            if call_count == 1:
+                return FlextResult.fail("Serialization error")
+            return original_create(data, **kwargs)
 
-    def test_value_object_model_operations(self) -> None:
-        """Test Pydantic model operations."""
-        email = EmailAddress(email="test@example.com")
+        with patch.object(FlextPayload, "create", side_effect=mock_create):
+            payload = vo.to_payload()
+            assert isinstance(payload, FlextPayload)
 
-        # Test model dump
-        data = email.model_dump()
-        assert isinstance(data, dict)
-        assert data["email"] == "test@example.com", (
-            f"Expected {'test@example.com'}, got {data['email']}"
-        )
+    def test_to_payload_complete_failure(self) -> None:
+        """Test payload conversion complete failure."""
+        vo = SerializationTestValueObject(name="test", callback=lambda x: x)
 
-        # Test model copy (should work for value objects)
-        email_copy = email.model_copy()
-        assert email_copy == email, f"Expected {email}, got {email_copy}"
-        assert email_copy is not email  # Different instances
+        # Mock both attempts to fail
+        with (
+            patch.object(
+                FlextPayload, "create", return_value=FlextResult.fail("Error")
+            ),
+            pytest.raises(FlextValidationError),
+        ):
+            vo.to_payload()
 
-    def test_value_object_inheritance_behavior(self) -> None:
-        """Test that value object properly inherits from all mixins."""
-        email = EmailAddress(email="test@example.com")
+    def test_extract_serializable_attributes_pydantic(self) -> None:
+        """Test serializable attribute extraction via Pydantic."""
+        vo = SimpleValueObject(value="test")
+        result = vo._extract_serializable_attributes()
 
-        # Test multiple inheritance is working
-        assert hasattr(email, "logger")  # From FlextLoggableMixin
-        assert hasattr(email, "is_valid")  # From FlextValueObjectMixin
-        assert hasattr(email, "generate_entity_id")  # From FlextGenerators
-        assert hasattr(email, "format_dict")  # From FlextFormatters (or own method)
+        assert isinstance(result, dict)
+        assert "value" in result
+        assert result["value"] == "test"
+
+    def test_extract_serializable_attributes_manual(self) -> None:
+        """Test manual attribute extraction directly."""
+        vo = SimpleValueObject(value="test")
+
+        # Test the manual extraction method directly
+        result = vo._try_manual_extraction()
+
+        assert isinstance(result, dict)
+        # Should contain the value attribute
+        assert "value" in result
+        assert result["value"] == "test"
+
+    def test_extract_serializable_no_model_dump(self) -> None:
+        """Test the fallback info when neither Pydantic nor manual extraction work."""
+        vo = SimpleValueObject(value="test")
+
+        # Test the fallback info method directly
+        result = vo._get_fallback_info()
+
+        assert isinstance(result, dict)
+        assert "class_name" in result
+        assert result["class_name"] == "SimpleValueObject"
+
+    def test_process_serializable_values(self) -> None:
+        """Test processing of serializable values."""
+        vo = SimpleValueObject(value="test")
+        data = {
+            "string": "value",
+            "int": 42,
+            "float": math.pi,
+            "bool": True,
+            "none": None,
+            "complex": {"nested": "object"},
+        }
+
+        result = vo._process_serializable_values(data)
+
+        assert result["string"] == "value"
+        assert result["int"] == 42
+        assert result["float"] == math.pi
+        assert result["bool"] is True
+        assert result["none"] is None
+        assert isinstance(result["complex"], str)  # Should be converted to string
+
+    def test_should_include_attribute(self) -> None:
+        """Test attribute inclusion logic."""
+        vo = SimpleValueObject(value="test")
+
+        assert vo._should_include_attribute("value") is True
+        assert vo._should_include_attribute("_private") is False
+        assert vo._should_include_attribute("validate_business_rules") is False
+
+    def test_safely_get_attribute(self) -> None:
+        """Test safe attribute retrieval."""
+        vo = SimpleValueObject(value="test")
+
+        # Test successful retrieval
+        result = vo._safely_get_attribute("value")
+        assert result == "test"
+
+        # Test with non-existent attribute
+        result = vo._safely_get_attribute("nonexistent")
+        assert result is None
+
+    def test_safely_get_attribute_with_str_method(self) -> None:
+        """Test safe attribute retrieval with __str__ conversion."""
+
+        class ObjectWithStr:
+            def __str__(self):
+                return "string_repr"
+
+        vo = SimpleValueObject(value="test")
+        # Create a test attribute on the value object
+        object.__setattr__(vo, "_test_attr", ObjectWithStr())
+
+        result = vo._safely_get_attribute("_test_attr")
+        assert result == "string_repr"
+
+    def test_safely_get_attribute_exception(self) -> None:
+        """Test safe attribute retrieval with exception."""
+        vo = SimpleValueObject(value="test")
+
+        # Test with a non-existent attribute - this will naturally raise AttributeError
+        result = vo._safely_get_attribute("nonexistent_attribute")
+        assert result is None
+
+    def test_get_fallback_info(self) -> None:
+        """Test fallback information generation."""
+        vo = SimpleValueObject(value="test")
+        result = vo._get_fallback_info()
+
+        assert "class_name" in result
+        assert "module" in result
+        assert result["class_name"] == "SimpleValueObject"
+
+
+# =============================================================================
+# SUBCLASS TRACKING TESTS
+# =============================================================================
+
+
+class TestValueObjectSubclassing:
+    """Test value object subclass tracking."""
+
+    def test_init_subclass_logging(self) -> None:
+        """Test that subclass creation is logged."""
+        with patch(
+            "flext_core.loggings.FlextLoggerFactory.get_logger"
+        ) as mock_get_logger:
+            mock_logger = Mock()
+            mock_get_logger.return_value = mock_logger
+
+            # Create a new subclass
+            class TestSubclass(FlextValueObject):
+                test_field: str
+
+                def validate_business_rules(self) -> FlextResult[None]:
+                    return FlextResult.ok(None)
+
+            # Check that logging was called
+            mock_get_logger.assert_called()
+            mock_logger.debug.assert_called()
+
+
+# =============================================================================
+# FACTORY TESTS
+# =============================================================================
 
 
 class TestFlextValueObjectFactory:
     """Test FlextValueObjectFactory functionality."""
 
-    def test_factory_email_creation(self) -> None:
-        """Test factory creation of email value objects."""
-        # Create factory for EmailAddress
-        email_factory = FlextValueObjectFactory.create_value_object_factory(
-            EmailAddress,
+    def test_create_value_object_factory_basic(self) -> None:
+        """Test basic factory creation."""
+        factory = FlextValueObjectFactory.create_value_object_factory(SimpleValueObject)
+
+        assert callable(factory)
+
+        # Test factory usage
+        result = factory(value="test")
+        assert result.success is True
+        assert isinstance(result.data, SimpleValueObject)
+        assert result.data.value == "test"
+
+    def test_create_value_object_factory_with_defaults(self) -> None:
+        """Test factory creation with defaults."""
+        defaults = {"currency": "EUR"}
+        factory = FlextValueObjectFactory.create_value_object_factory(
+            MoneyAmount, defaults=defaults
         )
-        email_result = email_factory(email="test@example.com")
 
-        if email_result.success:
-            email = email_result.data
-            assert email.email == "test@example.com", (
-                f"Expected {'test@example.com'}, got {email.email}"
-            )
-        else:
-            # Factory might not be fully implemented
-            assert email_result.is_failure
+        # Test with defaults
+        result = factory(amount=Decimal("10.00"))
+        assert result.success is True
+        assert result.data.currency == "EUR"  # Default applied
 
-    def test_factory_invalid_email(self) -> None:
-        """Test factory with invalid email."""
-        # Create factory for EmailAddress
-        email_factory = FlextValueObjectFactory.create_value_object_factory(
-            EmailAddress,
+        # Test overriding defaults
+        result = factory(amount=Decimal("20.00"), currency="USD")
+        assert result.success is True
+        assert result.data.currency == "USD"  # Override applied
+
+    def test_factory_validation_failure(self) -> None:
+        """Test factory with validation failure."""
+        factory = FlextValueObjectFactory.create_value_object_factory(SimpleValueObject)
+
+        result = factory(value="")  # Should fail validation
+        assert result.success is False
+        assert "cannot be empty" in result.error
+
+    def test_factory_creation_failure(self) -> None:
+        """Test factory with creation failure."""
+        factory = FlextValueObjectFactory.create_value_object_factory(SimpleValueObject)
+
+        # Pass invalid parameter type
+        result = factory(value=123)  # Should be string
+        assert result.success is False
+        assert "Failed to create" in result.error
+
+    def test_factory_without_defaults(self) -> None:
+        """Test factory creation without defaults."""
+        factory = FlextValueObjectFactory.create_value_object_factory(
+            SimpleValueObject, defaults=None
         )
-        email_result = email_factory(email="invalid-email")
-        assert email_result.is_failure
 
-    def test_factory_money_creation(self) -> None:
-        """Test factory creation of money value objects."""
-        # Create factory for Money
-        money_factory = FlextValueObjectFactory.create_value_object_factory(Money)
-        money_result = money_factory(amount=100.0, currency="USD")
+        result = factory(value="test")
+        assert result.success is True
+        assert result.data.value == "test"
 
-        if money_result.success:
-            money = money_result.data
-            assert money.amount == 100.0, f"Expected {100.0}, got {money.amount}"
-            assert money.currency == "USD"
-        else:
-            # Factory might not be fully implemented
-            assert money_result.is_failure
 
-    def test_factory_invalid_money(self) -> None:
-        """Test factory with invalid money."""
-        # Create factory for Money
-        money_factory = FlextValueObjectFactory.create_value_object_factory(Money)
-        money_result = money_factory(amount=-100.0, currency="USD")
-        assert money_result.is_failure
+# =============================================================================
+# INTEGRATION TESTS
+# =============================================================================
+
+
+class TestValueObjectIntegration:
+    """Test integration scenarios with value objects."""
+
+    def test_value_object_with_complex_validation(self) -> None:
+        """Test value object with complex validation scenario."""
+        email = EmailAddress(address="user@example.com")
+
+        # Test validation
+        validation_result = email.validate_flext()
+        assert validation_result.success is True
+
+        # Test payload conversion
+        payload = email.to_payload()
+        assert isinstance(payload, FlextPayload)
+
+        # Test string representation
+        str_repr = str(email)
+        assert "EmailAddress" in str_repr
+        assert "user@example.com" in str_repr
+
+    def test_value_object_equality_and_hashing(self) -> None:
+        """Test complex equality and hashing scenarios."""
+        money1 = MoneyAmount(amount=Decimal("10.00"), currency="USD")
+        money2 = MoneyAmount(amount=Decimal("10.00"), currency="USD")
+        money3 = MoneyAmount(amount=Decimal("10.00"), currency="EUR")
+
+        # Test equality
+        assert money1 == money2
+        assert money1 != money3
+
+        # Test hashing for use in sets/dicts
+        money_set = {money1, money2, money3}
+        assert len(money_set) == 2  # money1 and money2 are equal
+
+        # Test as dict keys
+        money_dict = {money1: "first", money2: "second", money3: "third"}
+        assert len(money_dict) == 2  # money1 and money2 share same key
+
+    def test_value_object_with_nested_structures(self) -> None:
+        """Test value objects with complex nested data."""
+        complex_vo = ComplexValueObject(
+            name="test",
+            metadata={"nested": {"deep": {"value": 42}}},
+            tags=["tag1", "tag2"],
+            settings={"enabled": True, "debug": False},
+        )
+
+        # Test creation and validation
+        validation_result = complex_vo.validate_flext()
+        assert validation_result.success is True
+
+        # Test hash works with nested structures
+        hash_value = hash(complex_vo)
+        assert isinstance(hash_value, int)
+
+        # Test equality with same nested structures
+        complex_vo2 = ComplexValueObject(
+            name="test",
+            metadata={"nested": {"deep": {"value": 42}}},
+            tags=["tag1", "tag2"],
+            settings={"enabled": True, "debug": False},
+        )
+        assert complex_vo == complex_vo2
+
+    def test_factory_integration_scenario(self) -> None:
+        """Test complete factory integration scenario."""
+        # Create factory with defaults
+        email_factory = FlextValueObjectFactory.create_value_object_factory(
+            EmailAddress, defaults={}
+        )
+
+        # Create multiple emails
+        emails = []
+        test_addresses = ["user1@example.com", "user2@test.org", "REDACTED_LDAP_BIND_PASSWORD@company.net"]
+
+        for address in test_addresses:
+            result = email_factory(address=address)
+            assert result.success is True
+            emails.append(result.data)
+
+        # Test all emails are valid and unique
+        assert len(emails) == 3
+        assert len(set(emails)) == 3  # All unique due to different addresses
+
+        # Test string representation for all
+        for email in emails:
+            str_repr = str(email)
+            assert "EmailAddress" in str_repr
+            assert email.address in str_repr
+
+
+# =============================================================================
+# EDGE CASE TESTS
+# =============================================================================
 
 
 class TestValueObjectEdgeCases:
     """Test edge cases and error conditions."""
 
-    def test_value_object_with_complex_data(self) -> None:
-        """Test value object with complex nested data."""
-
-        class ComplexValueObject(FlextValueObject):
-            data: dict[str, object]
-            items: list[str]
-
-            def validate_business_rules(self) -> FlextResult[None]:
-                if not self.data or not self.items:
-                    return FlextResult.fail("Data and items are required")
-                return FlextResult.ok(None)
-
-        # Rebuild the model to properly handle the Any type
-        ComplexValueObject.model_rebuild()
-
-        complex_obj = ComplexValueObject(
-            data={"key": "value", "nested": {"inner": "data"}},
-            items=["item1", "item2"],
+    def test_hash_with_unhashable_nested_data(self) -> None:
+        """Test hashing with deeply nested unhashable data."""
+        complex_data = ComplexValueObject(
+            name="test",
+            metadata={
+                "list": [1, 2, {"nested": "dict"}],
+                "set": {"a", "b", "c"},
+                "nested_dict": {"level2": {"level3": ["deep", "list"]}},
+            },
+            tags=["tag1", "tag2"],
+            settings={"enabled": True},
         )
 
-        assert complex_obj.data["key"] == "value", (
-            f"Expected {'value'}, got {complex_obj.data['key']}"
-        )
-        assert len(complex_obj.items) == EXPECTED_BULK_SIZE
+        # Should successfully hash despite complex nested structures
+        hash_value = hash(complex_data)
+        assert isinstance(hash_value, int)
 
-        validation_result = complex_obj.validate_business_rules()
-        assert validation_result.success
+    def test_equality_with_different_types(self) -> None:
+        """Test equality comparison with different types."""
+        vo = SimpleValueObject(value="test")
 
-    def test_value_object_serialization(self) -> None:
-        """Test value object serialization capabilities."""
-        email = EmailAddress(email="test@example.com")
+        # Compare with non-value object
+        assert vo != "string"
+        assert vo != 123
+        assert vo is not None
+        assert vo != []
 
-        # Test JSON serialization
-        json_str = email.model_dump_json()
-        assert isinstance(json_str, str)
-        assert "test@example.com" in json_str, (
-            f"Expected {'test@example.com'} in {json_str}"
-        )
+    def test_serialization_with_circular_references(self) -> None:
+        """Test serialization handling of problematic data."""
+        # Create value object with callback that could cause issues
+        vo = SerializationTestValueObject(name="test")
 
-    def test_value_object_validation_chaining(self) -> None:
-        """Test chaining multiple validation methods."""
-        email = EmailAddress(email="test@example.com")
+        # Test extraction methods handle edge cases
+        result = vo._extract_serializable_attributes()
+        assert isinstance(result, dict)
+        assert "name" in result
 
-        # Chain multiple validations
-        domain_result = email.validate_business_rules()
-        flext_result = email.validate_flext()
-        field_result = email.validate_all_fields()
+    def test_field_validation_error_handling(self) -> None:
+        """Test field validation with error conditions."""
+        vo = SimpleValueObject(value="test")
 
-        # All should be consistent
-        if domain_result.success:
-            # If domain rules pass, flext validation should also consider this
-            assert flext_result.success or flext_result.is_failure  # Either is valid
+        # Mock field validation to return error
+        with patch("flext_core.fields.FlextFields.get_field_by_name") as mock_get:
+            mock_field = Mock()
+            mock_field.validate_value.return_value = FlextResult.fail("Field error")
+            mock_get.return_value = FlextResult.ok(mock_field)
 
-        # Field validation depends on field registry
-        assert isinstance(field_result, FlextResult)
+            result = vo.validate_field("test_field", "value")
+            assert result.success is False
+            assert "Field error" in result.error
 
-    def test_value_object_error_handling(self) -> None:
-        """Test error handling in value object operations."""
-        money = Money(amount=100.0, currency="USD")
+    def test_all_fields_validation_with_errors(self) -> None:
+        """Test validation of all fields with multiple errors."""
+        vo = SimpleValueObject(value="test")
 
-        # Test operations that might fail
-        # Add with invalid object
-        with pytest.raises((AttributeError, TypeError)):
-            money.add(None)
+        # Mock field validation to return specific errors for specific fields
+        def mock_validate_field(field_name, field_value):
+            if field_name == "field1":
+                return FlextResult.fail("Field1 error")
+            if field_name == "field2":
+                return FlextResult.fail("Field2 error")
+            return FlextResult.ok(None)
 
-    def test_value_object_performance(self) -> None:
-        """Test performance characteristics of value objects."""
-        # Create many value objects
-        emails = []
-        for i in range(100):
-            email = EmailAddress(email=f"user{i}@example.com")
-            emails.append(email)
-
-        assert len(emails) == 100, f"Expected {100}, got {len(emails)}"
-
-        # Test that they all validate correctly
-        for email in emails[:10]:  # Test subset for performance
-            validation_result = email.validate_business_rules()
-            assert validation_result.success
-
-    def test_value_object_memory_efficiency(self) -> None:
-        """Test memory efficiency of value objects."""
-        # Create identical value objects
-        emails = [EmailAddress(email="test@example.com") for _ in range(10)]
-
-        # They should all be equal
-        for i in range(1, len(emails)):
-            assert emails[0] == emails[i], f"Expected {emails[i]}, got {emails[0]}"
-            assert hash(emails[0]) == hash(emails[i])
-
-    def test_value_object_thread_safety(self) -> None:
-        """Test basic thread safety of value objects."""
-        email = EmailAddress(email="test@example.com")
-
-        # Immutable objects should be thread-safe
-        original_email = email.email
-
-        # Multiple access should be consistent
-        for _ in range(10):
-            assert email.email == original_email, (
-                f"Expected {original_email}, got {email.email}"
-            )
-            validation_result = email.validate_business_rules()
-            assert validation_result.success
+        with (
+            patch.object(
+                SimpleValueObject, "validate_field", side_effect=mock_validate_field
+            ),
+            patch.object(
+                SimpleValueObject,
+                "model_dump",
+                return_value={"field1": "val1", "field2": "val2"},
+            ),
+        ):
+            result = vo.validate_all_fields()
+            assert result.success is False
+            assert "Field validation errors" in result.error
+            assert "Field1 error" in result.error
+            assert "Field2 error" in result.error

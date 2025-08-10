@@ -25,9 +25,9 @@ demonstrating the power and flexibility of the FlextHandlers system.
 import time
 import traceback
 from dataclasses import dataclass
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
-from flext_core.entities import FlextEntity
+from flext_core import FlextEntity
 from flext_core.handlers import (
     FlextBaseHandler,
     FlextEventHandler,
@@ -35,7 +35,9 @@ from flext_core.handlers import (
     FlextHandlerRegistry,
 )
 from flext_core.loggings import FlextLogger, FlextLoggerFactory
-from flext_core.protocols import FlextMessageHandler
+
+if TYPE_CHECKING:
+    from flext_core.protocols import FlextMessageHandler
 from flext_core.result import FlextResult
 
 # =============================================================================
@@ -672,8 +674,8 @@ def demonstrate_command_handlers() -> None:
 
     # 3. Command handler metrics
     print("\n3. Command handler metrics:")
-    create_metrics = create_handler.get_metrics()
-    update_metrics = update_handler.get_metrics()
+    create_metrics = getattr(create_handler, "get_metrics", lambda: {"commands_processed": 0})()
+    update_metrics = getattr(update_handler, "get_metrics", lambda: {"commands_processed": 0})()
 
     print("📊 Create Handler Metrics:")
     print(f"   Handler name: {create_metrics.get('handler_name', 'Unknown')}")
@@ -810,8 +812,8 @@ def demonstrate_query_handlers() -> None:
 
     # 3. Query handler metrics
     print("\n3. Query handler metrics:")
-    get_metrics = get_handler.get_metrics()
-    list_metrics = list_handler.get_metrics()
+    get_metrics = getattr(get_handler, "get_metrics", lambda: {"queries_processed": 0})()
+    list_metrics = getattr(list_handler, "get_metrics", lambda: {"queries_processed": 0})()
 
     print("📊 Get Handler Metrics:")
     print(f"   Handler name: {get_metrics.get('handler_name', 'Unknown')}")
@@ -880,9 +882,9 @@ def demonstrate_event_handlers() -> None:
 
     # 4. Event handler metrics
     print("\n4. Event handler metrics:")
-    user_created_metrics = user_created_handler.get_metrics()
-    user_updated_metrics = user_updated_handler.get_metrics()
-    order_created_metrics = order_created_handler.get_metrics()
+    user_created_metrics = getattr(user_created_handler, "get_metrics", lambda: {"events_processed": 0})()
+    user_updated_metrics = getattr(user_updated_handler, "get_metrics", lambda: {"events_processed": 0})()
+    order_created_metrics = getattr(order_created_handler, "get_metrics", lambda: {"events_processed": 0})()
 
     print("📊 User Created Handler:")
     print(f"   Handler name: {user_created_metrics.get('handler_name', 'Unknown')}")
@@ -925,11 +927,13 @@ def demonstrate_handler_registry() -> None:
     # Register by type - cast handlers to expected type
     registry.register_for_type(
         CreateUserCommand,
+        "create_user",
         create_handler,
     )
-    registry.register_for_type(GetUserQuery, get_handler)
+    registry.register_for_type(GetUserQuery, "get_user", get_handler)
     registry.register_for_type(
         UserCreatedEvent,
+        "user_created",
         user_created_handler,
     )
 
@@ -1084,8 +1088,8 @@ def _process_event_through_all_handlers(chain: FlextHandlerChain) -> None:
         timestamp=time.time(),
     )
 
-    results = chain.process_all(user_event)
-    print(f"📊 Event processed by {len(results)} handlers")
+    results = chain.process_all([user_event])
+    print(f"📊 Event processed by {len(results.unwrap_or([]))} handlers")
 
     for i, result in enumerate(results, 1):
         if result.success:

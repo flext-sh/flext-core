@@ -19,6 +19,7 @@ from flext_core.base_mixins import (
     FlextAbstractTimestampMixin,
     FlextAbstractValidatableMixin,
 )
+from flext_core.exceptions import FlextValidationError
 from flext_core.loggings import FlextLoggerFactory
 from flext_core.result import FlextResult
 from flext_core.utilities import FlextGenerators
@@ -71,6 +72,15 @@ class FlextTimestampMixin(FlextAbstractTimestampMixin):
         """Initialize timestamp state lazily."""
         # No-op; state created lazily in accessors
         return
+
+    def update_timestamp(self) -> None:
+        """Update timestamp - implements abstract method."""
+        self._update_timestamp()
+
+    def get_timestamp(self) -> float:
+        """Get timestamp - implements abstract method."""
+        self.__ensure_timestamp_state()
+        return self._updated_at
 
     def _update_timestamp(self) -> None:
         """Update timestamp - implements abstract method."""
@@ -131,21 +141,50 @@ class FlextIdentifiableMixin(FlextAbstractIdentifiableMixin):
     SOLID principles.
     """
 
+    def get_id(self) -> TEntityId:
+        """Get entity ID - implements abstract method."""
+        # Try _id first (private attribute)
+        id_value = getattr(self, "_id", None)
+        if isinstance(id_value, str):
+            return id_value
+
+        # Try public id attribute
+        id_value = getattr(self, "id", None)
+        if isinstance(id_value, str):
+            return id_value
+        # Generate default ID if none exists
+        generated_id = self._generate_default_id()
+        self._id: TEntityId = generated_id
+        return generated_id
+
     def _generate_default_id(self) -> TEntityId:
         """Generate default ID - implements abstract method."""
         return FlextGenerators.generate_id()
 
     def get_identity(self) -> TEntityId:
         """Get entity identity - implements abstract method."""
-        return self.id
+        return self.get_id()
+
+    @property
+    def id(self) -> TEntityId:
+        """Get ID property."""
+        return self.get_id()
+
+    @id.setter
+    def id(self, value: TEntityId) -> None:
+        """Set ID property."""
+        self._id = value
 
     def set_id(self, entity_id: TEntityId) -> None:
         """Set entity ID with validation."""
         if FlextValidators.is_non_empty_string(entity_id):
-            self.id = entity_id
+            self._id = entity_id
         else:
             msg = f"Invalid entity ID: {entity_id}"
-            raise ValueError(msg)
+            raise FlextValidationError(
+                msg,
+                validation_details={"field": "entity_id", "value": entity_id},
+            )
 
     def generate_id(self) -> None:
         """Generate new unique ID."""
@@ -253,9 +292,11 @@ class FlextValidatableMixin(FlextAbstractValidatableMixin):
             return []
         return list(errors)
 
+    @property
     def is_valid(self) -> bool:
         """Return validation status; None treated as False for tests."""
-        return bool(getattr(self, "_is_valid", False))
+        is_valid_val = getattr(self, "_is_valid", False)
+        return bool(is_valid_val)
 
     def add_validation_error(self, message: str) -> None:
         """Add a validation error message and mark invalid."""
@@ -415,7 +456,9 @@ class FlextCacheableMixin:
 
 
 class FlextEntityMixin(
-    FlextAbstractEntityMixin, FlextTimestampMixin, FlextIdentifiableMixin,
+    FlextAbstractEntityMixin,
+    FlextTimestampMixin,
+    FlextIdentifiableMixin,
 ):
     """Concrete entity mixin using base abstractions.
 
@@ -481,7 +524,9 @@ class FlextCommandMixin(
 
 
 class FlextServiceMixin(
-    FlextAbstractServiceMixin, FlextLoggableMixin, FlextValidatableMixin,
+    FlextAbstractServiceMixin,
+    FlextLoggableMixin,
+    FlextValidatableMixin,
 ):
     """Concrete service mixin using base abstractions.
 
@@ -503,7 +548,7 @@ class FlextServiceMixin(
             "service_name": self.service_name,
             "service_type": self.__class__.__name__,
             "is_initialized": getattr(self, "_service_initialized", False),
-            "is_valid": self.is_valid(),
+            "is_valid": bool(self.is_valid),
         }
 
 
@@ -595,7 +640,7 @@ class FlextFullMixin(
 # EXPORTS - Centralized mixin implementations
 # =============================================================================
 
-__all__ = [
+__all__: list[str] = [
     "FlextCacheableMixin",
     "FlextCommandMixin",
     "FlextComparableMixin",

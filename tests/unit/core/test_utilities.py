@@ -10,6 +10,7 @@ for comprehensive utility function validation.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import TYPE_CHECKING
 from unittest.mock import Mock, patch
 
@@ -36,7 +37,6 @@ from flext_core.utilities import (
 )
 from tests.conftest import (
     AssertHelpers,
-    MockFactory,
     PerformanceMonitor,
     TestBuilder,
     TestCase,
@@ -212,8 +212,8 @@ class TestFlextUtilitiesPerformance:
     @pytest.mark.benchmark
     def test_id_generation_performance(
         self,
-        performance_monitor: PerformanceMonitor,
-        performance_threshold: float,
+        performance_monitor: Callable[[Callable[[], object]], dict[str, object]],
+        performance_threshold: dict[str, float],
     ) -> None:
         """Benchmark ID generation performance."""
 
@@ -232,7 +232,7 @@ class TestFlextUtilitiesPerformance:
     @pytest.mark.benchmark
     def test_truncate_performance(
         self,
-        performance_monitor: PerformanceMonitor,
+        performance_monitor: Callable[[Callable[[], object]], dict[str, object]],
     ) -> None:
         """Benchmark truncation performance with large texts."""
         large_text = "x" * 10000
@@ -271,7 +271,7 @@ class TestFlextUtilitiesPerformance:
 class TestFlextUtilitiesWithFixtures:
     """Tests using advanced fixtures from conftest."""
 
-    def test_utilities_with_mock_factory(self, mock_factory: MockFactory) -> None:
+    def test_utilities_with_mock_factory(self, mock_factory: Mock) -> None:
         """Test utilities with mock factory fixture."""
         # Create mock external service
         service = mock_factory("external_service")
@@ -302,8 +302,8 @@ class TestFlextUtilitiesWithFixtures:
 
     def test_utilities_with_sample_data(
         self,
-        sample_data: dict[str, str],
-        validators: dict[str, Callable[[str], bool]],
+        sample_data: dict[str, object],
+        validators: dict[str, Callable[[object], bool]],
     ) -> None:
         """Test utilities with sample data and validators."""
         # Use sample data to test truncation
@@ -381,7 +381,7 @@ class TestFlextUtilitiesErrorHandling:
 
             cli_function = Mock(side_effect=exception_type(message))
 
-            with patch("flext_core.utilities.Console") as mock_console_class:
+            with patch("flext_core.utilities.FlextConsole") as mock_console_class:
                 mock_console = Mock()
                 mock_console_class.return_value = mock_console
 

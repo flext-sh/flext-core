@@ -13,8 +13,7 @@ from decimal import Decimal
 from enum import StrEnum
 from typing import cast
 
-# Import shared domain models instead of defining local ones
-from shared_domain import (
+from .shared_domain import (
     Age,
     EmailAddress as Email,
     Money,

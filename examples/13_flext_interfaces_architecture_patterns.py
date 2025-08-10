@@ -28,25 +28,28 @@ import time
 import traceback
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable, cast
 
 if TYPE_CHECKING:
     from structlog.stdlib import BoundLogger
 
 from flext_core.protocols import (
     FlextConfigurable,
+    FlextDomainEvent,
     FlextEventPublisher,
     FlextEventSubscriber,
     FlextHandler,
     FlextMiddleware,
     FlextPlugin,
     FlextPluginContext,
+    FlextLoggerProtocol,
     FlextRepository,
     FlextService,
     FlextUnitOfWork,
     FlextValidationRule,
     FlextValidator,
 )
+from flext_core.handlers import FlextHandlers
 from flext_core.result import FlextResult
 from flext_core.typings import TAnyDict
 
@@ -162,39 +165,47 @@ class AgeRangeRule(FlextValidationRule):
         self.min_age = min_age
         self.max_age = max_age
 
-    def check(self, value: object) -> bool:
-        """Check if age is within valid range."""
+    def apply(self, value: object, field_name: str) -> FlextResult[object]:
+        """Apply rule and return value when valid."""
         if not isinstance(value, int):
-            return False
-        return self.min_age <= value <= self.max_age
+            return FlextResult.fail(f"{field_name} must be an integer")
+        if not (self.min_age <= value <= self.max_age):
+            return FlextResult.fail(
+                f"{field_name} must be between {self.min_age} and {self.max_age}",
+            )
+        return FlextResult.ok(value)
 
-    def error_message(self) -> str:
-        """Get age validation error message."""
-        return f"Age must be between {self.min_age} and {self.max_age}"
+    def get_error_message(self, field_name: str, value: object) -> str:
+        """Provide rule error message."""
+        return f"{field_name} must be between {self.min_age} and {self.max_age}"
 
 
 class NonEmptyStringRule(FlextValidationRule):
     """Non-empty string validation rule."""
 
-    def check(self, value: object) -> bool:
-        """Check if value is non-empty string."""
-        return isinstance(value, str) and len(value.strip()) > 0
+    def apply(self, value: object, field_name: str) -> FlextResult[object]:
+        """Apply rule and return value when valid."""
+        if not isinstance(value, str) or len(value.strip()) == 0:
+            return FlextResult.fail(f"{field_name} must be a non-empty string")
+        return FlextResult.ok(value)
 
-    def error_message(self) -> str:
-        """Get non-empty string error message."""
-        return "Value must be a non-empty string"
+    def get_error_message(self, field_name: str, value: object) -> str:
+        """Provide rule error message."""
+        return f"{field_name} must be a non-empty string"
 
 
 class PositiveNumberRule(FlextValidationRule):
     """Positive number validation rule."""
 
-    def check(self, value: object) -> bool:
-        """Check if value is positive number."""
-        return isinstance(value, int | float) and value > 0
+    def apply(self, value: object, field_name: str) -> FlextResult[object]:
+        """Apply rule and return value when valid."""
+        if not isinstance(value, (int, float)) or value <= 0:
+            return FlextResult.fail(f"{field_name} must be a positive number")
+        return FlextResult.ok(value)
 
-    def error_message(self) -> str:
-        """Get positive number error message."""
-        return "Value must be a positive number"
+    def get_error_message(self, field_name: str, value: object) -> str:
+        """Provide rule error message."""
+        return f"{field_name} must be a positive number"
 
 
 # =============================================================================
@@ -320,7 +331,7 @@ class ConfigurableEmailService:
 # =============================================================================
 
 
-class UserCommandHandler(FlextHandler):
+class UserCommandHandler(FlextHandlers.CommandHandler):
     """User command handler demonstrating FlextHandler."""
 
     def __init__(self, user_service: UserService) -> None:
@@ -367,14 +378,14 @@ class LoggingMiddleware(FlextMiddleware):
     def process(
         self,
         message: object,
-        next_handler: FlextHandler,
+        next_handler: "Callable[[object], FlextResult[object]]",
     ) -> FlextResult[object]:
         """Process message with logging."""
         message_type = getattr(message, "type", "unknown")
         print(f"[MIDDLEWARE] Processing message: {message_type}")
 
         # Process through next handler
-        result = next_handler.handle(message)
+        result = next_handler(message)
 
         if result.success:
             print(f"[MIDDLEWARE] Message {message_type} processed successfully")
@@ -389,17 +400,12 @@ class ValidationMiddleware(FlextMiddleware):
 
     def __init__(self) -> None:
         """Initialize ValidationMiddleware."""
-        self._validators: dict[str, list[FlextValidationRule]] = {
-            "user_create": [
-                NonEmptyStringRule(),  # For name and email
-                AgeRangeRule(18, 120),  # For age if provided
-            ],
-        }
+        self._validators: dict[str, list[FlextValidationRule]] = {}
 
     def process(
         self,
         message: object,
-        next_handler: FlextHandler,
+        next_handler: Callable[[object], FlextResult[object]],
     ) -> FlextResult[object]:
         """Process message with validation."""
         message_type = getattr(message, "type", "unknown")
@@ -411,29 +417,27 @@ class ValidationMiddleware(FlextMiddleware):
             age = getattr(message, "age", None)
 
             # Validate name
-            name_rule = NonEmptyStringRule()
-            if not name_rule.check(name):
+            # Apply a simple non-empty validation inline to satisfy protocol
+            if not isinstance(name, str) or not name.strip():
                 return FlextResult.fail(
-                    f"Name validation failed: {name_rule.error_message()}",
+                    "Name validation failed: Value must be a non-empty string",
                 )
 
             # Validate email
-            email_rule = NonEmptyStringRule()
-            if not email_rule.check(email):
+            if not isinstance(email, str) or "@" not in email:
                 return FlextResult.fail(
-                    f"Email validation failed: {email_rule.error_message()}",
+                    "Email validation failed: Email must contain @ symbol",
                 )
 
             # Validate age if provided
             if age is not None:
-                age_rule = AgeRangeRule()
-                if not age_rule.check(age):
+                if not isinstance(age, int) or not (18 <= age <= 120):
                     return FlextResult.fail(
-                        f"Age validation failed: {age_rule.error_message()}",
+                        "Age validation failed: Age must be between 18 and 120",
                     )
 
         # Continue to next handler
-        return next_handler.handle(message)
+        return next_handler(message)
 
 
 # =============================================================================
@@ -441,7 +445,7 @@ class ValidationMiddleware(FlextMiddleware):
 # =============================================================================
 
 
-class UserRepository(FlextRepository):
+class UserRepository(FlextRepository[User]):
     """User repository demonstrating FlextRepository."""
 
     def __init__(self) -> None:
@@ -449,7 +453,7 @@ class UserRepository(FlextRepository):
         self._users: dict[str, User] = {}
         self._deleted_ids: set[str] = set()
 
-    def find_by_id(self, entity_id: str) -> FlextResult[object]:
+    def find_by_id(self, entity_id: str) -> FlextResult[User]:
         """Find user by ID."""
         if entity_id in self._deleted_ids:
             return FlextResult.fail(f"User {entity_id} was deleted")
@@ -459,17 +463,14 @@ class UserRepository(FlextRepository):
 
         return FlextResult.ok(self._users[entity_id])
 
-    def save(self, entity: object) -> FlextResult[None]:
+    def save(self, entity: User) -> FlextResult[User]:
         """Save user entity."""
-        if not isinstance(entity, User):
-            return FlextResult.fail("Entity must be a User")
-
         if entity.id in self._deleted_ids:
             return FlextResult.fail(f"Cannot save deleted user {entity.id}")
 
         self._users[entity.id] = entity
         print(f"User {entity.id} saved to repository")
-        return FlextResult.ok(None)
+        return FlextResult.ok(entity)
 
     def delete(self, entity_id: str) -> FlextResult[None]:
         """Delete user by ID."""
@@ -512,13 +513,15 @@ class DatabaseUnitOfWork(FlextUnitOfWork):
         # Apply all changes
         for operation, data in self._changes:
             if operation == "save":
-                result = self._user_repo.save(data)
-                if result.is_failure:
-                    return result
+                if not isinstance(data, User):
+                    return FlextResult.fail("Invalid data type for save")
+                save_result = self._user_repo.save(data)
+                if save_result.is_failure:
+                    return FlextResult.fail(save_result.error or "save failed")
             elif operation == "delete":
-                result = self._user_repo.delete(str(data))
-                if result.is_failure:
-                    return result
+                delete_result = self._user_repo.delete(str(data))
+                if delete_result.is_failure:
+                    return delete_result
 
         self._committed = True
         print(f"Unit of work committed with {len(self._changes)} changes")
@@ -532,6 +535,12 @@ class DatabaseUnitOfWork(FlextUnitOfWork):
         self._changes.clear()
         self._rolled_back = True
         print("Unit of work rolled back")
+        return FlextResult.ok(None)
+
+    def begin(self) -> FlextResult[None]:
+        """Begin transaction (no-op for in-memory demo)."""
+        self._committed = False
+        self._rolled_back = False
         return FlextResult.ok(None)
 
     def __enter__(self) -> FlextUnitOfWork:
@@ -617,12 +626,12 @@ class MockLogger:
     def bind(self, **_kwargs: object) -> "BoundLogger":
         """Bind additional context (mock implementation)."""
         # Return a new MockLogger to satisfy BoundLogger interface
-        return MockLogger()
+        return cast("BoundLogger", MockLogger())
 
     def unbind(self, *_keys: str) -> "BoundLogger":
         """Unbind context keys (mock implementation)."""
         # Return a new MockLogger to satisfy BoundLogger interface
-        return MockLogger()
+        return cast("BoundLogger", MockLogger())
 
 
 class SimplePluginContext:
@@ -639,16 +648,13 @@ class SimplePluginContext:
         self._services: dict[str, object] = {}
         self._logger = MockLogger()
 
-    @property
-    def logger(self) -> "BoundLogger":
+    def get_logger(self) -> FlextLoggerProtocol:
         """Get logger for plugin (simplified)."""
-        # Return MockLogger which implements BoundLogger interface
-        return self._logger
+        return cast("FlextLoggerProtocol", self._logger)
 
-    @property
-    def config(self) -> Mapping[str, object]:
+    def get_config(self) -> dict[str, object]:
         """Get plugin configuration."""
-        return self._config
+        return dict(self._config)
 
     def get_service(self, service_name: str) -> FlextResult[object]:
         """Get service by name."""
@@ -695,14 +701,18 @@ class EmailNotificationPlugin(FlextPlugin):
                 return FlextResult.fail("Invalid email service type")
 
             # Configure email service from plugin config
-            config = dict(context.config)
+            config = context.get_config()
             if isinstance(self._email_service, ConfigurableEmailService):
                 config_result = self._email_service.configure(config)
                 if config_result.is_failure:
                     return config_result
 
             self._initialized = True
-            context.logger.info("Plugin %s v%s initialized", self.name, self.version)
+            context.get_logger().info(
+                "Plugin initialized",
+                plugin=self.name,
+                version=self.version,
+            )
             return FlextResult.ok(None)
 
         except (ValueError, TypeError, ImportError) as e:
@@ -751,7 +761,11 @@ class AuditLogPlugin(FlextPlugin):
     def initialize(self, context: FlextPluginContext) -> FlextResult[None]:
         """Initialize plugin with context."""
         self._initialized = True
-        context.logger.info("Plugin %s v%s initialized", self.name, self.version)
+        context.get_logger().info(
+            "Plugin initialized",
+            plugin=self.name,
+            version=self.version,
+        )
         return FlextResult.ok(None)
 
     def shutdown(self) -> FlextResult[None]:
@@ -794,7 +808,7 @@ class SimpleEventPublisher(FlextEventPublisher):
         """Initialize SimpleEventPublisher."""
         self._subscribers: dict[type[object], list[FlextHandler]] = {}
 
-    def publish(self, event: object) -> FlextResult[None]:
+    def publish(self, event: FlextDomainEvent) -> FlextResult[None]:
         """Publish event to subscribers."""
         event_type = type(event)
 
@@ -806,12 +820,11 @@ class SimpleEventPublisher(FlextEventPublisher):
         failed_handlers = []
 
         for handler in handlers:
-            if handler.can_handle(event):
-                result = handler.handle(event)
-                if result.is_failure:
-                    failed_handlers.append(
-                        f"{handler.__class__.__name__}: {result.error}",
-                    )
+            result = handler.handle(event)
+            if result.is_failure:
+                failed_handlers.append(
+                    f"{handler.__class__.__name__}: {result.error}",
+                )
 
         if failed_handlers:
             return FlextResult.fail(
@@ -819,6 +832,14 @@ class SimpleEventPublisher(FlextEventPublisher):
             )
 
         print(f"Event {event_type.__name__} published to {len(handlers)} handlers")
+        return FlextResult.ok(None)
+
+    def publish_batch(self, events: list[FlextDomainEvent]) -> FlextResult[None]:
+        """Publish a batch of events sequentially."""
+        for event in events:
+            result = self.publish(event)
+            if result.is_failure:
+                return result
         return FlextResult.ok(None)
 
     def add_subscriber(self, event_type: type[object], handler: FlextHandler) -> None:
@@ -880,8 +901,16 @@ class SimpleEventSubscriber(FlextEventSubscriber):
         except (ValueError, TypeError, KeyError) as e:
             return FlextResult.fail(f"Unsubscription failed: {e}")
 
+    # Implement protocol-required methods
+    def handle_event(self, event: FlextDomainEvent) -> FlextResult[None]:
+        print(f"Handled event: {event.event_type}")
+        return FlextResult.ok(None)
 
-class UserEventHandler(FlextHandler):
+    def can_handle(self, event_type: str) -> bool:
+        return True
+
+
+class UserEventHandler(FlextHandlers.EventHandler):
     """User event handler for event system demonstration."""
 
     def __init__(self, audit_plugin: AuditLogPlugin) -> None:
@@ -976,9 +1005,10 @@ def demonstrate_validation_interfaces() -> None:
     ]
 
     for rule, value, description in test_cases:
-        is_valid = rule.check(value)
+        apply_result = rule.apply(value, "value")
+        is_valid = apply_result.success
         status = "✅" if is_valid else "❌"
-        error_msg = "" if is_valid else f" - {rule.error_message()}"
+        error_msg = "" if is_valid else f" - {rule.get_error_message('value', value)}"
         print(f"   {status} {description}: {value}{error_msg}")
 
     print("✅ Validation interfaces demonstration completed")
@@ -1125,9 +1155,9 @@ def demonstrate_handler_interfaces() -> None:
     )
 
     # Process through validation middleware first, then logging
-    result = validation_middleware.process(valid_message, handler)
+    result = validation_middleware.process(valid_message, handler.handle)
     if result.success:
-        result = logging_middleware.process(valid_message, handler)
+        result = logging_middleware.process(valid_message, handler.handle)
         if result.success:
             user = result.data
             if hasattr(user, "name") and hasattr(user, "id"):
@@ -1142,7 +1172,7 @@ def demonstrate_handler_interfaces() -> None:
         age=25,
     )
 
-    result = validation_middleware.process(invalid_message, handler)
+    result = validation_middleware.process(invalid_message, handler.handle)
     if result.is_failure:
         print(f"   ❌ Validation middleware caught error (expected): {result.error}")
 

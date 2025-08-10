@@ -10,7 +10,7 @@ from __future__ import annotations
 from typing import cast
 
 # Import shared domain models to eliminate duplication
-from shared_domain import (
+from .shared_domain import (
     SharedDomainFactory,
     log_domain_operation,
 )

@@ -11,7 +11,7 @@ import time
 from typing import Protocol
 
 # Import shared domain models to reduce duplication
-from shared_domain import (
+from .shared_domain import (
     SharedDomainFactory,
     User as SharedUser,
     log_domain_operation,
@@ -1428,7 +1428,7 @@ def _demonstrate_service_pattern(order_service: OrderServiceProtocol) -> None:
 
 def main() -> None:
     """Run comprehensive FlextMixins demonstration."""
-    from shared_example_helpers import run_example_demonstration
+    from .shared_example_helpers import run_example_demonstration  # noqa: PLC0415
 
     examples = [
         ("Individual Mixin Patterns", demonstrate_individual_mixins),

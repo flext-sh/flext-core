@@ -9,6 +9,7 @@ from __future__ import annotations
 import warnings
 
 from flext_core.models import FlextEntity, FlextEntityFactory
+from flext_core.utilities import FlextGenerators
 
 # Issue deprecation warning when module is imported
 warnings.warn(
@@ -31,7 +32,8 @@ def _deprecated_factory() -> FlextEntityFactory:
 
 
 # Backward compatibility exports
-__all__ = [
+__all__: list[str] = [
     "FlextEntity",  # Re-exported from models
     "FlextEntityFactory",  # Re-exported from models
+    "FlextGenerators",  # Re-exported from utilities for test compatibility
 ]

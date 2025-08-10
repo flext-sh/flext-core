@@ -184,12 +184,16 @@ class FlextPipelineService:
     ) -> FlextResult[FlextDataPipeline]:
         """Create pipeline using unified factory pattern."""
         # Create configuration using unified patterns
-        config_result = FlextFactory.create_model(FlextOracleConfig, **oracle_config)
+        config_result = FlextFactory.create_model(  # type: ignore[call-arg]
+            FlextOracleConfig, **oracle_config
+        )
         if config_result.is_failure:
             return FlextResult.fail(f"Invalid Oracle config: {config_result.error}")
 
         # Create owner profile using unified patterns
-        owner_result = FlextFactory.create_model(FlextUserProfile, **owner_profile)
+        owner_result = FlextFactory.create_model(  # type: ignore[call-arg]
+            FlextUserProfile, **owner_profile
+        )
         if owner_result.is_failure:
             return FlextResult.fail(f"Invalid owner profile: {owner_result.error}")
 
@@ -201,7 +205,9 @@ class FlextPipelineService:
             "owner": owner_result.data,
         }
 
-        pipeline_result = FlextFactory.create_model(FlextDataPipeline, **pipeline_data)
+        pipeline_result = FlextFactory.create_model(  # type: ignore[call-arg]
+            FlextDataPipeline, **pipeline_data
+        )
         if pipeline_result.is_failure:
             return FlextResult.fail(
                 f"Pipeline creation failed: {pipeline_result.error}"

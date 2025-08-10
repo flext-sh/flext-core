@@ -110,7 +110,8 @@ class FlextAbstractHandlerChain[TRequest, TResponse](ABC):
 
     @abstractmethod
     def remove_handler(
-        self, handler: FlextAbstractHandler[TRequest, TResponse],
+        self,
+        handler: FlextAbstractHandler[TRequest, TResponse],
     ) -> bool:
         """Remove handler from chain - must be implemented by subclasses."""
         ...
@@ -203,7 +204,7 @@ class FlextAbstractMetricsHandler[TRequest, TResponse](
 # EXPORTS - Clean public API
 # =============================================================================
 
-__all__ = [
+__all__: list[str] = [
     "FlextAbstractHandler",
     "FlextAbstractHandlerChain",
     "FlextAbstractHandlerRegistry",

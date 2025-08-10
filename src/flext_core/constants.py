@@ -39,6 +39,11 @@ class FlextConstants:
         PYTHON_VERSION = "3.13+"
         ARCHITECTURE = "clean_architecture"
 
+        # Magic number replacements
+        CONFIGURATION_ARGUMENT_INDEX_THRESHOLD = 2
+        MAX_BRANCHES_ALLOWED = 12
+        MAX_RETURN_STATEMENTS_ALLOWED = 6
+
     class Errors:
         """Error codes and messages."""
 
@@ -641,7 +646,7 @@ FlextConstants.ERROR_CODES = ERROR_CODES
 MESSAGES = FlextConstants.Messages
 SERVICE_NAME_EMPTY = "Service name cannot be empty"
 
-__all__ = [
+__all__: list[str] = [
     # Legacy constants
     "ERROR_CODES",
     "MESSAGES",

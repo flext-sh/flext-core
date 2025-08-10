@@ -17,7 +17,7 @@ Classes:
 from __future__ import annotations
 
 import re
-from typing import TYPE_CHECKING, NotRequired, TypedDict
+from typing import TYPE_CHECKING, ClassVar, NotRequired, TypedDict
 
 from pydantic import (
     ConfigDict,
@@ -28,8 +28,10 @@ from pydantic import (
 )
 from pydantic_settings import SettingsConfigDict
 
-from flext_core.config import FlextSettings
-from flext_core.config_base import FlextAbstractConfig
+from flext_core.config_base import (
+    FlextAbstractConfig,
+    FlextSettings,
+)
 from flext_core.loggings import FlextLoggerFactory
 from flext_core.result import FlextResult
 
@@ -169,6 +171,15 @@ class FlextBaseConfigModel(FlextAbstractConfig):
 
         """
         return self.model_dump(exclude_unset=True)
+
+    def to_dict(self) -> dict[str, object]:
+        """Convert to dictionary representation.
+
+        Returns:
+            Dictionary representation including default values.
+
+        """
+        return self.model_dump()
 
 
 class FlextDatabaseConfig(FlextBaseConfigModel):
@@ -507,6 +518,13 @@ class FlextObservabilityConfig(FlextBaseConfigModel):
         description="Correlation ID header",
     )
 
+    # Backward-compat constants expected by tests
+    ENABLE_METRICS: ClassVar[bool] = True
+    TRACE_ENABLED: ClassVar[bool] = True
+    TRACE_SAMPLE_RATE: ClassVar[float] = 0.1
+    SLOW_OPERATION_THRESHOLD: ClassVar[int] = 1000
+    CRITICAL_OPERATION_THRESHOLD: ClassVar[int] = 5000
+
     @field_validator("log_level")
     @classmethod
     def validate_log_level(cls, v: str) -> str:
@@ -517,6 +535,10 @@ class FlextObservabilityConfig(FlextBaseConfigModel):
             msg = f"Log level must be one of: {allowed_levels}"
             raise ValueError(msg)
         return v_upper
+
+    def to_observability_dict(self) -> dict[str, object]:
+        """Convert to observability dictionary representation."""
+        return self.model_dump()
 
 
 class FlextPerformanceConfig(FlextBaseConfigModel):
@@ -529,6 +551,15 @@ class FlextPerformanceConfig(FlextBaseConfigModel):
         description="Enable performance profiling",
     )
     max_connections: int = Field(100, description="Maximum connections", ge=1, le=10000)
+
+    # Backward-compat constants expected by tests
+    DEFAULT_CACHE_SIZE: ClassVar[int] = 1000
+    DEFAULT_PAGE_SIZE: ClassVar[int] = 50
+    DEFAULT_RETRIES: ClassVar[int] = 3
+    DEFAULT_TIMEOUT: ClassVar[int] = 30
+    DEFAULT_BATCH_SIZE: ClassVar[int] = 50  # same as DEFAULT_PAGE_SIZE per tests
+    DEFAULT_POOL_SIZE: ClassVar[int] = 10
+    DEFAULT_MAX_RETRIES: ClassVar[int] = 3  # same as DEFAULT_RETRIES per tests
 
     def to_performance_dict(self) -> dict[str, object]:
         """Convert to performance dictionary representation."""
@@ -598,7 +629,7 @@ class FlextDataIntegrationConfig(FlextBaseConfigModel):
 class FlextDatabaseSettings(FlextSettings):
     """Database settings with environment variables."""
 
-    model_config = SettingsConfigDict(
+    model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(
         env_prefix="FLEXT_DATABASE_",
         env_file=".env",
         env_file_encoding="utf-8",
@@ -1023,7 +1054,7 @@ class FlextPluginRegistryConfig(FlextBaseConfigModel):
 # EXPORTS
 # =============================================================================
 
-__all__ = [  # noqa: RUF022
+__all__: list[str] = [  # noqa: RUF022
     # Base models
     "FlextBaseConfigModel",
     # Composite models
