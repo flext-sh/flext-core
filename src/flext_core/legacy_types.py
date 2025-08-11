@@ -6,8 +6,6 @@ This module exists to maintain compatibility with existing tests.
 
 from __future__ import annotations
 
-# Re-export everything from typings for backward compatibility
-# Legacy aliases for backward compatibility - use Protocol instead
 from flext_core.protocols import FlextValidator as TPredicate  # Legacy alias
 from flext_core.typings import (
     E,

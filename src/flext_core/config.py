@@ -22,45 +22,19 @@ from flext_core.config_base import (
     FlextConfigOperations,
     FlextSettings,
 )
+from flext_core.config_compat import (
+    LegacyCompatibleConfigManager,
+    safe_get_env_var as compat_get_env_var,
+)
+from flext_core.config_models import (
+    FlextObservabilityConfig,
+    FlextPerformanceConfig,
+)
 from flext_core.constants import FlextConstants
 from flext_core.result import FlextResult
 
-# Import compatibility functions at top level to fix PLC0415
-try:
-    from flext_core.config_compat import (
-        LegacyCompatibleConfigManager,
-        safe_get_env_var as compat_get_env_var,
-        safe_load_json_file as compat_load_json_file,
-    )
-
-    HAS_COMPAT_MODULE = True
-except ImportError:
-    HAS_COMPAT_MODULE = False
-    LegacyCompatibleConfigManager = None  # type: ignore[assignment, misc]
-    compat_get_env_var = None  # type: ignore[assignment]
-    compat_load_json_file = None  # type: ignore[assignment]
-
 if TYPE_CHECKING:
     from collections.abc import Callable
-
-    from flext_core.config_models import (
-        FlextObservabilityConfig,
-        FlextPerformanceConfig,
-    )
-else:
-    # Import at runtime to avoid circular imports
-    try:
-        from flext_core.config_models import (
-            FlextObservabilityConfig,
-            FlextPerformanceConfig,
-        )
-    except ImportError:
-        # Create stub classes for backward compatibility
-        class FlextObservabilityConfig:  # type: ignore[no-redef]
-            """Stub class for observability configuration."""
-
-        class FlextPerformanceConfig:  # type: ignore[no-redef]
-            """Stub class for performance configuration."""
 
 
 # =============================================================================
@@ -257,14 +231,14 @@ class FlextConfig:
         # Use composition to load the JSON file (allows test mocking)
         load_result = FlextConfigOps.safe_load_json_file(file_path)
         if load_result.is_failure:
-            # Propagate the exact error from the loader (may be empty and
+            # Propagate the exact error from the loader (maybe empty and
             # convert to "Unknown error occurred")
             error = load_result.error or "Unknown error occurred"
             return FlextResult.fail(error)
 
         data = load_result.unwrap()
 
-        # Check required keys if specified
+        # Check the required keys if specified
         if required_keys:
             missing = [k for k in required_keys if k not in data]
             if missing:
@@ -397,7 +371,7 @@ class FlextConfigOps:
 
     Provides domain-specific configuration loading operations by composing
     base configuration operations from config_base.py. Eliminates code
-    duplication while maintaining clean interface.
+    duplication while maintaining a clean interface.
     """
 
     @classmethod
@@ -481,7 +455,7 @@ class FlextConfigOps:
             FlextResult containing loaded JSON data.
 
         """
-        # Return underlying result directly so tests match exact messages
+        # Return an underlying result directly so tests match exact messages
         return FlextConfigOperations.load_from_json(Path(file_path))
 
     # Backward-compat helper expected by tests/utilities
@@ -623,7 +597,7 @@ if TYPE_CHECKING:
 # DOMAIN-SPECIFIC TYPES - Configuration Pattern Specializations
 # =============================================================================
 
-# Configuration specific types for better domain modeling
+# Configuration-specific types for better domain modeling
 
 # Environment and deployment types
 
@@ -719,7 +693,7 @@ class FlextConfigManager:
         """Load and validate configuration from JSON file.
 
         Args:
-            file_path: Path to configuration file.
+            file_path: Path to a configuration file.
             required_keys: List of required configuration keys.
 
         Returns:
@@ -851,7 +825,7 @@ class FlextConfigManager:
             return FlextResult.fail(error_msg)
 
         # Use compatibility manager if available for other failures
-        if HAS_COMPAT_MODULE and LegacyCompatibleConfigManager is not None:
+        if LegacyCompatibleConfigManager is not None:
             return LegacyCompatibleConfigManager.get_env_with_validation(
                 var_name,
                 required=required,
@@ -860,7 +834,7 @@ class FlextConfigManager:
             )
 
         # Pass through the error from FlextConfigOps (allows test mocking)
-        # with proper str type
+        # with a proper str type
         return FlextResult.fail(ops_result.error or "Unknown error occurred")
 
     # =========================================================================
@@ -930,7 +904,7 @@ class FlextMainConfig(FlextAbstractConfig, FlextSettings):  # type: ignore[misc]
     """Main configuration class with environment integration.
 
     Provides immutable configuration with environment variable loading
-    and business rule validation support. Uses both abstract config
+    and business rule validation support. Use both abstract config
     and settings patterns from base abstractions.
     """
 
@@ -943,7 +917,8 @@ class FlextMainConfig(FlextAbstractConfig, FlextSettings):  # type: ignore[misc]
         """
         return self.validate_business_rules()
 
-    def validate_business_rules(self) -> FlextResult[None]:
+    @staticmethod
+    def validate_business_rules() -> FlextResult[None]:
         """Validate business rules - override in subclasses.
 
         Returns:
@@ -963,7 +938,7 @@ class FlextMainConfig(FlextAbstractConfig, FlextSettings):  # type: ignore[misc]
         apply_defaults: bool = True,
         validate_all: bool = True,
     ) -> FlextResult[TAnyDict]:
-        """Compatibility alias to manager's create_complete_config."""
+        """Compatibility alias to managers create_complete_config."""
         return FlextConfigManager.create_complete_config(
             config_data,
             apply_defaults=apply_defaults,
@@ -1085,7 +1060,7 @@ def safe_get_env_var(  # noqa: PLR0911
         return FlextResult.fail(error_msg)
 
     # Try compatibility module if available
-    if HAS_COMPAT_MODULE and compat_get_env_var is not None:
+    if compat_get_env_var is not None:
         compat_result = compat_get_env_var(var_name, default, required=required)
         if compat_result.success and compat_result.data is not None:
             return FlextResult.ok(str(compat_result.data))

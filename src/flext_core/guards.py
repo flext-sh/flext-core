@@ -23,7 +23,6 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from flext_core.result import FlextResult
-    from flext_core.typings import T
 
 from collections.abc import Callable  # noqa: TC003
 
@@ -54,14 +53,14 @@ class FlextGuards:
 
     @staticmethod
     def is_dict_of(obj: object, value_type: type) -> bool:
-        """Check if object is a dict with values of specific type."""
+        """Check if an object is a dict with values of a specific type."""
         if not isinstance(obj, dict):
             return False
         return all(isinstance(value, value_type) for value in obj.values())
 
     @staticmethod
     def immutable[T](target_class: type[T]) -> type[T]:
-        """Make class immutable using decorator pattern.
+        """Make class immutable using a decorator pattern.
 
         Args:
             target_class: The class to make immutable
@@ -130,7 +129,7 @@ class FlextGuards:
 
         def pure_wrapper(*args: object, **kwargs: object) -> object:
             """Pure function wrapper with memoization."""
-            # Create cache key from args and kwargs
+            # Create a cache key from args and kwargs
             try:
                 cache_key = (args, tuple(sorted(kwargs.items())))
 
@@ -160,7 +159,7 @@ class FlextGuards:
 
     @staticmethod
     def make_factory(target_class: type) -> Callable[[], object]:
-        """Create simple factory function for safe object construction."""
+        """Create a simple factory function for safe object construction."""
 
         def factory(*args: object, **kwargs: object) -> object:
             return target_class(*args, **kwargs)
@@ -169,7 +168,7 @@ class FlextGuards:
 
     @staticmethod
     def make_builder(target_class: type) -> Callable[[], object]:
-        """Create simple builder function for fluent object construction."""
+        """Create a simple builder function for fluent object construction."""
 
         def builder(*args: object, **kwargs: object) -> object:
             return target_class(*args, **kwargs)
@@ -218,7 +217,7 @@ class FlextValidatedModel(  # type: ignore[misc]
     @classmethod
     def create(cls, **data: object) -> FlextResult[Self]:
         """Create instance using centralized factory."""
-        # ARCHITECTURAL DECISION: Use centralized factory to eliminate duplication
+        # ARCHITECTURAL DECISION: Use centralized factory to remove duplication
         factory = FlextGenericFactory(cls)
         # Type cast to correct return type since factory returns FlextResult[object]
         return factory.create(**data)  # type: ignore[return-value]
@@ -265,7 +264,7 @@ class FlextValidationUtils:
         max_val: int,
         message: str | None = None,
     ) -> object:
-        """Require value is within specified range with bounds validation."""
+        """Require value is within a specified range with bounds validation."""
         if not (isinstance(value, (int, float)) and min_val <= value <= max_val):
             if not message:
                 message = f"Value must be between {min_val} and {max_val}"
@@ -315,7 +314,7 @@ require_positive = FlextValidationUtils.require_positive
 require_in_range = FlextValidationUtils.require_in_range
 require_non_empty = FlextValidationUtils.require_non_empty
 
-# Backward compatibility alias for validated model
+# Backward compatibility alias for a validated model
 ValidatedModel = FlextValidatedModel
 
 

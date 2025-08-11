@@ -1,66 +1,102 @@
-# FLEXT Core Tests
+# Test Suite Documentation
 
-**Comprehensive Test Suite for Enterprise-Grade Quality Assurance**
+Comprehensive testing framework for FLEXT Core with 75%+ coverage requirement.
 
-Professional test organization ensuring 95%+ coverage and enterprise-grade quality validation for the foundational library used across all 32 projects in the FLEXT ecosystem.
+## Overview
 
-## Structure
+The test suite validates FLEXT Core's functionality across unit, integration, and end-to-end scenarios. Tests are organized following Clean Architecture principles and ensure quality for all dependent projects in the FLEXT ecosystem.
+
+## Test Organization
 
 ```
 tests/
-├── conftest.py                 # Main test configuration
-├── conftest_integration.py     # Integration-specific fixtures
-├── unit/                       # Unit tests (isolated components)
-│   ├── core/                   # Core module tests
-│   │   ├── test_result.py      # FlextResult tests
-│   │   ├── test_container.py   # FlextContainer tests
-│   │   ├── test_types*.py      # Type system tests
-│   │   ├── test_config.py      # Configuration tests
-│   │   └── ...
-│   ├── patterns/               # Pattern implementation tests
-│   │   ├── test_patterns_commands.py
-│   │   ├── test_patterns_handlers.py
-│   │   └── ...
-│   ├── domain/                 # DDD building block tests
+├── conftest.py                      # Shared fixtures and configuration
+├── conftest_integration.py          # Integration test fixtures
+├── shared_test_domain.py            # Shared test models
+├── test_shared_domain.py            # Tests for shared domain
+│
+├── unit/                            # Unit tests (75% coverage target)
+│   ├── core/                        # Core framework tests
+│   │   ├── test_result.py           # FlextResult pattern
+│   │   ├── test_container.py        # Dependency injection
+│   │   ├── test_config.py           # Configuration management
+│   │   ├── test_config_base.py      # Base configuration
+│   │   ├── test_commands.py         # Command patterns
+│   │   ├── test_handlers.py         # Handler patterns
+│   │   ├── test_validation.py       # Validation system
+│   │   ├── test_utilities.py        # Utility functions
+│   │   ├── test_payload.py          # Payload patterns
+│   │   ├── test_mixins.py           # Mixin behaviors
+│   │   ├── test_decorators.py       # Decorator patterns
+│   │   ├── test_entities.py         # Domain entities
+│   │   ├── test_value_objects.py    # Value objects
+│   │   ├── test_aggregate_root.py   # Aggregate roots
+│   │   ├── test_interfaces.py       # Interface definitions
+│   │   ├── test_loggings.py         # Logging system
+│   │   ├── test_semantic.py         # Semantic patterns
+│   │   ├── test_schema_processing.py # Schema processing
+│   │   ├── test_context.py          # Context management
+│   │   ├── test_core.py             # Core functionality
+│   │   └── test_observability_simple.py # Observability
+│   │
+│   ├── domain/                      # Domain model tests
 │   │   ├── test_domain_entity.py
 │   │   ├── test_domain_value_object.py
-│   │   └── ...
-│   ├── test_pep8_compliance.py # PEP8 validation tests
-│   └── test_coverage_gaps.py   # Coverage analysis tests
-├── integration/                # Integration tests (component interactions)
-│   ├── services/               # Service integration tests
-│   ├── containers/             # Container integration tests
-│   ├── configs/                # Configuration integration tests
-│   └── test_integration.py     # Main integration tests
-└── e2e/                        # End-to-end tests (complete workflows)
-    └── test_real_usage.py       # Real-world usage patterns
+│   │   ├── test_domain_services.py
+│   │   └── test_entities.py
+│   │
+│   └── patterns/                    # Pattern tests
+│       ├── test_patterns_commands.py
+│       ├── test_patterns_validation.py
+│       └── test_architectural_patterns.py
+│
+├── integration/                     # Integration tests
+│   ├── test_integration.py
+│   └── test_integration_examples.py
+│
+└── e2e/                             # End-to-end tests
+    └── test_complete_workflows.py
 ```
 
-## Test Types
+## Test Categories
 
 ### Unit Tests (`tests/unit/`)
+**Isolated component testing**
 
-- **Purpose**: Test individual components in isolation
-- **Scope**: Single classes, functions, or modules
-- **Dependencies**: Minimal, use mocks when needed
-- **Speed**: Fast (<100ms per test)
-- **Coverage**: 95% minimum requirement
+- **Purpose**: Validate individual components work correctly
+- **Scope**: Single functions, classes, or modules
+- **Dependencies**: Uses mocks and fixtures
+- **Execution**: Fast (<100ms per test)
+- **Coverage Target**: 75% minimum
+- **Examples**: 
+  - `test_result.py`: FlextResult behavior
+  - `test_container.py`: DI container operations
+  - `test_config.py`: Configuration validation
 
 ### Integration Tests (`tests/integration/`)
+**Component interaction testing**
 
-- **Purpose**: Test component interactions
-- **Scope**: Multiple classes working together
-- **Dependencies**: Real dependencies within FLEXT Core
-- **Speed**: Medium (100ms-1s per test)
-- **Coverage**: Critical integration points
+- **Purpose**: Verify components work together
+- **Scope**: Multiple modules interacting
+- **Dependencies**: Real FLEXT Core components
+- **Execution**: Medium (100ms-1s)
+- **Focus Areas**:
+  - Service integration
+  - Container lifecycle
+  - Configuration loading
+  - Cross-module communication
 
 ### End-to-End Tests (`tests/e2e/`)
+**Complete workflow validation**
 
-- **Purpose**: Test complete user workflows
-- **Scope**: Full scenarios from start to finish
+- **Purpose**: Test real-world usage scenarios
+- **Scope**: Full application workflows
 - **Dependencies**: Complete system
-- **Speed**: Slow (1s+ per test)
-- **Coverage**: User-facing scenarios
+- **Execution**: Slower (>1s)
+- **Scenarios**:
+  - User registration flow
+  - Order processing pipeline
+  - Configuration and startup
 
 ## Running Tests
 
@@ -106,96 +142,307 @@ pytest -m ddd
 pytest -m architecture
 ```
 
-### Quality Gates
+### Coverage and Quality
 
 ```bash
-# Fast feedback loop
-pytest tests/unit/core/test_result.py -v
+# Check current coverage
+pytest --cov=src/flext_core --cov-report=term-missing
 
-# Full unit test suite
-pytest tests/unit/ -v
+# Generate HTML coverage report
+pytest --cov=src/flext_core --cov-report=html
+open htmlcov/index.html  # View report
 
-# Complete test suite
-pytest tests/ -v
+# Coverage by module
+pytest --cov=src/flext_core.result tests/unit/core/test_result.py
 
-# With coverage
-pytest tests/ --cov=src/flext_core --cov-report=html
+# Fail if below threshold (75%)
+pytest --cov=src/flext_core --cov-fail-under=75
+
+# Quick quality check
+make test  # Runs tests with coverage requirement
 ```
 
 ## Test Markers
 
-Available pytest markers for selective test execution:
+### Primary Markers
 
-### Core Test Categories
+| Marker | Description | Usage |
+|--------|-------------|-------|
+| `unit` | Unit tests | `pytest -m unit` |
+| `integration` | Integration tests | `pytest -m integration` |
+| `e2e` | End-to-end tests | `pytest -m e2e` |
+| `slow` | Slow-running tests | `pytest -m "not slow"` |
+| `performance` | Performance tests | `pytest -m performance` |
 
-- `unit` - Unit tests (isolated components)
-- `integration` - Integration tests (component interactions)
-- `e2e` - End-to-end tests (complete workflows)
-- `slow` - Slow tests (can be excluded with `-m "not slow"`)
+### Domain Markers
 
-### Architecture and Quality
+| Marker | Description | Usage |
+|--------|-------------|-------|
+| `core` | Core functionality | `pytest -m core` |
+| `ddd` | Domain-driven design | `pytest -m ddd` |
+| `architecture` | Architectural patterns | `pytest -m architecture` |
+| `pep8` | PEP8 compliance | `pytest -m pep8` |
 
-- `core` - Core framework functionality tests
-- `architecture` - Architectural pattern tests
-- `ddd` - Domain-driven design tests
-- `pep8` - PEP8 compliance validation tests
-- `performance` - Performance benchmark tests
+### Combining Markers
 
-### Test Flow Categories
+```bash
+# Fast unit tests only
+pytest -m "unit and not slow"
 
-- `happy_path` - Success path testing
-- `error_path` - Error handling and failure scenarios
-- `boundary` - Boundary conditions and edge cases
-- `regression` - Regression prevention tests
+# Core functionality excluding integration
+pytest -m "core and not integration"
 
-## Configuration
+# All DDD tests
+pytest -m ddd
+```
+
+## Test Configuration
 
 ### Main Configuration (`conftest.py`)
 
-- Test markers configuration
-- Shared fixtures for all test types
-- Environment setup and cleanup
+```python
+# Key fixtures available globally
+@pytest.fixture
+def clean_container() -> FlextContainer:
+    """Provides clean container for each test."""
+    container = FlextContainer()
+    yield container
+    container.clear()
 
-### Integration Configuration (`conftest_integration.py`)
+@pytest.fixture
+def sample_config() -> dict:
+    """Sample configuration for testing."""
+    return {
+        "app_name": "test_app",
+        "debug": True,
+        "database_url": "sqlite:///:memory:"
+    }
 
-- Integration-specific fixtures
-- Mock services and containers
-- Database and service mocks
+@pytest.fixture
+def mock_repository(mocker):
+    """Mock repository for testing."""
+    return mocker.Mock(spec=Repository)
+```
 
-## Best Practices
+### Shared Test Domain (`shared_test_domain.py`)
 
-### Modern Pytest Patterns
+```python
+# Shared domain models for testing
+class TestUser(FlextEntity):
+    """Test user entity."""
+    username: str
+    email: str
+    is_active: bool = True
 
-1. **AAA Structure**: All tests follow Arrange-Act-Assert pattern
-2. **Fixture Usage**: Leverage fixtures for clean test isolation
-3. **Type Safety**: All test functions properly typed with return annotations
-4. **Marker Usage**: Every test marked with appropriate category markers
-5. **Descriptive Docstrings**: Clear test purpose and validation documented
+class TestOrder(FlextAggregateRoot):
+    """Test order aggregate."""
+    customer_id: str
+    items: list
+    total: Decimal
+```
 
-### Test Quality Standards
+## Writing Tests
 
-1. **Test Organization**: Each module has corresponding comprehensive test file(s)
-2. **Naming Convention**: `test_{module_name}.py` with descriptive test method names
-3. **Performance**: Keep unit tests under 100ms, integration tests under 1s
-4. **Isolation**: Unit tests use fixtures and mocks, no external dependencies
-5. **Coverage**: Maintain 95% minimum test coverage across all modules
-6. **Error Testing**: Comprehensive error path coverage with proper exception testing
+### Test Structure (AAA Pattern)
 
-### Enterprise Integration Patterns
+```python
+def test_user_activation():
+    """Test user activation with AAA pattern."""
+    # Arrange
+    user = TestUser(
+        id="user_123",
+        username="testuser",
+        email="test@example.com",
+        is_active=False
+    )
+    
+    # Act
+    result = user.activate()
+    
+    # Assert
+    assert result.success
+    assert user.is_active is True
+    assert "UserActivated" in [e.type for e in user.get_events()]
+```
 
-1. **Mock Integration**: Proper mock setup and verification patterns
-2. **Service Testing**: Container-based service integration with lifecycle management
-3. **Performance Validation**: Threshold-based performance testing
-4. **Error Propagation**: Cross-component error handling validation
-5. **Type System Testing**: Generic type safety validation across boundaries
+### Testing FlextResult Patterns
 
-## Dependencies
+```python
+def test_railway_pattern():
+    """Test railway-oriented error handling."""
+    result = (
+        FlextResult.ok(10)
+        .map(lambda x: x * 2)
+        .flat_map(lambda x: FlextResult.ok(x + 5))
+        .map_error(lambda e: f"Error: {e}")
+    )
+    
+    assert result.success
+    assert result.unwrap() == 25
 
-Test dependencies are minimal and isolated:
+def test_error_propagation():
+    """Test error propagation in chain."""
+    result = (
+        FlextResult.ok(10)
+        .flat_map(lambda x: FlextResult.fail("Division error"))
+        .map(lambda x: x * 2)  # Should not execute
+    )
+    
+    assert result.is_failure
+    assert result.error == "Division error"
+```
 
-- `pytest` - Test framework
-- `pytest-cov` - Coverage reporting
-- `pytest-mock` - Mocking utilities
-- Standard library only for mocks
+### Testing Domain Models
 
-No external services required for unit tests.
+```python
+def test_value_object_immutability():
+    """Test value objects are immutable."""
+    email1 = Email(address="test@example.com")
+    email2 = Email(address="test@example.com")
+    
+    assert email1 == email2  # Value equality
+    assert email1 is not email2  # Different instances
+    
+    with pytest.raises(AttributeError):
+        email1.address = "new@example.com"  # Should be immutable
+
+def test_entity_business_rules():
+    """Test entity enforces business rules."""
+    account = BankAccount(
+        id="acc_123",
+        balance=100.0,
+        daily_limit=500.0
+    )
+    
+    # Test successful withdrawal
+    result = account.withdraw(50.0)
+    assert result.success
+    assert account.balance == 50.0
+    
+    # Test overdraft protection
+    result = account.withdraw(100.0)
+    assert result.is_failure
+    assert "Insufficient funds" in result.error
+```
+
+### Testing Configuration
+
+```python
+def test_configuration_loading():
+    """Test configuration loads from environment."""
+    os.environ["APP_DEBUG"] = "true"
+    os.environ["APP_DATABASE_URL"] = "postgresql://localhost/test"
+    
+    try:
+        config = AppSettings()
+        assert config.debug is True
+        assert config.database_url == "postgresql://localhost/test"
+    finally:
+        # Clean up
+        os.environ.pop("APP_DEBUG", None)
+        os.environ.pop("APP_DATABASE_URL", None)
+```
+
+## Test Dependencies
+
+### Required Dependencies
+
+```toml
+# pyproject.toml
+[tool.poetry.group.test.dependencies]
+pytest = "^8.0.0"
+pytest-cov = "^5.0.0"
+pytest-mock = "^3.12.0"
+pytest-asyncio = "^0.21.0"  # For async tests
+pytest-timeout = "^2.2.0"   # Prevent hanging tests
+```
+
+### Running Without External Services
+
+All tests are self-contained:
+- No database required (uses in-memory when needed)
+- No external APIs (uses mocks)
+- No network calls (uses fixtures)
+- No file system dependencies (uses temp directories)
+
+## Common Test Patterns
+
+### Parametrized Tests
+
+```python
+@pytest.mark.parametrize("input,expected", [
+    (0, FlextResult.fail("Cannot divide by zero")),
+    (2, FlextResult.ok(5.0)),
+    (-2, FlextResult.ok(-5.0)),
+])
+def test_division_scenarios(input, expected):
+    """Test division with multiple scenarios."""
+    result = divide(10, input)
+    if expected.success:
+        assert result.success
+        assert result.unwrap() == expected.unwrap()
+    else:
+        assert result.is_failure
+        assert result.error == expected.error
+```
+
+### Fixture Composition
+
+```python
+@pytest.fixture
+def user_service(clean_container, mock_repository):
+    """Compose fixtures for service testing."""
+    service = UserService(repository=mock_repository)
+    clean_container.register("user_service", service)
+    return service
+
+def test_user_creation(user_service):
+    """Test user creation with composed fixtures."""
+    result = user_service.create_user("testuser", "test@example.com")
+    assert result.success
+```
+
+## Troubleshooting
+
+### Common Issues
+
+**Import Errors**
+```bash
+# Ensure FLEXT Core is installed
+pip install -e .
+# Or
+PYTHONPATH=. pytest tests/
+```
+
+**Coverage Not Meeting Threshold**
+```bash
+# Find uncovered lines
+pytest --cov=src/flext_core --cov-report=term-missing
+
+# Focus on specific module
+pytest --cov=src/flext_core.result --cov-report=term-missing tests/unit/core/test_result.py
+```
+
+**Slow Tests**
+```bash
+# Skip slow tests
+pytest -m "not slow"
+
+# Find slow tests
+pytest --durations=10
+```
+
+## Contributing Tests
+
+When adding new tests:
+
+1. **Location**: Place in appropriate directory (unit/integration/e2e)
+2. **Naming**: Follow `test_{feature}_{scenario}.py` pattern
+3. **Markers**: Add appropriate markers
+4. **Documentation**: Include docstrings explaining test purpose
+5. **Coverage**: Ensure new code has tests
+6. **Quality**: Run `make validate` before committing
+
+---
+
+For more information, see the [Contributing Guide](../CONTRIBUTING.md).

@@ -6,12 +6,9 @@ This module exists to maintain compatibility with existing tests.
 
 from __future__ import annotations
 
-# Re-export specific handlers for backward compatibility following SOLID principles
-# Generic type variables for handlers
 from abc import ABC, abstractmethod
 from typing import TypeVar
 
-# Import abstractions directly from handlers_base to avoid circular imports
 from flext_core.handlers_base import FlextAbstractHandler
 from flext_core.result import FlextResult
 
@@ -42,7 +39,8 @@ class FlextBaseHandler(FlextAbstractHandler[object, object]):
         """Validate request - default implementation allows all."""
         return FlextResult.ok(None)
 
-    def process_request(self, request: object) -> FlextResult[object]:
+    @staticmethod
+    def process_request(request: object) -> FlextResult[object]:
         """Process request - default implementation."""
         return FlextResult.ok(request)
 
@@ -109,8 +107,8 @@ class FlextQueryHandler[TQuery, TResult](FlextAbstractHandler[TQuery, TResult], 
 
 
 # Create simple aliases for other handlers to avoid circular imports
-class FlextValidatingHandler(FlextBaseHandler):
-    """Validating handler for backward compatibility."""
+class FlextLegacyValidatingHandler(FlextBaseHandler):
+    """Legacy validating handler for backward compatibility - use FlextValidatingHandler from handlers.py instead."""
 
 
 class FlextAuthorizingHandler(FlextBaseHandler):
@@ -134,22 +132,20 @@ class FlextHandlerRegistry:
 
     def __init__(self) -> None:
         """Initialize handler registry."""
-        self._handlers: list[FlextBaseHandler] = []
+        self._handlers: list[
+            FlextAbstractHandler[object, object] | FlextBaseHandler
+        ] = []
 
-    def register(self, handler: FlextAbstractHandler[object, object] | FlextBaseHandler) -> None:
+    def register(
+        self, handler: FlextAbstractHandler[object, object] | FlextBaseHandler
+    ) -> None:
         """Register a handler."""
-        # Normalize to base handler type for storage
-        if isinstance(handler, FlextBaseHandler):
-            self._handlers.append(handler)
-        else:
-            # Wrap unknown abstract handler types into a simple adapter
-            class _Adapter(FlextBaseHandler):
-                def process_request(self, request: object) -> FlextResult[object]:
-                    return handler.handle(request)
+        # Store handler directly to preserve its behavior
+        self._handlers.append(handler)
 
-            self._handlers.append(_Adapter())
-
-    def get_handlers(self) -> list[FlextBaseHandler]:
+    def get_handlers(
+        self,
+    ) -> list[FlextAbstractHandler[object, object] | FlextBaseHandler]:
         """Get registered handlers."""
         return self._handlers.copy()
 
@@ -165,7 +161,7 @@ __all__: list[str] = [
     "FlextHandlerChain",
     "FlextHandlerRegistry",
     "FlextHandlers",  # Legacy alias
+    "FlextLegacyValidatingHandler",
     "FlextMetricsHandler",
     "FlextQueryHandler",  # Legacy alias
-    "FlextValidatingHandler",
 ]

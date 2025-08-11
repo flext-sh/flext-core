@@ -68,7 +68,7 @@ class FlextMixinDelegator:
     _MIXIN_REGISTRY: ClassVar[dict[str, type]] = {}
 
     def __init__(self, host_instance: object, *mixin_classes: type) -> None:
-        """Initialize delegation system with automatic mixin discovery.
+        """Initialize a delegation system with automatic mixin discovery.
 
         Args:
             host_instance: Instance that will receive delegated methods
@@ -199,24 +199,24 @@ class FlextMixinDelegator:
         def delegated_method(*args: object, **kwargs: object) -> object:
             try:
                 return method(*args, **kwargs)
-            except (AttributeError, TypeError, ValueError) as e:
+            except (AttributeError, TypeError, ValueError) as e1:
                 # Enhanced error with delegation context
                 error_msg = (
                     f"Delegation error in {type(mixin_instance).__name__}."
-                    f"{method_name}: {e}"
+                    f"{method_name}: {e1}"
                 )
                 raise FlextOperationError(
                     error_msg,
                     operation="delegation",
                     stage=method_name,
-                ) from e
+                ) from e1
 
         # Preserve original signature and docstring
         try:
             delegated_method.__name__ = method_name
             delegated_method.__doc__ = method.__doc__
 
-            # Use type ignore for dynamic attribute assignment on function object
+            # Use type ignore for dynamic attribute assignment on a function object
             delegated_method.__signature__ = inspect.signature(method)  # type: ignore[attr-defined]
         except (AttributeError, ValueError) as e:
             logger = FlextLoggerFactory.get_logger(__name__)
@@ -227,7 +227,7 @@ class FlextMixinDelegator:
         # Store for access via host
         self._delegated_methods[method_name] = delegated_method
 
-        # Try to attach to host instance - handle frozen Pydantic models
+        # Try to attach to host-instance - handle frozen Pydantic models
         try:
             if not hasattr(self._host, method_name):
                 setattr(self._host, method_name, delegated_method)
@@ -263,7 +263,7 @@ class FlextMixinDelegator:
         return FlextResult.ok(None)
 
     def get_mixin_instance(self, mixin_class: type) -> object | None:
-        """Get specific mixin instance for direct access if needed."""
+        """Get a specific mixin instance for direct access if needed."""
         return self._mixin_instances.get(mixin_class)
 
     def get_delegation_info(self) -> dict[str, object]:

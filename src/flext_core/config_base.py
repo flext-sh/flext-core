@@ -270,7 +270,7 @@ class FlextConfigOperations:
             return FlextResult.fail("Path is not a file")
 
     # -----------------------------------------------------------------
-    # Backward-compat helper names used by tests via patching
+    # Backward-compatible helper names used by tests via patching
     # -----------------------------------------------------------------
     @staticmethod
     def safe_load_json_file(file_path: str | Path) -> FlextResult[dict[str, object]]:
@@ -327,7 +327,7 @@ class FlextConfigOperations:
             required: List of required field names.
 
         Returns:
-            FlextResult indicating validation result.
+            FlextResult indicating a validation result.
 
         """
         missing = [field for field in required if field not in config]
@@ -361,7 +361,7 @@ class FlextConfigValidator:
             required_keys: List of required keys.
 
         Returns:
-            FlextResult indicating validation result.
+            FlextResult indicating a validation result.
 
         """
         missing = [k for k in required_keys if k not in config]
@@ -381,7 +381,7 @@ class FlextConfigValidator:
             type_map: Mapping of keys to expected types.
 
         Returns:
-            FlextResult indicating validation result.
+            FlextResult indicating a validation result.
 
         """
         for key, expected_type in type_map.items():
@@ -409,7 +409,7 @@ class FlextConfigValidator:
             max_val: Maximum allowed value.
 
         Returns:
-            FlextResult indicating validation result.
+            FlextResult indicating a validation result.
 
         """
         if key not in config:
@@ -433,7 +433,7 @@ class FlextConfigValidator:
         key: str,
         pattern: str,
     ) -> FlextResult[None]:
-        """Validate string value matches pattern.
+        """Validate a string value matches pattern.
 
         Args:
             config: Configuration dictionary.
@@ -441,7 +441,7 @@ class FlextConfigValidator:
             pattern: Regular expression pattern.
 
         Returns:
-            FlextResult indicating validation result.
+            FlextResult indicating a validation result.
 
         """
         if key not in config:
@@ -588,7 +588,7 @@ class FlextSettings(FlextAbstractSettings, PydanticBaseSettings):
 
     Extends base abstractions and Pydantic BaseSettings with FlextResult
     integration for type-safe configuration management with .env file support.
-    Uses config_base.py abstractions following SOLID principles.
+    Use config_base.py abstractions following SOLID principles.
     """
 
     model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(

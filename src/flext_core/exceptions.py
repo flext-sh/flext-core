@@ -251,7 +251,7 @@ def create_context_exception_factory(
 
 
 def create_module_exception_classes(module_name: str) -> dict[str, type]:
-    """Create DRY module-specific exception classes to eliminate duplication.
+    """Create DRY module-specific exception classes to exclude duplication.
 
     This function creates a complete set of module-specific exception classes that
     eliminate the need for duplicate exception code across FLEXT modules. Each module
@@ -357,7 +357,8 @@ class FlextError(FlextAbstractError):
             "serialization_version": "1.0",
         }
 
-    def _sanitize_context(self, context: dict[str, object]) -> dict[str, object]:
+    @staticmethod
+    def _sanitize_context(context: dict[str, object]) -> dict[str, object]:
         """Sanitize context for safe serialization.
 
         Args:
@@ -441,7 +442,7 @@ class FlextError(FlextAbstractError):
         # Attempt to resolve the correct exception class
         exception_class = cls._resolve_exception_class(error_type)
 
-        # Create instance with appropriate constructor
+        # Create instance with the appropriate constructor
         try:
             # Try to create with the specific class
             if exception_class != FlextError:
@@ -792,7 +793,7 @@ class FlextPermissionError(FlextAbstractInfrastructureError, FlextError):
 
 
 class FlextNotFoundError(FlextError):
-    """Resource not found errors with lookup context."""
+    """Resource didn't find errors with lookup context."""
 
     def __init__(self, message: str = "Resource not found", **kwargs: object) -> None:
         """Initialize not found error with context.
@@ -973,7 +974,7 @@ class FlextExceptions(FlextAbstractErrorFactory):
 
     Provides convenient factory methods for creating all types of FLEXT exceptions
     with appropriate default context and error codes.
-    Implements FlextAbstractErrorFactory.
+    Implement FlextAbstractErrorFactory.
     """
 
     @classmethod

@@ -36,8 +36,6 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from flext_core.typings import (
-        R,
-        T,
         TAnyDict,
         TCommand,
         TCorrelationId,
@@ -47,14 +45,6 @@ if TYPE_CHECKING:
         TUserId,
     )
 # FlextLogger imported for class methods only - instance methods use FlextLoggableMixin
-
-# =============================================================================
-# DOMAIN-SPECIFIC TYPES - Command Pattern Specializations
-# =============================================================================
-
-# Command pattern specific types for better domain modeling
-
-# Query pattern specific types
 
 # =============================================================================
 # FLEXT COMMANDS - Unified command pattern
@@ -135,7 +125,7 @@ class FlextCommands:
                 try:
                     object.__setattr__(self, "command_type", snake_name)
                 except Exception:
-                    # If field has no setter and is default, fallback to build new
+                    # If a field has no setter and is default, fallback to build new
                     data = self.model_dump()
                     data["command_type"] = snake_name
                     new_inst = type(self).model_validate(data)
@@ -237,7 +227,7 @@ class FlextCommands:
             validate_method = getattr(command, "validate_command", None)
             if callable(validate_method):
                 validation_result = validate_method()
-                if validation_result.is_failure:
+                if validation_result.is_failture:
                     return FlextResult.fail(
                         validation_result.error or "Command validation failed",
                     )
@@ -254,20 +244,20 @@ class FlextCommands:
             # Override in subclasses for custom validation
             return FlextResult.ok(None)
 
+        @staticmethod
         def require_field(
-            self,
             field_name: str,
             value: object,
             error_msg: str = "",
         ) -> FlextResult[None]:
-            """Validate required field with custom error."""
+            """Validate a required field with custom error."""
             if not value or (isinstance(value, str) and not value.strip()):
                 msg = error_msg or f"{field_name} is required"
                 return FlextResult.fail(msg)
             return FlextResult.ok(None)
 
+        @staticmethod
         def require_email(
-            self,
             email: str,
             field_name: str = "email",
         ) -> FlextResult[None]:
@@ -280,8 +270,8 @@ class FlextCommands:
                 return FlextResult.fail(f"Invalid {field_name} format")
             return FlextResult.ok(None)
 
+        @staticmethod
         def require_min_length(
-            self,
             value: str,
             min_len: int,
             field_name: str,
@@ -316,7 +306,7 @@ class FlextCommands:
             error: str | None = None,
             metadata: TAnyDict | None = None,
         ) -> None:
-            """Initialize command result with metadata."""
+            """Initialize a command result with metadata."""
             super().__init__(data=data, error=error)
             self.metadata = metadata or {}
 
@@ -336,7 +326,7 @@ class FlextCommands:
             error_code: str | None = None,
             error_data: dict[str, object] | None = None,
         ) -> FlextCommands.Result[T]:
-            """Create failed result with metadata and optional error code."""
+            """Create a failed result with metadata and optional error code."""
             # Convert error_data to TAnyDict for metadata compatibility
             metadata: TAnyDict | None = None
             if error_data is not None:
@@ -365,12 +355,11 @@ class FlextCommands:
     ):
         """Base command handler interface - implements FlextAbstractCommandHandler."""
 
-        def __init__(
-            self,
-            handler_name: TServiceName | None = None,
-            handler_id: TServiceName | None = None,
-        ) -> None:
+        def __init__(self, handler_name: TServiceName | None = None,
+                     handler_id: TServiceName | None = None) -> None:
             """Initialize handler with logging."""
+            super().__init__()
+            self._metrics_state = None
             self._handler_name = handler_name or self.__class__.__name__
             self.handler_id = handler_id or f"{self.__class__.__name__}_{id(self)}"
             # Logger now provided by FlextLoggableMixin - DRY principle applied
@@ -419,7 +408,8 @@ class FlextCommands:
             if metrics_state is None:
                 self._metrics_state = {"total": 0, "success": 0}
                 metrics_state = self._metrics_state
-            metrics_state["total"] = int(metrics_state.get("total", 0)) + 1
+            # mypy: metrics_state is dict now
+            metrics_state["total"] = int(metrics_state.get("total", 0)) + 1  # type: ignore[index]
 
             # Validate command first via injected validator or command's own method
             validator = getattr(self, "_validator", None)
@@ -427,10 +417,10 @@ class FlextCommands:
                 try:
                     validate_method = getattr(validator, "validate_message", None)
                     if callable(validate_method):
-                        vres: FlextResult[None] = validate_method(command)
-                        if isinstance(vres, FlextResult) and vres.is_failure:
-                            # Propagar exatamente o FlextResult do validador
-                            return vres  # type: ignore[return-value]
+                        validated_result: FlextResult[None] = validate_method(command)
+                        if isinstance(validated_result, FlextResult) and validated_result.is_failure:
+                            # Exactly propagate a validated FlextResult
+                            return validated_result  # type: ignore[return-value]
                 except Exception as e:
                     return FlextResult.fail(f"Command validation failed: {e}")
             else:
@@ -441,7 +431,7 @@ class FlextCommands:
                         error = validation_result.error or "Command validation failed"
                         return FlextResult.fail(error)
 
-            # Check if can handle
+            # Check if it can handle
             if not self.can_handle(command):
                 error = f"{self.handler_name} cannot process {type(command).__name__}"
                 return FlextResult.fail(error)
@@ -482,7 +472,7 @@ class FlextCommands:
                     args = getattr(base, "__args__", None)
                     if args is not None and len(args) >= 1:
                         expected_type = base.__args__[0]
-                        # Use BASE type guard directly - MAXIMIZA base funcionalidade
+                        # Use BASE type guard directly - MAXIMIZE base functionality
                         can_handle_result = FlextTypeGuards.is_instance_of(
                             command,
                             expected_type,
@@ -552,6 +542,7 @@ class FlextCommands:
 
         def __init__(self) -> None:
             """Initialize command bus with logging."""
+            super().__init__()
             self._handlers: dict[object, object] = {}
             self._middleware: list[object] = []
             self._execution_count = 0
@@ -567,7 +558,7 @@ class FlextCommands:
         ) -> None:
             """Register command handler (compatible signature).
 
-            Supports both (command_type: str, handler) and (handler,) forms.
+            Supports both (command_type: str, handler) and (handler) forms.
             """
             one = 1
             two = 2
@@ -635,13 +626,13 @@ class FlextCommands:
 
             Args:
                 handler_or_command_type: Handler instance or command type
-                handler: Handler instance (when first arg is command type)
+                handler: Handler instance (when first arg is a command type)
 
             Returns:
                 FlextResult indicating registration success
 
             """
-            # Handle single argument case (just the handler)
+            # Handle a single argument case (just the handler)
             if handler is None:
                 handle_method = getattr(handler_or_command_type, "handle", None)
                 if not callable(handle_method):
@@ -649,7 +640,7 @@ class FlextCommands:
                         "Invalid handler: must have callable 'handle' method",
                     )
                 handler_obj = handler_or_command_type
-                # Use handler_id as key for uniqueness
+                # Use handler_id as a key for uniqueness
                 key = getattr(handler_obj, "handler_id", handler_obj.__class__.__name__)
                 self._handlers[key] = handler_obj
 
@@ -660,11 +651,11 @@ class FlextCommands:
                     total_handlers=len(self._handlers),
                 )
                 return FlextResult.ok(None)
-            # Handle two argument case (command_type, handler)
+            # Handle two arguments case (command_type, handler)
             command_type = handler_or_command_type
             handler_obj = handler
 
-            # Use BASE validators directly - MAXIMIZA base usage
+            # Use BASE validators directly - MAXIMIZE base usage
             if not FlextValidators.is_not_none(command_type):
                 return FlextResult.fail("Command type cannot be None")
 
@@ -735,7 +726,7 @@ class FlextCommands:
             command: TCommand,
             command_type: type,
         ) -> FlextResult[None]:
-            """Validate command if it has validation method."""
+            """Validate command if it has a validation method."""
             validate_method = getattr(command, "validate_command", None)
             if callable(validate_method):
                 validation_result = validate_method()
@@ -751,7 +742,7 @@ class FlextCommands:
             return FlextResult.ok(None)
 
         def _find_command_handler(self, command: TCommand) -> object | None:
-            """Find handler that can handle this command."""
+            """Find a handler that can handle this command."""
             for registered_handler in self._handlers.values():
                 can_handle_method = getattr(registered_handler, "can_handle", None)
                 if callable(can_handle_method) and can_handle_method(command):
@@ -759,7 +750,7 @@ class FlextCommands:
             return None
 
         def _handle_no_handler_found(self, command_type: type) -> FlextResult[object]:
-            """Handle case when no handler is found."""
+            """Handle a case when no handler is found."""
             handler_names = [h.__class__.__name__ for h in self._handlers.values()]
             self.logger.error(
                 "No handler found",
@@ -773,7 +764,7 @@ class FlextCommands:
             command: TCommand,
             handler: object,
         ) -> FlextResult[None]:
-            """Apply middleware pipeline."""
+            """Apply a middleware pipeline."""
             for i, middleware in enumerate(self._middleware):
                 self.logger.debug(
                     "Applying middleware",
@@ -931,7 +922,7 @@ class FlextCommands:
         sort_order: TServiceName = "asc"
 
         def validate_query(self) -> FlextResult[None]:
-            """Validate query with business logic."""
+            """Validate a query with business logic."""
             errors: list[str] = []
 
             # Perform business validation
@@ -972,11 +963,11 @@ class FlextCommands:
             return self._handler_name
 
         def can_handle(self, query: object) -> bool:  # noqa: ARG002
-            """Check if handler can handle query (always True for generic handler)."""
+            """Check if a handler can handle a query (always True for generic handler)."""
             return True
 
         def validate_query(self, query: T) -> FlextResult[None]:
-            """Validate query object using its own validation method if available."""
+            """Validate a query object using its own validation method if available."""
             validate_method = getattr(query, "validate_query", None)
             if callable(validate_method):
                 return validate_method()  # type: ignore[no-any-return]

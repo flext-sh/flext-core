@@ -47,7 +47,7 @@ class FlextAbstractError(ABC, Exception):
         self.context = context or {}
 
     def __str__(self) -> str:  # pragma: no cover - trivial
-        """Return human-readable exception message."""
+        """Return a human-readable exception message."""
         if self.error_code:
             return f"[{self.error_code}] {self.message}"
         return self.message
@@ -69,7 +69,7 @@ class FlextAbstractError(ABC, Exception):
         ...
 
 
-class FlextAbstractValidationError(FlextAbstractError):
+class FlextAbstractValidationError(FlextAbstractError, ABC):
     """Abstract validation error for input validation."""
 
     def __init__(
@@ -95,7 +95,7 @@ class FlextAbstractValidationError(FlextAbstractError):
         return "VALIDATION_ERROR"
 
 
-class FlextAbstractBusinessError(FlextAbstractError):
+class FlextAbstractBusinessError(FlextAbstractError, ABC):
     """Abstract business error for business rule violations."""
 
     def __init__(
@@ -119,7 +119,7 @@ class FlextAbstractBusinessError(FlextAbstractError):
         return "BUSINESS_ERROR"
 
 
-class FlextAbstractInfrastructureError(FlextAbstractError):
+class FlextAbstractInfrastructureError(FlextAbstractError, ABC):
     """Abstract infrastructure error for infrastructure issues."""
 
     def __init__(
@@ -143,7 +143,7 @@ class FlextAbstractInfrastructureError(FlextAbstractError):
         return "INFRASTRUCTURE_ERROR"
 
 
-class FlextAbstractConfigurationError(FlextAbstractError):
+class FlextAbstractConfigurationError(FlextAbstractError, ABC):
     """Abstract configuration error for configuration issues."""
 
     def __init__(

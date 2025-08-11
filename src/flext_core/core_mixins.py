@@ -1,0 +1,86 @@
+"""Compatibility layer for mixins.
+
+This module re-exports the canonical mixin implementations from
+`flext_core.mixins`. Prefer importing from `flext_core` or
+`flext_core.mixins` in new code.
+"""
+
+from __future__ import annotations
+
+# Re-export selected names explicitly to keep static analyzers happy
+from flext_core.mixins import (  # noqa: F401
+    FlextAbstractEntityMixin,
+    FlextAbstractIdentifiableMixin,
+    FlextAbstractLoggableMixin,
+    FlextAbstractMixin,
+    FlextAbstractSerializableMixin,
+    FlextAbstractServiceMixin,
+    FlextAbstractTimestampMixin,
+    FlextAbstractValidatableMixin,
+    FlextCacheableMixin,
+    FlextCommandMixin,
+    FlextComparableMixin,
+    FlextDataMixin,
+    FlextEntityMixin,
+    FlextFullMixin,
+    FlextIdentifiableMixin,
+    FlextLoggableMixin,
+    FlextSerializableMixin,
+    FlextServiceMixin,
+    FlextTimestampMixin,
+    FlextTimingMixin,
+    FlextValidatableMixin,
+    FlextValidators,
+    FlextValueObjectMixin,
+    LegacyCompatibleCacheableMixin,
+    LegacyCompatibleCommandMixin,
+    LegacyCompatibleComparableMixin,
+    LegacyCompatibleDataMixin,
+    LegacyCompatibleEntityMixin,
+    LegacyCompatibleFullMixin,
+    LegacyCompatibleIdentifiableMixin,
+    LegacyCompatibleLoggableMixin,
+    LegacyCompatibleSerializableMixin,
+    LegacyCompatibleTimestampMixin,
+    LegacyCompatibleTimingMixin,
+    LegacyCompatibleValidatableMixin,
+)
+
+# Keep an explicit __all__ to satisfy static analyzers and maintain clarity
+__all__: list[str] = [
+    "FlextAbstractEntityMixin",
+    "FlextAbstractIdentifiableMixin",
+    "FlextAbstractLoggableMixin",
+    "FlextAbstractMixin",
+    "FlextAbstractSerializableMixin",
+    "FlextAbstractServiceMixin",
+    "FlextAbstractTimestampMixin",
+    "FlextAbstractValidatableMixin",
+    "FlextCacheableMixin",
+    "FlextCommandMixin",
+    "FlextComparableMixin",
+    "FlextDataMixin",
+    "FlextEntityMixin",
+    "FlextFullMixin",
+    "FlextIdentifiableMixin",
+    "FlextLoggableMixin",
+    "FlextSerializableMixin",
+    "FlextServiceMixin",
+    "FlextTimestampMixin",
+    "FlextTimingMixin",
+    "FlextValidatableMixin",
+    "FlextValidators",
+    "FlextValueObjectMixin",
+    "LegacyCompatibleCacheableMixin",
+    "LegacyCompatibleCommandMixin",
+    "LegacyCompatibleComparableMixin",
+    "LegacyCompatibleDataMixin",
+    "LegacyCompatibleEntityMixin",
+    "LegacyCompatibleFullMixin",
+    "LegacyCompatibleIdentifiableMixin",
+    "LegacyCompatibleLoggableMixin",
+    "LegacyCompatibleSerializableMixin",
+    "LegacyCompatibleTimestampMixin",
+    "LegacyCompatibleTimingMixin",
+    "LegacyCompatibleValidatableMixin",
+]

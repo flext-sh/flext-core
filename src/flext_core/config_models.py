@@ -1,8 +1,8 @@
 """Domain-specific configuration models using config_base abstractions.
 
 Provides concrete configuration models for database, cache, authentication,
-and integration systems. Uses config_base.py abstractions following SOLID
-principles to eliminate duplication.
+and integration systems. Use a config_base.py abstractions following SOLID
+principles to remove duplication.
 
 Classes:
     FlextDatabaseConfig: Database connection configuration.
@@ -518,7 +518,7 @@ class FlextObservabilityConfig(FlextBaseConfigModel):
         description="Correlation ID header",
     )
 
-    # Backward-compat constants expected by tests
+    # Backward-compatible constants expected by tests
     ENABLE_METRICS: ClassVar[bool] = True
     TRACE_ENABLED: ClassVar[bool] = True
     TRACE_SAMPLE_RATE: ClassVar[float] = 0.1
@@ -552,7 +552,7 @@ class FlextPerformanceConfig(FlextBaseConfigModel):
     )
     max_connections: int = Field(100, description="Maximum connections", ge=1, le=10000)
 
-    # Backward-compat constants expected by tests
+    # Backward-compatible constants expected by tests
     DEFAULT_CACHE_SIZE: ClassVar[int] = 1000
     DEFAULT_PAGE_SIZE: ClassVar[int] = 50
     DEFAULT_RETRIES: ClassVar[int] = 3

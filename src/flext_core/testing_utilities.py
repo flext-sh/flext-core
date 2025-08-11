@@ -107,8 +107,8 @@ class FlextTestUtilities:
 
         Args:
             success: Whether the result should be successful.
-            data: Data for successful result.
-            error: Error message for failed result.
+            data: Data for a successful result.
+            error: Error message for a failed result.
 
         Returns:
             FlextResult for testing.
@@ -129,7 +129,7 @@ class FlextTestUtilities:
             The unwrapped data.
 
         Raises:
-            AssertionError: If result is not successful.
+            AssertionError: If a result is not successful.
 
         """
         if not result.is_success:
@@ -148,7 +148,7 @@ class FlextTestUtilities:
             The error message.
 
         Raises:
-            AssertionError: If result is not a failure.
+            AssertionError: If a result is not a failure.
 
         """
         if not result.is_failure:
@@ -390,8 +390,8 @@ class FlextTestAssertion:
         """
 
         def _fail_no_exception() -> None:
-            msg = message or f"Expected {exception_class.__name__} to be raised"
-            raise AssertionError(msg)
+            msg2 = message or f"Expected {exception_class.__name__} to be raised"
+            raise AssertionError(msg2)
 
         try:
             callable_obj()
@@ -501,7 +501,7 @@ class FlextTestMocker:
             **kwargs: Additional mock configuration.
 
         Returns:
-            Configured async mock object.
+            Configured an async mock object.
 
         """
         mock = MagicMock(**kwargs)

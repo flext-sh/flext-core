@@ -1,104 +1,328 @@
 # Unit Tests
 
-**Isolated Component Testing with 95%+ Coverage Requirement**
+Isolated component testing for FLEXT Core modules.
 
-Unit tests validate individual components in isolation, ensuring comprehensive coverage of all business logic, error paths, and edge cases across the FLEXT Core architectural layers.
+## Overview
+
+Unit tests validate individual components in isolation, ensuring correct behavior of all functions, classes, and modules. Tests use mocks and fixtures to eliminate external dependencies.
 
 ## Test Organization
 
-### Core Pattern Layer Tests (`core/`)
-
-- `test_result.py` - FlextResult[T] railway-oriented programming validation
-- `test_container.py` - FlextContainer dependency injection testing
-- `test_exceptions.py` - Exception hierarchy and error handling validation
-- `test_utilities.py` - Pure utility function testing with performance validation
-
-### Domain Layer Tests (`domain/`)
-
-- `test_domain_entity.py` - FlextEntity business logic and event testing
-- `test_domain_value_object.py` - FlextValueObject immutability and equality
-- `test_entities.py` - Entity behavior and lifecycle validation
-
-### Pattern Implementation Tests (`patterns/`)
-
-- `test_patterns_commands.py` - CQRS command pattern validation
-- `test_patterns_handlers.py` - Message handler pattern testing
-- `test_patterns_validation.py` - Validation pattern comprehensive testing
-
-### Cross-Cutting Tests
-
-- `test_pep8_compliance.py` - Code style and formatting validation
-- `test_coverage_gaps.py` - Coverage analysis and gap identification
-
-## Quality Standards
-
-### Coverage Requirements
-
-- **Minimum**: 95% line coverage per module
-- **Critical Paths**: 100% coverage for FlextResult, FlextContainer
-- **Error Paths**: All exception scenarios tested
-- **Edge Cases**: Boundary conditions and invalid inputs
-
-### Performance Requirements
-
-- **Execution Time**: < 100ms per individual test
-- **Suite Time**: < 10 seconds for complete unit test suite
-- **Memory Usage**: No memory leaks in test execution
-
-### Test Isolation
-
-- **No External Dependencies**: All external services mocked
-- **Clean State**: Each test starts with fresh state
-- **No Side Effects**: Tests do not affect other tests
-- **Deterministic**: Tests produce same results on every run
-
-## Running Unit Tests
-
-```bash
-# All unit tests
-pytest tests/unit/
-
-# Specific test categories
-pytest tests/unit/core/                # Core pattern tests
-pytest tests/unit/domain/              # Domain layer tests
-pytest tests/unit/patterns/            # Pattern implementation tests
-
-# Fast feedback for development
-pytest tests/unit/core/test_result.py -v
-pytest -m "unit and not slow"
+```
+tests/unit/
+├── core/                    # Core framework tests
+│   ├── test_result.py      # FlextResult pattern
+│   ├── test_container.py   # Dependency injection
+│   ├── test_config.py      # Configuration
+│   ├── test_utilities.py   # Utility functions
+│   └── ...
+├── domain/                  # Domain model tests
+│   ├── test_entities.py    # Domain entities
+│   ├── test_domain_entity.py
+│   └── test_domain_value_object.py
+├── patterns/                # Pattern tests
+│   ├── test_patterns_commands.py
+│   ├── test_patterns_validation.py
+│   └── test_architectural_patterns.py
+└── test_pep8_compliance.py # Code style validation
 ```
 
-## Test Standards
+## Running Tests
+
+### Run All Unit Tests
+
+```bash
+# Run all unit tests
+pytest tests/unit/
+
+# With coverage
+pytest tests/unit/ --cov=src/flext_core
+
+# Verbose output
+pytest tests/unit/ -v
+
+# Parallel execution
+pytest tests/unit/ -n auto
+```
+
+### Run Specific Categories
+
+```bash
+# Core tests only
+pytest tests/unit/core/
+
+# Domain tests only
+pytest tests/unit/domain/
+
+# Pattern tests only
+pytest tests/unit/patterns/
+
+# Single test file
+pytest tests/unit/core/test_result.py
+```
+
+### Run by Markers
+
+```bash
+# Fast tests only
+pytest tests/unit/ -m "not slow"
+
+# Core functionality
+pytest tests/unit/ -m core
+
+# PEP8 compliance
+pytest tests/unit/ -m pep8
+```
+
+## Writing Unit Tests
 
 ### Test Structure
 
 ```python
-def test_should_[behavior]_when_[condition](fixture_name: Type) -> None:
-    """Test that [component] [behavior] when [condition].
+import pytest
+from unittest.mock import Mock, patch
+from flext_core import FlextResult
 
-    Validates [specific behavior] ensuring [business rule].
-    Coverage: [coverage area] - [quality aspect validated]
-    """
-    # Arrange
-    setup_test_data
-
-    # Act
-    result = component_under_test.method(parameters)
-
-    # Assert
-    assert result.success
-    assert expected_behavior_occurred
+class TestComponentName:
+    """Test suite for ComponentName."""
+    
+    @pytest.fixture
+    def component(self):
+        """Provide component instance for testing."""
+        return ComponentName()
+    
+    def test_successful_operation(self, component):
+        """Test successful operation path."""
+        # Arrange
+        input_data = {"key": "value"}
+        
+        # Act
+        result = component.process(input_data)
+        
+        # Assert
+        assert result.success
+        assert result.unwrap() == expected_value
+    
+    def test_error_handling(self, component):
+        """Test error handling path."""
+        # Arrange
+        invalid_input = None
+        
+        # Act
+        result = component.process(invalid_input)
+        
+        # Assert
+        assert result.is_failure
+        assert "Invalid input" in result.error
+    
+    @pytest.mark.parametrize("input,expected", [
+        ("value1", "result1"),
+        ("value2", "result2"),
+        ("value3", "result3"),
+    ])
+    def test_multiple_scenarios(self, component, input, expected):
+        """Test multiple input scenarios."""
+        result = component.process(input)
+        assert result.unwrap() == expected
 ```
 
-### Mock Usage
+### Using Mocks
 
-- **External Dependencies**: Always mocked in unit tests
-- **Time Dependencies**: Mock datetime.now() for deterministic testing
-- **File System**: Mock file operations
-- **Network**: Mock all HTTP and network calls
+```python
+def test_with_external_dependency(mocker):
+    """Test component with mocked dependency."""
+    # Mock external service
+    mock_service = mocker.Mock(spec=ExternalService)
+    mock_service.fetch_data.return_value = FlextResult.ok({"data": "value"})
+    
+    # Inject mock
+    component = Component(service=mock_service)
+    
+    # Test behavior
+    result = component.process()
+    
+    # Verify interactions
+    mock_service.fetch_data.assert_called_once()
+    assert result.success
+```
+
+### Testing Async Code
+
+```python
+import pytest
+import asyncio
+
+@pytest.mark.asyncio
+async def test_async_operation():
+    """Test asynchronous operation."""
+    component = AsyncComponent()
+    result = await component.async_process()
+    assert result.success
+```
+
+## Coverage Requirements
+
+### Target Coverage
+
+- **Minimum**: 75% overall coverage
+- **Critical modules**: 90% coverage
+  - `result.py`
+  - `container.py`
+  - `config.py`
+- **New code**: 80% minimum
+
+### Check Coverage
+
+```bash
+# Generate coverage report
+pytest tests/unit/ --cov=src/flext_core --cov-report=term-missing
+
+# HTML report
+pytest tests/unit/ --cov=src/flext_core --cov-report=html
+open htmlcov/index.html
+
+# Fail if below threshold
+pytest tests/unit/ --cov=src/flext_core --cov-fail-under=75
+```
+
+## Test Categories
+
+### Core Tests (`core/`)
+
+Tests for fundamental patterns:
+
+- Railway-oriented programming (FlextResult)
+- Dependency injection (FlextContainer)
+- Configuration management
+- Exception handling
+- Utility functions
+
+### Domain Tests (`domain/`)
+
+Tests for domain modeling:
+
+- Entities with business logic
+- Value objects and immutability
+- Aggregate roots and consistency
+- Domain services
+
+### Pattern Tests (`patterns/`)
+
+Tests for architectural patterns:
+
+- CQRS commands and queries
+- Validation patterns
+- Handler chains
+- Decorators and mixins
+
+## Best Practices
+
+### DO
+
+- ✅ Test both success and failure paths
+- ✅ Use descriptive test names
+- ✅ Keep tests focused and simple
+- ✅ Use fixtures for common setup
+- ✅ Mock external dependencies
+- ✅ Test edge cases and boundaries
+- ✅ Verify error messages
+
+### DON'T
+
+- ❌ Test implementation details
+- ❌ Use real external services
+- ❌ Share state between tests
+- ❌ Write overly complex tests
+- ❌ Ignore flaky tests
+- ❌ Test framework code
+
+## Common Patterns
+
+### Testing FlextResult
+
+```python
+def test_result_chaining():
+    """Test FlextResult chaining operations."""
+    result = (
+        FlextResult.ok(10)
+        .map(lambda x: x * 2)
+        .flat_map(lambda x: FlextResult.ok(x + 5))
+    )
+    assert result.unwrap() == 25
+
+def test_result_error_propagation():
+    """Test error propagation in chain."""
+    result = (
+        FlextResult.ok(10)
+        .flat_map(lambda x: FlextResult.fail("Error"))
+        .map(lambda x: x * 2)  # Should not execute
+    )
+    assert result.is_failure
+    assert result.error == "Error"
+```
+
+### Testing Configuration
+
+```python
+def test_configuration_loading(monkeypatch):
+    """Test configuration from environment."""
+    monkeypatch.setenv("APP_DEBUG", "true")
+    monkeypatch.setenv("APP_PORT", "8080")
+    
+    config = AppSettings()
+    assert config.debug is True
+    assert config.port == 8080
+```
+
+### Testing Domain Models
+
+```python
+def test_entity_business_logic():
+    """Test entity enforces business rules."""
+    user = User(id="123", email="test@example.com")
+    
+    # Test valid operation
+    result = user.activate()
+    assert result.success
+    assert user.is_active
+    
+    # Test invalid operation
+    result = user.activate()  # Already active
+    assert result.is_failure
+    assert "already active" in result.error.lower()
+```
+
+## Troubleshooting
+
+### Common Issues
+
+**Slow tests:**
+
+```bash
+# Find slow tests
+pytest tests/unit/ --durations=10
+
+# Skip slow tests
+pytest tests/unit/ -m "not slow"
+```
+
+**Import errors:**
+
+```bash
+# Ensure proper Python path
+PYTHONPATH=. pytest tests/unit/
+```
+
+**Flaky tests:**
+
+```bash
+# Run multiple times to detect flakiness
+pytest tests/unit/test_file.py --count=10
+```
 
 ## Related Documentation
 
-- [Integration Tests](../integration/README.md)
-- [End-to-End Tests](../e2e/README.md)
-- [Source Code Organization](../../src/flext_core/README.md)
+- [Integration Tests](../integration/)
+- [E2E Tests](../e2e/)
+- [Test Configuration](../conftest.py)
+- [Main Test Documentation](../README.md)

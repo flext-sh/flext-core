@@ -52,7 +52,6 @@ import json
 import json as _json
 import re
 import sys
-import time
 import warnings
 from typing import TYPE_CHECKING
 
@@ -70,7 +69,6 @@ from flext_core.decorators import (
     _flext_timing_decorator,
     _flext_validate_input_decorator,
 )
-from flext_core.exceptions import FlextValidationError
 from flext_core.fields import FlextFieldCore, FlextFields
 from flext_core.handlers import (
     FlextAuthorizingHandler,
@@ -85,6 +83,24 @@ from flext_core.loggings import (
     FlextLoggerFactory,
     create_log_context as modern_create_log_context,
     get_logger,
+)
+
+# Import legacy compatible mixins from mixin_compat.py to eliminate duplication
+from flext_core.mixin_compat import (
+    LegacyCompatibleCacheableMixin,
+    LegacyCompatibleCommandMixin,
+    LegacyCompatibleComparableMixin,
+    LegacyCompatibleDataMixin,
+    LegacyCompatibleEntityMixin,
+    LegacyCompatibleFullMixin,
+    LegacyCompatibleIdentifiableMixin,
+    LegacyCompatibleLoggableMixin,
+    LegacyCompatibleSerializableMixin,
+    LegacyCompatibleServiceMixin,
+    LegacyCompatibleTimestampMixin,
+    LegacyCompatibleTimingMixin,
+    LegacyCompatibleValidatableMixin,
+    LegacyCompatibleValueObjectMixin,
 )
 from flext_core.models import (
     FlextDatabaseModel,
@@ -1092,167 +1108,11 @@ def flext_create_boolean_field(
 
 
 # =============================================================================
-# MIXIN COMPATIBILITY LAYER - Test compatibility wrappers
+# MIXIN COMPATIBILITY LAYER - Mixins imported from mixin_compat.py
 # =============================================================================
 
-
-class LegacyCompatibleTimestampMixin:
-    """Backward-compatible TimestampMixin for tests."""
-
-    def __init__(self) -> None:
-        self._created_at = time.time()
-        self._updated_at = time.time()
-
-    def get_timestamp(self) -> float:
-        """Default timestamp implementation for compatibility."""
-        return time.time()
-
-    def update_timestamp(self) -> None:
-        """Default timestamp update for compatibility."""
-
-    @property
-    def created_at(self) -> float:
-        return getattr(self, "_created_at", self.get_timestamp())
-
-    @property
-    def updated_at(self) -> float:
-        return getattr(self, "_updated_at", self.get_timestamp())
-
-    def _update_timestamp(self) -> None:
-        self._updated_at = self.get_timestamp()
-
-    def get_age_seconds(self) -> float:
-        return self.get_timestamp() - self.created_at
-
-
-class LegacyCompatibleIdentifiableMixin:
-    """Backward-compatible IdentifiableMixin for tests."""
-
-    def __init__(self) -> None:
-        self._id = "default-id"
-
-    def get_id(self) -> str:
-        """Default ID implementation for compatibility."""
-        return getattr(self, "_id", "default-id")
-
-    @property
-    def id(self) -> str:
-        return getattr(self, "_id", "default-id")
-
-    @id.setter
-    def id(self, value: str) -> None:
-        self._id = value
-
-    def set_id(self, entity_id: str) -> None:
-        if entity_id and entity_id.strip():
-            self._id = entity_id
-        else:
-            msg = "Invalid entity ID: "
-            raise FlextValidationError(
-                msg,
-                validation_details={"field": "entity_id", "value": entity_id},
-            )
-
-    def has_id(self) -> bool:
-        id_attr = getattr(self, "_id", None)
-        return id_attr is not None
-
-
-class LegacyCompatibleValidatableMixin:
-    """Backward-compatible ValidatableMixin for tests."""
-
-    def __init__(self) -> None:
-        self._validation_errors: list[str] = []
-        self._is_valid: bool = False
-
-    @property
-    def is_valid(self) -> bool:
-        return getattr(self, "_is_valid", False)
-
-    @property
-    def validation_errors(self) -> list[str]:
-        return getattr(self, "_validation_errors", [])
-
-    def add_validation_error(self, message: str) -> None:
-        validation_errors = getattr(self, "_validation_errors", None)
-        if validation_errors is None:
-            self._validation_errors = []
-            validation_errors = self._validation_errors
-        validation_errors.append(message)
-        self._is_valid = False
-
-    def clear_validation_errors(self) -> None:
-        validation_errors = getattr(self, "_validation_errors", None)
-        if validation_errors is not None:
-            validation_errors.clear()
-        self._is_valid = False
-
-    def validate_data(self) -> bool:
-        return self.is_valid
-
-
-class LegacyCompatibleSerializableMixin:
-    """Backward-compatible SerializableMixin for tests."""
-
-    def to_dict_basic(
-        self,
-    ) -> dict[str, object]:
-        """Basic serialization for test compatibility."""
-        result: dict[str, object] = {}
-        for attr_name in dir(self):
-            if not attr_name.startswith("_") and not callable(getattr(self, attr_name)):
-                try:
-                    value = getattr(self, attr_name)
-                    if (
-                        isinstance(value, (str, int, float, bool, list, dict))
-                        or value is None
-                    ):
-                        result[attr_name] = value
-                    else:
-                        to_dict_method = getattr(value, "to_dict_basic", None)
-                        if callable(to_dict_method):
-                            result[attr_name] = to_dict_method()
-                except Exception as exc:
-                    logger.exception("Error serializing %s", attr_name)
-                    error_msg = f"Error serializing {attr_name}"
-                    raise FlextValidationError(
-                        error_msg,
-                        validation_details={"field": attr_name},
-                    ) from exc
-        return result
-
-
-class LegacyCompatibleEntityMixin(
-    LegacyCompatibleTimestampMixin,
-    LegacyCompatibleIdentifiableMixin,
-    LegacyCompatibleValidatableMixin,
-):
-    """Backward-compatible EntityMixin combining all functionality for tests."""
-
-    def __init__(self, entity_id: str | None = None) -> None:
-        LegacyCompatibleTimestampMixin.__init__(self)
-        LegacyCompatibleIdentifiableMixin.__init__(self)
-        LegacyCompatibleValidatableMixin.__init__(self)
-        if entity_id:
-            self.set_id(entity_id)
-
-    def get_domain_events(self) -> list[object]:
-        """Default domain events implementation for compatibility."""
-        return getattr(self, "_domain_events", [])
-
-    def clear_domain_events(self) -> None:
-        """Default clear domain events implementation for compatibility."""
-        domain_events = getattr(self, "_domain_events", None)
-        if domain_events is not None:
-            domain_events.clear()
-
-    def mixin_setup(self) -> None:
-        """Default mixin setup for compatibility."""
-
-    def _compare_basic(self, other: object) -> int:
-        """Default comparison implementation for compatibility."""
-        return 0 if str(self) == str(other) else 1
-
+# All LegacyCompatible* mixins are imported at the top of the file
+# from flext_core.mixin_compat to eliminate code duplication
 
 # =============================================================================
 # DEPRECATED EXPORTS - Legacy compatibility only
@@ -1361,6 +1221,21 @@ __all__: list[str] = [  # noqa: RUF022
     # === LEGACY VALIDATION FUNCTIONS ===
     "validate_smart",
     "validation_decorator",
+    # === LEGACY COMPATIBLE MIXINS ===
+    "LegacyCompatibleCacheableMixin",
+    "LegacyCompatibleCommandMixin",
+    "LegacyCompatibleComparableMixin",
+    "LegacyCompatibleDataMixin",
+    "LegacyCompatibleEntityMixin",
+    "LegacyCompatibleFullMixin",
+    "LegacyCompatibleIdentifiableMixin",
+    "LegacyCompatibleLoggableMixin",
+    "LegacyCompatibleSerializableMixin",
+    "LegacyCompatibleServiceMixin",
+    "LegacyCompatibleTimestampMixin",
+    "LegacyCompatibleTimingMixin",
+    "LegacyCompatibleValidatableMixin",
+    "LegacyCompatibleValueObjectMixin",
 ]
 
 # =============================================================================

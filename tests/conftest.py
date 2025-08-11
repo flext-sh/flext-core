@@ -965,7 +965,7 @@ def event_factory() -> Callable[[str, dict[str, object]], FlextEvent]:
 def integration_setup() -> Generator[None]:
     """One-time setup for integration tests."""
     # Setup code here
-    return
+    return None
     # Teardown code here
 
 

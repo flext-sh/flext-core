@@ -1,13 +1,13 @@
 """Unified Pydantic models with validation and business rules.
 
 Provides foundation models with consistent patterns including
-FlextModel, FlextEntity, FlextValue, and FlextConfig classes.
+FlextModel, FlextEntity, FlextValue, and FlextLegacyConfig classes.
 
 Classes:
     FlextModel: Base model with validation.
     FlextEntity: Domain entity with identity.
     FlextValue: Immutable value object.
-    FlextConfig: Configuration model.
+    FlextLegacyConfig: Legacy configuration model.
     ModelValidator: Model validation utilities.
     ModelFactory: Factory for model creation.
 
@@ -35,14 +35,9 @@ from flext_core.constants import (
 from flext_core.exceptions import FlextValidationError
 from flext_core.fields import FlextFields
 from flext_core.loggings import FlextLoggerFactory
+from flext_core.payload import FlextEvent
 from flext_core.result import FlextResult
 from flext_core.utilities import FlextGenerators
-
-# Import for event creation in add_domain_event
-try:
-    from flext_core.payload import FlextEvent
-except ImportError:
-    FlextEvent = None  # type: ignore[misc,assignment]
 
 # =============================================================================
 # DOMAIN EVENT DICT - Hybrid dict/object for test compatibility
@@ -58,7 +53,7 @@ class DomainEventDict(dict[str, object]):
 
     @property
     def event_type(self) -> str:
-        """Get event type from dict."""
+        """Get an event type from dict."""
         return str(self.get("type", ""))
 
     @property
@@ -74,7 +69,7 @@ class DomainEventDict(dict[str, object]):
 
     @property
     def version(self) -> int:
-        """Get version from dict."""
+        """Get a version from dict."""
         version_value = self.get("version", 1)
         if isinstance(version_value, int):
             return version_value
@@ -108,7 +103,7 @@ class FlextModel(BaseModel):
 # =============================================================================
 
 # ARCHITECTURAL DECISION: FlextModel is imported from flext_core.foundation
-# to eliminate duplication and ensure single source of truth. This follows
+# to remove duplication and ensure a single source of truth. This follows
 # the FLEXT centralization pattern:
 # - foundation.py = Single source of truth for core base classes
 # - models.py = Domain-specific model implementations and extensions
@@ -208,7 +203,7 @@ class FlextEntity(FlextModel, ABC):
         description="Entity last update timestamp",
     )
 
-    # Domain events for event sourcing pattern
+    # Domain events for an event sourcing pattern
     domain_events: list[object] = Field(
         default_factory=list,
         exclude=True,
@@ -243,9 +238,7 @@ class FlextEntity(FlextModel, ABC):
     def __repr__(self) -> str:  # pragma: no cover - simple debug representation
         """Return detailed entity representation for debugging."""
         # Get all model fields (excluding internal/computed fields)
-        fields_repr = []
-        fields_repr.append(f"id={self.id}")
-        fields_repr.append(f"version={self.version}")
+        fields_repr = [f"id={self.id}", f"version={self.version}"]
 
         # Add other fields dynamically, excluding domain_events and timestamps
         excluded_fields = {"id", "version", "domain_events", "created_at", "updated_at"}
@@ -279,16 +272,16 @@ class FlextEntity(FlextModel, ABC):
             return FlextResult.fail(f"Failed to increment version: {e}")
 
     def with_version(self, new_version: int) -> FlextEntity:
-        """Create a new entity instance with specified version.
+        """Create a new entity instance with a specified version.
 
         Args:
             new_version: The new version number (must be greater than current)
 
         Returns:
-            FlextEntity: New entity instance with updated version
+            FlextEntity: New entity instance with an updated version
 
         Raises:
-            FlextValidationError: If new version is not greater than current
+            FlextValidationError: If a new version is not greater than current
 
         """
         if new_version <= self.version:
@@ -305,7 +298,7 @@ class FlextEntity(FlextModel, ABC):
             try:
                 new_entity = type(self)(**entity_data)
             except TypeError as te:
-                # If this is a test mock error, re-raise as validation error
+                # If this is a test mock error, re-rise as a validation error
                 if "Mock error" in str(te):
                     msg = f"Failed to set version: {te}"
                     raise FlextValidationError(msg) from te
@@ -439,7 +432,8 @@ class FlextEntity(FlextModel, ABC):
         """Alias to validate_business_rules for backward compatibility."""
         return self.validate_business_rules()
 
-    def validate_field(self, field_name: str, value: object) -> FlextResult[object]:
+    @staticmethod
+    def validate_field(field_name: str, value: object) -> FlextResult[object]:
         """Validate a single field using field definitions.
 
         Args:
@@ -463,7 +457,7 @@ class FlextEntity(FlextModel, ABC):
             return field.validate_value(value)
 
         except (ImportError, AttributeError) as e:
-            # If validation system is not available, fail
+            # If a validation system is not available, fail
             return FlextResult.fail(f"Field validation error: {e}")
 
     def validate_all_fields(self) -> FlextResult[None]:
@@ -496,7 +490,7 @@ class FlextEntity(FlextModel, ABC):
             return FlextResult.fail(f"Validation failed: {e}")
 
 
-# FlextConfig moved to config.py where it belongs
+# FlextLegacyConfig for backward compatibility - main FlextConfig moved to config.py where it belongs
 
 
 # =============================================================================
@@ -652,7 +646,7 @@ class FlextData:
     to add domain-specific models following the semantic pattern.
 
     Example extensions:
-        class Oracle(FlextConfig, ConnectionProtocol):
+        class Oracle(FlextLegacyConfig, ConnectionProtocol):
             host: str
             port: int = 1521
             service_name: str
@@ -666,7 +660,7 @@ class FlextAuth:
     to add authentication-specific models.
 
     Example extensions:
-        class JWT(FlextConfig, AuthProtocol):
+        class JWT(FlextLegacyConfig, AuthProtocol):
             secret_key: SecretStr
             algorithm: str = "HS256"
     """
@@ -690,7 +684,7 @@ class FlextObs:
 # LEGACY ALIASES - For backward compatibility (temporary)
 # =============================================================================
 
-# Legacy type aliases and imports moved to top
+# Legacy type aliases and imports moved to the top
 
 # Legacy type aliases for backward compatibility
 FlextBaseModel = FlextModel  # Alias for backward compatibility
@@ -698,7 +692,7 @@ FlextBaseModel = FlextModel  # Alias for backward compatibility
 
 # Enums imported from constants.py - single source of truth for entire ecosystem
 # FlextEntityStatus, FlextOperationStatus, FlextDataFormat, FlextConnectionType
-# are now centralized in constants.py to eliminate duplication
+# are now centralized in constants.py to remove duplication
 
 
 # Legacy TypedDict definitions
@@ -848,7 +842,7 @@ class FlextDatabaseModel(FlextModel):
 
     def connection_string(self) -> str:
         """Generate connection string for test compatibility."""
-        password_str = ""  # nosec B105 - Not a hardcoded password, just an empty string
+        password_str = ""  # nosec: B105 - Not a hardcoded password, just an empty string
         if self.password:
             get_secret_method = getattr(self.password, "get_secret_value", None)
             if callable(get_secret_method):
@@ -901,8 +895,8 @@ class FlextOracleModel(FlextModel):
         return FlextResult.ok(None)
 
 
-class FlextConfig(FlextModel):
-    """Configuration model for backward compatibility."""
+class FlextLegacyConfig(FlextModel):
+    """Legacy configuration model for backward compatibility."""
 
     model_config = ConfigDict(
         extra="allow",  # Allow extra fields for compatibility
@@ -921,7 +915,7 @@ class FlextConfig(FlextModel):
         return FlextResult.ok(None)
 
     @classmethod
-    def load_and_validate_from_file(cls, file_path: str) -> FlextResult[FlextConfig]:
+    def load_and_validate_from_file(cls, file_path: str) -> FlextResult[FlextLegacyConfig]:
         """Load configuration from file and validate."""
         try:
             path = Path(file_path)
@@ -1106,7 +1100,7 @@ __all__: list[str] = [
     "FlextAuth",
     # LEGACY ALIASES - Backward compatibility (will be deprecated)
     "FlextBaseModel",
-    "FlextConfig",
+    "FlextLegacyConfig",
     "FlextConnectionDict",
     "FlextConnectionType",
     "FlextData",
@@ -1179,7 +1173,7 @@ class FlextEntityFactory:
                     generator = FlextGenerators()
                     data["id"] = generator.generate_entity_id()
 
-                # Set default version if not provided
+                # Set a default version if not provided
                 if "version" not in data:
                     data["version"] = 1
 

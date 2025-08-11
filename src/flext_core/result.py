@@ -65,7 +65,7 @@ class FlextResult[T]:
 
     @property
     def is_success(self) -> bool:
-        """Check if result is successful."""
+        """Check if a result is successful."""
         return self._error is None
 
     @property
@@ -75,7 +75,7 @@ class FlextResult[T]:
 
     @property
     def is_failure(self) -> bool:
-        """Check if result is failure."""
+        """Check if a result is failure."""
         return self._error is not None
 
     @property
@@ -90,7 +90,7 @@ class FlextResult[T]:
 
     @property
     def error(self) -> str | None:
-        """Get error message."""
+        """Get an error message."""
         return self._error
 
     @property
@@ -105,7 +105,7 @@ class FlextResult[T]:
 
     @classmethod
     def ok(cls, data: T) -> FlextResult[T]:
-        """Create successful result.
+        """Create a successful result.
 
         Args:
             data: The success value.
@@ -116,7 +116,7 @@ class FlextResult[T]:
         """
         return cls(data=data)
 
-    # Backward-compat classmethod without shadowing property access
+    # Backward-compatible classmethod without shadowing property access
     @classmethod
     def success_factory(cls, data: T) -> FlextResult[T]:
         """Compatibility alias for ok() - renamed to avoid property conflict."""
@@ -130,7 +130,7 @@ class FlextResult[T]:
         error_code: str | None = None,
         error_data: dict[str, object] | None = None,
     ) -> FlextResult[T]:
-        """Backward-compat alias for fail()."""
+        """Backward-compatible alias for fail()."""
         return cls.fail(error, error_code=error_code, error_data=error_data)
 
     @classmethod
@@ -160,9 +160,9 @@ class FlextResult[T]:
     # Compatibility operations expected by tests
     @staticmethod
     def chain_results(*results: FlextResult[object]) -> FlextResult[list[object]]:
-        """Chain multiple results into list, failing on first failure.
+        """Chain multiple results into a list, failing on first failure.
 
-        If no results are provided, returns success with empty list.
+        If no results are provided, returns success with an empty list.
         """
         if not results:
             return FlextResult.ok([])
@@ -191,7 +191,7 @@ class FlextResult[T]:
                 context=self._error_data,
             )
         # For success cases, return data even if it's None
-        # None is a valid value for successful results (e.g., void operations)
+        #  is a valid value for successful results (e.g., void operations)
         # Type system guarantees that for success results, _data is of type T
         return cast("T", self._data)
 
@@ -213,7 +213,7 @@ class FlextResult[T]:
             )
         try:
             # Apply function to data, even if it's None
-            # None is a valid value for successful results
+            # is a valid value for successful results
             # Type system guarantees that for success results, _data is of type T
             # Apply function to data - type system guarantees _data is T for success
             # Cast is safe here because for successful results, _data must be T
@@ -252,7 +252,7 @@ class FlextResult[T]:
             )
         try:
             # Apply function to data, even if it's None
-            # None is a valid value for successful results
+            #  is a valid value for successful result
             # Type system guarantees that for success results, _data is of type T
             return func(cast("T", self._data))
         except (TypeError, ValueError, AttributeError, IndexError, KeyError) as e:
@@ -294,7 +294,7 @@ class FlextResult[T]:
         )
 
     def __hash__(self) -> int:
-        """Return hash for result to enable use in sets and dicts."""
+        """Return hash for a result to enable use in sets and dicts."""
         # Hash based on success state and primary content
         if self.is_success:
             # For success, hash the data (if hashable) or use a default
@@ -327,7 +327,7 @@ class FlextResult[T]:
             return f"FlextResult(data={self._data!r}, is_success=True, error=None)"
         return f"FlextResult(data=None, is_success=False, error={self._error!r})"
 
-    # Enhanced methods for railway pattern
+    # Enhanced methods for a railway pattern
     def then[U](self, func: Callable[[T], FlextResult[U]]) -> FlextResult[U]:
         """Alias for flat_map."""
         return self.flat_map(func)
@@ -337,7 +337,7 @@ class FlextResult[T]:
         return self.flat_map(func)
 
     def or_else(self, alternative: FlextResult[T]) -> FlextResult[T]:
-        """Return this result if successful, otherwise return alternative result."""
+        """Return this result if successful, otherwise return an alternative result."""
         if self.is_success:
             return self
         return alternative
@@ -425,13 +425,13 @@ class FlextResult[T]:
             return FlextResult.fail(str(e))
 
     def to_either(self) -> tuple[T | None, str | None]:
-        """Convert result to either tuple (data, error)."""
+        """Convert a result to either tuple (data, error)."""
         if self.is_success:
-            return (self._data, None)
-        return (None, self._error)
+            return self._data, None
+        return None, self._error
 
     def to_exception(self) -> Exception | None:
-        """Convert result to exception or None."""
+        """Convert a result to exception or None."""
         if self.is_success:
             return None
 
@@ -440,7 +440,7 @@ class FlextResult[T]:
 
     @staticmethod
     def from_exception(func: Callable[[], T]) -> FlextResult[T]:
-        """Create result from function that might raise exception."""
+        """Create a result from a function that might raise exception."""
         try:
             return FlextResult.ok(func())
         except (TypeError, ValueError, AttributeError) as e:
@@ -485,7 +485,7 @@ class FlextResult[T]:
 
     @staticmethod
     def first_success(*results: FlextResult[T]) -> FlextResult[T]:
-        """Return first successful result.
+        """Return the first successful result.
 
         Args:
             *results: Results to search.
@@ -549,7 +549,7 @@ class FlextResult[T]:
 
 
 def safe_call[T](func: Callable[[], T]) -> FlextResult[T]:
-    """Safely call a function and wrap result in FlextResult (compat)."""
+    """Safely call a function and wrap result in FlextResult (compatible)."""
     try:
         return FlextResult.ok(func())
     except Exception as e:

@@ -13,6 +13,7 @@ Protocols:
 from __future__ import annotations
 
 from abc import abstractmethod
+from collections.abc import Callable
 from typing import TYPE_CHECKING, Protocol, TypeVar, runtime_checkable
 
 if TYPE_CHECKING:
@@ -21,7 +22,6 @@ if TYPE_CHECKING:
 
     from flext_core.result import FlextResult
 
-from collections.abc import Callable
 
 T = TypeVar("T")
 
@@ -40,20 +40,20 @@ type FlextHandler = FlextMessageHandler
 class FlextConnectionProtocol(Protocol):
     """Protocol for external system connections.
 
-    Provides consistent connection interface across all FLEXT projects
+    Provides a consistent connection interface across all FLEXT projects
     for databases, APIs, message queues, and other external systems.
     """
 
     def test_connection(self) -> FlextResult[bool]:
-        """Test connection to external system."""
+        """Test connection to an external system."""
         ...
 
     def get_connection_string(self) -> str:
-        """Get connection string for external system."""
+        """Get connection string for an external system."""
         ...
 
     def close_connection(self) -> FlextResult[None]:
-        """Close connection to external system."""
+        """Close connection to an external system."""
         ...
 
 
@@ -131,7 +131,7 @@ class FlextValidationRule(Protocol):
         ...
 
     def get_error_message(self, field_name: str, value: object) -> str:
-        """Get error message for validation failure."""
+        """Get an error message for validation failure."""
         ...
 
 
@@ -194,7 +194,7 @@ class FlextMessageHandler(Protocol):
         ...
 
     def can_handle(self, message_type: type) -> bool:
-        """Check if handler can process message type."""
+        """Check if handler can process a message type."""
         ...
 
 
@@ -209,7 +209,7 @@ class FlextValidatingHandler(Protocol):
         ...
 
     def handle(self, message: object) -> FlextResult[object]:
-        """Handle validated message."""
+        """Handle a validated message."""
         ...
 
 
@@ -228,7 +228,7 @@ class FlextAuthorizingHandler(Protocol):
         ...
 
     def handle(self, message: object) -> FlextResult[object]:
-        """Handle authorized message."""
+        """Handle an authorized message."""
         ...
 
 
@@ -243,7 +243,7 @@ class FlextEventProcessor(Protocol):
         ...
 
     def can_process(self, event_type: str) -> bool:
-        """Check if processor can handle event type."""
+        """Check if the processor can handle an event type."""
         ...
 
 
@@ -367,7 +367,7 @@ class FlextMetricsProtocol(Protocol):
     """
 
     def increment_counter(self, name: str, tags: dict[str, str] | None = None) -> None:
-        """Increment counter metric."""
+        """Increment counter-metric."""
         ...
 
     def record_gauge(
@@ -398,7 +398,7 @@ class FlextAlertsProtocol(Protocol):
         ...
 
     def warning(self, message: str, **kwargs: object) -> None:
-        """Send warning alert."""
+        """Send a warning alert."""
         ...
 
     def error(self, message: str, **kwargs: object) -> None:
@@ -482,7 +482,7 @@ class FlextPluginLoader(Protocol):
     """
 
     def load_plugin(self, plugin_path: str | Path) -> FlextResult[FlextPlugin]:
-        """Load plugin from file path."""
+        """Load plugin from a file path."""
         ...
 
     def load_plugins_from_directory(self, directory: str | Path) -> list[FlextPlugin]:
@@ -528,7 +528,7 @@ class FlextRepository[T](Protocol):
 
 
 class FlextUnitOfWork(Protocol):
-    """Protocol for Unit of Work pattern.
+    """Protocol for Unit of a Work pattern.
 
     CONSOLIDATED FROM: interfaces.py FlextUnitOfWork (ABC converted to protocol)
     """
@@ -603,7 +603,7 @@ class FlextEventStore(Protocol):
         aggregate_id: str,
         from_version: int,
     ) -> FlextResult[list[FlextDomainEvent]]:
-        """Get events from specific version."""
+        """Get events from a specific version."""
         ...
 
 
@@ -637,7 +637,7 @@ class FlextEventSubscriber(Protocol):
 
     @abstractmethod
     def can_handle(self, event_type: str) -> bool:
-        """Check if subscriber can handle event type."""
+        """Check if subscriber can handle an event type."""
         ...
 
 
@@ -699,11 +699,11 @@ class FlextAsyncHandler(Protocol):
     """Protocol for async message handlers."""
 
     async def handle_async(self, message: object) -> FlextResult[object]:
-        """Handle message asynchronously."""
+        """Handle a message asynchronously."""
         ...
 
     def can_handle(self, message_type: type) -> bool:
-        """Check if handler can process message type."""
+        """Check if handler can process a message type."""
         ...
 
 
@@ -731,7 +731,7 @@ class FlextAsyncService(Protocol):
 class FlextFactory[T](Protocol):
     """Protocol for type-safe factory implementations.
 
-    Modern Python 3.13 generic syntax for factory pattern.
+    Modern Python 3.13 generic syntax for a factory pattern.
     """
 
     def create(self, **kwargs: object) -> FlextResult[T]:

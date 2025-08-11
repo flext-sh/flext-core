@@ -29,13 +29,9 @@ if TYPE_CHECKING:
 # =============================================================================
 
 # Get version from package metadata
-try:
-    from importlib.metadata import version as _pkg_version
+from importlib.metadata import version as _pkg_version
 
-    __version__ = _pkg_version("flext-core")
-except Exception:
-    # Fallback for development installs or any metadata error
-    __version__ = "0.9.0"
+__version__ = _pkg_version("flext-core")
 
 # Version metadata for programmatic access
 VERSION_MAJOR = 0
@@ -106,13 +102,13 @@ class FlextCompatibilityResult(NamedTuple):
 
 
 def get_version_tuple() -> tuple[int, int, int]:
-    """Get version as tuple for programmatic comparison.
+    """Get a version as tuple for programmatic comparison.
 
     Returns:
         Tuple containing (major, minor, patch) version components.
 
     """
-    return (VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH)
+    return VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH
 
 
 def get_version_info() -> FlextVersionInfo:
@@ -195,7 +191,7 @@ def check_python_compatibility() -> FlextCompatibilityResult:
 
 
 def is_feature_available(feature_name: str) -> bool:
-    """Check if a specific feature is available in current version.
+    """Check if a specific feature is available in a current version.
 
     Enables feature-based conditional logic allowing graceful handling
     of version-dependent functionality with clear feature names.
@@ -211,9 +207,9 @@ def is_feature_available(feature_name: str) -> bool:
 
 
 def get_available_features() -> TAnyList:
-    """Get list of available features in current version.
+    """Get a list of available features in the current version.
 
-    Returns list of feature names available in current version enabling
+    Returns a list of feature names available in the current version enabling
     dynamic feature discovery and capability reporting.
 
     Returns:
@@ -227,14 +223,14 @@ def compare_versions(version1: str, version2: str) -> int:
     """Compare two semantic version strings.
 
     Compares semantic version strings following SemVer 2.0.0 specification
-    returning standard comparison result for version ordering.
+    returning a standard comparison result for version ordering.
 
     Args:
         version1: First version string to compare
         version2: Second version string to compare
 
     Returns:
-        -1 if version1 < version2, 0 if equal, 1 if version1 > version2.
+        -1 of version1 < version2, 0 if equal, 1 of version1 > version2.
 
     """
 
@@ -253,7 +249,7 @@ def compare_versions(version1: str, version2: str) -> int:
 
 
 def validate_version_format(version: str) -> bool:
-    """Validate semantic version string format.
+    """Validate a semantic version string format.
 
     Validates version string against semantic versioning format requirements
     ensuring compliance with SemVer 2.0.0 specification.
@@ -262,7 +258,7 @@ def validate_version_format(version: str) -> bool:
         version: Version string to validate
 
     Returns:
-        True if version format is valid, False otherwise.
+        True if a version format is valid, False otherwise.
 
     """
     try:

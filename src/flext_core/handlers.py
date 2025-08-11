@@ -8,13 +8,14 @@ Classes:
     FlextValidatingHandler: Handler with validation logic.
     FlextAuthorizingHandler: Handler with authorization logic.
     FlextEventHandler: Handler for event processing.
-    FlextMetricsHandler: Handler with metrics collection.
+    FlextMetricsHandler: Handler with a metrics collection.
     FlextHandlerChain: Concrete chain of responsibility implementation.
     FlextHandlerRegistry: Concrete handler registry implementation.
 """
 
 from __future__ import annotations
 
+from abc import ABC
 from typing import Generic, TypeVar
 
 from flext_core.commands import FlextCommands
@@ -59,13 +60,13 @@ class FlextBaseHandler(FlextAbstractHandler[object, object]):
         return FlextResult.ok(None)
 
     def can_handle(self, message_type: object) -> bool:  # noqa: ARG002
-        """Check if handler can process message type.
+        """Check if handler can process a message type.
 
         Args:
             message_type: Type of message to check.
 
         Returns:
-            True if handler can process message type.
+            True if handler can process a message type.
 
         """
         # Default implementation - override in subclasses
@@ -88,10 +89,10 @@ class FlextBaseHandler(FlextAbstractHandler[object, object]):
         """Process main message - override in subclasses."""
         return FlextResult.ok(message)
 
+    @staticmethod
     def post_process(
-        self,
         _message: object,
-        result: FlextResult[object],  # noqa: ARG002
+        _result: FlextResult[object],
     ) -> FlextResult[None]:
         """Post-processing hook."""
         return FlextResult.ok(None)
@@ -147,28 +148,30 @@ class FlextValidatingHandler(FlextAbstractValidatingHandler[object, object]):
         """Get validation rules."""
         return []
 
-    def validate_message(self, message: object) -> FlextResult[None]:
+    @staticmethod
+    def validate_message(message: object) -> FlextResult[None]:
         """Validate message - implements abstract method."""
         # Basic validation - check not None
         if message is None:
             return FlextResult.fail("Message cannot be None")
         return FlextResult.ok(None)
 
-    def process_message(self, message: object) -> FlextResult[object]:
+    @staticmethod
+    def process_message(message: object) -> FlextResult[object]:
         """Process validated message."""
         return FlextResult.ok(message)
 
     def validate(self, message: object) -> FlextResult[object]:
-        """Validate message before processing (compatibility method)."""
+        """Validate a message before processing (compatibility method)."""
         validation_result = self.validate_message(message)
         if validation_result.is_failure:
             return FlextResult.fail(validation_result.error or "Validation failed")
         return FlextResult.ok(message)
 
+    @staticmethod
     def post_process(
-        self,
         message: object,
-        result: FlextResult[object],  # noqa: ARG002
+        _result: FlextResult[object],
     ) -> FlextResult[None]:
         """Post-process the result."""
         del message
@@ -255,30 +258,31 @@ class FlextEventHandler(FlextBaseHandler):
             if not event_type:
                 return FlextResult.fail("Event missing event_type")
 
-            # Process based on event type
-            return self.handle_event_type(str(event_type), event)
+            # Process based on an event type
+            return self.handle_event_type(event)
 
         except Exception as e:
             return FlextResult.fail(f"Event processing failed: {e}")
 
-    def can_process(self, event_type: str) -> bool:
-        """Check if handler can process event type."""
-        del event_type  # Unused argument
+    @staticmethod
+    def can_process(event_type: str | None = None) -> bool:
+        """Check if handler can process an event type."""
+        del event_type
         # Override in subclasses for specific event types
         return True
 
+    @staticmethod
     def handle_event_type(
-        self,
-        event_type: str,
         event: dict[str, object],
+        event_type: str | None = None,
     ) -> FlextResult[None]:
         """Handle specific event type - override in subclasses."""
-        del event_type, event  # Unused arguments
+        del event_type, event
         return FlextResult.ok(None)
 
 
 class FlextMetricsHandler(FlextAbstractMetricsHandler[object, object]):
-    """Concrete handler with metrics collection using abstractions."""
+    """Concrete handler with a metrics collection using abstractions."""
 
     def __init__(self, name: str | None = None) -> None:
         """Initialize metrics handler."""
@@ -296,7 +300,7 @@ class FlextMetricsHandler(FlextAbstractMetricsHandler[object, object]):
 
     @property
     def name(self) -> str:
-        """Get handler name (compat)."""
+        """Get handler name (compatible)."""
         return self._name
 
     def handle(self, request: object) -> FlextResult[object]:
@@ -331,14 +335,14 @@ class FlextMetricsHandler(FlextAbstractMetricsHandler[object, object]):
         return request is not None
 
     def start_metrics(self, request: object) -> None:
-        """Start metrics collection."""
+        """Start a metrics collection."""
         import time  # noqa: PLC0415
 
         self._start_time = time.time()
         self.metrics["request_type"] = type(request).__name__
 
     def stop_metrics(self, request: object, response: object) -> None:  # noqa: ARG002
-        """Stop metrics collection."""
+        """Stop a metrics collection."""
         import time  # noqa: PLC0415
 
         if self._start_time is not None:
@@ -354,13 +358,15 @@ class FlextMetricsHandler(FlextAbstractMetricsHandler[object, object]):
         self.metrics.clear()
         self._start_time = None
 
-    def process_message(self, message: object) -> FlextResult[object]:
+    @staticmethod
+    def process_message(message: object) -> FlextResult[object]:
         """Process message - basic implementation."""
         return FlextResult.ok(message)
 
-    def collect_metrics(self, message: object, result: FlextResult[object]) -> None:  # noqa: ARG002
+    def collect_metrics(self, message: object, result: FlextResult[object]) -> None:
         """Collect custom metrics - implements abstract method."""
         # Collect basic processing metrics
+        del message
         success = result.is_success
 
         # Initialize custom metrics storage inside metrics dict
@@ -438,7 +444,7 @@ class FlextMetricsHandler(FlextAbstractMetricsHandler[object, object]):
         message: object,
         result: FlextResult[object],
     ) -> FlextResult[None]:
-        """Post-process with metrics collection."""
+        """Post-process with a metrics collection."""
         _ = super().post_process(message, result)  # type: ignore[misc]
 
         # Record operation metrics
@@ -510,7 +516,7 @@ class FlextHandlerRegistry(
     def get_handlers_for_type(
         self, message_type: type
     ) -> list[FlextAbstractHandler[object, object]]:
-        """Get all handlers that can process message type."""
+        """Get all handlers that can process a message type."""
         return [
             handler
             for handler in self.registry.values()
@@ -544,7 +550,7 @@ class FlextHandlerRegistry(
         self,
         message_type: type,
     ) -> FlextResult[FlextAbstractHandler[object, object]]:
-        """Get first handler registered for a specific message type."""
+        """Get the first handler registered for a specific message type."""
         # Prefer explicit mapping first
         names = self._type_mappings.get(message_type)
         if names:
@@ -591,7 +597,7 @@ class FlextHandlerChain(FlextAbstractHandlerChain[object, object]):
         self,
         handlers: list[FlextAbstractHandler[object, object]] | None = None,
     ) -> None:
-        """Initialize with optional handler list using abstractions."""
+        """Initialize with an optional handler list using abstractions."""
         self.handlers: list[FlextAbstractHandler[object, object]] = handlers or []
 
     @property
@@ -656,7 +662,7 @@ class FlextHandlerChain(FlextAbstractHandlerChain[object, object]):
         return FlextResult.fail("No handlers processed the message")
 
     def handle(self, message: object) -> FlextResult[list[object]]:
-        """Handle message through chain (compatibility method)."""
+        """Handle a message through chain (compatibility method)."""
         results = []
 
         for handler in self.handlers:
@@ -675,7 +681,7 @@ class FlextHandlerChain(FlextAbstractHandlerChain[object, object]):
                 results.append(error_result)
                 break
 
-        # Convert list of results to list of objects
+        # Convert a list of results to list of objects
         result_objects: list[object] = []
         for result in results:
             if result.is_success and result.data is not None:
@@ -685,7 +691,7 @@ class FlextHandlerChain(FlextAbstractHandlerChain[object, object]):
         return FlextResult.ok(result_objects)
 
     def can_handle(self, message_type: type) -> bool:
-        """Check if any handler in chain can process message type."""
+        """Check if any handler in chain can process a message type."""
         return any(handler.can_handle(message_type) for handler in self.handlers)
 
     # ------------------------------------------------------------------
@@ -728,7 +734,7 @@ class FlextHandlerChain(FlextAbstractHandlerChain[object, object]):
 # Global registry functions have been moved to legacy.py with deprecation warnings.
 #
 # NEW USAGE: Create and manage your own registry
-#   registry = FlextHandlerRegistry()
+#    = FlextHandlerRegistry()
 #   registry.register("my_handler", my_handler)
 #
 # OLD USAGE (deprecated): Import from legacy.py
@@ -743,20 +749,20 @@ __all__: list[str] = [
     # Clean Handler Implementations Only (alphabetically sorted)
     "FlextAuthorizingHandler",
     "FlextBaseHandler",
-    "FlextCommandHandler",  # Backward-compat
+    "FlextCommandHandler",  # Backward-compatible
     "FlextEventHandler",
     "FlextHandlerChain",
     "FlextHandlerRegistry",
-    "FlextHandlers",  # Backward-compat facade expected by tests
+    "FlextHandlers",  # Backward-compatible facade expected by tests
     "FlextMetricsHandler",
-    "FlextQueryHandler",  # Backward-compat
+    "FlextQueryHandler",  # Backward-compatible
     "FlextValidatingHandler",
 ]
 
 
-# Backward-compat handler classes used in historical tests
+# Backward-compatible handler classes used in historical tests
 class FlextCommandHandler(FlextCommands.Handler[object, object]):
-    """Test-friendly command handler with default pass-through behavior."""
+    """Test-friendly command handler with defaulted pass-through behavior."""
 
     def __init__(
         self,
@@ -819,6 +825,8 @@ class FlextCommandHandler(FlextCommands.Handler[object, object]):
         # Apply internal metrics counters if available
         if hasattr(self, "_metrics_state"):
             state = self._metrics_state
+            if not isinstance(state, dict):
+                return metrics
             total = state.get("total", 0)
             success = state.get("success", 0)
             metrics["commands_processed"] = total
@@ -853,11 +861,10 @@ class FlextQueryHandler(FlextCommands.QueryHandler[object, object]):
     """Minimal query handler with optional authorizer injection."""
 
     def __init__(
-        self,
-        handler_name: str | None = None,
-        authorizer: object | None = None,
+        self, handler_name: str | None = None, authorizer: object | None = None
     ) -> None:
         """Initialize query handler with optional authorizer."""
+        super().__init__(handler_name)
         self._name = handler_name or self.__class__.__name__
         self._authorizer = authorizer
 
@@ -876,7 +883,8 @@ class FlextQueryHandler(FlextCommands.QueryHandler[object, object]):
         """Pre-handle query."""
         return self.authorize_query(query)
 
-    def validate_message(self, message: object) -> FlextResult[None]:
+    @staticmethod
+    def validate_message(message: object) -> FlextResult[None]:
         """Validate message for test compatibility."""
         # Basic validation - check not None
         if message is None:
@@ -918,14 +926,15 @@ class FlextHandlers:
             """Pre-handle query."""
             return self.authorize_query(query)
 
-        def validate_message(self, message: object) -> FlextResult[None]:
+        @staticmethod
+        def validate_message(message: object) -> FlextResult[None]:
             """Validate message for test compatibility."""
             # Basic validation - check not None
             if message is None:
                 return FlextResult.fail("Message cannot be None")
             return FlextResult.ok(None)
 
-    class Handler(FlextCommands.Handler[object, object]):
+    class Handler(FlextCommands.Handler[object, object], ABC):
         """Generic handler base alias for compatibility."""
 
     class EventHandler(FlextEventHandler):
@@ -977,15 +986,16 @@ class FlextHandlers:
             """Initialize pipeline behavior."""
             self.next_behavior: object | None = None
 
-        def handle(self, message: object, next_handler: object) -> FlextResult[object]:
-            """Handle message in pipeline."""
+        @staticmethod
+        def handle(message: object, next_handler: object) -> FlextResult[object]:
+            """Handle a message in a pipeline."""
             # Default implementation just calls next handler
             if hasattr(next_handler, "handle"):
                 return next_handler.handle(message)  # type: ignore[no-any-return]
             return FlextResult.ok(message)
 
         def set_next(self, behavior: object) -> None:
-            """Set next behavior in chain."""
+            """Set next behavior in a chain."""
             self.next_behavior = behavior
 
     # Command and Query Bus implementations for test compatibility
@@ -1053,7 +1063,7 @@ class FlextHandlers:
             return FlextResult.ok(None)
 
         def send(self, query: object) -> FlextResult[object]:
-            """Send query to handler."""
+            """Send a query to handler."""
             query_type = type(query)
             handler = self._handlers.get(query_type)
 

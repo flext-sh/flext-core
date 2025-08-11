@@ -1,64 +1,82 @@
-# FLEXT Core Installation Guide
+# Installation Guide
 
-**Installation and setup guide based on actual implementation**
+Step-by-step guide to installing and setting up FLEXT Core.
 
-## 🎯 System Requirements
+## System Requirements
 
-### Required
+### Minimum Requirements
 
-- **Python 3.13+** (library requires modern Python features)
-- **pip** or **Poetry** for dependency management
-- **Git** for version control (development)
+- **Python 3.13+**: Required for modern type hints and features
+- **pip 23.0+** or **Poetry 1.7+**: Package management
+- **Git 2.0+**: For development installation
 
-### Python Version Check
+### Verify Prerequisites
 
 ```bash
-python --version  # Must be 3.13+
-pip --version     # Any recent version
+# Check Python version
+python --version  # Must show 3.13.0 or higher
+
+# Check pip version
+pip --version
+
+# Check Poetry (if using)
+poetry --version
 ```
 
-## 📦 Installation Methods
+## Installation Methods
 
-### 1. Poetry Installation (Recommended)
+### Option 1: Production Installation (PyPI)
 
 ```bash
-# Install FLEXT Core
+# Using pip
+pip install flext-core
+
+# Using Poetry (recommended for projects)
 poetry add flext-core
 
-# For development
-poetry install --with dev,test
+# With optional dependencies
+pip install "flext-core[dev,test]"
 ```
 
-### 2. pip Installation
+### Option 2: Development Installation (Source)
 
 ```bash
-# Basic installation
-pip install flext-core
-
-# In virtual environment (recommended)
-python -m venv flext-env
-source flext-env/bin/activate  # Linux/Mac
-pip install flext-core
-```
-
-### 3. Development Installation
-
-```bash
-# Clone and setup
-git clone <repository-url>
+# Clone the repository
+git clone https://github.com/flext-sh/flext-core.git
 cd flext-core
 
-# Install with Poetry
-poetry install --with dev,test
+# Install with Poetry (recommended)
+poetry install --with dev,test,docs
 poetry shell
 
-# Setup development environment
-make setup
+# Or install with pip
+pip install -e ".[dev,test,docs]"
+
+# Run setup
+make setup  # Installs pre-commit hooks and tools
 ```
 
-## 🔧 Verification
+### Option 3: Virtual Environment Setup
 
-### 1. Basic Functionality Test
+```bash
+# Create virtual environment
+python -m venv .venv
+
+# Activate environment
+source .venv/bin/activate  # Linux/Mac
+# or
+.venv\Scripts\activate     # Windows
+
+# Install FLEXT Core
+pip install flext-core
+
+# Verify installation
+python -c "import flext_core; print(flext_core.__version__)"
+```
+
+## Verification
+
+### Quick Verification
 
 ```python
 # test_installation.py
@@ -87,109 +105,198 @@ if __name__ == "__main__":
     test_installation()
 ```
 
-### 2. Available Imports Test
+### Complete Import Verification
 
 ```python
-# verify_imports.py - Test REAL available imports
-from flext_core import (
-    # Core patterns (WORKING)
-    FlextResult,
-    FlextContainer,
-    FlextSettings,
+# verify_imports.py
+"""Verify all FLEXT Core imports are working."""
 
-    # Domain patterns (AVAILABLE)
-    FlextValueObject,
-    FlextAggregateRoot,
-
-    # Commands (AVAILABLE)
-    FlextCommands,
-
-    # Configuration (WORKING)
-    FlextConfig,
-)
-from flext_core.models import FlextEntity
-from flext_core.validation import FlextValidators
-from flext_core.utilities import FlextUtilities
-
-def test_imports():
-    """Test that all core imports work."""
-    # FlextResult
-    result = FlextResult.ok("test")
+def verify_core_imports():
+    """Test core pattern imports."""
+    from flext_core import (
+        FlextResult,
+        FlextContainer,
+        get_flext_container,
+        FlextSettings,
+    )
+    
+    # Test FlextResult
+    result = FlextResult.ok("Success")
     assert result.success
-    print("✅ FlextResult import working")
+    assert result.unwrap() == "Success"
+    print("✅ FlextResult working")
+    
+    # Test FlextContainer
+    container = get_flext_container()
+    container.register("test", "value")
+    assert container.has("test")
+    print("✅ FlextContainer working")
+    
+    # Test FlextSettings
+    class Settings(FlextSettings):
+        app_name: str = "test"
+    
+    settings = Settings()
+    assert settings.app_name == "test"
+    print("✅ FlextSettings working")
 
-    # FlextContainer
-    container = FlextContainer()
-    print("✅ FlextContainer import working")
+def verify_domain_imports():
+    """Test domain pattern imports."""
+    from flext_core import (
+        FlextEntity,
+        FlextValueObject,
+        FlextAggregateRoot,
+    )
+    
+    # Test domain patterns are importable
+    print("✅ Domain patterns available")
 
-    # Configuration
-    class TestSettings(FlextSettings):
-        test_field: str = "default"
-
-    settings = TestSettings()
-    assert settings.test_field == "default"
-    print("✅ FlextSettings import working")
-
-    print("🎉 All core imports verified")
+def verify_utility_imports():
+    """Test utility imports."""
+    from flext_core.utilities import generate_id, generate_uuid
+    from flext_core import get_logger
+    
+    # Test utilities
+    entity_id = generate_id("test")
+    assert entity_id.startswith("test_")
+    
+    uuid = generate_uuid()
+    assert len(uuid) == 36
+    
+    logger = get_logger(__name__)
+    assert logger is not None
+    
+    print("✅ Utilities working")
 
 if __name__ == "__main__":
-    test_imports()
+    print("Verifying FLEXT Core installation...")
+    verify_core_imports()
+    verify_domain_imports()
+    verify_utility_imports()
+    print("🎉 All imports verified successfully!")
 ```
 
-## 🏗️ Development Setup
+## Development Environment Setup
 
-### 1. Development Commands
+### Essential Development Commands
 
 ```bash
-# Validation (MANDATORY before commit)
-make validate     # Complete validation
-make check        # Quick lint + type check
-make test         # Run tests
-make format       # Format code
+# Quality gates (run before committing)
+make validate     # Run ALL checks (lint + type + security + test)
+make check        # Quick check (lint + type only)
+make test         # Run test suite with coverage
 
-# Individual commands
-make lint         # Ruff linting
-make type-check   # MyPy type checking
-make security     # Security checks
+# Code quality
+make lint         # Ruff linting with all rules
+make type-check   # MyPy strict mode checking
+make format       # Auto-format code
+make security     # Security vulnerability scan
+
+# Development utilities
+make shell        # Open Python REPL with project loaded
+make clean        # Clean build artifacts
+make build        # Build distribution packages
+make docs         # Build documentation
+
+# Dependency management
+make deps-show    # Show dependency tree
+make deps-audit   # Audit dependencies for vulnerabilities
+make deps-update  # Update all dependencies
 ```
 
-### 2. Project Structure
+### Recommended Project Structure
 
 ```
-my_project/
+my_flext_project/
 ├── src/
 │   └── my_project/
 │       ├── __init__.py
-│       ├── domain/           # Domain models
-│       ├── services/         # Application services
-│       └── infrastructure/   # Technical implementations
+│       ├── domain/              # Domain layer (entities, value objects)
+│       │   ├── __init__.py
+│       │   ├── entities.py
+│       │   ├── value_objects.py
+│       │   └── aggregates.py
+│       ├── application/         # Application layer (use cases)
+│       │   ├── __init__.py
+│       │   ├── commands.py
+│       │   ├── queries.py
+│       │   └── handlers.py
+│       ├── infrastructure/      # Infrastructure layer (persistence, external)
+│       │   ├── __init__.py
+│       │   ├── repositories.py
+│       │   ├── database.py
+│       │   └── external_apis.py
+│       └── config.py            # Configuration using FlextSettings
 ├── tests/
-│   ├── unit/                # Unit tests
-│   └── integration/         # Integration tests
-├── pyproject.toml           # Poetry config
-└── README.md
+│   ├── unit/                    # Unit tests (isolated)
+│   ├── integration/             # Integration tests
+│   ├── conftest.py             # Pytest fixtures
+│   └── test_e2e.py             # End-to-end tests
+├── pyproject.toml               # Poetry configuration
+├── .env.example                 # Example environment variables
+├── Makefile                     # Development commands
+└── README.md                    # Project documentation
 ```
 
-### 3. Configuration Example
+### Project Configuration Template
 
 ```python
-# config.py
+# src/my_project/config.py
+"""Application configuration using FLEXT Core."""
+
 from flext_core import FlextSettings
+from pydantic import Field
+from typing import Optional
 
-class AppSettings(FlextSettings):
-    app_name: str = "My App"
-    debug: bool = False
-    database_url: str = "sqlite:///app.db"
+class DatabaseConfig(FlextSettings):
+    """Database configuration."""
+    host: str = Field("localhost", description="Database host")
+    port: int = Field(5432, ge=1, le=65535)
+    name: str = Field("myapp", description="Database name")
+    user: str = Field("postgres")
+    password: str = Field("", description="Database password")
+    
+    @property
+    def url(self) -> str:
+        """Build database URL."""
+        auth = f"{self.user}:{self.password}@" if self.password else f"{self.user}@"
+        return f"postgresql://{auth}{self.host}:{self.port}/{self.name}"
+    
+    class Config:
+        env_prefix = "DB_"
 
+class AppConfig(FlextSettings):
+    """Main application configuration."""
+    app_name: str = Field("My FLEXT App", description="Application name")
+    version: str = Field("1.0.0", description="Application version")
+    debug: bool = Field(False, description="Debug mode")
+    environment: str = Field("development", pattern="^(development|staging|production)$")
+    
+    # API settings
+    api_host: str = Field("0.0.0.0")
+    api_port: int = Field(8000, ge=1, le=65535)
+    api_workers: int = Field(1, ge=1, le=16)
+    
+    # Security
+    secret_key: str = Field(..., min_length=32, description="Secret key for JWT")
+    cors_origins: list[str] = Field(default_factory=list)
+    
+    # Optional features
+    enable_metrics: bool = Field(False)
+    enable_tracing: bool = Field(False)
+    redis_url: Optional[str] = Field(None)
+    
     class Config:
         env_prefix = "APP_"
+        env_file = ".env"
+        case_sensitive = False
 
-# Usage
-settings = AppSettings()
-print(f"App: {settings.app_name}")
+# Global configuration instances
+database_config = DatabaseConfig()
+app_config = AppConfig()
 ```
 
-## 🧪 Common Patterns
+## Common Usage Patterns
 
 ### 1. Railway Pattern
 
@@ -225,104 +332,292 @@ if config_result.success:
     print(f"Database: {config['db_url']}")
 ```
 
-### 3. Domain Entity (models API)
+### 3. Domain Modeling
 
 ```python
-from flext_core.models import FlextEntity
+from flext_core import FlextEntity, FlextValueObject, FlextResult
+from datetime import datetime
+
+class Email(FlextValueObject):
+    """Email value object."""
+    address: str
+    
+    def __init__(self, **data):
+        address = data.get('address', '')
+        if '@' not in address:
+            raise ValueError(f"Invalid email: {address}")
+        data['address'] = address.lower()
+        super().__init__(**data)
 
 class User(FlextEntity):
-    def __init__(self, user_id: str, name: str, email: str):
-        super().__init__(user_id)
-        self.name = name
-        self.email = email
+    """User entity."""
+    username: str
+    email: Email
+    created_at: datetime
+    is_active: bool = True
+    
+    def activate(self) -> FlextResult[None]:
+        """Activate user account."""
+        if self.is_active:
+            return FlextResult.fail("Already active")
+        self.is_active = True
+        return FlextResult.ok(None)
 
 # Usage
-user = User("123", "John Doe", "john@example.com")
+email = Email(address="john@example.com")
+user = User(
+    id="user_123",
+    username="johndoe",
+    email=email,
+    created_at=datetime.now()
+)
+
+activation = user.activate()
+if activation.success:
+    print("User activated")
 ```
 
-## 🔍 Troubleshooting
+## Troubleshooting
 
-### Common Issues
+### Common Issues and Solutions
 
-#### 1. Python Version Error
+#### Python Version Error
 
-```bash
+**Problem:**
+```
 ERROR: Python 3.13+ required
+flext-core requires Python >=3.13
 ```
 
-**Solution:** Install Python 3.13+
+**Solution:**
+```bash
+# Install Python 3.13 using pyenv
+pyenv install 3.13.0
+pyenv local 3.13.0
 
-#### 2. Import Error
+# Or use system package manager
+sudo apt install python3.13  # Ubuntu/Debian
+brew install python@3.13     # macOS
+```
 
+#### Import Errors
+
+**Problem:**
 ```python
-ImportError: No module named 'flext_core'
+ImportError: cannot import name 'FlextResult' from 'flext_core'
 ```
 
 **Solutions:**
-
 ```bash
-# Check installation
-pip list | grep flext-core
+# Verify installation
+pip show flext-core
+
+# Check Python path
+python -c "import sys; print(sys.path)"
 
 # Reinstall
-pip uninstall flext-core
-pip install flext-core
+pip uninstall flext-core -y
+pip install --no-cache-dir flext-core
+
+# If using Poetry
+poetry cache clear pypi --all
+poetry install
 ```
 
-#### 3. MyPy Errors
+#### Type Checking Issues
 
-MyPy may report errors during development. This is expected as the library is in active development.
+**Problem:**
+```
+error: Module "flext_core" has no attribute "FlextResult"  [attr-defined]
+```
 
-### Health Check
+**Solution:**
+```bash
+# Install type stubs
+pip install types-pydantic
+
+# Configure mypy.ini
+cat > mypy.ini << EOF
+[mypy]
+plugins = pydantic.mypy
+ignore_missing_imports = True
+EOF
+```
+
+#### Virtual Environment Issues
+
+**Problem:**
+```
+Command 'poetry' not found or 'make' not working
+```
+
+**Solution:**
+```bash
+# Install Poetry
+curl -sSL https://install.python-poetry.org | python3 -
+
+# Add to PATH
+export PATH="$HOME/.local/bin:$PATH"
+
+# Install make (if missing)
+sudo apt install build-essential  # Ubuntu/Debian
+brew install make                  # macOS
+```
+
+### Comprehensive Health Check
 
 ```python
-# health_check.py
+#!/usr/bin/env python3
+"""FLEXT Core installation health check."""
+
 import sys
+import subprocess
+from pathlib import Path
 
-def check_system():
-    """Basic system health check."""
-    print("🔍 FLEXT Core Health Check")
-
-    # Python version
+def check_python_version():
+    """Check Python version requirement."""
     version = sys.version_info
-    print(f"Python: {version.major}.{version.minor}.{version.micro}")
-
+    print(f"Python version: {version.major}.{version.minor}.{version.micro}")
+    
     if version < (3, 13):
         print("❌ Python 3.13+ required")
         return False
-
-    # Test import
-    try:
-        import flext_core
-        print(f"✅ FLEXT Core imported successfully")
-        print(f"Version: {flext_core.__version__}")
-    except ImportError as e:
-        print(f"❌ Import failed: {e}")
-        return False
-
-    print("✅ System healthy")
+    
+    print("✅ Python version OK")
     return True
 
+def check_flext_core():
+    """Check FLEXT Core installation."""
+    try:
+        import flext_core
+        print(f"✅ FLEXT Core {flext_core.__version__} installed")
+        
+        # Test core functionality
+        from flext_core import FlextResult
+        result = FlextResult.ok("test")
+        assert result.success
+        print("✅ Core functionality working")
+        
+        return True
+    except ImportError as e:
+        print(f"❌ FLEXT Core not installed: {e}")
+        return False
+    except Exception as e:
+        print(f"❌ FLEXT Core error: {e}")
+        return False
+
+def check_dependencies():
+    """Check required dependencies."""
+    required = ["pydantic", "pydantic_settings", "structlog"]
+    missing = []
+    
+    for package in required:
+        try:
+            __import__(package)
+            print(f"✅ {package} installed")
+        except ImportError:
+            missing.append(package)
+            print(f"❌ {package} missing")
+    
+    return len(missing) == 0
+
+def check_development_tools():
+    """Check development tools (optional)."""
+    tools = {
+        "poetry": "poetry --version",
+        "make": "make --version",
+        "git": "git --version",
+        "ruff": "ruff --version",
+        "mypy": "mypy --version"
+    }
+    
+    print("\nDevelopment tools:")
+    for tool, command in tools.items():
+        try:
+            subprocess.run(
+                command.split(),
+                capture_output=True,
+                check=True,
+                text=True
+            )
+            print(f"✅ {tool} available")
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            print(f"⚠️  {tool} not available (optional)")
+
+def main():
+    """Run complete health check."""
+    print("FLEXT Core Health Check")
+    print("=" * 40)
+    
+    checks = [
+        ("Python version", check_python_version),
+        ("FLEXT Core", check_flext_core),
+        ("Dependencies", check_dependencies)
+    ]
+    
+    all_passed = True
+    for name, check_func in checks:
+        print(f"\nChecking {name}...")
+        if not check_func():
+            all_passed = False
+    
+    # Optional development tools
+    check_development_tools()
+    
+    print("\n" + "=" * 40)
+    if all_passed:
+        print("🎉 All checks passed! FLEXT Core is ready to use.")
+        return 0
+    else:
+        print("❌ Some checks failed. Please fix the issues above.")
+        return 1
+
 if __name__ == "__main__":
-    check_system()
+    sys.exit(main())
 ```
 
-## 📚 Next Steps
+## Next Steps
 
 After successful installation:
 
-1. **[Quick Start Guide](quickstart.md)** - Basic usage patterns
-2. **[Core API Reference](../api/core.md)** - Main API documentation
-3. **[Architecture Overview](../architecture/overview.md)** - Design principles
-4. **[Examples](../examples/overview.md)** - Practical examples
+1. **[Quick Start Guide](quickstart.md)**: Learn basic usage patterns
+2. **[Examples Guide](../examples/overview.md)**: See practical examples
+3. **[API Reference](../api/core.md)**: Explore the complete API
+4. **[Configuration Guide](../configuration/overview.md)**: Set up configuration
+5. **[Best Practices](../development/best-practices.md)**: Development guidelines
 
-## ⚠️ Important Notes
+## IDE Setup
 
-- This guide reflects the **ACTUAL** implementation in src/flext_core/
-- All import examples are **TESTED** against current code
-- Some features mentioned in other docs may be in development
-- For advanced features, check the source code directly
+### VS Code
+
+```json
+// .vscode/settings.json
+{
+    "python.linting.enabled": true,
+    "python.linting.ruffEnabled": true,
+    "python.linting.mypyEnabled": true,
+    "python.formatting.provider": "black",
+    "python.testing.pytestEnabled": true,
+    "python.testing.unittestEnabled": false,
+    "editor.formatOnSave": true,
+    "editor.rulers": [79, 120]
+}
+```
+
+### PyCharm
+
+1. Set Python interpreter to 3.13+
+2. Enable type checking: Settings → Editor → Inspections → Python → Type checker
+3. Configure line length: Settings → Editor → Code Style → Python → Hard wrap at 79
+4. Enable pytest: Settings → Tools → Python Integrated Tools → Testing → pytest
+
+## Additional Resources
+
+- **GitHub Repository**: Source code and issues
+- **Documentation**: Full documentation at `/docs`
+- **Examples**: Working examples in `/examples`
+- **Tests**: Test examples in `/tests`
 
 ---
 
-**FLEXT Core** - Foundation library for clean architecture patterns
+For support, please check the GitHub issues or documentation.

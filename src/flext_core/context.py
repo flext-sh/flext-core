@@ -74,7 +74,7 @@ class FlextContext:
 
     @staticmethod
     def get_correlation_id() -> str | None:
-        """Get current correlation ID from context."""
+        """Get a current correlation ID from context."""
         return _correlation_id.get()
 
     @staticmethod
@@ -105,7 +105,7 @@ class FlextContext:
         correlation_id: str | None = None,
         parent_id: str | None = None,
     ) -> Generator[str]:
-        """Create new correlation context scope.
+        """Create a new correlation context scope.
 
         Args:
             correlation_id: Specific correlation ID to use (generates if None)
@@ -171,12 +171,12 @@ class FlextContext:
 
     @staticmethod
     def set_service_name(service_name: str) -> None:
-        """Set service name in context."""
+        """Set the service name in context."""
         _service_name.set(service_name)
 
     @staticmethod
     def get_service_version() -> str | None:
-        """Get current service version from context."""
+        """Get the current service version from context."""
         return _service_version.get()
 
     @staticmethod
@@ -221,7 +221,7 @@ class FlextContext:
 
     @staticmethod
     def get_user_id() -> str | None:
-        """Get current user ID from context."""
+        """Get the current user ID from context."""
         return _user_id.get()
 
     @staticmethod
@@ -231,7 +231,7 @@ class FlextContext:
 
     @staticmethod
     def get_operation_name() -> str | None:
-        """Get current operation name from context."""
+        """Get the current operation name from context."""
         return _operation_name.get()
 
     @staticmethod
@@ -273,7 +273,7 @@ class FlextContext:
         _request_id.get()
         _operation_metadata.get()
 
-        # Set new context with proper token typing
+        # Set a new context with proper token typing
         user_token = _user_id.set(user_id) if user_id else None
         operation_token = (
             _operation_name.set(operation_name) if operation_name else None
@@ -504,7 +504,7 @@ class FlextContext:
 
     @staticmethod
     def get_context_summary() -> str:
-        """Get human-readable context summary for debugging.
+        """Get a human-readable context summary for debugging.
 
         Returns:
             str: Context summary string
