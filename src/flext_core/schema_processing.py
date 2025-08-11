@@ -16,7 +16,7 @@ from __future__ import annotations
 import re
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING, Protocol, TypeVar
 
 from .result import FlextResult
 from .typings import EntryT
@@ -30,7 +30,7 @@ class FlextEntryType(Enum):
     """Base enumeration for entry types."""
 
 
-class FlextBaseEntry(FlextValueObject):
+class FlextBaseEntry(FlextValueObject, ABC):
     """Base entry value object for schema/ACL processing."""
 
     entry_type: str
@@ -47,17 +47,20 @@ class FlextEntryValidator(Protocol):
         ...
 
     def is_whitelisted(self, identifier: str) -> bool:
-        """Check if identifier is whitelisted."""
+        """Check if an identifier is whitelisted."""
         ...
 
 
-class FlextBaseProcessor[EntryT](ABC):
+TEntry = TypeVar("TEntry")
+
+
+class FlextBaseProcessor[TEntry](ABC):
     """Base processor for entries with configurable validation."""
 
     def __init__(self, validator: FlextEntryValidator | None = None) -> None:
         """Initialize processor with optional validator."""
         self.validator = validator
-        self._extracted_entries: list[EntryT] = []
+        self._extracted_entries: list[TEntry] = []
 
     @abstractmethod
     def _extract_identifier(self, content: str) -> FlextResult[str]:
@@ -71,7 +74,7 @@ class FlextBaseProcessor[EntryT](ABC):
         clean_content: str,
         original_content: str,
         identifier: str,
-    ) -> FlextResult[EntryT]:
+    ) -> FlextResult[TEntry]:
         """Create concrete entry instance."""
         ...
 
@@ -138,7 +141,7 @@ class FlextBaseProcessor[EntryT](ABC):
         content: str,
         identifier: str,
     ) -> FlextResult[EntryT]:
-        """Validate entry creation step."""
+        """Validate an entry creation step."""
         entry_result = self._create_entry(
             entry_type,
             clean_content,
@@ -171,7 +174,9 @@ class FlextBaseProcessor[EntryT](ABC):
             if not line.strip():
                 continue
 
-            result = self.extract_entry_info(line, entry_type, prefix)
+            result: FlextResult[EntryT] = self.extract_entry_info(
+                line, entry_type, prefix
+            )
             if result.success:
                 if result.data is not None:
                     results.append(result.data)
@@ -193,7 +198,7 @@ class FlextBaseProcessor[EntryT](ABC):
         self._extracted_entries.clear()
 
 
-class FlextRegexProcessor(FlextBaseProcessor[EntryT]):
+class FlextRegexProcessor(FlextBaseProcessor[EntryT], ABC):
     """Regex-based processor for entries with pattern matching."""
 
     def __init__(
@@ -201,12 +206,12 @@ class FlextRegexProcessor(FlextBaseProcessor[EntryT]):
         identifier_pattern: str,
         validator: FlextEntryValidator | None = None,
     ) -> None:
-        """Initialize with regex pattern for identifier extraction."""
+        """Initialize with a regex pattern for identifier extraction."""
         super().__init__(validator)
         self.identifier_pattern = re.compile(identifier_pattern)
 
     def _extract_identifier(self, content: str) -> FlextResult[str]:
-        """Extract identifier using regex pattern."""
+        """Extract identifier using a regex pattern."""
         match = self.identifier_pattern.search(content)
         if not match:
             return FlextResult.fail(
@@ -221,7 +226,7 @@ class FlextConfigAttributeValidator:
 
     @staticmethod
     def has_attribute(config: object, attribute: str) -> bool:
-        """Check if config has specified attribute."""
+        """Check if config has a specified attribute."""
         return hasattr(config, attribute)
 
     @staticmethod
@@ -237,7 +242,7 @@ class FlextConfigAttributeValidator:
         """Validate config has required attributes - FACADE to base_validation."""
         # ARCHITECTURAL DECISION: Use centralized validation to eliminate duplication
         if not isinstance(config, dict):
-            # Convert object to dict for schema validator compatibility
+            # Convert an object to dict for schema validator compatibility
             config_dict = getattr(config, "__dict__", {})
         else:
             config_dict = config
@@ -248,14 +253,14 @@ class FlextConfigAttributeValidator:
             return FlextResult.fail(
                 f"Missing required attributes: {', '.join(missing)}"
             )
-        return FlextResult.ok(True)
+        return FlextResult.ok(data=True)
 
 
 class FlextBaseConfigManager:
     """Base configuration manager with attribute validation."""
 
     def __init__(self, config: object) -> None:
-        """Initialize with configuration object."""
+        """Initialize with a configuration object."""
         self.config = config
         self.validator = FlextConfigAttributeValidator()
 
@@ -275,7 +280,7 @@ class FlextBaseConfigManager:
                 self.config,
                 required_attrs,
             )
-        return FlextResult.ok(True)
+        return FlextResult.ok(data=True)
 
 
 class FlextBaseSorter[T]:
@@ -334,7 +339,7 @@ class FlextProcessingPipeline[T, U]:
         self,
         step: Callable[[T], FlextResult[U]],
     ) -> FlextProcessingPipeline[T, U]:
-        """Add processing step to pipeline."""
+        """Add a processing step to a pipeline."""
         self.steps.append(step)  # type: ignore[arg-type]
         return self
 
@@ -354,7 +359,7 @@ class FlextProcessingPipeline[T, U]:
 # =============================================================================
 
 __all__: list[str] = [
-    # Backward-compat export names expected by tests
+    # Backward-compatible export names expected by tests
     "BaseEntry",
     "BaseFileWriter",
     "BaseProcessor",
@@ -370,7 +375,7 @@ __all__: list[str] = [
     "ProcessingPipeline",
 ]
 
-# Backward-compat aliases
+# Backward-compatible aliases
 BaseEntry = FlextBaseEntry
 EntryType = FlextEntryType
 EntryValidator = FlextEntryValidator

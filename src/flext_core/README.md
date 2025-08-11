@@ -1,95 +1,102 @@
 # FLEXT Core Source Code
 
-**The Architectural Foundation Implementation for Enterprise Data Integration**
+Core implementation of FLEXT Core's foundational patterns and architectural components.
 
-This directory contains the complete source code implementation of FLEXT Core, providing foundational patterns used across all 32 projects in the FLEXT ecosystem.
+## Overview
 
-## 🏗️ Source Code Architecture
+This directory contains the complete source implementation of FLEXT Core, providing railway-oriented programming, dependency injection, domain-driven design patterns, and enterprise features used across the FLEXT ecosystem.
 
-FLEXT Core is organized into **6 architectural layers**, each providing specific patterns and capabilities:
+## Module Organization
 
-### **Foundation Layer** - Type System & Core Contracts
+The source code follows Clean Architecture principles with clear separation of concerns:
 
-Core foundational contracts that all other modules depend on.
+### Foundation Layer
 
-| Module                             | Purpose             | Key Exports                                          |
-| ---------------------------------- | ------------------- | ---------------------------------------------------- |
-| [`__init__.py`](__init__.py)       | Public API gateway  | `FlextResult`, `FlextContainer`, `FlextEntity`, etc. |
-| [`typings.py`](typings.py)         | Centralized types   | `FlextTypes`, `TAnyDict`, `TLogMessage`, all types   |
-| [`constants.py`](constants.py)     | Ecosystem constants | `FlextLogLevel`, `Platform`, port definitions        |
-| [`__version__.py`](__version__.py) | Version management  | `get_version_info()`, `is_feature_available()`       |
+**Core contracts and type system**
 
-### **Core Pattern Layer** - Railway-Oriented Programming
+| Module | Purpose | Key Components |
+|--------|---------|----------------|
+| `__init__.py` | Public API exports | All public classes and functions |
+| `typings.py` | Type definitions | Type aliases, protocols, generics |
+| `constants.py` | System constants | Enums, configuration defaults |
+| `__version__.py` | Version info | Version string and metadata |
 
-Railway-oriented programming foundation and dependency injection.
+### Core Patterns
 
-| Module                           | Purpose                | Key Exports                                   |
-| -------------------------------- | ---------------------- | --------------------------------------------- |
-| [`result.py`](result.py)         | FlextResult[T] pattern | `FlextResult`, railway-oriented methods       |
-| [`container.py`](container.py)   | Enterprise DI system   | `FlextContainer`, `get_flext_container()`     |
-| [`exceptions.py`](exceptions.py) | Exception hierarchy    | `FlextException`, business context exceptions |
-| [`utilities.py`](utilities.py)   | Pure utility functions | Performance tracking, ID generation           |
+**Railway-oriented programming and DI**
 
-### **Configuration Layer** - System Integration & Logging
+| Module | Purpose | Key Components |
+|--------|---------|----------------|
+| `result.py` | Error handling | `FlextResult[T]`, chaining methods |
+| `container.py` | Dependency injection | `FlextContainer`, service registry |
+| `exceptions.py` | Exception hierarchy | Domain exceptions, error types |
+| `utilities.py` | Helper functions | ID generation, common operations |
 
-Configuration, logging, and external integration contracts.
+### Configuration & Infrastructure
 
-| Module                                             | Purpose              | Key Exports                                          |
-| -------------------------------------------------- | -------------------- | ---------------------------------------------------- |
-| [`config.py`](config.py)                           | Base configuration   | `FlextSettings`, environment integration         |
-| [`loggings.py`](loggings.py)                       | Structured logging   | `FlextLogger`, `get_logger()`, correlation IDs       |
-| [`payload.py`](payload.py)                         | Message patterns     | `FlextPayload`, `FlextEvent`, `FlextMessage`         |
-| [`interfaces.py`](interfaces.py)                   | Protocol definitions | `FlextValidator`, `FlextService`, Clean Architecture |
-| [`config_models.py`](config_models.py)             | Configuration models | Database, Redis, Oracle, LDAP configs                |
-| [`config_hierarchical.py`](config_hierarchical.py) | Hierarchical config  | Configuration composition patterns                   |
+**Settings, logging, and integration**
 
-### **Domain Layer** - Domain-Driven Design Patterns
+| Module | Purpose | Key Components |
+|--------|---------|----------------|
+| `config.py` | Configuration management | `FlextSettings`, env loading |
+| `config_base.py` | Base configuration | Configuration patterns |
+| `config_models.py` | Config models | Database, cache, service configs |
+| `loggings.py` | Structured logging | Logger factory, correlation IDs |
+| `payload.py` | Message structures | Events, messages, payloads |
+| `interfaces.py` | Contracts | Protocols, interfaces |
 
-Rich domain modeling patterns following DDD principles.
+### Domain Patterns
 
-| Module                                     | Purpose          | Key Exports                                  |
-| ------------------------------------------ | ---------------- | -------------------------------------------- |
-| [`entities.py`](entities.py)               | Domain entities  | `FlextEntity`, rich business logic           |
-| [`value_objects.py`](value_objects.py)     | Immutable values | `FlextValueObject`, attribute-based equality |
-| [`aggregate_root.py`](aggregate_root.py)   | DDD aggregates   | `FlextAggregateRoot`, invariants & events    |
-| [`domain_services.py`](domain_services.py) | Domain services  | `FlextDomainService`, business operations    |
-| [`models.py`](models.py)                   | General models   | Universal data structures, semantic types    |
+**DDD building blocks**
 
-### **CQRS Layer** - Command Query Responsibility Segregation
+| Module | Purpose | Key Components |
+|--------|---------|----------------|
+| `entities.py` | Domain entities | Business entities with identity |
+| `value_objects.py` | Value objects | Immutable domain values |
+| `aggregate_root.py` | Aggregates | Consistency boundaries |
+| `domain_services.py` | Domain services | Stateless domain operations |
+| `models.py` | Domain models | Shared model definitions |
 
-CQRS patterns for enterprise scalability.
+### Application Patterns
 
-| Module                           | Purpose          | Key Exports                               |
-| -------------------------------- | ---------------- | ----------------------------------------- |
-| [`commands.py`](commands.py)     | Command patterns | `FlextCommand`, `FlextCommandBus`         |
-| [`handlers.py`](handlers.py)     | Handler patterns | `FlextCommandHandler`, message processing |
-| [`validation.py`](validation.py) | Input validation | Validation system, business rules         |
+**CQRS and command handling**
 
-### **Extension Layer** - Reusable Behaviors & Cross-Cutting Concerns
+| Module | Purpose | Key Components |
+|--------|---------|----------------|
+| `commands.py` | Command patterns | Commands, command bus |
+| `handlers.py` | Request handlers | Command/query handlers |
+| `handlers_base.py` | Base handlers | Handler abstractions |
+| `validation.py` | Validation system | Validators, rules |
+| `validation_base.py` | Validation base | Base validation patterns |
 
-Reusable patterns and cross-cutting concerns.
+### Cross-Cutting Concerns
 
-| Module                           | Purpose               | Key Exports                             |
-| -------------------------------- | --------------------- | --------------------------------------- |
-| [`mixins.py`](mixins.py)         | Reusable behaviors    | `TimestampMixin`, `SoftDeleteMixin`     |
-| [`decorators.py`](decorators.py) | Enterprise decorators | `@with_correlation_id`, `@with_metrics` |
-| [`fields.py`](fields.py)         | Field metadata        | Enhanced data modeling support          |
-| [`guards.py`](guards.py)         | Validation guards     | Type safety, validation builders        |
-| [`core.py`](core.py)             | FlextCore main class  | Integration of all patterns             |
+**Mixins, decorators, and utilities**
 
-### **Specialized Modules** - Extension Points & Legacy Support
+| Module | Purpose | Key Components |
+|--------|---------|----------------|
+| `mixins.py` | Behavior mixins | Timestamp, audit, soft delete |
+| `decorators.py` | Function decorators | Retry, cache, logging |
+| `guards.py` | Guard clauses | Validation, assertions |
+| `context.py` | Context management | Request context, correlation |
+| `core.py` | Core integration | Main FlextCore class |
 
-Specialized processing components and legacy compatibility.
+### Specialized Modules
 
-| Module                                         | Purpose               | Key Exports                               |
-| ---------------------------------------------- | --------------------- | ----------------------------------------- |
-| [`schema_processing.py`](schema_processing.py) | Processing components | LDIF/ACL processing patterns              |
-| [`singer_base.py`](singer_base.py)             | Legacy compatibility  | Singer pattern compatibility (deprecated) |
-| [`testing_utilities.py`](testing_utilities.py) | Testing support       | Standardized test configurations          |
+**Domain-specific and compatibility**
 
-## 🎯 Module Usage Patterns
+| Module | Purpose | Key Components |
+|--------|---------|----------------|
+| `observability.py` | Monitoring patterns | Metrics, tracing, health checks |
+| `semantic.py` | Semantic processing | Domain language processing |
+| `schema_processing.py` | Schema handling | Data schema operations |
+| `singer_base.py` | Singer compatibility | Singer SDK base classes |
+| `legacy.py` | Legacy support | Backward compatibility |
+| `testing_utilities.py` | Test helpers | Test fixtures, utilities |
 
-### **Foundation Usage**
+## Usage Examples
+
+### Basic Imports
 
 ```python
 # Essential imports for all FLEXT projects
@@ -98,7 +105,7 @@ from flext_core.typings import FlextTypes, TAnyDict, TLogMessage
 from flext_core.constants import FlextLogLevel, Platform
 ```
 
-### **Railway-Oriented Programming**
+### Error Handling
 
 ```python
 # Type-safe error handling throughout ecosystem
@@ -111,7 +118,7 @@ def process_data(data: dict) -> FlextResult[ProcessedData]:
     )
 ```
 
-### **Domain Modeling**
+### Domain Models
 
 ```python
 # Rich domain entities with business logic
@@ -128,7 +135,7 @@ class User(FlextEntity):
         return FlextResult.ok(None)
 ```
 
-### **Enterprise Configuration**
+### Configuration
 
 ```python
 # Environment-aware configuration management
@@ -140,7 +147,7 @@ class AppSettings(FlextSettings):
         env_prefix = "APP_"
 ```
 
-### **Structured Logging**
+### Logging
 
 ```python
 # Correlation ID support and enterprise observability
@@ -149,66 +156,136 @@ with create_log_context(logger, request_id="123", user_id="456"):
     logger.info("Processing request", operation="create_user")
 ```
 
-## 📊 Ecosystem Integration
+## Module Dependencies
 
-### **Project Dependencies**
+### Internal Dependencies
 
-- **32 Projects** directly depend on FLEXT Core patterns
-- **15,000+ Function Signatures** use FlextResult[T] across ecosystem
-- **Zero Downtime** requirement for changes affecting dependent projects
+Modules follow Clean Architecture dependency rules:
 
-### **Cross-Language Integration**
+```
+Foundation ← Core Patterns ← Configuration ← Domain ← Application ← Cross-Cutting
+```
 
-- **Python-Go Bridge**: FlextCore (Go) integrates via Python bridge
-- **Type Safety**: Comprehensive type annotations ensure cross-service reliability
-- **Serialization**: Cross-language data contract compatibility
+- Foundation modules have no internal dependencies
+- Core patterns depend only on foundation
+- Higher layers can depend on lower layers
+- No circular dependencies allowed
 
-### **Development Status (v0.9.0 → 1.0.0)**
+### External Dependencies
 
-- ✅ **Production Ready**: Core patterns, dependency injection, domain modeling
-- 🚧 **In Development**: Event Sourcing, advanced CQRS, plugin architecture
-- 📋 **Planned**: Python-Go bridge, enterprise observability, distributed tracing
+**Runtime dependencies (minimal):**
 
-## 🔧 Development Standards
+- `pydantic >= 2.11.7` - Data validation
+- `pydantic-settings >= 2.10.1` - Configuration
+- `structlog >= 25.4.0` - Structured logging
 
-### **Quality Requirements**
+**Development dependencies:**
 
-- **Test Coverage**: 95% minimum (currently 95%+)
-- **Type Safety**: Strict MyPy with zero tolerance for type errors
-- **Code Quality**: Ruff linting with comprehensive rule set
-- **Security**: Bandit + pip-audit scanning
-- **Line Length**: 79 characters (strict PEP8 compliance)
+- See `pyproject.toml` for complete list
 
-### **Documentation Standards**
+## Development Guidelines
 
-- **Comprehensive Docstrings**: Every module, class, and method documented
-- **Module Role Documentation**: Clear architectural layer positioning
-- **Usage Patterns**: Real-world examples and ecosystem integration
-- **Development Status**: Current capabilities and roadmap integration
+### Code Standards
 
-### **Architectural Constraints**
+- **Type Safety**: All public APIs fully typed
+- **Error Handling**: Use FlextResult, avoid exceptions
+- **Line Length**: 79 characters (PEP 8)
+- **Documentation**: Docstrings for all public APIs
+- **Testing**: 75% minimum coverage requirement
 
-- **Dependency Direction**: Dependencies flow inward following Clean Architecture
-- **Layer Separation**: Clear boundaries with no reverse dependencies
-- **Type Safety**: FlextResult[T] for all error-prone operations
-- **Immutability**: Value objects frozen, entities mutable with controlled state
+### Adding New Modules
 
-## 📚 Related Documentation
+1. **Determine Layer**: Place in appropriate architectural layer
+2. **Define Exports**: Add to `__init__.py` if public
+3. **Add Tests**: Create corresponding test file
+4. **Document**: Include module docstring and examples
+5. **Type Check**: Ensure MyPy passes
 
-- [**CLAUDE.md**](../../CLAUDE.md) - Development guidance and quality gates
-- [**README.md**](../../README.md) - Project overview and getting started
-- [**docs/architecture/**](../../docs/architecture/) - Detailed architectural documentation
-- [**docs/TODO.md**](../../docs/TODO.md) - Development roadmap and current priorities
-- [**examples/**](../../examples/) - 17 comprehensive working examples
+### Module Patterns
 
-## 🎯 Navigation Tips
+```python
+"""Module description.
 
-1. **Start with Foundation**: Begin with `__init__.py`, `result.py`, and `container.py`
-2. **Follow Layers**: Progress through layers in architectural order
-3. **Check Examples**: Reference working examples for usage patterns
-4. **Review Tests**: Examine test files for comprehensive usage scenarios
-5. **Understand Context**: Each module's docstring explains its ecosystem role
+This module provides [functionality] as part of the [layer] layer.
+
+Key Components:
+    - Component1: Description
+    - Component2: Description
+
+Usage:
+    >>> from flext_core.module import Component
+    >>> component = Component()
+"""
+
+from typing import Optional
+from flext_core import FlextResult
+
+__all__ = ["Component1", "Component2"]
+
+# Implementation follows...
+```
+
+## File Structure Summary
+
+```
+src/flext_core/
+├── __init__.py              # Public API exports
+├── __version__.py           # Version information
+├── py.typed                 # Type hint marker
+│
+├── # Core Patterns
+├── result.py                # FlextResult pattern
+├── container.py             # Dependency injection
+├── exceptions.py            # Exception hierarchy
+├── utilities.py             # Utility functions
+│
+├── # Configuration
+├── config.py                # Main configuration
+├── config_base.py           # Base patterns
+├── config_models.py         # Config models
+├── loggings.py              # Logging system
+│
+├── # Domain Patterns
+├── entities.py              # Domain entities
+├── value_objects.py         # Value objects
+├── aggregate_root.py        # Aggregates
+├── domain_services.py       # Domain services
+│
+├── # Application Patterns
+├── commands.py              # Commands
+├── handlers.py              # Handlers
+├── validation.py            # Validation
+│
+├── # Cross-Cutting
+├── mixins.py                # Mixins
+├── decorators.py            # Decorators
+├── interfaces.py            # Interfaces
+│
+└── # Supporting
+    ├── typings.py           # Type definitions
+    ├── constants.py         # Constants
+    ├── models.py            # Models
+    └── testing_utilities.py # Test helpers
+```
+
+## Key Design Decisions
+
+### Why Railway-Oriented Programming
+
+FlextResult provides explicit error handling without exceptions, making error paths visible and composable. This pattern is used consistently across all 32+ FLEXT projects.
+
+### Why Minimal Dependencies
+
+As a foundation library, FLEXT Core minimizes dependencies to avoid version conflicts and reduce the attack surface. Only essential, well-maintained packages are used.
+
+### Why Clean Architecture
+
+Clean Architecture ensures the business logic remains independent of frameworks and external concerns, making the codebase testable, maintainable, and adaptable to change.
+
+## Contributing
+
+See [CONTRIBUTING.md](../../CONTRIBUTING.md) for development guidelines.
 
 ---
 
-**FLEXT Core v0.9.0** - The architectural foundation enabling enterprise-grade data integration across 32 interconnected projects. Every module serves a specific role in building reliable, scalable, and maintainable data integration solutions.
+**FLEXT Core v0.9.0** - Foundation library for the FLEXT ecosystem.

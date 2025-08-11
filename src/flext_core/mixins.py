@@ -32,9 +32,6 @@ if TYPE_CHECKING:
 # UTILITY CLASSES - Helper functionality for mixins
 # =============================================================================
 
-# REFACTORED: FlextGenerators moved to utilities.py (single source of truth)
-# Now imported from canonical location above
-
 
 class FlextValidators:
     """Validation functions for mixin functionality.

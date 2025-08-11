@@ -1,6 +1,6 @@
 """Configuration Compatibility Layer for Tests.
 
-⚠️  IMPORTANT: This module provides COMPATIBILITY functions for the hybrid approach.
+⚠️ IMPORTANT: This module provides COMPATIBILITY functions for the hybrid approach.
     These functions bridge between the new clean config architecture and old
     test expectations.
 
@@ -17,11 +17,9 @@ Architecture:
     - FUTURE: Tests can be gradually migrated to use new clean config APIs
 
 Usage in Tests:
-    from flext_core.config_compat import (
-        LegacyCompatibleConfigManager,
+    from flext_core.config_compat import (LegacyCompatibleConfigManager,
         legacy_safe_get_env_var,
-        # ... other compatibility functions
-    )
+        # ... other compatibility functions)
 """
 
 from __future__ import annotations
@@ -176,8 +174,7 @@ class LegacyCompatibleConfigManager:
         *,
         required_keys: list[str] | None = None,
     ) -> FlextResult[dict[str, object]]:
-        """Load and validate configuration from file with legacy error handling."""
-        # Load the file
+        """Load and validate configuration from a file with legacy error handling."""
         load_result = LegacyCompatibleConfigOps.safe_load_json_file(file_path)
         if load_result.is_failure:
             error = load_result.error or ""

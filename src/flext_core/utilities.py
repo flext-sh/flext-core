@@ -55,7 +55,8 @@ class FlextConsole:
     def __init__(self) -> None:
         """Initialize console."""
 
-    def print(self, *args: object, **kwargs: object) -> None:
+    @staticmethod
+    def print(*args: object, **kwargs: object) -> None:
         """Print to console with standard print function.
 
         Supports rich-style markup for compatibility but ignores it,
@@ -65,11 +66,11 @@ class FlextConsole:
         for arg in args:
             text = str(arg)
             # Remove rich markup tags for plain text output
-            clean_text = re.sub(r"\[/?[^\]]*\]", "", text)
+            clean_text = re.sub(r"[/?[^]]*", "", text)
             text_parts.append(clean_text)
 
         # Use sys.stdout.write instead of print to avoid T201 linting error
-        # Handle kwargs similar to standard print (sep, end, etc)
+        # Handle kwargs similar to standard print (sep, end, etc.)
         sep = str(kwargs.get("sep", " "))
         end = str(kwargs.get("end", "\n"))
         output = sep.join(text_parts) + end
@@ -81,7 +82,7 @@ class FlextConsole:
         self.print(*args, **kwargs)
 
 
-# Backward-compat simple Console symbol for tests that patch
+# Backward-compatible simple Console symbol for tests that patch
 # flext_core.utilities.Console
 Console = FlextConsole
 
@@ -203,12 +204,12 @@ class FlextUtilities:
 
     @classmethod
     def has_attribute(cls, obj: object, attr: str) -> bool:
-        """Check if object has attribute."""
+        """Check if an object has an attribute."""
         return hasattr(obj, attr)
 
     @classmethod
     def is_instance_of(cls, obj: object, target_type: type) -> bool:
-        """Check if object is instance of type."""
+        """Check if an object is an instance of a type."""
         return isinstance(obj, target_type)
 
     @classmethod
@@ -220,7 +221,7 @@ class FlextUtilities:
             except Exception:
                 num_params = 0
 
-            result = (func)() if num_params == 0 else (func)(object())  # type: ignore[call-arg]
+            result = func() if num_params == 0 else func(object())  # type: ignore[call-arg]
             return FlextResult.ok(result)
         except Exception as e:
             return FlextResult.fail(str(e))
@@ -518,7 +519,7 @@ class FlextTimeUtils:
     - OCP: Extensible through adding new time formatting methods
     - LSP: N/A (utility class, no inheritance)
     - ISP: Focused interface for time operations only
-    - DIP: No external dependencies beyond standard library
+    - DIP: No external dependencies beyond a standard library
     """
 
     @staticmethod
@@ -671,24 +672,24 @@ class FlextTypeGuards:
 
     @staticmethod
     def has_attribute(obj: object, attr: str) -> bool:
-        """Check if object has attribute."""
+        """Check if an object has an attribute."""
         return hasattr(obj, attr)
 
     @staticmethod
     def is_instance_of(obj: object, target_type: type) -> bool:
-        """Check if object is instance of type."""
+        """Check if an object is an instance of type."""
         return isinstance(obj, target_type)
 
     @staticmethod
     def is_list_of(obj: object, item_type: type) -> bool:
-        """Check if object is a list of specific type."""
+        """Check if an object is a list of specific type."""
         if not isinstance(obj, list):
             return False
         return all(isinstance(item, item_type) for item in obj)
 
     @staticmethod
     def is_not_none_guard(value: object | None) -> bool:
-        """Return True if value is not None (compat)."""
+        """Return True if value is not None (compatible)."""
         return value is not None
 
 
@@ -785,13 +786,13 @@ class FlextGenericFactory(FlextBaseFactory[object]):
     """
 
     def __init__(self, target_type: type[object]) -> None:
-        """Initialize factory with target type."""
+        """Initialize factory with a target type."""
         self._target_type = target_type
 
-    def create(self, **kwargs: object) -> FlextResult[object]:
-        """Create instance of target type with error handling."""
+    def create(self, **kwargs: object) -> FlextResult[object]:  # noqa: ARG002
+        """Create instance of a target type with error handling."""
         try:
-            instance = self._target_type(**kwargs)
+            instance = self._target_type()
             return FlextResult.ok(instance)
         except Exception as e:
             return FlextResult.fail(f"Factory creation failed: {e}")
@@ -803,23 +804,28 @@ class FlextUtilityFactory:
     def __init__(self) -> None:
         """Initialize utility factory."""
 
-    def create_generator(self, **kwargs: object) -> FlextGenerators:  # noqa: ARG002
+    @staticmethod
+    def create_generator() -> FlextGenerators:
         """Create generator."""
         return FlextGenerators()
 
-    def create_formatter(self, **kwargs: object) -> FlextFormatters:  # noqa: ARG002
+    @staticmethod
+    def create_formatter() -> FlextFormatters:
         """Create formatter."""
         return FlextFormatters()
 
-    def create_converter(self, **kwargs: object) -> FlextConversions:  # noqa: ARG002
+    @staticmethod
+    def create_converter() -> FlextConversions:
         """Create converter."""
         return FlextConversions()
 
-    def create_performance_tracker(self, **kwargs: object) -> FlextPerformance:  # noqa: ARG002
+    @staticmethod
+    def create_performance_tracker() -> FlextPerformance:
         """Create performance tracker."""
         return FlextPerformance()
 
-    def create_text_processor(self, **kwargs: object) -> FlextTextProcessor:  # noqa: ARG002
+    @staticmethod
+    def create_text_processor() -> FlextTextProcessor:
         """Create text processor."""
         return FlextTextProcessor()
 
@@ -860,7 +866,7 @@ def generate_uuid() -> str:
 
 
 def is_not_none(value: object) -> bool:
-    """Check if value is not None."""
+    """Check if the value is not None."""
     return FlextUtilities.is_not_none_guard(value)
 
 
@@ -889,7 +895,7 @@ def flext_record_performance(
 ) -> None:
     """Record performance metrics.
 
-    Backward-compat: accept both ``success`` (new) and ``_success`` (old) flags.
+    Backward-compatible: accept both ``success`` (new) and ``_success`` (old) flags.
     """
     flag = (
         success if success is not None else (_success if _success is not None else True)
@@ -915,7 +921,7 @@ def generate_iso_timestamp() -> str:
 
 
 # =============================================================================
-# EXPORTS - Clean public API seguindo diretrizes
+# EXPORTS - Clean public API following directives
 # =============================================================================
 
 __all__: list[str] = [

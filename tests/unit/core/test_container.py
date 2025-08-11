@@ -16,9 +16,9 @@ import pytest
 from flext_core.container import (
     FlextContainer,
     FlextGlobalContainerManager,
+    FlextServiceKey,
     FlextServiceRegistrar,
-    FlextServiceRetrivier,
-    ServiceKey,
+    FlextServiceRetriever,
     configure_flext_container,
     get_flext_container,
     get_typed,
@@ -269,7 +269,7 @@ class TestFlextServiceRetrivier:
             "factory": lambda: SampleService("factory")
         }
 
-        retriever = FlextServiceRetrivier(services, factories)
+        retriever = FlextServiceRetriever(services, factories)
 
         # Verify it has references to the dictionaries
         assert retriever._services is services
@@ -281,7 +281,7 @@ class TestFlextServiceRetrivier:
         services: dict[str, object] = {"test": service}
         factories: dict[str, Callable[[], object]] = {}
 
-        retriever = FlextServiceRetrivier(services, factories)
+        retriever = FlextServiceRetriever(services, factories)
 
         result = retriever.get_service("test")
         assert result.success
@@ -298,7 +298,7 @@ class TestFlextServiceRetrivier:
             return SampleService(f"factory_{call_count}")
 
         factories: dict[str, Callable[[], object]] = {"test": factory}
-        retriever = FlextServiceRetrivier(services, factories)
+        retriever = FlextServiceRetriever(services, factories)
 
         # First call should execute factory
         result1 = retriever.get_service("test")
@@ -328,7 +328,7 @@ class TestFlextServiceRetrivier:
             raise FlextError(msg)
 
         factories: dict[str, Callable[[], object]] = {"test": failing_factory}
-        retriever = FlextServiceRetrivier(services, factories)
+        retriever = FlextServiceRetriever(services, factories)
 
         result = retriever.get_service("test")
         assert result.is_failure
@@ -355,7 +355,7 @@ class TestFlextServiceRetrivier:
                 raise exc
 
             factories: dict[str, Callable[[], object]] = {f"test_{i}": failing_factory}
-            retriever = FlextServiceRetrivier(services, factories)
+            retriever = FlextServiceRetriever(services, factories)
 
             result = retriever.get_service(f"test_{i}")
             assert result.is_failure
@@ -368,7 +368,7 @@ class TestFlextServiceRetrivier:
         """Test getting non-existent service."""
         services: dict[str, object] = {}
         factories: dict[str, Callable[[], object]] = {}
-        retriever = FlextServiceRetrivier(services, factories)
+        retriever = FlextServiceRetriever(services, factories)
 
         result = retriever.get_service("nonexistent")
         assert result.is_failure
@@ -382,7 +382,7 @@ class TestFlextServiceRetrivier:
         service = SampleService("test")
         services: dict[str, object] = {"test": service}
         factories: dict[str, Callable[[], object]] = {}
-        retriever = FlextServiceRetrivier(services, factories)
+        retriever = FlextServiceRetriever(services, factories)
 
         result = retriever.get_service_info("test")
         assert result.success
@@ -406,7 +406,7 @@ class TestFlextServiceRetrivier:
 
         services: dict[str, object] = {}
         factories: dict[str, Callable[[], object]] = {"test": test_factory}
-        retriever = FlextServiceRetrivier(services, factories)
+        retriever = FlextServiceRetriever(services, factories)
 
         result = retriever.get_service_info("test")
         assert result.success
@@ -426,7 +426,7 @@ class TestFlextServiceRetrivier:
         """Test getting info for non-existent service."""
         services: dict[str, object] = {}
         factories: dict[str, Callable[[], object]] = {}
-        retriever = FlextServiceRetrivier(services, factories)
+        retriever = FlextServiceRetriever(services, factories)
 
         result = retriever.get_service_info("nonexistent")
         assert result.is_failure
@@ -444,7 +444,7 @@ class TestFlextServiceRetrivier:
             return SampleService("factory")
 
         factories: dict[str, Callable[[], object]] = {"factory": factory}
-        retriever = FlextServiceRetrivier(services, factories)
+        retriever = FlextServiceRetriever(services, factories)
 
         service_list = retriever.list_services()
         if service_list["instance"] != "instance":
@@ -661,11 +661,11 @@ class TestFlextContainerAdvancedFeatures:
 
 @pytest.mark.unit
 class TestServiceKey:
-    """Test ServiceKey functionality."""
+    """Test FlextServiceKey functionality."""
 
     def test_service_key_creation(self) -> None:
-        """Test ServiceKey creation and basic functionality."""
-        key = ServiceKey[SampleService]("test_service")
+        """Test FlextServiceKey creation and basic functionality."""
+        key = FlextServiceKey[SampleService]("test_service")
         if key.name != "test_service":
             raise AssertionError(f"Expected {'test_service'}, got {key.name}")
         assert str(key) == "test_service"
@@ -674,8 +674,8 @@ class TestServiceKey:
         self,
         clean_container: FlextContainer,
     ) -> None:
-        """Test ServiceKey with register_typed function."""
-        key = ServiceKey[SampleService]("test_service")
+        """Test FlextServiceKey with register_typed function."""
+        key = FlextServiceKey[SampleService]("test_service")
         service = SampleService("test")
 
         result = register_typed(key, service)
@@ -684,8 +684,8 @@ class TestServiceKey:
         assert clean_container.has("test_service")
 
     def test_service_key_with_get_typed(self, clean_container: FlextContainer) -> None:
-        """Test ServiceKey with get_typed function."""
-        key = ServiceKey[SampleService]("test_service")
+        """Test FlextServiceKey with get_typed function."""
+        key = FlextServiceKey[SampleService]("test_service")
         service = SampleService("test")
         # Register in global container since get_typed uses global container
         global_container = get_flext_container()
@@ -696,8 +696,8 @@ class TestServiceKey:
         assert result.data is service
 
     def test_get_typed_service_not_found(self, clean_container: FlextContainer) -> None:
-        """Test get_typed with ServiceKey for non-existent service."""
-        key = ServiceKey[SampleService]("nonexistent")
+        """Test get_typed with FlextServiceKey for non-existent service."""
+        key = FlextServiceKey[SampleService]("nonexistent")
 
         result = get_typed(key, SampleService)
         assert result.is_failure
@@ -881,7 +881,7 @@ class TestContainerValidationIntegration:
         """Test retriever integrates with validation system correctly."""
         services: dict[str, object] = {}
         factories: dict[str, Callable[[], object]] = {}
-        retriever = FlextServiceRetrivier(services, factories)
+        retriever = FlextServiceRetriever(services, factories)
 
         # Test the internal validation method directly
         result = retriever._validate_service_name("valid_name")

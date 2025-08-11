@@ -16,7 +16,6 @@ from flext_core.constants import FlextConstants
 from flext_core.container import (
     FlextContainer,
     FlextServiceKey,
-    ServiceKey,
     get_flext_container,  # re-export for test patching
 )
 from flext_core.guards import ValidatedModel, immutable, is_dict_of, pure
@@ -45,7 +44,7 @@ class FlextCore:
         # Note: Logging configuration will be implemented when
         # FlextLogger.configure is available
 
-        # Settings - Use object instead of Any
+        # Settings - Use an object instead of Any
         self._settings_cache: dict[type[object], object] = {}
 
     @classmethod
@@ -66,7 +65,7 @@ class FlextCore:
 
     def register_service[S](
         self,
-        key: FlextServiceKey[S] | ServiceKey[S],
+        key: FlextServiceKey[S],
         service: S,
     ) -> FlextResult[None]:
         """Register typed service in container.
@@ -84,7 +83,7 @@ class FlextCore:
             service,
         )
 
-    def get_service[S](self, key: FlextServiceKey[S] | ServiceKey[S]) -> FlextResult[S]:
+    def get_service[S](self, key: FlextServiceKey[S]) -> FlextResult[S]:
         """Get typed service from container.
 
         Args:
@@ -107,7 +106,8 @@ class FlextCore:
     # LOGGING ACCESS
     # =========================================================================
 
-    def get_logger(self, name: str) -> FlextLogger:
+    @staticmethod
+    def get_logger(name: str) -> FlextLogger:
         """Get configured logger instance.
 
         Args:
@@ -119,8 +119,8 @@ class FlextCore:
         """
         return FlextLoggerFactory.get_logger(name)
 
+    @staticmethod
     def configure_logging(
-        self,
         *,
         log_level: str = "INFO",
         _json_output: bool | None = None,
@@ -173,7 +173,7 @@ class FlextCore:
     def pipe(
         *funcs: Callable[[object], FlextResult[object]],
     ) -> Callable[[object], FlextResult[object]]:
-        """Create pipeline of Result-returning functions."""
+        """Create a pipeline of Result-returning functions."""
 
         def pipeline(value: object) -> FlextResult[object]:
             result = FlextResult.ok(value)
@@ -252,19 +252,19 @@ class FlextCore:
     # VALIDATION & GUARDS - SOLID Implementation with DIP
     # =========================================================================
 
+    @staticmethod
     def validate_type(
-        self,
         obj: object,
         expected_type: type[object],
     ) -> FlextResult[object]:
-        """Validate object type using dependency injection pattern.
+        """Validate an object type using a dependency injection pattern.
 
         Args:
             obj: Object to validate
             expected_type: Expected type
 
         Returns:
-            FlextResult with validation outcome
+            FlextResult with a validation outcome
 
         """
         if not isinstance(obj, expected_type):
@@ -273,8 +273,8 @@ class FlextCore:
             )
         return FlextResult.ok(obj)
 
+    @staticmethod
     def validate_dict_structure(
-        self,
         obj: object,
         value_type: type[object],
     ) -> FlextResult[dict[str, object]]:
@@ -298,8 +298,8 @@ class FlextCore:
 
         return FlextResult.ok(obj)
 
+    @staticmethod
     def create_validated_model[T: ValidatedModel](
-        self,
         model_class: type[T],
         **data: object,
     ) -> FlextResult[T]:
@@ -316,19 +316,21 @@ class FlextCore:
         # Use the safe creation method from ValidatedModel
         return model_class.create(**data)
 
-    def make_immutable[T](self, cls: type[T]) -> type[T]:
+    @staticmethod
+    def make_immutable[T](target_class: type[T]) -> type[T]:
         """Make class immutable using guards module.
 
         Args:
-            cls: Class to make immutable
+            target_class: Class to make immutable
 
         Returns:
             Immutable version of the class
 
         """
-        return immutable(cls)
+        return immutable(target_class)
 
-    def make_pure[T](self, func: T) -> T:
+    @staticmethod
+    def make_pure[T](func: T) -> T:
         """Make function pure using guards module.
 
         Args:
@@ -357,10 +359,10 @@ class FlextCore:
 
 # Convenience function for global access
 def flext_core() -> FlextCore:
-    """Get global FlextCore instance with convenient access pattern.
+    """Get global FlextCore instance with a convenient access pattern.
 
     Convenience function providing direct access to the global FlextCore singleton
-    instance without requiring explicit class method calls. Maintains singleton
+    instance without requiring explicit class method calls. Maintains a singleton
     pattern while providing simpler access syntax.
 
     Returns:

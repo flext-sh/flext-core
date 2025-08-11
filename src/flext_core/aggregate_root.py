@@ -1,6 +1,6 @@
 """Domain-Driven Design aggregate root implementation.
 
-Provides DDD aggregate root pattern with transactional boundaries,
+Provides a DDD aggregate root pattern with transactional boundaries,
 domain event management, and business logic encapsulation for the
 FLEXT data integration ecosystem.
 """
@@ -49,7 +49,7 @@ class FlextAggregateRoot(FlextEntity):
         version: int = 1,
         **data: object,
     ) -> None:
-        """Initialize with empty event list."""
+        """Initialize with an empty event list."""
         # Handle id from data or entity_id parameter
         provided_id = data.pop("id", None)
         # Ensure actual_id is a string
@@ -60,13 +60,13 @@ class FlextAggregateRoot(FlextEntity):
         else:
             actual_id = FlextGenerators.generate_uuid()
 
-        # Initialize domain events list
+        # Initialize a domain events list
         domain_events_raw = data.pop("domain_events", [])
         # Ensure domain_events is properly typed as list[FlextEvent]
         domain_events = domain_events_raw if isinstance(domain_events_raw, list) else []
 
         # Only add created_at if it's a proper datetime
-        created_at = None
+        created_at: datetime | None = None
         if "created_at" in data and hasattr(data["created_at"], "year"):
             created_at = cast("datetime", data["created_at"])
 
@@ -93,7 +93,7 @@ class FlextAggregateRoot(FlextEntity):
             # This allows Pydantic to properly validate all fields
             super().__init__(**init_kwargs)  # type: ignore[arg-type]
 
-            # Initialize domain event objects list for aggregate root functionality
+            # Initialize a domain event objects list for aggregate root functionality
             # Use object.__setattr__ because the model is frozen
             object.__setattr__(self, "_domain_event_objects", [])
         except Exception as e:
@@ -189,7 +189,7 @@ class FlextAggregateRoot(FlextEntity):
             return FlextResult.fail(f"Failed to add domain event: {e}")
 
     def add_event_object(self, event: FlextEvent) -> None:
-        """Add domain event object directly (convenience method).
+        """Add a domain event object directly (convenience method).
 
         Args:
             event: Domain event object to add
@@ -242,7 +242,7 @@ class FlextAggregateRoot(FlextEntity):
 
 # Rebuild models to resolve forward references after import
 # Note: model_rebuild() disabled due to TAnyDict circular reference issues
-# The models work correctly without explicit rebuild as Pydantic handles
+# The models work correctly without an explicit rebuild as Pydantic handles
 # forward references automatically during runtime validation
 # FlextAggregateRoot.model_rebuild()
 

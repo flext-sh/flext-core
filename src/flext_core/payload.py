@@ -16,20 +16,18 @@ from typing import TYPE_CHECKING, cast
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
+from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextAttributeError, FlextValidationError
-
-# Import types for runtime usage (not just TYPE_CHECKING)
-from flext_core.loggings import FlextLoggerFactory, get_logger
+from flext_core.loggings import FlextLoggerFactory, flext_get_logger
 from flext_core.mixins import (
     FlextLoggableMixin,
     FlextSerializableMixin,
-    FlextValidatableMixin,
 )
 from flext_core.result import FlextResult
 from flext_core.validation import FlextValidators
 
 if TYPE_CHECKING:
-    from flext_core.typings import T, TValue
+    from flext_core.typings import TValue
 
 # =============================================================================
 # CROSS-SERVICE SERIALIZATION CONSTANTS AND TYPES
@@ -37,7 +35,6 @@ if TYPE_CHECKING:
 
 # Serialization protocol version for backward compatibility
 # Constants moved to constants.py following SOLID Single Responsibility Principle
-from flext_core.constants import FlextConstants
 
 FLEXT_SERIALIZATION_VERSION = FlextConstants.Observability.FLEXT_SERIALIZATION_VERSION
 
@@ -78,10 +75,9 @@ MAX_UNCOMPRESSED_SIZE = 65536
 COMPRESSION_LEVEL = 6
 
 
-class FlextPayload[T](  # type: ignore[misc]
+class FlextPayload[T](
     BaseModel,
     FlextSerializableMixin,
-    FlextValidatableMixin,
     FlextLoggableMixin,
 ):
     """Generic type-safe payload container for structured data transport and validation.
@@ -123,10 +119,6 @@ class FlextPayload[T](  # type: ignore[misc]
             Result containing payload or error
 
         """
-        # Import logger directly for class methods
-
-        logger = FlextLoggerFactory.get_logger(f"{cls.__module__}.{cls.__name__}")
-
         logger.debug(
             "Creating payload",
             data_type=type(data).__name__,
@@ -143,7 +135,7 @@ class FlextPayload[T](  # type: ignore[misc]
             return FlextResult.fail(f"Failed to create payload: {e}")
 
     def with_metadata(self, **additional: TValue) -> FlextPayload[T]:
-        """Create new payload with additional metadata.
+        """Create a new payload with additional metadata.
 
         Args:
             **additional: Metadata to add/update
@@ -157,7 +149,7 @@ class FlextPayload[T](  # type: ignore[misc]
         return FlextPayload(data=self.data, metadata=new_metadata)
 
     def enrich_metadata(self, additional: dict[str, object]) -> FlextPayload[T]:
-        """Create new payload with enriched metadata from dictionary.
+        """Create a new payload with enriched metadata from dictionary.
 
         Args:
             additional: Dictionary of metadata to add/update
@@ -198,9 +190,9 @@ class FlextPayload[T](  # type: ignore[misc]
             # Cast to proper type for the generic class
             payload = cls(data=payload_data, metadata=payload_metadata)
             return FlextResult.ok(payload)
-        except (RuntimeError, ValueError, TypeError, AttributeError) as e:
+        except (RuntimeError, ValueError, TypeError, AttributeError) as e2:
             # Broad exception handling for API contract safety in payload creation
-            return FlextResult.fail(f"Failed to create payload from dict: {e}")
+            return FlextResult.fail(f"Failed to create payload from dict: {e2}")
 
     @classmethod
     def from_dict(
@@ -267,9 +259,9 @@ class FlextPayload[T](  # type: ignore[misc]
             transformed_data = transformer(self.data)
             new_payload = FlextPayload(data=transformed_data, metadata=self.metadata)
             return FlextResult.ok(new_payload)
-        except (RuntimeError, ValueError, TypeError) as e:
+        except (RuntimeError, ValueError, TypeError) as e3:
             # Broad exception handling for transformer function safety
-            return FlextResult.fail(f"Data transformation failed: {e}")
+            return FlextResult.fail(f"Data transformation failed: {e3}")
 
     def get_metadata(self, key: str, default: object | None = None) -> object | None:
         """Get metadata value by key.
@@ -285,7 +277,7 @@ class FlextPayload[T](  # type: ignore[misc]
         return self.metadata.get(key, default)
 
     def has_metadata(self, key: str) -> bool:
-        """Check if metadata key exists.
+        """Check if a metadata key exists.
 
         Args:
             key: Metadata key to check
@@ -362,8 +354,8 @@ class FlextPayload[T](  # type: ignore[misc]
 
         return None
 
+    @staticmethod
     def _serialize_collection(
-        self,
         collection: list[object] | tuple[object, ...],
     ) -> list[object]:
         """Serialize list or tuple values."""
@@ -379,7 +371,8 @@ class FlextPayload[T](  # type: ignore[misc]
                         serialized_list.append(result)
         return serialized_list
 
-    def _serialize_dict(self, dict_value: dict[str, object]) -> dict[str, object]:
+    @staticmethod
+    def _serialize_dict(dict_value: dict[str, object]) -> dict[str, object]:
         """Serialize dictionary values."""
         serialized_dict: dict[str, object] = {}
         for k, v in dict_value.items():
@@ -443,7 +436,6 @@ class FlextPayload[T](  # type: ignore[misc]
             return result
 
         # REAL SOLUTION: Type-safe complex object serialization
-        logger = FlextLoggerFactory.get_logger(__name__)
         logger.warning(
             "Complex object cannot be serialized for cross-service transport",
             object_type=type(value).__name__,
@@ -474,7 +466,8 @@ class FlextPayload[T](  # type: ignore[misc]
         # Handle objects with serialization methods
         return self._handle_serializable_objects(value)
 
-    def _handle_basic_types(self, value: object) -> object | None:
+    @staticmethod
+    def _handle_basic_types(value: object) -> object | None:
         """Handle basic JSON-compatible types."""
         if value is None:
             return None
@@ -492,7 +485,8 @@ class FlextPayload[T](  # type: ignore[misc]
             }
         return None
 
-    def _handle_serializable_objects(self, value: object) -> object | None:
+    @staticmethod
+    def _handle_serializable_objects(value: object) -> object | None:
         """Handle objects with serialization methods."""
         # Objects with cross-service serialization
         cross_service_method = getattr(value, "to_cross_service_dict", None)
@@ -538,7 +532,8 @@ class FlextPayload[T](  # type: ignore[misc]
 
         return serialized_metadata
 
-    def _get_go_type_name(self, python_type: type) -> str:
+    @staticmethod
+    def _get_go_type_name(python_type: type) -> str:
         """Get Go type name for Python type.
 
         Args:
@@ -550,7 +545,8 @@ class FlextPayload[T](  # type: ignore[misc]
         """
         return PYTHON_TO_GO_TYPES.get(python_type, "interface{}")
 
-    def _get_python_type_name(self, python_type: type) -> str:
+    @staticmethod
+    def _get_python_type_name(python_type: type) -> str:
         """Get Python type name string.
 
         Args:
@@ -589,8 +585,9 @@ class FlextPayload[T](  # type: ignore[misc]
 
         return type_info
 
-    def _is_json_serializable(self, value: object) -> bool:
-        """Check if value is JSON serializable.
+    @staticmethod
+    def _is_json_serializable(value: object) -> bool:
+        """Check if the value is JSON serializable.
 
         Args:
             value: Value to check
@@ -602,9 +599,10 @@ class FlextPayload[T](  # type: ignore[misc]
         try:
             json.dumps(value)
             return True
-        except (TypeError, ValueError, OverflowError) as e:
-            logger = get_logger(__name__)
-            logger.warning(f"Value not JSON serializable: {type(value).__name__} - {e}")
+        except (TypeError, ValueError, OverflowError) as e4:
+            logger.warning(
+                f"Value not JSON serializable: {type(value).__name__} - {e4}"
+            )
             return False
 
     @classmethod
@@ -624,7 +622,7 @@ class FlextPayload[T](  # type: ignore[misc]
             FlextResult containing reconstructed payload.
 
         Raises:
-            FlextValidationError: If dictionary format is invalid.
+            FlextValidationError: If a dictionary format is invalid.
 
         """
         # Validate required fields
@@ -662,14 +660,14 @@ class FlextPayload[T](  # type: ignore[misc]
             payload = cls(data=cast("T | None", reconstructed_data), metadata=metadata)
             return FlextResult.ok(payload)
 
-        except (ValueError, TypeError, KeyError) as e:
+        except (ValueError, TypeError, KeyError) as e5:
             return FlextResult.fail(
-                f"Failed to reconstruct payload from cross-service dict: {e}",
+                f"Failed to reconstruct payload from cross-service dict: {e5}",
             )
 
     @classmethod
     def _is_protocol_compatible(cls, version: str) -> bool:
-        """Check if protocol version is compatible.
+        """Check if a protocol version is compatible.
 
         Args:
             version: Protocol version string
@@ -713,7 +711,7 @@ class FlextPayload[T](  # type: ignore[misc]
 
     @classmethod
     def _convert_to_target_type(cls, data: object, target_type: type) -> object:
-        """Convert data to target type safely.
+        """Convert data to a target type safely.
 
         Args:
             data: Data to convert
@@ -736,11 +734,10 @@ class FlextPayload[T](  # type: ignore[misc]
             if target_type is bool and not isinstance(data, bool):
                 return bool(data) if data is not None else None
 
-        except (ValueError, TypeError) as e:
-            logger = get_logger(__name__)
+        except (ValueError, TypeError) as e6:
             logger.warning(
                 f"Type conversion failed for {type(data).__name__} "
-                f"to {target_type.__name__}: {e}",
+                f"to {target_type.__name__}: {e6}",
             )
 
         return data
@@ -782,7 +779,7 @@ class FlextPayload[T](  # type: ignore[misc]
 
         """
         try:
-            # Get cross-service dictionary
+            # Get a cross-service dictionary
             payload_dict = self.to_cross_service_dict(
                 include_type_info=include_type_info,
             )
@@ -813,8 +810,8 @@ class FlextPayload[T](  # type: ignore[misc]
             }
             return FlextResult.ok(json.dumps(envelope))
 
-        except (TypeError, ValueError, OverflowError) as e:
-            return FlextResult.fail(f"Failed to serialize to JSON: {e}")
+        except (TypeError, ValueError, OverflowError) as e7:
+            return FlextResult.fail(f"Failed to serialize to JSON: {e7}")
 
     @classmethod
     def from_json_string(cls, json_str: str) -> FlextResult[FlextPayload[T]]:
@@ -837,8 +834,8 @@ class FlextPayload[T](  # type: ignore[misc]
             # Delegate to helper method to reduce complexity
             return cls._process_json_envelope(envelope)
 
-        except (json.JSONDecodeError, KeyError, TypeError) as e:
-            return FlextResult.fail(f"Failed to parse JSON: {e}")
+        except (json.JSONDecodeError, KeyError, TypeError) as e8:
+            return FlextResult.fail(f"Failed to parse JSON: {e8}")
 
     @classmethod
     def _process_json_envelope(
@@ -878,8 +875,8 @@ class FlextPayload[T](  # type: ignore[misc]
             payload_dict = json.loads(decompressed_str)
             return cls.from_cross_service_dict(payload_dict)
 
-        except (zlib.error, UnicodeDecodeError) as e:
-            return FlextResult.fail(f"Decompression failed: {e}")
+        except (zlib.error, UnicodeDecodeError) as e9:
+            return FlextResult.fail(f"Decompression failed: {e9}")
 
     def get_serialization_size(self) -> dict[str, int | float]:
         """Get serialization size information for monitoring.
@@ -1012,7 +1009,7 @@ class FlextPayload[T](  # type: ignore[misc]
         # Create hash from extra fields by converting to sorted tuple
         extra_hash = 0
         if hasattr(self, "__pydantic_extra__") and self.__pydantic_extra__:
-            # Sort items to ensure consistent hash for same content
+            # Sort items to ensure consistent hash for the same content
             sorted_items = tuple(sorted(self.__pydantic_extra__.items()))
             try:
                 extra_hash = hash(sorted_items)
@@ -1055,7 +1052,7 @@ class FlextPayload[T](  # type: ignore[misc]
         return default
 
     def keys(self) -> list[str]:
-        """Get list of extra field names.
+        """Get a list of extra field names.
 
         Returns:
             List of field names
@@ -1066,7 +1063,7 @@ class FlextPayload[T](  # type: ignore[misc]
         return []
 
     def items(self) -> list[tuple[str, object]]:
-        """Get list of (key, value) pairs from extra fields.
+        """Get a list of (key, value) pairs from extra fields.
 
         Returns:
             List of (key, value) tuples
@@ -1109,10 +1106,6 @@ class FlextMessage(FlextPayload[str]):
             Result containing message payload
 
         """
-        # Import logger directly for class methods
-
-        logger = FlextLoggerFactory.get_logger(f"{cls.__module__}.{cls.__name__}")
-
         # Validate message using FlextValidation
         if not FlextValidators.is_non_empty_string(message):
             logger.error("Invalid message - empty or not string")
@@ -1145,7 +1138,7 @@ class FlextMessage(FlextPayload[str]):
 
     @property
     def source(self) -> str | None:
-        """Get message source."""
+        """Get a message source."""
         source = self.get_metadata("source")
         return str(source) if source is not None else None
 
@@ -1166,7 +1159,7 @@ class FlextMessage(FlextPayload[str]):
         include_type_info: bool = True,
         protocol_version: str = FLEXT_SERIALIZATION_VERSION,
     ) -> dict[str, object]:
-        """Convert message to cross-service compatible dictionary.
+        """Convert a message to cross-service compatible dictionary.
 
         Enhanced for FlextMessage with message-specific metadata.
 
@@ -1215,7 +1208,7 @@ class FlextMessage(FlextPayload[str]):
         if not message_text or not isinstance(message_text, str):
             return FlextResult.fail("Invalid message text in cross-service data")
 
-        # Create message using factory method
+        # Create a message using factory method
         result: FlextResult[FlextPayload[str]] = cast(
             "FlextResult[FlextPayload[str]]",
             cls.create_message(
@@ -1256,10 +1249,6 @@ class FlextEvent(FlextPayload[Mapping[str, object]]):
             Result containing event payload
 
         """
-        # Import logger directly for class methods
-
-        logger = FlextLoggerFactory.get_logger(f"{cls.__module__}.{cls.__name__}")
-
         # Validate event_type using FlextValidation
         if not FlextValidators.is_non_empty_string(event_type):
             logger.error("Invalid event type - empty or not string")
@@ -1293,12 +1282,12 @@ class FlextEvent(FlextPayload[Mapping[str, object]]):
         try:
             instance = cls(data=dict(event_data), metadata=metadata)
             return FlextResult.ok(instance)
-        except (ValidationError, FlextValidationError) as e:
-            return FlextResult.fail(f"Failed to create event: {e}")
+        except (ValidationError, FlextValidationError) as e12:
+            return FlextResult.fail(f"Failed to create event: {e12}")
 
     @property
     def event_type(self) -> str | None:
-        """Get event type."""
+        """Get an event type."""
         event_type = self.get_metadata("event_type")
         return str(event_type) if event_type is not None else None
 
@@ -1316,14 +1305,13 @@ class FlextEvent(FlextPayload[Mapping[str, object]]):
 
     @property
     def version(self) -> int | None:
-        """Get event version."""
+        """Get an event version."""
         version = self.get_metadata("version")
         if version is None:
             return None
         try:
             return int(str(version))
         except (ValueError, TypeError) as e:
-            logger = get_logger(__name__)
             logger.warning(f"Failed to convert version to int: {version} - {e}")
             return None
 
@@ -1397,7 +1385,7 @@ class FlextEvent(FlextPayload[Mapping[str, object]]):
         if not isinstance(event_data, dict):
             return FlextResult.fail("Invalid event data in cross-service data")
 
-        # Convert version to int if provided
+        # Convert a version to int if provided
         version_int = None
         if event_version is not None:
             try:
@@ -1452,7 +1440,7 @@ def create_cross_service_event(
     correlation_id: str | None = None,
     **kwargs: object,
 ) -> FlextResult[FlextEvent]:
-    """Create cross-service event."""
+    """Create a cross-service event."""
     try:
         # Extract known parameters for create_event
         aggregate_id = kwargs.pop("aggregate_id", None)
@@ -1483,7 +1471,7 @@ def create_cross_service_message(
     correlation_id: str | None = None,
     **kwargs: object,
 ) -> FlextResult[FlextMessage]:
-    """Create cross-service message."""
+    """Create a cross-service message."""
     try:
         # Extract known parameters for create_message with type safety
         level = kwargs.pop("level", "info")
@@ -1493,7 +1481,7 @@ def create_cross_service_message(
         level_str = level if isinstance(level, str) else "info"
         source_str = source if isinstance(source, str) else None
 
-        # Create message with supported parameters only
+        # Create a message with supported parameters only
         result = FlextMessage.create_message(
             message_text, level=level_str, source=source_str
         )
@@ -1563,14 +1551,12 @@ try:
     FlextPayload.model_rebuild()
     FlextMessage.model_rebuild()
     FlextEvent.model_rebuild()
-except Exception as e:
+except Exception as except_data:
     # Log rebuild errors but maintain runtime compatibility
-    import structlog
-
-    logger = structlog.get_logger(__name__)
+    logger = flext_get_logger(__name__)
     logger.warning(
         "Model rebuild failed, continuing with runtime compatibility",
-        error=str(e),
+        error=str(except_data),
         models=["FlextPayload", "FlextMessage", "FlextEvent"],
     )
 

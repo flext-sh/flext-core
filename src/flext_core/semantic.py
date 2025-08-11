@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 
 
 class FlextSemanticModel:
-    """Unified model patterns using constants from single source."""
+    """Unified model patterns using constants from a single source."""
 
     # FOUNDATION CLASSES - 4 core types using semantic constants
     class Foundation:
@@ -254,7 +254,7 @@ class FlextSemanticError:
         """Error hierarchy using semantic error codes."""
 
         class FlextError(Exception):
-            """Base error for entire FLEXT ecosystem."""
+            """Base error for the entire FLEXT ecosystem."""
 
             def __init__(
                 self,
@@ -393,7 +393,7 @@ class FlextSemanticError:
             """Convert standard exception to FLEXT error."""
             error_message = message or str(exception)
 
-            # Classify exception type using semantic constants
+            # Classify an exception type using semantic constants
             if isinstance(exception, ValueError):
                 return FlextSemanticError.Hierarchy.FlextValidationError(
                     error_message,
@@ -419,7 +419,7 @@ class FlextSemanticError:
 
 
 class FlextSemantic:
-    """Unified semantic API for entire FLEXT ecosystem.
+    """Unified semantic API for the entire FLEXT ecosystem.
 
     Single entry point providing access to all semantic patterns:
     constants, domain models, observability interfaces, and hierarchical

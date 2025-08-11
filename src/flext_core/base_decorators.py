@@ -235,7 +235,7 @@ class FlextAbstractErrorHandlingDecorator(FlextAbstractDecorator):
 class FlextAbstractCompositeDecorator(FlextAbstractDecorator):
     """Abstract composite decorator for combining multiple decorators.
 
-    Provides foundation for composite decorator pattern following
+    Provides foundation for a composite decorator pattern following
     SOLID principles with proper decorator chain management.
     """
 
@@ -250,7 +250,7 @@ class FlextAbstractCompositeDecorator(FlextAbstractDecorator):
 
     @abstractmethod
     def add_decorator(self, decorator: FlextAbstractDecorator) -> None:
-        """Add decorator to chain - must be implemented by subclasses."""
+        """Add decorator to a chain - must be implemented by subclasses."""
         ...
 
     @abstractmethod
@@ -336,14 +336,14 @@ __all__: list[str] = [  # noqa: RUF022
     "FlextAbstractValidationDecorator",
 ]
 
-# Backward-compat exports expected by tests (facade names e símbolos internos)
-# Inclui alias _DecoratedFunction usado nos testes
+# Backward-compatible exports expected by tests (facade names and internal symbols)
+# Include an alias _DecoratedFunction used in tests.
 
 # Use a conservative decorated function alias expected by tests.
-# Keeping object return type avoids explicit Any under strict mode.
+# Keeping an object return type to avoid any explicit Any under strict mode.
 _DecoratedFunction = Callable[..., object]  # type: ignore[explicit-any]
 
-# Fornecer shims mínimos; testes apenas importam/verificam presença/assinatura
+# Enforcer shims minimus; tests only import/verify presence/signature
 
 
 class FlextFunctionalDecorators:  # pragma: no cover - simple shim

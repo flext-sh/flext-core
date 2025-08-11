@@ -37,7 +37,7 @@ if TYPE_CHECKING:
 
 
 # REFACTORED: Protocol moved to protocols.py
-# FlextDecoratedFunction now imported from centralized location above
+# FlextDecoratedFunction now imported from the centralized location above
 
 
 # =============================================================================
@@ -201,12 +201,12 @@ class FlextErrorHandlingDecorators(FlextAbstractErrorHandlingDecorator):
         [FlextDecoratedFunction],
         FlextDecoratedFunction,
     ]:
-        """Get default safe decorator."""
+        """Get the default safe decorator."""
         return _flext_safe_call_decorator()
 
     @staticmethod
     def retry_decorator(func: FlextDecoratedFunction) -> FlextDecoratedFunction:
-        """Add retry capability to function."""
+        """Add retry capability to the function."""
         return func
 
     @staticmethod
@@ -521,7 +521,7 @@ class FlextImmutabilityDecorators(FlextAbstractDecorator):
 
         @functools.wraps(func)
         def wrapper(*args: object, **kwargs: object) -> object:  # type: ignore[misc]
-            # Basic immutability enforcement - return copy of result
+            # Basic immutability enforcement - return copy of a result
             return func(*args, **kwargs)
 
         return wrapper
@@ -745,7 +745,7 @@ def _flext_safe_call_decorator(
                 error_value = Exception(result.error or "Unknown error")
                 return error_handler(error_value)
 
-            # Return unwrapped result for backward compatibility
+            # Return an unwrapped result for backward compatibility
             return result.unwrap_or(None)
 
         return FlextDecoratorUtils.preserve_metadata(func, wrapper)
@@ -841,7 +841,7 @@ def _flext_cache_decorator(
 
             # Limit cache size
             if len(cache) >= max_size:
-                # Remove oldest entry (simple FIFO)
+                # Remove the oldest entry (simple FIFO)
                 oldest_key = next(iter(cache))
                 del cache[oldest_key]
 
@@ -990,10 +990,9 @@ class FlextDecorators:
         *,
         cache_size: int = 128,
         with_timing: bool = False,
-        _with_logging: bool = False,
-        with_logging: bool = False,  # Backward compatibility alias
+        with_logging: bool = False,
     ) -> Callable[[FlextDecoratedFunction], FlextDecoratedFunction]:
-        """Compose multiple features: cache, timing and validation.
+        """Compose multiple features: cache, timing, and validation.
 
         Args:
             model_class: Optional validation model/class for kwargs.
@@ -1017,14 +1016,14 @@ class FlextDecorators:
                     decorated
                 )
             # Both with_logging and _with_logging are no-ops for compatibility
-            logging_enabled = _with_logging or with_logging
+            logging_enabled = with_logging
             if logging_enabled:
                 pass  # Placeholder for future logging integration
             return decorated
 
         return decorator
 
-    # Aggregate all category decorators as class references for factory pattern
+    # Aggregate all category decorators as class references for a factory pattern
     Validation = FlextValidationDecorators
     ErrorHandling = FlextErrorHandlingDecorators
     Performance = FlextPerformanceDecorators

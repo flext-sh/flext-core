@@ -24,8 +24,7 @@ Usage of New Conftest Infrastructure:
 from __future__ import annotations
 
 import math
-from collections.abc import Callable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pytest
 from hypothesis import given, strategies as st
@@ -42,6 +41,9 @@ from flext_core.fields import (
 )
 from flext_core.result import FlextResult
 from tests.conftest import TestCase, TestScenario, assert_performance
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 # Test markers for organized execution
 pytestmark = [pytest.mark.unit, pytest.mark.core]
@@ -358,7 +360,9 @@ class TestFlextFieldCorePropertyBased:
         ),
         test_value=st.text(min_size=1, max_size=10),
     )
-    def test_allowed_values_property(self, allowed_values: list[str], test_value: str) -> None:
+    def test_allowed_values_property(
+        self, allowed_values: list[str], test_value: str
+    ) -> None:
         """Property: field with allowed values only accepts values from the list."""
         field = FlextFieldCore(
             field_id="allowed_values_field",
@@ -390,7 +394,9 @@ class TestFlextFieldCorePerformance:
 
     @pytest.mark.benchmark
     def test_field_creation_performance(
-        self, performance_monitor: Callable[[Callable[[], object]], dict[str, object]], performance_threshold: dict[str, float]
+        self,
+        performance_monitor: Callable[[Callable[[], object]], dict[str, object]],
+        performance_threshold: dict[str, float],
     ) -> None:
         """Benchmark field creation performance."""
 
@@ -417,7 +423,9 @@ class TestFlextFieldCorePerformance:
         assert metrics["memory_used"] < 1_000_000  # 1MB for 100 fields
 
     @pytest.mark.benchmark
-    def test_validation_performance(self, performance_monitor: Callable[[Callable[[], object]], dict[str, object]]) -> None:
+    def test_validation_performance(
+        self, performance_monitor: Callable[[Callable[[], object]], dict[str, object]]
+    ) -> None:
         """Benchmark validation performance with complex constraints."""
         # Create complex field
         field = FlextFieldCore(
@@ -444,7 +452,9 @@ class TestFlextFieldCorePerformance:
         assert len(metrics["result"]) == 100
 
     @pytest.mark.benchmark
-    def test_registry_performance(self, performance_monitor: Callable[[Callable[[], object]], dict[str, object]]):
+    def test_registry_performance(
+        self, performance_monitor: Callable[[Callable[[], object]], dict[str, object]]
+    ):
         """Benchmark registry operations performance."""
         registry = FlextFieldRegistry()
 
@@ -484,7 +494,9 @@ class TestFlextFieldCorePerformance:
 class TestFlextFieldCoreWithFixtures:
     """Tests demonstrating advanced fixture usage from conftest."""
 
-    def test_fields_with_test_builder(self, test_builder: Callable[[], object], assert_helpers: object) -> None:
+    def test_fields_with_test_builder(
+        self, test_builder: Callable[[], object], assert_helpers: object
+    ) -> None:
         """Test field creation using test data builder pattern."""
         # Build complex field configuration using fluent builder
         field_config = (
@@ -547,7 +559,9 @@ class TestFlextFieldCoreWithFixtures:
         assert uuid_result.success
         assert validators["is_valid_uuid"](sample_data["uuid"])
 
-    def test_fields_with_mock_factory(self, mock_factory: Callable[[str], object]) -> None:
+    def test_fields_with_mock_factory(
+        self, mock_factory: Callable[[str], object]
+    ) -> None:
         """Test field integration with external services using mock factory."""
         # Create mock external validation service
         validator_service = mock_factory("field_validator_service")

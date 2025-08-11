@@ -59,7 +59,7 @@ class FlextCompositeValidator[T](FlextAbstractValidator[T]):
 
 
 class FlextAbstractValidationRule(ABC):
-    """Abstract validation rule following Strategy pattern.
+    """Abstract validation rule following a Strategy pattern.
 
     Note: Prefer the runtime-checkable protocol `FlextValidationRule`
     from `flext_core.protocols` for type annotations. This abstract
@@ -74,7 +74,7 @@ class FlextAbstractValidationRule(ABC):
 
     @abstractmethod
     def get_description(self) -> str:
-        """Get human-readable description of the rule."""
+        """Get a human-readable description of the rule."""
         ...
 
 

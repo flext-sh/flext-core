@@ -21,7 +21,6 @@ from __future__ import annotations
 
 import json
 import logging
-from collections.abc import Generator
 from contextlib import contextmanager
 from typing import TYPE_CHECKING
 
@@ -72,7 +71,7 @@ class FlextConsoleLogger:
         self._logger.info(message, extra={"context": kwargs} if kwargs else None)
 
     def warning(self, message: str, **kwargs: object) -> None:
-        """Log warning message to console."""
+        """Log a warning message to console."""
         self._logger.warning(message, extra={"context": kwargs} if kwargs else None)
 
     # Back-compat alias
@@ -178,7 +177,7 @@ class FlextInMemoryMetrics:
         self._histograms: dict[str, list[float]] = {}
 
     def increment_counter(self, name: str, tags: dict[str, str] | None = None) -> None:
-        """Increment counter metric."""
+        """Increment a counter metric."""
         key = self._make_key(name, tags)
         self._counters[key] = self._counters.get(key, 0) + 1
 
@@ -340,11 +339,13 @@ class FlextSimpleAlerts:
         """Record warning alert."""
         del message, kwargs
 
-    def error(self, message: str, **kwargs: object) -> None:
+    @staticmethod
+    def error(message: str, **kwargs: object) -> None:
         """Record error alert."""
         del message, kwargs
 
-    def critical(self, message: str, **kwargs: object) -> None:
+    @staticmethod
+    def critical(message: str, **kwargs: object) -> None:
         """Record critical alert."""
         del message, kwargs
 
@@ -352,13 +353,16 @@ class FlextSimpleAlerts:
 class _SimpleHealth:
     """Minimal health component for legacy API compatibility."""
 
-    def health_check(self) -> dict[str, object]:
+    @staticmethod
+    def health_check() -> dict[str, object]:
         return {"status": "healthy"}
 
-    def ready_check(self) -> bool:
+    @staticmethod
+    def ready_check() -> bool:
         return True
 
-    def live_check(self) -> bool:
+    @staticmethod
+    def live_check() -> bool:
         return True
 
 

@@ -1,7 +1,7 @@
 """Field definition and validation system with metadata support.
 
 Provides immutable field definitions with validation, centralized field management,
-and factory methods for creating strongly-typed field definitions.
+and factory methods for creating strongly typed field definitions.
 
 """
 
@@ -15,7 +15,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 from flext_core.constants import FlextFieldType
 from flext_core.exceptions import FlextTypeError, FlextValidationError
 from flext_core.loggings import FlextLoggerFactory
-from flext_core.mixins import FlextSerializableMixin, FlextValidatableMixin
+from flext_core.mixins import FlextSerializableMixin
 from flext_core.result import FlextResult
 from flext_core.typings import (
     FlextFieldId,
@@ -29,7 +29,7 @@ from flext_core.typings import (
 from flext_core.validation import FlextValidators
 
 # =============================================================================
-# TYPE DEFINITIONS - Consolidados sem underscore
+# TYPE DEFINITIONS - Consolidates without underscore
 # =============================================================================
 
 # Type aliases moved to typings.py for centralization
@@ -37,13 +37,12 @@ from flext_core.validation import FlextValidators
 
 
 # =============================================================================
-# FLEXT FIELD CORE - Consolidado usando Pydantic máximo
+# FLEXT FIELD CORE - Consolidates using Pydantic
 # =============================================================================
 
 
-class FlextFieldCore(  # type: ignore[misc]
+class FlextFieldCore(
     BaseModel,
-    FlextValidatableMixin,
     FlextSerializableMixin,
 ):
     """Immutable field definition with validation and metadata.
@@ -225,7 +224,8 @@ class FlextFieldCore(  # type: ignore[misc]
 
         return True, None
 
-    def _validate_boolean_value(self, value: object) -> tuple[bool, str | None]:
+    @staticmethod
+    def _validate_boolean_value(value: object) -> tuple[bool, str | None]:
         """Validate boolean value."""
         if not isinstance(value, bool):
             return False, f"Expected boolean, got {type(value).__name__}"
@@ -277,7 +277,7 @@ class FlextFieldCore(  # type: ignore[misc]
         value: object,
         field_type_str: str,
     ) -> object:
-        """Convert value based on field type for serialization."""
+        """Convert value based on a field type for serialization."""
         if field_type_str == "string":
             return str(value)
         if field_type_str == "integer" and isinstance(value, (int, float)):
@@ -288,7 +288,8 @@ class FlextFieldCore(  # type: ignore[misc]
             return self._serialize_boolean_value(value)
         return value
 
-    def _serialize_boolean_value(self, value: object) -> object:
+    @staticmethod
+    def _serialize_boolean_value(value: object) -> object:
         """Serialize boolean value with string conversion support."""
         if isinstance(value, bool):
             return value
@@ -315,7 +316,7 @@ class FlextFieldCore(  # type: ignore[misc]
         value: object,
         field_type_str: str,
     ) -> object:
-        """Convert value based on field type for deserialization."""
+        """Convert value based on a field type for deserialization."""
         if field_type_str == "string":
             return str(value)
         if field_type_str == "integer":
@@ -326,7 +327,8 @@ class FlextFieldCore(  # type: ignore[misc]
             return self._deserialize_boolean_value(value)
         return value
 
-    def _deserialize_integer_value(self, value: object) -> object:
+    @staticmethod
+    def _deserialize_integer_value(value: object) -> object:
         """Deserialize integer value with type conversion."""
         if (isinstance(value, str) and value.isdigit()) or isinstance(
             value,
@@ -335,7 +337,8 @@ class FlextFieldCore(  # type: ignore[misc]
             return int(value)
         return value
 
-    def _deserialize_float_value(self, value: object) -> object:
+    @staticmethod
+    def _deserialize_float_value(value: object) -> object:
         """Deserialize float value with type conversion."""
         if isinstance(value, str):
             try:
@@ -346,7 +349,8 @@ class FlextFieldCore(  # type: ignore[misc]
             return float(value)
         return value
 
-    def _deserialize_boolean_value(self, value: object) -> object:
+    @staticmethod
+    def _deserialize_boolean_value(value: object) -> object:
         """Deserialize boolean value with comprehensive type conversion."""
         if isinstance(value, bool):
             return value
@@ -365,15 +369,15 @@ class FlextFieldCore(  # type: ignore[misc]
         return self.default_value
 
     def is_required(self) -> bool:
-        """Check if field is required."""
+        """Check if the field is required."""
         return self.required
 
     def is_deprecated(self) -> bool:
-        """Check if field is deprecated."""
+        """Check if the field is deprecated."""
         return self.deprecated
 
     def is_sensitive(self) -> bool:
-        """Check if field is sensitive."""
+        """Check if the field is sensitive."""
         return self.sensitive
 
     def get_field_info(self) -> TFieldInfo:
@@ -572,7 +576,7 @@ def _safe_cast_int(value: object) -> int | None:
 
 
 # =============================================================================
-# FLEXT FIELD REGISTRY - Consolidado seguindo padrão estabelecido
+# FLEXT FIELD REGISTRY - Consolidate segueing padrão estabelecido
 # =============================================================================
 
 
@@ -670,7 +674,7 @@ class FlextFieldRegistry(BaseModel):
         return list(self.fields_dict.keys())
 
     def get_field_count(self) -> int:
-        """Get total number of registered fields."""
+        """Get the total number of registered fields."""
         return len(self.fields_dict)
 
     def clear_registry(self) -> None:
@@ -704,7 +708,7 @@ class FlextFieldRegistry(BaseModel):
 
         """
         for field_id, field in self.fields_dict.items():
-            # Check if required field is missing
+            # Check if the required field is missing
             if field.required and field_id not in data:
                 return FlextResult.fail(
                     f"Required field '{field.field_name}' is missing",
@@ -896,7 +900,7 @@ class FlextFields:
 
     @classmethod
     def get_field_count(cls) -> int:
-        """Get total number of registered fields."""
+        """Get the total number of registered fields."""
         return cls._registry.get_field_count()
 
     @classmethod
@@ -948,7 +952,7 @@ class FlextFields:
 # =============================================================================
 
 # Removed FlextStringField, FlextIntegerField, FlextBooleanField classes
-# to eliminate duplication. Use FlextFields.create_string_field() instead
+# to remove duplication. Use FlextFields.create_string_field() instead
 # or flext_create_string_field() helper function.
 
 

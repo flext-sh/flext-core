@@ -1,7 +1,7 @@
 """Core constants and enums for the FLEXT ecosystem.
 
 Provides centralized constants, error codes, patterns, and defaults.
-Serves as single source of truth for all constant values.
+Serves as a single source of truth for all constant values.
 
 Classes:
     FlextConstants: Main constants container with nested categories.
@@ -359,20 +359,20 @@ class FlextConstants:
         DEFAULT_PROTOCOL = "http"
         SECURE_PROTOCOLS: ClassVar[list[str]] = ["https", "wss", "ssl"]
 
-    # NEW: Model system constants (MOVED FROM Pydantic pattern)
+    # NEW: Model system constants (MOVED FROM a Pydantic pattern)
     class Models:
         """Model system constants."""
 
-        # Validation settings (MOVED FROM Pydantic pattern)
+        # Validation settings (MOVED FROM a Pydantic pattern)
         VALIDATE_ASSIGNMENT = True
         USE_ENUM_VALUES = True
         STR_STRIP_WHITESPACE = True
 
-        # Serialization settings (MOVED FROM Pydantic pattern)
+        # Serialization settings (MOVED FROM a Pydantic pattern)
         ARBITRARY_TYPES_ALLOWED = True
         VALIDATE_DEFAULT = True
 
-        # Model behavior (MOVED FROM Pydantic pattern)
+        # Model behavior (MOVED FROM a Pydantic pattern)
         EXTRA_FORBID = "forbid"
         EXTRA_ALLOW = "allow"
         EXTRA_IGNORE = "ignore"

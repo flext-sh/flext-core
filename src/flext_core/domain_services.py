@@ -10,9 +10,9 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import ConfigDict
 
-from flext_core.mixins import FlextSerializableMixin, FlextValidatableMixin
+from flext_core.models import FlextModel
 from flext_core.result import FlextResult
 
 # Type alias for flexible operation callables
@@ -28,12 +28,7 @@ OperationType = (
 # =============================================================================
 
 
-class FlextDomainService[T](  # type: ignore[misc]
-    BaseModel,
-    FlextValidatableMixin,
-    FlextSerializableMixin,
-    ABC,
-):
+class FlextDomainService[T](FlextModel, ABC):  # type: ignore[misc]
     """Abstract domain service for stateless cross-entity operations.
 
     Provides foundation for complex business operations that span multiple

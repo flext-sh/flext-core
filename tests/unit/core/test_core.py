@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 import pytest
 
 from flext_core.constants import FlextConstants
-from flext_core.container import ServiceKey
+from flext_core.container import FlextServiceKey
 from flext_core.core import FlextCore, flext_core
 from flext_core.loggings import FlextLogger
 from flext_core.result import FlextResult
@@ -47,9 +47,9 @@ def mock_service() -> Mock:
 
 
 @pytest.fixture
-def service_key() -> ServiceKey[Mock]:
+def service_key() -> FlextServiceKey[Mock]:
     """Service key for testing."""
-    return ServiceKey[Mock]("test_service")
+    return FlextServiceKey[Mock]("test_service")
 
 
 # Test service classes for typed services
@@ -142,7 +142,7 @@ class TestFlextCoreContainerIntegration:
     def test_register_service_success(
         self,
         clean_flext_core: FlextCore,
-        service_key: ServiceKey[Mock],
+        service_key: FlextServiceKey[Mock],
         mock_service: Mock,
     ) -> None:
         """Test successful service registration."""
@@ -158,7 +158,7 @@ class TestFlextCoreContainerIntegration:
     def test_register_service_typed_keys(self, clean_flext_core: FlextCore) -> None:
         """Test service registration with typed keys."""
         user_service = UserService("prod_user_service")
-        user_key = ServiceKey[UserService]("user_service")
+        user_key = FlextServiceKey[UserService]("user_service")
 
         result = clean_flext_core.register_service(user_key, user_service)
         assert result.success
@@ -176,7 +176,7 @@ class TestFlextCoreContainerIntegration:
     def test_get_service_success(
         self,
         clean_flext_core: FlextCore,
-        service_key: ServiceKey[Mock],
+        service_key: FlextServiceKey[Mock],
         mock_service: Mock,
     ) -> None:
         """Test successful service retrieval."""
@@ -193,7 +193,7 @@ class TestFlextCoreContainerIntegration:
         clean_flext_core: FlextCore,
     ) -> None:
         """Test service retrieval when service not found."""
-        non_existent_key = ServiceKey[Mock]("non_existent_service")
+        non_existent_key = FlextServiceKey[Mock]("non_existent_service")
 
         result = clean_flext_core.get_service(non_existent_key)
 
@@ -207,8 +207,8 @@ class TestFlextCoreContainerIntegration:
         user_service = UserService()
         data_service = DataService()
 
-        user_key = ServiceKey[UserService]("user_service")
-        data_key = ServiceKey[DataService]("data_service")
+        user_key = FlextServiceKey[UserService]("user_service")
+        data_key = FlextServiceKey[DataService]("data_service")
 
         user_result = clean_flext_core.register_service(user_key, user_service)
         data_result = clean_flext_core.register_service(data_key, data_service)
@@ -236,7 +236,7 @@ class TestFlextCoreContainerIntegration:
             "register",
             return_value=FlextResult.fail("Registration failed"),
         ) as mock_register:
-            service_key = ServiceKey[Mock]("test_service")
+            service_key = FlextServiceKey[Mock]("test_service")
             result = clean_flext_core.register_service(service_key, Mock())
 
             assert result.is_failure
@@ -320,7 +320,7 @@ class TestFlextCoreLogging:
 
         # Register a service
         service = UserService()
-        service_key = ServiceKey[UserService]("user_service")
+        service_key = FlextServiceKey[UserService]("user_service")
         result = clean_flext_core.register_service(service_key, service)
 
         assert result.success
@@ -854,8 +854,8 @@ class TestFlextCoreRepresentation:
         service1 = UserService()
         service2 = DataService()
 
-        key1 = ServiceKey[UserService]("user")
-        key2 = ServiceKey[DataService]("data")
+        key1 = FlextServiceKey[UserService]("user")
+        key2 = FlextServiceKey[DataService]("data")
 
         clean_flext_core.register_service(key1, service1)
         clean_flext_core.register_service(key2, service2)
@@ -905,7 +905,7 @@ class TestFlextCoreConvenienceFunction:
     def test_convenience_function_service_operations(self) -> None:
         """Test convenience function with service operations."""
         service = UserService("convenience_test")
-        service_key = ServiceKey[UserService]("convenience_service")
+        service_key = FlextServiceKey[UserService]("convenience_service")
 
         # Register through convenience function
         register_result = flext_core().register_service(service_key, service)
@@ -958,8 +958,8 @@ class TestFlextCoreIntegration:
         user_service = UserService("integration_user")
         data_service = DataService("integration_db")
 
-        user_key = ServiceKey[UserService]("user_service")
-        data_key = ServiceKey[DataService]("data_service")
+        user_key = FlextServiceKey[UserService]("user_service")
+        data_key = FlextServiceKey[DataService]("data_service")
 
         user_reg_result = clean_flext_core.register_service(user_key, user_service)
         data_reg_result = clean_flext_core.register_service(data_key, data_service)
@@ -1079,7 +1079,7 @@ class TestFlextCoreIntegration:
         user_settings = clean_flext_core.get_settings(UserService)
 
         # Register service using settings
-        service_key = ServiceKey[UserService]("configured_service")
+        service_key = FlextServiceKey[UserService]("configured_service")
         register_result = clean_flext_core.register_service(service_key, user_settings)
 
         assert register_result.success

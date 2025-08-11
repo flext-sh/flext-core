@@ -1,93 +1,107 @@
 # Configuration Management Overview
 
-Reality-based configuration system aligned with the current FLEXT Core implementation
+Comprehensive guide to FLEXT Core's type-safe configuration system.
 
-## 🎯 Overview
+## Overview
 
-FLEXT Core provides a type-safe configuration system based on Pydantic v2. This documentation reflects the ACTUAL implementation in `src/flext_core/config.py`.
+FLEXT Core provides enterprise-grade configuration management through Pydantic v2 integration, offering type safety, environment variable support, and validation out of the box. The configuration system is designed to support both simple applications and complex multi-service architectures.
 
-## 📦 Available Features
+## Features
 
-Validated — based on the current code:
+### Core Capabilities
+- **Type Safety**: Full Pydantic v2 validation with type hints
+- **Environment Variables**: Automatic loading with customizable prefixes
+- **Validation**: Built-in and custom validators for data integrity
+- **Multi-Environment**: Support for development, staging, and production configs
+- **Composability**: Nested configurations and inheritance patterns
 
-- ✅ Type Safety: Full validation with Pydantic v2
-- ✅ Environment Variables: Automatic loading with prefixes
-- ✅ Multi-Environment: Different deployment environments
-- 🔧 Framework Integration: Singer, CLI (in development)
-- 📋 Advanced Features: Multi-file configs (planned)
+### Integration Support
+- **Singer SDK**: Configuration for data extraction/loading
+- **CLI Applications**: Command-line tool configuration
+- **Web Services**: FastAPI and Flask configuration patterns
+- **Database Connections**: Connection pooling and SSL configuration
+- **Cache Services**: Redis and memcached configuration
 
-## 🔧 Current API
+## Core API
 
 ### Available Imports
 
 ```python
-# Correct — based on the current implementation
+# Primary import for most use cases
 from flext_core import FlextSettings
 
-# Advanced configuration — available
-from flext_core.config import FlextConfig
-from flext_core.config_models import FlextDatabaseConfig, FlextRedisConfig
+# Advanced configuration imports
+from flext_core.config import FlextConfig, FlextBaseSettings
+from flext_core.config_models import (
+    FlextDatabaseConfig,
+    FlextRedisConfig,
+    FlextServiceConfig
+)
+from flext_core.config_base import ConfigurationManager
 ```
 
 ### Basic Usage
 
-Validated — works with the current implementation:
-
 ```python
-"""
-Real configuration example using FLEXT Core.
-Based on src/flext_core/config.py
-"""
-
 from flext_core import FlextSettings
 from typing import Optional
 
 class AppSettings(FlextSettings):
-    """Configuration for your application."""
-
-    # Basic settings with defaults
+    """Application configuration with sensible defaults."""
+    
+    # Application metadata
     app_name: str = "My FLEXT App"
+    version: str = "1.0.0"
     debug: bool = False
-
+    environment: str = "development"
+    
     # Database configuration
     database_url: str = "sqlite:///app.db"
     database_pool_size: int = 5
-
+    database_timeout: int = 30
+    
     # API configuration
     api_host: str = "127.0.0.1"
     api_port: int = 8000
-
+    api_workers: int = 1
+    
     # Optional features
     redis_url: Optional[str] = None
     enable_metrics: bool = False
-
+    enable_tracing: bool = False
+    
     class Config:
         env_prefix = "MYAPP_"
         case_sensitive = False
+        env_file = ".env"
+        env_file_encoding = "utf-8"
 
-# Usage
-def main():
-    """Load and use configuration."""
-    # Load from environment variables or defaults
+# Usage example
+def initialize_app():
+    """Initialize application with configuration."""
     settings = AppSettings()
-
-    print(f"App: {settings.app_name}")
-    print(f"Debug: {settings.debug}")
-    print(f"Database: {settings.database_url}")
-    print(f"API: http://{settings.api_host}:{settings.api_port}")
-
-    # Environment-based logic
-    if settings.debug:
-        print("🔧 Running in debug mode")
-        pool_size = 2
-    else:
-        print("🚀 Running in production mode")
-        pool_size = settings.database_pool_size
-
-    print(f"Database pool size: {pool_size}")
-
-if __name__ == "__main__":
-    main()
+    
+    # Access configuration values
+    print(f"Starting {settings.app_name} v{settings.version}")
+    print(f"Environment: {settings.environment}")
+    print(f"API endpoint: http://{settings.api_host}:{settings.api_port}")
+    
+    # Environment-specific behavior
+    if settings.environment == "production":
+        settings.database_pool_size = 20
+        settings.api_workers = 4
+    elif settings.environment == "staging":
+        settings.database_pool_size = 10
+        settings.api_workers = 2
+    
+    # Optional feature flags
+    if settings.enable_metrics:
+        print("Metrics collection enabled")
+    
+    if settings.enable_tracing:
+        print("Distributed tracing enabled")
+    
+    return settings
 ```
 
 ### Environment Variables
@@ -112,71 +126,115 @@ export MYAPP_REDIS_URL="redis://localhost:6379"
 export MYAPP_ENABLE_METRICS=true
 ```
 
-### Configuration with Validation
+### Advanced Validation
 
 ```python
-"""
-Configuration with custom validation.
-"""
-
 from flext_core import FlextSettings
-from pydantic import field_validator, Field
+from pydantic import field_validator, Field, model_validator
 from typing import Optional
+import re
 
 class DatabaseSettings(FlextSettings):
-    """Database configuration with validation."""
-
+    """Database configuration with comprehensive validation."""
+    
+    # Connection parameters
     host: str = Field("localhost", description="Database host")
     port: int = Field(5432, ge=1, le=65535, description="Database port")
-    name: str = Field("myapp", description="Database name")
-    user: str = Field("postgres", description="Database user")
+    name: str = Field("myapp", pattern=r"^[a-zA-Z][a-zA-Z0-9_]*$")
+    user: str = Field("postgres", min_length=1, max_length=63)
     password: str = Field("", description="Database password")
-
-    # SSL settings
+    
+    # Connection pool settings
+    pool_min_size: int = Field(2, ge=1, le=100)
+    pool_max_size: int = Field(10, ge=1, le=100)
+    pool_timeout: int = Field(30, ge=1, le=300)
+    
+    # SSL configuration
     ssl_mode: str = Field("prefer", description="SSL mode")
     ssl_cert_path: Optional[str] = Field(None, description="SSL certificate path")
-
+    ssl_key_path: Optional[str] = Field(None, description="SSL key path")
+    
     @field_validator("ssl_mode")
     @classmethod
     def validate_ssl_mode(cls, v: str) -> str:
         """Validate SSL mode."""
-        valid_modes = ["disable", "allow", "prefer", "require", "verify-ca", "verify-full"]
+        valid_modes = {"disable", "allow", "prefer", "require", "verify-ca", "verify-full"}
         if v not in valid_modes:
-            raise ValueError(f"SSL mode must be one of: {valid_modes}")
+            raise ValueError(f"SSL mode must be one of: {', '.join(valid_modes)}")
         return v
+    
+    @field_validator("password")
+    @classmethod
+    def validate_password_strength(cls, v: str) -> str:
+        """Validate password strength in production."""
+        if v and len(v) < 8:
+            raise ValueError("Password must be at least 8 characters")
+        return v
+    
+    @model_validator(mode='after')
+    def validate_pool_sizes(self) -> 'DatabaseSettings':
+        """Ensure pool_max_size >= pool_min_size."""
+        if self.pool_max_size < self.pool_min_size:
+            raise ValueError("pool_max_size must be >= pool_min_size")
+        return self
+    
+    @model_validator(mode='after')
+    def validate_ssl_paths(self) -> 'DatabaseSettings':
+        """Validate SSL certificate paths."""
+        if self.ssl_mode in {"verify-ca", "verify-full"}:
+            if not self.ssl_cert_path:
+                raise ValueError(f"ssl_cert_path required for ssl_mode={self.ssl_mode}")
+        return self
 
     @property
     def connection_url(self) -> str:
-        """Build database connection URL."""
+        """Build database connection URL with parameters."""
         auth = f"{self.user}:{self.password}@" if self.password else f"{self.user}@"
-        return f"postgresql://{auth}{self.host}:{self.port}/{self.name}"
-
-    def get_pool_config(self, environment: str = "development") -> dict:
+        base_url = f"postgresql://{auth}{self.host}:{self.port}/{self.name}"
+        
+        # Add SSL parameters if needed
+        params = []
+        if self.ssl_mode != "disable":
+            params.append(f"sslmode={self.ssl_mode}")
+        if self.ssl_cert_path:
+            params.append(f"sslcert={self.ssl_cert_path}")
+        if self.ssl_key_path:
+            params.append(f"sslkey={self.ssl_key_path}")
+        
+        if params:
+            return f"{base_url}?{'&'.join(params)}"
+        return base_url
+    
+    def get_async_url(self) -> str:
+        """Get async connection URL for asyncpg."""
+        return self.connection_url.replace("postgresql://", "postgresql+asyncpg://")
+    
+    def get_pool_config(self) -> dict:
         """Get connection pool configuration."""
-        if environment == "production":
-            return {"min_size": 10, "max_size": 20}
-        elif environment == "staging":
-            return {"min_size": 5, "max_size": 10}
-        else:
-            return {"min_size": 2, "max_size": 5}
+        return {
+            "min_size": self.pool_min_size,
+            "max_size": self.pool_max_size,
+            "timeout": self.pool_timeout,
+            "command_timeout": 60,
+            "max_queries": 50000,
+            "max_inactive_connection_lifetime": 300
+        }
 
-# Usage
+# Usage example
 def setup_database():
     """Setup database with validated configuration."""
-    db_config = DatabaseSettings()
-
-    print(f"Database URL: {db_config.connection_url}")
-    print(f"SSL Mode: {db_config.ssl_mode}")
-
-    # Get environment-specific pool config
-    pool_config = db_config.get_pool_config("production")
-    print(f"Pool config: {pool_config}")
-
-if __name__ == "__main__":
-    setup_database()
+    try:
+        db_config = DatabaseSettings()
+        print(f"Database URL: {db_config.connection_url}")
+        print(f"Async URL: {db_config.get_async_url()}")
+        print(f"Pool config: {db_config.get_pool_config()}")
+        return db_config
+    except ValueError as e:
+        print(f"Configuration error: {e}")
+        raise
 ```
 
-### Multi-Service Configuration
+### Multi-Service Architecture
 
 ```python
 """
@@ -277,7 +335,7 @@ if __name__ == "__main__":
     main()
 ```
 
-## 🧪 Testing Configuration
+## Testing Configuration
 
 ```python
 """
@@ -345,35 +403,200 @@ if __name__ == "__main__":
     print("✅ All configuration tests passed")
 ```
 
-## 📋 Implementation Status
+## Best Practices
 
-Based on the ACTUAL code in `src/flext_core/config.py`:
+### 1. Environment-Specific Files
 
-### ✅ Functional
+Organize configuration files by environment:
 
-- FlextSettings: Base configuration with Pydantic v2
-- Environment Variables: Automatic loading
-- Type Safety: Full type validation
-- Field Validation: Custom validation
+```
+config/
+├── .env.development    # Development defaults
+├── .env.staging       # Staging configuration
+├── .env.production    # Production configuration
+└── .internal.invalid         # Local overrides (gitignored)
+```
 
-### 🔧 In Development
+### 2. Secret Management
 
-- Framework Integration: Singer/CLI integrations
-- Secret Management: Secure secret management
-- Multi-file Configuration: Distributed configuration
+```python
+from flext_core import FlextSettings
+from pydantic import Field, SecretStr
 
-### 📋 Planned
+class SecureSettings(FlextSettings):
+    """Configuration with secure secret handling."""
+    
+    # Sensitive values use SecretStr
+    api_key: SecretStr = Field(..., description="API key")
+    database_password: SecretStr = Field(..., description="DB password")
+    jwt_secret: SecretStr = Field(..., description="JWT secret")
+    
+    class Config:
+        env_prefix = "SECURE_"
+        
+    def get_api_key(self) -> str:
+        """Get API key value (careful with logging)."""
+        return self.api_key.get_secret_value()
+```
 
-- Dynamic Configuration: Runtime configuration
-- Configuration Templates: Templates for different environments
-- Validation Rules: Advanced validation rules
+### 3. Configuration Validation
 
-## ⚠️ Important
+```python
+def validate_configuration(settings: FlextSettings) -> FlextResult[None]:
+    """Validate configuration at startup."""
+    errors = []
+    
+    # Check required services
+    if settings.database_url == "sqlite:///app.db" and settings.environment == "production":
+        errors.append("SQLite not recommended for production")
+    
+    # Validate external connections
+    if settings.redis_url and not can_connect_redis(settings.redis_url):
+        errors.append("Cannot connect to Redis")
+    
+    if errors:
+        return FlextResult.fail("; ".join(errors))
+    
+    return FlextResult.ok(None)
+```
 
-- Use `FlextSettings` (not `FlextCoreSettings`)
-- All examples were tested against the current implementation
-- For advanced features, check `src/flext_core/config.py`
+### 4. Configuration Documentation
+
+Always document configuration options:
+
+```python
+class DocumentedSettings(FlextSettings):
+    """Application settings with comprehensive documentation.
+    
+    Environment Variables:
+        APP_NAME: Application name for logging and metrics
+        APP_DEBUG: Enable debug mode (verbose logging)
+        APP_PORT: HTTP server port (1-65535)
+        APP_WORKERS: Number of worker processes
+    
+    Example:
+        export APP_NAME="my-service"
+        export APP_DEBUG=false
+        export APP_PORT=8080
+        export APP_WORKERS=4
+    """
+    
+    app_name: str = Field(
+        "my-app",
+        description="Application identifier used in logs and metrics"
+    )
+    debug: bool = Field(
+        False,
+        description="Enable debug mode with verbose logging"
+    )
+    port: int = Field(
+        8000,
+        ge=1,
+        le=65535,
+        description="HTTP server port"
+    )
+    workers: int = Field(
+        1,
+        ge=1,
+        le=16,
+        description="Number of worker processes"
+    )
+```
+
+## Common Patterns
+
+### Service Discovery
+
+```python
+class ServiceDiscoverySettings(FlextSettings):
+    """Configuration for service discovery."""
+    
+    # Service registry
+    consul_host: str = "localhost"
+    consul_port: int = 8500
+    
+    # Service metadata
+    service_name: str
+    service_id: str
+    service_tags: list[str] = []
+    
+    # Health check
+    health_check_interval: int = 10
+    health_check_timeout: int = 5
+    
+    def get_consul_url(self) -> str:
+        """Get Consul API URL."""
+        return f"http://{self.consul_host}:{self.consul_port}"
+```
+
+### Feature Flags
+
+```python
+class FeatureFlags(FlextSettings):
+    """Feature flag configuration."""
+    
+    # Feature toggles
+    enable_new_ui: bool = False
+    enable_beta_features: bool = False
+    enable_analytics: bool = True
+    
+    # Rollout percentages
+    new_algorithm_rollout: int = Field(0, ge=0, le=100)
+    
+    # A/B testing
+    ab_test_groups: dict[str, int] = {}
+    
+    def is_feature_enabled(self, feature: str, user_id: str = None) -> bool:
+        """Check if feature is enabled for user."""
+        # Implement percentage-based rollout logic
+        pass
+```
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Environment variables not loading**:
+   - Check prefix matches (case-sensitive on Linux/Mac)
+   - Verify .env file location and encoding
+   - Use `export` command on Unix systems
+
+2. **Validation errors**:
+   - Enable debug logging to see actual values
+   - Check field constraints (min/max, patterns)
+   - Verify required fields have values
+
+3. **Type conversion errors**:
+   - Ensure correct types in environment variables
+   - Use "true"/"false" for booleans (not 1/0)
+   - Lists should be comma-separated
+
+### Debug Configuration Loading
+
+```python
+import os
+from flext_core import FlextSettings
+
+def debug_configuration():
+    """Debug configuration loading."""
+    
+    # Show all environment variables
+    print("Environment variables:")
+    for key, value in os.environ.items():
+        if key.startswith("MYAPP_"):
+            print(f"  {key}={value}")
+    
+    # Try loading configuration
+    try:
+        settings = AppSettings()
+        print("\nLoaded configuration:")
+        print(settings.model_dump_json(indent=2))
+    except Exception as e:
+        print(f"\nConfiguration error: {e}")
+        import traceback
+        traceback.print_exc()
+```
 
 ---
 
-This documentation reflects the ACTUAL implementation in `src/flext_core/config.py`.
+For implementation examples, see [Examples Guide](../examples/overview.md).

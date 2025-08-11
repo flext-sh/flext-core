@@ -1,320 +1,251 @@
-# Documentation Maintenance Checklist
+# Maintenance Checklist
 
-**Preventing Future Documentation Inflation and Ensuring Accuracy**
+**Last Updated**: 2025-01-10  
+**Purpose**: Ensure documentation accuracy and code quality
 
-This checklist establishes processes to maintain documentation quality and prevent the accumulation of false claims, unvalidated examples, and inflated metrics.
+## Daily Checks
 
-## 🚨 **Pre-Commit Documentation Validation**
+### Before Committing Code
 
-### **Before Any Documentation Update**
+- [ ] Run `make lint` - Must pass with zero errors
+- [ ] Run `make type-check` - Target: zero errors
+- [ ] Run `make test` - Must maintain 75%+ coverage
+- [ ] Update relevant documentation if API changes
+- [ ] Verify all examples still work
 
-**MANDATORY CHECKS**:
+### Documentation Updates
 
-- [ ] **Test ALL Code Examples**: Every code example must run without errors
-- [ ] **Verify ALL Imports**: Every import statement must work with current API
-- [ ] **Validate Claims**: No unverified percentages, counts, or status claims
-- [ ] **Check Cross-References**: All links must point to existing files
-- [ ] **Update Dates**: Change "Last Updated" dates when content changes
+- [ ] Test all code examples in changed files
+- [ ] Verify all imports are valid
+- [ ] Update "Last Updated" dates
+- [ ] Check cross-references still work
+- [ ] No unverified claims or metrics
 
-### **Code Example Validation Protocol**
+## Weekly Maintenance
 
-```bash
-# For each code example in documentation:
-# 1. Extract to temporary file
-# 2. Run with current environment
-# 3. Verify no import errors
-# 4. Verify no runtime errors
-# 5. Check output matches expectations
+### Every Monday
 
-# Example validation command:
-python -c "
-from flext_core import FlextResult
-result = FlextResult.ok('test')
-assert result.success
-print('✅ Example validated')
-"
-```
+- [ ] Review open issues and PRs
+- [ ] Check documentation for outdated information
+- [ ] Run full test suite: `make validate`
+- [ ] Update TODO.md with progress
+- [ ] Review and update dependencies if needed
 
-## 📊 **Metric Validation Requirements**
-
-### **Forbidden Claims Without Evidence**
-
-**NEVER Document Without Verification**:
-
-- ❌ "100% complete" - unless every item is verified
-- ❌ "32 projects" - unless actual project list exists
-- ❌ "95% coverage" - unless coverage report proves it
-- ❌ "Zero errors" - unless test run confirms it
-- ❌ "Production ready" - unless deployed and tested
-
-### **Required Evidence for Claims**
-
-**Module Counts**:
+### Code Quality Check
 
 ```bash
-# Always verify with actual commands:
-find src/flext_core -name "*.py" | wc -l
-# Document the exact result, not rounded numbers
+# Full quality check
+make validate
+
+# Individual checks
+make lint        # Linting
+make type-check  # Type checking
+make test        # Tests with coverage
+make security    # Security scan
 ```
 
-**Error Counts**:
+## Monthly Review
+
+### First Monday of Month
+
+- [ ] Full documentation audit
+- [ ] Test all examples in documentation
+- [ ] Update version numbers if releasing
+- [ ] Review and update CHANGELOG.md
+- [ ] Check all external links
+- [ ] Review deprecation warnings
+- [ ] Update compatibility matrix
+
+### Performance Review
+
+- [ ] Benchmark core operations
+- [ ] Profile memory usage
+- [ ] Check import times
+- [ ] Review test execution times
+
+## Pre-Release Checklist
+
+### Version Release Preparation
+
+- [ ] All tests passing (75%+ coverage)
+- [ ] Zero lint errors
+- [ ] MyPy errors documented or fixed
+- [ ] Documentation updated
+- [ ] CHANGELOG.md updated
+- [ ] Version number bumped
+- [ ] Migration guide updated if breaking changes
+
+### Final Validation
 
 ```bash
-# Always verify with actual quality commands:
-make lint 2>&1 | grep -c "error"
-make type-check 2>&1 | grep -c "error"
+# Complete validation before release
+make clean
+make setup
+make validate
+make build
+
+# Test installation
+pip install dist/*.whl
+python -c "from flext_core import FlextResult; print('✅ Import successful')"
 ```
 
-**Test Coverage**:
+## Documentation Standards
+
+### Required for Code Examples
+
+Every code example must:
+- [ ] Import from correct modules
+- [ ] Run without errors
+- [ ] Produce expected output
+- [ ] Use current API
+- [ ] Include error handling
+
+### Forbidden Without Evidence
+
+Never claim:
+- "100% complete" without verification
+- Specific percentages without measurement
+- "Production ready" without deployment proof
+- "Zero errors" without test confirmation
+- Project counts without listing them
+
+### How to Verify Claims
 
 ```bash
-# Only claim coverage with actual measurement:
-make test-coverage
-# Include actual percentage from report
+# Count Python modules
+find src/flext_core -name "*.py" -type f | wc -l
+
+# Check test coverage
+pytest --cov=src/flext_core --cov-report=term
+
+# Count MyPy errors
+mypy src/flext_core --strict 2>&1 | grep -c "error:"
+
+# Count lint issues
+ruff check src/flext_core 2>&1 | grep -c "error"
 ```
 
-## 🔍 **Regular Audit Schedule**
+## Common Issues
 
-### **Weekly Documentation Audit**
+### Import Errors in Examples
 
-**Every Monday - Quick Check** (15 minutes):
-
-- [ ] Run one random documentation code example
-- [ ] Check for new files with unvalidated claims
-- [ ] Verify main navigation links still work
-- [ ] Update any broken cross-references
-
-### **Monthly Deep Audit**
-
-**First Monday of Each Month** (2 hours):
-
-- [ ] Test ALL code examples in ALL documentation files
-- [ ] Verify ALL import statements work
-- [ ] Check ALL cross-references are valid
-- [ ] Update ANY outdated status claims
-- [ ] Review and update this checklist
-
-### **Pre-Release Audit**
-
-**Before Any Version Release**:
-
-- [ ] Complete documentation validation (all examples tested)
-- [ ] Update all version numbers consistently
-- [ ] Verify all API references match current implementation
-- [ ] Remove any references to unimplemented features
-- [ ] Update status metrics with current reality
-
-## 🛠️ **Validation Tools and Commands**
-
-### **Documentation Testing Script**
-
-Create `scripts/validate_docs.py`:
-
-````python
-#!/usr/bin/env python3
-"""Documentation validation script."""
-import re
-import subprocess
-import sys
-from pathlib import Path
-
-def extract_python_code_blocks(file_path):
-    """Extract Python code blocks from markdown."""
-    content = Path(file_path).read_text()
-    pattern = r'```python\n(.*?)\n```'
-    return re.findall(pattern, content, re.DOTALL)
-
-def test_code_block(code, file_path, block_num):
-    """Test a single code block."""
-    try:
-        # Write to temp file and test
-        temp_file = f"/tmp/test_doc_{block_num}.py"
-        Path(temp_file).write_text(code)
-
-        result = subprocess.run(
-            [sys.executable, temp_file],
-            capture_output=True,
-            text=True,
-            timeout=30
-        )
-
-        if result.returncode != 0:
-            print(f"❌ {file_path} block {block_num}: {result.stderr}")
-            return False
-        else:
-            print(f"✅ {file_path} block {block_num}: OK")
-            return True
-
-    except Exception as e:
-        print(f"❌ {file_path} block {block_num}: {e}")
-        return False
-
-def validate_all_docs():
-    """Validate all documentation files."""
-    docs_dir = Path("docs")
-    total_blocks = 0
-    failed_blocks = 0
-
-    for md_file in docs_dir.rglob("*.md"):
-        code_blocks = extract_python_code_blocks(md_file)
-
-        for i, code in enumerate(code_blocks, 1):
-            total_blocks += 1
-            if not test_code_block(code, md_file, i):
-                failed_blocks += 1
-
-    print(f"\n📊 Results: {total_blocks - failed_blocks}/{total_blocks} passed")
-    return failed_blocks == 0
-
-if __name__ == "__main__":
-    if validate_all_docs():
-        print("🎉 All documentation examples validated!")
-        sys.exit(0)
-    else:
-        print("💥 Some documentation examples failed!")
-        sys.exit(1)
-````
-
-### **Quality Gate Integration**
-
-Add to `Makefile`:
-
-```makefile
-validate-docs:
-	@echo "🔍 Validating documentation examples..."
-	python scripts/validate_docs.py
-
-docs-audit:
-	@echo "📋 Running documentation audit..."
-	@echo "Testing examples..."
-	make validate-docs
-	@echo "Checking cross-references..."
-	python scripts/check_links.py
-	@echo "Audit complete!"
-
-# Add to main validate target
-validate: lint type-check test validate-docs
+```python
+# Always test imports
+from flext_core import FlextResult  # Must work
+from flext_core import FlextContainer  # Must work
+from flext_core import FlextSettings  # Must work
 ```
 
-## 📝 **Content Guidelines**
+### Outdated API Usage
 
-### **Language and Tone Standards**
+```python
+# Check for deprecated patterns
+# OLD: result.is_success (might be deprecated)
+# NEW: result.success (current standard)
+```
 
-**Required Style**:
+### Version Mismatches
 
-- ✅ **Accurate**: Claims match actual implementation
-- ✅ **Specific**: "48 modules" not "many modules"
-- ✅ **Honest**: "In development" not "Complete"
-- ✅ **Testable**: All examples must run
-- ✅ **Current**: Based on latest code version
+```bash
+# Verify version consistency
+grep version pyproject.toml
+grep __version__ src/flext_core/__version__.py
+grep Version docs/*/
+```
 
-**Forbidden Patterns**:
+## Quality Metrics
 
-- ❌ **Marketing Language**: "Revolutionary", "Amazing", "Best-in-class"
-- ❌ **Unverified Claims**: "Used by thousands", "Industry standard"
-- ❌ **Aspirational Status**: "Will be", "Planning to", "Future-ready"
-- ❌ **Vague Metrics**: "Most", "Many", "Significant"
+### Current Targets
 
-### **API Documentation Rules**
+| Metric | Target | Current | Status |
+|--------|--------|---------|--------|
+| Test Coverage | 75%+ | 75% | ✅ |
+| Lint Errors | 0 | 0 | ✅ |
+| MyPy Errors (src) | 0 | 4 | 🚧 |
+| MyPy Errors (tests) | <100 | 1,245 | ❌ |
+| Documentation | 100% | 100% | ✅ |
 
-**ONLY Document What Exists**:
+### Tracking Progress
 
-- ✅ Check `__init__.py` for actual exports
-- ✅ Test import statements before documenting
-- ✅ Verify method signatures match implementation
-- ✅ Include actual error messages from testing
+```bash
+# Generate metrics report
+echo "=== FLEXT Core Metrics ==="
+echo "Test Coverage: $(pytest --cov=src/flext_core --cov-report=term | grep TOTAL | awk '{print $4}')"
+echo "Lint Errors: $(ruff check src/flext_core 2>&1 | grep -c error || echo 0)"
+echo "MyPy Errors: $(mypy src/flext_core 2>&1 | grep -c error || echo 0)"
+echo "Python Files: $(find src/flext_core -name '*.py' | wc -l)"
+echo "Test Files: $(find tests -name 'test_*.py' | wc -l)"
+```
 
-**API Change Protocol**:
+## Automation Tools
 
-1. **Before API Change**: Update documentation to reflect reality
-2. **During Development**: Mark features as "In Development"
-3. **After Implementation**: Update examples and test them
-4. **Version Release**: Update all version references
+### Pre-commit Hooks
 
-## 🔄 **Update Workflow**
+```yaml
+# .pre-commit-config.yaml
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.6
+    hooks:
+      - id: ruff
+      - id: ruff-format
+  
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.14.1
+    hooks:
+      - id: mypy
+```
 
-### **When Adding New Documentation**
+### CI/CD Integration
 
-1. **Write Content**: Create new documentation content
-2. **Test Examples**: Verify all code examples work
-3. **Check Claims**: Ensure all claims are verifiable
-4. **Test Imports**: Verify all import statements work
-5. **Update Navigation**: Add to index/navigation if needed
-6. **Cross-Reference**: Update related documentation
-7. **Validate**: Run full documentation validation
+Ensure CI runs:
+- `make validate` on every PR
+- `make test` with coverage reporting
+- `make build` for release branches
+- Documentation build and validation
 
-### **When Updating Existing Documentation**
+## Emergency Procedures
 
-1. **Identify Changes**: What API or behavior changed?
-2. **Update Examples**: Fix any broken code examples
-3. **Update Claims**: Adjust metrics or status claims
-4. **Test Everything**: Run validation on updated content
-5. **Update References**: Fix any cross-references affected
-6. **Update Dates**: Change "Last Updated" information
+### If Build Breaks
 
-### **When API Changes**
+1. Check recent commits: `git log --oneline -10`
+2. Run diagnostics: `make doctor`
+3. Verify environment: `python --version && pip list`
+4. Clean and rebuild: `make clean && make setup`
+5. Check for dependency conflicts
 
-1. **Impact Assessment**: Which documentation is affected?
-2. **Update Examples**: Fix all broken examples first
-3. **Update Imports**: Change import statements if needed
-4. **Update Claims**: Adjust any feature status claims
-5. **Test Validation**: Run complete validation suite
-6. **Version Alignment**: Ensure version numbers match
+### If Documentation Is Wrong
 
-## ⚠️ **Warning Signs of Documentation Rot**
+1. Identify incorrect information
+2. Test the correct behavior
+3. Update documentation immediately
+4. Add test to prevent regression
+5. Note in CHANGELOG.md
 
-### **Red Flags to Watch For**
+## Team Responsibilities
 
-- 🚨 **Import Errors**: Code examples that don't run
-- 🚨 **Dead Links**: Cross-references to non-existent files
-- 🚨 **Version Mismatch**: Different version numbers in different files
-- 🚨 **Status Inflation**: Claims not backed by evidence
-- 🚨 **API Drift**: Documentation references non-existent methods
+### Code Owners
 
-### **Immediate Action Required**
+- Review all PRs affecting their modules
+- Maintain documentation for owned code
+- Ensure test coverage remains high
+- Address issues promptly
 
-When ANY red flag is detected:
+### Documentation Team
 
-1. **Stop Development**: Don't add more documentation
-2. **Fix Immediately**: Address the root cause
-3. **Test Thoroughly**: Validate the fix works
-4. **Update Process**: Prevent recurrence
-5. **Continue Carefully**: Resume with increased vigilance
+- Weekly documentation reviews
+- Maintain examples and guides
+- Update migration documentation
+- Respond to user feedback
 
-## 📚 **Maintenance Resources**
+### Release Manager
 
-### **Tools and Scripts**
-
-- `scripts/validate_docs.py` - Test all code examples
-- `scripts/check_links.py` - Validate cross-references
-- `scripts/count_modules.py` - Get accurate module counts
-- `make validate-docs` - Run documentation validation
-- `make docs-audit` - Complete documentation audit
-
-### **Reference Files**
-
-- `src/flext_core/__init__.py` - Source of truth for public API
-- `docs/MAINTENANCE_CHECKLIST.md` - This checklist (keep updated)
-- `TODO.md` - Current project status (keep honest)
-- `README.md` - Main project description (keep accurate)
+- Coordinate version releases
+- Update CHANGELOG.md
+- Ensure all checks pass
+- Create release tags
+- Publish to PyPI
 
 ---
 
-## ✅ **Maintenance Completion Checklist**
-
-**After Each Maintenance Session**:
-
-- [ ] All code examples tested and working
-- [ ] All import statements verified
-- [ ] All cross-references checked
-- [ ] All claims validated with evidence
-- [ ] All version numbers consistent
-- [ ] All dates updated appropriately
-- [ ] This checklist reviewed and updated if needed
-
----
-
-**This maintenance checklist prevents documentation inflation by requiring evidence for all claims and testing for all examples. It should be updated whenever new documentation patterns are identified or new quality issues arise.**
-
-**Last Updated**: August 2025  
-**Next Review**: September 2025
+**Note**: This checklist is a living document. Update it as processes improve.

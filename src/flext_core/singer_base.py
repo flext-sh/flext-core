@@ -1,7 +1,7 @@
 """FLEXT Singer base patterns.
 
 This module provides Singer-specific base patterns and utilities for data integration.
-Currently provides stubs for backward compatibility during refactoring.
+Currently, it provides stubs for backward compatibility during refactoring.
 """
 
 from __future__ import annotations
@@ -17,11 +17,13 @@ class FlextSingerBase(FlextModel):
         """Initialize Singer base."""
         super().__init__(**kwargs)
 
-    def extract(self) -> FlextResult[dict[str, object]]:
+    @staticmethod
+    def extract() -> FlextResult[dict[str, object]]:
         """Extract data using Singer patterns."""
         return FlextResult.ok({})
 
-    def load(self, data: dict[str, object]) -> FlextResult[bool]:  # noqa: ARG002
+    @staticmethod
+    def load(_data: dict[str, object]) -> FlextResult[bool]:  # noqa: ARG002
         """Load data using Singer patterns."""
         return FlextResult.ok(True)  # noqa: FBT003
 

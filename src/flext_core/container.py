@@ -22,11 +22,12 @@ from flext_core.constants import SERVICE_NAME_EMPTY
 from flext_core.exceptions import FlextError
 from flext_core.mixins import FlextLoggableMixin
 from flext_core.result import FlextResult
-from flext_core.typings import T
 from flext_core.validation import flext_validate_service_name
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+    from flext_core.typings import T
 
 
 class FlextServiceKey[T](str):
@@ -39,10 +40,10 @@ class FlextServiceKey[T](str):
     __slots__ = ()
 
     def __new__(cls, name: str) -> Self:
-        """Create new service key."""
+        """Create a new service key."""
         return str.__new__(cls, str(name))
 
-    # Compatibility: tests access key.name
+    # Compatibility: test access key.name
     @property
     def name(self) -> str:
         """Return the service key name (string value)."""
@@ -51,20 +52,6 @@ class FlextServiceKey[T](str):
     @classmethod
     def __class_getitem__(cls, _item: object) -> type[FlextServiceKey[object]]:
         """Support generic subscription without affecting runtime behavior."""
-        return cls
-
-
-# Backward-compat typed alias form used by tests
-class ServiceKey(FlextServiceKey[T]):
-    """Generic service key with ``ServiceKey[T](name)`` syntax support."""
-
-    def __new__(cls, name: str) -> ServiceKey[T]:
-        """Create new ServiceKey instance."""
-        return str.__new__(cls, str(name))
-
-    @classmethod
-    def __class_getitem__(cls, _item: object) -> type[ServiceKey[T]]:
-        """Support generic subscription."""
         return cls
 
 
@@ -82,10 +69,12 @@ class FlextServiceRegistrar(FlextLoggableMixin):
 
     def __init__(self) -> None:
         """Initialize service registrar with empty registry."""
+        super().__init__()
         self._services: dict[str, object] = {}
         self._factories: dict[str, Callable[[], object]] = {}
 
-    def _validate_service_name(self, name: str) -> FlextResult[str]:
+    @staticmethod
+    def _validate_service_name(name: str) -> FlextResult[str]:
         """Validate service name.
 
         Args:
@@ -205,7 +194,7 @@ class FlextServiceRegistrar(FlextLoggableMixin):
         return len(self._services) + len(self._factories)
 
     def has_service(self, name: str) -> bool:
-        """Check if service exists."""
+        """Check if a service exists."""
         return name in self._services or name in self._factories
 
     def get_services_dict(self) -> dict[str, object]:
@@ -226,15 +215,15 @@ class FlextServiceRetriever(FlextLoggableMixin):
     """Service retrieval component implementing single responsibility principle."""
 
     def __init__(
-        self,
-        services: dict[str, object],
-        factories: dict[str, Callable[[], object]],
+        self, services: dict[str, object], factories: dict[str, Callable[[], object]]
     ) -> None:
         """Initialize service retriever with references."""
+        super().__init__()
         self._services = services
         self._factories = factories
 
-    def _validate_service_name(self, name: str) -> FlextResult[str]:
+    @staticmethod
+    def _validate_service_name(name: str) -> FlextResult[str]:
         """Validate service name.
 
         Args:
@@ -255,7 +244,7 @@ class FlextServiceRetriever(FlextLoggableMixin):
 
         validated_name = name.strip()
 
-        # Check direct service registration first (most common case)
+        # Check direct service registration first (the most common case)
         if validated_name in self._services:
             return FlextResult.ok(self._services[validated_name])
 
@@ -297,7 +286,7 @@ class FlextServiceRetriever(FlextLoggableMixin):
 
         validated_name = name.strip()
 
-        # Check if service is registered as instance
+        # Check if a service is registered as instance
         if validated_name in self._services:
             service = self._services[validated_name]
             service_class = service.__class__
@@ -310,7 +299,7 @@ class FlextServiceRetriever(FlextLoggableMixin):
                 }
             )
 
-        # Check if service is registered as factory
+        # Check if a service is registered as factory
         if validated_name in self._factories:
             factory = self._factories[validated_name]
             factory_name = getattr(factory, "__name__", str(factory))
@@ -350,6 +339,7 @@ class FlextContainer(FlextLoggableMixin):
     def __init__(self) -> None:
         """Initialize container with internal components."""
         # Call mixin setup first
+        super().__init__()
         self.mixin_setup()
         self.logger.info("Initializing FlextContainer")
 
@@ -399,7 +389,7 @@ class FlextContainer(FlextLoggableMixin):
         return self._registrar.clear_all()
 
     def has(self, name: str) -> bool:
-        """Check if service exists."""
+        """Check if a service exists."""
         return self._registrar.has_service(name)
 
     def list_services(self) -> dict[str, str]:
@@ -445,25 +435,24 @@ class FlextContainer(FlextLoggableMixin):
     def get_info(self, name: str) -> FlextResult[dict[str, object]]:
         """Return basic info about a registered service or factory."""
         try:
-            info: dict[str, object] = {}
             if name in self._registrar.get_services_dict():
                 service = self._registrar.get_services_dict()[name]
-                info = {
+                service_info: dict[str, object] = {
                     "name": name,
                     "kind": "instance",
                     "type": "instance",
                     "class": type(service).__name__,
                 }
-                return FlextResult.ok(info)
+                return FlextResult.ok(service_info)
             if name in self._registrar.get_factories_dict():
                 factory = self._registrar.get_factories_dict()[name]
-                info = {
+                factory_info: dict[str, object] = {
                     "name": name,
                     "kind": "factory",
                     "type": "factory",
                     "class": type(factory).__name__,
                 }
-                return FlextResult.ok(info)
+                return FlextResult.ok(factory_info)
             return FlextResult.fail(f"Service '{name}' not found")
         except Exception as e:
             return FlextResult.fail(f"Info retrieval failed: {e}")
@@ -504,7 +493,7 @@ class FlextContainer(FlextLoggableMixin):
 
         Args:
             service_class: Class to instantiate with auto-wired dependencies.
-            service_name: Optional service name (defaults to class name).
+            service_name: Optional service name (default to class name).
 
         Returns:
             FlextResult containing the instantiated and registered service.
@@ -601,7 +590,7 @@ class FlextGlobalContainerManager(FlextLoggableMixin):
         self._container: FlextContainer | None = None
 
     def get_container(self) -> FlextContainer:
-        """Get or create global container.
+        """Get or create a global container.
 
         Returns:
             Global container instance.
@@ -742,15 +731,6 @@ def register_typed[T](key: FlextServiceKey[T] | str, service: T) -> FlextResult[
 
 
 # =============================================================================
-# LEGACY ALIASES - Backward compatibility
-# =============================================================================
-
-# Legacy alias for backward compatibility with existing tests (typo preserved)
-FlextServiceRetrivier = FlextServiceRetriever
-# ServiceKey now provided as a class factory above (no instance needed)
-
-
-# =============================================================================
 # MODULE UTILITIES FACTORY - DRY helpers for per-module containers
 # =============================================================================
 
@@ -801,7 +781,7 @@ __all__: list[str] = [
     "FlextContainer",
     "FlextContainerUtils",
     "FlextServiceKey",
-    "ServiceKey",  # Backward compatibility alias
+    "FlextServiceKey",  # Backward compatibility alias
     "configure_flext_container",
     "create_module_container_utilities",
     "get_flext_container",

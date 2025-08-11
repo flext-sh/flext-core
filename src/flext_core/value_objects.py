@@ -24,7 +24,6 @@ from flext_core.loggings import FlextLoggerFactory
 from flext_core.mixins import FlextLoggableMixin, FlextValueObjectMixin
 from flext_core.payload import FlextPayload
 from flext_core.result import FlextResult
-from flext_core.typings import TAnyDict
 from flext_core.utilities import FlextFormatters, FlextGenerators
 
 if TYPE_CHECKING:
@@ -112,7 +111,7 @@ class FlextValueObject(  # type: ignore[misc]
         Renamed from 'validate' to avoid conflict with Pydantic's validate method.
 
         Returns:
-            FlextResult with validation result
+            FlextResult with a validation result
 
         """
         # Use FlextValidation for comprehensive validation
@@ -131,8 +130,9 @@ class FlextValueObject(  # type: ignore[misc]
         )
         return FlextResult.ok(self)
 
-    def validate_field(self, field_name: str, field_value: object) -> FlextResult[None]:
-        """Validate a specific field using the fields system.
+    @staticmethod
+    def validate_field(field_name: str, field_value: object) -> FlextResult[None]:
+        """Validate a specific field using the field's system.
 
         Args:
             field_name: Name of the field to validate
@@ -153,14 +153,14 @@ class FlextValueObject(  # type: ignore[misc]
                 validation_result.error or "Field validation failed",
             )
 
-        # If no field definition found, return success (allow other validation)
+        # If no field definition found, return success (allow another validation)
         return FlextResult.ok(None)
 
     def validate_all_fields(self) -> FlextResult[None]:
         """Validate all value object fields using the fields system.
 
         Automatically validates all model fields that have corresponding
-        field definitions in the fields registry.
+        field definitions in the field's registry.
 
         Returns:
             Result of comprehensive field validation
@@ -185,7 +185,8 @@ class FlextValueObject(  # type: ignore[misc]
 
         return FlextResult.ok(None)
 
-    def format_dict(self, data: dict[str, object]) -> str:
+    @staticmethod
+    def format_dict(data: dict[str, object]) -> str:
         """Format dictionary for string representation."""
         formatted_items = []
         for key, value in data.items():
@@ -201,7 +202,7 @@ class FlextValueObject(  # type: ignore[misc]
         fields = self.format_dict(self.model_dump())
         return f"{self.__class__.__name__}({fields})"
 
-    # Back-compat helper relied on by tests for simple dict view
+    # Back-compatible helper relied on by tests for simple dict view
     def to_dict_basic(self) -> dict[str, object]:
         """Return basic dict view of the value object (public fields only)."""
         return {k: v for k, v in self.model_dump().items() if not k.startswith("_")}
@@ -281,7 +282,7 @@ class FlextValueObject(  # type: ignore[misc]
     def _extract_serializable_attributes(
         self,
     ) -> dict[str, str | int | float | bool | None]:
-        """Extract only serializable attributes from value object.
+        """Extract only serializable attributes from a value object.
 
         Proper implementation without fallback - uses type-safe introspection.
         """
@@ -323,8 +324,8 @@ class FlextValueObject(  # type: ignore[misc]
 
         return serializable
 
+    @staticmethod
     def _process_serializable_values(
-        self,
         data: dict[str, object],
     ) -> dict[str, str | int | float | bool | None]:
         """Process values to ensure they are serializable."""

@@ -6,8 +6,7 @@ import types
 
 import pytest
 
-from flext_core import interfaces
-from flext_core.interfaces import FlextConfigurable, FlextValidator
+from flext_core import FlextConfigurable, FlextValidator, interfaces
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 

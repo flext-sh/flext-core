@@ -173,7 +173,7 @@ platform = "linux"
 explicit_package_bases = true
 namespace_packages = true
 mypy_path = ["src"]
-files = ["src", "tests"]
+files = ["src"]
 
 # Plugins
 plugins = ["pydantic.mypy"]

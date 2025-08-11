@@ -53,24 +53,24 @@ class _BaseValidators:
 
     @staticmethod
     def is_not_none(value: object) -> bool:
-        """Check if value is not None."""
+        """Check if the value is not None."""
         return value is not None
 
     @staticmethod
     def is_string(value: object) -> bool:
-        """Check if value is string."""
+        """Check if the value is string."""
         return isinstance(value, str)
 
     @staticmethod
     def is_non_empty_string(value: object) -> bool:
-        """Check if value is non-empty string."""
+        """Check if the value is non-empty string."""
         if not isinstance(value, str):
             return False
         return len(value.strip()) > 0
 
     @staticmethod
     def is_email(value: object) -> bool:
-        """Check if value is valid email."""
+        """Check if the value is valid email."""
         if not isinstance(value, str):
             return False
         pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
@@ -78,7 +78,7 @@ class _BaseValidators:
 
     @staticmethod
     def is_uuid(value: object) -> bool:
-        """Check if value is valid UUID."""
+        """Check if the value is valid UUID."""
         if not isinstance(value, str):
             return False
         pattern = r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
@@ -86,7 +86,7 @@ class _BaseValidators:
 
     @staticmethod
     def is_url(value: object) -> bool:
-        """Check if value is valid URL."""
+        """Check if the value is valid URL."""
         if not isinstance(value, str):
             return False
         return value.startswith(("http://", "https://"))
@@ -114,22 +114,22 @@ class _BaseValidators:
 
     @staticmethod
     def is_callable(value: object) -> bool:
-        """Check if value is callable."""
+        """Check if the value is callable."""
         return callable(value)
 
     @staticmethod
     def is_list(value: object) -> bool:
-        """Check if value is list."""
+        """Check if the value is a list."""
         return isinstance(value, list)
 
     @staticmethod
     def is_dict(value: object) -> bool:
-        """Check if value is dict."""
+        """Check if the value is dict."""
         return isinstance(value, dict)
 
     @staticmethod
     def is_none(value: object) -> bool:
-        """Check if value is None."""
+        """Check if the value is None."""
         return value is None
 
 
@@ -138,7 +138,7 @@ class _BasePredicates:
 
     @staticmethod
     def is_positive(value: object) -> bool:
-        """Check if value is positive number."""
+        """Check if value is a positive number."""
         return isinstance(value, (int, float)) and value > 0
 
     @staticmethod
@@ -148,7 +148,7 @@ class _BasePredicates:
 
     @staticmethod
     def is_zero(value: object) -> bool:
-        """Check if value is zero."""
+        """Check if the value is zero."""
         return isinstance(value, (int, float)) and value == 0
 
 
@@ -281,7 +281,7 @@ def _validate_service_name(name: str) -> bool:
 # FLEXT VALIDATION MODELS - Direct exposure from base with clean names
 # =============================================================================
 
-# Direct exposure eliminating inheritance overhead
+# Direct exposure removing inheritance overhead
 FlextValidationConfig = _ValidationConfig
 FlextValidationResult = _ValidationResult
 
@@ -434,7 +434,7 @@ class FlextValidation(FlextValidators):
             validator: Validator function to apply
 
         Returns:
-            FlextResult with validation outcome
+            FlextResult with a validation outcome
 
         """
         try:
@@ -532,7 +532,7 @@ def flext_validate_email(
     """Validate email field with format and structure checking.
 
     Performs comprehensive email validation including format checking,
-    domain validation, and structural requirements verification.
+    domain validation, and structural requirement verification.
 
     Args:
         value: Value to validate (expected to be email string)
