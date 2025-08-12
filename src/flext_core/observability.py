@@ -92,9 +92,18 @@ class FlextConsoleLogger:
         """Alias for critical."""
         self.critical(message, **kwargs)
 
-    def exception(self, message: str, **kwargs: object) -> None:
-        """Log exception message to console."""
-        self._logger.exception(message, extra={"context": kwargs} if kwargs else None)
+    def exception(
+        self,
+        message: str,
+        *,
+        exc_info: bool = True,
+        **kwargs: object,
+    ) -> None:
+        """Log exception message to console with automatic traceback information."""
+        if exc_info:
+            self._logger.error(message, extra={"context": kwargs} if kwargs else None)
+        else:
+            self._logger.error(message, extra={"context": kwargs} if kwargs else None)
 
     # Back-compat: audit method (no-op structured log)
     def audit(self, message: str, **kwargs: object) -> None:

@@ -10,14 +10,13 @@ by providing test-specific domain models directly within the tests directory.
 
 from __future__ import annotations
 
+import logging
 from decimal import Decimal
 from enum import StrEnum
 
-from pydantic import Field
+from pydantic import Field, field_validator
 
-from flext_core import FlextResult, TEntityId
-from flext_core.entities import FlextEntity
-from flext_core.value_objects import FlextValueObject
+from flext_core import FlextEntity, FlextResult, FlextValueObject, TEntityId
 
 # =============================================================================
 # TEST DOMAIN CONSTANTS
@@ -80,7 +79,7 @@ class TestMoney(FlextValueObject):
 
     amount: Decimal
     currency: str = "USD"
-    description: str = ""
+    description: str = ""  # Default empty string
 
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate money for testing."""
@@ -146,6 +145,13 @@ class TestUser(FlextEntity):
     age: int = 25
     status: TestUserStatus = TestUserStatus.ACTIVE
     balance: Decimal = Decimal("0.00")
+
+    @classmethod
+    @field_validator("name")
+    def validate_name(cls, v: str) -> str:
+        """Validate name field at Pydantic level."""
+        # Domain validation handles empty strings; ensure non-None type here
+        return v
 
     def validate_domain_rules(self) -> FlextResult[None]:
         """Validate user domain rules for testing."""
@@ -380,12 +386,17 @@ class TestDomainFactory:
 
     @classmethod
     def create_test_money(
-        cls, amount: str | Decimal = "100.00", currency: str = "USD"
+        cls,
+        amount: str | Decimal = "100.00",
+        currency: str = "USD",
+        description: str = "test money",
     ) -> FlextResult[TestMoney]:
         """Create test money with validation."""
         try:
             money_amount = Decimal(str(amount))
-            money_obj = TestMoney(amount=money_amount, currency=currency)
+            money_obj = TestMoney(
+                amount=money_amount, currency=currency, description=description
+            )
             validation = money_obj.validate_business_rules()
             if validation.is_failure:
                 return FlextResult.fail(f"Money validation failed: {validation.error}")
@@ -407,9 +418,17 @@ class TestDomainFactory:
     @classmethod
     def create_concrete_value_object(cls, **kwargs: object) -> FlextResult[TestMoney]:
         """Create concrete value object (alias for create_test_money for backward compatibility)."""
-        amount = kwargs.get("amount", "100.00")
+        amount_obj = kwargs.get("amount", "100.00")
+        # Coerce to accepted type for create_test_money
+        if isinstance(amount_obj, (str, Decimal)):
+            normalized_amount: str | Decimal = amount_obj
+        else:
+            normalized_amount = str(amount_obj)
         currency = str(kwargs.get("currency", "USD"))
-        return cls.create_test_money(amount=amount, currency=currency)
+        description = str(kwargs.get("description", "test money"))
+        return cls.create_test_money(
+            amount=normalized_amount, currency=currency, description=description
+        )
 
     @classmethod
     def create_complex_value_object(
@@ -466,7 +485,16 @@ def create_test_product_safe(
     name: str = "Test Product", **kwargs: object
 ) -> TestProduct:
     """Create test product with error handling."""
-    result = TestDomainFactory.create_test_product(name, **kwargs)
+    # Normalize optional price for type-compatibility
+    price_obj = kwargs.pop("price", "50.00")
+    if isinstance(price_obj, (str, Decimal)):
+        normalized_price: str | Decimal = price_obj
+    else:
+        normalized_price = str(price_obj)
+    # mypy: kwargs is object; cast to a typed dict for safe ** expansion
+    result = TestDomainFactory.create_test_product(
+        name=name, price=normalized_price, **kwargs
+    )
     if result.is_failure:
         raise ValueError(f"Failed to create test product: {result.error}")
     if result.data is None:
@@ -478,7 +506,6 @@ def create_test_product_safe(
 def log_test_operation(operation: str, entity_type: str, entity_id: str) -> None:
     """Log test domain operations for debugging."""
     # Simple logging for test operations (using debug logging instead of print)
-    import logging
 
     logger = logging.getLogger("test_domain")
     logger.debug("TEST: %s %s %s", operation, entity_type, entity_id)

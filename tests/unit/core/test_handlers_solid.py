@@ -66,7 +66,6 @@ class TestSOLIDPrinciples:
 
     def test_single_responsibility_principle(self) -> None:
         """Test SRP - each handler has single responsibility."""
-
         # CommandHandler is only responsible for command processing
         command_handler = FlextHandlers.CommandHandler("cmd_handler")
 
@@ -162,7 +161,7 @@ class TestSOLIDPrinciples:
         def process_with_any_handler(
             handler: FlextHandlers.CommandHandler, command: object
         ) -> FlextResult[object]:
-            """Function that works with any command handler."""
+            """Process commands using any command handler."""
             return handler.handle_with_hooks(command)
 
         # Base handler works
@@ -184,7 +183,6 @@ class TestSOLIDPrinciples:
 
     def test_metrics_collection_improvement(self) -> None:
         """Test that SOLID refactoring improved metrics collection."""
-
         handler = FlextHandlers.CommandHandler("metrics_test")
 
         # Initial metrics
@@ -220,7 +218,6 @@ class TestSOLIDPrinciples:
 
     def test_protocol_compliance(self) -> None:
         """Test that protocols are properly implemented."""
-
         # Test that handlers implement expected protocols
         handler = FlextHandlers.CommandHandler("protocol_test")
 

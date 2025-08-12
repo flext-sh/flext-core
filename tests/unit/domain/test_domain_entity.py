@@ -17,6 +17,7 @@ from flext_core.result import FlextResult
 from tests.shared_test_domain import (
     ConcreteFlextEntity,
     TestDomainFactory,
+    TestUserStatus,
 )
 
 # Constants
@@ -193,7 +194,7 @@ class TestFlextEntityVersioning:
             id="custom-id",
             name="Test Entity",
             email="test@example.com",
-            status="inactive",
+            status=TestUserStatus.INACTIVE,
             version=1,
         )
 
@@ -238,7 +239,7 @@ class TestFlextEntityEdgeCases:
             id="custom-id",
             name="Test",
             email="test@example.com",
-            status="active",  # Use valid enum value
+            status=TestUserStatus.ACTIVE,
             created_at=custom_time,
             version=10,
         )
@@ -354,7 +355,7 @@ class TestFlextEntityValidation:
         """Test integration with Pydantic field validation."""
         # Test that Pydantic validation works as expected
         with pytest.raises(ValidationError):
-            ConcreteFlextEntity()
+            ConcreteFlextEntity(id="test-id", name="", email="test@example.com")
 
         # Test successful creation with valid data
         entity = ConcreteFlextEntity(

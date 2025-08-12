@@ -9,6 +9,7 @@ FLEXT Core provides enterprise-grade configuration management through Pydantic v
 ## Features
 
 ### Core Capabilities
+
 - **Type Safety**: Full Pydantic v2 validation with type hints
 - **Environment Variables**: Automatic loading with customizable prefixes
 - **Validation**: Built-in and custom validators for data integrity
@@ -16,6 +17,7 @@ FLEXT Core provides enterprise-grade configuration management through Pydantic v
 - **Composability**: Nested configurations and inheritance patterns
 
 ### Integration Support
+
 - **Singer SDK**: Configuration for data extraction/loading
 - **CLI Applications**: Command-line tool configuration
 - **Web Services**: FastAPI and Flask configuration patterns

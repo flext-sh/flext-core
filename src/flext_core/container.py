@@ -1,22 +1,39 @@
-"""Dependency injection container for service management.
+"""Dependency injection container for FLEXT ecosystem service management.
 
-Provides type-safe service registration and retrieval with factory support.
-Implements dependency inversion principle for Clean Architecture.
+This module provides a comprehensive dependency injection container system for
+the FLEXT ecosystem, implementing type-safe service registration and retrieval
+with factory support. It follows Clean Architecture principles and implements
+the dependency inversion principle for loose coupling.
+
+The container system is built with Single Responsibility Principle (SRP),
+separating service registration from service retrieval concerns.
 
 Classes:
-    FlextServiceRegistrar: Service registration component.
-    FlextServiceLocator: Service retrieval component.
-    FlextContainer: Main DI container combining both.
+    FlextServiceKey: Typed service key supporting generic subscription.
+    FlextServiceRegistrar: Service registration component implementing SRP.
+    FlextServiceLocator: Service retrieval component implementing SRP.
+    FlextContainer: Main DI container combining registration and location.
+    FlextContainerUtils: Utility functions for container operations.
 
 Functions:
-    get_flext_container: Get global container instance.
+    configure_flext_container: Configure the global container instance.
+    create_module_container_utilities: Create module-specific container utilities.
+
+Example:
+    Basic container usage for dependency injection:
+
+    >>> container = FlextContainer()
+    >>> container.register_service("database", DatabaseService())
+    >>> db_service = container.get_service("database", DatabaseService)
+    >>> print(db_service.data)  # DatabaseService instance
 
 """
 
 from __future__ import annotations
 
 import inspect
-from typing import TYPE_CHECKING, Self, cast
+from collections import UserString
+from typing import TYPE_CHECKING, Generic, Self, TypeVar
 
 from flext_core.constants import SERVICE_NAME_EMPTY
 from flext_core.exceptions import FlextError
@@ -30,18 +47,41 @@ if TYPE_CHECKING:
     from flext_core.typings import T
 
 
-class FlextServiceKey[T](str):
-    """Typed service key supporting generic subscription at type-check time.
+TService = TypeVar("TService")
 
-    Acts as a plain ``str`` at runtime while enabling usages like
-    ``FlextServiceKey[T]("name")`` in type-checked code.
+
+class FlextServiceKey(UserString, Generic[TService]):  # noqa: UP046
+    """Typed service key supporting generic subscription for type-safe service resolution.
+
+    A specialized string that acts as a plain string at runtime but provides type safety
+    at type-check time. This enables type-safe service registration and retrieval in the
+    FLEXT dependency injection container while maintaining runtime string compatibility.
+
+    The key supports generic subscription like FlextServiceKey[DatabaseService]("db")
+    to provide compile-time type checking without runtime overhead.
+
+    Attributes:
+        data: The underlying string value of the service key.
+        name: Alias for the string value (compatibility property).
+
+    Example:
+        Type-safe service key usage:
+
+        >>> key = FlextServiceKey[DatabaseService]("database")
+        >>> print(key)  # Acts like a string
+        'database'
+        >>> print(key.name)
+        'database'
+
     """
 
     __slots__ = ()
 
     def __new__(cls, name: str) -> Self:
         """Create a new service key."""
-        return str.__new__(cls, str(name))
+        instance = object.__new__(cls)
+        instance.data = str(name)
+        return instance
 
     # Compatibility: test access key.name
     @property
@@ -50,7 +90,7 @@ class FlextServiceKey[T](str):
         return str(self)
 
     @classmethod
-    def __class_getitem__(cls, _item: object) -> type[FlextServiceKey[object]]:
+    def __class_getitem__(cls, _item: object) -> type[FlextServiceKey]:  # type: ignore[type-arg]
         """Support generic subscription without affecting runtime behavior."""
         return cls
 
@@ -61,10 +101,33 @@ class FlextServiceKey[T](str):
 
 
 class FlextServiceRegistrar(FlextLoggableMixin):
-    """Service registration component.
+    """Service registration component implementing Single Responsibility Principle.
 
-    Handles service and factory registration with validation.
-    Implements single responsibility principle.
+    This class handles all service and factory registration operations with validation
+    and error handling. It's separated from service retrieval to follow SRP and
+    provide clear separation of concerns in the dependency injection system.
+
+    The registrar validates service names, prevents duplicate registrations, and
+    maintains both direct service instances and factory functions for lazy instantiation.
+
+    Attributes:
+        _services: Internal registry mapping service names to instances.
+        _factories: Internal registry mapping service names to factory functions.
+
+    Example:
+        Direct usage for service registration:
+
+        >>> registrar = FlextServiceRegistrar()
+        >>> result = registrar.register_service("logger", logger_instance)
+        >>> print(result.is_success)
+        True
+
+        Factory registration for lazy instantiation:
+
+        >>> factory_result = registrar.register_factory("db", lambda: DatabaseService())
+        >>> print(factory_result.is_success)
+        True
+
     """
 
     def __init__(self) -> None:
@@ -148,10 +211,27 @@ class FlextServiceRegistrar(FlextLoggableMixin):
         if not callable(factory):
             return FlextResult.fail("Factory must be callable")
 
+        # Verify factory signature to ensure it can be called without parameters
+        try:
+            sig = inspect.signature(factory)
+            required_params = sum(
+                1
+                for p in sig.parameters.values()
+                if p.default == p.empty
+                and p.kind not in {p.VAR_POSITIONAL, p.VAR_KEYWORD}
+            )
+            if required_params > 0:
+                return FlextResult.fail(
+                    f"Factory must be callable without parameters, but requires {required_params} parameter(s)",
+                )
+        except (ValueError, TypeError, OSError) as e:
+            return FlextResult.fail(f"Could not inspect factory signature: {e}")
+
         if validated_name in self._services:
             del self._services[validated_name]
 
-        factory_callable = cast("Callable[[], object]", factory)
+        # Safe assignment after signature verification
+        factory_callable = factory
         self._factories[validated_name] = factory_callable
         self.logger.debug(
             "Factory registered",
@@ -215,7 +295,9 @@ class FlextServiceRetriever(FlextLoggableMixin):
     """Service retrieval component implementing single responsibility principle."""
 
     def __init__(
-        self, services: dict[str, object], factories: dict[str, Callable[[], object]]
+        self,
+        services: dict[str, object],
+        factories: dict[str, Callable[[], object]],
     ) -> None:
         """Initialize service retriever with references."""
         super().__init__()
@@ -296,7 +378,7 @@ class FlextServiceRetriever(FlextLoggableMixin):
                     "type": "instance",
                     "class": service_class.__name__,
                     "module": service_class.__module__,
-                }
+                },
             )
 
         # Check if a service is registered as factory
@@ -310,7 +392,7 @@ class FlextServiceRetriever(FlextLoggableMixin):
                     "type": "factory",
                     "factory": factory_name,
                     "module": factory_module,
-                }
+                },
             )
 
         return FlextResult.fail(f"Service '{validated_name}' not found")
@@ -454,7 +536,7 @@ class FlextContainer(FlextLoggableMixin):
                 }
                 return FlextResult.ok(factory_info)
             return FlextResult.fail(f"Service '{name}' not found")
-        except Exception as e:
+        except (KeyError, AttributeError, TypeError) as e:
             return FlextResult.fail(f"Info retrieval failed: {e}")
 
     def get_or_create(
@@ -483,11 +565,13 @@ class FlextContainer(FlextLoggableMixin):
                 return service_result
 
             return service_result
-        except Exception as e:
+        except (TypeError, ValueError, AttributeError, RuntimeError) as e:
             return FlextResult.fail(f"get_or_create failed: {e}")
 
     def auto_wire(
-        self, service_class: type[T], service_name: str | None = None
+        self,
+        service_class: type[T],
+        service_name: str | None = None,
     ) -> FlextResult[T]:
         """Auto-wire service dependencies and register the service.
 
@@ -521,7 +605,7 @@ class FlextContainer(FlextLoggableMixin):
                 if dependency_result.is_failure:
                     return FlextResult.fail(
                         f"Required dependency '{param.name}' not found for "
-                        f"{service_class.__name__}"
+                        f"{service_class.__name__}",
                     )
 
                 kwargs[param.name] = dependency_result.unwrap()
@@ -533,16 +617,17 @@ class FlextContainer(FlextLoggableMixin):
             register_result = self.register(name, service_instance)
             if register_result.is_failure:
                 return FlextResult.fail(
-                    f"Auto-wiring failed during registration: {register_result.error}"
+                    f"Auto-wiring failed during registration: {register_result.error}",
                 )
 
             return FlextResult.ok(service_instance)
 
-        except Exception as e:
+        except (TypeError, ValueError, AttributeError, RuntimeError, OSError) as e:
             return FlextResult.fail(f"Auto-wiring failed: {e}")
 
     def batch_register(
-        self, registrations: dict[str, object]
+        self,
+        registrations: dict[str, object],
     ) -> FlextResult[list[str]]:
         """Register many services/factories atomically; roll back on failure."""
         # Snapshot current state for rollback
@@ -564,7 +649,7 @@ class FlextContainer(FlextLoggableMixin):
                     return FlextResult.fail("Batch registration failed")
                 registered_names.append(key)
             return FlextResult.ok(registered_names)
-        except Exception as e:
+        except (TypeError, ValueError, AttributeError, RuntimeError, KeyError) as e:
             # Rollback on unexpected errors
             self._registrar.get_services_dict().clear()
             self._registrar.get_services_dict().update(services_snapshot)
@@ -695,7 +780,8 @@ def configure_flext_container(container: FlextContainer | None) -> FlextContaine
 
 
 def get_typed[T](
-    key: FlextServiceKey[T] | str, expected_type: type[T]
+    key: FlextServiceKey[T] | str,
+    expected_type: type[T],
 ) -> FlextResult[T]:
     """Get typed service from global container.
 

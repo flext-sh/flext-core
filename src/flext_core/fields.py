@@ -181,55 +181,61 @@ class FlextFieldCore(
 
     def _validate_string_value(self, value: object) -> tuple[bool, str | None]:
         """Validate string value with all constraints."""
-        if not isinstance(value, str):
-            return False, f"Expected string, got {type(value).__name__}"
+        match value:
+            case str() as str_value:
+                pass  # Continue with validation
+            case _:
+                return False, f"Expected string, got {type(value).__name__}"
 
         # Length validation using base validators
         if self.min_length is not None and not FlextValidators.has_min_length(
-            value,
+            str_value,
             self.min_length,
         ):
-            return False, f"String too short: {len(value)} < {self.min_length}"
+            return False, f"String too short: {len(str_value)} < {self.min_length}"
 
         if self.max_length is not None and not FlextValidators.has_max_length(
-            value,
+            str_value,
             self.max_length,
         ):
-            return False, f"String too long: {len(value)} > {self.max_length}"
+            return False, f"String too long: {len(str_value)} > {self.max_length}"
 
         # Pattern validation using base validators
         if self.pattern is not None and not FlextValidators.matches_pattern(
-            value,
+            str_value,
             self.pattern,
         ):
             return False, f"String does not match pattern: {self.pattern}"
 
         # Allowed values validation
-        if self.allowed_values and value not in self.allowed_values:
+        if self.allowed_values and str_value not in self.allowed_values:
             return False, f"Value not in allowed list: {self.allowed_values}"
 
         return True, None
 
     def _validate_integer_value(self, value: object) -> tuple[bool, str | None]:
         """Validate integer value with range constraints."""
-        if not isinstance(value, int):
-            return False, f"Expected integer, got {type(value).__name__}"
+        match value:
+            case int() as int_value:
+                # Range validation using base validators
+                if self.min_value is not None and int_value < self.min_value:
+                    return False, f"Integer too small: {int_value} < {self.min_value}"
 
-        # Range validation using base validators
-        if self.min_value is not None and value < self.min_value:
-            return False, f"Integer too small: {value} < {self.min_value}"
+                if self.max_value is not None and int_value > self.max_value:
+                    return False, f"Integer too large: {int_value} > {self.max_value}"
 
-        if self.max_value is not None and value > self.max_value:
-            return False, f"Integer too large: {value} > {self.max_value}"
-
-        return True, None
+                return True, None
+            case _:
+                return False, f"Expected integer, got {type(value).__name__}"
 
     @staticmethod
     def _validate_boolean_value(value: object) -> tuple[bool, str | None]:
         """Validate boolean value."""
-        if not isinstance(value, bool):
-            return False, f"Expected boolean, got {type(value).__name__}"
-        return True, None
+        match value:
+            case bool():
+                return True, None
+            case _:
+                return False, f"Expected boolean, got {type(value).__name__}"
 
     def has_tag(self, tag: str) -> bool:
         """Check if field has specific tag."""
@@ -277,25 +283,33 @@ class FlextFieldCore(
         value: object,
         field_type_str: str,
     ) -> object:
-        """Convert value based on a field type for serialization."""
+        """Convert value based on a field type for serialization.
+
+        Refactored to reduce return paths (ruff PLR0911).
+        """
+        result: object = value
         if field_type_str == "string":
-            return str(value)
-        if field_type_str == "integer" and isinstance(value, (int, float)):
-            return int(value)
-        if field_type_str == "float" and isinstance(value, (int, float)):
-            return float(value)
-        if field_type_str == "boolean":
-            return self._serialize_boolean_value(value)
-        return value
+            result = str(value)
+        elif field_type_str == "integer":
+            if isinstance(value, (int, float)):
+                result = int(value)
+        elif field_type_str == "float":
+            if isinstance(value, (int, float)):
+                result = float(value)
+        elif field_type_str == "boolean":
+            result = self._serialize_boolean_value(value)
+        return result
 
     @staticmethod
     def _serialize_boolean_value(value: object) -> object:
         """Serialize boolean value with string conversion support."""
-        if isinstance(value, bool):
-            return value
-        if isinstance(value, str):
-            return value.lower() in {"true", "1", "yes", "on"}
-        return bool(value)
+        match value:
+            case bool() as bool_value:
+                return bool_value
+            case str() as str_value:
+                return str_value.lower() in {"true", "1", "yes", "on"}
+            case _:
+                return bool(value)
 
     def deserialize_value(self, value: object) -> object:
         """Deserialize value from storage or transmission."""
@@ -330,38 +344,47 @@ class FlextFieldCore(
     @staticmethod
     def _deserialize_integer_value(value: object) -> object:
         """Deserialize integer value with type conversion."""
-        if (isinstance(value, str) and value.isdigit()) or isinstance(
-            value,
-            (int, float),
-        ):
-            return int(value)
-        return value
+        match value:
+            case str() as str_value if str_value.isdigit():
+                return int(str_value)
+            case int() | float() as numeric_value:
+                return int(numeric_value)
+            case _:
+                return value
 
     @staticmethod
     def _deserialize_float_value(value: object) -> object:
         """Deserialize float value with type conversion."""
-        if isinstance(value, str):
-            try:
-                return float(value)
-            except ValueError:
+        match value:
+            case str() as str_value:
+                try:
+                    return float(str_value)
+                except ValueError:
+                    return value
+            case int() | float() as numeric_value:
+                return float(numeric_value)
+            case _:
                 return value
-        if isinstance(value, (int, float)):
-            return float(value)
-        return value
 
     @staticmethod
     def _deserialize_boolean_value(value: object) -> object:
         """Deserialize boolean value with comprehensive type conversion."""
-        if isinstance(value, bool):
-            return value
-        if isinstance(value, str):
-            return value.lower() in {"true", "1", "yes", "on"}
-        if isinstance(value, (int, float)):
-            return bool(value)
-        if isinstance(value, (list, dict, tuple, set)):
-            msg = "Cannot deserialize"
-            raise FlextTypeError(msg, expected_type="bool", actual_type=type(value))
-        return bool(value)
+        match value:
+            case bool() as bool_value:
+                return bool_value
+            case str() as str_value:
+                return str_value.lower() in {"true", "1", "yes", "on"}
+            case int() | float() as numeric_value:
+                return bool(numeric_value)
+            case list() | dict() | tuple() | set():
+                msg = "Cannot deserialize"
+                raise FlextTypeError(
+                    msg,
+                    expected_type="bool",
+                    actual_type=type(value).__name__,
+                )
+            case _:
+                return bool(value)
 
     # Backward compatibility methods for tests
     def get_default_value(self) -> str | int | float | bool | None:
@@ -497,82 +520,122 @@ class FlextFieldMetadata(BaseModel):
             min_length=_safe_cast_int(data.get("min_length")),
             max_length=_safe_cast_int(data.get("max_length")),
             pattern=str(data.get("pattern")) if data.get("pattern") else None,
-            allowed_values=(
-                list(allowed_vals)
-                if (allowed_vals := data.get("allowed_values"))
-                and isinstance(allowed_vals, (list, tuple))
-                else []
-            ),
+            allowed_values=_safe_cast_list(data.get("allowed_values")),
             # Documentation
             description=(
                 str(data.get("description", "")) if data.get("description") else None
             ),
             example=_safe_cast_default_value(data.get("example")),
-            tags=(
-                list(tags_vals)
-                if (tags_vals := data.get("tags"))
-                and isinstance(tags_vals, (list, tuple))
-                else []
-            ),
+            tags=_safe_cast_string_list(data.get("tags")),
             # System flags
             deprecated=bool(data.get("deprecated", False)),
             sensitive=bool(data.get("sensitive", False)),
             indexed=bool(data.get("indexed", False)),
             internal=bool(data.get("internal", False)),
             unique=bool(data.get("unique", False)),
-            custom_properties=(
-                dict(custom_props)
-                if (custom_props := data.get("custom_properties"))
-                and isinstance(custom_props, dict)
-                else {}
-            ),
+            custom_properties=_safe_cast_dict(data.get("custom_properties")),
         )
 
 
 def _safe_cast_default_value(value: object) -> str | int | float | bool | None:
     """Safely cast a value to allowed default value types."""
-    if value is None:
-        return None
-    if isinstance(value, (str, int, float, bool)):
-        return value
-    return None
+    match value:
+        case None:
+            return None
+        case str() | int() | float() | bool() as valid_value:
+            return valid_value
+        case _:
+            return None
 
 
 def _safe_cast_numeric(value: object) -> int | float | None:
     """Safely cast a value to numeric type."""
-    if value is None:
-        return None
-    if isinstance(value, (int, float)):
-        return value
-    if isinstance(value, str):
-        try:
-            # Try int first, then float
-            if "." in value:
-                return float(value)
-            return int(value)
-        except ValueError as e:
-            # Log numeric conversion error but maintain API contract
-            logger = FlextLoggerFactory.get_logger(__name__)
-            logger.warning(f"Numeric conversion failed for value '{value}': {e}")
+    match value:
+        case None:
             return None
-    return None
+        case int() | float() as numeric_value:
+            return numeric_value
+        case str() as str_value:
+            try:
+                # Try int first, then float
+                if "." in str_value:
+                    return float(str_value)
+                return int(str_value)
+            except ValueError as e:
+                # Log numeric conversion error but maintain API contract
+                logger = FlextLoggerFactory.get_logger(__name__)
+                logger.warning(
+                    f"Numeric conversion failed for value '{str_value}': {e}",
+                )
+                return None
+        case _:
+            return None
 
 
 def _safe_cast_int(value: object) -> int | None:
     """Safely cast a value to int."""
-    if value is None:
-        return None
-    if isinstance(value, int):
-        return value
-    if isinstance(value, (float, str)):
-        try:
-            return int(value)
-        except (ValueError, TypeError) as e:
-            # Log int conversion error but maintain API contract
-            logger = FlextLoggerFactory.get_logger(__name__)
-            logger.warning(f"Int conversion failed for value '{value}': {e}")
+    match value:
+        case None:
             return None
-    return None
+        case int() as int_value:
+            return int_value
+        case float() | str() as convertible_value:
+            try:
+                return int(convertible_value)
+            except (ValueError, TypeError) as e:
+                # Log int conversion error but maintain API contract
+                logger = FlextLoggerFactory.get_logger(__name__)
+                logger.warning(
+                    f"Int conversion failed for value '{convertible_value}': {e}",
+                )
+                return None
+        case _:
+            return None
+
+
+def _is_list_or_tuple_type(value: object) -> bool:
+    """Check if value is list or tuple using pattern matching."""
+    match value:
+        case list() | tuple():
+            return True
+        case _:
+            return False
+
+
+def _is_dict_type(value: object) -> bool:
+    """Check if value is dict using pattern matching."""
+    match value:
+        case dict():
+            return True
+        case _:
+            return False
+
+
+def _safe_cast_list(value: object) -> list[object]:
+    """Safely cast a value to list using pattern matching."""
+    match value:
+        case list() | tuple() as sequence_value:
+            return list(sequence_value)
+        case _:
+            return []
+
+
+def _safe_cast_dict(value: object) -> dict[str, object]:
+    """Safely cast a value to dict using pattern matching."""
+    match value:
+        case dict() as dict_value:
+            return dict(dict_value)
+        case _:
+            return {}
+
+
+def _safe_cast_string_list(value: object) -> list[str]:
+    """Safely cast a value to list of strings using pattern matching."""
+    match value:
+        case list() | tuple() as sequence_value:
+            return [str(item) for item in sequence_value if item is not None]
+        case _:
+            return []
 
 
 # =============================================================================

@@ -10,7 +10,8 @@ Classes:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from collections.abc import Callable
+from typing import TYPE_CHECKING, ParamSpec, TypeVar, cast
 
 from flext_core.constants import FlextConstants
 from flext_core.container import (
@@ -19,8 +20,12 @@ from flext_core.container import (
     get_flext_container,  # re-export for test patching
 )
 from flext_core.guards import ValidatedModel, immutable, is_dict_of, pure
-from flext_core.loggings import FlextLogger, FlextLoggerFactory
+from flext_core.loggings import FlextLogger, FlextLoggerFactory, FlextLogLevel
 from flext_core.result import FlextResult
+
+# Type variables for function signatures
+P = ParamSpec("P")
+R = TypeVar("R")
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -79,7 +84,7 @@ class FlextCore:
 
         """
         return self._container.register(
-            str(key) if not isinstance(key, str) else key,
+            str(key),
             service,
         )
 
@@ -94,13 +99,13 @@ class FlextCore:
 
         """
         # Use container method directly for type safety
-        key_str = str(key) if not isinstance(key, str) else key
+        key_str = str(key)
         # Get the service without type checking since S is already constrained
         result = self._container.get(key_str)
         if result.is_failure:
             return FlextResult.fail(result.error or "Service not found")
         # Cast the result to the expected type
-        return FlextResult.ok(result.data)  # type: ignore[arg-type]
+        return FlextResult.ok(cast("S", result.data))
 
     # =========================================================================
     # LOGGING ACCESS
@@ -129,11 +134,28 @@ class FlextCore:
 
         Args:
             log_level: Minimum log level
-            _json_output: Force JSON output (not yet implemented)
+            _json_output: Force JSON output (implemented via FlextLogger)
 
         """
+        # Convert string log level to FlextLogLevel enum
+        log_level_enum = FlextLogLevel.INFO
+        try:
+            log_level_enum = FlextLogLevel(log_level.upper())
+        except (ValueError, AttributeError):
+            # Fallback to INFO if invalid level
+            log_level_enum = FlextLogLevel.INFO
+
+        # Set global level via factory
         FlextLoggerFactory.set_global_level(log_level)
-        # Note: FlextLogger.configure not yet implemented
+
+        # Configure JSON output if specified
+        if _json_output is not None:
+            FlextLogger.configure(
+                log_level=log_level_enum,
+                json_output=_json_output,
+                add_timestamp=True,  # Always include timestamps
+                add_caller=False,  # Keep caller info optional for performance
+            )
 
     # =========================================================================
     # RESULT PATTERN ACCESS
@@ -330,7 +352,7 @@ class FlextCore:
         return immutable(target_class)
 
     @staticmethod
-    def make_pure[T](func: T) -> T:
+    def make_pure(func: Callable[P, R]) -> Callable[P, R]:
         """Make function pure using guards module.
 
         Args:
@@ -340,7 +362,7 @@ class FlextCore:
             Pure version of the function
 
         """
-        return pure(func)
+        return cast("Callable[P, R]", pure(func))
 
     # =========================================================================
     # UTILITY METHODS

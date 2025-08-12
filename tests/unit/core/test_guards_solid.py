@@ -78,7 +78,6 @@ class TestGuardsSOLIDImplementation:
 
     def test_pure_function_decorator_functionality(self) -> None:
         """Test that pure decorator provides real functional purity."""
-
         call_count = 0
 
         @pure
@@ -141,7 +140,6 @@ class TestGuardsSOLIDImplementation:
 
     def test_pure_function_with_unhashable_args(self) -> None:
         """Test pure function handling of unhashable arguments."""
-
         call_count = 0
 
         @pure
@@ -389,7 +387,7 @@ class TestSOLIDPrinciplesInGuards:
                 return f"{self.prefix}: processed: {data}"
 
         def use_processor(processor: BaseProcessor, data: str) -> str:
-            """Function that uses any processor."""
+            """Use any processor to process data."""
             return processor.process(data)
 
         # Base processor works
@@ -496,7 +494,6 @@ class TestSOLIDCompliance:
 
     def test_integration_with_flext_ecosystem(self) -> None:
         """Test integration with other FLEXT components."""
-
         from flext_core.result import FlextResult
 
         @immutable

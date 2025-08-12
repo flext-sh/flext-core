@@ -23,7 +23,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar, Protocol, TypeVar, runtime_checkable
+from typing import (
+    TYPE_CHECKING,
+    ClassVar,
+    Protocol,
+    TypeVar,
+    cast,
+    runtime_checkable,
+)
 from unittest.mock import MagicMock, Mock, patch
 
 from flext_core.models import FlextModel
@@ -35,6 +42,12 @@ if TYPE_CHECKING:
 T = TypeVar("T")
 TTestData = TypeVar("TTestData")
 TTestConfig = TypeVar("TTestConfig")
+
+
+def _cast[T](_type_hint: type[T], value: object) -> T:
+    """Type-safe cast helper for testing utilities."""
+    # Type checkers need a literal type, not a variable
+    return cast("T", value)
 
 
 # =============================================================================
@@ -63,11 +76,11 @@ class ITestAssertion(Protocol):
         """Assert equality."""
         ...
 
-    def assert_true(self, condition: bool) -> None:  # noqa: FBT001
+    def assert_true(self, *, condition: bool) -> None:
         """Assert condition is true."""
         ...
 
-    def assert_false(self, condition: bool) -> None:  # noqa: FBT001
+    def assert_false(self, *, condition: bool) -> None:
         """Assert condition is false."""
         ...
 
@@ -293,7 +306,8 @@ class FlextTestAssertion:
 
     @staticmethod
     def assert_true(
-        condition: bool,  # noqa: FBT001
+        *,
+        condition: bool,
         message: str | None = None,
     ) -> None:
         """Assert condition is true.
@@ -312,7 +326,8 @@ class FlextTestAssertion:
 
     @staticmethod
     def assert_false(
-        condition: bool,  # noqa: FBT001
+        *,
+        condition: bool,
         message: str | None = None,
     ) -> None:
         """Assert condition is false.
@@ -466,7 +481,14 @@ class FlextTestMocker:
             Patch context manager.
 
         """
-        return patch(target, **kwargs)  # type: ignore[call-overload]
+        # Handle common patch configurations with type safety
+        # Detect whether "new" was explicitly provided (so new=None is honored)
+        if "new" in kwargs:
+            new_value = kwargs.pop("new")
+            patch_context = patch(target, new=new_value, **kwargs)  # type: ignore[call-overload]
+        else:
+            patch_context = patch(target, **kwargs)  # type: ignore[call-overload]
+        return _cast(object, patch_context)
 
     @staticmethod
     def patch_object(
@@ -479,12 +501,13 @@ class FlextTestMocker:
         Args:
             target: Object to patch.
             attribute: Attribute name to patch.
-            **kwargs: Additional patch configuration.
+            **kwargs: Additional patch configuration (new, create, spec, etc.).
 
         Returns:
             Patch context manager.
 
         """
+        # Forward all kwargs to patch.object, preserving explicit new=None
         return patch.object(target, attribute, **kwargs)  # type: ignore[call-overload]
 
     @staticmethod

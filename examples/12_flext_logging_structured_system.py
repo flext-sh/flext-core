@@ -25,8 +25,8 @@ import traceback
 from types import TracebackType
 from typing import cast
 
-from flext_core import FlextConstants
-from flext_core.loggings import (
+from flext_core import (
+    FlextConstants,
     FlextLogger,
     FlextLoggerFactory,
     create_log_context,

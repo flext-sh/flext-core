@@ -27,18 +27,19 @@ import traceback
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, cast
 
-from flext_core import FlextEntity
-from flext_core.handlers import (
+from flext_core import (
     FlextBaseHandler,
+    FlextEntity,
     FlextEventHandler,
     FlextHandlerChain,
     FlextHandlerRegistry,
+    FlextLogger,
+    FlextLoggerFactory,
+    FlextResult,
 )
-from flext_core.loggings import FlextLogger, FlextLoggerFactory
 
 if TYPE_CHECKING:
-    from flext_core.protocols import FlextMessageHandler
-from flext_core.result import FlextResult
+    from flext_core import FlextMessageHandler
 
 # =============================================================================
 # HANDLER CONSTANTS - Validation and business rule constraints
@@ -1017,7 +1018,7 @@ def _create_handler_chain() -> tuple[FlextHandlerChain, dict[str, User], str | N
     chain.add_handler(create_handler)
     chain.add_handler(get_handler)
     chain.add_handler(update_handler)
-    chain.add_handler(cast("FlextMessageHandler", user_event_handler))
+    chain.add_handler(user_event_handler)
 
     print("✅ Handler chain created with 4 handlers")
 
@@ -1088,14 +1089,18 @@ def _process_event_through_all_handlers(chain: FlextHandlerChain) -> None:
         timestamp=time.time(),
     )
 
-    results = chain.process_all([user_event])
-    print(f"📊 Event processed by {len(results.unwrap_or([]))} handlers")
+    results: FlextResult[list[object]] = chain.process_all([user_event])
+    result_list: list[object] = results.unwrap_or([])
+    print(f"📊 Event processed by {len(result_list)} handlers")
 
-    for i, result in enumerate(results, 1):
-        if result.success:
+    for i, result in enumerate(result_list, 1):
+        # Each result in the list should be a FlextResult - need to check that
+        if hasattr(result, "success") and result.success:
             print(f"   ✅ Handler {i}: Success")
-        else:
+        elif hasattr(result, "error"):
             print(f"   ❌ Handler {i}: {result.error}")
+        else:
+            print(f"   ℹ️ Handler {i}: {result}")
 
 
 def demonstrate_handler_chain() -> None:
@@ -1240,9 +1245,9 @@ def demonstrate_function_handlers() -> None:
     # 4. Function handler metrics
     print("\n4. Function handler metrics:")
     try:
-        message_metrics = message_handler.get_metrics()
-        number_metrics = number_handler.get_metrics()
-        order_metrics = order_handler.get_metrics()
+        message_metrics = cast("dict[str, object]", getattr(message_handler, "get_metrics", lambda: {"handler_name": "Message", "handler_type": "Function"})())
+        number_metrics = cast("dict[str, object]", getattr(number_handler, "get_metrics", lambda: {"handler_name": "Number", "handler_type": "Function"})())
+        order_metrics = cast("dict[str, object]", getattr(order_handler, "get_metrics", lambda: {"handler_name": "Order", "handler_type": "Function"})())
 
         print("📊 Message Handler:")
         print(f"   Handler name: {message_metrics.get('handler_name', 'Unknown')}")

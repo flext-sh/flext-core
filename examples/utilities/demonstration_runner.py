@@ -13,10 +13,7 @@ import math
 import time
 from decimal import Decimal
 
-from ..shared_domain import (
-    SharedDomainFactory,
-)
-
+from examples.shared_domain import SharedDomainFactory
 from flext_core import (
     FlextUtilities,
     TEntityId,
@@ -191,7 +188,7 @@ def demonstrate_shared_domain_usage() -> None:
     print(f"Cache TTL: {enhanced_user.get_cache_ttl()} seconds")
 
     # Serialize the user
-    serialized_data = enhanced_user.to_serializable()
+    serialized_data: dict[str, object] = enhanced_user.to_serializable()
     print(f"Serialized User Keys: {list(serialized_data.keys())}")
 
     DemonstrationSectionHelper.log_success("Shared domain demonstration completed")

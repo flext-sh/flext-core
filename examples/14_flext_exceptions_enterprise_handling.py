@@ -28,7 +28,7 @@ import time
 import traceback
 from typing import cast
 
-from flext_core.exceptions import (
+from flext_core import (
     FlextAlreadyExistsError,
     FlextAuthenticationError,
     FlextConfigurationError,
@@ -40,13 +40,13 @@ from flext_core.exceptions import (
     FlextOperationError,
     FlextPermissionError,
     FlextProcessingError,
+    FlextResult,
     FlextTimeoutError,
     FlextTypeError,
     FlextValidationError,
     clear_exception_metrics,
     get_exception_metrics,
 )
-from flext_core.result import FlextResult
 
 # =============================================================================
 # EXCEPTION CONSTANTS - Validation and error handling constraints
@@ -138,7 +138,7 @@ class DatabaseConnection:
 
         # Demo credentials - in production use secure authentication
         demo_username = "admin"
-        demo_password = "secret"
+        demo_password = "secret"  # noqa: S105
         if username != demo_username or password != demo_password:
             msg = "Invalid database credentials"
             raise FlextAuthenticationError(
@@ -226,8 +226,8 @@ class UserValidationService:
                 msg = "Age must be an integer"
                 raise FlextTypeError(
                     msg,
-                    expected_type=int,
-                    actual_type=type(age),
+                    expected_type="int",
+                    actual_type=type(age).__name__,
                 )
 
         def _validate_age_range(age: int) -> None:
@@ -612,7 +612,7 @@ class ExternalAPIService:
                 msg,
                 api_url=self.api_url,
                 authentication_method="bearer_token",
-                error_code="invalid_token",
+                token_type="invalid_token",
             )
 
         try:
@@ -708,8 +708,8 @@ def demonstrate_base_exceptions() -> None:
         ),
         FlextTypeError(
             "Expected string, got integer",
-            expected_type=str,
-            actual_type=int,
+            expected_type="str",
+            actual_type="int",
         ),
         FlextOperationError(
             "Database operation failed",
@@ -829,7 +829,8 @@ def demonstrate_validation_exceptions() -> None:
     print("\n2. Exception factory methods:")
 
     # Create validation error using factory
-    validation_error = FlextExceptions.create_validation_error(
+    factory = FlextExceptions()
+    validation_error = factory.create_validation_error(
         "Email domain not allowed",
         field="email",
         value="user@blocked-domain.com",
@@ -839,11 +840,11 @@ def demonstrate_validation_exceptions() -> None:
     print(f"   Factory-created validation error: {validation_error}")
     print(f"   Context: {validation_error.context}")
 
-    # Create type error using factory
-    type_error = FlextExceptions.create_type_error(
+    # Create type error directly
+    type_error = FlextTypeError(
         "Configuration value must be integer",
-        expected_type=int,
-        actual_type=str,
+        expected_type="int",
+        actual_type="str",
     )
 
     print(f"   Factory-created type error: {type_error}")

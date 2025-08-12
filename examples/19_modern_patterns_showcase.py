@@ -13,7 +13,7 @@ from decimal import Decimal
 from enum import StrEnum
 from typing import cast
 
-from .shared_domain import (
+from shared_domain import (
     Age,
     EmailAddress as Email,
     Money,
@@ -53,7 +53,7 @@ class AppConfig(FlextSettings):
     redis_url: str = "redis://localhost:6379"
 
     # Payment settings
-    payment_api_key: str
+    payment_api_key: str = "demo_payment_key_12345"
     payment_endpoint: str = "https://api.payments.com"
 
     # Business rules

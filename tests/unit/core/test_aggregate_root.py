@@ -32,7 +32,9 @@ class TestAggregateRootCoverage:
             result = aggregate.add_domain_event("invalid_event", {"data": "test"})
 
             assert result.is_failure
-            assert "Failed to add domain event: Invalid event type" in result.error
+            error_message: str = "Failed to add domain event: Invalid event type"
+
+            assert error_message in (result.error or "")
 
     def test_add_domain_event_value_error_handling(self) -> None:
         """Test add_domain_event ValueError handling (lines 261-262)."""
@@ -45,7 +47,8 @@ class TestAggregateRootCoverage:
             result = aggregate.add_domain_event("test_event", {"invalid": None})
 
             assert result.is_failure
-            assert "Failed to add domain event: Invalid event data" in result.error
+            error_message: str = "Failed to add domain event: Invalid event data"
+            assert error_message in (result.error or "")
 
     def test_add_domain_event_attribute_error_handling(self) -> None:
         """Test add_domain_event AttributeError handling (lines 261-262)."""
@@ -58,4 +61,5 @@ class TestAggregateRootCoverage:
             result = aggregate.add_domain_event("test_event", {"data": "test"})
 
             assert result.is_failure
-            assert "Failed to add domain event: Missing attribute" in result.error
+            error_message: str = "Failed to add domain event: Missing attribute"
+            assert error_message in (result.error or "")

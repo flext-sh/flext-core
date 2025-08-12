@@ -1,14 +1,31 @@
-"""Railway-oriented programming result type.
+"""Railway-oriented programming result type for FLEXT ecosystem.
 
-Provides FlextResult[T] for type-safe error handling without exceptions.
-Enables function composition through map/flat_map chaining operations.
+This module provides the FlextResult[T] class for type-safe error handling without exceptions
+in the FLEXT ecosystem. It implements the railway-oriented programming pattern, enabling
+function composition through map/flat_map chaining operations for clean error handling.
+
+The FlextResult pattern is fundamental to FLEXT's approach to error handling, replacing
+traditional exception-based error handling with explicit success/failure states that
+compose cleanly in functional programming style.
 
 Classes:
     FlextResult: Generic result container with success/failure states.
-    FlextResultOperations: Additional utility operations.
+    FlextResultOperations: Additional utility operations (alias for FlextResult).
 
 Functions:
-    safe_call: Execute functions with automatic error handling.
+    safe_call: Execute functions with automatic error handling wrapped in FlextResult.
+
+Example:
+    Basic usage of FlextResult for error handling:
+
+    >>> result = FlextResult.ok("success")
+    >>> mapped = result.map(lambda x: x.upper())
+    >>> print(mapped.data)
+    'SUCCESS'
+
+    >>> error_result = FlextResult.fail("Something went wrong")
+    >>> print(error_result.error)
+    'Something went wrong'
 
 """
 
@@ -33,13 +50,39 @@ if TYPE_CHECKING:
 
 
 class FlextResult[T]:
-    """Result type for railway-oriented programming.
+    """Result type for railway-oriented programming in FLEXT ecosystem.
 
-    Container that represents either success (with data) or failure
-    (with error). Supports functional composition via map/flat_map.
+    A generic container that represents either success (with data) or failure (with error).
+    This class supports functional composition via map/flat_map operations, enabling
+    clean error handling without exceptions. It's the foundation of FLEXT's error
+    handling strategy across all ecosystem components.
 
-    Type Parameters:
-        T: Type of the success value.
+    The class implements the Result pattern (also known as Either pattern) where
+    operations can be chained without explicit error checking at each step.
+
+    Attributes:
+        is_success: True if the result represents success, False otherwise.
+        is_failure: True if the result represents failure, False otherwise.
+        data: The success value if successful, None otherwise.
+        error: The error message if failed, None otherwise.
+        error_code: Optional error code for structured error handling.
+        error_data: Optional error metadata dictionary.
+
+    Example:
+        Basic usage with method chaining:
+
+        >>> result = FlextResult.ok(10)
+        >>> final = result.map(lambda x: x * 2).map(lambda x: str(x))
+        >>> print(final.data)
+        '20'
+
+        Error handling without exceptions:
+
+        >>> error_result = FlextResult.fail("Division by zero")
+        >>> final = error_result.map(lambda x: x * 2)  # Skipped due to error
+        >>> print(final.error)
+        'Division by zero'
+
     """
 
     def __init__(
@@ -49,13 +92,21 @@ class FlextResult[T]:
         error_code: str | None = None,
         error_data: dict[str, object] | None = None,
     ) -> None:
-        """Initialize result with data or error.
+        """Initialize FlextResult with success data or error information.
+
+        Creates a new FlextResult instance representing either a successful operation
+        (with data) or a failed operation (with error details). The result is considered
+        successful if no error is provided, otherwise it's considered a failure.
 
         Args:
-            data: Success value if no error.
-            error: Error message if failed.
-            error_code: Optional error code.
-            error_data: Optional error metadata.
+            data: The success value to store. Can be None for successful void operations.
+            error: Error message describing what went wrong. None for successful results.
+            error_code: Optional structured error code for programmatic error handling.
+            error_data: Optional dictionary containing additional error metadata and context.
+
+        Note:
+            Either data should be provided (for success) OR error should be provided (for failure).
+            Providing both data and error results in a failure state (error takes precedence).
 
         """
         self._data = data
@@ -65,7 +116,12 @@ class FlextResult[T]:
 
     @property
     def is_success(self) -> bool:
-        """Check if a result is successful."""
+        """Check if the result represents a successful operation.
+
+        Returns:
+            bool: True if the result contains success data, False if it contains an error.
+
+        """
         return self._error is None
 
     @property
@@ -105,13 +161,23 @@ class FlextResult[T]:
 
     @classmethod
     def ok(cls, data: T) -> FlextResult[T]:
-        """Create a successful result.
+        """Create a successful FlextResult containing the provided data.
+
+        Factory method for creating successful results. This is the preferred way
+        to create successful FlextResult instances throughout the FLEXT ecosystem.
 
         Args:
-            data: The success value.
+            data: The success value to wrap in the result.
 
         Returns:
-            Result containing the data.
+            FlextResult[T]: A new successful result containing the provided data.
+
+        Example:
+            >>> result = FlextResult.ok("Hello World")
+            >>> print(result.data)
+            'Hello World'
+            >>> print(result.is_success)
+            True
 
         """
         return cls(data=data)
@@ -140,15 +206,28 @@ class FlextResult[T]:
         error_code: str | None = None,
         error_data: dict[str, object] | None = None,
     ) -> FlextResult[T]:
-        """Create failed result.
+        """Create a failed FlextResult with error information.
+
+        Factory method for creating failed results. This is the preferred way
+        to create error results throughout the FLEXT ecosystem, providing
+        structured error handling with optional error codes and metadata.
 
         Args:
-            error: Error message.
-            error_code: Optional error code.
-            error_data: Optional error metadata.
+            error: Human-readable error message describing what went wrong.
+            error_code: Optional structured error code for programmatic handling.
+            error_data: Optional dictionary containing additional error context and metadata.
 
         Returns:
-            Result containing the error.
+            FlextResult[T]: A new failed result containing the error information.
+
+        Example:
+            >>> result = FlextResult.fail(
+            ...     "Invalid input", error_code="VALIDATION_ERROR"
+            ... )
+            >>> print(result.error)
+            'Invalid input'
+            >>> print(result.error_code)
+            'VALIDATION_ERROR'
 
         """
         # Provide default error message for empty strings
@@ -549,7 +628,34 @@ class FlextResult[T]:
 
 
 def safe_call[T](func: Callable[[], T]) -> FlextResult[T]:
-    """Safely call a function and wrap result in FlextResult (compatible)."""
+    """Safely execute a function and wrap the result in a FlextResult.
+
+    This utility function executes the provided function and automatically
+    wraps the result in a FlextResult. If the function executes successfully,
+    returns FlextResult.ok with the result. If an exception occurs, returns
+    FlextResult.fail with the error message.
+
+    Args:
+        func: A callable that takes no arguments and returns a value of type T.
+
+    Returns:
+        FlextResult[T]: Success result containing the function's return value,
+                       or failure result containing the exception message.
+
+    Example:
+        >>> def risky_operation() -> str:
+        ...     return "success"
+        >>> result = safe_call(risky_operation)
+        >>> print(result.data)
+        'success'
+
+        >>> def failing_operation() -> str:
+        ...     raise ValueError("Something went wrong")
+        >>> result = safe_call(failing_operation)
+        >>> print(result.error)
+        'Something went wrong'
+
+    """
     try:
         return FlextResult.ok(func())
     except Exception as e:

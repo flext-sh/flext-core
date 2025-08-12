@@ -50,53 +50,23 @@ class FlextAggregateRoot(FlextEntity):
         **data: object,
     ) -> None:
         """Initialize with an empty event list."""
-        # Handle id from data or entity_id parameter
-        provided_id = data.pop("id", None)
-        # Ensure actual_id is a string
-        if provided_id is not None and isinstance(provided_id, str):
-            actual_id = provided_id
-        elif entity_id is not None:
-            actual_id = entity_id
-        else:
-            actual_id = FlextGenerators.generate_uuid()
-
-        # Initialize a domain events list
-        domain_events_raw = data.pop("domain_events", [])
-        # Ensure domain_events is properly typed as list[FlextEvent]
-        domain_events = domain_events_raw if isinstance(domain_events_raw, list) else []
-
-        # Only add created_at if it's a proper datetime
-        created_at: datetime | None = None
-        if "created_at" in data and hasattr(data["created_at"], "year"):
-            created_at = cast("datetime", data["created_at"])
-
-        # Remove created_at from data to avoid duplicate argument
+        actual_id = self._resolve_entity_id(entity_id, data)
+        domain_events_objects = self._process_domain_events(data)
+        created_at = self._extract_created_at(data)
         entity_data = {k: v for k, v in data.items() if k != "created_at"}
 
-        # Initialize parent FlextEntity with proper arguments
-        # Pass through all additional fields for subclass-specific attributes
-        init_kwargs = {
-            "id": actual_id,
-            "version": version,
-            "domain_events": domain_events,
-        }
-
-        # Only add created_at if it's not None
-        if created_at is not None:
-            init_kwargs["created_at"] = created_at
-
-        # Add all remaining entity data for subclass fields
-        init_kwargs.update(entity_data)
-
         try:
-            # Initialize parent class with all parameters at once
-            # This allows Pydantic to properly validate all fields
-            super().__init__(**init_kwargs)  # type: ignore[arg-type]
-
+            self._initialize_parent(
+                actual_id,
+                version,
+                created_at,
+                domain_events_objects,
+                entity_data,
+            )
             # Initialize a domain event objects list for aggregate root functionality
             # Use object.__setattr__ because the model is frozen
             object.__setattr__(self, "_domain_event_objects", [])
-        except Exception as e:
+        except (TypeError, ValueError, AttributeError, RuntimeError) as e:
             # REAL SOLUTION: Proper error handling for initialization failures
             error_msg = f"Failed to initialize aggregate root with provided data: {e}"
             raise FlextValidationError(
@@ -104,9 +74,60 @@ class FlextAggregateRoot(FlextEntity):
                 validation_details={
                     "aggregate_id": actual_id,
                     "initialization_error": str(e),
-                    "provided_kwargs": list(init_kwargs.keys()),
+                    "provided_entity_data": list(entity_data.keys()),
+                    "provided_version": version,
                 },
             ) from e
+
+    def _resolve_entity_id(self, entity_id: str | None, data: dict[str, object]) -> str:
+        """Resolve the actual entity ID from parameters and data."""
+        provided_id = data.pop("id", None)
+        if provided_id is not None and isinstance(provided_id, str):
+            return provided_id
+        if entity_id is not None:
+            return entity_id
+        return FlextGenerators.generate_uuid()
+
+    def _process_domain_events(self, data: dict[str, object]) -> list[object]:
+        """Process and convert domain events to the proper format."""
+        domain_events_raw = data.pop("domain_events", [])
+        domain_events_objects: list[object] = []
+        if isinstance(domain_events_raw, list):
+            for ev in domain_events_raw:
+                if isinstance(ev, dict):
+                    domain_events_objects.append(ev)
+                elif hasattr(ev, "model_dump"):
+                    dumped = ev.model_dump()
+                    if isinstance(dumped, dict):
+                        domain_events_objects.append(dumped)
+                else:
+                    domain_events_objects.append(ev)
+        return domain_events_objects
+
+    def _extract_created_at(self, data: dict[str, object]) -> datetime | None:
+        """Extract and validate created_at datetime from data."""
+        if "created_at" in data and hasattr(data["created_at"], "year"):
+            return cast("datetime", data["created_at"])
+        return None
+
+    def _initialize_parent(
+        self,
+        actual_id: str,
+        version: int,
+        created_at: datetime | None,
+        domain_events_objects: list[object],
+        entity_data: dict[str, object],
+    ) -> None:
+        """Initialize parent class with all parameters."""
+        # Initialize base entity first with all parameters
+        init_params: dict[str, object] = {"id": actual_id, "version": version}
+        if created_at is not None:
+            init_params["created_at"] = created_at
+        # Add all other entity data
+        init_params.update(entity_data)
+        super().__init__(**init_params)  # type: ignore[arg-type]
+        # Set domain events
+        object.__setattr__(self, "domain_events", list(domain_events_objects))
 
     def add_domain_event(self, *args: object) -> FlextResult[None]:
         """Add domain event for event sourcing.
@@ -115,13 +136,16 @@ class FlextAggregateRoot(FlextEntity):
         (event_type: str, data: dict).
         """
         try:
-            if len(args) == 1 and isinstance(args[0], dict):
+            legacy_args_count = 1
+            modern_args_count = 2
+
+            if len(args) == legacy_args_count and isinstance(args[0], dict):
                 # Legacy signature: event dict
                 event_dict = args[0]
                 event_type = event_dict.get("type", "unknown")
                 event_data = event_dict.get("data", {})
             elif (
-                len(args) == 2  # noqa: PLR2004
+                len(args) == modern_args_count
                 and isinstance(args[0], str)
                 and isinstance(args[1], dict)
             ):
@@ -153,7 +177,7 @@ class FlextAggregateRoot(FlextEntity):
             new_dict_events = [*current_dict_events, event.model_dump()]
             object.__setattr__(self, "domain_events", new_dict_events)
             return FlextResult.ok(None)
-        except Exception as e:
+        except (TypeError, ValueError, AttributeError, KeyError) as e:
             return FlextResult.fail(f"Failed to add domain event: {e}")
 
     def add_typed_domain_event(
@@ -216,11 +240,11 @@ class FlextAggregateRoot(FlextEntity):
             return list(self._domain_event_objects)
         return []
 
-    def clear_domain_events(self) -> list[FlextEvent]:  # type: ignore[override]
+    def clear_domain_events(self) -> list[dict[str, object]]:
         """Clear all domain events after publishing.
 
         Returns:
-            List of domain events that were cleared as FlextEvent instances
+            List of domain events that were cleared as dictionaries
 
         """
         if hasattr(self, "_domain_event_objects"):
@@ -228,7 +252,15 @@ class FlextAggregateRoot(FlextEntity):
             # Use object.__setattr__ because the model is frozen
             object.__setattr__(self, "_domain_event_objects", [])
             object.__setattr__(self, "domain_events", [])  # Also clear the dict version
-            return events
+            # Convert FlextEvent objects to dictionaries
+            return [
+                event.model_dump()
+                if hasattr(event, "model_dump")
+                else event.__dict__
+                if hasattr(event, "__dict__")
+                else {"event": str(event)}
+                for event in events
+            ]
         return []
 
     def has_domain_events(self) -> bool:

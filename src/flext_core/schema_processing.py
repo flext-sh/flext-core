@@ -16,9 +16,11 @@ from __future__ import annotations
 import re
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import TYPE_CHECKING, Protocol, TypeVar
+from typing import TYPE_CHECKING, Generic, Protocol, TypeVar
 
 from .result import FlextResult
+
+# Keep internal alias for backward compatibility in public API exports
 from .typings import EntryT
 from .value_objects import FlextValueObject
 
@@ -30,7 +32,7 @@ class FlextEntryType(Enum):
     """Base enumeration for entry types."""
 
 
-class FlextBaseEntry(FlextValueObject, ABC):
+class FlextBaseEntry(FlextValueObject):
     """Base entry value object for schema/ACL processing."""
 
     entry_type: str
@@ -51,16 +53,19 @@ class FlextEntryValidator(Protocol):
         ...
 
 
-TEntry = TypeVar("TEntry")
+# Use EntryT from typings instead of local TEntry
 
 
-class FlextBaseProcessor[TEntry](ABC):
+EntryTypeVar = TypeVar("EntryTypeVar")
+
+
+class FlextBaseProcessor(ABC, Generic[EntryTypeVar]):  # noqa: UP046
     """Base processor for entries with configurable validation."""
 
     def __init__(self, validator: FlextEntryValidator | None = None) -> None:
         """Initialize processor with optional validator."""
         self.validator = validator
-        self._extracted_entries: list[TEntry] = []
+        self._extracted_entries: list[EntryTypeVar] = []
 
     @abstractmethod
     def _extract_identifier(self, content: str) -> FlextResult[str]:
@@ -74,7 +79,7 @@ class FlextBaseProcessor[TEntry](ABC):
         clean_content: str,
         original_content: str,
         identifier: str,
-    ) -> FlextResult[TEntry]:
+    ) -> FlextResult[EntryTypeVar]:
         """Create concrete entry instance."""
         ...
 
@@ -83,7 +88,7 @@ class FlextBaseProcessor[TEntry](ABC):
         content: str,
         entry_type: str,
         prefix: str = "",
-    ) -> FlextResult[EntryT]:
+    ) -> FlextResult[EntryTypeVar]:
         """Extract entry information from content with type safety."""
         # Step 1: Extract and validate identifier
         identifier_validation = self._validate_identifier_extraction(content)
@@ -140,7 +145,7 @@ class FlextBaseProcessor[TEntry](ABC):
         clean_content: str,
         content: str,
         identifier: str,
-    ) -> FlextResult[EntryT]:
+    ) -> FlextResult[EntryTypeVar]:
         """Validate an entry creation step."""
         entry_result = self._create_entry(
             entry_type,
@@ -165,17 +170,19 @@ class FlextBaseProcessor[TEntry](ABC):
         lines: list[str],
         entry_type: str,
         prefix: str = "",
-    ) -> FlextResult[list[EntryT]]:
+    ) -> FlextResult[list[EntryTypeVar]]:
         """Process multiple content lines and return successful entries."""
-        results: list[EntryT] = []
+        results: list[EntryTypeVar] = []
         errors: list[str] = []
 
         for line in lines:
             if not line.strip():
                 continue
 
-            result: FlextResult[EntryT] = self.extract_entry_info(
-                line, entry_type, prefix
+            result: FlextResult[EntryTypeVar] = self.extract_entry_info(
+                line,
+                entry_type,
+                prefix,
             )
             if result.success:
                 if result.data is not None:
@@ -189,7 +196,7 @@ class FlextBaseProcessor[TEntry](ABC):
         # Return success even if some entries failed (partial success)
         return FlextResult.ok(results)
 
-    def get_extracted_entries(self) -> list[EntryT]:
+    def get_extracted_entries(self) -> list[EntryTypeVar]:
         """Get all successfully extracted entries."""
         return self._extracted_entries.copy()
 
@@ -251,7 +258,7 @@ class FlextConfigAttributeValidator:
         missing = [field for field in required if field not in config_dict]
         if missing:
             return FlextResult.fail(
-                f"Missing required attributes: {', '.join(missing)}"
+                f"Missing required attributes: {', '.join(missing)}",
             )
         return FlextResult.ok(data=True)
 

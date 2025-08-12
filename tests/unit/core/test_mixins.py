@@ -5,7 +5,7 @@ from __future__ import annotations
 import time
 
 # Use compatibility mixins for test compatibility during hybrid approach
-from flext_core.mixin_compat import (
+from flext_core.mixins import (
     LegacyCompatibleCacheableMixin as FlextCacheableMixin,
     LegacyCompatibleCommandMixin as FlextCommandMixin,
     LegacyCompatibleComparableMixin as FlextComparableMixin,

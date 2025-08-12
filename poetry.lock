@@ -2690,4 +2690,4 @@ typings = ["django-stubs", "types-ldap3", "types-protobuf", "types-psutil", "typ
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.13,<3.14"
-content-hash = "342204adbd562f124b2e753484e0ee20637ac4f1e6594a15de6adfe6cd45b029"
+content-hash = "057ba1ef77b27d54b0adfa0703b7360ffb7223e31290a704725fbff06848301b"

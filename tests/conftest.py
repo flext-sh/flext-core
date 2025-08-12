@@ -19,7 +19,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING, Generic, TypeVar
+from typing import TYPE_CHECKING, Generic, TypedDict, TypeVar
 from unittest.mock import AsyncMock, MagicMock, Mock
 
 import pytest
@@ -269,6 +269,7 @@ def sample_data() -> dict[str, object]:
 
     Returns:
         Dict containing various data types for comprehensive testing
+
     """
     return {
         "string": "test_string",
@@ -286,7 +287,6 @@ def sample_data() -> dict[str, object]:
 @pytest.fixture
 def hypothesis_strategies() -> dict[str, object]:
     """Hypothesis strategies for property-based testing."""
-
     return {
         "valid_email": st.emails(),
         "valid_uuid": st.uuids(),
@@ -311,6 +311,7 @@ def sample_metadata() -> dict[str, str | float | list[str] | None]:
 
     Returns:
         Dict containing metadata fields for testing
+
     """
     return {
         "source": "test_suite",
@@ -332,6 +333,7 @@ def error_context() -> dict[str, str | None]:
 
     Returns:
         Dict containing error context fields for testing
+
     """
     return {
         "error_code": "TEST_ERROR_001",
@@ -353,6 +355,7 @@ def test_user_data() -> dict[str, str | int | bool | list[str] | None]:
 
     Returns:
         Dict containing user data for testing
+
     """
     return {
         "id": "user-12345",
@@ -401,6 +404,7 @@ def mock_external_service() -> Generator[MagicMock]:
 
     Yields:
         MagicMock configured for external service simulation
+
     """
     mock = MagicMock()
     mock.is_healthy.return_value = True
@@ -503,6 +507,7 @@ def clean_container() -> Generator[FlextContainer]:
 
     Yields:
         FlextContainer instance with proper cleanup
+
     """
     container = FlextContainer()
 
@@ -528,6 +533,7 @@ def configured_container(
 
     Returns:
         FlextContainer with standard test services registered
+
     """
     # Register common test services
     clean_container.register("external_service", mock_external_service)
@@ -546,6 +552,7 @@ def temp_directory() -> Generator[Path]:
 
     Yields:
         Path to temporary directory with automatic cleanup
+
     """
     import shutil
     import tempfile
@@ -607,6 +614,7 @@ def clean_logging_state() -> Generator[None]:
 
     Yields:
         None (setup/teardown only)
+
     """
     # Setup: Clear initial state
     FlextLoggerFactory.clear_loggers()
@@ -638,13 +646,22 @@ def clean_logging_state() -> Generator[None]:
 # ============================================================================
 
 
+class PerformanceMetrics(TypedDict):
+    """Performance metrics data structure."""
+
+    result: object
+    execution_time: float
+    memory_used: int
+    peak_memory: int
+
+
 @pytest.fixture
-def performance_monitor() -> Callable[[Callable[[], object]], dict[str, object]]:
+def performance_monitor() -> Callable[[Callable[[], object]], PerformanceMetrics]:
     """Monitor performance metrics for operations."""
 
     def _monitor(
         func: Callable[[], object], *args: object, **kwargs: object
-    ) -> dict[str, object]:
+    ) -> PerformanceMetrics:
         import gc
 
         # Force garbage collection
@@ -682,6 +699,7 @@ def benchmark_data() -> dict[str, object]:
 
     Returns:
         Dict containing benchmark data sets
+
     """
     return {
         "small_dataset": list(range(100)),
@@ -703,6 +721,7 @@ def performance_threshold() -> dict[str, float]:
 
     Returns:
         Dict containing performance thresholds in seconds
+
     """
     return {
         "result_creation": 0.001,  # 1ms for FlextResult creation
@@ -768,7 +787,6 @@ def snapshot_manager(tmp_path: Path) -> Callable[[str, object], None]:
 @pytest.fixture
 def event_loop() -> Generator[asyncio.AbstractEventLoop]:
     """Create event loop for async tests."""
-
     loop = asyncio.new_event_loop()
     yield loop
     loop.close()
@@ -962,10 +980,10 @@ def event_factory() -> Callable[[str, dict[str, object]], FlextEvent]:
 
 
 @pytest.fixture(scope="session")
-def integration_setup() -> Generator[None]:
+def integration_setup() -> None:
     """One-time setup for integration tests."""
     # Setup code here
-    return None
+    return
     # Teardown code here
 
 
@@ -1053,6 +1071,17 @@ class AssertHelpers:
         """Assert that a result is a failure."""
         assert result.is_failure, f"Expected failure but got: {result.data}"
 
+    # Backward-compatible aliases used in some tests
+    @staticmethod
+    def assert_result_ok(result: FlextResult[object]) -> None:
+        """Assert that a result is successful."""
+        AssertHelpers.assert_result_success(result)
+
+    @staticmethod
+    def assert_result_fail(result: FlextResult[object]) -> None:
+        """Assert that a result is a failure."""
+        AssertHelpers.assert_result_failure(result)
+
 
 class MockFactory:
     """Factory for creating mock objects."""
@@ -1067,17 +1096,16 @@ class PerformanceMonitor:
     """Monitor performance during tests."""
 
     def __init__(self) -> None:
+        """Initialize performance monitor."""
         self.start_time: float | None = None
         self.end_time: float | None = None
 
     def start(self) -> None:
         """Start timing."""
-
         self.start_time = time.time()
 
     def stop(self) -> None:
         """Stop timing."""
-
         self.end_time = time.time()
 
     @property
@@ -1092,6 +1120,7 @@ class TestBuilder:
     """Builder for creating test objects."""
 
     def __init__(self) -> None:
+        """Initialize test builder."""
         self.data: dict[str, object] = {}
 
     def with_field(self, name: str, value: object) -> TestBuilder:
@@ -1129,7 +1158,9 @@ def temp_json_file() -> Generator[str]:
     """Create a temporary JSON file for testing."""
     import tempfile
 
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+    with tempfile.NamedTemporaryFile(
+        encoding="utf-8", mode="w", suffix=".json", delete=False
+    ) as f:
         json.dump(
             {
                 "database_url": "sqlite:///test.db",
@@ -1153,7 +1184,6 @@ def temp_json_file() -> Generator[str]:
 @pytest.fixture
 def validation_test_cases() -> list[dict[str, object]]:
     """Provide common validation test cases."""
-
     return [
         {"valid": True, "data": {"name": "test", "value": 123}},
         {"valid": False, "data": {"name": "", "value": None}},

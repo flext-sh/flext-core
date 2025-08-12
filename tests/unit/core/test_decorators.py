@@ -524,8 +524,9 @@ class TestFlextDecoratorUtils:
         def original_func() -> str:
             return "original"
 
-        # Create a function without standard attributes by using lambda
-        original_minimal = lambda: "original"  # noqa: E731
+        # Create a function without standard attributes
+        def original_minimal() -> str:
+            return "original"
 
         def wrapper_func() -> str:
             return "wrapper"
@@ -553,8 +554,8 @@ class TestFlextErrorHandlingDecorators:
         result = handler.handle_error("test_func", error)
 
         assert hasattr(result, "is_failure")
-        assert result.is_failure  # type: ignore[union-attr]
-        assert "Error in test_func: test error" in (result.error or "")  # type: ignore[union-attr]
+        assert result.is_failure
+        assert "Error in test_func: test error" in (result.error or "")
 
     def test_should_handle_error_method(self) -> None:
         """Test should_handle_error method (lines 170-172)."""
@@ -573,8 +574,8 @@ class TestFlextErrorHandlingDecorators:
         result = handler.create_error_result("save_user", error)
 
         assert hasattr(result, "is_failure")
-        assert result.is_failure  # type: ignore[union-attr]
-        assert "Function save_user failed: database error" in (result.error or "")  # type: ignore[union-attr]
+        assert result.is_failure
+        assert "Function save_user failed: database error" in (result.error or "")
 
     def test_error_handling_decorator_apply_decoration(self) -> None:
         """Test apply_decoration method with error handling (lines 178-190)."""
@@ -797,7 +798,6 @@ class TestBaseDecoratorClasses:
 
     def test_base_performance_decorators(self) -> None:
         """Test _BasePerformanceDecorators functionality."""
-
         # Test get_timing_decorator
         decorator = _BasePerformanceDecorators.get_timing_decorator()
         assert callable(decorator)

@@ -7,15 +7,13 @@ validation, and event sourcing integration.
 
 from __future__ import annotations
 
-from typing import cast
+from typing import Protocol, cast
 
-# Import shared domain models to eliminate duplication
-from .shared_domain import (
+from shared_domain import (
     SharedDomainFactory,
     log_domain_operation,
 )
 
-# Import additional flext-core patterns for enhanced functionality
 from flext_core import (
     FlextCommands,
     FlextResult,
@@ -37,6 +35,19 @@ MAX_USER_AGE = 120  # Maximum reasonable age for validation
 
 # Deletion reason validation constants
 MIN_DELETION_REASON_LENGTH = 10  # Minimum characters for deletion justification
+
+# =============================================================================
+# HANDLER PROTOCOLS - Type-safe handler interfaces
+# =============================================================================
+
+
+class QueryHandlerProtocol(Protocol):
+    """Protocol for query handlers with handle method."""
+
+    def handle(self, query: object) -> FlextResult[object]:
+        """Handle a query and return result."""
+        ...
+
 
 # =============================================================================
 # NO LOCAL DOMAIN MODELS - Use ONLY shared_domain.py models
@@ -62,15 +73,16 @@ class DomainEvent:
         self.timestamp = FlextUtilities.generate_iso_timestamp()
         self.correlation_id = FlextUtilities.generate_correlation_id()
 
-    def to_dict(self) -> TAnyObject:
-        """Convert event to dictionary using TAnyObject."""
-        return {
+    def to_dict(self) -> dict[str, object]:
+        """Convert event to dictionary."""
+        result: dict[str, object] = {
             "event_id": self.event_id,
             "event_type": self.event_type,
             "data": self.data,
             "timestamp": self.timestamp,
             "correlation_id": self.correlation_id,
         }
+        return result
 
 
 class EventStore:
@@ -117,9 +129,9 @@ class BaseCommandHandler:
         log_message: TLogMessage = f"🔧 {handler_type} initialized: {self.handler_id}"
         print(log_message)
 
-    def create_query_projection(self, shared_user: object) -> TAnyObject:
+    def create_query_projection(self, shared_user: object) -> dict[str, object]:
         """DRY Helper: Create standardized query projection."""
-        return {
+        result: dict[str, object] = {
             "id": getattr(shared_user, "id", None),
             "name": getattr(shared_user, "name", None),
             "email": getattr(getattr(shared_user, "email_address", None), "email", None)
@@ -136,6 +148,7 @@ class BaseCommandHandler:
             else None,
             "version": getattr(shared_user, "version", None),
         }
+        return result
 
     def store_domain_event(
         self, event_type: str, data: TAnyObject
@@ -348,7 +361,7 @@ class CreateUserCommandHandler(
             )
 
             # Use helper to create query projection - DRY principle
-            query_projection = self.create_query_projection(shared_user)
+            query_projection: dict[str, object] = self.create_query_projection(shared_user)
 
             # Use helper to store domain event - DRY principle
             event_result = self.store_domain_event("UserCreated", query_projection)
@@ -356,7 +369,7 @@ class CreateUserCommandHandler(
                 return FlextResult.fail(event_result.error or "Event storage failed")
 
             print(f"✅ User created successfully: {shared_user.id}")
-            return FlextResult.ok(query_projection)
+            return FlextResult.ok(cast("TAnyObject", query_projection))
 
         except (TypeError, ValueError) as e:
             return FlextResult.fail(f"Failed to create shared user: {e}")
@@ -385,7 +398,7 @@ class UpdateUserCommandHandler(
         user_data = self.users_db[command.target_user_id]
 
         # Update fields using helper data structure
-        update_data: TAnyObject = {
+        update_data: dict[str, object] = {
             "updated_at": FlextUtilities.generate_iso_timestamp(),
         }
 
@@ -403,7 +416,7 @@ class UpdateUserCommandHandler(
             return FlextResult.fail(event_result.error or "Event storage failed")
 
         print(f"✅ User updated successfully: {command.target_user_id}")
-        return FlextResult.ok(user_data)
+        return FlextResult.ok(cast("TAnyObject", user_data))
 
 
 class DeleteUserCommandHandler(
@@ -439,7 +452,7 @@ class DeleteUserCommandHandler(
         )
 
         # Prepare deletion event data
-        deletion_data: TAnyObject = {
+        deletion_data: dict[str, object] = {
             "user_id": command.target_user_id,
             "reason": command.reason,
             "deleted_at": deleted_at,
@@ -451,7 +464,7 @@ class DeleteUserCommandHandler(
             return FlextResult.fail(event_result.error or "Event storage failed")
 
         print(f"✅ User deleted successfully: {command.target_user_id}")
-        return FlextResult.ok(user_data)
+        return FlextResult.ok(cast("TAnyObject", user_data))
 
 
 # =============================================================================
@@ -477,7 +490,7 @@ class GetUserQueryHandler(FlextCommands.QueryHandler[GetUserQuery, TAnyObject]):
 
         user_data = self.users_db[query.target_user_id]
         print(f"✅ User retrieved: {query.target_user_id}")
-        return FlextResult.ok(user_data)
+        return FlextResult.ok(cast("TAnyObject", user_data))
 
 
 class ListUsersQueryHandler(
@@ -507,7 +520,7 @@ class ListUsersQueryHandler(
             if query.max_age is not None and user_age > query.max_age:
                 continue
 
-            users.append(user_data)
+            users.append(cast("TAnyObject", user_data))
 
         print(f"✅ Found {len(users)} users matching criteria")
         return FlextResult.ok(users)
@@ -526,7 +539,7 @@ class GetUserEventsQueryHandler(
         print(log_message)
 
         events = event_store.get_events_by_correlation(query.correlation_id)
-        event_data: list[TAnyObject] = [event.to_dict() for event in events]
+        event_data: list[TAnyObject] = [cast("TAnyObject", event.to_dict()) for event in events]
 
         print(
             f"✅ Found {len(event_data)} events for correlation {query.correlation_id}",
@@ -551,9 +564,9 @@ def setup_command_bus() -> FlextResult[FlextCommands.Bus]:
     command_bus = FlextCommands.Bus()
 
     # Register command handlers
-    create_handler = CreateUserCommandHandler()
-    update_handler = UpdateUserCommandHandler(users_db)
-    delete_handler = DeleteUserCommandHandler(users_db)
+    create_handler: object = CreateUserCommandHandler()
+    update_handler: object = UpdateUserCommandHandler(users_db)
+    delete_handler: object = DeleteUserCommandHandler(users_db)
 
     command_bus.register_handler(CreateUserCommand, create_handler)
     command_bus.register_handler(UpdateUserCommand, update_handler)
@@ -645,8 +658,8 @@ class UserManagementApplicationService:
         print(log_message)
 
         query = GetUserQuery(target_user_id=user_id)
-        handler = cast("GetUserQueryHandler", self.query_handlers["get_user"])
-        return handler.handle(query)
+        handler = cast("QueryHandlerProtocol", self.query_handlers["get_user"])
+        return cast("FlextResult[TAnyObject]", handler.handle(query))
 
     def list_users(
         self,
@@ -666,8 +679,8 @@ class UserManagementApplicationService:
             min_age=min_age,
             max_age=max_age,
         )
-        handler = cast("ListUsersQueryHandler", self.query_handlers["list_users"])
-        return handler.handle(query)
+        handler = cast("QueryHandlerProtocol", self.query_handlers["list_users"])
+        return cast("FlextResult[list[TAnyObject]]", handler.handle(query))
 
     def get_user_events(
         self,
@@ -681,10 +694,10 @@ class UserManagementApplicationService:
 
         query = GetUserEventsQuery(correlation_id=correlation_id)
         handler = cast(
-            "GetUserEventsQueryHandler",
+            "QueryHandlerProtocol",
             self.query_handlers["get_user_events"],
         )
-        return handler.handle(query)
+        return cast("FlextResult[list[TAnyObject]]", handler.handle(query))
 
 
 # =============================================================================
@@ -732,7 +745,7 @@ class CQRSDemonstrator:
         # Use helper for standardized section header
         DemonstrationFlowHelper.print_section_header(2, "User Creation Commands")
 
-        create_result = self.app_service.create_user(
+        create_result: FlextResult[object] = self.app_service.create_user(
             "Alice Johnson", "alice@example.com", 28
         )
 
@@ -762,7 +775,7 @@ class CQRSDemonstrator:
         print("📋 EXAMPLE 3: User Update Commands")
         print("=" * 60)
 
-        update_result = self.app_service.update_user(
+        update_result: FlextResult[object] = self.app_service.update_user(
             self.created_user_id, name="Alice Smith"
         )
         if update_result.success:
@@ -782,14 +795,17 @@ class CQRSDemonstrator:
         print("📋 EXAMPLE 4: User Queries")
         print("=" * 60)
 
-        list_result = self.app_service.list_users(active_only=True)
+        list_result: FlextResult[list[object]] = self.app_service.list_users(active_only=True)
         if list_result.success:
             users = list_result.data
             if isinstance(users, list):
                 print(f"✅ Found {len(users)} active users")
                 for user in users:
                     if isinstance(user, dict) and "name" in user:
-                        print(f"   - {user['name']} ({user.get('email', 'N/A')})")
+                        user_dict = cast("dict[str, object]", user)
+                        user_name = user_dict.get("name", "Unknown")
+                        user_email = user_dict.get("email", "N/A")
+                        print(f"   - {user_name} ({user_email})")
             else:
                 print("✅ Users listed successfully")
             return FlextResult.ok(None)
@@ -816,7 +832,7 @@ class CQRSDemonstrator:
         print("📋 EXAMPLE 6: User Deletion Commands")
         print("=" * 60)
 
-        delete_result = self.app_service.delete_user(
+        delete_result: FlextResult[object] = self.app_service.delete_user(
             self.created_user_id,
             "User requested account deletion",
         )
@@ -838,7 +854,7 @@ class CQRSDemonstrator:
         print("=" * 60)
 
         # Try to create user with invalid data
-        invalid_result = self.app_service.create_user("", "invalid-email", 15)
+        invalid_result: FlextResult[object] = self.app_service.create_user("", "invalid-email", 15)
         if invalid_result.is_failure:
             print(f"❌ Expected validation failure: {invalid_result.error}")
             return FlextResult.ok(None)

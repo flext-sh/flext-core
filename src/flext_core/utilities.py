@@ -1,32 +1,34 @@
 """Common utility functions for ID generation and formatting.
 
 Provides utilities for ID generation, type conversion, formatting, and performance
-tracking following SOLID principles with concrete implementations from
-base_utilities.py.
+tracking following SOLID principles with concrete implementations.
 
 """
 
 from __future__ import annotations
 
-import datetime
 import re
 import sys
 import time
 import traceback
 import uuid
 from abc import ABC, abstractmethod
-from datetime import UTC
+from datetime import UTC, datetime
 from inspect import signature
-from typing import TYPE_CHECKING, Protocol, TypeGuard
+from typing import TYPE_CHECKING, Generic, Protocol, TypeGuard, TypeVar
 
 from flext_core.constants import FlextConstants
 from flext_core.loggings import FlextLoggerFactory
 from flext_core.result import FlextResult
-from flext_core.typings import T, TAnyDict  # noqa: TC001
 from flext_core.validation import FlextValidators
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+    from flext_core.typings import TAnyDict
+
+# Type variable for generic utilities
+T = TypeVar("T")
 
 # =============================================================================
 # CONSTANTS - Backward compatibility
@@ -65,8 +67,8 @@ class FlextConsole:
         text_parts = []
         for arg in args:
             text = str(arg)
-            # Remove rich markup tags for plain text output
-            clean_text = re.sub(r"[/?[^]]*", "", text)
+            # Remove rich-style markup tags (e.g., [red]...[/red]) for plain output
+            clean_text = re.sub(r"\[/?[^\]]*\]", "", text)
             text_parts.append(clean_text)
 
         # Use sys.stdout.write instead of print to avoid T201 linting error
@@ -153,10 +155,8 @@ class FlextUtilities:
 
     @classmethod
     def truncate(cls, text: str, max_length: int = 100, suffix: str = "...") -> str:
-        """Truncate text."""
-        if len(text) <= max_length:
-            return text
-        return text[: max_length - len(suffix)] + suffix
+        """Truncate text (delegates to FlextTextProcessor)."""
+        return FlextTextProcessor.truncate(text, max_length, suffix)
 
     @classmethod
     def handle_cli_main_errors(
@@ -214,16 +214,26 @@ class FlextUtilities:
 
     @classmethod
     def safe_call(cls, func: Callable[[], T] | Callable[[object], T]) -> FlextResult[T]:
-        """Safely call function."""
+        """Safely call function using signature inspection."""
         try:
+            # Use signature inspection to determine parameter count safely
             try:
-                num_params = len(signature(func).parameters)
-            except Exception:
-                num_params = 0
+                sig = signature(func)
+                param_count = len(sig.parameters)
+            except (ValueError, TypeError, OSError):
+                # If signature inspection fails, fall back to try-catch approach
+                try:
+                    result = func()  # type: ignore[call-arg]
+                    return FlextResult.ok(result)
+                except TypeError:
+                    result = func(object())  # type: ignore[call-arg]
+                    return FlextResult.ok(result)
 
-            result = func() if num_params == 0 else func(object())  # type: ignore[call-arg]
+            # Call based on actual parameter count
+            result = func() if param_count == 0 else func(object())  # type: ignore[call-arg]
+
             return FlextResult.ok(result)
-        except Exception as e:
+        except (TypeError, ValueError, AttributeError, RuntimeError) as e:
             return FlextResult.fail(str(e))
 
     @classmethod
@@ -620,7 +630,7 @@ class FlextIdGenerator:
     @staticmethod
     def generate_timestamp() -> float:
         """Get current UTC timestamp."""
-        return datetime.datetime.now(UTC).timestamp()
+        return datetime.now(UTC).timestamp()
 
     @staticmethod
     def safe_get(
@@ -718,7 +728,7 @@ class FlextGenerators:
     @classmethod
     def generate_iso_timestamp(cls) -> str:
         """Generate ISO format timestamp."""
-        return datetime.datetime.now(datetime.UTC).isoformat()
+        return datetime.now(UTC).isoformat()
 
     @classmethod
     def generate_correlation_id(cls) -> str:
@@ -768,7 +778,7 @@ class FlextFormatters:
 # =============================================================================
 
 
-class FlextBaseFactory[T](ABC):
+class FlextBaseFactory(ABC, Generic[T]):  # noqa: UP046
     """Abstract base factory providing creation foundation across ecosystem.
 
     SOLID compliance: Single responsibility for object creation patterns.
@@ -789,12 +799,14 @@ class FlextGenericFactory(FlextBaseFactory[object]):
         """Initialize factory with a target type."""
         self._target_type = target_type
 
-    def create(self, **kwargs: object) -> FlextResult[object]:  # noqa: ARG002
+    def create(self, **kwargs: object) -> FlextResult[object]:
         """Create instance of a target type with error handling."""
         try:
-            instance = self._target_type()
+            # NOTE: Caller is responsible for providing correct kwargs
+            # that match the target type's constructor signature
+            instance = self._target_type(**kwargs)
             return FlextResult.ok(instance)
-        except Exception as e:
+        except (TypeError, ValueError, AttributeError, RuntimeError, OSError) as e:
             return FlextResult.fail(f"Factory creation failed: {e}")
 
 

@@ -37,7 +37,7 @@ class SimpleValueObject(FlextValueObject):
     value: str
 
     def validate_business_rules(self) -> FlextResult[None]:
-        """Simple validation - value cannot be empty."""
+        """Validate that value is not empty."""
         if not self.value or not self.value.strip():
             return FlextResult.fail("Value cannot be empty")
         return FlextResult.ok(None)
@@ -95,7 +95,7 @@ class InvalidValueObject(FlextValueObject):
     data: str
 
     def validate_business_rules(self) -> FlextResult[None]:
-        """Always fails validation."""
+        """Fail validation always."""
         return FlextResult.fail("Always invalid")
 
 
@@ -106,7 +106,7 @@ class SerializationTestValueObject(FlextValueObject):
     callback: object = None  # This will cause serialization issues
 
     def validate_business_rules(self) -> FlextResult[None]:
-        """Simple validation."""
+        """Validate name is not empty."""
         if not self.name:
             return FlextResult.fail("Name required")
         return FlextResult.ok(None)
@@ -190,6 +190,7 @@ class TestValueObjectValidation:
         vo = SimpleValueObject(value="")
         result = vo.validate_business_rules()
         assert result.success is False
+        assert result.error is not None
         assert "cannot be empty" in result.error
 
     def test_validate_flext_success(self) -> None:
@@ -204,6 +205,7 @@ class TestValueObjectValidation:
         vo = SimpleValueObject(value="")
         result = vo.validate_flext()
         assert result.success is False
+        assert result.error is not None
         assert "cannot be empty" in result.error
 
     def test_validate_flext_with_logging(self) -> None:
@@ -317,6 +319,7 @@ class TestValueObjectPayloadConversion:
 
         assert isinstance(payload, FlextPayload)
         payload_data = payload.data
+        assert isinstance(payload_data, dict)
         assert "value_object_data" in payload_data
         assert "class_info" in payload_data
         assert "validation_status" in payload_data
@@ -351,6 +354,7 @@ class TestValueObjectPayloadConversion:
             # Should still create payload but mark as invalid
             assert payload is not None
             payload_data = payload.data
+            assert isinstance(payload_data, dict)
             assert payload_data["validation_status"] == "invalid"
 
     def test_to_payload_serialization_fallback(self) -> None:
@@ -361,7 +365,9 @@ class TestValueObjectPayloadConversion:
         original_create = FlextPayload.create
         call_count = 0
 
-        def mock_create(data, **kwargs):
+        def mock_create(
+            data: dict[str, object], **kwargs: object
+        ) -> FlextResult[FlextPayload[object]]:
             nonlocal call_count
             call_count += 1
             if call_count == 1:
@@ -462,7 +468,7 @@ class TestValueObjectPayloadConversion:
         """Test safe attribute retrieval with __str__ conversion."""
 
         class ObjectWithStr:
-            def __str__(self):
+            def __str__(self) -> str:
                 return "string_repr"
 
         vo = SimpleValueObject(value="test")
@@ -540,7 +546,7 @@ class TestFlextValueObjectFactory:
 
     def test_create_value_object_factory_with_defaults(self) -> None:
         """Test factory creation with defaults."""
-        defaults = {"currency": "EUR"}
+        defaults: dict[str, object] = {"currency": "EUR"}
         factory = FlextValueObjectFactory.create_value_object_factory(
             MoneyAmount, defaults=defaults
         )
@@ -743,7 +749,9 @@ class TestValueObjectEdgeCases:
         vo = SimpleValueObject(value="test")
 
         # Mock field validation to return specific errors for specific fields
-        def mock_validate_field(field_name, field_value):
+        def mock_validate_field(
+            field_name: str, field_value: object
+        ) -> FlextResult[None]:
             if field_name == "field1":
                 return FlextResult.fail("Field1 error")
             if field_name == "field2":
@@ -762,6 +770,7 @@ class TestValueObjectEdgeCases:
         ):
             result = vo.validate_all_fields()
             assert result.success is False
+            assert result.error is not None
             assert "Field validation errors" in result.error
             assert "Field1 error" in result.error
             assert "Field2 error" in result.error

@@ -9,8 +9,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from typing import cast
 
-from flext_core import FlextDomainService, FlextResult, get_logger
-from flext_core.typings import TAnyDict
+from flext_core import FlextDomainService, FlextResult, TAnyDict, get_logger
 
 logger = get_logger(__name__)
 
@@ -173,7 +172,7 @@ def demonstrate_boilerplate_reduction() -> None:
         host="localhost",
         port=1521,
         username="oracle",
-        password="secret",
+        password="secret"
     )
 
     # Automatic validation and error handling

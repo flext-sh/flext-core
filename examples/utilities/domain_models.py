@@ -9,6 +9,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from examples.shared_domain import (
+    Order as SharedOrder,
+    Product as SharedProduct,
+    User as SharedUser,
+)
 from flext_core import (
     FlextCacheableMixin,
     FlextComparableMixin,
@@ -16,14 +21,8 @@ from flext_core import (
     FlextSerializableMixin,
     FlextTimestampMixin,
     FlextUtilities,
-    TAnyObject,
 )
 
-from ..shared_domain import (  # noqa: TID252
-    Order as SharedOrder,
-    Product as SharedProduct,
-    User as SharedUser,
-)
 from .formatting_helpers import (
     ADULT_AGE_THRESHOLD,
     MIDDLE_AGED_THRESHOLD,
@@ -50,7 +49,7 @@ class UtilityDemoUser(SharedUser, FlextCacheableMixin, FlextSerializableMixin):
         """Get serialization key."""
         return f"user_data:{self.id}"
 
-    def to_serializable(self) -> TAnyObject:
+    def to_serializable(self) -> dict[str, object]:
         """Convert to serializable format with enhanced data."""
         base_data = {
             "id": self.id,
@@ -102,7 +101,7 @@ class UtilityDemoProduct(
         """Get serialization key."""
         return f"product_data:{self.id}"
 
-    def to_serializable(self) -> TAnyObject:
+    def to_serializable(self) -> dict[str, object]:
         """Convert to serializable format with enhanced data."""
         return {
             "id": self.id,
@@ -155,7 +154,7 @@ class UtilityDemoOrder(
         """Get serialization key."""
         return f"order_data:{self.id}"
 
-    def to_serializable(self) -> TAnyObject:
+    def to_serializable(self) -> dict[str, object]:
         """Convert to serializable format with enhanced data."""
         # Calculate total since Order doesn't have a total attribute
         calculated_total = sum(

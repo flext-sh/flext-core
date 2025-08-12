@@ -17,6 +17,8 @@ Usage of New Conftest Infrastructure:
 
 from __future__ import annotations
 
+from typing import cast
+
 import pytest
 
 from flext_core.validation import (
@@ -164,15 +166,18 @@ class TestFlextValidatorsAdvanced:
 
     @pytest.mark.parametrize_advanced
     def test_validator_scenarios(
-        self, validator_test_cases: list[TestCase], assert_helpers
+        self, validator_test_cases: list[TestCase], assert_helpers: object
     ) -> None:
         """Test validators using structured parametrized approach."""
         for test_case in validator_test_cases:
-            input_data = test_case.input_data
+            input_data = cast("dict[str, object]", test_case.input_data)
             expected = test_case.expected_output
 
-            validator_name = input_data["validator"]
-            value = input_data["value"]
+            assert isinstance(input_data, dict)
+            assert isinstance(expected, bool)
+
+            validator_name: str = cast("str", input_data["validator"])
+            value: object = input_data["value"]
 
             # Get validator method dynamically
             validator_method = getattr(FlextValidators, validator_name)
@@ -264,8 +269,9 @@ class TestFlextValidatorsAdvanced:
     ) -> None:
         """Test email validation with comprehensive scenarios."""
         for test_case in email_validation_cases:
-            email = test_case.input_data["email"]
-            expected = test_case.expected_output
+            input_data = cast("dict[str, object]", test_case.input_data)
+            email: str = cast("str", input_data["email"])
+            expected: bool = cast("bool", test_case.expected_output)
 
             result = FlextValidators.is_email(value=email)
             assert result == expected, (
@@ -361,10 +367,10 @@ class TestFlextValidatorsAdvanced:
     ) -> None:
         """Test additional validation scenarios."""
         for test_case in numeric_validation_cases:
-            input_data = test_case.input_data
-            validator_name = input_data["validator"]
-            value = input_data["value"]
-            expected = test_case.expected_output
+            input_data = cast("dict[str, object]", test_case.input_data)
+            validator_name: str = cast("str", input_data["validator"])
+            value: object = input_data["value"]
+            expected: bool = cast("bool", test_case.expected_output)
 
             validator_method = getattr(FlextValidators, validator_name)
 
@@ -372,11 +378,11 @@ class TestFlextValidatorsAdvanced:
             if validator_name in {"has_min_length", "has_max_length"}:
                 if validator_name == "has_min_length":
                     result = validator_method(
-                        value=value, min_length=input_data["min_length"]
+                        value=value, min_length=cast("int", input_data["min_length"])
                     )
                 elif validator_name == "has_max_length":
                     result = validator_method(
-                        value=value, max_length=input_data["max_length"]
+                        value=value, max_length=cast("int", input_data["max_length"])
                     )
             else:
                 result = validator_method(value=value)
@@ -448,10 +454,10 @@ class TestFlextPredicatesAdvanced:
     def test_predicate_scenarios(self, predicate_test_cases: list[TestCase]) -> None:
         """Test predicates using structured parametrized approach."""
         for test_case in predicate_test_cases:
-            input_data = test_case.input_data
-            predicate_name = input_data["predicate"]
-            value = input_data["value"]
-            expected = test_case.expected_output
+            input_data = cast("dict[str, object]", test_case.input_data)
+            predicate_name: str = cast("str", input_data["predicate"])
+            value: object = input_data["value"]
+            expected: bool = cast("bool", test_case.expected_output)
 
             predicate_method = getattr(FlextPredicates, predicate_name)
             result = predicate_method(value)
@@ -467,22 +473,22 @@ class TestValidationSimpleIntegration:
     def test_email_validation_function(self) -> None:
         """Test email validation function directly."""
         # Valid email
-        result = flext_validate_email("test@example.com")
-        assert result.is_valid
+        valid_result = flext_validate_email("test@example.com")
+        assert valid_result.is_valid
 
         # Invalid email
-        result = flext_validate_email("invalid-email")
-        assert not result.is_valid
+        invalid_result = flext_validate_email("invalid-email")
+        assert not invalid_result.is_valid
 
     def test_non_empty_string_validation_function(self) -> None:
         """Test non-empty string validation function directly."""
         # Valid string - flext_validate_non_empty_string returns bool
-        result = flext_validate_non_empty_string("hello")
-        assert result is True
+        non_empty_result = flext_validate_non_empty_string("hello")
+        assert non_empty_result is True
 
         # Invalid empty string
-        result = flext_validate_non_empty_string("")
-        assert result is False
+        empty_result = flext_validate_non_empty_string("")
+        assert empty_result is False
 
 
 # All edge cases, model tests, and additional coverage tests have been

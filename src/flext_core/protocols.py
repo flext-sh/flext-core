@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Protocol, TypeVar, runtime_checkable
+from typing import TYPE_CHECKING, Generic, Protocol, TypeVar, runtime_checkable
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Iterator
@@ -267,19 +267,7 @@ class FlextMetricsCollector(Protocol):
 # =============================================================================
 
 
-class FlextDecoratedFunction(Protocol):
-    """Protocol for decorated function objects.
-
-    CONSOLIDATED FROM: decorators.py FlextDecoratedFunction
-    Enables type-safe decorator patterns.
-    """
-
-    __name__: str
-    __doc__: str | None
-
-    def __call__(self, *args: object, **kwargs: object) -> object:
-        """Call the decorated function."""
-        ...
+type FlextDecoratedFunction = Callable[..., object]  # type: ignore[explicit-any]
 
 
 # =============================================================================
@@ -318,7 +306,13 @@ class FlextLoggerProtocol(Protocol):
         """Log critical message."""
         ...
 
-    def exception(self, message: str, **kwargs: object) -> None:
+    def exception(
+        self,
+        message: str,
+        *,
+        exc_info: bool = True,
+        **kwargs: object,
+    ) -> None:
         """Log exception message."""
         ...
 
@@ -499,7 +493,7 @@ class FlextPluginLoader(Protocol):
 # =============================================================================
 
 
-class FlextRepository[T](Protocol):
+class FlextRepository(Protocol, Generic[T]):  # noqa: UP046
     """Protocol for repository pattern implementations.
 
     CONSOLIDATED FROM: interfaces.py FlextRepository (ABC converted to protocol)
@@ -728,7 +722,7 @@ class FlextAsyncService(Protocol):
 # =============================================================================
 
 
-class FlextFactory[T](Protocol):
+class FlextFactory(Protocol, Generic[T]):  # noqa: UP046
     """Protocol for type-safe factory implementations.
 
     Modern Python 3.13 generic syntax for a factory pattern.
@@ -739,7 +733,7 @@ class FlextFactory[T](Protocol):
         ...
 
 
-class FlextAsyncFactory[T](Protocol):
+class FlextAsyncFactory(Protocol, Generic[T]):  # noqa: UP046
     """Protocol for async factory implementations."""
 
     async def create_async(self, **kwargs: object) -> FlextResult[T]:

@@ -6,13 +6,19 @@ including property-based testing, performance benchmarks, and advanced scenarios
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from typing import TYPE_CHECKING, cast
+
 import pytest
 from hypothesis import given, strategies as st
 
 from flext_core.exceptions import FlextOperationError
-from flext_core.legacy import chain, compose
-from flext_core.result import FlextResult, safe_call
+from flext_core.result import FlextResult
+from flext_core.utilities import safe_call
 from tests.conftest import TestCase, TestScenario
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 
@@ -58,8 +64,8 @@ class TestFlextResultProperties:
         error_data = {"field": "value", "code": 123}
         result: FlextResult[None] = FlextResult.fail("error", error_data=error_data)
         if result.error_data != error_data:
-            msg: str = f"Expected {error_data}, got {result.error_data}"
-            raise AssertionError(msg)
+            error_data_msg: str = f"Expected {error_data}, got {result.error_data}"
+            raise AssertionError(error_data_msg)
 
     def test_error_data_property_failure_none(self) -> None:
         """Test error_data property when None passed."""
@@ -257,8 +263,10 @@ class TestFlextResultFlatMapExceptions:
 
         def failing_func(x: str) -> FlextResult[int]:
             # This will raise AttributeError when accessing non-existent method
-            x.non_existent_method()
-            return FlextResult.ok(42)  # Never reached
+            # x.non_existent_method()
+            msg = "Simulated AttributeError"
+            raise AttributeError(msg)
+            # return FlextResult.ok(42)  # Never reached
 
         mapped = result.flat_map(failing_func)
         assert mapped.is_failure
@@ -526,7 +534,7 @@ class TestFlextResultRailwayMethods:
         result = FlextResult[str](error="")
         result._error = None  # Manually set to None
 
-        # When error is None, the result becomes successful, so recover returns self
+        # When error is None, result should be treated as success, so return self
         def recovery(error: str) -> str:
             return "recovered"
 
@@ -809,7 +817,7 @@ class TestFlextResultFilter:
         assert filtered.is_failure
         error_msg = filtered.error or ""
         if "Predicate failed" not in error_msg:
-            msg: str = f"Expected {'Predicate failed'} in {filtered.error}"
+            msg: str = f"Expected {'Predicate failed'} in {error_msg}"
             raise AssertionError(msg)
 
 
@@ -1179,7 +1187,8 @@ class TestModuleLevelFunctions:
             FlextResult.ok("c"),
         ]
 
-        chained = chain(*results)
+        # Use FlextResult.combine instead of legacy chain
+        chained = FlextResult.combine(*results)
         assert chained.success
         if chained.data != ["a", "b", "c"]:
             msg: str = f"Expected {['a', 'b', 'c']}, got {chained.data}"
@@ -1193,7 +1202,8 @@ class TestModuleLevelFunctions:
             FlextResult.ok("c"),
         ]
 
-        chained = chain(*results)
+        # Use FlextResult.combine instead of legacy chain
+        chained = FlextResult.combine(*results)
         assert chained.is_failure
         if chained.error != "chain error":
             msg: str = f"Expected {'chain error'}, got {chained.error}"
@@ -1207,7 +1217,8 @@ class TestModuleLevelFunctions:
             FlextResult.ok("c"),
         ]
 
-        chained = chain(*results)
+        # Use FlextResult.combine instead of legacy chain
+        chained = FlextResult.combine(*results)
         assert chained.success
         if chained.data != ["a", "c"]:
             msg: str = f"Expected {['a', 'c']}, got {chained.data}"
@@ -1220,7 +1231,8 @@ class TestModuleLevelFunctions:
             FlextResult.ok("b"),
         ]
 
-        composed = compose(*results)
+        # Use FlextResult.combine instead of legacy compose
+        composed = FlextResult.combine(*results)
         assert composed.success
         if composed.data != ["a", "b"]:
             msg: str = f"Expected {['a', 'b']}, got {composed.data}"
@@ -1333,19 +1345,19 @@ class TestFlextResultPropertyBased:
         ),
     )
     def test_result_map_composition(
-        self, value: int, func1: object, func2: object
-    ) -> None:
+        self, value: int, func1: Callable[[int], int], func2: Callable[[int], int]
+    ) -> None:  # type: ignore[no-untyped-def]
         """Property: map operations compose correctly."""
-        result = FlextResult.ok(value)
+        result: FlextResult[int] = FlextResult.ok(value)
 
         # Apply functions separately
-        result1 = result.map(func1).map(func2)
+        result1: FlextResult[int] = result.map(func1).map(func2)
 
         # Apply composed function
         def composed(x: int) -> int:
-            return func2(func1(x))  # type: ignore[operator]
+            return func2(func1(x))
 
-        result2 = result.map(composed)
+        result2: FlextResult[int] = result.map(composed)
 
         # Results should be identical
         assert result1.data == result2.data
@@ -1418,7 +1430,7 @@ class TestFlextResultPerformance:
     @pytest.mark.benchmark
     def test_result_creation_performance(
         self,
-        performance_monitor: object,
+        performance_monitor: Callable[..., dict[str, float | list[FlextResult[str]]]],
         performance_threshold: dict[str, float],
     ) -> None:
         """Benchmark FlextResult creation performance."""
@@ -1426,20 +1438,17 @@ class TestFlextResultPerformance:
         def create_results() -> list[FlextResult[str]]:
             return [FlextResult.ok(f"value_{i}") for i in range(1000)]
 
-        if not callable(performance_monitor):
-            pytest.skip("Performance monitor not available")
-            return
-
         metrics = performance_monitor(create_results)
         threshold = performance_threshold.get("result_creation", 1.0)
-
-        assert metrics["execution_time"] < threshold * 1000  # Convert to ms
-        assert len(metrics["result"]) == 1000
+        exec_time = cast("float", metrics["execution_time"])
+        assert exec_time < threshold * 1000  # Convert to ms
+        res_list = cast("list[FlextResult[str]]", metrics["result"])
+        assert len(res_list) == 1000
 
     @pytest.mark.benchmark
     def test_result_chain_performance(
         self,
-        performance_monitor: object,
+        performance_monitor: Callable[..., dict[str, float | FlextResult[int]]],
         performance_threshold: dict[str, float],
     ) -> None:
         """Benchmark chained FlextResult operations."""
@@ -1454,14 +1463,31 @@ class TestFlextResultPerformance:
                 .map(len)
             )
 
-        if not callable(performance_monitor):
-            pytest.skip("Performance monitor not available")
-            return
-
         metrics = performance_monitor(chain_operations)
+        exec_time = cast("float", metrics["execution_time"])
+        assert exec_time < 0.01  # 10ms for chain
+        res_result = cast("FlextResult[int]", metrics["result"])
+        assert res_result.data == 2  # len("16")
 
-        assert metrics["execution_time"] < 0.01  # 10ms for chain
-        assert metrics["result"].data == 2  # len("16")
+    @pytest.mark.error_path
+    def test_exception_in_nested_operations(self) -> None:
+        """Test exception handling in nested operations."""
+
+        def risky_operation(x: int) -> int:
+            if x > 5:
+                error_msg = "Value too large"
+                raise ValueError(error_msg)
+            return x * 2
+
+        result = FlextResult.ok(10)
+
+        # The map method should catch the exception and return a failure result
+        mapped_result: FlextResult[int] = result.map(risky_operation)
+
+        # Verify the exception was caught and converted to a failure
+        assert mapped_result.is_failure
+        assert "Transformation error: Value too large" in (mapped_result.error or "")
+        assert mapped_result.error_code == "EXCEPTION_ERROR"
 
 
 # ============================================================================
@@ -1476,7 +1502,7 @@ class TestFlextResultIntegration:
         """Test complex data processing pipeline with FlextResult."""
 
         # Simulate data processing pipeline
-        def validate_data(data: dict[str, object]) -> FlextResult[dict[str, object]]:
+        def validate_data(data: object) -> FlextResult[dict[str, object]]:
             if not isinstance(data, dict):
                 return FlextResult.fail("Data must be dictionary")
             if "id" not in data:
@@ -1506,6 +1532,7 @@ class TestFlextResultIntegration:
         )
 
         assert result.success
+        assert result.data is not None
         assert result.data["id"] == 123
         assert result.data["name"] == "TEST USER"
         assert result.data["processed"] is True
@@ -1544,11 +1571,15 @@ class TestFlextResultBoundary:
     @pytest.mark.boundary
     def test_deep_nesting_chain(self) -> None:
         """Test deeply nested chain operations."""
-        result = FlextResult.ok(1)
+        result: FlextResult[int] = FlextResult.ok(1)
 
         # Create a deep chain (50 operations)
         for i in range(50):
-            result = result.map(lambda x, i=i: x + i)
+
+            def _add_i(x: int, i=i) -> int:
+                return x + i
+
+            result = result.map(_add_i)
 
         assert result.success
         # Sum from 0 to 49 = 49*50/2 = 1225, plus initial 1 = 1226
@@ -1561,11 +1592,12 @@ class TestFlextResultBoundary:
         result = FlextResult.ok(large_list)
 
         # Test map operation on large data
-        transformed = result.map(
+        transformed: FlextResult[list[int]] = result.map(
             lambda lst: [x * 2 for x in lst[:100]]
         )  # First 100 only
 
         assert transformed.success
+        assert transformed.data is not None
         assert len(transformed.data) == 100
         assert transformed.data[0] == 0
         assert transformed.data[99] == 198
@@ -1583,7 +1615,7 @@ class TestFlextResultBoundary:
         result = FlextResult.ok(10)
 
         # The map method should catch the exception and return a failure result
-        mapped_result = result.map(risky_operation)
+        mapped_result: FlextResult[int] = result.map(risky_operation)
 
         # Verify the exception was caught and converted to a failure
         assert mapped_result.is_failure

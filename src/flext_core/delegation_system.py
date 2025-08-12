@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import contextlib
 import inspect
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, ClassVar, NoReturn, Protocol, cast
 
 from flext_core.exceptions import FlextOperationError, FlextTypeError
 from flext_core.loggings import FlextLoggerFactory
@@ -25,6 +25,14 @@ from flext_core.result import FlextResult
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+
+class _HasDelegator(Protocol):
+    delegator: _DelegatorProtocol
+
+
+class _DelegatorProtocol(Protocol):
+    def get_delegation_info(self) -> dict[str, object]: ...
 
 
 class FlextDelegatedProperty:
@@ -217,7 +225,8 @@ class FlextMixinDelegator:
             delegated_method.__doc__ = method.__doc__
 
             # Use type ignore for dynamic attribute assignment on a function object
-            delegated_method.__signature__ = inspect.signature(method)  # type: ignore[attr-defined]
+            with contextlib.suppress(ValueError, TypeError):
+                delegated_method.__signature__ = inspect.signature(method)  # type: ignore[attr-defined]
         except (AttributeError, ValueError) as e:
             logger = FlextLoggerFactory.get_logger(__name__)
             logger.warning(
@@ -296,7 +305,7 @@ def create_mixin_delegator(
 def _validate_delegation_methods(host: object, test_results: list[str]) -> None:
     """Validate that delegation methods exist on the host."""
 
-    def _raise_delegation_error(message: str) -> None:
+    def _raise_delegation_error(message: str) -> NoReturn:
         raise FlextOperationError(message, operation="delegation_validation")
 
     # Test validation methods exist
@@ -317,7 +326,7 @@ def _validate_delegation_methods(host: object, test_results: list[str]) -> None:
 def _validate_method_functionality(host: object, test_results: list[str]) -> None:
     """Validate that delegated methods are functional."""
 
-    def _raise_type_error(message: str) -> None:
+    def _raise_type_error(message: str) -> NoReturn:
         raise FlextTypeError(message)
 
     # Test method functionality
@@ -333,15 +342,16 @@ def _validate_delegation_info(
 ) -> dict[str, object]:
     """Validate delegation system self-check and return info."""
 
-    def _raise_delegation_error(message: str) -> None:
+    def _raise_delegation_error(message: str) -> NoReturn:
         raise FlextOperationError(message, operation="delegation_validation")
 
     # Test delegation info - use type guard for host.delegator
     if not hasattr(host, "delegator"):
         _raise_delegation_error("Host must have delegator attribute")
 
-    # Use type ignore for dynamic attribute access after hasattr check
-    delegator = host.delegator  # type: ignore[attr-defined]
+    # Use runtime getattr only after hasattr guard for type safety
+    host_typed = cast("_HasDelegator", host)
+    delegator = host_typed.delegator
     if not hasattr(delegator, "get_delegation_info"):
         _raise_delegation_error("Delegator must have get_delegation_info method")
 
@@ -352,8 +362,9 @@ def _validate_delegation_info(
     # Type cast for MyPy after isinstance check
     typed_info: dict[str, object] = info
 
-    validation_result = typed_info.get("validation_result", False)
-    if not validation_result:
+    validation_result_obj = typed_info.get("validation_result", False)
+    validation_ok = bool(validation_result_obj)
+    if not validation_ok:
         _raise_delegation_error("Delegation validation should pass")
     test_results.append("✓ Delegation system self-validation passed")
     return typed_info

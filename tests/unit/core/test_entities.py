@@ -22,7 +22,9 @@ from flext_core.result import FlextResult
 class EntityFactory(Protocol):
     """Protocol for entity factory functions."""
 
-    def __call__(self, **kwargs: object) -> FlextResult[object]: ...
+    def __call__(self, **kwargs: object) -> FlextResult[object]:
+        """Create entity instance."""
+        ...
 
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]

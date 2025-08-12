@@ -486,18 +486,21 @@ pytest tests/integration/ --durations=10
 ### Common Errors
 
 **Import errors:**
+
 ```bash
 # Ensure proper Python path
 PYTHONPATH=. pytest tests/integration/
 ```
 
 **Timeout errors:**
+
 ```bash
 # Increase timeout for slow tests
 pytest tests/integration/ --timeout=30
 ```
 
 **Resource errors:**
+
 ```bash
 # Run tests individually to isolate resource issues
 pytest tests/integration/test_integration.py -k test_name

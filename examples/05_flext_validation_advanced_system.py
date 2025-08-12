@@ -17,8 +17,7 @@ import time
 from decimal import Decimal
 from typing import TYPE_CHECKING, cast
 
-# Import shared domain models to reduce duplication
-from .shared_domain import (
+from shared_domain import (
     Money,
     Product as SharedProduct,
     SharedDemonstrationPattern,
@@ -187,13 +186,14 @@ class ProductValidationOrchestrator:
     def validate_all_fields(self) -> FlextResult[None]:
         """Validate all product fields using accumulator pattern - single return."""
         # Extract all fields
+        product_dict = cast("dict[str, object]", self.product_data)
         fields = {
-            "product_id": self.product_data.get("product_id"),
-            "name": self.product_data.get("name"),
-            "price": self.product_data.get("price"),
-            "category": self.product_data.get("category"),
-            "stock": self.product_data.get("stock"),
-            "tags": self.product_data.get("tags"),
+            "product_id": product_dict.get("product_id"),
+            "name": product_dict.get("name"),
+            "price": product_dict.get("price"),
+            "category": product_dict.get("category"),
+            "stock": product_dict.get("stock"),
+            "tags": product_dict.get("tags"),
         }
 
         # Validate each field using strategy pattern
@@ -291,7 +291,7 @@ def validate_user_business_rules(user: SharedUser) -> FlextResult[None]:
         # Check if this is a restricted activity
         return FlextResult.fail(f"Users under {MIN_GUARDIAN_AGE} have restrictions")
 
-    if user.status.value == "suspended":
+    if user.status == "suspended":
         return FlextResult.fail("Suspended users cannot perform operations")
 
     return FlextResult.ok(None)
@@ -672,7 +672,7 @@ def validate_product_complete(
     Refactored to reduce complexity with single responsibility methods.
     """
     log_message: TLogMessage = (
-        f"🔍 Validating product: {product_data.get('name', 'Unknown')}"
+        f"🔍 Validating product: {cast('dict[str, object]', product_data).get('name', 'Unknown')}"
     )
     print(log_message)
 
@@ -711,11 +711,12 @@ def _extract_and_validate_product_types(
 ) -> FlextResult[dict[str, object]]:
     """Extract and validate product data types."""
     # Extract fields
-    name = product_data.get("name")
-    price = product_data.get("price")
-    category = product_data.get("category")
-    stock = product_data.get("stock")
-    product_id = product_data.get("product_id")
+    product_dict = cast("dict[str, object]", product_data)
+    name = product_dict.get("name")
+    price = product_dict.get("price")
+    category = product_dict.get("category")
+    stock = product_dict.get("stock")
+    product_id = product_dict.get("product_id")
 
     # Type validation for required fields
     if not isinstance(name, str):
@@ -883,7 +884,7 @@ def demonstrate_product_validation() -> None:
     print("=" * 60)
 
     # Test product data
-    test_products: list[tuple[str, TAnyObject]] = [
+    test_products: list[tuple[str, dict[str, object]]] = [
         (
             "Valid Product",
             {

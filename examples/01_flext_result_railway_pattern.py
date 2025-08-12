@@ -9,22 +9,18 @@ from __future__ import annotations
 
 import json
 import secrets
+from typing import cast
 
-from typing import TYPE_CHECKING, cast
-
-from .shared_domain import (
+from shared_domain import (
     SharedDomainFactory,
     User as SharedUser,
 )
 
-from flext_core import (
-    FlextResult,
-    FlextValidation,
-)
-from flext_core.result import safe_call
+from flext_core import FlextResult, FlextValidation, safe_call
 
-if TYPE_CHECKING:
-    from flext_core.typings import TAnyObject, TEntityId, TUserData
+# Type aliases for better readability
+UserDataDict = dict[str, object]
+ProcessingResultDict = dict[str, object]
 
 # Constants to avoid magic numbers
 FAILURE_RATE = 0.2  # 20% chance of failure
@@ -125,7 +121,7 @@ def process_user_data_traditional(data: dict[str, object]) -> dict[str, object]:
 # =============================================================================
 
 
-def validate_user_data(data: TUserData) -> FlextResult[TUserData]:
+def validate_user_data(data: UserDataDict) -> FlextResult[UserDataDict]:
     """🚀 ZERO-BOILERPLATE validation using FlextValidation."""
     return (
         FlextResult.ok(data)
@@ -140,7 +136,7 @@ def validate_user_data(data: TUserData) -> FlextResult[TUserData]:
     )
 
 
-def create_user(validated_data: TUserData) -> FlextResult[SharedUser]:
+def create_user(validated_data: UserDataDict) -> FlextResult[SharedUser]:
     """🚀 ONE-LINE user creation using SharedDomainFactory."""
     return SharedDomainFactory.create_user(
         name=str(validated_data["name"]),
@@ -149,7 +145,7 @@ def create_user(validated_data: TUserData) -> FlextResult[SharedUser]:
     ).tap(lambda u: print(f"✅ Created: {u.name}"))
 
 
-def save_user_to_database(user: SharedUser) -> FlextResult[TEntityId]:
+def save_user_to_database(user: SharedUser) -> FlextResult[str]:
     """🚀 ZERO-BOILERPLATE database simulation using FlextResult."""
     return (
         FlextResult.ok(user.id)
@@ -172,8 +168,8 @@ def send_welcome_email(user: SharedUser) -> FlextResult[bool]:
     )
 
 
-def process_user_registration(data: TUserData) -> FlextResult[dict[str, object]]:
-    """🚀 ULTRA-COMPACT registration pipeline - 4 lines eliminate 35+ lines!"""
+def process_user_registration(data: UserDataDict) -> FlextResult[dict[str, object]]:
+    """P."""
     return (
         validate_user_data(data)
         .flat_map(create_user)
@@ -192,21 +188,26 @@ def process_user_registration(data: TUserData) -> FlextResult[dict[str, object]]
     )
 
 
-def process_multiple_users(users_data: list[TUserData]) -> FlextResult[TAnyObject]:
+def process_multiple_users(
+    users_data: list[UserDataDict],
+) -> FlextResult[ProcessingResultDict]:
     """🚀 BATCH processing with ONE-LINE aggregation using FlextResult.combine_all."""
     results = [process_user_registration(data) for data in users_data]
     successful = [r.data for r in results if r.success]
     failed = len(results) - len(successful)
 
-    return FlextResult.ok(
-        {
-            "total": len(users_data),
-            "successful": len(successful),
-            "failed": failed,
-            "success_rate": len(successful) / len(users_data) * 100,
-            "results": successful,
-        }
-    ).tap(lambda s: print(f"📊 Processed {s['successful']}/{s['total']} users"))
+    result_dict: ProcessingResultDict = {
+        "total": len(users_data),
+        "successful": len(successful),
+        "failed": failed,
+        "success_rate": len(successful) / len(users_data) * 100
+        if len(users_data) > 0
+        else 0,
+        "results": successful,
+    }
+    return FlextResult.ok(result_dict).tap(
+        lambda s: print(f"📊 Processed {s['successful']}/{s['total']} users")
+    )
 
 
 # =============================================================================
@@ -215,8 +216,8 @@ def process_multiple_users(users_data: list[TUserData]) -> FlextResult[TAnyObjec
 
 
 def process_with_retry(
-    data: TUserData, max_retries: int = 3
-) -> FlextResult[TAnyObject]:
+    data: UserDataDict, max_retries: int = 3
+) -> FlextResult[dict[str, object]]:
     """🚀 ZERO-BOILERPLATE retry using FlextResult composition."""
     for attempt in range(1, max_retries + 1):
         result = process_user_registration(data)
@@ -227,7 +228,7 @@ def process_with_retry(
                 print(_m)
 
             return result.tap(_printer)
-    error_result: TAnyObject = {
+    error_result = {
         "status": "failed_after_retries",
         "error": "All attempts failed",
         "attempts": max_retries,
@@ -235,7 +236,7 @@ def process_with_retry(
     return FlextResult.ok(error_result)
 
 
-def transform_user_data(raw_data: str) -> FlextResult[TUserData]:
+def transform_user_data(raw_data: str) -> FlextResult[UserDataDict]:
     """🚀 ONE-LINE JSON transformation using safe_call."""
     return (
         FlextResult.ok(raw_data)
@@ -257,7 +258,7 @@ def demo_successful_registration() -> None:
     print("📋 EXAMPLE 1: Successful User Registration")
     print("=" * 60)
 
-    valid_user: TUserData = {
+    valid_user: UserDataDict = {
         "name": "Alice Johnson",
         "email": "alice@example.com",
         "age": 28,
@@ -276,7 +277,7 @@ def demo_validation_failure() -> None:
     print("📋 EXAMPLE 2: Validation Failure")
     print("=" * 60)
 
-    invalid_user: TUserData = {"name": "", "email": "not-an-email", "age": 15}
+    invalid_user: UserDataDict = {"name": "", "email": "not-an-email", "age": 15}
 
     result = process_user_registration(invalid_user)
     if result.success:
@@ -291,7 +292,7 @@ def demo_batch_processing() -> None:
     print("📋 EXAMPLE 3: Batch Processing")
     print("=" * 60)
 
-    users_batch: list[TUserData] = [
+    users_batch: list[UserDataDict] = [
         {"name": "Bob Smith", "email": "bob@example.com", "age": 35},
         {"name": "Carol Davis", "email": "carol@example.com", "age": 42},
         {"name": "", "email": "invalid", "age": 16},  # This will fail
@@ -300,8 +301,23 @@ def demo_batch_processing() -> None:
     ]
 
     result = process_multiple_users(users_batch)
-    if result.success:
+    if result.success and result.data is not None:
         print("✅ Batch processing completed!")
+        successful_count = result.data.get("successful", 0)
+        print(f"📊 Processed {successful_count} users successfully")
+        results_list = result.data.get("results", [])
+        # Type annotation for loop variable and proper type handling
+        typed_results_list: list[object] = (
+            results_list if isinstance(results_list, list) else []
+        )
+        for i, user_result in enumerate(typed_results_list):
+            if isinstance(user_result, dict) and "user" in user_result:
+                user_data = user_result["user"]
+                if isinstance(user_data, dict):
+                    name = user_data.get("name", "Unknown")
+                    print(f"  👤 User {i + 1}: {name}")
+    else:
+        print(f"❌ Batch processing failed: {result.error}")
 
 
 def demo_json_transformation() -> None:
@@ -331,7 +347,7 @@ def demo_retry_pattern() -> None:
     print("📋 EXAMPLE 5: Retry Pattern")
     print("=" * 60)
 
-    retry_user: TUserData = {
+    retry_user: UserDataDict = {
         "name": "Grace Taylor",
         "email": "grace@example.com",
         "age": 31,

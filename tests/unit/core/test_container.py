@@ -8,13 +8,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
-if TYPE_CHECKING:
-    from collections.abc import Callable
-
 import pytest
 
-from flext_core.container import (
+from flext_core import (
     FlextContainer,
+    FlextError,
     FlextGlobalContainerManager,
     FlextServiceKey,
     FlextServiceRegistrar,
@@ -24,10 +22,10 @@ from flext_core.container import (
     get_typed,
     register_typed,
 )
-from flext_core.exceptions import FlextError
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
 
 # Constants
 EXPECTED_BULK_SIZE = 2
@@ -37,6 +35,7 @@ class SampleService:
     """Test service for container testing."""
 
     def __init__(self, name: str = "test") -> None:
+        """Initialize test service."""
         self.name = name
 
     def get_name(self) -> str:
@@ -52,6 +51,7 @@ class DependentService:
         test_service: SampleService,
         optional_param: str = "default",
     ) -> None:
+        """Initialize dependent service."""
         self.test_service = test_service
         self.optional_param = optional_param
 
@@ -60,6 +60,7 @@ class ComplexService:
     """Service with complex constructor for testing."""
 
     def __init__(self, *args: object, **kwargs: object) -> None:
+        """Initialize complex service."""
         self.args = args
         self.kwargs = kwargs
 
