@@ -6,7 +6,8 @@ from abc import ABC
 
 import pytest
 
-from flext_core.base_handlers import (
+from flext_core.handlers import (
+    FlextAbstractHandler,
     FlextAuthorizingHandler,
     FlextBaseHandler,
     FlextCommandHandler,
@@ -18,7 +19,6 @@ from flext_core.base_handlers import (
     FlextQueryHandler,
     FlextValidatingHandler,
 )
-from flext_core.handlers_base import FlextAbstractHandler
 from flext_core.result import FlextResult
 
 # Test markers
@@ -118,7 +118,7 @@ class TestFlextCommandHandler:
 
         # Cannot instantiate directly
         with pytest.raises(TypeError, match="Can't instantiate abstract class"):
-            FlextCommandHandler()
+            FlextCommandHandler()  # type: ignore[abstract]
 
     def test_concrete_command_handler_handle_command(self) -> None:
         """Test concrete command handler handle_command (lines 48-50)."""
@@ -178,7 +178,7 @@ class TestFlextQueryHandler:
 
         # Cannot instantiate directly
         with pytest.raises(TypeError, match="Can't instantiate abstract class"):
-            FlextQueryHandler()  # type: ignore[type-arg]
+            FlextQueryHandler()  # type: ignore[abstract]
 
     def test_concrete_query_handler_handle_query(self) -> None:
         """Test concrete query handler handle_query (lines 69-71)."""
@@ -346,12 +346,17 @@ class TestFlextHandlersIntegration:
                 assert result.success
                 assert result.data == 4
             elif isinstance(handler, ConcreteQueryHandler):
-                result = handler.process_request({"name": "Test"})
-                assert result.success
-                assert result.data == "Hello, Test!"
+                query_result: FlextResult[str] = handler.process_request(
+                    {"name": "Test"}
+                )
+                assert query_result.success
+                assert query_result.data == "Hello, Test!"
             else:
-                result = handler.process_request("any_request")
-                assert result.success
+                # These are FlextBaseHandler instances that have process_request
+                # Use assert isinstance for type narrowing
+                assert hasattr(handler, "process_request")
+                base_result = handler.process_request("any_request")
+                assert base_result.success
 
     def test_handler_polymorphism(self) -> None:
         """Test handler polymorphism through base interface."""

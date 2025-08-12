@@ -374,14 +374,14 @@ class TestFlextCommandHandler:
 
     def test_can_handle_wrong_command_type(self) -> None:
         """Test can_handle with wrong command type."""
-        handler: FlextCommandHandler[UpdateUserCommand, dict[str, object]] = (
+        handler: FlextCommandHandler[CreateUserCommand, dict[str, object]] = (
             CreateUserCommandHandler()
         )
         command: UpdateUserCommand = UpdateUserCommand(
             user_id="123", updates={"name": "new_name"}, mixin_setup=lambda: None
         )
 
-        if handler.can_handle(command):
+        if handler.can_handle(cast("CreateUserCommand", command)):
             raise AssertionError(f"Expected False, got {handler.can_handle(command)}")
 
     def test_can_handle_non_command_object(self) -> None:

@@ -1,6 +1,6 @@
 """Domain validation implementations for FLEXT ecosystem.
 
-Concrete validation implementations using validation_base abstractions.
+Concrete validation implementations using abstract validator patterns.
 Provides business-specific validators and domain validation logic.
 
 Classes:
@@ -12,16 +12,28 @@ Classes:
 from __future__ import annotations
 
 import re
-from typing import TYPE_CHECKING
+from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING, Generic, TypeVar
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 from pydantic import BaseModel, ConfigDict
 
 from flext_core.protocols import FlextValidationRule as _FlextValidationRuleProtocol
 from flext_core.result import FlextResult
-from flext_core.validation_base import FlextAbstractValidator
 
-if TYPE_CHECKING:
-    from collections.abc import Callable
+T = TypeVar("T")
+
+
+class FlextAbstractValidator(ABC, Generic[T]):  # noqa: UP046
+    """Abstract validator for validation patterns."""
+
+    @abstractmethod
+    def validate(self, value: T) -> FlextResult[T]:
+        """Validate value."""
+        ...
+
 
 # =============================================================================
 # BASIC VALIDATION CLASSES
@@ -577,7 +589,7 @@ def flext_validate_service_name(name: str) -> bool:
 # =============================================================================
 
 # =============================================================================
-# BASE VALIDATORS - Moved from base_validation.py (eliminating facade)
+# BASE VALIDATORS - Core validation patterns
 # =============================================================================
 
 
@@ -629,7 +641,7 @@ __all__: list[str] = [
     # Import from flext_core.legacy if needed for backward compatibility
 ]
 
-# Backward-compatibility alias: prefer FlextAbstractValidator from validation_base
+# Backward-compatibility alias: prefer FlextAbstractValidator
 FlextBaseValidator = FlextAbstractValidator
 
 # Re-export protocol name for convenience

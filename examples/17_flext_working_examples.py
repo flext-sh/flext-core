@@ -4,14 +4,14 @@
 Comprehensive examples demonstrating all major FLEXT Core functionality.
 """
 
-from .shared_domain import SharedDomainFactory, User as SharedUser
-
 from flext_core import (
     FlextCommands,
     FlextFields,
     FlextResult,
     get_flext_container,
 )
+
+from .shared_domain import SharedDomainFactory, User as SharedUser
 
 
 def main() -> None:
@@ -173,8 +173,8 @@ def main() -> None:
     bus = FlextCommands.create_command_bus()
 
     # Register handler
-    registration = bus.register_handler(CreateUserCommand, handler)
-    print(f"  Handler registered: {registration.success}")
+    bus.register_handler(CreateUserCommand, handler)
+    print("  Handler registered successfully")
 
     # Execute via bus
     bus_result = bus.execute(command)

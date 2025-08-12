@@ -14,7 +14,7 @@ import pytest
 
 from flext_core.container import get_flext_container
 from flext_core.core import FlextCore
-from flext_core.handlers import FlextHandlers
+from flext_core.handlers import FlextAbstractHandler
 from flext_core.loggings import FlextLogger, FlextLoggerFactory
 from flext_core.result import FlextResult
 
@@ -99,11 +99,29 @@ class TestPerformanceBenchmarks:
     def test_handler_chain_performance(self) -> None:
         """Test handler chain performance with multiple handlers."""
 
-        class FastHandler(FlextHandlers.Handler):
+        class FastAbstractHandler(FlextAbstractHandler[object, object]):
             """Fast processing handler."""
 
+            def __init__(self, handler_id: str) -> None:
+                """Initialize handler with ID."""
+                self._handler_id = handler_id
+
+            @property
+            def handler_name(self) -> str:
+                """Get handler name."""
+                return f"FastAbstractHandler_{self._handler_id}"
+
+            def can_handle(self, request: object) -> bool:
+                """Check if handler can handle request."""
+                return True
+
             def handle(self, message: object) -> FlextResult[object]:
+                """Handle message and return processed result."""
                 return FlextResult.ok(f"processed_{message}")
+
+            def validate_request(self, request: object) -> FlextResult[None]:
+                """Validate request."""
+                return FlextResult.ok(None)
 
         # Create handler chain
         from flext_core.handlers import FlextHandlerChain
@@ -112,7 +130,7 @@ class TestPerformanceBenchmarks:
 
         # Add multiple handlers
         for handler_id in range(10):
-            chain.add_handler(FastHandler(f"handler_{handler_id}"))
+            chain.add_handler(FastAbstractHandler(f"handler_{handler_id}"))
 
         start_time = time.time()
 
@@ -204,7 +222,6 @@ class TestMemoryPerformance:
     @pytest.mark.architecture
     def test_core_singleton_performance(self) -> None:
         """Test FlextCore singleton performance."""
-
         # Multiple calls should return same instance
         cores = []
         start_time = time.time()

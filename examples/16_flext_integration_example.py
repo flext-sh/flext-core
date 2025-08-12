@@ -8,15 +8,13 @@ domain models.
 from decimal import Decimal
 from typing import cast
 
-# Import shared domain models to eliminate duplication
-from .shared_domain import (
+from shared_domain import (
     EmailAddress,
     Money,
     SharedDomainFactory,
 )
 
 from flext_core import (
-    FlextCommands,
     FlextFields,
     FlextResult,
     get_flext_container,
@@ -97,7 +95,7 @@ def main() -> None:
         print("❌ Operation returned None data")
 
         return
-    print(f"  Order: {order.id}, Status: {order.status.value}")
+    print(f"  Order: {order.id}, Status: {order.status}")
     print(f"  Customer: {order.customer_id}")
     print(f"  Events: {len(order.domain_events)} domain events")
     print()
@@ -105,9 +103,10 @@ def main() -> None:
     # 4. Command Pattern Example
     print("4. Command Pattern with Shared Domain:")
 
-    class CreateOrderCommand(FlextCommands.Command):
-        customer_id: str
-        items: list[dict[str, str]]
+    class CreateOrderCommand:
+        def __init__(self, customer_id: str, items: list[dict[str, str]]) -> None:
+            self.customer_id = customer_id
+            self.items = items
 
         def validate_command(self) -> FlextResult[None]:
             if not self.customer_id.strip():

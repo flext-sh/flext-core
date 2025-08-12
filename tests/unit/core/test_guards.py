@@ -8,8 +8,8 @@ from typing import Protocol, cast
 import pytest
 from pydantic import Field, field_validator
 
-from flext_core.exceptions import FlextValidationError
-from flext_core.guards import (
+from flext_core import (
+    FlextValidationError,
     ValidatedModel,
     immutable,
     is_dict_of,
@@ -31,13 +31,17 @@ from flext_core.result import FlextResult
 class FactoryProtocol(Protocol):
     """Protocol for factory functions."""
 
-    def __call__(self, *args: object, **kwargs: object) -> object: ...
+    def __call__(self, *args: object, **kwargs: object) -> object:
+        """Call the factory function."""
+        ...
 
 
 class BuilderProtocol(Protocol):
     """Protocol for builder functions."""
 
-    def __call__(self, *args: object, **kwargs: object) -> object: ...
+    def __call__(self, *args: object, **kwargs: object) -> object:
+        """Call the builder function."""
+        ...
 
 
 # Constants

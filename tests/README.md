@@ -61,6 +61,7 @@ tests/
 ## Test Categories
 
 ### Unit Tests (`tests/unit/`)
+
 **Isolated component testing**
 
 - **Purpose**: Validate individual components work correctly
@@ -68,12 +69,13 @@ tests/
 - **Dependencies**: Uses mocks and fixtures
 - **Execution**: Fast (<100ms per test)
 - **Coverage Target**: 75% minimum
-- **Examples**: 
+- **Examples**:
   - `test_result.py`: FlextResult behavior
   - `test_container.py`: DI container operations
   - `test_config.py`: Configuration validation
 
 ### Integration Tests (`tests/integration/`)
+
 **Component interaction testing**
 
 - **Purpose**: Verify components work together
@@ -87,6 +89,7 @@ tests/
   - Cross-module communication
 
 ### End-to-End Tests (`tests/e2e/`)
+
 **Complete workflow validation**
 
 - **Purpose**: Test real-world usage scenarios
@@ -360,6 +363,7 @@ pytest-timeout = "^2.2.0"   # Prevent hanging tests
 ### Running Without External Services
 
 All tests are self-contained:
+
 - No database required (uses in-memory when needed)
 - No external APIs (uses mocks)
 - No network calls (uses fixtures)
@@ -407,6 +411,7 @@ def test_user_creation(user_service):
 ### Common Issues
 
 **Import Errors**
+
 ```bash
 # Ensure FLEXT Core is installed
 pip install -e .
@@ -415,6 +420,7 @@ PYTHONPATH=. pytest tests/
 ```
 
 **Coverage Not Meeting Threshold**
+
 ```bash
 # Find uncovered lines
 pytest --cov=src/flext_core --cov-report=term-missing
@@ -424,6 +430,7 @@ pytest --cov=src/flext_core.result --cov-report=term-missing tests/unit/core/tes
 ```
 
 **Slow Tests**
+
 ```bash
 # Skip slow tests
 pytest -m "not slow"

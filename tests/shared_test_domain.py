@@ -12,18 +12,12 @@ from __future__ import annotations
 
 from decimal import Decimal
 
-# Import from test-specific shared domain - NO MORE CIRCULAR IMPORTS
-# =============================================================================
-# BACKWARD COMPATIBILITY ALIASES
-# =============================================================================
-# These aliases maintain compatibility with existing tests while using
-# the new test-specific domain models
-# Import the actual value objects for proper aliases
 from tests.test_shared_domain import (
     TestComplexValueObject,
     TestDomainFactory,
     TestMoney,
     TestUser,
+    TestUserStatus,
 )
 
 # Entity aliases for backward compatibility
@@ -92,6 +86,7 @@ __all__: list[str] = [
     "ConcreteFlextEntity",
     "ConcreteValueObject",
     "TestDomainFactory",
+    "TestUserStatus",
     "create_complex_test_value_object_safe",
     "create_test_entity_safe",
     "create_test_value_object_safe",

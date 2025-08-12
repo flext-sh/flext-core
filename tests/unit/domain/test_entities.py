@@ -112,7 +112,6 @@ class SampleValueObject(FlextValueObject):
 
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate test value object business rules."""
-
         if self.amount < 0:
             return FlextResult.fail("Amount cannot be negative")
         return FlextResult.ok(None)
@@ -126,7 +125,6 @@ class SampleAggregateRoot(FlextAggregateRoot):
 
     def validate_domain_rules(self) -> FlextResult[None]:
         """Validate test aggregate root domain rules."""
-
         if not self.title.strip():
             return FlextResult.fail("Aggregate title cannot be empty")
         return FlextResult.ok(None)

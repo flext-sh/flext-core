@@ -270,7 +270,6 @@ class TestFlextLogger:
 
     def test_module_level_function(self) -> None:
         """Test module-level backward compatibility function."""
-
         logger = flext_get_logger("module_test")
 
         assert logger is not None
@@ -420,7 +419,6 @@ class TestFlextLoggerIntegration:
     @pytest.mark.performance
     def test_performance_logging_integration(self) -> None:
         """Test performance logging integration."""
-
         logger = FlextLogger("perf_integration_test", "DEBUG")
 
         start_time = time.time()

@@ -2,8 +2,13 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from flext_core.result import FlextResult
 from flext_core.validation import FlextValidation
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 # =============================================================================
 # TEST VALIDATION UTILITIES
@@ -265,7 +270,7 @@ class TestFlextResultValidation:
 class TestValidationIntegration:
     """Integration tests for validation system."""
 
-    def test_complex_validation_scenario(self) -> None:  # noqa: C901
+    def test_complex_validation_scenario(self) -> None:
         """Test complex validation using available utilities."""
 
         def validate_user_data(
@@ -294,52 +299,84 @@ class TestValidationIntegration:
 
             return FlextResult.ok(data)
 
-        # Test valid data
+        self._test_valid_user_data(validate_user_data)
+        self._test_invalid_user_data(validate_user_data)
+
+    def _test_valid_user_data(
+        self,
+        validate_func: Callable[[dict[str, object]], FlextResult[dict[str, object]]],
+    ) -> None:
+        """Test validation with valid user data."""
         valid_data: dict[str, object] = {
             "name": "John Doe",
             "email": "john@example.com",
             "roles": ["user", "REDACTED_LDAP_BIND_PASSWORD"],
         }
-        result = validate_user_data(valid_data)
+        result = validate_func(valid_data)
         assert result.success
         if result.data != valid_data:
             raise AssertionError(f"Expected {valid_data}, got {result.data}")
 
-        # Test invalid data - not a dict - we need to cast to satisfy mypy
-        from typing import cast
-
-        result = validate_user_data(cast("dict[str, object]", "not a dict"))
+    def _test_invalid_user_data(
+        self,
+        validate_func: Callable[[dict[str, object]], FlextResult[dict[str, object]]],
+    ) -> None:
+        """Test validation with various invalid user data scenarios."""
+        # Test invalid data - not a dict
+        result = validate_func("not a dict")  # type: ignore[arg-type]
         assert result.is_failure
         assert result.error is not None
         if "dictionary" not in (result.error or ""):
             raise AssertionError(f"Expected 'dictionary' in {result.error}")
 
-        # Test invalid data - missing name
+        self._test_missing_name_scenario(validate_func)
+        self._test_bad_email_scenario(validate_func)
+        self._test_bad_roles_scenario(validate_func)
+
+    def _test_missing_name_scenario(
+        self,
+        validate_func: Callable[[dict[str, object]], FlextResult[dict[str, object]]],
+    ) -> None:
+        """Test validation with missing name."""
         invalid_data: dict[str, object] = {"email": "test@example.com"}
-        result = validate_user_data(invalid_data)
+        result = validate_func(invalid_data)
         assert result.is_failure
         assert result.error is not None
         if "name" not in result.error.lower():
             raise AssertionError(f"Expected {'name'} in {result.error.lower()}")
 
-        # Test invalid data - bad email
+    def _test_bad_email_scenario(
+        self,
+        validate_func: Callable[[dict[str, object]], FlextResult[dict[str, object]]],
+    ) -> None:
+        """Test validation with bad email."""
         invalid_email_data: dict[str, object] = {"name": "John", "email": "invalid"}
-        result = validate_user_data(invalid_email_data)
+        result = validate_func(invalid_email_data)
         assert result.is_failure
         assert result.error is not None
         if "email" not in result.error.lower():
             raise AssertionError(f"Expected {'email'} in {result.error.lower()}")
 
-        # Test invalid data - bad roles
+    def _test_bad_roles_scenario(
+        self,
+        validate_func: Callable[[dict[str, object]], FlextResult[dict[str, object]]],
+    ) -> None:
+        """Test validation with bad roles."""
         invalid_roles_data: dict[str, object] = {"name": "John", "roles": "not a list"}
-        result = validate_user_data(invalid_roles_data)
+        result = validate_func(invalid_roles_data)
         assert result.is_failure
         assert result.error is not None
         if "list" not in result.error.lower():
             raise AssertionError(f"Expected {'list'} in {result.error.lower()}")
 
-    def test_validation_chaining(self) -> None:  # noqa: C901
+    def test_validation_chaining(self) -> None:
         """Test chaining multiple validations."""
+        validation_chain = self._create_validation_chain()
+        self._test_successful_validation(validation_chain)
+        self._test_validation_failures(validation_chain)
+
+    def _create_validation_chain(self) -> object:
+        """Create the validation chain for testing."""
 
         def validate_step1(value: str) -> FlextResult[str]:
             """First validation step."""
@@ -366,38 +403,47 @@ class TestValidationIntegration:
             if result.is_failure:
                 return result
 
-            # Step 2 - result.data is guaranteed to be str because step1 succeeded
+            # Step 2
             assert result.data is not None
             result = validate_step2(result.data)
             if result.is_failure:
                 return result
 
-            # Step 3 - result.data is guaranteed to be str because step2 succeeded
+            # Step 3
             assert result.data is not None
             return validate_step3(result.data)
 
-        # Test successful validation
-        result = validate_all_steps("test123")
+        return validate_all_steps
+
+    def _test_successful_validation(
+        self, validation_chain: Callable[[str], FlextResult[str]]
+    ) -> None:
+        """Test successful validation scenario."""
+        result = validation_chain("test123")
         assert result.success
         if result.data != "TEST123":
             raise AssertionError(f"Expected {'TEST123'}, got {result.data}")
 
+    def _test_validation_failures(
+        self, validation_chain: Callable[[str], FlextResult[str]]
+    ) -> None:
+        """Test validation failure scenarios."""
         # Test failure at step 1
-        result = validate_all_steps("")
+        result = validation_chain("")
         assert result.is_failure
         assert result.error is not None
         if "Step 1" not in (result.error or ""):
             raise AssertionError(f"Expected 'Step 1' in {result.error}")
 
         # Test failure at step 2
-        result = validate_all_steps("ab")
+        result = validation_chain("ab")
         assert result.is_failure
         assert result.error is not None
         if "Step 2" not in (result.error or ""):
             raise AssertionError(f"Expected 'Step 2' in {result.error}")
 
         # Test failure at step 3
-        result = validate_all_steps("test@123")
+        result = validation_chain("test@123")
         assert result.is_failure
         assert result.error is not None
         if "Step 3" not in (result.error or ""):

@@ -25,31 +25,28 @@ demonstrating the power and flexibility of the FlextDecorators system.
 
 import time
 from collections.abc import Callable
-from typing import TYPE_CHECKING, cast
+from typing import cast
+
+from flext_core import (
+    FlextDecorators,
+    FlextErrorHandlingDecorators,
+    FlextImmutabilityDecorators,
+    FlextLoggingDecorators,
+    FlextPerformanceDecorators,
+    FlextResult,
+    FlextValidationDecorators,
+    FlextValidationError,
+    TAnyObject,
+    TErrorMessage,
+    TLogMessage,
+    TUserData,
+)
 
 from .shared_domain import (
     SharedDomainFactory,
     User as SharedUser,
     log_domain_operation,
 )
-
-from flext_core import (
-    FlextDecorators,
-    FlextErrorHandlingDecorators,
-    FlextLoggingDecorators,
-    FlextPerformanceDecorators,
-    FlextResult,
-    FlextValidationDecorators,
-    TAnyObject,
-    TErrorMessage,
-    TLogMessage,
-    TUserData,
-)
-from flext_core.exceptions import FlextValidationError
-
-if TYPE_CHECKING:
-    from flext_core.base_decorators import _DecoratedFunction
-
 
 # Constants to avoid magic numbers
 MAX_RETRY_ATTEMPTS = 3  # Maximum number of retry attempts
@@ -65,6 +62,28 @@ MAX_REASONABLE_AGE = 150  # Maximum reasonable age for validation
 MAX_RETRY_ATTEMPTS = 3  # Maximum number of retry attempts before success
 
 
+def _demonstrate_basic_argument_validation() -> None:
+    """Demonstrate basic argument validation."""
+    print("\n1. Basic argument validation:")
+
+    # Apply validation decorator with proper casting
+    def _validate_user_data_impl(name: str, email: str, age: int) -> TUserData:
+        """Validate user data using flext_core.typings."""
+        return {"name": name, "email": email, "age": age, "status": "validated"}
+
+    validate_user_data = FlextValidationDecorators.validate_arguments(
+        _validate_user_data_impl
+    )
+
+    try:
+        result = validate_user_data("John Doe", "john@example.com", 30)
+        log_message = f"✅ Valid arguments: {result}"
+        print(log_message)
+    except (TypeError, ValueError) as e:
+        error_message: TErrorMessage = f"Validation failed: {e}"
+        print(f"❌ {error_message}")
+
+
 def demonstrate_validation_decorators() -> None:
     """Demonstrate validation decorators with automatic argument checking.
 
@@ -75,26 +94,7 @@ def demonstrate_validation_decorators() -> None:
     print("✅ VALIDATION DECORATORS")
     print("=" * 80)
 
-    # 1. Basic argument validation
-    log_message = "\n1. Basic argument validation:"
-    print(log_message)
-
-    # Apply validation decorator with proper casting
-    def _validate_user_data_impl(name: str, email: str, age: int) -> TUserData:
-        """Validate user data using flext_core.typings."""
-        return {"name": name, "email": email, "age": age, "status": "validated"}
-
-    validate_user_data = FlextValidationDecorators.validate_arguments(
-        cast("_DecoratedFunction", _validate_user_data_impl)
-    )
-
-    try:
-        result = validate_user_data("John Doe", "john@example.com", 30)
-        log_message = f"✅ Valid arguments: {result}"
-        print(log_message)
-    except (TypeError, ValueError) as e:
-        error_message: TErrorMessage = f"Validation failed: {e}"
-        print(f"❌ {error_message}")
+    _demonstrate_basic_argument_validation()
 
     # 2. Custom validation decorator
     log_message = "\n2. Custom validation decorator:"
@@ -113,7 +113,7 @@ def demonstrate_validation_decorators() -> None:
         return f"User registered with email: {email}"
 
     register_user = email_validation_decorator(
-        cast("_DecoratedFunction", _register_user_impl)
+        _register_user_impl
     )
 
     # Test valid email
@@ -148,7 +148,7 @@ def demonstrate_validation_decorators() -> None:
 
     create_user_profile = FlextValidationDecorators.create_validation_decorator(
         validate_age
-    )(cast("_DecoratedFunction", _create_user_profile_impl))
+    )(_create_user_profile_impl)
 
     # Test valid age
     try:
@@ -183,13 +183,19 @@ def demonstrate_error_handling_decorators() -> None:
     log_message = "\n1. Safe result decorator:"
     print(log_message)
 
-    @FlextDecorators.safe_result
-    def risky_division(a: float, b: float) -> float:
-        """Risky division operation."""
+    def _risky_division_impl(a: object, b: object) -> object:
+        """Risky division implementation."""
+        if not isinstance(a, (int, float)) or not isinstance(b, (int, float)):
+            msg = "Arguments must be numbers"
+            raise TypeError(msg)
         if b == 0:
             msg = "Division by zero"
             raise ValueError(msg)
-        return a / b
+        return float(a) / float(b)
+
+    risky_division = FlextDecorators.safe_result(
+        _risky_division_impl
+    )
 
     # Test successful operation
     result = risky_division(10.0, 2.0)
@@ -227,7 +233,7 @@ def demonstrate_error_handling_decorators() -> None:
         return "Service succeeded after retries"
 
     unreliable_service = FlextErrorHandlingDecorators.retry_decorator(
-        cast("_DecoratedFunction", _unreliable_service_impl)
+        _unreliable_service_impl
     )
 
     try:
@@ -263,7 +269,7 @@ def demonstrate_error_handling_decorators() -> None:
         raise ValueError(msg)
 
     operation_with_custom_handling = custom_safe_decorator(
-        cast("_DecoratedFunction", _operation_with_custom_handling_impl)
+        _operation_with_custom_handling_impl
     )
 
     try:
@@ -297,10 +303,10 @@ def demonstrate_performance_decorators() -> None:
         return sum(i for i in range(n))
 
     slow_computation = timing_decorator(
-        cast("_DecoratedFunction", _slow_computation_impl)
+        _slow_computation_impl
     )
 
-    result = slow_computation(1000)
+    result = slow_computation(1000) if callable(slow_computation) else 0
     log_message = f"✅ Computation result: {result}"
     print(log_message)
 
@@ -317,7 +323,7 @@ def demonstrate_performance_decorators() -> None:
         )
 
     expensive_fibonacci = FlextPerformanceDecorators.memoize_decorator(
-        cast("_DecoratedFunction", _expensive_fibonacci_impl)
+        _expensive_fibonacci_impl
     )
 
     # First call (expensive)
@@ -350,7 +356,9 @@ def demonstrate_performance_decorators() -> None:
         time.sleep(0.01)  # Simulate processing
         return f"Processed data: {data_id}"
 
-    data_processor = cache_decorator(cast("_DecoratedFunction", _data_processor_impl))
+    data_processor = cache_decorator(
+        _data_processor_impl
+    )
 
     # First call
     result1 = data_processor("data_001")
@@ -384,7 +392,7 @@ def demonstrate_logging_decorators() -> None:
         }
 
     business_operation = FlextLoggingDecorators.log_calls_decorator(
-        cast("_DecoratedFunction", _business_operation_impl)
+        _business_operation_impl
     )
 
     result = business_operation("payment", 100.50)
@@ -403,7 +411,7 @@ def demonstrate_logging_decorators() -> None:
         return f"Operation {operation_id} completed successfully"
 
     risky_business_operation = FlextLoggingDecorators.log_exceptions_decorator(
-        cast("_DecoratedFunction", _risky_business_operation_impl)
+        _risky_business_operation_impl
     )
 
     # Test successful operation
@@ -445,7 +453,7 @@ def demonstrate_logging_decorators() -> None:
     # Apply decorators in sequence
     comprehensive_service_with_exceptions = (
         FlextLoggingDecorators.log_exceptions_decorator(
-            cast("_DecoratedFunction", _comprehensive_service_impl)
+            _comprehensive_service_impl
         )
     )
     comprehensive_service = FlextLoggingDecorators.log_calls_decorator(
@@ -490,7 +498,7 @@ def demonstrate_immutability_decorators() -> None:
         }
 
     create_immutable_config = FlextImmutabilityDecorators.immutable_decorator(
-        cast("_DecoratedFunction", _create_immutable_config_impl)
+        _create_immutable_config_impl
     )
 
     config = create_immutable_config()
@@ -523,7 +531,7 @@ def demonstrate_immutability_decorators() -> None:
         return {"original": user_data, "processed": True}
 
     process_user_data = FlextImmutabilityDecorators.freeze_args_decorator(
-        cast("_DecoratedFunction", _process_user_data_impl)
+        _process_user_data_impl
     )
 
     input_data: TUserData = {"name": "Alice", "age": 30}
@@ -567,7 +575,7 @@ def demonstrate_functional_decorators() -> None:
 
     # Apply decorators in sequence
     step1 = FlextPerformanceDecorators.memoize_decorator(
-        cast("_DecoratedFunction", _enterprise_user_service_impl)
+        _enterprise_user_service_impl
     )
     step2 = FlextValidationDecorators.validate_arguments(step1)
     step3 = FlextErrorHandlingDecorators.retry_decorator(step2)
@@ -596,7 +604,7 @@ def demonstrate_functional_decorators() -> None:
         return {**data, "validated": True}
 
     step1_validate = FlextPerformanceDecorators.get_timing_decorator()(
-        cast("_DecoratedFunction", _step1_validate_impl)
+        _step1_validate_impl
     )
 
     def _step2_enrich_impl(data: TUserData) -> TUserData:
@@ -604,23 +612,33 @@ def demonstrate_functional_decorators() -> None:
         return {**data, "enriched": True, "timestamp": time.time()}
 
     step2_enrich = FlextPerformanceDecorators.get_timing_decorator()(
-        cast("_DecoratedFunction", _step2_enrich_impl)
+        _step2_enrich_impl
     )
 
     def _step3_transform_impl(data: TAnyObject) -> TAnyObject:
         """Step 3: Transform data."""
-        return {**data, "transformed": True, "final": True}
+        if isinstance(data, dict):
+            result = dict(data)
+            result.update({"transformed": True, "final": True})
+            return cast("TAnyObject", result)
+        return cast("TAnyObject", {"transformed": True, "final": True})
 
     step3_transform = FlextPerformanceDecorators.get_timing_decorator()(
-        cast("_DecoratedFunction", _step3_transform_impl)
+        _step3_transform_impl
     )
 
     # Execute pipeline
     pipeline_data: TUserData = {"input": "test_data"}
 
-    step1_result = step1_validate(pipeline_data)
-    step2_result = step2_enrich(step1_result)
-    step3_result = step3_transform(step2_result)
+    step1_result = (
+        step1_validate(pipeline_data) if callable(step1_validate) else pipeline_data
+    )
+    step2_result = (
+        step2_enrich(step1_result) if callable(step2_enrich) else step1_result
+    )
+    step3_result = (
+        step3_transform(step2_result) if callable(step3_transform) else step2_result
+    )
 
     log_message = f"✅ Pipeline result: {step3_result}"
     print(log_message)
@@ -687,14 +705,14 @@ def demonstrate_decorator_best_practices() -> None:
         """Set user age with validation."""
         return f"User age set to {age}"
 
-    set_user_age = age_validator(cast("_DecoratedFunction", _set_user_age_impl))
+    set_user_age = age_validator(_set_user_age_impl)
 
     def _set_completion_rate_impl(rate: int) -> str:
         """Set completion rate with validation."""
         return f"Completion rate set to {rate}%"
 
     set_completion_rate = percentage_validator(
-        cast("_DecoratedFunction", _set_completion_rate_impl)
+        _set_completion_rate_impl
     )
 
     # Test valid values
@@ -757,8 +775,9 @@ def demonstrate_decorator_best_practices() -> None:
 
 
 def demonstrate_domain_model_decorators() -> None:
-    """Demonstrate decorators with shared domain models integration using
-    railway-oriented programming.
+    """Demonstrate decorators with shared domain models integration.
+
+    Uses railway-oriented programming patterns.
     """
     _print_section_header("🏢 DOMAIN MODEL DECORATORS INTEGRATION")
 
@@ -795,7 +814,7 @@ def _demonstrate_validation_decorators() -> FlextResult[None]:
 
     # Apply decorators in sequence
     create_validated_user_with_logging = FlextLoggingDecorators.log_calls_decorator(
-        cast("_DecoratedFunction", _create_validated_user_impl)
+        _create_validated_user_impl
     )
     create_validated_user = FlextValidationDecorators.validate_arguments(
         create_validated_user_with_logging
@@ -868,11 +887,12 @@ def _demonstrate_performance_decorators() -> FlextResult[None]:
         return None
 
     # Apply decorators in sequence
-    find_user_with_timing = FlextPerformanceDecorators.get_timing_decorator()(
-        cast("_DecoratedFunction", _find_user_by_email_impl)
+    find_user_with_timing = FlextPerformanceDecorators.get_timing_decorator(
+    )(
+        _find_user_by_email_impl
     )
     find_user_by_email = FlextPerformanceDecorators.memoize_decorator(
-        find_user_with_timing
+        find_user_with_timing  # type: ignore[arg-type]
     )
 
     return _execute_performance_lookups(find_user_by_email)
@@ -915,7 +935,7 @@ def _demonstrate_error_handling_decorators() -> FlextResult[None]:
 
     # Apply decorators in sequence
     activate_user_with_exceptions = FlextLoggingDecorators.log_exceptions_decorator(
-        cast("_DecoratedFunction", _activate_user_account_impl)
+        _activate_user_account_impl
     )
     activate_user_account = FlextDecorators.safe_result(activate_user_with_exceptions)
 
@@ -1040,7 +1060,7 @@ def _demonstrate_domain_validation_decorators() -> FlextResult[None]:
         raise ValueError(result.error or "User registration failed")
 
     register_user_with_domain_validation = domain_validator(
-        cast("_DecoratedFunction", _register_user_with_domain_validation_impl)
+        _register_user_with_domain_validation_impl
     )
 
     return _test_domain_validation_scenarios(register_user_with_domain_validation)

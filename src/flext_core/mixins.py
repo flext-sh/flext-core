@@ -1,24 +1,29 @@
-"""Reusable mixin classes for common functionality.
+"""FLEXT Core Mixins - Reusable behavioral patterns for enterprise applications.
 
-Provides mixin classes for timestamps, logging, validation, serialization,
-and other common patterns. Designed for multiple inheritance without conflicts.
+Consolidates all mixin patterns following PEP8 naming conventions.
+Provides abstract base classes and concrete implementations for common
+behaviors like timestamps, logging, validation, and serialization.
+
+Architecture:
+    - Abstract Base Classes: Foundation mixin patterns
+    - Concrete Implementations: Production-ready mixin classes
+    - Composite Mixins: Higher-level combinations
+    - Legacy Compatibility: Backward compatibility aliases
+
+Usage:
+    from flext_core import FlextTimestampMixin, FlextValidatableMixin
+
+    class User(FlextTimestampMixin, FlextValidatableMixin):
+        name: str
 """
 
 from __future__ import annotations
 
 import json
 import time
+from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
-from flext_core.base_mixins import (
-    FlextAbstractEntityMixin,
-    FlextAbstractIdentifiableMixin,
-    FlextAbstractLoggableMixin,
-    FlextAbstractSerializableMixin,
-    FlextAbstractServiceMixin,
-    FlextAbstractTimestampMixin,
-    FlextAbstractValidatableMixin,
-)
 from flext_core.exceptions import FlextValidationError
 from flext_core.loggings import FlextLoggerFactory
 from flext_core.result import FlextResult
@@ -27,6 +32,186 @@ from flext_core.utilities import FlextGenerators
 if TYPE_CHECKING:
     from flext_core.protocols import FlextLoggerProtocol
     from flext_core.typings import TEntityId
+
+# =============================================================================
+# ABSTRACT BASE CLASSES - Foundation mixin patterns
+# =============================================================================
+
+
+class FlextAbstractMixin(ABC):
+    """Abstract base class for all FLEXT mixins following SOLID principles.
+
+    Provides foundation for implementing mixins with proper separation
+    of concerns and dependency inversion.
+    """
+
+    @abstractmethod
+    def mixin_setup(self) -> None:
+        """Set up mixin - must be implemented by concrete mixins."""
+        ...
+
+    def __init__(self, *args: object, **kwargs: object) -> None:
+        """Initialize abstract mixin and tolerate extra args for MRO chains."""
+        del args, kwargs
+        self._mixin_initialized = True
+
+
+class FlextAbstractTimestampMixin(FlextAbstractMixin):
+    """Abstract timestamp mixin for entity time tracking."""
+
+    @abstractmethod
+    def update_timestamp(self) -> None:
+        """Update timestamp - must be implemented by subclasses."""
+        ...
+
+    @abstractmethod
+    def get_timestamp(self) -> float:
+        """Get timestamp - must be implemented by subclasses."""
+        ...
+
+    def mixin_setup(self) -> None:
+        """Set up timestamp mixin."""
+        self.update_timestamp()
+
+
+class FlextAbstractIdentifiableMixin(FlextAbstractMixin):
+    """Abstract identifiable mixin for entity identification."""
+
+    @abstractmethod
+    def get_id(self) -> TEntityId:
+        """Get entity ID - must be implemented by subclasses."""
+        ...
+
+    @abstractmethod
+    def set_id(self, entity_id: TEntityId) -> None:
+        """Set entity ID - must be implemented by subclasses."""
+        ...
+
+    def mixin_setup(self) -> None:
+        """Set up identifiable mixin."""
+
+
+class FlextAbstractLoggableMixin(FlextAbstractMixin):
+    """Abstract loggable mixin for entity logging."""
+
+    @property
+    @abstractmethod
+    def logger(self) -> FlextLoggerProtocol:
+        """Get logger instance - must be implemented by subclasses."""
+        ...
+
+    @abstractmethod
+    def log_operation(self, operation: str, **kwargs: object) -> None:
+        """Log operation - must be implemented by subclasses."""
+        ...
+
+    def mixin_setup(self) -> None:
+        """Set up loggable mixin."""
+
+
+class FlextAbstractValidatableMixin(FlextAbstractMixin):
+    """Abstract validatable mixin for entity validation."""
+
+    @abstractmethod
+    def validate(self) -> FlextResult[None]:
+        """Validate entity - must be implemented by subclasses."""
+        ...
+
+    @property
+    @abstractmethod
+    def is_valid(self) -> bool:  # pragma: no cover - abstract property declaration
+        """Check if entity is valid - must be implemented by subclasses."""
+        raise NotImplementedError
+
+    def mixin_setup(self) -> None:
+        """Set up validatable mixin."""
+
+    # ------------------------------------------------------------------
+    # Default validation state management (available to all subclasses)
+    # These methods are used heavily by examples and keep state locally
+    # ------------------------------------------------------------------
+
+    def clear_validation_errors(self) -> None:
+        """Clear collected validation errors and reset valid flag."""
+        self._ensure_validation_state()
+        self._validation_errors.clear()
+        self._is_valid = True
+
+    def add_validation_error(self, message: str) -> None:
+        """Add a validation error message and mark entity as invalid."""
+        self._ensure_validation_state()
+        self._validation_errors.append(str(message))
+        self._is_valid = False
+
+    @property
+    def validation_errors(self) -> list[str]:
+        """Return current validation errors (read-only list)."""
+        self._ensure_validation_state()
+        return list(self._validation_errors)
+
+    def mark_valid(self) -> None:
+        """Explicitly mark entity as valid (clears errors)."""
+        self._ensure_validation_state()
+        self._is_valid = True
+
+    # Internal lazy state initializer for validation
+    def _ensure_validation_state(self) -> None:
+        if not hasattr(self, "_validation_initialized"):
+            self._validation_errors: list[str] = []
+            self._is_valid = True
+            self._validation_initialized = True
+
+
+class FlextAbstractSerializableMixin(FlextAbstractMixin):
+    """Abstract serializable mixin for entity serialization."""
+
+    @abstractmethod
+    def to_dict(self) -> dict[str, object]:
+        """Convert to dictionary - must be implemented by subclasses."""
+        ...
+
+    @abstractmethod
+    def load_from_dict(self, data: dict[str, object]) -> None:
+        """Load from dictionary - must be implemented by subclasses."""
+        ...
+
+    def mixin_setup(self) -> None:
+        """Set up serializable mixin."""
+
+
+class FlextAbstractEntityMixin(FlextAbstractMixin):
+    """Abstract entity mixin for domain entities."""
+
+    @abstractmethod
+    def get_domain_events(self) -> list[object]:
+        """Get domain events - must be implemented by subclasses."""
+        ...
+
+    @abstractmethod
+    def clear_domain_events(self) -> None:
+        """Clear domain events - must be implemented by subclasses."""
+        ...
+
+    def mixin_setup(self) -> None:
+        """Set up entity mixin."""
+
+
+class FlextAbstractServiceMixin(FlextAbstractMixin):
+    """Abstract service mixin for service classes."""
+
+    @abstractmethod
+    def get_service_name(self) -> str:
+        """Get service name - must be implemented by subclasses."""
+        ...
+
+    @abstractmethod
+    def initialize_service(self) -> FlextResult[None]:
+        """Initialize service - must be implemented by subclasses."""
+        ...
+
+    def mixin_setup(self) -> None:
+        """Set up service mixin."""
+
 
 # =============================================================================
 # UTILITY CLASSES - Helper functionality for mixins
@@ -54,7 +239,7 @@ class FlextValidators:
 
 
 # =============================================================================
-# TIMESTAMP MIXIN - Creation and update timestamp tracking
+# CONCRETE IMPLEMENTATIONS - Production-ready mixin classes
 # =============================================================================
 
 
@@ -83,6 +268,7 @@ class FlextTimestampMixin(FlextAbstractTimestampMixin):
         """Update timestamp - implements abstract method."""
         # Ensure internal state exists
         _ = self.updated_at
+
         self._updated_at = FlextGenerators.generate_timestamp()
 
     def get_age_seconds(self) -> float:
@@ -124,11 +310,6 @@ class FlextTimestampMixin(FlextAbstractTimestampMixin):
         """Get age in seconds since creation."""
         self.__ensure_timestamp_state()
         return FlextGenerators.generate_timestamp() - self._created_at
-
-
-# =============================================================================
-# IDENTIFIABLE MIXIN - Unique ID management
-# =============================================================================
 
 
 class FlextIdentifiableMixin(FlextAbstractIdentifiableMixin):
@@ -180,12 +361,13 @@ class FlextIdentifiableMixin(FlextAbstractIdentifiableMixin):
             msg = f"Invalid entity ID: {entity_id}"
             raise FlextValidationError(
                 msg,
+                field="entity_id",
                 validation_details={"field": "entity_id", "value": entity_id},
             )
 
     def generate_id(self) -> None:
         """Generate new unique ID."""
-        self.id = FlextGenerators.generate_id()
+        self.id = self._generate_default_id()
 
     @property
     def entity_id(self) -> TEntityId:
@@ -197,467 +379,399 @@ class FlextIdentifiableMixin(FlextAbstractIdentifiableMixin):
         return self.id is not None
 
 
-# =============================================================================
-# LOGGABLE MIXIN - Structured logging with correlation IDs
-# =============================================================================
-
-
 class FlextLoggableMixin(FlextAbstractLoggableMixin):
     """Concrete loggable mixin using base abstractions.
 
-    Structured logging capabilities following SOLID principles.
+    Provides automatic logging capability with structured logging
+    following SOLID principles.
     """
-
-    def mixin_setup(self) -> None:
-        """Set up loggable mixin - implements abstract method."""
-        # Initialize logger if not already present
-        if not hasattr(self, "_logger"):
-            logger_name = f"{self.__class__.__module__}.{self.__class__.__name__}"
-            self._logger = FlextLoggerFactory.get_logger(logger_name)
 
     @property
     def logger(self) -> FlextLoggerProtocol:
-        """Get logger instance - implements abstract property."""
+        """Get logger instance - implements abstract method."""
         if not hasattr(self, "_logger"):
-            logger_name = f"{self.__class__.__module__}.{self.__class__.__name__}"
-            self._logger = FlextLoggerFactory.get_logger(logger_name)
+            self._logger = FlextLoggerFactory.get_logger(
+                self.__class__.__module__ + "." + self.__class__.__name__,
+            )
         return self._logger
 
     def log_operation(self, operation: str, **kwargs: object) -> None:
-        """Log operation with context - implements abstract method."""
+        """Log operation - implements abstract method."""
         self.logger.info(f"Operation: {operation}", **kwargs)
 
-    def log_with_context(self, level: str, message: str, **context: object) -> None:
-        """Log message with additional context."""
-        log_method = getattr(self.logger, level.lower(), self.logger.info)
-        log_method(message, **context)
+    def mixin_setup(self) -> None:
+        """Set up loggable mixin."""
+        # Initialize logger lazily
+        _ = self.logger
 
+    def log_info(self, message: str, **kwargs: object) -> None:
+        """Log info message with context."""
+        self.logger.info(message, **kwargs)
 
-# =============================================================================
-# TIMING MIXIN - Performance timing and measurement
-# =============================================================================
+    def log_error(self, message: str, **kwargs: object) -> None:
+        """Log error message with context."""
+        self.logger.error(message, **kwargs)
+
+    def log_debug(self, message: str, **kwargs: object) -> None:
+        """Log debug message with context."""
+        self.logger.debug(message, **kwargs)
 
 
 class FlextTimingMixin:
-    """Centralized timing mixin.
+    """Timing mixin for performance tracking.
 
-    Performance timing and execution measurement patterns
-    with high-precision measurements and monitoring support.
+    Provides start/stop timing functionality for performance measurement.
     """
 
+    def __init__(self) -> None:
+        """Initialize timing state."""
+        super().__init__()
+        self._start_time: float | None = None
+        self._elapsed_times: list[float] = []
+
+    def start_timing(self) -> None:
+        """Start timing operation."""
+        self._start_time = time.time()
+
+    def stop_timing(self) -> float:
+        """Stop timing and return elapsed seconds."""
+        if self._start_time is None:
+            return 0.0
+        elapsed = time.time() - self._start_time
+        self._elapsed_times.append(elapsed)
+        self._start_time = None
+        return elapsed
+
     def _start_timing(self) -> float:
-        """Start timing measurement."""
-        return time.perf_counter()
+        """Compatibility helper used in examples: return start timestamp.
+
+        Returns:
+            The timestamp (seconds) when timing started.
+
+        """
+        start = time.time()
+        self._start_time = start
+        return start
 
     def _get_execution_time_ms(self, start_time: float) -> float:
-        """Get execution time in milliseconds."""
-        return (time.perf_counter() - start_time) * 1000.0
+        """Compatibility helper used in examples: return elapsed time in ms.
 
-    def _get_execution_time_ms_rounded(self, start_time: float) -> float:
-        """Get execution time in milliseconds (rounded)."""
-        return round(self._get_execution_time_ms(start_time), 2)
+        Args:
+            start_time: The start timestamp (seconds) previously returned by _start_timing.
 
+        Returns:
+            Elapsed time in milliseconds.
 
-# =============================================================================
-# VALIDATABLE MIXIN - Domain validation patterns
-# =============================================================================
+        """
+        return (time.time() - start_time) * 1000.0
+
+    def get_last_elapsed_time(self) -> float:
+        """Get last elapsed time."""
+        return self._elapsed_times[-1] if self._elapsed_times else 0.0
+
+    def get_average_elapsed_time(self) -> float:
+        """Get average elapsed time."""
+        if not self._elapsed_times:
+            return 0.0
+        return sum(self._elapsed_times) / len(self._elapsed_times)
+
+    def clear_timing_history(self) -> None:
+        """Clear timing history."""
+        self._elapsed_times.clear()
 
 
 class FlextValidatableMixin(FlextAbstractValidatableMixin):
     """Concrete validatable mixin using base abstractions.
 
-    Domain validation patterns following SOLID principles.
+    Provides validation capability with structured error reporting
+    following SOLID principles.
     """
 
-    def __init__(self) -> None:
-        """Initialize validation state."""
-        super().__init__()
-        # Deferred init: properties below are accessed lazily as needed
-        self._validation_errors: list[str] = []
-        self._is_valid: bool | None = None
-
-    def mixin_setup(self) -> None:
-        """No-op setup to satisfy abstract base contract."""
-        return
-
-    @property
-    def validation_errors(self) -> list[str]:
-        """Get collected validation errors (compat API)."""
-        errors = getattr(self, "_validation_errors", None)
-        if errors is None:
-            self._validation_errors = []
-            return []
-        return list(errors)
+    def validate(self) -> FlextResult[None]:
+        """Validate entity - implements abstract method."""
+        # Basic validation - can be overridden
+        if not self.is_valid:
+            return FlextResult.fail("Entity validation failed")
+        return FlextResult.ok(None)
 
     @property
     def is_valid(self) -> bool:
-        """Return validation status; None treated as False for tests."""
-        is_valid_val = getattr(self, "_is_valid", False)
-        return bool(is_valid_val)
-
-    def add_validation_error(self, message: str) -> None:
-        """Add a validation error message and mark invalid."""
-        if message:
-            self._validation_errors.append(message)
-        self._is_valid = False
+        """Check if entity is valid - implements abstract method."""
+        # Ensure validation state exists
+        self._ensure_validation_state()
+        return self._is_valid and len(self._validation_errors) == 0
 
     def clear_validation_errors(self) -> None:
-        """Clear errors and reset status to False (unknown treated as False)."""
+        """Clear collected validation errors and reset valid flag to False (override base behavior)."""
+        self._ensure_validation_state()
         self._validation_errors.clear()
-        self._is_valid = False
+        self._is_valid = (
+            False  # Override: concrete mixin treats cleared as False rather than True
+        )
 
-    def mark_valid(self) -> None:
-        """Explicitly mark object as valid."""
-        self._is_valid = True
+    def _ensure_validation_state(self) -> None:
+        """Override base initialization to start with False (concrete mixin behavior)."""
+        if not hasattr(self, "_validation_initialized"):
+            self._validation_errors: list[str] = []
+            self._is_valid = False  # Concrete implementation starts invalid until explicitly validated
+            self._validation_initialized = True
 
-    def has_validation_errors(self) -> bool:
-        """Check if there are collected validation errors."""
-        return len(self._validation_errors) > 0
-
-    def validate(self) -> FlextResult[None]:
-        """Validate domain rules - implements abstract method."""
-        result = self.validate_business_rules()
-        if result.is_failure and result.error:
-            self.add_validation_error(result.error)
-        elif not self._validation_errors:
-            self._is_valid = True
-        return result
-
-    def validate_business_rules(self) -> FlextResult[None]:
-        """Validate business rules (override in subclasses)."""
-        return FlextResult.ok(None)
-
-    # is_valid property implemented above (compat semantics)
-
-
-# =============================================================================
-# SERIALIZABLE MIXIN - JSON/dict serialization patterns
-# =============================================================================
+    def mixin_setup(self) -> None:
+        """Set up validatable mixin."""
+        # No initialization needed for basic validation
 
 
 class FlextSerializableMixin(FlextAbstractSerializableMixin):
     """Concrete serializable mixin using base abstractions.
 
-    JSON and dictionary serialization following SOLID principles.
+    Provides JSON serialization capability following SOLID principles.
     """
-
-    def mixin_setup(self) -> None:
-        """No-op setup to satisfy abstract base contract."""
-        return
 
     def to_dict(self) -> dict[str, object]:
         """Convert to dictionary - implements abstract method."""
-        if hasattr(self, "model_dump"):
-            # Type cast to satisfy MyPy - model_dump returns dict[str, object]
-            return dict(self.model_dump())
-
-        # Default implementation using __dict__
-        return {k: v for k, v in self.__dict__.items() if not k.startswith("_")}
+        result = {}
+        for key, value in self.__dict__.items():
+            if not key.startswith("_"):
+                if hasattr(value, "to_dict"):
+                    result[key] = value.to_dict()
+                else:
+                    result[key] = value
+        return result
 
     def to_json(self) -> str:
-        """Convert to JSON string - implements abstract method."""
-        return json.dumps(self.to_dict())
+        """Convert to JSON string."""
+        return json.dumps(self.to_dict(), default=str)
+
+    def to_dict_basic(self) -> dict[str, object]:
+        """Alias for to_dict to maintain backward compatibility."""
+        return self.to_dict()
 
     def load_from_dict(self, data: dict[str, object]) -> None:
-        """Load from dictionary (override in subclasses)."""
+        """Load from dictionary - implements abstract method."""
         for key, value in data.items():
-            if not key.startswith("_") and hasattr(self, key):
+            if hasattr(self, key):
                 setattr(self, key, value)
 
-    # Back-compat helper used by various tests and payload serialization
-    def to_dict_basic(self) -> dict[str, object]:
-        """Convert to dict removing private/internal attributes."""
-        data = self.to_dict()
-        return {k: v for k, v in data.items() if not k.startswith("_")}
+    def load_from_json(self, json_str: str) -> None:
+        """Load from JSON string."""
+        data = json.loads(json_str)
+        self.load_from_dict(data)
 
-
-# =============================================================================
-# COMPARABLE MIXIN - Comparison operations for value objects
-# =============================================================================
+    def mixin_setup(self) -> None:
+        """Set up serializable mixin."""
+        # No initialization needed for serialization
 
 
 class FlextComparableMixin:
-    """Centralized comparable mixin.
-
-    Comparison operations for value objects and entities
-    with rich comparison operators and sorting support.
-    """
-
-    def _get_comparison_key(self) -> tuple[object, ...]:
-        """Get key for comparison (override in subclasses)."""
-        return (str(self),)
+    """Comparable mixin for ordering and equality."""
 
     def __eq__(self, other: object) -> bool:
-        """Equality comparison."""
+        """Check equality."""
         if not isinstance(other, self.__class__):
             return False
-        return self._get_comparison_key() == other._get_comparison_key()
-
-    def __lt__(self, other: object) -> bool:
-        """Less than comparison."""
-        if not isinstance(other, self.__class__):
-            return False  # Different classes are considered unequal
-        return self._get_comparison_key() < other._get_comparison_key()
-
-    def __le__(self, other: object) -> bool:
-        """Less than or equal comparison."""
-        return self < other or self == other
-
-    def __gt__(self, other: object) -> bool:
-        """Greater than comparison."""
-        if not isinstance(other, self.__class__):
-            return False  # Different classes are considered unequal
-        return self._get_comparison_key() > other._get_comparison_key()
-
-    def __ge__(self, other: object) -> bool:
-        """Greater than or equal comparison."""
-        return self > other or self == other
+        if hasattr(self, "to_dict") and hasattr(other, "to_dict"):
+            return bool(self.to_dict() == other.to_dict())
+        return bool(self.__dict__ == other.__dict__)
 
     def __hash__(self) -> int:
-        """Hash for use in sets and dicts."""
-        return hash(self._get_comparison_key())
+        """Generate hash."""
+        if hasattr(self, "id"):
+            return hash(self.id)
+        return hash(str(self.__dict__))
 
+    # Rich comparison operators for ordering in tests
+    def __lt__(self, other: object) -> bool:
+        """Less than comparison based on string representation of dict."""
+        if not isinstance(other, self.__class__):
+            return NotImplemented
+        left = self.to_dict_basic() if hasattr(self, "to_dict_basic") else self.__dict__
+        right = (
+            other.to_dict_basic() if hasattr(other, "to_dict_basic") else other.__dict__
+        )
+        return str(left) < str(right)
 
-# =============================================================================
-# CACHEABLE MIXIN - Caching patterns with TTL support
-# =============================================================================
+    def __le__(self, other: object) -> bool:  # pragma: no cover - trivial glue
+        """Less than or equal comparison."""
+        if not isinstance(other, self.__class__):
+            return NotImplemented
+        return self == other or self < other
+
+    def __gt__(self, other: object) -> bool:  # pragma: no cover - trivial glue
+        """Greater than comparison."""
+        if not isinstance(other, self.__class__):
+            return NotImplemented
+        return not self <= other
+
+    def __ge__(self, other: object) -> bool:  # pragma: no cover - trivial glue
+        """Greater than or equal comparison."""
+        if not isinstance(other, self.__class__):
+            return NotImplemented
+        return not self < other
 
 
 class FlextCacheableMixin:
-    """Centralized cacheable mixin.
-
-    Caching patterns with TTL support, cache invalidation,
-    and key generation methods.
-    """
+    """Cacheable mixin for cache key generation."""
 
     def get_cache_key(self) -> str:
-        """Get cache key (override in subclasses)."""
-        return f"{self.__class__.__name__}:{id(self)}"
+        """Generate cache key."""
+        if hasattr(self, "id"):
+            return f"{self.__class__.__name__}:{self.id}"
+        return f"{self.__class__.__name__}:{hash(str(self.__dict__))}"
 
     def get_cache_ttl(self) -> int:
-        """Get cache TTL in seconds (override in subclasses)."""
-        return 300  # 5 minutes default
-
-    def should_cache(self) -> bool:
-        """Determine if object should be cached."""
-        return True
-
-    def invalidate_cache(self) -> None:
-        """Invalidate cache entry."""
-        # Implementation would depend on cache backend
+        """Get cache TTL in seconds."""
+        return 3600  # Default 1 hour
 
 
 # =============================================================================
-# ENTITY MIXIN - Domain entity patterns with lifecycle
+# COMPOSITE MIXINS - Higher-level combinations
 # =============================================================================
 
 
 class FlextEntityMixin(
-    FlextAbstractEntityMixin,
     FlextTimestampMixin,
     FlextIdentifiableMixin,
+    FlextLoggableMixin,
+    FlextValidatableMixin,
+    FlextSerializableMixin,
 ):
-    """Concrete entity mixin using base abstractions.
+    """Composite entity mixin combining common entity behaviors."""
 
-    Domain entity patterns following DDD and SOLID principles.
-    """
-
-    def __init__(self, entity_id: TEntityId | None = None) -> None:  # noqa: ARG002
-        """Initialize entity mixin with proper MRO."""
-        FlextAbstractEntityMixin.__init__(self)
-        FlextTimestampMixin.__init__(self)
-        FlextIdentifiableMixin.__init__(self)
+    def mixin_setup(self) -> None:
+        """Set up all component mixins."""
+        super().mixin_setup()
 
 
-# =============================================================================
-# VALUE OBJECT MIXIN - Immutable value object patterns
-# =============================================================================
+class FlextValueObjectMixin(
+    FlextValidatableMixin,
+    FlextSerializableMixin,
+    FlextComparableMixin,
+):
+    """Composite value object mixin for immutable values."""
 
-
-class FlextValueObjectMixin(FlextComparableMixin, FlextValidatableMixin):
-    """Centralized value object mixin.
-
-    Immutable value object patterns with comparison, validation,
-    and structural equality support.
-    """
-
-    # Implementation comes from composition of comparable and validatable mixins
-
-
-# =============================================================================
-# COMMAND MIXIN - Command pattern integration
-# =============================================================================
+    def mixin_setup(self) -> None:
+        """Set up all component mixins."""
+        super().mixin_setup()
 
 
 class FlextCommandMixin(
+    FlextIdentifiableMixin,
     FlextTimestampMixin,
     FlextValidatableMixin,
     FlextSerializableMixin,
 ):
-    """Centralized command mixin for command pattern implementations.
+    """Composite command mixin for CQRS commands."""
 
-    Command pattern combining timestamp, validation, and
-    serialization functionality.
-    """
-
-    def validate_and_set(self, **kwargs: object) -> None:
-        """Validate and set command attributes."""
-        for key, value in kwargs.items():
-            if hasattr(self, key):
-                setattr(self, key, value)
-        # Update timestamp after setting values
-        self._update_timestamp()
-
-    def to_dict_basic(self) -> dict[str, object]:
-        """Convert to basic dictionary representation for commands."""
-        data = self.to_dict()
-        # Remove internal attributes
-        return {k: v for k, v in data.items() if not k.startswith("_")}
-
-
-# =============================================================================
-# SERVICE MIXIN - Service pattern integration
-# =============================================================================
+    def mixin_setup(self) -> None:
+        """Set up all component mixins."""
+        super().mixin_setup()
 
 
 class FlextServiceMixin(
-    FlextAbstractServiceMixin,
     FlextLoggableMixin,
     FlextValidatableMixin,
 ):
-    """Concrete service mixin using base abstractions.
+    """Composite service mixin for service classes."""
 
-    Service pattern following SOLID principles.
-    """
-
-    def __init__(self, service_name: str) -> None:
-        """Initialize service with proper MRO."""
-        FlextAbstractServiceMixin.__init__(self)
-        FlextLoggableMixin.__init__(self)
-        FlextValidatableMixin.__init__(self)
-        self.service_name = service_name
-        self.id = service_name
-        self._service_initialized = True
-
-    def get_service_info(self) -> dict[str, object]:
-        """Get service info - implements abstract method."""
-        return {
-            "service_name": self.service_name,
-            "service_type": self.__class__.__name__,
-            "is_initialized": getattr(self, "_service_initialized", False),
-            "is_valid": bool(self.is_valid),
-        }
+    def mixin_setup(self) -> None:
+        """Set up all component mixins."""
+        super().mixin_setup()
 
 
-# =============================================================================
-# DATA MIXIN - Data pattern integration
-# =============================================================================
-
-
-class FlextDataMixin(FlextValidatableMixin, FlextSerializableMixin):
-    """Centralized data mixin for data pattern implementations.
-
-    Data pattern combining validation, serialization,
-    and comparison functionality.
-    """
-
-    def _compare_basic(self, other: object) -> int:
-        """Compare data objects."""
-        if not isinstance(other, self.__class__):
-            return 1  # Different classes are considered unequal
-        # Use string comparison by default
-        self_str = str(self)
-        other_str = str(other)
-        return (self_str > other_str) - (self_str < other_str)
-
-    def to_dict_basic(self) -> dict[str, object]:
-        """Convert to basic dictionary representation for data."""
-        data = self.to_dict()
-        # Remove internal attributes
-        return {k: v for k, v in data.items() if not k.startswith("_")}
-
-    def validate_data(self) -> bool:
-        """Validate data integrity."""
-        return self.validate().is_success
-
-
-# =============================================================================
-# FULL MIXIN - Complete functionality integration
-# =============================================================================
-
-
-class FlextFullMixin(
-    FlextEntityMixin,
-    FlextLoggableMixin,
-    FlextCacheableMixin,
+class FlextDataMixin(
+    FlextTimestampMixin,
     FlextSerializableMixin,
     FlextValidatableMixin,
 ):
-    """Centralized full mixin combining ALL capabilities.
+    """Composite data mixin for data transfer objects."""
 
-    Comprehensive mixin combining entity, logging, caching,
-    serialization, and validation functionality.
-    """
+    def mixin_setup(self) -> None:
+        """Set up all component mixins."""
+        super().mixin_setup()
 
-    def _compare_basic(self, other: object) -> int:
-        """Compare full objects using ID if available."""
-        if not isinstance(other, self.__class__):
-            return 1  # Different classes are considered unequal
-        # Use ID comparison if both have IDs
-        if hasattr(self, "entity_id") and hasattr(other, "entity_id"):
-            self_id = str(self.entity_id)
-            other_id = str(other.entity_id)
-            return (self_id > other_id) - (self_id < other_id)
-        # Fall back to string comparison
-        self_str = str(self)
-        other_str = str(other)
-        return (self_str > other_str) - (self_str < other_str)
 
-    def to_dict_basic(self) -> dict[str, object]:
-        """Convert to basic dictionary representation for full objects."""
-        data = self.to_dict()
-        # Remove internal attributes
-        return {k: v for k, v in data.items() if not k.startswith("_")}
+class FlextFullMixin(
+    FlextTimestampMixin,
+    FlextIdentifiableMixin,
+    FlextLoggableMixin,
+    FlextTimingMixin,
+    FlextValidatableMixin,
+    FlextSerializableMixin,
+    FlextComparableMixin,
+    FlextCacheableMixin,
+):
+    """Full-featured mixin with all common behaviors."""
 
-    # Simple cache implementation for testing
-    def cache_set(self, key: str, value: object) -> None:
-        """Set cache value."""
-        if not hasattr(self, "_cache"):
-            self._cache: dict[str, object] = {}
-        self._cache[key] = value
-
-    def cache_get(self, key: str) -> object:
-        """Get cache value."""
-        if not hasattr(self, "_cache"):
-            self._cache = {}
-        return self._cache.get(key)
+    def mixin_setup(self) -> None:
+        """Set up all component mixins."""
+        super().mixin_setup()
 
 
 # =============================================================================
-# EXPORTS - Centralized mixin implementations
+# LEGACY COMPATIBILITY ALIASES - Maintain backward compatibility
 # =============================================================================
 
-__all__: list[str] = [
+# Legacy compatibility mixins (map to modern implementations)
+LegacyCompatibleTimestampMixin = FlextTimestampMixin
+LegacyCompatibleIdentifiableMixin = FlextIdentifiableMixin
+LegacyCompatibleValidatableMixin = FlextValidatableMixin
+LegacyCompatibleSerializableMixin = FlextSerializableMixin
+LegacyCompatibleLoggableMixin = FlextLoggableMixin
+LegacyCompatibleTimingMixin = FlextTimingMixin
+LegacyCompatibleComparableMixin = FlextComparableMixin
+LegacyCompatibleCacheableMixin = FlextCacheableMixin
+LegacyCompatibleEntityMixin = FlextEntityMixin
+LegacyCompatibleCommandMixin = FlextCommandMixin
+LegacyCompatibleDataMixin = FlextDataMixin
+LegacyCompatibleFullMixin = FlextFullMixin
+LegacyCompatibleServiceMixin = FlextServiceMixin
+LegacyCompatibleValueObjectMixin = FlextValueObjectMixin
+
+# =============================================================================
+# EXPORTS - Clean public API
+# =============================================================================
+
+__all__: list[str] = [  # noqa: RUF022
+    "FlextAbstractEntityMixin",
+    "FlextAbstractIdentifiableMixin",
+    "FlextAbstractLoggableMixin",
+    # Abstract Base Classes
+    "FlextAbstractMixin",
+    "FlextAbstractSerializableMixin",
+    "FlextAbstractServiceMixin",
+    "FlextAbstractTimestampMixin",
+    "FlextAbstractValidatableMixin",
     "FlextCacheableMixin",
     "FlextCommandMixin",
     "FlextComparableMixin",
     "FlextDataMixin",
-    # Composite mixins
+    # Composite Mixins
     "FlextEntityMixin",
     "FlextFullMixin",
-    # Utility classes
-    "FlextGenerators",
     "FlextIdentifiableMixin",
     "FlextLoggableMixin",
     "FlextSerializableMixin",
     "FlextServiceMixin",
-    # Core mixins
+    # Concrete Mixins
     "FlextTimestampMixin",
     "FlextTimingMixin",
     "FlextValidatableMixin",
+    # Utilities
     "FlextValidators",
     "FlextValueObjectMixin",
+    "LegacyCompatibleCacheableMixin",
+    "LegacyCompatibleCommandMixin",
+    "LegacyCompatibleComparableMixin",
+    "LegacyCompatibleDataMixin",
+    "LegacyCompatibleEntityMixin",
+    "LegacyCompatibleFullMixin",
+    "LegacyCompatibleIdentifiableMixin",
+    "LegacyCompatibleLoggableMixin",
+    "LegacyCompatibleSerializableMixin",
+    # Legacy Compatibility
+    "LegacyCompatibleTimestampMixin",
+    "LegacyCompatibleTimingMixin",
+    "LegacyCompatibleValidatableMixin",
+    "LegacyCompatibleServiceMixin",
+    "LegacyCompatibleValueObjectMixin",
 ]
-
-# Total exports: 12 items - centralized mixin implementations
-# These are the SINGLE SOURCE OF TRUTH for all mixin patterns in FLEXT

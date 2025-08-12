@@ -4,9 +4,19 @@
 Advanced patterns and enterprise scenarios using FLEXT Core with shared domain models.
 """
 
-from decimal import Decimal
+from __future__ import annotations
 
-# Import shared domain models to eliminate duplication
+from decimal import Decimal
+from typing import TYPE_CHECKING, cast
+
+from flext_core import (
+    FlextCommands,
+    FlextDecorators,
+    FlextResult,
+    FlextSettings,
+    get_logger,
+)
+
 from .shared_domain import (
     EmailAddress,
     Money,
@@ -15,12 +25,8 @@ from .shared_domain import (
     User as SharedUser,
 )
 
-from flext_core import (
-    FlextCommands,
-    FlextDecorators,
-    FlextResult,
-    get_logger,
-)
+if TYPE_CHECKING:
+    from flext_core import FlextDecoratedFunction
 
 # =============================================================================
 # VALIDATION CONSTANTS - Domain rule constraints
@@ -268,20 +274,24 @@ def _demonstrate_decorators() -> FlextResult[None]:
     """Demonstrate decorator patterns."""
     print("4. FlextDecorators Examples:")
 
-    @FlextDecorators.safe_result
     def risky_calculation(x: float, y: float) -> float:
         if y == 0:
             msg = "Division by zero"
             raise ValueError(msg)
         return x / y
 
+    # Apply decorator using casting for protocol compliance
+    safe_calculation = FlextDecorators.safe_result(
+        cast("FlextDecoratedFunction", risky_calculation)
+    )
+
     # Test safe execution
-    safe_result = risky_calculation(10.0, 2.0)
+    safe_result = safe_calculation(10.0, 2.0)
     print(
         f"  Safe calculation: {getattr(safe_result, 'success', False)}, Result: {getattr(safe_result, 'data', 'N/A')}"
     )
 
-    error_result = risky_calculation(10.0, 0.0)
+    error_result = safe_calculation(10.0, 0.0)
     print(
         f"  Error handling: {getattr(error_result, 'is_failure', False)}, Error: {getattr(error_result, 'error', 'N/A')}"
     )
@@ -323,8 +333,6 @@ def _demonstrate_configuration() -> FlextResult[None]:
     """Demonstrate configuration management patterns."""
     print("6. FlextConfig Examples:")
 
-    from flext_core.config import FlextSettings
-
     class AppSettings(FlextSettings):
         database_url: str = "sqlite:///app.db"
         debug: bool = False
@@ -335,17 +343,17 @@ def _demonstrate_configuration() -> FlextResult[None]:
             env_prefix = "APP_"
 
     # Create settings
-    settings_result = AppSettings.create_with_validation(
-        {
-            "debug": True,
-            "max_workers": 8,
-        },
-    )
+    try:
+        settings = AppSettings(
+            debug=True,
+            max_workers=8,
+        )
+        settings_result = FlextResult.ok(settings)
+    except Exception as e:
+        settings_result = FlextResult.fail(f"Configuration creation failed: {e}")
 
     if settings_result.success:
-        settings = settings_result.data
-        if settings is None:
-            return FlextResult.fail("Configuration creation returned None data")
+        settings = settings_result.unwrap()
 
         print(f"  Database URL: {getattr(settings, 'database_url', 'N/A')}")
         print(f"  Debug mode: {getattr(settings, 'debug', 'N/A')}")

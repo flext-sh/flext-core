@@ -5,6 +5,8 @@ This test suite focuses on testing the actual API of payload.py.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 
 from flext_core.payload import (
@@ -12,6 +14,9 @@ from flext_core.payload import (
     FlextMessage,
     FlextPayload,
 )
+
+if TYPE_CHECKING:
+    from flext_core.result import FlextResult
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 
@@ -386,7 +391,9 @@ class TestEdgeCases:
 
         # Deserialize from JSON
         assert json_result.data is not None
-        restored_result = FlextPayload.from_json_string(json_result.data)
+        restored_result: FlextResult[FlextPayload[object]] = (
+            FlextPayload.from_json_string(json_result.data)
+        )
         assert restored_result.success is True
 
         restored_payload = restored_result.data

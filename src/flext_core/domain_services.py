@@ -9,9 +9,11 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable
+from typing import TypeVar
 
 from pydantic import ConfigDict
 
+from flext_core.mixins import FlextSerializableMixin
 from flext_core.models import FlextModel
 from flext_core.result import FlextResult
 
@@ -28,7 +30,14 @@ OperationType = (
 # =============================================================================
 
 
-class FlextDomainService[T](FlextModel, ABC):  # type: ignore[misc]
+TDomainResult = TypeVar("TDomainResult")
+
+
+class FlextDomainService[TDomainResult](
+    FlextModel,
+    FlextSerializableMixin,
+    ABC,
+):
     """Abstract domain service for stateless cross-entity operations.
 
     Provides foundation for complex business operations that span multiple
@@ -43,11 +52,19 @@ class FlextDomainService[T](FlextModel, ABC):  # type: ignore[misc]
     )
 
     # Mixin functionality is now inherited properly:
-    # - Validation methods from FlextValidatableMixin
     # - Serialization methods from FlextSerializableMixin
 
+    def is_valid(self) -> bool:
+        """Check if domain service is valid (compatibility with FlextValidatableMixin)."""
+        validation_result = self.validate_business_rules()
+        return validation_result.is_success
+
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Validate domain service business rules (override in subclasses)."""
+        return FlextResult.ok(None)
+
     @abstractmethod
-    def execute(self) -> FlextResult[T]:
+    def execute(self) -> FlextResult[TDomainResult]:
         """Execute the domain service operation.
 
         Must be implemented by concrete services.

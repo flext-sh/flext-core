@@ -12,9 +12,6 @@ import contextlib
 from typing import TYPE_CHECKING, cast
 from unittest.mock import Mock, patch
 
-if TYPE_CHECKING:
-    from collections.abc import Callable
-
 import pytest
 
 from flext_core.constants import FlextConstants
@@ -22,6 +19,9 @@ from flext_core.container import FlextServiceKey
 from flext_core.core import FlextCore, flext_core
 from flext_core.loggings import FlextLogger
 from flext_core.result import FlextResult
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 
@@ -57,6 +57,7 @@ class UserService:
     """Test service for dependency injection."""
 
     def __init__(self, name: str = "test_user_service") -> None:
+        """Initialize user service."""
         self.name = name
 
     def get_user(self, user_id: str) -> str:
@@ -68,6 +69,7 @@ class DataService:
     """Another test service for dependency injection."""
 
     def __init__(self, connection: str = "test_db") -> None:
+        """Initialize data service."""
         self.connection = connection
 
     def save_data(self, data: str) -> bool:
@@ -949,7 +951,7 @@ class TestFlextCoreIntegration:
         self._validate_integration_results(result, logged_steps)
 
     def _setup_integration_test(self, clean_flext_core: FlextCore) -> None:
-        """Setup logging and basic configuration for integration test."""
+        """Set up logging and basic configuration for integration test."""
         clean_flext_core.configure_logging(log_level="INFO")
         _ = clean_flext_core.get_logger("integration.test")
 
@@ -976,7 +978,7 @@ class TestFlextCoreIntegration:
         logged_steps: list[str] = []
 
         def get_user_data(user_id: object) -> FlextResult[object]:
-            user_result = clean_flext_core.get_service(user_key)
+            user_result: FlextResult[object] = clean_flext_core.get_service(user_key)
             if user_result.is_failure:
                 return FlextResult.fail("User service not available")
             user_service = user_result.data
@@ -985,7 +987,7 @@ class TestFlextCoreIntegration:
             return FlextResult.ok(user_data)
 
         def save_user_data(user_data: object) -> FlextResult[object]:
-            data_result = clean_flext_core.get_service(data_key)
+            data_result: FlextResult[object] = clean_flext_core.get_service(data_key)
             if data_result.is_failure:
                 return FlextResult.fail("Data service not available")
             data_service = data_result.data
@@ -1007,7 +1009,7 @@ class TestFlextCoreIntegration:
             log_step("saved"),
         )
 
-        result = pipeline("user123")
+        result: FlextResult[object] = pipeline("user123")
         return result, logged_steps
 
     def _validate_integration_results(
@@ -1015,7 +1017,7 @@ class TestFlextCoreIntegration:
     ) -> None:
         """Validate the integration test results."""
         assert result.success
-        if not (result.data):
+        if result.data is None:
             raise AssertionError(f"Expected True, got {result.data}")
         if len(logged_steps) != EXPECTED_DATA_COUNT:
             raise AssertionError(f"Expected {3}, got {len(logged_steps)}")
@@ -1048,7 +1050,7 @@ class TestFlextCoreIntegration:
         pipeline = clean_flext_core.pipe(validate_input, process_data, save_result)
 
         # Test success case
-        success_result = pipeline("valid_input")
+        success_result: FlextResult[object] = pipeline("valid_input")
         assert success_result.success
         if success_result.data != "saved_processed_valid_input":
             raise AssertionError(
@@ -1056,14 +1058,14 @@ class TestFlextCoreIntegration:
             )
 
         # Test failure cases
-        empty_result = pipeline("")
+        empty_result: FlextResult[object] = pipeline("")
         assert empty_result.is_failure
         assert empty_result.error is not None
         assert "Empty input" in empty_result.error, (
             f"Expected 'Empty input' in {empty_result.error}"
         )
 
-        fail_result = pipeline("fail")
+        fail_result: FlextResult[object] = pipeline("fail")
         assert fail_result.is_failure
         assert fail_result.error is not None
         assert "Processing failed" in fail_result.error, (

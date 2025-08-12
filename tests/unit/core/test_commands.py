@@ -18,7 +18,7 @@ Usage of New Conftest Infrastructure:
 from __future__ import annotations
 
 from datetime import datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypedDict, cast
 from zoneinfo import ZoneInfo
 
 import pytest
@@ -26,9 +26,42 @@ import pytest
 from flext_core.commands import FlextCommands
 from flext_core.payload import FlextPayload
 from flext_core.result import FlextResult
-from tests.conftest import TestCase, TestScenario
+from tests.conftest import (
+    AssertHelpers,
+    PerformanceMetrics,
+    TestCase,
+    TestScenario,
+)
+
+
+# TypedDict definitions needed at runtime
+class SampleCommandKwargs(TypedDict, total=False):
+    """Sample command kwargs type definition."""
+
+    name: str
+    value: int
+    command_id: str
+    command_type: str
+    user_id: str
+    correlation_id: str
+    timestamp: datetime
+
+
+class SampleComplexCommandKwargs(TypedDict, total=False):
+    """Sample complex command kwargs type definition."""
+
+    email: str
+    age: int
+    command_id: str
+    command_type: str
+    user_id: str
+    correlation_id: str
+    timestamp: datetime
+
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from flext_core.typings import (
         TCorrelationId,
         TEntityId,
@@ -43,6 +76,7 @@ else:
     TResult = object
     TServiceName = str
     TUserId = str
+
 
 # Test markers for organized execution
 pytestmark = [pytest.mark.unit, pytest.mark.core]
@@ -190,25 +224,31 @@ class TestFlextCommandsAdvanced:
     ) -> None:
         """Validate command validation result to reduce complexity."""
         if "validation_success" in expected:
-            result = command.validate_command()
+            result: FlextResult[None] = command.validate_command()
             assert result.success == expected["validation_success"]
             if "error" in expected:
-                assert expected["error"] in (result.error or "")
+                error_message: str = cast("str", expected["error"])
+                assert error_message in (result.error or "")
 
     @pytest.mark.parametrize_advanced
     def test_command_scenarios(
-        self, command_test_cases: list[TestCase], assert_helpers
+        self, command_test_cases: list[TestCase], assert_helpers: AssertHelpers
     ) -> None:
         """Test commands using structured parametrized approach."""
         for test_case in command_test_cases:
-            input_data = test_case.input_data
-            expected = test_case.expected_output
+            input_data: dict[str, object] = cast(
+                "dict[str, object]", test_case.input_data
+            )
+            expected: dict[str, object] = cast(
+                "dict[str, object]", test_case.expected_output
+            )
 
             # Create command
-            if "timestamp" in input_data:
+            if "timestamp" in input_data and isinstance(input_data["timestamp"], str):
                 input_data["timestamp"] = datetime.now(tz=ZoneInfo("UTC"))
 
-            command = SampleCommand(**input_data)
+            cmd_kwargs: SampleCommandKwargs = cast("SampleCommandKwargs", input_data)
+            command: SampleCommand = SampleCommand(**cmd_kwargs)
 
             # Validate using helper methods to reduce complexity
             self._validate_basic_properties(command, expected)
@@ -271,7 +311,10 @@ class TestFlextCommandsAdvanced:
     ) -> None:
         """Test payload conversion scenarios."""
         for test_case in payload_conversion_cases:
-            if "payload_data" not in test_case.input_data:
+            input_data: dict[str, object] = cast(
+                "dict[str, object]", test_case.input_data
+            )
+            if "payload_data" not in input_data:
                 self._test_command_to_payload(test_case)
             else:
                 self._test_payload_to_command(test_case)
@@ -304,18 +347,19 @@ class TestFlextCommandsAdvanced:
         payload_data = input_data["payload_data"]
         payload = FlextPayload.create(data=payload_data, type="SampleCommand").unwrap()
 
-        result = SampleCommand.from_payload(payload)
+        result: FlextResult[SampleCommand] = SampleCommand.from_payload(payload)
 
         if "from_payload_success" in expected:
             assert result.success == expected["from_payload_success"]
 
         if expected.get("from_payload_success", False):
             self._validate_command_result(result.data, expected)
+            assert result.data is not None
         elif "error" in expected:
             assert expected["error"] in (result.error or "")
 
     def _validate_command_result(
-        self, command: object, expected: dict[str, object]
+        self, command: SampleCommand, expected: dict[str, object]
     ) -> None:
         """Validate command result against expected values."""
         if "name" in expected:
@@ -368,10 +412,16 @@ class TestFlextCommandsComplexValidation:
     ) -> None:
         """Test complex validation scenarios."""
         for test_case in complex_validation_cases:
-            input_data = test_case.input_data
-            expected = test_case.expected_output
+            input_data: dict[str, object] = cast(
+                "dict[str, object]", test_case.input_data
+            )
+            expected: dict[str, object] = cast(
+                "dict[str, object]", test_case.expected_output
+            )
 
-            command = SampleComplexCommand(**input_data)
+            command: SampleComplexCommand = SampleComplexCommand(
+                **cast("dict[str, object]", input_data)
+            )
             result = command.validate_command()
 
             assert result.success == expected["validation_success"]
@@ -409,20 +459,23 @@ class TestFlextCommandsWithoutValidation:
 class TestFlextCommandsPerformance:
     """Performance tests for command operations."""
 
-    def test_command_creation_performance(self, performance_monitor) -> None:
+    def test_command_creation_performance(
+        self, performance_monitor: Callable[[Callable[[], object]], PerformanceMetrics]
+    ) -> None:
         """Test command creation performance."""
 
-        def create_commands():
+        def create_commands() -> list[SampleCommand]:
             commands = []
             for i in range(1000):
-                command = SampleCommand(name=f"test_{i}", value=i)
+                command: SampleCommand = SampleCommand(name=f"test_{i}", value=i)
                 commands.append(command)
             return commands
 
-        metrics = performance_monitor(create_commands)
+        metrics: PerformanceMetrics = performance_monitor(create_commands)
 
         # Should create 1000 commands quickly
         assert metrics["execution_time"] < 0.1  # Less than 100ms
+        assert metrics["result"] is not None
         assert len(metrics["result"]) == 1000
 
 
@@ -497,15 +550,19 @@ class TestFlextCommandsFactoryMethods:
     def test_command_result_with_metadata(self) -> None:
         """Test FlextCommands.Result with metadata functionality."""
         # Test successful result with metadata
-        result = FlextCommands.Result.ok("success", metadata={"source": "test"})
+        result: FlextResult[str] = FlextCommands.Result.ok(
+            "success", metadata={"source": "test"}
+        )
+        assert result is not None
         assert result.success
         assert result.data == "success"
         assert result.metadata["source"] == "test"
 
         # Test failed result with error code
-        failed_result = FlextCommands.Result.fail(
+        failed_result: FlextResult[None] = FlextCommands.Result.fail(
             "error message", error_code="TEST_ERROR", error_data={"context": "test"}
         )
+        assert failed_result is not None
         assert failed_result.is_failure
         assert failed_result.metadata["error_code"] == "TEST_ERROR"
 
@@ -516,7 +573,8 @@ class TestFlextCommandsFactoryMethods:
             search_term: str = "test"
 
         query = TestQuery()
-        validation_result = query.validate_query()
+        validation_result: FlextResult[None] = query.validate_query()
+        assert validation_result is not None
         assert validation_result.success
 
         # Test query handler
@@ -526,9 +584,11 @@ class TestFlextCommandsFactoryMethods:
 
         handler = TestQueryHandler()
         assert handler.handler_name == "TestQueryHandler"
-        result = handler.handle(query)
+        result: FlextResult[str] = handler.handle(query)
+        assert result is not None
         assert result.success
-        assert "found: test" in result.data
+        assert result.data is not None
+        assert "found: test" in str(result.data)
 
 
 # All edge cases, integration tests, and additional coverage tests have been

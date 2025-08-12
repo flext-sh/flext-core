@@ -6,11 +6,11 @@ in core module implementation.
 
 from __future__ import annotations
 
+from typing import Any
+
 import pytest
 
-from flext_core.core import FlextCore
-from flext_core.guards import ValidatedModel
-from flext_core.result import FlextResult
+from flext_core import FlextCore, FlextResult, ValidatedModel
 
 
 class TestCoreSOLIDImplementation:
@@ -109,6 +109,7 @@ class TestCoreSOLIDImplementation:
         pure_func = self.core.make_pure(impure_function)
 
         # Should return a function-like object
+        assert pure_func is not None
         assert callable(pure_func) or pure_func is impure_function
 
         # Test that it works (implementation might be a placeholder)
@@ -118,34 +119,38 @@ class TestCoreSOLIDImplementation:
 
     def test_dependency_inversion_principle(self) -> None:
         """Test that validation depends on abstractions, not concretions."""
-
         # The FlextCore validation methods use the guards module
         # This demonstrates Dependency Inversion - core depends on guards interface
 
         # Type validation uses isinstance (abstraction)
-        result1 = self.core.validate_type(42, int)
+        result1: FlextResult[object] = self.core.validate_type(42, int)
         assert result1.success
 
         # Dict validation uses is_dict_of from guards module
-        _result2 = self.core.validate_dict_structure({"a": 1}, int)
+        _result2: FlextResult[dict[str, object]] = self.core.validate_dict_structure(
+            {"a": 1}, int
+        )
         # Result depends on guards module implementation
 
         # Model creation uses ValidatedModel from guards module
         class SimpleModel(ValidatedModel):
             value: str
 
-        result3 = self.core.create_validated_model(SimpleModel, value="test")
+        result3: FlextResult[SimpleModel] = self.core.create_validated_model(
+            SimpleModel, value="test"
+        )
         assert result3.success
 
     def test_single_responsibility_principle(self) -> None:
         """Test that validation methods have single responsibilities."""
-
         # validate_type only validates types
-        type_result = self.core.validate_type("text", str)
+        type_result: FlextResult[object] = self.core.validate_type("text", str)
         assert type_result.success
 
         # validate_dict_structure only validates dictionary structure
-        dict_result = self.core.validate_dict_structure({"key": "value"}, str)
+        dict_result: FlextResult[dict[str, object]] = self.core.validate_dict_structure(
+            {"key": "value"}, str
+        )
         assert dict_result.success
 
         # Each method has a single, well-defined responsibility
@@ -161,13 +166,13 @@ class TestCoreSOLIDImplementation:
             email: str
 
             def model_post_init(self, __context: object, /) -> None:
-                """Custom validation after model creation."""
+                """Perform custom validation after model creation."""
                 if "@" not in self.email:
                     email_error = "Invalid email format"
                     raise ValueError(email_error)
 
         # Core validation system works with our extension
-        result = self.core.create_validated_model(
+        result: FlextResult[ExtendedModel] = self.core.create_validated_model(
             ExtendedModel, email="test@example.com"
         )
         assert result.success
@@ -180,7 +185,6 @@ class TestCoreSOLIDImplementation:
 
     def test_interface_segregation_principle(self) -> None:
         """Test that validation interfaces are segregated."""
-
         # FlextCore provides specific validation methods for specific needs
         # Clients only depend on what they actually use
 
@@ -205,20 +209,21 @@ class TestCoreSOLIDImplementation:
                 return self.core.validate_dict_structure(obj, str)
 
         # Each client uses only the interface it needs
-        type_client = TypeOnlyClient(self.core)
-        dict_client = DictOnlyClient(self.core)
+        type_client: TypeOnlyClient = TypeOnlyClient(self.core)
+        dict_client: DictOnlyClient = DictOnlyClient(self.core)
 
-        type_result = type_client.validate_string("test")
+        type_result: FlextResult[object] = type_client.validate_string("test")
         assert type_result.success
 
-        dict_result = dict_client.validate_string_dict({"key": "value"})
+        dict_result: FlextResult[dict[str, object]] = dict_client.validate_string_dict(
+            {"key": "value"}
+        )
         assert dict_result.success
 
     def test_error_handling_consistency(self) -> None:
         """Test consistent error handling across validation methods."""
-
         # All validation methods return FlextResult
-        results = [
+        results: list[FlextResult[Any]] = [
             self.core.validate_type(123, str),  # Should fail
             self.core.validate_dict_structure("not_dict", str),  # Should fail
         ]
@@ -231,7 +236,6 @@ class TestCoreSOLIDImplementation:
 
     def test_integration_with_guards_module(self) -> None:
         """Test integration with guards module functions."""
-
         # Test that core methods use guards module functionality
         from flext_core.guards import immutable, is_dict_of, pure
 
@@ -242,14 +246,16 @@ class TestCoreSOLIDImplementation:
 
         # Test integration through FlextCore methods
         test_dict = {"a": "string1", "b": "string2"}
-        _result = self.core.validate_dict_structure(test_dict, str)
+        _result: FlextResult[dict[str, object]] = self.core.validate_dict_structure(
+            test_dict, str
+        )
         # The result depends on guards.is_dict_of implementation
 
         # Test immutable integration
         class TestClass:
             pass
 
-        immutable_class = self.core.make_immutable(TestClass)
+        immutable_class: type[TestClass] = self.core.make_immutable(TestClass)
         assert isinstance(immutable_class, type)
 
 
@@ -258,7 +264,6 @@ class TestCoreSOLIDCompliance:
 
     def test_no_placeholder_todos_remaining(self) -> None:
         """Verify that TODO placeholders have been implemented."""
-
         core = FlextCore()
 
         # All validation methods should be callable and return FlextResult
@@ -269,7 +274,7 @@ class TestCoreSOLIDCompliance:
         assert callable(core.make_pure)
 
         # Basic functionality test to ensure methods aren't just placeholders
-        result = core.validate_type("test", str)
+        result: FlextResult[object] = core.validate_type("test", str)
         assert isinstance(result, FlextResult)
         assert result.success
 
@@ -277,7 +282,6 @@ class TestCoreSOLIDCompliance:
     @pytest.mark.ddd
     def test_solid_architectural_compliance(self) -> None:
         """Test that the implementation follows SOLID architectural principles."""
-
         core = FlextCore()
 
         # SRP: Each method has single responsibility
@@ -299,7 +303,7 @@ class TestCoreSOLIDCompliance:
         ]
 
         for method, args, should_succeed in scenarios:
-            result = method(*args)
+            result: FlextResult[object] = method(*args)
             assert isinstance(result, FlextResult)
             if should_succeed:
                 assert result.success

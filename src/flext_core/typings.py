@@ -1,13 +1,18 @@
 """Centralized type definitions for the FLEXT ecosystem.
 
-Provides type aliases, generic types, and protocol definitions.
-Serves as a single source of truth for all type definitions.
+Provides comprehensive type system following PEP8 naming conventions.
+Single source of truth for all type definitions across 32+ FLEXT projects.
 
-Type Categories:
-    Core types: Basic types and aliases.
-    Generic types: Parameterized type definitions.
-    Protocol types: Interface definitions.
+Architecture:
+    - FlextTypes: Hierarchical type system organized by domain
+    - Type Variables: Generic type parameters (T, U, V, etc.)
+    - Legacy Aliases: Backward compatibility T* naming convention
+    - Protocol Types: Interface definitions and contracts
 
+Usage:
+    from flext_core.typings import FlextTypes, T, TAnyDict
+    # Preferred: FlextTypes.Core.AnyDict
+    # Legacy: TAnyDict
 """
 
 from __future__ import annotations
@@ -15,12 +20,7 @@ from __future__ import annotations
 import warnings
 from collections.abc import Callable, Mapping
 from datetime import datetime
-from typing import TYPE_CHECKING, TypeVar
-
-from flext_core.loggings import FlextLoggerFactory
-
-if TYPE_CHECKING:
-    from flext_core.protocols import FlextLoggerProtocol
+from typing import TypeVar
 
 # =============================================================================
 # CORE TYPE VARIABLES - Foundation building blocks
@@ -603,21 +603,6 @@ FlextValidator = FlextTypes.Protocols.Validator[object]
 # Entity identifier alias for backward compatibility
 FlextEntityId = TEntityId
 
-# Lazy logger to avoid circular imports
-_logger: FlextLoggerProtocol | None = None
-
-
-def _get_logger() -> FlextLoggerProtocol:
-    """Get logger instance with lazy loading to avoid circular imports."""
-    # Avoid global mutation warnings by reassigning via local then assign back
-    logger = _logger
-    if logger is None:
-        logger = FlextLoggerFactory.get_logger(__name__)
-    # Cache for later calls
-    globals()["_logger"] = logger
-    return logger
-
-
 # =============================================================================
 # DEPRECATION WARNING SYSTEM - Encourage migration to centralized types
 # =============================================================================
@@ -627,7 +612,7 @@ def _emit_deprecation_warning(old_name: str, new_name: str) -> None:
     """Emit deprecation warning for legacy usage."""
     warnings.warn(
         f"'{old_name}' is deprecated. "
-        f"Use 'from flext_core.typings import FlextTypes.{new_name}' instead.",
+        f"Use 'from flext_core.core_types import FlextTypes.{new_name}' instead.",
         DeprecationWarning,
         stacklevel=3,
     )

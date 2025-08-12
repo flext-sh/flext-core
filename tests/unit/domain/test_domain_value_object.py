@@ -278,7 +278,8 @@ class TestFlextValueObjectPydanticIntegration:
     def test_pydantic_validation_required_fields(self) -> None:
         """Test Pydantic validation for required fields."""
         with pytest.raises(ValidationError):
-            ConcreteValueObject()
+            # This should fail because amount is required and None is not a valid Decimal
+            ConcreteValueObject(amount=None, currency="USD")
 
     def test_pydantic_validation_field_types(self) -> None:
         """Test Pydantic validation for field types."""

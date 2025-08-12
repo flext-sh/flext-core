@@ -53,19 +53,19 @@ import json as _json
 import re
 import sys
 import warnings
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
-from flext_core.config_models import (
+from flext_core.config import (
     FlextConfigFactory,
     FlextDatabaseConfig,
     FlextLDAPConfig,
     FlextOracleConfig,
     FlextRedisConfig,
 )
-from flext_core.constants import FlextConstants
+from flext_core.constants import FlextConstants, FlextOperationStatus
 from flext_core.decorators import (
-    _flext_cache_decorator,
-    _flext_safe_call_decorator,
+    _flext_cache_decorator,  # pyright: ignore[reportPrivateUsage]
+    _flext_safe_call_decorator,  # pyright: ignore[reportPrivateUsage]
     _flext_timing_decorator,
     _flext_validate_input_decorator,
 )
@@ -83,10 +83,9 @@ from flext_core.loggings import (
     FlextLoggerFactory,
     create_log_context as modern_create_log_context,
     get_logger,
+    setup_custom_trace_level,
 )
-
-# Import legacy compatible mixins from mixin_compat.py to eliminate duplication
-from flext_core.mixin_compat import (
+from flext_core.mixins import (
     LegacyCompatibleCacheableMixin,
     LegacyCompatibleCommandMixin,
     LegacyCompatibleComparableMixin,
@@ -220,11 +219,11 @@ def safe_int_conversion_with_default(value: object, default: int) -> int:
 # =============================================================================
 
 
-def create_base_handler(name: str | None = None) -> FlextBaseHandler:
+def create_base_handler(name: str | None = None) -> FlextValidatingHandler:
     """Create base handler (DEPRECATED)."""
     _emit_legacy_warning("legacy.create_base_handler")
     # Return a concrete implementation, not the abstract base
-    return FlextValidatingHandler(name or "legacy_handler")  # type: ignore[return-value]
+    return FlextValidatingHandler(name or "legacy_handler")
 
 
 def create_validating_handler(name: str | None = None) -> FlextValidatingHandler:
@@ -236,7 +235,7 @@ def create_validating_handler(name: str | None = None) -> FlextValidatingHandler
 def create_authorizing_handler(
     name: str | None = None,
     *,
-    auth_required: bool = True,  # noqa: ARG001
+    _auth_required: bool = True,
 ) -> FlextAuthorizingHandler:
     """Create authorizing handler (DEPRECATED)."""
     _emit_legacy_warning("legacy.create_authorizing_handler")
@@ -352,7 +351,7 @@ def create_ldap_config(
 class LegacyBaseEntry:
     """Base entry class (DEPRECATED - use FlextValueObject)."""
 
-    def __init__(self, **kwargs: object) -> None:  # noqa: ARG002
+    def __init__(self, **_kwargs: object) -> None:
         """Initialize base entry (deprecated)."""
         _emit_legacy_warning("legacy.BaseEntry")
 
@@ -542,10 +541,10 @@ def _init_legacy_dicts() -> None:
     """Initialize legacy dict constants."""
     global ERROR_CODES, MESSAGES, STATUS_CODES  # noqa: PLW0603
 
-    _emit_legacy_warning("legacy.dict_constants")
-    ERROR_CODES = get_error_codes()
-    MESSAGES = get_messages()  # type: ignore[assignment]
-    STATUS_CODES = get_status_codes()  # type: ignore[assignment]
+    _emit_legacy_warning("legacy.dict_c onstants")
+    ERROR_CODES = cast("dict[str, str] | None", get_error_codes())
+    MESSAGES = cast("dict[str, str] | None", get_messages())
+    STATUS_CODES = cast("dict[str, str] | None", get_status_codes())
 
 
 _init_legacy_dicts()
@@ -570,14 +569,14 @@ def get_default_page_size() -> int:
 
 
 # Legacy individual constants for backward compatibility
-def _create_legacy_constant_getter(attr_name: str, path: str) -> Callable[..., object]:  # type: ignore[explicit-any]
+def _create_legacy_constant_getter(attr_name: str, path: str) -> Callable[[], object]:
     """Create a getter function for legacy constants."""
 
     def get_constant() -> object:
         _emit_legacy_warning(f"legacy.{attr_name}")
 
         # Navigate the nested path
-        obj = FlextConstants
+        obj: object = FlextConstants
         for part in path.split("."):
             obj = getattr(obj, part)
         return obj
@@ -628,9 +627,7 @@ def _get_legacy_constant_value(const_name: str) -> object | None:
 # Initialize legacy constants on first import
 def _init_legacy_constants() -> None:
     """Initialize legacy constants."""
-    global DEFAULT_TIMEOUT, DEFAULT_RETRIES, DEFAULT_PAGE_SIZE, VERSION, NAME  # noqa: PLW0603
-    global EMAIL_PATTERN, UUID_PATTERN, URL_PATTERN, IDENTIFIER_PATTERN  # noqa: PLW0603
-    global SERVICE_NAME_PATTERN  # noqa: PLW0603
+    global DEFAULT_TIMEOUT, DEFAULT_RETRIES, DEFAULT_PAGE_SIZE, VERSION, NAME, EMAIL_PATTERN, UUID_PATTERN, URL_PATTERN, IDENTIFIER_PATTERN, SERVICE_NAME_PATTERN  # noqa: PLW0603
 
     # Emit warning once for module import
     _emit_legacy_warning("legacy.constants")
@@ -656,13 +653,13 @@ _init_legacy_constants()
 # =============================================================================
 
 
-def create_database_model(**kwargs: object) -> object:
+def create_database_model(**kwargs: object) -> FlextDatabaseModel:
     """Create database model (DEPRECATED)."""
     _emit_legacy_warning("legacy.create_database_model")
     return FlextDatabaseModel(**kwargs)  # type: ignore[arg-type]
 
 
-def create_oracle_model(**kwargs: object) -> object:
+def create_oracle_model(**kwargs: object) -> FlextOracleModel:
     """Create oracle model (DEPRECATED)."""
     _emit_legacy_warning("legacy.create_oracle_model")
     return FlextOracleModel(**kwargs)  # type: ignore[arg-type]
@@ -671,21 +668,13 @@ def create_oracle_model(**kwargs: object) -> object:
 def create_operation_model(
     operation_id: str,
     operation_type: str,
-    status: str = "pending",
     **kwargs: object,
-) -> object:
+) -> FlextOperationModel:
     """Create operation model (DEPRECATED)."""
     _emit_legacy_warning("legacy.create_operation_model")
-    from flext_core.constants import FlextOperationStatus  # noqa: PLC0415
 
-    # Convert string status to enum for compatibility
+    # Use default pending status
     status_enum = FlextOperationStatus.PENDING
-    if status:
-        status_upper = status.upper()
-        for op_status in FlextOperationStatus:
-            if op_status.value == status_upper:
-                status_enum = op_status
-                break
 
     return FlextOperationModel(
         operation_id=operation_id,
@@ -698,15 +687,16 @@ def create_operation_model(
 def create_service_model(
     service_name: str,
     service_type: str,
-    status: str = "active",
+    service_port: int,
     **kwargs: object,
-) -> object:
+) -> FlextServiceModel:
     """Create service model (DEPRECATED)."""
     _emit_legacy_warning("legacy.create_service_model")
-    return FlextServiceModel(  # type: ignore[call-arg]
+    # NOTE: service_type is mapped to service_id for backward compatibility
+    return FlextServiceModel(
         service_name=service_name,
-        service_type=service_type,
-        status=status,
+        service_id=service_type,
+        port=service_port,
         **kwargs,  # type: ignore[arg-type]
     )
 
@@ -714,16 +704,15 @@ def create_service_model(
 def create_singer_stream_model(
     stream_name: str,
     schema_dict: dict[str, object],
-    key_properties: list[str] | None = None,
-    **kwargs: object,
+    _key_properties: list[str] | None = None,
+    **_kwargs: object,  # Renamed to indicate intentional non-use
 ) -> object:
     """Create singer stream model (DEPRECATED)."""
     _emit_legacy_warning("legacy.create_singer_stream_model")
-    return FlextSingerStreamModel(  # type: ignore[call-arg]
+    # Only pass supported fields to avoid type issues in legacy path
+    return FlextSingerStreamModel(
         stream_name=stream_name,
-        schema=schema_dict,
-        key_properties=key_properties or [],
-        kwargs=kwargs,
+        schema_definition=schema_dict,
     )
 
 
@@ -783,36 +772,38 @@ def deserialize_payload_from_go_bridge(json_str: str) -> FlextResult[object]:
 
 def create_cross_service_message(
     message_type: str,
-    data: dict,  # type: ignore[type-arg]
+    data: dict[str, object] | str,
     correlation_id: str | None = None,
     **kwargs: object,
 ) -> FlextMessage:
     """Create cross-service message (DEPRECATED)."""
     _emit_legacy_warning("legacy.create_cross_service_message")
 
-    return FlextMessage(  # type: ignore[call-arg]
-        data=str(data),
-        message_type=message_type,
-        correlation_id=correlation_id or FlextUtilities.generate_correlation_id(),
-        **kwargs,  # type: ignore[arg-type]
-    )
+    # Create metadata with message_type and correlation_id
+    metadata = {
+        "message_type": message_type,
+        "correlation_id": correlation_id or FlextUtilities.generate_correlation_id(),
+        **kwargs,
+    }
+    return FlextMessage(data=str(data), metadata=metadata)
 
 
 def create_cross_service_event(
     event_type: str,
-    event_data: dict,  # type: ignore[type-arg]
+    event_data: dict[str, object],
     correlation_id: str | None = None,
     **kwargs: object,
 ) -> FlextEvent:
     """Create cross-service event (DEPRECATED)."""
     _emit_legacy_warning("legacy.create_cross_service_event")
 
-    return FlextEvent(  # type: ignore[call-arg]
-        data=event_data,
-        event_type=event_type,
-        correlation_id=correlation_id or FlextUtilities.generate_correlation_id(),
-        **kwargs,  # type: ignore[arg-type]
-    )
+    # Create metadata with event_type and correlation_id
+    metadata = {
+        "event_type": event_type,
+        "correlation_id": correlation_id or FlextUtilities.generate_correlation_id(),
+        **kwargs,
+    }
+    return FlextEvent(data=event_data, metadata=metadata)
 
 
 def validate_cross_service_protocol(payload: object) -> FlextResult[object]:
@@ -914,7 +905,7 @@ class DecoratedFunction:
 # =============================================================================
 
 
-def validate_smart(value: object, **context: object) -> object:  # noqa: ARG001
+def validate_smart(value: object, **_context: object) -> object:
     """Validate value with type detection (DEPRECATED)."""
     _emit_legacy_warning("legacy.validate_smart")
 
@@ -933,57 +924,64 @@ def is_valid_data(value: object) -> bool:
 # =============================================================================
 
 
-def create_cache_decorator(  # type: ignore[explicit-any]
+def create_cache_decorator(
     max_size: int = 128,
-) -> Callable[[Callable[..., object]], Callable[..., object]]:
+) -> Callable[[FlextDecoratedFunction], FlextDecoratedFunction]:
     """Create cache decorator (DEPRECATED)."""
     _emit_legacy_warning("legacy.create_cache_decorator")
     return _flext_cache_decorator(max_size)
 
 
-def create_safe_decorator(  # type: ignore[explicit-any]
-    error_handler: Callable[..., object] | None = None,
-) -> Callable[..., object]:
+def create_safe_decorator(
+    error_handler: Callable[[Exception], str] | None = None,
+) -> Callable[[FlextDecoratedFunction], FlextDecoratedFunction]:
     """Create safe call decorator (DEPRECATED)."""
     _emit_legacy_warning("legacy.create_safe_decorator")
-    return _flext_safe_call_decorator(error_handler)  # type: ignore[arg-type]
+    return _flext_safe_call_decorator(error_handler)
 
 
-def create_timing_decorator() -> Callable[..., FlextDecoratedFunction]:  # type: ignore[explicit-any]
+def create_timing_decorator() -> Callable[
+    [FlextDecoratedFunction],
+    FlextDecoratedFunction,
+]:
     """Create timing decorator (DEPRECATED)."""
     _emit_legacy_warning("legacy.create_timing_decorator")
     return _flext_timing_decorator
 
 
-def create_validation_decorator(  # type: ignore[explicit-any]
-    validator: Callable[..., object],
-) -> Callable[..., object]:
+def create_validation_decorator(
+    validator: Callable[[object], bool],
+) -> Callable[[FlextDecoratedFunction], FlextDecoratedFunction]:
     """Create input validation decorator (DEPRECATED)."""
     _emit_legacy_warning("legacy.create_validation_decorator")
-    return _flext_validate_input_decorator(validator)  # type: ignore[arg-type]
+    return _flext_validate_input_decorator(validator)
 
 
-def safe_call_decorator(  # type: ignore[explicit-any]
-    error_handler: Callable[..., object] | None = None,
-) -> Callable[..., object]:
+def safe_call_decorator(
+    error_handler: Callable[[Exception], str] | None = None,
+) -> Callable[[FlextDecoratedFunction], FlextDecoratedFunction]:
     """Safe call decorator (DEPRECATED - alias)."""
     _emit_legacy_warning("legacy.safe_call_decorator")
     return create_safe_decorator(error_handler)
 
 
-def timing_decorator(func: Callable[..., object]) -> Callable[..., object]:  # type: ignore[explicit-any]
+def timing_decorator(func: FlextDecoratedFunction) -> FlextDecoratedFunction:
     """Time function execution (DEPRECATED - alias)."""
     _emit_legacy_warning("legacy.timing_decorator")
     return create_timing_decorator()(func)
 
 
-def cache_decorator(max_size: int = 128) -> Callable[..., object]:  # type: ignore[explicit-any]
+def cache_decorator(
+    max_size: int = 128,
+) -> Callable[[FlextDecoratedFunction], FlextDecoratedFunction]:
     """Cache decorator (DEPRECATED - alias)."""
     _emit_legacy_warning("legacy.cache_decorator")
     return create_cache_decorator(max_size)
 
 
-def validation_decorator(validator: Callable[..., object]) -> Callable[..., object]:  # type: ignore[explicit-any]
+def validation_decorator(
+    validator: Callable[[object], bool],
+) -> Callable[[FlextDecoratedFunction], FlextDecoratedFunction]:
     """Validate function input (DEPRECATED - alias)."""
     _emit_legacy_warning("legacy.validation_decorator")
     return create_validation_decorator(validator)
@@ -997,7 +995,6 @@ def validation_decorator(validator: Callable[..., object]) -> Callable[..., obje
 def setup_legacy_trace_level() -> None:
     """Set up custom trace level (DEPRECATED)."""
     _emit_legacy_warning("legacy.setup_legacy_trace_level")
-    from flext_core.loggings import setup_custom_trace_level  # noqa: PLC0415
 
     return setup_custom_trace_level()
 
@@ -1024,7 +1021,7 @@ def create_log_context(
         context["user_id"] = user_id
     if operation is not None:
         context["operation"] = operation
-    return modern_create_log_context(**context)  # type: ignore[arg-type]
+    return modern_create_log_context(logger=None, **context)
 
 
 def flext_get_logger(name: str) -> object:
@@ -1122,12 +1119,8 @@ def flext_create_boolean_field(
 # They will be REMOVED in flext-core v2.0.0
 # Use proper Flext* prefixed imports from flext_core main module instead
 
-__all__: list[str] = [  # noqa: RUF022
+__all__: list[str] = [
     "BYTES_PER_GB",
-    # === LEGACY RESULT FUNCTIONS ===
-    "chain",
-    "compose",
-    "safe_call",
     # === LEGACY UTILITIES CONSTANTS AND CLASSES ===
     "BYTES_PER_KB",
     "BYTES_PER_MB",
@@ -1149,15 +1142,37 @@ __all__: list[str] = [  # noqa: RUF022
     "UUID_PATTERN",
     "VALIDATION_RULES",
     "VERSION",
+    "DecoratedFunction",
     "LegacyBaseEntry",
     "LegacyBaseProcessor",
+    # === LEGACY COMPATIBLE MIXINS ===
+    "LegacyCompatibleCacheableMixin",
+    "LegacyCompatibleCommandMixin",
+    "LegacyCompatibleComparableMixin",
+    "LegacyCompatibleDataMixin",
+    "LegacyCompatibleEntityMixin",
+    "LegacyCompatibleFullMixin",
+    "LegacyCompatibleIdentifiableMixin",
+    "LegacyCompatibleLoggableMixin",
+    "LegacyCompatibleSerializableMixin",
+    "LegacyCompatibleServiceMixin",
+    "LegacyCompatibleTimestampMixin",
+    "LegacyCompatibleTimingMixin",
+    "LegacyCompatibleValidatableMixin",
+    "LegacyCompatibleValueObjectMixin",
     # === FROM FLEXT_TYPES.PY ===
     # === LEGACY CLASS ALIASES ===
     "LegacyConsole",
-    "DecoratedFunction",
+    # === LEGACY SINGER BASE CLASSES ===
+    "SingerBase",
+    "SingerTap",
+    "SingerTarget",
     # All T* aliases from typings.py (imported via *)
     "TAnyDict",
     "cache_decorator",
+    # === LEGACY RESULT FUNCTIONS ===
+    "chain",
+    "compose",
     "create_authorizing_handler",
     # === LEGACY HANDLER CREATION FUNCTIONS ===
     "create_base_handler",
@@ -1199,13 +1214,14 @@ __all__: list[str] = [  # noqa: RUF022
     "generate_id",
     "generate_iso_timestamp",
     "generate_uuid",
+    "get_legacy_logger",
     # === UTILITY FUNCTIONS ===
     "get_legacy_usage_warning",
-    "get_legacy_logger",
     "get_serialization_metrics",
     "is_not_none",
     "is_valid_data",
     "model_to_dict_safe",
+    "safe_call",
     "safe_call_decorator",
     "safe_int_conversion",
     "safe_int_conversion_with_default",
@@ -1221,22 +1237,51 @@ __all__: list[str] = [  # noqa: RUF022
     # === LEGACY VALIDATION FUNCTIONS ===
     "validate_smart",
     "validation_decorator",
-    # === LEGACY COMPATIBLE MIXINS ===
-    "LegacyCompatibleCacheableMixin",
-    "LegacyCompatibleCommandMixin",
-    "LegacyCompatibleComparableMixin",
-    "LegacyCompatibleDataMixin",
-    "LegacyCompatibleEntityMixin",
-    "LegacyCompatibleFullMixin",
-    "LegacyCompatibleIdentifiableMixin",
-    "LegacyCompatibleLoggableMixin",
-    "LegacyCompatibleSerializableMixin",
-    "LegacyCompatibleServiceMixin",
-    "LegacyCompatibleTimestampMixin",
-    "LegacyCompatibleTimingMixin",
-    "LegacyCompatibleValidatableMixin",
-    "LegacyCompatibleValueObjectMixin",
 ]
+
+# =============================================================================
+# LEGACY SINGER BASE CLASSES - From singer_base.py
+# =============================================================================
+
+
+class SingerBase:
+    """Base class for Singer-related functionality (DEPRECATED)."""
+
+    def __init__(self, **kwargs: object) -> None:
+        """Initialize Singer base (deprecated)."""
+        _emit_legacy_warning("legacy.SingerBase")
+        # Simplified initialization for legacy compatibility
+        self._kwargs = kwargs
+
+    def extract(self) -> _FResult[dict[str, object]]:
+        """Extract data using Singer patterns (DEPRECATED)."""
+        _emit_legacy_warning("legacy.SingerBase.extract")
+        return _FResult.ok({})
+
+    def load(self, _data: dict[str, object]) -> _FResult[bool]:
+        """Load data using Singer patterns (DEPRECATED)."""
+        _emit_legacy_warning("legacy.SingerBase.load")
+        success = True
+        return _FResult.ok(success)
+
+
+class SingerTap(SingerBase):
+    """Base class for Singer taps/extractors (DEPRECATED)."""
+
+    def __init__(self, **kwargs: object) -> None:
+        """Initialize Singer tap (deprecated)."""
+        _emit_legacy_warning("legacy.SingerTap")
+        super().__init__(**kwargs)
+
+
+class SingerTarget(SingerBase):
+    """Base class for Singer targets/loaders (DEPRECATED)."""
+
+    def __init__(self, **kwargs: object) -> None:
+        """Initialize Singer target (deprecated)."""
+        _emit_legacy_warning("legacy.SingerTarget")
+        super().__init__(**kwargs)
+
 
 # =============================================================================
 # MODULE NOTICE

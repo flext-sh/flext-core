@@ -24,7 +24,7 @@ Usage of New Conftest Infrastructure:
 from __future__ import annotations
 
 import math
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, cast
 
 import pytest
 from hypothesis import given, strategies as st
@@ -140,7 +140,7 @@ class TestFlextFieldCoreAdvanced:
         """Test field creation using structured test cases."""
         for test_case in field_creation_test_cases:
             # Create field using test case input data
-            field = FlextFieldCore(**test_case.input_data)
+            field: FlextFieldCore = FlextFieldCore(**test_case.input_data)
 
             # Validate field creation
             assert_helpers.assert_result_ok(FlextResult.ok(field))
@@ -237,7 +237,9 @@ class TestFlextFieldCoreAdvanced:
             test_value = test_case.input_data["test_value"]
 
             # Create field
-            field = FlextFieldCore(**field_config)
+            field: FlextFieldCore = FlextFieldCore(
+                **cast("dict[str, object]", field_config)
+            )
 
             # Validate value
             validation_result = field.validate_value(test_value)
@@ -261,12 +263,12 @@ class TestFlextFieldCoreAdvanced:
     def test_field_type_validation_matrix(
         self,
         field_type: FlextFieldType,
-        test_values: list[Any],
+        test_values: list[object],
         expected_valid: list[bool],
         assert_helpers: object,
     ) -> None:
         """Test validation matrix for different field types and values."""
-        field = FlextFieldCore(
+        field: FlextFieldCore = FlextFieldCore(
             field_id=f"{field_type.value}_field",
             field_name=f"test_{field_type.value}",
             field_type=field_type.value,
@@ -300,14 +302,17 @@ class TestFlextFieldCorePropertyBased:
         max_length=st.integers(min_value=1, max_value=200),
     )
     def test_string_field_length_properties(
-        self, field_name: str, min_length: int, max_length: int
+        self,
+        field_name: str,
+        min_length: int,
+        max_length: int,
     ) -> None:
         """Property: string field validation respects length constraints."""
         # Ensure min_length < max_length (strict inequality required by validation)
         if min_length >= max_length:
             min_length, max_length = 0, max(min_length, max_length) + 1
 
-        field = FlextFieldCore(
+        field: FlextFieldCore = FlextFieldCore(
             field_id="property_test_field",
             field_name=field_name,
             field_type=FlextFieldType.STRING.value,
@@ -330,10 +335,13 @@ class TestFlextFieldCorePropertyBased:
         test_value=st.integers(min_value=-500, max_value=500),
     )
     def test_integer_field_range_properties(
-        self, min_value: int, max_value: int, test_value: int
+        self,
+        min_value: int,
+        max_value: int,
+        test_value: int,
     ) -> None:
         """Property: integer field validation respects range constraints."""
-        field = FlextFieldCore(
+        field: FlextFieldCore = FlextFieldCore(
             field_id="property_int_field",
             field_name="test_integer",
             field_type=FlextFieldType.INTEGER.value,
@@ -361,10 +369,12 @@ class TestFlextFieldCorePropertyBased:
         test_value=st.text(min_size=1, max_size=10),
     )
     def test_allowed_values_property(
-        self, allowed_values: list[str], test_value: str
+        self,
+        allowed_values: list[str],
+        test_value: str,
     ) -> None:
         """Property: field with allowed values only accepts values from the list."""
-        field = FlextFieldCore(
+        field: FlextFieldCore = FlextFieldCore(
             field_id="allowed_values_field",
             field_name="test_allowed",
             field_type=FlextFieldType.STRING.value,
@@ -400,7 +410,7 @@ class TestFlextFieldCorePerformance:
     ) -> None:
         """Benchmark field creation performance."""
 
-        def create_hundred_fields():
+        def create_hundred_fields() -> list[FlextFieldCore]:
             fields = []
             for i in range(100):
                 field = FlextFieldCore(
@@ -424,7 +434,9 @@ class TestFlextFieldCorePerformance:
 
     @pytest.mark.benchmark
     def test_validation_performance(
-        self, performance_monitor: Callable[[Callable[[], object]], dict[str, object]]
+        self,
+        performance_monitor: Callable[[Callable[[], object]], dict[str, object]],
+        assert_helpers: object,
     ) -> None:
         """Benchmark validation performance with complex constraints."""
         # Create complex field
@@ -438,7 +450,7 @@ class TestFlextFieldCorePerformance:
             allowed_values=[f"value_{i}" for i in range(50)],
         )
 
-        def validate_many_values():
+        def validate_many_values() -> list[FlextResult[object]]:
             results = []
             for i in range(100):
                 value = f"value_{i % 25}"  # Mix of valid and invalid
@@ -453,12 +465,14 @@ class TestFlextFieldCorePerformance:
 
     @pytest.mark.benchmark
     def test_registry_performance(
-        self, performance_monitor: Callable[[Callable[[], object]], dict[str, object]]
-    ):
+        self,
+        performance_monitor: Callable[[Callable[[], object]], dict[str, object]],
+        assert_helpers: object,
+    ) -> None:
         """Benchmark registry operations performance."""
         registry = FlextFieldRegistry()
 
-        def registry_operations():
+        def registry_operations() -> list[FlextResult[object]]:
             # Register many fields
             for i in range(50):
                 field = FlextFieldCore(
@@ -495,7 +509,9 @@ class TestFlextFieldCoreWithFixtures:
     """Tests demonstrating advanced fixture usage from conftest."""
 
     def test_fields_with_test_builder(
-        self, test_builder: Callable[[], object], assert_helpers: object
+        self,
+        test_builder: Callable[[], object],
+        assert_helpers: object,
     ) -> None:
         """Test field creation using test data builder pattern."""
         # Build complex field configuration using fluent builder
@@ -514,7 +530,9 @@ class TestFlextFieldCoreWithFixtures:
         )
 
         # Create field from builder data
-        field = FlextFieldCore(**field_config)
+        field: FlextFieldCore = FlextFieldCore(
+            **cast("dict[str, object]", field_config)
+        )
 
         # Validate field properties
         assert field.field_id == "builder_test_field"
@@ -529,7 +547,12 @@ class TestFlextFieldCoreWithFixtures:
         validation_result = field.validate_value("ValidValue")
         assert_helpers.assert_result_ok(validation_result)
 
-    def test_fields_with_sample_data(self, sample_data, validators):
+    def test_fields_with_sample_data(
+        self,
+        sample_data: dict[str, object],
+        validators: dict[str, Callable[[str], bool]],
+        assert_helpers: object,
+    ) -> None:
         """Test field validation using sample data fixture."""
         # Create field for email validation
         email_field = FlextFieldCore(
@@ -608,7 +631,9 @@ class TestFlextFieldCoreSnapshot:
     """Snapshot tests for complex field configurations and outputs."""
 
     @pytest.mark.snapshot
-    def test_comprehensive_field_snapshot(self, snapshot_manager) -> None:
+    def test_comprehensive_field_snapshot(
+        self, snapshot_manager: Callable[[str, object], None]
+    ) -> None:
         """Test comprehensive field configuration snapshot."""
         field = FlextFieldCore(
             field_id="comprehensive_snapshot_field",
@@ -659,7 +684,9 @@ class TestFlextFieldCoreSnapshot:
         snapshot_manager("comprehensive_field_config", field_snapshot)
 
     @pytest.mark.snapshot
-    def test_field_registry_snapshot(self, snapshot_manager) -> None:
+    def test_field_registry_snapshot(
+        self, snapshot_manager: Callable[[str, object], None]
+    ) -> None:
         """Test field registry structure snapshot."""
         registry = FlextFieldRegistry()
 
@@ -724,13 +751,13 @@ class TestFlextFieldCoreIntegration:
 
     def test_complete_field_workflow_integration(
         self,
-        test_builder,
-        assert_helpers,
-        performance_monitor,
+        test_builder: Callable[[], object],
+        assert_helpers: object,
+        performance_monitor: Callable[[Callable[[], object]], dict[str, object]],
     ) -> None:
         """Test complete field workflow from creation to validation."""
 
-        def complete_field_workflow():
+        def complete_field_workflow() -> dict[str, object]:
             # 1. Create registry
             registry = FlextFieldRegistry()
 
@@ -749,19 +776,28 @@ class TestFlextFieldCoreIntegration:
             )
 
             # 3. Create and register field
-            field = FlextFieldCore(**field_config)
+            field: FlextFieldCore = FlextFieldCore(
+                **cast("dict[str, object]", field_config)
+            )
             registry.register_field(field)
 
             # 4. Retrieve field from registry
-            retrieval_result = registry.get_field_by_id("workflow_integration_field")
-            retrieved_field = retrieval_result.unwrap()
+            retrieval_result: FlextResult[FlextFieldCore] = registry.get_field_by_id(
+                "workflow_integration_field"
+            )
+            retrieved_field: FlextFieldCore = retrieval_result.unwrap()
 
             # 5. Validate various test values
-            test_values = ["ValidValue", "another_valid", "Val123", "X_valid"]
-            validation_results = []
+            test_values: list[str] = [
+                "ValidValue",
+                "another_valid",
+                "Val123",
+                "X_valid",
+            ]
+            validation_results: list[FlextResult[object]] = []
 
             for value in test_values:
-                result = retrieved_field.validate_value(value)
+                result: FlextResult[object] = retrieved_field.validate_value(value)
                 validation_results.append(result)
 
             return {
@@ -775,6 +811,15 @@ class TestFlextFieldCoreIntegration:
         workflow_result = metrics["result"]
 
         # Validate workflow execution
+        assert isinstance(workflow_result, dict)
+        assert isinstance(workflow_result["field"], FlextFieldCore)
+        assert isinstance(workflow_result["retrieved_field"], FlextFieldCore)
+        assert isinstance(workflow_result["validation_results"], list)
+        assert all(
+            isinstance(result, FlextResult)
+            for result in workflow_result["validation_results"]
+        )
+
         assert_helpers.assert_result_ok(FlextResult.ok(workflow_result["field"]))
 
         # Verify field properties
@@ -786,15 +831,39 @@ class TestFlextFieldCoreIntegration:
         assert field.field_type == retrieved_field.field_type
 
         # Verify all validations passed
-        validation_results = workflow_result["validation_results"]
+        validation_results: list[FlextResult[object]] = workflow_result[
+            "validation_results"
+        ]
         for result in validation_results:
             assert_helpers.assert_result_ok(result)
 
         # Performance assertion
-        assert metrics["execution_time"] < 0.01  # 10ms for complete workflow
+        assert isinstance(metrics, dict)
+
+        # Robust execution_time conversion that handles multiple numeric types
+        execution_time_raw = metrics["execution_time"]
+        if isinstance(execution_time_raw, (int, float)):
+            execution_time = float(execution_time_raw)
+        elif isinstance(execution_time_raw, bytes):
+            execution_time = float(execution_time_raw.decode().strip())
+        elif hasattr(execution_time_raw, "__float__"):  # Decimal or similar
+            execution_time = float(execution_time_raw)
+        elif isinstance(execution_time_raw, str):
+            try:
+                execution_time = float(execution_time_raw.strip())
+            except ValueError as e:
+                pytest.fail(
+                    f"Could not parse execution_time '{execution_time_raw}' as float: {e}"
+                )
+        else:
+            pytest.fail(
+                f"Unexpected execution_time type: {type(execution_time_raw)} with value: {execution_time_raw}"
+            )
+
+        assert execution_time < 0.01  # 10ms for complete workflow
 
     @pytest.mark.integration
-    def test_factory_methods_integration(self, assert_helpers) -> None:
+    def test_factory_methods_integration(self, assert_helpers: object) -> None:
         """Test integration between factory methods and registry."""
         # Create fields using factory methods
         string_field_result = FlextFields.create_string_field(
@@ -920,11 +989,11 @@ class TestFlextFieldCoreEdgeCases:
     def test_field_type_edge_values(
         self,
         field_type: FlextFieldType,
-        edge_values: list[Any],
+        edge_values: list[object],
         descriptions: list[str],
-    ):
+    ) -> None:
         """Test field validation with edge case values."""
-        field = FlextFieldCore(
+        field: FlextFieldCore = FlextFieldCore(
             field_id=f"edge_test_{field_type.value}",
             field_name=f"edge_{field_type.value}",
             field_type=field_type.value,
@@ -1034,11 +1103,11 @@ class TestFlextFieldCoreBackwardCompatibility:
     )
     def test_legacy_function_compatibility(
         self,
-        legacy_function,
-        modern_method,
-        args: dict[str, Any],
-        assert_helpers,
-    ):
+        legacy_function: Callable[[], object],
+        modern_method: Callable[[], object],
+        args: dict[str, object],
+        assert_helpers: object,
+    ) -> None:
         """Test that legacy functions produce compatible results with modern methods."""
         # Call legacy function
         legacy_result = legacy_function(**args)

@@ -6,7 +6,11 @@ import types
 
 import pytest
 
-from flext_core import FlextConfigurable, FlextValidator, interfaces
+from flext_core import (
+    FlextConfigurableProtocol as FlextConfigurable,
+    FlextValidatorProtocol as FlextValidator,
+    interfaces,
+)
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 
@@ -44,7 +48,7 @@ class TestProtocolInterfaces:
         # These tests will cover the TYPE_CHECKING import lines
 
         # Test protocol structure - covers TYPE_CHECKING imports
-        # Note: FlextConfigurable is now defined in protocols.py but re-exported through interfaces.py
+        # Note: Protocols are defined in protocols.py but re-exported through interfaces.py
         assert FlextConfigurable.__module__ == "flext_core.protocols", (
             f"Expected {'flext_core.protocols'}, got {FlextConfigurable.__module__}"
         )

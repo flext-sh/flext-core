@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from flext_core.testing_utilities import (
+    FlextTestMocker,
     create_api_test_response,
     create_ldap_test_config,
     create_oud_connection_config,
@@ -287,3 +288,91 @@ class TestUtilitiesIntegration:
 
         ldap_config2 = create_ldap_test_config()
         assert ldap_config2["host"] == "localhost"  # Should be unchanged
+
+
+class TestFlextTestMockerPatchObject:
+    """Test FlextTestMocker.patch_object method."""
+
+    def test_patch_object_with_new_none(self) -> None:
+        """Test that patch_object honors new=None and sets attribute to None."""
+
+        class TestTarget:
+            attr = "original_value"
+
+        target = TestTarget()
+        assert target.attr == "original_value"
+
+        # Test that new=None is properly handled
+        with FlextTestMocker.patch_object(target, "attr", new=None):
+            assert target.attr is None
+
+        # After context, should be restored
+        assert target.attr == "original_value"
+
+    def test_patch_object_with_new_value(self) -> None:
+        """Test that patch_object works with new values."""
+
+        class TestTarget:
+            attr = "original_value"
+
+        target = TestTarget()
+
+        with FlextTestMocker.patch_object(target, "attr", new="new_value"):
+            assert target.attr == "new_value"
+
+        assert target.attr == "original_value"
+
+    def test_patch_object_preserves_kwargs(self) -> None:
+        """Test that patch_object preserves all kwargs like create=True."""
+
+        class TestTarget:
+            pass  # No attr initially
+
+        target = TestTarget()
+        assert not hasattr(target, "attr")
+
+        # Test create=True is honored
+        with FlextTestMocker.patch_object(
+            target, "attr", new="test_value", create=True
+        ):
+            assert target.attr == "test_value"
+
+        # After context, attribute should be removed since it was created
+        assert not hasattr(target, "attr")
+
+    def test_patch_object_with_spec(self) -> None:
+        """Test that patch_object honors spec parameter."""
+
+        class TestTarget:
+            def attr(self) -> str:
+                return "original"
+
+        class MockSpec:
+            def mock_method(self):
+                return "mocked"
+
+        target = TestTarget()
+
+        # Test spec is honored
+        with FlextTestMocker.patch_object(target, "attr", spec=MockSpec) as mock:
+            assert hasattr(mock, "mock_method")
+            # The mock should have spec methods but not others
+            assert hasattr(mock, "mock_method")
+
+        # Original should be restored
+        assert callable(target.attr)
+
+    def test_patch_object_no_kwargs(self) -> None:
+        """Test patch_object with no additional kwargs (creates MagicMock)."""
+
+        class TestTarget:
+            attr = "original"
+
+        target = TestTarget()
+
+        with FlextTestMocker.patch_object(target, "attr") as mock:
+            # Should be a mock when no new= is provided
+            assert mock != "original"
+            assert target.attr is mock
+
+        assert target.attr == "original"

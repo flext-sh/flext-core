@@ -119,53 +119,69 @@ TRACE_LEVEL = FlextConstants.Observability.TRACE_LEVEL
 
 
 def setup_custom_trace_level() -> None:
-    """Set up custom TRACE level for both stdlib logging and structlog."""
-    # Add to standard logging
+    """Set up custom TRACE level for both stdlib logging and structlog.
+
+    Complexity reduction: split into helpers to comply with cyclomatic
+    complexity limits while preserving behavior.
+    """
+    _register_stdlib_trace_level()
+    _register_structlog_trace_level()
+    _inject_trace_methods()
+
+
+def _register_stdlib_trace_level() -> None:
+    """Register TRACE level in standard logging."""
     logging.addLevelName(TRACE_LEVEL, "TRACE")
 
-    # Update structlog's internal mappings safely using getattr/setattr
-    # This avoids direct attribute access issues
 
-    # Try both possible attribute names for structlog compatibility
-    name_to_level = getattr(structlog.stdlib, "_NAME_TO_LEVEL", None)
-    if name_to_level is None:
-        name_to_level = getattr(structlog.stdlib, "NAME_TO_LEVEL", None)
-    if name_to_level is not None and isinstance(name_to_level, dict):
+def _register_structlog_trace_level() -> None:
+    """Register TRACE level mappings in structlog if available."""
+    name_to_level = getattr(structlog.stdlib, "_NAME_TO_LEVEL", None) or getattr(
+        structlog.stdlib,
+        "NAME_TO_LEVEL",
+        None,
+    )
+    if isinstance(name_to_level, dict):
         name_to_level["trace"] = TRACE_LEVEL
 
-    level_to_name = getattr(structlog.stdlib, "_LEVEL_TO_NAME", None)
-    if level_to_name is None:
-        level_to_name = getattr(structlog.stdlib, "LEVEL_TO_NAME", None)
-    if level_to_name is not None and isinstance(level_to_name, dict):
+    level_to_name = getattr(structlog.stdlib, "_LEVEL_TO_NAME", None) or getattr(
+        structlog.stdlib,
+        "LEVEL_TO_NAME",
+        None,
+    )
+    if isinstance(level_to_name, dict):
         level_to_name[TRACE_LEVEL] = "trace"
 
-    # Add trace method to standard logger
-    def trace_method(
-        self: logging.Logger,
-        msg: str,
-        *args: object,
-    ) -> None:
+
+def _inject_trace_methods() -> None:
+    """Inject trace methods into logging and structlog loggers."""
+
+    def trace_method(self: logging.Logger, msg: str, *args: object) -> None:
         if self.isEnabledFor(TRACE_LEVEL):
-            # Use the correct signature for _log
             self._log(TRACE_LEVEL, msg, args)
 
-    # Add trace method to structlog BoundLogger
     def bound_trace_method(
         self: structlog.stdlib.BoundLogger,
         event: str | None = None,
         **kwargs: object,
     ) -> object:
-        # Access the logger's proxy method properly
         if hasattr(self, "_proxy_to_logger"):
-            proxy_method = self._proxy_to_logger
-            return proxy_method("trace", event, **kwargs)
+            return self._proxy_to_logger("trace", event, **kwargs)
         return None
 
-    # Use setattr which is the proper way to add attributes dynamically
-    # MyPy doesn't understand dynamic attributes, but this is the correct approach
-    # The alternative would be to create a subclass, but that breaks existing code
-    logging.Logger.trace = trace_method  # type: ignore[attr-defined]
-    structlog.stdlib.BoundLogger.trace = bound_trace_method  # type: ignore[attr-defined]
+    try:
+        if not hasattr(logging.Logger, "trace"):
+            logging.Logger.trace = trace_method  # type: ignore[attr-defined]
+    except (AttributeError, TypeError) as e:
+        logging.getLogger(__name__).debug(
+            "Skipping logging.Logger.trace injection: %s",
+            e,
+        )
+    try:
+        if not hasattr(structlog.stdlib.BoundLogger, "trace"):
+            structlog.stdlib.BoundLogger.trace = bound_trace_method  # type: ignore[attr-defined]
+    except (AttributeError, TypeError) as e:
+        logging.getLogger(__name__).debug("Skipping BoundLogger.trace injection: %s", e)
 
 
 # Initialize custom TRACE level

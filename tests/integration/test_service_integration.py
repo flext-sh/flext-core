@@ -55,6 +55,7 @@ class TestServiceIntegrationPatterns:
             mock_external_service: Mock external service
             performance_threshold: Performance threshold configuration
             benchmark_data: Benchmark data sets
+
         """
         # Arrange
         large_dataset = benchmark_data["large_dataset"]
@@ -100,6 +101,7 @@ class TestServiceIntegrationPatterns:
             configured_container: Pre-configured container with services
             mock_external_service: Mock external service
             error_context: Error context fixture
+
         """
         # Arrange - Configure mock to simulate service failure
         error_message = f"Service error: {error_context['error_code']}"
@@ -136,6 +138,7 @@ class TestServiceIntegrationPatterns:
         Args:
             clean_container: Isolated container fixture
             test_user_data: User data fixture
+
         """
         # Arrange - Create mock services
         mock_user_service = MagicMock()
@@ -200,6 +203,7 @@ class TestServiceIntegrationPatterns:
         Args:
             clean_container: Isolated container fixture
             temp_directory: Temporary directory fixture
+
         """
         # Arrange - Create lifecycle-aware mock service
         mock_service = MagicMock()

@@ -18,27 +18,36 @@ import time
 from decimal import Decimal
 from typing import TYPE_CHECKING, cast
 
-# Import shared domain models to eliminate duplication
-from .shared_domain import (
+from shared_domain import (
     Address,
     Age,
     EmailAddress as Email,
     Money,
     Order,
     OrderItem,
+    User,
     User as SharedUser,
     UserStatus,
 )
 
 from flext_core import (
     FlextEntity,
-    FlextLoggableMixin,
     FlextResult,
     FlextUtilities,
 )
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from typing import Protocol
+
+    class CustomerFactory(Protocol):
+        def __call__(self, **kwargs: object) -> FlextResult[Customer]: ...
+
+    class ProductFactory(Protocol):
+        def __call__(self, **kwargs: object) -> FlextResult[Product]: ...
+
+    class OrderFactory(Protocol):
+        def __call__(self, **kwargs: object) -> FlextResult[Order]: ...
 
 # =============================================================================
 # DDD VALIDATION CONSTANTS - Domain validation constraints
@@ -81,7 +90,7 @@ CURRENCY_PRECISION_TOLERANCE = 0.01  # Tolerance for currency amount comparisons
 # =============================================================================
 
 
-class Customer(SharedUser, FlextLoggableMixin):
+class Customer(SharedUser):
     """Enhanced customer entity using shared domain models."""
 
     registration_date: str
@@ -121,7 +130,7 @@ class Customer(SharedUser, FlextLoggableMixin):
         """Check if customer is active based on status."""
         return self.status == UserStatus.ACTIVE
 
-    def activate(self) -> FlextResult[Customer]:
+    def activate(self) -> FlextResult[User]:
         """Activate customer account."""
         if self.is_active:
             return FlextResult.fail("Customer is already active")
@@ -142,7 +151,7 @@ class Customer(SharedUser, FlextLoggableMixin):
             },
         )
 
-        return FlextResult.ok(activated_customer)
+        return FlextResult.ok(cast("User", activated_customer))
 
     def deactivate(self, reason: str) -> FlextResult[Customer]:
         """Deactivate customer account using structured validation."""
@@ -498,13 +507,13 @@ class Product(FlextEntity):
     ) -> FlextResult[Product]:
         """Add domain event for price update."""
         updated_product.add_domain_event(
+            "ProductPriceUpdated",
             {
-                "event_type": "ProductPriceUpdated",
                 "product_id": self.id,
                 "old_price": str(self.price),
                 "new_price": str(new_price),
                 "update_date": FlextUtilities.generate_iso_timestamp(),
-            }
+            },
         )
 
         return FlextResult.ok(updated_product)
@@ -568,8 +577,8 @@ class Product(FlextEntity):
 
         # Add domain event
         updated_product.add_domain_event(
+            event_type,
             {
-                "event_type": event_type,
                 "product_id": self.id,
                 "old_stock": self.stock_quantity,
                 "new_stock": updated_product.stock_quantity,
@@ -578,7 +587,7 @@ class Product(FlextEntity):
                 "is_low_stock": updated_product.is_low_stock(),
                 "is_out_of_stock": updated_product.is_out_of_stock(),
                 "update_date": FlextUtilities.generate_iso_timestamp(),
-            }
+            },
         )
 
         return FlextResult.ok(updated_product)
@@ -623,13 +632,13 @@ class Product(FlextEntity):
     ) -> FlextResult[Product]:
         """Add domain event for product unavailability."""
         unavailable_product.add_domain_event(
+            "ProductMadeUnavailable",
             {
-                "event_type": "ProductMadeUnavailable",
                 "product_id": self.id,
                 "reason": reason,
                 "stock_at_time": self.stock_quantity,
                 "update_date": FlextUtilities.generate_iso_timestamp(),
-            }
+            },
         )
 
         return FlextResult.ok(unavailable_product)
@@ -1168,25 +1177,28 @@ class OrderDomainService:
 # =============================================================================
 
 
-def create_customer_factory() -> object:
+def create_customer_factory() -> CustomerFactory:
     """Create factory for customers with defaults."""
 
     def factory(**kwargs: object) -> FlextResult[Customer]:
         try:
-            # Set defaults
+            # Set required defaults for User base class
             defaults = {
-                "id": FlextUtilities.generate_entity_id(),
-                "registration_date": FlextUtilities.generate_iso_timestamp(),
+                "name": "Default Customer",
+                "email_address": Email(email="default@example.com"),
                 "age": Age(value=30),
+                "status": UserStatus.PENDING,
+                "registration_date": FlextUtilities.generate_iso_timestamp(),
                 "credit_limit": Money(amount=Decimal("5000.0"), currency="USD"),
                 "total_orders": 0,
-                "status": UserStatus.PENDING,
             }
             # Update with provided values
-            defaults.update(kwargs)
+            defaults_dict = dict(defaults)
+            defaults_dict.update(kwargs)
+            defaults = defaults_dict
 
-            # Create customer instance
-            customer = Customer(**defaults)
+            # Create customer instance using model validation
+            customer = Customer.model_validate(defaults)
 
             # Validate the customer
             validation = customer.validate_business_rules()
@@ -1202,7 +1214,7 @@ def create_customer_factory() -> object:
     return factory
 
 
-def create_product_factory() -> object:
+def create_product_factory() -> ProductFactory:
     """Create factory for products with defaults."""
 
     def factory(**kwargs: object) -> FlextResult[Product]:
@@ -1215,10 +1227,12 @@ def create_product_factory() -> object:
                 "stock_quantity": 100,
             }
             # Update with provided values
-            defaults.update(kwargs)
+            defaults_dict = dict(defaults)
+            defaults_dict.update(kwargs)
+            defaults = defaults_dict
 
-            # Create product instance
-            product = Product(**defaults)
+            # Create product instance using model validation
+            product = Product.model_validate(defaults)
 
             # Validate the product
             validation = product.validate_business_rules()
@@ -1234,13 +1248,13 @@ def create_product_factory() -> object:
     return factory
 
 
-def create_order_factory() -> object:
+def create_order_factory() -> OrderFactory:
     """Create factory for orders with defaults."""
 
     def factory(**kwargs: object) -> FlextResult[Order]:
         try:
-            # Set defaults
-            defaults = {
+            # Set defaults with explicit typing for object compatibility
+            defaults: dict[str, object] = {
                 "id": FlextUtilities.generate_entity_id(),
                 "order_date": FlextUtilities.generate_iso_timestamp(),
                 "status": "pending",
@@ -1248,8 +1262,8 @@ def create_order_factory() -> object:
             # Update with provided values
             defaults.update(kwargs)
 
-            # Create order instance
-            order = Order(**defaults)
+            # Create order instance using model validation
+            order = Order.model_validate(defaults)
 
             # Validate the order
             validation = order.validate_domain_rules()
@@ -1415,9 +1429,15 @@ def demonstrate_entity_lifecycle() -> None:
     print("\n📋 Domain Events:")
     events = customer.clear_events()
     for i, event in enumerate(events, 1):
-        event_type = event.get_metadata("event_type")
+        if hasattr(event, "get_metadata"):
+            event_type = event.get_metadata("event_type")
+        else:
+            event_type = "Unknown Event Type"
         print(f"  📝 Event {i}: {event_type}")
-        print(f"     Data: {event.data}")
+        if hasattr(event, "data"):
+            print(f"     Data: {event.data}")
+        else:
+            print(f"     Data: {event}")
 
 
 def _setup_aggregate_repositories() -> tuple[
@@ -1449,7 +1469,7 @@ def _create_test_customer(customer_repo: CustomerRepository) -> Customer | None:
     if customer is None:
         print("❌ Failed to create customer: None returned")
         return None
-    customer = cast("Customer", customer)
+    # Customer is already correctly typed
     customer_repo.save(customer)
     return customer
 
@@ -1543,7 +1563,7 @@ def _process_order_lifecycle(
     print(f"✅ Order fulfilled: Status {fulfilled_order.status}")
 
     # Deliver order (method may not exist in Order class)
-    try:
+    if hasattr(fulfilled_order, "deliver_order"):
         deliver_result = fulfilled_order.deliver_order()
         if deliver_result.success:
             delivered_order = deliver_result.data
@@ -1552,7 +1572,7 @@ def _process_order_lifecycle(
                 return
             order_repo.save(delivered_order)
             print(f"✅ Order delivered: Status {delivered_order.status}")
-    except AttributeError:
+    else:
         # If method doesn't exist, simulate delivery
         print("✅ Order delivered (simulated): Status delivered")
 
@@ -1884,7 +1904,7 @@ def demonstrate_performance_characteristics() -> None:
 
 def main() -> None:
     """Run comprehensive FlextEntity/ValueObject DDD demonstration."""
-    from .shared_example_helpers import run_example_demonstration  # noqa: PLC0415
+    from shared_example_helpers import run_example_demonstration
 
     examples = [
         ("Value Object Patterns", demonstrate_value_objects),

@@ -10,14 +10,12 @@ from __future__ import annotations
 import asyncio
 from typing import TYPE_CHECKING, Literal, cast
 
-if TYPE_CHECKING:
-    from collections.abc import Callable
-
 from pydantic import Field, SecretStr
 
-from flext_core import FlextResult
-from flext_core.config import FlextConfig
-from flext_core.models import FlextEntity, FlextFactory, FlextValue
+from flext_core import FlextConfig, FlextEntity, FlextResult, FlextValue
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 # =============================================================================
 # LAYER 0: FOUNDATION PATTERNS - Core Pydantic Models
@@ -38,17 +36,17 @@ class FlextOracleConfig(FlextConfig):
     def validate_business_rules(self) -> FlextResult[None]:
         """Unified business rule validation pattern."""
         if not self.service_name and not self.sid:
-            return FlextResult.fail("Either service_name or sid must be provided")
+            return FlextResult.fail("Missing identifiers: both service_name and sid are empty")
 
         min_port = 1
         max_port = 65535
         if not (min_port <= self.port <= max_port):
-            return FlextResult.fail(f"Port must be between {min_port} and {max_port}")
+            return FlextResult.fail(f"Port out of range: {self.port} not between {min_port} and {max_port}")
 
         if self.max_connections < 1:
-            return FlextResult.fail("Max connections must be positive")
+            return FlextResult.fail(f"Invalid max_connections: {self.max_connections} must be at least 1")
 
-        return FlextResult.ok(None)
+        return FlextResult.success(None)
 
 
 class FlextUserProfile(FlextValue):
@@ -94,13 +92,13 @@ class FlextDataPipeline(FlextEntity):
             return FlextResult.fail("Processed records cannot be negative")
 
         # Validate nested objects using unified patterns
-        source_validation = self.source_config.validate_business_rules()
-        if source_validation.is_failure:
-            return FlextResult.fail(f"Invalid source config: {source_validation.error}")
+        source_result = self.source_config.validate_business_rules()
+        if not source_result.is_success:
+            return FlextResult.fail(f"Invalid source config: {source_result.error}")
 
-        owner_validation = self.owner.validate_business_rules()
-        if owner_validation.is_failure:
-            return FlextResult.fail(f"Invalid owner: {owner_validation.error}")
+        owner_result = self.owner.validate_business_rules()
+        if not owner_result.is_success:
+            return FlextResult.fail(f"Invalid owner: {owner_result.error}")
 
         return FlextResult.ok(None)
 
@@ -183,31 +181,61 @@ class FlextPipelineService:
         owner_profile: dict[str, object],
     ) -> FlextResult[FlextDataPipeline]:
         """Create pipeline using unified factory pattern."""
-        # Create configuration using unified patterns
-        config_result = FlextFactory.create_model(  # type: ignore[call-arg]
-            FlextOracleConfig, **oracle_config
-        )
+        # Create configuration using direct construction with proper field mapping
+        try:
+            port_value = oracle_config.get("port", 1521)
+            port_int = port_value if isinstance(port_value, int) else 1521
+            config_instance = FlextOracleConfig(
+                host=str(oracle_config.get("host", "localhost")),
+                port=port_int,
+                service_name=str(oracle_config.get("service_name", "XE")),
+                username=str(oracle_config.get("username", "flext")),
+                password=SecretStr(str(oracle_config.get("password", "password"))),
+            )
+            config_result = FlextResult.ok(config_instance)
+        except Exception as e:
+            config_result = FlextResult.fail(str(e))
         if config_result.is_failure:
             return FlextResult.fail(f"Invalid Oracle config: {config_result.error}")
 
-        # Create owner profile using unified patterns
-        owner_result = FlextFactory.create_model(  # type: ignore[call-arg]
-            FlextUserProfile, **owner_profile
-        )
+        # Create owner profile using direct construction with proper field mapping
+        try:
+            owner_instance = FlextUserProfile(
+                email=str(owner_profile.get("email", "REDACTED_LDAP_BIND_PASSWORD@example.com")),
+                full_name=str(owner_profile.get("full_name", "Pipeline Owner")),
+                role=cast(
+                    "Literal['REDACTED_LDAP_BIND_PASSWORD', 'user', 'viewer']",
+                    owner_profile.get("role", "REDACTED_LDAP_BIND_PASSWORD"),
+                ),
+                preferences=cast(
+                    "dict[str, object]", owner_profile.get("preferences", {})
+                ),
+            )
+            owner_result = FlextResult.ok(owner_instance)
+        except Exception as e:
+            owner_result = FlextResult.fail(str(e))
         if owner_result.is_failure:
             return FlextResult.fail(f"Invalid owner profile: {owner_result.error}")
 
-        # Create pipeline using unified patterns
-        pipeline_data = {
-            "id": f"pipeline_{len(self._pipelines) + 1}",
-            "name": name,
-            "source_config": config_result.data,
-            "owner": owner_result.data,
-        }
+        # Create pipeline using unified patterns with None checks
+        config_data = config_result.data
+        owner_data = owner_result.data
 
-        pipeline_result = FlextFactory.create_model(  # type: ignore[call-arg]
-            FlextDataPipeline, **pipeline_data
-        )
+        if config_data is None:
+            return FlextResult.fail("Oracle configuration creation returned None")
+        if owner_data is None:
+            return FlextResult.fail("Owner profile creation returned None")
+
+        try:
+            pipeline_instance = FlextDataPipeline(
+                id=f"pipeline_{len(self._pipelines) + 1}",
+                name=name,
+                source_config=config_data,
+                owner=owner_data,
+            )
+            pipeline_result = FlextResult.ok(pipeline_instance)
+        except Exception as e:
+            pipeline_result = FlextResult.fail(str(e))
         if pipeline_result.is_failure:
             return FlextResult.fail(
                 f"Pipeline creation failed: {pipeline_result.error}"

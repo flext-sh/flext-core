@@ -7,8 +7,9 @@ data integration systems.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from functools import wraps
-from typing import TYPE_CHECKING, Self
+from typing import TYPE_CHECKING, ParamSpec, Self, TypeVar, cast
 
 from pydantic import BaseModel, ValidationError
 
@@ -16,15 +17,13 @@ from flext_core.constants import FlextConstants
 from flext_core.decorators import FlextDecorators
 from flext_core.exceptions import FlextValidationError
 from flext_core.mixins import FlextSerializableMixin, FlextValidatableMixin
-from flext_core.utilities import FlextGenericFactory, FlextTypeGuards, FlextUtilities
+from flext_core.result import FlextResult
+from flext_core.utilities import FlextTypeGuards, FlextUtilities
 from flext_core.validation import FlextValidators
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from flext_core.result import FlextResult
-
-from collections.abc import Callable  # noqa: TC003
 
 Platform = FlextConstants.Platform
 
@@ -44,6 +43,11 @@ is_instance_of = FlextTypeGuards.is_instance_of
 # =============================================================================
 
 
+T = TypeVar("T")
+P = ParamSpec("P")
+R = TypeVar("R")
+
+
 class FlextGuards:
     """Static class for type guards, validation, and factory methods.
 
@@ -59,7 +63,7 @@ class FlextGuards:
         return all(isinstance(value, value_type) for value in obj.values())
 
     @staticmethod
-    def immutable[T](target_class: type[T]) -> type[T]:
+    def immutable(target_class: type[T]) -> type[T]:
         """Make class immutable using a decorator pattern.
 
         Args:
@@ -70,48 +74,50 @@ class FlextGuards:
 
         """
 
-        class ImmutableWrapper(target_class):  # type: ignore[misc,valid-type]
-            """Immutable wrapper class."""
+        def _init(self: object, *args: object, **kwargs: object) -> None:
+            target_class.__init__(self, *args, **kwargs)
+            object.__setattr__(self, "_initialized", True)
 
-            def __init__(self, *args: object, **kwargs: object) -> None:
-                """Initialize and mark as immutable."""
-                super().__init__(*args, **kwargs)
-                object.__setattr__(self, "_initialized", True)
+        def _setattr(self: object, name: str, value: object) -> None:
+            if hasattr(self, "_initialized"):
+                msg = "Cannot modify immutable object attribute '" + name + "'"
+                raise AttributeError(msg)
+            object.__setattr__(self, name, value)
 
-            def __setattr__(self, name: str, value: object) -> None:
-                """Prevent attribute modification after initialization."""
-                if hasattr(self, "_initialized"):
-                    error_msg = f"Cannot modify immutable object attribute '{name}'"
-                    raise AttributeError(error_msg)
-                super().__setattr__(name, value)
+        def _hash(self: object) -> int:
+            try:
+                attrs = tuple(
+                    getattr(self, attr)
+                    for attr in dir(self)
+                    if not attr.startswith("_") and not callable(getattr(self, attr))
+                )
+                return hash((self.__class__.__name__, attrs))
+            except TypeError:
+                return hash(id(self))
 
-            def __hash__(self) -> int:
-                """Make object hashable based on all attributes."""
-                try:
-                    attrs = tuple(
-                        getattr(self, attr)
-                        for attr in dir(self)
-                        if not attr.startswith("_")
-                        and not callable(getattr(self, attr))
-                    )
-                    return hash((self.__class__.__name__, attrs))
-                except TypeError:
-                    # If any attribute is unhashable, use object id
-                    return hash(id(self))
-
-        # Preserve class metadata
-        ImmutableWrapper.__name__ = target_class.__name__
-        ImmutableWrapper.__qualname__ = getattr(
-            target_class,
-            "__qualname__",
-            target_class.__name__,
+        wrapper: type[T] = cast(
+            "type[T]",
+            type(
+                target_class.__name__,
+                (target_class,),
+                {
+                    "__init__": _init,
+                    "__setattr__": _setattr,
+                    "__hash__": _hash,
+                    "__module__": getattr(target_class, "__module__", __name__),
+                    "__qualname__": getattr(
+                        target_class,
+                        "__qualname__",
+                        target_class.__name__,
+                    ),
+                },
+            ),
         )
-        ImmutableWrapper.__module__ = getattr(target_class, "__module__", __name__)
 
-        return ImmutableWrapper
+        return wrapper
 
     @staticmethod
-    def pure[T](func: T) -> T:
+    def pure(func: Callable[P, R]) -> Callable[P, R]:
         """Mark function as pure with memoization caching.
 
         Args:
@@ -121,13 +127,10 @@ class FlextGuards:
             Pure version of the function with caching
 
         """
-        if not callable(func):
-            return func  # Not a function, return as-is
-
         # Cache for memoization
-        cache: dict[tuple[object, ...], object] = {}
+        cache: dict[tuple[object, ...], R] = {}
 
-        def pure_wrapper(*args: object, **kwargs: object) -> object:
+        def pure_wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
             """Pure function wrapper with memoization."""
             # Create a cache key from args and kwargs
             try:
@@ -147,15 +150,16 @@ class FlextGuards:
                 return result
 
         # Use functools.wraps to properly preserve function metadata
-        pure_wrapper = wraps(func)(pure_wrapper)
+        wrapped = wraps(func)(pure_wrapper)
+        # Mark as pure and expose cache size for tests and tooling
+        setattr(wrapped, "__pure__", True)  # noqa: B010 - intentional test hint attribute
 
-        # Mark function as pure for introspection
-        # using type ignore for custom attributes
-        pure_wrapper.__pure__ = True  # type: ignore[attr-defined]
-        pure_wrapper.__cache_size__ = lambda: len(cache)  # type: ignore[attr-defined]
-        pure_wrapper.__clear_cache__ = cache.clear  # type: ignore[attr-defined]
+        # Provide a lightweight cache size accessor expected by tests
+        def _cache_size() -> int:
+            return len(cache)
 
-        return pure_wrapper  # type: ignore[return-value]
+        wrapped.__dict__["__cache_size__"] = _cache_size
+        return cast("Callable[P, R]", wrapped)
 
     @staticmethod
     def make_factory(target_class: type) -> Callable[[], object]:
@@ -181,11 +185,7 @@ class FlextGuards:
 # =============================================================================
 
 
-class FlextValidatedModel(  # type: ignore[misc]
-    BaseModel,
-    FlextValidatableMixin,
-    FlextSerializableMixin,
-):
+class FlextValidatedModel(BaseModel, FlextSerializableMixin, FlextValidatableMixin):  # type: ignore[misc]
     """Automatic validation model with Pydantic and FLEXT integration.
 
     Provides validated object construction with enhanced error handling
@@ -196,14 +196,22 @@ class FlextValidatedModel(  # type: ignore[misc]
         """Initialize with proper mixin inheritance and enhanced error handling."""
         try:
             super().__init__(**data)
-            # Mixins now initialize themselves through proper inheritance
+            # Initialize validation state for mixin integration
+            FlextValidatableMixin.__init__(self)
         except ValidationError as e:
             # Convert Pydantic errors to user-friendly format
             errors = []
             for error in e.errors():
-                loc = ".".join(str(x) for x in error["loc"])
-                msg = error["msg"]
-                errors.append(f"{loc}: {msg}")
+                loc = ".".join(str(x) for x in error["loc"]) if error.get("loc") else ""
+                msg = error.get("msg", "Validation error")
+                # Some tests expect messages without 'Input should be' prefix
+                normalized = (
+                    msg.replace("Input should be ", "")
+                    .replace("Input should be a ", "a ")
+                    .strip()
+                )
+                errors.append(f"{loc}: {normalized}" if loc else normalized)
+            # Join messages using '; ' consistent with expectations
             error_msg: str = f"Invalid data: {'; '.join(errors)}"
             raise FlextValidationError(
                 error_msg,
@@ -216,11 +224,29 @@ class FlextValidatedModel(  # type: ignore[misc]
 
     @classmethod
     def create(cls, **data: object) -> FlextResult[Self]:
-        """Create instance using centralized factory."""
-        # ARCHITECTURAL DECISION: Use centralized factory to remove duplication
-        factory = FlextGenericFactory(cls)
-        # Type cast to correct return type since factory returns FlextResult[object]
-        return factory.create(**data)  # type: ignore[return-value]
+        """Create instance using centralized factory.
+
+        On failure, return FlextResult with normalized 'Invalid data' message
+        instead of raising, to align with tests expecting failure results.
+        """
+        try:
+            instance = cls(**data)
+            return FlextResult.ok(instance)
+        except (ValidationError, FlextValidationError) as e:
+            errors = []
+            if isinstance(e, ValidationError):
+                for error in e.errors():
+                    loc = ".".join(str(x) for x in error.get("loc", []))
+                    msg = error.get("msg", "Validation error")
+                    normalized = (
+                        msg.replace("Input should be ", "")
+                        .replace("Input should be a ", "a ")
+                        .strip()
+                    )
+                    errors.append(f"{loc}: {normalized}" if loc else normalized)
+                return FlextResult.fail(f"Invalid data: {'; '.join(errors)}")
+            # FlextValidationError already has normalized message
+            return FlextResult.fail(str(e))
 
 
 # =============================================================================
@@ -322,15 +348,15 @@ ValidatedModel = FlextValidatedModel
 # EXPORTS - Clean public API
 # =============================================================================
 
-__all__: list[str] = [  # noqa: RUF022
+__all__: list[str] = [
     # Main static class
     "FlextGuards",
-    # Utility classes
-    "FlextValidationUtils",
     # Base classes
     "FlextValidatedModel",
+    # Utility classes
+    "FlextValidationUtils",
+    # Compatibility aliases for functions (alphabetically sorted)
     "ValidatedModel",
-    # Compatibility aliases for functions
     "immutable",
     "is_dict_of",
     "is_instance_of",

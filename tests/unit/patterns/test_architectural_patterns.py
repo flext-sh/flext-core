@@ -246,13 +246,10 @@ class TestCleanArchitecturePatterns:
         ):
             """Handler for user queries."""
 
-            def handle(self, query: object) -> FlextResult[object]:
+            def handle(self, query: GetUserQuery) -> FlextResult[dict[str, object]]:
                 """Handle user query."""
-                if not isinstance(query, GetUserQuery):
-                    return FlextResult.fail("Invalid query type")
-
                 # Simulate data retrieval
-                user_data = {
+                user_data: dict[str, object] = {
                     "id": query.user_id,
                     "name": "John Doe",
                     "email": "john@example.com",

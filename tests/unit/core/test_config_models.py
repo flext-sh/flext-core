@@ -9,7 +9,7 @@ from __future__ import annotations
 import pytest
 from pydantic import SecretStr, ValidationError
 
-from flext_core.config_models import (
+from flext_core.config import (
     FlextApplicationConfig,
     FlextBaseConfigModel,
     FlextDatabaseConfig,
@@ -554,7 +554,7 @@ class TestConfigFactoryFunctions:
 
     def test_load_config_from_env(self) -> None:
         """Test load_config_from_env function."""
-        from flext_core.config_models import FlextDatabaseSettings
+        from flext_core.config import FlextDatabaseSettings
 
         config = load_config_from_env(FlextDatabaseSettings)
         assert isinstance(config, FlextDatabaseSettings)

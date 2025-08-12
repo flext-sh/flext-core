@@ -17,7 +17,7 @@ from flext_core import FlextResult
 from .formatting_helpers import MAX_DISCOUNT_PERCENTAGE
 
 if TYPE_CHECKING:
-    from ..shared_domain import Order as SharedOrder, Product as SharedProduct
+    from examples.shared_domain import Order as SharedOrder, Product as SharedProduct
 
 # =============================================================================
 # TYPE CHECKING FUNCTIONS - Using FlextTypes.TypeGuards for safety

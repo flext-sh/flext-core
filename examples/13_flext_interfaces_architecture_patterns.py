@@ -26,32 +26,30 @@ demonstrating the power and flexibility of the FlextInterfaces system.
 
 import time
 import traceback
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Callable, cast
+from typing import TYPE_CHECKING, cast
 
-if TYPE_CHECKING:
-    from structlog.stdlib import BoundLogger
-
+from flext_core import FlextHandlers, FlextResult, TAnyDict
 from flext_core.protocols import (
     FlextConfigurable,
     FlextDomainEvent,
     FlextEventPublisher,
     FlextEventSubscriber,
     FlextHandler,
+    FlextLoggerProtocol,
     FlextMiddleware,
     FlextPlugin,
     FlextPluginContext,
-    FlextLoggerProtocol,
     FlextRepository,
     FlextService,
     FlextUnitOfWork,
     FlextValidationRule,
     FlextValidator,
 )
-from flext_core.handlers import FlextHandlers
-from flext_core.result import FlextResult
-from flext_core.typings import TAnyDict
+
+if TYPE_CHECKING:
+    from structlog.stdlib import BoundLogger
 
 # =============================================================================
 # INTERFACE CONSTANTS - Network and system constraints
@@ -103,20 +101,118 @@ class Order:
 class UserCreatedEvent:
     """Event indicating user was created."""
 
+    # Domain event fields (FlextDomainEvent protocol)
+    event_id: str
+    event_type: str
+    aggregate_id: str
+    event_version: int
+    timestamp: str
+
+    # Event-specific fields
     user_id: str
     name: str
     email: str
-    timestamp: float
+
+    def to_dict(self) -> dict[str, object]:
+        """Convert event to dictionary."""
+        return {
+            "event_id": self.event_id,
+            "event_type": self.event_type,
+            "aggregate_id": self.aggregate_id,
+            "event_version": self.event_version,
+            "timestamp": self.timestamp,
+            "user_id": self.user_id,
+            "name": self.name,
+            "email": self.email,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, object]) -> "UserCreatedEvent":
+        """Create event from dictionary."""
+        event_version_raw = data["event_version"]
+        if isinstance(event_version_raw, int):
+            event_version = event_version_raw
+        elif isinstance(event_version_raw, (str, float)):
+            event_version = int(event_version_raw)
+        elif event_version_raw is None:
+            event_version = 1
+        else:
+            event_version = int(str(event_version_raw))
+
+        return cls(
+            event_id=str(data["event_id"]),
+            event_type=str(data["event_type"]),
+            aggregate_id=str(data["aggregate_id"]),
+            event_version=event_version,
+            timestamp=str(data["timestamp"]),
+            user_id=str(data["user_id"]),
+            name=str(data["name"]),
+            email=str(data["email"]),
+        )
 
 
 @dataclass
 class OrderPlacedEvent:
     """Event indicating order was placed."""
 
+    # Domain event fields (FlextDomainEvent protocol)
+    event_id: str
+    event_type: str
+    aggregate_id: str
+    event_version: int
+    timestamp: str
+
+    # Event-specific fields
     order_id: str
     user_id: str
     total: float
-    timestamp: float
+
+    def to_dict(self) -> dict[str, object]:
+        """Convert event to dictionary."""
+        return {
+            "event_id": self.event_id,
+            "event_type": self.event_type,
+            "aggregate_id": self.aggregate_id,
+            "event_version": self.event_version,
+            "timestamp": self.timestamp,
+            "order_id": self.order_id,
+            "user_id": self.user_id,
+            "total": self.total,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, object]) -> "OrderPlacedEvent":
+        """Create event from dictionary."""
+        event_version_raw = data["event_version"]
+        if isinstance(event_version_raw, int):
+            event_version = event_version_raw
+        elif isinstance(event_version_raw, (str, float)):
+            event_version = int(event_version_raw)
+        elif event_version_raw is None:
+            event_version = 1
+        else:
+            event_version = int(str(event_version_raw))
+
+        total_raw = data["total"]
+        if isinstance(total_raw, float):
+            total = total_raw
+        elif isinstance(total_raw, (int, str)):
+            total = float(total_raw)
+        elif total_raw is None:
+            total = 0.0
+        else:
+            total = float(str(total_raw))
+
+        return cls(
+            event_id=str(data["event_id"]),
+            event_type=str(data["event_type"]),
+            aggregate_id=str(data["aggregate_id"]),
+            event_version=event_version,
+            timestamp=str(data["timestamp"]),
+            order_id=str(data["order_id"]),
+            user_id=str(data["user_id"]),
+            total=total,
+        )
 
 
 # =============================================================================
@@ -472,6 +568,21 @@ class UserRepository(FlextRepository[User]):
         print(f"User {entity.id} saved to repository")
         return FlextResult.ok(entity)
 
+    def get_by_id(self, entity_id: str) -> FlextResult[User | None]:
+        """Get user by ID (implements abstract method)."""
+        result = self.find_by_id(entity_id)
+        if result.success:
+            return FlextResult.ok(result.data)
+        return FlextResult.ok(None)
+
+    def find_all(self) -> FlextResult[list[User]]:
+        """Find all users (implements abstract method)."""
+        active_users = [
+            user for user_id, user in self._users.items()
+            if user_id not in self._deleted_ids
+        ]
+        return FlextResult.ok(active_users)
+
     def delete(self, entity_id: str) -> FlextResult[None]:
         """Delete user by ID."""
         if entity_id not in self._users:
@@ -718,6 +829,16 @@ class EmailNotificationPlugin(FlextPlugin):
         except (ValueError, TypeError, ImportError) as e:
             return FlextResult.fail(f"Plugin initialization failed: {e}")
 
+    def get_info(self) -> dict[str, object]:
+        """Get plugin information (implements abstract method)."""
+        return {
+            "name": self.name,
+            "version": self.version,
+            "description": "Email notification plugin for demonstrations",
+            "initialized": self._initialized,
+            "email_service_available": self._email_service is not None,
+        }
+
     def shutdown(self) -> FlextResult[None]:
         """Shutdown plugin cleanly."""
         if not self._initialized:
@@ -767,6 +888,16 @@ class AuditLogPlugin(FlextPlugin):
             version=self.version,
         )
         return FlextResult.ok(None)
+
+    def get_info(self) -> dict[str, object]:
+        """Get plugin information (implements abstract method)."""
+        return {
+            "name": self.name,
+            "version": self.version,
+            "description": "Audit logging plugin for demonstrations",
+            "initialized": self._initialized,
+            "log_entries": len(self._audit_log),
+        }
 
     def shutdown(self) -> FlextResult[None]:
         """Shutdown plugin cleanly."""
@@ -1249,10 +1380,9 @@ def demonstrate_repository_interfaces() -> None:
 
     # Verify user was saved
     result = fresh_repo.find_by_id("user_100")
-    if result.success:
+    if result.success and result.data is not None:
         user_data = result.data
-        if hasattr(user_data, "name"):
-            print(f"   ✅ User persisted after commit: {user_data.name}")
+        print(f"   ✅ User persisted after commit: {user_data.name}")
 
     # Failed transaction (rollback)
     print("   Failed transaction with rollback:")
@@ -1401,10 +1531,14 @@ def demonstrate_event_interfaces() -> None:
 
     # Publish user created event
     user_event = UserCreatedEvent(
+        event_id="evt_user_001",
+        event_type="user_created",
+        aggregate_id="user_event_user_1",
+        event_version=1,
+        timestamp="2023-01-01T00:00:00Z",
         user_id="event_user_1",
         name="Event User",
         email="eventuser@example.com",
-        timestamp=time.time(),
     )
 
     result = publisher.publish(user_event)
@@ -1415,10 +1549,14 @@ def demonstrate_event_interfaces() -> None:
 
     # Publish order placed event
     order_event = OrderPlacedEvent(
+        event_id="evt_order_001",
+        event_type="order_placed",
+        aggregate_id="order_event_order_1",
+        event_version=1,
+        timestamp="2023-01-01T00:00:00Z",
         order_id="event_order_1",
         user_id="event_user_1",
         total=129.99,
-        timestamp=time.time(),
     )
 
     result = publisher.publish(order_event)
@@ -1430,9 +1568,57 @@ def demonstrate_event_interfaces() -> None:
     # Publish event with no subscribers
     @dataclass
     class UnknownEvent:
+        # Domain event fields (FlextDomainEvent protocol)
+        event_id: str
+        event_type: str
+        aggregate_id: str
+        event_version: int
+        timestamp: str
+
+        # Event-specific fields
         data: str
 
-    unknown_event = UnknownEvent("test data")
+        def to_dict(self) -> dict[str, object]:
+            """Convert event to dictionary."""
+            return {
+                "event_id": self.event_id,
+                "event_type": self.event_type,
+                "aggregate_id": self.aggregate_id,
+                "event_version": self.event_version,
+                "timestamp": self.timestamp,
+                "data": self.data,
+            }
+
+        @classmethod
+        def from_dict(cls, data_dict: dict[str, object]) -> "UnknownEvent":
+            """Create event from dictionary."""
+            event_version_raw = data_dict["event_version"]
+            if isinstance(event_version_raw, int):
+                event_version = event_version_raw
+            elif isinstance(event_version_raw, (str, float)):
+                event_version = int(event_version_raw)
+            elif event_version_raw is None:
+                event_version = 1
+            else:
+                event_version = int(str(event_version_raw))
+
+            return cls(
+                event_id=str(data_dict["event_id"]),
+                event_type=str(data_dict["event_type"]),
+                aggregate_id=str(data_dict["aggregate_id"]),
+                event_version=event_version,
+                timestamp=str(data_dict["timestamp"]),
+                data=str(data_dict["data"]),
+            )
+
+    unknown_event = UnknownEvent(
+        event_id="evt_001",
+        event_type="unknown",
+        aggregate_id="test",
+        event_version=1,
+        timestamp="2023-01-01T00:00:00Z",
+        data="test data"
+    )
     result = publisher.publish(unknown_event)
     if result.success:
         print("   ✅ Unknown event published (no subscribers)")
@@ -1446,10 +1632,14 @@ def demonstrate_event_interfaces() -> None:
 
     # Publish event after unsubscription
     user_event2 = UserCreatedEvent(
+        event_id="evt_user_002",
+        event_type="user_created",
+        aggregate_id="user_event_user_2",
+        event_version=1,
+        timestamp="2023-01-01T01:00:00Z",
         user_id="event_user_2",
         name="Second Event User",
         email="eventuser2@example.com",
-        timestamp=time.time(),
     )
 
     result = publisher.publish(user_event2)

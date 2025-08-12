@@ -9,6 +9,7 @@ This directory contains 20+ practical examples showcasing FLEXT Core's capabilit
 ## Example Structure
 
 ### Core Patterns (01-04)
+
 **Foundation patterns every FLEXT application uses**
 
 | File | Description | Key Concepts |
@@ -19,6 +20,7 @@ This directory contains 20+ practical examples showcasing FLEXT Core's capabilit
 | `04_flext_utilities_modular.py` | Utility functions | ID generation, helpers, common operations |
 
 ### Domain-Driven Design (05-08)
+
 **Building rich domain models**
 
 | File | Description | Key Concepts |
@@ -29,6 +31,7 @@ This directory contains 20+ practical examples showcasing FLEXT Core's capabilit
 | `08_flext_config_enterprise_configuration.py` | Configuration management | Settings, environments, validation |
 
 ### Enterprise Features (09-14)
+
 **Production-ready patterns**
 
 | File | Description | Key Concepts |
@@ -41,6 +44,7 @@ This directory contains 20+ practical examples showcasing FLEXT Core's capabilit
 | `14_flext_exceptions_enterprise_handling.py` | Error management | Exception hierarchy, recovery |
 
 ### Advanced Integration (15-20)
+
 **Complex scenarios and integrations**
 
 | File | Description | Key Concepts |
@@ -65,6 +69,7 @@ This directory contains 20+ practical examples showcasing FLEXT Core's capabilit
 ## Learning Path
 
 ### Beginner Path
+
 **Start here if new to FLEXT Core**
 
 1. **Railway Pattern** (`01_flext_result_railway_pattern.py`)
@@ -80,6 +85,7 @@ This directory contains 20+ practical examples showcasing FLEXT Core's capabilit
    - Type-safe configuration
 
 ### Intermediate Path
+
 **For building domain models**
 
 1. **Domain Entities** (`06_flext_entity_valueobject_ddd_patterns.py`)
@@ -95,6 +101,7 @@ This directory contains 20+ practical examples showcasing FLEXT Core's capabilit
    - Command and query handlers
 
 ### Advanced Path
+
 **For enterprise applications**
 
 1. **Event-Driven** (`10_flext_payload_messaging_events.py`)
@@ -274,6 +281,7 @@ rich              # Pretty console output
 ### No External Services Required
 
 All examples are self-contained:
+
 - No database connections needed
 - No external APIs required
 - No network dependencies

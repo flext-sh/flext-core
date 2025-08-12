@@ -67,6 +67,7 @@ class TestLibraryIntegration:
         Args:
             clean_container: Isolated container fixture
             sample_data: Test data fixture
+
         """
         # Arrange
         test_value = sample_data["string"]
@@ -118,6 +119,7 @@ class TestLibraryIntegration:
         Args:
             clean_container: Isolated container fixture
             mock_external_service: Mock external service
+
         """
         # Arrange
         expected_result_data = "container_result"

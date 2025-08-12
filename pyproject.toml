@@ -30,6 +30,7 @@ dependencies = [
     "pydantic>=2.11.7",
     "pydantic-settings>=2.10.1",
     "structlog (>=25.4.0)",
+    "typing-extensions>=4.12.0",
 ]
 keywords = [
     "clean-architecture",
@@ -260,7 +261,6 @@ testpaths = ["tests"]
 [tool.ruff]
 extend = "../.ruff-shared.toml"
 lint.isort.known-first-party = ["flext_core"]
-extend-exclude = ["examples/**"]
 
 
 [tool.vulture]
