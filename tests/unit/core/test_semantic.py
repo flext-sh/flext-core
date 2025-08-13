@@ -457,7 +457,7 @@ class TestSemanticIntegration:
         assert default_log_level is not None
 
         # The configure method should use this constant as default
-        import contextlib
+        import contextlib  # noqa: PLC0415
 
         with contextlib.suppress(ImportError, AttributeError):
             # Try to call with default - should use the constant

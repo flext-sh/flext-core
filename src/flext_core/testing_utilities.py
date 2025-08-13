@@ -575,7 +575,7 @@ class FlextTestConfig(FlextModel):
     timeout: int = 30
     retries: int = 3
     # Build base_url without deep dynamic __import__ chains to avoid runtime errors
-    from flext_core.constants import (
+    from flext_core.constants import (  # noqa: PLC0415
         FlextConstants as _FlextConstants,  # local import to avoid cycles
     )
 

@@ -65,7 +65,7 @@ class TestBaseConfigOps:
 
     def test_safe_load_from_dict_not_dict(self) -> None:
         """Test safe_load_from_dict with non-dictionary."""
-        from typing import cast
+        from typing import cast  # noqa: PLC0415
 
         result = _BaseConfigOps.safe_load_from_dict(cast("TAnyDict", "not a dict"))
 
@@ -108,7 +108,7 @@ class TestBaseConfigOps:
     def test_safe_load_from_dict_invalid_required_keys(self) -> None:
         """Test safe_load_from_dict with invalid required_keys type."""
         config_dict: dict[str, object] = {"key1": "value1"}
-        from typing import cast
+        from typing import cast  # noqa: PLC0415
 
         required_keys = cast("list[str]", "not a list")
 
@@ -126,7 +126,7 @@ class TestBaseConfigOps:
         """Test safe_load_from_dict with copy error."""
         # The validation logic catches non-dict objects early
         # Create a non-dict object to trigger the early validation
-        from typing import cast
+        from typing import cast  # noqa: PLC0415
 
         bad_config = cast("TAnyDict", "not a dict")
 
@@ -191,7 +191,7 @@ class TestBaseConfigOps:
 
     def test_safe_get_env_var_none_name(self) -> None:
         """Test safe_get_env_var with None variable name."""
-        from typing import cast
+        from typing import cast  # noqa: PLC0415
 
         result = _BaseConfigOps.safe_get_env_var(cast("str", None))
 
@@ -591,7 +591,7 @@ class TestBaseConfigValidation:
                 raise TypeError(self.cannot_compare_error_msg_2)
 
         bad_value = BadValue()
-        from typing import cast
+        from typing import cast  # noqa: PLC0415
 
         result = _BaseConfigValidation.validate_config_range(
             cast("float", bad_value), 1.0, 10.0,
@@ -650,7 +650,7 @@ class TestBaseConfigDefaults:
 
     def test_apply_defaults_config_not_dict(self) -> None:
         """Test apply_defaults with non-dictionary config."""
-        from typing import cast
+        from typing import cast  # noqa: PLC0415
 
         result = _BaseConfigDefaults.apply_defaults(cast("TAnyDict", "not dict"), {})
 
@@ -675,7 +675,7 @@ class TestBaseConfigDefaults:
         config = {"key1": "value1"}
         defaults = {"key2": "default2"}
 
-        from typing import cast
+        from typing import cast  # noqa: PLC0415
 
         result = _BaseConfigDefaults.apply_defaults(
             cast("TAnyDict", config), cast("TAnyDict", defaults),

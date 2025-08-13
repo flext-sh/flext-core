@@ -418,7 +418,7 @@ class TestEdgeCases:
 
     def test_cross_service_utilities(self) -> None:
         """Test cross-service utility functions."""
-        from flext_core.payload import (
+        from flext_core.payload import (  # noqa: PLC0415
             create_cross_service_event,
             create_cross_service_message,
             get_serialization_metrics,

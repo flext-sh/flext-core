@@ -184,7 +184,7 @@ class TestTypeAliases:
             data_dict = payload.model_dump()
             return f"Processing: {len(data_dict)} fields"
 
-        from typing import cast
+        from typing import cast  # noqa: PLC0415
 
         payload_data = cast("dict[str, object]", user_payload.data)
         assert payload_data["id"] == "123", (
@@ -350,7 +350,7 @@ class TestProtocolDefinitions:
                 return self.data.copy()
 
             def to_json(self) -> str:
-                import json
+                import json  # noqa: PLC0415
 
                 return json.dumps(self.data)
 
@@ -372,7 +372,7 @@ class TestTypeAliasComprehensive:
 
     def test_entity_type_aliases(self) -> None:
         """Test entity-related type aliases."""
-        from flext_core.typings import TEntityId
+        from flext_core.typings import TEntityId  # noqa: PLC0415
 
         # TEntityId usage
         user_id: TEntityId = "user-123"
@@ -385,7 +385,7 @@ class TestTypeAliasComprehensive:
 
     def test_cqrs_type_aliases(self) -> None:
         """Test CQRS-related type aliases."""
-        from flext_core.typings import (
+        from flext_core.typings import (  # noqa: PLC0415
             TCorrelationId,
             TRequestId,
             TUserId,
@@ -402,7 +402,7 @@ class TestTypeAliasComprehensive:
 
     def test_business_type_aliases(self) -> None:
         """Test business domain type aliases."""
-        from flext_core.typings import (
+        from flext_core.typings import (  # noqa: PLC0415
             TBusinessCode,
             TBusinessId,
             TBusinessName,
@@ -424,7 +424,11 @@ class TestTypeAliasComprehensive:
 
     def test_cache_type_aliases(self) -> None:
         """Test cache-related type aliases."""
-        from flext_core.typings import TCacheKey, TCacheTTL, TCacheValue
+        from flext_core.typings import (  # noqa: PLC0415
+            TCacheKey,
+            TCacheTTL,
+            TCacheValue,
+        )
 
         cache_key: TCacheKey = "user:123:profile"
         cache_value: TCacheValue = (
@@ -467,7 +471,7 @@ class TestTypeAliasComprehensive:
 
     def test_infrastructure_type_aliases(self) -> None:
         """Test infrastructure-related type aliases."""
-        from flext_core.typings import (
+        from flext_core.typings import (  # noqa: PLC0415
             TConfigDict,
             TConfigValue,
             TConnectionString,
@@ -494,7 +498,7 @@ class TestTypesCoverageImprovements:
 
     def test_is_instance_exception_handling(self) -> None:
         """Test is_instance method exception handling (lines 256-257)."""
-        from flext_core.typings import FlextTypes
+        from flext_core.typings import FlextTypes  # noqa: PLC0415
 
         # Test with invalid type that causes TypeError/AttributeError
         class BadType:

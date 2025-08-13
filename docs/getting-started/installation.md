@@ -534,14 +534,13 @@ def check_development_tools():
     print("\nDevelopment tools:")
     for tool, command in tools.items():
         try:
-            subprocess.run(
-                command.split(),
-                capture_output=True,
-                check=True,
-                text=True
-            )
-            print(f"✅ {tool} available")
-        except (subprocess.CalledProcessError, FileNotFoundError):
+            import shutil
+            tool_bin = command.split()[0]
+            if shutil.which(tool_bin):
+                print(f"✅ {tool} available")
+            else:
+                print(f"⚠️  {tool} not available (optional)")
+        except Exception:
             print(f"⚠️  {tool} not available (optional)")
 
 def main():

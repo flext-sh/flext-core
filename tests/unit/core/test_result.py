@@ -11,11 +11,11 @@ from typing import TYPE_CHECKING, cast
 
 import pytest
 from hypothesis import given, strategies as st
+from tests.conftest import TestCase, TestScenario
 
 from flext_core.exceptions import FlextOperationError
 from flext_core.result import FlextResult
 from flext_core.utilities import safe_call
-from tests.conftest import TestCase, TestScenario
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -1634,7 +1634,7 @@ class TestFlextResultAsync:
     @pytest.mark.asyncio
     async def test_result_in_async_context(self) -> None:
         """Test FlextResult usage in async functions."""
-        import asyncio
+        import asyncio  # noqa: PLC0415
 
         async def async_operation(value: int) -> FlextResult[int]:
             await asyncio.sleep(0.001)  # Simulate async work
@@ -1647,7 +1647,7 @@ class TestFlextResultAsync:
     @pytest.mark.asyncio
     async def test_result_async_chain(self) -> None:
         """Test chaining FlextResult with async operations."""
-        import asyncio
+        import asyncio  # noqa: PLC0415
 
         async def async_add(x: int) -> int:
             await asyncio.sleep(0.001)

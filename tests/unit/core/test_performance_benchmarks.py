@@ -124,7 +124,7 @@ class TestPerformanceBenchmarks:
                 return FlextResult.ok(None)
 
         # Create handler chain
-        from flext_core.handlers import FlextHandlerChain
+        from flext_core.handlers import FlextHandlerChain  # noqa: PLC0415
 
         chain = FlextHandlerChain()
 
@@ -247,7 +247,7 @@ class TestConcurrencyPerformance:
     @pytest.mark.performance
     def test_result_thread_safety(self) -> None:
         """Test FlextResult thread safety (immutability)."""
-        import threading
+        import threading  # noqa: PLC0415
 
         results = []
         errors = []

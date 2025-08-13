@@ -554,7 +554,7 @@ class TestConfigFactoryFunctions:
 
     def test_load_config_from_env(self) -> None:
         """Test load_config_from_env function."""
-        from flext_core.config import FlextDatabaseSettings
+        from flext_core.config import FlextDatabaseSettings  # noqa: PLC0415
 
         config = load_config_from_env(FlextDatabaseSettings)
         assert isinstance(config, FlextDatabaseSettings)
