@@ -375,7 +375,7 @@ class TestValidationIntegration:
         self._test_successful_validation(validation_chain)
         self._test_validation_failures(validation_chain)
 
-    def _create_validation_chain(self) -> object:
+    def _create_validation_chain(self) -> Callable[[str], FlextResult[str]]:
         """Create the validation chain for testing."""
 
         def validate_step1(value: str) -> FlextResult[str]:

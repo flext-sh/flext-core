@@ -41,6 +41,7 @@ Example:
 
 from __future__ import annotations
 
+import logging
 import time
 import traceback
 from abc import ABC, abstractmethod
@@ -54,20 +55,10 @@ if TYPE_CHECKING:
 # CONSTANTS - Error codes and categories
 # =============================================================================
 
-ERROR_CODES = {
-    "VALIDATION_ERROR": "Invalid input data or parameters",
-    "BUSINESS_ERROR": "Business rule violation",
-    "INFRASTRUCTURE_ERROR": "Infrastructure service failure",
-    "CONFIG_ERROR": "Configuration error or missing values",
-    "CONNECTION_ERROR": "Network or service connection failure",
-    "AUTHENTICATION_ERROR": "Authentication failure",
-    "PERMISSION_ERROR": "Insufficient permissions",
-    "NOT_FOUND_ERROR": "Resource not found",
-    "ALREADY_EXISTS_ERROR": "Resource already exists",
-    "TIMEOUT_ERROR": "Operation timeout",
-    "PROCESSING_ERROR": "Data processing failure",
-    "CRITICAL_ERROR": "Critical system error",
-}
+from flext_core.constants import ERROR_CODES as _ERROR_CODES
+
+# Module-level logger (avoid using root logger)
+logger = logging.getLogger(__name__)
 
 # =============================================================================
 # EXCEPTION METRICS SYSTEM - Singleton pattern to avoid globals
@@ -172,7 +163,7 @@ class FlextAbstractValidationError(FlextAbstractError, ABC):
 
     def _get_default_error_code(self) -> str:
         """Get default error code."""
-        return "VALIDATION_ERROR"
+        return _ERROR_CODES["VALIDATION_ERROR"]
 
 
 class FlextAbstractBusinessError(FlextAbstractError, ABC):
@@ -196,7 +187,7 @@ class FlextAbstractBusinessError(FlextAbstractError, ABC):
 
     def _get_default_error_code(self) -> str:
         """Get default error code."""
-        return "BUSINESS_ERROR"
+        return _ERROR_CODES["BUSINESS_ERROR"]
 
 
 class FlextAbstractInfrastructureError(FlextAbstractError, ABC):
@@ -220,7 +211,7 @@ class FlextAbstractInfrastructureError(FlextAbstractError, ABC):
 
     def _get_default_error_code(self) -> str:
         """Get default error code."""
-        return "INFRASTRUCTURE_ERROR"
+        return _ERROR_CODES["INFRASTRUCTURE_ERROR"]
 
 
 class FlextAbstractConfigurationError(FlextAbstractError, ABC):
@@ -244,7 +235,7 @@ class FlextAbstractConfigurationError(FlextAbstractError, ABC):
 
     def _get_default_error_code(self) -> str:
         """Get default error code."""
-        return "CONFIG_ERROR"
+        return _ERROR_CODES["CONFIG_ERROR"]
 
 
 class FlextAbstractErrorFactory(ABC):
@@ -321,14 +312,44 @@ class FlextError(FlextAbstractError):
 
         # Merge with provided context
         if context:
-            filtered_context.update(context)
+            if (
+                isinstance(context, dict)
+                and "context" in context
+                and isinstance(context["context"], dict)
+            ):
+                # Merge inner context first
+                inner_ctx = context.get("context", {})
+                if isinstance(inner_ctx, dict):
+                    filtered_context.update(inner_ctx)
+                # Then merge other non-context keys
+                filtered_context.update(
+                    {k: v for k, v in context.items() if k != "context"},
+                )
+            else:
+                filtered_context.update(context)
 
         super().__init__(message, error_code, filtered_context)
 
         # Set specific attributes
-        self.correlation_id = correlation_id
-        self.timestamp = timestamp
-        self.traceback_info = traceback_info
+        self.correlation_id: str = str(correlation_id)
+        self.timestamp: float = float(str(timestamp))
+        self.traceback_info: str = str(traceback_info)
+        # Provide a list-based stack trace for tests (non-empty best-effort)
+        try:
+            self.stack_trace: list[str] = traceback.format_stack()
+        except Exception:
+            self.stack_trace = []
+
+        # Truncate overly large contexts for safety and tests
+        try:
+            serialized = str(self.context)
+            truncate_threshold = 1000
+            if len(serialized) > truncate_threshold:
+                original_size = len(serialized)
+                self.context = {"_truncated": True, "_original_size": original_size}
+        except Exception as e:  # noqa: BLE001
+            # Keep context unchanged if it cannot be serialized; log for debug
+            logger.debug("Failed to serialize context", extra={"error": str(e)})
 
         # Record metrics
         _exception_metrics.record_exception(self.__class__.__name__)
@@ -340,7 +361,7 @@ class FlextError(FlextAbstractError):
 
     def _get_default_error_code(self) -> str:
         """Get default error code."""
-        return "FLEXT_ERROR"
+        return _ERROR_CODES["GENERIC_ERROR"]
 
     def to_dict(self) -> TAnyDict:
         """Convert exception to serializable dictionary."""
@@ -381,6 +402,26 @@ class FlextValidationError(FlextAbstractValidationError, FlextError):
     ) -> None:
         """Initialize validation error."""
         super().__init__(message, field, validation_details, error_code, context)
+        # Flatten details into context to satisfy tests expecting direct keys
+        if isinstance(self.context, dict):
+            if field is not None:
+                self.context.setdefault("field", field)
+            for k, v in (validation_details or {}).items():
+                self.context.setdefault(k, v)
+        # Expose common attributes for tests
+        self.value = None
+        if isinstance(validation_details, dict):
+            self.value = validation_details.get("value")
+            # If no explicit field arg, also derive from details
+            if self.field is None and isinstance(validation_details.get("field"), str):
+                from typing import cast as _cast
+
+                self.field = _cast("str", validation_details["field"])
+        self.rules = (
+            (validation_details or {}).get("rules")
+            if isinstance(validation_details, dict)
+            else None
+        )
 
     def to_dict(self) -> TAnyDict:
         """Convert validation error to dictionary."""
@@ -400,17 +441,24 @@ class FlextTypeError(FlextError):
     def __init__(
         self,
         message: str = "Type validation failed",
-        expected_type: str | None = None,
-        actual_type: str | None = None,
+        expected_type: object | None = None,
+        actual_type: object | None = None,
         **kwargs: object,
     ) -> None:
         """Initialize type error."""
+        # Preserve original types for tests (can be type objects)
+        self.expected_type: object | None = expected_type
+        self.actual_type: object | None = actual_type
         context = dict(kwargs)
-        if expected_type:
-            context["expected_type"] = expected_type
-        if actual_type:
-            context["actual_type"] = actual_type
-        super().__init__(message, error_code="TYPE_ERROR", context=context)
+        if expected_type is not None and "expected_type" not in context:
+            context["expected_type"] = str(expected_type)
+        if actual_type is not None and "actual_type" not in context:
+            context["actual_type"] = str(actual_type)
+        super().__init__(
+            message,
+            error_code=_ERROR_CODES["TYPE_ERROR"],
+            context=context,
+        )
 
 
 class FlextAttributeError(FlextError):
@@ -426,7 +474,15 @@ class FlextAttributeError(FlextError):
         context = dict(kwargs)
         if attribute:
             context["attribute"] = attribute
-        super().__init__(message, error_code="ATTRIBUTE_ERROR", context=context)
+        # Flatten attribute_context if provided by tests
+        attr_ctx = context.pop("attribute_context", None)
+        if isinstance(attr_ctx, dict):
+            context.update(attr_ctx)
+        super().__init__(
+            message,
+            error_code=_ERROR_CODES["TYPE_ERROR"],
+            context=context,
+        )
 
 
 class FlextOperationError(FlextError):
@@ -436,13 +492,26 @@ class FlextOperationError(FlextError):
         self,
         message: str = "Operation failed",
         operation: str | None = None,
+        error_code: str | None = None,
         **kwargs: object,
     ) -> None:
         """Initialize operation error."""
         context = dict(kwargs)
-        if operation:
+        if operation and "operation" not in context:
             context["operation"] = operation
-        super().__init__(message, error_code="OPERATION_ERROR", context=context)
+        self.operation = operation
+        self.stage = context.get("stage") if isinstance(context, dict) else None
+        # If originated from unwrap (marker), default to UNWRAP_ERROR when no explicit code
+        default_code = (
+            _ERROR_CODES["UNWRAP_ERROR"]
+            if context.pop("_unwrap_origin", False) and not error_code
+            else _ERROR_CODES["OPERATION_ERROR"]
+        )
+        super().__init__(
+            message,
+            error_code=error_code or default_code,
+            context=context,
+        )
 
 
 class FlextConfigurationError(FlextAbstractConfigurationError, FlextError):
@@ -457,9 +526,13 @@ class FlextConfigurationError(FlextAbstractConfigurationError, FlextError):
     ) -> None:
         """Initialize configuration error."""
         context = dict(kwargs)
-        if config_file:
+        if config_file and "config_file" not in context:
             context["config_file"] = config_file
-        super().__init__(message, config_key, "CONFIG_ERROR", **context)
+        # Ensure we do not pass duplicated config_key via kwargs to abstract base
+        super().__init__(message, config_key, _ERROR_CODES["CONFIG_ERROR"], **context)
+        # Ensure the context reflects the key for diagnostics
+        if config_key is not None and "config_key" not in self.context:
+            self.context["config_key"] = config_key
 
     def to_dict(self) -> TAnyDict:
         """Convert configuration error to dictionary."""
@@ -486,7 +559,7 @@ class FlextConnectionError(FlextAbstractInfrastructureError, FlextError):
         context = dict(kwargs)
         if endpoint:
             context["endpoint"] = endpoint
-        super().__init__(message, service, "CONNECTION_ERROR", **context)
+        super().__init__(message, service, _ERROR_CODES["CONNECTION_ERROR"], **context)
 
     def to_dict(self) -> TAnyDict:
         """Convert connection error to dictionary."""
@@ -513,7 +586,7 @@ class FlextAuthenticationError(FlextAbstractInfrastructureError, FlextError):
         context = dict(kwargs)
         if user_id:
             context["user_id"] = user_id
-        super().__init__(message, service, "AUTHENTICATION_ERROR", **context)
+        super().__init__(message, service, _ERROR_CODES["AUTH_ERROR"], **context)
 
 
 class FlextPermissionError(FlextAbstractInfrastructureError, FlextError):
@@ -530,7 +603,7 @@ class FlextPermissionError(FlextAbstractInfrastructureError, FlextError):
         context = dict(kwargs)
         if required_permission:
             context["required_permission"] = required_permission
-        super().__init__(message, service, "PERMISSION_ERROR", **context)
+        super().__init__(message, service, _ERROR_CODES["PERMISSION_ERROR"], **context)
 
 
 class FlextNotFoundError(FlextError):
@@ -549,7 +622,7 @@ class FlextNotFoundError(FlextError):
             context["resource_type"] = resource_type
         if resource_id:
             context["resource_id"] = resource_id
-        super().__init__(message, error_code="NOT_FOUND_ERROR", context=context)
+        super().__init__(message, error_code=_ERROR_CODES["NOT_FOUND"], context=context)
 
 
 class FlextAlreadyExistsError(FlextError):
@@ -568,7 +641,11 @@ class FlextAlreadyExistsError(FlextError):
             context["resource_type"] = resource_type
         if resource_id:
             context["resource_id"] = resource_id
-        super().__init__(message, error_code="ALREADY_EXISTS_ERROR", context=context)
+        super().__init__(
+            message,
+            error_code=_ERROR_CODES["ALREADY_EXISTS"],
+            context=context,
+        )
 
 
 class FlextTimeoutError(FlextAbstractInfrastructureError, FlextError):
@@ -585,7 +662,7 @@ class FlextTimeoutError(FlextAbstractInfrastructureError, FlextError):
         context = dict(kwargs)
         if timeout_seconds:
             context["timeout_seconds"] = timeout_seconds
-        super().__init__(message, service, "TIMEOUT_ERROR", **context)
+        super().__init__(message, service, _ERROR_CODES["TIMEOUT_ERROR"], **context)
 
 
 class FlextProcessingError(FlextAbstractBusinessError, FlextError):
@@ -602,7 +679,12 @@ class FlextProcessingError(FlextAbstractBusinessError, FlextError):
         context = dict(kwargs)
         if operation:
             context["operation"] = operation
-        super().__init__(message, business_rule, "PROCESSING_ERROR", **context)
+        super().__init__(
+            message,
+            business_rule,
+            _ERROR_CODES["PROCESSING_ERROR"],
+            **context,
+        )
 
 
 class FlextCriticalError(FlextAbstractInfrastructureError, FlextError):
@@ -618,7 +700,7 @@ class FlextCriticalError(FlextAbstractInfrastructureError, FlextError):
         """Initialize critical error."""
         context = dict(kwargs)
         context["severity"] = severity
-        super().__init__(message, service, "CRITICAL_ERROR", **context)
+        super().__init__(message, service, _ERROR_CODES["CRITICAL_ERROR"], **context)
 
 
 # =============================================================================
@@ -850,8 +932,8 @@ def create_module_exception_classes(module_name: str) -> dict[str, type]:
 class FlextExceptions(FlextAbstractErrorFactory):
     """Factory for creating FLEXT exceptions."""
 
+    @staticmethod
     def create_validation_error(
-        self,
         message: str,
         **kwargs: object,
     ) -> FlextValidationError:
@@ -868,18 +950,30 @@ class FlextExceptions(FlextAbstractErrorFactory):
             if k not in {"field", "validation_details", "error_code"}
         }
 
+        # Normalize validation_details to a precise type for both argument and context
+        validation_details_dict: dict[str, object] | None
+        if isinstance(validation_details, dict):
+            # Ensure keys are strings and values are objects
+            validation_details_dict = {str(k): v for k, v in validation_details.items()}
+        else:
+            validation_details_dict = None
+
+        merged_context: dict[str, object] | None
+        if validation_details_dict is not None:
+            merged_context = {**filtered_kwargs, **validation_details_dict}
+        else:
+            merged_context = filtered_kwargs or None
+
         return FlextValidationError(
             message,
             field=field if isinstance(field, str) else None,
-            validation_details=validation_details
-            if isinstance(validation_details, dict)
-            else None,
+            validation_details=validation_details_dict,
             error_code=error_code if isinstance(error_code, str) else None,
-            context=filtered_kwargs or None,
+            context=merged_context,
         )
 
+    @staticmethod
     def create_business_error(
-        self,
         message: str,
         **kwargs: object,
     ) -> FlextProcessingError:
@@ -900,8 +994,8 @@ class FlextExceptions(FlextAbstractErrorFactory):
             **filtered_kwargs,
         )
 
+    @staticmethod
     def create_infrastructure_error(
-        self,
         message: str,
         **kwargs: object,
     ) -> FlextConnectionError:
@@ -922,8 +1016,8 @@ class FlextExceptions(FlextAbstractErrorFactory):
             **filtered_kwargs,
         )
 
+    @staticmethod
     def create_configuration_error(
-        self,
         message: str,
         **kwargs: object,
     ) -> FlextConfigurationError:
@@ -936,12 +1030,79 @@ class FlextExceptions(FlextAbstractErrorFactory):
         filtered_kwargs = {
             k: v for k, v in kwargs.items() if k not in {"config_key", "config_file"}
         }
-
         return FlextConfigurationError(
             message,
             config_key=config_key if isinstance(config_key, str) else None,
             config_file=config_file if isinstance(config_file, str) else None,
             **filtered_kwargs,
+        )
+
+    # Additional factories used by tests
+    @staticmethod
+    def create_connection_error(message: str, **kwargs: object) -> FlextConnectionError:
+        """Create connection error for network/service connectivity issues."""
+        service = kwargs.get("service")
+        endpoint = kwargs.get("endpoint")
+        filtered_kwargs = {
+            k: v for k, v in kwargs.items() if k not in {"service", "endpoint"}
+        }
+        return FlextConnectionError(
+            message,
+            service=service if isinstance(service, str) else None,
+            endpoint=endpoint if isinstance(endpoint, str) else None,
+            **filtered_kwargs,
+        )
+
+    @staticmethod
+    def create_type_error(
+        message: str,
+        *,
+        expected_type: object | None = None,
+        actual_type: object | None = None,
+        **kwargs: object,
+    ) -> FlextTypeError:
+        """Create type error for type validation failures."""
+        expected_type_str: str | None
+        if isinstance(expected_type, str):
+            expected_type_str = expected_type
+        elif isinstance(expected_type, type):
+            expected_type_str = expected_type.__name__
+        else:
+            expected_type_str = None
+
+        actual_type_str: str | None
+        if isinstance(actual_type, str):
+            actual_type_str = actual_type
+        elif isinstance(actual_type, type):
+            actual_type_str = actual_type.__name__
+        else:
+            actual_type_str = None
+
+        return FlextTypeError(
+            message,
+            expected_type=expected_type_str,
+            actual_type=actual_type_str,
+            **kwargs,
+        )
+
+    @staticmethod
+    def create_operation_error(message: str, **kwargs: object) -> FlextOperationError:
+        """Create operation error for failed operations or processes."""
+        operation_name_obj = kwargs.get("operation_name") or kwargs.get("operation")
+        operation_name = (
+            operation_name_obj if isinstance(operation_name_obj, str) else None
+        )
+        filtered_kwargs = {
+            k: v for k, v in kwargs.items() if k not in {"operation_name", "operation"}
+        }
+        # Build context dict explicitly to satisfy type expectations
+        extra_context: dict[str, object] = dict(filtered_kwargs)
+        # Pass context via explicit keyword to avoid signature conflicts
+        return FlextOperationError(
+            message,
+            operation=operation_name,
+            error_code=None,
+            context=extra_context,
         )
 
 
@@ -971,8 +1132,6 @@ def _record_exception(exception_type: str) -> None:
 
 
 __all__: list[str] = [
-    # Constants
-    "ERROR_CODES",
     # Abstract Base Classes
     "FlextAbstractBusinessError",
     "FlextAbstractConfigurationError",

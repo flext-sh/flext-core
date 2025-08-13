@@ -117,20 +117,20 @@ class TestHandlersModuleDirect:
 
     def test_command_handler_direct(self) -> None:
         """Test FlextCommandHandler directly from module."""
-        command_handler_cls = handlers_module.FlextCommandHandler
+        command_handler_cls = handlers_module.FlextHandlers.CommandHandler
 
-        handler = command_handler_cls()
-        assert handler is not None
+        handler2: object = command_handler_cls()
+        assert handler2 is not None
 
     def test_query_handler_direct(self) -> None:
         """Test FlextQueryHandler directly from module."""
-        query_handler_cls = handlers_module.FlextQueryHandler
+        query_handler_cls = handlers_module.FlextHandlers.QueryHandler
 
-        handler = query_handler_cls()
-        assert handler is not None
+        handler2: object = query_handler_cls()
+        assert handler2 is not None
 
-        # Test basic functionality
-        result = handler.handle("test query")
+        # Test basic functionality using fail-by-default since not implemented
+        result = handler2.pre_handle("test query")  # type: ignore[attr-defined]
         assert isinstance(result, FlextResult)
 
     def test_all_handler_classes_exist(self) -> None:

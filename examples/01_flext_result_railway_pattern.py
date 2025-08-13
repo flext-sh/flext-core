@@ -11,12 +11,12 @@ import json
 import secrets
 from typing import cast
 
-from shared_domain import (
+from flext_core import FlextResult, FlextValidation, safe_call
+
+from .shared_domain import (
     SharedDomainFactory,
     User as SharedUser,
 )
-
-from flext_core import FlextResult, FlextValidation, safe_call
 
 # Type aliases for better readability
 UserDataDict = dict[str, object]

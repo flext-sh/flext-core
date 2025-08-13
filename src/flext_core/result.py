@@ -264,10 +264,18 @@ class FlextResult[T]:
         """
         if self.is_failure:
             error_msg = self._error or "Unwrap failed"
+            # When unwrapping, tests expect any provided error_code to pass through
+            # and context to equal error_data directly.
+            # Pass through error_code; if none, set UNWRAP_ERROR and do not
+            # override with OPERATION_ERROR default inside exception.
+            error_kwargs = dict(self._error_data or {})
+            # Mark as unwrap-originated to allow default error code override
+            error_kwargs["_unwrap_origin"] = True
             raise FlextOperationError(
                 error_msg,
                 error_code=self._error_code or ERROR_CODES["UNWRAP_ERROR"],
-                context=self._error_data,
+                operation=None,
+                **error_kwargs,
             )
         # For success cases, return data even if it's None
         #  is a valid value for successful results (e.g., void operations)

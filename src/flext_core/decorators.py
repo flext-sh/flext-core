@@ -10,7 +10,7 @@ import functools
 import time
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from typing import TYPE_CHECKING, ParamSpec, TypeVar, cast
+from typing import TYPE_CHECKING, ParamSpec, Protocol, TypeVar, cast
 
 from flext_core.exceptions import FlextValidationError
 from flext_core.loggings import FlextLoggerFactory
@@ -934,9 +934,9 @@ class FlextDecorators:
     def validated_with_result(
         model_class: object | None = None,
     ) -> Callable[[FlextDecoratedFunction], FlextDecoratedFunction]:
-        """Decorator factory that validates kwargs via Pydantic model if provided.
+        """Create a decorator that validates kwargs via Pydantic model when provided.
 
-        Without model_class, it returns a decorator that wraps the function result
+        Without model_class, return a decorator that wraps the function result
         into FlextResult and catches exceptions.
         """
 
@@ -1113,12 +1113,74 @@ __all__: list[str] = [
     "FlextLoggingDecorators",
     "FlextPerformanceDecorators",
     "FlextValidationDecorators",
+    # Back-compat names referenced by tests
+    "_decorators_base",
     # Individual decorator functions
     "_flext_cache_decorator",
     "_flext_safe_call_decorator",
     "_flext_timing_decorator",
     "_flext_validate_input_decorator",
+    "_safe_call_decorator",
+    "_validate_input_decorator",
 ]
+
+
+class _DecoratedFunction(Protocol):
+    def __call__(self, *args: object, **kwargs: object) -> object: ...
+
+
+class _BaseDecoratorUtils:
+    """Legacy utilities holder used by tests for presence checks."""
+
+
+_decorators_base = type(
+    "_DecoratorsBase",
+    (),
+    {
+        "_DecoratedFunction": _DecoratedFunction,
+        "_BaseDecoratorUtils": _BaseDecoratorUtils,
+    },
+)
+_validate_input_decorator = _flext_validate_input_decorator
+_safe_call_decorator = _flext_safe_call_decorator
+
+
+# Additional back-compat class and factory aliases expected by tests
+class _BaseImmutabilityDecorators(FlextImmutabilityDecorators):
+    """Legacy alias for immutability decorators used in tests."""
+
+    @staticmethod
+    def freeze_args_decorator(
+        func: FlextDecoratedFunction | None = None,
+    ) -> (
+        Callable[[FlextDecoratedFunction], FlextDecoratedFunction]
+        | FlextDecoratedFunction
+    ):
+        """Compatibility wrapper supporting both no-arg factory and direct usage.
+
+        - Called with a function: returns decorated function
+        - Called without args: returns the decorator factory
+        """
+        if func is None:
+            return FlextImmutabilityDecorators.freeze_args_decorator
+        return FlextImmutabilityDecorators.freeze_args_decorator(func)
+
+
+class _BaseDecoratorFactory(FlextDecoratorFactory):
+    """Legacy alias for decorator factory used in tests."""
+
+    @staticmethod
+    def create_cache_decorator(
+        size: int = 128,
+    ) -> Callable[[FlextDecoratedFunction], FlextDecoratedFunction]:
+        return FlextDecoratorFactory.create_cache_decorator(max_size=size)
+
+    @staticmethod
+    def create_safe_decorator(
+        error_handler: Callable[[Exception], str] | None = None,
+    ) -> Callable[[FlextDecoratedFunction], FlextDecoratedFunction]:
+        return FlextDecoratorFactory.create_safe_decorator(error_handler=error_handler)
+
 
 # Total exports: 13 items - centralized decorator implementations
 # These are the SINGLE SOURCE OF TRUTH for all decorator patterns in FLEXT

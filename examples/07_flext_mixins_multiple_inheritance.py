@@ -14,7 +14,6 @@ from flext_core import (
     FlextCacheableMixin,
     FlextComparableMixin,
     FlextConstants,
-    FlextEntityMixin,
     FlextIdentifiableMixin,
     FlextLoggableMixin,
     FlextResult,
@@ -23,14 +22,15 @@ from flext_core import (
     FlextTimingMixin,
     FlextUtilities,
     FlextValidatableMixin,
-    FlextValueObjectMixin,
 )
+from flext_core.mixins import FlextEntityMixin, FlextValueObjectMixin
 
 from .shared_domain import (
     SharedDomainFactory,
     User as SharedUser,
     log_domain_operation,
 )
+from .shared_example_helpers import run_example_demonstration
 
 # =============================================================================
 # PROTOCOL DEFINITIONS - Type protocols for enterprise patterns
@@ -1486,8 +1486,6 @@ def _demonstrate_service_pattern(order_service: OrderServiceProtocol) -> None:
 
 def main() -> None:
     """Run comprehensive FlextMixins demonstration."""
-    from .shared_example_helpers import run_example_demonstration
-
     examples = [
         ("Individual Mixin Patterns", demonstrate_individual_mixins),
         ("Multiple Inheritance Composition", demonstrate_multiple_inheritance),

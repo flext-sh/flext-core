@@ -45,46 +45,38 @@ LOW_STOCK_THRESHOLD = 10  # Minimum quantity before low stock alert
 
 def demonstrate_generic_payloads() -> None:
     """Demonstrate generic payload containers with type safety."""
+    _print_generic_header()
+    _demo_basic_payloads()
+    _demo_type_safe_payload()
+    _demo_invalid_payload()
+    _demo_metadata_enrichment()
+    _demo_payload_transformation()
+
+
+def _print_generic_header() -> None:
     log_message: TLogMessage = "\n" + "=" * 80
     print(log_message)
     print("📦 GENERIC PAYLOAD CONTAINERS")
     print("=" * 80)
 
-    # 1. Basic payload creation
-    log_message = "\n1. Basic payload creation:"
-    print(log_message)
 
-    # Simple string payload
+def _demo_basic_payloads() -> None:
+    print("\n1. Basic payload creation:")
     text_payload = FlextPayload(data="Hello, World!")
-    log_message = f"✅ Text payload: {text_payload}"
-    print(log_message)
-    log_message = f"   Data: {text_payload.data}"
-    print(log_message)
-    log_message = f"   Metadata: {text_payload.metadata}"
-    print(log_message)
+    print(f"✅ Text payload: {text_payload}")
+    print(f"   Data: {text_payload.data}")
+    print(f"   Metadata: {text_payload.metadata}")
 
-    # Dictionary payload with metadata
-    user_data: TUserData = {
-        "id": "user123",
-        "name": "John Doe",
-        "email": "john@example.com",
-    }
+    user_data: TUserData = {"id": "user123", "name": "John Doe", "email": "john@example.com"}
     user_payload = FlextPayload(
         data=user_data,
-        metadata={
-            "source": "user_service",
-            "version": "1.0",
-            "timestamp": time.time(),
-        },
+        metadata={"source": "user_service", "version": "1.0", "timestamp": time.time()},
     )
-    log_message = f"✅ User payload: {user_payload}"
-    print(log_message)
+    print(f"✅ User payload: {user_payload}")
 
-    # 2. Type-safe payload creation with factory method
-    log_message = "\n2. Type-safe payload creation:"
-    print(log_message)
 
-    # Create payload with validation
+def _demo_type_safe_payload() -> None:
+    print("\n2. Type-safe payload creation:")
     order_data: TUserData = {
         "order_id": "ORD001",
         "customer_id": "CUST123",
@@ -94,104 +86,74 @@ def demonstrate_generic_payloads() -> None:
         ],
         "total": 1059.97,
     }
-
     order_result = FlextPayload.create(
-        order_data,
-        source="order_service",
-        correlation_id="req_456",
-        processing_stage="created",
+        order_data, source="order_service", correlation_id="req_456", processing_stage="created"
     )
-
-    if order_result.success:
+    if order_result.success and order_result.data is not None:
         order_payload = order_result.data
-        if order_payload is not None:
-            log_message = f"✅ Order payload created: {order_payload}"
-            print(log_message)
-            order_id = (
-                order_payload.data.get("order_id") if order_payload.data else None
-            )
-            log_message = f"   Order ID: {order_id}"
-            print(log_message)
-            total = order_payload.data.get("total") if order_payload.data else None
-            log_message = f"   Total: ${total}"
-            print(log_message)
+        print(f"✅ Order payload created: {order_payload}")
+        order_id = order_payload.data.get("order_id") if order_payload.data else None
+        print(f"   Order ID: {order_id}")
+        total = order_payload.data.get("total") if order_payload.data else None
+        print(f"   Total: ${total}")
     else:
-        error_message: TErrorMessage = (
-            f"Order payload creation failed: {order_result.error}"
-        )
+        error_message: TErrorMessage = f"Order payload creation failed: {order_result.error}"
         print(f"❌ {error_message}")
 
-    # 3. Payload validation and error handling
-    log_message = "\n3. Payload validation and error handling:"
-    print(log_message)
 
-    # Test invalid payload (None data)
-    invalid_result = FlextPayload.create(
-        None,
-        source="test_service",
-    )
-
+def _demo_invalid_payload() -> None:
+    print("\n3. Payload validation and error handling:")
+    invalid_result = FlextPayload.create(None, source="test_service")
     if invalid_result.success:
-        log_message = f"✅ Invalid payload created: {invalid_result.data}"
-        print(log_message)
+        print(f"✅ Invalid payload created: {invalid_result.data}")
     else:
-        error_message = f"Invalid payload rejected (expected): {invalid_result.error}"
-        print(f"❌ {error_message}")
+        print(f"❌ Invalid payload rejected (expected): {invalid_result.error}")
 
-    # 4. Metadata enrichment
-    log_message = "\n4. Metadata enrichment:"
-    print(log_message)
 
-    base_payload = FlextPayload(
-        data={"message": "Hello from service"},
-        metadata={"source": "base_service"},
-    )
+def _demo_metadata_enrichment() -> None:
+    print("\n4. Metadata enrichment:")
+    base_payload = FlextPayload(data={"message": "Hello from service"}, metadata={"source": "base_service"})
+    enriched_payload = base_payload.enrich_metadata({"timestamp": time.time(), "version": "2.0", "environment": "production"})
+    print(f"✅ Enriched payload: {enriched_payload}")
+    print(f"   Metadata keys: {list(enriched_payload.metadata.keys())}")
 
-    # Enrich with additional metadata
-    enriched_payload = base_payload.enrich_metadata(
-        {
-            "timestamp": time.time(),
-            "version": "2.0",
-            "environment": "production",
-        },
-    )
 
-    log_message = f"✅ Enriched payload: {enriched_payload}"
-    print(log_message)
-    log_message = f"   Metadata keys: {list(enriched_payload.metadata.keys())}"
-    print(log_message)
-
-    # 5. Payload transformation
-    log_message = "\n5. Payload transformation:"
-    print(log_message)
-
-    # Transform payload data
+def _demo_payload_transformation() -> None:
+    print("\n5. Payload transformation:")
+    base_payload = FlextPayload(data={"message": "Hello from service"}, metadata={"source": "base_service"})
     transform_result = base_payload.transform_data(
-        lambda data: {"transformed_message": f"TRANSFORMED: {data.get('message', '')}"},
+        lambda data: {"transformed_message": f"TRANSFORMED: {data.get('message', '')}"}
     )
-
-    if transform_result.success:
-        transformed_payload = transform_result.data
-        if transformed_payload is not None:
-            log_message = f"✅ Transformed payload: {transformed_payload}"
-            print(log_message)
+    if transform_result.success and transform_result.data is not None:
+        print(f"✅ Transformed payload: {transform_result.data}")
     else:
-        error_message = f"Payload transformation failed: {transform_result.error}"
-        print(f"❌ {error_message}")
+        print(f"❌ Payload transformation failed: {transform_result.error}")
 
 
 def demonstrate_message_payloads() -> None:
     """Demonstrate message payloads with level validation using flext_core.typings."""
+    _print_message_header()
+    info_res, warning_res, error_res = _create_basic_messages()
+    _display_basic_messages(info_res, warning_res, error_res)
+    _validate_invalid_level_message()
+    _demonstrate_message_enrichment()
+    _process_and_filter_messages()
+    _demonstrate_message_correlation()
+
+
+def _print_message_header() -> None:
     log_message: TLogMessage = "\n" + "=" * 80
     print(log_message)
     print("💬 MESSAGE PAYLOADS")
     print("=" * 80)
 
-    # 1. Basic message creation
-    log_message = "\n1. Basic message creation:"
-    print(log_message)
 
-    # Create different message levels
+def _create_basic_messages() -> tuple[
+    FlextResult[FlextPayload[str]],
+    FlextResult[FlextPayload[str]],
+    FlextResult[FlextPayload[str]],
+]:
+    print("\n1. Basic message creation:")
     info_message = FlextMessage.create(
         "User login successful",
         level="info",
@@ -209,65 +171,60 @@ def demonstrate_message_payloads() -> None:
         level="error",
         source="payment_service",
     )
+    return info_message, warning_message, error_message_result
 
+
+def _display_basic_messages(
+    info_message: FlextResult[FlextPayload[str]],
+    warning_message: FlextResult[FlextPayload[str]],
+    error_message_result: FlextResult[FlextPayload[str]],
+) -> None:
     if info_message.success:
         info_payload = info_message.data
         if info_payload is not None:
-            log_message = f"✅ Info message: {info_payload}"
-            print(log_message)
-            log_message = f"   Level: {info_payload.level}"
-            print(log_message)
-            log_message = f"   Source: {info_payload.source}"
-            print(log_message)
+            print(f"✅ Info message: {info_payload}")
+            print(f"   Level: {info_payload.level}")
+            print(f"   Source: {info_payload.source}")
 
     if warning_message.success:
         warning_payload = warning_message.data
         if warning_payload is not None:
-            log_message = f"✅ Warning message: {warning_payload}"
-            print(log_message)
+            print(f"✅ Warning message: {warning_payload}")
 
     if error_message_result.success:
         error_payload = error_message_result.data
         if error_payload is not None:
-            log_message = f"✅ Error message: {error_payload}"
-            print(log_message)
+            print(f"✅ Error message: {error_payload}")
 
-    # 2. Message validation
-    log_message = "\n2. Message validation:"
-    print(log_message)
 
-    # Test invalid message level
+def _validate_invalid_level_message() -> None:
+    print("\n2. Message validation:")
     invalid_level_result = FlextMessage.create(
         "Test message",
         level="invalid_level",
         source="test_service",
     )
-
     if invalid_level_result.success:
         invalid_payload = invalid_level_result.data
         if invalid_payload is not None:
-            log_message = f"✅ Invalid level message: {invalid_payload}"
-            print(log_message)
+            print(f"✅ Invalid level message: {invalid_payload}")
     else:
         error_message = (
             f"Invalid level rejected (expected): {invalid_level_result.error}"
         )
         print(f"❌ {error_message}")
 
-    # 3. Message enrichment
-    log_message = "\n3. Message enrichment:"
-    print(log_message)
 
+def _demonstrate_message_enrichment() -> None:
+    print("\n3. Message enrichment:")
     base_message_result = FlextMessage.create(
         "Base message",
         level="info",
         source="base_service",
     )
-
     if base_message_result.success:
         base_message = base_message_result.data
         if base_message is not None:
-            # Enrich with additional context
             enriched_message = base_message.enrich_metadata(
                 {
                     "user_id": "user_123",
@@ -275,17 +232,12 @@ def demonstrate_message_payloads() -> None:
                     "request_id": "req_789",
                 },
             )
+            print(f"✅ Enriched message: {enriched_message}")
+            print(f"   User ID: {enriched_message.metadata.get('user_id')}")
 
-            log_message = f"✅ Enriched message: {enriched_message}"
-            print(log_message)
-            log_message = f"   User ID: {enriched_message.metadata.get('user_id')}"
-            print(log_message)
 
-    # 4. Message filtering and processing
-    log_message = "\n4. Message filtering and processing:"
-    print(log_message)
-
-    # Create multiple messages for processing
+def _process_and_filter_messages() -> None:
+    print("\n4. Message filtering and processing:")
     messages_data: list[TUserData] = [
         {"text": "System startup", "level": "info", "source": "system"},
         {"text": "Low memory warning", "level": "warning", "source": "monitoring"},
@@ -293,8 +245,7 @@ def demonstrate_message_payloads() -> None:
         {"text": "User action completed", "level": "info", "source": "user_service"},
     ]
 
-    created_messages = []
-
+    created_messages: list[FlextPayload[str]] = []
     for msg_data in messages_data:
         message_result = FlextMessage.create(
             str(msg_data["text"]),
@@ -306,50 +257,37 @@ def demonstrate_message_payloads() -> None:
             if message is not None:
                 created_messages.append(message)
 
-    log_message = f"✅ Created {len(created_messages)} messages"
-    print(log_message)
-
-    # Filter error messages
+    print(f"✅ Created {len(created_messages)} messages")
     error_messages = [msg for msg in created_messages if msg.level == "error"]
-    log_message = f"   Error messages: {len(error_messages)}"
-    print(log_message)
-
-    # Filter warning messages
+    print(f"   Error messages: {len(error_messages)}")
     warning_messages = [msg for msg in created_messages if msg.level == "warning"]
-    log_message = f"   Warning messages: {len(warning_messages)}"
-    print(log_message)
+    print(f"   Warning messages: {len(warning_messages)}")
 
-    # 5. Message correlation
-    log_message = "\n5. Message correlation:"
-    print(log_message)
 
-    # Create correlated messages
+def _demonstrate_message_correlation() -> None:
+    print("\n5. Message correlation:")
     correlation_id = "corr_123"
-
     request_message_result = FlextMessage.create(
         "Processing user request",
         level="info",
         source="api_gateway",
         correlation_id=correlation_id,
     )
-
     response_message_result = FlextMessage.create(
         "Request completed successfully",
         level="info",
         source="api_gateway",
         correlation_id=correlation_id,
     )
-
     if request_message_result.success and response_message_result.success:
         request_msg = request_message_result.data
         response_msg = response_message_result.data
         if request_msg is not None and response_msg is not None:
-            log_message = f"✅ Request message: {request_msg.correlation_id}"
-            print(log_message)
-            log_message = f"✅ Response message: {response_msg.correlation_id}"
-            print(log_message)
-            log_message = f"   Correlation match: {request_msg.correlation_id == response_msg.correlation_id}"
-            print(log_message)
+            print(f"✅ Request message: {request_msg.correlation_id}")
+            print(f"✅ Response message: {response_msg.correlation_id}")
+            print(
+                f"   Correlation match: {request_msg.correlation_id == response_msg.correlation_id}"
+            )
 
 
 def demonstrate_domain_events() -> None:
@@ -691,16 +629,23 @@ def demonstrate_payload_serialization() -> None:
 
     Using flext_core.typings for type safety.
     """
+    _print_serialization_header()
+    serialization_data = _basic_serialization_demo()
+    _message_serialization_demo()
+    _event_serialization_demo(serialization_data)
+    _cross_service_transport_demo()
+    _payload_validation_during_serialization()
+
+
+def _print_serialization_header() -> None:
     log_message: TLogMessage = "\n" + "=" * 80
     print(log_message)
     print("🔄 PAYLOAD SERIALIZATION")
     print("=" * 80)
 
-    # 1. Basic serialization
-    log_message = "\n1. Basic serialization:"
-    print(log_message)
 
-    # Create payload for serialization
+def _basic_serialization_demo() -> TUserData:
+    print("\n1. Basic serialization:")
     serialization_data: TUserData = {
         "user_id": "user_789",
         "action": "profile_update",
@@ -710,7 +655,6 @@ def demonstrate_payload_serialization() -> None:
         },
         "timestamp": "2024-01-15T17:00:00Z",
     }
-
     payload = FlextPayload(
         data=serialization_data,
         metadata={
@@ -719,34 +663,28 @@ def demonstrate_payload_serialization() -> None:
             "correlation_id": "corr_789",
         },
     )
-
-    # Serialize to dictionary
     serialized_dict = payload.to_dict()
-    log_message = f"✅ Serialized to dict: {serialized_dict}"
-    print(log_message)
+    print(f"✅ Serialized to dict: {serialized_dict}")
+    return serialization_data
 
-    # 2. Message serialization
-    log_message = "\n2. Message serialization:"
-    print(log_message)
 
+def _message_serialization_demo() -> None:
+    print("\n2. Message serialization:")
     message_result = FlextMessage.create(
         "User profile updated successfully",
         level="info",
         source="user_service",
         correlation_id="corr_789",
     )
-
     if message_result.success:
         message = message_result.data
         if message is not None:
             message_dict = message.to_dict()
-            log_message = f"✅ Message serialized: {message_dict}"
-            print(log_message)
+            print(f"✅ Message serialized: {message_dict}")
 
-    # 3. Event serialization
-    log_message = "\n3. Event serialization:"
-    print(log_message)
 
+def _event_serialization_demo(serialization_data: TUserData) -> None:
+    print("\n3. Event serialization:")
     event_result = FlextEvent.create(
         event_type="UserProfileUpdated",
         aggregate_id="user_789",
@@ -756,47 +694,34 @@ def demonstrate_payload_serialization() -> None:
         version=1,
         correlation_id="corr_789",
     )
-
     if event_result.success:
         event = event_result.data
         if event is not None:
             event_dict = event.to_dict()
-            log_message = f"✅ Event serialized: {event_dict}"
-            print(log_message)
+            print(f"✅ Event serialized: {event_dict}")
 
-    # 4. Cross-service payload transport
-    log_message = "\n4. Cross-service payload transport:"
-    print(log_message)
 
-    # Simulate payload transport between services
+def _cross_service_transport_demo() -> None:
+    print("\n4. Cross-service payload transport:")
     service_a_payload = FlextPayload(
         data={"request_id": "req_123", "user_id": "user_456"},
         metadata={"source": "service_a", "timestamp": time.time()},
     )
-
-    # Serialize for transport
     transport_data = service_a_payload.to_dict()
-    log_message = f"✅ Transport data: {transport_data}"
-    print(log_message)
-
-    # Simulate receiving service
+    print(f"✅ Transport data: {transport_data}")
     received_payload = FlextPayload.from_dict(transport_data)
     if received_payload.success:
         received_data = received_payload.data
         if received_data is not None:
-            log_message = f"✅ Received payload: {received_data}"
-            print(log_message)
-            log_message = f"   Source: {received_data.metadata.get('source')}"
-            print(log_message)
+            print(f"✅ Received payload: {received_data}")
+            print(f"   Source: {received_data.metadata.get('source')}")
     else:
         error_message = f"Payload deserialization failed: {received_payload.error}"
         print(f"❌ {error_message}")
 
-    # 5. Payload validation during serialization
-    log_message = "\n5. Payload validation during serialization:"
-    print(log_message)
 
-    # Test serialization with complex data
+def _payload_validation_during_serialization() -> None:
+    print("\n5. Payload validation during serialization:")
     complex_data: TUserData = {
         "nested_object": {
             "level1": {
@@ -808,18 +733,14 @@ def demonstrate_payload_serialization() -> None:
         "array_data": [1, 2, 3, {"nested": "value"}],
         "boolean_flags": [True, False, True],
     }
-
     complex_payload = FlextPayload(
         data=complex_data,
         metadata={"complexity": "high", "validation": "passed"},
     )
-
     try:
         complex_dict = complex_payload.to_dict()
-        log_message = "✅ Complex payload serialized successfully"
-        print(log_message)
-        log_message = f"   Keys: {list(complex_dict.keys())}"
-        print(log_message)
+        print("✅ Complex payload serialized successfully")
+        print(f"   Keys: {list(complex_dict.keys())}")
     except (RuntimeError, ValueError, TypeError) as e:
         error_message = f"Complex serialization failed: {e}"
         print(f"❌ {error_message}")
@@ -827,23 +748,29 @@ def demonstrate_payload_serialization() -> None:
 
 def demonstrate_enterprise_messaging_patterns() -> None:
     """Demonstrate enterprise messaging patterns using flext_core.typings."""
+    _print_enterprise_header()
+    _request_response_pattern_demo()
+    _event_driven_pattern_demo()
+    _message_routing_pattern_demo()
+    _message_correlation_tracing_demo()
+    _dead_letter_queue_demo()
+
+
+def _print_enterprise_header() -> None:
     log_message: TLogMessage = "\n" + "=" * 80
     print(log_message)
     print("🏭 ENTERPRISE MESSAGING PATTERNS")
     print("=" * 80)
 
-    # 1. Request-Response pattern
-    log_message = "\n1. Request-Response pattern:"
-    print(log_message)
 
-    # Create request payload
+def _request_response_pattern_demo() -> None:
+    print("\n1. Request-Response pattern:")
     request_data: TUserData = {
         "request_id": "req_456",
         "user_id": "user_123",
         "action": "get_user_profile",
         "parameters": {"include_preferences": True, "include_history": False},
     }
-
     request_payload = FlextPayload(
         data=request_data,
         metadata={
@@ -853,8 +780,6 @@ def demonstrate_enterprise_messaging_patterns() -> None:
             "timestamp": time.time(),
         },
     )
-
-    # Simulate response
     response_data: TUserData = {
         "request_id": "req_456",
         "user_profile": {
@@ -866,7 +791,6 @@ def demonstrate_enterprise_messaging_patterns() -> None:
         "status": "success",
         "processing_time_ms": 45,
     }
-
     response_payload = FlextPayload(
         data=response_data,
         metadata={
@@ -876,22 +800,15 @@ def demonstrate_enterprise_messaging_patterns() -> None:
             "timestamp": time.time(),
         },
     )
-
     if request_payload.data is not None:
-        log_message = f"✅ Request payload: {request_payload.data.get('request_id')}"
-        print(log_message)
+        print(f"✅ Request payload: {request_payload.data.get('request_id')}")
     if response_payload.data is not None:
-        log_message = f"✅ Response payload: {response_payload.data.get('request_id')}"
-        print(log_message)
+        print(f"✅ Response payload: {response_payload.data.get('request_id')}")
 
-    # 2. Event-driven pattern
-    log_message = "\n2. Event-driven pattern:"
-    print(log_message)
 
-    # Create domain events for order processing
+def _event_driven_pattern_demo() -> None:
+    print("\n2. Event-driven pattern:")
     order_id = "order_999"
-
-    # Order placed event
     order_placed_event = FlextEvent.create(
         event_type="OrderPlaced",
         aggregate_id=order_id,
@@ -905,8 +822,6 @@ def demonstrate_enterprise_messaging_patterns() -> None:
         source="order_service",
         version=1,
     )
-
-    # Inventory reserved event
     inventory_reserved_event = FlextEvent.create(
         event_type="InventoryReserved",
         aggregate_id=order_id,
@@ -919,8 +834,6 @@ def demonstrate_enterprise_messaging_patterns() -> None:
         source="inventory_service",
         version=2,
     )
-
-    # Payment processed event
     payment_processed_event = FlextEvent.create(
         event_type="PaymentProcessed",
         aggregate_id=order_id,
@@ -934,8 +847,7 @@ def demonstrate_enterprise_messaging_patterns() -> None:
         source="payment_service",
         version=3,
     )
-
-    events = []
+    events: list[FlextPayload[Mapping[str, object]]] = []
     for event_result in [
         order_placed_event,
         inventory_reserved_event,
@@ -945,44 +857,32 @@ def demonstrate_enterprise_messaging_patterns() -> None:
             event = event_result.data
             if event is not None:
                 events.append(event)
-
-    log_message = f"✅ Created {len(events)} events for order {order_id}"
-    print(log_message)
+    print(f"✅ Created {len(events)} events for order {order_id}")
     for event in events:
-        log_message = f"   - {event.event_type} (v{event.version})"
-        print(log_message)
+        print(f"   - {event.event_type} (v{event.version})")
 
-    # 3. Message routing pattern
-    log_message = "\n3. Message routing pattern:"
-    print(log_message)
 
-    # Create messages for different routing scenarios
-    routing_messages = []
-
-    # High priority message
+def _message_routing_pattern_demo() -> None:
+    print("\n3. Message routing pattern:")
+    routing_messages: list[FlextPayload[str]] = []
     high_priority_result = FlextMessage.create(
         "Critical system alert",
         level="error",
         source="monitoring_service",
         metadata={"priority": "high", "route_to": "admin_team"},
     )
-
-    # Normal priority message
     normal_priority_result = FlextMessage.create(
         "User login successful",
         level="info",
         source="auth_service",
         metadata={"priority": "normal", "route_to": "log_aggregator"},
     )
-
-    # Low priority message
     low_priority_result = FlextMessage.create(
         "Debug information",
         level="debug",
         source="debug_service",
         metadata={"priority": "low", "route_to": "debug_logs"},
     )
-
     for msg_result in [
         high_priority_result,
         normal_priority_result,
@@ -992,26 +892,17 @@ def demonstrate_enterprise_messaging_patterns() -> None:
             message = msg_result.data
             if message is not None:
                 routing_messages.append(message)
-
-    log_message = f"✅ Created {len(routing_messages)} routing messages"
-    print(log_message)
-
-    # Route messages based on priority
+    print(f"✅ Created {len(routing_messages)} routing messages")
     for message in routing_messages:
         priority = message.metadata.get("priority", "normal")
         route_to = message.metadata.get("route_to", "default")
         message_text = str(message.text)[:30] if message.text else "(empty)"
-        log_message = f"   {priority} priority -> {route_to}: {message_text}..."
-        print(log_message)
+        print(f"   {priority} priority -> {route_to}: {message_text}...")
 
-    # 4. Message correlation and tracing
-    log_message = "\n4. Message correlation and tracing:"
-    print(log_message)
 
-    # Create correlated messages for a business transaction
+def _message_correlation_tracing_demo() -> None:
+    print("\n4. Message correlation and tracing:")
     transaction_id = "txn_123"
-
-    # Transaction start
     start_message = FlextMessage.create(
         "Transaction started",
         level="info",
@@ -1019,8 +910,6 @@ def demonstrate_enterprise_messaging_patterns() -> None:
         correlation_id=transaction_id,
         metadata={"step": "start", "transaction_type": "payment"},
     )
-
-    # Transaction validation
     validation_message = FlextMessage.create(
         "Transaction validated",
         level="info",
@@ -1028,8 +917,6 @@ def demonstrate_enterprise_messaging_patterns() -> None:
         correlation_id=transaction_id,
         metadata={"step": "validation", "validation_result": "success"},
     )
-
-    # Transaction completion
     completion_message = FlextMessage.create(
         "Transaction completed",
         level="info",
@@ -1037,38 +924,30 @@ def demonstrate_enterprise_messaging_patterns() -> None:
         correlation_id=transaction_id,
         metadata={"step": "completion", "final_status": "success"},
     )
-
-    correlated_messages = []
+    correlated_messages: list[FlextPayload[str]] = []
     for msg_result in [start_message, validation_message, completion_message]:
         if msg_result.success:
             message = msg_result.data
             if message is not None:
                 correlated_messages.append(message)
+    print(f"✅ Created {len(correlated_messages)} correlated messages")
+    print(f"   Transaction ID: {transaction_id}")
 
-    log_message = f"✅ Created {len(correlated_messages)} correlated messages"
-    print(log_message)
-    log_message = f"   Transaction ID: {transaction_id}"
-    print(log_message)
 
-    # 5. Error handling and dead letter queues
-    log_message = "\n5. Error handling and dead letter queues:"
-    print(log_message)
-
-    # Create problematic message
+def _dead_letter_queue_demo() -> None:
+    print("\n5. Error handling and dead letter queues:")
     problematic_message_result = FlextMessage.create(
         "Message with invalid data",
         level="error",
         source="problematic_service",
         metadata={"retry_count": 3, "max_retries": 3, "dead_letter": True},
     )
-
     if problematic_message_result.success:
         problematic_message = problematic_message_result.data
         if problematic_message is not None:
             retry_count_obj = problematic_message.metadata.get("retry_count", 0)
             max_retries_obj = problematic_message.metadata.get("max_retries", 0)
             dead_letter_obj = problematic_message.metadata.get("dead_letter", False)
-
             retry_count = (
                 int(retry_count_obj) if isinstance(retry_count_obj, (int, str)) else 0
             )
@@ -1076,17 +955,11 @@ def demonstrate_enterprise_messaging_patterns() -> None:
                 int(max_retries_obj) if isinstance(max_retries_obj, (int, str)) else 0
             )
             dead_letter = bool(dead_letter_obj)
-
-            log_message = "✅ Problematic message created"
-            print(log_message)
-            log_message = f"   Retry count: {retry_count}/{max_retries}"
-            print(log_message)
-            log_message = f"   Dead letter: {dead_letter}"
-            print(log_message)
-
+            print("✅ Problematic message created")
+            print(f"   Retry count: {retry_count}/{max_retries}")
+            print(f"   Dead letter: {dead_letter}")
             if retry_count >= max_retries and dead_letter:
-                log_message = "   → Routing to dead letter queue"
-                print(log_message)
+                print("   → Routing to dead letter queue")
 
 
 def main() -> None:

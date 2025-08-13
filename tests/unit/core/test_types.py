@@ -4,21 +4,18 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
-if TYPE_CHECKING:
-    from collections.abc import Callable
-
 from flext_core import FlextEntityId, FlextPayload
 from flext_core.typings import (
     FlextTypes,
     TAnyDict,
     TAnyList,
     TComparable,
-    TFactory,
-    TSerializable,
 )
 
 if TYPE_CHECKING:
     # Type aliases for testing
+    from collections.abc import Callable as _Callable
+
     FlextConfigKey = str
     FlextEventType = str
     FlextServiceName = str
@@ -42,14 +39,12 @@ class TestTypeProtocols:
         """Test TComparable protocol usage."""
 
         # Test with strings (which implement __lt__)
-        def use_comparable(obj: TComparable) -> bool:
+        def use_comparable(obj: object) -> bool:
             return hasattr(obj, "__lt__")
 
         # Use cast to bypass strict typing for protocol testing
-        from typing import cast
-
-        assert use_comparable(cast("TComparable", "test"))
-        assert use_comparable(cast("TComparable", 42))
+        assert use_comparable("test")
+        assert use_comparable(42)
 
     def test_type_aliases_usage(self) -> None:
         """Test type aliases from types module."""
@@ -80,8 +75,8 @@ class TestTypeProtocols:
 
         serializable_obj = TestTSerializable({"key": "value", "data": "test"})
 
-        def use_serializable(obj: TSerializable) -> dict[str, object]:
-            return obj.serialize()
+        def use_serializable(obj: object) -> dict[str, object]:
+            return cast("TestTSerializable", obj).serialize()
 
         result = use_serializable(serializable_obj)
         assert isinstance(result, dict)
@@ -95,10 +90,8 @@ class TestTypeProtocols:
         def string_factory() -> str:
             return "created"
 
-        def use_factory(factory: TFactory[str]) -> str:
-            # Cast to specific callable type for testing
-            no_arg_factory = cast("Callable[[], str]", factory)
-            return no_arg_factory()
+        def use_factory(factory: _Callable[[], str]) -> str:
+            return factory()
 
         result = use_factory(string_factory)
         assert result == "created"

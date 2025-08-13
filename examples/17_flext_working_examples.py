@@ -4,6 +4,8 @@
 Comprehensive examples demonstrating all major FLEXT Core functionality.
 """
 
+from typing import cast
+
 from flext_core import (
     FlextCommands,
     FlextFields,
@@ -14,50 +16,41 @@ from flext_core import (
 from .shared_domain import SharedDomainFactory, User as SharedUser
 
 
-def main() -> None:
-    """Execute main function for working examples."""
+def _print_header() -> None:
     print("=== FLEXT Core Working Examples ===\n")
 
-    # 1. FlextResult - Railway Pattern
+
+def _demo_flext_result() -> None:
     print("1. FlextResult Examples:")
     success_result = FlextResult.ok("Operation successful")
     print(f"  Success: {success_result.success}, Data: {success_result.data}")
-
     error_result: FlextResult[str] = FlextResult.fail("Something went wrong")
     print(f"  Error: {error_result.is_failure}, Error: {error_result.error}")
     print()
 
-    # 2. FlextEntity - Domain Modeling (using shared domain)
-    print("2. FlextEntity Examples (using shared domain):")
 
-    # Use SharedUser from shared_domain instead of local User class
+def _demo_entity_shared_domain() -> SharedUser | None:
+    print("2. FlextEntity Examples (using shared domain):")
     user_result = SharedDomainFactory.create_user(
         name="John Doe",
         email="john@example.com",
         age=30,
     )
-
-    if user_result.is_failure:
+    if user_result.is_failure or user_result.data is None:
         print(f"Failed to create user: {user_result.error}")
-        return
-
+        return None
     user = user_result.data
-
-    if user is None:
-        print("❌ Operation returned None data")
-
-        return
-
     print(
         f"  User: {user.name} ({user.email_address.email}), "
         f"Status: {user.status.value}",
     )
-
     validation = user.validate_domain_rules()
     print(f"  Validation: {validation.success}")
     print()
+    return user
 
-    # 3. FlextCommands - CQRS Pattern
+
+def _demo_commands() -> tuple[object, object]:
     print("3. FlextCommands Examples:")
 
     class CreateUserCommand(FlextCommands.Command):
@@ -73,32 +66,25 @@ def main() -> None:
 
     class CreateUserHandler(FlextCommands.Handler[CreateUserCommand, SharedUser]):
         def handle(self, command: CreateUserCommand) -> FlextResult[SharedUser]:
-            # Create user using SharedDomainFactory
             return SharedDomainFactory.create_user(
                 name=command.name,
                 email=command.email,
-                age=30,  # Default age
+                age=30,
             )
 
-    # Create and execute command
     command = CreateUserCommand(email="alice@example.com", name="Alice Smith")
     handler = CreateUserHandler()
-
     print(f"  Command: {command.command_type}")
     print(f"  Command ID: {command.command_id}")
-
     result = handler.execute(command)
-    if result.success:
+    if result.success and result.data is not None:
         created_user = result.data
-
-        if created_user is None:
-            print("❌ Operation returned None data")
-
-            return
         print(f"  Created: {created_user.name} ({created_user.email_address.email})")
     print()
+    return command, handler
 
-    # 4. FlextContainer - Dependency Injection
+
+def _demo_container() -> None:
     print("4. FlextContainer Examples:")
 
     class UserService:
@@ -106,11 +92,9 @@ def main() -> None:
             self.repository = repository
 
         def create_user(self, email: str, name: str) -> SharedUser:
-            # Use SharedDomainFactory for consistent user creation
             result = SharedDomainFactory.create_user(name=name, email=email, age=25)
             if result.success and result.data is not None:
                 return result.data
-            # Fallback - this shouldn't happen in practice
             msg: str = f"Failed to create user: {result.error}"
             raise ValueError(msg)
 
@@ -122,17 +106,11 @@ def main() -> None:
             self.users[user.id] = user
             return user
 
-    # Get global container
     container = get_flext_container()
-
-    # Register dependencies
     repository = UserRepository()
     container.register("user_repository", repository)
-
     service = UserService(repository)
     container.register("user_service", service)
-
-    # Retrieve and use service
     service_result = container.get("user_service")
     if service_result.success:
         user_service = service_result.data
@@ -145,10 +123,9 @@ def main() -> None:
             print("  Service creation failed: no create_user method")
     print()
 
-    # 5. FlextFields - Field Validation
-    print("5. FlextFields Examples:")
 
-    # Create email field
+def _demo_fields() -> None:
+    print("5. FlextFields Examples:")
     email_field = FlextFields.create_string_field(
         field_id="user_email",
         field_name="email",
@@ -156,27 +133,19 @@ def main() -> None:
         required=True,
         description="User email address",
     )
-
     print(f"  Field: {email_field.field_name} ({email_field.field_type})")
-
-    # Test validation
     valid_email = email_field.validate_value("user@example.com")
     invalid_email = email_field.validate_value("invalid-email")
-
     print(f"  Valid email: {valid_email.success}")
     print(f"  Invalid email: {invalid_email.success} - {invalid_email.error}")
     print()
 
-    # 6. Command Bus Pattern
+
+def _demo_command_bus(command: object, handler: object) -> None:
     print("6. Command Bus Examples:")
-
     bus = FlextCommands.create_command_bus()
-
-    # Register handler
-    bus.register_handler(CreateUserCommand, handler)
+    bus.register_handler(cast("type", type(command)), handler)  # type: ignore[arg-type]
     print("  Handler registered successfully")
-
-    # Execute via bus
     bus_result = bus.execute(command)
     if bus_result.success:
         bus_user = bus_result.data
@@ -186,6 +155,18 @@ def main() -> None:
             print(f"  Bus executed: {bus_user}")
     print()
 
+
+def main() -> None:
+    """Execute main function for working examples."""
+    _print_header()
+    _demo_flext_result()
+    user = _demo_entity_shared_domain()
+    if user is None:
+        return
+    command, handler = _demo_commands()
+    _demo_container()
+    _demo_fields()
+    _demo_command_bus(command, handler)
     print("=== All Examples Completed Successfully! ===")
 
 

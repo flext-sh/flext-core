@@ -26,10 +26,10 @@ import pytest
 import structlog
 from hypothesis import strategies as st
 
+from flext_core import FlextEntity
 from flext_core.aggregate_root import FlextAggregateRoot
 from flext_core.commands import FlextCommands
 from flext_core.container import FlextContainer
-from flext_core.entities import FlextEntity
 from flext_core.handlers import FlextBaseHandler
 from flext_core.loggings import FlextLoggerFactory
 from flext_core.models import FlextEntityStatus, FlextOperationStatus

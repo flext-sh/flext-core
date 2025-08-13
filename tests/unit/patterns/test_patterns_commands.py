@@ -364,9 +364,7 @@ class TestFlextCommandHandler:
 
     def test_can_handle_correct_command_type(self) -> None:
         """Test can_handle with correct command type."""
-        handler: FlextCommandHandler[CreateUserCommand, dict[str, object]] = (
-            CreateUserCommandHandler()
-        )
+        handler: CreateUserCommandHandler = CreateUserCommandHandler()
         command = CreateUserCommand(username="test", email="test@example.com")
 
         if not (handler.can_handle(command)):
@@ -404,7 +402,7 @@ class TestFlextCommandHandler:
             username="john", email="john@example.com", mixin_setup=lambda: None
         )
 
-        result = handler.handle_command(command)
+        result = handler.handle(command)
 
         if not result.success:
             raise AssertionError(f"Expected True, got {result.success}")
@@ -419,9 +417,7 @@ class TestFlextCommandHandler:
 
     def test_process_command_success(self) -> None:
         """Test complete command processing flow."""
-        handler: FlextCommandHandler[CreateUserCommand, dict[str, object]] = (
-            CreateUserCommandHandler()
-        )
+        handler: CreateUserCommandHandler = CreateUserCommandHandler()
         command: CreateUserCommand = CreateUserCommand(
             username="jane", email="jane@example.com", mixin_setup=lambda: None
         )
@@ -710,12 +706,8 @@ class TestCommandPatternIntegration:
         bus: FlextCommandBus = FlextCommandBus()
 
         # Register different handlers
-        create_handler: FlextCommandHandler[CreateUserCommand, dict[str, object]] = (
-            CreateUserCommandHandler()
-        )
-        update_handler: FlextCommandHandler[UpdateUserCommand, dict[str, object]] = (
-            UpdateUserCommandHandler()
-        )
+        create_handler: CreateUserCommandHandler = CreateUserCommandHandler()
+        update_handler: UpdateUserCommandHandler = UpdateUserCommandHandler()
 
         bus.register_handler(create_handler)
         bus.register_handler(update_handler)

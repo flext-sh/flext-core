@@ -18,7 +18,13 @@ import time
 from decimal import Decimal
 from typing import TYPE_CHECKING, cast
 
-from shared_domain import (
+from flext_core import (
+    FlextEntity,
+    FlextResult,
+    FlextUtilities,
+)
+
+from .shared_domain import (
     Address,
     Age,
     EmailAddress as Email,
@@ -29,25 +35,32 @@ from shared_domain import (
     User as SharedUser,
     UserStatus,
 )
-
-from flext_core import (
-    FlextEntity,
-    FlextResult,
-    FlextUtilities,
-)
+from .shared_example_helpers import run_example_demonstration
 
 if TYPE_CHECKING:
     from collections.abc import Callable
     from typing import Protocol
 
     class CustomerFactory(Protocol):
-        def __call__(self, **kwargs: object) -> FlextResult[Customer]: ...
+        """Factory protocol for creating `Customer` instances."""
+
+        def __call__(self, **kwargs: object) -> FlextResult[Customer]:
+            """Create a new `Customer` from keyword arguments."""
+            ...
 
     class ProductFactory(Protocol):
-        def __call__(self, **kwargs: object) -> FlextResult[Product]: ...
+        """Factory protocol for creating `Product` instances."""
+
+        def __call__(self, **kwargs: object) -> FlextResult[Product]:
+            """Create a new `Product` from keyword arguments."""
+            ...
 
     class OrderFactory(Protocol):
-        def __call__(self, **kwargs: object) -> FlextResult[Order]: ...
+        """Factory protocol for creating `Order` instances."""
+
+        def __call__(self, **kwargs: object) -> FlextResult[Order]:
+            """Create a new `Order` from keyword arguments."""
+            ...
 
 # =============================================================================
 # DDD VALIDATION CONSTANTS - Domain validation constraints
@@ -1353,91 +1366,95 @@ def demonstrate_entity_lifecycle() -> None:
     print("\n🔄 Entity Lifecycle Demonstration")
     print("=" * 50)
 
-    # Create customer factory
-    customer_factory = create_customer_factory()
+    customer = _create_demo_customer()
+    if customer is None:
+        return
 
-    # Create customer
-    print("📋 Customer Creation:")
-    customer_data = {
-        "name": "Alice Johnson",
-        "email_address": Email(email="alice@company.com"),
-        "address": Address(
+    customer = _demo_update_address(customer)
+    customer = _demo_increase_credit(customer)
+    customer = _demo_increment_orders(customer)
+    _demo_print_events(customer)
+
+
+def _create_demo_customer() -> Customer | None:
+    """Create and print a demo customer for lifecycle operations."""
+    factory = create_customer_factory()
+    result = factory(
+        name="Alice Johnson",
+        email_address=Email(email="alice@company.com"),
+        address=Address(
             street="123 Business Ave",
             city="Enterprise City",
             postal_code="12345",
             country="USA",
         ),
-    }
+    )
 
-    customer_result = customer_factory(**customer_data)
-    if customer_result.is_failure:
-        print(f"❌ Customer creation failed: {customer_result.error}")
-        return
+    if result.is_failure or result.data is None:
+        print(f"❌ Customer creation failed: {result.error or 'no data'}")
+        return None
 
-    customer = customer_result.data
-    if customer is None:
-        print("❌ Customer creation returned None")
-        return
-
+    customer = result.data
     print(
         f"✅ Customer created: {customer.name} "
         f"(ID: {customer.id}, Version: {customer.version})",
     )
-
-    # Customer operations
     print("\n📋 Customer Operations:")
+    return customer
 
-    # Update address
+
+def _demo_update_address(customer: Customer) -> Customer:
+    """Run and print the address update flow, returning the latest customer."""
     new_address = Address(
         street="456 New Street",
         city="New City",
         postal_code="67890",
         country="USA",
     )
-
     updated_result = customer.update_address(new_address)
-    if updated_result.success:
+    if updated_result.success and isinstance(updated_result.data, Customer):
         updated_customer = updated_result.data
-        if updated_customer is not None:
-            print(f"✅ Address updated (Version: {updated_customer.version})")
-            customer = updated_customer
+        print(f"✅ Address updated (Version: {updated_customer.version})")
+        return updated_customer
+    return customer
 
-    # Increase credit limit
+
+def _demo_increase_credit(customer: Customer) -> Customer:
+    """Run and print the credit increase flow, returning the latest customer."""
     credit_increase = Money(amount=Decimal("2000.0"), currency="USD")
     credit_result = customer.increase_credit_limit(credit_increase)
-    if credit_result.success:
-        credit_customer = credit_result.data
-        if credit_customer is not None:
-            print(
-                f"✅ Credit limit increased to {credit_customer.credit_limit} "
-                f"(Version: {credit_customer.version})",
-            )
-            customer = credit_customer
+    if credit_result.success and isinstance(credit_result.data, Customer):
+        updated = credit_result.data
+        print(
+            f"✅ Credit limit increased to {updated.credit_limit} "
+            f"(Version: {updated.version})",
+        )
+        return updated
+    return customer
 
-    # Increment order count
+
+def _demo_increment_orders(customer: Customer) -> Customer:
+    """Increment orders once and print the outcome, returning the latest customer."""
     order_result = customer.increment_order_count()
-    if order_result.success:
-        order_customer = order_result.data
-        if order_customer is not None:
-            print(
-                f"✅ Order count incremented to {order_customer.total_orders} "
-                f"(Version: {order_customer.version})",
-            )
-            customer = order_customer
+    if order_result.success and isinstance(order_result.data, Customer):
+        updated = order_result.data
+        print(
+            f"✅ Order count incremented to {updated.total_orders} "
+            f"(Version: {updated.version})",
+        )
+        return updated
+    return customer
 
-    # View domain events
+
+def _demo_print_events(customer: Customer) -> None:
+    """Print and clear domain events for the given customer."""
     print("\n📋 Domain Events:")
     events = customer.clear_events()
     for i, event in enumerate(events, 1):
-        if hasattr(event, "get_metadata"):
-            event_type = event.get_metadata("event_type")
-        else:
-            event_type = "Unknown Event Type"
+        event_type = event.get_metadata("event_type") if hasattr(event, "get_metadata") else "Unknown Event Type"
         print(f"  📝 Event {i}: {event_type}")
-        if hasattr(event, "data"):
-            print(f"     Data: {event.data}")
-        else:
-            print(f"     Data: {event}")
+        data_repr = event.data if hasattr(event, "data") else event
+        print(f"     Data: {data_repr}")
 
 
 def _setup_aggregate_repositories() -> tuple[
@@ -1904,8 +1921,6 @@ def demonstrate_performance_characteristics() -> None:
 
 def main() -> None:
     """Run comprehensive FlextEntity/ValueObject DDD demonstration."""
-    from shared_example_helpers import run_example_demonstration
-
     examples = [
         ("Value Object Patterns", demonstrate_value_objects),
         ("Entity Lifecycle Management", demonstrate_entity_lifecycle),

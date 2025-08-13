@@ -330,12 +330,11 @@ class TestFlextMixinDelegator:
         host = HostObject()
         FlextMixinDelegator(host, SampleMixin1)
 
-        # Test property setter - cast to Any to handle dynamic delegation
-        host_with_props = cast("object", host)
-        host_with_props.writable_property = "new_value"
-        if host_with_props.writable_property != "new_value":
+        # Test property setter using setattr/getattr to satisfy typing
+        host.writable_property = "new_value"  # type: ignore[attr-defined]
+        if host.writable_property != "new_value":  # type: ignore[attr-defined]
             raise AssertionError(
-                f"Expected {'new_value'}, got {host_with_props.writable_property}"
+                f"Expected {'new_value'}, got {host.writable_property}"  # type: ignore[attr-defined]
             )
 
     def test_property_delegation_readonly(self) -> None:
@@ -343,9 +342,8 @@ class TestFlextMixinDelegator:
         host = HostObject()
         FlextMixinDelegator(host, SampleMixin1)
 
-        # Test readonly property (don't use hasattr with __getattr__)
-        host_with_props = cast("object", host)
-        value = host_with_props.readonly_property
+        # Test readonly property via getattr
+        value = host.readonly_property
         if value != "readonly_value":
             raise AssertionError(f"Expected {'readonly_value'}, got {value}")
 
@@ -355,7 +353,7 @@ class TestFlextMixinDelegator:
             FlextOperationError,
             match="Property 'readonly_property' is read-only",
         ):
-            host_with_props.readonly_property = "new_value"
+            host.readonly_property = "new_value"
 
     def test_private_methods_not_delegated(self) -> None:
         """Test that private methods are not delegated."""
@@ -386,7 +384,7 @@ class TestFlextMixinDelegator:
             FlextOperationError,
             match="Delegation error in ErrorMixin.error_method",
         ):
-            cast("object", host).error_method()
+            host.error_method()
 
     def test_method_signature_preservation(self) -> None:
         """Test that method signatures are preserved."""
@@ -741,8 +739,7 @@ class TestDelegationSystemEdgeCases:
         FlextMixinDelegator(host, Mixin1, Mixin2)
 
         # Should have the method from the last registered mixin - use cast for dynamic delegation
-        host_with_methods = cast("object", host)
-        result = host_with_methods.conflict_method()
+        result = host.conflict_method()
         # The actual behavior depends on the order of processing
         if result not in {"mixin1", "mixin2"}:
             msg: str = f"Expected {'mixin1', 'mixin2'}, got {result}"
@@ -829,9 +826,8 @@ class TestDelegationSystemEdgeCases:
             raise AssertionError(
                 f"Expected {'property_with_error'} in {type(host).__dict__}"
             )
-        host_with_props = cast("object", host)
         with pytest.raises(ValueError, match="Property getter error"):
-            _ = host_with_props.property_with_error
+            _ = host.property_with_error
 
     def test_mixin_registry_persistence(self) -> None:
         """Test that mixin registry persists across delegator instances."""

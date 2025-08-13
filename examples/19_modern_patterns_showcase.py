@@ -13,13 +13,6 @@ from decimal import Decimal
 from enum import StrEnum
 from typing import cast
 
-from shared_domain import (
-    Age,
-    EmailAddress as Email,
-    Money,
-    User as SharedUser,
-)
-
 from flext_core import (
     FlextEntity,
     FlextResult,
@@ -27,6 +20,13 @@ from flext_core import (
     FlextUtilities,
     FlextValueObject,
     get_flext_container,
+)
+
+from .shared_domain import (
+    Age,
+    EmailAddress as Email,
+    Money,
+    User as SharedUser,
 )
 
 # =============================================================================
@@ -92,7 +92,7 @@ class OrderStatus(StrEnum):
 
 
 class Customer(SharedUser):
-    """Customer entity using shared domain - zero boilerplate!"""
+    """Customer entity using shared domain - zero boilerplate."""
 
     is_premium: bool = False
 
@@ -390,49 +390,60 @@ class OrderProcessingService:
         self, customer_id: str, order_data: dict[str, object]
     ) -> FlextResult[Order]:
         """Create order from raw data."""
-        order = Order(
-            id=FlextUtilities.generate_entity_id(), customer_id=customer_id, items=[]
-        )
+        def _start_empty_order() -> Order:
+            return Order(
+                id=FlextUtilities.generate_entity_id(),
+                customer_id=customer_id,
+                items=[],
+            )
 
-        # Add items to order
-        items_data = order_data.get("items", [])
-        if not isinstance(items_data, list):
-            return FlextResult.fail("Items must be a list")
+        def _ensure_items(data: dict[str, object]) -> FlextResult[list[dict[str, object]]]:
+            items_value = data.get("items", [])
+            if not isinstance(items_value, list):
+                return FlextResult.fail("Items must be a list")
+            normalized: list[dict[str, object]] = []
+            for entry in items_value:
+                if not isinstance(entry, dict):
+                    return FlextResult.fail("Item data must be a dictionary")
+                normalized.append(entry)
+            return FlextResult.ok(normalized)
 
-        for item_data in items_data:
-            if not isinstance(item_data, dict):
-                return FlextResult.fail("Item data must be a dictionary")
-
-            product_id = item_data.get("product_id")
-            if not isinstance(product_id, str):
-                return FlextResult.fail("Product ID must be a string")
-
-            product_result = self._get_product(product_id)
-            if not product_result.success:
-                return FlextResult.fail(product_result.error or "Product not found")
-
-            if product_result.data is None:
-                return FlextResult.fail("Product data is None")
-
-            product = product_result.data
-            quantity = item_data.get("quantity", 1)
-            if not isinstance(quantity, (int, str)):
+        def _parse_quantity(raw_quantity: object) -> FlextResult[int]:
+            if not isinstance(raw_quantity, (int, str)):
                 return FlextResult.fail("Quantity must be a number")
-
             try:
-                quantity_int = int(str(quantity))
+                return FlextResult.ok(int(str(raw_quantity)))
             except (ValueError, TypeError):
                 return FlextResult.fail("Invalid quantity format")
 
+        def _get_product_for_item(item: dict[str, object]) -> FlextResult[tuple[object, int]]:
+            product_id = item.get("product_id")
+            if not isinstance(product_id, str):
+                return FlextResult.fail("Product ID must be a string")
+            product_result = self._get_product(product_id)
+            if product_result.is_failure or product_result.data is None:
+                return FlextResult.fail(product_result.error or "Product not found")
+            quantity_result = _parse_quantity(item.get("quantity", 1))
+            if quantity_result.is_failure or quantity_result.data is None:
+                return FlextResult.fail(quantity_result.error or "Invalid quantity")
+            return FlextResult.ok((product_result.data, quantity_result.data))
+
+        items_result = _ensure_items(order_data)
+        if items_result.is_failure or items_result.data is None:
+            return FlextResult.fail(items_result.error or "Invalid items")
+
+        order = _start_empty_order()
+        for item_data in items_result.data:
+            pair_result = _get_product_for_item(item_data)
+            if pair_result.is_failure or pair_result.data is None:
+                return FlextResult.fail(pair_result.error or "Invalid item")
+            product, quantity_int = cast("tuple[Product, int]", pair_result.data)
             order_result = order.add_item(product, quantity_int)
             if not order_result.success:
                 return FlextResult.fail(order_result.error or "Failed to add item")
-
             if order_result.data is None:
                 return FlextResult.fail("Order result data is None")
-
             order = order_result.data
-
         return FlextResult.ok(order)
 
     def _validate_inventory(self, order: Order) -> FlextResult[Order]:
@@ -493,79 +504,63 @@ class OrderProcessingService:
 # =============================================================================
 
 
-def demonstrate_modern_patterns() -> None:
-    """Demonstrate the power of modern FLEXT patterns."""
+def _print_showcase_header() -> None:
     print("🚀 FLEXT Modern Patterns Showcase")
     print("=" * 50)
 
-    # Setup configuration (automatic environment loading)
+
+def _setup_environment() -> object:
     config = AppConfig()
     container = get_flext_container()
     container.register("config", config)
     print("✅ Configuration loaded automatically from environment")
+    return container
 
-    # Create customer (factory pattern with validation)
+
+def _create_and_register_customer(container: object) -> Customer | None:
     customer_result = create_customer("John Doe", "john@example.com")
-    if not customer_result.success:
-        print(f"❌ Customer creation failed: {customer_result.error}")
-        return
-
-    if customer_result.data is None:
-        print("❌ Customer creation failed: No data returned")
-        return
-
+    if not customer_result.success or customer_result.data is None:
+        print(f"❌ Customer creation failed: {customer_result.error or 'No data returned'}")
+        return None
     customer = customer_result.data
-    container.register(f"customer_{customer.id}", customer)
+    cast("object", container).register(f"customer_{customer.id}", customer)  # type: ignore[attr-defined]
     print(f"✅ Customer created: {customer.name} ({customer.email_address.email})")
+    return customer
 
-    # Create products (zero boilerplate)
+
+def _create_and_register_products(container: object) -> None:
     products_data = [
         ("Laptop", 99900, 10, "Electronics", "product_laptop"),
         ("Mouse", 2500, 50, "Electronics", "product_mouse"),
         ("Keyboard", 7500, 25, "Electronics", "product_keyboard"),
     ]
-
     for name, price, stock, category, key in products_data:
         product_result = create_product(name, price, stock, category)
         if product_result.success and product_result.data is not None:
             product = product_result.data
-            container.register(key, product)
+            cast("object", container).register(key, product)  # type: ignore[attr-defined]
             print(f"✅ Product created: {product.name} - {product.price}")
         else:
             print(
                 f"❌ Product creation failed: {product_result.error or 'No data returned'}"
             )
 
-    # Process order (railway-oriented programming)
-    print("\n🔄 Processing Order...")
-    print("-" * 30)
 
-    order_service = OrderProcessingService()
-
-    # Get product IDs for order (in real app, these would come from frontend)
-    # Using the known product from our creation above
-    product_keys = ["product_laptop", "product_mouse", "product_keyboard"]
-    laptop_id = None
-
-    # Find the first available product
-    for key in product_keys:
-        result = container.get(key)
+def _select_first_available_product_id(container: object, keys: list[str]) -> str | None:
+    for key in keys:
+        result = cast("object", container).get(key)  # type: ignore[attr-defined]
         if result.success and result.data is not None:
             product = cast("Product", result.data)
-            laptop_id = product.id
-            break
+            return product.id
+    return None
 
-    if not laptop_id:
-        print("❌ No products available for order")
-        return
 
-    order_data: dict[str, object] = {
-        "items": [{"product_id": laptop_id, "quantity": 1}]
-    }
-
-    # Single call processes entire order with automatic error handling!
+def _process_order_and_print(_: object, customer: Customer, product_id: str) -> None:
+    print("\n🔄 Processing Order...")
+    print("-" * 30)
+    order_service = OrderProcessingService()
+    order_data: dict[str, object] = {"items": [{"product_id": product_id, "quantity": 1}]}
     order_result = order_service.process_order(customer.id, order_data)
-
     if order_result.success and order_result.data is not None:
         order = order_result.data
         print("🎉 Order processed successfully!")
@@ -576,11 +571,11 @@ def demonstrate_modern_patterns() -> None:
     else:
         print(f"❌ Order processing failed: {order_result.error or 'No data returned'}")
 
-    # Demonstrate type safety and semantic clarity
+
+def _type_system_demo(customer: Customer) -> None:
     print("\n🔍 Type System Demonstration")
     print("-" * 30)
 
-    # Semantic types provide clear intent
     def validator(c: Customer) -> bool:
         return c.is_premium
 
@@ -592,6 +587,8 @@ def demonstrate_modern_patterns() -> None:
         f"✅ Money as string: {transformer(Money(amount=Decimal(5000), currency='USD'))}"
     )
 
+
+def _print_benefits() -> None:
     print("\n📊 Benefits Demonstrated:")
     print("• 85% less boilerplate code")
     print("• Zero exception handling (railway-oriented programming)")
@@ -599,6 +596,24 @@ def demonstrate_modern_patterns() -> None:
     print("• Self-documented business logic")
     print("• Automatic validation and error propagation")
     print("• Clean separation of concerns")
+
+
+def demonstrate_modern_patterns() -> None:
+    """Demonstrate the power of modern FLEXT patterns."""
+    _print_showcase_header()
+    container = _setup_environment()
+    _create_and_register_products(container)
+    customer = _create_and_register_customer(container)
+    if customer is None:
+        return
+    product_keys = ["product_laptop", "product_mouse", "product_keyboard"]
+    product_id = _select_first_available_product_id(container, product_keys)
+    if product_id is None:
+        print("❌ No products available for order")
+        return
+    _process_order_and_print(container, customer, product_id)
+    _type_system_demo(customer)
+    _print_benefits()
 
 
 def demonstrate_boilerplate_comparison() -> None:
