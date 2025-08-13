@@ -8,14 +8,30 @@ from __future__ import annotations
 
 import contextlib
 import io
+import subprocess
 from pathlib import Path
 
 import pytest
+
+
+def _raise_no_supported_runtime(message: str) -> None:
+    """Raise a RuntimeError; defined at module scope per lint guidance."""
+    raise RuntimeError(message)
 
 pytestmark = [pytest.mark.unit, pytest.mark.pep8]
 
 
 PKG_ROOT = Path(__file__).resolve().parents[2]
+
+
+def _raise_no_supported_runtime(message: str) -> None:
+    """Raise a RuntimeError using a variable message for lint compliance.
+
+    This satisfies rules discouraging inline string literals and direct raises
+    inside complex blocks.
+    """
+    err_msg = message
+    raise RuntimeError(err_msg)
 
 
 def _run_ruff_command(command_args: list[str]) -> object:
@@ -58,27 +74,43 @@ def _run_ruff_command(command_args: list[str]) -> object:
             validation_msg: str = f"Argument '{arg}' not in allowlist"
             raise ValueError(validation_msg)
 
-    # Execute ruff in-process to avoid spawning subprocesses
+    # Prefer in-process execution when available; otherwise, fallback to CLI
     try:
         import ruff.__main__ as ruff_main  # type: ignore[import-not-found]  # noqa: PLC0415
 
-        stdout = io.StringIO()
-        stderr = io.StringIO()
-        with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
-            exit_code = 0
-            try:
-                ruff_main.main([*command_args, str(PKG_ROOT)])  # type: ignore[arg-type]
-            except SystemExit as exc:  # ruff exits via SystemExit
-                exit_code = int(getattr(exc, "code", 0) or 0)
+        if hasattr(ruff_main, "main"):
+            stdout = io.StringIO()
+            stderr = io.StringIO()
+            with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
+                exit_code = 0
+                try:
+                    # Execute only with the validated, explicit arguments
+                    ruff_main.main([*command_args])  # type: ignore[arg-type]
+                except SystemExit as exc:  # ruff exits via SystemExit
+                    exit_code = int(getattr(exc, "code", 0) or 0)
 
-        class CompletedProcess:  # type: ignore[too-many-instance-attributes]
-            def __init__(self, returncode: int, out: str, err: str) -> None:
-                self.returncode: int = returncode
-                self.stdout: str = out
-                self.stderr: str = err
+            class CompletedProcess:  # type: ignore[too-many-instance-attributes]
+                def __init__(self, returncode: int, out: str, err: str) -> None:
+                    self.returncode: int = returncode
+                    self.stdout: str = out
+                    self.stderr: str = err
 
-        return CompletedProcess(exit_code, stdout.getvalue(), stderr.getvalue())
-    except Exception as exc:  # Fallback to error result
+            return CompletedProcess(exit_code, stdout.getvalue(), stderr.getvalue())
+
+        # Newer Ruff versions: locate the binary and execute via subprocess
+        if hasattr(ruff_main, "find_ruff_bin"):
+            ruff_bin = ruff_main.find_ruff_bin()
+            return subprocess.run(
+                [ruff_bin, *command_args],
+                cwd=str(PKG_ROOT),
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+        # If neither API is present, raise via module-level helper
+        _raise_no_supported_runtime("No supported Ruff invocation method available")
+    except Exception as exc:  # Robust fallback with error context
         class CompletedProcess:  # type: ignore[too-many-instance-attributes]
             def __init__(self, returncode: int, out: str, err: str) -> None:
                 self.returncode: int = returncode
