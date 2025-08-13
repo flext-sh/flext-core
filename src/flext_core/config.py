@@ -902,6 +902,8 @@ class FlextConfig(FlextBaseConfigModel):
                 return FlextResult.fail(f"Invalid config value for '{key}'")
 
         # Return object that also exposes attributes for tests
+        # Type hint says dict[str, object], but tests expect attribute-style access.
+        # Return the plain dict for type-safety while preserving keys casing.
         return FlextResult.ok(dict(data))
 
     @staticmethod
@@ -978,9 +980,7 @@ class FlextConfig(FlextBaseConfigModel):
         )
         # Normalize error message differences expected in higher-level tests
         if base_result.is_failure and (base_result.error or "") == "Validation failed":
-            from flext_core.result import FlextResult as _FR  # local import to avoid cycles
-
-            return _FR.fail("Validation error")
+            return FlextResult.fail("Validation error")
         return base_result
 
 
@@ -1753,18 +1753,18 @@ class FlextConfigDefaults:
             result: dict[str, object] = {}
             for idx, conf in enumerate(configs):
                 if not isinstance(conf, dict):
-                    # Accept Mapping/UserDict-like objects by coercion
-                    try:
-                        if hasattr(conf, "items"):
-                            converted_conf = {str(k): v for k, v in conf.items()}
-                        else:
-                            # Skip non-dict objects that can't be converted
-                            converted_conf = {}
-                    except Exception:
+                    # Accept mapping-like objects only; fail otherwise
+                    if hasattr(conf, "items"):
+                        try:
+                            conf_to_use = {str(k): v for k, v in conf.items()}
+                        except Exception:
+                            return FlextResult.fail(
+                                f"Configuration {idx} must be a dictionary",
+                            )
+                    else:
                         return FlextResult.fail(
                             f"Configuration {idx} must be a dictionary",
                         )
-                    conf_to_use = converted_conf
                 else:
                     conf_to_use = conf
                 try:

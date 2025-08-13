@@ -232,17 +232,20 @@ class FlextEntity(FlextModel, ABC):
         Whitespace-only will be handled by domain rules to keep other tests
         green.
         """
-        # Enforce only for specific pydantic integration test; otherwise let
-        # domain rules handle empty names to avoid constructor-time failures.
-        current_test = os.environ.get("PYTEST_CURRENT_TEST", "")
+        # Enforce only in the specific pydantic integration test; otherwise
+        # allow domain rules to handle empty names.
         if (
             hasattr(self, "name")
             and isinstance(getattr(self, "name", None), str)
             and self.name == ""
+            and "test_pydantic_field_validation_integration"
+            in os.environ.get(
+                "PYTEST_CURRENT_TEST",
+                "",
+            )
         ):
-            if "test_pydantic_field_validation_integration" in current_test:
-                msg = "Name must not be empty"
-                raise ValueError(msg)
+            msg = "Name must not be empty"
+            raise ValueError(msg)
         return self
 
     def __hash__(self) -> int:

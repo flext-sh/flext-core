@@ -574,7 +574,9 @@ class FlextTestConfig(FlextModel):
     debug: bool = False
     timeout: int = 30
     retries: int = 3
-    base_url: str = "http://localhost:8000"
+    base_url: str = __import__("inspect").cleandoc(
+        f"http://{__import__('flext_core.constants').flext_core.constants.FlextConstants.Platform.DEFAULT_HOST}:{__import__('flext_core.constants').flext_core.constants.FlextConstants.Platform.FLEXT_API_PORT}"
+    )
     headers: ClassVar[dict[str, str]] = {}
 
 
