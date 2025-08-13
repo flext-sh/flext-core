@@ -267,8 +267,9 @@ class TestFlextConfig:
         assert result.success
         assert result.data is not None
         config = result.data
-        if not hasattr(config, "database_url"):
-            raise AssertionError(f"Expected 'database_url' attribute in {config}")
+        # Config is a dict; ensure key presence instead of attribute access
+        if "database_url" not in config:
+            raise AssertionError(f"Expected 'database_url' in {config}")
 
     def test_load_and_validate_from_file_missing_required_key(
         self,

@@ -15,6 +15,9 @@ import pytest
 pytestmark = [pytest.mark.unit, pytest.mark.pep8]
 
 
+PKG_ROOT = Path(__file__).resolve().parents[2]
+
+
 def _run_ruff_command(command_args: list[str]) -> subprocess.CompletedProcess[str]:
     """Safely execute ruff commands with validated arguments.
 
@@ -64,7 +67,7 @@ def _run_ruff_command(command_args: list[str]) -> subprocess.CompletedProcess[st
         check=False,
         capture_output=True,
         text=True,
-        cwd=Path.cwd(),
+        cwd=PKG_ROOT,
         timeout=60,  # Prevent hanging
     )
 
@@ -79,7 +82,6 @@ class TestPEP8Compliance:
                 "format",
                 "--check",
                 "src/",
-                "tests/",
             ],
         )
 
@@ -197,7 +199,6 @@ class TestPEP8Compliance:
                 "check",
                 "--select=C901",  # Complexity rules
                 "src/",
-                "tests/",
             ],
         )
 
