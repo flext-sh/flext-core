@@ -414,7 +414,7 @@ class FlextValidationError(FlextAbstractValidationError, FlextError):
             self.value = validation_details.get("value")
             # If no explicit field arg, also derive from details
             if self.field is None and isinstance(validation_details.get("field"), str):
-                from typing import cast as _cast
+                from typing import cast as _cast  # noqa: PLC0415
 
                 self.field = _cast("str", validation_details["field"])
         self.rules = (

@@ -494,7 +494,7 @@ class TestSOLIDCompliance:
 
     def test_integration_with_flext_ecosystem(self) -> None:
         """Test integration with other FLEXT components."""
-        from flext_core.result import FlextResult
+        from flext_core.result import FlextResult  # noqa: PLC0415
 
         @immutable
         class ResultContainer:

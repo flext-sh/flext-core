@@ -11,15 +11,15 @@ from decimal import Decimal
 import pytest
 from pydantic import ValidationError
 
-from flext_core.result import FlextResult
-from flext_core.value_objects import FlextValueObject
-
 # Import shared test domain
 from tests.shared_test_domain import (
     ComplexValueObject,
     ConcreteValueObject,
     TestDomainFactory,
 )
+
+from flext_core.result import FlextResult
+from flext_core.value_objects import FlextValueObject
 
 # Constants
 EXPECTED_BULK_SIZE = 2

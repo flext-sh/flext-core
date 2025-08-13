@@ -52,9 +52,9 @@ class TestMixinsBaseCoverage:
 
     def test_identifiable_mixin_set_invalid_id(self) -> None:
         """Test set_id with invalid ID covering lines 161-162 - DRY REAL."""
-        import pytest
+        import pytest  # noqa: PLC0415
 
-        from flext_core.exceptions import FlextValidationError
+        from flext_core.exceptions import FlextValidationError  # noqa: PLC0415
 
         class ConcreteIdentifiable(FlextIdentifiableMixin):
             def get_id(self) -> str:

@@ -34,6 +34,7 @@ from flext_core.__version__ import (
     FlextCompatibilityResult,
     FlextVersionInfo,
 )
+__version_info__ = tuple(int(x) for x in __version__.split(".") if x.isdigit())
 
 # =============================================================================
 # CORE FOUNDATION PATTERNS
@@ -599,6 +600,7 @@ Use the modern Flext* APIs exposed by this package directly.
 
 __all__: list[str] = [
     "__version__",
+    "__version_info__",
     "FlextVersionInfo",
     "FlextCompatibilityResult",
     "FlextResult",

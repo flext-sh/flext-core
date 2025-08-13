@@ -237,7 +237,7 @@ class TestFlextEventHandler:
         """Test if FlextEventHandler is available."""
         # Try to import - if it fails, skip these tests
         try:
-            from flext_core.handlers import FlextEventHandler
+            from flext_core.handlers import FlextEventHandler  # noqa: PLC0415
 
             handler = FlextEventHandler()
             assert handler is not None

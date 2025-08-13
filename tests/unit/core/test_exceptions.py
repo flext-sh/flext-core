@@ -862,7 +862,7 @@ class TestExceptionsCoverageImprovements:
 
     def test_record_exception_function(self) -> None:
         """Test _record_exception function (line 565)."""
-        from flext_core.exceptions import (
+        from flext_core.exceptions import (  # noqa: PLC0415
             _record_exception,
             clear_exception_metrics,
             get_exception_metrics,

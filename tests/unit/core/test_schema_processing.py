@@ -175,7 +175,7 @@ class TestEntryType:
 
     def test_entry_type_enum(self) -> None:
         """Test entry type enum exists."""
-        from enum import EnumMeta
+        from enum import EnumMeta  # noqa: PLC0415
 
         assert isinstance(EntryType, EnumMeta)
         assert issubclass(EntryType, Enum)
@@ -206,7 +206,7 @@ class TestBaseEntry:
             identifier="id_123",
         )
         # Should not be able to modify (frozen Pydantic model)
-        from pydantic_core import ValidationError
+        from pydantic_core import ValidationError  # noqa: PLC0415
 
         with pytest.raises(ValidationError, match="Instance is frozen"):
             entry.entry_type = "new_type"
@@ -543,7 +543,7 @@ class TestBaseFileWriter:
 
     def test_write_entries_success(self) -> None:
         """Test successful entries writing."""
-        from typing import cast
+        from typing import cast  # noqa: PLC0415
 
         writer = MockFileWriter()
         entries = cast("list[object]", ["entry1", "entry2", "entry3"])
@@ -555,7 +555,7 @@ class TestBaseFileWriter:
 
     def test_write_entries_failure(self) -> None:
         """Test entries writing with failure."""
-        from typing import cast
+        from typing import cast  # noqa: PLC0415
 
         writer = MockFileWriter(fail_write=True)
         entries = cast("list[object]", ["entry1", "entry2"])

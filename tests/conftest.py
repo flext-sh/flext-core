@@ -425,7 +425,7 @@ def mock_external_service() -> Generator[MagicMock]:
 @pytest.fixture
 def entity_factory() -> Callable[[str, dict[str, object]], FlextEntity]:
     """Factory for creating test entities."""
-    from flext_core.models import FlextEntityStatus
+    from flext_core.models import FlextEntityStatus  # noqa: PLC0415
 
     class TestEntity(FlextEntity):
         name: str = "test"
@@ -554,8 +554,8 @@ def temp_directory() -> Generator[Path]:
         Path to temporary directory with automatic cleanup
 
     """
-    import shutil
-    import tempfile
+    import shutil  # noqa: PLC0415
+    import tempfile  # noqa: PLC0415
 
     temp_dir = Path(tempfile.mkdtemp(prefix="flext_test_"))
 
@@ -662,7 +662,7 @@ def performance_monitor() -> Callable[[Callable[[], object]], PerformanceMetrics
     def _monitor(
         func: Callable[[], object], *args: object, **kwargs: object,
     ) -> PerformanceMetrics:
-        import gc
+        import gc  # noqa: PLC0415
 
         # Force garbage collection
         gc.collect()
@@ -1137,7 +1137,7 @@ def assert_function_performance(
     func: Callable[[], object], max_duration: float = 1.0,
 ) -> object:
     """Assert that a function executes within time limit."""
-    import time
+    import time  # noqa: PLC0415
 
     start = time.time()
     result = func()
@@ -1156,7 +1156,7 @@ def assert_function_performance(
 @pytest.fixture
 def temp_json_file() -> Generator[str]:
     """Create a temporary JSON file for testing."""
-    import tempfile
+    import tempfile  # noqa: PLC0415
 
     with tempfile.NamedTemporaryFile(
         encoding="utf-8", mode="w", suffix=".json", delete=False,

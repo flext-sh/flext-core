@@ -237,7 +237,7 @@ class TestCoreSOLIDImplementation:
     def test_integration_with_guards_module(self) -> None:
         """Test integration with guards module functions."""
         # Test that core methods use guards module functionality
-        from flext_core.guards import immutable, is_dict_of, pure
+        from flext_core.guards import immutable, is_dict_of, pure  # noqa: PLC0415
 
         # Verify functions are imported and available
         assert callable(is_dict_of)

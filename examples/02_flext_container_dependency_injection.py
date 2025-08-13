@@ -820,54 +820,44 @@ class BaseServiceConfigurer:
             UserManagementService(user_repository, notification_service),
         )
 
-    def _resolve_notification_dependencies(
+    def _resolve_typed_dependencies[T1, T2](
         self,
-    ) -> FlextResult[tuple[EmailService, UserRepository]]:
-        """Resolve notification service dependencies using DRY principle."""
+        service1_name: str,
+        service2_name: str,
+        error_context: str,
+    ) -> FlextResult[tuple[T1, T2]]:
+        """Generic dependency resolution to eliminate code duplication."""
         result: FlextResult[tuple[object, ...]] = (
             self._dependency_resolver.resolve_multiple_dependencies(
-                "EmailService", "UserRepository",
+                service1_name, service2_name,
             )
         )
         if result.is_failure:
-            error_msg = result.error or "Notification dependency resolution failed"
+            error_msg = result.error or f"{error_context} dependency resolution failed"
             return FlextResult.fail(error_msg)
 
         deps_data = result.data
         expected_deps = 2
         if deps_data is None or len(deps_data) != expected_deps:
-            return FlextResult.fail("Invalid notification dependencies")
-        email_service, user_repository = deps_data
-        return FlextResult.ok(
-            (
-                cast("EmailService", email_service),
-                cast("UserRepository", user_repository),
-            ),
+            return FlextResult.fail(f"Invalid {error_context} dependencies")
+
+        service1, service2 = deps_data
+        return FlextResult.ok((cast("T1", service1), cast("T2", service2)))
+
+    def _resolve_notification_dependencies(
+        self,
+    ) -> FlextResult[tuple[EmailService, UserRepository]]:
+        """Resolve notification service dependencies using DRY principle."""
+        return self._resolve_typed_dependencies[EmailService, UserRepository](
+            "EmailService", "UserRepository", "notification"
         )
 
     def _resolve_user_management_dependencies(
         self,
     ) -> FlextResult[tuple[UserRepository, NotificationService]]:
         """Resolve user management service dependencies using DRY principle."""
-        result: FlextResult[tuple[object, ...]] = (
-            self._dependency_resolver.resolve_multiple_dependencies(
-                "UserRepository", "NotificationService",
-            )
-        )
-        if result.is_failure:
-            error_msg = result.error or "User management dependency resolution failed"
-            return FlextResult.fail(error_msg)
-
-        deps_data = result.data
-        expected_deps = 2
-        if deps_data is None or len(deps_data) != expected_deps:
-            return FlextResult.fail("Invalid user management dependencies")
-        user_repository, notification_service = deps_data
-        return FlextResult.ok(
-            (
-                cast("UserRepository", user_repository),
-                cast("NotificationService", notification_service),
-            ),
+        return self._resolve_typed_dependencies[UserRepository, NotificationService](
+            "UserRepository", "NotificationService", "user management"
         )
 
 
@@ -1148,20 +1138,10 @@ def setup_test_container() -> FlextResult[FlextContainer]:
 # =============================================================================
 
 
-def check_container_health(container: FlextContainer) -> FlextResult[TAnyObject]:
-    """Check container health using TAnyObject for health data."""
-    log_message: TLogMessage = "🏥 Checking container health..."
-    print(log_message)
-
-    health_data: dict[str, object] = {
-        "container_id": FlextUtilities.generate_entity_id(),
-        "timestamp": FlextUtilities.generate_iso_timestamp(),
-        "services": {},
-        "overall_status": "healthy",
-    }
-    services_dict = cast("dict[str, object]", health_data["services"])
-
-    # Check database connection
+def _check_database_service_health(
+    container: FlextContainer, services_dict: dict[str, object],
+) -> None:
+    """Check database service health and update services dictionary."""
     try:
         db_result = container.get("DatabaseConnection")
         if db_result.success:
@@ -1184,46 +1164,79 @@ def check_container_health(container: FlextContainer) -> FlextResult[TAnyObject]
             "error": str(e),
         }
 
-    # Check email service
+
+def _check_generic_service_health(
+    container: FlextContainer,
+    services_dict: dict[str, object],
+    service_name: str,
+    result_key: str,
+) -> None:
+    """Generic service health checker to eliminate code duplication."""
     try:
-        email_result = container.get("EmailService")
-        if email_result.success:
-            services_dict["email"] = {"status": "healthy"}
+        service_result = container.get(service_name)
+        if service_result.success:
+            services_dict[result_key] = {"status": "healthy"}
         else:
-            services_dict["email"] = {
+            services_dict[result_key] = {
                 "status": "unavailable",
-                "error": f"Service not found: {email_result.error or 'unknown error'}",
+                "error": f"Service not found: {service_result.error or 'unknown error'}",
             }
     except (RuntimeError, ValueError, TypeError) as e:
-        services_dict["email"] = {
+        services_dict[result_key] = {
             "status": "error",
             "error": str(e),
         }
 
-    # Check user repository
-    try:
-        repo_result = container.get("UserRepository")
-        if repo_result.success:
-            services_dict["user_repository"] = {"status": "healthy"}
-        else:
-            services_dict["user_repository"] = {
-                "status": "unavailable",
-                "error": f"Service not found: {repo_result.error or 'unknown error'}",
-            }
-    except (RuntimeError, ValueError, TypeError) as e:
-        services_dict["user_repository"] = {
-            "status": "error",
-            "error": str(e),
-        }
 
-    # Determine overall status
+def _check_email_service_health(
+    container: FlextContainer, services_dict: dict[str, object],
+) -> None:
+    """Check email service health and update services dictionary."""
+    _check_generic_service_health(container, services_dict, "EmailService", "email")
+
+
+def _check_user_repository_health(
+    container: FlextContainer, services_dict: dict[str, object],
+) -> None:
+    """Check user repository health and update services dictionary."""
+    _check_generic_service_health(container, services_dict, "UserRepository", "user_repository")
+
+
+def _determine_overall_health_status(services_dict: dict[str, object]) -> str:
+    """Determine overall health status based on individual service statuses."""
     unhealthy_services = [
         service
         for service in services_dict.values()
         if isinstance(service, dict) and service.get("status") != "healthy"
     ]
-    if unhealthy_services:
-        health_data["overall_status"] = "unhealthy"
+    return "unhealthy" if unhealthy_services else "healthy"
+
+
+def _create_health_data_structure() -> dict[str, object]:
+    """Create the base health data structure."""
+    return {
+        "container_id": FlextUtilities.generate_entity_id(),
+        "timestamp": FlextUtilities.generate_iso_timestamp(),
+        "services": {},
+        "overall_status": "healthy",
+    }
+
+
+def check_container_health(container: FlextContainer) -> FlextResult[TAnyObject]:
+    """Check container health using TAnyObject for health data."""
+    log_message: TLogMessage = "🏥 Checking container health..."
+    print(log_message)
+
+    health_data = _create_health_data_structure()
+    services_dict = cast("dict[str, object]", health_data["services"])
+
+    # Check all services using dedicated functions
+    _check_database_service_health(container, services_dict)
+    _check_email_service_health(container, services_dict)
+    _check_user_repository_health(container, services_dict)
+
+    # Determine overall status
+    health_data["overall_status"] = _determine_overall_health_status(services_dict)
 
     print(f"✅ Health check completed: {health_data['overall_status']}")
     return FlextResult.ok(cast("TAnyObject", health_data))

@@ -339,9 +339,9 @@ class TestStandaloneDecorators:
                 raise AssertionError(f"Expected {15}, got {result1}")
         except (ValueError, TypeError, RuntimeError) as e:
             if TYPE_CHECKING:
-                import pytest  # imported but unused in TYPE_CHECKING
+                import pytest  # imported but unused in TYPE_CHECKING  # noqa: PLC0415
             else:
-                import pytest
+                import pytest  # noqa: PLC0415
             pytest.fail(f"Safe decorator should handle exceptions: {e}")
 
     def test_flext_timing_decorator(self) -> None:
@@ -821,7 +821,7 @@ class TestDecoratorCoverageImprovements:
 
     def test_decorator_imports_coverage(self) -> None:
         """Test decorator imports from TYPE_CHECKING block (lines 91-93)."""
-        from flext_core import _decorators_base
+        from flext_core import _decorators_base  # noqa: PLC0415
 
         # Verify that TYPE_CHECKING imports are available at runtime for coverage
         assert hasattr(_decorators_base, "_DecoratedFunction")
@@ -829,10 +829,10 @@ class TestDecoratorCoverageImprovements:
 
     def test_immutability_decorators_coverage(self) -> None:
         """Test immutability decorator methods (lines 161, 276, 281)."""
-        from flext_core import (
+        from flext_core import (  # noqa: PLC0415
             _BaseImmutabilityDecorators,
         )
-        from flext_core.decorators import FlextImmutabilityDecorators
+        from flext_core.decorators import FlextImmutabilityDecorators  # noqa: PLC0415
 
         def sample_function(x: int) -> int:
             return x * 2
@@ -850,7 +850,7 @@ class TestDecoratorCoverageImprovements:
 
     def test_functional_decorators_coverage(self) -> None:
         """Test functional decorator methods (lines 290, 295)."""
-        from flext_core import (
+        from flext_core import (  # noqa: PLC0415
             FlextFunctionalDecorators as _BaseFunctionalDecorators,
         )
 
@@ -871,9 +871,9 @@ class TestDecoratorCoverageImprovements:
 
     def test_logging_decorator_exception_handling(self) -> None:
         """Test logging decorator exception handling (lines 222-236)."""
-        import pytest
+        import pytest  # noqa: PLC0415
 
-        from flext_core import (
+        from flext_core import (  # noqa: PLC0415
             FlextLoggingDecorators as _BaseLoggingDecorators,
         )
 
@@ -891,9 +891,9 @@ class TestDecoratorCoverageImprovements:
 
     def test_logging_decorator_type_error_handling(self) -> None:
         """Test logging decorator with TypeError (lines 222-236)."""
-        import pytest
+        import pytest  # noqa: PLC0415
 
-        from flext_core import (
+        from flext_core import (  # noqa: PLC0415
             FlextLoggingDecorators as _BaseLoggingDecorators,
         )
 
@@ -910,9 +910,9 @@ class TestDecoratorCoverageImprovements:
 
     def test_logging_decorator_value_error_handling(self) -> None:
         """Test logging decorator with ValueError (lines 222-236)."""
-        import pytest
+        import pytest  # noqa: PLC0415
 
-        from flext_core import (
+        from flext_core import (  # noqa: PLC0415
             FlextLoggingDecorators as _BaseLoggingDecorators,
         )
 
@@ -929,9 +929,9 @@ class TestDecoratorCoverageImprovements:
 
     def test_log_exceptions_decorator_exception_handling(self) -> None:
         """Test log_exceptions_decorator exception handling (lines 246-267)."""
-        import pytest
+        import pytest  # noqa: PLC0415
 
-        from flext_core import (
+        from flext_core import (  # noqa: PLC0415
             FlextLoggingDecorators as _BaseLoggingDecorators,
         )
 
@@ -948,9 +948,9 @@ class TestDecoratorCoverageImprovements:
 
     def test_log_exceptions_decorator_multiple_exception_types(self) -> None:
         """Test log_exceptions_decorator with different exception types (lines 246-267)."""
-        import pytest
+        import pytest  # noqa: PLC0415
 
-        from flext_core import (
+        from flext_core import (  # noqa: PLC0415
             FlextLoggingDecorators as _BaseLoggingDecorators,
         )
 
@@ -977,7 +977,7 @@ class TestDecoratorCoverageImprovements:
 
     def test_safe_call_decorator_with_error_handler(self) -> None:
         """Test safe_call_decorator with error handler (lines 325-326)."""
-        from flext_core import _safe_call_decorator
+        from flext_core import _safe_call_decorator  # noqa: PLC0415
 
         error_handled = False
 
@@ -999,9 +999,9 @@ class TestDecoratorCoverageImprovements:
 
     def test_validate_input_decorator_validation_failure(self) -> None:
         """Test validation decorator with validation failure (lines 377-388)."""
-        import pytest
+        import pytest  # noqa: PLC0415
 
-        from flext_core import _validate_input_decorator
+        from flext_core import _validate_input_decorator  # noqa: PLC0415
 
         def always_false_validator(arg: object) -> bool:
             return False
@@ -1017,9 +1017,9 @@ class TestDecoratorCoverageImprovements:
 
     def test_validate_input_decorator_with_multiple_args(self) -> None:
         """Test validation decorator with multiple arguments (lines 377-388)."""
-        import pytest
+        import pytest  # noqa: PLC0415
 
-        from flext_core import _validate_input_decorator
+        from flext_core import _validate_input_decorator  # noqa: PLC0415
 
         def validator_requiring_positive(arg: object) -> bool:
             return isinstance(arg, int) and arg > 0
@@ -1040,7 +1040,7 @@ class TestDecoratorCoverageImprovements:
 
     def test_decorator_factory_methods_coverage(self) -> None:
         """Test decorator factory methods (lines 401, 408, 413, 420)."""
-        from flext_core import (
+        from flext_core import (  # noqa: PLC0415
             _BaseDecoratorFactory,
         )
 
@@ -1067,7 +1067,7 @@ class TestDecoratorCoverageImprovements:
 
     def test_error_handling_decorator_retry_method(self) -> None:
         """Test retry_decorator method (line 161)."""
-        from flext_core import (
+        from flext_core import (  # noqa: PLC0415
             FlextErrorHandlingDecorators as _BaseErrorHandlingDecorators,
         )
 

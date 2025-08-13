@@ -6,8 +6,8 @@ strict PEP8 compliance at all times.
 
 from __future__ import annotations
 
-import subprocess
-import sys
+import contextlib
+import io
 from pathlib import Path
 
 import pytest
@@ -18,7 +18,7 @@ pytestmark = [pytest.mark.unit, pytest.mark.pep8]
 PKG_ROOT = Path(__file__).resolve().parents[2]
 
 
-def _run_ruff_command(command_args: list[str]) -> subprocess.CompletedProcess[str]:
+def _run_ruff_command(command_args: list[str]) -> object:
     """Safely execute ruff commands with validated arguments.
 
     Args:
@@ -58,18 +58,34 @@ def _run_ruff_command(command_args: list[str]) -> subprocess.CompletedProcess[st
             validation_msg: str = f"Argument '{arg}' not in allowlist"
             raise ValueError(validation_msg)
 
-    # Construct safe command with hardcoded python executable
-    safe_command = [sys.executable, "-m", "ruff", *command_args]
+    # Execute ruff in-process to avoid spawning subprocesses
+    try:
+        import ruff.__main__ as ruff_main  # type: ignore[import-not-found]  # noqa: PLC0415
 
-    # Execute with safe parameters - subprocess call is secure due to input validation
-    return subprocess.run(
-        safe_command,
-        check=False,
-        capture_output=True,
-        text=True,
-        cwd=PKG_ROOT,
-        timeout=60,  # Prevent hanging
-    )
+        stdout = io.StringIO()
+        stderr = io.StringIO()
+        with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
+            exit_code = 0
+            try:
+                ruff_main.main([*command_args, str(PKG_ROOT)])  # type: ignore[arg-type]
+            except SystemExit as exc:  # ruff exits via SystemExit
+                exit_code = int(getattr(exc, "code", 0) or 0)
+
+        class CompletedProcess:  # type: ignore[too-many-instance-attributes]
+            def __init__(self, returncode: int, out: str, err: str) -> None:
+                self.returncode: int = returncode
+                self.stdout: str = out
+                self.stderr: str = err
+
+        return CompletedProcess(exit_code, stdout.getvalue(), stderr.getvalue())
+    except Exception as exc:  # Fallback to error result
+        class CompletedProcess:  # type: ignore[too-many-instance-attributes]
+            def __init__(self, returncode: int, out: str, err: str) -> None:
+                self.returncode: int = returncode
+                self.stdout: str = out
+                self.stderr: str = err
+
+        return CompletedProcess(1, "", f"ruff execution failed: {exc}")
 
 
 class TestPEP8Compliance:
