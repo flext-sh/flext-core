@@ -1,11 +1,5 @@
 # flext-core
 
-[![Python 3.13](https://img.shields.io/badge/python-3.13-blue.svg)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
-[![Type checked: mypy](https://img.shields.io/badge/type%20checked-mypy-blue)](http://mypy-lang.org/)
-[![Test Coverage: 75%](https://img.shields.io/badge/coverage-75%25-green.svg)](https://coverage.readthedocs.io/)
-
 **Enterprise foundation library providing railway-oriented programming, dependency injection, and domain-driven design patterns for the FLEXT ecosystem.**
 
 ## Overview
@@ -49,7 +43,7 @@ def process_user(user_id: str) -> FlextResult[User]:
     """All operations return FlextResult for composability."""
     if not user_id:
         return FlextResult.fail("Invalid user ID")
-    
+
     user = User(id=user_id, name="John Doe")
     return FlextResult.ok(user)
 
@@ -95,7 +89,7 @@ from flext_core import FlextEntity, FlextValueObject, FlextAggregateRoot
 class Email(FlextValueObject):
     """Immutable value object with built-in validation."""
     address: str
-    
+
     def validate(self) -> FlextResult[None]:
         if "@" not in self.address:
             return FlextResult.fail("Invalid email format")
@@ -106,12 +100,12 @@ class User(FlextEntity):
     name: str
     email: Email
     is_active: bool = False
-    
+
     def activate(self) -> FlextResult[None]:
         """Business operations return FlextResult."""
         if self.is_active:
             return FlextResult.fail("User already active")
-        
+
         self.is_active = True
         self.add_domain_event("UserActivated", {"user_id": self.id})
         return FlextResult.ok(None)
@@ -120,11 +114,11 @@ class Account(FlextAggregateRoot):
     """Aggregate root managing consistency boundaries."""
     owner: User
     balance: Decimal
-    
+
     def withdraw(self, amount: Decimal) -> FlextResult[None]:
         if amount > self.balance:
             return FlextResult.fail("Insufficient funds")
-        
+
         self.balance -= amount
         self.add_domain_event("MoneyWithdrawn", {
             "account_id": self.id,
