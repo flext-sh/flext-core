@@ -14,85 +14,85 @@ The source code follows Clean Architecture principles with clear separation of c
 
 **Core contracts and type system**
 
-| Module | Purpose | Key Components |
-|--------|---------|----------------|
-| `__init__.py` | Public API exports | All public classes and functions |
-| `typings.py` | Type definitions | Type aliases, protocols, generics |
-| `constants.py` | System constants | Enums, configuration defaults |
-| `__version__.py` | Version info | Version string and metadata |
+| Module           | Purpose            | Key Components                    |
+| ---------------- | ------------------ | --------------------------------- |
+| `__init__.py`    | Public API exports | All public classes and functions  |
+| `typings.py`     | Type definitions   | Type aliases, protocols, generics |
+| `constants.py`   | System constants   | Enums, configuration defaults     |
+| `__version__.py` | Version info       | Version string and metadata       |
 
 ### Core Patterns
 
 **Railway-oriented programming and DI**
 
-| Module | Purpose | Key Components |
-|--------|---------|----------------|
-| `result.py` | Error handling | `FlextResult[T]`, chaining methods |
-| `container.py` | Dependency injection | `FlextContainer`, service registry |
-| `exceptions.py` | Exception hierarchy | Domain exceptions, error types |
-| `utilities.py` | Helper functions | ID generation, common operations |
+| Module          | Purpose              | Key Components                     |
+| --------------- | -------------------- | ---------------------------------- |
+| `result.py`     | Error handling       | `FlextResult[T]`, chaining methods |
+| `container.py`  | Dependency injection | `FlextContainer`, service registry |
+| `exceptions.py` | Exception hierarchy  | Domain exceptions, error types     |
+| `utilities.py`  | Helper functions     | ID generation, common operations   |
 
 ### Configuration & Infrastructure
 
 **Settings, logging, and integration**
 
-| Module | Purpose | Key Components |
-|--------|---------|----------------|
-| `config.py` | Configuration management | `FlextSettings`, env loading |
-| `config_base.py` | Base configuration | Configuration patterns |
-| `config_models.py` | Config models | Database, cache, service configs |
-| `loggings.py` | Structured logging | Logger factory, correlation IDs |
-| `payload.py` | Message structures | Events, messages, payloads |
-| `interfaces.py` | Contracts | Protocols, interfaces |
+| Module             | Purpose                  | Key Components                   |
+| ------------------ | ------------------------ | -------------------------------- |
+| `config.py`        | Configuration management | `FlextSettings`, env loading     |
+| `config_base.py`   | Base configuration       | Configuration patterns           |
+| `config_models.py` | Config models            | Database, cache, service configs |
+| `loggings.py`      | Structured logging       | Logger factory, correlation IDs  |
+| `payload.py`       | Message structures       | Events, messages, payloads       |
+| `interfaces.py`    | Contracts                | Protocols, interfaces            |
 
 ### Domain Patterns
 
 **DDD building blocks**
 
-| Module | Purpose | Key Components |
-|--------|---------|----------------|
-| `entities.py` | Domain entities | Business entities with identity |
-| `value_objects.py` | Value objects | Immutable domain values |
-| `aggregate_root.py` | Aggregates | Consistency boundaries |
-| `domain_services.py` | Domain services | Stateless domain operations |
-| `models.py` | Domain models | Shared model definitions |
+| Module               | Purpose         | Key Components                  |
+| -------------------- | --------------- | ------------------------------- |
+| `entities.py`        | Domain entities | Business entities with identity |
+| `value_objects.py`   | Value objects   | Immutable domain values         |
+| `aggregate_root.py`  | Aggregates      | Consistency boundaries          |
+| `domain_services.py` | Domain services | Stateless domain operations     |
+| `models.py`          | Domain models   | Shared model definitions        |
 
 ### Application Patterns
 
 **CQRS and command handling**
 
-| Module | Purpose | Key Components |
-|--------|---------|----------------|
-| `commands.py` | Command patterns | Commands, command bus |
-| `handlers.py` | Request handlers | Command/query handlers |
-| `handlers_base.py` | Base handlers | Handler abstractions |
-| `validation.py` | Validation system | Validators, rules |
-| `validation_base.py` | Validation base | Base validation patterns |
+| Module               | Purpose           | Key Components           |
+| -------------------- | ----------------- | ------------------------ |
+| `commands.py`        | Command patterns  | Commands, command bus    |
+| `handlers.py`        | Request handlers  | Command/query handlers   |
+| `handlers_base.py`   | Base handlers     | Handler abstractions     |
+| `validation.py`      | Validation system | Validators, rules        |
+| `validation_base.py` | Validation base   | Base validation patterns |
 
 ### Cross-Cutting Concerns
 
 **Mixins, decorators, and utilities**
 
-| Module | Purpose | Key Components |
-|--------|---------|----------------|
-| `mixins.py` | Behavior mixins | Timestamp, audit, soft delete |
-| `decorators.py` | Function decorators | Retry, cache, logging |
-| `guards.py` | Guard clauses | Validation, assertions |
-| `context.py` | Context management | Request context, correlation |
-| `core.py` | Core integration | Main FlextCore class |
+| Module          | Purpose             | Key Components                |
+| --------------- | ------------------- | ----------------------------- |
+| `mixins.py`     | Behavior mixins     | Timestamp, audit, soft delete |
+| `decorators.py` | Function decorators | Retry, cache, logging         |
+| `guards.py`     | Guard clauses       | Validation, assertions        |
+| `context.py`    | Context management  | Request context, correlation  |
+| `core.py`       | Core integration    | Main FlextCore class          |
 
 ### Specialized Modules
 
 **Domain-specific and compatibility**
 
-| Module | Purpose | Key Components |
-|--------|---------|----------------|
-| `observability.py` | Monitoring patterns | Metrics, tracing, health checks |
-| `semantic.py` | Semantic processing | Domain language processing |
-| `schema_processing.py` | Schema handling | Data schema operations |
-| `singer_base.py` | Singer compatibility | Singer SDK base classes |
-| `legacy.py` | Legacy support | Backward compatibility |
-| `testing_utilities.py` | Test helpers | Test fixtures, utilities |
+| Module                 | Purpose              | Key Components                  |
+| ---------------------- | -------------------- | ------------------------------- |
+| `observability.py`     | Monitoring patterns  | Metrics, tracing, health checks |
+| `semantic.py`          | Semantic processing  | Domain language processing      |
+| `schema_processing.py` | Schema handling      | Data schema operations          |
+| `singer_base.py`       | Singer compatibility | Singer SDK base classes         |
+| `legacy.py`            | Legacy support       | Backward compatibility          |
+| `testing_utilities.py` | Test helpers         | Test fixtures, utilities        |
 
 ## Usage Examples
 

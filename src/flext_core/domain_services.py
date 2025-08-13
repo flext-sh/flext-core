@@ -115,7 +115,7 @@ class FlextDomainService[TDomainResult](
         """Get service information for monitoring."""
         return {
             "service_type": self.__class__.__name__,
-            "config_valid": self.validate_config().success,
+            "config_valid": self.validate_config().is_success,
         }
 
 

@@ -261,7 +261,10 @@ class TestDomainFactory:
 
     @classmethod
     def create_test_user(
-        cls, name: str = "Test User", email: str = "test@example.com", **kwargs: object,
+        cls,
+        name: str = "Test User",
+        email: str = "test@example.com",
+        **kwargs: object,
     ) -> FlextResult[TestUser]:
         """Create test user with validation."""
         try:
@@ -370,7 +373,8 @@ class TestDomainFactory:
 
     @classmethod
     def create_test_email(
-        cls, email: str = "test@example.com",
+        cls,
+        email: str = "test@example.com",
     ) -> FlextResult[TestEmailAddress]:
         """Create test email address with validation."""
         try:
@@ -395,7 +399,9 @@ class TestDomainFactory:
         try:
             money_amount = Decimal(str(amount))
             money_obj = TestMoney(
-                amount=money_amount, currency=currency, description=description,
+                amount=money_amount,
+                currency=currency,
+                description=description,
             )
             validation = money_obj.validate_business_rules()
             if validation.is_failure:
@@ -409,7 +415,9 @@ class TestDomainFactory:
     # Add compatibility aliases for test methods
     @classmethod
     def create_concrete_entity(
-        cls, name: str = "Test User", **kwargs: object,
+        cls,
+        name: str = "Test User",
+        **kwargs: object,
     ) -> FlextResult[TestUser]:
         """Create concrete entity (alias for create_test_user for backward compatibility)."""
         email = str(kwargs.get("email", "test@example.com"))
@@ -427,12 +435,17 @@ class TestDomainFactory:
         currency = str(kwargs.get("currency", "USD"))
         description = str(kwargs.get("description", "test money"))
         return cls.create_test_money(
-            amount=normalized_amount, currency=currency, description=description,
+            amount=normalized_amount,
+            currency=currency,
+            description=description,
         )
 
     @classmethod
     def create_complex_value_object(
-        cls, name: str, tags: list[str], metadata: dict[str, object],
+        cls,
+        name: str,
+        tags: list[str],
+        metadata: dict[str, object],
     ) -> FlextResult[TestComplexValueObject]:
         """Create complex value object for testing."""
         try:
@@ -456,7 +469,9 @@ class TestDomainFactory:
 
 
 def create_test_user_safe(
-    name: str = "Test User", email: str = "test@example.com", **kwargs: object,
+    name: str = "Test User",
+    email: str = "test@example.com",
+    **kwargs: object,
 ) -> TestUser:
     """Create test user with error handling."""
     result = TestDomainFactory.create_test_user(name, email, **kwargs)
@@ -469,7 +484,9 @@ def create_test_user_safe(
 
 
 def create_test_order_safe(
-    user_id: TEntityId, total_amount: str | Decimal = "100.00", **kwargs: object,
+    user_id: TEntityId,
+    total_amount: str | Decimal = "100.00",
+    **kwargs: object,
 ) -> TestOrder:
     """Create test order with error handling."""
     result = TestDomainFactory.create_test_order(user_id, total_amount, **kwargs)
@@ -482,7 +499,8 @@ def create_test_order_safe(
 
 
 def create_test_product_safe(
-    name: str = "Test Product", **kwargs: object,
+    name: str = "Test Product",
+    **kwargs: object,
 ) -> TestProduct:
     """Create test product with error handling."""
     # Normalize optional price for type-compatibility
@@ -493,7 +511,9 @@ def create_test_product_safe(
         normalized_price = str(price_obj)
     # mypy: kwargs is object; cast to a typed dict for safe ** expansion
     result = TestDomainFactory.create_test_product(
-        name=name, price=normalized_price, **kwargs,
+        name=name,
+        price=normalized_price,
+        **kwargs,
     )
     if result.is_failure:
         raise ValueError(f"Failed to create test product: {result.error}")

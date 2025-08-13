@@ -9,11 +9,19 @@ from __future__ import annotations
 
 import json
 import secrets
+
+# Ensure project root is on sys.path so `examples` package imports work
+import sys as _sys
+from pathlib import Path as _Path
 from typing import cast
 
 from flext_core import FlextResult, FlextValidation, safe_call
 
-from .shared_domain import (
+_project_root = _Path(__file__).resolve().parents[1]
+if str(_project_root) not in _sys.path:
+    _sys.path.insert(0, str(_project_root))
+
+from examples.shared_domain import (
     SharedDomainFactory,
     User as SharedUser,
 )
@@ -130,7 +138,8 @@ def validate_user_data(data: UserDataDict) -> FlextResult[UserDataDict]:
             "Missing required fields",
         )
         .filter(
-            lambda d: FlextValidation.is_non_empty_string(d["name"]), "Invalid name",
+            lambda d: FlextValidation.is_non_empty_string(d["name"]),
+            "Invalid name",
         )
         .tap(lambda d: print(f"✅ Validated: {d['name']}"))
     )
@@ -162,7 +171,8 @@ def send_welcome_email(user: SharedUser) -> FlextResult[bool]:
     return (
         FlextResult.ok(data=True)
         .filter(
-            lambda _: "@invalid.com" not in user.email_address.email, "Invalid domain",
+            lambda _: "@invalid.com" not in user.email_address.email,
+            "Invalid domain",
         )
         .tap(lambda _: print(f"✅ Email sent to: {user.email_address.email}"))
     )
@@ -180,7 +190,8 @@ def process_user_registration(data: UserDataDict) -> FlextResult[dict[str, objec
                 send_welcome_email(user).map(lambda x: cast("object", x)),
             ).map(
                 lambda _: cast(
-                    "dict[str, object]", {"user_id": user.id, "status": "registered"},
+                    "dict[str, object]",
+                    {"user_id": user.id, "status": "registered"},
                 ),
             ),
         )
@@ -216,7 +227,8 @@ def process_multiple_users(
 
 
 def process_with_retry(
-    data: UserDataDict, max_retries: int = 3,
+    data: UserDataDict,
+    max_retries: int = 3,
 ) -> FlextResult[dict[str, object]]:
     """🚀 ZERO-BOILERPLATE retry using FlextResult composition."""
     for attempt in range(1, max_retries + 1):

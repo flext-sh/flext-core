@@ -143,10 +143,10 @@ class FlextValueObject(
         """
         # Get field definition from registry
         field_result = FlextFields.get_field_by_name(field_name)
-        if field_result.success:
+        if field_result.is_success:
             field_def = field_result.unwrap()
             validation_result = field_def.validate_value(field_value)
-            if validation_result.success:
+            if validation_result.is_success:
                 return FlextResult.ok(None)
             return FlextResult.fail(
                 validation_result.error or "Field validation failed",
@@ -228,7 +228,7 @@ class FlextValueObject(
             "type": f"ValueObject.{self.__class__.__name__}",
             "timestamp": FlextGenerators.generate_timestamp(),
             "correlation_id": FlextGenerators.generate_correlation_id(),
-            "validated": domain_validation.success,
+            "validated": domain_validation.is_success,
         }
 
         # 3. Use base formatters for data preparation
@@ -249,7 +249,7 @@ class FlextValueObject(
         payload_data: dict[str, str | int | float | bool | None] = {
             "value_object_data": formatted_data,
             "class_info": f"{self.__class__.__module__}.{self.__class__.__name__}",
-            "validation_status": "valid" if domain_validation.success else "invalid",
+            "validation_status": "valid" if domain_validation.is_success else "invalid",
         }
 
         # 6. Create payload with validation

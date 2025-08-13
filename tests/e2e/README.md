@@ -15,8 +15,8 @@ tests/e2e/
 ├── test_error_recovery.py          # Error handling and recovery
 ├── test_performance_scenarios.py   # Performance validation
 └── fixtures/                       # E2E test data and configs
-    ├── test_data.json              
-    └── test_config.yaml            
+    ├── test_data.json
+    └── test_config.yaml
 ```
 
 ## E2E Test Scenarios
@@ -29,7 +29,7 @@ def test_complete_user_registration_flow():
     # Initialize application
     app = Application()
     app.initialize()
-    
+
     # Step 1: Validate input
     user_data = {
         "email": "newuser@example.com",
@@ -37,21 +37,21 @@ def test_complete_user_registration_flow():
         "name": "John Doe",
         "age": 30
     }
-    
+
     # Step 2: Create user through application layer
     result = app.register_user(user_data)
     assert result.success
-    
+
     # Step 3: Verify user creation
     user = result.unwrap()
     assert user.id is not None
     assert user.email == "newuser@example.com"
     assert user.is_active is False
-    
+
     # Step 4: Activate user
     activation_result = app.activate_user(user.id)
     assert activation_result.success
-    
+
     # Step 5: Verify user can login
     login_result = app.authenticate(
         email="newuser@example.com",
@@ -74,23 +74,23 @@ def test_data_processing_pipeline():
         "enrichment": {"add_metadata": True},
         "output": {"format": "json"}
     })
-    
+
     # Load test data
     input_data = load_test_data("large_dataset.json")
-    
+
     # Process through pipeline
     result = pipeline.process(input_data)
-    
+
     # Verify all stages completed
     assert result.success
     output = result.unwrap()
-    
+
     # Validate output
     assert output["status"] == "completed"
     assert output["records_processed"] == len(input_data)
     assert output["errors"] == []
     assert output["metadata"]["pipeline_version"] == "1.0.0"
-    
+
     # Verify data integrity
     for record in output["data"]:
         assert record["validated"] is True
@@ -104,29 +104,29 @@ def test_data_processing_pipeline():
 def test_error_recovery_scenarios():
     """Test system recovery from various error conditions."""
     app = Application()
-    
+
     # Scenario 1: Database connection failure
     with simulate_database_failure():
         result = app.save_data({"test": "data"})
         assert result.is_failure
         assert "database" in result.error.lower()
-        
+
         # Verify graceful degradation
         assert app.is_running()
         assert app.health_check()["status"] == "degraded"
-    
+
     # Scenario 2: Recovery after failure
     result = app.save_data({"test": "data"})
     assert result.success  # Should work after recovery
-    
+
     # Scenario 3: Cascading failures
     with simulate_multiple_failures(["database", "cache", "queue"]):
         result = app.process_request({"action": "complex"})
         assert result.is_failure
-        
+
         # Verify circuit breaker activated
         assert app.circuit_breaker.is_open
-        
+
     # Scenario 4: Automatic recovery
     time.sleep(5)  # Wait for recovery
     assert app.circuit_breaker.is_closed
@@ -189,7 +189,7 @@ import time
 
 class TestCompleteWorkflows:
     """Test complete application workflows."""
-    
+
     @pytest.fixture(scope="class")
     def app(self):
         """Provide configured application instance."""
@@ -203,7 +203,7 @@ class TestCompleteWorkflows:
         app.initialize()
         yield app
         app.shutdown()
-    
+
     def test_user_lifecycle(self, app):
         """Test complete user lifecycle."""
         # Create user
@@ -213,18 +213,18 @@ class TestCompleteWorkflows:
         )
         assert create_result.success
         user_id = create_result.unwrap().id
-        
+
         # Update user
         update_result = app.update_user(
             user_id,
             {"name": "Updated Name"}
         )
         assert update_result.success
-        
+
         # Deactivate user
         deactivate_result = app.deactivate_user(user_id)
         assert deactivate_result.success
-        
+
         # Verify final state
         user = app.get_user(user_id).unwrap()
         assert user.name == "Updated Name"
@@ -237,35 +237,35 @@ class TestCompleteWorkflows:
 def test_concurrent_operations():
     """Test system under concurrent load."""
     import concurrent.futures
-    
+
     app = Application()
     results = []
-    
+
     def create_user(index):
         """Create a user with index."""
         return app.create_user(
             email=f"user{index}@example.com",
             password="password123"
         )
-    
+
     # Execute concurrent operations
     with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
         futures = [
             executor.submit(create_user, i)
             for i in range(100)
         ]
-        
+
         for future in concurrent.futures.as_completed(futures):
             result = future.result()
             results.append(result)
-    
+
     # Verify all operations completed
     successful = sum(1 for r in results if r.success)
     failed = sum(1 for r in results if r.is_failure)
-    
+
     assert successful >= 95  # Allow 5% failure rate
     assert failed <= 5
-    
+
     # Verify data consistency
     all_users = app.list_users().unwrap()
     assert len(all_users) == successful
@@ -277,20 +277,20 @@ def test_concurrent_operations():
 def test_resilience_under_failures():
     """Test system resilience under various failures."""
     app = Application()
-    
+
     # Test timeout handling
     with set_timeout(0.1):  # 100ms timeout
         result = app.slow_operation()
         assert result.is_failure
         assert "timeout" in result.error.lower()
-    
+
     # Test rate limiting
     for i in range(100):
         result = app.api_call()
         if i > 10:  # After rate limit
             assert result.is_failure
             assert "rate limit" in result.error.lower()
-    
+
     # Test memory pressure
     with limit_memory(100_000_000):  # 100MB limit
         result = app.memory_intensive_operation()
@@ -306,7 +306,7 @@ def test_resilience_under_failures():
 def test_response_time_requirements():
     """Validate response time meets requirements."""
     import time
-    
+
     app = Application()
     operations = {
         "read": 0.1,    # 100ms max
@@ -314,12 +314,12 @@ def test_response_time_requirements():
         "query": 1.0,   # 1s max
         "batch": 5.0    # 5s max
     }
-    
+
     for operation, max_time in operations.items():
         start = time.time()
         result = getattr(app, f"{operation}_operation")()
         elapsed = time.time() - start
-        
+
         assert result.success
         assert elapsed < max_time, f"{operation} took {elapsed}s (max: {max_time}s)"
 ```
@@ -334,21 +334,21 @@ def test_sustained_load():
     start_time = time.time()
     operations_count = 0
     errors_count = 0
-    
+
     while time.time() - start_time < duration:
         result = app.process_request({
             "type": "standard",
             "data": generate_test_data()
         })
-        
+
         operations_count += 1
         if result.is_failure:
             errors_count += 1
-    
+
     # Calculate metrics
     error_rate = errors_count / operations_count
     ops_per_second = operations_count / duration
-    
+
     # Verify requirements
     assert error_rate < 0.01  # Less than 1% error rate
     assert ops_per_second > 100  # At least 100 ops/sec
@@ -363,7 +363,7 @@ def load_test_data(filename):
     """Load test data from fixtures."""
     import json
     from pathlib import Path
-    
+
     data_path = Path(__file__).parent / "fixtures" / filename
     with open(data_path) as f:
         return json.load(f)
@@ -376,7 +376,7 @@ def generate_test_data(size="medium"):
         "large": 1000,
         "huge": 10000
     }
-    
+
     count = sizes.get(size, 100)
     return [
         {
@@ -423,21 +423,21 @@ def production_config():
 def test_state_transitions():
     """Test entity state transitions."""
     app = Application()
-    
+
     # Initial state
     order = app.create_order({"items": ["item1", "item2"]}).unwrap()
     assert order.status == "pending"
-    
+
     # Process order
     app.process_order(order.id)
     order = app.get_order(order.id).unwrap()
     assert order.status == "processing"
-    
+
     # Complete order
     app.complete_order(order.id)
     order = app.get_order(order.id).unwrap()
     assert order.status == "completed"
-    
+
     # Verify state consistency
     assert order.completed_at is not None
     assert order.completed_at > order.created_at
@@ -448,26 +448,26 @@ def test_state_transitions():
 ```python
 class TestWithCleanup:
     """Tests with proper cleanup."""
-    
+
     def setup_method(self):
         """Setup before each test."""
         self.app = Application()
         self.created_resources = []
-    
+
     def teardown_method(self):
         """Cleanup after each test."""
         # Clean up created resources
         for resource_id in self.created_resources:
             self.app.delete_resource(resource_id)
-        
+
         # Shutdown application
         self.app.shutdown()
-    
+
     def test_with_resources(self):
         """Test that creates resources."""
         result = self.app.create_resource({"name": "test"})
         self.created_resources.append(result.unwrap().id)
-        
+
         # Test logic here
         assert result.success
 ```

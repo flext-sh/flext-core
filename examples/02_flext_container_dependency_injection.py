@@ -8,7 +8,9 @@ lifecycle management, and configuration-driven container setup.
 from __future__ import annotations
 
 import secrets
+import sys as _sys
 from abc import ABC, abstractmethod
+from pathlib import Path as _Path
 from typing import TYPE_CHECKING, cast
 
 from flext_core import (
@@ -24,7 +26,11 @@ from flext_core import (
     get_flext_container,
 )
 
-from .shared_domain import (
+_project_root = _Path(__file__).resolve().parents[1]
+if str(_project_root) not in _sys.path:
+    _sys.path.insert(0, str(_project_root))
+
+from examples.shared_domain import (
     SharedDomainFactory,
     User as SharedUser,
     log_domain_operation,
@@ -105,7 +111,9 @@ class ServiceConfiguration:
     """Value object containing service configuration data."""
 
     def __init__(
-        self, name: str, factory_method: Callable[[], FlextResult[object]],
+        self,
+        name: str,
+        factory_method: Callable[[], FlextResult[object]],
     ) -> None:
         self.name = name
         self.factory_method = factory_method
@@ -165,7 +173,8 @@ class ContainerSetupOrchestrator:
             service_result = config.factory_method()
             registration_result = (
                 self._registration_strategy.register_service_with_validation(
-                    config.name, service_result,
+                    config.name,
+                    service_result,
                 )
             )
             if registration_result.is_failure:
@@ -182,7 +191,8 @@ class ContainerSetupOrchestrator:
         user_management_factory = factory_creator.create_factory()
 
         factory_result = self._container.register_factory(
-            "UserManagementService", user_management_factory,
+            "UserManagementService",
+            user_management_factory,
         )
         if factory_result.is_failure:
             return FlextResult.fail(
@@ -205,7 +215,9 @@ class UserManagementServiceFactoryCreator:
             # FlextContainer expects factories to return services directly,
             # not FlextResult
             create_method = getattr(
-                self._configurer, "create_user_management_service", None,
+                self._configurer,
+                "create_user_management_service",
+                None,
             )
             if create_method is None:
                 msg = "User management service factory not available"
@@ -260,11 +272,14 @@ class PrerequisiteValidator:
 
     @staticmethod
     def validate_condition(
-        *, condition: bool, error_message: str,
+        *,
+        condition: bool,
+        error_message: str,
     ) -> FlextResult[PrerequisiteValidation]:
         """Validate prerequisites with detailed result."""
         validation = PrerequisiteValidation(
-            is_valid=condition, error_message=error_message if not condition else "",
+            is_valid=condition,
+            error_message=error_message if not condition else "",
         )
 
         if not condition:
@@ -726,7 +741,8 @@ class DependencyResolver:
         return FlextResult.ok(cast("TAnyObject", service_data))
 
     def resolve_multiple_dependencies(
-        self, *service_names: str,
+        self,
+        *service_names: str,
     ) -> FlextResult[tuple[TAnyObject, ...]]:
         """Resolve multiple dependencies with early failure detection."""
         resolved_services: list[TAnyObject] = []
@@ -829,7 +845,8 @@ class BaseServiceConfigurer:
         """Generic dependency resolution to eliminate code duplication."""
         result: FlextResult[tuple[object, ...]] = (
             self._dependency_resolver.resolve_multiple_dependencies(
-                service1_name, service2_name,
+                service1_name,
+                service2_name,
             )
         )
         if result.is_failure:
@@ -848,16 +865,20 @@ class BaseServiceConfigurer:
         self,
     ) -> FlextResult[tuple[EmailService, UserRepository]]:
         """Resolve notification service dependencies using DRY principle."""
-        return self._resolve_typed_dependencies[EmailService, UserRepository](
-            "EmailService", "UserRepository", "notification"
+        return self._resolve_typed_dependencies(
+            "EmailService",
+            "UserRepository",
+            "notification",
         )
 
     def _resolve_user_management_dependencies(
         self,
     ) -> FlextResult[tuple[UserRepository, NotificationService]]:
         """Resolve user management service dependencies using DRY principle."""
-        return self._resolve_typed_dependencies[UserRepository, NotificationService](
-            "UserRepository", "NotificationService", "user management"
+        return self._resolve_typed_dependencies(
+            "UserRepository",
+            "NotificationService",
+            "user management",
         )
 
 
@@ -1044,7 +1065,8 @@ class TestServiceConfigurer:
             service_result = FlextResult.ok(service_instance)
             registration_result = (
                 self._registration_strategy.register_service_with_validation(
-                    service_name, service_result,
+                    service_name,
+                    service_result,
                 )
             )
             if registration_result.is_failure:
@@ -1072,7 +1094,8 @@ class TestServiceConfigurer:
         user_management_factory = factory_creator.create_factory()
 
         factory_result = self._container.register_factory(
-            "UserManagementService", user_management_factory,
+            "UserManagementService",
+            user_management_factory,
         )
         if factory_result.is_failure:
             return FlextResult.fail(
@@ -1139,7 +1162,8 @@ def setup_test_container() -> FlextResult[FlextContainer]:
 
 
 def _check_database_service_health(
-    container: FlextContainer, services_dict: dict[str, object],
+    container: FlextContainer,
+    services_dict: dict[str, object],
 ) -> None:
     """Check database service health and update services dictionary."""
     try:
@@ -1189,17 +1213,24 @@ def _check_generic_service_health(
 
 
 def _check_email_service_health(
-    container: FlextContainer, services_dict: dict[str, object],
+    container: FlextContainer,
+    services_dict: dict[str, object],
 ) -> None:
     """Check email service health and update services dictionary."""
     _check_generic_service_health(container, services_dict, "EmailService", "email")
 
 
 def _check_user_repository_health(
-    container: FlextContainer, services_dict: dict[str, object],
+    container: FlextContainer,
+    services_dict: dict[str, object],
 ) -> None:
     """Check user repository health and update services dictionary."""
-    _check_generic_service_health(container, services_dict, "UserRepository", "user_repository")
+    _check_generic_service_health(
+        container,
+        services_dict,
+        "UserRepository",
+        "user_repository",
+    )
 
 
 def _determine_overall_health_status(services_dict: dict[str, object]) -> str:
@@ -1298,7 +1329,10 @@ class ContainerDemonstrator:
         return command.execute()
 
     def _register_user_with_container(
-        self, container: FlextContainer, user_data: TUserData, context_name: str,
+        self,
+        container: FlextContainer,
+        user_data: TUserData,
+        context_name: str,
     ) -> FlextResult[None]:
         """Register user with container using strategy pattern."""
         user_registration_strategy = UserRegistrationStrategy(container, context_name)
@@ -1370,7 +1404,8 @@ class UserRegistrationStrategy:
             return FlextResult.fail(f"{self._context_name.title()} service error: {e}")
 
     def _handle_registration_result(
-        self, registration_result: FlextResult[TAnyObject],
+        self,
+        registration_result: FlextResult[TAnyObject],
     ) -> FlextResult[None]:
         """Handle user registration result."""
         if registration_result.success:
@@ -1425,7 +1460,9 @@ class UserRegistrationTestCommand(DemonstrationCommand):
         if self._container is None:
             return FlextResult.fail("Container is None after validation")
         return self._demonstrator._register_user_with_container(
-            self._container, test_user_data, self._context_name,
+            self._container,
+            test_user_data,
+            self._context_name,
         )
 
     # Note: This method is duplicated and should be removed
@@ -1491,7 +1528,9 @@ class ProductionContainerDemoCommand(DemonstrationCommand):
     """Command for production container demonstration - SOLID SRP."""
 
     def __init__(
-        self, demonstrator: ContainerDemonstrator, section: DemonstrationSection,
+        self,
+        demonstrator: ContainerDemonstrator,
+        section: DemonstrationSection,
     ) -> None:
         self._demonstrator = demonstrator
         self._section = section
@@ -1538,7 +1577,9 @@ class ProductionContainerDemoCommand(DemonstrationCommand):
         if self._demonstrator.prod_container is None:
             return FlextResult.fail("Production container is None after validation")
         return self._demonstrator._register_user_with_container(
-            self._demonstrator.prod_container, prod_user_data, "production",
+            self._demonstrator.prod_container,
+            prod_user_data,
+            "production",
         )
 
 

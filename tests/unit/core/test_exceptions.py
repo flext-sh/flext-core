@@ -726,7 +726,9 @@ class TestAdditionalExceptions:
     def test_flext_already_exists_error(self) -> None:
         """Test FlextAlreadyExistsError functionality."""
         error = FlextAlreadyExistsError(
-            "Resource exists", resource_id="456", type="email",
+            "Resource exists",
+            resource_id="456",
+            type="email",
         )
 
         assert str(error) == f"[{ERROR_CODES['ALREADY_EXISTS']}] Resource exists"
@@ -746,7 +748,9 @@ class TestAdditionalExceptions:
     def test_flext_processing_error(self) -> None:
         """Test FlextProcessingError functionality."""
         error = FlextProcessingError(
-            "Processing failed", data="test_data", stage="validation",
+            "Processing failed",
+            data="test_data",
+            stage="validation",
         )
 
         assert str(error) == f"[{ERROR_CODES['PROCESSING_ERROR']}] Processing failed"
@@ -757,7 +761,9 @@ class TestAdditionalExceptions:
     def test_flext_critical_error(self) -> None:
         """Test FlextCriticalError functionality."""
         error = FlextCriticalError(
-            "System failure", system="database", component="connection",
+            "System failure",
+            system="database",
+            component="connection",
         )
 
         assert str(error) == f"[{ERROR_CODES['CRITICAL_ERROR']}] System failure"
@@ -773,7 +779,8 @@ class TestAdditionalExceptions:
             "available_attributes": ["attr1", "attr2"],
         }
         error = FlextAttributeError(
-            "Attribute not found", attribute_context=attr_context,
+            "Attribute not found",
+            attribute_context=attr_context,
         )
 
         assert str(error) == f"[{ERROR_CODES['TYPE_ERROR']}] Attribute not found"
@@ -799,21 +806,27 @@ class TestAdditionalExceptions:
         """Test FlextExceptions factory methods."""
         # Test create_validation_error
         validation_error = FlextExceptions.create_validation_error(
-            "Invalid field", field="email", value="invalid", rules=["email_format"],
+            "Invalid field",
+            field="email",
+            value="invalid",
+            rules=["email_format"],
         )
         assert isinstance(validation_error, FlextValidationError)
         assert validation_error.context["field"] == "email"
 
         # Test create_type_error
         type_error = FlextExceptions.create_type_error(
-            "Type mismatch", expected_type=str, actual_type=int,
+            "Type mismatch",
+            expected_type=str,
+            actual_type=int,
         )
         assert isinstance(type_error, FlextTypeError)
         assert "str" in str(type_error.context["expected_type"])
 
         # Test create_operation_error
         op_error = FlextExceptions.create_operation_error(
-            "Operation failed", operation_name="user_creation",
+            "Operation failed",
+            operation_name="user_creation",
         )
         assert isinstance(op_error, FlextOperationError)
         assert op_error.context["operation"] == "user_creation"
@@ -884,7 +897,9 @@ class TestExceptionsCoverageImprovements:
     def test_factory_config_error_with_config_key(self) -> None:
         """Test create_configuration_error with config_key (lines 641-644)."""
         config_error = FlextExceptions.create_configuration_error(
-            "Config error", config_key="database.host", context={"extra": "data"},
+            "Config error",
+            config_key="database.host",
+            context={"extra": "data"},
         )
 
         assert isinstance(config_error, FlextConfigurationError)

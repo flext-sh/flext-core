@@ -531,7 +531,8 @@ class TestConfigValidation:
         """Test Oracle config validation without service_name or sid."""
         # Creating config without identifiers should fail at creation time
         with pytest.raises(
-            ValueError, match="Either service_name or sid must be provided",
+            ValueError,
+            match="Either service_name or sid must be provided",
         ):
             FlextOracleConfig(
                 username="user",

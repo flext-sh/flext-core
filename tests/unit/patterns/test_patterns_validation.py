@@ -416,7 +416,8 @@ class TestValidationIntegration:
         return validate_all_steps
 
     def _test_successful_validation(
-        self, validation_chain: Callable[[str], FlextResult[str]],
+        self,
+        validation_chain: Callable[[str], FlextResult[str]],
     ) -> None:
         """Test successful validation scenario."""
         result = validation_chain("test123")
@@ -425,7 +426,8 @@ class TestValidationIntegration:
             raise AssertionError(f"Expected {'TEST123'}, got {result.data}")
 
     def _test_validation_failures(
-        self, validation_chain: Callable[[str], FlextResult[str]],
+        self,
+        validation_chain: Callable[[str], FlextResult[str]],
     ) -> None:
         """Test validation failure scenarios."""
         # Test failure at step 1

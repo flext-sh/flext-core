@@ -248,7 +248,8 @@ class TestFlextFieldCoreAdvanced:
                 assert_helpers.assert_result_ok(validation_result)
             elif test_case.scenario == TestScenario.ERROR_CASE:
                 assert_helpers.assert_result_fail(
-                    validation_result, test_case.expected_error,
+                    validation_result,
+                    test_case.expected_error,
                 )
 
     @pytest.mark.parametrize(
@@ -364,7 +365,10 @@ class TestFlextFieldCorePropertyBased:
     @pytest.mark.hypothesis
     @given(
         allowed_values=st.lists(
-            st.text(min_size=1, max_size=10), min_size=1, max_size=5, unique=True,
+            st.text(min_size=1, max_size=10),
+            min_size=1,
+            max_size=5,
+            unique=True,
         ),
         test_value=st.text(min_size=1, max_size=10),
     )
@@ -583,7 +587,8 @@ class TestFlextFieldCoreWithFixtures:
         assert validators["is_valid_uuid"](sample_data["uuid"])
 
     def test_fields_with_mock_factory(
-        self, mock_factory: Callable[[str], object],
+        self,
+        mock_factory: Callable[[str], object],
     ) -> None:
         """Test field integration with external services using mock factory."""
         # Create mock external validation service
@@ -632,7 +637,8 @@ class TestFlextFieldCoreSnapshot:
 
     @pytest.mark.snapshot
     def test_comprehensive_field_snapshot(
-        self, snapshot_manager: Callable[[str, object], None],
+        self,
+        snapshot_manager: Callable[[str, object], None],
     ) -> None:
         """Test comprehensive field configuration snapshot."""
         field = FlextFieldCore(
@@ -685,7 +691,8 @@ class TestFlextFieldCoreSnapshot:
 
     @pytest.mark.snapshot
     def test_field_registry_snapshot(
-        self, snapshot_manager: Callable[[str, object], None],
+        self,
+        snapshot_manager: Callable[[str, object], None],
     ) -> None:
         """Test field registry structure snapshot."""
         registry = FlextFieldRegistry()

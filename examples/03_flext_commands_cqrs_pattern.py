@@ -7,6 +7,8 @@ validation, and event sourcing integration.
 
 from __future__ import annotations
 
+import sys as _sys
+from pathlib import Path as _Path
 from typing import Protocol, cast
 
 from flext_core import (
@@ -20,10 +22,27 @@ from flext_core import (
     TUserData,
 )
 
-from .shared_domain import (
+_project_root = _Path(__file__).resolve().parents[1]
+if str(_project_root) not in _sys.path:
+    _sys.path.insert(0, str(_project_root))
+
+from examples.shared_domain import (
     SharedDomainFactory,
     log_domain_operation,
 )
+
+# Ensure Pydantic resolves forward references for nested models
+try:  # Defensive: ignore if already built
+    _types_ns = {
+        "TServiceName": str,
+        "TUserId": str,
+        "TCorrelationId": str,
+        "TEntityId": str,
+    }
+    FlextCommands.Command.model_rebuild(types_namespace=_types_ns)
+    FlextCommands.Query.model_rebuild(types_namespace=_types_ns)
+except Exception:
+    pass
 
 # =============================================================================
 # VALIDATION CONSTANTS - Business rule constraints
@@ -151,7 +170,9 @@ class BaseCommandHandler:
         return result
 
     def store_domain_event(
-        self, event_type: str, data: TAnyObject,
+        self,
+        event_type: str,
+        data: TAnyObject,
     ) -> FlextResult[TEntityId]:
         """DRY Helper: Store domain event with error handling."""
         event = DomainEvent(event_type, data)
@@ -286,6 +307,15 @@ class DeleteUserCommand(FlextCommands.Command):
         return FlextResult.ok(None)
 
 
+# Rebuild Pydantic models for local command classes
+try:
+    CreateUserCommand.model_rebuild(types_namespace=_types_ns)
+    UpdateUserCommand.model_rebuild(types_namespace=_types_ns)
+    DeleteUserCommand.model_rebuild(types_namespace=_types_ns)
+except Exception:
+    pass
+
+
 # =============================================================================
 # QUERIES - Read operations
 # =============================================================================
@@ -322,9 +352,10 @@ class CreateUserCommandHandler(
 ):
     """Handler for CreateUserCommand using flext_core.typings."""
 
-    def __init__(self) -> None:
-        """Initialize command handler."""
+    def __init__(self, users_db: dict[TEntityId, TUserData]) -> None:
+        """Initialize command handler with shared users database."""
         super().__init__("CreateUserCommandHandler")
+        self.users_db = users_db
 
     def handle(self, command: CreateUserCommand) -> FlextResult[TAnyObject]:
         """Handle create user command using shared domain models.
@@ -369,6 +400,10 @@ class CreateUserCommandHandler(
             event_result = self.store_domain_event("UserCreated", query_projection)
             if event_result.is_failure:
                 return FlextResult.fail(event_result.error or "Event storage failed")
+
+            # Persist projection in shared database for subsequent queries/updates
+            user_id_str = str(shared_user.id)
+            self.users_db[user_id_str] = cast("TUserData", query_projection)
 
             print(f"✅ User created successfully: {shared_user.id}")
             return FlextResult.ok(cast("TAnyObject", query_projection))
@@ -568,7 +603,7 @@ def setup_command_bus() -> FlextResult[FlextCommands.Bus]:
     command_bus = FlextCommands.Bus()
 
     # Register command handlers
-    create_handler: object = CreateUserCommandHandler()
+    create_handler: object = CreateUserCommandHandler(users_db)
     update_handler: object = UpdateUserCommandHandler(users_db)
     delete_handler: object = DeleteUserCommandHandler(users_db)
 
@@ -750,7 +785,9 @@ class CQRSDemonstrator:
         DemonstrationFlowHelper.print_section_header(2, "User Creation Commands")
 
         create_result: FlextResult[object] = self.app_service.create_user(
-            "Alice Johnson", "alice@example.com", 28,
+            "Alice Johnson",
+            "alice@example.com",
+            28,
         )
 
         if create_result.success:
@@ -780,7 +817,8 @@ class CQRSDemonstrator:
         print("=" * 60)
 
         update_result: FlextResult[object] = self.app_service.update_user(
-            self.created_user_id, name="Alice Smith",
+            self.created_user_id,
+            name="Alice Smith",
         )
         if update_result.success:
             print(f"✅ User updated successfully: {self.created_user_id}")
@@ -861,7 +899,9 @@ class CQRSDemonstrator:
 
         # Try to create user with invalid data
         invalid_result: FlextResult[object] = self.app_service.create_user(
-            "", "invalid-email", 15,
+            "",
+            "invalid-email",
+            15,
         )
         if invalid_result.is_failure:
             print(f"❌ Expected validation failure: {invalid_result.error}")

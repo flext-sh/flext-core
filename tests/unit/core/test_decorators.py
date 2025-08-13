@@ -542,7 +542,8 @@ class TestFlextErrorHandlingDecorators:
     def test_error_handler_initialization(self) -> None:
         """Test ErrorHandlingDecorators initialization (lines 158-164)."""
         handler = FlextErrorHandlingDecorators(
-            name="test_handler", handled_exceptions=(ValueError, TypeError),
+            name="test_handler",
+            handled_exceptions=(ValueError, TypeError),
         )
         assert handler.name == "test_handler"
         assert handler.handled_exceptions == (ValueError, TypeError)
@@ -560,7 +561,8 @@ class TestFlextErrorHandlingDecorators:
     def test_should_handle_error_method(self) -> None:
         """Test should_handle_error method (lines 170-172)."""
         handler = FlextErrorHandlingDecorators(
-            "test_handler", handled_exceptions=(ValueError, TypeError),
+            "test_handler",
+            handled_exceptions=(ValueError, TypeError),
         )
 
         assert handler.should_handle_error(ValueError("test"))
@@ -580,7 +582,8 @@ class TestFlextErrorHandlingDecorators:
     def test_error_handling_decorator_apply_decoration(self) -> None:
         """Test apply_decoration method with error handling (lines 178-190)."""
         handler = FlextErrorHandlingDecorators(
-            "test_handler", handled_exceptions=(ValueError,),
+            "test_handler",
+            handled_exceptions=(ValueError,),
         )
 
         def failing_func(*, should_fail: bool = True) -> str:
@@ -606,7 +609,8 @@ class TestFlextPerformanceDecorators:
     def test_performance_decorator_initialization(self) -> None:
         """Test PerformanceDecorators initialization (lines 232-234)."""
         perf_decorator = FlextPerformanceDecorators(
-            name="test_perf", threshold_seconds=2.0,
+            name="test_perf",
+            threshold_seconds=2.0,
         )
         assert perf_decorator.name == "test_perf"
         assert perf_decorator.threshold_seconds == 2.0

@@ -166,7 +166,9 @@ class TestFlextValidatorsAdvanced:
 
     @pytest.mark.parametrize_advanced
     def test_validator_scenarios(
-        self, validator_test_cases: list[TestCase], assert_helpers: object,
+        self,
+        validator_test_cases: list[TestCase],
+        assert_helpers: object,
     ) -> None:
         """Test validators using structured parametrized approach."""
         for test_case in validator_test_cases:
@@ -265,7 +267,8 @@ class TestFlextValidatorsAdvanced:
 
     @pytest.mark.parametrize_advanced
     def test_email_validation_scenarios(
-        self, email_validation_cases: list[TestCase],
+        self,
+        email_validation_cases: list[TestCase],
     ) -> None:
         """Test email validation with comprehensive scenarios."""
         for test_case in email_validation_cases:
@@ -363,7 +366,8 @@ class TestFlextValidatorsAdvanced:
 
     @pytest.mark.parametrize_advanced
     def test_numeric_validation_scenarios(
-        self, numeric_validation_cases: list[TestCase],
+        self,
+        numeric_validation_cases: list[TestCase],
     ) -> None:
         """Test additional validation scenarios."""
         for test_case in numeric_validation_cases:
@@ -378,11 +382,13 @@ class TestFlextValidatorsAdvanced:
             if validator_name in {"has_min_length", "has_max_length"}:
                 if validator_name == "has_min_length":
                     result = validator_method(
-                        value=value, min_length=cast("int", input_data["min_length"]),
+                        value=value,
+                        min_length=cast("int", input_data["min_length"]),
                     )
                 elif validator_name == "has_max_length":
                     result = validator_method(
-                        value=value, max_length=cast("int", input_data["max_length"]),
+                        value=value,
+                        max_length=cast("int", input_data["max_length"]),
                     )
             else:
                 result = validator_method(value=value)

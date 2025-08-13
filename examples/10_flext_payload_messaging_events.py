@@ -122,7 +122,8 @@ def _demo_invalid_payload() -> None:
 def _demo_metadata_enrichment() -> None:
     print("\n4. Metadata enrichment:")
     base_payload = FlextPayload(
-        data={"message": "Hello from service"}, metadata={"source": "base_service"},
+        data={"message": "Hello from service"},
+        metadata={"source": "base_service"},
     )
     enriched_payload = base_payload.enrich_metadata(
         {"timestamp": time.time(), "version": "2.0", "environment": "production"},
@@ -134,7 +135,8 @@ def _demo_metadata_enrichment() -> None:
 def _demo_payload_transformation() -> None:
     print("\n5. Payload transformation:")
     base_payload = FlextPayload(
-        data={"message": "Hello from service"}, metadata={"source": "base_service"},
+        data={"message": "Hello from service"},
+        metadata={"source": "base_service"},
     )
     transform_result = base_payload.transform_data(
         lambda data: {"transformed_message": f"TRANSFORMED: {data.get('message', '')}"},
@@ -504,7 +506,8 @@ def _handle_stock_updated_event(
 
 
 def _create_and_display_low_stock_alert(
-    product_id: str, new_quantity: int,
+    product_id: str,
+    new_quantity: int,
 ) -> FlextResult[None]:
     """Create and display low stock alert event."""
     low_stock_data: TUserData = {

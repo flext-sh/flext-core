@@ -587,7 +587,9 @@ class TestFlextEntityFactory:
         factory = FlextEntityFactory.create_entity_factory(SampleUser)
 
         result = cast("EntityFactory", factory)(
-            name="John", email="john@example.com", age=25,
+            name="John",
+            email="john@example.com",
+            age=25,
         )
 
         assert result.success
@@ -605,7 +607,8 @@ class TestFlextEntityFactory:
         """Test factory with default values."""
         defaults = {"age": 18, "is_active": True}
         factory = FlextEntityFactory.create_entity_factory(
-            SampleUser, cast("dict[str, object]", defaults),
+            SampleUser,
+            cast("dict[str, object]", defaults),
         )
 
         result = cast("EntityFactory", factory)(name="John", email="john@example.com")
@@ -621,11 +624,15 @@ class TestFlextEntityFactory:
         """Test factory overriding default values."""
         defaults = {"age": 18, "is_active": False}
         factory = FlextEntityFactory.create_entity_factory(
-            SampleUser, cast("dict[str, object]", defaults),
+            SampleUser,
+            cast("dict[str, object]", defaults),
         )
 
         result = cast("EntityFactory", factory)(
-            name="John", email="john@example.com", age=25, is_active=True,
+            name="John",
+            email="john@example.com",
+            age=25,
+            is_active=True,
         )
 
         assert result.success
@@ -651,7 +658,9 @@ class TestFlextEntityFactory:
         factory = FlextEntityFactory.create_entity_factory(SampleUser)
 
         result = cast("EntityFactory", factory)(
-            id="custom_id", name="John", email="john@example.com",
+            id="custom_id",
+            name="John",
+            email="john@example.com",
         )
 
         assert result.success
@@ -664,7 +673,9 @@ class TestFlextEntityFactory:
         factory = FlextEntityFactory.create_entity_factory(SampleUser)
 
         result = cast("EntityFactory", factory)(
-            id="", name="John", email="john@example.com",
+            id="",
+            name="John",
+            email="john@example.com",
         )
 
         assert result.success
@@ -688,7 +699,9 @@ class TestFlextEntityFactory:
         factory = FlextEntityFactory.create_entity_factory(SampleUser)
 
         result = cast("EntityFactory", factory)(
-            name="John", email="john@example.com", version=5,
+            name="John",
+            email="john@example.com",
+            version=5,
         )
 
         assert result.success
@@ -728,7 +741,8 @@ class TestFlextEntityFactory:
             side_effect=TypeError("Type error"),
         ):
             result = cast("EntityFactory", factory)(
-                name="John", email="john@example.com",
+                name="John",
+                email="john@example.com",
             )
 
         assert result.is_failure
@@ -745,7 +759,8 @@ class TestFlextEntityFactory:
             side_effect=ImportError("Import error"),
         ):
             result = cast("EntityFactory", factory)(
-                name="John", email="john@example.com",
+                name="John",
+                email="john@example.com",
             )
 
         assert result.is_failure
@@ -799,7 +814,8 @@ class TestEntityIntegration:
         }
 
         factory = FlextEntityFactory.create_entity_factory(
-            SampleUser, cast("dict[str, object]", defaults),
+            SampleUser,
+            cast("dict[str, object]", defaults),
         )
 
         # Create multiple entities

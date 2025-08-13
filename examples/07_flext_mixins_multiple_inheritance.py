@@ -7,7 +7,9 @@ and enterprise service patterns using mixin combinations.
 
 from __future__ import annotations
 
+import sys as _sys
 import time
+from pathlib import Path as _Path
 from typing import Protocol
 
 from flext_core import (
@@ -25,12 +27,16 @@ from flext_core import (
 )
 from flext_core.mixins import FlextEntityMixin, FlextValueObjectMixin
 
-from .shared_domain import (
+_project_root = _Path(__file__).resolve().parents[1]
+if str(_project_root) not in _sys.path:
+    _sys.path.insert(0, str(_project_root))
+
+from examples.shared_domain import (
     SharedDomainFactory,
     User as SharedUser,
     log_domain_operation,
 )
-from .shared_example_helpers import run_example_demonstration
+from examples.shared_example_helpers import run_example_demonstration
 
 # =============================================================================
 # PROTOCOL DEFINITIONS - Type protocols for enterprise patterns
@@ -45,7 +51,9 @@ class UserRepositoryProtocol(Protocol):
         ...
 
     def save_user(
-        self, user_id: str, user_data: dict[str, object],
+        self,
+        user_id: str,
+        user_data: dict[str, object],
     ) -> FlextResult[None]:
         """Save user data."""
         ...
@@ -55,7 +63,9 @@ class OrderServiceProtocol(Protocol):
     """Protocol for order service interface."""
 
     def create_order(
-        self, user_id: str, items: list[dict[str, object]],
+        self,
+        user_id: str,
+        items: list[dict[str, object]],
     ) -> FlextResult[dict[str, object]]:
         """Create order for user."""
         ...
@@ -136,7 +146,7 @@ class TimestampedDocument(FlextTimestampMixin):
         return f"Document('{self.title}', age: {age:.2f}s)"
 
 
-class IdentifiableUser(SharedUser, FlextIdentifiableMixin, FlextLoggableMixin):
+class IdentifiableUser(SharedUser, FlextLoggableMixin):
     """Enhanced user with unique identification using shared domain models."""
 
     def change_username(self, new_username: str) -> bool:
@@ -145,7 +155,8 @@ class IdentifiableUser(SharedUser, FlextIdentifiableMixin, FlextLoggableMixin):
         Note: Since SharedUser is immutable, this demonstrates the pattern
         but returns a success indicator rather than mutating the instance.
         """
-        if not self.has_id():
+        # Validate ID presence from shared user
+        if not getattr(self, "id", None):
             print("❌ Cannot change username: User has no valid ID")
             return False
 
@@ -513,7 +524,11 @@ class AdvancedUser(
             "username": self.name,
             "email": self._user.email_address.email,
             "age": self._user.age.value,
-            "status": self._user.status.value,
+            "status": (
+                self._user.status.value
+                if hasattr(self._user.status, "value")
+                else str(self._user.status)
+            ),
             "role": self.role,
             "created_at": self._user.created_at,
             "updated_at": self.updated_at,
@@ -1256,24 +1271,31 @@ def _create_enterprise_user_repository() -> UserRepositoryProtocol:
                 self.logger.info("User saved", user_id=user_id)
             else:
                 self.logger.error(
-                    "Failed to save user", user_id=user_id, error=result.error,
+                    "Failed to save user",
+                    user_id=user_id,
+                    error=result.error,
                 )
             return result
 
         def save_user(
-            self, user_id: str, user_data: dict[str, object],
+            self,
+            user_id: str,
+            user_data: dict[str, object],
         ) -> FlextResult[None]:
             """Save user with caching and logging using railway-oriented programming."""
             start_time = self._start_timing()
 
             return self._execute_save_operation(user_id, user_data).flat_map(
                 lambda _: self._log_save_result(
-                    user_id, start_time, FlextResult.ok(None),
+                    user_id,
+                    start_time,
+                    FlextResult.ok(None),
                 ),
             )
 
         def _check_cache_for_user(
-            self, user_id: str,
+            self,
+            user_id: str,
         ) -> FlextResult[dict[str, object] | None]:
             """Check cache for user data."""
             cache_key = f"user:{user_id}"
@@ -1285,7 +1307,8 @@ def _create_enterprise_user_repository() -> UserRepositoryProtocol:
             return FlextResult.ok(None)
 
         def _check_storage_for_user(
-            self, user_id: str,
+            self,
+            user_id: str,
         ) -> FlextResult[dict[str, object] | None]:
             """Check storage for user data and update cache if found."""
             if user_id in self.users:
@@ -1297,7 +1320,8 @@ def _create_enterprise_user_repository() -> UserRepositoryProtocol:
             return FlextResult.ok(None)
 
         def _handle_user_not_found(
-            self, user_id: str,
+            self,
+            user_id: str,
         ) -> FlextResult[dict[str, object] | None]:
             """Handle case when user is not found."""
             self.logger.warning("User not found", user_id=user_id)
@@ -1357,14 +1381,16 @@ def _create_enterprise_order_service(
             user = user_result.data
             if not user:
                 self.logger.error(
-                    "Cannot create order: User not found", user_id=user_id,
+                    "Cannot create order: User not found",
+                    user_id=user_id,
                 )
                 return FlextResult.fail(f"User not found: {user_id}")
 
             return FlextResult.ok(user)
 
         def _validate_order_items(
-            self, items: list[dict[str, object]],
+            self,
+            items: list[dict[str, object]],
         ) -> FlextResult[None]:
             """Validate order items format and content."""
             self.clear_validation_errors()
@@ -1378,7 +1404,8 @@ def _create_enterprise_order_service(
 
             if not self.is_valid:
                 self.logger.error(
-                    "Order validation failed", errors=self.validation_errors,
+                    "Order validation failed",
+                    errors=self.validation_errors,
                 )
                 return FlextResult.fail(
                     f"Order validation failed: {'; '.join(self.validation_errors)}",
@@ -1441,10 +1468,12 @@ def _demonstrate_repository_pattern(user_repo: UserRepositoryProtocol) -> None:
 
     # Save users with FlextResult pattern
     save_result_1 = user_repo.save_user(
-        "user_001", {"name": "Alice", "email": "alice@example.com"},
+        "user_001",
+        {"name": "Alice", "email": "alice@example.com"},
     )
     save_result_2 = user_repo.save_user(
-        "user_002", {"name": "Bob", "email": "bob@example.com"},
+        "user_002",
+        {"name": "Bob", "email": "bob@example.com"},
     )
     print(
         f"  💾 Save results: Alice={save_result_1.is_success}, Bob={save_result_2.is_success}",

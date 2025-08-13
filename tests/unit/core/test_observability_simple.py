@@ -99,7 +99,8 @@ class TestNoOpTracer:
         tracer = NoOpTracer()
 
         with tracer.error_span(
-            "failed-operation", error_message="Operation failed",
+            "failed-operation",
+            error_message="Operation failed",
         ) as span:
             assert span is not None
 

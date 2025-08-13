@@ -333,7 +333,10 @@ class TestFlextTestMockerPatchObject:
 
         # Test create=True is honored
         with FlextTestMocker.patch_object(
-            target, "attr", new="test_value", create=True,
+            target,
+            "attr",
+            new="test_value",
+            create=True,
         ):
             assert target.attr == "test_value"
 

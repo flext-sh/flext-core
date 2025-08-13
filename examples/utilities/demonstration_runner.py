@@ -159,7 +159,9 @@ def demonstrate_shared_domain_usage() -> None:
 
     # Create user using shared domain
     user_result = SharedDomainFactory.create_user(
-        name="John Doe", email="john.doe@example.com", age=30,
+        name="John Doe",
+        email="john.doe@example.com",
+        age=30,
     )
 
     if not user_result.success:

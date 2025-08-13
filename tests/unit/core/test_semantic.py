@@ -173,7 +173,8 @@ class TestFlextSemanticObservability:
 
         # Test protocol is runtime checkable
         assert FlextSemanticObservability.Protocol.Logger.__dict__.get(
-            "_is_runtime_protocol", False,
+            "_is_runtime_protocol",
+            False,
         )
 
     def test_span_protocol_compliance(self) -> None:
@@ -183,7 +184,8 @@ class TestFlextSemanticObservability:
 
         # Test protocol is runtime checkable
         assert FlextSemanticObservability.Protocol.SpanProtocol.__dict__.get(
-            "_is_runtime_protocol", False,
+            "_is_runtime_protocol",
+            False,
         )
 
     def test_tracer_protocol_compliance(self) -> None:
@@ -193,7 +195,8 @@ class TestFlextSemanticObservability:
 
         # Test protocol is runtime checkable
         assert FlextSemanticObservability.Protocol.Tracer.__dict__.get(
-            "_is_runtime_protocol", False,
+            "_is_runtime_protocol",
+            False,
         )
 
     def test_metrics_protocol_compliance(self) -> None:
@@ -204,7 +207,8 @@ class TestFlextSemanticObservability:
 
         # Test protocol is runtime checkable
         assert FlextSemanticObservability.Protocol.Metrics.__dict__.get(
-            "_is_runtime_protocol", False,
+            "_is_runtime_protocol",
+            False,
         )
 
     def test_observability_protocol_compliance(self) -> None:
@@ -246,7 +250,8 @@ class TestFlextSemanticObservability:
         """Test Factory.configure_observability with custom log level."""
         try:
             obs = FlextSemanticObservability.Factory.configure_observability(
-                "test-service", log_level="DEBUG",
+                "test-service",
+                log_level="DEBUG",
             )
             assert obs is not None
         except (ImportError, AttributeError):
@@ -362,7 +367,9 @@ class TestFlextSemanticError:
     def test_factory_create_validation_error(self) -> None:
         """Test Factory.create_validation_error."""
         error = FlextSemanticError.Factory.create_validation_error(
-            "Age must be positive", field_name="age", field_value=-5,
+            "Age must be positive",
+            field_name="age",
+            field_value=-5,
         )
 
         assert isinstance(error, FlextSemanticError.Hierarchy.FlextValidationError)
@@ -390,7 +397,8 @@ class TestFlextSemanticError:
 
         # ValueError maps to FlextValidationError based on implementation
         assert isinstance(
-            result_error, FlextSemanticError.Hierarchy.FlextValidationError,
+            result_error,
+            FlextSemanticError.Hierarchy.FlextValidationError,
         )
         assert "Standard Python error" in str(result_error)
 

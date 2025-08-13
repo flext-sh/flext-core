@@ -281,7 +281,7 @@ class FlextMixinDelegator:
             "registered_mixins": list(self._mixin_instances.keys()),
             "delegated_methods": list(self._delegated_methods.keys()),
             "initialization_log": self._initialization_log.copy(),
-            "validation_result": self._validate_delegation().success,
+            "validation_result": self._validate_delegation().is_success,
         }
 
 

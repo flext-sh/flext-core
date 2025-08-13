@@ -270,7 +270,8 @@ class TestConcurrencyPerformance:
         threads = []
         for thread_id in range(10):
             thread = threading.Thread(
-                target=create_and_modify_result, args=(thread_id,),
+                target=create_and_modify_result,
+                args=(thread_id,),
             )
             threads.append(thread)
 

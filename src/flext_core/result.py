@@ -85,6 +85,12 @@ class FlextResult[T]:
 
     """
 
+    # Explicit instance attributes to aid static type checkers
+    _data: T | None
+    _error: str | None
+    _error_code: str | None
+    _error_data: dict[str, object]
+
     def __init__(
         self,
         data: T | None = None,
@@ -126,7 +132,10 @@ class FlextResult[T]:
 
     @property
     def success(self) -> bool:
-        """Alias for is_success."""
+        """Backward-compatible boolean success flag.
+
+        Many call sites use `result.success` in boolean contexts.
+        """
         return self._error is None
 
     @property
@@ -182,11 +191,8 @@ class FlextResult[T]:
         """
         return cls(data=data)
 
-    # Backward-compatible classmethod without shadowing property access
-    @classmethod
-    def success_factory(cls, data: T) -> FlextResult[T]:
-        """Compatibility alias for ok() - renamed to avoid property conflict."""
-        return cls.ok(data)
+    # Note: Classmethod `success()` removed to avoid name collision with
+    # the instance property `success`. Use `ok()` instead.
 
     @classmethod
     def failure(

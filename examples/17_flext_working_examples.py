@@ -4,6 +4,8 @@
 Comprehensive examples demonstrating all major FLEXT Core functionality.
 """
 
+import sys as _sys
+from pathlib import Path as _Path
 from typing import cast
 
 from flext_core import (
@@ -13,7 +15,13 @@ from flext_core import (
     get_flext_container,
 )
 
-from .shared_domain import SharedDomainFactory, User as SharedUser
+_project_root = _Path(__file__).resolve().parents[1]
+if str(_project_root) not in _sys.path:
+    _sys.path.insert(0, str(_project_root))
+
+import contextlib
+
+from examples.shared_domain import SharedDomainFactory, User as SharedUser
 
 
 def _print_header() -> None:
@@ -40,9 +48,11 @@ def _demo_entity_shared_domain() -> SharedUser | None:
         print(f"Failed to create user: {user_result.error}")
         return None
     user = user_result.data
+    status_value = (
+        user.status.value if hasattr(user.status, "value") else str(user.status)
+    )
     print(
-        f"  User: {user.name} ({user.email_address.email}), "
-        f"Status: {user.status.value}",
+        f"  User: {user.name} ({user.email_address.email}), Status: {status_value}",
     )
     validation = user.validate_domain_rules()
     print(f"  Validation: {validation.success}")
@@ -72,6 +82,16 @@ def _demo_commands() -> tuple[object, object]:
                 age=30,
             )
 
+    # Ensure Pydantic forward references are resolved for local command
+    with contextlib.suppress(Exception):
+        CreateUserCommand.model_rebuild(
+            types_namespace={
+                "TEntityId": str,
+                "TServiceName": str,
+                "TUserId": str,
+                "TCorrelationId": str,
+            },
+        )
     command = CreateUserCommand(email="alice@example.com", name="Alice Smith")
     handler = CreateUserHandler()
     print(f"  Command: {command.command_type}")

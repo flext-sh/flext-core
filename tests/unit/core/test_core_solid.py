@@ -128,7 +128,8 @@ class TestCoreSOLIDImplementation:
 
         # Dict validation uses is_dict_of from guards module
         _result2: FlextResult[dict[str, object]] = self.core.validate_dict_structure(
-            {"a": 1}, int,
+            {"a": 1},
+            int,
         )
         # Result depends on guards module implementation
 
@@ -137,7 +138,8 @@ class TestCoreSOLIDImplementation:
             value: str
 
         result3: FlextResult[SimpleModel] = self.core.create_validated_model(
-            SimpleModel, value="test",
+            SimpleModel,
+            value="test",
         )
         assert result3.success
 
@@ -149,7 +151,8 @@ class TestCoreSOLIDImplementation:
 
         # validate_dict_structure only validates dictionary structure
         dict_result: FlextResult[dict[str, object]] = self.core.validate_dict_structure(
-            {"key": "value"}, str,
+            {"key": "value"},
+            str,
         )
         assert dict_result.success
 
@@ -173,7 +176,8 @@ class TestCoreSOLIDImplementation:
 
         # Core validation system works with our extension
         result: FlextResult[ExtendedModel] = self.core.create_validated_model(
-            ExtendedModel, email="test@example.com",
+            ExtendedModel,
+            email="test@example.com",
         )
         assert result.success
 
@@ -204,7 +208,8 @@ class TestCoreSOLIDImplementation:
                 self.core = core
 
             def validate_string_dict(
-                self, obj: object,
+                self,
+                obj: object,
             ) -> FlextResult[dict[str, object]]:
                 return self.core.validate_dict_structure(obj, str)
 
@@ -247,7 +252,8 @@ class TestCoreSOLIDImplementation:
         # Test integration through FlextCore methods
         test_dict = {"a": "string1", "b": "string2"}
         _result: FlextResult[dict[str, object]] = self.core.validate_dict_structure(
-            test_dict, str,
+            test_dict,
+            str,
         )
         # The result depends on guards.is_dict_of implementation
 

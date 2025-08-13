@@ -9,6 +9,7 @@ FLEXT Core is the **architectural foundation library** for the FLEXT data integr
 **Status**: Core patterns stable (FlextResult, FlextContainer), 75% test coverage requirement, MyPy strict mode
 
 **Key Characteristics**:
+
 - Python 3.13+ only (no backward compatibility)
 - Minimal dependencies: pydantic>=2.11.7, pydantic-settings>=2.10.1, structlog>=25.4.0
 - Railway-oriented programming via FlextResult[T] pattern
@@ -36,7 +37,7 @@ make fix                   # Auto-fix linting issues
 
 # Testing commands
 make test-unit             # Unit tests only
-make test-integration      # Integration tests only  
+make test-integration      # Integration tests only
 make test-fast             # Tests without coverage (quick feedback)
 make coverage-html         # Generate HTML coverage report
 
@@ -117,7 +118,7 @@ class User(FlextEntity):
     """Entities have identity and lifecycle."""
     name: str
     email: Email  # Value object
-    
+
     def activate(self) -> FlextResult[None]:
         """Business logic returns FlextResult."""
         if self.is_active:
@@ -129,7 +130,7 @@ class User(FlextEntity):
 class Email(FlextValueObject):
     """Value objects are immutable and compared by value."""
     address: str
-    
+
     def validate(self) -> FlextResult[None]:
         if "@" not in self.address:
             return FlextResult.fail("Invalid email")
@@ -148,7 +149,7 @@ src/flext_core/
 │   ├── exceptions.py       # Exception hierarchy
 │   └── constants.py        # Core enums/constants
 │
-├── Domain Layer (DDD Patterns)  
+├── Domain Layer (DDD Patterns)
 │   ├── entities.py         # FlextEntity base
 │   ├── value_objects.py    # FlextValueObject base
 │   ├── aggregate_root.py   # FlextAggregateRoot
@@ -202,7 +203,7 @@ from shared_domain import (
 ### Error Handling Pattern
 
 - **Always use FlextResult**: Never raise exceptions in business logic
-- **Chain operations**: Use map/flat_map for composition  
+- **Chain operations**: Use map/flat_map for composition
 - **Handle all paths**: Both success and failure must be handled
 - **Unwrap carefully**: Only unwrap when you've checked success
 
@@ -233,7 +234,7 @@ flext-core (this library)
 │   ├── flext-grpc           # Uses FlextPayload for messages
 │   └── flext-meltano        # Uses all core patterns
 │
-├── Application Services (5 projects)  
+├── Application Services (5 projects)
 │   ├── flext-api            # FastAPI with FlextResult responses
 │   ├── flext-auth           # Auth with FlextEntity users
 │   └── flext-web            # Web UI with FlextContainer DI

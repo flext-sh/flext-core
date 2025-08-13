@@ -9,12 +9,14 @@
 ### High Priority
 
 - [ ] **Type Safety Improvements**
+
   - [ ] Reduce MyPy errors to zero in src/ (currently 4)
   - [ ] Fix type variance issues in tests (1,245 errors)
   - [ ] Standardize FlextResult API usage across codebase
   - [ ] Document type annotation patterns for ecosystem
 
 - [ ] **Test Coverage Enhancement**
+
   - [ ] Achieve 90% coverage (currently 75%)
   - [ ] Add missing integration tests for new patterns
   - [ ] Implement E2E workflow tests
@@ -29,12 +31,14 @@
 ### Medium Priority
 
 - [ ] **CQRS Implementation**
+
   - [ ] Implement FlextCommandBus with routing
   - [ ] Create FlextQueryBus with caching
   - [ ] Add pipeline behaviors (validation, logging)
   - [ ] Document CQRS patterns with examples
 
 - [ ] **Event Sourcing Foundation**
+
   - [ ] Design FlextEventStore interface
   - [ ] Implement FlextDomainEvent base class
   - [ ] Add event replay mechanisms
@@ -49,6 +53,7 @@
 ### Low Priority
 
 - [ ] **Performance Optimizations**
+
   - [ ] Profile critical paths
   - [ ] Optimize FlextResult chaining
   - [ ] Implement lazy evaluation where appropriate
@@ -65,6 +70,7 @@
 ### Architecture Evolution
 
 - [ ] **Async Support**
+
   - [ ] Add async/await support to FlextResult
   - [ ] Create AsyncFlextContainer
   - [ ] Implement async command handlers
@@ -79,6 +85,7 @@
 ### Ecosystem Integration
 
 - [ ] **Singer SDK Integration**
+
   - [ ] Create Singer-specific base classes
   - [ ] Add stream processing utilities
   - [ ] Implement catalog management

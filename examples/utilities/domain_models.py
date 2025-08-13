@@ -131,7 +131,10 @@ class UtilityDemoProduct(
 
 
 class UtilityDemoOrder(
-    SharedOrder, FlextLoggableMixin, FlextSerializableMixin, FlextTimestampMixin,
+    SharedOrder,
+    FlextLoggableMixin,
+    FlextSerializableMixin,
+    FlextTimestampMixin,
 ):
     """Enhanced order with logging and tracking capabilities."""
 
@@ -181,7 +184,9 @@ class UtilityDemoOrder(
             },
             "status": self.status.value,
             "created_at": getattr(
-                self, "created_at", FlextUtilities.generate_iso_timestamp(),
+                self,
+                "created_at",
+                FlextUtilities.generate_iso_timestamp(),
             ),
             "serialized_at": FlextUtilities.generate_iso_timestamp(),
             "summary": {

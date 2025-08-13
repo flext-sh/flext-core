@@ -106,10 +106,7 @@ if TYPE_CHECKING:
 
     from flext_core.typings import (
         TAnyDict,
-        TCorrelationId,
-        TEntityId,
         TServiceName,
-        TUserId,
     )
 # FlextLogger imported for class methods only - instance methods use FlextLoggableMixin
 
@@ -148,12 +145,12 @@ class FlextCommands:
         )
 
         # Use FlextUtilities for ID generation
-        command_id: TEntityId = Field(
+        command_id: str = Field(
             default_factory=FlextGenerators.generate_uuid,
             description="Unique command identifier",
         )
 
-        command_type: TServiceName = Field(
+        command_type: str = Field(
             default="",
             description="Command type for routing",
         )
@@ -163,12 +160,12 @@ class FlextCommands:
             description="Command creation timestamp",
         )
 
-        user_id: TUserId | None = Field(
+        user_id: str | None = Field(
             default=None,
             description="User who initiated the command",
         )
 
-        correlation_id: TCorrelationId = Field(
+        correlation_id: str = Field(
             default_factory=FlextGenerators.generate_uuid,
             description="Correlation ID for tracking",
         )
@@ -1034,12 +1031,12 @@ class FlextCommands:
             extra="forbid",
         )
 
-        query_id: TEntityId | None = None
-        query_type: TServiceName | None = None
+        query_id: str | None = None
+        query_type: str | None = None
         page_size: int = 100
         page_number: int = 1
-        sort_by: TServiceName | None = None
-        sort_order: TServiceName = "asc"
+        sort_by: str | None = None
+        sort_order: str = "asc"
 
         def validate_query(self) -> FlextResult[None]:
             """Validate a query with business logic."""
@@ -1145,8 +1142,31 @@ class FlextCommands:
 # =============================================================================
 
 # Rebuild nested models to resolve forward references after import
-# FlextCommands.Command.model_rebuild()  # Disabled due to TAnyDict import issues
-# FlextCommands.Query.model_rebuild()    # Disabled due to TAnyDict import issues
+try:  # Defensive: avoid failing import-time on environments without Pydantic
+    _types_ns = {
+        "TServiceName": str,
+        "TUserId": str,
+        "TCorrelationId": str,
+        "TEntityId": str,
+        "TAnyDict": dict[str, object],
+    }
+    # Pydantic v2 expects _types_namespace keyword
+    FlextCommands.Command.model_rebuild(_types_namespace=_types_ns)
+    FlextCommands.Query.model_rebuild(_types_namespace=_types_ns)
+except Exception as _e:  # noqa: BLE001 - import-time best effort
+    # Best-effort logging at import time without failing import
+    try:
+        _logger = FlextLoggerFactory.get_logger(__name__)
+        _logger.debug(
+            "Pydantic model_rebuild skipped",
+            error=str(_e),
+        )
+    except Exception as _inner_e:  # noqa: BLE001 - ignore logging init errors
+        # Last-resort: swallow to avoid import-time hard failure. No print.
+        from contextlib import suppress as _suppress
+
+        with _suppress(Exception):
+            _ = _inner_e
 
 # Export API
 __all__: list[str] = ["FlextCommands"]

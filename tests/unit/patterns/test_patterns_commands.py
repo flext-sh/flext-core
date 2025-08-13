@@ -244,7 +244,8 @@ class TestFlextCommand:
     def test_command_creation_with_auto_id(self) -> None:
         """Test creating command with auto-generated ID."""
         command: CreateUserCommand = CreateUserCommand(
-            username="john_doe", email="john@example.com",
+            username="john_doe",
+            email="john@example.com",
         )
 
         assert command.command_id is not None
@@ -376,7 +377,9 @@ class TestFlextCommandHandler:
             CreateUserCommandHandler()
         )
         command: UpdateUserCommand = UpdateUserCommand(
-            user_id="123", updates={"name": "new_name"}, mixin_setup=lambda: None,
+            user_id="123",
+            updates={"name": "new_name"},
+            mixin_setup=lambda: None,
         )
 
         if handler.can_handle(cast("CreateUserCommand", command)):
@@ -399,7 +402,9 @@ class TestFlextCommandHandler:
             CreateUserCommandHandler()
         )
         command: CreateUserCommand = CreateUserCommand(
-            username="john", email="john@example.com", mixin_setup=lambda: None,
+            username="john",
+            email="john@example.com",
+            mixin_setup=lambda: None,
         )
 
         result = handler.handle(command)
@@ -419,7 +424,9 @@ class TestFlextCommandHandler:
         """Test complete command processing flow."""
         handler: CreateUserCommandHandler = CreateUserCommandHandler()
         command: CreateUserCommand = CreateUserCommand(
-            username="jane", email="jane@example.com", mixin_setup=lambda: None,
+            username="jane",
+            email="jane@example.com",
+            mixin_setup=lambda: None,
         )
 
         result = handler.process_command(command)
@@ -435,7 +442,9 @@ class TestFlextCommandHandler:
             CreateUserCommandHandler()
         )
         command: CreateUserCommand = CreateUserCommand(
-            username="", email="invalid", mixin_setup=lambda: None,
+            username="",
+            email="invalid",
+            mixin_setup=lambda: None,
         )
 
         result = handler.process_command(command)
@@ -455,7 +464,9 @@ class TestFlextCommandHandler:
             CreateUserCommandHandler()
         )
         wrong_command: UpdateUserCommand = UpdateUserCommand(
-            user_id="123", updates={"name": "test"}, mixin_setup=lambda: None,
+            user_id="123",
+            updates={"name": "test"},
+            mixin_setup=lambda: None,
         )
 
         # We need to cast to the expected type to bypass type checking for this test
@@ -676,7 +687,8 @@ class TestCommandPatternIntegration:
 
         # Execute create user command
         create_command = CreateUserCommand(
-            username="john_doe", email="john@example.com",
+            username="john_doe",
+            email="john@example.com",
         )
         create_result = bus.execute(create_command)
 
@@ -715,16 +727,24 @@ class TestCommandPatternIntegration:
         # Execute different command types
         commands = [
             CreateUserCommand(
-                username="user1", email="user1@example.com", mixin_setup=lambda: None,
+                username="user1",
+                email="user1@example.com",
+                mixin_setup=lambda: None,
             ),
             CreateUserCommand(
-                username="user2", email="user2@example.com", mixin_setup=lambda: None,
+                username="user2",
+                email="user2@example.com",
+                mixin_setup=lambda: None,
             ),
             UpdateUserCommand(
-                user_id="user1", updates={"status": "active"}, mixin_setup=lambda: None,
+                user_id="user1",
+                updates={"status": "active"},
+                mixin_setup=lambda: None,
             ),
             UpdateUserCommand(
-                user_id="user2", updates={"bio": "Developer"}, mixin_setup=lambda: None,
+                user_id="user2",
+                updates={"bio": "Developer"},
+                mixin_setup=lambda: None,
             ),
         ]
 
@@ -752,7 +772,8 @@ class TestCommandPatternIntegration:
 
         # Test with valid command
         valid_command = CreateUserCommand(
-            username="valid_user", email="valid@example.com",
+            username="valid_user",
+            email="valid@example.com",
         )
         result = bus.execute(valid_command)
         if not result.success:

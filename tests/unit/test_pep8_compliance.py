@@ -18,6 +18,7 @@ def _raise_no_supported_runtime(message: str) -> None:
     """Raise a RuntimeError; defined at module scope per lint guidance."""
     raise RuntimeError(message)
 
+
 pytestmark = [pytest.mark.unit, pytest.mark.pep8]
 
 
@@ -111,6 +112,7 @@ def _run_ruff_command(command_args: list[str]) -> object:
         # If neither API is present, raise via module-level helper
         _raise_no_supported_runtime("No supported Ruff invocation method available")
     except Exception as exc:  # Robust fallback with error context
+
         class CompletedProcess:  # type: ignore[too-many-instance-attributes]
             def __init__(self, returncode: int, out: str, err: str) -> None:
                 self.returncode: int = returncode

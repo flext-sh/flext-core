@@ -23,8 +23,10 @@ This example shows real-world enterprise decorator scenarios
 demonstrating the power and flexibility of the FlextDecorators system.
 """
 
+import sys as _sys
 import time
 from collections.abc import Callable
+from pathlib import Path as _Path
 from typing import cast
 
 from flext_core import (
@@ -42,7 +44,11 @@ from flext_core import (
     TUserData,
 )
 
-from .shared_domain import (
+_project_root = _Path(__file__).resolve().parents[1]
+if str(_project_root) not in _sys.path:
+    _sys.path.insert(0, str(_project_root))
+
+from examples.shared_domain import (
     SharedDomainFactory,
     User as SharedUser,
     log_domain_operation,
@@ -303,7 +309,8 @@ def demonstrate_performance_decorators() -> None:
         if n <= 1:
             return n
         return cast("int", expensive_fibonacci(n - 1)) + cast(
-            "int", expensive_fibonacci(n - 2),
+            "int",
+            expensive_fibonacci(n - 2),
         )
 
     expensive_fibonacci = FlextPerformanceDecorators.memoize_decorator(
@@ -763,7 +770,8 @@ def _demonstrate_validation_decorators() -> FlextResult[None]:
 
 
 def _log_user_creation(
-    user: SharedUser, decorator_stack: str,
+    user: SharedUser,
+    decorator_stack: str,
 ) -> FlextResult[SharedUser]:
     """Log user creation with decorator information."""
     log_domain_operation(
@@ -898,7 +906,8 @@ def _perform_user_activation(user: SharedUser) -> FlextResult[SharedUser]:
 
 
 def _log_user_activation(
-    user: SharedUser, activated_user: SharedUser,
+    user: SharedUser,
+    activated_user: SharedUser,
 ) -> FlextResult[SharedUser]:
     """Log user activation event."""
     log_domain_operation(
@@ -914,7 +923,9 @@ def _log_user_activation(
 def _test_user_activation_scenarios(activate_func: object) -> FlextResult[None]:
     """Test user activation scenarios."""
     test_user_result = SharedDomainFactory.create_user(
-        "Test User", "test@example.com", 30,
+        "Test User",
+        "test@example.com",
+        30,
     )
     if not test_user_result.success:
         return FlextResult.fail("Failed to create test user")
@@ -928,7 +939,8 @@ def _test_user_activation_scenarios(activate_func: object) -> FlextResult[None]:
 
 
 def _test_successful_activation(
-    activate_func: object, test_user: SharedUser,
+    activate_func: object,
+    test_user: SharedUser,
 ) -> FlextResult[SharedUser]:
     """Test successful user activation."""
     if not callable(activate_func):
@@ -949,7 +961,8 @@ def _test_successful_activation(
 
 
 def _test_duplicate_activation(
-    activate_func: object, activated_user: SharedUser,
+    activate_func: object,
+    activated_user: SharedUser,
 ) -> FlextResult[None]:
     """Test duplicate activation scenario (should fail)."""
     if not callable(activate_func):
