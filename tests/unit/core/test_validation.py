@@ -20,7 +20,6 @@ from __future__ import annotations
 from typing import cast
 
 import pytest
-from tests.conftest import TestCase, TestScenario
 
 from flext_core.validation import (
     FlextPredicates,
@@ -28,6 +27,7 @@ from flext_core.validation import (
     flext_validate_email,
     flext_validate_non_empty_string,
 )
+from tests.conftest import TestCase, TestScenario
 
 # Test markers for organized execution
 pytestmark = [pytest.mark.unit, pytest.mark.core]

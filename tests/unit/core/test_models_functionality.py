@@ -11,13 +11,6 @@ from typing import TYPE_CHECKING
 import pytest
 from hypothesis import given, strategies as st
 from pydantic import SecretStr
-from tests.conftest import (
-    AssertHelpers,
-    PerformanceMonitor,
-    TestCase,
-    TestScenario,
-    assert_performance,
-)
 
 from flext_core.models import (
     FlextBaseModel,
@@ -40,6 +33,13 @@ from flext_core.models import (
     validate_all_models,
 )
 from flext_core.result import FlextResult
+from tests.conftest import (
+    AssertHelpers,
+    PerformanceMonitor,
+    TestCase,
+    TestScenario,
+    assert_performance,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Callable
