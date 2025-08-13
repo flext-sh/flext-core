@@ -271,7 +271,7 @@ class AgeRangeRule(FlextValidationRule):
             )
         return FlextResult.ok(value)
 
-    def get_error_message(self, field_name: str, value: object) -> str:
+    def get_error_message(self, field_name: str, _value: object) -> str:
         """Provide rule error message."""
         return f"{field_name} must be between {self.min_age} and {self.max_age}"
 
@@ -285,7 +285,7 @@ class NonEmptyStringRule(FlextValidationRule):
             return FlextResult.fail(f"{field_name} must be a non-empty string")
         return FlextResult.ok(value)
 
-    def get_error_message(self, field_name: str, value: object) -> str:
+    def get_error_message(self, field_name: str, _value: object) -> str:
         """Provide rule error message."""
         return f"{field_name} must be a non-empty string"
 
@@ -299,7 +299,7 @@ class PositiveNumberRule(FlextValidationRule):
             return FlextResult.fail(f"{field_name} must be a positive number")
         return FlextResult.ok(value)
 
-    def get_error_message(self, field_name: str, value: object) -> str:
+    def get_error_message(self, field_name: str, _value: object) -> str:
         """Provide rule error message."""
         return f"{field_name} must be a positive number"
 
@@ -526,11 +526,13 @@ class ValidationMiddleware(FlextMiddleware):
                 )
 
             # Validate age if provided
-            if age is not None:
-                if not isinstance(age, int) or not (18 <= age <= 120):
-                    return FlextResult.fail(
-                        "Age validation failed: Age must be between 18 and 120",
-                    )
+            min_age, max_age = 18, 120
+            if age is not None and (
+                not isinstance(age, int) or not (min_age <= age <= max_age)
+            ):
+                return FlextResult.fail(
+                    f"Age validation failed: Age must be between {min_age} and {max_age}",
+                )
 
         # Continue to next handler
         return next_handler(message)
@@ -1034,10 +1036,13 @@ class SimpleEventSubscriber(FlextEventSubscriber):
 
     # Implement protocol-required methods
     def handle_event(self, event: FlextDomainEvent) -> FlextResult[None]:
+        """Handle incoming event and return success when processed."""
         print(f"Handled event: {event.event_type}")
         return FlextResult.ok(None)
 
     def can_handle(self, event_type: str) -> bool:
+        """Return True when this subscriber can handle the given event type."""
+        del event_type
         return True
 
 
@@ -1313,102 +1318,81 @@ def demonstrate_handler_interfaces() -> None:
 
 def demonstrate_repository_interfaces() -> None:
     """Demonstrate repository and unit of work interfaces."""
+    _print_repo_header()
+    user_repo = UserRepository()
+    _basic_repo_operations(user_repo)
+    fresh_repo = UserRepository()
+    _unit_of_work_success_flow(fresh_repo)
+    _unit_of_work_failure_flow(fresh_repo)
+    print("✅ Repository interfaces demonstration completed")
+
+
+def _print_repo_header() -> None:
     print("\n" + "=" * 80)
     print("💾 REPOSITORY INTERFACES - DATA ACCESS PATTERNS")
     print("=" * 80)
 
-    # 1. Basic repository operations
+
+def _basic_repo_operations(user_repo: UserRepository) -> None:
     print("\n1. Basic repository operations:")
-
-    user_repo = UserRepository()
-
-    # Create and save users
     users = [
         User("user_1", "Alice", "alice@example.com", 25),
         User("user_2", "Bob", "bob@example.com", 30),
         User("user_3", "Carol", "carol@example.com", 35),
     ]
-
     for user in users:
         save_result = user_repo.save(user)
         if save_result.success:
             print(f"   ✅ Saved user: {user.name}")
         else:
             print(f"   ❌ Save failed: {save_result.error}")
-
-    # Find users
     print("   Finding users:")
     for user_id in ["user_1", "user_999", "user_2"]:
         result = user_repo.find_by_id(user_id)
         if result.success:
             user_data = result.data
-            if (
-                user_data is not None
-                and hasattr(user_data, "name")
-                and hasattr(user_data, "id")
-            ):
+            if user_data is not None and hasattr(user_data, "name") and hasattr(user_data, "id"):
                 print(f"   ✅ Found: {user_data.name} ({user_data.id})")
         else:
             print(f"   ❌ Not found: {user_id} - {result.error}")
-
-    # Delete user
     delete_result = user_repo.delete("user_2")
     if delete_result.success:
         print("   ✅ User deleted")
-
-    # Try to find deleted user
     result = user_repo.find_by_id("user_2")
     if result.is_failure:
         print(f"   ❌ Deleted user not found (expected): {result.error}")
 
-    # 2. Unit of Work pattern
+
+def _unit_of_work_success_flow(fresh_repo: UserRepository) -> None:
     print("\n2. Unit of Work pattern:")
-
-    fresh_repo = UserRepository()
-
-    # Successful transaction
     print("   Successful transaction:")
     with DatabaseUnitOfWork(fresh_repo) as uow:
         new_user = User("user_100", "Transaction User", "transaction@example.com", 40)
-        if hasattr(uow, "add_change"):
-            uow.add_change("save", new_user)
-
-        # Commit explicitly
+        uow.add_change("save", new_user)
         commit_result = uow.commit()
         if commit_result.success:
             print("   ✅ Transaction committed successfully")
-
-    # Verify user was saved
     result = fresh_repo.find_by_id("user_100")
     if result.success and result.data is not None:
-        user_data = result.data
-        print(f"   ✅ User persisted after commit: {user_data.name}")
+        print(f"   ✅ User persisted after commit: {result.data.name}")
 
-    # Failed transaction (rollback)
+
+def _unit_of_work_failure_flow(fresh_repo: UserRepository) -> None:
     print("   Failed transaction with rollback:")
 
     def _simulate_transaction_error() -> None:
-        """Simulate a transaction error to test rollback behavior."""
         msg = "Simulated transaction error"
         raise ValueError(msg)
-
     try:
         with DatabaseUnitOfWork(fresh_repo) as uow:
             failing_user = User("user_101", "Failing User", "fail@example.com", 50)
-            if hasattr(uow, "add_change"):
-                uow.add_change("save", failing_user)
-
-            # Simulate error by raising exception
+            uow.add_change("save", failing_user)
             _simulate_transaction_error()
     except ValueError as e:
         print(f"   ❌ Transaction failed (expected): {e}")
-
-    # Verify user was not saved due to rollback
     result = fresh_repo.find_by_id("user_101")
     if result.is_failure:
         print("   ✅ User not persisted after rollback (expected)")
-
-    print("✅ Repository interfaces demonstration completed")
 
 
 def demonstrate_plugin_interfaces() -> None:

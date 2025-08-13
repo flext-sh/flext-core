@@ -13,7 +13,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from flext_core.entities import FlextEntity, FlextEntityFactory
+from flext_core import FlextEntity, FlextEntityFactory
 from flext_core.exceptions import FlextValidationError
 from flext_core.payload import FlextEvent
 from flext_core.result import FlextResult
@@ -741,7 +741,7 @@ class TestFlextEntityFactory:
 
         # Mock FlextGenerators.generate_entity_id to raise ImportError
         with patch(
-            "flext_core.entities.FlextGenerators.generate_entity_id",
+            "flext_core.FlextGenerators.generate_entity_id",
             side_effect=ImportError("Import error"),
         ):
             result = cast("EntityFactory", factory)(

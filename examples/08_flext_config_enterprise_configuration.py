@@ -446,159 +446,92 @@ def demonstrate_configuration_hierarchies() -> None:
     Shows how defaults, environment and user configs merge.
     """
     _print_config_section_header("🏗️ CONFIGURATION HIERARCHIES")
+    base_config = _build_base_hierarchy_config()
+    dev_config = _build_dev_hierarchy_config()
+    prod_config = _build_prod_hierarchy_config()
 
-    # 1. Configuration hierarchy levels
-    log_message = "\n1. Configuration hierarchy levels:"
-    print(log_message)
+    _print_config_hierarchy_overview()
+    _print_merged_config("Development", merge_configs(base_config, dev_config))
+    _print_merged_config("Production", merge_configs(base_config, prod_config))
+    _print_feature_hierarchy_demo()
 
-    # Base configuration - use TAnyDict for nested structures
-    base_config: TAnyDict = {
-        "app": {
-            "name": "HierarchyApp",
-            "version": "0.9.0",
-        },
-        "database": {
-            "pool_size": 10,
-            "timeout": 30,
-        },
-        "logging": {
-            "level": "INFO",
-            "format": "json",
-        },
+
+def _build_base_hierarchy_config() -> TAnyDict:
+    return {
+        "app": {"name": "HierarchyApp", "version": "0.9.0"},
+        "database": {"pool_size": 10, "timeout": 30},
+        "logging": {"level": "INFO", "format": "json"},
     }
 
-    # Environment-specific overrides - use TAnyDict for nested structures
-    dev_config: TAnyDict = {
-        "app": {
-            "debug": True,
-        },
-        "database": {
-            "url": "sqlite:///dev.db",
-        },
-        "logging": {
-            "level": "DEBUG",
-        },
+
+def _build_dev_hierarchy_config() -> TAnyDict:
+    return {
+        "app": {"debug": True},
+        "database": {"url": "sqlite:///dev.db"},
+        "logging": {"level": "DEBUG"},
     }
 
-    # Production config - use TAnyDict for nested structures
-    prod_config: TAnyDict = {
-        "app": {
-            "debug": False,
-        },
+
+def _build_prod_hierarchy_config() -> TAnyDict:
+    return {
+        "app": {"debug": False},
         "database": {
             "url": "postgresql://prod-server:5432/prod",
             "pool_size": 50,
         },
-        "logging": {
-            "level": "WARNING",
-        },
+        "logging": {"level": "WARNING"},
     }
 
-    log_message = "📋 Configuration hierarchy:"
-    print(log_message)
-    log_message = "   Base → Development → Production"
-    print(log_message)
 
-    # 2. Merge hierarchy
-    log_message = "\n2. Merging configuration hierarchy:"
-    print(log_message)
+def _print_config_hierarchy_overview() -> None:
+    print("\n1. Configuration hierarchy levels:")
+    print("📋 Configuration hierarchy:")
+    print("   Base → Development → Production")
 
-    # Merge base + dev
-    dev_merged = merge_configs(base_config, dev_config)
-    log_message = "✅ Development configuration:"
-    print(log_message)
-    # Display development configuration
-    if isinstance(dev_merged, dict):
-        app_config = dev_merged.get("app", {})
-        debug_value = app_config.get("debug") if isinstance(app_config, dict) else "N/A"
-        log_message = f"   Debug: {debug_value}"
-        print(log_message)
 
-        db_config = dev_merged.get("database", {})
-        db_url = db_config.get("url") if isinstance(db_config, dict) else "N/A"
-        log_message = f"   Database: {db_url}"
-        print(log_message)
+def _print_merged_config(env_name: str, merged: TAnyDict) -> None:
+    print(f"\n2. Merging configuration hierarchy: {env_name}")
+    print(f"✅ {env_name} configuration:")
+    app_config = merged.get("app", {}) if isinstance(merged, dict) else {}
+    debug_value = app_config.get("debug") if isinstance(app_config, dict) else "N/A"
+    print(f"   Debug: {debug_value}")
 
-        logging_config = dev_merged.get("logging", {})
-        log_level = (
-            logging_config.get("level") if isinstance(logging_config, dict) else "N/A"
-        )
-        log_message = f"   Log level: {log_level}"
-        print(log_message)
-    # Note: merge_configs always returns dict, but keeping type safety
+    db_config = merged.get("database", {}) if isinstance(merged, dict) else {}
+    db_url = db_config.get("url") if isinstance(db_config, dict) else "N/A"
+    print(f"   Database: {db_url}")
 
-    # Merge base + prod
-    prod_merged = merge_configs(base_config, prod_config)
-    log_message = "✅ Production configuration:"
-    print(log_message)
-    # Display production configuration
-    if isinstance(prod_merged, dict):
-        app_config = prod_merged.get("app", {})
-        debug_value = app_config.get("debug") if isinstance(app_config, dict) else "N/A"
-        log_message = f"   Debug: {debug_value}"
-        print(log_message)
+    log_config = merged.get("logging", {}) if isinstance(merged, dict) else {}
+    log_level = log_config.get("level") if isinstance(log_config, dict) else "N/A"
+    pool_size = db_config.get("pool_size") if isinstance(db_config, dict) else "N/A"
+    if pool_size != "N/A":
+        print(f"   Pool size: {pool_size}")
+    print(f"   Log level: {log_level}")
 
-        db_config = prod_merged.get("database", {})
-        db_url = db_config.get("url") if isinstance(db_config, dict) else "N/A"
-        log_message = f"   Database: {db_url}"
-        print(log_message)
 
-        pool_size = db_config.get("pool_size") if isinstance(db_config, dict) else "N/A"
-        log_message = f"   Pool size: {pool_size}"
-        print(log_message)
-    # Note: merge_configs always returns dict, but keeping type safety
-
-    # 3. Configuration inheritance patterns
-    log_message = "\n3. Configuration inheritance patterns:"
-    print(log_message)
-
-    # Feature flags configuration - use TAnyDict for nested structures
+def _print_feature_hierarchy_demo() -> None:
+    print("\n3. Configuration inheritance patterns:")
     feature_config: TAnyDict = {
         "features": {
-            "new_ui": {
-                "enabled": True,
-                "beta": True,
-            },
-            "analytics": {
-                "enabled": True,
-                "tracking_id": "UA-123456",
-            },
-            "caching": {
-                "enabled": False,
-                "ttl": 3600,
-            },
+            "new_ui": {"enabled": True, "beta": True},
+            "analytics": {"enabled": True, "tracking_id": "UA-123456"},
+            "caching": {"enabled": False, "ttl": 3600},
         },
     }
-
-    # Environment-specific feature overrides - use TAnyDict for nested structures
     dev_features: TAnyDict = {
         "features": {
-            "new_ui": {
-                "enabled": True,
-                "beta": True,
-            },
-            "analytics": {
-                "enabled": False,  # Disable in dev
-            },
-            "caching": {
-                "enabled": True,
-                "ttl": 60,  # Short TTL for dev
-            },
+            "new_ui": {"enabled": True, "beta": True},
+            "analytics": {"enabled": False},
+            "caching": {"enabled": True, "ttl": 60},
         },
     }
-
-    # Merge feature configurations
     feature_merged = merge_configs(feature_config, dev_features)
-    log_message = "✅ Feature configuration:"
-    print(log_message)
+    print("✅ Feature configuration:")
     features = feature_merged.get("features", {})
-    for feature_name, feature_config in (
-        features.items() if isinstance(features, dict) else []
-    ):
-        enabled = feature_config.get("enabled", False)
+    items = features.items() if isinstance(features, dict) else []
+    for feature_name, feature_details in items:
+        enabled = feature_details.get("enabled", False)
         status = "✅ Enabled" if enabled else "❌ Disabled"
-        log_message = f"   {feature_name}: {status}"
-        print(log_message)
+        print(f"   {feature_name}: {status}")
 
 
 def demonstrate_advanced_configuration_patterns() -> None:

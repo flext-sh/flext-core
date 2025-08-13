@@ -11,12 +11,6 @@ import secrets
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, cast
 
-from shared_domain import (
-    SharedDomainFactory,
-    User as SharedUser,
-    log_domain_operation,
-)
-
 from flext_core import (
     FlextContainer,
     FlextResult,
@@ -28,6 +22,12 @@ from flext_core import (
     TLogMessage,
     TUserData,
     get_flext_container,
+)
+
+from .shared_domain import (
+    SharedDomainFactory,
+    User as SharedUser,
+    log_domain_operation,
 )
 
 if TYPE_CHECKING:

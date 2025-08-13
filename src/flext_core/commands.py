@@ -605,6 +605,14 @@ class FlextCommands:
             self.logger.warning("Could not determine handler type constraints")
             return True
 
+        def handle_command(self, command: TCommand) -> FlextResult[TResult]:
+            """Alias for handle used by some tests/utilities."""
+            return self.handle(command)
+
+        def get_command_type(self) -> str:
+            """Return command type name; subclasses typically override."""
+            return self.__class__.__name__
+
         def execute(self, command: TCommand) -> FlextResult[TResult]:
             """Execute command with full logging and error handling."""
             self.logger.info(
@@ -1078,7 +1086,7 @@ class FlextCommands:
             return self._handler_name
 
         def can_handle(self, query: TQuery) -> bool:
-            """Check if a handler can handle a query (always True for generic handler)."""
+            """Return True for generic handler capability check."""
             _ = query
             return True
 
@@ -1091,7 +1099,7 @@ class FlextCommands:
                     case FlextResult() as flext_result:
                         return flext_result
                     case _:
-                        # If validation method doesn't return FlextResult, assume success
+                        # If not a FlextResult, treat as success
                         pass
             return FlextResult.ok(None)
 

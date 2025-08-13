@@ -17,14 +17,6 @@ import time
 from decimal import Decimal
 from typing import TYPE_CHECKING, cast
 
-from shared_domain import (
-    Money,
-    Product as SharedProduct,
-    SharedDemonstrationPattern,
-    SharedDomainFactory,
-    User as SharedUser,
-)
-
 from flext_core import (
     FlextComparableMixin,
     FlextLoggableMixin,
@@ -33,6 +25,14 @@ from flext_core import (
     TErrorMessage,
     TLogMessage,
     TUserData,
+)
+
+from .shared_domain import (
+    Money,
+    Product as SharedProduct,
+    SharedDemonstrationPattern,
+    SharedDomainFactory,
+    User as SharedUser,
 )
 
 if TYPE_CHECKING:

@@ -184,9 +184,9 @@ class TestFlextPayloadCoverage:
         """Test to_dict_basic skipping mixin attributes (lines 350-352)."""
         payload = FlextPayload(data="test")
 
-        # Force some mixin attributes to exist
-        payload._validation_errors = ["error"]
-        payload._is_valid = False
+        # Force some mixin attributes to exist using dynamic setattr to satisfy typing
+        payload._validation_errors = ["error"]  # type: ignore[attr-defined]  # dynamic attribute for test
+        payload._is_valid = False  # type: ignore[attr-defined]  # dynamic attribute for test
 
         result = payload.to_dict_basic()
 

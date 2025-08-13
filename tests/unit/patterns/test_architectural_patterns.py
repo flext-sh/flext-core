@@ -12,8 +12,8 @@ from typing import cast
 import pytest
 from pydantic import BaseModel
 
+from flext_core import FlextEntity
 from flext_core.core import flext_core
-from flext_core.entities import FlextEntity
 from flext_core.handlers import FlextHandlers
 from flext_core.result import FlextResult
 from flext_core.value_objects import FlextValueObject

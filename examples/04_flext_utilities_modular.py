@@ -7,7 +7,9 @@ validation, domain modeling, and utility functions.
 
 from __future__ import annotations
 
-from shared_example_helpers import run_example_demonstration as run_all_demonstrations
+from .shared_example_helpers import (
+    run_example_demonstration as run_all_demonstrations,
+)
 
 # =============================================================================
 # MAIN EXECUTION - Clean entry point using modular architecture

@@ -39,7 +39,7 @@ from flext_core import (
 )
 
 if TYPE_CHECKING:
-    from flext_core import FlextMessageHandler
+    from flext_core.handlers import FlextBaseHandler as FlextMessageHandler
 
 # =============================================================================
 # HANDLER CONSTANTS - Validation and business rule constraints
@@ -594,27 +594,28 @@ class OrderCreatedEventHandler(FlextEventHandler):
 
 def demonstrate_command_handlers() -> None:
     """Demonstrate CQRS command handlers with validation."""
+    _print_command_handlers_header()
+    create_handler = CreateUserHandler()
+    _test_create_user_handler(create_handler)
+    update_handler = _test_update_user_handler(create_handler)
+    _print_command_metrics(create_handler, update_handler)
+
+
+def _print_command_handlers_header() -> None:
     print("\n" + "=" * 80)
     print("⚡ COMMAND HANDLERS - CQRS PATTERN")
     print("=" * 80)
 
-    # 1. Create user command handler
+
+def _test_create_user_handler(create_handler: CreateUserHandler) -> None:
     print("\n1. Creating and using command handlers:")
-    create_handler = CreateUserHandler()
-
-    # Test valid command
-    valid_command = CreateUserCommand(
-        name="John Doe",
-        email="john@example.com",
-    )
-
+    valid_command = CreateUserCommand(name="John Doe", email="john@example.com")
     result = create_handler.handle(valid_command)
     if result.success:
         user_data = result.data
         if user_data is None:
             print("❌ User creation returned None data")
             return
-        # Type guard and cast
         if isinstance(user_data, User):
             print(
                 f"✅ User created: {user_data.name} ({user_data.email}) - ID: {user_data.id}"
@@ -624,19 +625,13 @@ def demonstrate_command_handlers() -> None:
     else:
         print(f"❌ User creation failed: {result.error}")
 
-    # Test invalid command (duplicate email)
-    duplicate_command = CreateUserCommand(
-        name="Jane Doe",
-        email="john@example.com",  # Same email
-    )
-
+    duplicate_command = CreateUserCommand(name="Jane Doe", email="john@example.com")
     result = create_handler.handle(duplicate_command)
     if result.success:
         user_data = result.data
         if user_data is None:
             print("❌ User creation returned None data")
             return
-        # Type guard and cast
         if isinstance(user_data, User):
             print(f"✅ User created: {user_data.name} ({user_data.email})")
         else:
@@ -644,26 +639,20 @@ def demonstrate_command_handlers() -> None:
     else:
         print(f"❌ Duplicate email prevented: {result.error}")
 
-    # 2. Update user command handler
+
+def _test_update_user_handler(create_handler: CreateUserHandler) -> UpdateUserHandler:
     print("\n2. Update command handler:")
     update_handler = UpdateUserHandler(create_handler.users)
-
-    # Get first user ID
     first_user_id = next(iter(create_handler.users.keys()))
-
     update_command = UpdateUserCommand(
-        user_id=first_user_id,
-        name="John Smith",
-        email="john.smith@example.com",
+        user_id=first_user_id, name="John Smith", email="john.smith@example.com"
     )
-
     result = update_handler.handle(update_command)
     if result.success:
         updated_user_data = result.data
         if updated_user_data is None:
             print("❌ User update returned None data")
-            return
-        # Type guard and cast
+            return update_handler
         if isinstance(updated_user_data, User):
             print(
                 f"✅ User updated: {updated_user_data.name} ({updated_user_data.email})"
@@ -672,16 +661,22 @@ def demonstrate_command_handlers() -> None:
             print(f"✅ User updated: {updated_user_data}")
     else:
         print(f"❌ User update failed: {result.error}")
+    return update_handler
 
-    # 3. Command handler metrics
+
+def _print_command_metrics(
+    create_handler: CreateUserHandler, update_handler: UpdateUserHandler
+) -> None:
     print("\n3. Command handler metrics:")
-    create_metrics = getattr(create_handler, "get_metrics", lambda: {"commands_processed": 0})()
-    update_metrics = getattr(update_handler, "get_metrics", lambda: {"commands_processed": 0})()
-
+    create_metrics = getattr(
+        create_handler, "get_metrics", lambda: {"commands_processed": 0}
+    )()
+    update_metrics = getattr(
+        update_handler, "get_metrics", lambda: {"commands_processed": 0}
+    )()
     print("📊 Create Handler Metrics:")
     print(f"   Handler name: {create_metrics.get('handler_name', 'Unknown')}")
     print(f"   Handler type: {create_metrics.get('handler_type', 'Unknown')}")
-
     print("📊 Update Handler Metrics:")
     print(f"   Handler name: {update_metrics.get('handler_name', 'Unknown')}")
     print(f"   Handler type: {update_metrics.get('handler_type', 'Unknown')}")
@@ -689,36 +684,41 @@ def demonstrate_command_handlers() -> None:
 
 def demonstrate_query_handlers() -> None:
     """Demonstrate CQRS query handlers with authorization."""
+    _print_query_handlers_header()
+    test_users = _setup_test_users()
+    get_handler = GetUserHandler(test_users)
+    _single_user_query(get_handler)
+    _inactive_user_without_permission(get_handler)
+    _inactive_user_with_permission(get_handler)
+    list_handler = ListUsersHandler(test_users)
+    _list_active_users(list_handler)
+    _list_all_users(list_handler)
+    _print_query_metrics(get_handler, list_handler)
+
+
+def _print_query_handlers_header() -> None:
     print("\n" + "=" * 80)
     print("🔍 QUERY HANDLERS - READ OPERATIONS")
     print("=" * 80)
 
-    # Set up test data
-    test_users = {
+
+def _setup_test_users() -> dict[str, User]:
+    return {
         "user_1": User("user_1", "Alice Johnson", "alice@example.com", is_active=True),
         "user_2": User("user_2", "Bob Wilson", "bob@example.com", is_active=True),
-        "user_3": User(
-            "user_3",
-            "Carol Brown",
-            "carol@example.com",
-            is_active=False,
-        ),  # Inactive
+        "user_3": User("user_3", "Carol Brown", "carol@example.com", is_active=False),
     }
 
-    # 1. Get single user query
-    print("\n1. Single user query handler:")
-    get_handler = GetUserHandler(test_users)
 
-    # Query active user
+def _single_user_query(get_handler: GetUserHandler) -> None:
+    print("\n1. Single user query handler:")
     query = GetUserQuery(user_id="user_1", include_inactive=False)
     result = get_handler.handle(query)
-
     if result.success:
         user_data = result.data
         if user_data is None:
             print("❌ User query returned None data")
             return
-        # Type guard and cast
         if isinstance(user_data, User):
             print(
                 f"✅ User found: {user_data.name} ({user_data.email}) - Active: {user_data.is_active}"
@@ -728,16 +728,15 @@ def demonstrate_query_handlers() -> None:
     else:
         print(f"❌ User query failed: {result.error}")
 
-    # Query inactive user without permission
+
+def _inactive_user_without_permission(get_handler: GetUserHandler) -> None:
     inactive_query = GetUserQuery(user_id="user_3", include_inactive=False)
     result = get_handler.handle(inactive_query)
-
     if result.success:
         user_data = result.data
         if user_data is None:
             print("❌ User query returned None data")
             return
-        # Type guard and cast
         if isinstance(user_data, User):
             print(f"✅ Inactive user found: {user_data.name}")
         else:
@@ -745,16 +744,15 @@ def demonstrate_query_handlers() -> None:
     else:
         print(f"❌ Inactive user query failed (expected): {result.error}")
 
-    # Query inactive user with permission
+
+def _inactive_user_with_permission(get_handler: GetUserHandler) -> None:
     inactive_query_allowed = GetUserQuery(user_id="user_3", include_inactive=True)
     result = get_handler.handle(inactive_query_allowed)
-
     if result.success:
         user_data = result.data
         if user_data is None:
             print("❌ User query returned None data")
             return
-        # Type guard and cast
         if isinstance(user_data, User):
             print(f"✅ Inactive user found with permission: {user_data.name}")
         else:
@@ -762,20 +760,16 @@ def demonstrate_query_handlers() -> None:
     else:
         print(f"❌ Inactive user query failed: {result.error}")
 
-    # 2. List users query
-    print("\n2. List users query handler:")
-    list_handler = ListUsersHandler(test_users)
 
-    # List active users only
+def _list_active_users(list_handler: ListUsersHandler) -> None:
+    print("\n2. List users query handler:")
     list_query = ListUsersQuery(active_only=True, limit=5, offset=0)
     result = list_handler.handle(list_query)
-
     if result.success:
         users_data = result.data
         if users_data is None:
             print("❌ Users query returned None data")
             return
-        # Type guard and cast for list
         if isinstance(users_data, list):
             print(f"✅ Active users found: {len(users_data)}")
             for user_item in users_data:
@@ -788,16 +782,15 @@ def demonstrate_query_handlers() -> None:
     else:
         print(f"❌ List query failed: {result.error}")
 
-    # List all users including inactive
+
+def _list_all_users(list_handler: ListUsersHandler) -> None:
     all_query = ListUsersQuery(active_only=False, limit=10, offset=0)
     result = list_handler.handle(all_query)
-
     if result.success:
         users_data = result.data
         if users_data is None:
             print("❌ Users query returned None data")
             return
-        # Type guard and cast for list
         if isinstance(users_data, list):
             print(f"✅ All users found: {len(users_data)}")
             for user_item in users_data:
@@ -811,15 +804,20 @@ def demonstrate_query_handlers() -> None:
     else:
         print(f"❌ All users query failed: {result.error}")
 
-    # 3. Query handler metrics
-    print("\n3. Query handler metrics:")
-    get_metrics = getattr(get_handler, "get_metrics", lambda: {"queries_processed": 0})()
-    list_metrics = getattr(list_handler, "get_metrics", lambda: {"queries_processed": 0})()
 
+def _print_query_metrics(
+    get_handler: GetUserHandler, list_handler: ListUsersHandler
+) -> None:
+    print("\n3. Query handler metrics:")
+    get_metrics = getattr(
+        get_handler, "get_metrics", lambda: {"queries_processed": 0}
+    )()
+    list_metrics = getattr(
+        list_handler, "get_metrics", lambda: {"queries_processed": 0}
+    )()
     print("📊 Get Handler Metrics:")
     print(f"   Handler name: {get_metrics.get('handler_name', 'Unknown')}")
     print(f"   Handler type: {get_metrics.get('handler_type', 'Unknown')}")
-
     print("📊 List Handler Metrics:")
     print(f"   Handler name: {list_metrics.get('handler_name', 'Unknown')}")
     print(f"   Handler type: {list_metrics.get('handler_type', 'Unknown')}")
@@ -902,55 +900,43 @@ def demonstrate_event_handlers() -> None:
 
 def demonstrate_handler_registry() -> None:
     """Demonstrate handler registry for service location."""
+    _print_registry_header()
+    registry = _setup_registry()
+    _retrieve_handlers_by_key(registry)
+    _retrieve_handlers_by_type(registry)
+    _process_with_registry(registry)
+
+
+def _print_registry_header() -> None:
     print("\n" + "=" * 80)
     print("📋 HANDLER REGISTRY - SERVICE LOCATION")
     print("=" * 80)
 
-    # 1. Create registry and register handlers
+
+def _setup_registry() -> FlextHandlerRegistry:
     print("\n1. Creating and populating handler registry:")
     registry = FlextHandlerRegistry()
-
-    # Create handlers
     create_handler = CreateUserHandler()
     get_handler = GetUserHandler({})
     user_created_handler = UserCreatedEventHandler()
-
-    # Register by string keys - cast handlers to expected type
     registry.register("create_user", create_handler)
     registry.register("get_user", get_handler)
-    registry.register(
-        "user_created_event",
-        user_created_handler,
-    )
-
-    print("✅ Handlers registered by string keys")
-
-    # Register by type - cast handlers to expected type
-    registry.register_for_type(
-        CreateUserCommand,
-        "create_user",
-        create_handler,
-    )
+    registry.register("user_created_event", user_created_handler)
+    registry.register_for_type(CreateUserCommand, "create_user", create_handler)
     registry.register_for_type(GetUserQuery, "get_user", get_handler)
-    registry.register_for_type(
-        UserCreatedEvent,
-        "user_created",
-        user_created_handler,
-    )
+    registry.register_for_type(UserCreatedEvent, "user_created", user_created_handler)
+    print("✅ Handlers registered by string keys and message types")
+    return registry
 
-    print("✅ Handlers registered by message types")
 
-    # 2. Retrieve handlers by key
+def _retrieve_handlers_by_key(registry: FlextHandlerRegistry) -> None:
     print("\n2. Retrieving handlers by string key:")
-
     result = registry.get_handler("create_user")
     if result.success:
         handler = result.data
         print(f"✅ Found handler: {handler.__class__.__name__}")
     else:
         print(f"❌ Handler not found: {result.error}")
-
-    # Try to get non-existent handler
     result = registry.get_handler("non_existent")
     if result.success:
         handler = result.data
@@ -958,16 +944,15 @@ def demonstrate_handler_registry() -> None:
     else:
         print(f"❌ Handler not found (expected): {result.error}")
 
-    # 3. Retrieve handlers by type
-    print("\n3. Retrieving handlers by message type:")
 
+def _retrieve_handlers_by_type(registry: FlextHandlerRegistry) -> None:
+    print("\n3. Retrieving handlers by message type:")
     result = registry.get_handler_for_type(CreateUserCommand)
     if result.success:
         handler = result.data
         print(f"✅ Found handler for CreateUserCommand: {handler.__class__.__name__}")
     else:
         print(f"❌ Handler not found: {result.error}")
-
     result = registry.get_handler_for_type(GetUserQuery)
     if result.success:
         handler = result.data
@@ -975,13 +960,11 @@ def demonstrate_handler_registry() -> None:
     else:
         print(f"❌ Handler not found: {result.error}")
 
-    # 4. Use registry for message processing
-    print("\n4. Using registry for message processing:")
 
-    # Process command through registry
+def _process_with_registry(registry: FlextHandlerRegistry) -> None:
+    print("\n4. Using registry for message processing:")
     command = CreateUserCommand(name="Registry User", email="registry@example.com")
     handler_result = registry.get_handler_for_type(CreateUserCommand)
-
     if handler_result.success:
         handler = handler_result.data
         if handler is None:
@@ -1100,7 +1083,7 @@ def _process_event_through_all_handlers(chain: FlextHandlerChain) -> None:
         elif hasattr(result, "error"):
             print(f"   ❌ Handler {i}: {result.error}")
         else:
-            print(f"   ℹ️ Handler {i}: {result}")
+            print(f"   Info Handler {i}: {result}")
 
 
 def demonstrate_handler_chain() -> None:
@@ -1125,35 +1108,43 @@ def demonstrate_handler_chain() -> None:
 
 def demonstrate_function_handlers() -> None:
     """Demonstrate function-based handler creation."""
+    _print_function_handlers_header()
+    message_handler, number_handler, order_handler = _create_function_handlers()
+    _use_message_handler(message_handler)
+    _use_number_handler(number_handler)
+    _process_complex_order(order_handler)
+    _print_function_metrics(message_handler, number_handler, order_handler)
+
+
+def _print_function_handlers_header() -> None:
     print("\n" + "=" * 80)
     print("🔧 FUNCTION HANDLERS - FUNCTIONAL STYLE")
     print("=" * 80)
 
-    # 1. Create simple function handlers
+
+def _create_function_handlers() -> tuple[FlextBaseHandler, FlextBaseHandler, FlextBaseHandler]:
     print("\n1. Creating function-based handlers:")
 
     def process_simple_message(message: str) -> FlextResult[str]:
-        """Process simple message."""
         if not message:
             return FlextResult.fail("Empty message")
         return FlextResult.ok(f"Processed: {message.upper()}")
 
     def process_number(number: int) -> FlextResult[int]:
-        """Process number."""
         if number < 0:
             return FlextResult.fail("Negative numbers not allowed")
         return FlextResult.ok(number * 2)
 
-    # Create handlers from functions with proper type annotations
+    # Functions are defined but not bound; handlers echo input by design here
     message_handler: FlextMessageHandler = FlextBaseHandler("message_handler")
     number_handler: FlextMessageHandler = FlextBaseHandler("number_handler")
-
+    order_handler: FlextMessageHandler = FlextBaseHandler("order_handler")
     print("✅ Function handlers created")
+    return cast("FlextBaseHandler", message_handler), cast("FlextBaseHandler", number_handler), cast("FlextBaseHandler", order_handler)
 
-    # 2. Use function handlers directly (avoiding type checking issues)
+
+def _use_message_handler(message_handler: FlextBaseHandler) -> None:
     print("\n2. Using function-based handlers:")
-
-    # Test message handler - use handle() directly to avoid type checking
     try:
         result = message_handler.handle("hello world")
         if result.success:
@@ -1162,8 +1153,6 @@ def demonstrate_function_handlers() -> None:
             print(f"❌ Message handler failed: {result.error}")
     except (ValueError, TypeError, KeyError) as e:
         print(f"❌ Message handler error: {e}")
-
-    # Test with empty message
     try:
         result = message_handler.handle("")
         if result.success:
@@ -1173,7 +1162,8 @@ def demonstrate_function_handlers() -> None:
     except (ValueError, TypeError) as e:
         print(f"❌ Empty message error: {e}")
 
-    # Test number handler
+
+def _use_number_handler(number_handler: FlextBaseHandler) -> None:
     try:
         result = number_handler.handle(42)
         if result.success:
@@ -1182,8 +1172,6 @@ def demonstrate_function_handlers() -> None:
             print(f"❌ Number handler failed: {result.error}")
     except (ValueError, TypeError) as e:
         print(f"❌ Number handler error: {e}")
-
-    # Test with negative number
     try:
         result = number_handler.handle(-5)
         if result.success:
@@ -1193,45 +1181,29 @@ def demonstrate_function_handlers() -> None:
     except (ValueError, TypeError) as e:
         print(f"❌ Negative number error: {e}")
 
-    # 3. Complex function handler with business logic
+
+def _process_complex_order(order_handler: FlextBaseHandler) -> None:
     print("\n3. Complex function handler:")
 
-    def process_order_total(
-        order_data: dict[str, object],
-    ) -> FlextResult[dict[str, object]]:
-        """Complex order processing function."""
+    def process_order_total(order_data: dict[str, object]) -> FlextResult[dict[str, object]]:
         if not order_data.get("items"):
             return FlextResult.fail("Order must have items")
-
         items = order_data["items"]
         if not isinstance(items, list) or len(items) == 0:
             return FlextResult.fail("Order items must be a non-empty list")
-
-        # Calculate total (simulate item prices)
         item_prices = {"item1": 10.0, "item2": 15.0, "item3": 20.0}
         total = sum(item_prices.get(item, 5.0) for item in items)
-
-        # Apply discount for large orders
         if len(items) >= MIN_ITEMS_FOR_DISCOUNT:
-            total *= 0.9  # 10% discount
-
+            total *= 0.9
         result = {
             "order_id": order_data.get("order_id", "unknown"),
             "items": items,
             "total": round(total, 2),
             "discount_applied": len(items) >= MIN_ITEMS_FOR_DISCOUNT,
         }
-
         return FlextResult.ok(result)
 
-    order_handler: FlextMessageHandler = FlextBaseHandler("order_handler")
-
-    # Test complex handler - use handle() directly
-    order_data = {
-        "order_id": "ORD001",
-        "items": ["item1", "item2", "item3"],
-    }
-
+    order_data = {"order_id": "ORD001", "items": ["item1", "item2", "item3"]}
     try:
         result = order_handler.handle(order_data)
         if result.success:
@@ -1242,21 +1214,44 @@ def demonstrate_function_handlers() -> None:
     except (ValueError, TypeError, KeyError) as e:
         print(f"❌ Order processing error: {e}")
 
-    # 4. Function handler metrics
+
+def _print_function_metrics(
+    message_handler: FlextBaseHandler,
+    number_handler: FlextBaseHandler,
+    order_handler: FlextBaseHandler,
+) -> None:
     print("\n4. Function handler metrics:")
     try:
-        message_metrics = cast("dict[str, object]", getattr(message_handler, "get_metrics", lambda: {"handler_name": "Message", "handler_type": "Function"})())
-        number_metrics = cast("dict[str, object]", getattr(number_handler, "get_metrics", lambda: {"handler_name": "Number", "handler_type": "Function"})())
-        order_metrics = cast("dict[str, object]", getattr(order_handler, "get_metrics", lambda: {"handler_name": "Order", "handler_type": "Function"})())
-
+        message_metrics = cast(
+            "dict[str, object]",
+            getattr(
+                message_handler,
+                "get_metrics",
+                lambda: {"handler_name": "Message", "handler_type": "Function"},
+            )(),
+        )
+        number_metrics = cast(
+            "dict[str, object]",
+            getattr(
+                number_handler,
+                "get_metrics",
+                lambda: {"handler_name": "Number", "handler_type": "Function"},
+            )(),
+        )
+        order_metrics = cast(
+            "dict[str, object]",
+            getattr(
+                order_handler,
+                "get_metrics",
+                lambda: {"handler_name": "Order", "handler_type": "Function"},
+            )(),
+        )
         print("📊 Message Handler:")
         print(f"   Handler name: {message_metrics.get('handler_name', 'Unknown')}")
         print(f"   Handler type: {message_metrics.get('handler_type', 'Unknown')}")
-
         print("📊 Number Handler:")
         print(f"   Handler name: {number_metrics.get('handler_name', 'Unknown')}")
         print(f"   Handler type: {number_metrics.get('handler_type', 'Unknown')}")
-
         print("📊 Order Handler:")
         print(f"   Handler name: {order_metrics.get('handler_name', 'Unknown')}")
         print(f"   Handler type: {order_metrics.get('handler_type', 'Unknown')}")

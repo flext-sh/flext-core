@@ -6,6 +6,7 @@ using enhanced domain service patterns.
 
 from __future__ import annotations
 
+import os
 from datetime import UTC, datetime
 from typing import cast
 
@@ -150,7 +151,7 @@ def demonstrate_boilerplate_reduction() -> None:
         host="localhost",
         port=1521,
         username="oracle",
-        password="secret",
+        password=os.environ.get("ORACLE_PASSWORD", "change-me"),
     )
 
     # Manual validation and error handling
@@ -172,7 +173,7 @@ def demonstrate_boilerplate_reduction() -> None:
         host="localhost",
         port=1521,
         username="oracle",
-        password="secret"
+        password=os.environ.get("ORACLE_PASSWORD", "change-me"),
     )
 
     # Automatic validation and error handling
@@ -274,7 +275,7 @@ def demonstrate_ldap_service() -> None:
         host="ldap.example.com",
         port=389,
         bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
-        password="REDACTED_LDAP_BIND_PASSWORD123",
+        password=os.environ.get("LDAP_PASSWORD", "change-me"),
         base_dn="dc=example,dc=com",
         use_ssl=False,
     )

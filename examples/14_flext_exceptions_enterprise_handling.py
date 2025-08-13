@@ -24,6 +24,7 @@ demonstrating the power and flexibility of the FlextExceptions system.
 """
 
 import operator
+import os
 import time
 import traceback
 from typing import cast
@@ -159,139 +160,133 @@ class DatabaseConnection:
 class UserValidationService:
     """User validation service demonstrating validation exceptions."""
 
+    @staticmethod
+    def _ensure_str_or_type_error(value: object, field: str) -> str:
+        """Ensure a value is a string or raise a TypeError."""
+        if not isinstance(value, str):
+            msg = f"{field} is not a string after validation"
+            raise TypeError(msg)
+        return value
+
+    @staticmethod
+    def _validate_name_required(data: dict[str, object]) -> None:
+        """Validate that name field is provided."""
+        if "name" not in data:
+            msg = "Name is required"
+            raise FlextValidationError(
+                msg,
+                validation_details={
+                    "field": "name",
+                    "value": None,
+                    "rules": ["required", "non_empty"],
+                },
+            )
+
+    @staticmethod
+    def _validate_name_format(name: object) -> None:
+        """Validate name format and type."""
+        if not isinstance(name, str) or len(name.strip()) == 0:
+            msg = "Name must be a non-empty string"
+            raise FlextValidationError(
+                msg,
+                validation_details={
+                    "field": "name",
+                    "value": name,
+                    "rules": ["string_type", "non_empty"],
+                },
+            )
+
+    @staticmethod
+    def _validate_email_required(data: dict[str, object]) -> None:
+        """Validate that email field is provided."""
+        if "email" not in data:
+            msg = "Email is required"
+            raise FlextValidationError(
+                msg,
+                validation_details={
+                    "field": "email",
+                    "value": None,
+                    "rules": ["required", "email_format"],
+                },
+            )
+
+    @staticmethod
+    def _validate_email_format(email: object) -> None:
+        """Validate email format and type."""
+        if not isinstance(email, str) or "@" not in email:
+            msg = "Email must be a valid email address"
+            raise FlextValidationError(
+                msg,
+                validation_details={
+                    "field": "email",
+                    "value": email,
+                    "rules": ["string_type", "email_format"],
+                },
+            )
+
+    @staticmethod
+    def _validate_age_type(age: object) -> None:
+        """Validate age type."""
+        if not isinstance(age, int):
+            msg = "Age must be an integer"
+            raise FlextTypeError(
+                msg,
+                expected_type="int",
+                actual_type=type(age).__name__,
+            )
+
+    @staticmethod
+    def _validate_age_range(age: int) -> None:
+        """Validate age range."""
+        if age < MIN_USER_AGE or age > MAX_USER_AGE:
+            msg: str = f"Age must be between {MIN_USER_AGE} and {MAX_USER_AGE}"
+            raise FlextValidationError(
+                msg,
+                validation_details={
+                    "field": "age",
+                    "value": age,
+                    "rules": ["age_range"],
+                },
+            )
+
     def validate_user_data(self, data: dict[str, object]) -> FlextResult[User]:
         """Validate user data and create a User instance.
 
         Raises validation and type errors for invalid input.
         """
-
-        def _raise_type_error(msg: str) -> None:
-            raise TypeError(msg)
-
-        def _validate_name_required() -> None:
-            """Validate that name field is provided."""
-            if "name" not in data:
-                msg = "Name is required"
-                raise FlextValidationError(
-                    msg,
-                    validation_details={
-                        "field": "name",
-                        "value": None,
-                        "rules": ["required", "non_empty"],
-                    },
-                )
-
-        def _validate_name_format(name: object) -> None:
-            """Validate name format and type."""
-            if not isinstance(name, str) or len(name.strip()) == 0:
-                msg = "Name must be a non-empty string"
-                raise FlextValidationError(
-                    msg,
-                    validation_details={
-                        "field": "name",
-                        "value": name,
-                        "rules": ["string_type", "non_empty"],
-                    },
-                )
-
-        def _validate_email_required() -> None:
-            """Validate that email field is provided."""
-            if "email" not in data:
-                msg = "Email is required"
-                raise FlextValidationError(
-                    msg,
-                    validation_details={
-                        "field": "email",
-                        "value": None,
-                        "rules": ["required", "email_format"],
-                    },
-                )
-
-        def _validate_email_format(email: object) -> None:
-            """Validate email format and type."""
-            if not isinstance(email, str) or "@" not in email:
-                msg = "Email must be a valid email address"
-                raise FlextValidationError(
-                    msg,
-                    validation_details={
-                        "field": "email",
-                        "value": email,
-                        "rules": ["string_type", "email_format"],
-                    },
-                )
-
-        def _validate_age_type(age: object) -> None:
-            """Validate age type."""
-            if not isinstance(age, int):
-                msg = "Age must be an integer"
-                raise FlextTypeError(
-                    msg,
-                    expected_type="int",
-                    actual_type=type(age).__name__,
-                )
-
-        def _validate_age_range(age: int) -> None:
-            """Validate age range."""
-            if age < MIN_USER_AGE or age > MAX_USER_AGE:
-                msg: str = f"Age must be between {MIN_USER_AGE} and {MAX_USER_AGE}"
-                raise FlextValidationError(
-                    msg,
-                    validation_details={
-                        "field": "age",
-                        "value": age,
-                        "rules": ["age_range"],
-                    },
-                )
-
         try:
             # Validate required fields
-            _validate_name_required()
+            self._validate_name_required(data)
 
             name = data["name"]
-            _validate_name_format(name)
-            # After validation, we know name is a string
-            if not isinstance(name, str):
-                msg = "Name is not a string after validation"
-                _raise_type_error(msg)
-            # Type narrowing for MyPy - explicit check instead of assert
-            if not isinstance(name, str):
-                msg = "Type narrowing failed for name"
-                _raise_type_error(msg)
+            self._validate_name_format(name)
+            # After validation, ensure str type
+            name_str = self._ensure_str_or_type_error(name, "Name")
 
             # Validate email
-            _validate_email_required()
+            self._validate_email_required(data)
 
             email = data["email"]
-            _validate_email_format(email)
-            # After validation, we know email is a string
-            if not isinstance(email, str):
-                msg = "Email is not a string after validation"
-                _raise_type_error(msg)
-            # Type narrowing for MyPy - explicit check instead of assert
-            if not isinstance(email, str):
-                msg = "Type narrowing failed for email"
-                _raise_type_error(msg)
+            self._validate_email_format(email)
+            email_str = self._ensure_str_or_type_error(email, "Email")
 
             # Validate age if provided
             age_obj = data.get("age")
             age: int | None = None
             if age_obj is not None:
-                _validate_age_type(age_obj)
+                self._validate_age_type(age_obj)
                 # After validation, we can safely cast to int
                 age = cast("int", age_obj)
-                _validate_age_range(age)
+                self._validate_age_range(age)
 
             # Create user
             user_id_obj = data.get("user_id", f"user_{int(time.time())}")
-            if not isinstance(user_id_obj, str):
-                msg = "User ID is not a string"
-                _raise_type_error(msg)
-            user_id = cast("str", user_id_obj)
+            user_id = self._ensure_str_or_type_error(user_id_obj, "User ID")
 
             user = User(
                 user_id,
-                cast("str", name).strip(),
-                cast("str", email).lower().strip(),
+                name_str.strip(),
+                email_str.lower().strip(),
                 age,
             )
 
@@ -612,7 +607,7 @@ class ExternalAPIService:
                 msg,
                 api_url=self.api_url,
                 authentication_method="bearer_token",
-                token_type="invalid_token",
+                token_type=os.environ.get("API_TOKEN_TYPE", "invalid_token"),
             )
 
         try:
@@ -998,13 +993,8 @@ def demonstrate_configuration_exceptions() -> None:
     print("✅ Configuration exceptions demonstration completed")
 
 
-def demonstrate_connection_exceptions() -> None:
-    """Demonstrate connection and timeout exceptions."""
-    print("\n" + "=" * 80)
-    print("🌐 CONNECTION EXCEPTIONS - NETWORK AND TIMEOUTS")
-    print("=" * 80)
-
-    # 1. Database connection errors
+def _demo_database_scenarios() -> None:
+    """Show database connection/authentication scenarios."""
     print("\n1. Database connection scenarios:")
 
     # Successful connection
@@ -1038,12 +1028,14 @@ def demonstrate_connection_exceptions() -> None:
     # Authentication failure
     print("\n   Testing authentication failure:")
     try:
-        auth_result = db_conn.authenticate("wrong_user", "wrong_pass")
+        db_conn.authenticate("wrong_user", "wrong_pass")
     except FlextAuthenticationError as e:
         print(f"   ❌ Authentication failed (expected): {e}")
         print(f"   Error context: {e.context}")
 
-    # 2. External API connection scenarios
+
+def _demo_external_api_scenarios() -> None:
+    """Show external API connection/timeout/authentication scenarios."""
     print("\n2. External API scenarios:")
 
     # Successful API call
@@ -1054,13 +1046,18 @@ def demonstrate_connection_exceptions() -> None:
         print(f"   ✅ API call successful: {profile}")
 
     # Connection error
-    unreachable_api = ExternalAPIService("https://unreachable-api.example.com/v1")
+    unreachable_api = ExternalAPIService(
+        "https://unreachable-api.example.com/v1",
+    )
     conn_result = unreachable_api.fetch_user_profile("user_123")
     if conn_result.is_failure:
         print(f"   ❌ API connection failed (expected): {conn_result.error}")
 
     # Timeout error
-    slow_api = ExternalAPIService("https://slow-api.example.com/v1", timeout_seconds=1)
+    slow_api = ExternalAPIService(
+        "https://slow-api.example.com/v1",
+        timeout_seconds=1,
+    )
     timeout_result = slow_api.fetch_user_profile("user_123")
     if timeout_result.is_failure:
         print(f"   ❌ API timeout (expected): {timeout_result.error}")
@@ -1069,9 +1066,132 @@ def demonstrate_connection_exceptions() -> None:
     auth_api = ExternalAPIService("https://unauthorized-api.example.com/v1")
     auth_api_result = auth_api.fetch_user_profile("user_123")
     if auth_api_result.is_failure:
-        print(f"   ❌ API authentication failed (expected): {auth_api_result.error}")
+        print(
+            f"   ❌ API authentication failed (expected): {auth_api_result.error}",
+        )
 
+
+def demonstrate_connection_exceptions() -> None:
+    """Demonstrate connection and timeout exceptions."""
+    print("\n" + "=" * 80)
+    print("🌐 CONNECTION EXCEPTIONS - NETWORK AND TIMEOUTS")
+    print("=" * 80)
+
+    _demo_database_scenarios()
+    _demo_external_api_scenarios()
     print("✅ Connection exceptions demonstration completed")
+
+
+def _complex_operation() -> FlextResult[str]:
+    """Complex operation that can fail at multiple stages."""
+
+    def _raise_config_error(_: FlextResult[None]) -> None:
+        msg = "Complex operation failed at configuration stage"
+        raise FlextOperationError(
+            msg,
+            operation="complex_operation",
+            stage="configuration",
+        )
+
+    def _raise_validation_error(_: FlextResult[User]) -> None:
+        msg = "Complex operation failed at validation stage"
+        raise FlextOperationError(
+            msg,
+            operation="complex_operation",
+            stage="user_validation",
+        )
+
+    def _raise_api_error(_: FlextResult[dict[str, object]]) -> None:
+        msg = "Complex operation failed at API stage"
+        raise FlextOperationError(
+            msg,
+            operation="complex_operation",
+            stage="external_api",
+        )
+
+    try:
+        config_service = ConfigurationService()
+        config_result = config_service.load_configuration(
+            {
+                "database_url": "postgresql://localhost/db",
+                "api_key": "sk-test",
+                "log_level": "INFO",
+            },
+        )
+        if config_result.is_failure:
+            _raise_config_error(config_result)
+
+        validation_service = UserValidationService()
+        user_result = validation_service.validate_user_data(
+            {"name": "Test User", "email": "test@example.com", "age": 25},
+        )
+        if user_result.is_failure:
+            _raise_validation_error(user_result)
+
+        api_service = ExternalAPIService("https://api.example.com/v1")
+        api_result = api_service.fetch_user_profile("user_123")
+        if api_result.is_failure:
+            _raise_api_error(api_result)
+
+        return FlextResult.ok("Complex operation completed successfully")
+
+    except FlextOperationError as e:
+        return FlextResult.fail(str(e))
+    except (ValueError, TypeError, KeyError, AttributeError) as e:
+        msg = "Critical failure in complex operation"
+        raise FlextCriticalError(
+            msg,
+            operation="complex_operation",
+            component="enterprise_service",
+            exception_type=type(e).__name__,
+            exception_message=str(e),
+        ) from e
+
+
+def _operation_with_retry(max_retries: int = 3) -> FlextResult[str]:
+    """Operation with retry logic and exception handling."""
+
+    def _simulate_operation_failure(attempt: int, max_retries: int) -> None:
+        msg: str = f"Simulated failure on attempt {attempt + 1}"
+        raise FlextConnectionError(
+            msg,
+            attempt=attempt + 1,
+            max_retries=max_retries,
+        )
+
+    last_exception: Exception | None = None
+    for attempt in range(max_retries + 1):
+        try:
+            if attempt < MAX_RETRY_ATTEMPTS:
+                _simulate_operation_failure(attempt, max_retries)
+            return FlextResult.ok(f"Operation succeeded on attempt {attempt + 1}")
+        except FlextConnectionError as e:
+            last_exception = e
+            if attempt < max_retries:
+                print(f"   ⚠️ Attempt {attempt + 1} failed, retrying: {e}")
+                time.sleep(0.01)
+            else:
+                print(f"   ❌ All retries exhausted: {e}")
+    return FlextResult.fail(
+        f"Operation failed after {max_retries + 1} attempts: {last_exception}",
+    )
+
+
+def _print_exception_metrics() -> None:
+    """Print aggregated exception metrics."""
+    metrics = get_exception_metrics()
+    print("   Exception metrics summary:")
+    total_exceptions = sum(count for count in metrics.values())
+    print(f"   Total exceptions tracked: {total_exceptions}")
+    sorted_metrics = sorted(
+        metrics.items(), key=operator.itemgetter(1), reverse=True
+    )
+    print("   Top exception types:")
+    for exc_type, count in sorted_metrics[:5]:
+        error_codes: set[str] = set()
+        print(
+            f"     {exc_type}: {count} occurrences, {len(error_codes)} unique error codes",
+        )
 
 
 def demonstrate_exception_patterns() -> None:
@@ -1080,163 +1200,22 @@ def demonstrate_exception_patterns() -> None:
     print("🏢 ENTERPRISE EXCEPTION PATTERNS")
     print("=" * 80)
 
-    # 1. Exception chaining and context preservation
     print("\n1. Exception chaining and context preservation:")
-
-    def complex_operation() -> FlextResult[str]:
-        """Complex operation that can fail at multiple stages."""
-
-        def _raise_config_error(_: FlextResult[None]) -> None:
-            """Raise configuration stage error."""
-            msg = "Complex operation failed at configuration stage"
-            raise FlextOperationError(
-                msg,
-                operation="complex_operation",
-                stage="configuration",
-            )
-
-        def _raise_validation_error(_: FlextResult[User]) -> None:
-            """Raise validation stage error."""
-            msg = "Complex operation failed at validation stage"
-            raise FlextOperationError(
-                msg,
-                operation="complex_operation",
-                stage="user_validation",
-            )
-
-        def _raise_api_error(_: FlextResult[dict[str, object]]) -> None:
-            """Raise API stage error."""
-            msg = "Complex operation failed at API stage"
-            raise FlextOperationError(
-                msg,
-                operation="complex_operation",
-                stage="external_api",
-            )
-
-        try:
-            # Stage 1: Configuration
-            config_service = ConfigurationService()
-            config_result = config_service.load_configuration(
-                {
-                    "database_url": "postgresql://localhost/db",
-                    "api_key": "sk-test",
-                    "log_level": "INFO",
-                },
-            )
-
-            if config_result.is_failure:
-                _raise_config_error(config_result)
-
-            # Stage 2: User validation
-            validation_service = UserValidationService()
-            user_result = validation_service.validate_user_data(
-                {"name": "Test User", "email": "test@example.com", "age": 25},
-            )
-
-            if user_result.is_failure:
-                _raise_validation_error(user_result)
-
-            # Stage 3: External API call
-            api_service = ExternalAPIService("https://api.example.com/v1")
-            api_result = api_service.fetch_user_profile("user_123")
-
-            if api_result.is_failure:
-                _raise_api_error(api_result)
-
-            return FlextResult.ok("Complex operation completed successfully")
-
-        except FlextOperationError as e:
-            return FlextResult.fail(str(e))
-        except (ValueError, TypeError, KeyError, AttributeError) as e:
-            # Wrap any unexpected exceptions
-            msg = "Critical failure in complex operation"
-            raise FlextCriticalError(
-                msg,
-                operation="complex_operation",
-                component="enterprise_service",
-                exception_type=type(e).__name__,
-                exception_message=str(e),
-            ) from e
-
-    # Execute complex operation
-    result = complex_operation()
+    result = _complex_operation()
     if result.success:
         print(f"   ✅ Complex operation: {result.data}")
     else:
         print(f"   ❌ Complex operation failed: {result.error}")
 
-    # 2. Exception recovery patterns
     print("\n2. Exception recovery patterns:")
-
-    def operation_with_retry(max_retries: int = 3) -> FlextResult[str]:
-        """Operation with retry logic and exception handling."""
-
-        def _simulate_operation_failure(attempt: int, max_retries: int) -> None:
-            """Simulate operation failure for retry demonstration."""
-            msg: str = f"Simulated failure on attempt {attempt + 1}"
-            raise FlextConnectionError(
-                msg,
-                attempt=attempt + 1,
-                max_retries=max_retries,
-            )
-
-        last_exception = None
-
-        for attempt in range(max_retries + 1):
-            try:
-                # Simulate operation that might fail
-                if attempt < MAX_RETRY_ATTEMPTS:  # Fail first few attempts
-                    _simulate_operation_failure(attempt, max_retries)
-
-                # Success on final attempt
-                return FlextResult.ok(f"Operation succeeded on attempt {attempt + 1}")
-
-            except FlextConnectionError as e:
-                last_exception = e
-                if attempt < max_retries:
-                    print(f"   ⚠️ Attempt {attempt + 1} failed, retrying: {e}")
-                    time.sleep(0.01)  # Brief delay
-                else:
-                    print(f"   ❌ All retries exhausted: {e}")
-
-        # If we get here, all retries failed
-        return FlextResult.fail(
-            f"Operation failed after {max_retries + 1} attempts: {last_exception}",
-        )
-
-    # Test retry operation
-    retry_result = operation_with_retry()
+    retry_result = _operation_with_retry()
     if retry_result.success:
         print(f"   ✅ Retry operation: {retry_result.data}")
     else:
         print(f"   ❌ Retry operation failed: {retry_result.error}")
 
-    # 3. Exception metrics and monitoring
     print("\n3. Exception metrics and monitoring:")
-
-    # Get current metrics
-    metrics = get_exception_metrics()
-
-    print("   Exception metrics summary:")
-    total_exceptions = sum(count for count in metrics.values())
-    print(f"   Total exceptions tracked: {total_exceptions}")
-
-    # Show top exception types
-    sorted_metrics = sorted(
-        metrics.items(),
-        key=operator.itemgetter(1),  # x[1] is already the count (int)
-        reverse=True,
-    )
-
-    print("   Top exception types:")
-    for exc_type, count in sorted_metrics[:5]:  # Top 5
-        # count is already an int, simulate additional metrics
-        error_codes: set[str] = set()  # Simulate error codes for demo
-        print(
-            f"     {exc_type}: {count} occurrences,"
-            f" {len(error_codes)} unique error codes",
-        )
-
+    _print_exception_metrics()
     print("✅ Enterprise exception patterns demonstration completed")
 
 

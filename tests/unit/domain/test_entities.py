@@ -12,8 +12,8 @@ if TYPE_CHECKING:
 import pytest
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
+from flext_core import FlextEntity, FlextEntityFactory
 from flext_core.aggregate_root import FlextAggregateRoot
-from flext_core.entities import FlextEntity, FlextEntityFactory
 from flext_core.payload import FlextEvent
 from flext_core.result import FlextResult
 from flext_core.value_objects import FlextValueObject

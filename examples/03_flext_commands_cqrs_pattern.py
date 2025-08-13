@@ -9,11 +9,6 @@ from __future__ import annotations
 
 from typing import Protocol, cast
 
-from shared_domain import (
-    SharedDomainFactory,
-    log_domain_operation,
-)
-
 from flext_core import (
     FlextCommands,
     FlextResult,
@@ -23,6 +18,11 @@ from flext_core import (
     TErrorMessage,
     TLogMessage,
     TUserData,
+)
+
+from .shared_domain import (
+    SharedDomainFactory,
+    log_domain_operation,
 )
 
 # =============================================================================

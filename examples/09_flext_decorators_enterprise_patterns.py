@@ -174,17 +174,23 @@ def demonstrate_error_handling_decorators() -> None:
 
     Using flext_core.typings for type safety.
     """
+    _print_error_header()
+    _demo_safe_result_decorator()
+    _demo_retry_decorator()
+    _demo_custom_error_handler()
+
+
+def _print_error_header() -> None:
     log_message: TLogMessage = "\n" + "=" * 80
     print(log_message)
     print("🛡️ ERROR HANDLING DECORATORS")
     print("=" * 80)
 
-    # 1. Safe result decorator
-    log_message = "\n1. Safe result decorator:"
-    print(log_message)
+
+def _demo_safe_result_decorator() -> None:
+    print("\n1. Safe result decorator:")
 
     def _risky_division_impl(a: object, b: object) -> object:
-        """Risky division implementation."""
         if not isinstance(a, (int, float)) or not isinstance(b, (int, float)):
             msg = "Arguments must be numbers"
             raise TypeError(msg)
@@ -193,42 +199,32 @@ def demonstrate_error_handling_decorators() -> None:
             raise ValueError(msg)
         return float(a) / float(b)
 
-    risky_division = FlextDecorators.safe_result(
-        _risky_division_impl
-    )
+    risky_division = FlextDecorators.safe_result(_risky_division_impl)
 
-    # Test successful operation
     result = risky_division(10.0, 2.0)
     if hasattr(result, "success") and getattr(result, "success", False):
-        log_message = f"✅ Safe division result: {getattr(result, 'data', 'N/A')}"
-        print(log_message)
+        print(f"✅ Safe division result: {getattr(result, 'data', 'N/A')}")
     else:
-        error_message = f"Division failed: {getattr(result, 'error', 'Unknown error')}"
-        print(f"❌ {error_message}")
+        print(f"❌ Division failed: {getattr(result, 'error', 'Unknown error')}")
 
-    # Test failed operation
     result = risky_division(10.0, 0.0)
     if hasattr(result, "success") and getattr(result, "success", False):
-        log_message = f"✅ Safe division result: {getattr(result, 'data', 'N/A')}"
-        print(log_message)
+        print(f"✅ Safe division result: {getattr(result, 'data', 'N/A')}")
     else:
-        error_message = (
-            f"Division failed (expected): {getattr(result, 'error', 'Unknown error')}"
+        print(
+            f"❌ Division failed (expected): {getattr(result, 'error', 'Unknown error')}"
         )
-        print(f"❌ {error_message}")
 
-    # 2. Retry decorator
-    log_message = "\n2. Retry decorator:"
-    print(log_message)
 
+def _demo_retry_decorator() -> None:
+    print("\n2. Retry decorator:")
     attempt_count = 0
 
     def _unreliable_service_impl() -> str:
-        """Unreliable service that fails initially."""
         nonlocal attempt_count
         attempt_count += 1
         if attempt_count < MAX_RETRY_ATTEMPTS:
-            msg: str = f"Service failed on attempt {attempt_count}"
+            msg = f"Service failed on attempt {attempt_count}"
             raise RuntimeError(msg)
         return "Service succeeded after retries"
 
@@ -238,25 +234,20 @@ def demonstrate_error_handling_decorators() -> None:
 
     try:
         service_result = cast("str", unreliable_service())
-        log_message = f"✅ Retry service result: {service_result}"
-        print(log_message)
-        log_message = f"   Attempts made: {attempt_count}"
-        print(log_message)
+        print(f"✅ Retry service result: {service_result}")
+        print(f"   Attempts made: {attempt_count}")
     except (RuntimeError, ValueError, TypeError, FlextValidationError) as e:
-        error_message = f"Retry service failed: {e}"
-        print(f"❌ {error_message}")
+        print(f"❌ Retry service failed: {e}")
 
-    # 3. Custom error handling
-    log_message = "\n3. Custom error handling:"
-    print(log_message)
+
+def _demo_custom_error_handler() -> None:
+    print("\n3. Custom error handling:")
 
     def custom_error_handler(exception: Exception) -> str:
-        """Handle custom errors using flext_core.typings."""
         error_message: TErrorMessage = (
             f"Custom handler caught: {type(exception).__name__}"
         )
-        log_message = f"🛡️ {error_message}"
-        print(log_message)
+        print(f"🛡️ {error_message}")
         return "Recovered from error"
 
     custom_safe_decorator = FlextErrorHandlingDecorators.create_safe_decorator(
@@ -264,7 +255,6 @@ def demonstrate_error_handling_decorators() -> None:
     )
 
     def _operation_with_custom_handling_impl() -> str:
-        """Operation with custom error handling."""
         msg = "Intentional error for testing"
         raise ValueError(msg)
 
@@ -274,11 +264,9 @@ def demonstrate_error_handling_decorators() -> None:
 
     try:
         operation_result = cast("str", operation_with_custom_handling())
-        log_message = f"✅ Custom handling result: {operation_result}"
-        print(log_message)
+        print(f"✅ Custom handling result: {operation_result}")
     except (RuntimeError, ValueError, TypeError, FlextValidationError) as e:
-        error_message = f"Custom handling failed: {e}"
-        print(f"❌ {error_message}")
+        print(f"❌ Custom handling failed: {e}")
 
 
 def demonstrate_performance_decorators() -> None:
@@ -373,17 +361,23 @@ def demonstrate_performance_decorators() -> None:
 
 def demonstrate_logging_decorators() -> None:
     """Demonstrate logging decorators with structured logging using flext_core.typings."""
+    _print_logging_header()
+    _demo_call_logging()
+    _demo_exception_logging()
+    _demo_combined_logging()
+
+
+def _print_logging_header() -> None:
     log_message: TLogMessage = "\n" + "=" * 80
     print(log_message)
     print("📝 LOGGING DECORATORS")
     print("=" * 80)
 
-    # 1. Call logging decorator
-    log_message = "\n1. Call logging decorator:"
-    print(log_message)
+
+def _demo_call_logging() -> None:
+    print("\n1. Call logging decorator:")
 
     def _business_operation_impl(operation_type: str, amount: float) -> TUserData:
-        """Execute business operation with call logging."""
         return {
             "operation": operation_type,
             "amount": amount,
@@ -394,17 +388,14 @@ def demonstrate_logging_decorators() -> None:
     business_operation = FlextLoggingDecorators.log_calls_decorator(
         _business_operation_impl
     )
-
     result = business_operation("payment", 100.50)
-    log_message = f"✅ Business operation result: {result}"
-    print(log_message)
+    print(f"✅ Business operation result: {result}")
 
-    # 2. Exception logging decorator
-    log_message = "\n2. Exception logging decorator:"
-    print(log_message)
+
+def _demo_exception_logging() -> None:
+    print("\n2. Exception logging decorator:")
 
     def _risky_business_operation_impl(operation_id: str) -> str:
-        """Risky business operation with exception logging."""
         if operation_id == "fail":
             msg = "Operation failed intentionally"
             raise RuntimeError(msg)
@@ -414,65 +405,45 @@ def demonstrate_logging_decorators() -> None:
         _risky_business_operation_impl
     )
 
-    # Test successful operation
     try:
         result = risky_business_operation("success_001")
-        log_message = f"✅ Successful operation: {result}"
-        print(log_message)
+        print(f"✅ Successful operation: {result}")
     except (RuntimeError, ValueError, TypeError, FlextValidationError) as e:
-        error_message = f"Operation failed: {e}"
-        print(f"❌ {error_message}")
+        print(f"❌ Operation failed: {e}")
 
-    # Test failed operation
     try:
         result = risky_business_operation("fail")
-        log_message = f"✅ Failed operation: {result}"
-        print(log_message)
+        print(f"✅ Failed operation: {result}")
     except (RuntimeError, ValueError, TypeError, FlextValidationError) as e:
-        error_message = f"Operation failed (expected): {e}"
-        print(f"❌ {error_message}")
+        print(f"❌ Operation failed (expected): {e}")
 
-    # 3. Combined logging decorators
-    log_message = "\n3. Combined logging decorators:"
-    print(log_message)
+
+def _demo_combined_logging() -> None:
+    print("\n3. Combined logging decorators:")
 
     def _comprehensive_service_impl(
         service_name: str,
         params: TUserData,
     ) -> TUserData:
-        """Comprehensive service with both call and exception logging."""
         if service_name == "error_service":
             msg = "Service error for testing"
             raise ValueError(msg)
-        return {
-            "service": service_name,
-            "params": params,
-            "result": "success",
-        }
+        return {"service": service_name, "params": params, "result": "success"}
 
-    # Apply decorators in sequence
-    comprehensive_service_with_exceptions = (
-        FlextLoggingDecorators.log_exceptions_decorator(
-            _comprehensive_service_impl
-        )
+    service_with_exceptions = FlextLoggingDecorators.log_exceptions_decorator(
+        _comprehensive_service_impl
     )
     comprehensive_service = FlextLoggingDecorators.log_calls_decorator(
-        comprehensive_service_with_exceptions
+        service_with_exceptions
     )
 
-    # Test successful service
     result = comprehensive_service("test_service", {"param1": "value1"})
-    log_message = f"✅ Comprehensive service result: {result}"
-    print(log_message)
-
-    # Test failed service
+    print(f"✅ Comprehensive service result: {result}")
     try:
         result = comprehensive_service("error_service", {"param1": "value1"})
-        log_message = f"✅ Error service result: {result}"
-        print(log_message)
+        print(f"✅ Error service result: {result}")
     except (RuntimeError, ValueError, TypeError, FlextValidationError) as e:
-        error_message = f"Error service failed (expected): {e}"
-        print(f"❌ {error_message}")
+        print(f"❌ Error service failed (expected): {e}")
 
 
 def demonstrate_immutability_decorators() -> None:
@@ -646,22 +617,26 @@ def demonstrate_functional_decorators() -> None:
 
 def demonstrate_decorator_best_practices() -> None:
     """Demonstrate decorator best practices using flext_core.typings."""
+    _print_best_practices_header()
+    _demo_custom_decorator_example()
+    _demo_parameterized_decorators()
+    _demo_performance_monitoring_decorator()
+
+
+def _print_best_practices_header() -> None:
     log_message: TLogMessage = "\n" + "=" * 80
     print(log_message)
     print("📚 DECORATOR BEST PRACTICES")
     print("=" * 80)
 
-    # 1. Custom decorator with proper typing
-    log_message = "\n1. Custom decorator with proper typing:"
-    print(log_message)
+
+def _demo_custom_decorator_example() -> None:
+    print("\n1. Custom decorator with proper typing:")
 
     def custom_decorator(func: object) -> object:
-        """Apply custom decorator with proper typing."""
-
         def wrapper(*args: object, **kwargs: object) -> object:
             func_name = getattr(func, "__name__", "unknown")
-            log_message = f"🔧 Custom decorator called: {func_name}"
-            print(log_message)
+            print(f"🔧 Custom decorator called: {func_name}")
             if callable(func):
                 return func(*args, **kwargs)
             msg = "Not callable"
@@ -670,25 +645,17 @@ def demonstrate_decorator_best_practices() -> None:
         return wrapper
 
     def _documented_function_impl(x: int, y: int) -> int:
-        """Documented function with custom decorator."""
         return x + y
 
     documented_function = custom_decorator(_documented_function_impl)
-
     result = documented_function(5, 3) if callable(documented_function) else 0
-    log_message = f"✅ Custom decorator result: {result}"
-    print(log_message)
+    print(f"✅ Custom decorator result: {result}")
 
-    # 2. Parameterized decorators
-    log_message = "\n2. Parameterized decorators:"
-    print(log_message)
 
-    def create_range_validator(
-        min_val: int,
-        max_val: int,
-    ) -> Callable[[object], bool]:
-        """Create range validator using flext_core.typings."""
+def _demo_parameterized_decorators() -> None:
+    print("\n2. Parameterized decorators:")
 
+    def create_range_validator(min_val: int, max_val: int) -> Callable[[object], bool]:
         def range_validator(value: object) -> bool:
             return isinstance(value, int) and min_val <= value <= max_val
 
@@ -702,48 +669,34 @@ def demonstrate_decorator_best_practices() -> None:
     )
 
     def _set_user_age_impl(age: int) -> str:
-        """Set user age with validation."""
         return f"User age set to {age}"
 
     set_user_age = age_validator(_set_user_age_impl)
 
     def _set_completion_rate_impl(rate: int) -> str:
-        """Set completion rate with validation."""
         return f"Completion rate set to {rate}%"
 
-    set_completion_rate = percentage_validator(
-        _set_completion_rate_impl
-    )
+    set_completion_rate = percentage_validator(_set_completion_rate_impl)
 
-    # Test valid values
     try:
         result1 = set_user_age(25)
-        log_message = f"✅ Valid age: {result1}"
-        print(log_message)
-
+        print(f"✅ Valid age: {result1}")
         result2 = set_completion_rate(75)
-        log_message = f"✅ Valid rate: {result2}"
-        print(log_message)
+        print(f"✅ Valid rate: {result2}")
     except (RuntimeError, ValueError, TypeError, FlextValidationError) as e:
-        error_message = f"Validation failed: {e}"
-        print(f"❌ {error_message}")
+        print(f"❌ Validation failed: {e}")
 
-    # Test invalid values
     try:
-        result1 = set_user_age(200)  # Invalid age
-        log_message = f"✅ Invalid age: {result1}"
-        print(log_message)
+        result1 = set_user_age(200)
+        print(f"✅ Invalid age: {result1}")
     except (RuntimeError, ValueError, TypeError, FlextValidationError) as e:
-        error_message = f"Age validation failed (expected): {e}"
-        print(f"❌ {error_message}")
+        print(f"❌ Age validation failed (expected): {e}")
 
-    # 3. Performance monitoring decorator
-    log_message = "\n3. Performance monitoring decorator:"
-    print(log_message)
+
+def _demo_performance_monitoring_decorator() -> None:
+    print("\n3. Performance monitoring decorator:")
 
     def performance_monitor(func: object) -> object:
-        """Monitor performance with decorator."""
-
         def wrapper(*args: object, **kwargs: object) -> object:
             start_time = time.time()
             if callable(func):
@@ -752,26 +705,20 @@ def demonstrate_decorator_best_practices() -> None:
                 msg = "Not callable"
                 raise TypeError(msg)
             end_time = time.time()
-
             execution_time = end_time - start_time
             func_name = getattr(func, "__name__", "unknown")
-            log_message = f"⏱️ {func_name} executed in {execution_time:.4f}s"
-            print(log_message)
-
+            print(f"⏱️ {func_name} executed in {execution_time:.4f}s")
             return result
 
         return wrapper
 
     def _monitored_operation_impl(complexity: int) -> int:
-        """Execute monitored operation."""
-        time.sleep(0.01 * complexity)  # Simulate work
+        time.sleep(0.01 * complexity)
         return complexity * 2
 
     monitored_operation = performance_monitor(_monitored_operation_impl)
-
     result = monitored_operation(5) if callable(monitored_operation) else 0
-    log_message = f"✅ Monitored operation result: {result}"
-    print(log_message)
+    print(f"✅ Monitored operation result: {result}")
 
 
 def demonstrate_domain_model_decorators() -> None:

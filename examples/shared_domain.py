@@ -137,30 +137,29 @@ class EmailAddress(FlextValueObject):
 
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate email address business rules."""
+        # Compute first failing reason to limit number of return statements
+        reason: str | None = None
         if not self.email or not isinstance(self.email, str):
-            return FlextResult.fail("Email must be a non-empty string")
+            reason = "Email must be a non-empty string"
+        else:
+            email = self.email.strip().lower()
+            if "@" not in email:
+                reason = "Email must contain @ symbol"
+            elif len(email) > MAX_EMAIL_LENGTH:
+                reason = f"Email cannot exceed {MAX_EMAIL_LENGTH} characters"
+            else:
+                parts = email.split("@")
+                if len(parts) != REQUIRED_EMAIL_PARTS:
+                    reason = "Email must have exactly one @ symbol"
+                else:
+                    local, domain = parts
+                    if not local or not domain:
+                        reason = "Email must have both local and domain parts"
+                    elif "." not in domain:
+                        reason = "Email domain must contain at least one dot"
 
-        email = self.email.strip().lower()
-
-        if "@" not in email:
-            return FlextResult.fail("Email must contain @ symbol")
-
-        if len(email) > MAX_EMAIL_LENGTH:
-            return FlextResult.fail(
-                f"Email cannot exceed {MAX_EMAIL_LENGTH} characters",
-            )
-
-        parts = email.split("@")
-        if len(parts) != REQUIRED_EMAIL_PARTS:
-            return FlextResult.fail("Email must have exactly one @ symbol")
-
-        local, domain = parts
-        if not local or not domain:
-            return FlextResult.fail("Email must have both local and domain parts")
-
-        if "." not in domain:
-            return FlextResult.fail("Email domain must contain at least one dot")
-
+        if reason is not None:
+            return FlextResult.fail(reason)
         return FlextResult.ok(None)
 
 
@@ -327,39 +326,33 @@ class User(FlextEntity):
 
     def validate_domain_rules(self) -> FlextResult[None]:
         """Validate user business rules."""
-        if not self.name or len(self.name.strip()) < MIN_NAME_LENGTH:
-            return FlextResult.fail(
-                f"Name must be at least {MIN_NAME_LENGTH} characters",
-            )
+        reason: str | None = None
+        name_stripped = self.name.strip() if isinstance(self.name, str) else ""
+        if not name_stripped or len(name_stripped) < MIN_NAME_LENGTH:
+            reason = f"Name must be at least {MIN_NAME_LENGTH} characters"
+        elif len(name_stripped) > MAX_NAME_LENGTH:
+            reason = f"Name cannot exceed {MAX_NAME_LENGTH} characters"
+        else:
+            email_validation = self.email_address.validate_business_rules()
+            if email_validation.is_failure:
+                reason = f"Email validation failed: {email_validation.error}"
+            else:
+                age_validation = self.age.validate_business_rules()
+                if age_validation.is_failure:
+                    reason = f"Age validation failed: {age_validation.error}"
+                elif self.phone:
+                    phone_validation = self.phone.validate_business_rules()
+                    if phone_validation.is_failure:
+                        reason = f"Phone validation failed: {phone_validation.error}"
+                if reason is None and self.address:
+                    address_validation = self.address.validate_business_rules()
+                    if address_validation.is_failure:
+                        reason = (
+                            f"Address validation failed: {address_validation.error}"
+                        )
 
-        if len(self.name.strip()) > MAX_NAME_LENGTH:
-            return FlextResult.fail(f"Name cannot exceed {MAX_NAME_LENGTH} characters")
-
-        # Validate embedded value objects
-        email_validation = self.email_address.validate_business_rules()
-        if email_validation.is_failure:
-            return FlextResult.fail(
-                f"Email validation failed: {email_validation.error}",
-            )
-
-        age_validation = self.age.validate_business_rules()
-        if age_validation.is_failure:
-            return FlextResult.fail(f"Age validation failed: {age_validation.error}")
-
-        if self.phone:
-            phone_validation = self.phone.validate_business_rules()
-            if phone_validation.is_failure:
-                return FlextResult.fail(
-                    f"Phone validation failed: {phone_validation.error}",
-                )
-
-        if self.address:
-            address_validation = self.address.validate_business_rules()
-            if address_validation.is_failure:
-                return FlextResult.fail(
-                    f"Address validation failed: {address_validation.error}",
-                )
-
+        if reason is not None:
+            return FlextResult.fail(reason)
         return FlextResult.ok(None)
 
     def activate(self) -> FlextResult[User]:
