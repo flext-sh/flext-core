@@ -676,7 +676,7 @@ class DatabaseUnitOfWork(FlextUnitOfWork):
 class MockLogger:
     """Mock logger that behaves like BoundLogger."""
 
-    def info(self, message: str, *args: object) -> None:
+    def info(self, message: str, *args: object, **kwargs: object) -> None:
         """Log info message.
 
         Args:
@@ -686,9 +686,13 @@ class MockLogger:
         """
         if args:
             message %= args
+        if kwargs:
+            # Append key=value pairs for kwargs to mimic structured logging
+            context = " ".join(f"{k}={v}" for k, v in kwargs.items())
+            message = f"{message} {context}".strip()
         print(f"[INFO] {message}")
 
-    def error(self, message: str, *args: object) -> None:
+    def error(self, message: str, *args: object, **kwargs: object) -> None:
         """Log error message.
 
         Args:
@@ -698,9 +702,12 @@ class MockLogger:
         """
         if args:
             message %= args
+        if kwargs:
+            context = " ".join(f"{k}={v}" for k, v in kwargs.items())
+            message = f"{message} {context}".strip()
         print(f"[ERROR] {message}")
 
-    def debug(self, message: str, *args: object) -> None:
+    def debug(self, message: str, *args: object, **kwargs: object) -> None:
         """Log debug message.
 
         Args:
@@ -710,9 +717,12 @@ class MockLogger:
         """
         if args:
             message %= args
+        if kwargs:
+            context = " ".join(f"{k}={v}" for k, v in kwargs.items())
+            message = f"{message} {context}".strip()
         print(f"[DEBUG] {message}")
 
-    def warning(self, message: str, *args: object) -> None:
+    def warning(self, message: str, *args: object, **kwargs: object) -> None:
         """Log warning message.
 
         Args:
@@ -722,9 +732,12 @@ class MockLogger:
         """
         if args:
             message %= args
+        if kwargs:
+            context = " ".join(f"{k}={v}" for k, v in kwargs.items())
+            message = f"{message} {context}".strip()
         print(f"[WARNING] {message}")
 
-    def critical(self, message: str, *args: object) -> None:
+    def critical(self, message: str, *args: object, **kwargs: object) -> None:
         """Log critical message.
 
         Args:
@@ -734,6 +747,9 @@ class MockLogger:
         """
         if args:
             message %= args
+        if kwargs:
+            context = " ".join(f"{k}={v}" for k, v in kwargs.items())
+            message = f"{message} {context}".strip()
         print(f"[CRITICAL] {message}")
 
     # Mock the other methods that BoundLogger might have

@@ -469,7 +469,9 @@ class TestEventDrivenPatterns:
 
         # Create and process events
         created_event = UserCreatedEvent(
-            user_id="123", user_name="John Doe", timestamp=time.time(),
+            user_id="123",
+            user_name="John Doe",
+            timestamp=time.time(),
         )
 
         updated_event = UserUpdatedEvent(

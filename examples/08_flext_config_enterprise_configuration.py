@@ -24,7 +24,9 @@ demonstrating the power and flexibility of the FlextConfig system.
 import json
 import os
 import pathlib
+import sys as _sys
 import tempfile
+from pathlib import Path as _Path
 from typing import cast
 
 from flext_core import (
@@ -38,7 +40,11 @@ from flext_core import (
     merge_configs,
 )
 
-from .shared_domain import (
+_project_root = _Path(__file__).resolve().parents[1]
+if str(_project_root) not in _sys.path:
+    _sys.path.insert(0, str(_project_root))
+
+from examples.shared_domain import (
     SharedDemonstrationPattern,
     SharedDomainFactory,
     log_domain_operation,
@@ -622,7 +628,9 @@ def _validate_configuration_structure(
 
 
 def _validate_config_field(
-    config: TAnyDict, field_path: str, expected_type: type,
+    config: TAnyDict,
+    field_path: str,
+    expected_type: type,
 ) -> FlextResult[None]:
     """Validate a single configuration field."""
     # Navigate to nested field
@@ -671,7 +679,8 @@ def _demonstrate_configuration_transformation() -> FlextResult[None]:
 
     return _transform_to_connection_strings(transform_config).flat_map(
         lambda transformed: _display_transformed_configuration(
-            transformed, transform_config,
+            transformed,
+            transform_config,
         ),
     )
 
@@ -738,7 +747,8 @@ def _transform_redis_config(redis_config: TAnyDict) -> FlextResult[str]:
 
 
 def _display_transformed_configuration(
-    transformed_config: TAnyDict, original_config: TAnyDict,
+    transformed_config: TAnyDict,
+    original_config: TAnyDict,
 ) -> FlextResult[None]:
     """Display transformed configuration with masked sensitive data."""
     print("🔄 Transformed configuration:")
@@ -975,7 +985,8 @@ def _demonstrate_domain_rule_validation(
     validation_config_raw = config.get("user_validation", {})
     if isinstance(validation_config_raw, dict):
         validation_config: dict[str, object] = cast(
-            "dict[str, object]", validation_config_raw,
+            "dict[str, object]",
+            validation_config_raw,
         )
         min_age = validation_config.get("min_age", 18)
         max_age = validation_config.get("max_age", 120)
@@ -1039,7 +1050,8 @@ def _demonstrate_feature_flag_configuration(
 
 
 def _configure_single_feature_flag(
-    feature_name: str, enabled: object,
+    feature_name: str,
+    enabled: object,
 ) -> FlextResult[None]:
     """Configure a single feature flag with domain logging."""
     if isinstance(enabled, bool):

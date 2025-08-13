@@ -92,7 +92,7 @@ class FlextBaseProcessor(ABC, Generic[EntryTypeVar]):  # noqa: UP046
         """Extract entry information from content with type safety."""
         # Step 1: Extract and validate identifier
         identifier_validation = self._validate_identifier_extraction(content)
-        if not identifier_validation.success:
+        if identifier_validation.is_failure:
             return FlextResult.fail(
                 identifier_validation.error or "Identifier validation failed",
             )
@@ -112,7 +112,7 @@ class FlextBaseProcessor(ABC, Generic[EntryTypeVar]):  # noqa: UP046
             content,
             identifier,
         )
-        if not entry_validation.success:
+        if entry_validation.is_failure:
             return entry_validation
 
         entry = entry_validation.data
@@ -125,7 +125,7 @@ class FlextBaseProcessor(ABC, Generic[EntryTypeVar]):  # noqa: UP046
     def _validate_identifier_extraction(self, content: str) -> FlextResult[str]:
         """Validate identifier extraction step."""
         identifier_result = self._extract_identifier(content)
-        if not identifier_result.success:
+        if identifier_result.is_failure:
             return FlextResult.fail(
                 f"Failed to extract identifier: {identifier_result.error}",
             )
@@ -153,7 +153,7 @@ class FlextBaseProcessor(ABC, Generic[EntryTypeVar]):  # noqa: UP046
             content,
             identifier,
         )
-        if not entry_result.success:
+        if entry_result.is_failure:
             return entry_result
 
         entry = entry_result.data
@@ -184,7 +184,7 @@ class FlextBaseProcessor(ABC, Generic[EntryTypeVar]):  # noqa: UP046
                 entry_type,
                 prefix,
             )
-            if result.success:
+            if result.is_success:
                 if result.data is not None:
                     results.append(result.data)
             else:
@@ -355,7 +355,7 @@ class FlextProcessingPipeline[T, U]:
         current_data: object = input_data
         for step in self.steps:
             result = step(current_data)
-            if not result.success:
+            if result.is_failure:
                 return FlextResult.fail(result.error or "Processing step failed")
             current_data = result.data
         return FlextResult.ok(current_data)  # type: ignore[arg-type]

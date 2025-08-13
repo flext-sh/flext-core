@@ -141,10 +141,14 @@ def pipeline_factory() -> FlextDataPipeline:
         id="default",
         name="default_pipeline",
         source_config=FlextOracleConfig(
-            username="user", password=SecretStr("pass"), service_name="DB",
+            username="user",
+            password=SecretStr("pass"),
+            service_name="DB",
         ),
         owner=FlextUserProfile(
-            email="user@example.com", full_name="Default User", role="user",
+            email="user@example.com",
+            full_name="Default User",
+            role="user",
         ),
     )
 
@@ -213,7 +217,8 @@ class FlextPipelineService:
                         owner_profile.get("role", "admin"),
                     ),
                     preferences=cast(
-                        "dict[str, object]", owner_profile.get("preferences", {}),
+                        "dict[str, object]",
+                        owner_profile.get("preferences", {}),
                     ),
                 )
                 return FlextResult.ok(instance)
@@ -221,7 +226,8 @@ class FlextPipelineService:
                 return FlextResult.fail(str(e))
 
         def _build_pipeline(
-            cfg: FlextOracleConfig, owner: FlextUserProfile,
+            cfg: FlextOracleConfig,
+            owner: FlextUserProfile,
         ) -> FlextResult[FlextDataPipeline]:
             try:
                 instance = FlextDataPipeline(
@@ -411,7 +417,8 @@ def demonstrate_semantic_types() -> None:
 
 
 def demonstrate_domain_services(
-    service: FlextPipelineService, pipeline: FlextDataPipeline,
+    service: FlextPipelineService,
+    pipeline: FlextDataPipeline,
 ) -> None:
     """Demonstrate Layer 2: Domain Services."""
     print("\n⚙️ Layer 2: Domain Services (Business Logic)")
@@ -454,7 +461,8 @@ def demonstrate_utilities(service: FlextPipelineService) -> None:
         return enhanced
 
     transform_result = FlextUnifiedUtilities.safe_transform_data(
-        cast("dict[str, object]", sample_data), enhance_data,
+        cast("dict[str, object]", sample_data),
+        enhance_data,
     )
     if transform_result.success and transform_result.data is not None:
         print("\n✅ Data transformation successful:")
@@ -477,7 +485,9 @@ def demonstrate_error_handling(service: FlextPipelineService) -> None:
     # Try to create invalid configuration
     invalid_config = {"host": "invalid", "port": -1, "username": "test"}
     invalid_result = service.create_pipeline(
-        "Invalid Pipeline", invalid_config, cast("dict[str, object]", owner_profile),
+        "Invalid Pipeline",
+        invalid_config,
+        cast("dict[str, object]", owner_profile),
     )
 
     if invalid_result.is_failure:

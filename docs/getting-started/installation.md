@@ -119,23 +119,23 @@ def verify_core_imports():
         get_flext_container,
         FlextSettings,
     )
-    
+
     # Test FlextResult
     result = FlextResult.ok("Success")
     assert result.success
     assert result.unwrap() == "Success"
     print("✅ FlextResult working")
-    
+
     # Test FlextContainer
     container = get_flext_container()
     container.register("test", "value")
     assert container.has("test")
     print("✅ FlextContainer working")
-    
+
     # Test FlextSettings
     class Settings(FlextSettings):
         app_name: str = "test"
-    
+
     settings = Settings()
     assert settings.app_name == "test"
     print("✅ FlextSettings working")
@@ -147,7 +147,7 @@ def verify_domain_imports():
         FlextValueObject,
         FlextAggregateRoot,
     )
-    
+
     # Test domain patterns are importable
     print("✅ Domain patterns available")
 
@@ -155,17 +155,17 @@ def verify_utility_imports():
     """Test utility imports."""
     from flext_core.utilities import generate_id, generate_uuid
     from flext_core import get_logger
-    
+
     # Test utilities
     entity_id = generate_id("test")
     assert entity_id.startswith("test_")
-    
+
     uuid = generate_uuid()
     assert len(uuid) == 36
-    
+
     logger = get_logger(__name__)
     assert logger is not None
-    
+
     print("✅ Utilities working")
 
 if __name__ == "__main__":
@@ -255,13 +255,13 @@ class DatabaseConfig(FlextSettings):
     name: str = Field("myapp", description="Database name")
     user: str = Field("postgres")
     password: str = Field("", description="Database password")
-    
+
     @property
     def url(self) -> str:
         """Build database URL."""
         auth = f"{self.user}:{self.password}@" if self.password else f"{self.user}@"
         return f"postgresql://{auth}{self.host}:{self.port}/{self.name}"
-    
+
     class Config:
         env_prefix = "DB_"
 
@@ -271,21 +271,21 @@ class AppConfig(FlextSettings):
     version: str = Field("1.0.0", description="Application version")
     debug: bool = Field(False, description="Debug mode")
     environment: str = Field("development", pattern="^(development|staging|production)$")
-    
+
     # API settings
     api_host: str = Field("0.0.0.0")
     api_port: int = Field(8000, ge=1, le=65535)
     api_workers: int = Field(1, ge=1, le=16)
-    
+
     # Security
     secret_key: str = Field(..., min_length=32, description="Secret key for JWT")
     cors_origins: list[str] = Field(default_factory=list)
-    
+
     # Optional features
     enable_metrics: bool = Field(False)
     enable_tracing: bool = Field(False)
     redis_url: Optional[str] = Field(None)
-    
+
     class Config:
         env_prefix = "APP_"
         env_file = ".env"
@@ -341,7 +341,7 @@ from datetime import datetime
 class Email(FlextValueObject):
     """Email value object."""
     address: str
-    
+
     def __init__(self, **data):
         address = data.get('address', '')
         if '@' not in address:
@@ -355,7 +355,7 @@ class User(FlextEntity):
     email: Email
     created_at: datetime
     is_active: bool = True
-    
+
     def activate(self) -> FlextResult[None]:
         """Activate user account."""
         if self.is_active:
@@ -384,12 +384,14 @@ if activation.success:
 #### Python Version Error
 
 **Problem:**
+
 ```
 ERROR: Python 3.13+ required
 flext-core requires Python >=3.13
 ```
 
 **Solution:**
+
 ```bash
 # Install Python 3.13 using pyenv
 pyenv install 3.13.0
@@ -403,11 +405,13 @@ brew install python@3.13     # macOS
 #### Import Errors
 
 **Problem:**
+
 ```python
 ImportError: cannot import name 'FlextResult' from 'flext_core'
 ```
 
 **Solutions:**
+
 ```bash
 # Verify installation
 pip show flext-core
@@ -427,11 +431,13 @@ poetry install
 #### Type Checking Issues
 
 **Problem:**
+
 ```
 error: Module "flext_core" has no attribute "FlextResult"  [attr-defined]
 ```
 
 **Solution:**
+
 ```bash
 # Install type stubs
 pip install types-pydantic
@@ -447,11 +453,13 @@ EOF
 #### Virtual Environment Issues
 
 **Problem:**
+
 ```
 Command 'poetry' not found or 'make' not working
 ```
 
 **Solution:**
+
 ```bash
 # Install Poetry
 curl -sSL https://install.python-poetry.org | python3 -
@@ -478,11 +486,11 @@ def check_python_version():
     """Check Python version requirement."""
     version = sys.version_info
     print(f"Python version: {version.major}.{version.minor}.{version.micro}")
-    
+
     if version < (3, 13):
         print("❌ Python 3.13+ required")
         return False
-    
+
     print("✅ Python version OK")
     return True
 
@@ -491,13 +499,13 @@ def check_flext_core():
     try:
         import flext_core
         print(f"✅ FLEXT Core {flext_core.__version__} installed")
-        
+
         # Test core functionality
         from flext_core import FlextResult
         result = FlextResult.ok("test")
         assert result.success
         print("✅ Core functionality working")
-        
+
         return True
     except ImportError as e:
         print(f"❌ FLEXT Core not installed: {e}")
@@ -510,7 +518,7 @@ def check_dependencies():
     """Check required dependencies."""
     required = ["pydantic", "pydantic_settings", "structlog"]
     missing = []
-    
+
     for package in required:
         try:
             __import__(package)
@@ -518,7 +526,7 @@ def check_dependencies():
         except ImportError:
             missing.append(package)
             print(f"❌ {package} missing")
-    
+
     return len(missing) == 0
 
 def check_development_tools():
@@ -530,7 +538,7 @@ def check_development_tools():
         "ruff": "ruff --version",
         "mypy": "mypy --version"
     }
-    
+
     print("\nDevelopment tools:")
     for tool, command in tools.items():
         try:
@@ -547,22 +555,22 @@ def main():
     """Run complete health check."""
     print("FLEXT Core Health Check")
     print("=" * 40)
-    
+
     checks = [
         ("Python version", check_python_version),
         ("FLEXT Core", check_flext_core),
         ("Dependencies", check_dependencies)
     ]
-    
+
     all_passed = True
     for name, check_func in checks:
         print(f"\nChecking {name}...")
         if not check_func():
             all_passed = False
-    
+
     # Optional development tools
     check_development_tools()
-    
+
     print("\n" + "=" * 40)
     if all_passed:
         print("🎉 All checks passed! FLEXT Core is ready to use.")

@@ -54,7 +54,8 @@ class TestFlextPayload:
     def test_payload_get_metadata(self) -> None:
         """Test getting metadata values."""
         payload: FlextPayload[object] = FlextPayload(
-            data={}, metadata={"test": "value"},
+            data={},
+            metadata={"test": "value"},
         )
         assert payload.get_metadata("test") == "value"
         assert payload.get_metadata("missing") is None
@@ -63,7 +64,8 @@ class TestFlextPayload:
     def test_payload_has_metadata(self) -> None:
         """Test checking metadata existence."""
         payload: FlextPayload[object] = FlextPayload(
-            data={}, metadata={"exists": "yes"},
+            data={},
+            metadata={"exists": "yes"},
         )
         assert payload.has_metadata("exists") is True
         assert payload.has_metadata("missing") is False
@@ -71,7 +73,8 @@ class TestFlextPayload:
     def test_payload_to_dict(self) -> None:
         """Test payload dictionary conversion."""
         payload: FlextPayload[object] = FlextPayload(
-            data={"test": "data"}, metadata={"key": "value"},
+            data={"test": "data"},
+            metadata={"key": "value"},
         )
         result = payload.to_dict()
         assert result["data"] == {"test": "data"}
@@ -246,7 +249,9 @@ class TestFlextEvent:
     def test_event_create_with_version(self) -> None:
         """Test event creation with version."""
         result = FlextEvent.create_event(
-            "ProductUpdated", {"product_id": "789"}, version=2,
+            "ProductUpdated",
+            {"product_id": "789"},
+            version=2,
         )
         assert result.success is True
         event = result.data
@@ -382,7 +387,8 @@ class TestEdgeCases:
     def test_payload_json_serialization_round_trip(self) -> None:
         """Test JSON serialization round trip."""
         original_payload: FlextPayload[object] = FlextPayload(
-            data={"test": "value"}, metadata={"key": "metadata"},
+            data={"test": "value"},
+            metadata={"key": "metadata"},
         )
 
         # Serialize to JSON
@@ -431,7 +437,9 @@ class TestEdgeCases:
 
         # Test cross-service event creation
         event_result = create_cross_service_event(
-            "TestEvent", {"key": "value"}, correlation_id="456",
+            "TestEvent",
+            {"key": "value"},
+            correlation_id="456",
         )
         assert event_result.success is True
 

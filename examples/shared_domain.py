@@ -786,13 +786,15 @@ class SharedDomainFactory:
 
             payment_method = kwargs.get("payment_method")
             if payment_method is not None and not isinstance(
-                payment_method, PaymentMethod,
+                payment_method,
+                PaymentMethod,
             ):
                 payment_method = None
 
             shipping_address = kwargs.get("shipping_address")
             if shipping_address is not None and not isinstance(
-                shipping_address, Address,
+                shipping_address,
+                Address,
             ):
                 shipping_address = None
 
@@ -955,7 +957,9 @@ class TestDomainFactory:
         try:
             description = str(kwargs.get("description", ""))
             vo = ConcreteValueObject(
-                amount=amount, currency=currency, description=description,
+                amount=amount,
+                currency=currency,
+                description=description,
             )
             validation_result = vo.validate_business_rules()
             if validation_result.is_failure:

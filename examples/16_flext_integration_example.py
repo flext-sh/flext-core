@@ -5,7 +5,9 @@ Comprehensive example showing all FLEXT components working together with shared
 domain models.
 """
 
+import sys as _sys
 from decimal import Decimal
+from pathlib import Path as _Path
 from typing import cast
 
 from flext_core import (
@@ -16,7 +18,11 @@ from flext_core import (
     get_logger,
 )
 
-from .shared_domain import EmailAddress, Money, Order, SharedDomainFactory, User
+_project_root = _Path(__file__).resolve().parents[1]
+if str(_project_root) not in _sys.path:
+    _sys.path.insert(0, str(_project_root))
+
+from examples.shared_domain import EmailAddress, Money, Order, SharedDomainFactory, User
 
 # =============================================================================
 # VALIDATION CONSTANTS - Integration example constraints

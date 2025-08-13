@@ -96,14 +96,14 @@ def charge_payment(order: Order) -> FlextResult[str]:
     # Simulated payment processing
     if order.total > 10000:
         return FlextResult.fail("Payment amount exceeds limit")
-    
+
     transaction_id = f"txn_{datetime.now().timestamp():.0f}"
     return FlextResult.ok(transaction_id)
 
 def ship_order(order: Order, transaction_id: str) -> FlextResult[dict]:
     """Ship the order after successful payment."""
     tracking_number = f"TRACK-{order.id}-{transaction_id[:8]}"
-    
+
     return FlextResult.ok({
         "order_id": order.id,
         "transaction_id": transaction_id,
@@ -217,7 +217,7 @@ from typing import Optional
 
 class Account(FlextEntity):
     """Bank account entity with business rules."""
-    
+
     account_number: str
     owner_name: str
     balance: float
@@ -225,56 +225,56 @@ class Account(FlextEntity):
     created_at: datetime
     daily_withdrawal_limit: float = 1000.0
     daily_withdrawn: float = 0.0
-    
+
     def deposit(self, amount: float) -> FlextResult[float]:
         """Deposit money into account."""
         if amount <= 0:
             return FlextResult.fail("Deposit amount must be positive")
-        
+
         if not self.is_active:
             return FlextResult.fail("Account is not active")
-        
+
         self.balance += amount
         self.add_domain_event("MoneyDeposited", {
             "account": self.account_number,
             "amount": amount,
             "new_balance": self.balance
         })
-        
+
         return FlextResult.ok(self.balance)
-    
+
     def withdraw(self, amount: float) -> FlextResult[float]:
         """Withdraw money from account."""
         if amount <= 0:
             return FlextResult.fail("Withdrawal amount must be positive")
-        
+
         if not self.is_active:
             return FlextResult.fail("Account is not active")
-        
+
         if amount > self.balance:
             return FlextResult.fail("Insufficient funds")
-        
+
         if self.daily_withdrawn + amount > self.daily_withdrawal_limit:
             return FlextResult.fail(f"Exceeds daily limit of {self.daily_withdrawal_limit}")
-        
+
         self.balance -= amount
         self.daily_withdrawn += amount
-        
+
         self.add_domain_event("MoneyWithdrawn", {
             "account": self.account_number,
             "amount": amount,
             "new_balance": self.balance
         })
-        
+
         return FlextResult.ok(self.balance)
-    
+
     def transfer_to(self, target: 'Account', amount: float) -> FlextResult[None]:
         """Transfer money to another account."""
         # Withdraw from this account
         withdraw_result = self.withdraw(amount)
         if withdraw_result.is_failure:
             return FlextResult.fail(f"Transfer failed: {withdraw_result.error}")
-        
+
         # Deposit to target account
         deposit_result = target.deposit(amount)
         if deposit_result.is_failure:
@@ -282,13 +282,13 @@ class Account(FlextEntity):
             self.balance += amount
             self.daily_withdrawn -= amount
             return FlextResult.fail(f"Transfer failed: {deposit_result.error}")
-        
+
         self.add_domain_event("MoneyTransferred", {
             "from": self.account_number,
             "to": target.account_number,
             "amount": amount
         })
-        
+
         return FlextResult.ok(None)
 
 # Usage
@@ -314,7 +314,7 @@ if transfer_result.success:
     print(f"Transfer successful")
     print(f"Account 1 balance: {account1.balance}")  # 750.0
     print(f"Account 2 balance: {account2.balance}")  # 750.0
-    
+
     # Check domain events
     for event in account1.get_events():
         print(f"Event: {event}")
@@ -328,44 +328,44 @@ from decimal import Decimal
 
 class Money(FlextValueObject):
     """Immutable money value object."""
-    
+
     amount: Decimal
     currency: str = "USD"
-    
+
     def add(self, other: 'Money') -> FlextResult['Money']:
         """Add two money values."""
         if self.currency != other.currency:
             return FlextResult.fail(f"Cannot add {self.currency} and {other.currency}")
-        
+
         return FlextResult.ok(Money(
             amount=self.amount + other.amount,
             currency=self.currency
         ))
-    
+
     def multiply(self, factor: Decimal) -> 'Money':
         """Multiply money by a factor."""
         return Money(
             amount=self.amount * factor,
             currency=self.currency
         )
-    
+
     def __str__(self) -> str:
         return f"{self.currency} {self.amount:.2f}"
 
 class Address(FlextValueObject):
     """Immutable address value object."""
-    
+
     street: str
     city: str
     state: str
     postal_code: str
     country: str = "USA"
-    
+
     @property
     def full_address(self) -> str:
         """Get formatted full address."""
         return f"{self.street}, {self.city}, {self.state} {self.postal_code}, {self.country}"
-    
+
     def is_same_city(self, other: 'Address') -> bool:
         """Check if addresses are in the same city."""
         return self.city == other.city and self.state == other.state
@@ -396,25 +396,25 @@ from datetime import datetime
 
 class ShoppingCart(FlextAggregateRoot):
     """Shopping cart aggregate maintaining consistency."""
-    
+
     customer_id: str
     items: List[dict] = []
     created_at: datetime
     updated_at: datetime
     status: str = "active"
-    
-    def add_item(self, product_id: str, name: str, 
+
+    def add_item(self, product_id: str, name: str,
                  price: float, quantity: int) -> FlextResult[None]:
         """Add item to cart with validation."""
         if self.status != "active":
             return FlextResult.fail("Cannot modify inactive cart")
-        
+
         if quantity <= 0:
             return FlextResult.fail("Quantity must be positive")
-        
+
         if price < 0:
             return FlextResult.fail("Price cannot be negative")
-        
+
         # Check if item already exists
         for item in self.items:
             if item["product_id"] == product_id:
@@ -426,7 +426,7 @@ class ShoppingCart(FlextAggregateRoot):
                     "new_quantity": item["quantity"]
                 })
                 return FlextResult.ok(None)
-        
+
         # Add new item
         self.items.append({
             "product_id": product_id,
@@ -434,21 +434,21 @@ class ShoppingCart(FlextAggregateRoot):
             "price": price,
             "quantity": quantity
         })
-        
+
         self.updated_at = datetime.now()
         self.add_domain_event("ItemAddedToCart", {
             "cart_id": self.id,
             "product_id": product_id,
             "quantity": quantity
         })
-        
+
         return FlextResult.ok(None)
-    
+
     def remove_item(self, product_id: str) -> FlextResult[None]:
         """Remove item from cart."""
         if self.status != "active":
             return FlextResult.fail("Cannot modify inactive cart")
-        
+
         for i, item in enumerate(self.items):
             if item["product_id"] == product_id:
                 self.items.pop(i)
@@ -458,31 +458,31 @@ class ShoppingCart(FlextAggregateRoot):
                     "product_id": product_id
                 })
                 return FlextResult.ok(None)
-        
+
         return FlextResult.fail(f"Item {product_id} not found in cart")
-    
+
     def calculate_total(self) -> float:
         """Calculate cart total."""
         return sum(item["price"] * item["quantity"] for item in self.items)
-    
+
     def checkout(self) -> FlextResult[float]:
         """Checkout cart and return total."""
         if self.status != "active":
             return FlextResult.fail("Cart already checked out")
-        
+
         if not self.items:
             return FlextResult.fail("Cart is empty")
-        
+
         total = self.calculate_total()
         self.status = "checked_out"
         self.updated_at = datetime.now()
-        
+
         self.add_domain_event("CartCheckedOut", {
             "cart_id": self.id,
             "total": total,
             "items_count": len(self.items)
         })
-        
+
         return FlextResult.ok(total)
 
 # Usage
@@ -504,7 +504,7 @@ print(f"Cart total: ${cart.calculate_total():.2f}")
 checkout_result = cart.checkout()
 if checkout_result.success:
     print(f"Checked out. Total: ${checkout_result.unwrap():.2f}")
-    
+
     # View events
     for event in cart.get_events():
         print(f"Event: {event}")
@@ -575,7 +575,7 @@ class CreateProductCommand:
     description: str
     price: float
     stock: int
-    
+
     def validate(self) -> FlextResult[None]:
         """Validate command data."""
         if not self.name:
@@ -591,7 +591,7 @@ class UpdateStockCommand:
     """Command to update product stock."""
     product_id: str
     quantity_change: int  # Can be positive or negative
-    
+
     def validate(self) -> FlextResult[None]:
         """Validate command data."""
         if not self.product_id:
@@ -602,24 +602,24 @@ class UpdateStockCommand:
 
 class CommandHandler(Protocol):
     """Protocol for command handlers."""
-    
+
     def handle(self, command) -> FlextResult:
         """Handle the command."""
         ...
 
 class CreateProductHandler:
     """Handler for CreateProductCommand."""
-    
+
     def __init__(self, repository):
         self.repository = repository
-    
+
     def handle(self, command: CreateProductCommand) -> FlextResult[str]:
         """Create a new product."""
         # Validate command
         validation = command.validate()
         if validation.is_failure:
             return FlextResult.fail(validation.error)
-        
+
         # Create product
         product_id = f"prod_{hash(command.name) % 10000:04d}"
         product = {
@@ -629,12 +629,12 @@ class CreateProductHandler:
             "price": command.price,
             "stock": command.stock
         }
-        
+
         # Save to repository
         save_result = self.repository.save(product)
         if save_result.is_failure:
             return FlextResult.fail(f"Failed to save: {save_result.error}")
-        
+
         return FlextResult.ok(product_id)
 
 # Usage
@@ -671,27 +671,27 @@ class SearchProductsQuery:
 
 class GetProductByIdHandler:
     """Handler for GetProductByIdQuery."""
-    
+
     def __init__(self, repository):
         self.repository = repository
-    
+
     def handle(self, query: GetProductByIdQuery) -> FlextResult[dict]:
         """Get product by ID."""
         if not query.product_id:
             return FlextResult.fail("Product ID is required")
-        
+
         product = self.repository.find_by_id(query.product_id)
         if not product:
             return FlextResult.fail(f"Product {query.product_id} not found")
-        
+
         return FlextResult.ok(product)
 
 class SearchProductsHandler:
     """Handler for SearchProductsQuery."""
-    
+
     def __init__(self, repository):
         self.repository = repository
-    
+
     def handle(self, query: SearchProductsQuery) -> FlextResult[list]:
         """Search for products."""
         # Build search criteria
@@ -700,14 +700,14 @@ class SearchProductsHandler:
             "price_range": (query.min_price, query.max_price),
             "in_stock": query.in_stock_only
         }
-        
+
         # Execute search
         products = self.repository.search(
             criteria,
             limit=query.limit,
             offset=query.offset
         )
-        
+
         return FlextResult.ok(products)
 
 # Usage
@@ -762,16 +762,16 @@ class PaymentProcessedEvent(DomainEvent):
 
 class EventBus:
     """Simple event bus for publishing and subscribing."""
-    
+
     def __init__(self):
         self.handlers: dict[str, List[Callable]] = {}
-    
+
     def subscribe(self, event_type: str, handler: Callable) -> None:
         """Subscribe to an event type."""
         if event_type not in self.handlers:
             self.handlers[event_type] = []
         self.handlers[event_type].append(handler)
-    
+
     def publish(self, event: DomainEvent) -> None:
         """Publish an event to all subscribers."""
         event_handlers = self.handlers.get(event.event_type, [])

@@ -50,28 +50,28 @@ from typing import Optional
 
 class AppSettings(FlextSettings):
     """Application configuration with sensible defaults."""
-    
+
     # Application metadata
     app_name: str = "My FLEXT App"
     version: str = "1.0.0"
     debug: bool = False
     environment: str = "development"
-    
+
     # Database configuration
     database_url: str = "sqlite:///app.db"
     database_pool_size: int = 5
     database_timeout: int = 30
-    
+
     # API configuration
     api_host: str = "127.0.0.1"
     api_port: int = 8000
     api_workers: int = 1
-    
+
     # Optional features
     redis_url: Optional[str] = None
     enable_metrics: bool = False
     enable_tracing: bool = False
-    
+
     class Config:
         env_prefix = "MYAPP_"
         case_sensitive = False
@@ -82,12 +82,12 @@ class AppSettings(FlextSettings):
 def initialize_app():
     """Initialize application with configuration."""
     settings = AppSettings()
-    
+
     # Access configuration values
     print(f"Starting {settings.app_name} v{settings.version}")
     print(f"Environment: {settings.environment}")
     print(f"API endpoint: http://{settings.api_host}:{settings.api_port}")
-    
+
     # Environment-specific behavior
     if settings.environment == "production":
         settings.database_pool_size = 20
@@ -95,14 +95,14 @@ def initialize_app():
     elif settings.environment == "staging":
         settings.database_pool_size = 10
         settings.api_workers = 2
-    
+
     # Optional feature flags
     if settings.enable_metrics:
         print("Metrics collection enabled")
-    
+
     if settings.enable_tracing:
         print("Distributed tracing enabled")
-    
+
     return settings
 ```
 
@@ -138,24 +138,24 @@ import re
 
 class DatabaseSettings(FlextSettings):
     """Database configuration with comprehensive validation."""
-    
+
     # Connection parameters
     host: str = Field("localhost", description="Database host")
     port: int = Field(5432, ge=1, le=65535, description="Database port")
     name: str = Field("myapp", pattern=r"^[a-zA-Z][a-zA-Z0-9_]*$")
     user: str = Field("postgres", min_length=1, max_length=63)
     password: str = Field("", description="Database password")
-    
+
     # Connection pool settings
     pool_min_size: int = Field(2, ge=1, le=100)
     pool_max_size: int = Field(10, ge=1, le=100)
     pool_timeout: int = Field(30, ge=1, le=300)
-    
+
     # SSL configuration
     ssl_mode: str = Field("prefer", description="SSL mode")
     ssl_cert_path: Optional[str] = Field(None, description="SSL certificate path")
     ssl_key_path: Optional[str] = Field(None, description="SSL key path")
-    
+
     @field_validator("ssl_mode")
     @classmethod
     def validate_ssl_mode(cls, v: str) -> str:
@@ -164,7 +164,7 @@ class DatabaseSettings(FlextSettings):
         if v not in valid_modes:
             raise ValueError(f"SSL mode must be one of: {', '.join(valid_modes)}")
         return v
-    
+
     @field_validator("password")
     @classmethod
     def validate_password_strength(cls, v: str) -> str:
@@ -172,14 +172,14 @@ class DatabaseSettings(FlextSettings):
         if v and len(v) < 8:
             raise ValueError("Password must be at least 8 characters")
         return v
-    
+
     @model_validator(mode='after')
     def validate_pool_sizes(self) -> 'DatabaseSettings':
         """Ensure pool_max_size >= pool_min_size."""
         if self.pool_max_size < self.pool_min_size:
             raise ValueError("pool_max_size must be >= pool_min_size")
         return self
-    
+
     @model_validator(mode='after')
     def validate_ssl_paths(self) -> 'DatabaseSettings':
         """Validate SSL certificate paths."""
@@ -193,7 +193,7 @@ class DatabaseSettings(FlextSettings):
         """Build database connection URL with parameters."""
         auth = f"{self.user}:{self.password}@" if self.password else f"{self.user}@"
         base_url = f"postgresql://{auth}{self.host}:{self.port}/{self.name}"
-        
+
         # Add SSL parameters if needed
         params = []
         if self.ssl_mode != "disable":
@@ -202,15 +202,15 @@ class DatabaseSettings(FlextSettings):
             params.append(f"sslcert={self.ssl_cert_path}")
         if self.ssl_key_path:
             params.append(f"sslkey={self.ssl_key_path}")
-        
+
         if params:
             return f"{base_url}?{'&'.join(params)}"
         return base_url
-    
+
     def get_async_url(self) -> str:
         """Get async connection URL for asyncpg."""
         return self.connection_url.replace("postgresql://", "postgresql+asyncpg://")
-    
+
     def get_pool_config(self) -> dict:
         """Get connection pool configuration."""
         return {
@@ -427,15 +427,15 @@ from pydantic import Field, SecretStr
 
 class SecureSettings(FlextSettings):
     """Configuration with secure secret handling."""
-    
+
     # Sensitive values use SecretStr
     api_key: SecretStr = Field(..., description="API key")
     database_password: SecretStr = Field(..., description="DB password")
     jwt_secret: SecretStr = Field(..., description="JWT secret")
-    
+
     class Config:
         env_prefix = "SECURE_"
-        
+
     def get_api_key(self) -> str:
         """Get API key value (careful with logging)."""
         return self.api_key.get_secret_value()
@@ -447,18 +447,18 @@ class SecureSettings(FlextSettings):
 def validate_configuration(settings: FlextSettings) -> FlextResult[None]:
     """Validate configuration at startup."""
     errors = []
-    
+
     # Check required services
     if settings.database_url == "sqlite:///app.db" and settings.environment == "production":
         errors.append("SQLite not recommended for production")
-    
+
     # Validate external connections
     if settings.redis_url and not can_connect_redis(settings.redis_url):
         errors.append("Cannot connect to Redis")
-    
+
     if errors:
         return FlextResult.fail("; ".join(errors))
-    
+
     return FlextResult.ok(None)
 ```
 
@@ -469,20 +469,20 @@ Always document configuration options:
 ```python
 class DocumentedSettings(FlextSettings):
     """Application settings with comprehensive documentation.
-    
+
     Environment Variables:
         APP_NAME: Application name for logging and metrics
         APP_DEBUG: Enable debug mode (verbose logging)
         APP_PORT: HTTP server port (1-65535)
         APP_WORKERS: Number of worker processes
-    
+
     Example:
         export APP_NAME="my-service"
         export APP_DEBUG=false
         export APP_PORT=8080
         export APP_WORKERS=4
     """
-    
+
     app_name: str = Field(
         "my-app",
         description="Application identifier used in logs and metrics"
@@ -512,20 +512,20 @@ class DocumentedSettings(FlextSettings):
 ```python
 class ServiceDiscoverySettings(FlextSettings):
     """Configuration for service discovery."""
-    
+
     # Service registry
     consul_host: str = "localhost"
     consul_port: int = 8500
-    
+
     # Service metadata
     service_name: str
     service_id: str
     service_tags: list[str] = []
-    
+
     # Health check
     health_check_interval: int = 10
     health_check_timeout: int = 5
-    
+
     def get_consul_url(self) -> str:
         """Get Consul API URL."""
         return f"http://{self.consul_host}:{self.consul_port}"
@@ -536,18 +536,18 @@ class ServiceDiscoverySettings(FlextSettings):
 ```python
 class FeatureFlags(FlextSettings):
     """Feature flag configuration."""
-    
+
     # Feature toggles
     enable_new_ui: bool = False
     enable_beta_features: bool = False
     enable_analytics: bool = True
-    
+
     # Rollout percentages
     new_algorithm_rollout: int = Field(0, ge=0, le=100)
-    
+
     # A/B testing
     ab_test_groups: dict[str, int] = {}
-    
+
     def is_feature_enabled(self, feature: str, user_id: str = None) -> bool:
         """Check if feature is enabled for user."""
         # Implement percentage-based rollout logic
@@ -559,19 +559,21 @@ class FeatureFlags(FlextSettings):
 ### Common Issues
 
 1. **Environment variables not loading**:
-   - Check prefix matches (case-sensitive on Linux/Mac)
-   - Verify .env file location and encoding
-   - Use `export` command on Unix systems
+
+    - Check prefix matches (case-sensitive on Linux/Mac)
+    - Verify .env file location and encoding
+    - Use `export` command on Unix systems
 
 2. **Validation errors**:
-   - Enable debug logging to see actual values
-   - Check field constraints (min/max, patterns)
-   - Verify required fields have values
+
+    - Enable debug logging to see actual values
+    - Check field constraints (min/max, patterns)
+    - Verify required fields have values
 
 3. **Type conversion errors**:
-   - Ensure correct types in environment variables
-   - Use "true"/"false" for booleans (not 1/0)
-   - Lists should be comma-separated
+    - Ensure correct types in environment variables
+    - Use "true"/"false" for booleans (not 1/0)
+    - Lists should be comma-separated
 
 ### Debug Configuration Loading
 
@@ -581,13 +583,13 @@ from flext_core import FlextSettings
 
 def debug_configuration():
     """Debug configuration loading."""
-    
+
     # Show all environment variables
     print("Environment variables:")
     for key, value in os.environ.items():
         if key.startswith("MYAPP_"):
             print(f"  {key}={value}")
-    
+
     # Try loading configuration
     try:
         settings = AppSettings()

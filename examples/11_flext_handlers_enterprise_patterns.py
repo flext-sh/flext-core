@@ -100,7 +100,10 @@ class UserEntity(FlextEntity):
             return FlextResult.fail("User is already active")
         # Since entities are frozen, we need to create a new instance
         activated_user = UserEntity(
-            id=self.id, name=self.name, email=self.email, is_active=True,
+            id=self.id,
+            name=self.name,
+            email=self.email,
+            is_active=True,
         )
         return FlextResult.ok(activated_user)
 
@@ -645,7 +648,9 @@ def _test_update_user_handler(create_handler: CreateUserHandler) -> UpdateUserHa
     update_handler = UpdateUserHandler(create_handler.users)
     first_user_id = next(iter(create_handler.users.keys()))
     update_command = UpdateUserCommand(
-        user_id=first_user_id, name="John Smith", email="john.smith@example.com",
+        user_id=first_user_id,
+        name="John Smith",
+        email="john.smith@example.com",
     )
     result = update_handler.handle(update_command)
     if result.success:
@@ -665,14 +670,19 @@ def _test_update_user_handler(create_handler: CreateUserHandler) -> UpdateUserHa
 
 
 def _print_command_metrics(
-    create_handler: CreateUserHandler, update_handler: UpdateUserHandler,
+    create_handler: CreateUserHandler,
+    update_handler: UpdateUserHandler,
 ) -> None:
     print("\n3. Command handler metrics:")
     create_metrics = getattr(
-        create_handler, "get_metrics", lambda: {"commands_processed": 0},
+        create_handler,
+        "get_metrics",
+        lambda: {"commands_processed": 0},
     )()
     update_metrics = getattr(
-        update_handler, "get_metrics", lambda: {"commands_processed": 0},
+        update_handler,
+        "get_metrics",
+        lambda: {"commands_processed": 0},
     )()
     print("📊 Create Handler Metrics:")
     print(f"   Handler name: {create_metrics.get('handler_name', 'Unknown')}")
@@ -806,14 +816,19 @@ def _list_all_users(list_handler: ListUsersHandler) -> None:
 
 
 def _print_query_metrics(
-    get_handler: GetUserHandler, list_handler: ListUsersHandler,
+    get_handler: GetUserHandler,
+    list_handler: ListUsersHandler,
 ) -> None:
     print("\n3. Query handler metrics:")
     get_metrics = getattr(
-        get_handler, "get_metrics", lambda: {"queries_processed": 0},
+        get_handler,
+        "get_metrics",
+        lambda: {"queries_processed": 0},
     )()
     list_metrics = getattr(
-        list_handler, "get_metrics", lambda: {"queries_processed": 0},
+        list_handler,
+        "get_metrics",
+        lambda: {"queries_processed": 0},
     )()
     print("📊 Get Handler Metrics:")
     print(f"   Handler name: {get_metrics.get('handler_name', 'Unknown')}")
@@ -882,13 +897,19 @@ def demonstrate_event_handlers() -> None:
     # 4. Event handler metrics
     print("\n4. Event handler metrics:")
     user_created_metrics = getattr(
-        user_created_handler, "get_metrics", lambda: {"events_processed": 0},
+        user_created_handler,
+        "get_metrics",
+        lambda: {"events_processed": 0},
     )()
     user_updated_metrics = getattr(
-        user_updated_handler, "get_metrics", lambda: {"events_processed": 0},
+        user_updated_handler,
+        "get_metrics",
+        lambda: {"events_processed": 0},
     )()
     order_created_metrics = getattr(
-        order_created_handler, "get_metrics", lambda: {"events_processed": 0},
+        order_created_handler,
+        "get_metrics",
+        lambda: {"events_processed": 0},
     )()
 
     print("📊 User Created Handler:")
@@ -1129,7 +1150,9 @@ def _print_function_handlers_header() -> None:
 
 
 def _create_function_handlers() -> tuple[
-    FlextBaseHandler, FlextBaseHandler, FlextBaseHandler,
+    FlextBaseHandler,
+    FlextBaseHandler,
+    FlextBaseHandler,
 ]:
     print("\n1. Creating function-based handlers:")
 

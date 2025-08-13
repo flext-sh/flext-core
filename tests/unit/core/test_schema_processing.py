@@ -244,7 +244,8 @@ class TestConfigAttributeValidator:
         config.attr2 = "value2"
 
         result = ConfigAttributeValidator.validate_required_attributes(
-            config, ["attr1", "attr2"],
+            config,
+            ["attr1", "attr2"],
         )
         assert result.success
         assert result.data is True
@@ -260,7 +261,8 @@ class TestConfigAttributeValidator:
         config = SimpleConfig()
 
         result = ConfigAttributeValidator.validate_required_attributes(
-            config, ["attr1", "attr2", "attr3"],
+            config,
+            ["attr1", "attr2", "attr3"],
         )
         assert not result.success
         assert "Missing required attributes" in (result.error or "")
@@ -360,7 +362,9 @@ class TestBaseProcessor:
         """Test entry extraction with prefix."""
         processor = MockProcessor()
         result = processor.extract_entry_info(
-            "prefix: test content 456", "test_type", "prefix",
+            "prefix: test content 456",
+            "test_type",
+            "prefix",
         )
 
         assert result.success

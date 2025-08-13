@@ -111,13 +111,13 @@ from flext_core import FlextResult
 
 def process_data(data: str) -> FlextResult[str]:
     """Process input data with validation.
-    
+
     Args:
         data: The input string to process.
-        
+
     Returns:
         FlextResult containing processed data or error message.
-        
+
     Example:
         >>> result = process_data("hello")
         >>> if result.success:
@@ -125,7 +125,7 @@ def process_data(data: str) -> FlextResult[str]:
     """
     if not data:
         return FlextResult.fail("Data cannot be empty")
-    
+
     processed = data.strip().upper()
     return FlextResult.ok(processed)
 ```
@@ -157,19 +157,19 @@ from flext_core import FlextResult
 
 class TestFlextResult:
     """Test FlextResult railway pattern."""
-    
+
     def test_success_case(self):
         """Test successful result creation."""
         result = FlextResult.ok("test")
         assert result.success
         assert result.data == "test"
-    
+
     def test_failure_case(self):
         """Test failure result creation."""
         result = FlextResult.fail("error")
         assert result.is_failure
         assert result.error == "error"
-    
+
     @pytest.mark.parametrize("value,expected", [
         ("test", "TEST"),
         ("hello", "HELLO"),
@@ -202,30 +202,30 @@ def complex_function(
     optional: bool = False
 ) -> FlextResult[dict]:
     """Brief description of function purpose.
-    
+
     Longer description explaining behavior, edge cases,
     and important details about the implementation.
-    
+
     Args:
         param1: Description of first parameter.
         param2: Description of second parameter.
         optional: Description of optional parameter.
             Defaults to False.
-    
+
     Returns:
         FlextResult containing a dictionary with keys:
         - key1: Description of key1
         - key2: Description of key2
-        
+
     Raises:
         Never raises - returns FlextResult.fail() on error.
-        
+
     Example:
         >>> result = complex_function("test", 42)
         >>> if result.success:
         ...     data = result.unwrap()
         ...     print(data["key1"])
-        
+
     Note:
         This function is thread-safe.
     """
@@ -322,22 +322,28 @@ src/flext_core/
 
 ```markdown
 ## Description
+
 Brief description of changes
 
 ## Motivation
+
 Why these changes are needed
 
 ## Changes
+
 - Change 1
 - Change 2
 
 ## Testing
+
 How the changes were tested
 
 ## Breaking Changes
+
 List any breaking changes
 
 ## Checklist
+
 - [ ] Tests added/updated
 - [ ] Documentation updated
 - [ ] All checks pass

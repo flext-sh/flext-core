@@ -84,7 +84,8 @@ class TestFlextUtilitiesParametrized:
 
     @pytest.mark.parametrize_advanced
     def test_utility_constants(
-        self, constant_test_cases: list[TestCase[dict[str, object], int]],
+        self,
+        constant_test_cases: list[TestCase[dict[str, object], int]],
     ) -> None:
         """Test utility constants using structured test cases."""
         for test_case in constant_test_cases:
@@ -280,7 +281,8 @@ class TestFlextUtilitiesWithFixtures:
         service.process_id.assert_called_once_with(generated_id)
 
     def test_utilities_with_test_builder(
-        self, test_builder: type[TestDataBuilder[object]],
+        self,
+        test_builder: type[TestDataBuilder[object]],
     ) -> None:
         """Test utilities with test data builder."""
         # Build test data with utilities
@@ -370,12 +372,14 @@ class TestFlextUtilitiesErrorHandling:
     @pytest.mark.error_path
     @pytest.mark.parametrize_advanced
     def test_cli_error_handling(
-        self, error_test_cases: list[TestCase[dict[str, object], None]],
+        self,
+        error_test_cases: list[TestCase[dict[str, object], None]],
     ) -> None:
         """Test CLI error handling with structured test cases."""
         for test_case in error_test_cases:
             exception_type = cast(
-                "type[BaseException]", test_case.input_data["exception"],
+                "type[BaseException]",
+                test_case.input_data["exception"],
             )
             message = cast("str", test_case.input_data["message"])
 
@@ -434,7 +438,8 @@ class TestFlextUtilitiesSnapshot:
 
     @pytest.mark.snapshot
     def test_generator_output_snapshot(
-        self, snapshot_manager: Callable[[str, object], None],
+        self,
+        snapshot_manager: Callable[[str, object], None],
     ) -> None:
         """Test generator outputs with snapshot."""
         # Generate various IDs and timestamps
@@ -522,7 +527,8 @@ class TestFlextUtilitiesIntegration:
 
         # Validate entity structure
         entity = cast(
-            "dict[str, object]", cast("dict[str, object]", result.data)["entity"],
+            "dict[str, object]",
+            cast("dict[str, object]", result.data)["entity"],
         )
         assert cast("str", entity["id"]).startswith("entity_")
         assert cast("str", entity["correlation_id"]).startswith("corr_")
@@ -686,10 +692,12 @@ class TestFlextUtilitiesBackwardCompatibility:
         for old_function, new_method, args in cases:
             if len(args) == 0:
                 old_gen = cast(
-                    "TestFlextUtilitiesBackwardCompatibility.GenFunc", old_function,
+                    "TestFlextUtilitiesBackwardCompatibility.GenFunc",
+                    old_function,
                 )
                 new_gen = cast(
-                    "TestFlextUtilitiesBackwardCompatibility.GenFunc", new_method,
+                    "TestFlextUtilitiesBackwardCompatibility.GenFunc",
+                    new_method,
                 )
                 old_result = old_gen()
                 new_result = new_gen()
@@ -705,19 +713,23 @@ class TestFlextUtilitiesBackwardCompatibility:
                     assert old_prefix == new_prefix
             elif len(args) == 2:
                 old_trunc = cast(
-                    "TestFlextUtilitiesBackwardCompatibility.TruncFunc", old_function,
+                    "TestFlextUtilitiesBackwardCompatibility.TruncFunc",
+                    old_function,
                 )
                 new_trunc = cast(
-                    "TestFlextUtilitiesBackwardCompatibility.TruncFunc", new_method,
+                    "TestFlextUtilitiesBackwardCompatibility.TruncFunc",
+                    new_method,
                 )
                 s, n = args
                 assert old_trunc(s, n) == new_trunc(s, n)
             else:
                 old_pred = cast(
-                    "TestFlextUtilitiesBackwardCompatibility.PredOld", old_function,
+                    "TestFlextUtilitiesBackwardCompatibility.PredOld",
+                    old_function,
                 )
                 new_pred = cast(
-                    "TestFlextUtilitiesBackwardCompatibility.PredNew", new_method,
+                    "TestFlextUtilitiesBackwardCompatibility.PredNew",
+                    new_method,
                 )
                 (val,) = args
                 assert old_pred(val) == new_pred(val)

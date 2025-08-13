@@ -14,8 +14,10 @@ domain events, and aggregate patterns.
 
 from __future__ import annotations
 
+import sys as _sys
 import time
 from decimal import Decimal
+from pathlib import Path as _Path
 from typing import TYPE_CHECKING, cast
 
 from flext_core import (
@@ -24,7 +26,11 @@ from flext_core import (
     FlextUtilities,
 )
 
-from .shared_domain import (
+_project_root = _Path(__file__).resolve().parents[1]
+if str(_project_root) not in _sys.path:
+    _sys.path.insert(0, str(_project_root))
+
+from examples.shared_domain import (
     Address,
     Age,
     EmailAddress as Email,
@@ -35,7 +41,7 @@ from .shared_domain import (
     User as SharedUser,
     UserStatus,
 )
-from .shared_example_helpers import run_example_demonstration
+from examples.shared_example_helpers import run_example_demonstration
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -209,7 +215,9 @@ class Customer(SharedUser):
             return FlextResult.fail(f"Failed to create deactivated customer: {e}")
 
     def _add_deactivation_event(
-        self, customer: Customer, reason: str,
+        self,
+        customer: Customer,
+        reason: str,
     ) -> FlextResult[Customer]:
         """Add domain event for customer deactivation."""
         customer.add_domain_event(
@@ -251,7 +259,8 @@ class Customer(SharedUser):
         return FlextResult.ok(None)
 
     def _create_customer_with_updated_address(
-        self, new_address: Address,
+        self,
+        new_address: Address,
     ) -> FlextResult[Customer]:
         """Create new customer instance with updated address."""
         try:
@@ -261,7 +270,9 @@ class Customer(SharedUser):
             return FlextResult.fail(f"Failed to create updated customer: {e}")
 
     def _add_address_update_event(
-        self, customer: Customer, new_address: Address,
+        self,
+        customer: Customer,
+        new_address: Address,
     ) -> FlextResult[Customer]:
         """Add domain event for address update."""
         customer.add_domain_event(
@@ -338,7 +349,8 @@ class Customer(SharedUser):
             return FlextResult.fail(f"Failed to create updated customer: {e}")
 
     def _add_credit_limit_event(
-        self, updated_customer: Customer,
+        self,
+        updated_customer: Customer,
     ) -> FlextResult[Customer]:
         """Add domain event for credit limit increase."""
         updated_customer.add_domain_event(
@@ -504,7 +516,8 @@ class Product(FlextEntity):
         return FlextResult.ok(None)
 
     def _create_updated_product_with_price(
-        self, new_price: Money,
+        self,
+        new_price: Money,
     ) -> FlextResult[Product]:
         """Create new product instance with updated price."""
         try:
@@ -543,7 +556,9 @@ class Product(FlextEntity):
             .flat_map(self._create_updated_product_with_stock)
             .flat_map(
                 lambda product: self._add_stock_adjustment_event(
-                    product, quantity_change, reason,
+                    product,
+                    quantity_change,
+                    reason,
                 ),
             )
         )
@@ -567,7 +582,8 @@ class Product(FlextEntity):
         return FlextResult.ok(new_stock)
 
     def _create_updated_product_with_stock(
-        self, new_stock: int,
+        self,
+        new_stock: int,
     ) -> FlextResult[Product]:
         """Create new product instance with updated stock quantity."""
         try:
@@ -641,7 +657,9 @@ class Product(FlextEntity):
             return FlextResult.fail(f"Failed to create unavailable product: {e}")
 
     def _add_unavailability_event(
-        self, unavailable_product: Product, reason: str,
+        self,
+        unavailable_product: Product,
+        reason: str,
     ) -> FlextResult[Product]:
         """Add domain event for product unavailability."""
         unavailable_product.add_domain_event(
@@ -696,7 +714,9 @@ class CustomerRepository:
         """Find customer by email."""
         for customer in self.customers.values():
             customer_email = getattr(customer, "email_address", None) or getattr(
-                customer, "email", None,
+                customer,
+                "email",
+                None,
             )
             if customer_email and getattr(customer_email, "email", None) == email:
                 print(f"🔍 Customer found by email: {customer.name}")
@@ -865,7 +885,10 @@ class OrderDomainService:
 
         # Create and finalize order
         return self._create_and_persist_order(
-            customer_id, order_items, shipping_address, total_amount,
+            customer_id,
+            order_items,
+            shipping_address,
+            total_amount,
         )
 
     def _validate_customer_for_order(self, customer_id: str) -> FlextResult[None]:
@@ -895,7 +918,8 @@ class OrderDomainService:
         return FlextResult.ok(None)
 
     def _create_and_validate_order_items(
-        self, product_orders: list[tuple[str, int]],
+        self,
+        product_orders: list[tuple[str, int]],
     ) -> FlextResult[tuple[list[OrderItem], Money]]:
         """Create and validate all order items, calculate total."""
         order_items: list[OrderItem] = []
@@ -928,7 +952,9 @@ class OrderDomainService:
         return FlextResult.ok((order_items, total_amount))
 
     def _create_single_order_item(
-        self, product_id: str, quantity: int,
+        self,
+        product_id: str,
+        quantity: int,
     ) -> FlextResult[OrderItem]:
         """Create and validate a single order item."""
         # Get and validate product
@@ -958,7 +984,9 @@ class OrderDomainService:
         return FlextResult.ok(order_item)
 
     def _get_and_validate_product(
-        self, product_id: str, quantity: int,
+        self,
+        product_id: str,
+        quantity: int,
     ) -> FlextResult[Product]:
         """Get product and validate availability and stock."""
         product_result = self.product_repo.find_by_id(product_id)
@@ -981,7 +1009,9 @@ class OrderDomainService:
         return FlextResult.ok(product)
 
     def _add_item_to_total(
-        self, order_item: OrderItem, current_total: Money,
+        self,
+        order_item: OrderItem,
+        current_total: Money,
     ) -> FlextResult[Money]:
         """Add order item total to running total."""
         if hasattr(order_item, "total_price"):
@@ -1054,7 +1084,9 @@ class OrderDomainService:
         return FlextResult.ok(order)
 
     def _add_order_creation_event(
-        self, order: Order, customer_id: str,
+        self,
+        order: Order,
+        customer_id: str,
     ) -> FlextResult[Order]:
         """Add domain event for order creation."""
         order.add_domain_event(
@@ -1085,13 +1117,15 @@ class OrderDomainService:
             .flat_map(self._save_confirmed_order)
             .flat_map(
                 lambda confirmed_order: self._ship_order_safely(
-                    confirmed_order, tracking_number,
+                    confirmed_order,
+                    tracking_number,
                 ),
             )
             .flat_map(self._save_shipped_order)
             .flat_map(
                 lambda shipped_order: self._update_product_stock_for_order(
-                    shipped_order, order_id,
+                    shipped_order,
+                    order_id,
                 ),
             )
         )
@@ -1135,7 +1169,9 @@ class OrderDomainService:
         return FlextResult.ok(confirmed_order)
 
     def _ship_order_safely(
-        self, confirmed_order: Order, tracking_number: str,
+        self,
+        confirmed_order: Order,
+        tracking_number: str,
     ) -> FlextResult[Order]:
         """Ship order safely, handling missing methods."""
         try:
@@ -1165,7 +1201,9 @@ class OrderDomainService:
         return FlextResult.ok(shipped_order)
 
     def _update_product_stock_for_order(
-        self, shipped_order: Order, order_id: str,
+        self,
+        shipped_order: Order,
+        order_id: str,
     ) -> FlextResult[Order]:
         """Update product stock for all items in the order."""
         # Update product stock
@@ -1462,7 +1500,9 @@ def _demo_print_events(customer: Customer) -> None:
 
 
 def _setup_aggregate_repositories() -> tuple[
-    CustomerRepository, ProductRepository, OrderRepository,
+    CustomerRepository,
+    ProductRepository,
+    OrderRepository,
 ]:
     """Setup repositories for aggregate demonstration."""
     return CustomerRepository(), ProductRepository(), OrderRepository()
@@ -1599,7 +1639,8 @@ def _process_order_lifecycle(
 
 
 def _display_updated_stock(
-    product_repo: ProductRepository, products: list[Product],
+    product_repo: ProductRepository,
+    products: list[Product],
 ) -> None:
     """Display updated product stock after order processing."""
     print("\n📋 Updated Product Stock:")
@@ -1688,7 +1729,8 @@ def _create_test_customers_for_repo(
 
 
 def _demonstrate_customer_queries(
-    customer_repo: CustomerRepository, customers: list[Customer],
+    customer_repo: CustomerRepository,
+    customers: list[Customer],
 ) -> None:
     """Demonstrate customer repository queries."""
     print("\n📋 Repository Queries:")

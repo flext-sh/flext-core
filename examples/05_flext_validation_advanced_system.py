@@ -13,8 +13,10 @@ composition patterns, and structured error reporting.
 from __future__ import annotations
 
 import math
+import sys as _sys
 import time
 from decimal import Decimal
+from pathlib import Path as _Path
 from typing import TYPE_CHECKING, cast
 
 from flext_core import (
@@ -27,7 +29,11 @@ from flext_core import (
     TUserData,
 )
 
-from .shared_domain import (
+_project_root = _Path(__file__).resolve().parents[1]
+if str(_project_root) not in _sys.path:
+    _sys.path.insert(0, str(_project_root))
+
+from examples.shared_domain import (
     Money,
     Product as SharedProduct,
     SharedDemonstrationPattern,
@@ -627,7 +633,9 @@ def _extract_and_validate_customer_input(
 
 
 def _create_user_with_factory(
-    name: str, email: str, age: int,
+    name: str,
+    email: str,
+    age: int,
 ) -> FlextResult[SharedUser]:
     """Create user using SharedDomainFactory with validation."""
     user_result = SharedDomainFactory.create_user(

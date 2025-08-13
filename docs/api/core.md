@@ -54,48 +54,48 @@ class FlextResult[T]:
     @classmethod
     def ok(cls, data: T) -> FlextResult[T]:
         """Create success result with data."""
-    
+
     @classmethod
     def fail(cls, error: str) -> FlextResult[T]:
         """Create failure result with error message."""
-    
+
     # Properties
     @property
     def success(self) -> bool:
         """True if result is successful."""
-    
+
     @property
     def is_failure(self) -> bool:
         """True if result is failure."""
-    
+
     @property
     def data(self) -> T | None:
         """Success data (None if failure)."""
-    
+
     @property
     def error(self) -> str | None:
         """Error message (None if success)."""
-    
+
     # Transformation methods
     def map(self, func: Callable[[T], U]) -> FlextResult[U]:
         """Transform success value, pass through errors."""
-    
+
     def flat_map(self, func: Callable[[T], FlextResult[U]]) -> FlextResult[U]:
         """Chain operations that return FlextResult."""
-    
+
     def map_error(self, func: Callable[[str], str]) -> FlextResult[T]:
         """Transform error message, pass through success."""
-    
+
     def or_else(self, func: Callable[[str], FlextResult[T]]) -> FlextResult[T]:
         """Provide alternative on failure."""
-    
+
     # Extraction methods
     def unwrap(self) -> T:
         """Extract value (raises if failure)."""
-    
+
     def unwrap_or(self, default: T) -> T:
         """Extract value or return default."""
-    
+
     def unwrap_or_else(self, func: Callable[[str], T]) -> T:
         """Extract value or compute default from error."""
 ```
@@ -157,24 +157,24 @@ class FlextContainer:
     # Registration
     def register(self, key: str, instance: Any) -> FlextResult[None]:
         """Register service instance."""
-    
+
     def register_factory(self, key: str, factory: Callable[[], Any]) -> FlextResult[None]:
         """Register service factory."""
-    
+
     # Resolution
     def get(self, key: str) -> FlextResult[Any]:
         """Get service by key."""
-    
+
     def has(self, key: str) -> bool:
         """Check if service is registered."""
-    
+
     # Management
     def unregister(self, key: str) -> FlextResult[None]:
         """Remove service registration."""
-    
+
     def list_services(self) -> list[str]:
         """Get all registered service keys."""
-    
+
     def clear(self) -> None:
         """Remove all registrations."""
 
@@ -199,7 +199,7 @@ class AppSettings(FlextSettings):
     database_url: str = "sqlite:///app.db"
     api_port: int = 8000
     api_key: str | None = None
-    
+
     class Config:
         env_prefix = "APP_"  # Read from APP_DEBUG, APP_DATABASE_URL, etc.
         env_file = ".env"    # Load from .env file
@@ -224,18 +224,18 @@ class DatabaseSettings(FlextSettings):
     password: str = Field(..., min_length=8)
     database: str = "myapp"
     pool_size: int = Field(5, ge=1, le=100)
-    
+
     @validator("username")
     def validate_username(cls, v):
         if not v.isalnum():
             raise ValueError("Username must be alphanumeric")
         return v
-    
+
     @property
     def connection_url(self) -> str:
         """Build connection URL."""
         return f"postgresql://{self.username}:{self.password}@{self.host}:{self.port}/{self.database}"
-    
+
     class Config:
         env_prefix = "DB_"
         env_file = ".env"
@@ -257,27 +257,27 @@ class User(FlextEntity):
     email: str
     is_active: bool = True
     created_at: datetime
-    
+
     def activate(self) -> FlextResult[None]:
         """Activate user account."""
         if self.is_active:
             return FlextResult.fail("User already active")
-        
+
         self.is_active = True
         self.add_domain_event("UserActivated", {
             "user_id": self.id,
             "activated_at": datetime.now().isoformat()
         })
         return FlextResult.ok(None)
-    
+
     def change_email(self, new_email: str) -> FlextResult[None]:
         """Change user email with validation."""
         if "@" not in new_email:
             return FlextResult.fail("Invalid email format")
-        
+
         old_email = self.email
         self.email = new_email
-        
+
         self.add_domain_event("EmailChanged", {
             "user_id": self.id,
             "old_email": old_email,
@@ -298,43 +298,43 @@ class Money(FlextValueObject):
     """Immutable money value object."""
     amount: Decimal
     currency: str
-    
+
     def add(self, other: 'Money') -> FlextResult['Money']:
         """Add money amounts with same currency."""
         if self.currency != other.currency:
             return FlextResult.fail(f"Currency mismatch: {self.currency} != {other.currency}")
-        
+
         return FlextResult.ok(Money(
             amount=self.amount + other.amount,
             currency=self.currency
         ))
-    
+
     def multiply(self, factor: Decimal) -> 'Money':
         """Multiply money amount."""
         return Money(
             amount=self.amount * factor,
             currency=self.currency
         )
-    
+
     def __str__(self) -> str:
         return f"{self.currency} {self.amount:.2f}"
 
 class Email(FlextValueObject):
     """Email value object with validation."""
     address: str
-    
+
     def __init__(self, **data):
         address = data.get('address', '')
         if "@" not in address or "." not in address.split("@")[1]:
             raise ValueError(f"Invalid email: {address}")
         data['address'] = address.lower()  # Normalize
         super().__init__(**data)
-    
+
     @property
     def domain(self) -> str:
         """Get email domain."""
         return self.address.split("@")[1]
-    
+
     @property
     def username(self) -> str:
         """Get email username."""
@@ -353,16 +353,16 @@ class ShoppingCart(FlextAggregateRoot):
     customer_id: str
     items: list[CartItem] = []
     status: str = "active"
-    
-    def add_item(self, product_id: str, quantity: int, 
+
+    def add_item(self, product_id: str, quantity: int,
                  price: Money) -> FlextResult[None]:
         """Add item to cart with validation."""
         if self.status != "active":
             return FlextResult.fail("Cannot modify inactive cart")
-        
+
         if quantity <= 0:
             return FlextResult.fail("Quantity must be positive")
-        
+
         # Check for existing item
         for item in self.items:
             if item.product_id == product_id:
@@ -373,31 +373,31 @@ class ShoppingCart(FlextAggregateRoot):
                     "new_quantity": item.quantity
                 })
                 return FlextResult.ok(None)
-        
+
         # Add new item
         self.items.append(CartItem(
             product_id=product_id,
             quantity=quantity,
             price=price
         ))
-        
+
         self.add_domain_event("ItemAddedToCart", {
             "cart_id": self.id,
             "product_id": product_id,
             "quantity": quantity,
             "price": str(price.amount)
         })
-        
+
         return FlextResult.ok(None)
-    
+
     def checkout(self) -> FlextResult[Money]:
         """Checkout cart and calculate total."""
         if not self.items:
             return FlextResult.fail("Cart is empty")
-        
+
         if self.status != "active":
             return FlextResult.fail("Cart already checked out")
-        
+
         total = Money(amount=Decimal("0"), currency="USD")
         for item in self.items:
             item_total = item.price.multiply(Decimal(item.quantity))
@@ -405,14 +405,14 @@ class ShoppingCart(FlextAggregateRoot):
             if add_result.is_failure:
                 return add_result
             total = add_result.unwrap()
-        
+
         self.status = "checked_out"
         self.add_domain_event("CartCheckedOut", {
             "cart_id": self.id,
             "total": str(total.amount),
             "items_count": len(self.items)
         })
-        
+
         return FlextResult.ok(total)
 ```
 
@@ -427,7 +427,7 @@ from flext_core import get_logger
 logger = get_logger(__name__)
 
 # Structured logging
-logger.info("Processing request", 
+logger.info("Processing request",
             request_id="123",
             user_id="456",
             action="create_order")
@@ -458,13 +458,13 @@ def get_user_with_fallback(user_id: str) -> FlextResult[User]:
     result = database.get_user(user_id)
     if result.success:
         return result
-    
+
     # Try cache
     cache_result = cache.get_user(user_id)
     if cache_result.success:
         logger.warning("Using cached user data", user_id=user_id)
         return cache_result
-    
+
     # Return error
     return FlextResult.fail(f"User {user_id} not found")
 ```
@@ -475,19 +475,19 @@ def get_user_with_fallback(user_id: str) -> FlextResult[User]:
 def validate_order(order: Order) -> FlextResult[Order]:
     """Validate order with multiple checks."""
     errors = []
-    
+
     if not order.items:
         errors.append("Order has no items")
-    
+
     if order.total.amount <= 0:
         errors.append("Order total must be positive")
-    
+
     if not order.customer_id:
         errors.append("Customer ID is required")
-    
+
     if errors:
         return FlextResult.fail("; ".join(errors))
-    
+
     return FlextResult.ok(order)
 ```
 

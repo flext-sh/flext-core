@@ -85,36 +85,36 @@ from flext_core import FlextResult
 
 class TestComponentName:
     """Test suite for ComponentName."""
-    
+
     @pytest.fixture
     def component(self):
         """Provide component instance for testing."""
         return ComponentName()
-    
+
     def test_successful_operation(self, component):
         """Test successful operation path."""
         # Arrange
         input_data = {"key": "value"}
-        
+
         # Act
         result = component.process(input_data)
-        
+
         # Assert
         assert result.success
         assert result.unwrap() == expected_value
-    
+
     def test_error_handling(self, component):
         """Test error handling path."""
         # Arrange
         invalid_input = None
-        
+
         # Act
         result = component.process(invalid_input)
-        
+
         # Assert
         assert result.is_failure
         assert "Invalid input" in result.error
-    
+
     @pytest.mark.parametrize("input,expected", [
         ("value1", "result1"),
         ("value2", "result2"),
@@ -134,13 +134,13 @@ def test_with_external_dependency(mocker):
     # Mock external service
     mock_service = mocker.Mock(spec=ExternalService)
     mock_service.fetch_data.return_value = FlextResult.ok({"data": "value"})
-    
+
     # Inject mock
     component = Component(service=mock_service)
-    
+
     # Test behavior
     result = component.process()
-    
+
     # Verify interactions
     mock_service.fetch_data.assert_called_once()
     assert result.success
@@ -166,9 +166,9 @@ async def test_async_operation():
 
 - **Minimum**: 75% overall coverage
 - **Critical modules**: 90% coverage
-  - `result.py`
-  - `container.py`
-  - `config.py`
+    - `result.py`
+    - `container.py`
+    - `config.py`
 - **New code**: 80% minimum
 
 ### Check Coverage
@@ -268,7 +268,7 @@ def test_configuration_loading(monkeypatch):
     """Test configuration from environment."""
     monkeypatch.setenv("APP_DEBUG", "true")
     monkeypatch.setenv("APP_PORT", "8080")
-    
+
     config = AppSettings()
     assert config.debug is True
     assert config.port == 8080
@@ -280,12 +280,12 @@ def test_configuration_loading(monkeypatch):
 def test_entity_business_logic():
     """Test entity enforces business rules."""
     user = User(id="123", email="test@example.com")
-    
+
     # Test valid operation
     result = user.activate()
     assert result.success
     assert user.is_active
-    
+
     # Test invalid operation
     result = user.activate()  # Already active
     assert result.is_failure

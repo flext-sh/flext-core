@@ -235,7 +235,9 @@ class TestFlextEntity:
     def test_entity_model_dump(self) -> None:
         """Test entity serialization."""
         entity_obj = create_test_entity(
-            SampleEntity, name="Test Entity", status="active",
+            SampleEntity,
+            name="Test Entity",
+            status="active",
         )
         entity = cast("SampleEntity", entity_obj)
 

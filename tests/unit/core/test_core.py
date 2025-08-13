@@ -694,7 +694,8 @@ class TestFlextCoreRailwayProgramming:
         validate_positive: Callable[[int], FlextResult[int]],
         double_if_even: Callable[[int], FlextResult[int]],
     ) -> tuple[
-        Callable[[object], FlextResult[object]], Callable[[object], FlextResult[object]],
+        Callable[[object], FlextResult[object]],
+        Callable[[object], FlextResult[object]],
     ]:
         """Create pipeline wrapper functions."""
 
@@ -727,7 +728,8 @@ class TestFlextCoreRailwayProgramming:
 
         # Create pipeline wrappers
         validate_wrapper, double_wrapper = self._create_pipeline_wrappers(
-            validate_positive, double_if_even,
+            validate_positive,
+            double_if_even,
         )
 
         # Create pipeline
@@ -745,7 +747,8 @@ class TestFlextCoreRailwayProgramming:
         self._verify_logged_values()
 
     def _test_even_positive_number(
-        self, pipeline: Callable[[int], FlextResult[object]],
+        self,
+        pipeline: Callable[[int], FlextResult[object]],
     ) -> None:
         """Test pipeline with even positive number."""
         result = pipeline(4)
@@ -754,7 +757,8 @@ class TestFlextCoreRailwayProgramming:
             raise AssertionError(f"Expected {8}, got {result.data}")
 
     def _test_odd_positive_number(
-        self, pipeline: Callable[[int], FlextResult[object]],
+        self,
+        pipeline: Callable[[int], FlextResult[object]],
     ) -> None:
         """Test pipeline with odd positive number."""
         result = pipeline(3)
@@ -763,7 +767,8 @@ class TestFlextCoreRailwayProgramming:
             raise AssertionError(f"Expected {3}, got {result.data}")
 
     def _test_negative_number(
-        self, pipeline: Callable[[int], FlextResult[object]],
+        self,
+        pipeline: Callable[[int], FlextResult[object]],
     ) -> None:
         """Test pipeline with negative number."""
         result = pipeline(-1)
@@ -944,7 +949,9 @@ class TestFlextCoreIntegration:
 
         # Pipeline execution phase
         result, logged_steps = self._execute_integration_pipeline(
-            clean_flext_core, user_key, data_key,
+            clean_flext_core,
+            user_key,
+            data_key,
         )
 
         # Validation phase
@@ -972,7 +979,10 @@ class TestFlextCoreIntegration:
         return user_key, data_key
 
     def _execute_integration_pipeline(
-        self, clean_flext_core: FlextCore, user_key: object, data_key: object,
+        self,
+        clean_flext_core: FlextCore,
+        user_key: object,
+        data_key: object,
     ) -> tuple[object, list[str]]:
         """Execute the full integration pipeline with logging."""
         logged_steps: list[str] = []
@@ -1013,7 +1023,9 @@ class TestFlextCoreIntegration:
         return result, logged_steps
 
     def _validate_integration_results(
-        self, result: object, logged_steps: list[str],
+        self,
+        result: object,
+        logged_steps: list[str],
     ) -> None:
         """Validate the integration test results."""
         assert result.success

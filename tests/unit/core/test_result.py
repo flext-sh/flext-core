@@ -141,7 +141,8 @@ class TestFlextResultUnwrap:
         """Test unwrap failure raises FlextOperationError with error data."""
         error_data = {"field": "test", "value": 123}
         result: FlextResult[None] = FlextResult.fail(
-            "Test error", error_data=error_data,
+            "Test error",
+            error_data=error_data,
         )
 
         with pytest.raises(FlextOperationError) as exc_info:
@@ -1345,7 +1346,10 @@ class TestFlextResultPropertyBased:
         ),
     )
     def test_result_map_composition(
-        self, value: int, func1: Callable[[int], int], func2: Callable[[int], int],
+        self,
+        value: int,
+        func1: Callable[[int], int],
+        func2: Callable[[int], int],
     ) -> None:  # type: ignore[no-untyped-def]
         """Property: map operations compose correctly."""
         result: FlextResult[int] = FlextResult.ok(value)
@@ -1401,7 +1405,8 @@ class TestFlextResultParametrized:
 
     @pytest.mark.parametrize_advanced
     def test_result_creation_parametrized(
-        self, result_test_cases: list[TestCase[object]],
+        self,
+        result_test_cases: list[TestCase[object]],
     ) -> None:
         """Test result creation with parametrized test cases."""
         for test_case in result_test_cases:

@@ -56,7 +56,8 @@ class TestLibraryIntegration:
         self,
         clean_container: FlextContainer,
         sample_data: dict[
-            str, str | int | float | bool | list[int] | dict[str, str] | None,
+            str,
+            str | int | float | bool | list[int] | dict[str, str] | None,
         ],
     ) -> None:
         """Test comprehensive integration of core library exports.

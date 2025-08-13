@@ -938,7 +938,7 @@ class FlextPayload[T](
         json_result = self.to_json_string(compressed=False)
         json_size = (
             len(json_result.data.encode())
-            if json_result.success and json_result.data
+            if json_result.is_success and json_result.data
             else 0
         )
 
@@ -946,7 +946,7 @@ class FlextPayload[T](
         compressed_result = self.to_json_string(compressed=True)
         compressed_size = (
             len(compressed_result.data.encode())
-            if compressed_result.success and compressed_result.data
+            if compressed_result.is_success and compressed_result.data
             else 0
         )
 

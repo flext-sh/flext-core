@@ -9,8 +9,10 @@ inventory tracking, payment processing, and notification systems.
 
 from __future__ import annotations
 
+import sys as _sys
 from decimal import Decimal
 from enum import StrEnum
+from pathlib import Path as _Path
 from typing import cast
 
 from flext_core import (
@@ -22,7 +24,11 @@ from flext_core import (
     get_flext_container,
 )
 
-from .shared_domain import (
+_project_root = _Path(__file__).resolve().parents[1]
+if str(_project_root) not in _sys.path:
+    _sys.path.insert(0, str(_project_root))
+
+from examples.shared_domain import (
     Age,
     EmailAddress as Email,
     Money,
@@ -208,7 +214,9 @@ class Order(FlextEntity):
             )
 
         item = OrderItem(
-            product_id=product.id, quantity=quantity, unit_price=product.price,
+            product_id=product.id,
+            quantity=quantity,
+            unit_price=product.price,
         )
 
         updated_items = [*self.items, item]
@@ -303,7 +311,9 @@ class NotificationService:
     """Notification service for customer communications."""
 
     def send_order_confirmation(
-        self, customer: Customer, order: Order,
+        self,
+        customer: Customer,
+        order: Order,
     ) -> FlextResult[None]:
         """Send order confirmation email."""
         message = f"Order confirmed: {order.id} for ${order.total.amount / 100:.2f}"
@@ -334,7 +344,10 @@ def create_customer(name: str, email_address: str) -> FlextResult[Customer]:
 
 
 def create_product(
-    name: str, price_cents: int, stock: int, category: str,
+    name: str,
+    price_cents: int,
+    stock: int,
+    category: str,
 ) -> FlextResult[Product]:
     """Create product with business rules."""
     if price_cents <= 0:
@@ -369,7 +382,9 @@ class OrderProcessingService:
         self.notifications = NotificationService()
 
     def process_order(
-        self, customer_id: str, order_data: dict[str, object],
+        self,
+        customer_id: str,
+        order_data: dict[str, object],
     ) -> FlextResult[Order]:
         """Process complete order with automatic error handling.
 
@@ -387,7 +402,9 @@ class OrderProcessingService:
         )
 
     def _create_order(
-        self, customer_id: str, order_data: dict[str, object],
+        self,
+        customer_id: str,
+        order_data: dict[str, object],
     ) -> FlextResult[Order]:
         """Create order from raw data."""
 
@@ -483,7 +500,8 @@ class OrderProcessingService:
 
         customer = cast("Customer", customer_result.data)
         notification_result = self.notifications.send_order_confirmation(
-            customer, order,
+            customer,
+            order,
         )
         return notification_result.map(lambda _: order)
 
@@ -554,7 +572,8 @@ def _create_and_register_products(container: object) -> None:
 
 
 def _select_first_available_product_id(
-    container: object, keys: list[str],
+    container: object,
+    keys: list[str],
 ) -> str | None:
     for key in keys:
         result = cast("object", container).get(key)  # type: ignore[attr-defined]

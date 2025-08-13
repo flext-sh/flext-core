@@ -68,7 +68,7 @@ class Money(FlextValueObject):
     """Value object - compared by value, immutable."""
     amount: Decimal
     currency: str
-    
+
     def add(self, other: Money) -> FlextResult[Money]:
         if self.currency != other.currency:
             return FlextResult.fail("Currency mismatch")
@@ -82,7 +82,7 @@ class Account(FlextEntity):
     account_number: str
     balance: Money
     owner_id: str
-    
+
     def withdraw(self, amount: Money) -> FlextResult[None]:
         result = self.balance.subtract(amount)
         if result.success:
@@ -97,22 +97,22 @@ class Account(FlextEntity):
 class BankingContext(FlextAggregateRoot):
     """Aggregate root - consistency boundary."""
     accounts: list[Account]
-    
-    def transfer(self, from_id: str, to_id: str, 
+
+    def transfer(self, from_id: str, to_id: str,
                  amount: Money) -> FlextResult[None]:
         # Ensures transactional consistency
         from_account = self.find_account(from_id)
         to_account = self.find_account(to_id)
-        
+
         withdraw_result = from_account.withdraw(amount)
         if withdraw_result.is_failure:
             return withdraw_result
-            
+
         deposit_result = to_account.deposit(amount)
         if deposit_result.is_failure:
             # Rollback logic here
             return deposit_result
-            
+
         self.add_domain_event("TransferCompleted", {
             "from": from_id,
             "to": to_id,
@@ -147,15 +147,15 @@ class TransferMoneyCommand(FlextCommand):
 
 class TransferMoneyHandler(FlextHandler[TransferMoneyCommand, None]):
     """Handler - executes business logic."""
-    
+
     def __init__(self, repository, event_bus):
         self.repository = repository
         self.event_bus = event_bus
-    
+
     def handle(self, command: TransferMoneyCommand) -> FlextResult[None]:
         # Load aggregate
         banking = self.repository.get_banking_context()
-        
+
         # Execute domain logic
         money = Money(amount=command.amount, currency=command.currency)
         result = banking.transfer(
@@ -163,14 +163,14 @@ class TransferMoneyHandler(FlextHandler[TransferMoneyCommand, None]):
             command.to_account,
             money
         )
-        
+
         # Persist changes
         if result.success:
             self.repository.save(banking)
             # Publish domain events
             for event in banking.get_uncommitted_events():
                 self.event_bus.publish(event)
-                
+
         return result
 ```
 
@@ -197,7 +197,7 @@ class DatabaseSettings(FlextSettings):
     database_url: str
     pool_size: int = 5
     timeout: int = 30
-    
+
     class Config:
         env_prefix = "DB_"
 
@@ -205,7 +205,7 @@ class DatabaseSettings(FlextSettings):
 logger = get_logger(__name__)
 
 def connect_database(settings: DatabaseSettings) -> FlextResult[Connection]:
-    logger.info("Connecting to database", 
+    logger.info("Connecting to database",
                 url=settings.database_url,
                 pool_size=settings.pool_size)
     try:
@@ -264,19 +264,19 @@ class OrderPlaced(FlextDomainEvent):
     order_id: str
     customer_id: str
     total: Decimal
-    
+
 class Order(FlextAggregateRoot):
     def place(self) -> FlextResult[None]:
         # Business logic
         self.status = "placed"
-        
+
         # Raise domain event
         self.add_domain_event(OrderPlaced(
             order_id=self.id,
             customer_id=self.customer_id,
             total=self.total
         ))
-        
+
         return FlextResult.ok(None)
 ```
 
@@ -315,18 +315,18 @@ Test individual components in isolation:
 def test_money_addition():
     money1 = Money(amount=Decimal("10.00"), currency="USD")
     money2 = Money(amount=Decimal("20.00"), currency="USD")
-    
+
     result = money1.add(money2)
-    
+
     assert result.success
     assert result.unwrap().amount == Decimal("30.00")
 
 def test_money_currency_mismatch():
     money1 = Money(amount=Decimal("10.00"), currency="USD")
     money2 = Money(amount=Decimal("20.00"), currency="EUR")
-    
+
     result = money1.add(money2)
-    
+
     assert result.is_failure
     assert "Currency mismatch" in result.error
 ```
@@ -340,12 +340,12 @@ def test_transfer_between_accounts(container):
     # Setup
     container.register("repository", InMemoryRepository())
     container.register("event_bus", InMemoryEventBus())
-    
+
     handler = TransferMoneyHandler(
         container.get("repository").unwrap(),
         container.get("event_bus").unwrap()
     )
-    
+
     # Execute
     command = TransferMoneyCommand(
         from_account="123",
@@ -354,7 +354,7 @@ def test_transfer_between_accounts(container):
         currency="USD"
     )
     result = handler.handle(command)
-    
+
     # Verify
     assert result.success
     events = container.get("event_bus").unwrap().get_events()
@@ -401,13 +401,13 @@ def new_divide(a: float, b: float) -> FlextResult[float]:
 def transfer_money(from_id, to_id, amount):
     from_account = db.get_account(from_id)
     to_account = db.get_account(to_id)
-    
+
     if from_account.balance < amount:
         return False
-        
+
     from_account.balance -= amount
     to_account.balance += amount
-    
+
     db.save(from_account)
     db.save(to_account)
     return True

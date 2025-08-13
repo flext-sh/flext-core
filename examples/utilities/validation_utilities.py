@@ -71,7 +71,8 @@ def is_non_empty_string(value: object) -> bool:
 
 
 def calculate_discount_price(
-    product: SharedProduct, discount_percentage: float,
+    product: SharedProduct,
+    discount_percentage: float,
 ) -> FlextResult[Decimal]:
     """Calculate discounted price with validation."""
     if discount_percentage < 0 or discount_percentage > MAX_DISCOUNT_PERCENTAGE:

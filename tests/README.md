@@ -70,9 +70,9 @@ tests/
 - **Execution**: Fast (<100ms per test)
 - **Coverage Target**: 75% minimum
 - **Examples**:
-  - `test_result.py`: FlextResult behavior
-  - `test_container.py`: DI container operations
-  - `test_config.py`: Configuration validation
+    - `test_result.py`: FlextResult behavior
+    - `test_container.py`: DI container operations
+    - `test_config.py`: Configuration validation
 
 ### Integration Tests (`tests/integration/`)
 
@@ -83,10 +83,10 @@ tests/
 - **Dependencies**: Real FLEXT Core components
 - **Execution**: Medium (100ms-1s)
 - **Focus Areas**:
-  - Service integration
-  - Container lifecycle
-  - Configuration loading
-  - Cross-module communication
+    - Service integration
+    - Container lifecycle
+    - Configuration loading
+    - Cross-module communication
 
 ### End-to-End Tests (`tests/e2e/`)
 
@@ -97,9 +97,9 @@ tests/
 - **Dependencies**: Complete system
 - **Execution**: Slower (>1s)
 - **Scenarios**:
-  - User registration flow
-  - Order processing pipeline
-  - Configuration and startup
+    - User registration flow
+    - Order processing pipeline
+    - Configuration and startup
 
 ## Running Tests
 
@@ -169,22 +169,22 @@ make test  # Runs tests with coverage requirement
 
 ### Primary Markers
 
-| Marker | Description | Usage |
-|--------|-------------|-------|
-| `unit` | Unit tests | `pytest -m unit` |
-| `integration` | Integration tests | `pytest -m integration` |
-| `e2e` | End-to-end tests | `pytest -m e2e` |
-| `slow` | Slow-running tests | `pytest -m "not slow"` |
-| `performance` | Performance tests | `pytest -m performance` |
+| Marker        | Description        | Usage                   |
+| ------------- | ------------------ | ----------------------- |
+| `unit`        | Unit tests         | `pytest -m unit`        |
+| `integration` | Integration tests  | `pytest -m integration` |
+| `e2e`         | End-to-end tests   | `pytest -m e2e`         |
+| `slow`        | Slow-running tests | `pytest -m "not slow"`  |
+| `performance` | Performance tests  | `pytest -m performance` |
 
 ### Domain Markers
 
-| Marker | Description | Usage |
-|--------|-------------|-------|
-| `core` | Core functionality | `pytest -m core` |
-| `ddd` | Domain-driven design | `pytest -m ddd` |
+| Marker         | Description            | Usage                    |
+| -------------- | ---------------------- | ------------------------ |
+| `core`         | Core functionality     | `pytest -m core`         |
+| `ddd`          | Domain-driven design   | `pytest -m ddd`          |
 | `architecture` | Architectural patterns | `pytest -m architecture` |
-| `pep8` | PEP8 compliance | `pytest -m pep8` |
+| `pep8`         | PEP8 compliance        | `pytest -m pep8`         |
 
 ### Combining Markers
 
@@ -258,10 +258,10 @@ def test_user_activation():
         email="test@example.com",
         is_active=False
     )
-    
+
     # Act
     result = user.activate()
-    
+
     # Assert
     assert result.success
     assert user.is_active is True
@@ -279,7 +279,7 @@ def test_railway_pattern():
         .flat_map(lambda x: FlextResult.ok(x + 5))
         .map_error(lambda e: f"Error: {e}")
     )
-    
+
     assert result.success
     assert result.unwrap() == 25
 
@@ -290,7 +290,7 @@ def test_error_propagation():
         .flat_map(lambda x: FlextResult.fail("Division error"))
         .map(lambda x: x * 2)  # Should not execute
     )
-    
+
     assert result.is_failure
     assert result.error == "Division error"
 ```
@@ -302,10 +302,10 @@ def test_value_object_immutability():
     """Test value objects are immutable."""
     email1 = Email(address="test@example.com")
     email2 = Email(address="test@example.com")
-    
+
     assert email1 == email2  # Value equality
     assert email1 is not email2  # Different instances
-    
+
     with pytest.raises(AttributeError):
         email1.address = "new@example.com"  # Should be immutable
 
@@ -316,12 +316,12 @@ def test_entity_business_rules():
         balance=100.0,
         daily_limit=500.0
     )
-    
+
     # Test successful withdrawal
     result = account.withdraw(50.0)
     assert result.success
     assert account.balance == 50.0
-    
+
     # Test overdraft protection
     result = account.withdraw(100.0)
     assert result.is_failure
@@ -335,7 +335,7 @@ def test_configuration_loading():
     """Test configuration loads from environment."""
     os.environ["APP_DEBUG"] = "true"
     os.environ["APP_DATABASE_URL"] = "postgresql://localhost/test"
-    
+
     try:
         config = AppSettings()
         assert config.debug is True

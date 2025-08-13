@@ -75,7 +75,7 @@ class Money(FlextValueObject):
     """Immutable value object."""
     amount: Decimal
     currency: str
-    
+
     def add(self, other: Money) -> FlextResult[Money]:
         if self.currency != other.currency:
             return FlextResult.fail("Currency mismatch")
@@ -89,11 +89,11 @@ class Account(FlextEntity):
     owner_name: str
     balance: Money
     is_active: bool = True
-    
+
     def deposit(self, amount: Money) -> FlextResult[None]:
         if not self.is_active:
             return FlextResult.fail("Account is inactive")
-        
+
         result = self.balance.add(amount)
         if result.success:
             self.balance = result.unwrap()
@@ -156,22 +156,23 @@ class Account(FlextEntity):
 
 ### Core Components
 
-| Component | Purpose | Status |
-|-----------|---------|--------|
-| **FlextResult[T]** | Railway-oriented error handling | ✅ Stable |
-| **FlextContainer** | Dependency injection container | ✅ Stable |
-| **FlextEntity** | DDD entities with identity | ✅ Stable |
-| **FlextValueObject** | Immutable value objects | ✅ Stable |
-| **FlextAggregateRoot** | Aggregate consistency boundary | ✅ Stable |
-| **FlextCommand** | CQRS command pattern | 🔄 Active |
-| **FlextHandler** | Command/query handlers | 🔄 Active |
-| **FlextEvent** | Domain events | 📋 Planned |
+| Component              | Purpose                         | Status     |
+| ---------------------- | ------------------------------- | ---------- |
+| **FlextResult[T]**     | Railway-oriented error handling | ✅ Stable  |
+| **FlextContainer**     | Dependency injection container  | ✅ Stable  |
+| **FlextEntity**        | DDD entities with identity      | ✅ Stable  |
+| **FlextValueObject**   | Immutable value objects         | ✅ Stable  |
+| **FlextAggregateRoot** | Aggregate consistency boundary  | ✅ Stable  |
+| **FlextCommand**       | CQRS command pattern            | 🔄 Active  |
+| **FlextHandler**       | Command/query handlers          | 🔄 Active  |
+| **FlextEvent**         | Domain events                   | 📋 Planned |
 
 ## Ecosystem Integration
 
 FLEXT Core serves as the foundation for:
 
 ### Python Libraries (29 projects)
+
 - **Infrastructure**: flext-db-oracle, flext-ldap, flext-grpc
 - **Applications**: flext-api, flext-auth, flext-web
 - **Singer Taps**: flext-tap-oracle, flext-tap-ldap
@@ -179,6 +180,7 @@ FLEXT Core serves as the foundation for:
 - **DBT Projects**: flext-dbt-oracle, flext-dbt-ldap
 
 ### Go Services
+
 - **FlexCore**: Distributed runtime engine
 - **FLEXT Service**: Control panel and orchestration
 
@@ -230,6 +232,7 @@ make security   # Security scan
 ### Version 0.9.0
 
 #### ✅ Stable Features
+
 - FlextResult railway-oriented programming
 - FlextContainer dependency injection
 - Domain modeling (Entity, ValueObject, AggregateRoot)
@@ -237,12 +240,14 @@ make security   # Security scan
 - Structured logging
 
 #### 🔄 In Development
+
 - CQRS command/query bus
 - Event sourcing patterns
 - Advanced validation
 - Plugin architecture
 
 #### 📋 Planned
+
 - Cross-language bridge (Python-Go)
 - Distributed patterns
 - Performance optimizations

@@ -94,6 +94,7 @@ python -c "from flext_core import FlextResult; print('✅ Import successful')"
 ### Required for Code Examples
 
 Every code example must:
+
 - [ ] Import from correct modules
 - [ ] Run without errors
 - [ ] Produce expected output
@@ -103,6 +104,7 @@ Every code example must:
 ### Forbidden Without Evidence
 
 Never claim:
+
 - "100% complete" without verification
 - Specific percentages without measurement
 - "Production ready" without deployment proof
@@ -157,13 +159,13 @@ grep Version docs/*/
 
 ### Current Targets
 
-| Metric | Target | Current | Status |
-|--------|--------|---------|--------|
-| Test Coverage | 75%+ | 75% | ✅ |
-| Lint Errors | 0 | 0 | ✅ |
-| MyPy Errors (src) | 0 | 4 | 🚧 |
-| MyPy Errors (tests) | <100 | 1,245 | ❌ |
-| Documentation | 100% | 100% | ✅ |
+| Metric              | Target | Current | Status |
+| ------------------- | ------ | ------- | ------ |
+| Test Coverage       | 75%+   | 75%     | ✅     |
+| Lint Errors         | 0      | 0       | ✅     |
+| MyPy Errors (src)   | 0      | 4       | 🚧     |
+| MyPy Errors (tests) | <100   | 1,245   | ❌     |
+| Documentation       | 100%   | 100%    | ✅     |
 
 ### Tracking Progress
 
@@ -184,21 +186,22 @@ echo "Test Files: $(find tests -name 'test_*.py' | wc -l)"
 ```yaml
 # .pre-commit-config.yaml
 repos:
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.8.6
-    hooks:
-      - id: ruff
-      - id: ruff-format
-  
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.14.1
-    hooks:
-      - id: mypy
+    - repo: https://github.com/astral-sh/ruff-pre-commit
+      rev: v0.8.6
+      hooks:
+          - id: ruff
+          - id: ruff-format
+
+    - repo: https://github.com/pre-commit/mirrors-mypy
+      rev: v1.14.1
+      hooks:
+          - id: mypy
 ```
 
 ### CI/CD Integration
 
 Ensure CI runs:
+
 - `make validate` on every PR
 - `make test` with coverage reporting
 - `make build` for release branches

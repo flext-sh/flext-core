@@ -344,8 +344,11 @@ class FlextIdentifiableMixin(FlextAbstractIdentifiableMixin):
         if isinstance(id_value, str):
             return id_value
 
-        # Try public id attribute
-        id_value = getattr(self, "id", None)
+        # Try public id attribute without triggering property recursion
+        try:
+            id_value = object.__getattribute__(self, "__dict__").get("id")
+        except Exception:
+            id_value = None
         if isinstance(id_value, str):
             return id_value
         # Generate default ID if none exists
@@ -394,7 +397,13 @@ class FlextIdentifiableMixin(FlextAbstractIdentifiableMixin):
 
     def has_id(self) -> bool:
         """Check if entity has ID set."""
-        return self.id is not None
+        try:
+            if isinstance(getattr(self, "_id", None), str):
+                return True
+            id_value = object.__getattribute__(self, "__dict__").get("id")
+            return isinstance(id_value, str) and len(id_value) > 0
+        except Exception:
+            return False
 
 
 class FlextLoggableMixin(FlextAbstractLoggableMixin):

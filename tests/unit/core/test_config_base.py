@@ -356,7 +356,8 @@ class TestBaseConfigOps:
     def test_safe_save_json_file_not_dict(self, temp_dir: Path) -> None:
         """Test safe_save_json_file with non-dictionary data."""
         data = cast(
-            "TAnyDict", ["not", "a", "dict"],
+            "TAnyDict",
+            ["not", "a", "dict"],
         )  # Intentionally invalid for testing
         output_file = temp_dir / "output.json"
 
@@ -420,7 +421,8 @@ class TestBaseConfigValidation:
     def test_validate_config_value_not_callable(self) -> None:
         """Test validate_config_value with non-callable validator."""
         not_callable = cast(
-            "Callable[[object], bool]", "not callable",
+            "Callable[[object], bool]",
+            "not callable",
         )  # Intentionally invalid for testing
         result = _BaseConfigValidation.validate_config_value(42, not_callable)
 
@@ -594,7 +596,9 @@ class TestBaseConfigValidation:
         from typing import cast  # noqa: PLC0415
 
         result = _BaseConfigValidation.validate_config_range(
-            cast("float", bad_value), 1.0, 10.0,
+            cast("float", bad_value),
+            1.0,
+            10.0,
         )
 
         assert result.is_failure
@@ -678,7 +682,8 @@ class TestBaseConfigDefaults:
         from typing import cast  # noqa: PLC0415
 
         result = _BaseConfigDefaults.apply_defaults(
-            cast("TAnyDict", config), cast("TAnyDict", defaults),
+            cast("TAnyDict", config),
+            cast("TAnyDict", defaults),
         )
 
         assert result.success

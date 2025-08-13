@@ -34,6 +34,7 @@ from flext_core.__version__ import (
     FlextCompatibilityResult,
     FlextVersionInfo,
 )
+
 __version_info__ = tuple(int(x) for x in __version__.split(".") if x.isdigit())
 
 # =============================================================================

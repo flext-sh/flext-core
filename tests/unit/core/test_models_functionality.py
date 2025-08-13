@@ -153,7 +153,10 @@ class TestFlextModelEnumsAdvanced:
         ],
     )
     def test_enum_completeness(
-        self, enum_type: str, enum_values: list[object], context: str,
+        self,
+        enum_type: str,
+        enum_values: list[object],
+        context: str,
     ) -> None:
         """Test enum completeness and consistency."""
         # All enums should have values
@@ -258,7 +261,8 @@ class TestFlextModelValidationAdvanced:
 
             else:
                 assert_helpers.assert_result_fail(
-                    validation_result, test_case.expected_error,
+                    validation_result,
+                    test_case.expected_error,
                 )
 
     @pytest.mark.hypothesis
@@ -484,7 +488,8 @@ class TestModelInheritanceBehaviorAdvanced:
 
     @pytest.mark.performance
     def test_inheritance_performance(
-        self, performance_monitor: PerformanceMonitor,
+        self,
+        performance_monitor: PerformanceMonitor,
     ) -> None:
         """Test performance characteristics of different model types."""
 
@@ -660,7 +665,8 @@ class TestFlextDomainEntityAdvanced:
 
     @pytest.mark.snapshot
     def test_domain_entity_snapshot(
-        self, snapshot_manager: object,
+        self,
+        snapshot_manager: object,
     ) -> None:  # SnapshotManager (not yet implemented)
         """Test domain entity structure with snapshot testing."""
         entity = FlextDomainEntity(id="snapshot-entity")
@@ -769,7 +775,8 @@ class TestFlextDomainValueObjectAdvanced:
         ),
     )
     def test_value_object_immutability_properties(
-        self, metadata: dict[str, object],
+        self,
+        metadata: dict[str, object],
     ) -> None:
         """Property-based testing for value object immutability."""
         vo = FlextDomainValueObject(metadata=metadata)
@@ -789,7 +796,8 @@ class TestFlextDomainValueObjectAdvanced:
 
     @pytest.mark.performance
     def test_value_object_performance(
-        self, performance_monitor: PerformanceMonitor,
+        self,
+        performance_monitor: PerformanceMonitor,
     ) -> None:
         """Test value object creation and comparison performance."""
 
@@ -1114,7 +1122,8 @@ class TestUtilityFunctionsAdvanced:
 
     @pytest.mark.performance
     def test_utility_functions_performance(
-        self, performance_monitor: PerformanceMonitor,
+        self,
+        performance_monitor: PerformanceMonitor,
     ) -> None:
         """Test utility function performance with large datasets."""
 
@@ -1144,7 +1153,8 @@ class TestUtilityFunctionsAdvanced:
 
     @pytest.mark.snapshot
     def test_model_structure_snapshot(
-        self, snapshot_manager: object,
+        self,
+        snapshot_manager: object,
     ) -> None:  # SnapshotManager (not yet implemented)
         """Test complex model structures with snapshot testing."""
         # Create complex model structure
@@ -1228,7 +1238,8 @@ class TestModelsIntegrationAdvanced:
 
             # Create operation to track workflow
             operation: FlextOperationModel = FlextOperationModel(
-                operation_id="workflow_op", operation_type="integration_test",
+                operation_id="workflow_op",
+                operation_type="integration_test",
             )
 
             # Add domain event to entity

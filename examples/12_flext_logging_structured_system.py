@@ -303,7 +303,7 @@ def _basic_exception_logging() -> None:
     try:
         number: str = "not_a_number"
         _ = int(number) + 10
-    except TypeError:
+    except Exception:
         error_logger.exception(
             "Type conversion error",
             operation="data_processing",
@@ -393,7 +393,9 @@ def _unified_api_usage() -> None:
     api_logger = FlextLoggerFactory.get_logger("myapp.unified_api", "DEBUG")
     metrics_logger = FlextLoggerFactory.get_logger("myapp.metrics", "INFO")
     api_logger.info(
-        "API server starting", port=FlextConstants.Platform.FLEXCORE_PORT, workers=4,
+        "API server starting",
+        port=FlextConstants.Platform.FLEXCORE_PORT,
+        workers=4,
     )
     metrics_logger.info("Metrics collection enabled", interval_seconds=30)
     print("   Setting global level through unified API...")
@@ -487,7 +489,9 @@ def _print_enterprise_header() -> None:
 
 
 def _process_user_request(
-    user_id: str, request_id: str, operation: str,
+    user_id: str,
+    request_id: str,
+    operation: str,
 ) -> dict[str, object]:
     gateway_logger = get_logger("enterprise.api_gateway", "INFO")
     auth_logger = get_logger("enterprise.auth_service", "INFO")
@@ -501,7 +505,9 @@ def _process_user_request(
     }
     try:
         with create_log_context(
-            gateway_logger, **correlation_context, service="api_gateway",
+            gateway_logger,
+            **correlation_context,
+            service="api_gateway",
         ):
             gateway_logger.info(
                 "Request received",
@@ -516,20 +522,29 @@ def _process_user_request(
             with create_log_context(user_logger, **correlation_context, service="user"):
                 user_logger.info("User service processing started")
                 with create_log_context(
-                    db_logger, **correlation_context, service="database",
+                    db_logger,
+                    **correlation_context,
+                    service="database",
                 ):
                     db_logger.info(
-                        "Database query started", table="users", query_type="SELECT",
+                        "Database query started",
+                        table="users",
+                        query_type="SELECT",
                     )
                     time.sleep(0.005)
                     db_logger.info(
-                        "Database query completed", rows_returned=1, duration_ms=5,
+                        "Database query completed",
+                        rows_returned=1,
+                        duration_ms=5,
                     )
                 user_logger.info(
-                    "User service processing completed", result_size_kb=2.5,
+                    "User service processing completed",
+                    result_size_kb=2.5,
                 )
             gateway_logger.info(
-                "Request completed successfully", status_code=200, response_time_ms=16,
+                "Request completed successfully",
+                status_code=200,
+                response_time_ms=16,
             )
             return {
                 "status": "success",
@@ -667,7 +682,10 @@ def _business_metrics_demo() -> None:
         event_type = event.pop("event")
         message = f"Business event: {event_type}"
         business_logger.info(
-            message, event_type=event_type, timestamp=time.time(), **event,
+            message,
+            event_type=event_type,
+            timestamp=time.time(),
+            **event,
         )
     print("✅ Business metrics logging completed")
 
