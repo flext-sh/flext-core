@@ -23,7 +23,6 @@ Example:
 
 from __future__ import annotations
 
-import importlib as _importlib
 from typing import TYPE_CHECKING
 
 # =============================================================================
@@ -587,45 +586,12 @@ if TYPE_CHECKING:
 
 
 # =============================================================================
-# LEGACY COMPATIBILITY
+# LEGACY COMPATIBILITY REMOVED
 # =============================================================================
+"""All legacy compatibility entrypoints have been removed.
 
-
-# Legacy module proxy for complex backward compatibility
-class _LegacyProxy:
-    """Lazy proxy for legacy compatibility to avoid circular imports."""
-
-    _legacy_module: ModuleType | None = None
-
-    def _load(self) -> ModuleType:
-        if self._legacy_module is None:
-            self._legacy_module = _importlib.import_module("flext_core.legacy")
-        return self._legacy_module
-
-    def __getattr__(self, name: str) -> object:
-        module = self._load()
-        return getattr(module, name)
-
-
-legacy = _LegacyProxy()
-
-# Legacy factory functions for backward compatibility
-from flext_core.legacy import (
-    create_authorizing_handler,
-    create_base_handler,
-    create_cache_decorator,
-    create_database_config,
-    create_event_handler,
-    create_ldap_config,
-    create_metrics_handler,
-    create_oracle_config,
-    create_redis_config,
-    create_safe_decorator,
-    create_singer_stream_model,
-    create_timing_decorator,
-    create_validating_handler,
-    create_validation_decorator,
-)
+Use the modern Flext* APIs exposed by this package directly.
+"""
 
 # =============================================================================
 # EXPORTS - Clean, collision-free public API
@@ -956,21 +922,6 @@ __all__: list[str] = [
     "FlextPluginRegistry",
     # Back-compat module namespace
     "interfaces",
-    "legacy",
-    "create_authorizing_handler",
-    "create_base_handler",
-    "create_cache_decorator",
-    "create_database_config",
-    "create_event_handler",
-    "create_ldap_config",
-    "create_metrics_handler",
-    "create_oracle_config",
-    "create_redis_config",
-    "create_safe_decorator",
-    "create_singer_stream_model",
-    "create_timing_decorator",
-    "create_validating_handler",
-    "create_validation_decorator",
     "annotations",
     "TYPE_CHECKING",
     # Decorators adicionales
