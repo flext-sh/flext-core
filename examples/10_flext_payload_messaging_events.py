@@ -67,7 +67,11 @@ def _demo_basic_payloads() -> None:
     print(f"   Data: {text_payload.data}")
     print(f"   Metadata: {text_payload.metadata}")
 
-    user_data: TUserData = {"id": "user123", "name": "John Doe", "email": "john@example.com"}
+    user_data: TUserData = {
+        "id": "user123",
+        "name": "John Doe",
+        "email": "john@example.com",
+    }
     user_payload = FlextPayload(
         data=user_data,
         metadata={"source": "user_service", "version": "1.0", "timestamp": time.time()},
@@ -87,7 +91,10 @@ def _demo_type_safe_payload() -> None:
         "total": 1059.97,
     }
     order_result = FlextPayload.create(
-        order_data, source="order_service", correlation_id="req_456", processing_stage="created"
+        order_data,
+        source="order_service",
+        correlation_id="req_456",
+        processing_stage="created",
     )
     if order_result.success and order_result.data is not None:
         order_payload = order_result.data
@@ -97,7 +104,9 @@ def _demo_type_safe_payload() -> None:
         total = order_payload.data.get("total") if order_payload.data else None
         print(f"   Total: ${total}")
     else:
-        error_message: TErrorMessage = f"Order payload creation failed: {order_result.error}"
+        error_message: TErrorMessage = (
+            f"Order payload creation failed: {order_result.error}"
+        )
         print(f"❌ {error_message}")
 
 
@@ -112,17 +121,23 @@ def _demo_invalid_payload() -> None:
 
 def _demo_metadata_enrichment() -> None:
     print("\n4. Metadata enrichment:")
-    base_payload = FlextPayload(data={"message": "Hello from service"}, metadata={"source": "base_service"})
-    enriched_payload = base_payload.enrich_metadata({"timestamp": time.time(), "version": "2.0", "environment": "production"})
+    base_payload = FlextPayload(
+        data={"message": "Hello from service"}, metadata={"source": "base_service"},
+    )
+    enriched_payload = base_payload.enrich_metadata(
+        {"timestamp": time.time(), "version": "2.0", "environment": "production"},
+    )
     print(f"✅ Enriched payload: {enriched_payload}")
     print(f"   Metadata keys: {list(enriched_payload.metadata.keys())}")
 
 
 def _demo_payload_transformation() -> None:
     print("\n5. Payload transformation:")
-    base_payload = FlextPayload(data={"message": "Hello from service"}, metadata={"source": "base_service"})
+    base_payload = FlextPayload(
+        data={"message": "Hello from service"}, metadata={"source": "base_service"},
+    )
     transform_result = base_payload.transform_data(
-        lambda data: {"transformed_message": f"TRANSFORMED: {data.get('message', '')}"}
+        lambda data: {"transformed_message": f"TRANSFORMED: {data.get('message', '')}"},
     )
     if transform_result.success and transform_result.data is not None:
         print(f"✅ Transformed payload: {transform_result.data}")
@@ -286,7 +301,7 @@ def _demonstrate_message_correlation() -> None:
             print(f"✅ Request message: {request_msg.correlation_id}")
             print(f"✅ Response message: {response_msg.correlation_id}")
             print(
-                f"   Correlation match: {request_msg.correlation_id == response_msg.correlation_id}"
+                f"   Correlation match: {request_msg.correlation_id == response_msg.correlation_id}",
             )
 
 
@@ -425,11 +440,11 @@ def _display_order_lifecycle_events(
         ):
             print(
                 f"✅ Order created event (v{created_event.version}): "
-                f"{created_event.event_type}"
+                f"{created_event.event_type}",
             )
             print(
                 f"✅ Order confirmed event (v{confirmed_event.version}): "
-                f"{confirmed_event.event_type}"
+                f"{confirmed_event.event_type}",
             )
 
     return FlextResult.ok(None)
@@ -489,7 +504,7 @@ def _handle_stock_updated_event(
 
 
 def _create_and_display_low_stock_alert(
-    product_id: str, new_quantity: int
+    product_id: str, new_quantity: int,
 ) -> FlextResult[None]:
     """Create and display low stock alert event."""
     low_stock_data: TUserData = {
@@ -515,7 +530,7 @@ def _create_and_display_low_stock_alert(
             print(f"✅ Low stock alert event: {alert_event.event_type}")
             if alert_event.data is not None:
                 print(
-                    f"   Current quantity: {alert_event.data.get('current_quantity')}"
+                    f"   Current quantity: {alert_event.data.get('current_quantity')}",
                 )
 
     return FlextResult.ok(None)
@@ -585,7 +600,7 @@ def _display_correlated_events(
             print(f"✅ Step completed: {completed_event.correlation_id}")
             print(
                 f"   Correlation match: "
-                f"{started_event.correlation_id == completed_event.correlation_id}"
+                f"{started_event.correlation_id == completed_event.correlation_id}",
             )
 
     return FlextResult.ok(None)

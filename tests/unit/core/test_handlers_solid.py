@@ -44,7 +44,7 @@ class TestSOLIDPrinciples:
 
         # Command handler with validator
         command_handler = FlextHandlers.CommandHandler(
-            handler_name="test_cmd", validator=validator
+            handler_name="test_cmd", validator=validator,
         )
 
         # Query handler with authorizer
@@ -159,7 +159,7 @@ class TestSOLIDPrinciples:
                 return FlextResult.ok(f"SPECIAL: {command}")
 
         def process_with_any_handler(
-            handler: FlextHandlers.CommandHandler, command: object
+            handler: FlextHandlers.CommandHandler, command: object,
         ) -> FlextResult[object]:
             """Process commands using any command handler."""
             return handler.handle_with_hooks(command)
@@ -293,7 +293,7 @@ class TestSOLIDIntegration:
 
         query_handler: FlextHandlers.QueryHandler[object, object] = (
             FlextHandlers.QueryHandler(
-                handler_name="production_query", authorizer=authorizer
+                handler_name="production_query", authorizer=authorizer,
             )
         )
 

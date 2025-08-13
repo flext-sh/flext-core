@@ -151,7 +151,7 @@ class BaseCommandHandler:
         return result
 
     def store_domain_event(
-        self, event_type: str, data: TAnyObject
+        self, event_type: str, data: TAnyObject,
     ) -> FlextResult[TEntityId]:
         """DRY Helper: Store domain event with error handling."""
         event = DomainEvent(event_type, data)
@@ -182,7 +182,7 @@ class DemonstrationFlowHelper:
                 state_dict[user_id] = result.data
             return result
         return FlextResult.fail(
-            f"{success_message.split(' ', maxsplit=1)[0]} failed: {result.error}"
+            f"{success_message.split(' ', maxsplit=1)[0]} failed: {result.error}",
         )
 
 
@@ -243,7 +243,7 @@ class UpdateUserCommand(FlextCommands.Command):
         # Validate at least one field to update
         if not self.name and not self.email:
             return FlextResult.fail(
-                "At least one field (name or email) must be provided"
+                "At least one field (name or email) must be provided",
             )
 
         # Validate name if provided
@@ -279,7 +279,7 @@ class DeleteUserCommand(FlextCommands.Command):
         if not self.reason or len(self.reason.strip()) < MIN_DELETION_REASON_LENGTH:
             return FlextResult.fail(
                 f"Deletion reason must be at least"
-                f" {MIN_DELETION_REASON_LENGTH} characters"
+                f" {MIN_DELETION_REASON_LENGTH} characters",
             )
 
         print(f"✅ DeleteUserCommand validation passed: {self.target_user_id}")
@@ -361,7 +361,9 @@ class CreateUserCommandHandler(
             )
 
             # Use helper to create query projection - DRY principle
-            query_projection: dict[str, object] = self.create_query_projection(shared_user)
+            query_projection: dict[str, object] = self.create_query_projection(
+                shared_user,
+            )
 
             # Use helper to store domain event - DRY principle
             event_result = self.store_domain_event("UserCreated", query_projection)
@@ -448,7 +450,7 @@ class DeleteUserCommandHandler(
                 "status": "deleted",
                 "deleted_at": deleted_at,
                 "deletion_reason": command.reason,
-            }
+            },
         )
 
         # Prepare deletion event data
@@ -539,7 +541,9 @@ class GetUserEventsQueryHandler(
         print(log_message)
 
         events = event_store.get_events_by_correlation(query.correlation_id)
-        event_data: list[TAnyObject] = [cast("TAnyObject", event.to_dict()) for event in events]
+        event_data: list[TAnyObject] = [
+            cast("TAnyObject", event.to_dict()) for event in events
+        ]
 
         print(
             f"✅ Found {len(event_data)} events for correlation {query.correlation_id}",
@@ -723,7 +727,7 @@ class CQRSDemonstrator:
         command_bus_result = setup_command_bus()
         if command_bus_result.is_failure:
             return FlextResult.fail(
-                f"Command bus setup failed: {command_bus_result.error}"
+                f"Command bus setup failed: {command_bus_result.error}",
             )
 
         # Setup query handlers
@@ -746,7 +750,7 @@ class CQRSDemonstrator:
         DemonstrationFlowHelper.print_section_header(2, "User Creation Commands")
 
         create_result: FlextResult[object] = self.app_service.create_user(
-            "Alice Johnson", "alice@example.com", 28
+            "Alice Johnson", "alice@example.com", 28,
         )
 
         if create_result.success:
@@ -776,7 +780,7 @@ class CQRSDemonstrator:
         print("=" * 60)
 
         update_result: FlextResult[object] = self.app_service.update_user(
-            self.created_user_id, name="Alice Smith"
+            self.created_user_id, name="Alice Smith",
         )
         if update_result.success:
             print(f"✅ User updated successfully: {self.created_user_id}")
@@ -795,7 +799,9 @@ class CQRSDemonstrator:
         print("📋 EXAMPLE 4: User Queries")
         print("=" * 60)
 
-        list_result: FlextResult[list[object]] = self.app_service.list_users(active_only=True)
+        list_result: FlextResult[list[object]] = self.app_service.list_users(
+            active_only=True,
+        )
         if list_result.success:
             users = list_result.data
             if isinstance(users, list):
@@ -854,7 +860,9 @@ class CQRSDemonstrator:
         print("=" * 60)
 
         # Try to create user with invalid data
-        invalid_result: FlextResult[object] = self.app_service.create_user("", "invalid-email", 15)
+        invalid_result: FlextResult[object] = self.app_service.create_user(
+            "", "invalid-email", 15,
+        )
         if invalid_result.is_failure:
             print(f"❌ Expected validation failure: {invalid_result.error}")
             return FlextResult.ok(None)
@@ -886,7 +894,7 @@ def main() -> None:
         if hasattr(result, "is_failure") and getattr(result, "is_failure", False):
             print(
                 f"❌ Demonstration step failed: "
-                f"{getattr(result, 'error', 'Unknown error')}"
+                f"{getattr(result, 'error', 'Unknown error')}",
             )
             return
 

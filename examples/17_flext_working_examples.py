@@ -117,7 +117,7 @@ def _demo_container() -> None:
         if hasattr(user_service, "create_user"):
             new_user = user_service.create_user("bob@example.com", "Bob Wilson")
             print(
-                f"  Service created: {new_user.name} ({new_user.email_address.email})"
+                f"  Service created: {new_user.name} ({new_user.email_address.email})",
             )
         else:
             print("  Service creation failed: no create_user method")

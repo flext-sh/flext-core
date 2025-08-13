@@ -245,7 +245,7 @@ class TestFlextEntity:
         assert result.is_failure
         if "Failed to increment version" not in (result.error or ""):
             raise AssertionError(
-                f"Expected 'Failed to increment version' in {result.error}"
+                f"Expected 'Failed to increment version' in {result.error}",
             )
 
     def test_copy_with_success(self) -> None:
@@ -482,7 +482,7 @@ class TestFlextEntity:
         assert result.is_failure
         if "Field validation errors:" not in (result.error or ""):
             raise AssertionError(
-                f"Expected 'Field validation errors:' in {result.error}"
+                f"Expected 'Field validation errors:' in {result.error}",
             )
         assert result.error is not None
         assert "name: Name validation failed" in result.error
@@ -522,10 +522,10 @@ class TestFlextEntity:
             user.with_version(3)  # Lower than current version
 
         if "New version must be greater than current version" not in str(
-            exc_info.value
+            exc_info.value,
         ):
             raise AssertionError(
-                f"Expected {'New version must be greater than current version'} in {exc_info.value!s}"
+                f"Expected {'New version must be greater than current version'} in {exc_info.value!s}",
             )
 
     def test_with_version_equal_version(self) -> None:
@@ -537,10 +537,10 @@ class TestFlextEntity:
             user.with_version(5)  # Equal to current version
 
         if "New version must be greater than current version" not in str(
-            exc_info.value
+            exc_info.value,
         ):
             raise AssertionError(
-                f"Expected {'New version must be greater than current version'} in {exc_info.value!s}"
+                f"Expected {'New version must be greater than current version'} in {exc_info.value!s}",
             )
 
     def test_with_version_domain_validation_failure(self) -> None:
@@ -568,7 +568,7 @@ class TestFlextEntity:
 
         if "Failed to set version" not in str(exc_info.value):
             raise AssertionError(
-                f"Expected {'Failed to set version'} in {exc_info.value!s}"
+                f"Expected {'Failed to set version'} in {exc_info.value!s}",
             )
 
 
@@ -587,7 +587,7 @@ class TestFlextEntityFactory:
         factory = FlextEntityFactory.create_entity_factory(SampleUser)
 
         result = cast("EntityFactory", factory)(
-            name="John", email="john@example.com", age=25
+            name="John", email="john@example.com", age=25,
         )
 
         assert result.success
@@ -605,7 +605,7 @@ class TestFlextEntityFactory:
         """Test factory with default values."""
         defaults = {"age": 18, "is_active": True}
         factory = FlextEntityFactory.create_entity_factory(
-            SampleUser, cast("dict[str, object]", defaults)
+            SampleUser, cast("dict[str, object]", defaults),
         )
 
         result = cast("EntityFactory", factory)(name="John", email="john@example.com")
@@ -621,11 +621,11 @@ class TestFlextEntityFactory:
         """Test factory overriding default values."""
         defaults = {"age": 18, "is_active": False}
         factory = FlextEntityFactory.create_entity_factory(
-            SampleUser, cast("dict[str, object]", defaults)
+            SampleUser, cast("dict[str, object]", defaults),
         )
 
         result = cast("EntityFactory", factory)(
-            name="John", email="john@example.com", age=25, is_active=True
+            name="John", email="john@example.com", age=25, is_active=True,
         )
 
         assert result.success
@@ -651,7 +651,7 @@ class TestFlextEntityFactory:
         factory = FlextEntityFactory.create_entity_factory(SampleUser)
 
         result = cast("EntityFactory", factory)(
-            id="custom_id", name="John", email="john@example.com"
+            id="custom_id", name="John", email="john@example.com",
         )
 
         assert result.success
@@ -664,7 +664,7 @@ class TestFlextEntityFactory:
         factory = FlextEntityFactory.create_entity_factory(SampleUser)
 
         result = cast("EntityFactory", factory)(
-            id="", name="John", email="john@example.com"
+            id="", name="John", email="john@example.com",
         )
 
         assert result.success
@@ -688,7 +688,7 @@ class TestFlextEntityFactory:
         factory = FlextEntityFactory.create_entity_factory(SampleUser)
 
         result = cast("EntityFactory", factory)(
-            name="John", email="john@example.com", version=5
+            name="John", email="john@example.com", version=5,
         )
 
         assert result.success
@@ -728,7 +728,7 @@ class TestFlextEntityFactory:
             side_effect=TypeError("Type error"),
         ):
             result = cast("EntityFactory", factory)(
-                name="John", email="john@example.com"
+                name="John", email="john@example.com",
             )
 
         assert result.is_failure
@@ -745,7 +745,7 @@ class TestFlextEntityFactory:
             side_effect=ImportError("Import error"),
         ):
             result = cast("EntityFactory", factory)(
-                name="John", email="john@example.com"
+                name="John", email="john@example.com",
             )
 
         assert result.is_failure
@@ -799,7 +799,7 @@ class TestEntityIntegration:
         }
 
         factory = FlextEntityFactory.create_entity_factory(
-            SampleUser, cast("dict[str, object]", defaults)
+            SampleUser, cast("dict[str, object]", defaults),
         )
 
         # Create multiple entities

@@ -42,7 +42,7 @@ class TestServiceIntegrationPatterns:
         mock_external_service: MagicMock,
         performance_threshold: dict[str, float],
         benchmark_data: dict[
-            str, list[int] | dict[str, str] | dict[str, dict[str, dict[str, list[int]]]]
+            str, list[int] | dict[str, str] | dict[str, dict[str, dict[str, list[int]]]],
         ],
     ) -> None:
         """Test service pipeline meets performance requirements.
@@ -69,7 +69,7 @@ class TestServiceIntegrationPatterns:
             # Simulate service pipeline with realistic operations
             result = FlextResult.ok(data)
             return result.flat_map(mock_external_service.process).map(
-                lambda r: f"pipeline_result_{len(str(data))}"
+                lambda r: f"pipeline_result_{len(str(data))}",
             )
 
         # Act - Measure pipeline performance
@@ -185,7 +185,7 @@ class TestServiceIntegrationPatterns:
         # Verify service calls
         mock_user_service.get_user.assert_called_once_with(user_id)
         mock_notification_service.send.assert_called_once_with(
-            str(test_user_data["email"])
+            str(test_user_data["email"]),
         )
 
     @pytest.mark.integration
@@ -219,7 +219,7 @@ class TestServiceIntegrationPatterns:
 
         # Act - Register service with configuration
         registration_result = clean_container.register(
-            "lifecycle_service", mock_service
+            "lifecycle_service", mock_service,
         )
         config_result = clean_container.register("service_config", service_config)
 

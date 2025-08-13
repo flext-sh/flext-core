@@ -52,7 +52,7 @@ class TestFlextPayload:
     """Test FlextPayload core functionality with advanced pytest patterns."""
 
     @pytest.mark.parametrize(
-        "test_data", ["test_data", 42, True, {}, {"key": "value"}, [1, 2, 3]]
+        "test_data", ["test_data", 42, True, {}, {"key": "value"}, [1, 2, 3]],
     )
     def test_payload_creation_with_various_data_types(self, test_data: object) -> None:
         """Test payload creation with various data types."""
@@ -216,7 +216,7 @@ class TestFlextPayloadCoverage:
         ],
     )
     def test_payload_operations_comprehensive(
-        self, payload_test_data: dict[str, object], operations: list[str]
+        self, payload_test_data: dict[str, object], operations: list[str],
     ) -> None:
         """Test comprehensive payload operations."""
         basic_data = payload_test_data.get("basic_data")
@@ -250,7 +250,7 @@ class TestFlextPayloadEdgeCases:
         ],
     )
     def test_payload_from_dict_invalid_metadata(
-        self, invalid_data: dict[str, object], expected_metadata: dict[str, object]
+        self, invalid_data: dict[str, object], expected_metadata: dict[str, object],
     ) -> None:
         """Test from_dict with various invalid metadata types."""
         result: FlextResult[FlextPayload[object]] = FlextPayload.from_dict(invalid_data)

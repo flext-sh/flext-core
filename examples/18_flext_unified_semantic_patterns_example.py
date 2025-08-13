@@ -37,16 +37,20 @@ class FlextOracleConfig(FlextConfig):
         """Unified business rule validation pattern."""
         if not self.service_name and not self.sid:
             return FlextResult.fail(
-                "Missing identifiers: both service_name and sid are empty"
+                "Missing identifiers: both service_name and sid are empty",
             )
 
         min_port = 1
         max_port = 65535
         if not (min_port <= self.port <= max_port):
-            return FlextResult.fail(f"Port out of range: {self.port} not between {min_port} and {max_port}")
+            return FlextResult.fail(
+                f"Port out of range: {self.port} not between {min_port} and {max_port}",
+            )
 
         if self.max_connections < 1:
-            return FlextResult.fail(f"Invalid max_connections: {self.max_connections} must be at least 1")
+            return FlextResult.fail(
+                f"Invalid max_connections: {self.max_connections} must be at least 1",
+            )
 
         return FlextResult.ok(None)
 
@@ -67,7 +71,7 @@ class FlextUserProfile(FlextValue):
         min_name_length = 2
         if len(self.full_name.strip()) < min_name_length:
             return FlextResult.fail(
-                f"Full name must be at least {min_name_length} characters"
+                f"Full name must be at least {min_name_length} characters",
             )
 
         return FlextResult.ok(None)
@@ -87,7 +91,7 @@ class FlextDataPipeline(FlextEntity):
         min_pipeline_name_length = 3
         if len(self.name.strip()) < min_pipeline_name_length:
             return FlextResult.fail(
-                f"Pipeline name must be at least {min_pipeline_name_length} characters"
+                f"Pipeline name must be at least {min_pipeline_name_length} characters",
             )
 
         if self.processed_records < 0:
@@ -119,7 +123,7 @@ class FlextDataPipeline(FlextEntity):
                 "type": "pipeline_activated",
                 "pipeline_id": self.id,
                 "timestamp": "2025-08-05T10:00:00Z",
-            }
+            },
         )
 
         return FlextResult.ok(None)
@@ -137,10 +141,10 @@ def pipeline_factory() -> FlextDataPipeline:
         id="default",
         name="default_pipeline",
         source_config=FlextOracleConfig(
-            username="user", password=SecretStr("pass"), service_name="DB"
+            username="user", password=SecretStr("pass"), service_name="DB",
         ),
         owner=FlextUserProfile(
-            email="user@example.com", full_name="Default User", role="user"
+            email="user@example.com", full_name="Default User", role="user",
         ),
     )
 
@@ -183,6 +187,7 @@ class FlextPipelineService:
         owner_profile: dict[str, object],
     ) -> FlextResult[FlextDataPipeline]:
         """Create pipeline using unified factory pattern."""
+
         def _build_config() -> FlextResult[FlextOracleConfig]:
             try:
                 port_value = oracle_config.get("port", 1521)
@@ -208,14 +213,16 @@ class FlextPipelineService:
                         owner_profile.get("role", "REDACTED_LDAP_BIND_PASSWORD"),
                     ),
                     preferences=cast(
-                        "dict[str, object]", owner_profile.get("preferences", {})
+                        "dict[str, object]", owner_profile.get("preferences", {}),
                     ),
                 )
                 return FlextResult.ok(instance)
             except Exception as e:
                 return FlextResult.fail(str(e))
 
-        def _build_pipeline(cfg: FlextOracleConfig, owner: FlextUserProfile) -> FlextResult[FlextDataPipeline]:
+        def _build_pipeline(
+            cfg: FlextOracleConfig, owner: FlextUserProfile,
+        ) -> FlextResult[FlextDataPipeline]:
             try:
                 instance = FlextDataPipeline(
                     id=f"pipeline_{len(self._pipelines) + 1}",
@@ -230,19 +237,19 @@ class FlextPipelineService:
         config_result = _build_config()
         if config_result.is_failure or config_result.data is None:
             return FlextResult.fail(
-                f"Invalid Oracle config: {config_result.error or 'None'}"
+                f"Invalid Oracle config: {config_result.error or 'None'}",
             )
 
         owner_result = _build_owner()
         if owner_result.is_failure or owner_result.data is None:
             return FlextResult.fail(
-                f"Invalid owner profile: {owner_result.error or 'None'}"
+                f"Invalid owner profile: {owner_result.error or 'None'}",
             )
 
         pipeline_result = _build_pipeline(config_result.data, owner_result.data)
         if pipeline_result.is_failure or pipeline_result.data is None:
             return FlextResult.fail(
-                f"Pipeline creation failed: {pipeline_result.error or 'None'}"
+                f"Pipeline creation failed: {pipeline_result.error or 'None'}",
             )
 
         pipeline = pipeline_result.data
@@ -381,7 +388,7 @@ async def demonstrate_foundation_models() -> FlextDataPipeline | None:
         print(f"   Owner: {pipeline.owner.full_name} ({pipeline.owner.email})")
         print(f"   Status: {pipeline.status}")
         print(
-            f"   Oracle Host: {pipeline.source_config.host}:{pipeline.source_config.port}"
+            f"   Oracle Host: {pipeline.source_config.host}:{pipeline.source_config.port}",
         )
         return pipeline
     print("❌ Pipeline creation returned None")
@@ -394,17 +401,17 @@ def demonstrate_semantic_types() -> None:
 
     # Demonstrate type usage
     connection_validation = FlextUnifiedUtilities.validate_oracle_connection(
-        DatabaseConnection
+        DatabaseConnection,
     )
     if connection_validation.success and connection_validation.data is not None:
         conn_info = connection_validation.data
         print(
-            f"✅ Connection validated: {conn_info['host']}:{conn_info['port']}/{conn_info['service_name']}"
+            f"✅ Connection validated: {conn_info['host']}:{conn_info['port']}/{conn_info['service_name']}",
         )
 
 
 def demonstrate_domain_services(
-    service: FlextPipelineService, pipeline: FlextDataPipeline
+    service: FlextPipelineService, pipeline: FlextDataPipeline,
 ) -> None:
     """Demonstrate Layer 2: Domain Services."""
     print("\n⚙️ Layer 2: Domain Services (Business Logic)")
@@ -447,7 +454,7 @@ def demonstrate_utilities(service: FlextPipelineService) -> None:
         return enhanced
 
     transform_result = FlextUnifiedUtilities.safe_transform_data(
-        cast("dict[str, object]", sample_data), enhance_data
+        cast("dict[str, object]", sample_data), enhance_data,
     )
     if transform_result.success and transform_result.data is not None:
         print("\n✅ Data transformation successful:")
@@ -470,7 +477,7 @@ def demonstrate_error_handling(service: FlextPipelineService) -> None:
     # Try to create invalid configuration
     invalid_config = {"host": "invalid", "port": -1, "username": "test"}
     invalid_result = service.create_pipeline(
-        "Invalid Pipeline", invalid_config, cast("dict[str, object]", owner_profile)
+        "Invalid Pipeline", invalid_config, cast("dict[str, object]", owner_profile),
     )
 
     if invalid_result.is_failure:

@@ -198,7 +198,7 @@ class TestFlextCommandsAdvanced:
         ]
 
     def _validate_basic_properties(
-        self, command: SampleCommand, expected: dict[str, object]
+        self, command: SampleCommand, expected: dict[str, object],
     ) -> None:
         """Validate basic command properties to reduce complexity."""
         if "name" in expected:
@@ -211,7 +211,7 @@ class TestFlextCommandsAdvanced:
             assert command.command_id == expected["command_id"]
 
     def _validate_existence_flags(
-        self, command: SampleCommand, expected: dict[str, object]
+        self, command: SampleCommand, expected: dict[str, object],
     ) -> None:
         """Validate existence flags to reduce complexity."""
         if "has_command_id" in expected:
@@ -220,7 +220,7 @@ class TestFlextCommandsAdvanced:
             assert isinstance(command.timestamp, datetime) == expected["has_timestamp"]
 
     def _validate_command_result(
-        self, command: SampleCommand, expected: dict[str, object]
+        self, command: SampleCommand, expected: dict[str, object],
     ) -> None:
         """Validate command validation result to reduce complexity."""
         if "validation_success" in expected:
@@ -232,15 +232,15 @@ class TestFlextCommandsAdvanced:
 
     @pytest.mark.parametrize_advanced
     def test_command_scenarios(
-        self, command_test_cases: list[TestCase], assert_helpers: AssertHelpers
+        self, command_test_cases: list[TestCase], assert_helpers: AssertHelpers,
     ) -> None:
         """Test commands using structured parametrized approach."""
         for test_case in command_test_cases:
             input_data: dict[str, object] = cast(
-                "dict[str, object]", test_case.input_data
+                "dict[str, object]", test_case.input_data,
             )
             expected: dict[str, object] = cast(
-                "dict[str, object]", test_case.expected_output
+                "dict[str, object]", test_case.expected_output,
             )
 
             # Create command
@@ -278,7 +278,7 @@ class TestFlextCommandsAdvanced:
                         "name": "test",
                         "value": 42,
                         "command_id": "cmd-123",
-                    }
+                    },
                 },
                 expected_output={
                     "from_payload_success": True,
@@ -295,7 +295,7 @@ class TestFlextCommandsAdvanced:
                     "payload_data": {
                         "name": "",  # Invalid
                         "value": -1,  # Invalid
-                    }
+                    },
                 },
                 expected_output={
                     "from_payload_success": False,
@@ -307,12 +307,12 @@ class TestFlextCommandsAdvanced:
 
     @pytest.mark.parametrize_advanced
     def test_payload_conversion_scenarios(
-        self, payload_conversion_cases: list[TestCase]
+        self, payload_conversion_cases: list[TestCase],
     ) -> None:
         """Test payload conversion scenarios."""
         for test_case in payload_conversion_cases:
             input_data: dict[str, object] = cast(
-                "dict[str, object]", test_case.input_data
+                "dict[str, object]", test_case.input_data,
             )
             if "payload_data" not in input_data:
                 self._test_command_to_payload(test_case)
@@ -359,7 +359,7 @@ class TestFlextCommandsAdvanced:
             assert expected["error"] in (result.error or "")
 
     def _validate_command_result(
-        self, command: SampleCommand, expected: dict[str, object]
+        self, command: SampleCommand, expected: dict[str, object],
     ) -> None:
         """Validate command result against expected values."""
         if "name" in expected:
@@ -408,19 +408,19 @@ class TestFlextCommandsComplexValidation:
 
     @pytest.mark.parametrize_advanced
     def test_complex_validation_scenarios(
-        self, complex_validation_cases: list[TestCase]
+        self, complex_validation_cases: list[TestCase],
     ) -> None:
         """Test complex validation scenarios."""
         for test_case in complex_validation_cases:
             input_data: dict[str, object] = cast(
-                "dict[str, object]", test_case.input_data
+                "dict[str, object]", test_case.input_data,
             )
             expected: dict[str, object] = cast(
-                "dict[str, object]", test_case.expected_output
+                "dict[str, object]", test_case.expected_output,
             )
 
             command: SampleComplexCommand = SampleComplexCommand(
-                **cast("dict[str, object]", input_data)
+                **cast("dict[str, object]", input_data),
             )
             result = command.validate_command()
 
@@ -460,7 +460,7 @@ class TestFlextCommandsPerformance:
     """Performance tests for command operations."""
 
     def test_command_creation_performance(
-        self, performance_monitor: Callable[[Callable[[], object]], PerformanceMetrics]
+        self, performance_monitor: Callable[[Callable[[], object]], PerformanceMetrics],
     ) -> None:
         """Test command creation performance."""
 
@@ -551,7 +551,7 @@ class TestFlextCommandsFactoryMethods:
         """Test FlextCommands.Result with metadata functionality."""
         # Test successful result with metadata
         result: FlextResult[str] = FlextCommands.Result.ok(
-            "success", metadata={"source": "test"}
+            "success", metadata={"source": "test"},
         )
         assert result is not None
         assert result.success
@@ -560,7 +560,7 @@ class TestFlextCommandsFactoryMethods:
 
         # Test failed result with error code
         failed_result: FlextResult[None] = FlextCommands.Result.fail(
-            "error message", error_code="TEST_ERROR", error_data={"context": "test"}
+            "error message", error_code="TEST_ERROR", error_data={"context": "test"},
         )
         assert failed_result is not None
         assert failed_result.is_failure

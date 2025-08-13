@@ -244,13 +244,13 @@ class TestFlextCommand:
     def test_command_creation_with_auto_id(self) -> None:
         """Test creating command with auto-generated ID."""
         command: CreateUserCommand = CreateUserCommand(
-            username="john_doe", email="john@example.com"
+            username="john_doe", email="john@example.com",
         )
 
         assert command.command_id is not None
         if command.command_type != "create_user":
             raise AssertionError(
-                f"Expected {'create_user'}, got {command.command_type}"
+                f"Expected {'create_user'}, got {command.command_type}",
             )
         assert command.username == "john_doe"
         if command.email != "john@example.com":
@@ -297,7 +297,7 @@ class TestFlextCommand:
         assert result.error
         if "username is required" not in result.error.lower():
             raise AssertionError(
-                f"Expected {'username is required'} in {result.error.lower()}"
+                f"Expected {'username is required'} in {result.error.lower()}",
             )
 
     def test_validate_command_failure_no_email(self) -> None:
@@ -311,7 +311,7 @@ class TestFlextCommand:
         assert result.error
         if "email is required" not in result.error.lower():
             raise AssertionError(
-                f"Expected {'email is required'} in {result.error.lower()}"
+                f"Expected {'email is required'} in {result.error.lower()}",
             )
 
     def test_validate_command_failure_invalid_email(self) -> None:
@@ -325,7 +325,7 @@ class TestFlextCommand:
         assert result.error
         if "invalid email" not in result.error.lower():
             raise AssertionError(
-                f"Expected {'invalid email'} in {result.error.lower()}"
+                f"Expected {'invalid email'} in {result.error.lower()}",
             )
 
     def test_get_command_metadata(self) -> None:
@@ -340,7 +340,7 @@ class TestFlextCommand:
             raise AssertionError(f"Expected {'command_class'} in {metadata}")
         if metadata["command_class"] != "CreateUserCommand":
             raise AssertionError(
-                f"Expected {'CreateUserCommand'}, got {metadata['command_class']}"
+                f"Expected {'CreateUserCommand'}, got {metadata['command_class']}",
             )
 
 
@@ -358,7 +358,7 @@ class TestFlextCommandHandler:
 
         if handler.handler_id != "create_user_handler":
             raise AssertionError(
-                f"Expected {'create_user_handler'}, got {handler.handler_id}"
+                f"Expected {'create_user_handler'}, got {handler.handler_id}",
             )
         assert handler.get_command_type() == "create_user"
 
@@ -376,7 +376,7 @@ class TestFlextCommandHandler:
             CreateUserCommandHandler()
         )
         command: UpdateUserCommand = UpdateUserCommand(
-            user_id="123", updates={"name": "new_name"}, mixin_setup=lambda: None
+            user_id="123", updates={"name": "new_name"}, mixin_setup=lambda: None,
         )
 
         if handler.can_handle(cast("CreateUserCommand", command)):
@@ -390,7 +390,7 @@ class TestFlextCommandHandler:
 
         if handler.can_handle("not_a_command"):
             raise AssertionError(
-                f"Expected False, got {handler.can_handle('not_a_command')}"
+                f"Expected False, got {handler.can_handle('not_a_command')}",
             )
 
     def test_handle_command_success(self) -> None:
@@ -399,7 +399,7 @@ class TestFlextCommandHandler:
             CreateUserCommandHandler()
         )
         command: CreateUserCommand = CreateUserCommand(
-            username="john", email="john@example.com", mixin_setup=lambda: None
+            username="john", email="john@example.com", mixin_setup=lambda: None,
         )
 
         result = handler.handle(command)
@@ -409,7 +409,7 @@ class TestFlextCommandHandler:
         assert result.data is not None
         if (result.data or {})["username"] != "john":
             raise AssertionError(
-                f"Expected {'john'}, got {(result.data or {})['username']}"
+                f"Expected {'john'}, got {(result.data or {})['username']}",
             )
         assert (result.data or {})["email"] == "john@example.com"
         if "id" not in result.data:
@@ -419,7 +419,7 @@ class TestFlextCommandHandler:
         """Test complete command processing flow."""
         handler: CreateUserCommandHandler = CreateUserCommandHandler()
         command: CreateUserCommand = CreateUserCommand(
-            username="jane", email="jane@example.com", mixin_setup=lambda: None
+            username="jane", email="jane@example.com", mixin_setup=lambda: None,
         )
 
         result = handler.process_command(command)
@@ -435,7 +435,7 @@ class TestFlextCommandHandler:
             CreateUserCommandHandler()
         )
         command: CreateUserCommand = CreateUserCommand(
-            username="", email="invalid", mixin_setup=lambda: None
+            username="", email="invalid", mixin_setup=lambda: None,
         )
 
         result = handler.process_command(command)
@@ -446,7 +446,7 @@ class TestFlextCommandHandler:
         assert result.error
         if "username is required" not in result.error.lower():
             raise AssertionError(
-                f"Expected {'username is required'} in {result.error.lower()}"
+                f"Expected {'username is required'} in {result.error.lower()}",
             )
 
     def test_process_command_cannot_handle(self) -> None:
@@ -455,7 +455,7 @@ class TestFlextCommandHandler:
             CreateUserCommandHandler()
         )
         wrong_command: UpdateUserCommand = UpdateUserCommand(
-            user_id="123", updates={"name": "test"}, mixin_setup=lambda: None
+            user_id="123", updates={"name": "test"}, mixin_setup=lambda: None,
         )
 
         # We need to cast to the expected type to bypass type checking for this test
@@ -468,7 +468,7 @@ class TestFlextCommandHandler:
         assert result.error
         if "cannot process" not in result.error.lower():
             raise AssertionError(
-                f"Expected {'cannot process'} in {result.error.lower()}"
+                f"Expected {'cannot process'} in {result.error.lower()}",
             )
 
     def test_process_command_handling_failure(self) -> None:
@@ -552,7 +552,7 @@ class TestFlextCommandBus:
         assert result.error
         if "no handler found" not in result.error.lower():
             raise AssertionError(
-                f"Expected {'no handler found'} in {result.error.lower()}"
+                f"Expected {'no handler found'} in {result.error.lower()}",
             )
 
     def test_execute_command_validation_failure(self) -> None:
@@ -639,7 +639,7 @@ class TestFlextCommandResult:
         assert command_result.data is None
         if command_result.error != error_message:
             raise AssertionError(
-                f"Expected {error_message}, got {command_result.error}"
+                f"Expected {error_message}, got {command_result.error}",
             )
 
     def test_result_metadata(self) -> None:
@@ -652,7 +652,7 @@ class TestFlextCommandResult:
             raise AssertionError(f"Expected True, got {command_result.success}")
         if command_result.metadata["test"] != "value":
             raise AssertionError(
-                f"Expected {'value'}, got {command_result.metadata['test']}"
+                f"Expected {'value'}, got {command_result.metadata['test']}",
             )
 
 
@@ -676,7 +676,7 @@ class TestCommandPatternIntegration:
 
         # Execute create user command
         create_command = CreateUserCommand(
-            username="john_doe", email="john@example.com"
+            username="john_doe", email="john@example.com",
         )
         create_result = bus.execute(create_command)
 
@@ -715,16 +715,16 @@ class TestCommandPatternIntegration:
         # Execute different command types
         commands = [
             CreateUserCommand(
-                username="user1", email="user1@example.com", mixin_setup=lambda: None
+                username="user1", email="user1@example.com", mixin_setup=lambda: None,
             ),
             CreateUserCommand(
-                username="user2", email="user2@example.com", mixin_setup=lambda: None
+                username="user2", email="user2@example.com", mixin_setup=lambda: None,
             ),
             UpdateUserCommand(
-                user_id="user1", updates={"status": "active"}, mixin_setup=lambda: None
+                user_id="user1", updates={"status": "active"}, mixin_setup=lambda: None,
             ),
             UpdateUserCommand(
-                user_id="user2", updates={"bio": "Developer"}, mixin_setup=lambda: None
+                user_id="user2", updates={"bio": "Developer"}, mixin_setup=lambda: None,
             ),
         ]
 
@@ -736,11 +736,11 @@ class TestCommandPatternIntegration:
         # Verify all commands executed successfully
         if not all(result.success for result in results):
             raise AssertionError(
-                f"Expected {all(result.success for result in results)} in {results}"
+                f"Expected {all(result.success for result in results)} in {results}",
             )
         if len(create_handler.created_users) != EXPECTED_BULK_SIZE:
             raise AssertionError(
-                f"Expected {2}, got {len(create_handler.created_users)}"
+                f"Expected {2}, got {len(create_handler.created_users)}",
             )
         assert len(update_handler.updated_users) == EXPECTED_BULK_SIZE
 
@@ -752,7 +752,7 @@ class TestCommandPatternIntegration:
 
         # Test with valid command
         valid_command = CreateUserCommand(
-            username="valid_user", email="valid@example.com"
+            username="valid_user", email="valid@example.com",
         )
         result = bus.execute(valid_command)
         if not result.success:
@@ -767,7 +767,7 @@ class TestCommandPatternIntegration:
         # Verify handler state is consistent
         if len(handler.created_users) != 1:  # Only valid command processed:
             raise AssertionError(
-                f"Expeced {1} # Only valid command processed, got {len(handler.created_users)}"
+                f"Expeced {1} # Only valid command processed, got {len(handler.created_users)}",
             )
 
     def test_error_handling_throughout_command_flow(self) -> None:

@@ -353,7 +353,7 @@ class TestFlextLogger:
             msg_34: str = f"Expected {'traceback'} in {log_entry['context']}"
             raise AssertionError(msg_34)
         assert "ValueError: Test exception" in str(
-            cast("TAnyDict", log_entry["context"])["traceback"]
+            cast("TAnyDict", log_entry["context"])["traceback"],
         )
 
     def test_message_formatting_with_args(self, clean_log_store: None) -> None:

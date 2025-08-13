@@ -93,7 +93,9 @@ def demonstrate_basic_configuration() -> None:
         log_message = "✅ Configuration type validation is valid"
         print(log_message)
     else:
-        error_message = "Configuration validation failed: app_name must be a non-empty string"
+        error_message = (
+            "Configuration validation failed: app_name must be a non-empty string"
+        )
         print(f"❌ {error_message}")
 
     # 3. Configuration defaults
@@ -412,7 +414,9 @@ def _validate_loaded_configuration(
         log_message = "✅ App name validation passed"
         print(log_message)
     else:
-        error_message = "App name validation failed: app.name must be a non-empty string"
+        error_message = (
+            "App name validation failed: app.name must be a non-empty string"
+        )
         print(f"❌ {error_message}")
 
     return FlextResult.ok(temp_file_path)
@@ -565,7 +569,7 @@ def _demonstrate_configuration_validation() -> FlextResult[None]:
     complex_config = _create_complex_configuration()
 
     return _validate_configuration_structure(complex_config).flat_map(
-        _display_validation_results
+        _display_validation_results,
     )
 
 
@@ -610,7 +614,7 @@ def _validate_configuration_structure(
         validation_result = _validate_config_field(config, field_path, expected_type)
         if validation_result.is_failure:
             validation_errors.append(
-                validation_result.error or f"Validation failed for {field_path}"
+                validation_result.error or f"Validation failed for {field_path}",
             )
 
     is_valid = len(validation_errors) == 0
@@ -618,7 +622,7 @@ def _validate_configuration_structure(
 
 
 def _validate_config_field(
-    config: TAnyDict, field_path: str, expected_type: type
+    config: TAnyDict, field_path: str, expected_type: type,
 ) -> FlextResult[None]:
     """Validate a single configuration field."""
     # Navigate to nested field
@@ -628,7 +632,7 @@ def _validate_config_field(
             value = value.get(key)
         else:
             return FlextResult.fail(
-                f"Field path '{field_path}' not found in configuration"
+                f"Field path '{field_path}' not found in configuration",
             )
 
     # Validate type
@@ -667,8 +671,8 @@ def _demonstrate_configuration_transformation() -> FlextResult[None]:
 
     return _transform_to_connection_strings(transform_config).flat_map(
         lambda transformed: _display_transformed_configuration(
-            transformed, transform_config
-        )
+            transformed, transform_config,
+        ),
     )
 
 
@@ -734,7 +738,7 @@ def _transform_redis_config(redis_config: TAnyDict) -> FlextResult[str]:
 
 
 def _display_transformed_configuration(
-    transformed_config: TAnyDict, original_config: TAnyDict
+    transformed_config: TAnyDict, original_config: TAnyDict,
 ) -> FlextResult[None]:
     """Display transformed configuration with masked sensitive data."""
     print("🔄 Transformed configuration:")
@@ -767,7 +771,7 @@ def _demonstrate_configuration_composition() -> FlextResult[None]:
     config_sources = _create_configuration_sources()
 
     return _compose_configuration_from_sources(config_sources).flat_map(
-        _display_composed_configuration
+        _display_composed_configuration,
     )
 
 
@@ -971,7 +975,7 @@ def _demonstrate_domain_rule_validation(
     validation_config_raw = config.get("user_validation", {})
     if isinstance(validation_config_raw, dict):
         validation_config: dict[str, object] = cast(
-            "dict[str, object]", validation_config_raw
+            "dict[str, object]", validation_config_raw,
         )
         min_age = validation_config.get("min_age", 18)
         max_age = validation_config.get("max_age", 120)
@@ -1028,14 +1032,14 @@ def _demonstrate_feature_flag_configuration(
 
     print(
         f"📊 Successfully validated configuration with "
-        f"{len(created_users)} domain objects"
+        f"{len(created_users)} domain objects",
     )
 
     return FlextResult.ok(None)
 
 
 def _configure_single_feature_flag(
-    feature_name: str, enabled: object
+    feature_name: str, enabled: object,
 ) -> FlextResult[None]:
     """Configure a single feature flag with domain logging."""
     if isinstance(enabled, bool):

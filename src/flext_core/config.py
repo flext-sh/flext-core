@@ -432,7 +432,7 @@ class FlextDatabaseSettings(FlextSettings):
     port: int = 5432
     username: str = "postgres"
     # Default used for tests; can be overridden via env. Not a real secret.
-    password: str = "postgres"  # noqa: S105
+    password: str = os.getenv("DB_PASSWORD", "postgres")
     database: str = "postgres"
 
     model_config = SettingsConfigDict(
@@ -855,7 +855,7 @@ class FlextConfig(FlextBaseConfigModel):
                 post_validation = FlextConfig._validate_non_none(data)
                 if post_validation.is_failure:
                     return FlextResult.fail(
-                        post_validation.error or "Validation failed"
+                        post_validation.error or "Validation failed",
                     )
 
             # Ensure default keys exist even for empty input

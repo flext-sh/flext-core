@@ -159,12 +159,12 @@ def demonstrate_shared_domain_usage() -> None:
 
     # Create user using shared domain
     user_result = SharedDomainFactory.create_user(
-        name="John Doe", email="john.doe@example.com", age=30
+        name="John Doe", email="john.doe@example.com", age=30,
     )
 
     if not user_result.success:
         DemonstrationSectionHelper.log_error(
-            f"Failed to create user: {user_result.error}"
+            f"Failed to create user: {user_result.error}",
         )
         return
 
@@ -207,7 +207,7 @@ def demonstrate_business_logic() -> None:
 
     if not product_result.success:
         DemonstrationSectionHelper.log_error(
-            f"Failed to create product: {product_result.error}"
+            f"Failed to create product: {product_result.error}",
         )
         return
 
@@ -218,7 +218,7 @@ def demonstrate_business_logic() -> None:
 
     print(
         f"Product: {product.name} - "
-        f"{FormattingHelper.format_currency(float(product.price.amount))}"
+        f"{FormattingHelper.format_currency(float(product.price.amount))}",
     )
 
     # Test discount calculation
@@ -228,18 +228,18 @@ def demonstrate_business_logic() -> None:
         if final_price is not None:
             print(
                 f"20% discount price: "
-                f"{FormattingHelper.format_currency(float(final_price))}"
+                f"{FormattingHelper.format_currency(float(final_price))}",
             )
     else:
         DemonstrationSectionHelper.log_error(
-            f"Discount calculation failed: {discount_result.error}"
+            f"Discount calculation failed: {discount_result.error}",
         )
 
     # Test invalid discount
     invalid_discount_result = calculate_discount_price(product, 150.0)
     if not invalid_discount_result.success:
         DemonstrationSectionHelper.log_error(
-            f"Expected error: {invalid_discount_result.error}"
+            f"Expected error: {invalid_discount_result.error}",
         )
 
     DemonstrationSectionHelper.log_success("Business logic demonstration completed")
@@ -260,7 +260,7 @@ def run_all_demonstrations() -> None:
 
         print("\n" + "=" * 70)
         DemonstrationSectionHelper.log_success(
-            "ALL DEMONSTRATIONS COMPLETED SUCCESSFULLY!"
+            "ALL DEMONSTRATIONS COMPLETED SUCCESSFULLY!",
         )
         print("=" * 70)
 

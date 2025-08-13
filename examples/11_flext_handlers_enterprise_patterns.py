@@ -88,7 +88,7 @@ class UserEntity(FlextEntity):
         """Validate domain rules for user entity."""
         if not self.name or len(self.name) < MIN_NAME_LENGTH:
             return FlextResult.fail(
-                f"Name must be at least {MIN_NAME_LENGTH} characters"
+                f"Name must be at least {MIN_NAME_LENGTH} characters",
             )
         if "@" not in self.email:
             return FlextResult.fail("Invalid email format")
@@ -100,7 +100,7 @@ class UserEntity(FlextEntity):
             return FlextResult.fail("User is already active")
         # Since entities are frozen, we need to create a new instance
         activated_user = UserEntity(
-            id=self.id, name=self.name, email=self.email, is_active=True
+            id=self.id, name=self.name, email=self.email, is_active=True,
         )
         return FlextResult.ok(activated_user)
 
@@ -618,7 +618,7 @@ def _test_create_user_handler(create_handler: CreateUserHandler) -> None:
             return
         if isinstance(user_data, User):
             print(
-                f"✅ User created: {user_data.name} ({user_data.email}) - ID: {user_data.id}"
+                f"✅ User created: {user_data.name} ({user_data.email}) - ID: {user_data.id}",
             )
         else:
             print(f"✅ User created: {user_data}")
@@ -645,7 +645,7 @@ def _test_update_user_handler(create_handler: CreateUserHandler) -> UpdateUserHa
     update_handler = UpdateUserHandler(create_handler.users)
     first_user_id = next(iter(create_handler.users.keys()))
     update_command = UpdateUserCommand(
-        user_id=first_user_id, name="John Smith", email="john.smith@example.com"
+        user_id=first_user_id, name="John Smith", email="john.smith@example.com",
     )
     result = update_handler.handle(update_command)
     if result.success:
@@ -655,7 +655,7 @@ def _test_update_user_handler(create_handler: CreateUserHandler) -> UpdateUserHa
             return update_handler
         if isinstance(updated_user_data, User):
             print(
-                f"✅ User updated: {updated_user_data.name} ({updated_user_data.email})"
+                f"✅ User updated: {updated_user_data.name} ({updated_user_data.email})",
             )
         else:
             print(f"✅ User updated: {updated_user_data}")
@@ -665,14 +665,14 @@ def _test_update_user_handler(create_handler: CreateUserHandler) -> UpdateUserHa
 
 
 def _print_command_metrics(
-    create_handler: CreateUserHandler, update_handler: UpdateUserHandler
+    create_handler: CreateUserHandler, update_handler: UpdateUserHandler,
 ) -> None:
     print("\n3. Command handler metrics:")
     create_metrics = getattr(
-        create_handler, "get_metrics", lambda: {"commands_processed": 0}
+        create_handler, "get_metrics", lambda: {"commands_processed": 0},
     )()
     update_metrics = getattr(
-        update_handler, "get_metrics", lambda: {"commands_processed": 0}
+        update_handler, "get_metrics", lambda: {"commands_processed": 0},
     )()
     print("📊 Create Handler Metrics:")
     print(f"   Handler name: {create_metrics.get('handler_name', 'Unknown')}")
@@ -721,7 +721,7 @@ def _single_user_query(get_handler: GetUserHandler) -> None:
             return
         if isinstance(user_data, User):
             print(
-                f"✅ User found: {user_data.name} ({user_data.email}) - Active: {user_data.is_active}"
+                f"✅ User found: {user_data.name} ({user_data.email}) - Active: {user_data.is_active}",
             )
         else:
             print(f"✅ User found: {user_data}")
@@ -806,14 +806,14 @@ def _list_all_users(list_handler: ListUsersHandler) -> None:
 
 
 def _print_query_metrics(
-    get_handler: GetUserHandler, list_handler: ListUsersHandler
+    get_handler: GetUserHandler, list_handler: ListUsersHandler,
 ) -> None:
     print("\n3. Query handler metrics:")
     get_metrics = getattr(
-        get_handler, "get_metrics", lambda: {"queries_processed": 0}
+        get_handler, "get_metrics", lambda: {"queries_processed": 0},
     )()
     list_metrics = getattr(
-        list_handler, "get_metrics", lambda: {"queries_processed": 0}
+        list_handler, "get_metrics", lambda: {"queries_processed": 0},
     )()
     print("📊 Get Handler Metrics:")
     print(f"   Handler name: {get_metrics.get('handler_name', 'Unknown')}")
@@ -881,9 +881,15 @@ def demonstrate_event_handlers() -> None:
 
     # 4. Event handler metrics
     print("\n4. Event handler metrics:")
-    user_created_metrics = getattr(user_created_handler, "get_metrics", lambda: {"events_processed": 0})()
-    user_updated_metrics = getattr(user_updated_handler, "get_metrics", lambda: {"events_processed": 0})()
-    order_created_metrics = getattr(order_created_handler, "get_metrics", lambda: {"events_processed": 0})()
+    user_created_metrics = getattr(
+        user_created_handler, "get_metrics", lambda: {"events_processed": 0},
+    )()
+    user_updated_metrics = getattr(
+        user_updated_handler, "get_metrics", lambda: {"events_processed": 0},
+    )()
+    order_created_metrics = getattr(
+        order_created_handler, "get_metrics", lambda: {"events_processed": 0},
+    )()
 
     print("📊 User Created Handler:")
     print(f"   Handler name: {user_created_metrics.get('handler_name', 'Unknown')}")
@@ -1122,7 +1128,9 @@ def _print_function_handlers_header() -> None:
     print("=" * 80)
 
 
-def _create_function_handlers() -> tuple[FlextBaseHandler, FlextBaseHandler, FlextBaseHandler]:
+def _create_function_handlers() -> tuple[
+    FlextBaseHandler, FlextBaseHandler, FlextBaseHandler,
+]:
     print("\n1. Creating function-based handlers:")
 
     def process_simple_message(message: str) -> FlextResult[str]:
@@ -1140,7 +1148,11 @@ def _create_function_handlers() -> tuple[FlextBaseHandler, FlextBaseHandler, Fle
     number_handler: FlextMessageHandler = FlextBaseHandler("number_handler")
     order_handler: FlextMessageHandler = FlextBaseHandler("order_handler")
     print("✅ Function handlers created")
-    return cast("FlextBaseHandler", message_handler), cast("FlextBaseHandler", number_handler), cast("FlextBaseHandler", order_handler)
+    return (
+        cast("FlextBaseHandler", message_handler),
+        cast("FlextBaseHandler", number_handler),
+        cast("FlextBaseHandler", order_handler),
+    )
 
 
 def _use_message_handler(message_handler: FlextBaseHandler) -> None:
@@ -1185,7 +1197,9 @@ def _use_number_handler(number_handler: FlextBaseHandler) -> None:
 def _process_complex_order(order_handler: FlextBaseHandler) -> None:
     print("\n3. Complex function handler:")
 
-    def process_order_total(order_data: dict[str, object]) -> FlextResult[dict[str, object]]:
+    def process_order_total(
+        order_data: dict[str, object],
+    ) -> FlextResult[dict[str, object]]:
         if not order_data.get("items"):
             return FlextResult.fail("Order must have items")
         items = order_data["items"]

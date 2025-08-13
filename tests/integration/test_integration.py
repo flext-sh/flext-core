@@ -56,7 +56,7 @@ class TestLibraryIntegration:
         self,
         clean_container: FlextContainer,
         sample_data: dict[
-            str, str | int | float | bool | list[int] | dict[str, str] | None
+            str, str | int | float | bool | list[int] | dict[str, str] | None,
         ],
     ) -> None:
         """Test comprehensive integration of core library exports.
@@ -127,7 +127,7 @@ class TestLibraryIntegration:
         def create_result() -> FlextResult[str]:
             # Simulate service processing with mock
             mock_external_service.process.return_value = FlextResult.ok(
-                expected_result_data
+                expected_result_data,
             )
             processed: FlextResult[str] = mock_external_service.process()
             return processed

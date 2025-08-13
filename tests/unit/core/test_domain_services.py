@@ -182,7 +182,7 @@ class TestFlextDomainService:
         assert result.is_failure
         if "Value cannot be negative" not in (result.error or ""):
             raise AssertionError(
-                f"Expected 'Value cannot be negative' in {result.error}"
+                f"Expected 'Value cannot be negative' in {result.error}",
             )
 
     def test_execute_validation_service_success(self) -> None:
@@ -241,7 +241,7 @@ class TestFlextDomainService:
         assert result.is_failure
         if "Min length cannot be negative" not in (result.error or ""):
             raise AssertionError(
-                f"Expected 'Min length cannot be negative' in {result.error}"
+                f"Expected 'Min length cannot be negative' in {result.error}",
             )
 
     def test_execute_operation_success(self) -> None:
@@ -287,7 +287,7 @@ class TestFlextDomainService:
         assert result.is_failure
         if "Configuration validation failed" not in (result.error or ""):
             raise AssertionError(
-                f"Expected 'Configuration validation failed' in {result.error}"
+                f"Expected 'Configuration validation failed' in {result.error}",
             )
 
     def test_execute_operation_config_validation_empty_error(self) -> None:
@@ -330,7 +330,7 @@ class TestFlextDomainService:
         assert result.is_failure
         if "Operation failing failed" not in (result.error or ""):
             raise AssertionError(
-                f"Expected 'Operation failing failed' in {result.error}"
+                f"Expected 'Operation failing failed' in {result.error}",
             )
 
     def test_execute_operation_type_error_handling(self) -> None:
@@ -346,7 +346,7 @@ class TestFlextDomainService:
         assert result.is_failure
         if "Operation type_error failed" not in (result.error or ""):
             raise AssertionError(
-                f"Expected 'Operation type_error failed' in {result.error}"
+                f"Expected 'Operation type_error failed' in {result.error}",
             )
 
     def test_execute_operation_runtime_error_handling(self) -> None:
@@ -362,7 +362,7 @@ class TestFlextDomainService:
         assert result.is_failure
         if "Operation runtime_error failed" not in (result.error or ""):
             raise AssertionError(
-                f"Expected 'Operation runtime_error failed' in {result.error}"
+                f"Expected 'Operation runtime_error failed' in {result.error}",
             )
 
     def test_get_service_info_success(self) -> None:
@@ -373,7 +373,7 @@ class TestFlextDomainService:
 
         if info["service_type"] != "SampleCalculationService":
             raise AssertionError(
-                f"Expected {'SampleCalculationService'}, got {info['service_type']}"
+                f"Expected {'SampleCalculationService'}, got {info['service_type']}",
             )
         if not (info["config_valid"]):
             raise AssertionError(f"Expected True, got {info['config_valid']}")
@@ -386,7 +386,7 @@ class TestFlextDomainService:
 
         if info["service_type"] != "SampleConfigErrorService":
             raise AssertionError(
-                f"Expected {'SampleConfigErrorService'}, got {info['service_type']}"
+                f"Expected {'SampleConfigErrorService'}, got {info['service_type']}",
             )
         if info["config_valid"]:
             raise AssertionError(f"Expected False, got {info['config_valid']}")
@@ -399,7 +399,7 @@ class TestFlextDomainService:
 
         if info["service_type"] != "SampleValidationService":
             raise AssertionError(
-                f"Expected {'SampleValidationService'}, got {info['service_type']}"
+                f"Expected {'SampleValidationService'}, got {info['service_type']}",
             )
         if not (info["config_valid"]):
             raise AssertionError(f"Expected True, got {info['config_valid']}")
@@ -412,7 +412,7 @@ class TestFlextDomainService:
 
         if info["service_type"] != "SampleValidationService":
             raise AssertionError(
-                f"Expected {'SampleValidationService'}, got {info['service_type']}"
+                f"Expected {'SampleValidationService'}, got {info['service_type']}",
             )
         if info["config_valid"]:
             raise AssertionError(f"Expected False, got {info['config_valid']}")
@@ -466,7 +466,7 @@ class TestFlextDomainService:
         assert result.is_failure
         if result.error != "Service always fails":
             raise AssertionError(
-                f"Expected {'Service always fails'}, got {result.error}"
+                f"Expected {'Service always fails'}, got {result.error}",
             )
 
     def test_error_service_with_default_message(self) -> None:
@@ -478,7 +478,7 @@ class TestFlextDomainService:
         assert result.is_failure
         if result.error != "Service always fails":
             raise AssertionError(
-                f"Expected {'Service always fails'}, got {result.error}"
+                f"Expected {'Service always fails'}, got {result.error}",
             )
 
 
@@ -531,7 +531,7 @@ class TestDomainServiceIntegration:
             assert validation_result.success
             if validation_result.data != "RESULT_10":
                 raise AssertionError(
-                    f"Expected {'RESULT_10'}, got {validation_result.data}"
+                    f"Expected {'RESULT_10'}, got {validation_result.data}",
                 )
 
     def test_multiple_service_info_collection(self) -> None:
@@ -553,18 +553,18 @@ class TestDomainServiceIntegration:
         assert service_infos[0]["service_type"] == "SampleCalculationService"
         if service_infos[1]["service_type"] != "SampleValidationService":
             raise AssertionError(
-                f"Expected {'SampleValidationService'}, got {service_infos[1]['service_type']}"
+                f"Expected {'SampleValidationService'}, got {service_infos[1]['service_type']}",
             )
         assert service_infos[2]["service_type"] == "SampleErrorService"
         if service_infos[3]["service_type"] != "SampleConfigErrorService":
             raise AssertionError(
-                f"Expected {'SampleConfigErrorService'}, got {service_infos[3]['service_type']}"
+                f"Expected {'SampleConfigErrorService'}, got {service_infos[3]['service_type']}",
             )
 
         # Check config validity
         if not (service_infos[0]["config_valid"]):
             raise AssertionError(
-                f"Expected True, got {service_infos[0]['config_valid']}"
+                f"Expected True, got {service_infos[0]['config_valid']}",
             )
         assert service_infos[1]["config_valid"] is True
         assert service_infos[2]["config_valid"] is True  # ErrorService has valid config
@@ -708,7 +708,7 @@ class TestDomainServiceEdgeCases:
 
         if info["service_type"] != "SampleConfigErrorService":
             raise AssertionError(
-                f"Expected {'SampleConfigErrorService'}, got {info['service_type']}"
+                f"Expected {'SampleConfigErrorService'}, got {info['service_type']}",
             )
         # Should handle invalid config gracefully
         if info["config_valid"]:
@@ -838,5 +838,5 @@ class TestDomainServiceMockIntegration:
         assert config_result.is_failure
         if "Name cannot be empty" not in (config_result.error or ""):
             raise AssertionError(
-                f"Expected {'Name cannot be empty'} in {config_result.error}"
+                f"Expected {'Name cannot be empty'} in {config_result.error}",
             )

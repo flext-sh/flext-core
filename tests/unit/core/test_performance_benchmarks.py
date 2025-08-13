@@ -259,7 +259,7 @@ class TestConcurrencyPerformance:
 
                 # Chain operations
                 final_result = base_result.map(lambda x: f"{x}_step1").map(
-                    lambda x: f"{x}_step2"
+                    lambda x: f"{x}_step2",
                 )
 
                 results.append((thread_id, final_result.data))
@@ -270,7 +270,7 @@ class TestConcurrencyPerformance:
         threads = []
         for thread_id in range(10):
             thread = threading.Thread(
-                target=create_and_modify_result, args=(thread_id,)
+                target=create_and_modify_result, args=(thread_id,),
             )
             threads.append(thread)
 

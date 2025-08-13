@@ -207,7 +207,7 @@ class TestFlextAuthorizingHandler:
         # Test with custom values
         permissions = ["read", "write"]
         custom_handler = FlextAuthorizingHandler(
-            name="CustomAuth", required_permissions=permissions
+            name="CustomAuth", required_permissions=permissions,
         )
         assert custom_handler.handler_name == "CustomAuth"
         assert custom_handler.required_permissions == permissions

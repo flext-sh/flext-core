@@ -235,7 +235,7 @@ class TestFlextEntity:
     def test_entity_model_dump(self) -> None:
         """Test entity serialization."""
         entity_obj = create_test_entity(
-            SampleEntity, name="Test Entity", status="active"
+            SampleEntity, name="Test Entity", status="active",
         )
         entity = cast("SampleEntity", entity_obj)
 
@@ -433,7 +433,7 @@ class TestFlextDomainEvent:
         assert isinstance(data, dict)
         if data["aggregate_id"] != "aggregate-123":
             raise AssertionError(
-                f"Expected {'aggregate-123'}, got {data['aggregate_id']}"
+                f"Expected {'aggregate-123'}, got {data['aggregate_id']}",
             )
         assert data["event_type"] == "test.created"
         if data["action"] != "create":
@@ -486,7 +486,7 @@ class TestFlextAggregateRoot:
         # Initially no events
         if len(aggregate.get_domain_events()) != 0:
             raise AssertionError(
-                f"Expected {0}, got {len(aggregate.get_domain_events())}"
+                f"Expected {0}, got {len(aggregate.get_domain_events())}",
             )
 
         # Perform action that raises event
@@ -495,19 +495,19 @@ class TestFlextAggregateRoot:
         # Check event was raised
         if len(aggregate.get_domain_events()) != 1:
             raise AssertionError(
-                f"Expected {1}, got {len(aggregate.get_domain_events())}"
+                f"Expected {1}, got {len(aggregate.get_domain_events())}",
             )
         event = aggregate.get_domain_events()[0]
         assert isinstance(event, FlextEvent)
         if event.get_metadata("aggregate_id") != aggregate.id:
             raise AssertionError(
-                f"Expected {aggregate.id}, got {event.get_metadata('aggregate_id')}"
+                f"Expected {aggregate.id}, got {event.get_metadata('aggregate_id')}",
             )
         assert event.get_metadata("event_type") == "test.created"
         assert event.data is not None
         if event.data.get("action") != "created":
             raise AssertionError(
-                f"Expected {'created'}, got {event.data.get('action')}"
+                f"Expected {'created'}, got {event.data.get('action')}",
             )
 
     def test_aggregate_root_multiple_events(self) -> None:
@@ -521,7 +521,7 @@ class TestFlextAggregateRoot:
 
         if len(aggregate.get_domain_events()) != EXPECTED_DATA_COUNT:
             raise AssertionError(
-                f"Expected {3}, got {len(aggregate.get_domain_events())}"
+                f"Expected {3}, got {len(aggregate.get_domain_events())}",
             )
 
         # Check event types
@@ -544,14 +544,14 @@ class TestFlextAggregateRoot:
         aggregate.perform_action("updated")
         if len(aggregate.get_domain_events()) != EXPECTED_BULK_SIZE:
             raise AssertionError(
-                f"Expected {2}, got {len(aggregate.get_domain_events())}"
+                f"Expected {2}, got {len(aggregate.get_domain_events())}",
             )
 
         # Clear events
         aggregate.clear_domain_events()
         if len(aggregate.get_domain_events()) != 0:
             raise AssertionError(
-                f"Expected {0}, got {len(aggregate.get_domain_events())}"
+                f"Expected {0}, got {len(aggregate.get_domain_events())}",
             )
 
     def test_aggregate_root_immutability(self) -> None:
@@ -609,7 +609,7 @@ class TestFlextAggregateRoot:
         # But we can verify events exist through the method
         if len(aggregate.get_domain_events()) != 1:
             raise AssertionError(
-                f"Expected {1}, got {len(aggregate.get_domain_events())}"
+                f"Expected {1}, got {len(aggregate.get_domain_events())}",
             )
 
     def test_aggregate_root_with_entity_id_parameter(self) -> None:
@@ -661,7 +661,7 @@ class TestFlextAggregateRoot:
         # by passing invalid event_data that causes JSON serialization issues
         # Use a complex object that might cause serialization issues
         invalid_data: dict[str, object] = {
-            "func": lambda x: x
+            "func": lambda x: x,
         }  # Functions can't be serialized
         result = aggregate.add_domain_event("test.event", invalid_data)
 
@@ -687,7 +687,7 @@ class TestFlextAggregateRoot:
         # Initially no events
         if len(aggregate.get_domain_events()) != 0:
             raise AssertionError(
-                f"Expected {0}, got {len(aggregate.get_domain_events())}"
+                f"Expected {0}, got {len(aggregate.get_domain_events())}",
             )
 
         # Add event object directly
@@ -696,7 +696,7 @@ class TestFlextAggregateRoot:
         # Verify event was added
         if len(aggregate.get_domain_events()) != 1:
             raise AssertionError(
-                f"Expected {1}, got {len(aggregate.get_domain_events())}"
+                f"Expected {1}, got {len(aggregate.get_domain_events())}",
             )
         assert aggregate.get_domain_events()[0] == event
 
@@ -739,7 +739,7 @@ class TestEntitiesIntegration:
 
         if composite_data["entity"]["name"] != "Test Entity":
             raise AssertionError(
-                f"Expected {'Test Entity'}, got {composite_data['entity']['name']}"
+                f"Expected {'Test Entity'}, got {composite_data['entity']['name']}",
             )
         assert composite_data["value"]["amount"] == 100
 
@@ -764,7 +764,7 @@ class TestEntitiesIntegration:
         aggregate.clear_domain_events()
         if len(aggregate.get_domain_events()) != 0:
             raise AssertionError(
-                f"Expected {0}, got {len(aggregate.get_domain_events())}"
+                f"Expected {0}, got {len(aggregate.get_domain_events())}",
             )
 
         # Events should contain full audit trail
@@ -773,19 +773,19 @@ class TestEntitiesIntegration:
         assert events[2].data is not None
         if events[0].data.get("action") != "created":
             raise AssertionError(
-                f"Expected {'created'}, got {events[0].data.get('action')}"
+                f"Expected {'created'}, got {events[0].data.get('action')}",
             )
         assert events[1].data.get("action") == "updated"
         if events[2].data.get("action") != "activated":
             raise AssertionError(
-                f"Expected {'activated'}, got {events[2].data.get('action')}"
+                f"Expected {'activated'}, got {events[2].data.get('action')}",
             )
 
         # All events should be for same aggregate
         aggregate_ids = [event.get_metadata("aggregate_id") for event in events]
         if not all(aid == aggregate.id for aid in aggregate_ids):
             raise AssertionError(
-                f"Expected all aggregate IDs to be {aggregate.id}, got {aggregate_ids}"
+                f"Expected all aggregate IDs to be {aggregate.id}, got {aggregate_ids}",
             )
 
     def test_polymorphic_entity_behavior(self) -> None:

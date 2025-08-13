@@ -128,7 +128,7 @@ class Product(FlextEntity):
         """Reserve stock for an order."""
         if not self.is_available(quantity):
             return FlextResult.fail(
-                f"Insufficient stock: {self.stock_quantity} available, {quantity} requested"
+                f"Insufficient stock: {self.stock_quantity} available, {quantity} requested",
             )
 
         # Update stock (in real implementation would persist to database)
@@ -150,7 +150,7 @@ class Product(FlextEntity):
         price_validation = self.price.validate_business_rules()
         if price_validation.is_failure:
             return FlextResult.fail(
-                f"Price validation failed: {price_validation.error}"
+                f"Price validation failed: {price_validation.error}",
             )
 
         return FlextResult.ok(None)
@@ -178,7 +178,7 @@ class OrderItem(FlextValueObject):
         price_validation = self.unit_price.validate_business_rules()
         if price_validation.is_failure:
             return FlextResult.fail(
-                f"Unit price validation failed: {price_validation.error}"
+                f"Unit price validation failed: {price_validation.error}",
             )
 
         return FlextResult.ok(None)
@@ -204,11 +204,11 @@ class Order(FlextEntity):
         """Add item to order with validation."""
         if not product.is_available(quantity):
             return FlextResult.fail(
-                f"Product {product.name} not available in quantity {quantity}"
+                f"Product {product.name} not available in quantity {quantity}",
             )
 
         item = OrderItem(
-            product_id=product.id, quantity=quantity, unit_price=product.price
+            product_id=product.id, quantity=quantity, unit_price=product.price,
         )
 
         updated_items = [*self.items, item]
@@ -249,7 +249,7 @@ class Order(FlextEntity):
             item_validation = item.validate_business_rules()
             if item_validation.is_failure:
                 return FlextResult.fail(
-                    f"Item {i + 1} validation failed: {item_validation.error}"
+                    f"Item {i + 1} validation failed: {item_validation.error}",
                 )
 
         # Validate total is consistent
@@ -303,7 +303,7 @@ class NotificationService:
     """Notification service for customer communications."""
 
     def send_order_confirmation(
-        self, customer: Customer, order: Order
+        self, customer: Customer, order: Order,
     ) -> FlextResult[None]:
         """Send order confirmation email."""
         message = f"Order confirmed: {order.id} for ${order.total.amount / 100:.2f}"
@@ -320,7 +320,7 @@ class NotificationService:
 def create_customer(name: str, email_address: str) -> FlextResult[Customer]:
     """Create customer with validation."""
     email_result = FlextResult.ok(Email(email=email_address)).flat_map(
-        lambda e: e.validate_business_rules().map(lambda _: e)
+        lambda e: e.validate_business_rules().map(lambda _: e),
     )
 
     return email_result.map(
@@ -329,12 +329,12 @@ def create_customer(name: str, email_address: str) -> FlextResult[Customer]:
             name=name,
             email_address=email,
             age=Age(value=25),  # Default age
-        )
+        ),
     )
 
 
 def create_product(
-    name: str, price_cents: int, stock: int, category: str
+    name: str, price_cents: int, stock: int, category: str,
 ) -> FlextResult[Product]:
     """Create product with business rules."""
     if price_cents <= 0:
@@ -351,7 +351,7 @@ def create_product(
             price=price,
             stock_quantity=stock,
             category=category,
-        )
+        ),
     )
 
 
@@ -369,7 +369,7 @@ class OrderProcessingService:
         self.notifications = NotificationService()
 
     def process_order(
-        self, customer_id: str, order_data: dict[str, object]
+        self, customer_id: str, order_data: dict[str, object],
     ) -> FlextResult[Order]:
         """Process complete order with automatic error handling.
 
@@ -387,9 +387,10 @@ class OrderProcessingService:
         )
 
     def _create_order(
-        self, customer_id: str, order_data: dict[str, object]
+        self, customer_id: str, order_data: dict[str, object],
     ) -> FlextResult[Order]:
         """Create order from raw data."""
+
         def _start_empty_order() -> Order:
             return Order(
                 id=FlextUtilities.generate_entity_id(),
@@ -397,7 +398,9 @@ class OrderProcessingService:
                 items=[],
             )
 
-        def _ensure_items(data: dict[str, object]) -> FlextResult[list[dict[str, object]]]:
+        def _ensure_items(
+            data: dict[str, object],
+        ) -> FlextResult[list[dict[str, object]]]:
             items_value = data.get("items", [])
             if not isinstance(items_value, list):
                 return FlextResult.fail("Items must be a list")
@@ -416,7 +419,9 @@ class OrderProcessingService:
             except (ValueError, TypeError):
                 return FlextResult.fail("Invalid quantity format")
 
-        def _get_product_for_item(item: dict[str, object]) -> FlextResult[tuple[object, int]]:
+        def _get_product_for_item(
+            item: dict[str, object],
+        ) -> FlextResult[tuple[object, int]]:
             product_id = item.get("product_id")
             if not isinstance(product_id, str):
                 return FlextResult.fail("Product ID must be a string")
@@ -478,7 +483,7 @@ class OrderProcessingService:
 
         customer = cast("Customer", customer_result.data)
         notification_result = self.notifications.send_order_confirmation(
-            customer, order
+            customer, order,
         )
         return notification_result.map(lambda _: order)
 
@@ -520,7 +525,9 @@ def _setup_environment() -> object:
 def _create_and_register_customer(container: object) -> Customer | None:
     customer_result = create_customer("John Doe", "john@example.com")
     if not customer_result.success or customer_result.data is None:
-        print(f"❌ Customer creation failed: {customer_result.error or 'No data returned'}")
+        print(
+            f"❌ Customer creation failed: {customer_result.error or 'No data returned'}",
+        )
         return None
     customer = customer_result.data
     cast("object", container).register(f"customer_{customer.id}", customer)  # type: ignore[attr-defined]
@@ -542,11 +549,13 @@ def _create_and_register_products(container: object) -> None:
             print(f"✅ Product created: {product.name} - {product.price}")
         else:
             print(
-                f"❌ Product creation failed: {product_result.error or 'No data returned'}"
+                f"❌ Product creation failed: {product_result.error or 'No data returned'}",
             )
 
 
-def _select_first_available_product_id(container: object, keys: list[str]) -> str | None:
+def _select_first_available_product_id(
+    container: object, keys: list[str],
+) -> str | None:
     for key in keys:
         result = cast("object", container).get(key)  # type: ignore[attr-defined]
         if result.success and result.data is not None:
@@ -559,7 +568,9 @@ def _process_order_and_print(_: object, customer: Customer, product_id: str) -> 
     print("\n🔄 Processing Order...")
     print("-" * 30)
     order_service = OrderProcessingService()
-    order_data: dict[str, object] = {"items": [{"product_id": product_id, "quantity": 1}]}
+    order_data: dict[str, object] = {
+        "items": [{"product_id": product_id, "quantity": 1}],
+    }
     order_result = order_service.process_order(customer.id, order_data)
     if order_result.success and order_result.data is not None:
         order = order_result.data
@@ -584,7 +595,7 @@ def _type_system_demo(customer: Customer) -> None:
 
     print(f"✅ Customer is premium: {validator(customer)}")
     print(
-        f"✅ Money as string: {transformer(Money(amount=Decimal(5000), currency='USD'))}"
+        f"✅ Money as string: {transformer(Money(amount=Decimal(5000), currency='USD'))}",
     )
 
 

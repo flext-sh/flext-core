@@ -282,18 +282,18 @@ def _demonstrate_decorators() -> FlextResult[None]:
 
     # Apply decorator using casting for protocol compliance
     safe_calculation = FlextDecorators.safe_result(
-        cast("FlextDecoratedFunction", risky_calculation)
+        cast("FlextDecoratedFunction", risky_calculation),
     )
 
     # Test safe execution
     safe_result = safe_calculation(10.0, 2.0)
     print(
-        f"  Safe calculation: {getattr(safe_result, 'success', False)}, Result: {getattr(safe_result, 'data', 'N/A')}"
+        f"  Safe calculation: {getattr(safe_result, 'success', False)}, Result: {getattr(safe_result, 'data', 'N/A')}",
     )
 
     error_result = safe_calculation(10.0, 0.0)
     print(
-        f"  Error handling: {getattr(error_result, 'is_failure', False)}, Error: {getattr(error_result, 'error', 'N/A')}"
+        f"  Error handling: {getattr(error_result, 'is_failure', False)}, Error: {getattr(error_result, 'error', 'N/A')}",
     )
     print()
     return FlextResult.ok(None)

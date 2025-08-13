@@ -141,7 +141,7 @@ class TestFlextResultUnwrap:
         """Test unwrap failure raises FlextOperationError with error data."""
         error_data = {"field": "test", "value": 123}
         result: FlextResult[None] = FlextResult.fail(
-            "Test error", error_data=error_data
+            "Test error", error_data=error_data,
         )
 
         with pytest.raises(FlextOperationError) as exc_info:
@@ -1308,7 +1308,7 @@ class TestFlextResultPropertyBased:
             st.floats(allow_nan=False),
             st.booleans(),
             st.none(),
-        )
+        ),
     )
     def test_result_ok_preserves_value(self, value: object) -> None:
         """Property: FlextResult.ok preserves any value."""
@@ -1334,18 +1334,18 @@ class TestFlextResultPropertyBased:
                 lambda x: x + 1,
                 lambda x: x * 2,
                 lambda x: x - 1,
-            ]
+            ],
         ),
         func2=st.sampled_from(
             [
                 lambda x: x * 3,
                 lambda x: x + 10,
                 lambda x: x // 2 if x != 0 else 0,
-            ]
+            ],
         ),
     )
     def test_result_map_composition(
-        self, value: int, func1: Callable[[int], int], func2: Callable[[int], int]
+        self, value: int, func1: Callable[[int], int], func2: Callable[[int], int],
     ) -> None:  # type: ignore[no-untyped-def]
         """Property: map operations compose correctly."""
         result: FlextResult[int] = FlextResult.ok(value)
@@ -1401,7 +1401,7 @@ class TestFlextResultParametrized:
 
     @pytest.mark.parametrize_advanced
     def test_result_creation_parametrized(
-        self, result_test_cases: list[TestCase[object]]
+        self, result_test_cases: list[TestCase[object]],
     ) -> None:
         """Test result creation with parametrized test cases."""
         for test_case in result_test_cases:
@@ -1593,7 +1593,7 @@ class TestFlextResultBoundary:
 
         # Test map operation on large data
         transformed: FlextResult[list[int]] = result.map(
-            lambda lst: [x * 2 for x in lst[:100]]
+            lambda lst: [x * 2 for x in lst[:100]],
         )  # First 100 only
 
         assert transformed.success

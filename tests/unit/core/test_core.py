@@ -172,7 +172,7 @@ class TestFlextCoreContainerIntegration:
         assert isinstance(retrieved_service, UserService)
         if retrieved_service.name != "prod_user_service":
             raise AssertionError(
-                f"Expected {'prod_user_service'}, got {retrieved_service.name}"
+                f"Expected {'prod_user_service'}, got {retrieved_service.name}",
             )
 
     def test_get_service_success(
@@ -244,7 +244,7 @@ class TestFlextCoreContainerIntegration:
             assert result.is_failure
             if "Registration failed" not in (result.error or ""):
                 raise AssertionError(
-                    f"Expected 'Registration failed' in {result.error}"
+                    f"Expected 'Registration failed' in {result.error}",
                 )
 
             # Verify register was called
@@ -284,7 +284,7 @@ class TestFlextCoreLogging:
         # FlextLoggerFactory should return the same instance for same name
         if logger1._name == logger2._name != logger_name:
             raise AssertionError(
-                f"Expected {logger_name}, got {logger1._name == logger2._name}"
+                f"Expected {logger_name}, got {logger1._name == logger2._name}",
             )
 
     def test_configure_logging_default_settings(
@@ -330,7 +330,7 @@ class TestFlextCoreLogging:
         # Logger should still work
         if logger._name != "service.integration":
             raise AssertionError(
-                f"Expected {'service.integration'}, got {logger._name}"
+                f"Expected {'service.integration'}, got {logger._name}",
             )
 
 
@@ -390,12 +390,12 @@ class TestFlextCoreResultPatterns:
             raise AssertionError(f"Expected {'Simple error'}, got {error1.error}")
 
         error2: FlextResult[object] = clean_flext_core.fail(
-            "Complex error with details"
+            "Complex error with details",
         )
         assert error2.is_failure
         if error2.error != "Complex error with details":
             raise AssertionError(
-                f"Expected {'Complex error with details'}, got {error2.error}"
+                f"Expected {'Complex error with details'}, got {error2.error}",
             )
 
         # Empty error should be handled
@@ -404,7 +404,7 @@ class TestFlextCoreResultPatterns:
         # FlextResult handles empty errors
         if error3.error != "Unknown error occurred":
             raise AssertionError(
-                f"Expected {'Unknown error occurred'}, got {error3.error}"
+                f"Expected {'Unknown error occurred'}, got {error3.error}",
             )
 
     def test_result_pattern_integration(self, clean_flext_core: FlextCore) -> None:
@@ -418,7 +418,7 @@ class TestFlextCoreResultPatterns:
         assert chained_success.success
         if chained_success.data != "processed initial":
             raise AssertionError(
-                f"Expected {'processed initial'}, got {chained_success.data}"
+                f"Expected {'processed initial'}, got {chained_success.data}",
             )
 
         # Failure should propagate
@@ -426,7 +426,7 @@ class TestFlextCoreResultPatterns:
         assert chained_failure.is_failure
         if chained_failure.error != "failed operation":
             raise AssertionError(
-                f"Expected {'failed operation'}, got {chained_failure.error}"
+                f"Expected {'failed operation'}, got {chained_failure.error}",
             )
 
 
@@ -513,7 +513,7 @@ class TestFlextCoreRailwayProgramming:
         # Right to left: add_suffix first, then add_prefix
         if result.data != "prefix_middle_suffix":
             raise AssertionError(
-                f"Expected {'prefix_middle_suffix'}, got {result.data}"
+                f"Expected {'prefix_middle_suffix'}, got {result.data}",
             )
 
     def test_when_predicate_true(self, clean_flext_core: FlextCore) -> None:
@@ -694,7 +694,7 @@ class TestFlextCoreRailwayProgramming:
         validate_positive: Callable[[int], FlextResult[int]],
         double_if_even: Callable[[int], FlextResult[int]],
     ) -> tuple[
-        Callable[[object], FlextResult[object]], Callable[[object], FlextResult[object]]
+        Callable[[object], FlextResult[object]], Callable[[object], FlextResult[object]],
     ]:
         """Create pipeline wrapper functions."""
 
@@ -727,7 +727,7 @@ class TestFlextCoreRailwayProgramming:
 
         # Create pipeline wrappers
         validate_wrapper, double_wrapper = self._create_pipeline_wrappers(
-            validate_positive, double_if_even
+            validate_positive, double_if_even,
         )
 
         # Create pipeline
@@ -745,7 +745,7 @@ class TestFlextCoreRailwayProgramming:
         self._verify_logged_values()
 
     def _test_even_positive_number(
-        self, pipeline: Callable[[int], FlextResult[object]]
+        self, pipeline: Callable[[int], FlextResult[object]],
     ) -> None:
         """Test pipeline with even positive number."""
         result = pipeline(4)
@@ -754,7 +754,7 @@ class TestFlextCoreRailwayProgramming:
             raise AssertionError(f"Expected {8}, got {result.data}")
 
     def _test_odd_positive_number(
-        self, pipeline: Callable[[int], FlextResult[object]]
+        self, pipeline: Callable[[int], FlextResult[object]],
     ) -> None:
         """Test pipeline with odd positive number."""
         result = pipeline(3)
@@ -763,7 +763,7 @@ class TestFlextCoreRailwayProgramming:
             raise AssertionError(f"Expected {3}, got {result.data}")
 
     def _test_negative_number(
-        self, pipeline: Callable[[int], FlextResult[object]]
+        self, pipeline: Callable[[int], FlextResult[object]],
     ) -> None:
         """Test pipeline with negative number."""
         result = pipeline(-1)
@@ -944,7 +944,7 @@ class TestFlextCoreIntegration:
 
         # Pipeline execution phase
         result, logged_steps = self._execute_integration_pipeline(
-            clean_flext_core, user_key, data_key
+            clean_flext_core, user_key, data_key,
         )
 
         # Validation phase
@@ -972,7 +972,7 @@ class TestFlextCoreIntegration:
         return user_key, data_key
 
     def _execute_integration_pipeline(
-        self, clean_flext_core: FlextCore, user_key: object, data_key: object
+        self, clean_flext_core: FlextCore, user_key: object, data_key: object,
     ) -> tuple[object, list[str]]:
         """Execute the full integration pipeline with logging."""
         logged_steps: list[str] = []
@@ -1013,7 +1013,7 @@ class TestFlextCoreIntegration:
         return result, logged_steps
 
     def _validate_integration_results(
-        self, result: object, logged_steps: list[str]
+        self, result: object, logged_steps: list[str],
     ) -> None:
         """Validate the integration test results."""
         assert result.success
@@ -1054,7 +1054,7 @@ class TestFlextCoreIntegration:
         assert success_result.success
         if success_result.data != "saved_processed_valid_input":
             raise AssertionError(
-                f"Expected {'saved_processed_valid_input'}, got {success_result.data}"
+                f"Expected {'saved_processed_valid_input'}, got {success_result.data}",
             )
 
         # Test failure cases

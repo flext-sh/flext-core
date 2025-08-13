@@ -109,7 +109,7 @@ class TestTypeGuards:
         value_to_test = True
         if not (is_instance_of(value_to_test, bool)):
             raise AssertionError(
-                f"Expected True, got {is_instance_of(value_to_test, bool)}"
+                f"Expected True, got {is_instance_of(value_to_test, bool)}",
             )
 
         # Test inheritance
@@ -136,7 +136,7 @@ class TestTypeGuards:
         # Test valid dictionaries
         if not (is_dict_of({"a": 1, "b": 2}, int)):
             raise AssertionError(
-                f"Expected True, got {is_dict_of({'a': 1, 'b': 2}, int)}"
+                f"Expected True, got {is_dict_of({'a': 1, 'b': 2}, int)}",
             )
         assert is_dict_of({"x": "hello", "y": "world"}, str) is True
         assert is_dict_of({}, int) is True  # Empty dict is valid
@@ -144,7 +144,7 @@ class TestTypeGuards:
         # Test invalid dictionaries
         if is_dict_of({"a": 1, "b": "2"}, int):
             raise AssertionError(
-                f"Expected False, got {is_dict_of({'a': 1, 'b': '2'}, int)}"
+                f"Expected False, got {is_dict_of({'a': 1, 'b': '2'}, int)}",
             )
         assert is_dict_of({"x": "hello", "y": 2}, str) is False
 
@@ -458,7 +458,7 @@ class TestValidationUtilities:
         # Test with valid values
         if require_not_none("string") != "string":
             raise AssertionError(
-                f"Expected {'string'}, got {require_not_none('string')}"
+                f"Expected {'string'}, got {require_not_none('string')}",
             )
         assert require_not_none(42) == 42
         if require_not_none([]) != []:
@@ -557,7 +557,7 @@ class TestValidationUtilities:
         error = exc_info.value
         if "Value out of allowed range" not in str(error):
             raise AssertionError(
-                f"Expected {'Value out of allowed range'} in {error!s}"
+                f"Expected {'Value out of allowed range'} in {error!s}",
             )
 
         # Test with auto-generated message
@@ -567,7 +567,7 @@ class TestValidationUtilities:
         error = exc_info.value
         if "Value must be between 1 and 10" not in str(error):
             raise AssertionError(
-                f"Expected {'Value must be between 1 and 10'} in {error!s}"
+                f"Expected {'Value must be between 1 and 10'} in {error!s}",
             )
 
     def test_require_non_empty(self) -> None:
@@ -575,12 +575,12 @@ class TestValidationUtilities:
         # Test with valid non-empty strings
         if require_non_empty("hello") != "hello":
             raise AssertionError(
-                f"Expected {'hello'}, got {require_non_empty('hello')}"
+                f"Expected {'hello'}, got {require_non_empty('hello')}",
             )
         assert require_non_empty("a") == "a"
         if require_non_empty("  text  ") != "  text  ":  # Whitespace preserved:
             raise AssertionError(
-                f"Expected {'  text  '}, got {require_non_empty('  text  ')}"
+                f"Expected {'  text  '}, got {require_non_empty('  text  ')}",
             )
 
         # Test with invalid values
@@ -618,7 +618,7 @@ class TestEdgeCases:
         assert is_list_of(None, int) is False
         if not (is_instance_of(None, type(None))):
             raise AssertionError(
-                f"Expected True, got {is_instance_of(None, type(None))}"
+                f"Expected True, got {is_instance_of(None, type(None))}",
             )
         if is_dict_of(None, int):
             raise AssertionError(f"Expected False, got {is_dict_of(None, int)}")
@@ -641,7 +641,7 @@ class TestEdgeCases:
         objects = [CustomClass(), CustomClass()]
         if not (is_list_of(objects, CustomClass)):
             raise AssertionError(
-                f"Expected True, got {is_list_of(objects, CustomClass)}"
+                f"Expected True, got {is_list_of(objects, CustomClass)}",
             )
 
     def test_validated_model_edge_cases(self) -> None:
@@ -800,7 +800,7 @@ class TestIntegrationAndComposition:
         # Test valid data
         if not (validate_list_of_positive_ints([1, 2, 3])):
             raise AssertionError(
-                f"Expected True, got {validate_list_of_positive_ints([1, 2, 3])}"
+                f"Expected True, got {validate_list_of_positive_ints([1, 2, 3])}",
             )
         assert validate_list_of_positive_ints([]) is True  # Empty list is valid
 
@@ -810,7 +810,7 @@ class TestIntegrationAndComposition:
             validate_list_of_positive_ints([1, "2", 3]) is not False
         ):  # String not in list
             raise AssertionError(
-                f"Expected {validate_list_of_positive_ints([1, '2', 3])} to be False"
+                f"Expected {validate_list_of_positive_ints([1, '2', 3])} to be False",
             )
         assert validate_list_of_positive_ints("not a list") is False  # Not a list
         assert validate_list_of_positive_ints(None) is False  # None
@@ -856,5 +856,5 @@ class TestPerformanceAndScalability:
             raise AssertionError(f"Expected {100}, got {len(objects)}")
         if not all(getattr(obj, "value", None) == i for i, obj in enumerate(objects)):
             raise AssertionError(
-                f"Expected all objects to have matching values but got {[(i, getattr(obj, 'value', None)) for i, obj in enumerate(objects[:5])]}"
+                f"Expected all objects to have matching values but got {[(i, getattr(obj, 'value', None)) for i, obj in enumerate(objects[:5])]}",
             )

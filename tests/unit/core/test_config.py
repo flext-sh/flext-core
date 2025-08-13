@@ -103,13 +103,13 @@ class TestFlextConfig:
         config = result.data
         if config["database_url"] != "postgresql://localhost/test":
             raise AssertionError(
-                f"Expected 'postgresql://localhost/test', got {config['database_url']}"
+                f"Expected 'postgresql://localhost/test', got {config['database_url']}",
             )
         if not config["debug"]:
             raise AssertionError(f"Expected True, got {config['debug']}")
         if config["port"] != FlextConstants.Platform.FLEXCORE_PORT:
             raise AssertionError(
-                f"Expected {FlextConstants.Platform.FLEXCORE_PORT}, got {config['port']}"
+                f"Expected {FlextConstants.Platform.FLEXCORE_PORT}, got {config['port']}",
             )
         # Should apply defaults
         if "timeout" not in config:
@@ -128,7 +128,7 @@ class TestFlextConfig:
         config = result.data
         if config["database_url"] != "postgresql://localhost/test":
             raise AssertionError(
-                f"Expected {'postgresql://localhost/test'}, got {config['database_url']}"
+                f"Expected {'postgresql://localhost/test'}, got {config['database_url']}",
             )
         if not (config["debug"]):
             raise AssertionError(f"Expected True, got {config['debug']}")
@@ -149,7 +149,7 @@ class TestFlextConfig:
         config = result.data
         if config["database_url"] != "postgresql://localhost/test":
             raise AssertionError(
-                f"Expected {'postgresql://localhost/test'}, got {config['database_url']}"
+                f"Expected {'postgresql://localhost/test'}, got {config['database_url']}",
             )
 
     def test_create_complete_config_with_none_values(self) -> None:
@@ -168,7 +168,7 @@ class TestFlextConfig:
         assert result.is_failure
         if "Config validation failed for database_url" not in (result.error or ""):
             raise AssertionError(
-                f"Expected 'Config validation failed for database_url' in {result.error}"
+                f"Expected 'Config validation failed for database_url' in {result.error}",
             )
 
     def test_create_complete_config_validation_failure(self) -> None:
@@ -189,7 +189,7 @@ class TestFlextConfig:
             assert result.is_failure
             if "Config validation failed for key" not in (result.error or ""):
                 raise AssertionError(
-                    f"Expected 'Config validation failed for key' in {result.error}"
+                    f"Expected 'Config validation failed for key' in {result.error}",
                 )
 
     def test_create_complete_config_load_failure(self) -> None:
@@ -222,7 +222,7 @@ class TestFlextConfig:
             assert result.is_failure
             if "Applying defaults failed" not in (result.error or ""):
                 raise AssertionError(
-                    f"Expected 'Applying defaults failed' in {result.error}"
+                    f"Expected 'Applying defaults failed' in {result.error}",
                 )
 
     def test_create_complete_config_exception_handling(self) -> None:
@@ -238,7 +238,7 @@ class TestFlextConfig:
             assert result.is_failure
             if "Complete config creation failed" not in (result.error or ""):
                 raise AssertionError(
-                    f"Expected 'Complete config creation failed' in {result.error}"
+                    f"Expected 'Complete config creation failed' in {result.error}",
                 )
 
     def test_load_and_validate_from_file_success(self, temp_json_file: str) -> None:
@@ -253,7 +253,7 @@ class TestFlextConfig:
         config = result.data
         if config["database_url"] != "sqlite:///test.db":
             raise AssertionError(
-                f"Expected {'sqlite:///test.db'}, got {config['database_url']}"
+                f"Expected {'sqlite:///test.db'}, got {config['database_url']}",
             )
         assert config["secret_key"] == "test-secret-key"
 
@@ -283,7 +283,7 @@ class TestFlextConfig:
         assert result.is_failure
         if "Required config key 'missing_key' not found" not in (result.error or ""):
             raise AssertionError(
-                f"Expected 'Required config key \\'missing_key\\' not found' in {result.error}"
+                f"Expected 'Required config key \\'missing_key\\' not found' in {result.error}",
             )
 
     def test_load_and_validate_from_file_none_value(self) -> None:
@@ -303,7 +303,7 @@ class TestFlextConfig:
             assert result.is_failure
             if "Invalid config value for 'key'" not in (result.error or ""):
                 raise AssertionError(
-                    f"Expected 'Invalid config value for \\'key\\'' in {result.error}"
+                    f"Expected 'Invalid config value for \\'key\\'' in {result.error}",
                 )
 
     def test_load_and_validate_from_file_load_failure(self) -> None:
@@ -332,7 +332,7 @@ class TestFlextConfig:
             # FlextResult converts empty errors to "Unknown error occurred"
             if "Unknown error occurred" not in (result.error or ""):
                 raise AssertionError(
-                    f"Expected 'Unknown error occurred' in {result.error}"
+                    f"Expected 'Unknown error occurred' in {result.error}",
                 )
 
     def test_merge_and_validate_configs_success(
@@ -351,7 +351,7 @@ class TestFlextConfig:
             raise AssertionError(f"Expected True, got {merged['debug']}")
         if merged["port"] != FlextConstants.Platform.FLEXCORE_PORT:
             raise AssertionError(
-                f"Expected {FlextConstants.Platform.FLEXCORE_PORT}, got {merged['port']}"
+                f"Expected {FlextConstants.Platform.FLEXCORE_PORT}, got {merged['port']}",
             )
         # Base values should be included
         if merged["max_connections"] != 100:
@@ -369,7 +369,7 @@ class TestFlextConfig:
             assert result.is_failure
             if "Config merge failed" not in (result.error or ""):
                 raise AssertionError(
-                    f"Expected 'Config merge failed' in {result.error}"
+                    f"Expected 'Config merge failed' in {result.error}",
                 )
 
     def test_merge_and_validate_configs_validation_failure(self) -> None:
@@ -390,7 +390,7 @@ class TestFlextConfig:
             assert result.is_failure
             if "Merged config validation failed" not in (result.error or ""):
                 raise AssertionError(
-                    f"Expected 'Merged config validation failed' in {result.error}"
+                    f"Expected 'Merged config validation failed' in {result.error}",
                 )
 
     def test_merge_and_validate_configs_exception_handling(self) -> None:
@@ -405,7 +405,7 @@ class TestFlextConfig:
             assert result.is_failure
             if "Config merge failed" not in (result.error or ""):
                 raise AssertionError(
-                    f"Expected 'Config merge failed' in {result.error}"
+                    f"Expected 'Config merge failed' in {result.error}",
                 )
 
     def test_get_env_with_validation_success(self) -> None:
@@ -461,7 +461,7 @@ class TestFlextConfig:
             # FlextResult converts empty errors to "Unknown error occurred"
             if "Unknown error occurred" not in (result.error or ""):
                 raise AssertionError(
-                    f"Expected 'Unknown error occurred' in {result.error}"
+                    f"Expected 'Unknown error occurred' in {result.error}",
                 )
 
     def test_safe_get_env_var_empty_error(self) -> None:
@@ -477,7 +477,7 @@ class TestFlextConfig:
             # FlextResult converts empty errors to "Unknown error occurred"
             if "Unknown error occurred" not in (result.error or ""):
                 raise AssertionError(
-                    f"Expected 'Unknown error occurred' in {result.error}"
+                    f"Expected 'Unknown error occurred' in {result.error}",
                 )
 
     def test_safe_load_json_file_success(self, temp_json_file: str) -> None:
@@ -591,7 +591,7 @@ class TestFlextConfig:
         assert result.is_failure
         if "Validator must be callable" not in (result.error or ""):
             raise AssertionError(
-                f"Expected 'Validator must be callable' in {result.error}"
+                f"Expected 'Validator must be callable' in {result.error}",
             )
 
 
@@ -643,7 +643,7 @@ class TestFlextSettings:
         with patch.dict(os.environ, {}, clear=True):
             overrides = {"debug": True, "timeout": 60}
             result = TestSettings.create_with_validation(
-                overrides=cast("TAnyDict", overrides)
+                overrides=cast("TAnyDict", overrides),
             )
             assert result.success
             assert result.data is not None
@@ -720,17 +720,17 @@ class TestFlextSettings:
             settings = TestSettings(_env_file=None)
             if settings.model_config["env_file"] != ".env":
                 raise AssertionError(
-                    f"Expected {'.env'}, got {settings.model_config['env_file']}"
+                    f"Expected {'.env'}, got {settings.model_config['env_file']}",
                 )
             assert settings.model_config["env_file_encoding"] == "utf-8"
             if settings.model_config["case_sensitive"]:
                 raise AssertionError(
-                    f"Expected False, got {settings.model_config['case_sensitive']}"
+                    f"Expected False, got {settings.model_config['case_sensitive']}",
                 )
             assert settings.model_config["extra"] == "ignore"
             if not (settings.model_config["validate_assignment"]):
                 raise AssertionError(
-                    f"Expected True, got {settings.model_config['validate_assignment']}"
+                    f"Expected True, got {settings.model_config['validate_assignment']}",
                 )
 
     def test_settings_environment_integration(self) -> None:
@@ -849,7 +849,7 @@ class TestModuleLevelFunctions:
             assert result.is_failure
             if "required" not in (result.error or "").lower():
                 raise AssertionError(
-                    f"Expected {'required'} in {(result.error or '').lower()}"
+                    f"Expected {'required'} in {(result.error or '').lower()}",
                 )
 
     def test_safe_get_env_var_failure(self) -> None:
@@ -878,7 +878,7 @@ class TestModuleLevelFunctions:
             # FlextResult converts empty errors to "Unknown error occurred"
             if "Unknown error occurred" not in (result.error or ""):
                 raise AssertionError(
-                    f"Expected 'Unknown error occurred' in {result.error}"
+                    f"Expected 'Unknown error occurred' in {result.error}",
                 )
 
     def test_safe_load_json_file_success(self, temp_json_file: str) -> None:
@@ -962,7 +962,7 @@ class TestConfigIntegration:
         final_config = merge_result.data
         if final_config["database_url"] != "postgresql://localhost/test":
             raise AssertionError(
-                f"Expected {'postgresql://localhost/test'}, got {final_config['database_url']}"
+                f"Expected {'postgresql://localhost/test'}, got {final_config['database_url']}",
             )
         assert final_config["new_setting"] == "new_value"
         if "timeout" not in final_config:  # From defaults
@@ -986,7 +986,7 @@ class TestConfigIntegration:
 
             # Test that settings can be created from config
             settings_result = TestSettings.create_with_validation(
-                overrides=cast("TAnyDict", config_data)
+                overrides=cast("TAnyDict", config_data),
             )
             assert settings_result.success
             assert settings_result.data is not None
@@ -1026,7 +1026,7 @@ class TestConfigIntegration:
             assert final_config is not None
             if final_config["database_url"] != "postgresql://prod/app":
                 raise AssertionError(
-                    f"Expected {'postgresql://prod/app'}, got {final_config['database_url']}"
+                    f"Expected {'postgresql://prod/app'}, got {final_config['database_url']}",
                 )
 
     def test_error_handling_cascade(self) -> None:
@@ -1044,7 +1044,7 @@ class TestConfigIntegration:
         # Error should be descriptive
         if "Config validation failed" not in (result.error or ""):
             raise AssertionError(
-                f"Expected 'Config validation failed' in {result.error}"
+                f"Expected 'Config validation failed' in {result.error}",
             )
         assert "key" in (result.error or "")
 
@@ -1056,7 +1056,7 @@ class TestConfigIntegration:
 
         if direct_result.success != proxy_result.success:
             raise AssertionError(
-                f"Expected {proxy_result.success}, got {direct_result.success}"
+                f"Expected {proxy_result.success}, got {direct_result.success}",
             )
         assert direct_result.data == proxy_result.data
 
@@ -1072,7 +1072,7 @@ class TestConfigIntegration:
 
         if direct_validation.success != proxy_validation.success:
             raise AssertionError(
-                f"Expected {proxy_validation.success}, got {direct_validation.success}"
+                f"Expected {proxy_validation.success}, got {direct_validation.success}",
             )
 
 
@@ -1120,7 +1120,7 @@ class TestConfigEdgeCases:
 
         if database_config["host"] != "localhost":
             raise AssertionError(
-                f"Expected {'localhost'}, got {database_config['host']}"
+                f"Expected {'localhost'}, got {database_config['host']}",
             )
         assert redis_config["port"] == 6379
 
@@ -1131,7 +1131,7 @@ class TestConfigEdgeCases:
         assert result.is_failure
         if "Validator must be callable" not in (result.error or ""):
             raise AssertionError(
-                f"Expected 'Validator must be callable' in {result.error}"
+                f"Expected 'Validator must be callable' in {result.error}",
             )
 
         # Test with validator that returns non-boolean

@@ -27,11 +27,11 @@ class TestFlextFieldsFactory:
         assert field.field_name == "test_field"
         if field.field_type != FlextFieldType.INTEGER.value:
             raise AssertionError(
-                f"Expected {FlextFieldType.INTEGER.value}, got {field.field_type}"
+                f"Expected {FlextFieldType.INTEGER.value}, got {field.field_type}",
             )
         if field.required is not True:  # Default
             raise AssertionError(
-                f"Expected True, got {field.required is True}"
+                f"Expected True, got {field.required is True}",
             )  # Default
         assert field.default_value is None
 
@@ -59,7 +59,7 @@ class TestFlextFieldsFactory:
 
         if field.description != "Custom integer field":
             raise AssertionError(
-                f"Expected Custom integer field, got {field.description}"
+                f"Expected Custom integer field, got {field.description}",
             )
         assert field.min_value == 10
 
@@ -99,7 +99,7 @@ class TestFlextFieldsFactory:
         assert schema["field_name"] == "test_field"
         if schema["field_type"] != FlextFieldType.INTEGER.value:
             raise AssertionError(
-                f"Expected {FlextFieldType.INTEGER.value}, got {schema['field_type']}"
+                f"Expected {FlextFieldType.INTEGER.value}, got {schema['field_type']}",
             )
         assert schema["min_value"] == 0
         if schema["max_value"] != 100:
@@ -117,11 +117,11 @@ class TestFlextFieldsFactory:
         assert field.field_name == "test_field"
         if field.field_type != FlextFieldType.BOOLEAN.value:
             raise AssertionError(
-                f"Expected {FlextFieldType.BOOLEAN.value}, got {field.field_type}"
+                f"Expected {FlextFieldType.BOOLEAN.value}, got {field.field_type}",
             )
         if field.required is not True:  # Default
             raise AssertionError(
-                f"Expected True, got {field.required is True}"
+                f"Expected True, got {field.required is True}",
             )  # Default
         assert field.default_value is None
 
@@ -135,7 +135,7 @@ class TestFlextFieldsFactory:
 
         if field.description != "Custom boolean field":
             raise AssertionError(
-                f"Expected Custom boolean field, got {field.description}"
+                f"Expected Custom boolean field, got {field.description}",
             )
 
     def test_boolean_field_validate_value_success(self) -> None:
@@ -174,11 +174,11 @@ class TestFlextFieldsFactory:
         assert field.field_name == "test_field"
         if field.field_type != FlextFieldType.STRING.value:
             raise AssertionError(
-                f"Expected {FlextFieldType.STRING.value}, got {field.field_type}"
+                f"Expected {FlextFieldType.STRING.value}, got {field.field_type}",
             )
         if field.required is not True:  # Default
             raise AssertionError(
-                f"Expected True, got {field.required is True}"
+                f"Expected True, got {field.required is True}",
             )  # Default
         assert field.default_value is None
 

@@ -268,7 +268,7 @@ class TestFlextJWTConfig:
     def test_jwt_config_creation(self) -> None:
         """Test JWT config creation."""
         config = FlextJWTConfig(
-            secret_key=SecretStr("secret123456789012345678901234567890")
+            secret_key=SecretStr("secret123456789012345678901234567890"),
         )
         assert config.algorithm == "HS256"
         assert config.access_token_expire_minutes == 30
@@ -290,7 +290,7 @@ class TestFlextJWTConfig:
     def test_jwt_config_to_jwt_dict(self) -> None:
         """Test JWT config to_jwt_dict method."""
         config = FlextJWTConfig(
-            secret_key=SecretStr("secret123456789012345678901234567890")
+            secret_key=SecretStr("secret123456789012345678901234567890"),
         )
         result = config.to_jwt_dict()
         assert isinstance(result, dict)
@@ -531,7 +531,7 @@ class TestConfigValidation:
         """Test Oracle config validation without service_name or sid."""
         # Creating config without identifiers should fail at creation time
         with pytest.raises(
-            ValueError, match="Either service_name or sid must be provided"
+            ValueError, match="Either service_name or sid must be provided",
         ):
             FlextOracleConfig(
                 username="user",

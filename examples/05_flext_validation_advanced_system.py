@@ -120,7 +120,7 @@ class ProductFieldValidator:
         # Now name is narrowed to str type
         if not name or len(name.strip()) < MIN_PRODUCT_NAME_LENGTH:
             self.validation_result.add_error(
-                f"Name must be at least {MIN_PRODUCT_NAME_LENGTH} characters"
+                f"Name must be at least {MIN_PRODUCT_NAME_LENGTH} characters",
             )
 
     def validate_price(self, price: object) -> None:
@@ -135,7 +135,7 @@ class ProductFieldValidator:
 
         if price > MAX_PRODUCT_PRICE:
             self.validation_result.add_error(
-                f"Price cannot exceed ${MAX_PRODUCT_PRICE}"
+                f"Price cannot exceed ${MAX_PRODUCT_PRICE}",
             )
 
     def validate_category(self, category: object) -> None:
@@ -627,7 +627,7 @@ def _extract_and_validate_customer_input(
 
 
 def _create_user_with_factory(
-    name: str, email: str, age: int
+    name: str, email: str, age: int,
 ) -> FlextResult[SharedUser]:
     """Create user using SharedDomainFactory with validation."""
     user_result = SharedDomainFactory.create_user(
@@ -671,9 +671,7 @@ def validate_product_complete(
 
     Refactored to reduce complexity with single responsibility methods.
     """
-    log_message: TLogMessage = (
-        f"🔍 Validating product: {cast('dict[str, object]', product_data).get('name', 'Unknown')}"
-    )
+    log_message: TLogMessage = f"🔍 Validating product: {cast('dict[str, object]', product_data).get('name', 'Unknown')}"
     print(log_message)
 
     # Validate fields using orchestrator pattern
@@ -735,7 +733,7 @@ def _extract_and_validate_product_types(
             "category": category,
             "stock": stock,
             "product_id": product_id,
-        }
+        },
     )
 
 

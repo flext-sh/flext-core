@@ -55,7 +55,7 @@ class TraditionalOracleService:
             config_result = self.validate_config()
             if config_result.is_failure:
                 return FlextResult.fail(
-                    config_result.error or "Configuration validation failed"
+                    config_result.error or "Configuration validation failed",
                 )
 
             logger.info("Executing query: %s", query)
