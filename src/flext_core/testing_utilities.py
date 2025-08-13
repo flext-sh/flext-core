@@ -574,8 +574,13 @@ class FlextTestConfig(FlextModel):
     debug: bool = False
     timeout: int = 30
     retries: int = 3
+    # Build base_url without deep dynamic __import__ chains to avoid runtime errors
+    from flext_core.constants import (
+        FlextConstants as _FlextConstants,  # local import to avoid cycles
+    )
+
     base_url: str = __import__("inspect").cleandoc(
-        f"http://{__import__('flext_core.constants').flext_core.constants.FlextConstants.Platform.DEFAULT_HOST}:{__import__('flext_core.constants').flext_core.constants.FlextConstants.Platform.FLEXT_API_PORT}"
+        f"http://{_FlextConstants.Platform.DEFAULT_HOST}:{_FlextConstants.Platform.FLEXT_API_PORT}",
     )
     headers: ClassVar[dict[str, str]] = {}
 

@@ -172,9 +172,7 @@ def _demo_fields_validation() -> None:
     print()
 
 
-def _demo_complete_flow(
-    customer: User, order: Order, logger: FlextLogger
-) -> None:
+def _demo_complete_flow(customer: User, order: Order, logger: FlextLogger) -> None:
     print("8. Complete Integration Flow:")
     order2_result = SharedDomainFactory.create_order(
         customer_id=customer.id,
@@ -226,15 +224,18 @@ def main() -> None:
         return
     order = order_result.data
     _print_order(order)
-    _demo_command_pattern(customer.id, [
-        {
-            "product_id": "product123",
-            "product_name": "Test Product",
-            "quantity": "1",
-            "unit_price": str(money.amount),
-            "currency": money.currency,
-        },
-    ])
+    _demo_command_pattern(
+        customer.id,
+        [
+            {
+                "product_id": "product123",
+                "product_name": "Test Product",
+                "quantity": "1",
+                "unit_price": str(money.amount),
+                "currency": money.currency,
+            },
+        ],
+    )
     repository = _demo_repository_pattern(order)
     _demo_container(customer, repository)
     _demo_fields_validation()

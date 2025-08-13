@@ -71,7 +71,7 @@ class TestFlextLogContext:
         assert context["session_id"] == "session-456"
         if context["transaction_id"] != "tx-789":
             raise AssertionError(
-                f"Expected {'tx-789'}, got {context['transaction_id']}"
+                f"Expected {'tx-789'}, got {context['transaction_id']}",
             )
         assert context["customer_id"] == "customer-abc"
         if context["order_id"] != "order-def":
@@ -104,7 +104,7 @@ class TestFlextLogContext:
         assert context["error_type"] == "ValidationError"
         if context["stack_trace"] != "Traceback...":
             raise AssertionError(
-                f"Expected {'Traceback...'}, got {context['stack_trace']}"
+                f"Expected {'Traceback...'}, got {context['stack_trace']}",
             )
 
 
@@ -137,7 +137,7 @@ class TestFlextLogLevel:
         for level in all_levels:
             if level not in FlextLogLevel.__dict__.values():
                 raise AssertionError(
-                    f"Expected {level} in {FlextLogLevel.__dict__.values()}"
+                    f"Expected {level} in {FlextLogLevel.__dict__.values()}",
                 )
 
 

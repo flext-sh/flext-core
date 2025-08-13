@@ -58,7 +58,7 @@ class TestHandlersModuleDirect:
 
         # Test with permissions
         handler_with_perms = authorizing_handler_cls(
-            name="AuthHandler", required_permissions=["read", "write"]
+            name="AuthHandler", required_permissions=["read", "write"],
         )
         assert handler_with_perms.required_permissions == ["read", "write"]
 

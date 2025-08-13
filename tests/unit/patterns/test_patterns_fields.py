@@ -33,7 +33,7 @@ class TestFlextFieldCoreInteger:
         # field_type is stored as string value
         if field.field_type != FlextFieldType.INTEGER.value:
             raise AssertionError(
-                f"Expected {FlextFieldType.INTEGER.value}, got {field.field_type}"
+                f"Expected {FlextFieldType.INTEGER.value}, got {field.field_type}",
             )
         assert field.required is True  # Default is True, not False
         assert field.default_value is None
@@ -255,12 +255,12 @@ class TestFlextFieldCoreInteger:
 
         if restored.description != original.description:
             raise AssertionError(
-                f"Expected {original.description}, got {restored.description}"
+                f"Expected {original.description}, got {restored.description}",
             )
         assert restored.min_length == original.min_length
         if restored.max_length != original.max_length:
             raise AssertionError(
-                f"Expected {original.max_length}, got {restored.max_length}"
+                f"Expected {original.max_length}, got {restored.max_length}",
             )
         assert restored.deprecated == original.deprecated
         if restored.tags != original.tags:
@@ -304,11 +304,11 @@ class TestFlextFieldCoreBase:
         assert field.field_name == "test_field"
         if field.field_type != FlextFieldType.STRING.value:
             raise AssertionError(
-                f"Expected {FlextFieldType.STRING.value}, got {field.field_type}"
+                f"Expected {FlextFieldType.STRING.value}, got {field.field_type}",
             )
         if field.required is not True:  # Default
             raise AssertionError(
-                f"Expected True, got {field.required is True}"
+                f"Expected True, got {field.required is True}",
             )  # Default
         assert field.default_value is None
         assert isinstance(field.metadata, FlextFieldCoreMetadata)
@@ -331,7 +331,7 @@ class TestFlextFieldCoreBase:
         assert field.field_name == "test_field"
         if field.field_type != FlextFieldType.STRING.value:
             raise AssertionError(
-                f"Expected {FlextFieldType.STRING.value}, got {field.field_type}"
+                f"Expected {FlextFieldType.STRING.value}, got {field.field_type}",
             )
         if field.required:
             raise AssertionError(f"Expected False, got {field.required}")
@@ -441,7 +441,7 @@ class TestFlextFieldCoreBase:
         assert info["field_name"] == "test_field"
         if info["field_type"] != FlextFieldType.STRING.value:
             raise AssertionError(
-                f"Expected {FlextFieldType.STRING.value}, got {info['field_type']}"
+                f"Expected {FlextFieldType.STRING.value}, got {info['field_type']}",
             )
 
         # Type safe access to metadata
@@ -450,7 +450,7 @@ class TestFlextFieldCoreBase:
             assert metadata["description"] == "Test description"
             if metadata["example"] != "test_example":
                 raise AssertionError(
-                    f"Expected test_example, got {metadata['example']}"
+                    f"Expected test_example, got {metadata['example']}",
                 )
 
     def test_field_get_field_info_no_validator(self) -> None:
@@ -467,7 +467,7 @@ class TestFlextFieldCoreBase:
         assert info["field_name"] == "test_field"
         if info["field_type"] != FlextFieldType.STRING.value:
             raise AssertionError(
-                f"Expected {FlextFieldType.STRING.value}, got {info['field_type']}"
+                f"Expected {FlextFieldType.STRING.value}, got {info['field_type']}",
             )
 
     def test_field_validate_value_required_success(self) -> None:
@@ -537,7 +537,7 @@ class TestFlextFieldCoreString:
             raise AssertionError(f"Expected string, got {field.field_type}")
         if field.required is not True:  # Default
             raise AssertionError(
-                f"Expected True, got {field.required is True}"
+                f"Expected True, got {field.required is True}",
             )  # Default
         assert field.default_value is None
 
@@ -571,7 +571,7 @@ class TestFlextFieldCoreString:
         # Metadata is computed from field properties
         if field.metadata.description != "Custom field":
             raise AssertionError(
-                f"Expected Custom field, got {field.metadata.description}"
+                f"Expected Custom field, got {field.metadata.description}",
             )
         assert field.metadata.min_length == 5
 
@@ -685,7 +685,7 @@ class TestFlextFieldCoreString:
         # Verify metadata is correctly computed
         if field.metadata.description != "Test string field":
             raise AssertionError(
-                f"Expected Test string field, got {field.metadata.description}"
+                f"Expected Test string field, got {field.metadata.description}",
             )
 
 
@@ -707,7 +707,7 @@ class TestFlextFieldCoreBoolean:
             raise AssertionError(f"Expected boolean, got {field.field_type}")
         if field.required is not True:  # Default
             raise AssertionError(
-                f"Expected True, got {field.required is True}"
+                f"Expected True, got {field.required is True}",
             )  # Default
         assert field.default_value is None
 

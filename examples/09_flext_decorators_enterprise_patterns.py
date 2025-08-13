@@ -72,7 +72,7 @@ def _demonstrate_basic_argument_validation() -> None:
         return {"name": name, "email": email, "age": age, "status": "validated"}
 
     validate_user_data = FlextValidationDecorators.validate_arguments(
-        _validate_user_data_impl
+        _validate_user_data_impl,
     )
 
     try:
@@ -112,9 +112,7 @@ def demonstrate_validation_decorators() -> None:
         """Register user with email validation."""
         return f"User registered with email: {email}"
 
-    register_user = email_validation_decorator(
-        _register_user_impl
-    )
+    register_user = email_validation_decorator(_register_user_impl)
 
     # Test valid email
     try:
@@ -147,7 +145,7 @@ def demonstrate_validation_decorators() -> None:
         return {"name": name, "age": age, "profile_created": True}
 
     create_user_profile = FlextValidationDecorators.create_validation_decorator(
-        validate_age
+        validate_age,
     )(_create_user_profile_impl)
 
     # Test valid age
@@ -212,7 +210,7 @@ def _demo_safe_result_decorator() -> None:
         print(f"✅ Safe division result: {getattr(result, 'data', 'N/A')}")
     else:
         print(
-            f"❌ Division failed (expected): {getattr(result, 'error', 'Unknown error')}"
+            f"❌ Division failed (expected): {getattr(result, 'error', 'Unknown error')}",
         )
 
 
@@ -229,7 +227,7 @@ def _demo_retry_decorator() -> None:
         return "Service succeeded after retries"
 
     unreliable_service = FlextErrorHandlingDecorators.retry_decorator(
-        _unreliable_service_impl
+        _unreliable_service_impl,
     )
 
     try:
@@ -259,7 +257,7 @@ def _demo_custom_error_handler() -> None:
         raise ValueError(msg)
 
     operation_with_custom_handling = custom_safe_decorator(
-        _operation_with_custom_handling_impl
+        _operation_with_custom_handling_impl,
     )
 
     try:
@@ -290,9 +288,7 @@ def demonstrate_performance_decorators() -> None:
         time.sleep(0.01)  # Simulate slow operation
         return sum(i for i in range(n))
 
-    slow_computation = timing_decorator(
-        _slow_computation_impl
-    )
+    slow_computation = timing_decorator(_slow_computation_impl)
 
     result = slow_computation(1000) if callable(slow_computation) else 0
     log_message = f"✅ Computation result: {result}"
@@ -307,11 +303,11 @@ def demonstrate_performance_decorators() -> None:
         if n <= 1:
             return n
         return cast("int", expensive_fibonacci(n - 1)) + cast(
-            "int", expensive_fibonacci(n - 2)
+            "int", expensive_fibonacci(n - 2),
         )
 
     expensive_fibonacci = FlextPerformanceDecorators.memoize_decorator(
-        _expensive_fibonacci_impl
+        _expensive_fibonacci_impl,
     )
 
     # First call (expensive)
@@ -344,9 +340,7 @@ def demonstrate_performance_decorators() -> None:
         time.sleep(0.01)  # Simulate processing
         return f"Processed data: {data_id}"
 
-    data_processor = cache_decorator(
-        _data_processor_impl
-    )
+    data_processor = cache_decorator(_data_processor_impl)
 
     # First call
     result1 = data_processor("data_001")
@@ -386,7 +380,7 @@ def _demo_call_logging() -> None:
         }
 
     business_operation = FlextLoggingDecorators.log_calls_decorator(
-        _business_operation_impl
+        _business_operation_impl,
     )
     result = business_operation("payment", 100.50)
     print(f"✅ Business operation result: {result}")
@@ -402,7 +396,7 @@ def _demo_exception_logging() -> None:
         return f"Operation {operation_id} completed successfully"
 
     risky_business_operation = FlextLoggingDecorators.log_exceptions_decorator(
-        _risky_business_operation_impl
+        _risky_business_operation_impl,
     )
 
     try:
@@ -431,10 +425,10 @@ def _demo_combined_logging() -> None:
         return {"service": service_name, "params": params, "result": "success"}
 
     service_with_exceptions = FlextLoggingDecorators.log_exceptions_decorator(
-        _comprehensive_service_impl
+        _comprehensive_service_impl,
     )
     comprehensive_service = FlextLoggingDecorators.log_calls_decorator(
-        service_with_exceptions
+        service_with_exceptions,
     )
 
     result = comprehensive_service("test_service", {"param1": "value1"})
@@ -469,7 +463,7 @@ def demonstrate_immutability_decorators() -> None:
         }
 
     create_immutable_config = FlextImmutabilityDecorators.immutable_decorator(
-        _create_immutable_config_impl
+        _create_immutable_config_impl,
     )
 
     config = create_immutable_config()
@@ -502,7 +496,7 @@ def demonstrate_immutability_decorators() -> None:
         return {"original": user_data, "processed": True}
 
     process_user_data = FlextImmutabilityDecorators.freeze_args_decorator(
-        _process_user_data_impl
+        _process_user_data_impl,
     )
 
     input_data: TUserData = {"name": "Alice", "age": 30}
@@ -545,9 +539,7 @@ def demonstrate_functional_decorators() -> None:
         return result
 
     # Apply decorators in sequence
-    step1 = FlextPerformanceDecorators.memoize_decorator(
-        _enterprise_user_service_impl
-    )
+    step1 = FlextPerformanceDecorators.memoize_decorator(_enterprise_user_service_impl)
     step2 = FlextValidationDecorators.validate_arguments(step1)
     step3 = FlextErrorHandlingDecorators.retry_decorator(step2)
     enterprise_user_service = FlextLoggingDecorators.log_calls_decorator(step3)
@@ -575,16 +567,14 @@ def demonstrate_functional_decorators() -> None:
         return {**data, "validated": True}
 
     step1_validate = FlextPerformanceDecorators.get_timing_decorator()(
-        _step1_validate_impl
+        _step1_validate_impl,
     )
 
     def _step2_enrich_impl(data: TUserData) -> TUserData:
         """Step 2: Enrich data."""
         return {**data, "enriched": True, "timestamp": time.time()}
 
-    step2_enrich = FlextPerformanceDecorators.get_timing_decorator()(
-        _step2_enrich_impl
-    )
+    step2_enrich = FlextPerformanceDecorators.get_timing_decorator()(_step2_enrich_impl)
 
     def _step3_transform_impl(data: TAnyObject) -> TAnyObject:
         """Step 3: Transform data."""
@@ -595,7 +585,7 @@ def demonstrate_functional_decorators() -> None:
         return cast("TAnyObject", {"transformed": True, "final": True})
 
     step3_transform = FlextPerformanceDecorators.get_timing_decorator()(
-        _step3_transform_impl
+        _step3_transform_impl,
     )
 
     # Execute pipeline
@@ -753,7 +743,7 @@ def _demonstrate_validation_decorators() -> FlextResult[None]:
     def _create_validated_user_impl(name: str, email: str, age: int) -> SharedUser:
         """Create validated user using shared domain models with decorators."""
         result = SharedDomainFactory.create_user(name, email, age).flat_map(
-            lambda user: _log_user_creation(user, "validation+logging")
+            lambda user: _log_user_creation(user, "validation+logging"),
         )
         if result.success and result.data is not None:
             return result.data
@@ -761,19 +751,19 @@ def _demonstrate_validation_decorators() -> FlextResult[None]:
 
     # Apply decorators in sequence
     create_validated_user_with_logging = FlextLoggingDecorators.log_calls_decorator(
-        _create_validated_user_impl
+        _create_validated_user_impl,
     )
     create_validated_user = FlextValidationDecorators.validate_arguments(
-        create_validated_user_with_logging
+        create_validated_user_with_logging,
     )
 
     return _test_valid_user_creation(create_validated_user).flat_map(
-        lambda _: _test_invalid_user_creation(create_validated_user)
+        lambda _: _test_invalid_user_creation(create_validated_user),
     )
 
 
 def _log_user_creation(
-    user: SharedUser, decorator_stack: str
+    user: SharedUser, decorator_stack: str,
 ) -> FlextResult[SharedUser]:
     """Log user creation with decorator information."""
     log_domain_operation(
@@ -834,12 +824,11 @@ def _demonstrate_performance_decorators() -> FlextResult[None]:
         return None
 
     # Apply decorators in sequence
-    find_user_with_timing = FlextPerformanceDecorators.get_timing_decorator(
-    )(
-        _find_user_by_email_impl
+    find_user_with_timing = FlextPerformanceDecorators.get_timing_decorator()(
+        _find_user_by_email_impl,
     )
     find_user_by_email = FlextPerformanceDecorators.memoize_decorator(
-        find_user_with_timing  # type: ignore[arg-type]
+        find_user_with_timing,  # type: ignore[arg-type]
     )
 
     return _execute_performance_lookups(find_user_by_email)
@@ -882,7 +871,7 @@ def _demonstrate_error_handling_decorators() -> FlextResult[None]:
 
     # Apply decorators in sequence
     activate_user_with_exceptions = FlextLoggingDecorators.log_exceptions_decorator(
-        _activate_user_account_impl
+        _activate_user_account_impl,
     )
     activate_user_account = FlextDecorators.safe_result(activate_user_with_exceptions)
 
@@ -909,7 +898,7 @@ def _perform_user_activation(user: SharedUser) -> FlextResult[SharedUser]:
 
 
 def _log_user_activation(
-    user: SharedUser, activated_user: SharedUser
+    user: SharedUser, activated_user: SharedUser,
 ) -> FlextResult[SharedUser]:
     """Log user activation event."""
     log_domain_operation(
@@ -925,7 +914,7 @@ def _log_user_activation(
 def _test_user_activation_scenarios(activate_func: object) -> FlextResult[None]:
     """Test user activation scenarios."""
     test_user_result = SharedDomainFactory.create_user(
-        "Test User", "test@example.com", 30
+        "Test User", "test@example.com", 30,
     )
     if not test_user_result.success:
         return FlextResult.fail("Failed to create test user")
@@ -933,13 +922,13 @@ def _test_user_activation_scenarios(activate_func: object) -> FlextResult[None]:
     test_user = test_user_result.data
     if test_user is not None:
         return _test_successful_activation(activate_func, test_user).flat_map(
-            lambda activated: _test_duplicate_activation(activate_func, activated)
+            lambda activated: _test_duplicate_activation(activate_func, activated),
         )
     return FlextResult.fail("Test user creation returned None")
 
 
 def _test_successful_activation(
-    activate_func: object, test_user: SharedUser
+    activate_func: object, test_user: SharedUser,
 ) -> FlextResult[SharedUser]:
     """Test successful user activation."""
     if not callable(activate_func):
@@ -960,7 +949,7 @@ def _test_successful_activation(
 
 
 def _test_duplicate_activation(
-    activate_func: object, activated_user: SharedUser
+    activate_func: object, activated_user: SharedUser,
 ) -> FlextResult[None]:
     """Test duplicate activation scenario (should fail)."""
     if not callable(activate_func):
@@ -990,7 +979,7 @@ def _demonstrate_domain_validation_decorators() -> FlextResult[None]:
         )
 
     domain_validator = FlextValidationDecorators.create_validation_decorator(
-        domain_user_validator
+        domain_user_validator,
     )
 
     def _register_user_with_domain_validation_impl(
@@ -1007,7 +996,7 @@ def _demonstrate_domain_validation_decorators() -> FlextResult[None]:
         raise ValueError(result.error or "User registration failed")
 
     register_user_with_domain_validation = domain_validator(
-        _register_user_with_domain_validation_impl
+        _register_user_with_domain_validation_impl,
     )
 
     return _test_domain_validation_scenarios(register_user_with_domain_validation)
@@ -1090,7 +1079,7 @@ def _log_user_registration(user: SharedUser) -> FlextResult[SharedUser]:
 def _test_domain_validation_scenarios(register_func: object) -> FlextResult[None]:
     """Test domain validation scenarios."""
     return _test_valid_registration(register_func).flat_map(
-        lambda _: _test_invalid_registration(register_func)
+        lambda _: _test_invalid_registration(register_func),
     )
 
 

@@ -347,7 +347,7 @@ class TestFlextHandlersIntegration:
                 assert result.data == 4
             elif isinstance(handler, ConcreteQueryHandler):
                 query_result: FlextResult[str] = handler.process_request(
-                    {"name": "Test"}
+                    {"name": "Test"},
                 )
                 assert query_result.success
                 assert query_result.data == "Hello, Test!"

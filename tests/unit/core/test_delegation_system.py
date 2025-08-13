@@ -186,7 +186,7 @@ class TestFlextMixinDelegator:
             raise AssertionError(f"Expected {1}, got {len(delegator._mixin_instances)}")
         if SampleMixin1 not in delegator._mixin_instances:
             raise AssertionError(
-                f"Expected {SampleMixin1} in {delegator._mixin_instances}"
+                f"Expected {SampleMixin1} in {delegator._mixin_instances}",
             )
         assert isinstance(delegator._mixin_instances[SampleMixin1], SampleMixin1)
 
@@ -199,7 +199,7 @@ class TestFlextMixinDelegator:
             raise AssertionError(f"Expected {2}, got {len(delegator._mixin_instances)}")
         if SampleMixin1 not in delegator._mixin_instances:
             raise AssertionError(
-                f"Expected {SampleMixin1} in {delegator._mixin_instances}"
+                f"Expected {SampleMixin1} in {delegator._mixin_instances}",
             )
         assert SampleMixin2 in delegator._mixin_instances
 
@@ -222,7 +222,7 @@ class TestFlextMixinDelegator:
         assert isinstance(mixin_instance, InitializableMixin)
         if not (mixin_instance.validation_initialized):
             raise AssertionError(
-                f"Expected True, got {mixin_instance.validation_initialized}"
+                f"Expected True, got {mixin_instance.validation_initialized}",
             )
         assert mixin_instance.timestamps_initialized is True
         if not (mixin_instance.id_initialized):
@@ -230,7 +230,7 @@ class TestFlextMixinDelegator:
         assert mixin_instance.logging_initialized is True
         if not (mixin_instance.serialization_initialized):
             raise AssertionError(
-                f"Expected True, got {mixin_instance.serialization_initialized}"
+                f"Expected True, got {mixin_instance.serialization_initialized}",
             )
 
         # Check initialization log
@@ -247,7 +247,7 @@ class TestFlextMixinDelegator:
         # Mixin should still be registered despite initialization failure
         if FailingInitMixin not in delegator._mixin_instances:
             raise AssertionError(
-                f"Expected {FailingInitMixin} in {delegator._mixin_instances}"
+                f"Expected {FailingInitMixin} in {delegator._mixin_instances}",
             )
 
         # Check that failures were logged
@@ -334,7 +334,7 @@ class TestFlextMixinDelegator:
         host.writable_property = "new_value"  # type: ignore[attr-defined]
         if host.writable_property != "new_value":  # type: ignore[attr-defined]
             raise AssertionError(
-                f"Expected {'new_value'}, got {host.writable_property}"  # type: ignore[attr-defined]
+                f"Expected {'new_value'}, got {host.writable_property}",  # type: ignore[attr-defined]
             )
 
     def test_property_delegation_readonly(self) -> None:
@@ -595,7 +595,7 @@ class TestValidateDelegationSystem:
             test_results = data["test_results"]
             if not isinstance(test_results, (list, tuple)):
                 raise AssertionError(
-                    f"Expected list/tuple for test_results, got {type(test_results)}"
+                    f"Expected list/tuple for test_results, got {type(test_results)}",
                 )
             success_results = [
                 r for r in test_results if isinstance(r, str) and r.startswith("✓")
@@ -824,7 +824,7 @@ class TestDelegationSystemEdgeCases:
         # Check if property exists in class __dict__ without calling the getter
         if "property_with_error" not in type(host).__dict__:
             raise AssertionError(
-                f"Expected {'property_with_error'} in {type(host).__dict__}"
+                f"Expected {'property_with_error'} in {type(host).__dict__}",
             )
         with pytest.raises(ValueError, match="Property getter error"):
             _ = host.property_with_error
@@ -868,7 +868,7 @@ class TestDelegationSystemEdgeCases:
         registered_mixins = info["registered_mixins"]
         if not isinstance(registered_mixins, (list, tuple)):
             raise TypeError(
-                f"Expected list/tuple for registered_mixins, got {type(registered_mixins)}"
+                f"Expected list/tuple for registered_mixins, got {type(registered_mixins)}",
             )
         if len(registered_mixins) != EXPECTED_BULK_SIZE:
             raise AssertionError(f"Expected {2}, got {len(registered_mixins)}")
@@ -880,7 +880,7 @@ class TestDelegationSystemEdgeCases:
         methods = info["delegated_methods"]
         if not isinstance(methods, (list, tuple, dict)):
             raise TypeError(
-                f"Expected list/tuple/dict for delegated_methods, got {type(methods)}"
+                f"Expected list/tuple/dict for delegated_methods, got {type(methods)}",
             )
         if "mixin_method1" not in methods:  # From both mixins, but one will override:
             raise AssertionError(f"Expected {'mixin_method1'} in {methods}")
@@ -889,7 +889,7 @@ class TestDelegationSystemEdgeCases:
         initialization_log = info["initialization_log"]
         if not isinstance(initialization_log, (list, tuple)):
             raise TypeError(
-                f"Expected list/tuple for initialization_log, got {type(initialization_log)}"
+                f"Expected list/tuple for initialization_log, got {type(initialization_log)}",
             )
         if len(initialization_log) < 5:  # At least 5 initialization methods:
             raise AssertionError(f"Expected {len(initialization_log)} >= {5}")
@@ -1007,7 +1007,7 @@ class TestDelegationSystemIntegration:
             test_results = data["test_results"]
             if not isinstance(test_results, (list, tuple)):
                 raise AssertionError(
-                    f"Expected list/tuple for test_results, got {type(test_results)}"
+                    f"Expected list/tuple for test_results, got {type(test_results)}",
                 )
             assert len(test_results) > 0
 
@@ -1054,7 +1054,7 @@ class TestDelegationSystemIntegration:
         assert isinstance(init_mixin, InitializableMixin)
         if not (init_mixin.validation_initialized):
             raise AssertionError(
-                f"Expected True, got {init_mixin.validation_initialized}"
+                f"Expected True, got {init_mixin.validation_initialized}",
             )
         assert init_mixin.timestamps_initialized is True
         if not (init_mixin.id_initialized):
@@ -1062,7 +1062,7 @@ class TestDelegationSystemIntegration:
         assert init_mixin.logging_initialized is True
         if not (init_mixin.serialization_initialized):
             raise AssertionError(
-                f"Expected True, got {init_mixin.serialization_initialized}"
+                f"Expected True, got {init_mixin.serialization_initialized}",
             )
 
         # Verify system is valid

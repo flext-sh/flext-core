@@ -75,7 +75,7 @@ class TestFlextServiceRegistrar:
 
         if len(registrar.get_services_dict()) != 0:
             raise AssertionError(
-                f"Expected {0}, got {len(registrar.get_services_dict())}"
+                f"Expected {0}, got {len(registrar.get_services_dict())}",
             )
         assert len(registrar.get_factories_dict()) == 0
         if registrar.get_service_count() != 0:
@@ -92,7 +92,7 @@ class TestFlextServiceRegistrar:
         assert result.is_failure
         if "Service name cannot be empty" not in (result.error or ""):
             raise AssertionError(
-                f"Expected 'Service name cannot be empty' in {result.error}"
+                f"Expected 'Service name cannot be empty' in {result.error}",
             )
 
         # Test whitespace string
@@ -100,7 +100,7 @@ class TestFlextServiceRegistrar:
         assert result.is_failure
         if "Service name cannot be empty" not in (result.error or ""):
             raise AssertionError(
-                f"Expected 'Service name cannot be empty' in {result.error}"
+                f"Expected 'Service name cannot be empty' in {result.error}",
             )
 
     def test_service_registration_replacement_warning(self) -> None:
@@ -129,7 +129,7 @@ class TestFlextServiceRegistrar:
         registrar.register_service("test", service)
         if "test" not in registrar.get_services_dict():
             raise AssertionError(
-                f"Expected {'test'} in {registrar.get_services_dict()}"
+                f"Expected {'test'} in {registrar.get_services_dict()}",
             )
 
         # Register factory for same name
@@ -142,7 +142,7 @@ class TestFlextServiceRegistrar:
         # Service should be removed, factory should be present
         if "test" in registrar.get_services_dict():
             raise AssertionError(
-                f"Expected 'test' to be removed from services, but found it in {registrar.get_services_dict()}"
+                f"Expected 'test' to be removed from services, but found it in {registrar.get_services_dict()}",
             )
         assert "test" in registrar.get_factories_dict()
 
@@ -154,7 +154,7 @@ class TestFlextServiceRegistrar:
         assert result.is_failure
         if "Factory must be callable" not in (result.error or ""):
             raise AssertionError(
-                f"Expected 'Factory must be callable' in {result.error}"
+                f"Expected 'Factory must be callable' in {result.error}",
             )
 
     def test_unregister_service_success(self) -> None:
@@ -168,7 +168,7 @@ class TestFlextServiceRegistrar:
         assert result.success
         if "test" in registrar.get_services_dict():
             raise AssertionError(
-                f"Expected 'test' to be removed from services, but found it in {registrar.get_services_dict()}"
+                f"Expected 'test' to be removed from services, but found it in {registrar.get_services_dict()}",
             )
 
     def test_unregister_factory_success(self) -> None:
@@ -184,7 +184,7 @@ class TestFlextServiceRegistrar:
         assert result.success
         if "test" in registrar.get_factories_dict():
             raise AssertionError(
-                f"Expected 'test' to be removed from factories, but found it in {registrar.get_factories_dict()}"
+                f"Expected 'test' to be removed from factories, but found it in {registrar.get_factories_dict()}",
             )
 
     def test_unregister_nonexistent_service(self) -> None:
@@ -195,7 +195,7 @@ class TestFlextServiceRegistrar:
         assert result.is_failure
         if "Service 'nonexistent' not found" not in (result.error or ""):
             raise AssertionError(
-                f"Expected \"Service 'nonexistent' not found\" in {result.error}"
+                f"Expected \"Service 'nonexistent' not found\" in {result.error}",
             )
 
     def test_clear_all_services(self) -> None:
@@ -215,7 +215,7 @@ class TestFlextServiceRegistrar:
         assert result.success
         if len(registrar.get_services_dict()) != 0:
             raise AssertionError(
-                f"Expected {0}, got {len(registrar.get_services_dict())}"
+                f"Expected {0}, got {len(registrar.get_services_dict())}",
             )
         assert len(registrar.get_factories_dict()) == 0
         if registrar.get_service_count() != 0:
@@ -267,7 +267,7 @@ class TestFlextServiceRetrivier:
         """Test retriever initializes with provided dictionaries."""
         services: dict[str, object] = {"test": SampleService("test")}
         factories: dict[str, Callable[[], object]] = {
-            "factory": lambda: SampleService("factory")
+            "factory": lambda: SampleService("factory"),
         }
 
         retriever = FlextServiceRetriever(services, factories)
@@ -335,7 +335,7 @@ class TestFlextServiceRetrivier:
         assert result.is_failure
         if "Factory for 'test' failed" not in (result.error or ""):
             raise AssertionError(
-                f"Expected \"Factory for 'test' failed\" in {result.error}"
+                f"Expected \"Factory for 'test' failed\" in {result.error}",
             )
         assert "Factory failed" in (result.error or "")
 
@@ -362,7 +362,7 @@ class TestFlextServiceRetrivier:
             assert result.is_failure
             if f"Factory for 'test_{i}' failed" not in (result.error or ""):
                 raise AssertionError(
-                    f"Expected \"Factory for 'test_{i}' failed\" in {result.error}"
+                    f"Expected \"Factory for 'test_{i}' failed\" in {result.error}",
                 )
 
     def test_get_service_not_found(self) -> None:
@@ -375,7 +375,7 @@ class TestFlextServiceRetrivier:
         assert result.is_failure
         if "Service 'nonexistent' not found" not in (result.error or ""):
             raise AssertionError(
-                f"Expected \"Service 'nonexistent' not found\" in {result.error}"
+                f"Expected \"Service 'nonexistent' not found\" in {result.error}",
             )
 
     def test_get_service_info_for_instance(self) -> None:
@@ -433,7 +433,7 @@ class TestFlextServiceRetrivier:
         assert result.is_failure
         if "Service 'nonexistent' not found" not in (result.error or ""):
             raise AssertionError(
-                f"Expected \"Service 'nonexistent' not found\" in {result.error}"
+                f"Expected \"Service 'nonexistent' not found\" in {result.error}",
             )
 
     def test_list_services_mixed(self) -> None:
@@ -450,7 +450,7 @@ class TestFlextServiceRetrivier:
         service_list = retriever.list_services()
         if service_list["instance"] != "instance":
             raise AssertionError(
-                f"Expected {'instance'}, got {service_list['instance']}"
+                f"Expected {'instance'}, got {service_list['instance']}",
             )
         assert service_list["factory"] == "factory"
         if len(service_list) != EXPECTED_BULK_SIZE:
@@ -481,7 +481,7 @@ class TestFlextContainerAdvancedFeatures:
         assert result.is_failure
         if "is SampleService, expected str" not in (result.error or ""):
             raise AssertionError(
-                f"Expected 'is SampleService, expected str' in {result.error}"
+                f"Expected 'is SampleService, expected str' in {result.error}",
             )
 
     def test_get_typed_service_not_found(self, clean_container: FlextContainer) -> None:
@@ -506,7 +506,7 @@ class TestFlextContainerAdvancedFeatures:
         assert dependent.test_service is test_service
         if dependent.optional_param != "default":
             raise AssertionError(
-                f"Expected {'default'}, got {dependent.optional_param}"
+                f"Expected {'default'}, got {dependent.optional_param}",
             )
 
         # Verify service was registered
@@ -530,7 +530,7 @@ class TestFlextContainerAdvancedFeatures:
         assert result.is_failure
         if "Required dependency 'test_service' not found" not in (result.error or ""):
             raise AssertionError(
-                f"Expected \"Required dependency 'test_service' not found\" in {result.error}"
+                f"Expected \"Required dependency 'test_service' not found\" in {result.error}",
             )
 
     def test_auto_wire_registration_failure(
@@ -598,7 +598,7 @@ class TestFlextContainerAdvancedFeatures:
         assert result.is_failure
         if "Factory failed for service 'test'" not in (result.error or ""):
             raise AssertionError(
-                f"Expected \"Factory failed for service 'test'\" in {result.error}"
+                f"Expected \"Factory failed for service 'test'\" in {result.error}",
             )
 
     def test_batch_register_success(self, clean_container: FlextContainer) -> None:
@@ -613,7 +613,7 @@ class TestFlextContainerAdvancedFeatures:
         assert result.success
         if result.data != ["service1", "service2", "service3"]:
             raise AssertionError(
-                f"Expected {['service1', 'service2', 'service3']}, got {result.data}"
+                f"Expected {['service1', 'service2', 'service3']}, got {result.data}",
             )
 
         # Verify all services were registered
@@ -635,7 +635,7 @@ class TestFlextContainerAdvancedFeatures:
         assert result.is_failure
         if "Batch registration failed" not in (result.error or ""):
             raise AssertionError(
-                f"Expected 'Batch registration failed' in {result.error}"
+                f"Expected 'Batch registration failed' in {result.error}",
             )
 
         # Verify rollback occurred - service1 should not be registered
@@ -648,7 +648,7 @@ class TestFlextContainerAdvancedFeatures:
         repr_str = repr(clean_container)
         if "FlextContainer(services: 0)" not in repr_str:
             raise AssertionError(
-                f"Expected {'FlextContainer(services: 0)'} in {repr_str}"
+                f"Expected {'FlextContainer(services: 0)'} in {repr_str}",
             )
 
         # Container with services
@@ -656,7 +656,7 @@ class TestFlextContainerAdvancedFeatures:
         repr_str = repr(clean_container)
         if "FlextContainer(services: 1)" not in repr_str:
             raise AssertionError(
-                f"Expected {'FlextContainer(services: 1)'} in {repr_str}"
+                f"Expected {'FlextContainer(services: 1)'} in {repr_str}",
             )
 
 
@@ -846,7 +846,7 @@ class TestContainerEdgeCases:
         # Test bulk operations
         if clean_container.get_service_count() != 100:
             raise AssertionError(
-                f"Expected {100}, got {clean_container.get_service_count()}"
+                f"Expected {100}, got {clean_container.get_service_count()}",
             )
         service_names = clean_container.get_service_names()
         if len(service_names) != 100:

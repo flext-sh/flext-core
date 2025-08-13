@@ -296,7 +296,7 @@ class TestTypeGuards:
         try:
             # This might cause TypeError in some cases, should be handled
             result = FlextTypes.TypeGuards.is_instance_of(
-                42, type("InvalidType", (), {})
+                42, type("InvalidType", (), {}),
             )
             assert isinstance(result, bool)
         except TypeError:

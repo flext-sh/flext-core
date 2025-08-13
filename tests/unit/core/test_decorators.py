@@ -245,7 +245,7 @@ class TestFlextDecorators:
         assert result.success
         if "Complex operation for: Charlie" not in (result.data or ""):
             raise AssertionError(
-                f"Expected {'Complex operation for: Charlie'} in {result.data}"
+                f"Expected {'Complex operation for: Charlie'} in {result.data}",
             )
 
     def test_complete_decorator_minimal(self) -> None:
@@ -394,7 +394,7 @@ class TestDecoratorComposition:
         assert result1.success
         if "display_name" not in str(getattr(result1, "data", "") or ""):
             raise AssertionError(
-                f"Expected {'display_name'} in {getattr(result1, 'data', '')}"
+                f"Expected {'display_name'} in {getattr(result1, 'data', '')}",
             )
 
         # Invalid input
@@ -542,7 +542,7 @@ class TestFlextErrorHandlingDecorators:
     def test_error_handler_initialization(self) -> None:
         """Test ErrorHandlingDecorators initialization (lines 158-164)."""
         handler = FlextErrorHandlingDecorators(
-            name="test_handler", handled_exceptions=(ValueError, TypeError)
+            name="test_handler", handled_exceptions=(ValueError, TypeError),
         )
         assert handler.name == "test_handler"
         assert handler.handled_exceptions == (ValueError, TypeError)
@@ -560,7 +560,7 @@ class TestFlextErrorHandlingDecorators:
     def test_should_handle_error_method(self) -> None:
         """Test should_handle_error method (lines 170-172)."""
         handler = FlextErrorHandlingDecorators(
-            "test_handler", handled_exceptions=(ValueError, TypeError)
+            "test_handler", handled_exceptions=(ValueError, TypeError),
         )
 
         assert handler.should_handle_error(ValueError("test"))
@@ -580,7 +580,7 @@ class TestFlextErrorHandlingDecorators:
     def test_error_handling_decorator_apply_decoration(self) -> None:
         """Test apply_decoration method with error handling (lines 178-190)."""
         handler = FlextErrorHandlingDecorators(
-            "test_handler", handled_exceptions=(ValueError,)
+            "test_handler", handled_exceptions=(ValueError,),
         )
 
         def failing_func(*, should_fail: bool = True) -> str:
@@ -606,7 +606,7 @@ class TestFlextPerformanceDecorators:
     def test_performance_decorator_initialization(self) -> None:
         """Test PerformanceDecorators initialization (lines 232-234)."""
         perf_decorator = FlextPerformanceDecorators(
-            name="test_perf", threshold_seconds=2.0
+            name="test_perf", threshold_seconds=2.0,
         )
         assert perf_decorator.name == "test_perf"
         assert perf_decorator.threshold_seconds == 2.0
@@ -682,7 +682,7 @@ class TestFlextPerformanceDecorators:
         assert result.is_failure
         if "Validation failed" not in (getattr(result, "error", "") or ""):
             raise AssertionError(
-                f"Expected 'Validation failed' in {getattr(result, 'error', '')}"
+                f"Expected 'Validation failed' in {getattr(result, 'error', '')}",
             )
 
 
@@ -769,7 +769,7 @@ class TestBaseDecoratorClasses:
 
         # Test create_validation_decorator
         decorator = _BaseValidationDecorators.create_validation_decorator(
-            simple_validator
+            simple_validator,
         )
         assert callable(decorator)
 
@@ -778,7 +778,7 @@ class TestBaseDecoratorClasses:
             return "test"
 
         validated_func = _BaseValidationDecorators.validate_arguments(
-            cast("_DecoratedFunction", test_func)
+            cast("_DecoratedFunction", test_func),
         )
         assert validated_func is test_func
 
@@ -811,7 +811,7 @@ class TestBaseDecoratorClasses:
             return x * 2
 
         memoized = _BasePerformanceDecorators.memoize_decorator(
-            cast("_DecoratedFunction", test_func)
+            cast("_DecoratedFunction", test_func),
         )
         assert callable(memoized)
 
@@ -839,7 +839,7 @@ class TestDecoratorCoverageImprovements:
 
         # Test immutable_decorator from FlextImmutabilityDecorators - line 276
         decorated = FlextImmutabilityDecorators.immutable_decorator(
-            cast("_DecoratedFunction", sample_function)
+            cast("_DecoratedFunction", sample_function),
         )
         assert callable(decorated)  # Should return callable function
 
@@ -859,13 +859,13 @@ class TestDecoratorCoverageImprovements:
 
         # Test curry_decorator - line 290
         decorated = _BaseFunctionalDecorators.curry_decorator(
-            cast("_DecoratedFunction", sample_function)
+            cast("_DecoratedFunction", sample_function),
         )
         assert decorated is sample_function  # Returns same function
 
         # Test compose_decorator - line 295
         decorated = _BaseFunctionalDecorators.compose_decorator(
-            cast("_DecoratedFunction", sample_function)
+            cast("_DecoratedFunction", sample_function),
         )
         assert decorated is sample_function  # Returns same function
 
@@ -882,7 +882,7 @@ class TestDecoratorCoverageImprovements:
             raise RuntimeError(msg)
 
         decorated = _BaseLoggingDecorators.log_calls_decorator(
-            cast("_DecoratedFunction", failing_function)
+            cast("_DecoratedFunction", failing_function),
         )
 
         # Should re-raise the exception after logging
@@ -902,7 +902,7 @@ class TestDecoratorCoverageImprovements:
             raise TypeError(msg)
 
         decorated = _BaseLoggingDecorators.log_calls_decorator(
-            cast("_DecoratedFunction", type_error_function)
+            cast("_DecoratedFunction", type_error_function),
         )
 
         with pytest.raises(TypeError, match="Type error occurred"):
@@ -921,7 +921,7 @@ class TestDecoratorCoverageImprovements:
             raise ValueError(msg)
 
         decorated = _BaseLoggingDecorators.log_calls_decorator(
-            cast("_DecoratedFunction", value_error_function)
+            cast("_DecoratedFunction", value_error_function),
         )
 
         with pytest.raises(ValueError, match="Value error occurred"):
@@ -940,7 +940,7 @@ class TestDecoratorCoverageImprovements:
             raise RuntimeError(msg)
 
         decorated = _BaseLoggingDecorators.log_exceptions_decorator(
-            cast("_DecoratedFunction", failing_function)
+            cast("_DecoratedFunction", failing_function),
         )
 
         with pytest.raises(RuntimeError, match="Exception for logging test"):
@@ -963,10 +963,10 @@ class TestDecoratorCoverageImprovements:
             raise ValueError(msg)
 
         decorated_type = _BaseLoggingDecorators.log_exceptions_decorator(
-            cast("_DecoratedFunction", type_error_function)
+            cast("_DecoratedFunction", type_error_function),
         )
         decorated_value = _BaseLoggingDecorators.log_exceptions_decorator(
-            cast("_DecoratedFunction", value_error_function)
+            cast("_DecoratedFunction", value_error_function),
         )
 
         with pytest.raises(TypeError, match="Type error in log_exceptions test"):
@@ -1061,7 +1061,7 @@ class TestDecoratorCoverageImprovements:
             return True
 
         validation_decorator = _BaseDecoratorFactory.create_validation_decorator(
-            dummy_validator
+            dummy_validator,
         )
         assert callable(validation_decorator)
 
@@ -1076,6 +1076,6 @@ class TestDecoratorCoverageImprovements:
 
         # Test retry_decorator - currently returns same function (line 161)
         decorated = _BaseErrorHandlingDecorators.retry_decorator(
-            cast("_DecoratedFunction", sample_function)
+            cast("_DecoratedFunction", sample_function),
         )
         assert decorated is sample_function  # Returns same function

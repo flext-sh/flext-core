@@ -393,7 +393,7 @@ def _unified_api_usage() -> None:
     api_logger = FlextLoggerFactory.get_logger("myapp.unified_api", "DEBUG")
     metrics_logger = FlextLoggerFactory.get_logger("myapp.metrics", "INFO")
     api_logger.info(
-        "API server starting", port=FlextConstants.Platform.FLEXCORE_PORT, workers=4
+        "API server starting", port=FlextConstants.Platform.FLEXCORE_PORT, workers=4,
     )
     metrics_logger.info("Metrics collection enabled", interval_seconds=30)
     print("   Setting global level through unified API...")
@@ -486,7 +486,9 @@ def _print_enterprise_header() -> None:
     print("=" * 80)
 
 
-def _process_user_request(user_id: str, request_id: str, operation: str) -> dict[str, object]:
+def _process_user_request(
+    user_id: str, request_id: str, operation: str,
+) -> dict[str, object]:
     gateway_logger = get_logger("enterprise.api_gateway", "INFO")
     auth_logger = get_logger("enterprise.auth_service", "INFO")
     user_logger = get_logger("enterprise.user_service", "INFO")
@@ -498,7 +500,9 @@ def _process_user_request(user_id: str, request_id: str, operation: str) -> dict
         "trace_id": f"trace_{int(time.time())}",
     }
     try:
-        with create_log_context(gateway_logger, **correlation_context, service="api_gateway"):
+        with create_log_context(
+            gateway_logger, **correlation_context, service="api_gateway",
+        ):
             gateway_logger.info(
                 "Request received",
                 endpoint=f"/api/users/{user_id}/{operation}",
@@ -511,13 +515,27 @@ def _process_user_request(user_id: str, request_id: str, operation: str) -> dict
                 auth_logger.info("Authentication successful", token_valid=True)
             with create_log_context(user_logger, **correlation_context, service="user"):
                 user_logger.info("User service processing started")
-                with create_log_context(db_logger, **correlation_context, service="database"):
-                    db_logger.info("Database query started", table="users", query_type="SELECT")
+                with create_log_context(
+                    db_logger, **correlation_context, service="database",
+                ):
+                    db_logger.info(
+                        "Database query started", table="users", query_type="SELECT",
+                    )
                     time.sleep(0.005)
-                    db_logger.info("Database query completed", rows_returned=1, duration_ms=5)
-                user_logger.info("User service processing completed", result_size_kb=2.5)
-            gateway_logger.info("Request completed successfully", status_code=200, response_time_ms=16)
-            return {"status": "success", "correlation_id": request_id, "data": {"user_id": user_id, "operation": operation}}
+                    db_logger.info(
+                        "Database query completed", rows_returned=1, duration_ms=5,
+                    )
+                user_logger.info(
+                    "User service processing completed", result_size_kb=2.5,
+                )
+            gateway_logger.info(
+                "Request completed successfully", status_code=200, response_time_ms=16,
+            )
+            return {
+                "status": "success",
+                "correlation_id": request_id,
+                "data": {"user_id": user_id, "operation": operation},
+            }
     except (RuntimeError, ValueError, TypeError) as e:
         gateway_logger.exception(
             "Request processing failed",
@@ -613,10 +631,34 @@ def _business_metrics_demo() -> None:
     print("\n3. Business metrics and analytics:")
     business_logger = get_logger("enterprise.business", "INFO")
     business_events = [
-        {"event": "user_registration", "user_id": "new_user_001", "source": "web_app", "plan": "premium", "revenue_impact": 99.99},
-        {"event": "subscription_renewal", "user_id": "user_123", "plan": "enterprise", "renewal_period": "yearly", "revenue_impact": 1199.99},
-        {"event": "feature_usage", "user_id": "user_456", "feature": "advanced_analytics", "usage_count": 1, "session_duration_minutes": 45},
-        {"event": "support_ticket_created", "user_id": "user_789", "priority": "high", "category": "billing", "agent_assigned": "agent_001"},
+        {
+            "event": "user_registration",
+            "user_id": "new_user_001",
+            "source": "web_app",
+            "plan": "premium",
+            "revenue_impact": 99.99,
+        },
+        {
+            "event": "subscription_renewal",
+            "user_id": "user_123",
+            "plan": "enterprise",
+            "renewal_period": "yearly",
+            "revenue_impact": 1199.99,
+        },
+        {
+            "event": "feature_usage",
+            "user_id": "user_456",
+            "feature": "advanced_analytics",
+            "usage_count": 1,
+            "session_duration_minutes": 45,
+        },
+        {
+            "event": "support_ticket_created",
+            "user_id": "user_789",
+            "priority": "high",
+            "category": "billing",
+            "agent_assigned": "agent_001",
+        },
     ]
     for event in business_events:
         if not isinstance(event, dict):
@@ -624,7 +666,9 @@ def _business_metrics_demo() -> None:
             raise TypeError(msg)
         event_type = event.pop("event")
         message = f"Business event: {event_type}"
-        business_logger.info(message, event_type=event_type, timestamp=time.time(), **event)
+        business_logger.info(
+            message, event_type=event_type, timestamp=time.time(), **event,
+        )
     print("✅ Business metrics logging completed")
 
 

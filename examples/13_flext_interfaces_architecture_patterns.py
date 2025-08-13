@@ -580,7 +580,8 @@ class UserRepository(FlextRepository[User]):
     def find_all(self) -> FlextResult[list[User]]:
         """Find all users (implements abstract method)."""
         active_users = [
-            user for user_id, user in self._users.items()
+            user
+            for user_id, user in self._users.items()
             if user_id not in self._deleted_ids
         ]
         return FlextResult.ok(active_users)
@@ -1351,7 +1352,11 @@ def _basic_repo_operations(user_repo: UserRepository) -> None:
         result = user_repo.find_by_id(user_id)
         if result.success:
             user_data = result.data
-            if user_data is not None and hasattr(user_data, "name") and hasattr(user_data, "id"):
+            if (
+                user_data is not None
+                and hasattr(user_data, "name")
+                and hasattr(user_data, "id")
+            ):
                 print(f"   ✅ Found: {user_data.name} ({user_data.id})")
         else:
             print(f"   ❌ Not found: {user_id} - {result.error}")
@@ -1383,6 +1388,7 @@ def _unit_of_work_failure_flow(fresh_repo: UserRepository) -> None:
     def _simulate_transaction_error() -> None:
         msg = "Simulated transaction error"
         raise ValueError(msg)
+
     try:
         with DatabaseUnitOfWork(fresh_repo) as uow:
             failing_user = User("user_101", "Failing User", "fail@example.com", 50)
@@ -1601,7 +1607,7 @@ def demonstrate_event_interfaces() -> None:
         aggregate_id="test",
         event_version=1,
         timestamp="2023-01-01T00:00:00Z",
-        data="test data"
+        data="test data",
     )
     result = publisher.publish(unknown_event)
     if result.success:

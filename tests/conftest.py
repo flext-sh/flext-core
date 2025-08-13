@@ -248,7 +248,7 @@ def fixture_factory() -> Callable[[str, object], object]:
         {"type": "minimal", "fields": 1},
         {"type": "standard", "fields": 5},
         {"type": "complex", "fields": 10},
-    ]
+    ],
 )
 def parametrized_data(request: SubRequest) -> dict[str, object]:
     """Parametrized fixture providing various data complexities."""
@@ -438,7 +438,7 @@ def entity_factory() -> Callable[[str, dict[str, object]], FlextEntity]:
             return FlextResult.ok(None)
 
     def _create_entity(
-        entity_id: str, data: dict[str, object] | None = None
+        entity_id: str, data: dict[str, object] | None = None,
     ) -> FlextEntity:
         data = data or {}
         # Extract specific fields with type safety
@@ -660,7 +660,7 @@ def performance_monitor() -> Callable[[Callable[[], object]], PerformanceMetrics
     """Monitor performance metrics for operations."""
 
     def _monitor(
-        func: Callable[[], object], *args: object, **kwargs: object
+        func: Callable[[], object], *args: object, **kwargs: object,
     ) -> PerformanceMetrics:
         import gc
 
@@ -707,7 +707,7 @@ def benchmark_data() -> dict[str, object]:
         "large_dataset": list(range(10000)),
         "complex_dict": {f"key_{i}": f"value_{i}" for i in range(1000)},
         "nested_structure": {
-            "level1": {"level2": {"level3": {"data": list(range(100))}}}
+            "level1": {"level2": {"level3": {"data": list(range(100))}}},
         },
     }
 
@@ -739,7 +739,7 @@ def performance_threshold() -> dict[str, float]:
 
 @contextmanager
 def assert_performance(
-    max_time: float = 1.0, max_memory: int = 10_000_000
+    max_time: float = 1.0, max_memory: int = 10_000_000,
 ) -> Generator[None]:
     """Context manager for performance assertions."""
     tracemalloc.start()
@@ -833,7 +833,7 @@ def assert_helpers() -> object:
     class AssertHelpers:
         @staticmethod
         def assert_result_ok(
-            result: FlextResult[object], expected_data: object | None = None
+            result: FlextResult[object], expected_data: object | None = None,
         ) -> None:
             """Assert result is successful with optional data check."""
             assert result.success, f"Expected success but got error: {result.error}"
@@ -842,7 +842,7 @@ def assert_helpers() -> object:
 
         @staticmethod
         def assert_result_fail(
-            result: FlextResult[object], expected_error: str | None = None
+            result: FlextResult[object], expected_error: str | None = None,
         ) -> None:
             """Assert result is failure with optional error check."""
             assert result.is_failure, "Expected failure but got success"
@@ -927,7 +927,7 @@ def command_factory() -> Callable[[str, dict[str, object]], FlextCommands.Comman
             return FlextResult.ok(None)
 
     def _create_command(
-        name: str, payload: dict[str, object] | None = None
+        name: str, payload: dict[str, object] | None = None,
     ) -> FlextCommands.Command:
         return TestCommand(name=name, payload=payload or {})
 
@@ -961,7 +961,7 @@ def event_factory() -> Callable[[str, dict[str, object]], FlextEvent]:
     """Factory for creating test events."""
 
     def _create_event(
-        event_type: str, data: dict[str, object] | None = None
+        event_type: str, data: dict[str, object] | None = None,
     ) -> FlextEvent:
         result = FlextEvent.create_event(
             event_type=event_type,
@@ -1134,7 +1134,7 @@ class TestBuilder:
 
 
 def assert_function_performance(
-    func: Callable[[], object], max_duration: float = 1.0
+    func: Callable[[], object], max_duration: float = 1.0,
 ) -> object:
     """Assert that a function executes within time limit."""
     import time
@@ -1159,7 +1159,7 @@ def temp_json_file() -> Generator[str]:
     import tempfile
 
     with tempfile.NamedTemporaryFile(
-        encoding="utf-8", mode="w", suffix=".json", delete=False
+        encoding="utf-8", mode="w", suffix=".json", delete=False,
     ) as f:
         json.dump(
             {

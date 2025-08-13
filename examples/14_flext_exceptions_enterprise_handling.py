@@ -1183,9 +1183,7 @@ def _print_exception_metrics() -> None:
     print("   Exception metrics summary:")
     total_exceptions = sum(count for count in metrics.values())
     print(f"   Total exceptions tracked: {total_exceptions}")
-    sorted_metrics = sorted(
-        metrics.items(), key=operator.itemgetter(1), reverse=True
-    )
+    sorted_metrics = sorted(metrics.items(), key=operator.itemgetter(1), reverse=True)
     print("   Top exception types:")
     for exc_type, count in sorted_metrics[:5]:
         error_codes: set[str] = set()

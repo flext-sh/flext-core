@@ -160,7 +160,7 @@ class TestMixinsBaseCoverage:
                 result = {}
                 for attr_name in dir(self):
                     if not attr_name.startswith("_") and not callable(
-                        getattr(self, attr_name)
+                        getattr(self, attr_name),
                     ):
                         try:
                             value = getattr(self, attr_name)
@@ -732,7 +732,7 @@ class TestMixinComposition:
         empty_model = CustomModel("")
         if empty_model.validate_custom_rules():
             raise AssertionError(
-                f"Expected False, got {empty_model.validate_custom_rules()}"
+                f"Expected False, got {empty_model.validate_custom_rules()}",
             )
 
 
@@ -785,7 +785,7 @@ class TestMixinEdgeCases:
         # none_value is not serialized if it's None
         if "none_value" in data:
             raise AssertionError(
-                f"Expected none_value not in {data}, but found: {data.get('none_value')}"
+                f"Expected none_value not in {data}, but found: {data.get('none_value')}",
             )
 
     def test_mixin_performance_characteristics(self) -> None:

@@ -71,7 +71,7 @@ class TestCleanArchitecturePatterns:
                     email_validation = email_obj.validate_business_rules()
                     if email_validation.is_failure:
                         return FlextResult.fail(
-                            f"Email validation failed: {email_validation.error}"
+                            f"Email validation failed: {email_validation.error}",
                         )
                 except Exception as e:
                     return FlextResult.fail(f"Email creation failed: {e}")
@@ -86,7 +86,7 @@ class TestCleanArchitecturePatterns:
 
                 if user_result.is_failure:
                     return FlextResult.fail(
-                        f"User validation failed: {user_result.error}"
+                        f"User validation failed: {user_result.error}",
                     )
 
                 return FlextResult.ok("User created successfully")
@@ -242,7 +242,7 @@ class TestCleanArchitecturePatterns:
             user_id: str
 
         class GetUserHandler(
-            FlextHandlers.QueryHandler[GetUserQuery, dict[str, object]]
+            FlextHandlers.QueryHandler[GetUserQuery, dict[str, object]],
         ):
             """Handler for user queries."""
 
@@ -469,7 +469,7 @@ class TestEventDrivenPatterns:
 
         # Create and process events
         created_event = UserCreatedEvent(
-            user_id="123", user_name="John Doe", timestamp=time.time()
+            user_id="123", user_name="John Doe", timestamp=time.time(),
         )
 
         updated_event = UserUpdatedEvent(

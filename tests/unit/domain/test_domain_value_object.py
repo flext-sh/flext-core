@@ -98,7 +98,7 @@ class TestFlextValueObjectEquality:
 
         if vo1 != vo2:  # Empty description = default empty description:
             raise AssertionError(
-                f"Expected {vo2} # Empty description = default empty description, got {vo1}"
+                f"Expected {vo2} # Empty description = default empty description, got {vo1}",
             )
         assert vo1 != vo3  # Different description values
         assert vo2 != vo3
@@ -302,7 +302,7 @@ class TestFlextValueObjectPydanticIntegration:
         assert data["currency"] == "USD"
         if data["description"] != "Test description":
             raise AssertionError(
-                f"Expected {'Test description'}, got {data['description']}"
+                f"Expected {'Test description'}, got {data['description']}",
             )
 
     def test_pydantic_immutability(self) -> None:
@@ -333,7 +333,7 @@ class TestFlextValueObjectPydanticIntegration:
 
         if vo.description != "Test description":  # Whitespace stripped:
             raise AssertionError(
-                f"Expected {'Test description'} # Whitespace stripped, got {vo.description}"
+                f"Expected {'Test description'} # Whitespace stripped, got {vo.description}",
             )
 
     def test_pydantic_extra_fields_forbidden(self) -> None:
@@ -415,7 +415,7 @@ class TestFlextValueObjectEdgeCases:
         assert "tag-with-dashes" in vo.tags
         if vo.metadata["key with spaces"] != "value with spaces":
             raise AssertionError(
-                f"Expected {'value with spaces'}, got {vo.metadata['key with spaces']}"
+                f"Expected {'value with spaces'}, got {vo.metadata['key with spaces']}",
             )
 
     def test_decimal_precision_equality(self) -> None:
@@ -441,7 +441,7 @@ class TestFlextValueObjectEdgeCases:
         assert isinstance(data["metadata"], dict)
         if data["metadata"]["nested"]["key"] != "value":
             raise AssertionError(
-                f"Expected {'value'}, got {data['metadata']['nested']['key']}"
+                f"Expected {'value'}, got {data['metadata']['nested']['key']}",
             )
 
 

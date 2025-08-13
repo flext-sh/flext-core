@@ -17,11 +17,11 @@ class TestFlextTypesTypeGuards:
         # Test normal case
         if not (FlextTypes.TypeGuards.is_instance_of("test", str)):
             raise AssertionError(
-                f"Expected True, got {FlextTypes.TypeGuards.is_instance_of('test', str)}"
+                f"Expected True, got {FlextTypes.TypeGuards.is_instance_of('test', str)}",
             )
         if FlextTypes.TypeGuards.is_instance_of(123, str):
             raise AssertionError(
-                f"Expected False, got {FlextTypes.TypeGuards.is_instance_of(123, str)}"
+                f"Expected False, got {FlextTypes.TypeGuards.is_instance_of(123, str)}",
             )
 
         # Test exception handling with problematic type
@@ -36,7 +36,7 @@ class TestFlextTypesTypeGuards:
         # Should return False when TypeError/AttributeError occurs
         if FlextTypes.TypeGuards.is_instance_of("test", ProblematicType):
             raise AssertionError(
-                f"Expected False, got {FlextTypes.TypeGuards.is_instance_of('test', ProblematicType)}"
+                f"Expected False, got {FlextTypes.TypeGuards.is_instance_of('test', ProblematicType)}",
             )
 
     def test_is_callable(self) -> None:
@@ -44,23 +44,23 @@ class TestFlextTypesTypeGuards:
         # Callable objects
         if not (FlextTypes.TypeGuards.is_callable(lambda x: x)):
             raise AssertionError(
-                f"Expected True, got {FlextTypes.TypeGuards.is_callable(lambda x: x)}"
+                f"Expected True, got {FlextTypes.TypeGuards.is_callable(lambda x: x)}",
             )
         assert FlextTypes.TypeGuards.is_callable(str) is True
         if not (FlextTypes.TypeGuards.is_callable(print)):
             raise AssertionError(
-                f"Expected True, got {FlextTypes.TypeGuards.is_callable(print)}"
+                f"Expected True, got {FlextTypes.TypeGuards.is_callable(print)}",
             )
 
         # Non-callable objects
         if FlextTypes.TypeGuards.is_callable("string"):
             raise AssertionError(
-                f"Expected False, got {FlextTypes.TypeGuards.is_callable('string')}"
+                f"Expected False, got {FlextTypes.TypeGuards.is_callable('string')}",
             )
         assert FlextTypes.TypeGuards.is_callable(123) is False
         if FlextTypes.TypeGuards.is_callable([1, 2, 3]):
             raise AssertionError(
-                f"Expected False, got {FlextTypes.TypeGuards.is_callable([1, 2, 3])}"
+                f"Expected False, got {FlextTypes.TypeGuards.is_callable([1, 2, 3])}",
             )
 
     def test_is_dict_like(self) -> None:
@@ -68,7 +68,7 @@ class TestFlextTypesTypeGuards:
         # Dict-like objects
         if not (FlextTypes.TypeGuards.is_dict_like({})):
             raise AssertionError(
-                f"Expected True, got {FlextTypes.TypeGuards.is_dict_like({})}"
+                f"Expected True, got {FlextTypes.TypeGuards.is_dict_like({})}",
             )
         assert FlextTypes.TypeGuards.is_dict_like({"key": "value"}) is True
 
@@ -85,18 +85,18 @@ class TestFlextTypesTypeGuards:
 
         if not (FlextTypes.TypeGuards.is_dict_like(DictLike())):
             raise AssertionError(
-                f"Expected True, got {FlextTypes.TypeGuards.is_dict_like(DictLike())}"
+                f"Expected True, got {FlextTypes.TypeGuards.is_dict_like(DictLike())}",
             )
 
         # Non-dict-like objects
         if FlextTypes.TypeGuards.is_dict_like("string"):
             raise AssertionError(
-                f"Expected False, got {FlextTypes.TypeGuards.is_dict_like('string')}"
+                f"Expected False, got {FlextTypes.TypeGuards.is_dict_like('string')}",
             )
         assert FlextTypes.TypeGuards.is_dict_like([1, 2, 3]) is False
         if FlextTypes.TypeGuards.is_dict_like(123):
             raise AssertionError(
-                f"Expected False, got {FlextTypes.TypeGuards.is_dict_like(123)}"
+                f"Expected False, got {FlextTypes.TypeGuards.is_dict_like(123)}",
             )
 
     def test_is_list_like(self) -> None:
@@ -104,12 +104,12 @@ class TestFlextTypesTypeGuards:
         # List-like objects
         if not (FlextTypes.TypeGuards.is_list_like([1, 2, 3])):
             raise AssertionError(
-                f"Expected True, got {FlextTypes.TypeGuards.is_list_like([1, 2, 3])}"
+                f"Expected True, got {FlextTypes.TypeGuards.is_list_like([1, 2, 3])}",
             )
         assert FlextTypes.TypeGuards.is_list_like((1, 2, 3)) is True
         if not (FlextTypes.TypeGuards.is_list_like({1, 2, 3})):
             raise AssertionError(
-                f"Expected True, got {FlextTypes.TypeGuards.is_list_like({1, 2, 3})}"
+                f"Expected True, got {FlextTypes.TypeGuards.is_list_like({1, 2, 3})}",
             )
 
         # Custom list-like class
@@ -122,16 +122,16 @@ class TestFlextTypesTypeGuards:
 
         if not (FlextTypes.TypeGuards.is_list_like(ListLike())):
             raise AssertionError(
-                f"Expected True, got {FlextTypes.TypeGuards.is_list_like(ListLike())}"
+                f"Expected True, got {FlextTypes.TypeGuards.is_list_like(ListLike())}",
             )
 
         # Non-list-like objects (strings and bytes are excluded)
         if FlextTypes.TypeGuards.is_list_like("string"):
             raise AssertionError(
-                f"Expected False, got {FlextTypes.TypeGuards.is_list_like('string')}"
+                f"Expected False, got {FlextTypes.TypeGuards.is_list_like('string')}",
             )
         assert FlextTypes.TypeGuards.is_list_like(b"bytes") is False
         if FlextTypes.TypeGuards.is_list_like(123):
             raise AssertionError(
-                f"Expected False, got {FlextTypes.TypeGuards.is_list_like(123)}"
+                f"Expected False, got {FlextTypes.TypeGuards.is_list_like(123)}",
             )

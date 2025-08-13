@@ -45,7 +45,7 @@ class UserRepositoryProtocol(Protocol):
         ...
 
     def save_user(
-        self, user_id: str, user_data: dict[str, object]
+        self, user_id: str, user_data: dict[str, object],
     ) -> FlextResult[None]:
         """Save user data."""
         ...
@@ -55,7 +55,7 @@ class OrderServiceProtocol(Protocol):
     """Protocol for order service interface."""
 
     def create_order(
-        self, user_id: str, items: list[dict[str, object]]
+        self, user_id: str, items: list[dict[str, object]],
     ) -> FlextResult[dict[str, object]]:
         """Create order for user."""
         ...
@@ -95,6 +95,7 @@ class SimpleCacheMixin:
         """Remove cache entry."""
         if hasattr(self, "_cache") and key in self._cache:
             del self._cache[key]
+
 
 # =============================================================================
 # INDIVIDUAL MIXIN DEMONSTRATIONS - Single responsibility patterns
@@ -1254,23 +1255,25 @@ def _create_enterprise_user_repository() -> UserRepositoryProtocol:
             if result.is_success:
                 self.logger.info("User saved", user_id=user_id)
             else:
-                self.logger.error("Failed to save user", user_id=user_id, error=result.error)
+                self.logger.error(
+                    "Failed to save user", user_id=user_id, error=result.error,
+                )
             return result
 
         def save_user(
-            self, user_id: str, user_data: dict[str, object]
+            self, user_id: str, user_data: dict[str, object],
         ) -> FlextResult[None]:
             """Save user with caching and logging using railway-oriented programming."""
             start_time = self._start_timing()
 
             return self._execute_save_operation(user_id, user_data).flat_map(
                 lambda _: self._log_save_result(
-                    user_id, start_time, FlextResult.ok(None)
-                )
+                    user_id, start_time, FlextResult.ok(None),
+                ),
             )
 
         def _check_cache_for_user(
-            self, user_id: str
+            self, user_id: str,
         ) -> FlextResult[dict[str, object] | None]:
             """Check cache for user data."""
             cache_key = f"user:{user_id}"
@@ -1282,7 +1285,7 @@ def _create_enterprise_user_repository() -> UserRepositoryProtocol:
             return FlextResult.ok(None)
 
         def _check_storage_for_user(
-            self, user_id: str
+            self, user_id: str,
         ) -> FlextResult[dict[str, object] | None]:
             """Check storage for user data and update cache if found."""
             if user_id in self.users:
@@ -1294,7 +1297,7 @@ def _create_enterprise_user_repository() -> UserRepositoryProtocol:
             return FlextResult.ok(None)
 
         def _handle_user_not_found(
-            self, user_id: str
+            self, user_id: str,
         ) -> FlextResult[dict[str, object] | None]:
             """Handle case when user is not found."""
             self.logger.warning("User not found", user_id=user_id)
@@ -1348,18 +1351,20 @@ def _create_enterprise_order_service(
             user_result = self.user_repo.find_user(user_id)
             if user_result.is_failure:
                 return FlextResult.fail(
-                    f"Failed to check user existence: {user_result.error}"
+                    f"Failed to check user existence: {user_result.error}",
                 )
 
             user = user_result.data
             if not user:
-                self.logger.error("Cannot create order: User not found", user_id=user_id)
+                self.logger.error(
+                    "Cannot create order: User not found", user_id=user_id,
+                )
                 return FlextResult.fail(f"User not found: {user_id}")
 
             return FlextResult.ok(user)
 
         def _validate_order_items(
-            self, items: list[dict[str, object]]
+            self, items: list[dict[str, object]],
         ) -> FlextResult[None]:
             """Validate order items format and content."""
             self.clear_validation_errors()
@@ -1372,9 +1377,11 @@ def _create_enterprise_order_service(
                     self.add_validation_error("Invalid item format")
 
             if not self.is_valid:
-                self.logger.error("Order validation failed", errors=self.validation_errors)
+                self.logger.error(
+                    "Order validation failed", errors=self.validation_errors,
+                )
                 return FlextResult.fail(
-                    f"Order validation failed: {'; '.join(self.validation_errors)}"
+                    f"Order validation failed: {'; '.join(self.validation_errors)}",
                 )
 
             return FlextResult.ok(None)
@@ -1434,13 +1441,13 @@ def _demonstrate_repository_pattern(user_repo: UserRepositoryProtocol) -> None:
 
     # Save users with FlextResult pattern
     save_result_1 = user_repo.save_user(
-        "user_001", {"name": "Alice", "email": "alice@example.com"}
+        "user_001", {"name": "Alice", "email": "alice@example.com"},
     )
     save_result_2 = user_repo.save_user(
-        "user_002", {"name": "Bob", "email": "bob@example.com"}
+        "user_002", {"name": "Bob", "email": "bob@example.com"},
     )
     print(
-        f"  💾 Save results: Alice={save_result_1.is_success}, Bob={save_result_2.is_success}"
+        f"  💾 Save results: Alice={save_result_1.is_success}, Bob={save_result_2.is_success}",
     )
 
     # Find users (cache demo) with FlextResult pattern

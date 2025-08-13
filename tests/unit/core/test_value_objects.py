@@ -214,7 +214,7 @@ class TestValueObjectValidation:
 
         # Patch the logger factory instead of the instance logger
         with patch(
-            "flext_core.loggings.FlextLoggerFactory.get_logger"
+            "flext_core.loggings.FlextLoggerFactory.get_logger",
         ) as mock_get_logger:
             mock_logger = Mock()
             mock_get_logger.return_value = mock_logger
@@ -346,7 +346,7 @@ class TestValueObjectPayloadConversion:
                 return_value=FlextResult.fail("Validation failed"),
             ),
             patch.object(
-                FlextPayload, "create", return_value=FlextResult.ok(mock_payload)
+                FlextPayload, "create", return_value=FlextResult.ok(mock_payload),
             ),
         ):
             payload = vo.to_payload()
@@ -366,7 +366,7 @@ class TestValueObjectPayloadConversion:
         call_count = 0
 
         def mock_create(
-            data: dict[str, object], **kwargs: object
+            data: dict[str, object], **kwargs: object,
         ) -> FlextResult[FlextPayload[object]]:
             nonlocal call_count
             call_count += 1
@@ -385,7 +385,7 @@ class TestValueObjectPayloadConversion:
         # Mock both attempts to fail
         with (
             patch.object(
-                FlextPayload, "create", return_value=FlextResult.fail("Error")
+                FlextPayload, "create", return_value=FlextResult.fail("Error"),
             ),
             pytest.raises(FlextValidationError),
         ):
@@ -507,7 +507,7 @@ class TestValueObjectSubclassing:
     def test_init_subclass_logging(self) -> None:
         """Test that subclass creation is logged."""
         with patch(
-            "flext_core.loggings.FlextLoggerFactory.get_logger"
+            "flext_core.loggings.FlextLoggerFactory.get_logger",
         ) as mock_get_logger:
             mock_logger = Mock()
             mock_get_logger.return_value = mock_logger
@@ -548,7 +548,7 @@ class TestFlextValueObjectFactory:
         """Test factory creation with defaults."""
         defaults: dict[str, object] = {"currency": "EUR"}
         factory = FlextValueObjectFactory.create_value_object_factory(
-            MoneyAmount, defaults=defaults
+            MoneyAmount, defaults=defaults,
         )
 
         # Test with defaults
@@ -581,7 +581,7 @@ class TestFlextValueObjectFactory:
     def test_factory_without_defaults(self) -> None:
         """Test factory creation without defaults."""
         factory = FlextValueObjectFactory.create_value_object_factory(
-            SimpleValueObject, defaults=None
+            SimpleValueObject, defaults=None,
         )
 
         result = factory(value="test")
@@ -662,7 +662,7 @@ class TestValueObjectIntegration:
         """Test complete factory integration scenario."""
         # Create factory with defaults
         email_factory = FlextValueObjectFactory.create_value_object_factory(
-            EmailAddress, defaults={}
+            EmailAddress, defaults={},
         )
 
         # Create multiple emails
@@ -750,7 +750,7 @@ class TestValueObjectEdgeCases:
 
         # Mock field validation to return specific errors for specific fields
         def mock_validate_field(
-            field_name: str, field_value: object
+            field_name: str, field_value: object,
         ) -> FlextResult[None]:
             if field_name == "field1":
                 return FlextResult.fail("Field1 error")
@@ -760,7 +760,7 @@ class TestValueObjectEdgeCases:
 
         with (
             patch.object(
-                SimpleValueObject, "validate_field", side_effect=mock_validate_field
+                SimpleValueObject, "validate_field", side_effect=mock_validate_field,
             ),
             patch.object(
                 SimpleValueObject,

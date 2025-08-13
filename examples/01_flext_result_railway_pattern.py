@@ -130,7 +130,7 @@ def validate_user_data(data: UserDataDict) -> FlextResult[UserDataDict]:
             "Missing required fields",
         )
         .filter(
-            lambda d: FlextValidation.is_non_empty_string(d["name"]), "Invalid name"
+            lambda d: FlextValidation.is_non_empty_string(d["name"]), "Invalid name",
         )
         .tap(lambda d: print(f"✅ Validated: {d['name']}"))
     )
@@ -162,7 +162,7 @@ def send_welcome_email(user: SharedUser) -> FlextResult[bool]:
     return (
         FlextResult.ok(data=True)
         .filter(
-            lambda _: "@invalid.com" not in user.email_address.email, "Invalid domain"
+            lambda _: "@invalid.com" not in user.email_address.email, "Invalid domain",
         )
         .tap(lambda _: print(f"✅ Email sent to: {user.email_address.email}"))
     )
@@ -180,9 +180,9 @@ def process_user_registration(data: UserDataDict) -> FlextResult[dict[str, objec
                 send_welcome_email(user).map(lambda x: cast("object", x)),
             ).map(
                 lambda _: cast(
-                    "dict[str, object]", {"user_id": user.id, "status": "registered"}
-                )
-            )
+                    "dict[str, object]", {"user_id": user.id, "status": "registered"},
+                ),
+            ),
         )
         .tap(lambda _: print("🎉 Registration completed!"))
     )
@@ -206,7 +206,7 @@ def process_multiple_users(
         "results": successful,
     }
     return FlextResult.ok(result_dict).tap(
-        lambda s: print(f"📊 Processed {s['successful']}/{s['total']} users")
+        lambda s: print(f"📊 Processed {s['successful']}/{s['total']} users"),
     )
 
 
@@ -216,7 +216,7 @@ def process_multiple_users(
 
 
 def process_with_retry(
-    data: UserDataDict, max_retries: int = 3
+    data: UserDataDict, max_retries: int = 3,
 ) -> FlextResult[dict[str, object]]:
     """🚀 ZERO-BOILERPLATE retry using FlextResult composition."""
     for attempt in range(1, max_retries + 1):

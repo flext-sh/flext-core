@@ -26,7 +26,7 @@ class TestFlextValidation:
         """Test non-empty string validation with valid input."""
         if not (FlextValidation.Validators.is_non_empty_string("test")):
             raise AssertionError(
-                f"Expected True, got {FlextValidation.Validators.is_non_empty_string('test')}"
+                f"Expected True, got {FlextValidation.Validators.is_non_empty_string('test')}",
             )
         assert FlextValidation.Validators.is_non_empty_string("hello world") is True
 
@@ -34,12 +34,12 @@ class TestFlextValidation:
         """Test non-empty string validation with invalid input."""
         if FlextValidation.Validators.is_non_empty_string(""):
             raise AssertionError(
-                f"Expected False, got {FlextValidation.Validators.is_non_empty_string('')}"
+                f"Expected False, got {FlextValidation.Validators.is_non_empty_string('')}",
             )
         assert FlextValidation.Validators.is_non_empty_string(None) is False
         if FlextValidation.Validators.is_non_empty_string(123):
             raise AssertionError(
-                f"Expected False, got {FlextValidation.Validators.is_non_empty_string(123)}"
+                f"Expected False, got {FlextValidation.Validators.is_non_empty_string(123)}",
             )
 
     def test_is_callable_valid(self) -> None:
@@ -50,48 +50,48 @@ class TestFlextValidation:
 
         if not (FlextValidation.Validators.is_callable(test_func)):
             raise AssertionError(
-                f"Expected True, got {FlextValidation.Validators.is_callable(test_func)}"
+                f"Expected True, got {FlextValidation.Validators.is_callable(test_func)}",
             )
         assert FlextValidation.Validators.is_callable(lambda x: x) is True
         if not (FlextValidation.Validators.is_callable(str)):
             raise AssertionError(
-                f"Expected True, got {FlextValidation.Validators.is_callable(str)}"
+                f"Expected True, got {FlextValidation.Validators.is_callable(str)}",
             )
 
     def test_is_callable_invalid(self) -> None:
         """Test callable validation with invalid input."""
         if FlextValidation.Validators.is_callable("not callable"):
             raise AssertionError(
-                f"Expected False, got {FlextValidation.Validators.is_callable('not callable')}"
+                f"Expected False, got {FlextValidation.Validators.is_callable('not callable')}",
             )
         assert FlextValidation.Validators.is_callable(123) is False
         if FlextValidation.Validators.is_callable(None):
             raise AssertionError(
-                f"Expected False, got {FlextValidation.Validators.is_callable(None)}"
+                f"Expected False, got {FlextValidation.Validators.is_callable(None)}",
             )
 
     def test_is_list_valid(self) -> None:
         """Test list validation with valid input."""
         if not (FlextValidation.Validators.is_list([])):
             raise AssertionError(
-                f"Expected True, got {FlextValidation.Validators.is_list([])}"
+                f"Expected True, got {FlextValidation.Validators.is_list([])}",
             )
         assert FlextValidation.Validators.is_list([1, 2, 3]) is True
         if not (FlextValidation.Validators.is_list(["a", "b"])):
             raise AssertionError(
-                f"Expected True, got {FlextValidation.Validators.is_list(['a', 'b'])}"
+                f"Expected True, got {FlextValidation.Validators.is_list(['a', 'b'])}",
             )
 
     def test_is_list_invalid(self) -> None:
         """Test list validation with invalid input."""
         if FlextValidation.Validators.is_list("not a list"):
             raise AssertionError(
-                f"Expected False, got {FlextValidation.Validators.is_list('not a list')}"
+                f"Expected False, got {FlextValidation.Validators.is_list('not a list')}",
             )
         assert FlextValidation.Validators.is_list(123) is False
         if FlextValidation.Validators.is_list(None):
             raise AssertionError(
-                f"Expected False, got {FlextValidation.Validators.is_list(None)}"
+                f"Expected False, got {FlextValidation.Validators.is_list(None)}",
             )
         assert FlextValidation.Validators.is_list({"key": "value"}) is False
 
@@ -99,24 +99,24 @@ class TestFlextValidation:
         """Test dict validation with valid input."""
         if not (FlextValidation.Validators.is_dict({})):
             raise AssertionError(
-                f"Expected True, got {FlextValidation.Validators.is_dict({})}"
+                f"Expected True, got {FlextValidation.Validators.is_dict({})}",
             )
         assert FlextValidation.Validators.is_dict({"key": "value"}) is True
         if not (FlextValidation.Validators.is_dict({"a": 1, "b": 2})):
             raise AssertionError(
-                f"Expected True, got {FlextValidation.Validators.is_dict({'a': 1, 'b': 2})}"
+                f"Expected True, got {FlextValidation.Validators.is_dict({'a': 1, 'b': 2})}",
             )
 
     def test_is_dict_invalid(self) -> None:
         """Test dict validation with invalid input."""
         if FlextValidation.Validators.is_dict("not a dict"):
             raise AssertionError(
-                f"Expected False, got {FlextValidation.Validators.is_dict('not a dict')}"
+                f"Expected False, got {FlextValidation.Validators.is_dict('not a dict')}",
             )
         assert FlextValidation.Validators.is_dict(123) is False
         if FlextValidation.Validators.is_dict(None):
             raise AssertionError(
-                f"Expected False, got {FlextValidation.Validators.is_dict(None)}"
+                f"Expected False, got {FlextValidation.Validators.is_dict(None)}",
             )
         assert FlextValidation.Validators.is_dict([1, 2, 3]) is False
 
@@ -124,20 +124,20 @@ class TestFlextValidation:
         """Test None validation with valid input."""
         if not (FlextValidation.Validators.is_none(None)):
             raise AssertionError(
-                f"Expected True, got {FlextValidation.Validators.is_none(None)}"
+                f"Expected True, got {FlextValidation.Validators.is_none(None)}",
             )
 
     def test_is_none_invalid(self) -> None:
         """Test None validation with invalid input."""
         if FlextValidation.Validators.is_none(""):
             raise AssertionError(
-                f"Expected False, got {FlextValidation.Validators.is_none('')}"
+                f"Expected False, got {FlextValidation.Validators.is_none('')}",
             )
         assert FlextValidation.Validators.is_none(0) is False
         is_false = False
         if FlextValidation.Validators.is_none(is_false):
             raise AssertionError(
-                f"Expected False, got {FlextValidation.Validators.is_none(is_false)}"
+                f"Expected False, got {FlextValidation.Validators.is_none(is_false)}",
             )
         assert FlextValidation.Validators.is_none([]) is False
 
@@ -145,13 +145,13 @@ class TestFlextValidation:
         """Test not None validation with valid input."""
         if not (FlextValidation.Validators.is_not_none("test")):
             raise AssertionError(
-                f"Expected True, got {FlextValidation.Validators.is_not_none('test')}"
+                f"Expected True, got {FlextValidation.Validators.is_not_none('test')}",
             )
         assert FlextValidation.Validators.is_not_none(0) is True
         is_false = False
         if not (FlextValidation.Validators.is_not_none(is_false)):
             raise AssertionError(
-                f"Expected True, got {FlextValidation.Validators.is_not_none(is_false)}"
+                f"Expected True, got {FlextValidation.Validators.is_not_none(is_false)}",
             )
         assert FlextValidation.Validators.is_not_none([]) is True
 
@@ -159,7 +159,7 @@ class TestFlextValidation:
         """Test not None validation with invalid input."""
         if FlextValidation.Validators.is_not_none(None):
             raise AssertionError(
-                f"Expected False, got {FlextValidation.Validators.is_not_none(None)}"
+                f"Expected False, got {FlextValidation.Validators.is_not_none(None)}",
             )
 
     def test_is_email_placeholder(self) -> None:
@@ -170,7 +170,7 @@ class TestFlextValidation:
         )
         if FlextValidation.Validators.is_non_empty_string(""):
             raise AssertionError(
-                f"Expected False, got {FlextValidation.Validators.is_non_empty_string('')}"
+                f"Expected False, got {FlextValidation.Validators.is_non_empty_string('')}",
             )
 
     def test_is_uuid_placeholder(self) -> None:
@@ -184,7 +184,7 @@ class TestFlextValidation:
         )
         if FlextValidation.Validators.is_non_empty_string(""):
             raise AssertionError(
-                f"Expected False, got {FlextValidation.Validators.is_non_empty_string('')}"
+                f"Expected False, got {FlextValidation.Validators.is_non_empty_string('')}",
             )
 
     def test_is_url_placeholder(self) -> None:
@@ -196,7 +196,7 @@ class TestFlextValidation:
         )
         if FlextValidation.Validators.is_non_empty_string(""):
             raise AssertionError(
-                f"Expected False, got {FlextValidation.Validators.is_non_empty_string('')}"
+                f"Expected False, got {FlextValidation.Validators.is_non_empty_string('')}",
             )
 
 
@@ -416,7 +416,7 @@ class TestValidationIntegration:
         return validate_all_steps
 
     def _test_successful_validation(
-        self, validation_chain: Callable[[str], FlextResult[str]]
+        self, validation_chain: Callable[[str], FlextResult[str]],
     ) -> None:
         """Test successful validation scenario."""
         result = validation_chain("test123")
@@ -425,7 +425,7 @@ class TestValidationIntegration:
             raise AssertionError(f"Expected {'TEST123'}, got {result.data}")
 
     def _test_validation_failures(
-        self, validation_chain: Callable[[str], FlextResult[str]]
+        self, validation_chain: Callable[[str], FlextResult[str]],
     ) -> None:
         """Test validation failure scenarios."""
         # Test failure at step 1
