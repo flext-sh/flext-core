@@ -8,9 +8,7 @@ lifecycle management, and configuration-driven container setup.
 from __future__ import annotations
 
 import secrets
-import sys as _sys
 from abc import ABC, abstractmethod
-from pathlib import Path as _Path
 from typing import TYPE_CHECKING, cast
 
 from flext_core import (
@@ -26,11 +24,7 @@ from flext_core import (
     get_flext_container,
 )
 
-_project_root = _Path(__file__).resolve().parents[1]
-if str(_project_root) not in _sys.path:
-    _sys.path.insert(0, str(_project_root))
-
-from examples.shared_domain import (
+from .shared_domain import (
     SharedDomainFactory,
     User as SharedUser,
     log_domain_operation,

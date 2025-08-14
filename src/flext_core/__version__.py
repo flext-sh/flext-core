@@ -28,10 +28,14 @@ if TYPE_CHECKING:
 # VERSION INFORMATION - Single source of truth for FLEXT Core version
 # =============================================================================
 
-# Get version from package metadata
-from importlib.metadata import version as _pkg_version
+# Get version from package metadata with fallback
+try:
+    from importlib.metadata import version as _pkg_version
 
-__version__ = _pkg_version("flext-core")
+    __version__ = _pkg_version("flext-core")
+except Exception:  # noqa: BLE001
+    # Fallback when package metadata is not available (development mode)
+    __version__ = "0.9.0-dev"
 
 # Version metadata for programmatic access
 VERSION_MAJOR = 0

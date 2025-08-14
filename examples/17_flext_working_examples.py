@@ -4,8 +4,7 @@
 Comprehensive examples demonstrating all major FLEXT Core functionality.
 """
 
-import sys as _sys
-from pathlib import Path as _Path
+import contextlib
 from typing import cast
 
 from flext_core import (
@@ -15,13 +14,7 @@ from flext_core import (
     get_flext_container,
 )
 
-_project_root = _Path(__file__).resolve().parents[1]
-if str(_project_root) not in _sys.path:
-    _sys.path.insert(0, str(_project_root))
-
-import contextlib
-
-from examples.shared_domain import SharedDomainFactory, User as SharedUser
+from .shared_domain import SharedDomainFactory, User as SharedUser
 
 
 def _print_header() -> None:

@@ -31,6 +31,7 @@ from typing import TYPE_CHECKING, ClassVar, Generic, Protocol, TypedDict, TypeVa
 
 from pydantic import (
     BaseModel,
+    ConfigDict,
     Field,
     SecretStr,
     field_validator,
@@ -131,13 +132,14 @@ class FlextConfigSerializerProtocol(Protocol):
 class FlextAbstractConfig(ABC, BaseModel):
     """Abstract base class for all configuration models."""
 
-    class Config:
-        """Pydantic model configuration."""
-
-        extra = "forbid"
-        validate_assignment = True
-        use_enum_values = True
-        frozen = False
+    # Pydantic v2 configuration using ConfigDict (replaces class Config)
+    model_config = ConfigDict(
+        extra="forbid",
+        validate_assignment=True,
+        use_enum_values=True,
+        frozen=False,
+        str_strip_whitespace=True,
+    )
 
     @abstractmethod
     def validate_business_rules(self) -> FlextResult[None]:

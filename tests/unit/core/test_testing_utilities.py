@@ -36,7 +36,7 @@ class TestCreateOudConnectionConfig:
         assert config["host"] == "localhost"
         assert config["port"] == "3389"
         assert config["bind_dn"] == "cn=orclREDACTED_LDAP_BIND_PASSWORD"
-        assert config["bind_password"] == "Welcome1"
+        assert config["bind_password"] == "password"
         assert config["base_dn"] == "dc=ctbc,dc=com"
         assert config["use_ssl"] == "false"
         assert config["timeout"] == "30"

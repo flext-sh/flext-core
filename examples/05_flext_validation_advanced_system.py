@@ -13,10 +13,8 @@ composition patterns, and structured error reporting.
 from __future__ import annotations
 
 import math
-import sys as _sys
 import time
 from decimal import Decimal
-from pathlib import Path as _Path
 from typing import TYPE_CHECKING, cast
 
 from flext_core import (
@@ -29,11 +27,7 @@ from flext_core import (
     TUserData,
 )
 
-_project_root = _Path(__file__).resolve().parents[1]
-if str(_project_root) not in _sys.path:
-    _sys.path.insert(0, str(_project_root))
-
-from examples.shared_domain import (
+from .shared_domain import (
     Money,
     Product as SharedProduct,
     SharedDemonstrationPattern,
