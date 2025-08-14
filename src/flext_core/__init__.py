@@ -473,6 +473,16 @@ from flext_core.fields import (
 # Core
 from flext_core.core import FlextCore, flext_core
 
+# Expose `constants` attribute on top-level module for tests using
+# __import__('flext_core.constants').flext_core.constants pattern.
+# This provides a module alias to flext_core.constants.
+try:  # pragma: no cover
+    from flext_core import constants as _constants_module
+    constants = _constants_module  # runtime alias to module
+except Exception:  # pragma: no cover
+    # Fallback: expose FlextConstants class under a module-like alias for compatibility
+    constants = FlextConstants  # type: ignore[assignment]
+
 # Mixins
 from flext_core.mixins import (
     FlextAbstractMixin,

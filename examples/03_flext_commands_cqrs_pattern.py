@@ -7,8 +7,6 @@ validation, and event sourcing integration.
 
 from __future__ import annotations
 
-import sys as _sys
-from pathlib import Path as _Path
 from typing import Protocol, cast
 
 from flext_core import (
@@ -22,11 +20,7 @@ from flext_core import (
     TUserData,
 )
 
-_project_root = _Path(__file__).resolve().parents[1]
-if str(_project_root) not in _sys.path:
-    _sys.path.insert(0, str(_project_root))
-
-from examples.shared_domain import (
+from .shared_domain import (
     SharedDomainFactory,
     log_domain_operation,
 )
@@ -41,8 +35,8 @@ try:  # Defensive: ignore if already built
     }
     FlextCommands.Command.model_rebuild(types_namespace=_types_ns)
     FlextCommands.Query.model_rebuild(types_namespace=_types_ns)
-except Exception:
-    pass
+except Exception as _e:
+    print(f"Model rebuild skipped: {type(_e).__name__}")
 
 # =============================================================================
 # VALIDATION CONSTANTS - Business rule constraints
@@ -312,8 +306,8 @@ try:
     CreateUserCommand.model_rebuild(types_namespace=_types_ns)
     UpdateUserCommand.model_rebuild(types_namespace=_types_ns)
     DeleteUserCommand.model_rebuild(types_namespace=_types_ns)
-except Exception:
-    pass
+except Exception as _e:
+    print(f"Local model rebuild skipped: {type(_e).__name__}")
 
 
 # =============================================================================

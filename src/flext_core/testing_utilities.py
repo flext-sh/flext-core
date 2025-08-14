@@ -23,6 +23,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import os
 from typing import (
     TYPE_CHECKING,
     ClassVar,
@@ -597,11 +598,15 @@ def create_oud_connection_config() -> dict[str, str]:
         Dictionary with OUD connection parameters as strings.
 
     """
+    # Prefer environment-provided ports to avoid conflicts in CI/containers
+    port_str = os.environ.get("LDAP_PORT") or os.environ.get("TESTS_LDAP_PORT") or "3389"
+
     return {
         "host": "localhost",
-        "port": "3389",
+        "port": port_str,
         "bind_dn": "cn=orcladmin",
-        "bind_password": "Welcome1",
+        # Match container default password from fixtures
+        "bind_password": "password",
         "base_dn": "dc=ctbc,dc=com",
         "use_ssl": "false",
         "timeout": "30",

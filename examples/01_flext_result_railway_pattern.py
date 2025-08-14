@@ -11,17 +11,11 @@ import json
 import secrets
 
 # Ensure project root is on sys.path so `examples` package imports work
-import sys as _sys
-from pathlib import Path as _Path
 from typing import cast
 
 from flext_core import FlextResult, FlextValidation, safe_call
 
-_project_root = _Path(__file__).resolve().parents[1]
-if str(_project_root) not in _sys.path:
-    _sys.path.insert(0, str(_project_root))
-
-from examples.shared_domain import (
+from .shared_domain import (
     SharedDomainFactory,
     User as SharedUser,
 )
