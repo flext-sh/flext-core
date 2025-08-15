@@ -1,9 +1,4 @@
-"""Enterprise-grade structured logging system for FLEXT.
-
-Provides comprehensive logging infrastructure with context management,
-performance optimization, and observability features for distributed
-data integration pipelines.
-"""
+"""Structured logging system."""
 
 from __future__ import annotations
 

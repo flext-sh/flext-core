@@ -1,12 +1,4 @@
-"""Central orchestration for unified FLEXT Core system access.
-
-Provides singleton-based orchestration, facade patterns, and type-safe
-dependency injection for application-wide consistency and subsystem coordination.
-
-Classes:
-    FlextCore: Main singleton providing unified system access.
-
-"""
+"""Central orchestration for unified FLEXT Core system access."""
 
 from __future__ import annotations
 

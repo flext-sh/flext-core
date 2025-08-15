@@ -1,33 +1,4 @@
-"""Dependency injection container for FLEXT ecosystem service management.
-
-This module provides a comprehensive dependency injection container system for
-the FLEXT ecosystem, implementing type-safe service registration and retrieval
-with factory support. It follows Clean Architecture principles and implements
-the dependency inversion principle for loose coupling.
-
-The container system is built with Single Responsibility Principle (SRP),
-separating service registration from service retrieval concerns.
-
-Classes:
-    FlextServiceKey: Typed service key supporting generic subscription.
-    FlextServiceRegistrar: Service registration component implementing SRP.
-    FlextServiceLocator: Service retrieval component implementing SRP.
-    FlextContainer: Main DI container combining registration and location.
-    FlextContainerUtils: Utility functions for container operations.
-
-Functions:
-    configure_flext_container: Configure the global container instance.
-    create_module_container_utilities: Create module-specific container utilities.
-
-Example:
-    Basic container usage for dependency injection:
-
-    >>> container = FlextContainer()
-    >>> container.register_service("database", DatabaseService())
-    >>> db_service = container.get_service("database", DatabaseService)
-    >>> print(db_service.data)  # DatabaseService instance
-
-"""
+"""Dependency injection container."""
 
 from __future__ import annotations
 
@@ -55,14 +26,14 @@ class FlextServiceKey(UserString, Generic[TService]):  # noqa: UP046
 
     A specialized string that acts as a plain string at runtime but provides type safety
     at type-check time. This enables type-safe service registration and retrieval in the
-    FLEXT dependency injection container while maintaining runtime string compatibility.
+    FLEXT dependency injection container while maintaining runtime string support.
 
     The key supports generic subscription like FlextServiceKey[DatabaseService]("db")
     to provide compile-time type checking without runtime overhead.
 
     Attributes:
         data: The underlying string value of the service key.
-        name: Alias for the string value (compatibility property).
+        name: Alias for the string value (convenience property).
 
     Example:
         Type-safe service key usage:
@@ -83,7 +54,7 @@ class FlextServiceKey(UserString, Generic[TService]):  # noqa: UP046
         instance.data = str(name)
         return instance
 
-    # Compatibility: test access key.name
+    # Convenience: test access key.name
     @property
     def name(self) -> str:
         """Return the service key name (string value)."""
@@ -511,7 +482,7 @@ class FlextContainer(FlextLoggableMixin):
         return f"FlextContainer(services: {count})"
 
     # -----------------------------------------------------------------
-    # Compatibility methods expected by tests and other projects
+    # Convenience methods expected by tests and other projects
     # -----------------------------------------------------------------
 
     def get_info(self, name: str) -> FlextResult[dict[str, object]]:
@@ -867,7 +838,7 @@ __all__: list[str] = [
     "FlextContainer",
     "FlextContainerUtils",
     "FlextServiceKey",
-    "FlextServiceKey",  # Backward compatibility alias
+    "FlextServiceKey",  # Service key alias
     "configure_flext_container",
     "create_module_container_utilities",
     "get_flext_container",

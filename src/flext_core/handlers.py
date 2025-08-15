@@ -1,17 +1,4 @@
-"""Concrete handler implementations following CQRS patterns.
-
-Provides domain-specific handler implementations for CQRS patterns using
-abstract handler patterns following SOLID principles.
-
-Classes:
-    FlextBaseHandler: Concrete base handler implementation.
-    FlextValidatingHandler: Handler with validation logic.
-    FlextAuthorizingHandler: Handler with authorization logic.
-    FlextEventHandler: Handler for event processing.
-    FlextMetricsHandler: Handler with a metrics collection.
-    FlextHandlerChain: Concrete chain of responsibility implementation.
-    FlextHandlerRegistry: Concrete handler registry implementation.
-"""
+"""Handler implementations following CQRS patterns."""
 
 from __future__ import annotations
 
@@ -51,12 +38,12 @@ class FlextAbstractHandler(ABC, Generic[TInput, TOutput]):  # noqa: UP046
 class FlextAbstractHandlerChain(ABC, Generic[TInput, TOutput]):  # noqa: UP046
     """Abstract handler chain.
 
-    Legacy tests expect a base compatibility with FlextBaseHandler API.
+    Tests expect a base API consistent with FlextBaseHandler.
     """
 
     @property
-    def handler_name(self) -> str:  # compatibility for tests
-        """Return the chain class name for compatibility with legacy tests."""
+    def handler_name(self) -> str:  # convenience for tests
+        """Return the chain class name for testing convenience."""
         return self.__class__.__name__
 
     @abstractmethod
@@ -123,10 +110,10 @@ class FlextBaseHandler(FlextAbstractHandler[object, object]):
         return self.process_message(request)
 
     # ------------------------------------------------------------------
-    # Backward-compatible API expected by legacy tests
+    # Convenience API expected by tests
     # ------------------------------------------------------------------
     def process_request(self, request: object) -> FlextResult[object]:
-        """Compatibility alias for handle()."""
+        """Convenience alias for handle()."""
         return self.handle(request)
 
     def validate_request(self, request: object) -> FlextResult[None]:
@@ -235,7 +222,7 @@ class FlextValidatingHandler(
         return FlextResult.ok(message)
 
     def validate(self, message: object) -> FlextResult[object]:
-        """Validate a message before processing (compatibility method)."""
+        """Validate a message before processing (convenience method)."""
         validation_result = self.validate_message(message)
         if validation_result.is_failure:
             return FlextResult.fail(validation_result.error or "Validation failed")
@@ -376,7 +363,7 @@ class FlextMetricsHandler(
 
     @property
     def name(self) -> str:
-        """Get handler name (compatible)."""
+        """Get handler name (convenience method)."""
         return self._name
 
     def handle(self, request: object) -> FlextResult[object]:
@@ -562,7 +549,7 @@ class FlextMetricsHandler(
         message: object,
         result: FlextResult[object],
     ) -> FlextResult[None]:
-        """Post-process hook - no-op for static compatibility."""
+        """Post-process hook - no-op for static implementation."""
         del message, result
         return FlextResult.ok(None)
 
@@ -584,10 +571,10 @@ class FlextMetricsHandler(
 class FlextHandlerRegistry(
     FlextAbstractHandlerRegistry[FlextAbstractHandler[object, object]],
 ):
-    """Concrete handler registry with dual API (legacy and modern).
+    """Concrete handler registry with dual API (testing and modern).
 
     Exposes a simple list-based API via `_handlers`, `register(handler)`,
-    and `get_handlers()` for legacy tests, while also supporting a named
+    and `get_handlers()` for testing convenience, while also supporting a named
     registry via `register_handler(name, handler)` and dictionary lookups.
     """
 
@@ -631,7 +618,7 @@ class FlextHandlerRegistry(
     ) -> FlextResult[FlextAbstractHandler[object, object]]:
         """Register handler with optional explicit name.
 
-        Compatibility behavior:
+        Registration behavior:
         - register(handler) -> auto-name using handler class name
         - register(name, handler)
         """
@@ -661,7 +648,7 @@ class FlextHandlerRegistry(
         ]
 
     # ------------------------------------------------------------------
-    # Compatibility helpers expected by legacy tests
+    # Convenience helpers expected by tests
     # ------------------------------------------------------------------
     def register_for_type(
         self,
@@ -719,9 +706,9 @@ class FlextHandlerRegistry(
         """Clear all registered handlers."""
         self.clear_handlers()
 
-    # Legacy convenience API expected by some tests
+    # Convenience API expected by some tests
     def get_handlers(self) -> list[FlextAbstractHandler[object, object]]:
-        """Return a copy of registered handlers as a list (legacy API)."""
+        """Return a copy of registered handlers as a list (convenience API)."""
         return list(self._handlers)
 
 
@@ -802,7 +789,7 @@ class FlextHandlerChain(FlextBaseHandler, FlextAbstractHandlerChain[object, obje
         return FlextResult.fail("No handlers processed the message")
 
     def handle(self, message: object) -> FlextResult[object]:
-        """Handle a message through chain (compatibility method)."""
+        """Handle a message through chain (convenience method)."""
         for handler in self.handlers:
             try:
                 if handler.can_handle(message):
@@ -813,21 +800,21 @@ class FlextHandlerChain(FlextBaseHandler, FlextAbstractHandlerChain[object, obje
                 return FlextResult.fail(f"Chain handler failed: {e}")
         return FlextResult.ok(message)
 
-    def can_handle(self, message_type: object) -> bool:  # accept any for compatibility
+    def can_handle(self, message_type: object) -> bool:  # accept any for flexibility
         """Check if any handler in chain can process a message type or payload."""
         if not self.handlers:
             return True
         try:
             return any(handler.can_handle(message_type) for handler in self.handlers)
         except Exception:
-            # Be permissive for compatibility
+            # Be permissive for flexibility
             return True
 
     # ------------------------------------------------------------------
-    # Compatibility helpers expected by legacy tests
+    # Convenience helpers expected by tests
     # ------------------------------------------------------------------
     def process(self, message: object) -> FlextResult[object]:
-        """Compatibility alias for processing a single message."""
+        """Convenience alias for processing a single message."""
         return self.process_chain(message)
 
     def process_all(self, messages: list[object]) -> FlextResult[list[object]]:
@@ -844,29 +831,29 @@ class FlextHandlerChain(FlextBaseHandler, FlextAbstractHandlerChain[object, obje
 
 
 # =============================================================================
-# HANDLER FACTORIES MOVED TO LEGACY.PY
+# HANDLER FACTORIES MOVED TO HELPERS MODULE
 # =============================================================================
 # Factory functions create_base_handler, create_validating_handler, etc.
-# have been moved to legacy.py with deprecation warnings.
+# have been moved to legacy.py with transition warnings.
 #
 # NEW USAGE: Use direct class instantiation
 #   handler = FlextBaseHandler(name="my_handler")
 #   validator = FlextValidatingHandler(name="validator")
 #
-# OLD USAGE (deprecated): Import from legacy.py
+# OLD USAGE (transitional): Import from legacy.py
 #   from flext_core.legacy import create_base_handler
 
 
 # =============================================================================
-# GLOBAL REGISTRY MOVED TO LEGACY.PY
+# GLOBAL REGISTRY MOVED TO HELPERS MODULE
 # =============================================================================
-# Global registry functions have been moved to legacy.py with deprecation warnings.
+# Global registry functions have been moved to legacy.py with transition warnings.
 #
 # NEW USAGE: Create and manage your own registry
 #    = FlextHandlerRegistry()
 #   registry.register("my_handler", my_handler)
 #
-# OLD USAGE (deprecated): Import from legacy.py
+# OLD USAGE (transitional): Import from legacy.py
 #   from flext_core.legacy import get_global_registry, reset_global_registry
 
 
@@ -882,19 +869,19 @@ __all__: list[str] = [
     "FlextAbstractMetricsHandler",
     "FlextAuthorizingHandler",
     "FlextBaseHandler",
-    "FlextCommandHandler",  # Backward-compatible
+    "FlextCommandHandler",  # Convenience alias
     "FlextEventHandler",
     "FlextHandlerChain",
     "FlextHandlerRegistry",
-    "FlextHandlers",  # Legacy alias expected by tests
+    "FlextHandlers",  # Convenience alias expected by tests
     "FlextMetricsHandler",
-    "FlextQueryHandler",  # Backward-compatible
+    "FlextQueryHandler",  # Convenience alias
     "FlextValidatingHandler",
     "HandlersFacade",  # Facade class used by package-level import
 ]
 
 
-# Backward-compatible handler classes used in historical tests
+# Convenience handler classes used in tests
 # ABC and abstractmethod are already imported at the top of the file
 
 
@@ -969,9 +956,9 @@ class FlextCommandHandler(FlextCommands.Handler[TInput, TOutput], ABC):
 
         return result
 
-    # Backward-compatible API used by tests
+    # Convenience API used by tests
     def process_request(self, command: TInput) -> FlextResult[TOutput]:
-        """Compatibility alias that delegates to handle_command."""
+        """Convenience alias that delegates to handle_command."""
         return self.handle_command(command)
 
     # SOLID-friendly explicit method naming used in tests
@@ -1083,14 +1070,14 @@ class FlextQueryHandler(FlextCommands.QueryHandler[TInput, TOutput], ABC):
         """Pre-handle query."""
         return self.authorize_query(query)
 
-    # Backward-compatible API used by tests
+    # Convenience API used by tests
     def process_request(self, query: TInput) -> FlextResult[TOutput]:
-        """Compatibility alias delegating to handle_query."""
+        """Convenience alias delegating to handle_query."""
         return self.handle_query(query)
 
     @staticmethod
     def validate_message(message: object) -> FlextResult[None]:
-        """Validate message for test compatibility."""
+        """Validate message for test convenience."""
         # Basic validation - check not None
         if message is None:
             return FlextResult.fail("Message cannot be None")
@@ -1098,13 +1085,13 @@ class FlextQueryHandler(FlextCommands.QueryHandler[TInput, TOutput], ABC):
 
 
 class HandlersFacade:
-    """Legacy facade exposing command/query handler classes for tests."""
+    """Convenience facade exposing command/query handler classes for tests."""
 
     class CommandHandler(FlextCommandHandler[object, object]):
         """Concrete alias class to satisfy type usage in tests."""
 
     class QueryHandler(Generic[TQuery, TQueryResult]):
-        """Generic query handler alias for test compatibility."""
+        """Generic query handler alias for test convenience."""
 
         def __init__(
             self,
@@ -1148,14 +1135,14 @@ class HandlersFacade:
 
         @staticmethod
         def validate_message(message: object) -> FlextResult[None]:
-            """Validate message for test compatibility."""
+            """Validate message for test convenience."""
             # Basic validation - check not None
             if message is None:
                 return FlextResult.fail("Message cannot be None")
             return FlextResult.ok(None)
 
     class Handler(FlextCommands.Handler[object, object], ABC):
-        """Generic handler base alias for compatibility."""
+        """Generic handler base alias for convenience."""
 
     class EventHandler(FlextEventHandler):
         """Concrete alias for event handler used in tests."""
@@ -1221,9 +1208,9 @@ class HandlersFacade:
             """Set next behavior in a chain."""
             self.next_behavior = behavior
 
-    # Command and Query Bus implementations for test compatibility
+    # Command and Query Bus implementations for test convenience
     class CommandBus:
-        """Command bus implementation for test compatibility."""
+        """Command bus implementation for test convenience."""
 
         def __init__(self) -> None:
             """Initialize command bus."""
@@ -1269,7 +1256,7 @@ class HandlersFacade:
             return dict(self._metrics)
 
     class QueryBus:
-        """Query bus implementation for test compatibility."""
+        """Query bus implementation for test convenience."""
 
         def __init__(self) -> None:
             """Initialize query bus."""
@@ -1315,11 +1302,11 @@ class HandlersFacade:
 
 
 # =============================================================================
-# LEGACY COMPATIBILITY
+# CONVENIENCE ALIASES
 # =============================================================================
 
 
-# Backward compatibility expected by multiple tests:
+# Convenience aliases expected by multiple tests:
 # 1) Some tests assert FlextHandlers is FlextBaseHandler
 # 2) And expect nested CommandHandler/QueryHandler types accessible via FlextHandlers
 # We alias FlextHandlers to FlextBaseHandler and attach nested types onto it.
@@ -1365,7 +1352,7 @@ if TYPE_CHECKING:
 
 else:
     FlextHandlers = FlextBaseHandler
-    # Attach nested types for compatibility expectations in tests
+    # Attach nested types for convenience in tests
     FlextHandlers.CommandHandler = _ConcreteCommandHandler  # type: ignore[attr-defined]
     FlextHandlers.QueryHandler = _ConcreteQueryHandler  # type: ignore[attr-defined]
     FlextHandlers.EventHandler = FlextEventHandler  # type: ignore[attr-defined]

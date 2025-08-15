@@ -1,15 +1,4 @@
-"""Reusable schema and entry processing components.
-
-Provides data validation, transformation, and pipeline processing patterns
-for LDIF, ACL, and structured data across FLEXT ecosystem projects.
-
-Classes:
-    BaseEntry: Immutable value object for data representation.
-    EntryValidator: Protocol for validation logic.
-    BaseProcessor: Abstract processor with pipeline integration.
-    ProcessingPipeline: Composable processing stages.
-
-"""
+"""Reusable schema and entry processing components."""
 
 from __future__ import annotations
 

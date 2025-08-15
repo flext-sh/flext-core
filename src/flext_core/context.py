@@ -1,17 +1,4 @@
-"""Context management for correlation IDs and request tracking.
-
-Provides thread-safe context variables for service identification,
-correlation ID propagation, and distributed operation tracking.
-
-Classes:
-    FlextContext: Context management with correlation IDs.
-    FlextRequestContext: Request-scoped context information.
-
-Functions:
-    get_correlation_id: Get current correlation ID.
-    set_correlation_id: Set correlation ID in context.
-
-"""
+"""Context management for correlation IDs and request tracking."""
 
 from __future__ import annotations
 

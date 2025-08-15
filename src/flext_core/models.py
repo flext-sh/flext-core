@@ -1,20 +1,4 @@
-"""Unified Pydantic models with validation and business rules.
-
-Provides foundation models with consistent patterns including
-FlextModel, FlextEntity, FlextValue, and FlextLegacyConfig classes.
-
-Classes:
-    FlextModel: Base model with validation.
-    FlextEntity: Domain entity with identity.
-    FlextValue: Immutable value object.
-    FlextLegacyConfig: Legacy configuration model.
-    ModelValidator: Model validation utilities.
-    ModelFactory: Factory for model creation.
-
-Provides base model classes with validation, serialization, and business rule
-enforcement for enterprise domain modeling following DDD principles.
-
-"""
+"""Pydantic models with validation and business rules."""
 
 from __future__ import annotations
 
@@ -42,14 +26,14 @@ from flext_core.result import FlextResult
 from flext_core.utilities import FlextGenerators
 
 # =============================================================================
-# DOMAIN EVENT DICT - Hybrid dict/object for test compatibility
+# DOMAIN EVENT DICT - Hybrid dict/object for testing
 # =============================================================================
 
 
 class DomainEventDict(UserDict[str, object]):
     """Domain event dictionary that also provides object-like property access.
 
-    Acts as a regular dict for serialization/compatibility but exposes properties
+    Acts as a regular dict for serialization but exposes properties
     that tests expect for FlextEvent objects.
     """
 
@@ -91,11 +75,11 @@ class FlextModel(BaseModel):
         return FlextResult.ok(None)
 
     def to_dict(self) -> dict[str, object]:
-        """Convert model to dictionary for test compatibility."""
+        """Convert model to dictionary for testing."""
         return self.model_dump()
 
     def to_typed_dict(self) -> dict[str, object]:
-        """Convert model to typed dictionary for test compatibility."""
+        """Convert model to typed dictionary for testing."""
         return self.model_dump()
 
 
@@ -272,7 +256,7 @@ class FlextEntity(FlextModel, ABC):
         for field_name in self.model_fields:
             if field_name not in excluded_fields:
                 value = getattr(self, field_name, None)
-                # Format strings without quotes for test compatibility
+                # Format strings without quotes for testing
                 if isinstance(value, str):
                     fields_repr.append(f"{field_name}={value}")
                 else:
@@ -346,7 +330,7 @@ class FlextEntity(FlextModel, ABC):
     def add_domain_event(self, *args: object) -> FlextResult[None]:
         """Add domain event for event sourcing.
 
-        Supports both legacy signature (event: dict) and modern
+        Supports both dict signature (event: dict) and modern
         (event_type: str, data: dict).
         """
         try:
@@ -370,7 +354,7 @@ class FlextEntity(FlextModel, ABC):
                 self.domain_events.append(create_result.unwrap())
                 return FlextResult.ok(None)
 
-            # Legacy signature: (event_dict)
+            # Dict signature: (event_dict)
             if len(args) == 1 and isinstance(args[0], dict):
                 # If dict missing required fields, let Pydantic raise when entity validates elsewhere
                 self.domain_events.append(DomainEventDict(args[0]))
@@ -384,7 +368,7 @@ class FlextEntity(FlextModel, ABC):
         """Clear and return domain events."""
         events = self.domain_events.copy()
         self.domain_events.clear()
-        # Convert objects to dict format for return type compatibility
+        # Convert objects to dict format for consistent return type
         dict_events: list[dict[str, object]] = []
         for event in events:
             if isinstance(event, dict):
@@ -397,9 +381,9 @@ class FlextEntity(FlextModel, ABC):
                     dict_events.append({"event": event})
         return dict_events
 
-    # Alias for test compatibility
+    # Alias for convenience
     def clear_events(self) -> list[object]:
-        """Clear and return domain events (alias for test compatibility)."""
+        """Clear and return domain events (alias for convenience)."""
         events = self.domain_events.copy()
         self.domain_events.clear()
         return events
@@ -455,9 +439,9 @@ class FlextEntity(FlextModel, ABC):
         """Validate business rules (override in subclasses for specific rules)."""
         return FlextResult.ok(None)
 
-    # Backward-compat: tests and shared domain use validate_domain_rules
+    # Alias: tests and shared domain use validate_domain_rules
     def validate_domain_rules(self) -> FlextResult[None]:  # pragma: no cover
-        """Alias to validate_business_rules for backward compatibility."""
+        """Alias to validate_business_rules for convenience."""
         return self.validate_business_rules()
 
     @staticmethod
@@ -518,7 +502,7 @@ class FlextEntity(FlextModel, ABC):
             return FlextResult.fail(f"Validation failed: {e}")
 
 
-# FlextLegacyConfig for backward compatibility - main FlextConfig moved to config.py where it belongs
+# FlextLegacyConfig for testing - main FlextConfig moved to config.py where it belongs
 
 
 # =============================================================================
@@ -568,7 +552,7 @@ class FlextFactory:
 
         """
         if name not in cls._registry:
-            # Support built-in legacy factories for tests via local functions
+            # Support built-in factories for tests via local functions
             if name == "database":
                 return FlextResult.ok(create_database_model(**kwargs))
             if name == "oracle":
@@ -728,13 +712,13 @@ class FlextObs:
 
 
 # =============================================================================
-# LEGACY ALIASES - For backward compatibility (temporary)
+# ALIASES - For convenience
 # =============================================================================
 
-# Legacy type aliases and imports moved to the top
+# Type aliases and imports moved to the top
 
-# Legacy type aliases for backward compatibility
-FlextBaseModel = FlextModel  # Alias for backward compatibility
+# Type aliases for convenience
+FlextBaseModel = FlextModel  # Alias for convenience
 
 
 # Enums imported from constants.py - single source of truth for entire ecosystem
@@ -742,7 +726,7 @@ FlextBaseModel = FlextModel  # Alias for backward compatibility
 # are now centralized in constants.py to remove duplication
 
 
-# Legacy TypedDict definitions
+# TypedDict definitions
 class FlextEntityDict(TypedDict):
     """TypedDict for core entity structure."""
 
@@ -785,17 +769,17 @@ class FlextConnectionDict(TypedDict):
     options: NotRequired[dict[str, object]]
 
 
-# Legacy base model classes
+# Base model aliases
 FlextImmutableModel = FlextValue  # Alias for immutable models
 FlextMutableModel = FlextEntity  # Alias for mutable models
 
 
-# Legacy domain models
+# Domain models for testing
 class FlextDomainEntity(FlextModel):
-    """Legacy domain entity - use FlextEntity instead."""
+    """Domain entity for testing - use FlextEntity instead."""
 
     model_config = ConfigDict(
-        extra="allow",  # Allow extra fields for compatibility
+        extra="allow",  # Allow extra fields for testing
         validate_assignment=False,  # Disable strict validation
         str_strip_whitespace=False,  # Disable strict string handling
         frozen=False,
@@ -806,22 +790,22 @@ class FlextDomainEntity(FlextModel):
     version: int = 1
     domain_events: list[dict[str, object]] = Field(default_factory=list, exclude=True)
 
-    # Add timestamp support for test compatibility
+    # Add timestamp support for testing
     @property
     def updated_at(self) -> str:
-        """Legacy timestamp property for test compatibility."""
+        """Timestamp property for testing convenience."""
         return datetime.now(UTC).isoformat()
 
     def increment_version(self) -> None:
-        """Increment version for compatibility."""
+        """Increment version for convenience."""
         self.version += 1
 
     def add_domain_event(self, event: dict[str, object]) -> None:
-        """Add domain event for test compatibility."""
+        """Add domain event for testing convenience."""
         self.domain_events.append(event)
 
     def validate_business_rules(self) -> FlextResult[None]:
-        """Validate for legacy compatibility."""
+        """Validate for testing convenience."""
         return FlextResult.ok(None)
 
     def __hash__(self) -> int:
@@ -866,7 +850,7 @@ class FlextDomainValueObject(FlextModel):
         return hash(tuple(hashable_items))
 
     def validate_business_rules(self) -> FlextResult[None]:
-        """Validate for legacy compatibility."""
+        """Validate for testing convenience."""
         return FlextResult.ok(None)
 
 
@@ -902,7 +886,7 @@ class FlextDatabaseModel(FlextModel):
         return f"postgresql://{self.username}@{self.host}:{self.port}/{self.database}"
 
     def validate_business_rules(self) -> FlextResult[None]:
-        """Validate for legacy compatibility."""
+        """Validate for testing convenience."""
         return FlextResult.ok(None)
 
 
@@ -938,7 +922,7 @@ class FlextOracleModel(FlextModel):
         return FlextResult.ok(None)
 
     def validate_business_rules(self) -> FlextResult[None]:
-        """Validate for legacy compatibility."""
+        """Validate for testing convenience."""
         return FlextResult.ok(None)
 
 
@@ -958,7 +942,7 @@ class FlextLegacyConfig(FlextModel):
     log_level: str = "INFO"
 
     def validate_business_rules(self) -> FlextResult[None]:
-        """Validate for legacy compatibility."""
+        """Validate for testing convenience."""
         return FlextResult.ok(None)
 
     @classmethod
@@ -1007,7 +991,7 @@ class FlextOperationModel(FlextModel):
     max_retries: int = 3  # Add for test compatibility
 
     def validate_business_rules(self) -> FlextResult[None]:
-        """Validate for legacy compatibility."""
+        """Validate for testing convenience."""
         return FlextResult.ok(None)
 
 
@@ -1031,7 +1015,7 @@ class FlextServiceModel(FlextModel):
     health_check_url: str = ""  # Add for test compatibility
 
     def validate_business_rules(self) -> FlextResult[None]:
-        """Validate for legacy compatibility."""
+        """Validate for testing convenience."""
         return FlextResult.ok(None)
 
 
@@ -1054,7 +1038,7 @@ class FlextSingerStreamModel(FlextModel):
     replication_method: str = "FULL_TABLE"  # Add for test compatibility
 
     def validate_business_rules(self) -> FlextResult[None]:
-        """Validate for legacy compatibility."""
+        """Validate for testing convenience."""
         return FlextResult.ok(None)
 
 

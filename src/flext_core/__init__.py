@@ -1,25 +1,4 @@
-"""FLEXT Core foundation library.
-
-This module provides foundational patterns, types, and utilities for data
-integration across the FLEXT ecosystem. All exports use FlextXXX naming
-convention for namespace safety and follow Clean Architecture and
-Domain-Driven Design patterns.
-
-Architecture:
-    This is a pure foundation library providing patterns used across
-    32+ FLEXT projects. All exports follow a strict Flext* naming
-    convention to avoid namespace collisions. The library implements
-    Clean Architecture, Domain-Driven Design (DDD), and CQRS patterns.
-
-Example:
-    Basic usage of core patterns:
-
-    >>> from flext_core import FlextResult, FlextContainer, FlextConfig
-    >>> result = FlextResult.ok("Operation completed")
-    >>> container = get_flext_container()
-    >>> config = FlextConfig()
-
-"""
+"""FLEXT Core foundation library."""
 
 from __future__ import annotations
 
@@ -105,7 +84,7 @@ from flext_core.config import (
     FlextOracleConfigDict,
     FlextRedisConfigDict,
     FlextSingerConfigDict,
-    # Legacy/Compatibility Functions
+    # Configuration Functions
     merge_configs,
     load_config_from_env,
     safe_get_env_var,
@@ -158,7 +137,7 @@ from flext_core.typings import (
     FlextTypes,
     FlextEntityId,
     TEntityId,
-    # Common legacy types
+    # Common type variables
     T,
     U,
     V,
@@ -335,7 +314,7 @@ from flext_core.decorators import (
     _flext_safe_call_decorator,  # pyright: ignore[reportPrivateUsage]
     _flext_timing_decorator,  # pyright: ignore[reportPrivateUsage]
     _flext_validate_input_decorator,  # pyright: ignore[reportPrivateUsage]
-    # Back-compat exports for tests
+    # Internal decorators for testing
     _decorators_base,
     _BaseDecoratorFactory,
     _BaseImmutabilityDecorators,
@@ -598,12 +577,9 @@ if TYPE_CHECKING:
 
 
 # =============================================================================
-# LEGACY COMPATIBILITY REMOVED
+# CLEAN ARCHITECTURE IMPLEMENTATION
 # =============================================================================
-"""All legacy compatibility entrypoints have been removed.
-
-Use the modern Flext* APIs exposed by this package directly.
-"""
+"""Modern FLEXT Core foundation library."""
 
 # =============================================================================
 # EXPORTS - Clean, collision-free public API
@@ -933,7 +909,7 @@ __all__: list[str] = [
     "FlextValidatorProtocol",
     "FlextPluginLoader",
     "FlextPluginRegistry",
-    # Back-compat module namespace
+    # Protocol interfaces module
     "interfaces",
     "annotations",
     "TYPE_CHECKING",

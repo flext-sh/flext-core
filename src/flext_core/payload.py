@@ -1,9 +1,4 @@
-"""Type-safe payload containers for data transport.
-
-Provides type-safe payload containers with metadata, validation, and serialization
-for structured data transport across FLEXT system boundaries.
-
-"""
+"""Type-safe payload containers for data transport."""
 
 from __future__ import annotations
 
@@ -33,7 +28,7 @@ if TYPE_CHECKING:
 # CROSS-SERVICE SERIALIZATION CONSTANTS AND TYPES
 # =============================================================================
 
-# Serialization protocol version for backward compatibility
+# Serialization protocol version for cross-service communication
 # Constants moved to constants.py following SOLID Single Responsibility Principle
 
 FLEXT_SERIALIZATION_VERSION = FlextConstants.Observability.FLEXT_SERIALIZATION_VERSION
@@ -210,7 +205,7 @@ class FlextPayload[T](
         cls,
         data_dict: dict[str, object] | Mapping[str, object] | object,
     ) -> FlextResult[FlextPayload[object]]:
-        """Compatibility wrapper expected by tests; returns FlextResult.
+        """Convenience wrapper expected by tests; returns FlextResult.
 
         Accepts dict-like inputs to satisfy broader call sites and delegates
         to ``create_from_dict`` after minimal normalization.
@@ -415,10 +410,10 @@ class FlextPayload[T](
         include_type_info: bool = True,
         protocol_version: str = FLEXT_SERIALIZATION_VERSION,
     ) -> dict[str, object]:
-        """Convert payload to cross-service compatible dictionary with type information.
+        """Convert payload to cross-service dictionary with type information.
 
         Enhanced serialization for Go bridge integration with comprehensive type
-        information preservation and protocol versioning for backward compatibility.
+        information preservation and protocol versioning for cross-service communication.
 
         Args:
             include_type_info: Whether to include Python type information
@@ -446,13 +441,13 @@ class FlextPayload[T](
         return base_dict
 
     def _serialize_for_cross_service(self, value: object) -> object:
-        """Serialize value for cross-service compatibility.
+        """Serialize value for cross-service communication.
 
         Args:
             value: Value to serialize
 
         Returns:
-            Cross-service compatible representation
+            Cross-service representation
 
         """
         logger = flext_get_logger(__name__)
@@ -495,7 +490,7 @@ class FlextPayload[T](
 
     @staticmethod
     def _handle_basic_types(value: object) -> object | None:
-        """Handle basic JSON-compatible types."""
+        """Handle basic JSON-serializable types."""
         match value:
             case None:
                 return None
@@ -549,7 +544,7 @@ class FlextPayload[T](
             metadata: Metadata dictionary
 
         Returns:
-            Cross-service compatible metadata
+            Cross-service metadata
 
         """
         serialized_metadata: dict[str, object] = {}
@@ -558,7 +553,7 @@ class FlextPayload[T](
             # Ensure keys are strings
             str_key = str(key)
 
-            # Serialize values for cross-service compatibility
+            # Serialize values for cross-service communication
             serialized_value = self._serialize_for_cross_service(value)
 
             # Only include JSON-serializable values
@@ -676,10 +671,10 @@ class FlextPayload[T](
             metadata = cross_service_dict.get("metadata", {})
             protocol_version = cross_service_dict.get("protocol_version", "1.0.0")
 
-            # Validate protocol version compatibility
-            if not cls._is_protocol_compatible(str(protocol_version)):
+            # Validate protocol version support
+            if not cls._is_protocol_supported(str(protocol_version)):
                 return FlextResult.fail(
-                    f"Incompatible protocol version: {protocol_version}",
+                    f"Unsupported protocol version: {protocol_version}",
                 )
 
             # Reconstruct data with type information if available
@@ -698,7 +693,7 @@ class FlextPayload[T](
                 case _:
                     metadata = {}
 
-            # Create payload instance - cast for generic constructor compatibility
+            # Create payload instance - cast for generic constructor
             payload = cls(data=cast("T | None", reconstructed_data), metadata=metadata)
             return FlextResult.ok(payload)
 
@@ -708,17 +703,17 @@ class FlextPayload[T](
             )
 
     @classmethod
-    def _is_protocol_compatible(cls, version: str) -> bool:
-        """Check if a protocol version is compatible.
+    def _is_protocol_supported(cls, version: str) -> bool:
+        """Check if a protocol version is supported.
 
         Args:
             version: Protocol version string
 
         Returns:
-            True if compatible
+            True if supported
 
         """
-        # Simple version compatibility check
+        # Simple version support check
         # In production, this would implement semantic versioning rules
         major_version = version.split(".", maxsplit=1)[0] if "." in version else version
         current_major = FLEXT_SERIALIZATION_VERSION.split(".", maxsplit=1)[0]
@@ -1210,7 +1205,7 @@ class FlextMessage(FlextPayload[str]):
         include_type_info: bool = True,
         protocol_version: str = FLEXT_SERIALIZATION_VERSION,
     ) -> dict[str, object]:
-        """Convert a message to cross-service compatible dictionary.
+        """Convert a message to cross-service dictionary.
 
         Enhanced for FlextMessage with message-specific metadata.
 
@@ -1219,7 +1214,7 @@ class FlextMessage(FlextPayload[str]):
             protocol_version: Serialization protocol version
 
         Returns:
-            Cross-service compatible dictionary for message transport
+            Cross-service dictionary for message transport
 
         """
         base_dict = super().to_cross_service_dict(
@@ -1381,7 +1376,7 @@ class FlextEvent(FlextPayload[Mapping[str, object]]):
         include_type_info: bool = True,
         protocol_version: str = FLEXT_SERIALIZATION_VERSION,
     ) -> dict[str, object]:
-        """Convert event to cross-service compatible dictionary.
+        """Convert event to cross-service dictionary.
 
         Enhanced for FlextEvent with event sourcing metadata.
 
@@ -1390,7 +1385,7 @@ class FlextEvent(FlextPayload[Mapping[str, object]]):
             protocol_version: Serialization protocol version
 
         Returns:
-            Cross-service compatible dictionary for event transport
+            Cross-service dictionary for event transport
 
         """
         base_dict = super().to_cross_service_dict(
@@ -1462,19 +1457,19 @@ class FlextEvent(FlextPayload[Mapping[str, object]]):
 
 
 # =============================================================================
-# MIGRATION NOTICE - Legacy functions moved to legacy.py
+# MIGRATION NOTICE - Helper functions moved to legacy.py
 # =============================================================================
 
 
-# IMPORTANT: Legacy cross-service functions have been moved to legacy.py
+# IMPORTANT: Cross-service helper functions have been moved to legacy.py
 #
 # Migration guide:
 # OLD: from flext_core.payload import serialize_payload_for_go_bridge
 # NEW: from flext_core.legacy import serialize_payload_for_go_bridge
-#      (with deprecation warning)
+#      (with transition warning)
 # MODERN: use payload.to_json_string() directly with appropriate settings
 #
-# Legacy functions moved:
+# Helper functions moved:
 # - serialize_payload_for_go_bridge()
 # - deserialize_payload_from_go_bridge()
 # - create_cross_service_message()
@@ -1485,9 +1480,9 @@ class FlextEvent(FlextPayload[Mapping[str, object]]):
 # For new code, use the FlextPayload, FlextMessage, and FlextEvent
 # class methods directly
 #
-# TEST COMPATIBILITY: Re-export selected legacy helpers from legacy.py here so
+# TEST CONVENIENCE: Re-export selected helpers from legacy.py here so
 # imports like `from flext_core.payload import create_cross_service_event` keep
-# working in tests. These are thin wrappers around legacy implementations.
+# working in tests. These are thin wrappers around implementations.
 def create_cross_service_event(
     event_type: str,
     event_data: dict[str, object],
@@ -1603,7 +1598,7 @@ def validate_cross_service_protocol(payload: object) -> FlextResult[None]:
 # MODEL REBUILDS - Resolve forward references for Pydantic
 # =============================================================================
 
-# CRITICAL: Model rebuild enabled for test compatibility
+# CRITICAL: Model rebuild enabled for test functionality
 # The models need explicit rebuild to work correctly with generic types
 # in test environment to avoid "not fully defined" errors.
 try:
@@ -1617,10 +1612,10 @@ except (
     ImportError,
     RuntimeError,
 ) as except_data:
-    # Log rebuild errors but maintain runtime compatibility
+    # Log rebuild errors but maintain runtime functionality
     logger = flext_get_logger(__name__)
     logger.warning(
-        "Model rebuild failed, continuing with runtime compatibility",
+        "Model rebuild failed, continuing with runtime functionality",
         error=str(except_data),
         models=["FlextPayload", "FlextMessage", "FlextEvent"],
     )
@@ -1636,7 +1631,7 @@ __all__: list[str] = [
     "FlextEvent",
     "FlextMessage",
     "FlextPayload",
-    # Legacy cross-service functions for test compatibility
+    # Cross-service helper functions for test convenience
     "create_cross_service_event",
     "create_cross_service_message",
     "get_serialization_metrics",

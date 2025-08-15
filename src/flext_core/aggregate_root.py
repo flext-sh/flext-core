@@ -1,9 +1,4 @@
-"""Domain-Driven Design aggregate root implementation.
-
-Provides a DDD aggregate root pattern with transactional boundaries,
-domain event management, and business logic encapsulation for the
-FLEXT data integration ecosystem.
-"""
+"""Domain-Driven Design aggregate root implementation."""
 
 from __future__ import annotations
 

@@ -1,13 +1,4 @@
-"""Internal delegation system for mixin composition patterns.
-
-Provides automatic method delegation and proxy patterns for mixins.
-Internal module - use public API through mixins module.
-
-Note:
-    This is an internal implementation module. Use the public API
-    through the mixins module instead.
-
-"""
+"""Internal delegation system for mixin composition patterns."""
 
 from __future__ import annotations
 

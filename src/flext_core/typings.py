@@ -1,19 +1,4 @@
-"""Centralized type definitions for the FLEXT ecosystem.
-
-Provides comprehensive type system following PEP8 naming conventions.
-Single source of truth for all type definitions across 32+ FLEXT projects.
-
-Architecture:
-    - FlextTypes: Hierarchical type system organized by domain
-    - Type Variables: Generic type parameters (T, U, V, etc.)
-    - Legacy Aliases: Backward compatibility T* naming convention
-    - Protocol Types: Interface definitions and contracts
-
-Usage:
-    from flext_core.typings import FlextTypes, T, TAnyDict
-    # Preferred: FlextTypes.Core.AnyDict
-    # Legacy: TAnyDict
-"""
+"""Centralized type definitions for the FLEXT ecosystem."""
 
 from __future__ import annotations
 
@@ -86,9 +71,9 @@ class FlextTypes:
         # Explicit JSON dictionary alias used widely externally
         type JsonDict = dict[str, object]
 
-        # Legacy aliases
-        type Dict = FlextTypes.Core.AnyDict  # Backward compatibility
-        type List = FlextTypes.Core.AnyList  # Backward compatibility
+        # Convenience aliases
+        type Dict = FlextTypes.Core.AnyDict  # Convenience alias
+        type List = FlextTypes.Core.AnyList  # Convenience alias
 
         # Connection and infrastructure
         type ConnectionString = str
@@ -114,7 +99,7 @@ class FlextTypes:
         # Dictionary types
         type Dict = dict[str, object]  # Generic dictionary for data storage
         type StringDict = dict[str, str]  # String-only dictionary
-        type JsonDict = dict[str, object]  # JSON-compatible dictionary
+        type JsonDict = dict[str, object]  # JSON-serializable dictionary
 
         # List types
         type List = list[object]  # Generic list
@@ -140,12 +125,12 @@ class FlextTypes:
         type FlextMessageHandler[T] = Callable[[T], object]
 
         # Metadata and configuration types
-        type JsonDict = dict[str, object]  # Standard JSON-compatible dictionary
+        type JsonDict = dict[str, object]  # Standard JSON-serializable dictionary
         type Metadata = dict[str, object]
         type Settings = dict[str, object]
         type Configuration = Mapping[str, object]
 
-        # Legacy compatibility
+        # Convenience aliases
         type Transform[T, U] = Callable[[T], U]  # Alias for Transformer
         type Handler[T, R] = Callable[[T], R]  # Generic handler
         ServiceInstance = TypeVar("ServiceInstance")
@@ -278,11 +263,11 @@ class FlextTypes:
         type EnvironmentName = str  # Environment identifier
         type DeploymentStage = str  # Deployment stage (staging, production)
         type ConfigVersion = str  # Configuration version for tracking
-        # File system types (legacy)
+        # File system types
         type DirectoryPath = str
         type FilePath = str
 
-        # Legacy compatibility
+        # Convenience aliases
         type EnvVar = str
         type ConfigSection = str
 
@@ -383,11 +368,11 @@ class FlextTypes:
         type Validator[T] = Callable[[T], bool | str]
 
     # -----------------------------------------------------------------
-    # LEGACY: Some tests refer to FlextTypes.TypeGuards
+    # CONVENIENCE: Some tests refer to FlextTypes.TypeGuards
     # Provide a minimal implementation to avoid circular imports
     # -----------------------------------------------------------------
     class TypeGuards:
-        """Legacy facade for type guard utilities (tests compatibility)."""
+        """Convenience facade for type guard utilities (tests convenience)."""
 
         @staticmethod
         def has_attribute(obj: object, attr: str) -> bool:
@@ -434,10 +419,10 @@ class FlextTypes:
 
 
 # =============================================================================
-# BACKWARD COMPATIBILITY ALIASES - Legacy support during migration
+# CONVENIENCE ALIASES - Export consistency
 # =============================================================================
 
-# Export all legacy T* aliases for backward compatibility
+# Export all T* aliases for convenience
 # Core type variables (already defined above)
 
 # Domain and data type aliases (from types.py)
@@ -545,14 +530,14 @@ TValidationPipeline = FlextTypes.Validation.ValidationPipeline
 # Logging types (from loggings.py)
 TLoggerName = FlextTypes.Logging.LoggerName
 
-# Business types (legacy/testing convenience)
+# Business types (testing convenience)
 TBusinessId = str
 TBusinessName = str
 TBusinessCode = str
 TBusinessStatus = str
 TBusinessType = str
 
-# Cache types (legacy/testing convenience)
+# Cache types (testing convenience)
 TCacheKey = str
 TCacheValue = str | int | float | bool | None
 TCacheTTL = int
@@ -587,7 +572,7 @@ TDomainEvents = FlextTypes.Domain.DomainEvents
 TEventStream = FlextTypes.Domain.EventStream
 TEventVersion = FlextTypes.Domain.EventVersion
 
-# Protocol compatibility aliases
+# Protocol convenience aliases
 Comparable = FlextTypes.Protocols.Comparable
 Serializable = FlextTypes.Protocols.Serializable
 Timestamped = FlextTypes.Protocols.Timestamped
@@ -595,12 +580,12 @@ Validatable = FlextTypes.Protocols.Validatable
 Cacheable = FlextTypes.Protocols.Cacheable
 Configurable = FlextTypes.Protocols.Configurable
 
-# Legacy protocol aliases with deprecation support
+# Convenience protocol aliases with transition support
 FlextSerializable = Serializable
 FlextValidatable = Validatable
 FlextValidator = FlextTypes.Protocols.Validator[object]
 
-# Entity identifier alias for backward compatibility
+# Entity identifier alias for convenience
 FlextEntityId = TEntityId
 
 # =============================================================================
@@ -608,10 +593,10 @@ FlextEntityId = TEntityId
 # =============================================================================
 
 
-def _emit_deprecation_warning(old_name: str, new_name: str) -> None:
-    """Emit deprecation warning for legacy usage."""
+def _emit_transition_warning(old_name: str, new_name: str) -> None:
+    """Emit transition warning for historical usage."""
     warnings.warn(
-        f"'{old_name}' is deprecated. "
+        f"'{old_name}' is transitional. "
         f"Use 'from flext_core.core_types import FlextTypes.{new_name}' instead.",
         DeprecationWarning,
         stacklevel=3,
@@ -623,7 +608,7 @@ def get_centralized_types_usage_info() -> str:
     return (
         "All types are now centralized in typings.py. "
         "Use 'from flext_core.typings import FlextTypes' for new development. "
-        "Legacy T* aliases are available for backward compatibility."
+        "T* aliases are available for convenience."
     )
 
 
@@ -641,7 +626,7 @@ __all__: list[str] = [
     # Schema processing types
     "EntryT",
     "F",
-    # FlextEntity compatibility
+    # FlextEntity convenience
     "FlextEntityId",
     "FlextSerializable",
     # Hierarchical type system (preferred)
@@ -652,16 +637,16 @@ __all__: list[str] = [
     "R",
     "Serializable",
     "T",
-    # Legacy T* aliases - Domain types
+    # T* aliases - Domain types
     "TAggregateId",
-    # Legacy T* aliases - Core types
+    # T* aliases - Core types
     "TAnyDict",
     "TAnyList",
     # TypeVar entities
     "TAnyObject",
     "TCallable",
     "TCommand",
-    # Legacy T* aliases - CQRS types
+    # T* aliases - CQRS types
     "TCommandBusId",
     "TCommandId",
     "TCommandMetadata",
@@ -671,7 +656,7 @@ __all__: list[str] = [
     "TCommandType",
     "TComparable",
     "TConfig",
-    # Legacy T* aliases - Config types
+    # T* aliases - Config types
     "TConfigDefaults",
     "TConfigDict",
     "TConfigEnv",
@@ -683,15 +668,15 @@ __all__: list[str] = [
     "TConfigValidationRule",
     "TConfigValue",
     "TConfigVersion",
-    # Legacy T* aliases - Infrastructure types
+    # T* aliases - Infrastructure types
     "TConnection",
     "TConnectionString",
-    # Legacy T* aliases - Auth types
+    # T* aliases - Auth types
     "TContextDict",
-    # Legacy T* aliases - Service types
+    # T* aliases - Service types
     "TCorrelationId",
     "TCredentials",
-    # Legacy T* aliases - Validation types
+    # T* aliases - Validation types
     "TCustomValidator",
     "TData",
     "TDeploymentStage",
@@ -725,7 +710,7 @@ __all__: list[str] = [
     "TFieldValue",
     "THandlerName",
     "TList",
-    # Legacy T* aliases - Logging types
+    # T* aliases - Logging types
     "TLogConfiguration",
     "TLogFilter",
     "TLogFormat",

@@ -1,9 +1,4 @@
-"""Domain-Driven Design domain services implementation.
-
-Provides stateless business services for cross-entity operations
-and complex business logic that doesn't naturally belong to
-entities or value objects.
-"""
+"""Domain-Driven Design domain services implementation."""
 
 from __future__ import annotations
 

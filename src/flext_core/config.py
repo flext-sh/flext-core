@@ -1,22 +1,4 @@
-"""FLEXT Core Configuration - Enterprise configuration management system.
-
-Consolidates all configuration patterns following PEP8 naming conventions.
-Provides Pydantic-based models, environment loading, validation, and
-cross-service serialization for distributed data integration pipelines.
-
-Architecture:
-    - Abstract Protocols: Configuration contracts and interfaces
-    - Base Classes: Foundation configuration patterns
-    - Concrete Models: Production-ready configuration classes
-    - Factory Methods: Dynamic configuration creation
-    - Compatibility Layer: Legacy support and migration
-
-Usage:
-    from flext_core.core_config import FlextConfig, FlextDatabaseConfig
-
-    config = FlextConfig(debug=True, environment="production")
-    db_config = FlextDatabaseConfig.from_env()
-"""
+"""Configuration management system."""
 
 from __future__ import annotations
 

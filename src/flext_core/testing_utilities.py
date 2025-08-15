@@ -1,25 +1,4 @@
-"""FLEXT Testing utilities following SOLID principles.
-
-Provides utilities and helpers for testing FLEXT components with proper
-separation of concerns and dependency inversion.
-
-Architecture:
-    - Protocol-based abstractions (Interface Segregation)
-    - Single responsibility classes (SRP)
-    - Composition over inheritance (OCP)
-    - Type-safe operations (LSP)
-    - Dependency inversion through protocols (DIP)
-
-Classes:
-    FlextTestUtilities: Centralized testing utilities.
-    FlextTestModel: Test model for testing purposes.
-    FlextTestFactory: Factory for creating test objects.
-    FlextTestAssertion: Enhanced assertion utilities.
-    FlextTestMocker: Mock object creation utilities.
-
-Copyright (c) 2025 FLEXT Contributors
-SPDX-License-Identifier: MIT
-"""
+"""Testing utilities and helpers for FLEXT components."""
 
 from __future__ import annotations
 

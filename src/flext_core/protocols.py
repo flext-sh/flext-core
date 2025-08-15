@@ -1,14 +1,4 @@
-"""Protocol definitions for FLEXT ecosystem contracts.
-
-Centralized protocol definitions for validation, services, logging,
-and observability across all FLEXT projects.
-
-Protocols:
-    FlextValidator: Validation contract with result handling.
-    FlextService: Service lifecycle and management contract.
-    FlextLogger: Logging interface with structured data.
-
-"""
+"""Protocol definitions for FLEXT ecosystem contracts."""
 
 from __future__ import annotations
 

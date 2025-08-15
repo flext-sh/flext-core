@@ -1,8 +1,4 @@
-"""Decorator patterns for function enhancement.
-
-Provides validation, error handling, performance, logging, and functional
-decorators with FlextResult integration and type safety.
-"""
+"""Decorator patterns for function enhancement."""
 
 from __future__ import annotations
 

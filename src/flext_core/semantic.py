@@ -1,8 +1,4 @@
-"""FLEXT Harmonized Semantic Architecture - Single Source of Truth.
-
-Provides unified semantic patterns for constants, models, observability,
-and error handling across the FLEXT ecosystem.
-"""
+"""FLEXT semantic architecture and unified patterns."""
 
 from __future__ import annotations
 
