@@ -1,9 +1,4 @@
-"""Field definition and validation system with metadata support.
-
-Provides immutable field definitions with validation, centralized field management,
-and factory methods for creating strongly typed field definitions.
-
-"""
+"""Field definition and validation system with metadata support."""
 
 from __future__ import annotations
 
@@ -386,7 +381,7 @@ class FlextFieldCore(
             case _:
                 return bool(value)
 
-    # Backward compatibility methods for tests
+    # Convenience methods for tests
     def get_default_value(self) -> str | int | float | bool | None:
         """Get the default value for this field."""
         return self.default_value
@@ -665,7 +660,7 @@ class FlextFieldRegistry(BaseModel):
 
     @property
     def _fields(self) -> dict[FlextFieldId, FlextFieldCore]:
-        """Backward compatibility property for _fields access."""
+        """Convenience property for _fields access."""
         return self.fields_dict
 
     # Mixin functionality is now inherited properly:
@@ -700,11 +695,11 @@ class FlextFieldRegistry(BaseModel):
         return FlextResult.ok(None)
 
     def get_field(self, field_id: FlextFieldId) -> FlextFieldCore | None:
-        """Get field by ID (backward compatibility method)."""
+        """Get field by ID (convenience method)."""
         return self.fields_dict.get(field_id)
 
     def get_all_fields(self) -> dict[FlextFieldId, FlextFieldCore]:
-        """Get all registered fields (backward compatibility method)."""
+        """Get all registered fields (convenience method)."""
         return self.fields_dict.copy()
 
     def get_field_by_id(self, field_id: FlextFieldId) -> FlextResult[FlextFieldCore]:
@@ -971,25 +966,25 @@ class FlextFields:
         """Clear all registered fields."""
         cls._registry.clear_registry()
 
-    # Backward-compat convenience wrappers expected by legacy layer/tests
+    # Convenience wrappers expected by tests
     @classmethod
     def string_field(cls, name: str, **kwargs: object) -> FlextFieldCore:
-        """Create string field with name (backward compatibility)."""
+        """Create string field with name (convenience method)."""
         return cls.create_string_field(field_id=name, field_name=name, **kwargs)
 
     @classmethod
     def integer_field(cls, name: str, **kwargs: object) -> FlextFieldCore:
-        """Create integer field with name (backward compatibility)."""
+        """Create integer field with name (convenience method)."""
         return cls.create_integer_field(field_id=name, field_name=name, **kwargs)
 
     @classmethod
     def boolean_field(cls, name: str, **kwargs: object) -> FlextFieldCore:
-        """Create boolean field with name (backward compatibility)."""
+        """Create boolean field with name (convenience method)."""
         return cls.create_boolean_field(field_id=name, field_name=name, **kwargs)
 
 
 # =============================================================================
-# CONVENIENCE ALIASES E FUNÇÕES - Mantendo compatibilidade
+# ALIASES FOR CONVENIENCE
 # =============================================================================
 
 # No legacy aliases - only Flext prefixed classes

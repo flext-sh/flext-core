@@ -11,11 +11,11 @@ from typing import TYPE_CHECKING, cast
 
 import pytest
 from hypothesis import given, strategies as st
+from tests.conftest import TestCase, TestScenario
 
 from flext_core.exceptions import FlextOperationError
 from flext_core.result import FlextResult
 from flext_core.utilities import safe_call
-from tests.conftest import TestCase, TestScenario
 
 if TYPE_CHECKING:
     from collections.abc import Callable

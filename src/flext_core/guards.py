@@ -1,9 +1,4 @@
-"""Comprehensive type guards and validation system for FLEXT.
-
-Provides enterprise-grade safety patterns, runtime type checking,
-validation decorators, and safe object construction for distributed
-data integration systems.
-"""
+"""Type guards and validation system."""
 
 from __future__ import annotations
 

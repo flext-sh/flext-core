@@ -1,21 +1,4 @@
-"""Basic observability implementations for development and testing.
-
-Provides console logging, no-op tracing, and in-memory metrics with a
-compatibility layer for legacy test expectations.
-
-Protocols are defined in protocols.py.
-
-Classes:
-    FlextConsoleLogger: Console-based logger (modern)
-    FlextNoOpTracer: No-op tracer (modern)
-    FlextInMemoryMetrics: In-memory metrics (modern)
-    FlextSimpleObservability: Simple observability (modern)
-
-Legacy-compatible APIs (kept for tests/backward-compat):
-    ConsoleLogger, NoOpTracer, InMemoryMetrics, SimpleAlerts,
-    MinimalObservability, get_observability
-
-"""
+"""Basic observability implementations for development and testing."""
 
 from __future__ import annotations
 
@@ -50,7 +33,7 @@ class FlextConsoleLogger:
 
     def __init__(self, name: str = "flext-console") -> None:
         """Initialize console logger."""
-        # Back-compat: expose underlying stdlib logger on `_logger`
+        # Expose underlying stdlib logger on `_logger`
         self._logger = logging.getLogger(name)
         self.name = name
 
@@ -74,7 +57,6 @@ class FlextConsoleLogger:
         """Log a warning message to console."""
         self._logger.warning(message, extra={"context": kwargs} if kwargs else None)
 
-    # Back-compat alias
     def warn(self, message: str, **kwargs: object) -> None:
         """Alias for warning."""
         self.warning(message, **kwargs)
@@ -87,7 +69,6 @@ class FlextConsoleLogger:
         """Log critical message to console."""
         self._logger.critical(message, extra={"context": kwargs} if kwargs else None)
 
-    # Back-compat alias for fatal
     def fatal(self, message: str, **kwargs: object) -> None:
         """Alias for critical."""
         self.critical(message, **kwargs)
@@ -105,9 +86,8 @@ class FlextConsoleLogger:
         else:
             self._logger.error(message, extra={"context": kwargs} if kwargs else None)
 
-    # Back-compat: audit method (no-op structured log)
     def audit(self, message: str, **kwargs: object) -> None:
-        """Audit log (compatibility no-op)."""
+        """Audit log (no-op implementation)."""
         self._logger.info("AUDIT: %s %s", message, json.dumps(kwargs) if kwargs else "")
 
 
@@ -123,13 +103,12 @@ class FlextNoOpSpan:
     def finish(self) -> None:
         """No-op finish span."""
 
-    # Back-compat additions
     def add_context(self, key: str, value: object) -> None:
-        """Alias for set_tag (compatibility)."""
+        """Alias for set_tag."""
         del key, value
 
     def add_error(self, error: Exception) -> None:
-        """Record error on span (compatibility no-op)."""
+        """Record error on span (no-op implementation)."""
         del error
 
 
@@ -153,24 +132,23 @@ class FlextNoOpTracer:
         finally:
             span.finish()
 
-    # Back-compat context managers
     @contextmanager
     def business_span(self, operation: str, **kwargs: object) -> Generator[object]:
-        """Create business span context manager (compatibility)."""
+        """Create business span context manager."""
         del kwargs
         with self.trace_operation(operation) as span:
             yield span
 
     @contextmanager
     def technical_span(self, operation: str, **kwargs: object) -> Generator[object]:
-        """Technical span context manager (compatibility)."""
+        """Technical span context manager."""
         del kwargs
         with self.trace_operation(operation) as span:
             yield span
 
     @contextmanager
     def error_span(self, operation: str, **kwargs: object) -> Generator[object]:
-        """Error span context manager (compatibility)."""
+        """Error span context manager."""
         del kwargs
         with self.trace_operation(operation) as span:
             yield span
@@ -231,7 +209,7 @@ class FlextInMemoryMetrics:
         key = self._make_key(name, tags)
         return self._histograms.get(key, [])
 
-    # Back-compat simple API expected by tests
+    # Simple metric API
     def increment(
         self,
         name: str,
@@ -333,12 +311,12 @@ class FlextSimpleObservability:
 
 
 # =============================================================================
-# LEGACY-COMPAT COMPONENTS REQUESTED BY TESTS
+# ADDITIONAL COMPONENTS FOR TESTING
 # =============================================================================
 
 
 class FlextSimpleAlerts:
-    """Minimal alerts component for legacy API compatibility."""
+    """Minimal alerts component for testing environments."""
 
     def info(self, message: str, **kwargs: object) -> None:
         """Record info alert."""
@@ -360,7 +338,7 @@ class FlextSimpleAlerts:
 
 
 class _SimpleHealth:
-    """Minimal health component for legacy API compatibility."""
+    """Minimal health component for testing environments."""
 
     @staticmethod
     def health_check() -> dict[str, object]:
@@ -376,7 +354,7 @@ class _SimpleHealth:
 
 
 class FlextMinimalObservability:
-    """Composite with legacy-friendly attributes and methods.
+    """Composite with testing-friendly attributes and methods.
 
     Provides `.log`, `.trace`, `.metrics`, `.alerts`, `.health` attributes
     and also implements the core ObservabilityProtocol methods for
@@ -508,10 +486,10 @@ def get_observability(
     log_level: str = "INFO",
     force_recreate: bool = False,
 ) -> FlextMinimalObservability:
-    """Legacy-friendly factory returning a process-wide singleton.
+    """Factory returning a process-wide singleton.
 
     Args:
-        log_level: Kept for compatibility (unused in minimal impl)
+        log_level: Log level configuration (unused in minimal implementation)
         force_recreate: If True, recreate the global instance
 
     """
@@ -550,10 +528,10 @@ __all__: list[str] = [
 
 
 # =============================================================================
-# LEGACY ALIASES - Backward compatibility
+# ALIASES FOR CONVENIENCE
 # =============================================================================
 
-# Legacy aliases for backward compatibility with existing tests
+# Aliases for testing convenience
 ConsoleLogger = FlextConsoleLogger
 NoOpTracer = FlextNoOpTracer
 InMemoryMetrics = FlextInMemoryMetrics

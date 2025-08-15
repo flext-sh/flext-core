@@ -1,18 +1,4 @@
-"""Version management and compatibility for FLEXT ecosystem.
-
-Provides semantic versioning, feature detection, and Python compatibility
-validation for distributed deployment across 32 FLEXT projects.
-
-Classes:
-    FlextVersionInfo: Structured version metadata access.
-    FlextCompatibilityResult: Compatibility validation results.
-
-Functions:
-    get_version_info: Complete version and metadata information.
-    check_python_compatibility: Python version validation.
-    is_feature_available: Feature availability detection.
-    compare_versions: Semantic version comparison.
-"""
+"""Version management and compatibility for FLEXT ecosystem."""
 
 from __future__ import annotations
 

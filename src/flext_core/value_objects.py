@@ -1,15 +1,4 @@
-"""Immutable value objects with attribute-based equality.
-
-Provides DDD value object implementation with immutability,
-rich behaviors, and comprehensive validation patterns.
-
-Classes:
-    FlextValueObject: Abstract base for immutable values.
-    FlextValueObjectFactory: Type-safe creation with validation.
-    ValueObjectValidator: Validation patterns for values.
-    ValueObjectFormatter: Formatting utilities.
-
-"""
+"""Immutable value objects with attribute-based equality."""
 
 from __future__ import annotations
 

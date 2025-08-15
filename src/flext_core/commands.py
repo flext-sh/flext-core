@@ -1,8 +1,4 @@
-"""CQRS command patterns for write operations.
-
-Provides command definitions, handlers, and bus for CQRS pattern
-implementation with validation and routing capabilities.
-"""
+"""CQRS command patterns for write operations."""
 
 from __future__ import annotations
 

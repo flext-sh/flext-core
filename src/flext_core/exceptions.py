@@ -1,43 +1,4 @@
-"""FLEXT Core Exceptions - Enterprise-grade exception hierarchy for FLEXT ecosystem.
-
-This module consolidates all exception patterns following PEP8 naming conventions and
-provides structured error handling, context management, and cross-service serialization
-for distributed data integration pipelines across the FLEXT ecosystem.
-
-The exception hierarchy is designed to support enterprise-grade error handling with
-proper categorization, context preservation, and metrics collection for monitoring
-and debugging distributed systems.
-
-Architecture:
-    - Abstract Base Classes: Foundation exception patterns for inheritance
-    - Concrete Implementations: Production-ready exception classes for common scenarios
-    - Factory Methods: Module-specific exception creation with standardized patterns
-    - Metrics System: Exception tracking and monitoring for observability
-
-Exception Categories:
-    - Validation Errors: Input validation and data integrity issues
-    - Business Errors: Business rule violations and domain logic failures
-    - Infrastructure Errors: Network, database, and service connectivity issues
-    - Configuration Errors: Missing or invalid configuration values
-    - Security Errors: Authentication and authorization failures
-
-Example:
-    Basic usage with structured error handling:
-
-    >>> try:
-    ...     # Some operation
-    ...     raise FlextValidationError("Invalid data", error_code="INVALID_INPUT")
-    ... except FlextValidationError as e:
-    ...     logger.error(f"Validation failed: {e.to_dict()}")
-    ...     print(e.error_code)
-    'INVALID_INPUT'
-
-    Creating module-specific exceptions:
-
-    >>> DatabaseError = create_module_exception_classes("database")
-    >>> raise DatabaseError.ConnectionError("Cannot connect to database")
-
-"""
+"""Exception hierarchy for FLEXT ecosystem."""
 
 from __future__ import annotations
 

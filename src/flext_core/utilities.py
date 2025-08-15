@@ -1,9 +1,4 @@
-"""Common utility functions for ID generation and formatting.
-
-Provides utilities for ID generation, type conversion, formatting, and performance
-tracking following SOLID principles with concrete implementations.
-
-"""
+"""Common utility functions."""
 
 from __future__ import annotations
 
@@ -31,14 +26,14 @@ if TYPE_CHECKING:
 T = TypeVar("T")
 
 # =============================================================================
-# CONSTANTS - Backward compatibility
+# CONSTANTS - Default values
 # =============================================================================
 
 BYTES_PER_KB = 1024
 BYTES_PER_MB = 1024 * 1024
 BYTES_PER_GB = 1024 * 1024 * 1024
 
-# Time constants for backward compatibility
+# Time constants
 SECONDS_PER_MINUTE = 60
 SECONDS_PER_HOUR = 3600
 
@@ -61,7 +56,7 @@ class FlextConsole:
     def print(*args: object, **kwargs: object) -> None:
         """Print to console with standard print function.
 
-        Supports rich-style markup for compatibility but ignores it,
+        Supports rich-style markup but ignores it,
         focusing on the text content only.
         """
         text_parts = []
@@ -84,7 +79,7 @@ class FlextConsole:
         self.print(*args, **kwargs)
 
 
-# Backward-compatible simple Console symbol for tests that patch
+# Simple Console symbol for tests that patch
 # flext_core.utilities.Console
 Console = FlextConsole
 
@@ -658,16 +653,9 @@ class FlextIdGenerator:
 
 
 # =============================================================================
-# MIGRATION NOTICE - Legacy functions moved to legacy.py
+# MODERN API - Use FlextUtilities class
 # =============================================================================
 
-# IMPORTANT: All backward compatibility functions have been moved to legacy.py
-#
-# Migration guide:
-# OLD: from flext_core.utilities import truncate
-# NEW: from flext_core.legacy import truncate (with deprecation warning)
-# MODERN: from flext_core import FlextUtilities; FlextUtilities.truncate()
-#
 # For new code, use the proper FlextXXX classes above.
 
 
@@ -699,7 +687,7 @@ class FlextTypeGuards:
 
     @staticmethod
     def is_not_none_guard(value: object | None) -> bool:
-        """Return True if value is not None (compatible)."""
+        """Return True if value is not None."""
         return value is not None
 
 
@@ -843,12 +831,12 @@ class FlextUtilityFactory:
 
 
 # =============================================================================
-# LEGACY FUNCTION ALIASES - Backward compatibility
+# FUNCTION ALIASES - Convenience functions
 # =============================================================================
 
 
 def flext_safe_int_conversion(value: object, default: int | None = None) -> int | None:
-    """Legacy alias for safe_int_conversion (backward compatibility)."""
+    """Alias for safe_int_conversion (convenience function)."""
     return FlextUtilities.safe_int_conversion(value, default)
 
 

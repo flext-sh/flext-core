@@ -1,21 +1,4 @@
-"""FLEXT Core Mixins - Reusable behavioral patterns for enterprise applications.
-
-Consolidates all mixin patterns following PEP8 naming conventions.
-Provides abstract base classes and concrete implementations for common
-behaviors like timestamps, logging, validation, and serialization.
-
-Architecture:
-    - Abstract Base Classes: Foundation mixin patterns
-    - Concrete Implementations: Production-ready mixin classes
-    - Composite Mixins: Higher-level combinations
-    - Legacy Compatibility: Backward compatibility aliases
-
-Usage:
-    from flext_core import FlextTimestampMixin, FlextValidatableMixin
-
-    class User(FlextTimestampMixin, FlextValidatableMixin):
-        name: str
-"""
+"""Reusable behavioral patterns for enterprise applications."""
 
 from __future__ import annotations
 
@@ -470,7 +453,7 @@ class FlextTimingMixin:
         return elapsed
 
     def _start_timing(self) -> float:
-        """Compatibility helper used in examples: return start timestamp.
+        """Helper used in examples: return start timestamp.
 
         Returns:
             The timestamp (seconds) when timing started.
@@ -481,7 +464,7 @@ class FlextTimingMixin:
         return start
 
     def _get_execution_time_ms(self, start_time: float) -> float:
-        """Compatibility helper used in examples: return elapsed time in ms.
+        """Helper used in examples: return elapsed time in ms.
 
         Args:
             start_time: The start timestamp (seconds) previously returned by _start_timing.
@@ -547,7 +530,7 @@ class FlextValidatableMixin(FlextAbstractValidatableMixin):
         """Set up validatable mixin."""
         # No initialization needed for basic validation
 
-    # Back-compat API expected in tests
+    # API expected in tests
     def validate_and_set(self, **kwargs: object) -> None:
         """Validate provided kwargs and set attributes on the instance."""
         for key, value in kwargs.items():
@@ -650,7 +633,7 @@ class FlextSerializableMixin(FlextAbstractSerializableMixin):
         return json.dumps(self.to_dict(), default=str)
 
     def to_dict_basic(self) -> dict[str, object]:
-        """Alias for to_dict to maintain backward compatibility."""
+        """Alias for to_dict for convenience."""
         return self.to_dict()
 
     def load_from_dict(self, data: dict[str, object]) -> None:
@@ -817,7 +800,7 @@ class FlextServiceMixin(
     def mixin_setup(self) -> None:
         """Set up all component mixins."""
         super().mixin_setup()
-        # Provide id alias as service name for compatibility with tests
+        # Provide id alias as service name for testing convenience
         service_name_value: str | None = None
         if hasattr(self, "get_service_name") and callable(self.get_service_name):
             with suppress(Exception):
@@ -892,10 +875,26 @@ class FlextFullMixin(
 
 
 # =============================================================================
-# LEGACY COMPATIBILITY ALIASES - Maintain backward compatibility
+# ALIASES FOR CONVENIENCE
 # =============================================================================
 
-# Legacy compatibility mixins (map to modern implementations)
+# Convenience mixins (map to modern implementations)
+CompatibleTimestampMixin = FlextTimestampMixin
+CompatibleIdentifiableMixin = FlextIdentifiableMixin
+CompatibleValidatableMixin = FlextValidatableMixin
+CompatibleSerializableMixin = FlextSerializableMixin
+CompatibleLoggableMixin = FlextLoggableMixin
+CompatibleTimingMixin = FlextTimingMixin
+CompatibleComparableMixin = FlextComparableMixin
+CompatibleCacheableMixin = FlextCacheableMixin
+CompatibleEntityMixin = FlextEntityMixin
+CompatibleCommandMixin = FlextCommandMixin
+CompatibleDataMixin = FlextDataMixin
+CompatibleFullMixin = FlextFullMixin
+CompatibleServiceMixin = FlextServiceMixin
+CompatibleValueObjectMixin = FlextValueObjectMixin
+
+# Convenience aliases (alternative import names)
 LegacyCompatibleTimestampMixin = FlextTimestampMixin
 LegacyCompatibleIdentifiableMixin = FlextIdentifiableMixin
 LegacyCompatibleValidatableMixin = FlextValidatableMixin

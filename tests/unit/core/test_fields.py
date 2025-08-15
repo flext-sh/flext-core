@@ -28,6 +28,7 @@ from typing import TYPE_CHECKING, cast
 
 import pytest
 from hypothesis import given, strategies as st
+from tests.conftest import TestCase, TestScenario, assert_performance
 
 from flext_core.constants import FlextFieldType
 from flext_core.fields import (
@@ -40,7 +41,6 @@ from flext_core.fields import (
     flext_create_string_field,
 )
 from flext_core.result import FlextResult
-from tests.conftest import TestCase, TestScenario, assert_performance
 
 if TYPE_CHECKING:
     from collections.abc import Callable

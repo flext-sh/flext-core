@@ -1,33 +1,4 @@
-"""Railway-oriented programming result type for FLEXT ecosystem.
-
-This module provides the FlextResult[T] class for type-safe error handling without exceptions
-in the FLEXT ecosystem. It implements the railway-oriented programming pattern, enabling
-function composition through map/flat_map chaining operations for clean error handling.
-
-The FlextResult pattern is fundamental to FLEXT's approach to error handling, replacing
-traditional exception-based error handling with explicit success/failure states that
-compose cleanly in functional programming style.
-
-Classes:
-    FlextResult: Generic result container with success/failure states.
-    FlextResultOperations: Additional utility operations (alias for FlextResult).
-
-Functions:
-    safe_call: Execute functions with automatic error handling wrapped in FlextResult.
-
-Example:
-    Basic usage of FlextResult for error handling:
-
-    >>> result = FlextResult.ok("success")
-    >>> mapped = result.map(lambda x: x.upper())
-    >>> print(mapped.data)
-    'SUCCESS'
-
-    >>> error_result = FlextResult.fail("Something went wrong")
-    >>> print(error_result.error)
-    'Something went wrong'
-
-"""
+"""Railway-oriented programming result type."""
 
 from __future__ import annotations
 
@@ -132,7 +103,7 @@ class FlextResult[T]:
 
     @property
     def success(self) -> bool:
-        """Backward-compatible boolean success flag.
+        """Boolean success flag.
 
         Many call sites use `result.success` in boolean contexts.
         """
@@ -202,7 +173,7 @@ class FlextResult[T]:
         error_code: str | None = None,
         error_data: dict[str, object] | None = None,
     ) -> FlextResult[T]:
-        """Backward-compatible alias for fail()."""
+        """Alias for fail()."""
         return cls.fail(error, error_code=error_code, error_data=error_data)
 
     @classmethod
@@ -242,7 +213,7 @@ class FlextResult[T]:
             actual_error = "Unknown error occurred"
         return cls(error=actual_error, error_code=error_code, error_data=error_data)
 
-    # Compatibility operations expected by tests
+    # Operations expected by tests
     @staticmethod
     def chain_results(*results: FlextResult[object]) -> FlextResult[list[object]]:
         """Chain multiple results into a list, failing on first failure.
@@ -367,7 +338,7 @@ class FlextResult[T]:
         """Boolean conversion - True for success, False for failure."""
         return self.is_success
 
-    # Compatibility boolean methods as callables removed - use properties instead
+    # Boolean methods as callables removed - use properties instead
 
     def unwrap_or[U](self, default: U) -> T | U:
         """Get data or return default if failure."""
@@ -624,7 +595,7 @@ class FlextResult[T]:
 
 
 # =============================================================================
-# MIGRATION NOTICE - Legacy functions moved to legacy.py
+# MODERN API - Use FlextResult class
 # =============================================================================
 
 # IMPORTANT: The following functions have been moved to legacy.py:

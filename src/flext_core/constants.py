@@ -1,14 +1,4 @@
-"""Core constants and enums for the FLEXT ecosystem.
-
-Provides centralized constants, error codes, patterns, and defaults.
-Serves as a single source of truth for all constant values.
-
-Classes:
-    FlextConstants: Main constants container with nested categories.
-    FlextFieldType: Field type enumeration.
-    FlextLogLevel: Log level enumeration.
-
-"""
+"""Core constants and enums."""
 
 from __future__ import annotations
 
