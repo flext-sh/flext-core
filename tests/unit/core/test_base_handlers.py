@@ -6,7 +6,7 @@ from abc import ABC
 
 import pytest
 
-from flext_core.handlers import (
+from flext_core import (
     FlextAbstractHandler,
     FlextAuthorizingHandler,
     FlextBaseHandler,
@@ -17,9 +17,9 @@ from flext_core.handlers import (
     FlextHandlers,
     FlextMetricsHandler,
     FlextQueryHandler,
+    FlextResult,
     FlextValidatingHandler,
 )
-from flext_core.result import FlextResult
 
 # Test markers
 pytestmark = [pytest.mark.unit, pytest.mark.core]
@@ -33,7 +33,7 @@ class ConcreteBaseHandler(FlextAbstractHandler[object, object]):
         """Get handler name."""
         return "ConcreteBaseHandler"
 
-    def can_handle(self, request: object) -> bool:
+    def can_handle(self, _request: object) -> bool:
         """Check if handler can handle request."""
         return True
 
@@ -102,11 +102,24 @@ class TestFlextBaseHandler:
 class ConcreteCommandHandler(FlextCommandHandler[str, int]):
     """Concrete implementation for testing FlextCommandHandler."""
 
+    @property
+    def handler_name(self) -> str:
+        """Get handler name."""
+        return "ConcreteCommandHandler"
+
+    def can_handle(self, message_type: object) -> bool:  # noqa: ARG002  # noqa: ARG002
+        """Check if can handle message type."""
+        return True
+
     def handle_command(self, command: str) -> FlextResult[int]:
         """Handle string command and return length."""
         if not command:
             return FlextResult.fail("Empty command")
         return FlextResult.ok(len(command))
+
+    def process_request(self, request: str) -> FlextResult[int]:
+        """Process request - delegates to handle_command."""
+        return self.handle_command(request)
 
 
 class TestFlextCommandHandler:
@@ -161,12 +174,25 @@ class TestFlextCommandHandler:
 class ConcreteQueryHandler(FlextQueryHandler[dict[str, str], str]):
     """Concrete implementation for testing FlextQueryHandler."""
 
+    @property
+    def handler_name(self) -> str:
+        """Get handler name."""
+        return "ConcreteQueryHandler"
+
+    def can_handle(self, message_type: object) -> bool:  # noqa: ARG002  # noqa: ARG002
+        """Check if can handle message type."""
+        return True
+
     def handle_query(self, query: dict[str, str]) -> FlextResult[str]:
         """Handle dict query and return formatted string."""
         if not query:
             return FlextResult.fail("Empty query")
         name = query.get("name", "Unknown")
         return FlextResult.ok(f"Hello, {name}!")
+
+    def process_request(self, request: dict[str, str]) -> FlextResult[str]:
+        """Process request - delegates to handle_query."""
+        return self.handle_query(request)
 
 
 class TestFlextQueryHandler:

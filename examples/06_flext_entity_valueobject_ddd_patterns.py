@@ -14,10 +14,8 @@ domain events, and aggregate patterns.
 
 from __future__ import annotations
 
-import sys as _sys
 import time
 from decimal import Decimal
-from pathlib import Path as _Path
 from typing import TYPE_CHECKING, cast
 
 from flext_core import (
@@ -26,11 +24,7 @@ from flext_core import (
     FlextUtilities,
 )
 
-_project_root = _Path(__file__).resolve().parents[1]
-if str(_project_root) not in _sys.path:
-    _sys.path.insert(0, str(_project_root))
-
-from examples.shared_domain import (
+from .shared_domain import (
     Address,
     Age,
     EmailAddress as Email,
@@ -41,7 +35,7 @@ from examples.shared_domain import (
     User as SharedUser,
     UserStatus,
 )
-from examples.shared_example_helpers import run_example_demonstration
+from .shared_example_helpers import run_example_demonstration
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -695,10 +689,6 @@ class CustomerRepository:
     def save(self, customer: Customer) -> FlextResult[str]:
         """Save customer to repository."""
         self.customers[customer.id] = customer
-        print(
-            f"💾 Customer saved: {customer.name} "
-            f"(ID: {customer.id}, Version: {customer.version})",
-        )
         return FlextResult.ok(customer.id)
 
     def find_by_id(self, customer_id: str) -> FlextResult[Customer]:
@@ -707,7 +697,6 @@ class CustomerRepository:
             return FlextResult.fail(f"Customer not found: {customer_id}")
 
         customer = self.customers[customer_id]
-        print(f"🔍 Customer found: {customer.name} (Version: {customer.version})")
         return FlextResult.ok(customer)
 
     def find_by_email(self, email: str) -> FlextResult[Customer]:
@@ -719,16 +708,13 @@ class CustomerRepository:
                 None,
             )
             if customer_email and getattr(customer_email, "email", None) == email:
-                print(f"🔍 Customer found by email: {customer.name}")
                 return FlextResult.ok(customer)
 
         return FlextResult.fail(f"Customer not found with email: {email}")
 
     def find_active_customers(self) -> list[Customer]:
         """Find all active customers."""
-        active = [c for c in self.customers.values() if c.is_active]
-        print(f"📋 Found {len(active)} active customers")
-        return active
+        return [c for c in self.customers.values() if c.is_active]
 
     def get_all(self) -> list[Customer]:
         """Get all customers."""
@@ -745,10 +731,6 @@ class ProductRepository:
     def save(self, product: Product) -> FlextResult[str]:
         """Save product to repository."""
         self.products[product.id] = product
-        print(
-            f"💾 Product saved: {product.name} "
-            f"(ID: {product.id}, Version: {product.version})",
-        )
         return FlextResult.ok(product.id)
 
     def find_by_id(self, product_id: str) -> FlextResult[Product]:
@@ -757,20 +739,15 @@ class ProductRepository:
             return FlextResult.fail(f"Product not found: {product_id}")
 
         product = self.products[product_id]
-        print(f"🔍 Product found: {product.name} (Version: {product.version})")
         return FlextResult.ok(product)
 
     def find_available_products(self) -> list[Product]:
         """Find all available products."""
-        available = [p for p in self.products.values() if p.is_available]
-        print(f"📋 Found {len(available)} available products")
-        return available
+        return [p for p in self.products.values() if p.is_available]
 
     def find_low_stock_products(self) -> list[Product]:
         """Find products with low stock."""
-        low_stock = [p for p in self.products.values() if p.is_low_stock()]
-        print(f"⚠️ Found {len(low_stock)} low stock products")
-        return low_stock
+        return [p for p in self.products.values() if p.is_low_stock()]
 
     def get_all(self) -> list[Product]:
         """Get all products."""
@@ -787,10 +764,6 @@ class OrderRepository:
     def save(self, order: Order) -> FlextResult[str]:
         """Save order to repository."""
         self.orders[order.id] = order
-        print(
-            f"💾 Order saved: {order.id} "
-            f"(Status: {order.status}, Version: {order.version})",
-        )
         return FlextResult.ok(order.id)
 
     def find_by_id(self, order_id: str) -> FlextResult[Order]:
@@ -799,22 +772,15 @@ class OrderRepository:
             return FlextResult.fail(f"Order not found: {order_id}")
 
         order = self.orders[order_id]
-        print(f"🔍 Order found: {order.id} (Status: {order.status})")
         return FlextResult.ok(order)
 
     def find_by_customer(self, customer_id: str) -> list[Order]:
         """Find orders by customer."""
-        customer_orders = [
-            o for o in self.orders.values() if o.customer_id == customer_id
-        ]
-        print(f"📋 Found {len(customer_orders)} orders for customer {customer_id}")
-        return customer_orders
+        return [o for o in self.orders.values() if o.customer_id == customer_id]
 
     def find_by_status(self, status: str) -> list[Order]:
         """Find orders by status."""
-        status_orders = [o for o in self.orders.values() if o.status == status]
-        print(f"📋 Found {len(status_orders)} orders with status: {status}")
-        return status_orders
+        return [o for o in self.orders.values() if o.status == status]
 
     def get_all(self) -> list[Order]:
         """Get all orders."""
@@ -858,8 +824,6 @@ class OrderDomainService:
         Refactored to reduce complexity while preserving DDD patterns.
         Uses private methods for clear separation of concerns.
         """
-        print(f"🛒 Creating order for customer: {customer_id}")
-
         # Validate prerequisites
         customer_result = self._validate_customer_for_order(customer_id)
         if customer_result.is_failure:
@@ -1069,7 +1033,7 @@ class OrderDomainService:
             )
 
         # Add domain event
-        event_result = self._add_order_creation_event(order, customer_id)
+        event_result = self._add_order_creation_event(order, customer_id, total_amount)
         if event_result.is_failure:
             return FlextResult.fail(event_result.error or "Failed to add domain event")
 
@@ -1080,13 +1044,13 @@ class OrderDomainService:
         if save_result.is_failure:
             return FlextResult.fail(f"Failed to save order: {save_result.error}")
 
-        print(f"✅ Order created successfully: {order.id} (Total: {total_amount})")
         return FlextResult.ok(order)
 
     def _add_order_creation_event(
         self,
         order: Order,
         customer_id: str,
+        total_amount: Money,
     ) -> FlextResult[Order]:
         """Add domain event for order creation."""
         order.add_domain_event(
@@ -1095,7 +1059,7 @@ class OrderDomainService:
                 "order_id": order.id,
                 "customer_id": customer_id,
                 "item_count": len(order.items),
-                "total_amount": str(getattr(order, "total_amount", "N/A")),
+                "total_amount": str(total_amount),
                 "shipping_address": str(order.shipping_address),
                 "creation_date": getattr(order, "order_date", None),
             },
@@ -1109,8 +1073,6 @@ class OrderDomainService:
         REFACTORED: Eliminated 6 returns using FlextResult chain pattern.
         Applied SOLID principles with single responsibility methods.
         """
-        print(f"📦 Fulfilling order: {order_id}")
-
         return (
             self._find_order_for_fulfillment(order_id)
             .flat_map(self._confirm_order_safely)
@@ -1219,7 +1181,6 @@ class OrderDomainService:
                     if stock_result.success and stock_result.data is not None:
                         self.product_repo.save(stock_result.data)
 
-        print(f"✅ Order fulfilled successfully: {order_id}")
         return FlextResult.ok(shipped_order)
 
 
@@ -1335,75 +1296,55 @@ def create_order_factory() -> OrderFactory:
 
 def demonstrate_value_objects() -> None:
     """Demonstrate value object patterns."""
-    print("\n💎 Value Objects Demonstration")
-    print("=" * 50)
-
     # Money value objects
-    print("📋 Money Value Objects:")
     usd_10 = Money(amount=Decimal("10.50"), currency="USD")
     usd_20 = Money(amount=Decimal("20.00"), currency="USD")
     eur_15 = Money(amount=Decimal("15.75"), currency="EUR")
 
-    print(f"  💵 USD Amount 1: {usd_10}")
-    print(f"  💵 USD Amount 2: {usd_20}")
-    print(f"  💶 EUR Amount: {eur_15}")
-
     # Money operations
-    print("\n📋 Money Operations:")
 
     # Addition (same currency)
     sum_result = usd_10.add(usd_20)
     if sum_result.success:
-        print(f"  ✅ {usd_10} + {usd_20} = {sum_result.data}")
+        pass
 
     # Addition (different currency - should fail)
     invalid_sum = usd_10.add(eur_15)
     if invalid_sum.is_failure:
-        print(f"  ❌ {usd_10} + {eur_15} failed: {invalid_sum.error}")
+        pass
 
     # Multiplication
     doubled_result = usd_10.multiply(Decimal("2.0"))
     if doubled_result.success:
-        print(f"  ✅ {usd_10} x 2 = {doubled_result.data}")
+        pass
 
     # Address value objects
-    print("\n📋 Address Value Objects:")
-    address1 = Address(
+    Address(
         street="123 Main Street",
         city="Springfield",
         postal_code="12345",
         country="USA",
     )
 
-    address2 = Address(
+    Address(
         street="456 Oak Avenue",
         city="Springfield",
         postal_code="12346",
         country="USA",
     )
 
-    print(f"  🏠 Address 1: {address1}")
-    print(f"  🏠 Address 2: {address2}")
-    print(f"  🏙️ Same city: {address1.is_same_city(address2)}")
-
     # Email value objects
-    print("\n📋 Email Value Objects:")
-    email1 = Email(email="john@example.com")
+    Email(email="john@example.com")
     email2 = Email(email="invalid-email")
-
-    print(f"  📧 Valid Email: {email1}")
 
     # Validate invalid email
     validation = email2.validate_business_rules()
     if validation.is_failure:
-        print(f"  ❌ Invalid Email '{email2}': {validation.error}")
+        pass
 
 
 def demonstrate_entity_lifecycle() -> None:
     """Demonstrate entity lifecycle operations."""
-    print("\n🔄 Entity Lifecycle Demonstration")
-    print("=" * 50)
-
     customer = _create_demo_customer()
     if customer is None:
         return
@@ -1429,16 +1370,9 @@ def _create_demo_customer() -> Customer | None:
     )
 
     if result.is_failure or result.data is None:
-        print(f"❌ Customer creation failed: {result.error or 'no data'}")
         return None
 
-    customer = result.data
-    print(
-        f"✅ Customer created: {customer.name} "
-        f"(ID: {customer.id}, Version: {customer.version})",
-    )
-    print("\n📋 Customer Operations:")
-    return customer
+    return result.data
 
 
 def _demo_update_address(customer: Customer) -> Customer:
@@ -1451,9 +1385,7 @@ def _demo_update_address(customer: Customer) -> Customer:
     )
     updated_result = customer.update_address(new_address)
     if updated_result.success and isinstance(updated_result.data, Customer):
-        updated_customer = updated_result.data
-        print(f"✅ Address updated (Version: {updated_customer.version})")
-        return updated_customer
+        return updated_result.data
     return customer
 
 
@@ -1462,12 +1394,7 @@ def _demo_increase_credit(customer: Customer) -> Customer:
     credit_increase = Money(amount=Decimal("2000.0"), currency="USD")
     credit_result = customer.increase_credit_limit(credit_increase)
     if credit_result.success and isinstance(credit_result.data, Customer):
-        updated = credit_result.data
-        print(
-            f"✅ Credit limit increased to {updated.credit_limit} "
-            f"(Version: {updated.version})",
-        )
-        return updated
+        return credit_result.data
     return customer
 
 
@@ -1475,28 +1402,20 @@ def _demo_increment_orders(customer: Customer) -> Customer:
     """Increment orders once and print the outcome, returning the latest customer."""
     order_result = customer.increment_order_count()
     if order_result.success and isinstance(order_result.data, Customer):
-        updated = order_result.data
-        print(
-            f"✅ Order count incremented to {updated.total_orders} "
-            f"(Version: {updated.version})",
-        )
-        return updated
+        return order_result.data
     return customer
 
 
 def _demo_print_events(customer: Customer) -> None:
     """Print and clear domain events for the given customer."""
-    print("\n📋 Domain Events:")
     events = customer.clear_events()
-    for i, event in enumerate(events, 1):
-        event_type = (
+    for event in events:
+        (
             event.get_metadata("event_type")
             if hasattr(event, "get_metadata")
             else "Unknown Event Type"
         )
-        print(f"  📝 Event {i}: {event_type}")
-        data_repr = event.data if hasattr(event, "data") else event
-        print(f"     Data: {data_repr}")
+        event.data if hasattr(event, "data") else event
 
 
 def _setup_aggregate_repositories() -> tuple[
@@ -1523,12 +1442,10 @@ def _create_test_customer(customer_repo: CustomerRepository) -> Customer | None:
     )
 
     if customer_result.is_failure:
-        print(f"❌ Failed to create customer: {customer_result.error}")
         return None
 
     customer = customer_result.data
     if customer is None:
-        print("❌ Failed to create customer: None returned")
         return None
     # Customer is already correctly typed
     customer_repo.save(customer)
@@ -1561,7 +1478,6 @@ def _create_test_products(product_repo: ProductRepository) -> list[Product]:
             if product is not None:
                 product_repo.save(product)
                 products.append(product)
-                print(f"  ✅ Product created: {product.name}")
     return products
 
 
@@ -1590,16 +1506,13 @@ def _create_order_via_service(
     )
 
     if order_result.is_failure:
-        print(f"❌ Order creation failed: {order_result.error}")
         return None
 
     order = order_result.data
     if order is None:
-        print("❌ Order creation returned None")
         return None
 
-    total_amount_str = str(getattr(order, "total_amount", "N/A"))
-    print(f"✅ Order created: {order.id} (Total: {total_amount_str})")
+    str(getattr(order, "total_amount", "N/A"))
     return order
 
 
@@ -1609,8 +1522,6 @@ def _process_order_lifecycle(
     order: Order,
 ) -> None:
     """Process order lifecycle (fulfill and deliver)."""
-    print("\n📋 Order Lifecycle:")
-
     # Fulfill order
     tracking_number = "TRK123456789"
     fulfill_result = order_service.fulfill_order(order.id, tracking_number)
@@ -1619,9 +1530,7 @@ def _process_order_lifecycle(
 
     fulfilled_order = fulfill_result.data
     if fulfilled_order is None:
-        print("❌ Order fulfillment returned None")
         return
-    print(f"✅ Order fulfilled: Status {fulfilled_order.status}")
 
     # Deliver order (method may not exist in Order class)
     if hasattr(fulfilled_order, "deliver_order"):
@@ -1629,13 +1538,11 @@ def _process_order_lifecycle(
         if deliver_result.success:
             delivered_order = deliver_result.data
             if delivered_order is None:
-                print("❌ Order delivery returned None")
                 return
             order_repo.save(delivered_order)
-            print(f"✅ Order delivered: Status {delivered_order.status}")
     else:
         # If method doesn't exist, simulate delivery
-        print("✅ Order delivered (simulated): Status delivered")
+        pass
 
 
 def _display_updated_stock(
@@ -1643,40 +1550,29 @@ def _display_updated_stock(
     products: list[Product],
 ) -> None:
     """Display updated product stock after order processing."""
-    print("\n📋 Updated Product Stock:")
     for product in products:
         updated_result = product_repo.find_by_id(product.id)
         if updated_result.success:
             updated_product = updated_result.data
             if updated_product is None:
-                print(f"  📦 Product {product.id}: Not found")
                 continue
-            print(
-                f"  📦 {updated_product.name}: Stock {updated_product.stock_quantity}",
-            )
 
 
 def demonstrate_aggregate_patterns() -> None:
     """Demonstrate aggregate patterns with orders."""
-    print("\n🏢 Aggregate Patterns Demonstration")
-    print("=" * 50)
-
     # Setup repositories
     customer_repo, product_repo, order_repo = _setup_aggregate_repositories()
 
     # Setup test data
-    print("📋 Setting up test data:")
     customer = _create_test_customer(customer_repo)
     if customer is None:
         return
 
     products = _create_test_products(product_repo)
     if not products:
-        print("❌ No products created")
         return
 
     # Create order using domain service
-    print("\n📋 Order Creation via Domain Service:")
     order_service = OrderDomainService(customer_repo, product_repo, order_repo)
     order = _create_order_via_service(order_service, customer, products)
     if order is None:
@@ -1733,20 +1629,15 @@ def _demonstrate_customer_queries(
     customers: list[Customer],
 ) -> None:
     """Demonstrate customer repository queries."""
-    print("\n📋 Repository Queries:")
-
     # Find by email
     email_result = customer_repo.find_by_email("alice@example.com")
     if email_result.success:
         found_customer = email_result.data
         if found_customer is None:
-            print("  🔍 Customer not found by email")
-        else:
-            print(f"  🔍 Found customer by email: {found_customer.name}")
+            pass
 
     # Find active customers
-    active_customers = customer_repo.find_active_customers()
-    print(f"  👥 Active customers: {len(active_customers)}")
+    customer_repo.find_active_customers()
 
     # Deactivate a customer
     if customers:
@@ -1757,16 +1648,13 @@ def _demonstrate_customer_queries(
             deactivated = deactivate_result.data
             if deactivated is not None:
                 customer_repo.save(deactivated)
-                print(f"  ❌ Customer deactivated: {deactivated.name}")
 
     # Check active customers again
-    active_customers = customer_repo.find_active_customers()
-    print(f"  👥 Active customers after deactivation: {len(active_customers)}")
+    customer_repo.find_active_customers()
 
 
 def _demonstrate_product_operations(product_repo: ProductRepository) -> None:
     """Demonstrate product repository operations."""
-    print("\n📋 Product Repository Operations:")
     product_factory = create_product_factory()
 
     products_data = [
@@ -1793,21 +1681,17 @@ def _demonstrate_product_operations(product_repo: ProductRepository) -> None:
 
     # Find low stock products
     low_stock = product_repo.find_low_stock_products()
-    for product in low_stock:
-        print(f"  ⚠️ Low stock: {product.name} ({product.stock_quantity} units)")
+    for _product in low_stock:
+        pass
 
 
 def demonstrate_repository_patterns() -> None:
     """Demonstrate repository patterns."""
-    print("\n🗄️ Repository Patterns Demonstration")
-    print("=" * 50)
-
     # Create repositories
     customer_repo = CustomerRepository()
     product_repo = ProductRepository()
 
     # Create and save customers
-    print("📋 Customer Repository Operations:")
     customers = _create_test_customers_for_repo(customer_repo)
 
     # Demonstrate customer queries
@@ -1819,9 +1703,6 @@ def demonstrate_repository_patterns() -> None:
 
 def demonstrate_version_management() -> None:
     """Demonstrate optimistic locking and version management."""
-    print("\n🔒 Version Management Demonstration")
-    print("=" * 50)
-
     # Create product
     product_factory = create_product_factory()
     product_result = product_factory(
@@ -1831,17 +1712,13 @@ def demonstrate_version_management() -> None:
     )
 
     if product_result.is_failure:
-        print(f"❌ Product creation failed: {product_result.error}")
         return
 
     product = product_result.data
     if product is None:
-        print("❌ Product creation returned None")
         return
-    print(f"📦 Product created: {product.name} (Version: {product.version})")
 
     # Simulate concurrent modifications
-    print("\n📋 Concurrent Modification Simulation:")
 
     # First modification: Update price
     new_price = Money(amount=Decimal("120.0"), currency="USD")
@@ -1849,10 +1726,7 @@ def demonstrate_version_management() -> None:
     if price_update_result.success:
         updated_product_1 = price_update_result.data
         if updated_product_1 is not None:
-            print(
-                f"  💰 Price updated: {updated_product_1.price} "
-                f"(Version: {updated_product_1.version})",
-            )
+            pass
 
         # Second modification: Adjust stock
         if updated_product_1 is not None:
@@ -1860,29 +1734,13 @@ def demonstrate_version_management() -> None:
             if stock_update_result.success:
                 updated_product_2 = stock_update_result.data
                 if updated_product_2 is not None:
-                    print(
-                        f"  📦 Stock adjusted: {updated_product_2.stock_quantity} "
-                        f"(Version: {updated_product_2.version})",
-                    )
-
                     # Show version progression
-                    print("\n📊 Version History:")
-                    print(f"  📝 Original: Version {product.version}")
-                    print(
-                        f"  📝 After price update: Version {updated_product_1.version}",
-                    )
-                    print(
-                        f"  📝 After stock update: Version {updated_product_2.version}",
-                    )
+                    pass
 
 
 def demonstrate_performance_characteristics() -> None:
     """Demonstrate performance characteristics of entities."""
-    print("\n⚡ Performance Characteristics Demonstration")
-    print("=" * 50)
-
     # Entity creation performance
-    print("📋 Entity Creation Performance:")
     customer_factory = create_customer_factory()
 
     operations = 1000
@@ -1900,14 +1758,9 @@ def demonstrate_performance_characteristics() -> None:
             ),
         )
 
-    creation_time = time.time() - start_time
-    print(
-        f"  🔹 {operations} Customer creations: {creation_time:.4f}s "
-        f"({operations / creation_time:.0f}/s)",
-    )
+    time.time() - start_time
 
     # Entity operation performance
-    print("\n📋 Entity Operation Performance:")
 
     # Create a customer for operations
     customer_result = customer_factory(
@@ -1924,7 +1777,6 @@ def demonstrate_performance_characteristics() -> None:
     if customer_result.success:
         customer = customer_result.data
         if customer is None:
-            print("❌ Performance test customer creation returned None")
             return
 
         # Test copy_with performance
@@ -1936,21 +1788,13 @@ def demonstrate_performance_characteristics() -> None:
             if result.success and result.data is not None:
                 current_customer = result.data
 
-        operation_time = time.time() - start_time
-        print(
-            f"  🔹 100 Entity operations: {operation_time:.4f}s "
-            f"({100 / operation_time:.0f}/s)",
-        )
+        time.time() - start_time
 
         # Final state
         if current_customer is not None:
-            print(
-                f"  📊 Final state: Version {current_customer.version}, "
-                f"Orders {current_customer.total_orders}",
-            )
+            pass
 
     # Value object operation performance
-    print("\n📋 Value Object Performance:")
     money1 = Money(amount=Decimal("100.0"), currency="USD")
     money2 = Money(amount=Decimal("50.0"), currency="USD")
 
@@ -1958,11 +1802,7 @@ def demonstrate_performance_characteristics() -> None:
     for _ in range(operations):
         money1.add(money2)
 
-    value_time = time.time() - start_time
-    print(
-        f"  🔹 {operations} Money additions: {value_time:.4f}s "
-        f"({operations / value_time:.0f}/s)",
-    )
+    time.time() - start_time
 
 
 def main() -> None:

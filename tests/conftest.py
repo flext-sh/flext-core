@@ -24,23 +24,26 @@ from unittest.mock import AsyncMock, MagicMock, Mock
 
 import pytest
 import structlog
+from _pytest.fixtures import SubRequest
 from hypothesis import strategies as st
 
-from flext_core import FlextEntity
-from flext_core.aggregate_root import FlextAggregateRoot
-from flext_core.commands import FlextCommands
-from flext_core.container import FlextContainer
-from flext_core.handlers import FlextBaseHandler
-from flext_core.loggings import FlextLoggerFactory
-from flext_core.models import FlextEntityStatus, FlextOperationStatus
-from flext_core.payload import FlextEvent
-from flext_core.result import FlextResult
-from flext_core.value_objects import FlextValueObject
+from flext_core import (
+    FlextAggregateRoot,
+    FlextBaseHandler,
+    FlextCommands,
+    FlextContainer,
+    FlextEntity,
+    FlextEntityStatus,
+    FlextEvent,
+    FlextLoggerFactory,
+    FlextOperationStatus,
+    FlextResult,
+    FlextValueObject,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator
 
-    from _pytest.fixtures import SubRequest
 
 # Type variables for generic fixtures
 T = TypeVar("T")
@@ -425,7 +428,7 @@ def mock_external_service() -> Generator[MagicMock]:
 @pytest.fixture
 def entity_factory() -> Callable[[str, dict[str, object]], FlextEntity]:
     """Factory for creating test entities."""
-    from flext_core.models import FlextEntityStatus  # noqa: PLC0415
+    from flext_core.constants import FlextEntityStatus  # noqa: PLC0415
 
     class TestEntity(FlextEntity):
         name: str = "test"
@@ -735,6 +738,19 @@ def performance_threshold() -> dict[str, float]:
     }
 
 
+# Backward-compatible alias fixtures for renamed fixtures in integration tests
+@pytest.fixture(name="_configured_container")
+def _alias_configured_container(configured_container: FlextContainer) -> FlextContainer:
+    return configured_container
+
+
+@pytest.fixture(name="_performance_threshold")
+def _alias_performance_threshold(
+    performance_threshold: dict[str, float],
+) -> dict[str, float]:
+    return performance_threshold
+
+
 # ============================================================================
 # Advanced Testing Utilities
 # ============================================================================
@@ -805,7 +821,7 @@ async def async_client() -> object:
             await asyncio.sleep(0.01)  # Simulate network delay
             return {"status": "success", "url": url}
 
-        async def post(self, url: str, data: dict[str, object]) -> dict[str, object]:
+        async def post(self, _url: str, data: dict[str, object]) -> dict[str, object]:
             await asyncio.sleep(0.01)
             return {"status": "created", "data": data}
 
@@ -946,7 +962,7 @@ def handler_factory() -> Callable[[Callable[[object], object]], FlextBaseHandler
     """Factory for creating test handlers."""
 
     class TestHandler(FlextBaseHandler):
-        def __init__(self, handler_func: Callable[[object], object]):
+        def __init__(self, handler_func: Callable[[object], object]) -> None:
             super().__init__("test_handler")
             self.handler_func = handler_func
 
@@ -1029,8 +1045,13 @@ def e2e_environment() -> dict[str, object]:
 # ============================================================================
 
 
-def pytest_collection_modifyitems(config: object, items: list[object]) -> None:
+def pytest_collection_modifyitems(
+    config: object,
+    items: list[object],
+) -> None:  # type: ignore[unused-argument]
     """Modify test collection to add custom markers."""
+    # Mark 'config' as intentionally unused while keeping hook signature valid
+    del config
     for item in items:
         # Add markers based on test location - use hasattr for safety
         if hasattr(item, "fspath") and "unit" in str(item.fspath):

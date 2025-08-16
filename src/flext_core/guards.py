@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from functools import wraps
 from typing import TYPE_CHECKING, ParamSpec, Self, TypeVar, cast
 
@@ -18,7 +17,6 @@ from flext_core.validation import FlextValidators
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-
 
 Platform = FlextConstants.Platform
 
@@ -306,7 +304,7 @@ class FlextValidationUtils:
         message: str = "Value cannot be empty",
     ) -> object:
         """Require value is a non-empty string with comprehensive validation."""
-        if not FlextValidators.is_non_empty_string(value):
+        if not isinstance(value, str) or not FlextValidators.is_non_empty_string(value):
             raise FlextValidationError(
                 message,
                 validation_details={"field": "non_empty_string", "value": value},

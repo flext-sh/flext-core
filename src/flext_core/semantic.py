@@ -5,8 +5,8 @@ from __future__ import annotations
 import importlib
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from .constants import FlextConstants
-from .result import FlextResult
+from flext_core.constants import FlextConstants
+from flext_core.result import FlextResult
 
 if TYPE_CHECKING:
     from contextlib import AbstractContextManager

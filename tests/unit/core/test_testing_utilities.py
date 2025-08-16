@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from flext_core.testing_utilities import (
+from flext_core import (
     FlextTestMocker,
     create_api_test_response,
     create_ldap_test_config,
@@ -351,7 +351,7 @@ class TestFlextTestMockerPatchObject:
                 return "original"
 
         class MockSpec:
-            def mock_method(self):
+            def mock_method(self) -> str:
                 return "mocked"
 
         target = TestTarget()

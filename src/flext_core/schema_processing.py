@@ -7,11 +7,9 @@ from abc import ABC, abstractmethod
 from enum import Enum
 from typing import TYPE_CHECKING, Generic, Protocol, TypeVar
 
-from .result import FlextResult
-
-# Keep internal alias for backward compatibility in public API exports
-from .typings import EntryT
-from .value_objects import FlextValueObject
+from flext_core.result import FlextResult
+from flext_core.typings import EntryT
+from flext_core.value_objects import FlextValueObject
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -87,8 +85,6 @@ class FlextBaseProcessor(ABC, Generic[EntryTypeVar]):  # noqa: UP046
             )
 
         identifier = identifier_validation.data
-        if identifier is None:
-            return FlextResult.fail("Identifier validation returned None")
 
         # Step 2: Create and validate entry
         clean_content = (
@@ -120,8 +116,6 @@ class FlextBaseProcessor(ABC, Generic[EntryTypeVar]):  # noqa: UP046
             )
 
         identifier = identifier_result.data
-        if identifier is None:
-            return FlextResult.fail("Identifier extraction returned None")
 
         if self.validator and not self.validator.is_whitelisted(identifier):
             return FlextResult.fail(f"Identifier {identifier} not whitelisted")

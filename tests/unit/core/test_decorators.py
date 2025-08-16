@@ -10,18 +10,16 @@ import pytest
 from pydantic import BaseModel, Field
 
 from flext_core import (
+    FlextDecoratedFunction,
     FlextDecorators,
-    FlextResult,
-)
-from flext_core.decorators import (
     FlextDecoratorUtils,
     FlextErrorHandlingDecorators,
     FlextLoggingDecorators,
     FlextPerformanceDecorators,
+    FlextResult,
     FlextValidationDecorators,
+    FlextValidationError,
 )
-from flext_core.exceptions import FlextValidationError
-from flext_core.protocols import FlextDecoratedFunction
 
 # Aliases for compatibility
 _BaseDecoratorUtils = FlextDecoratorUtils
@@ -131,7 +129,7 @@ class TestFlextDecorators:
         """Test validated_with_result decorator when execution fails."""
 
         @FlextDecorators.validated_with_result(UserModel)
-        def failing_user_creation(**kwargs: object) -> str:
+        def failing_user_creation(**kwargs: object) -> str:  # noqa: ARG001
             msg = "Database error"
             raise RuntimeError(msg)
 
@@ -439,7 +437,7 @@ class TestFlextValidationDecorators:
         """Test apply_decoration with output validation failure (lines 113-122)."""
         validator = FlextValidationDecorators("test_validator")
 
-        def test_func_none(x: int) -> None:  # Accept parameter
+        def test_func_none(x: int) -> None:  # noqa: ARG001  # Accept parameter
             return None
 
         decorated = validator.apply_decoration(test_func_none)
@@ -1007,7 +1005,7 @@ class TestDecoratorCoverageImprovements:
 
         from flext_core import _validate_input_decorator  # noqa: PLC0415
 
-        def always_false_validator(arg: object) -> bool:
+        def always_false_validator(arg: object) -> bool:  # noqa: ARG001
             return False
 
         def sample_function(x: int) -> int:
@@ -1061,7 +1059,7 @@ class TestDecoratorCoverageImprovements:
         assert callable(timing_decorator)
 
         # Test create_validation_decorator - line 420
-        def dummy_validator(arg: object) -> bool:
+        def dummy_validator(arg: object) -> bool:  # noqa: ARG001
             return True
 
         validation_decorator = _BaseDecoratorFactory.create_validation_decorator(

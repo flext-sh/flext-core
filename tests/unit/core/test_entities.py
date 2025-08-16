@@ -600,7 +600,8 @@ class TestFlextEntityFactory:
         assert user.email == "john@example.com"
         if user.age != 25:
             raise AssertionError(f"Expected {25}, got {user.age}")
-        assert user.version == 1
+        version_value = user.version.root if hasattr(user.version, "root") else user.version
+        assert version_value == 1
         assert user.id  # Should have generated ID
 
     def test_factory_with_defaults(self) -> None:
@@ -651,7 +652,8 @@ class TestFlextEntityFactory:
         assert result.success
         user = cast("SampleUser", result.data)
         assert user.id
-        assert len(user.id) > 0
+        id_value = user.id.root if hasattr(user.id, "root") else str(user.id)
+        assert len(id_value) > 0
 
     def test_factory_use_provided_id(self) -> None:
         """Test factory uses provided ID."""
@@ -691,8 +693,9 @@ class TestFlextEntityFactory:
 
         assert result.success
         user = cast("SampleUser", result.data)
-        if user.version != 1:
-            raise AssertionError(f"Expected {1}, got {user.version}")
+        version_value = user.version.root if hasattr(user.version, "root") else user.version
+        if version_value != 1:
+            raise AssertionError(f"Expected {1}, got {version_value}")
 
     def test_factory_use_provided_version(self) -> None:
         """Test factory uses provided version."""
@@ -706,8 +709,9 @@ class TestFlextEntityFactory:
 
         assert result.success
         user = cast("SampleUser", result.data)
-        if user.version != 5:
-            raise AssertionError(f"Expected {5}, got {user.version}")
+        version_value = user.version.root if hasattr(user.version, "root") else user.version
+        if version_value != 5:
+            raise AssertionError(f"Expected {5}, got {version_value}")
 
     def test_factory_domain_validation_failure(self) -> None:
         """Test factory with domain validation failure."""
@@ -734,10 +738,10 @@ class TestFlextEntityFactory:
         """Test factory handles TypeError."""
         factory = FlextEntityFactory.create_entity_factory(SampleUser)
 
-        # Mock model_validate to raise TypeError
+        # Mock __init__ to raise TypeError during instantiation
         with patch.object(
             SampleUser,
-            "model_validate",
+            "__init__",
             side_effect=TypeError("Type error"),
         ):
             result = cast("EntityFactory", factory)(
@@ -746,16 +750,16 @@ class TestFlextEntityFactory:
             )
 
         assert result.is_failure
-        if "Entity creation failed" not in (result.error or ""):
-            raise AssertionError(f"Expected 'Entity creation failed' in {result.error}")
+        if "Failed to create entity" not in (result.error or ""):
+            raise AssertionError(f"Expected 'Failed to create entity' in {result.error}")
 
     def test_factory_import_error_handling(self) -> None:
         """Test factory handles ImportError."""
         factory = FlextEntityFactory.create_entity_factory(SampleUser)
 
-        # Mock FlextGenerators.generate_entity_id to raise ImportError
+        # Mock FlextGenerators.generate_uuid to raise ImportError
         with patch(
-            "flext_core.FlextGenerators.generate_entity_id",
+            "flext_core.utilities.FlextGenerators.generate_uuid",
             side_effect=ImportError("Import error"),
         ):
             result = cast("EntityFactory", factory)(
@@ -793,7 +797,7 @@ class TestEntityIntegration:
         assert updated_user is not None
         if updated_user.name != "John Doe":
             raise AssertionError(f"Expected {'John Doe'}, got {updated_user.name}")
-        assert updated_user.version == EXPECTED_BULK_SIZE
+        assert updated_user.version.root == EXPECTED_BULK_SIZE
 
         # Original events are preserved (entity is immutable)
         if len(user.domain_events) != EXPECTED_BULK_SIZE:
@@ -873,7 +877,7 @@ class TestEntityCoverageImprovements:
                 """Validate domain rules."""
                 return FlextResult.ok(None)
 
-            def model_dump(self, **kwargs: object) -> dict[str, object]:
+            def model_dump(self, **_kwargs: object) -> dict[str, object]:
                 """Override model_dump to include internal fields for testing."""
                 normal_data = super().model_dump()
                 # Add internal fields that should be skipped by validate_all_fields

@@ -6,16 +6,14 @@ import json
 import time
 from abc import ABC, abstractmethod
 from contextlib import suppress
-from typing import TYPE_CHECKING
 
+from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextValidationError
 from flext_core.loggings import FlextLoggerFactory
+from flext_core.protocols import FlextLoggerProtocol
 from flext_core.result import FlextResult
+from flext_core.typings import TEntityId
 from flext_core.utilities import FlextGenerators
-
-if TYPE_CHECKING:
-    from flext_core.protocols import FlextLoggerProtocol
-    from flext_core.typings import TEntityId
 
 # =============================================================================
 # ABSTRACT BASE CLASSES - Foundation mixin patterns
@@ -362,7 +360,9 @@ class FlextIdentifiableMixin(FlextAbstractIdentifiableMixin):
         if FlextValidators.is_non_empty_string(entity_id):
             self._id = entity_id
         else:
-            msg = f"Invalid entity ID: {entity_id}"
+            msg = FlextConstants.Entities.INVALID_ENTITY_ID_TEMPLATE.format(
+                entity_id=entity_id,
+            )
             raise FlextValidationError(
                 msg,
                 field="entity_id",
@@ -407,7 +407,10 @@ class FlextLoggableMixin(FlextAbstractLoggableMixin):
 
     def log_operation(self, operation: str, **kwargs: object) -> None:
         """Log operation - implements abstract method."""
-        self.logger.info(f"Operation: {operation}", **kwargs)
+        self.logger.info(
+            FlextConstants.Entities.OPERATION_LOG_TEMPLATE.format(operation=operation),
+            **kwargs,
+        )
 
     def mixin_setup(self) -> None:
         """Set up loggable mixin."""

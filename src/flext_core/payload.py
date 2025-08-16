@@ -7,9 +7,16 @@ import time
 import zlib
 from base64 import b64decode, b64encode
 from collections.abc import Callable, Mapping
-from typing import TYPE_CHECKING, TypeVar, cast
+from typing import TypeVar, cast
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    ValidationError,
+    field_serializer,
+    model_serializer,
+)
 
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextAttributeError, FlextValidationError
@@ -19,10 +26,8 @@ from flext_core.mixins import (
     FlextSerializableMixin,
 )
 from flext_core.result import FlextResult
+from flext_core.typings import TValue
 from flext_core.validation import FlextValidators
-
-if TYPE_CHECKING:
-    from flext_core.typings import TValue
 
 # =============================================================================
 # CROSS-SERVICE SERIALIZATION CONSTANTS AND TYPES
@@ -99,10 +104,15 @@ class FlextPayload[T](
         },
     )
 
-    data: T | None = Field(default=None, description="Payload data")
+    data: T | None = Field(
+        default=None,
+        description="Payload data",
+        serialization_alias="payloadData",
+    )
     metadata: dict[str, object] = Field(
         default_factory=dict,
         description="Optional metadata",
+        serialization_alias="payloadMetadata",
     )
 
     @classmethod
@@ -297,6 +307,49 @@ class FlextPayload[T](
 
         """
         return key in self.metadata
+
+    @field_serializer("data", when_used="json")
+    def serialize_data_for_json(self, value: T | None) -> object:
+        """Custom field serializer for data in JSON mode."""
+        if value is None:
+            return None
+        # Enhanced JSON serialization with type information
+        return {
+            "value": value,
+            "type": type(value).__name__,
+            "serialized_at": time.time(),
+        }
+
+    @field_serializer("metadata", when_used="always")
+    def serialize_metadata_enhanced(
+        self, value: dict[str, object]
+    ) -> dict[str, object]:
+        """Enhanced metadata serialization with payload context."""
+        enhanced_metadata = dict(value)
+        enhanced_metadata["_payload_type"] = self.__class__.__name__
+        enhanced_metadata["_serialization_timestamp"] = time.time()
+        return enhanced_metadata
+
+    @model_serializer(mode="wrap", when_used="json")
+    def serialize_payload_for_api(
+        self,
+        serializer: object,
+        info: object,
+    ) -> dict[str, object] | object:
+        """Model serializer for API output with comprehensive payload metadata."""
+        _ = info  # Acknowledge parameter for future use
+        data = serializer(self)
+        if isinstance(data, dict):
+            # Add comprehensive payload API metadata
+            data["_payload"] = {
+                "type": self.__class__.__name__,
+                "has_data": self.has_data(),
+                "metadata_keys": list(self.metadata.keys()),
+                "serialization_format": "json",
+                "api_version": "v2",
+                "cross_service_ready": True,
+            }
+        return data
 
     def to_dict(self) -> dict[str, object]:
         """Convert payload to dictionary representation.

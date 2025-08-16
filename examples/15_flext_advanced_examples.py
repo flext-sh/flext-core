@@ -6,33 +6,27 @@ Advanced patterns and enterprise scenarios using FLEXT Core with shared domain m
 
 from __future__ import annotations
 
-import sys as _sys
 from decimal import Decimal
-from pathlib import Path as _Path
-from typing import TYPE_CHECKING, cast
+from typing import cast
+
+from pydantic import ConfigDict
 
 from flext_core import (
     FlextCommands,
+    FlextDecoratedFunction,
     FlextDecorators,
     FlextResult,
     FlextSettings,
     get_logger,
 )
 
-_project_root = _Path(__file__).resolve().parents[1]
-if str(_project_root) not in _sys.path:
-    _sys.path.insert(0, str(_project_root))
-
-from examples.shared_domain import (
+from .shared_domain import (
     EmailAddress,
     Money,
     Order as SharedOrder,
     SharedDomainFactory,
     User as SharedUser,
 )
-
-if TYPE_CHECKING:
-    from flext_core import FlextDecoratedFunction
 
 # =============================================================================
 # VALIDATION CONSTANTS - Domain rule constraints
@@ -44,8 +38,6 @@ CURRENCY_CODE_LENGTH = 3  # Standard ISO 4217 currency code length
 
 def main() -> None:
     """Execute main function for advanced examples using railway-oriented programming."""
-    print("=== FLEXT Core Advanced Examples ===\n")
-
     # Chain all demonstration functions using railway-oriented programming
     result = (
         _demonstrate_value_objects()
@@ -57,34 +49,23 @@ def main() -> None:
     )
 
     if result.success:
-        print("\n=== Advanced Examples Completed Successfully! ===")
-    else:
-        print(f"\n❌ Advanced examples failed: {result.error}")
+        pass
 
 
 def _demonstrate_value_objects() -> FlextResult[None]:
     """Demonstrate value objects using shared domain models."""
-    print("1. FlextValueObject Examples (using shared domain):")
-
     # Use shared domain models instead of local definitions
-    email = EmailAddress(email="user@example.com")
-    money = Money(amount=Decimal("100.50"), currency="USD")
-
-    print(f"  Email: {email.email}")
-    print(f"  Money: {money.amount} {money.currency}")
+    EmailAddress(email="user@example.com")
+    Money(amount=Decimal("100.50"), currency="USD")
 
     # Test equality (value objects are equal by value, not identity)
-    email2 = EmailAddress(email="user@example.com")
-    print(f"  Email equality: {email == email2}")  # Should be True
-    print()
+    EmailAddress(email="user@example.com")
 
     return FlextResult.ok(None)
 
 
 def _demonstrate_aggregate_root() -> FlextResult[SharedOrder]:
     """Demonstrate aggregate root pattern using shared domain models."""
-    print("2. FlextAggregateRoot Examples (using shared domain):")
-
     email = EmailAddress(email="user@example.com")
     money = Money(amount=Decimal("100.50"), currency="USD")
 
@@ -138,26 +119,19 @@ def _create_test_order(user: SharedUser, money: Money) -> FlextResult[SharedOrde
 
 def _display_order_information(order: SharedOrder) -> FlextResult[SharedOrder]:
     """Display order information and return order for chaining."""
-    print(f"  Order: {order.id}, Status: {order.status.value}")
-    print(f"  Customer: {order.customer_id}")
-
     total_result = order.calculate_total()
     if total_result.success:
         total = total_result.data
         if total is None:
             return FlextResult.fail("Total calculation returned None data")
-        print(f"  Total: {total.amount} {total.currency}")
 
     # SharedOrder has built-in domain events
-    print(f"  Events: {len(order.domain_events)} domain events")
-    print()
 
     return FlextResult.ok(order)
 
 
 def _demonstrate_query_pattern(_order: SharedOrder) -> FlextResult[None]:
     """Demonstrate CQRS query pattern."""
-    print("3. FlextCommands Query Examples:")
 
     class GetOrdersQuery(FlextCommands.Query):
         customer_email: str
@@ -190,7 +164,6 @@ def _demonstrate_query_pattern(_order: SharedOrder) -> FlextResult[None]:
             user = user_result.data
 
             if user is None:
-                print("❌ Operation returned None data")
                 return FlextResult.fail("User creation returned None data")
 
             # Simulate database query with SharedOrder
@@ -225,14 +198,12 @@ def _demonstrate_query_pattern(_order: SharedOrder) -> FlextResult[None]:
                 order1 = order1_result.data
 
                 if order1 is None:
-                    print("❌ Operation returned None data")
                     return FlextResult.fail("Order creation returned None data")
                 orders.append(order1)
             if order2_result.success:
                 order2 = order2_result.data
 
                 if order2 is None:
-                    print("❌ Operation returned None data")
                     return FlextResult.fail("Order creation returned None data")
                 orders.append(order2)
 
@@ -256,7 +227,6 @@ def _demonstrate_query_pattern(_order: SharedOrder) -> FlextResult[None]:
 
     # Validate query
     validation = query.validate_query()
-    print(f"  Query validation: {validation.success}")
 
     if validation.success:
         query_result = query_handler.handle(query)
@@ -264,21 +234,15 @@ def _demonstrate_query_pattern(_order: SharedOrder) -> FlextResult[None]:
             orders = query_result.data
 
             if orders is None:
-                print("❌ Operation returned None data")
                 return FlextResult.fail("Orders query returned None data")
-            print(f"  Found {len(orders)} orders")
             for o in orders:
                 if hasattr(o, "total") and o.total is not None:
-                    print(f"    Order {o.id}: {o.status} - {o.total.amount}")
-                else:
-                    print(f"    Order {o.id}: {o.status} - No total available")
-    print()
+                    pass
     return FlextResult.ok(None)
 
 
 def _demonstrate_decorators() -> FlextResult[None]:
     """Demonstrate decorator patterns."""
-    print("4. FlextDecorators Examples:")
 
     def risky_calculation(x: float, y: float) -> float:
         if y == 0:
@@ -292,23 +256,14 @@ def _demonstrate_decorators() -> FlextResult[None]:
     )
 
     # Test safe execution
-    safe_result = safe_calculation(10.0, 2.0)
-    print(
-        f"  Safe calculation: {getattr(safe_result, 'success', False)}, Result: {getattr(safe_result, 'data', 'N/A')}",
-    )
+    safe_calculation(10.0, 2.0)
 
-    error_result = safe_calculation(10.0, 0.0)
-    print(
-        f"  Error handling: {getattr(error_result, 'is_failure', False)}, Error: {getattr(error_result, 'error', 'N/A')}",
-    )
-    print()
+    safe_calculation(10.0, 0.0)
     return FlextResult.ok(None)
 
 
 def _demonstrate_logging() -> FlextResult[None]:
     """Demonstrate structured logging patterns."""
-    print("5. FlextLogger Examples:")
-
     logger = get_logger("advanced_examples")
 
     # Structured logging with context
@@ -330,14 +285,11 @@ def _demonstrate_logging() -> FlextResult[None]:
     except (RuntimeError, ValueError, TypeError) as e:
         logger.exception("Calculation failed", error=str(e))
 
-    print("  Check logs above for structured logging output")
-    print()
     return FlextResult.ok(None)
 
 
 def _demonstrate_configuration() -> FlextResult[None]:
     """Demonstrate configuration management patterns."""
-    print("6. FlextConfig Examples:")
 
     class AppSettings(FlextSettings):
         database_url: str = "sqlite:///app.db"
@@ -345,8 +297,7 @@ def _demonstrate_configuration() -> FlextResult[None]:
         max_workers: int = 4
         api_key: str = "default-key"
 
-        class Config:
-            env_prefix = "APP_"
+        model_config = ConfigDict(env_prefix="APP_")
 
     # Create settings
     try:
@@ -361,10 +312,6 @@ def _demonstrate_configuration() -> FlextResult[None]:
     if settings_result.success:
         settings = settings_result.unwrap()
 
-        print(f"  Database URL: {getattr(settings, 'database_url', 'N/A')}")
-        print(f"  Debug mode: {getattr(settings, 'debug', 'N/A')}")
-        print(f"  Max workers: {getattr(settings, 'max_workers', 'N/A')}")
-    print()
     return FlextResult.ok(None)
 
 

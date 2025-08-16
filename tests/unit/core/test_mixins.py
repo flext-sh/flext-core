@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import time
 
-# Use compatibility mixins for test compatibility during hybrid approach
-from flext_core.mixins import (
+from flext_core import (
+    FlextResult,
     LegacyCompatibleCacheableMixin as FlextCacheableMixin,
     LegacyCompatibleCommandMixin as FlextCommandMixin,
     LegacyCompatibleComparableMixin as FlextComparableMixin,
@@ -21,7 +21,6 @@ from flext_core.mixins import (
     LegacyCompatibleValidatableMixin as FlextValidatableMixin,
     LegacyCompatibleValueObjectMixin as FlextValueObjectMixin,
 )
-from flext_core.result import FlextResult
 
 
 class TestMixinsBaseCoverage:

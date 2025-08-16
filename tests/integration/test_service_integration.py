@@ -38,7 +38,7 @@ class TestServiceIntegrationPatterns:
     @pytest.mark.performance
     def test_service_pipeline_performance(
         self,
-        configured_container: FlextContainer,
+        configured_container: FlextContainer,  # noqa: ARG002 - provided by fixture for clarity
         mock_external_service: MagicMock,
         performance_threshold: dict[str, float],
         benchmark_data: dict[
@@ -70,7 +70,7 @@ class TestServiceIntegrationPatterns:
             # Simulate service pipeline with realistic operations
             result = FlextResult.ok(data)
             return result.flat_map(mock_external_service.process).map(
-                lambda r: f"pipeline_result_{len(str(data))}",
+                lambda _r: f"pipeline_result_{len(str(data))}",
             )
 
         # Act - Measure pipeline performance
@@ -89,7 +89,7 @@ class TestServiceIntegrationPatterns:
     @pytest.mark.error_path
     def test_service_error_propagation(
         self,
-        configured_container: FlextContainer,
+        configured_container: FlextContainer,  # noqa: ARG002 - provided by fixture for clarity
         mock_external_service: MagicMock,
         error_context: dict[str, str | None],
     ) -> None:
@@ -112,7 +112,7 @@ class TestServiceIntegrationPatterns:
             return (
                 FlextResult.ok(data)
                 .flat_map(mock_external_service.process)
-                .map(lambda r: f"processed_{r}")
+                .map(lambda _r: f"processed_{_r}")
             )
 
         # Act - Execute failing pipeline

@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from flext_core.payload import (
+from flext_core import (
     FlextEvent,
     FlextMessage,
     FlextPayload,
@@ -343,7 +343,7 @@ class TestEdgeCases:
         """Test payload transform with error."""
         payload = FlextPayload(data="test")
 
-        def failing_transformer(x: object) -> object:
+        def failing_transformer(x: object) -> object:  # noqa: ARG001
             error_msg = "Transform failed"
             raise ValueError(error_msg)
 

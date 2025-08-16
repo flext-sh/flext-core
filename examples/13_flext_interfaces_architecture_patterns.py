@@ -30,22 +30,22 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, cast
 
-from flext_core import FlextHandlers, FlextResult, TAnyDict
-from flext_core.protocols import (
-    FlextConfigurable,
+from flext_core import (
     FlextDomainEvent,
     FlextEventPublisher,
     FlextEventSubscriber,
     FlextHandler,
+    FlextHandlers,
     FlextLoggerProtocol,
     FlextMiddleware,
     FlextPlugin,
     FlextPluginContext,
     FlextRepository,
+    FlextResult,
     FlextService,
     FlextUnitOfWork,
     FlextValidationRule,
-    FlextValidator,
+    TAnyDict,
 )
 
 if TYPE_CHECKING:
@@ -324,7 +324,6 @@ class UserService(FlextService):
             return FlextResult.fail("Service is already running")
 
         self._is_running = True
-        print("UserService started successfully")
         return FlextResult.ok(None)
 
     def stop(self) -> FlextResult[None]:
@@ -333,7 +332,6 @@ class UserService(FlextService):
             return FlextResult.fail("Service is not running")
 
         self._is_running = False
-        print("UserService stopped successfully")
         return FlextResult.ok(None)
 
     def health_check(self) -> FlextResult[TAnyDict]:
@@ -406,19 +404,16 @@ class ConfigurableEmailService:
                 self._from_email = str(settings["from_email"])
 
             self._configured = True
-            print(f"EmailService configured: {self._smtp_host}:{self._smtp_port}")
             return FlextResult.ok(None)
 
         except (ValueError, TypeError, KeyError) as e:
             return FlextResult.fail(f"Configuration failed: {e}")
 
-    def send_email(self, to: str, subject: str, _body: str) -> FlextResult[None]:
+    def send_email(self, _to: str, _subject: str, _body: str) -> FlextResult[None]:
         """Send email (simulated)."""
         if not self._configured:
             return FlextResult.fail("Service not configured")
 
-        print(f"Sending email to {to}: {subject}")
-        print(f"From: {self._from_email} via {self._smtp_host}:{self._smtp_port}")
         return FlextResult.ok(None)
 
 
@@ -477,16 +472,13 @@ class LoggingMiddleware(FlextMiddleware):
         next_handler: "Callable[[object], FlextResult[object]]",
     ) -> FlextResult[object]:
         """Process message with logging."""
-        message_type = getattr(message, "type", "unknown")
-        print(f"[MIDDLEWARE] Processing message: {message_type}")
+        getattr(message, "type", "unknown")
 
         # Process through next handler
         result = next_handler(message)
 
         if result.success:
-            print(f"[MIDDLEWARE] Message {message_type} processed successfully")
-        else:
-            print(f"[MIDDLEWARE] Message {message_type} failed: {result.error}")
+            pass
 
         return result
 
@@ -567,7 +559,6 @@ class UserRepository(FlextRepository[User]):
             return FlextResult.fail(f"Cannot save deleted user {entity.id}")
 
         self._users[entity.id] = entity
-        print(f"User {entity.id} saved to repository")
         return FlextResult.ok(entity)
 
     def get_by_id(self, entity_id: str) -> FlextResult[User | None]:
@@ -593,7 +584,6 @@ class UserRepository(FlextRepository[User]):
 
         del self._users[entity_id]
         self._deleted_ids.add(entity_id)
-        print(f"User {entity_id} deleted from repository")
         return FlextResult.ok(None)
 
 
@@ -638,7 +628,6 @@ class DatabaseUnitOfWork(FlextUnitOfWork):
                     return delete_result
 
         self._committed = True
-        print(f"Unit of work committed with {len(self._changes)} changes")
         return FlextResult.ok(None)
 
     def rollback(self) -> FlextResult[None]:
@@ -648,7 +637,6 @@ class DatabaseUnitOfWork(FlextUnitOfWork):
 
         self._changes.clear()
         self._rolled_back = True
-        print("Unit of work rolled back")
         return FlextResult.ok(None)
 
     def begin(self) -> FlextResult[None]:
@@ -680,8 +668,9 @@ class MockLogger:
         """Log info message.
 
         Args:
-            message: Message to log
-            *args: Arguments to format message
+            message: Message to log.
+            *args: Positional arguments for formatting.
+            **kwargs: Key-value pairs to append as structured context.
 
         """
         if args:
@@ -690,14 +679,14 @@ class MockLogger:
             # Append key=value pairs for kwargs to mimic structured logging
             context = " ".join(f"{k}={v}" for k, v in kwargs.items())
             message = f"{message} {context}".strip()
-        print(f"[INFO] {message}")
 
     def error(self, message: str, *args: object, **kwargs: object) -> None:
         """Log error message.
 
         Args:
-            message: Message to log
-            *args: Arguments to format message
+            message: Message to log.
+            *args: Positional arguments for formatting.
+            **kwargs: Key-value pairs to append as structured context.
 
         """
         if args:
@@ -705,14 +694,14 @@ class MockLogger:
         if kwargs:
             context = " ".join(f"{k}={v}" for k, v in kwargs.items())
             message = f"{message} {context}".strip()
-        print(f"[ERROR] {message}")
 
     def debug(self, message: str, *args: object, **kwargs: object) -> None:
         """Log debug message.
 
         Args:
-            message: Message to log
-            *args: Arguments to format message
+            message: Message to log.
+            *args: Positional arguments for formatting.
+            **kwargs: Key-value pairs to append as structured context.
 
         """
         if args:
@@ -720,14 +709,14 @@ class MockLogger:
         if kwargs:
             context = " ".join(f"{k}={v}" for k, v in kwargs.items())
             message = f"{message} {context}".strip()
-        print(f"[DEBUG] {message}")
 
     def warning(self, message: str, *args: object, **kwargs: object) -> None:
         """Log warning message.
 
         Args:
-            message: Message to log
-            *args: Arguments to format message
+            message: Message to log.
+            *args: Positional arguments for formatting.
+            **kwargs: Key-value pairs to append as structured context.
 
         """
         if args:
@@ -735,14 +724,14 @@ class MockLogger:
         if kwargs:
             context = " ".join(f"{k}={v}" for k, v in kwargs.items())
             message = f"{message} {context}".strip()
-        print(f"[WARNING] {message}")
 
     def critical(self, message: str, *args: object, **kwargs: object) -> None:
         """Log critical message.
 
         Args:
-            message: Message to log
-            *args: Arguments to format message
+            message: Message to log.
+            *args: Positional arguments for formatting.
+            **kwargs: Key-value pairs to append as structured context.
 
         """
         if args:
@@ -750,7 +739,6 @@ class MockLogger:
         if kwargs:
             context = " ".join(f"{k}={v}" for k, v in kwargs.items())
             message = f"{message} {context}".strip()
-        print(f"[CRITICAL] {message}")
 
     # Mock the other methods that BoundLogger might have
     def bind(self, **_kwargs: object) -> "BoundLogger":
@@ -865,7 +853,6 @@ class EmailNotificationPlugin(FlextPlugin):
 
         self._email_service = None
         self._initialized = False
-        print(f"Plugin {self.name} shut down")
         return FlextResult.ok(None)
 
     def send_welcome_email(self, user: User) -> FlextResult[None]:
@@ -923,7 +910,6 @@ class AuditLogPlugin(FlextPlugin):
         if not self._initialized:
             return FlextResult.fail("Plugin not initialized")
 
-        print(f"Plugin {self.name} shut down - {len(self._audit_log)} log entries")
         return FlextResult.ok(None)
 
     def log_event(
@@ -942,7 +928,6 @@ class AuditLogPlugin(FlextPlugin):
         }
 
         self._audit_log.append(audit_entry)
-        print(f"Audit log: {event_type}")
         return FlextResult.ok(None)
 
 
@@ -963,7 +948,6 @@ class SimpleEventPublisher(FlextEventPublisher):
         event_type = type(event)
 
         if event_type not in self._subscribers:
-            print(f"No subscribers for event {event_type.__name__}")
             return FlextResult.ok(None)
 
         handlers = self._subscribers[event_type]
@@ -981,7 +965,6 @@ class SimpleEventPublisher(FlextEventPublisher):
                 f"Some handlers failed: {'; '.join(failed_handlers)}",
             )
 
-        print(f"Event {event_type.__name__} published to {len(handlers)} handlers")
         return FlextResult.ok(None)
 
     def publish_batch(self, events: list[FlextDomainEvent]) -> FlextResult[None]:
@@ -1020,10 +1003,6 @@ class SimpleEventSubscriber(FlextEventSubscriber):
                 self._subscriptions[event_type] = []
             self._subscriptions[event_type].append(handler)
 
-            print(
-                f"Handler {handler.__class__.__name__} subscribed to "
-                f"{event_type.__name__}",
-            )
             return FlextResult.ok(None)
 
         except (ValueError, TypeError, KeyError) as e:
@@ -1041,10 +1020,6 @@ class SimpleEventSubscriber(FlextEventSubscriber):
                 and handler in self._subscriptions[event_type]
             ):
                 self._subscriptions[event_type].remove(handler)
-                print(
-                    f"Handler {handler.__class__.__name__} unsubscribed from "
-                    f"{event_type.__name__}",
-                )
 
             return FlextResult.ok(None)
 
@@ -1054,7 +1029,6 @@ class SimpleEventSubscriber(FlextEventSubscriber):
     # Implement protocol-required methods
     def handle_event(self, event: FlextDomainEvent) -> FlextResult[None]:
         """Handle incoming event and return success when processed."""
-        print(f"Handled event: {event.event_type}")
         return FlextResult.ok(None)
 
     def can_handle(self, event_type: str) -> bool:
@@ -1108,37 +1082,23 @@ class UserEventHandler(FlextHandlers.EventHandler):
 
 def demonstrate_validation_interfaces() -> None:
     """Demonstrate validation interfaces with protocols and ABCs."""
-    print("\n" + "=" * 80)
-    print("✅ VALIDATION INTERFACES - PROTOCOLS AND RULES")
-    print("=" * 80)
-
     # 1. Protocol-based validation
-    print("\n1. Protocol-based email validation:")
 
     email_validator = EmailValidator()
 
     # Test valid email
     result = email_validator.validate("  User@Example.COM  ")
     if result.success:
-        print(f"✅ Valid email normalized: {result.data}")
-    else:
-        print(f"❌ Email validation failed: {result.error}")
+        pass
 
     # Test invalid email
     result = email_validator.validate("invalid-email")
     if result.success:
-        print(f"✅ Email validated: {result.data}")
-    else:
-        print(f"❌ Invalid email (expected): {result.error}")
+        pass
 
     # Runtime type checking
-    print(
-        f"   Email validator is FlextValidator: "
-        f"{isinstance(email_validator, FlextValidator)}",
-    )
 
     # 2. Rule-based validation
-    print("\n2. Rule-based validation with ABCs:")
 
     age_rule = AgeRangeRule(min_age=18, max_age=65)
     name_rule = NonEmptyStringRule()
@@ -1157,65 +1117,53 @@ def demonstrate_validation_interfaces() -> None:
         (price_rule, "not a number", "Non-numeric price"),
     ]
 
-    for rule, value, description in test_cases:
+    for rule, value, _description in test_cases:
         apply_result = rule.apply(value, "value")
         is_valid = apply_result.success
-        status = "✅" if is_valid else "❌"
-        error_msg = "" if is_valid else f" - {rule.get_error_message('value', value)}"
-        print(f"   {status} {description}: {value}{error_msg}")
-
-    print("✅ Validation interfaces demonstration completed")
+        "" if is_valid else f" - {rule.get_error_message('value', value)}"
 
 
 def demonstrate_service_interfaces() -> None:
     """Demonstrate service interfaces with lifecycle and configuration."""
-    print("\n" + "=" * 80)
-    print("🔧 SERVICE INTERFACES - LIFECYCLE AND CONFIGURATION")
-    print("=" * 80)
-
     # 1. Service lifecycle management
-    print("\n1. Service lifecycle management:")
 
     user_service = UserService()
 
     # Test health check before start
     health = user_service.health_check()
     if health.success:
-        print(f"   Health before start: {health.data}")
+        pass
 
     # Start service
     result = user_service.start()
     if result.success:
-        print("   ✅ Service started successfully")
-    else:
-        print(f"   ❌ Service start failed: {result.error}")
+        pass
 
     # Health check after start
     health = user_service.health_check()
     if health.success:
-        print(f"   Health after start: {health.data}")
+        pass
 
     # Use service
     user_result = user_service.create_user("Alice Johnson", "alice@example.com", 28)
     if user_result.success:
         user = user_result.data
         if user is not None:
-            print(f"   ✅ User created: {user.name} ({user.id})")
+            pass
 
     # Stop service
     result = user_service.stop()
     if result.success:
-        print("   ✅ Service stopped successfully")
+        pass
 
     # 2. Configurable service demonstration
-    print("\n2. Configurable service demonstration:")
 
     email_service = ConfigurableEmailService()
 
     # Test before configuration
     result = email_service.send_email("test@example.com", "Test", "Body")
     if result.is_failure:
-        print(f"   ❌ Service not configured (expected): {result.error}")
+        pass
 
     # Configure service
     config = {
@@ -1227,9 +1175,7 @@ def demonstrate_service_interfaces() -> None:
 
     config_result = email_service.configure(config)
     if config_result.success:
-        print("   ✅ Email service configured successfully")
-    else:
-        print(f"   ❌ Configuration failed: {config_result.error}")
+        pass
 
     # Test after configuration
     result = email_service.send_email(
@@ -1238,27 +1184,14 @@ def demonstrate_service_interfaces() -> None:
         "Welcome to our service!",
     )
     if result.success:
-        print("   ✅ Email sent successfully")
-    else:
-        print(f"   ❌ Email send failed: {result.error}")
+        pass
 
     # Test runtime protocol checking
-    print(
-        f"   Email service is configurable: "
-        f"{isinstance(email_service, FlextConfigurable)}",
-    )
-
-    print("✅ Service interfaces demonstration completed")
 
 
 def demonstrate_handler_interfaces() -> None:
     """Demonstrate handler and middleware interfaces."""
-    print("\n" + "=" * 80)
-    print("⚙️ HANDLER INTERFACES - MIDDLEWARE PIPELINE")
-    print("=" * 80)
-
     # 1. Basic handler demonstration
-    print("\n1. Basic handler demonstration:")
 
     user_service = UserService()
     user_service.start()
@@ -1280,26 +1213,21 @@ def demonstrate_handler_interfaces() -> None:
     )
 
     can_handle = handler.can_handle(create_message)
-    print(f"   Handler can handle create message: {can_handle}")
 
     if can_handle:
         result = handler.handle(create_message)
         if result.success:
             user = result.data
             if hasattr(user, "name") and hasattr(user, "id"):
-                print(f"   ✅ User created via handler: {user.name} ({user.id})")
-        else:
-            print(f"   ❌ Handler failed: {result.error}")
+                pass
 
     # 2. Middleware pipeline demonstration
-    print("\n2. Middleware pipeline demonstration:")
 
     # Create middleware instances
     logging_middleware = LoggingMiddleware()
     validation_middleware = ValidationMiddleware()
 
     # Test valid message through pipeline
-    print("   Testing valid message through pipeline:")
     valid_message = MockMessage(
         type="user_create",
         name="Carol Brown",
@@ -1314,10 +1242,9 @@ def demonstrate_handler_interfaces() -> None:
         if result.success:
             user = result.data
             if hasattr(user, "name") and hasattr(user, "id"):
-                print(f"   ✅ Pipeline success: {user.name} ({user.id})")
+                pass
 
     # Test invalid message through pipeline
-    print("   Testing invalid message through pipeline:")
     invalid_message = MockMessage(
         type="user_create",
         name="",  # Invalid empty name
@@ -1327,10 +1254,9 @@ def demonstrate_handler_interfaces() -> None:
 
     result = validation_middleware.process(invalid_message, handler.handle)
     if result.is_failure:
-        print(f"   ❌ Validation middleware caught error (expected): {result.error}")
+        pass
 
     user_service.stop()
-    print("✅ Handler interfaces demonstration completed")
 
 
 def demonstrate_repository_interfaces() -> None:
@@ -1341,17 +1267,13 @@ def demonstrate_repository_interfaces() -> None:
     fresh_repo = UserRepository()
     _unit_of_work_success_flow(fresh_repo)
     _unit_of_work_failure_flow(fresh_repo)
-    print("✅ Repository interfaces demonstration completed")
 
 
 def _print_repo_header() -> None:
-    print("\n" + "=" * 80)
-    print("💾 REPOSITORY INTERFACES - DATA ACCESS PATTERNS")
-    print("=" * 80)
+    pass
 
 
 def _basic_repo_operations(user_repo: UserRepository) -> None:
-    print("\n1. Basic repository operations:")
     users = [
         User("user_1", "Alice", "alice@example.com", 25),
         User("user_2", "Bob", "bob@example.com", 30),
@@ -1360,10 +1282,7 @@ def _basic_repo_operations(user_repo: UserRepository) -> None:
     for user in users:
         save_result = user_repo.save(user)
         if save_result.success:
-            print(f"   ✅ Saved user: {user.name}")
-        else:
-            print(f"   ❌ Save failed: {save_result.error}")
-    print("   Finding users:")
+            pass
     for user_id in ["user_1", "user_999", "user_2"]:
         result = user_repo.find_by_id(user_id)
         if result.success:
@@ -1373,34 +1292,28 @@ def _basic_repo_operations(user_repo: UserRepository) -> None:
                 and hasattr(user_data, "name")
                 and hasattr(user_data, "id")
             ):
-                print(f"   ✅ Found: {user_data.name} ({user_data.id})")
-        else:
-            print(f"   ❌ Not found: {user_id} - {result.error}")
+                pass
     delete_result = user_repo.delete("user_2")
     if delete_result.success:
-        print("   ✅ User deleted")
+        pass
     result = user_repo.find_by_id("user_2")
     if result.is_failure:
-        print(f"   ❌ Deleted user not found (expected): {result.error}")
+        pass
 
 
 def _unit_of_work_success_flow(fresh_repo: UserRepository) -> None:
-    print("\n2. Unit of Work pattern:")
-    print("   Successful transaction:")
     with DatabaseUnitOfWork(fresh_repo) as uow:
         new_user = User("user_100", "Transaction User", "transaction@example.com", 40)
         uow.add_change("save", new_user)
         commit_result = uow.commit()
         if commit_result.success:
-            print("   ✅ Transaction committed successfully")
+            pass
     result = fresh_repo.find_by_id("user_100")
     if result.success and result.data is not None:
-        print(f"   ✅ User persisted after commit: {result.data.name}")
+        pass
 
 
 def _unit_of_work_failure_flow(fresh_repo: UserRepository) -> None:
-    print("   Failed transaction with rollback:")
-
     def _simulate_transaction_error() -> None:
         msg = "Simulated transaction error"
         raise ValueError(msg)
@@ -1410,21 +1323,16 @@ def _unit_of_work_failure_flow(fresh_repo: UserRepository) -> None:
             failing_user = User("user_101", "Failing User", "fail@example.com", 50)
             uow.add_change("save", failing_user)
             _simulate_transaction_error()
-    except ValueError as e:
-        print(f"   ❌ Transaction failed (expected): {e}")
+    except ValueError:
+        pass
     result = fresh_repo.find_by_id("user_101")
     if result.is_failure:
-        print("   ✅ User not persisted after rollback (expected)")
+        pass
 
 
 def demonstrate_plugin_interfaces() -> None:
     """Demonstrate plugin interfaces with extensibility."""
-    print("\n" + "=" * 80)
-    print("🔌 PLUGIN INTERFACES - EXTENSIBILITY PATTERNS")
-    print("=" * 80)
-
     # 1. Plugin context setup
-    print("\n1. Plugin context and service setup:")
 
     # Create context with services
     context = SimplePluginContext(
@@ -1439,39 +1347,29 @@ def demonstrate_plugin_interfaces() -> None:
     email_service = ConfigurableEmailService()
     context.register_service("email_service", email_service)
 
-    print("   Plugin context created with email service")
-
     # 2. Plugin initialization and usage
-    print("\n2. Plugin initialization and usage:")
 
     # Initialize email notification plugin
     email_plugin = EmailNotificationPlugin()
-    print(f"   Plugin: {email_plugin.name} v{email_plugin.version}")
 
     init_result = email_plugin.initialize(context)
     if init_result.success:
-        print("   ✅ Email notification plugin initialized")
-    else:
-        print(f"   ❌ Plugin initialization failed: {init_result.error}")
+        pass
 
     # Initialize audit log plugin
     audit_plugin = AuditLogPlugin()
-    print(f"   Plugin: {audit_plugin.name} v{audit_plugin.version}")
 
     init_result = audit_plugin.initialize(context)
     if init_result.success:
-        print("   ✅ Audit log plugin initialized")
+        pass
 
     # 3. Plugin usage
-    print("\n3. Plugin usage:")
 
     # Use email plugin
     test_user = User("plugin_user", "Plugin Test User", "plugintest@example.com", 30)
     email_result = email_plugin.send_welcome_email(test_user)
     if email_result.success:
-        print("   ✅ Welcome email sent via plugin")
-    else:
-        print(f"   ❌ Email send failed: {email_result.error}")
+        pass
 
     # Use audit plugin
     audit_result = audit_plugin.log_event(
@@ -1482,30 +1380,22 @@ def demonstrate_plugin_interfaces() -> None:
         },
     )
     if audit_result.success:
-        print("   ✅ Event logged via audit plugin")
+        pass
 
     # 4. Plugin shutdown
-    print("\n4. Plugin shutdown:")
 
     shutdown_result = email_plugin.shutdown()
     if shutdown_result.success:
-        print("   ✅ Email plugin shut down")
+        pass
 
     shutdown_result = audit_plugin.shutdown()
     if shutdown_result.success:
-        print("   ✅ Audit plugin shut down")
-
-    print("✅ Plugin interfaces demonstration completed")
+        pass
 
 
 def demonstrate_event_interfaces() -> None:
     """Demonstrate event interfaces with publish-subscribe patterns."""
-    print("\n" + "=" * 80)
-    print("📡 EVENT INTERFACES - PUBLISH-SUBSCRIBE PATTERNS")
-    print("=" * 80)
-
     # 1. Event system setup
-    print("\n1. Event system setup:")
 
     publisher = SimpleEventPublisher()
     subscriber = SimpleEventSubscriber(publisher)
@@ -1518,22 +1408,18 @@ def demonstrate_event_interfaces() -> None:
     # Create event handler
     event_handler = UserEventHandler(audit_plugin)
 
-    print("   Event publisher and subscriber created")
-
     # 2. Event subscription
-    print("\n2. Event subscription:")
 
     # Subscribe to events
     result = subscriber.subscribe(UserCreatedEvent, event_handler)
     if result.success:
-        print("   ✅ Subscribed to UserCreatedEvent")
+        pass
 
     result = subscriber.subscribe(OrderPlacedEvent, event_handler)
     if result.success:
-        print("   ✅ Subscribed to OrderPlacedEvent")
+        pass
 
     # 3. Event publishing
-    print("\n3. Event publishing:")
 
     # Publish user created event
     user_event = UserCreatedEvent(
@@ -1549,9 +1435,7 @@ def demonstrate_event_interfaces() -> None:
 
     result = publisher.publish(user_event)
     if result.success:
-        print("   ✅ UserCreatedEvent published successfully")
-    else:
-        print(f"   ❌ Event publish failed: {result.error}")
+        pass
 
     # Publish order placed event
     order_event = OrderPlacedEvent(
@@ -1567,9 +1451,7 @@ def demonstrate_event_interfaces() -> None:
 
     result = publisher.publish(order_event)
     if result.success:
-        print("   ✅ OrderPlacedEvent published successfully")
-    else:
-        print(f"   ❌ Event publish failed: {result.error}")
+        pass
 
     # Publish event with no subscribers
     @dataclass
@@ -1627,14 +1509,13 @@ def demonstrate_event_interfaces() -> None:
     )
     result = publisher.publish(unknown_event)
     if result.success:
-        print("   ✅ Unknown event published (no subscribers)")
+        pass
 
     # 4. Event unsubscription
-    print("\n4. Event unsubscription:")
 
     result = subscriber.unsubscribe(UserCreatedEvent, event_handler)
     if result.success:
-        print("   ✅ Unsubscribed from UserCreatedEvent")
+        pass
 
     # Publish event after unsubscription
     user_event2 = UserCreatedEvent(
@@ -1650,16 +1531,11 @@ def demonstrate_event_interfaces() -> None:
 
     result = publisher.publish(user_event2)
     if result.success:
-        print("   ✅ Event published after unsubscription (should have no effect)")
-
-    print("✅ Event interfaces demonstration completed")
+        pass
 
 
 def main() -> None:
     """Execute all FlextInterfaces demonstrations."""
-    print("🚀 FLEXT INTERFACES - ARCHITECTURE PATTERNS EXAMPLE")
-    print("Demonstrating comprehensive interface patterns for enterprise architecture")
-
     try:
         demonstrate_validation_interfaces()
         demonstrate_service_interfaces()
@@ -1668,25 +1544,7 @@ def main() -> None:
         demonstrate_plugin_interfaces()
         demonstrate_event_interfaces()
 
-        print("\n" + "=" * 80)
-        print("✅ ALL FLEXT INTERFACES DEMONSTRATIONS COMPLETED SUCCESSFULLY!")
-        print("=" * 80)
-        print("\n📊 Summary of patterns demonstrated:")
-        print("   ✅ Validation interfaces with protocols and rules")
-        print("   🔧 Service interfaces with lifecycle management and configuration")
-        print("   ⚙️ Handler interfaces with middleware pipeline patterns")
-        print("   💾 Repository interfaces with Unit of Work pattern")
-        print("   🔌 Plugin interfaces with extensibility and context management")
-        print("   📡 Event interfaces with publish-subscribe patterns")
-        print("\n💡 FlextInterfaces provides enterprise-grade architecture patterns")
-        print(
-            "   with Clean Architecture, DDD, and extensibility through protocols "
-            "and ABCs!",
-        )
-
-    except (ValueError, TypeError, ImportError, AttributeError) as e:
-        print(f"\n❌ Error during FlextInterfaces demonstration: {e}")
-
+    except (ValueError, TypeError, ImportError, AttributeError):
         traceback.print_exc()
 
 

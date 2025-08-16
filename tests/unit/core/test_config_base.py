@@ -18,22 +18,23 @@ from pathlib import Path
 from typing import TYPE_CHECKING, cast
 from unittest.mock import patch
 
-if TYPE_CHECKING:
-    from collections.abc import Callable, Generator
-
-    from flext_core.typings import TAnyDict
-
 import pytest
 
-from flext_core.config import (
+from flext_core import (
     FlextConfig as _BaseConfig,
-    FlextConfigDefaults as _BaseConfigDefaults,
     FlextConfigOps as _BaseConfigOps,
-    FlextConfigValidation as _BaseConfigValidation,
+    FlextConstants,
     FlextObservabilityConfig as _ObservabilityConfig,
-    FlextPerformanceConfig as _PerformanceConfig,
+    TAnyDict,
 )
-from flext_core.constants import FlextConstants
+from flext_core.legacy import (
+    _BaseConfigDefaults,
+    _BaseConfigValidation,
+    _PerformanceConfig,
+)
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Generator
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 
@@ -436,7 +437,7 @@ class TestBaseConfigValidation:
         """Test validate_config_value with validator that raises exception."""
         validator_failed_error_msg_1: str = "Validator failed"
 
-        def failing_validator(value: object) -> bool:
+        def failing_validator(value: object) -> bool:  # noqa: ARG001
             raise ValueError(validator_failed_error_msg_1)
 
         result = _BaseConfigValidation.validate_config_value(42, failing_validator)
@@ -448,7 +449,7 @@ class TestBaseConfigValidation:
     def test_validate_config_value_default_message(self) -> None:
         """Test validate_config_value with default error message."""
 
-        def always_false(value: object) -> bool:
+        def always_false(value: object) -> bool:  # noqa: ARG001
             return False
 
         result = _BaseConfigValidation.validate_config_value(42, always_false)
@@ -764,7 +765,7 @@ class TestBaseConfigDefaults:
         class BadDict:
             cannot_update_error_msg_6: str = "Cannot update"
 
-            def update(self, other: object) -> None:
+            def update(self, other: object) -> None:  # noqa: ARG002
                 raise TypeError(self.cannot_update_error_msg_6)
 
         bad_merged = BadDict()
@@ -782,7 +783,7 @@ class TestBaseConfigDefaults:
             class FailingDict(UserDict[str, object]):
                 update_failed_error_msg_7: str = "Update failed"
 
-                def update(self, *args: object, **kwargs: object) -> None:
+                def update(self, *args: object, **kwargs: object) -> None:  # noqa: ARG002
                     raise AttributeError(self.update_failed_error_msg_7)
 
             # This is complex to test, let's skip the deep exception test

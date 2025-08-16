@@ -11,17 +11,18 @@ from __future__ import annotations
 
 import math
 from decimal import Decimal
-
-# Removed explicit Any - using object instead
 from unittest.mock import Mock, patch
 
 import pytest
 from pydantic import ValidationError
 
-from flext_core.exceptions import FlextValidationError
-from flext_core.payload import FlextPayload
-from flext_core.result import FlextResult
-from flext_core.value_objects import FlextValueObject, FlextValueObjectFactory
+from flext_core import (
+    FlextPayload,
+    FlextResult,
+    FlextValidationError,
+    FlextValueObject,
+    FlextValueObjectFactory,
+)
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 
@@ -759,7 +760,7 @@ class TestValueObjectEdgeCases:
         # Mock field validation to return specific errors for specific fields
         def mock_validate_field(
             field_name: str,
-            field_value: object,
+            _field_value: object,
         ) -> FlextResult[None]:
             if field_name == "field1":
                 return FlextResult.fail("Field1 error")

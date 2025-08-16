@@ -9,11 +9,11 @@ inventory tracking, payment processing, and notification systems.
 
 from __future__ import annotations
 
-import sys as _sys
 from decimal import Decimal
 from enum import StrEnum
-from pathlib import Path as _Path
 from typing import cast
+
+from pydantic import ConfigDict
 
 from flext_core import (
     FlextEntity,
@@ -24,11 +24,7 @@ from flext_core import (
     get_flext_container,
 )
 
-_project_root = _Path(__file__).resolve().parents[1]
-if str(_project_root) not in _sys.path:
-    _sys.path.insert(0, str(_project_root))
-
-from examples.shared_domain import (
+from .shared_domain import (
     Age,
     EmailAddress as Email,
     Money,
@@ -66,10 +62,7 @@ class AppConfig(FlextSettings):
     max_order_value: int = 100000  # cents
     min_order_value: int = 100  # cents
 
-    class Config:
-        """Configuration for AppConfig."""
-
-        env_prefix = "ECOMMERCE_"
+    model_config = ConfigDict(env_prefix="ECOMMERCE_")
 
 
 # =============================================================================
@@ -316,9 +309,8 @@ class NotificationService:
         order: Order,
     ) -> FlextResult[None]:
         """Send order confirmation email."""
-        message = f"Order confirmed: {order.id} for ${order.total.amount / 100:.2f}"
+        f"Order confirmed: {order.id} for ${order.total.amount / 100:.2f}"
         # In real implementation, send actual email
-        print(f"Email to {customer.email_address.email}: {message}")
         return FlextResult.ok(None)
 
 
@@ -519,7 +511,6 @@ class OrderProcessingService:
 
     def _log_success(self, order: Order) -> None:
         """Log successful order processing."""
-        print(f"✅ Order processed successfully: {order.id} - {order.total}")
 
 
 # =============================================================================
@@ -528,28 +519,22 @@ class OrderProcessingService:
 
 
 def _print_showcase_header() -> None:
-    print("🚀 FLEXT Modern Patterns Showcase")
-    print("=" * 50)
+    pass
 
 
 def _setup_environment() -> object:
     config = AppConfig()
     container = get_flext_container()
     container.register("config", config)
-    print("✅ Configuration loaded automatically from environment")
     return container
 
 
 def _create_and_register_customer(container: object) -> Customer | None:
     customer_result = create_customer("John Doe", "john@example.com")
     if not customer_result.success or customer_result.data is None:
-        print(
-            f"❌ Customer creation failed: {customer_result.error or 'No data returned'}",
-        )
         return None
     customer = customer_result.data
     cast("object", container).register(f"customer_{customer.id}", customer)  # type: ignore[attr-defined]
-    print(f"✅ Customer created: {customer.name} ({customer.email_address.email})")
     return customer
 
 
@@ -564,11 +549,6 @@ def _create_and_register_products(container: object) -> None:
         if product_result.success and product_result.data is not None:
             product = product_result.data
             cast("object", container).register(key, product)  # type: ignore[attr-defined]
-            print(f"✅ Product created: {product.name} - {product.price}")
-        else:
-            print(
-                f"❌ Product creation failed: {product_result.error or 'No data returned'}",
-            )
 
 
 def _select_first_available_product_id(
@@ -584,48 +564,25 @@ def _select_first_available_product_id(
 
 
 def _process_order_and_print(_: object, customer: Customer, product_id: str) -> None:
-    print("\n🔄 Processing Order...")
-    print("-" * 30)
     order_service = OrderProcessingService()
     order_data: dict[str, object] = {
         "items": [{"product_id": product_id, "quantity": 1}],
     }
     order_result = order_service.process_order(customer.id, order_data)
     if order_result.success and order_result.data is not None:
-        order = order_result.data
-        print("🎉 Order processed successfully!")
-        print(f"   Order ID: {order.id}")
-        print(f"   Status: {order.status}")
-        print(f"   Total: {order.total}")
-        print(f"   Items: {len(order.items)}")
-    else:
-        print(f"❌ Order processing failed: {order_result.error or 'No data returned'}")
+        pass
 
 
 def _type_system_demo(customer: Customer) -> None:
-    print("\n🔍 Type System Demonstration")
-    print("-" * 30)
-
     def validator(c: Customer) -> bool:
         return c.is_premium
 
     def transformer(m: Money) -> str:
         return str(m)
 
-    print(f"✅ Customer is premium: {validator(customer)}")
-    print(
-        f"✅ Money as string: {transformer(Money(amount=Decimal(5000), currency='USD'))}",
-    )
-
 
 def _print_benefits() -> None:
-    print("\n📊 Benefits Demonstrated:")
-    print("• 85% less boilerplate code")
-    print("• Zero exception handling (railway-oriented programming)")
-    print("• Complete type safety with semantic types")
-    print("• Self-documented business logic")
-    print("• Automatic validation and error propagation")
-    print("• Clean separation of concerns")
+    pass
 
 
 def demonstrate_modern_patterns() -> None:
@@ -639,7 +596,6 @@ def demonstrate_modern_patterns() -> None:
     product_keys = ["product_laptop", "product_mouse", "product_keyboard"]
     product_id = _select_first_available_product_id(container, product_keys)
     if product_id is None:
-        print("❌ No products available for order")
         return
     _process_order_and_print(container, customer, product_id)
     _type_system_demo(customer)
@@ -648,25 +604,9 @@ def demonstrate_modern_patterns() -> None:
 
 def demonstrate_boilerplate_comparison() -> None:
     """Show before/after comparison of boilerplate reduction."""
-    print("\n📈 Boilerplate Reduction Analysis")
-    print("=" * 50)
-
     traditional_lines = 150  # Estimated lines for traditional approach
     modern_lines = 25  # Actual lines in modern approach
-    reduction = ((traditional_lines - modern_lines) / traditional_lines) * 100
-
-    print(f"Traditional approach: ~{traditional_lines} lines")
-    print(f"Modern FLEXT patterns: ~{modern_lines} lines")
-    print(f"Boilerplate reduction: {reduction:.0f}%")
-    print()
-    print("Key eliminations:")
-    print("• Exception handling: Railway-oriented programming")
-    print("• Manual validation: Built-in entity validation")
-    print("• Configuration boilerplate: Auto environment loading")
-    print("• Factory patterns: Decorator-based registration")
-    print("• Type annotations: Semantic type system")
-    print("• ID generation: Automatic in FlextEntity")
-    print("• Timestamp tracking: Built-in lifecycle management")
+    ((traditional_lines - modern_lines) / traditional_lines) * 100
 
 
 if __name__ == "__main__":

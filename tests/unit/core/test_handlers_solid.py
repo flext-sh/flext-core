@@ -121,7 +121,7 @@ class TestSOLIDPrinciples:
         class MockValidator:
             """Mock validator for testing DIP."""
 
-            def validate_message(self, message: object) -> FlextResult[object]:
+            def validate_message(self, message: object) -> FlextResult[object]:  # noqa: ARG002
                 return FlextResult.fail("Mock validation failed")
 
         class MockMetricsCollector:
@@ -205,7 +205,7 @@ class TestSOLIDPrinciples:
 
         # Process failed command by creating failing handler
         class FailingHandler(FlextHandlers.CommandHandler):
-            def handle(self, command: object) -> FlextResult[object]:
+            def handle(self, command: object) -> FlextResult[object]:  # noqa: ARG002
                 return FlextResult.fail("Intentional failure")
 
         failing_handler = FailingHandler("failing")

@@ -3,14 +3,13 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable, Iterator
 from typing import TYPE_CHECKING, Generic, Protocol, TypeVar, runtime_checkable
 
-if TYPE_CHECKING:
-    from collections.abc import Awaitable, Iterator
-    from pathlib import Path
+from flext_core.result import FlextResult
 
-    from flext_core.result import FlextResult
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 T = TypeVar("T")

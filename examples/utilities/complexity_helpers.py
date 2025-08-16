@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING
 from .validation_utilities import is_email, is_int, is_non_empty_string
 
 if TYPE_CHECKING:
-    from flext_core import TErrorMessage, TLogMessage, TUserData
+    from flext_core import TErrorMessage, TUserData
 
 # =============================================================================
 # COMPLEXITY REDUCTION HELPERS - SOLID SRP: Modular utility demonstrations
@@ -27,33 +27,23 @@ class DemonstrationSectionHelper:
     @staticmethod
     def print_section_header(example_num: int, title: str) -> None:
         """DRY Helper: Print standardized section headers."""
-        log_message: TLogMessage = "\n" + "=" * 60
-        print(log_message)
-        print(f"📋 EXAMPLE {example_num}: {title}")
-        print("=" * 60)
+        "\n" + "=" * 60
 
     @staticmethod
     def log_operation(operation: str, result: object) -> None:
         """DRY Helper: Log operation results consistently."""
-        log_message: TLogMessage = f"🔧 {operation}: {result}"
-        print(log_message)
 
     @staticmethod
     def print_separator() -> None:
         """DRY Helper: Print visual separator."""
-        print("-" * 40)
 
     @staticmethod
     def log_success(message: str) -> None:
         """DRY Helper: Log success messages consistently."""
-        log_message: TLogMessage = f"✅ {message}"
-        print(log_message)
 
     @staticmethod
     def log_error(message: str) -> None:
         """DRY Helper: Log error messages consistently."""
-        log_message: TLogMessage = f"❌ {message}"
-        print(log_message)
 
 
 class ValidationHelper:
@@ -83,11 +73,7 @@ class ValidationHelper:
     def report_validation_result(validation_errors: list[TErrorMessage]) -> None:
         """DRY Helper: Report validation results consistently."""
         if validation_errors:
-            log_message: TLogMessage = f"❌ Validation failed: {validation_errors}"
-            print(log_message)
-        else:
-            log_message = "✅ Data validation passed"
-            print(log_message)
+            pass
 
     @staticmethod
     def validate_config_data(config: dict[str, object]) -> list[TErrorMessage]:

@@ -10,15 +10,14 @@ from datetime import UTC, datetime
 
 import pytest
 from pydantic import ValidationError
-from tests.shared_test_domain import (
+
+from flext_core import FlextEntity, FlextResult, FlextValidationError
+
+from ...shared_test_domain import (
     ConcreteFlextEntity,
     TestDomainFactory,
     TestUserStatus,
 )
-
-from flext_core import FlextEntity
-from flext_core.exceptions import FlextValidationError
-from flext_core.result import FlextResult
 
 # Constants
 EXPECTED_BULK_SIZE = 2

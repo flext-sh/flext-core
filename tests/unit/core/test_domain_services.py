@@ -12,8 +12,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from flext_core.domain_services import FlextDomainService
-from flext_core.result import FlextResult
+from flext_core import FlextDomainService, FlextResult
 
 if TYPE_CHECKING:
     from collections.abc import Callable

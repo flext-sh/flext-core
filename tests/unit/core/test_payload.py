@@ -4,15 +4,16 @@ from __future__ import annotations
 
 import uuid
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING
 
 import pytest
 
-from flext_core.constants import FlextConstants
-from flext_core.payload import FlextEvent, FlextMessage, FlextPayload
-
-if TYPE_CHECKING:
-    from flext_core.result import FlextResult
+from flext_core import (
+    FlextConstants,
+    FlextEvent,
+    FlextMessage,
+    FlextPayload,
+    FlextResult,
+)
 
 # Rebuild Pydantic models to resolve forward references
 FlextPayload.model_rebuild()

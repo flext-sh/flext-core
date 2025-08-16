@@ -3,14 +3,7 @@
 from __future__ import annotations
 
 import os
-from typing import (
-    TYPE_CHECKING,
-    ClassVar,
-    Protocol,
-    TypeVar,
-    cast,
-    runtime_checkable,
-)
+from typing import TYPE_CHECKING, ClassVar, Protocol, TypeVar, cast, runtime_checkable
 from unittest.mock import MagicMock, Mock, patch
 
 from flext_core.models import FlextModel
@@ -578,7 +571,9 @@ def create_oud_connection_config() -> dict[str, str]:
 
     """
     # Prefer environment-provided ports to avoid conflicts in CI/containers
-    port_str = os.environ.get("LDAP_PORT") or os.environ.get("TESTS_LDAP_PORT") or "3389"
+    port_str = (
+        os.environ.get("LDAP_PORT") or os.environ.get("TESTS_LDAP_PORT") or "3389"
+    )
 
     return {
         "host": "localhost",

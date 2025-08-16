@@ -1,5 +1,7 @@
 """Comprehensive tests for FlextResult functionality.
 
+# ruff: noqa: ARG
+
 Complete test suite covering all FlextResult methods, patterns, and edge cases
 including property-based testing, performance benchmarks, and advanced scenarios.
 """
@@ -11,11 +13,10 @@ from typing import TYPE_CHECKING, cast
 
 import pytest
 from hypothesis import given, strategies as st
-from tests.conftest import TestCase, TestScenario
 
-from flext_core.exceptions import FlextOperationError
-from flext_core.result import FlextResult
-from flext_core.utilities import safe_call
+from flext_core import FlextOperationError, FlextResult, safe_call
+
+from ...conftest import TestCase, TestScenario
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -208,7 +209,7 @@ class TestFlextResultMapExceptions:
         """Test map method with RuntimeError exception."""
         result = FlextResult.ok("test")
 
-        def failing_func(x: str) -> str:
+        def failing_func(_x: str) -> str:
             msg = "Custom runtime error"
             raise RuntimeError(msg)
 
@@ -225,7 +226,7 @@ class TestFlextResultMapExceptions:
         """Test map method with unexpected exception type."""
         result = FlextResult.ok("test")
 
-        def failing_func(x: str) -> str:
+        def failing_func(_x: str) -> str:
             msg = "Unexpected key error"
             raise KeyError(msg)
 
@@ -262,7 +263,7 @@ class TestFlextResultFlatMapExceptions:
         """Test flat_map method with TypeError exception."""
         result = FlextResult.ok("test")
 
-        def failing_func(x: str) -> FlextResult[int]:
+        def failing_func(_x: str) -> FlextResult[int]:
             # This will raise AttributeError when accessing non-existent method
             # x.non_existent_method()
             msg = "Simulated AttributeError"
@@ -311,7 +312,7 @@ class TestFlextResultFlatMapExceptions:
         """Test flat_map method with unexpected exception type."""
         result = FlextResult.ok("test")
 
-        def failing_func(x: str) -> FlextResult[str]:
+        def failing_func(_x: str) -> FlextResult[str]:
             msg = "Unexpected OS error"
             raise OSError(msg)
 
@@ -536,7 +537,7 @@ class TestFlextResultRailwayMethods:
         result._error = None  # Manually set to None
 
         # When error is None, result should be treated as success, so return self
-        def recovery(error: str) -> str:
+        def recovery(error: str) -> str:  # noqa: ARG001
             return "recovered"
 
         recovered = result.recover(recovery)
@@ -547,7 +548,7 @@ class TestFlextResultRailwayMethods:
         """Test recover method when recovery function raises exception."""
         result: FlextResult[object] = FlextResult.fail("error")
 
-        def failing_recovery(error: str) -> str:
+        def failing_recovery(_error: str) -> str:
             msg = "Recovery failed"
             raise ValueError(msg)
 
@@ -588,7 +589,7 @@ class TestFlextResultRailwayMethods:
         result = FlextResult[str](error="")
         result._error = None  # Manually set to None
 
-        def recovery(error: str) -> FlextResult[str]:
+        def recovery(error: str) -> FlextResult[str]:  # noqa: ARG001
             return FlextResult.ok("recovered")
 
         recovered = result.recover_with(recovery)
@@ -601,7 +602,7 @@ class TestFlextResultRailwayMethods:
         """Test recover_with method when recovery function raises exception."""
         result: FlextResult[str] = FlextResult.fail("error")
 
-        def failing_recovery(error: str) -> FlextResult[str]:
+        def failing_recovery(_error: str) -> FlextResult[str]:
             msg = "Recovery failed"
             raise ValueError(msg)
 
@@ -667,7 +668,7 @@ class TestFlextResultSideEffects:
         """Test tap method when side effect raises exception."""
         result = FlextResult.ok("test")
 
-        def failing_side_effect(data: str) -> None:
+        def failing_side_effect(_data: str) -> None:
             msg = "Side effect failed"
             raise ValueError(msg)
 
@@ -727,7 +728,7 @@ class TestFlextResultSideEffects:
         """Test tap_error method when side effect raises exception."""
         result: FlextResult[object] = FlextResult.fail("error")
 
-        def failing_error_side_effect(error: str) -> None:
+        def failing_error_side_effect(_error: str) -> None:
             msg = "Error side effect failed"
             raise ValueError(msg)
 
@@ -784,7 +785,7 @@ class TestFlextResultFilter:
         """Test filter method with failure result."""
         result: FlextResult[int] = FlextResult.fail("initial error")
 
-        def always_true(x: int) -> bool:
+        def always_true(_x: int) -> bool:
             return True
 
         filtered = result.filter(always_true)
@@ -810,7 +811,7 @@ class TestFlextResultFilter:
         """Test filter method when predicate raises exception."""
         result = FlextResult.ok("test")
 
-        def failing_predicate(x: str) -> bool:
+        def failing_predicate(_x: str) -> bool:
             msg = "Predicate failed"
             raise ValueError(msg)
 
@@ -1451,10 +1452,10 @@ class TestFlextResultPerformance:
         assert len(res_list) == 1000
 
     @pytest.mark.benchmark
+    @pytest.mark.usefixtures("performance_threshold")
     def test_result_chain_performance(
         self,
         performance_monitor: Callable[..., dict[str, float | FlextResult[int]]],
-        performance_threshold: dict[str, float],
     ) -> None:
         """Benchmark chained FlextResult operations."""
 
@@ -1546,7 +1547,7 @@ class TestFlextResultIntegration:
     def test_error_propagation_in_pipeline(self) -> None:
         """Test error propagation through data pipeline."""
 
-        def failing_step(data: object) -> FlextResult[object]:
+        def failing_step(_data: object) -> FlextResult[object]:
             return FlextResult.fail("Processing failed at step 2")
 
         def later_step(data: object) -> FlextResult[object]:
@@ -1581,7 +1582,7 @@ class TestFlextResultBoundary:
         # Create a deep chain (50 operations)
         for i in range(50):
 
-            def _add_i(x: int, i=i) -> int:
+            def _add_i(x: int, i=i) -> int:  # noqa: ANN001
                 return x + i
 
             result = result.map(_add_i)

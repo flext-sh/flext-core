@@ -13,9 +13,9 @@ from unittest.mock import Mock
 
 import pytest
 
-from flext_core.constants import FlextConstants
-from flext_core.result import FlextResult
-from flext_core.semantic import (
+from flext_core import (
+    FlextConstants,
+    FlextResult,
     FlextSemantic,
     FlextSemanticError,
     FlextSemanticModel,

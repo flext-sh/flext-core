@@ -9,8 +9,6 @@ from __future__ import annotations
 
 import json
 import secrets
-
-# Ensure project root is on sys.path so `examples` package imports work
 from typing import cast
 
 from flext_core import FlextResult, FlextValidation, safe_call
@@ -94,7 +92,6 @@ def process_user_data_traditional(data: dict[str, object]) -> dict[str, object]:
             if secrets.SystemRandom().random() < FAILURE_RATE:
                 _raise_database_timeout()
             # Simulate save
-            print(f"Saved user: {user_id}")
         except ConnectionError as e:
             msg = f"Database save failed: {e}"
             raise RuntimeError(msg) from e
@@ -103,10 +100,9 @@ def process_user_data_traditional(data: dict[str, object]) -> dict[str, object]:
         try:
             if secrets.SystemRandom().random() < FAILURE_RATE:
                 _raise_email_service_error()
-            print(f"Welcome email sent to: {data['email']}")
-        except RuntimeError as e:
+        except RuntimeError:
             # Continue anyway for email failures
-            print(f"Warning: Email failed: {e}")
+            pass
 
         return {"success": True, "user_id": user_id, "message": "User processed"}
 
@@ -231,7 +227,7 @@ def process_with_retry(
             msg = f"✅ Succeeded on attempt {attempt + 1}"
 
             def _printer(_: object, _m: str = msg) -> None:
-                print(_m)
+                pass
 
             return result.tap(_printer)
     error_result = {
@@ -260,10 +256,6 @@ def transform_user_data(raw_data: str) -> FlextResult[UserDataDict]:
 
 def demo_successful_registration() -> None:
     """Demonstrate successful user registration."""
-    print("\n" + "=" * 60)
-    print("📋 EXAMPLE 1: Successful User Registration")
-    print("=" * 60)
-
     valid_user: UserDataDict = {
         "name": "Alice Johnson",
         "email": "alice@example.com",
@@ -272,32 +264,20 @@ def demo_successful_registration() -> None:
 
     result = process_user_registration(valid_user)
     if result.success:
-        print(f"✅ Success: {json.dumps(result.data, indent=2)}")
-    else:
-        print(f"❌ Failed: {result.error}")
+        pass
 
 
 def demo_validation_failure() -> None:
     """Demonstrate validation failure handling."""
-    print("\n" + "=" * 60)
-    print("📋 EXAMPLE 2: Validation Failure")
-    print("=" * 60)
-
     invalid_user: UserDataDict = {"name": "", "email": "not-an-email", "age": 15}
 
     result = process_user_registration(invalid_user)
     if result.success:
-        print(f"✅ Success: {result.data}")
-    else:
-        print(f"❌ Expected failure: {result.error}")
+        pass
 
 
 def demo_batch_processing() -> None:
     """Demonstrate batch processing with error handling."""
-    print("\n" + "=" * 60)
-    print("📋 EXAMPLE 3: Batch Processing")
-    print("=" * 60)
-
     users_batch: list[UserDataDict] = [
         {"name": "Bob Smith", "email": "bob@example.com", "age": 35},
         {"name": "Carol Davis", "email": "carol@example.com", "age": 42},
@@ -308,30 +288,21 @@ def demo_batch_processing() -> None:
 
     result = process_multiple_users(users_batch)
     if result.success and result.data is not None:
-        print("✅ Batch processing completed!")
-        successful_count = result.data.get("successful", 0)
-        print(f"📊 Processed {successful_count} users successfully")
+        result.data.get("successful", 0)
         results_list = result.data.get("results", [])
         # Type annotation for loop variable and proper type handling
         typed_results_list: list[object] = (
             results_list if isinstance(results_list, list) else []
         )
-        for i, user_result in enumerate(typed_results_list):
+        for user_result in typed_results_list:
             if isinstance(user_result, dict) and "user" in user_result:
                 user_data = user_result["user"]
                 if isinstance(user_data, dict):
-                    name = user_data.get("name", "Unknown")
-                    print(f"  👤 User {i + 1}: {name}")
-    else:
-        print(f"❌ Batch processing failed: {result.error}")
+                    user_data.get("name", "Unknown")
 
 
 def demo_json_transformation() -> None:
     """Demonstrate JSON transformation pipeline."""
-    print("\n" + "=" * 60)
-    print("📋 EXAMPLE 4: JSON Transformation Pipeline")
-    print("=" * 60)
-
     json_data = '{"name": "Frank Miller", "email": "frank@example.com", "age": 45}'
 
     result = transform_user_data(json_data).flat_map(process_user_registration)
@@ -339,20 +310,11 @@ def demo_json_transformation() -> None:
     if result.success:
         data = result.data
         if isinstance(data, dict) and "user" in data and isinstance(data["user"], dict):
-            user_name = data["user"].get("name", "Unknown")
-            print(f"✅ Pipeline success: User {user_name} processed")
-        else:
-            print("✅ Pipeline success: User processed")
-    else:
-        print(f"❌ Pipeline failed: {result.error}")
+            data["user"].get("name", "Unknown")
 
 
 def demo_retry_pattern() -> None:
     """Demonstrate retry pattern with error recovery."""
-    print("\n" + "=" * 60)
-    print("📋 EXAMPLE 5: Retry Pattern")
-    print("=" * 60)
-
     retry_user: UserDataDict = {
         "name": "Grace Taylor",
         "email": "grace@example.com",
@@ -361,27 +323,14 @@ def demo_retry_pattern() -> None:
 
     result = process_with_retry(retry_user, max_retries=3)
     if result.success:
-        print("✅ Retry pattern success!")
+        pass
 
 
 def demo_boilerplate_comparison() -> None:
     """🎯 MAIN DEMONSTRATION: Before vs After Boilerplate Reduction."""
-    print("\n" + "=" * 80)
-    print("🎯 BOILERPLATE ELIMINATION SHOWCASE")
-    print("=" * 80)
-
     test_data = {"name": "John Doe", "email": "john@example.com", "age": 30}
 
-    print("\n📊 TRADITIONAL APPROACH (BEFORE):")
-    print("-" * 40)
-    traditional_result = process_user_data_traditional(test_data)
-    print(f"Result: {traditional_result}")
-    print("📏 Lines of code: ~35 lines")
-    print("🚨 Exception handlers: 4")
-    print("🔧 Error handling: Manual, repetitive")
-
-    print("\n🚀 MODERN FLEXT APPROACH (AFTER):")
-    print("-" * 40)
+    process_user_data_traditional(test_data)
 
     # Modern approach - single pipeline
     modern_result = (
@@ -393,42 +342,11 @@ def demo_boilerplate_comparison() -> None:
     )
 
     if modern_result.success:
-        print(f"Result: Success - User ID: {modern_result.data}")
-    else:
-        print(f"Result: Error - {modern_result.error}")
-
-    print("📏 Lines of code: ~4 lines")
-    print("🚨 Exception handlers: 0")
-    print("🔧 Error handling: Automatic propagation")
-
-    print("\n📈 MASSIVE IMPROVEMENT METRICS:")
-    print("-" * 40)
-    print("🎯 SPECIFIC FUNCTION REDUCTIONS ACHIEVED:")
-    print("• validate_user_data(): 18 lines → 6 lines (67% reduction)")
-    print("• create_user(): 24 lines → 5 lines (79% reduction)")
-    print("• save_user_to_database(): 12 lines → 4 lines (67% reduction)")
-    print("• send_welcome_email(): 12 lines → 4 lines (67% reduction)")
-    print("• process_user_registration(): 42 lines → 8 lines (81% reduction)")
-    print("• process_multiple_users(): 35 lines → 12 lines (66% reduction)")
-    print("• process_with_retry(): 33 lines → 7 lines (79% reduction)")
-    print("• transform_user_data(): 14 lines → 7 lines (50% reduction)")
-
-    print("\n🚀 OVERALL ACHIEVEMENT:")
-    print("• Total boilerplate eliminated: ~190 lines → ~51 lines")
-    print("• Overall reduction: 73% less code")
-    print("• Exception handlers eliminated: 100%")
-    print("• Type safety improved: 100%")
-    print("• Maintainability: DRASTICALLY improved")
+        pass
 
 
 def main() -> None:
     """🚀 FLEXT Railway Pattern - Boilerplate Elimination Showcase."""
-    print("=" * 80)
-    print("🚀 FLEXT RAILWAY PATTERN - BOILERPLATE ELIMINATION SHOWCASE")
-    print("=" * 80)
-    print("Demonstrating the revolutionary impact of modern FLEXT patterns")
-    print("through dramatic boilerplate reduction and error handling simplification.")
-
     # Main showcase: before vs after
     demo_boilerplate_comparison()
 
@@ -437,15 +355,6 @@ def main() -> None:
     demo_validation_failure()
     demo_json_transformation()
     demo_retry_pattern()
-
-    print("\n" + "=" * 80)
-    print("🎉 MODERN PATTERNS SHOWCASE COMPLETED")
-    print("=" * 80)
-    print("Key takeaways:")
-    print("• Railway-oriented programming eliminates exception chaos")
-    print("• Type-safe composition ensures predictable error handling")
-    print("• Dramatic boilerplate reduction while maintaining enterprise quality")
-    print("• Used across 15,000+ function signatures in FLEXT ecosystem")
 
 
 if __name__ == "__main__":

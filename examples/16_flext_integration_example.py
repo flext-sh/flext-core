@@ -5,9 +5,7 @@ Comprehensive example showing all FLEXT components working together with shared
 domain models.
 """
 
-import sys as _sys
 from decimal import Decimal
-from pathlib import Path as _Path
 from typing import cast
 
 from flext_core import (
@@ -18,11 +16,7 @@ from flext_core import (
     get_logger,
 )
 
-_project_root = _Path(__file__).resolve().parents[1]
-if str(_project_root) not in _sys.path:
-    _sys.path.insert(0, str(_project_root))
-
-from examples.shared_domain import EmailAddress, Money, Order, SharedDomainFactory, User
+from .shared_domain import EmailAddress, Money, Order, SharedDomainFactory, User
 
 # =============================================================================
 # VALIDATION CONSTANTS - Integration example constraints
@@ -33,7 +27,7 @@ MIN_EMAIL_LENGTH = 5  # Minimum characters for basic email validation
 
 
 def _print_header() -> None:
-    print("=== FLEXT Core Complete Integration Example ===\n")
+    pass
 
 
 def _setup_logger() -> FlextLogger:
@@ -45,15 +39,10 @@ def _setup_logger() -> FlextLogger:
 def _shared_domain_vo_demo() -> tuple[EmailAddress, Money]:
     email = EmailAddress(email="customer@example.com")
     money = Money(amount=Decimal("100.0"), currency="USD")
-    print("1. Shared Domain Value Objects:")
-    print(f"  Email: {email.email}")
-    print(f"  Money: {money.amount} {money.currency}")
-    print()
     return email, money
 
 
 def _create_customer(email: EmailAddress) -> FlextResult[User]:
-    print("2. Using Shared Domain User:")
     return SharedDomainFactory.create_user(
         name="John Customer",
         email=email.email,
@@ -62,12 +51,10 @@ def _create_customer(email: EmailAddress) -> FlextResult[User]:
 
 
 def _print_customer(customer: User) -> None:
-    print(f"  Customer: {customer.name} ({customer.email_address.email})")
-    print()
+    pass
 
 
 def _create_order(customer_id: str, money: Money) -> FlextResult[Order]:
-    print("3. Using Shared Domain Order:")
     order_items = [
         {
             "product_id": "product123",
@@ -84,15 +71,10 @@ def _create_order(customer_id: str, money: Money) -> FlextResult[Order]:
 
 
 def _print_order(order: Order) -> None:
-    print(f"  Order: {order.id}, Status: {order.status}")
-    print(f"  Customer: {order.customer_id}")
-    print(f"  Events: {len(order.domain_events)} domain events")
-    print()
+    pass
 
 
 def _demo_command_pattern(customer_id: str, order_items: list[dict[str, str]]) -> None:
-    print("4. Command Pattern with Shared Domain:")
-
     class CreateOrderCommand:
         def __init__(self, customer_id: str, items: list[dict[str, str]]) -> None:
             self.customer_id = customer_id
@@ -106,14 +88,10 @@ def _demo_command_pattern(customer_id: str, order_items: list[dict[str, str]]) -
             return FlextResult.ok(None)
 
     create_command = CreateOrderCommand(customer_id=customer_id, items=order_items)
-    validation = create_command.validate_command()
-    print(f"  Command validation: {validation.success}")
-    print()
+    create_command.validate_command()
 
 
 def _demo_repository_pattern(order: Order) -> object:
-    print("5. Repository Pattern with Shared Domain:")
-
     class OrderRepository:
         def __init__(self) -> None:
             self.orders: dict[str, object] = {}
@@ -130,13 +108,10 @@ def _demo_repository_pattern(order: Order) -> object:
             return FlextResult.fail(f"Order {order_id} not found")
 
     repository = OrderRepository()
-    save_result = repository.save(order)
-    print(f"  Order saved: {save_result.success}")
+    repository.save(order)
     fetch_result = repository.get_by_id(order.id)
     if fetch_result.success:
-        fetched_order = fetch_result.data
-        print(f"  Order fetched: {hasattr(fetched_order, 'id')}")
-    print()
+        pass
     return repository
 
 
@@ -145,41 +120,31 @@ class _OrderRepositoryProtocol:
 
 
 def _demo_container(customer: User, repository: object) -> None:
-    print("6. Dependency Injection Example:")
     container = get_flext_container()
     container.register("order_repository", repository)
     container.register("current_customer", customer)
     repo_result = container.get("order_repository")
     customer_result = container.get("current_customer")
     if repo_result.success and customer_result.success:
-        print("  Services registered and retrieved successfully")
         retrieved_customer = customer_result.data
         if hasattr(retrieved_customer, "name"):
-            print(f"  Retrieved customer: {retrieved_customer.name}")
-        else:
-            print(f"  Retrieved customer: {retrieved_customer}")
-    print()
+            pass
 
 
 def _demo_fields_validation() -> None:
-    print("7. Field Validation Example:")
     email_field = FlextFields.create_string_field(
         field_id="customer_email",
         field_name="email",
         pattern=r"^[^@]+@[^@]+\.[^@]+$",
         required=True,
     )
-    valid_test = email_field.validate_value("alice@example.com")
+    email_field.validate_value("alice@example.com")
     invalid_test = email_field.validate_value("invalid-email")
-    print(f"  Valid email validation: {valid_test.success}")
-    print(f"  Invalid email validation: {invalid_test.success}")
     if invalid_test.is_failure:
-        print(f"    Error: {invalid_test.error}")
-    print()
+        pass
 
 
 def _demo_complete_flow(customer: User, order: Order, logger: FlextLogger) -> None:
-    print("8. Complete Integration Flow:")
     order2_result = SharedDomainFactory.create_order(
         customer_id=customer.id,
         items=[
@@ -198,19 +163,14 @@ def _demo_complete_flow(customer: User, order: Order, logger: FlextLogger) -> No
         # Hint to type checker
         repo: _OrderRepositoryProtocol = repository_any  # type: ignore[assignment]
         repo.save(order2)
-        print(f"  Created second order: {order2.id}")
         total1_result = order.calculate_total()
         total2_result = order2.calculate_total()
         if total1_result.success and total2_result.success:
             total1 = total1_result.data
             total2 = total2_result.data
             if total1 is not None and total2 is not None:
-                combined_amount = total1.amount + total2.amount
-                print(f"  Order 1 total: {total1.amount} {total1.currency}")
-                print(f"  Order 2 total: {total2.amount} {total2.currency}")
-                print(f"  Combined total: {combined_amount} USD")
+                total1.amount + total2.amount
     logger.info("Integration example completed successfully")
-    print("\n=== Complete Integration Example Finished! ===")
 
 
 def main() -> None:
@@ -220,13 +180,11 @@ def main() -> None:
     email, money = _shared_domain_vo_demo()
     user_result = _create_customer(email)
     if user_result.is_failure or user_result.data is None:
-        print(f"Failed to create user: {user_result.error}")
         return
     customer = user_result.data
     _print_customer(customer)
     order_result = _create_order(customer.id, money)
     if order_result.is_failure or order_result.data is None:
-        print(f"Failed to create order: {order_result.error}")
         return
     order = order_result.data
     _print_order(order)

@@ -2,32 +2,14 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import cast
 
 import pytest
 
-from flext_core.commands import FlextCommands
-from flext_core.result import FlextResult
+from flext_core import FlextCommands, FlextResult
 
-if TYPE_CHECKING:
-    # Type aliases for command patterns
-    FlextCommandId = str
-    FlextCommandType = str
-    # Import the runtime types for model_rebuild
-    from flext_core.typings import (
-        TCorrelationId,
-        TEntityId,
-        TResult,
-        TServiceName,
-        TUserId,
-    )
-else:
-    # Define runtime aliases to prevent NameError during model_rebuild
-    TCorrelationId = str
-    TEntityId = str
-    TResult = object
-    TServiceName = str
-    TUserId = str
+FlextCommandId = str
+FlextCommandType = str
 
 # =============================================================================
 # Extract classes from FlextCommands
@@ -224,7 +206,7 @@ class FailingCommandHandler(FlextCommandHandler[FailingCommand, None]):
             and command.command_type == "failing"
         )
 
-    def handle(self, command: FailingCommand) -> FlextResult[None]:
+    def handle(self, command: FailingCommand) -> FlextResult[None]:  # noqa: ARG002
         """Fail to handle command intentionally."""
         return FlextResult.fail("Handler processing failed")
 

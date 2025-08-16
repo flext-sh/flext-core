@@ -24,8 +24,13 @@ from flext_core.mixins import (
 )
 from flext_core.payload import FlextPayload
 from flext_core.result import FlextResult
+from flext_core.typings import TAnyDict, TServiceName
 from flext_core.utilities import FlextGenerators, FlextTypeGuards
 from flext_core.validation import FlextValidators
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
 
 # Type variables for command patterns
 TCommand = TypeVar("TCommand")
@@ -97,13 +102,6 @@ class FlextAbstractQueryHandler(ABC, Generic[TQuery, TQueryResult]):  # noqa: UP
         ...
 
 
-if TYPE_CHECKING:
-    from collections.abc import Callable
-
-    from flext_core.typings import (
-        TAnyDict,
-        TServiceName,
-    )
 # FlextLogger imported for class methods only - instance methods use FlextLoggableMixin
 
 # =============================================================================

@@ -1,4 +1,4 @@
-"""Exception hierarchy for FLEXT ecosystem."""
+"""Exception hierarchy for FLEXT ecosystem using modern Pydantic patterns."""
 
 from __future__ import annotations
 
@@ -6,24 +6,36 @@ import logging
 import time
 import traceback
 from abc import ABC, abstractmethod
-from collections.abc import Mapping
-from typing import TYPE_CHECKING, ClassVar, Self, cast
+from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from flext_core.typings import TAnyDict
-
-# =============================================================================
-# CONSTANTS - Error codes and categories
-# =============================================================================
-
-from flext_core.constants import ERROR_CODES as _ERROR_CODES
+if TYPE_CHECKING:  # runtime import not required
+    from collections.abc import Mapping
+from enum import Enum
+from typing import ClassVar, Self, cast
 
 # Module-level logger (avoid using root logger)
 logger = logging.getLogger(__name__)
 
-# =============================================================================
-# EXCEPTION METRICS SYSTEM - Singleton pattern to avoid globals
-# =============================================================================
+
+class FlextErrorCodes(str, Enum):
+    """Error codes for FLEXT exceptions."""
+
+    GENERIC_ERROR = "FLEXT_GENERIC_ERROR"
+    VALIDATION_ERROR = "FLEXT_VALIDATION_ERROR"
+    TYPE_ERROR = "FLEXT_TYPE_ERROR"
+    CONFIGURATION_ERROR = "FLEXT_CONFIG_ERROR"
+    CONNECTION_ERROR = "FLEXT_CONNECTION_ERROR"
+    AUTHENTICATION_ERROR = "FLEXT_AUTH_ERROR"
+    PERMISSION_ERROR = "FLEXT_PERMISSION_ERROR"
+    NOT_FOUND = "FLEXT_NOT_FOUND"
+    ALREADY_EXISTS = "FLEXT_ALREADY_EXISTS"
+    TIMEOUT_ERROR = "FLEXT_TIMEOUT_ERROR"
+    PROCESSING_ERROR = "FLEXT_PROCESSING_ERROR"
+    CRITICAL_ERROR = "FLEXT_CRITICAL_ERROR"
+    OPERATION_ERROR = "FLEXT_OPERATION_ERROR"
+    UNWRAP_ERROR = "FLEXT_UNWRAP_ERROR"
+    BUSINESS_ERROR = "FLEXT_BUSINESS_ERROR"
+    INFRASTRUCTURE_ERROR = "FLEXT_INFRASTRUCTURE_ERROR"
 
 
 class FlextExceptionMetrics:
@@ -36,7 +48,7 @@ class FlextExceptionMetrics:
         """Ensure singleton instance."""
         if cls._instance is None:
             cls._instance = super().__new__(cls)
-        return cast("Self", cls._instance)
+        return cls._instance
 
     def record_exception(self, exception_type: str) -> None:
         """Record exception occurrence."""
@@ -54,614 +66,489 @@ class FlextExceptionMetrics:
 # Global instance for easy access
 _exception_metrics = FlextExceptionMetrics()
 
-# =============================================================================
-# ABSTRACT BASE CLASSES - Foundation exception patterns
-# =============================================================================
 
+class FlextErrorMixin:
+    """A mixin class for common functionality shared by all FLEXT-specific errors.
 
-class FlextAbstractError(ABC, Exception):
-    """Abstract base class for all FLEXT exceptions following SOLID principles.
-
-    Provides foundation for implementing exceptions with proper separation
-    of concerns and dependency inversion.
+    This follows the Pydantic pattern for error handling with modern Python features.
     """
 
     def __init__(
         self,
         message: str,
-        error_code: str | None = None,
-        context: dict[str, object] | None = None,
+        *,
+        code: FlextErrorCodes | None = None,
+        context: Mapping[str, object] | None = None,
+        correlation_id: str | None = None,
     ) -> None:
-        """Initialize abstract error."""
-        super().__init__(message)
+        """Initialize FLEXT error mixin.
+
+        Args:
+            message: A message describing the error
+            code: An optional error code from FlextErrorCodes enum
+            context: Additional context information
+            correlation_id: Correlation ID for tracking
+
+        """
         self.message = message
-        self.error_code = error_code or self._get_default_error_code()
-        self.context = context or {}
+        self.code = code or FlextErrorCodes.GENERIC_ERROR
+        self.context = dict(context or {})
+        self.correlation_id = correlation_id or f"flext_{int(time.time() * 1000)}"
+        self.timestamp = time.time()
+        self.stack_trace = traceback.format_stack()
 
-    def __str__(self) -> str:  # pragma: no cover - trivial
-        """Return a human-readable exception message."""
-        if self.error_code:
-            return f"[{self.error_code}] {self.message}"
-        return self.message
+        # Record metrics
+        _exception_metrics.record_exception(self.__class__.__name__)
 
-    @property
-    @abstractmethod
-    def error_category(self) -> str:
-        """Get error category - must be implemented by subclasses."""
-        ...
+    def __str__(self) -> str:
+        """Return human-readable error message."""
+        return f"[{self.code.value}] {self.message}"
 
-    @abstractmethod
-    def _get_default_error_code(self) -> str:
-        """Get default error code - must be implemented by subclasses."""
-        ...
-
-    @abstractmethod
-    def to_dict(self) -> TAnyDict:
-        """Convert exception to dictionary - must be implemented by subclasses."""
-        ...
+    def to_dict(self) -> dict[str, object]:
+        """Convert error to dictionary for serialization."""
+        return {
+            "error_type": self.__class__.__name__,
+            "code": self.code.value,
+            "message": self.message,
+            "context": self.context,
+            "correlation_id": self.correlation_id,
+            "timestamp": self.timestamp,
+        }
 
 
-class FlextAbstractValidationError(FlextAbstractError, ABC):
-    """Abstract validation error for input validation."""
+class FlextUserError(FlextErrorMixin, TypeError):
+    """An error raised due to incorrect use of FLEXT.
+
+    Follows Pydantic's PydanticUserError pattern.
+    """
 
     def __init__(
         self,
         message: str,
+        *,
+        code: FlextErrorCodes | None = None,
+        context: Mapping[str, object] | None = None,
+    ) -> None:
+        """Initialize user error."""
+        FlextErrorMixin.__init__(self, message, code=code, context=context)
+        TypeError.__init__(self, message)
+
+
+class FlextValidationError(FlextErrorMixin, ValueError):
+    """A validation error raised when input validation fails.
+
+    Follows Pydantic's validation error pattern.
+    """
+
+    def __init__(
+        self,
+        message: str,
+        *,
         field: str | None = None,
-        validation_details: dict[str, object] | None = None,
-        error_code: str | None = None,
-        context: dict[str, object] | None = None,
+        value: object = None,
+        code: FlextErrorCodes | None = None,
+        context: Mapping[str, object] | None = None,
     ) -> None:
-        """Initialize abstract validation error."""
-        super().__init__(message, error_code, context)
+        """Initialize validation error."""
+        base_context: dict[str, object] = dict(context or {})
+        if field is not None:
+            base_context["field"] = field
+        if value is not None:
+            base_context["value"] = str(value)[:100]  # Truncate for safety
+        FlextErrorMixin.__init__(
+            self,
+            message,
+            code=code or FlextErrorCodes.VALIDATION_ERROR,
+            context=base_context,
+        )
+        ValueError.__init__(self, message)
+
         self.field = field
-        self.validation_details = validation_details or {}
-
-    @property
-    def error_category(self) -> str:
-        """Get error category."""
-        return "VALIDATION"
-
-    def _get_default_error_code(self) -> str:
-        """Get default error code."""
-        return _ERROR_CODES["VALIDATION_ERROR"]
+        self.value = value
 
 
-class FlextAbstractBusinessError(FlextAbstractError, ABC):
-    """Abstract business error for business rule violations."""
+class FlextConfigurationError(FlextErrorMixin, ValueError):
+    """Configuration-related error."""
 
     def __init__(
         self,
         message: str,
-        business_rule: str | None = None,
-        error_code: str | None = None,
-        **kwargs: object,
-    ) -> None:
-        """Initialize abstract business error."""
-        super().__init__(message, error_code, kwargs)
-        self.business_rule = business_rule
-
-    @property
-    def error_category(self) -> str:
-        """Get error category."""
-        return "BUSINESS"
-
-    def _get_default_error_code(self) -> str:
-        """Get default error code."""
-        return _ERROR_CODES["BUSINESS_ERROR"]
-
-
-class FlextAbstractInfrastructureError(FlextAbstractError, ABC):
-    """Abstract infrastructure error for infrastructure issues."""
-
-    def __init__(
-        self,
-        message: str,
-        service: str | None = None,
-        error_code: str | None = None,
-        **kwargs: object,
-    ) -> None:
-        """Initialize abstract infrastructure error."""
-        super().__init__(message, error_code, kwargs)
-        self.service = service
-
-    @property
-    def error_category(self) -> str:
-        """Get error category."""
-        return "INFRASTRUCTURE"
-
-    def _get_default_error_code(self) -> str:
-        """Get default error code."""
-        return _ERROR_CODES["INFRASTRUCTURE_ERROR"]
-
-
-class FlextAbstractConfigurationError(FlextAbstractError, ABC):
-    """Abstract configuration error for configuration issues."""
-
-    def __init__(
-        self,
-        message: str,
+        *,
         config_key: str | None = None,
-        error_code: str | None = None,
-        **kwargs: object,
+        config_file: str | None = None,
+        code: FlextErrorCodes | None = None,
+        context: Mapping[str, object] | None = None,
     ) -> None:
-        """Initialize abstract configuration error."""
-        super().__init__(message, error_code, kwargs)
+        """Initialize configuration error."""
+        base_context: dict[str, object] = dict(context or {})
+        if config_key is not None:
+            base_context["config_key"] = config_key
+        if config_file is not None:
+            base_context["config_file"] = config_file
+        FlextErrorMixin.__init__(
+            self,
+            message,
+            code=code or FlextErrorCodes.CONFIGURATION_ERROR,
+            context=base_context,
+        )
+        ValueError.__init__(self, message)
+
         self.config_key = config_key
-
-    @property
-    def error_category(self) -> str:
-        """Get error category."""
-        return "CONFIGURATION"
-
-    def _get_default_error_code(self) -> str:
-        """Get default error code."""
-        return _ERROR_CODES["CONFIG_ERROR"]
+        self.config_file = config_file
 
 
-class FlextAbstractErrorFactory(ABC):
-    """Abstract factory for creating exceptions."""
+class FlextConnectionError(FlextErrorMixin, ConnectionError):
+    """Connection-related error."""
 
-    @abstractmethod
-    def create_validation_error(
+    def __init__(
         self,
         message: str,
-        **kwargs: object,
-    ) -> FlextAbstractValidationError:
-        """Create validation error - must be implemented by subclasses."""
-        ...
+        *,
+        service: str | None = None,
+        endpoint: str | None = None,
+        code: FlextErrorCodes | None = None,
+        context: Mapping[str, object] | None = None,
+    ) -> None:
+        """Initialize connection error."""
+        base_context: dict[str, object] = dict(context or {})
+        if service is not None:
+            base_context["service"] = service
+        if endpoint is not None:
+            base_context["endpoint"] = endpoint
+        FlextErrorMixin.__init__(
+            self,
+            message,
+            code=code or FlextErrorCodes.CONNECTION_ERROR,
+            context=base_context,
+        )
+        ConnectionError.__init__(self, message)
 
-    @abstractmethod
-    def create_business_error(
+        self.service = service
+        self.endpoint = endpoint
+
+
+class FlextNotFoundError(FlextErrorMixin, ValueError):
+    """Resource not found error."""
+
+    def __init__(
         self,
         message: str,
-        **kwargs: object,
-    ) -> FlextAbstractBusinessError:
-        """Create business error - must be implemented by subclasses."""
-        ...
+        *,
+        resource_type: str | None = None,
+        resource_id: str | None = None,
+        code: FlextErrorCodes | None = None,
+        context: Mapping[str, object] | None = None,
+    ) -> None:
+        """Initialize not found error."""
+        base_context: dict[str, object] = dict(context or {})
+        if resource_type is not None:
+            base_context["resource_type"] = resource_type
+        if resource_id is not None:
+            base_context["resource_id"] = resource_id
+        FlextErrorMixin.__init__(
+            self,
+            message,
+            code=code or FlextErrorCodes.NOT_FOUND,
+            context=base_context,
+        )
+        ValueError.__init__(self, message)
 
-    @abstractmethod
-    def create_infrastructure_error(
-        self,
-        message: str,
-        **kwargs: object,
-    ) -> FlextAbstractInfrastructureError:
-        """Create infrastructure error - must be implemented by subclasses."""
-        ...
-
-    @abstractmethod
-    def create_configuration_error(
-        self,
-        message: str,
-        **kwargs: object,
-    ) -> FlextAbstractConfigurationError:
-        """Create configuration error - must be implemented by subclasses."""
-        ...
-
-
-# =============================================================================
-# CONCRETE EXCEPTION IMPLEMENTATIONS - Production-ready exception classes
-# =============================================================================
+        self.resource_type = resource_type
+        self.resource_id = resource_id
 
 
-class FlextError(FlextAbstractError):
+class FlextError(FlextErrorMixin, Exception):
     """Base exception for all FLEXT operations.
 
-    Provides structured error handling with context, serialization,
+    Modern Pydantic-style error with structured error handling, context,
     and cross-service compatibility for distributed systems.
     """
 
     def __init__(
         self,
         message: str = "FLEXT operation failed",
-        error_code: str | None = None,
-        context: dict[str, object] | None = None,
-        **kwargs: object,
+        *,
+        code: FlextErrorCodes | None = None,
+        context: Mapping[str, object] | None = None,
     ) -> None:
         """Initialize FLEXT error with rich context."""
-        # Extract specific fields from kwargs
-        correlation_id = kwargs.get("correlation_id", "unknown")
-        timestamp = kwargs.get("timestamp", time.time())
-        traceback_info = kwargs.get("traceback_info", traceback.format_exc())
-
-        # Filter out specific fields from context
-        filtered_context = {
-            k: v
-            for k, v in kwargs.items()
-            if k not in {"correlation_id", "timestamp", "traceback_info"}
-        }
-
-        # Merge with provided context
-        if context:
-            if (
-                isinstance(context, dict)
-                and "context" in context
-                and isinstance(context["context"], dict)
-            ):
-                # Merge inner context first
-                inner_ctx = context.get("context", {})
-                if isinstance(inner_ctx, dict):
-                    filtered_context.update(inner_ctx)
-                # Then merge other non-context keys
-                filtered_context.update(
-                    {k: v for k, v in context.items() if k != "context"},
-                )
-            else:
-                filtered_context.update(context)
-
-        super().__init__(message, error_code, filtered_context)
-
-        # Set specific attributes
-        self.correlation_id: str = str(correlation_id)
-        self.timestamp: float = float(str(timestamp))
-        self.traceback_info: str = str(traceback_info)
-        # Provide a list-based stack trace for tests (non-empty best-effort)
-        try:
-            self.stack_trace: list[str] = traceback.format_stack()
-        except Exception:
-            self.stack_trace = []
-
-        # Truncate overly large contexts for safety and tests
-        try:
-            serialized = str(self.context)
-            truncate_threshold = 1000
-            if len(serialized) > truncate_threshold:
-                original_size = len(serialized)
-                self.context = {"_truncated": True, "_original_size": original_size}
-        except Exception as e:  # noqa: BLE001
-            # Keep context unchanged if it cannot be serialized; log for debug
-            logger.debug("Failed to serialize context", extra={"error": str(e)})
-
-        # Record metrics
-        _exception_metrics.record_exception(self.__class__.__name__)
-
-    @property
-    def error_category(self) -> str:
-        """Get error category."""
-        return "GENERAL"
-
-    def _get_default_error_code(self) -> str:
-        """Get default error code."""
-        return _ERROR_CODES["GENERIC_ERROR"]
-
-    def to_dict(self) -> TAnyDict:
-        """Convert exception to serializable dictionary."""
-        return {
-            "error_type": self.__class__.__name__,
-            "error_category": self.error_category,
-            "error_code": self.error_code,
-            "message": self.message,
-            "correlation_id": self.correlation_id,
-            "timestamp": self.timestamp,
-            "context": dict(self.context)
-            if isinstance(self.context, Mapping)
-            else self.context,
-            "traceback": self.traceback_info,
-        }
+        FlextErrorMixin.__init__(self, message, code=code or FlextErrorCodes.GENERIC_ERROR, context=context)
+        Exception.__init__(self, message)
 
     def __repr__(self) -> str:
         """Return technical representation."""
         return (
             f"{self.__class__.__name__}("
             f"message='{self.message}', "
-            f"error_code='{self.error_code}', "
+            f"code='{self.code.value}', "
             f"correlation_id='{self.correlation_id}'"
             f")"
         )
 
 
-class FlextValidationError(FlextAbstractValidationError, FlextError):
-    """Validation error for input validation failures."""
-
-    def __init__(
-        self,
-        message: str = "Validation failed",
-        field: str | None = None,
-        validation_details: dict[str, object] | None = None,
-        error_code: str | None = None,
-        context: dict[str, object] | None = None,
-    ) -> None:
-        """Initialize validation error."""
-        super().__init__(message, field, validation_details, error_code, context)
-        # Flatten details into context to satisfy tests expecting direct keys
-        if isinstance(self.context, dict):
-            if field is not None:
-                self.context.setdefault("field", field)
-            for k, v in (validation_details or {}).items():
-                self.context.setdefault(k, v)
-        # Expose common attributes for tests
-        self.value = None
-        if isinstance(validation_details, dict):
-            self.value = validation_details.get("value")
-            # If no explicit field arg, also derive from details
-            if self.field is None and isinstance(validation_details.get("field"), str):
-                from typing import cast as _cast  # noqa: PLC0415
-
-                self.field = _cast("str", validation_details["field"])
-        self.rules = (
-            (validation_details or {}).get("rules")
-            if isinstance(validation_details, dict)
-            else None
-        )
-
-    def to_dict(self) -> TAnyDict:
-        """Convert validation error to dictionary."""
-        base_dict = super().to_dict()
-        base_dict.update(
-            {
-                "field": self.field,
-                "validation_details": self.validation_details,
-            },
-        )
-        return base_dict
-
-
-class FlextTypeError(FlextError):
+class FlextTypeError(FlextErrorMixin, TypeError):
     """Type-related errors for type validation."""
 
     def __init__(
         self,
         message: str = "Type validation failed",
+        *,
         expected_type: object | None = None,
         actual_type: object | None = None,
-        **kwargs: object,
+        code: FlextErrorCodes | None = None,
+        context: Mapping[str, object] | None = None,
     ) -> None:
         """Initialize type error."""
-        # Preserve original types for tests (can be type objects)
-        self.expected_type: object | None = expected_type
-        self.actual_type: object | None = actual_type
-        context = dict(kwargs)
-        if expected_type is not None and "expected_type" not in context:
-            context["expected_type"] = str(expected_type)
-        if actual_type is not None and "actual_type" not in context:
-            context["actual_type"] = str(actual_type)
-        super().__init__(
+        base_context: dict[str, object] = dict(context or {})
+        if expected_type is not None:
+            base_context["expected_type"] = str(expected_type)
+        if actual_type is not None:
+            base_context["actual_type"] = str(actual_type)
+        FlextErrorMixin.__init__(
+            self,
             message,
-            error_code=_ERROR_CODES["TYPE_ERROR"],
-            context=context,
+            code=code or FlextErrorCodes.TYPE_ERROR,
+            context=base_context,
         )
+        TypeError.__init__(self, message)
+
+        self.expected_type = expected_type
+        self.actual_type = actual_type
 
 
-class FlextAttributeError(FlextError):
-    """Attribute access errors."""
-
-    def __init__(
-        self,
-        message: str = "Attribute error",
-        attribute: str | None = None,
-        **kwargs: object,
-    ) -> None:
-        """Initialize attribute error."""
-        context = dict(kwargs)
-        if attribute:
-            context["attribute"] = attribute
-        # Flatten attribute_context if provided by tests
-        attr_ctx = context.pop("attribute_context", None)
-        if isinstance(attr_ctx, dict):
-            context.update(attr_ctx)
-        super().__init__(
-            message,
-            error_code=_ERROR_CODES["TYPE_ERROR"],
-            context=context,
-        )
-
-
-class FlextOperationError(FlextError):
+class FlextOperationError(FlextErrorMixin, RuntimeError):
     """General operation errors."""
 
     def __init__(
         self,
         message: str = "Operation failed",
+        *,
         operation: str | None = None,
-        error_code: str | None = None,
-        **kwargs: object,
+        stage: str | None = None,
+        code: FlextErrorCodes | None = None,
+        context: Mapping[str, object] | None = None,
     ) -> None:
         """Initialize operation error."""
-        context = dict(kwargs)
-        if operation and "operation" not in context:
-            context["operation"] = operation
-        self.operation = operation
-        self.stage = context.get("stage") if isinstance(context, dict) else None
-        # If originated from unwrap (marker), default to UNWRAP_ERROR when no explicit code
-        default_code = (
-            _ERROR_CODES["UNWRAP_ERROR"]
-            if context.pop("_unwrap_origin", False) and not error_code
-            else _ERROR_CODES["OPERATION_ERROR"]
-        )
-        super().__init__(
+        base_context: dict[str, object] = dict(context or {})
+        if operation is not None:
+            base_context["operation"] = operation
+        if stage is not None:
+            base_context["stage"] = stage
+        FlextErrorMixin.__init__(
+            self,
             message,
-            error_code=error_code or default_code,
-            context=context,
+            code=code or FlextErrorCodes.OPERATION_ERROR,
+            context=base_context,
         )
+        RuntimeError.__init__(self, message)
+
+        self.operation = operation
+        self.stage = stage
 
 
-class FlextConfigurationError(FlextAbstractConfigurationError, FlextError):
-    """Configuration-related errors."""
+class FlextAttributeError(FlextErrorMixin, AttributeError):
+    """Attribute access errors."""
 
     def __init__(
         self,
-        message: str = "Configuration error",
-        config_key: str | None = None,
-        config_file: str | None = None,
-        **kwargs: object,
+        message: str = "Attribute error",
+        *,
+        attribute: str | None = None,
+        code: FlextErrorCodes | None = None,
+        context: Mapping[str, object] | None = None,
     ) -> None:
-        """Initialize configuration error."""
-        context = dict(kwargs)
-        if config_file and "config_file" not in context:
-            context["config_file"] = config_file
-        # Ensure we do not pass duplicated config_key via kwargs to abstract base
-        super().__init__(message, config_key, _ERROR_CODES["CONFIG_ERROR"], **context)
-        # Ensure the context reflects the key for diagnostics
-        if config_key is not None and "config_key" not in self.context:
-            self.context["config_key"] = config_key
-
-    def to_dict(self) -> TAnyDict:
-        """Convert configuration error to dictionary."""
-        base_dict = super().to_dict()
-        base_dict.update(
-            {
-                "config_key": self.config_key,
-            },
+        """Initialize attribute error."""
+        base_context: dict[str, object] = dict(context or {})
+        if attribute is not None:
+            base_context["attribute"] = attribute
+        FlextErrorMixin.__init__(
+            self,
+            message,
+            code=code or FlextErrorCodes.TYPE_ERROR,
+            context=base_context,
         )
-        return base_dict
+        AttributeError.__init__(self, message)
+
+        self.attribute = attribute
 
 
-class FlextConnectionError(FlextAbstractInfrastructureError, FlextError):
-    """Connection-related errors."""
-
-    def __init__(
-        self,
-        message: str = "Connection failed",
-        service: str | None = None,
-        endpoint: str | None = None,
-        **kwargs: object,
-    ) -> None:
-        """Initialize connection error."""
-        context = dict(kwargs)
-        if endpoint:
-            context["endpoint"] = endpoint
-        super().__init__(message, service, _ERROR_CODES["CONNECTION_ERROR"], **context)
-
-    def to_dict(self) -> TAnyDict:
-        """Convert connection error to dictionary."""
-        base_dict = super().to_dict()
-        base_dict.update(
-            {
-                "service": self.service,
-            },
-        )
-        return base_dict
-
-
-class FlextAuthenticationError(FlextAbstractInfrastructureError, FlextError):
+class FlextAuthenticationError(FlextErrorMixin, PermissionError):
     """Authentication-related errors."""
 
     def __init__(
         self,
         message: str = "Authentication failed",
+        *,
         service: str | None = None,
         user_id: str | None = None,
-        **kwargs: object,
+        code: FlextErrorCodes | None = None,
+        context: Mapping[str, object] | None = None,
     ) -> None:
         """Initialize authentication error."""
-        context = dict(kwargs)
-        if user_id:
-            context["user_id"] = user_id
-        super().__init__(message, service, _ERROR_CODES["AUTH_ERROR"], **context)
-
-
-class FlextPermissionError(FlextAbstractInfrastructureError, FlextError):
-    """Permission-related errors."""
-
-    def __init__(
-        self,
-        message: str = "Permission denied",
-        service: str | None = None,
-        required_permission: str | None = None,
-        **kwargs: object,
-    ) -> None:
-        """Initialize permission error."""
-        context = dict(kwargs)
-        if required_permission:
-            context["required_permission"] = required_permission
-        super().__init__(message, service, _ERROR_CODES["PERMISSION_ERROR"], **context)
-
-
-class FlextNotFoundError(FlextError):
-    """Resource not found errors."""
-
-    def __init__(
-        self,
-        message: str = "Resource not found",
-        resource_type: str | None = None,
-        resource_id: str | None = None,
-        **kwargs: object,
-    ) -> None:
-        """Initialize not found error."""
-        context = dict(kwargs)
-        if resource_type:
-            context["resource_type"] = resource_type
-        if resource_id:
-            context["resource_id"] = resource_id
-        super().__init__(message, error_code=_ERROR_CODES["NOT_FOUND"], context=context)
-
-
-class FlextAlreadyExistsError(FlextError):
-    """Resource already exists errors."""
-
-    def __init__(
-        self,
-        message: str = "Resource already exists",
-        resource_type: str | None = None,
-        resource_id: str | None = None,
-        **kwargs: object,
-    ) -> None:
-        """Initialize already exists error."""
-        context = dict(kwargs)
-        if resource_type:
-            context["resource_type"] = resource_type
-        if resource_id:
-            context["resource_id"] = resource_id
-        super().__init__(
+        base_context: dict[str, object] = dict(context or {})
+        if service is not None:
+            base_context["service"] = service
+        if user_id is not None:
+            base_context["user_id"] = user_id
+        FlextErrorMixin.__init__(
+            self,
             message,
-            error_code=_ERROR_CODES["ALREADY_EXISTS"],
-            context=context,
+            code=code or FlextErrorCodes.AUTHENTICATION_ERROR,
+            context=base_context,
         )
+        PermissionError.__init__(self, message)
+
+        self.service = service
+        self.user_id = user_id
 
 
-class FlextTimeoutError(FlextAbstractInfrastructureError, FlextError):
+class FlextTimeoutError(FlextErrorMixin, TimeoutError):
     """Timeout-related errors."""
 
     def __init__(
         self,
         message: str = "Operation timeout",
+        *,
         service: str | None = None,
         timeout_seconds: int | None = None,
-        **kwargs: object,
+        code: FlextErrorCodes | None = None,
+        context: Mapping[str, object] | None = None,
     ) -> None:
         """Initialize timeout error."""
-        context = dict(kwargs)
-        if timeout_seconds:
-            context["timeout_seconds"] = timeout_seconds
-        super().__init__(message, service, _ERROR_CODES["TIMEOUT_ERROR"], **context)
+        base_context: dict[str, object] = dict(context or {})
+        if service is not None:
+            base_context["service"] = service
+        if timeout_seconds is not None:
+            base_context["timeout_seconds"] = timeout_seconds
+        FlextErrorMixin.__init__(
+            self,
+            message,
+            code=code or FlextErrorCodes.TIMEOUT_ERROR,
+            context=base_context,
+        )
+        TimeoutError.__init__(self, message)
+
+        self.service = service
+        self.timeout_seconds = timeout_seconds
 
 
-class FlextProcessingError(FlextAbstractBusinessError, FlextError):
+class FlextProcessingError(FlextErrorMixin, RuntimeError):
     """Data processing errors."""
 
     def __init__(
         self,
         message: str = "Processing failed",
+        *,
         business_rule: str | None = None,
         operation: str | None = None,
-        **kwargs: object,
+        code: FlextErrorCodes | None = None,
+        context: Mapping[str, object] | None = None,
     ) -> None:
         """Initialize processing error."""
-        context = dict(kwargs)
-        if operation:
-            context["operation"] = operation
-        super().__init__(
+        base_context: dict[str, object] = dict(context or {})
+        if business_rule is not None:
+            base_context["business_rule"] = business_rule
+        if operation is not None:
+            base_context["operation"] = operation
+        FlextErrorMixin.__init__(
+            self,
             message,
-            business_rule,
-            _ERROR_CODES["PROCESSING_ERROR"],
-            **context,
+            code=code or FlextErrorCodes.PROCESSING_ERROR,
+            context=base_context,
         )
+        RuntimeError.__init__(self, message)
+
+        self.business_rule = business_rule
+        self.operation = operation
 
 
-class FlextCriticalError(FlextAbstractInfrastructureError, FlextError):
+class FlextPermissionError(FlextErrorMixin, PermissionError):
+    """Permission-related errors."""
+
+    def __init__(
+        self,
+        message: str = "Permission denied",
+        *,
+        service: str | None = None,
+        required_permission: str | None = None,
+        code: FlextErrorCodes | None = None,
+        context: Mapping[str, object] | None = None,
+    ) -> None:
+        """Initialize permission error."""
+        base_context: dict[str, object] = dict(context or {})
+        if service is not None:
+            base_context["service"] = service
+        if required_permission is not None:
+            base_context["required_permission"] = required_permission
+        FlextErrorMixin.__init__(
+            self,
+            message,
+            code=code or FlextErrorCodes.PERMISSION_ERROR,
+            context=base_context,
+        )
+        PermissionError.__init__(self, message)
+
+        self.service = service
+        self.required_permission = required_permission
+
+
+class FlextAlreadyExistsError(FlextErrorMixin, ValueError):
+    """Resource already exists errors."""
+
+    def __init__(
+        self,
+        message: str = "Resource already exists",
+        *,
+        resource_type: str | None = None,
+        resource_id: str | None = None,
+        code: FlextErrorCodes | None = None,
+        context: Mapping[str, object] | None = None,
+    ) -> None:
+        """Initialize already exists error."""
+        base_context: dict[str, object] = dict(context or {})
+        if resource_type is not None:
+            base_context["resource_type"] = resource_type
+        if resource_id is not None:
+            base_context["resource_id"] = resource_id
+        FlextErrorMixin.__init__(
+            self,
+            message,
+            code=code or FlextErrorCodes.ALREADY_EXISTS,
+            context=base_context,
+        )
+        ValueError.__init__(self, message)
+
+        self.resource_type = resource_type
+        self.resource_id = resource_id
+
+
+class FlextCriticalError(FlextErrorMixin, SystemError):
     """Critical system errors that require immediate attention."""
 
     def __init__(
         self,
         message: str = "Critical system error",
+        *,
         service: str | None = None,
         severity: str = "CRITICAL",
-        **kwargs: object,
+        code: FlextErrorCodes | None = None,
+        context: Mapping[str, object] | None = None,
     ) -> None:
         """Initialize critical error."""
-        context = dict(kwargs)
-        context["severity"] = severity
-        super().__init__(message, service, _ERROR_CODES["CRITICAL_ERROR"], **context)
+        base_context: dict[str, object] = dict(context or {})
+        if service is not None:
+            base_context["service"] = service
+        base_context["severity"] = severity
+        FlextErrorMixin.__init__(
+            self,
+            message,
+            code=code or FlextErrorCodes.CRITICAL_ERROR,
+            context=base_context,
+        )
+        SystemError.__init__(self, message)
+
+        self.service = service
+        self.severity = severity
 
 
 # =============================================================================
@@ -886,6 +773,71 @@ def create_module_exception_classes(module_name: str) -> dict[str, type]:
 
 
 # =============================================================================
+# ABSTRACT BASE CLASSES FOR EXTENSION
+# =============================================================================
+
+
+class FlextAbstractError(FlextError, ABC):
+    """Abstract base class for all FLEXT errors."""
+
+    @abstractmethod
+    def get_error_context(self) -> dict[str, object]:
+        """Get error context information."""
+
+
+class FlextAbstractConfigurationError(FlextConfigurationError, ABC):
+    """Abstract base class for configuration errors."""
+
+    @abstractmethod
+    def get_config_context(self) -> dict[str, object]:
+        """Get configuration context information."""
+
+
+class FlextAbstractInfrastructureError(FlextConnectionError, ABC):
+    """Abstract base class for infrastructure errors."""
+
+    @abstractmethod
+    def get_infrastructure_context(self) -> dict[str, object]:
+        """Get infrastructure context information."""
+
+
+class FlextAbstractBusinessError(FlextProcessingError, ABC):
+    """Abstract base class for business logic errors."""
+
+    @abstractmethod
+    def get_business_context(self) -> dict[str, object]:
+        """Get business rule context information."""
+
+
+class FlextAbstractValidationError(FlextValidationError, ABC):
+    """Abstract base class for validation errors."""
+
+    @abstractmethod
+    def get_validation_context(self) -> dict[str, object]:
+        """Get validation context information."""
+
+
+class FlextAbstractErrorFactory(ABC):
+    """Abstract factory for creating FLEXT exceptions."""
+
+    @abstractmethod
+    def create_error(self, message: str, **kwargs: object) -> FlextError:
+        """Create a generic error."""
+
+    @abstractmethod
+    def create_validation_error(
+        self, message: str, **kwargs: object
+    ) -> FlextValidationError:
+        """Create a validation error."""
+
+    @abstractmethod
+    def create_configuration_error(
+        self, message: str, **kwargs: object
+    ) -> FlextConfigurationError:
+        """Create a configuration error."""
+
+
+# =============================================================================
 # EXCEPTION FACTORY IMPLEMENTATION
 # =============================================================================
 
@@ -1093,13 +1045,7 @@ def _record_exception(exception_type: str) -> None:
 
 
 __all__: list[str] = [
-    # Abstract Base Classes
-    "FlextAbstractBusinessError",
-    "FlextAbstractConfigurationError",
-    "FlextAbstractError",
-    "FlextAbstractErrorFactory",
-    "FlextAbstractInfrastructureError",
-    "FlextAbstractValidationError",
+    # Concrete Exception Classes
     "FlextAlreadyExistsError",
     "FlextAttributeError",
     "FlextAuthenticationError",

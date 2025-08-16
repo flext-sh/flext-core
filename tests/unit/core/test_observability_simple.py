@@ -7,20 +7,18 @@ from __future__ import annotations
 
 import pytest
 
-from flext_core.observability import (
+from flext_core import (
     ConsoleLogger,
-    InMemoryMetrics,
-    MinimalObservability,
-    NoOpTracer,
-    SimpleAlerts,
-    get_observability,
-)
-from flext_core.protocols import (
     FlextAlertsProtocol,
     FlextLoggerProtocol,
     FlextMetricsProtocol,
     FlextObservabilityProtocol,
     FlextTracerProtocol,
+    InMemoryMetrics,
+    MinimalObservability,
+    NoOpTracer,
+    SimpleAlerts,
+    get_observability,
 )
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]

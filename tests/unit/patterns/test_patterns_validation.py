@@ -4,8 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_core.result import FlextResult
-from flext_core.validation import FlextValidation
+from flext_core import FlextResult, FlextValidation
 
 if TYPE_CHECKING:
     from collections.abc import Callable

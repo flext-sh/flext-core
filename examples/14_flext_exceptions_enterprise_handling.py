@@ -23,6 +23,7 @@ This example shows real-world enterprise exception handling scenarios
 demonstrating the power and flexibility of the FlextExceptions system.
 """
 
+import contextlib
 import operator
 import os
 import time
@@ -655,15 +656,10 @@ class ExternalAPIService:
 
 def demonstrate_base_exceptions() -> None:
     """Demonstrate base exception functionality with context and observability."""
-    print("\n" + "=" * 80)
-    print("🔥 BASE EXCEPTIONS - FOUNDATION AND OBSERVABILITY")
-    print("=" * 80)
-
     # Clear metrics for clean demo
     clear_exception_metrics()
 
     # 1. Basic FlextError usage
-    print("\n1. Basic FlextError with context:")
 
     def _raise_service_init_error() -> None:
         """Simulate a service initialization error."""
@@ -683,17 +679,10 @@ def demonstrate_base_exceptions() -> None:
         # Simulate a basic error
         _raise_service_init_error()
     except FlextError as e:
-        print(f"   ❌ Exception caught: {e}")
-        print(f"   Error code: {e.error_code}")
-        print(f"   Context: {e.context}")
-        print(f"   Timestamp: {e.timestamp}")
-
         # Demonstrate serialization
-        error_dict = e.to_dict()
-        print(f"   Serialized: {error_dict}")
+        e.to_dict()
 
     # 2. Exception hierarchy demonstration
-    print("\n2. Exception hierarchy with specialized exceptions:")
 
     # Create different types of exceptions
     exceptions_to_create = [
@@ -729,37 +718,22 @@ def demonstrate_base_exceptions() -> None:
     for exc in exceptions_to_create:
         try:
             raise exc
-        except FlextError as e:
-            print(f"   ❌ {e.__class__.__name__}: {e}")
+        except FlextError:
+            pass
 
     # 3. Exception metrics
-    print("\n3. Exception metrics and observability:")
 
     metrics = get_exception_metrics()
-    print(f"   Total exception types tracked: {len(metrics)}")
 
-    for exc_type, count in metrics.items():
+    for _exc_type, _count in metrics.items():
         # exc_metrics is actually just the count (int), not a dict
         # For demonstration purposes, we'll simulate additional metrics
-        error_codes: set[str] = set()  # Simulate error codes
-        last_seen = 0  # Simulate last seen timestamp
-
-        print(
-            f"   {exc_type}: {count} occurrences, codes: {len(error_codes)},"
-            f" last: {int(last_seen)}",
-        )
-
-    print("✅ Base exceptions demonstration completed")
+        pass  # Simulate last seen timestamp
 
 
 def demonstrate_validation_exceptions() -> None:
     """Demonstrate validation exceptions with detailed context."""
-    print("\n" + "=" * 80)
-    print("✅ VALIDATION EXCEPTIONS - FIELD VALIDATION ERRORS")
-    print("=" * 80)
-
     # 1. User validation service
-    print("\n1. User validation service with detailed errors:")
 
     validation_service = UserValidationService()
 
@@ -803,59 +777,41 @@ def demonstrate_validation_exceptions() -> None:
     ]
 
     for test_case in test_cases:
-        print(f"\n   Test: {test_case['name']}")
         data = test_case["data"]
         if isinstance(data, dict):
             result = validation_service.validate_user_data(data)
         else:
             result = FlextResult.fail("Invalid data type")
 
-        if result.success and test_case["should_pass"]:
-            user = result.data
-            print(f"     ✅ Validation passed: {user}")
-        elif result.is_failure and not test_case["should_pass"]:
-            print(f"     ❌ Validation failed (expected): {result.error}")
+        if (result.success and test_case["should_pass"]) or (
+            result.is_failure and not test_case["should_pass"]
+        ):
+            pass
         else:
-            status = "passed" if result.success else "failed"
-            expected = "pass" if test_case["should_pass"] else "fail"
-            print(f"     ⚠️ Unexpected result: {status} (expected {expected})")
+            "pass" if test_case["should_pass"] else "fail"
 
     # 2. Factory method demonstration
-    print("\n2. Exception factory methods:")
 
     # Create validation error using factory
     factory = FlextExceptions()
-    validation_error = factory.create_validation_error(
+    factory.create_validation_error(
         "Email domain not allowed",
         field="email",
         value="user@blocked-domain.com",
         rules=["email_format", "domain_whitelist"],
     )
 
-    print(f"   Factory-created validation error: {validation_error}")
-    print(f"   Context: {validation_error.context}")
-
     # Create type error directly
-    type_error = FlextTypeError(
+    FlextTypeError(
         "Configuration value must be integer",
         expected_type="int",
         actual_type="str",
     )
 
-    print(f"   Factory-created type error: {type_error}")
-    print(f"   Context: {type_error.context}")
-
-    print("✅ Validation exceptions demonstration completed")
-
 
 def demonstrate_operational_exceptions() -> None:
     """Demonstrate operational exceptions with service interactions."""
-    print("\n" + "=" * 80)
-    print("⚙️ OPERATIONAL EXCEPTIONS - SERVICE OPERATIONS")
-    print("=" * 80)
-
     # 1. User management operations
-    print("\n1. User management service operations:")
 
     user_service = UserManagementService()
 
@@ -869,15 +825,12 @@ def demonstrate_operational_exceptions() -> None:
 
     result = user_service.create_user(valid_user_data)
     if result.success:
-        user = result.data
-        print(f"   ✅ User created: {user}")
-    else:
-        print(f"   ❌ User creation failed: {result.error}")
+        pass
 
     # Try to create duplicate user
     result = user_service.create_user(valid_user_data)
     if result.is_failure:
-        print(f"   ❌ Duplicate user creation prevented (expected): {result.error}")
+        pass
 
     # Try to create user with duplicate email
     duplicate_email_data = {
@@ -889,53 +842,41 @@ def demonstrate_operational_exceptions() -> None:
 
     result = user_service.create_user(duplicate_email_data)
     if result.is_failure:
-        print(f"   ❌ Duplicate email prevented (expected): {result.error}")
+        pass
 
     # User retrieval operations
-    print("\n   User retrieval operations:")
 
     # Get existing user
     result = user_service.get_user("user_001")
     if result.success:
-        user = result.data
-        print(f"   ✅ User retrieved: {user}")
+        pass
 
     # Try to get non-existent user
     result = user_service.get_user("user_999")
     if result.is_failure:
-        print(f"   ❌ User not found (expected): {result.error}")
+        pass
 
     # User deletion operations
-    print("\n   User deletion operations:")
 
     # Unauthorized deletion
     delete_result1 = user_service.delete_user("user_001", "unauthorized_user")
     if delete_result1.is_failure:
-        print(
-            f"   ❌ Unauthorized deletion prevented (expected): {delete_result1.error}",
-        )
+        pass
 
     # Authorized deletion
     delete_result2 = user_service.delete_user("user_001", "REDACTED_LDAP_BIND_PASSWORD")
     if delete_result2.success:
-        print("   ✅ User deleted by REDACTED_LDAP_BIND_PASSWORD")
+        pass
 
     # Try to retrieve deleted user
     result = user_service.get_user("user_001")
     if result.is_failure:
-        print(f"   ❌ Deleted user not found (expected): {result.error}")
-
-    print("✅ Operational exceptions demonstration completed")
+        pass
 
 
 def demonstrate_configuration_exceptions() -> None:
     """Demonstrate configuration exceptions with validation."""
-    print("\n" + "=" * 80)
-    print("🔧 CONFIGURATION EXCEPTIONS - SETTINGS VALIDATION")
-    print("=" * 80)
-
     # 1. Configuration service
-    print("\n1. Configuration loading and validation:")
 
     config_service = ConfigurationService()
 
@@ -949,9 +890,7 @@ def demonstrate_configuration_exceptions() -> None:
 
     result = config_service.load_configuration(valid_config)
     if result.success:
-        print("   ✅ Valid configuration loaded successfully")
-    else:
-        print(f"   ❌ Configuration loading failed: {result.error}")
+        pass
 
     # Test invalid configurations
     invalid_configs = [
@@ -982,68 +921,46 @@ def demonstrate_configuration_exceptions() -> None:
     ]
 
     for test_config in invalid_configs:
-        print(f"\n   Test: {test_config['name']}")
         config_data = cast("dict[str, object]", test_config["config"])
         result = config_service.load_configuration(config_data)
         if result.is_failure:
-            print(f"     ❌ Configuration invalid (expected): {result.error}")
-        else:
-            print("     ⚠️ Configuration unexpectedly accepted")
-
-    print("✅ Configuration exceptions demonstration completed")
+            pass
 
 
 def _demo_database_scenarios() -> None:
     """Show database connection/authentication scenarios."""
-    print("\n1. Database connection scenarios:")
-
     # Successful connection
     db_conn = DatabaseConnection("localhost", 5432, "myapp_db")
     try:
         result = db_conn.connect()
         if result.success:
-            print("   ✅ Database connection successful")
-
             # Successful authentication
             auth_result = db_conn.authenticate("REDACTED_LDAP_BIND_PASSWORD", "secret")
             if auth_result.success:
-                print("   ✅ Database authentication successful")
+                pass
 
-    except FlextConnectionError as e:
-        print(f"   ❌ Connection failed: {e}")
-        print(f"   Context: {e.context}")
-    except FlextAuthenticationError as e:
-        print(f"   ❌ Authentication failed: {e}")
-        print(f"   Context: {e.context}")
+    except FlextConnectionError:
+        pass
+    except FlextAuthenticationError:
+        pass
 
     # Connection failure
-    print("\n   Testing connection failure:")
     unreachable_db = DatabaseConnection("unreachable-host", 5432, "myapp_db")
-    try:
+    with contextlib.suppress(FlextConnectionError):
         unreachable_db.connect()
-    except FlextConnectionError as e:
-        print(f"   ❌ Connection failed (expected): {e}")
-        print(f"   Error context: {e.context}")
 
     # Authentication failure
-    print("\n   Testing authentication failure:")
-    try:
+    with contextlib.suppress(FlextAuthenticationError):
         db_conn.authenticate("wrong_user", "wrong_pass")
-    except FlextAuthenticationError as e:
-        print(f"   ❌ Authentication failed (expected): {e}")
-        print(f"   Error context: {e.context}")
 
 
 def _demo_external_api_scenarios() -> None:
     """Show external API connection/timeout/authentication scenarios."""
-    print("\n2. External API scenarios:")
-
     # Successful API call
     api_service = ExternalAPIService("https://api.example.com/v1")
     api_result = api_service.fetch_user_profile("user_123")
     if api_result.success:
-        profile = api_result.data
-        print(f"   ✅ API call successful: {profile}")
+        pass
 
     # Connection error
     unreachable_api = ExternalAPIService(
@@ -1051,7 +968,7 @@ def _demo_external_api_scenarios() -> None:
     )
     conn_result = unreachable_api.fetch_user_profile("user_123")
     if conn_result.is_failure:
-        print(f"   ❌ API connection failed (expected): {conn_result.error}")
+        pass
 
     # Timeout error
     slow_api = ExternalAPIService(
@@ -1060,26 +977,19 @@ def _demo_external_api_scenarios() -> None:
     )
     timeout_result = slow_api.fetch_user_profile("user_123")
     if timeout_result.is_failure:
-        print(f"   ❌ API timeout (expected): {timeout_result.error}")
+        pass
 
     # Authentication error
     auth_api = ExternalAPIService("https://unauthorized-api.example.com/v1")
     auth_api_result = auth_api.fetch_user_profile("user_123")
     if auth_api_result.is_failure:
-        print(
-            f"   ❌ API authentication failed (expected): {auth_api_result.error}",
-        )
+        pass
 
 
 def demonstrate_connection_exceptions() -> None:
     """Demonstrate connection and timeout exceptions."""
-    print("\n" + "=" * 80)
-    print("🌐 CONNECTION EXCEPTIONS - NETWORK AND TIMEOUTS")
-    print("=" * 80)
-
     _demo_database_scenarios()
     _demo_external_api_scenarios()
-    print("✅ Connection exceptions demonstration completed")
 
 
 def _complex_operation() -> FlextResult[str]:
@@ -1168,10 +1078,7 @@ def _operation_with_retry(max_retries: int = 3) -> FlextResult[str]:
         except FlextConnectionError as e:
             last_exception = e
             if attempt < max_retries:
-                print(f"   ⚠️ Attempt {attempt + 1} failed, retrying: {e}")
                 time.sleep(0.01)
-            else:
-                print(f"   ❌ All retries exhausted: {e}")
     return FlextResult.fail(
         f"Operation failed after {max_retries + 1} attempts: {last_exception}",
     )
@@ -1180,51 +1087,27 @@ def _operation_with_retry(max_retries: int = 3) -> FlextResult[str]:
 def _print_exception_metrics() -> None:
     """Print aggregated exception metrics."""
     metrics = get_exception_metrics()
-    print("   Exception metrics summary:")
-    total_exceptions = sum(count for count in metrics.values())
-    print(f"   Total exceptions tracked: {total_exceptions}")
+    sum(count for count in metrics.values())
     sorted_metrics = sorted(metrics.items(), key=operator.itemgetter(1), reverse=True)
-    print("   Top exception types:")
-    for exc_type, count in sorted_metrics[:5]:
-        error_codes: set[str] = set()
-        print(
-            f"     {exc_type}: {count} occurrences, {len(error_codes)} unique error codes",
-        )
+    for _exc_type, _count in sorted_metrics[:5]:
+        pass
 
 
 def demonstrate_exception_patterns() -> None:
     """Demonstrate enterprise exception handling patterns."""
-    print("\n" + "=" * 80)
-    print("🏢 ENTERPRISE EXCEPTION PATTERNS")
-    print("=" * 80)
-
-    print("\n1. Exception chaining and context preservation:")
     result = _complex_operation()
     if result.success:
-        print(f"   ✅ Complex operation: {result.data}")
-    else:
-        print(f"   ❌ Complex operation failed: {result.error}")
+        pass
 
-    print("\n2. Exception recovery patterns:")
     retry_result = _operation_with_retry()
     if retry_result.success:
-        print(f"   ✅ Retry operation: {retry_result.data}")
-    else:
-        print(f"   ❌ Retry operation failed: {retry_result.error}")
+        pass
 
-    print("\n3. Exception metrics and monitoring:")
     _print_exception_metrics()
-    print("✅ Enterprise exception patterns demonstration completed")
 
 
 def main() -> None:
     """Execute all FlextExceptions demonstrations."""
-    print("🚀 FLEXT EXCEPTIONS - ENTERPRISE HANDLING EXAMPLE")
-    print(
-        "Demonstrating comprehensive exception handling patterns for enterprise"
-        " applications",
-    )
-
     try:
         demonstrate_base_exceptions()
         demonstrate_validation_exceptions()
@@ -1233,31 +1116,11 @@ def main() -> None:
         demonstrate_connection_exceptions()
         demonstrate_exception_patterns()
 
-        print("\n" + "=" * 80)
-        print("✅ ALL FLEXT EXCEPTIONS DEMONSTRATIONS COMPLETED SUCCESSFULLY!")
-        print("=" * 80)
-        print("\n📊 Summary of capabilities demonstrated:")
-        print("   🔥 Base exceptions with observability and context management")
-        print("   ✅ Validation exceptions with detailed field-specific context")
-        print("   ⚙️ Operational exceptions with service interaction patterns")
-        print("   🔧 Configuration exceptions with settings validation")
-        print("   🌐 Connection exceptions with network and timeout handling")
-        print("   🏢 Enterprise patterns with chaining, recovery, and monitoring")
-        print("\n💡 FlextExceptions provides enterprise-grade error handling")
-        print(
-            "   with observability, structured context, and comprehensive exception"
-            "hierarchy!",
-        )
-
         # Final metrics summary
         final_metrics = get_exception_metrics()
-        total_tracked = sum(count for count in final_metrics.values())
-        print(f"\n📈 Total exceptions tracked during demo: {total_tracked}")
-        print(f"📊 Exception types encountered: {len(final_metrics)}")
+        sum(count for count in final_metrics.values())
 
-    except (ValueError, TypeError, ImportError, AttributeError) as e:
-        print(f"\n❌ Error during FlextExceptions demonstration: {e}")
-
+    except (ValueError, TypeError, ImportError, AttributeError):
         traceback.print_exc()
 
 

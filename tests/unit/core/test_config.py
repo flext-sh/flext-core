@@ -20,9 +20,10 @@ from unittest.mock import patch
 
 import pytest
 
-from flext_core.config import (
+from flext_core import (
     FlextConfig,
     FlextConfigDefaults,
+    FlextConfigFactory,
     FlextConfigOps,
     FlextConfigValidation,
     FlextSettings,
@@ -32,11 +33,11 @@ from flext_core.config import (
 )
 from flext_core.constants import FlextConstants
 from flext_core.result import FlextResult
+from flext_core.typings import TAnyDict
 
 if TYPE_CHECKING:
     from collections.abc import Generator
 
-    from flext_core.typings import TAnyDict
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 
@@ -468,18 +469,14 @@ class TestFlextConfig:
     def test_safe_get_env_var_empty_error(self) -> None:
         """Test safe_get_env_var wrapper with empty error."""
         with patch(
-            "flext_core.config.FlextConfigOps.safe_get_env_var",
+            "os.environ.get",
         ) as mock_env:
-            mock_env.return_value = FlextResult.fail("")
+            mock_env.side_effect = RuntimeError("Environment access error")
 
             result = safe_get_env_var("TEST_VAR")
 
             assert result.is_failure
-            # FlextResult converts empty errors to "Unknown error occurred"
-            if "Unknown error occurred" not in (result.error or ""):
-                raise AssertionError(
-                    f"Expected 'Unknown error occurred' in {result.error}",
-                )
+            assert "Environment access error" in (result.error or "")
 
     def test_safe_load_json_file_success(self, temp_json_file: str) -> None:
         """Test safe_load_json_file wrapper function success."""
@@ -575,7 +572,7 @@ class TestFlextConfig:
     def test_validate_config_value_exception_in_validator(self) -> None:
         """Test validate_config_value with exception in validator."""
 
-        def failing_validator(value: object) -> bool:
+        def failing_validator(value: object) -> bool:  # noqa: ARG001
             msg = "Validator error"
             raise ValueError(msg)
 
@@ -869,18 +866,14 @@ class TestModuleLevelFunctions:
     def test_safe_get_env_var_empty_error(self) -> None:
         """Test safe_get_env_var wrapper with empty error."""
         with patch(
-            "flext_core.config.FlextConfigOps.safe_get_env_var",
+            "os.environ.get",
         ) as mock_env:
-            mock_env.return_value = FlextResult.fail("")
+            mock_env.side_effect = RuntimeError("Environment access error")
 
             result = safe_get_env_var("TEST_VAR")
 
             assert result.is_failure
-            # FlextResult converts empty errors to "Unknown error occurred"
-            if "Unknown error occurred" not in (result.error or ""):
-                raise AssertionError(
-                    f"Expected 'Unknown error occurred' in {result.error}",
-                )
+            assert "Environment access error" in (result.error or "")
 
     def test_safe_load_json_file_success(self, temp_json_file: str) -> None:
         """Test safe_load_json_file wrapper function success."""
@@ -938,7 +931,7 @@ class TestConfigIntegration:
     def test_complete_configuration_workflow(
         self,
         sample_config: TAnyDict,
-        sample_defaults: TAnyDict,
+        sample_defaults: TAnyDict,  # noqa: ARG002
     ) -> None:
         """Test complete configuration workflow integration."""
         # Step 1: Create complete config
@@ -982,7 +975,7 @@ class TestConfigIntegration:
 
             # Test integration with FlextConfig
             config_data = {"debug": True, "timeout": 60}
-            result = FlextConfig.create_complete_config(cast("TAnyDict", config_data))
+            result = FlextConfigFactory.create("main", **config_data)
             assert result.success
 
             # Test that settings can be created from config
@@ -1136,7 +1129,7 @@ class TestConfigEdgeCases:
             )
 
         # Test with validator that returns non-boolean
-        def bad_validator(value: object) -> str:
+        def bad_validator(value: object) -> str:  # noqa: ARG001
             return "not_boolean"
 
         # This should still work because Python treats "not_boolean" as truthy

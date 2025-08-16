@@ -16,19 +16,12 @@ from unittest.mock import Mock, patch
 
 import pytest
 from hypothesis import given, strategies as st
-from tests.conftest import (
-    AssertHelpers,
-    PerformanceMetrics,
-    TestCase,
-    TestDataBuilder,
-    TestScenario,
-)
 
-from flext_core.result import FlextResult
-from flext_core.utilities import (
+from flext_core import (
     BYTES_PER_KB,
     SECONDS_PER_HOUR,
     SECONDS_PER_MINUTE,
+    FlextResult,
     FlextTypeGuards,
     FlextUtilities,
     flext_clear_performance_metrics,
@@ -41,6 +34,14 @@ from flext_core.utilities import (
     generate_uuid,
     is_not_none,
     truncate,
+)
+
+from ...conftest import (
+    AssertHelpers,
+    PerformanceMetrics,
+    TestCase,
+    TestDataBuilder,
+    TestScenario,
 )
 
 # Test markers
@@ -103,12 +104,12 @@ class TestFlextUtilitiesParametrized:
             ("generate_session_id", "session_", 20),
         ],
     )
+    @pytest.mark.usefixtures("assert_helpers")
     def test_generator_methods_structure(
         self,
         generator_method: str,
         prefix: str,
         min_length: int,
-        assert_helpers: AssertHelpers,
     ) -> None:
         """Test generator methods with parametrized validation."""
         method = getattr(FlextUtilities, generator_method)
@@ -205,10 +206,10 @@ class TestFlextUtilitiesPerformance:
     """Performance tests using conftest monitoring."""
 
     @pytest.mark.benchmark
+    @pytest.mark.usefixtures("performance_threshold")
     def test_id_generation_performance(
         self,
         performance_monitor: Callable[[Callable[[], object]], PerformanceMetrics],
-        performance_threshold: dict[str, float],
     ) -> None:
         """Benchmark ID generation performance."""
 
@@ -251,7 +252,7 @@ class TestFlextUtilitiesPerformance:
         """Ensure tracking decorator adds minimal overhead."""
 
         @flext_track_performance("test_category")
-        def compute_sum(*args: object, **kwargs: object) -> object:
+        def compute_sum(*_args: object, **_kwargs: object) -> object:
             return sum(range(1000))
 
         result = compute_sum()
@@ -544,7 +545,7 @@ class TestFlextUtilitiesIntegration:
         flext_clear_performance_metrics()
 
         @flext_track_performance("integration")
-        def complex_operation(*args: object, **kwargs: object) -> object:
+        def complex_operation(*_args: object, **_kwargs: object) -> object:
             # Use multiple utilities
             ids = [FlextUtilities.generate_id() for _ in range(10)]
             timestamps = [FlextUtilities.generate_timestamp() for _ in range(5)]
@@ -596,12 +597,13 @@ class TestFlextUtilitiesEdgeCases:
             ("test", 4, "", "no suffix"),
         ],
     )
+    @pytest.mark.usefixtures("validation_test_cases")
     def test_truncate_edge_cases(
         self,
         text: str,
         max_length: int,
         suffix: str,
-        description: str,
+        description: str,  # noqa: ARG002
     ) -> None:
         """Test truncation edge cases with various scenarios."""
         result = FlextUtilities.truncate(text, max_length, suffix)

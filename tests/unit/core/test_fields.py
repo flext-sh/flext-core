@@ -28,19 +28,20 @@ from typing import TYPE_CHECKING, cast
 
 import pytest
 from hypothesis import given, strategies as st
-from tests.conftest import TestCase, TestScenario, assert_performance
 
-from flext_core.constants import FlextFieldType
-from flext_core.fields import (
+from flext_core import (
     FlextFieldCore,
     FlextFieldMetadata,
     FlextFieldRegistry,
     FlextFields,
+    FlextFieldType,
+    FlextResult,
     flext_create_boolean_field,
     flext_create_integer_field,
     flext_create_string_field,
 )
-from flext_core.result import FlextResult
+
+from ...conftest import TestCase, TestScenario, assert_performance
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -437,10 +438,10 @@ class TestFlextFieldCorePerformance:
         assert metrics["memory_used"] < 1_000_000  # 1MB for 100 fields
 
     @pytest.mark.benchmark
+    @pytest.mark.usefixtures("assert_helpers")
     def test_validation_performance(
         self,
         performance_monitor: Callable[[Callable[[], object]], dict[str, object]],
-        assert_helpers: object,
     ) -> None:
         """Benchmark validation performance with complex constraints."""
         # Create complex field
@@ -468,10 +469,10 @@ class TestFlextFieldCorePerformance:
         assert len(metrics["result"]) == 100
 
     @pytest.mark.benchmark
+    @pytest.mark.usefixtures("assert_helpers")
     def test_registry_performance(
         self,
         performance_monitor: Callable[[Callable[[], object]], dict[str, object]],
-        assert_helpers: object,
     ) -> None:
         """Benchmark registry operations performance."""
         registry = FlextFieldRegistry()
@@ -551,11 +552,11 @@ class TestFlextFieldCoreWithFixtures:
         validation_result = field.validate_value("ValidValue")
         assert_helpers.assert_result_ok(validation_result)
 
+    @pytest.mark.usefixtures("assert_helpers")
     def test_fields_with_sample_data(
         self,
         sample_data: dict[str, object],
         validators: dict[str, Callable[[str], bool]],
-        assert_helpers: object,
     ) -> None:
         """Test field validation using sample data fixture."""
         # Create field for email validation
@@ -1108,12 +1109,12 @@ class TestFlextFieldCoreBackwardCompatibility:
             ),
         ],
     )
+    @pytest.mark.usefixtures("assert_helpers")
     def test_legacy_function_compatibility(
         self,
         legacy_function: Callable[[], object],
         modern_method: Callable[[], object],
         args: dict[str, object],
-        assert_helpers: object,
     ) -> None:
         """Test that legacy functions produce compatible results with modern methods."""
         # Call legacy function

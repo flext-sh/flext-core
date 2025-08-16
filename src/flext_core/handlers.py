@@ -5,9 +5,10 @@ from __future__ import annotations
 import time
 from abc import ABC, abstractmethod
 from os import environ
-from typing import TYPE_CHECKING, Generic, TypeVar, cast
+from typing import Generic, TypeVar, cast
 
 from flext_core.commands import FlextCommands
+from flext_core.constants import FlextConstants
 from flext_core.result import FlextResult
 
 # Type variables for handlers
@@ -119,7 +120,7 @@ class FlextBaseHandler(FlextAbstractHandler[object, object]):
     def validate_request(self, request: object) -> FlextResult[None]:
         """Validate request."""
         if request is None:
-            return FlextResult.fail("Request cannot be None")
+            return FlextResult.fail(FlextConstants.Handlers.REQUEST_CANNOT_BE_NONE)
         return FlextResult.ok(None)
 
     def can_handle(self, _message_type: object) -> bool:
@@ -182,7 +183,9 @@ class FlextValidatingHandler(
         """Handle request with validation."""
         validation = self.validate_input(request)
         if validation.is_failure:
-            return FlextResult.fail(validation.error or "Validation failed")
+            return FlextResult.fail(
+                validation.error or FlextConstants.Handlers.VALIDATION_FAILED,
+            )
         result = self.process_message(request)
         return self.validate_output(result.unwrap() if result.is_success else None)
 
@@ -197,7 +200,7 @@ class FlextValidatingHandler(
     def validate_input(self, request: object) -> FlextResult[None]:
         """Validate input."""
         if request is None:
-            return FlextResult.fail("Request cannot be None")
+            return FlextResult.fail(FlextConstants.Handlers.REQUEST_CANNOT_BE_NONE)
         return FlextResult.ok(None)
 
     def validate_output(self, response: object) -> FlextResult[object]:
@@ -213,7 +216,7 @@ class FlextValidatingHandler(
         """Validate message - implements abstract method."""
         # Basic validation - check not None
         if message is None:
-            return FlextResult.fail("Message cannot be None")
+            return FlextResult.fail(FlextConstants.Handlers.MESSAGE_CANNOT_BE_NONE)
         return FlextResult.ok(None)
 
     @staticmethod
@@ -225,7 +228,9 @@ class FlextValidatingHandler(
         """Validate a message before processing (convenience method)."""
         validation_result = self.validate_message(message)
         if validation_result.is_failure:
-            return FlextResult.fail(validation_result.error or "Validation failed")
+            return FlextResult.fail(
+                validation_result.error or FlextConstants.Handlers.VALIDATION_FAILED,
+            )
         return FlextResult.ok(message)
 
     @staticmethod
@@ -277,16 +282,22 @@ class FlextAuthorizingHandler(FlextBaseHandler):
         # Basic authorization - check context has user
         user = context.get("user")
         if not user:
-            return FlextResult.fail("No user in context")
+            return FlextResult.fail(FlextConstants.Handlers.NO_USER_IN_CONTEXT)
 
         # Check permissions if required
         if self.required_permissions:
             user_permissions = context.get("permissions", [])
             if not isinstance(user_permissions, (list, set, tuple)):
-                return FlextResult.fail("Invalid permissions format in context")
+                return FlextResult.fail(
+                    FlextConstants.Handlers.INVALID_PERMISSIONS_FORMAT,
+                )
             for permission in self.required_permissions:
                 if permission not in user_permissions:
-                    return FlextResult.fail(f"Missing permission: {permission}")
+                    return FlextResult.fail(
+                        FlextConstants.Handlers.MISSING_PERMISSION_TEMPLATE.format(
+                            permission=permission,
+                        ),
+                    )
 
         authorized = True
         return FlextResult.ok(authorized)
@@ -316,13 +327,17 @@ class FlextEventHandler(FlextBaseHandler):
         try:
             event_type = event.get("event_type")
             if not event_type:
-                return FlextResult.fail("Event missing event_type")
+                return FlextResult.fail(FlextConstants.Handlers.EVENT_MISSING_TYPE)
 
             # Process based on an event type
             return self.handle_event_type(event)
 
         except (TypeError, ValueError, AttributeError, KeyError, RuntimeError) as e:
-            return FlextResult.fail(f"Event processing failed: {e}")
+            return FlextResult.fail(
+                FlextConstants.Handlers.EVENT_PROCESSING_FAILED_TEMPLATE.format(
+                    error=e,
+                ),
+            )
 
     @staticmethod
     def can_process(event_type: str | None = None) -> bool:
@@ -390,7 +405,7 @@ class FlextMetricsHandler(
     def validate_request(self, request: object) -> FlextResult[None]:
         """Validate request."""
         if request is None:
-            return FlextResult.fail("Request cannot be None")
+            return FlextResult.fail(FlextConstants.Handlers.REQUEST_CANNOT_BE_NONE)
         return FlextResult.ok(None)
 
     def can_handle(self, request: object) -> bool:
@@ -487,7 +502,9 @@ class FlextMetricsHandler(
             self._update_operation_metrics(op_metrics, duration)
             return FlextResult.ok(None)
         except (TypeError, ValueError, AttributeError, RuntimeError) as e:
-            return FlextResult.fail(f"Metrics collection failed: {e}")
+            return FlextResult.fail(
+                FlextConstants.Handlers.METRICS_COLLECTION_FAILED + f": {e}",
+            )
 
     def _ensure_operations_dict(self) -> dict[str, dict[str, int | float]]:
         """Ensure operations metrics dictionary exists and is a dict of dicts."""
@@ -591,7 +608,7 @@ class FlextHandlerRegistry(
     ) -> FlextResult[None]:
         """Register a handler by name and return a result object."""
         if not isinstance(name, str) or not name:
-            return FlextResult.fail("Handler name must be a non-empty string")
+            return FlextResult.fail(FlextConstants.Handlers.HANDLER_NAME_EMPTY)
 
         self.registry[name] = handler
         if handler not in self._handlers:
@@ -607,7 +624,10 @@ class FlextHandlerRegistry(
         if not handler:
             available = list(self.registry.keys())
             return FlextResult.fail(
-                f"Handler '{name}' not found. Available: {available}",
+                FlextConstants.Handlers.HANDLER_NOT_FOUND_TEMPLATE.format(
+                    name=name,
+                    available=available,
+                ),
             )
         return FlextResult.ok(handler)
 
@@ -624,7 +644,9 @@ class FlextHandlerRegistry(
         """
         if handler is None:
             if not hasattr(name_or_handler, "__class__"):
-                return FlextResult.fail("Invalid handler provided")
+                return FlextResult.fail(
+                    FlextConstants.Handlers.INVALID_HANDLER_PROVIDED,
+                )
             auto_handler = name_or_handler
             auto_name = auto_handler.__class__.__name__
             _ = self.register_handler(auto_name, auto_handler)  # type: ignore[arg-type]
@@ -632,7 +654,7 @@ class FlextHandlerRegistry(
 
         # Explicit name provided
         if not isinstance(name_or_handler, str):
-            return FlextResult.fail("Handler name must be a string")
+            return FlextResult.fail(FlextConstants.Handlers.HANDLER_NAME_MUST_BE_STRING)
         _ = self.register_handler(name_or_handler, handler)
         return FlextResult.ok(handler)
 
@@ -966,7 +988,9 @@ class FlextCommandHandler(FlextCommands.Handler[TInput, TOutput], ABC):
         """Validate command message using the underlying validation logic."""
         validation = self.validate(message)
         if validation.is_failure:
-            return FlextResult.fail(validation.error or "Validation failed")
+            return FlextResult.fail(
+                validation.error or FlextConstants.Handlers.VALIDATION_FAILED,
+            )
         return FlextResult.ok(None)
 
     def get_metrics(self) -> dict[str, object]:
@@ -1080,7 +1104,7 @@ class FlextQueryHandler(FlextCommands.QueryHandler[TInput, TOutput], ABC):
         """Validate message for test convenience."""
         # Basic validation - check not None
         if message is None:
-            return FlextResult.fail("Message cannot be None")
+            return FlextResult.fail(FlextConstants.Handlers.MESSAGE_CANNOT_BE_NONE)
         return FlextResult.ok(None)
 
 
@@ -1138,7 +1162,7 @@ class HandlersFacade:
             """Validate message for test convenience."""
             # Basic validation - check not None
             if message is None:
-                return FlextResult.fail("Message cannot be None")
+                return FlextResult.fail(FlextConstants.Handlers.MESSAGE_CANNOT_BE_NONE)
             return FlextResult.ok(None)
 
     class Handler(FlextCommands.Handler[object, object], ABC):
@@ -1324,35 +1348,8 @@ class _ConcreteQueryHandler(FlextQueryHandler[TQuery, TQueryResult]):
         return cast("FlextResult[TQueryResult]", FlextResult.ok(cast("object", query)))
 
 
-if TYPE_CHECKING:
-
-    class FlextHandlers(FlextBaseHandler):  # pragma: no cover - typing only
-        """Type-safe handler composition class for type checking."""
-
-        class CommandHandler(FlextCommandHandler[object, object]):
-            """Type-safe command handler."""
-
-            def handle_command(self, command: object) -> FlextResult[object]:
-                return FlextResult.ok(command)
-
-        class QueryHandler(
-            FlextQueryHandler[TQuery, TQueryResult],
-            Generic[TQuery, TQueryResult],
-        ):
-            """Type-safe query handler."""
-
-            def handle_query(self, query: TQuery) -> FlextResult[TQueryResult]:
-                return cast(
-                    "FlextResult[TQueryResult]",
-                    FlextResult.ok(cast("object", query)),
-                )
-
-        class EventHandler(FlextEventHandler):
-            """Type-safe event handler."""
-
-else:
-    FlextHandlers = FlextBaseHandler
-    # Attach nested types for convenience in tests
-    FlextHandlers.CommandHandler = _ConcreteCommandHandler  # type: ignore[attr-defined]
-    FlextHandlers.QueryHandler = _ConcreteQueryHandler  # type: ignore[attr-defined]
-    FlextHandlers.EventHandler = FlextEventHandler  # type: ignore[attr-defined]
+FlextHandlers = FlextBaseHandler
+# Attach nested types for convenience in tests
+FlextHandlers.CommandHandler = _ConcreteCommandHandler  # type: ignore[attr-defined]
+FlextHandlers.QueryHandler = _ConcreteQueryHandler  # type: ignore[attr-defined]
+FlextHandlers.EventHandler = FlextEventHandler  # type: ignore[attr-defined]

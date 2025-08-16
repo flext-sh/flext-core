@@ -23,7 +23,6 @@ from flext_core import (
     FlextResult,
     TAnyObject,
     TErrorMessage,
-    TLogMessage,
     TUserData,
 )
 
@@ -304,10 +303,7 @@ def validate_user_business_rules(user: SharedUser) -> FlextResult[None]:
 
 def demonstrate_basic_validations() -> None:
     """Demonstrate basic validation patterns using flext_core.typings."""
-    log_message: TLogMessage = "\n" + "=" * 60
-    print(log_message)
-    print("📋 EXAMPLE 1: Basic Validations")
-    print("=" * 60)
+    "\n" + "=" * 60
 
     # Test data for validation - use object for flexible test values
     test_cases: list[tuple[str, object]] = [
@@ -320,45 +316,22 @@ def demonstrate_basic_validations() -> None:
         ("None Value", None),
     ]
 
-    for test_name, test_value in test_cases:
-        log_message = f"🔍 Testing: {test_name} = {test_value}"
-        print(log_message)
-
+    for _test_name, test_value in test_cases:
         # Basic type validations using built-in isinstance (better type narrowing)
         is_str = isinstance(test_value, str)
-        is_int = isinstance(test_value, int)
-        is_float = isinstance(test_value, float)
-        is_list = isinstance(test_value, list)
-        is_dict = isinstance(test_value, dict)
-
-        log_message = f"   📝 String: {is_str}"
-        print(log_message)
-        log_message = f"   🔢 Integer: {is_int}"
-        print(log_message)
-        log_message = f"   🔢 Float: {is_float}"
-        print(log_message)
-        log_message = f"   📋 List: {is_list}"
-        print(log_message)
-        log_message = f"   📚 Dict: {is_dict}"
-        print(log_message)
+        isinstance(test_value, int)
+        isinstance(test_value, float)
+        isinstance(test_value, list)
+        isinstance(test_value, dict)
 
         # Non-empty string validation
         if is_str and isinstance(test_value, str):
-            non_empty = len(test_value.strip()) > 0
-            log_message = f"   📝 Non-empty: {non_empty}"
-            print(log_message)
-
-        print()
-
-    print("✅ Basic validations demonstration completed")
+            len(test_value.strip()) > 0
 
 
 def demonstrate_format_validations() -> None:
     """Demonstrate format validation patterns using flext_core.typings."""
-    log_message: TLogMessage = "\n" + "=" * 60
-    print(log_message)
-    print("📋 EXAMPLE 2: Format Validations")
-    print("=" * 60)
+    "\n" + "=" * 60
 
     # Email validation test cases
     email_cases: list[tuple[str, str]] = [
@@ -369,16 +342,9 @@ def demonstrate_format_validations() -> None:
         ("Invalid Email - Empty", ""),
     ]
 
-    log_message = "📧 Email Validation:"
-    print(log_message)
-    for test_name, email in email_cases:
+    for _test_name, email in email_cases:
         # Simple email validation
-        is_valid = "@" in email and "." in email.split("@")[-1]
-        status = "✅ Valid" if is_valid else "❌ Invalid"
-        log_message = f"   {test_name}: {email} -> {status}"
-        print(log_message)
-
-    print()
+        "@" in email and "." in email.split("@")[-1]
 
     # URL validation test cases
     url_cases: list[tuple[str, str]] = [
@@ -389,16 +355,9 @@ def demonstrate_format_validations() -> None:
         ("Empty URL", ""),
     ]
 
-    log_message = "🌐 URL Validation:"
-    print(log_message)
-    for test_name, url in url_cases:
+    for _test_name, url in url_cases:
         # Simple URL validation
-        is_valid = url.startswith(("http://", "https://"))
-        status = "✅ Valid" if is_valid else "❌ Invalid"
-        log_message = f"   {test_name}: {url} -> {status}"
-        print(log_message)
-
-    print()
+        url.startswith(("http://", "https://"))
 
     # Numeric range validation
     numeric_cases: list[tuple[str, float, float, float]] = [
@@ -409,23 +368,13 @@ def demonstrate_format_validations() -> None:
         ("Above Max", 150.0, 0.0, 100.0),
     ]
 
-    log_message = "🔢 Numeric Range Validation:"
-    print(log_message)
-    for test_name, value, min_val, max_val in numeric_cases:
-        is_valid = min_val <= value <= max_val
-        status = "✅ Valid" if is_valid else "❌ Invalid"
-        log_message = f"   {test_name}: {value} in [{min_val}, {max_val}] -> {status}"
-        print(log_message)
-
-    print("✅ Format validations demonstration completed")
+    for _test_name, _value, _min_val, _max_val in numeric_cases:
+        pass
 
 
 def demonstrate_functional_predicates() -> None:
     """Demonstrate functional predicates using flext_core.typings."""
-    log_message: TLogMessage = "\n" + "=" * 60
-    print(log_message)
-    print("📋 EXAMPLE 3: Functional Predicates")
-    print("=" * 60)
+    "\n" + "=" * 60
 
     # Test data - use object for mixed value types
     test_values: list[object] = [
@@ -462,43 +411,28 @@ def demonstrate_functional_predicates() -> None:
         ("Is Not None", lambda x: x is not None),
     ]
 
-    for pred_name, predicate in predicates:
-        log_message = f"🔍 Predicate: {pred_name}"
-        print(log_message)
-
+    for _pred_name, predicate in predicates:
         results: list[tuple[object, bool]] = []
         for value in test_values:
             try:
                 result = predicate(value)
                 results.append((value, result))
-            except (RuntimeError, ValueError, TypeError) as e:
-                error_message: TErrorMessage = f"Predicate failed: {e}"
-                log_message = f"   ❌ {value} -> {error_message}"
-                print(log_message)
+            except (RuntimeError, ValueError, TypeError):
                 results.append((value, False))
 
         # Show results
         valid_count = sum(1 for _, result in results if result)
-        log_message = f"   ✅ Valid: {valid_count}/{len(results)}"
-        print(log_message)
+        f"   ✅ Valid: {valid_count}/{len(results)}"
 
         # Show some examples
         valid_examples = [str(value) for value, result in results if result][:3]
         if valid_examples:
-            log_message = f"   📝 Examples: {', '.join(valid_examples)}"
-            print(log_message)
-
-        print()
-
-    print("✅ Functional predicates demonstration completed")
+            f"   📝 Examples: {', '.join(valid_examples)}"
 
 
 def demonstrate_predicate_composition() -> None:
     """Demonstrate predicate composition patterns using flext_core.typings."""
-    log_message: TLogMessage = "\n" + "=" * 60
-    print(log_message)
-    print("📋 EXAMPLE 4: Predicate Composition")
-    print("=" * 60)
+    "\n" + "=" * 60
 
     # Test data - use object for mixed value types
     test_values: list[object] = [
@@ -539,37 +473,15 @@ def demonstrate_predicate_composition() -> None:
             and has_domain_part(value)
         )
 
-    log_message = "📧 Email Validation with Predicate Composition:"
-    print(log_message)
-
     for value in test_values:
-        log_message = f"🔍 Testing: {value}"
-        print(log_message)
-
         # Individual predicate results
-        str_result = is_string(value)
-        non_empty_result = is_non_empty(value)
-        at_result = has_at_symbol(value)
-        domain_result = has_domain_part(value)
-
-        log_message = f"   📝 Is String: {str_result}"
-        print(log_message)
-        log_message = f"   📝 Non-Empty: {non_empty_result}"
-        print(log_message)
-        log_message = f"   📝 Has @: {at_result}"
-        print(log_message)
-        log_message = f"   📝 Has Domain: {domain_result}"
-        print(log_message)
+        is_string(value)
+        is_non_empty(value)
+        has_at_symbol(value)
+        has_domain_part(value)
 
         # Composed result
-        final_result = is_valid_email(value)
-        status = "✅ Valid Email" if final_result else "❌ Invalid Email"
-        log_message = f"   🎯 Final Result: {status}"
-        print(log_message)
-
-        print()
-
-    print("✅ Predicate composition demonstration completed")
+        is_valid_email(value)
 
 
 def validate_customer_complete(
@@ -579,10 +491,7 @@ def validate_customer_complete(
 
     Refactored to reduce complexity with single responsibility methods.
     """
-    log_message: TLogMessage = (
-        f"🔍 Validating customer: {customer_data.get('name', 'Unknown')}"
-    )
-    print(log_message)
+    (f"🔍 Validating customer: {customer_data.get('name', 'Unknown')}")
 
     # Extract and validate input data types
     input_result = _extract_and_validate_customer_input(customer_data)
@@ -656,8 +565,6 @@ def _validate_and_finalize_customer(user: SharedUser) -> FlextResult[SharedUser]
             return FlextResult.fail(error_msg)
 
         # Log successful validation
-        log_message = f"✅ Enhanced customer validation successful: {user.name}"
-        print(log_message)
 
         return FlextResult.ok(user)
 
@@ -673,8 +580,7 @@ def validate_product_complete(
 
     Refactored to reduce complexity with single responsibility methods.
     """
-    log_message: TLogMessage = f"🔍 Validating product: {cast('dict[str, object]', product_data).get('name', 'Unknown')}"
-    print(log_message)
+    f"🔍 Validating product: {cast('dict[str, object]', product_data).get('name', 'Unknown')}"
 
     # Validate fields using orchestrator pattern
     field_result = _validate_product_fields(product_data)
@@ -794,10 +700,6 @@ def _create_enhanced_demo_product(
             error_msg = inventory_validation.error or "Inventory validation failed"
             return FlextResult.fail(error_msg)
 
-        log_message = (
-            f"✅ Enhanced product validation successful: {enhanced_product.name}"
-        )
-        print(log_message)
         return FlextResult.ok(enhanced_product)
 
     except (RuntimeError, ValueError, TypeError) as e:
@@ -806,10 +708,7 @@ def _create_enhanced_demo_product(
 
 def demonstrate_customer_validation() -> None:
     """Demonstrate customer validation workflows using flext_core.typings."""
-    log_message: TLogMessage = "\n" + "=" * 60
-    print(log_message)
-    print("📋 EXAMPLE 5: Customer Validation")
-    print("=" * 60)
+    "\n" + "=" * 60
 
     # Test customer data
     test_customers: list[tuple[str, TUserData]] = [
@@ -853,35 +752,17 @@ def demonstrate_customer_validation() -> None:
         ),
     ]
 
-    for test_name, customer_data in test_customers:
-        log_message = f"👤 Testing: {test_name}"
-        print(log_message)
-
+    for _test_name, customer_data in test_customers:
         validation_result = validate_customer_complete(customer_data)
         if validation_result.success:
             customer = validation_result.data
             if customer is None:
-                print("❌ Customer validation returned None data")
                 continue
-            log_message = (
-                f"✅ Enhanced customer created: {customer.name} (ID: {customer.id})"
-            )
-            print(log_message)
-        else:
-            log_message = f"❌ Validation failed: {validation_result.error}"
-            print(log_message)
-
-        print()
-
-    print("✅ Customer validation demonstration completed")
 
 
 def demonstrate_product_validation() -> None:
     """Demonstrate product validation workflows using flext_core.typings."""
-    log_message: TLogMessage = "\n" + "=" * 60
-    print(log_message)
-    print("📋 EXAMPLE 6: Product Validation")
-    print("=" * 60)
+    "\n" + "=" * 60
 
     # Test product data
     test_products: list[tuple[str, dict[str, object]]] = [
@@ -928,40 +809,17 @@ def demonstrate_product_validation() -> None:
         ),
     ]
 
-    for test_name, product_data in test_products:
-        log_message = f"📦 Testing: {test_name}"
-        print(log_message)
-
+    for _test_name, product_data in test_products:
         validation_result = validate_product_complete(product_data)
         if validation_result.success:
             product = validation_result.data
             if product is None:
-                print("❌ Product validation returned None data")
                 continue
-            log_message = (
-                f"✅ Enhanced product created: {product.name} (ID: {product.id})"
-            )
-            print(log_message)
-            log_message = (
-                f"   💰 Price: ${product.price.amount} {product.price.currency}, "
-                f"📦 In Stock: {product.in_stock}"
-            )
-            print(log_message)
-        else:
-            log_message = f"❌ Validation failed: {validation_result.error}"
-            print(log_message)
-
-        print()
-
-    print("✅ Product validation demonstration completed")
 
 
 def demonstrate_validation_performance() -> None:
     """Demonstrate validation performance patterns using flext_core.typings."""
-    log_message: TLogMessage = "\n" + "=" * 60
-    print(log_message)
-    print("📋 EXAMPLE 7: Validation Performance")
-    print("=" * 60)
+    "\n" + "=" * 60
 
     # Benchmark data - use object for mixed value types
     test_data: list[object] = [
@@ -973,8 +831,6 @@ def demonstrate_validation_performance() -> None:
     ] * 200  # 1000 total tests
 
     # Benchmark email validation
-    log_message = "🏃 Benchmarking Email Validation"
-    print(log_message)
 
     def validate_email_simple(email: object) -> bool:
         """Validate email format simply."""
@@ -988,14 +844,10 @@ def demonstrate_validation_performance() -> None:
     end_time = time.time()
 
     validation_time = end_time - start_time
-    log_message = f"✅ Validated {len(test_data)} emails in {validation_time:.4f}s"
-    print(log_message)
-    log_message = f"   📊 Valid emails: {valid_count}/{len(test_data)}"
-    print(log_message)
+    f"✅ Validated {len(test_data)} emails in {validation_time:.4f}s"
+    f"   📊 Valid emails: {valid_count}/{len(test_data)}"
 
     # Benchmark type checking
-    log_message = "🏃 Benchmarking Type Checking"
-    print(log_message)
 
     start_time = time.time()
     type_results = [isinstance(item, str) for item in test_data]
@@ -1003,22 +855,11 @@ def demonstrate_validation_performance() -> None:
 
     type_check_time = end_time - start_time
     string_count = sum(type_results)
-    log_message = f"✅ Type checked {len(test_data)} items in {type_check_time:.4f}s"
-    print(log_message)
-    log_message = f"   📊 String items: {string_count}/{len(test_data)}"
-    print(log_message)
+    f"✅ Type checked {len(test_data)} items in {type_check_time:.4f}s"
+    f"   📊 String items: {string_count}/{len(test_data)}"
 
     # Performance summary
-    log_message = "\n📊 Performance Summary:"
-    print(log_message)
-    log_message = f"   Email Validation: {validation_time:.4f}s"
-    print(log_message)
-    log_message = f"   Type Checking: {type_check_time:.4f}s"
-    print(log_message)
-    log_message = f"   Total Operations: {len(test_data)}"
-    print(log_message)
-
-    print("✅ Validation performance demonstration completed")
+    f"   Total Operations: {len(test_data)}"
 
 
 def main() -> None:

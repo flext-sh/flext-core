@@ -20,6 +20,7 @@ This example shows real-world enterprise logging scenarios
 demonstrating the power and flexibility of the FlextLoggerFactory system.
 """
 
+import contextlib
 import time
 import traceback
 from types import TracebackType
@@ -69,12 +70,7 @@ def _raise_timeout_error() -> None:
 
 def demonstrate_basic_logging() -> None:
     """Demonstrate basic structured logging with FlextLogger."""
-    print("\n" + "=" * 80)
-    print("📝 BASIC STRUCTURED LOGGING")
-    print("=" * 80)
-
     # 1. Create basic logger
-    print("\n1. Creating and using basic logger:")
     logger = FlextLogger("myapp.service", "DEBUG")
 
     # Basic logging at different levels
@@ -89,24 +85,17 @@ def demonstrate_basic_logging() -> None:
     logger.error("Database connection failed", database="users", retry_count=3)
     logger.critical("System overload detected", cpu_usage_percent=95)
 
-    print("✅ Basic logging completed - check stderr for log entries")
-
     # 2. Logger with different level filtering
-    print("\n2. Level filtering demonstration:")
 
     # Create logger with WARNING level - should filter out DEBUG and INFO
     warning_logger = FlextLogger("myapp.critical", "WARNING")
 
-    print("   Logging with WARNING level filter:")
     warning_logger.debug("This debug message should be filtered out")
     warning_logger.info("This info message should be filtered out")
     warning_logger.warning("This warning message should appear")
     warning_logger.error("This error message should appear")
 
-    print("✅ Level filtering completed - only WARNING and ERROR should appear")
-
     # 3. Context-aware logging
-    print("\n3. Context-aware logging:")
 
     context_logger = FlextLogger("myapp.context", "INFO")
     context_logger.set_context(
@@ -125,17 +114,10 @@ def demonstrate_basic_logging() -> None:
     context_logger.info("User profile loaded", profile_size_kb=45, cache_hit=True)
     context_logger.warning("Rate limit approaching", requests_remaining=5)
 
-    print("✅ Context logging completed - context should be included in all entries")
-
 
 def demonstrate_logger_factory() -> None:
     """Demonstrate logger factory pattern with caching and global configuration."""
-    print("\n" + "=" * 80)
-    print("🏭 LOGGER FACTORY AND GLOBAL CONFIGURATION")
-    print("=" * 80)
-
     # 1. Factory logger creation with caching
-    print("\n1. Factory pattern with caching:")
 
     # Create loggers using factory
     service_logger = FlextLoggerFactory.get_logger("myapp.service", "DEBUG")
@@ -143,25 +125,18 @@ def demonstrate_logger_factory() -> None:
     api_logger = FlextLoggerFactory.get_logger("myapp.api", "DEBUG")
 
     # Create same logger again - should return cached instance
-    service_logger_2 = FlextLoggerFactory.get_logger("myapp.service", "DEBUG")
-
-    print(f"   Service logger instances same: {service_logger is service_logger_2}")
-    print("✅ Logger factory caching working correctly")
+    FlextLoggerFactory.get_logger("myapp.service", "DEBUG")
 
     # 2. Global level configuration
-    print("\n2. Global level configuration:")
 
     # Log at different levels before global change
-    print("   Before global level change (individual levels):")
     service_logger.debug("Service debug message")  # Should appear (DEBUG level)
     database_logger.debug("Database debug message")  # Should not appear (INFO level)
     api_logger.debug("API debug message")  # Should appear (DEBUG level)
 
     # Change global level to WARNING
-    print("   Changing global level to WARNING...")
     FlextLoggerFactory.set_global_level("WARNING")
 
-    print("   After global level change (WARNING for all):")
     service_logger.debug("Service debug after global change")  # Should not appear
     service_logger.info("Service info after global change")  # Should not appear
     service_logger.warning("Service warning after global change")  # Should appear
@@ -172,10 +147,7 @@ def demonstrate_logger_factory() -> None:
     api_logger.debug("API debug after global change")  # Should not appear
     api_logger.critical("API critical after global change")  # Should appear
 
-    print("✅ Global level configuration completed")
-
     # 3. Convenience function usage
-    print("\n3. Convenience function usage:")
 
     # Reset global level for this demo
     FlextLoggerFactory.set_global_level("DEBUG")
@@ -184,17 +156,10 @@ def demonstrate_logger_factory() -> None:
     convenience_logger = get_logger("myapp.convenience", "INFO")
     convenience_logger.info("Logger created with convenience function", easy=True)
 
-    print("✅ Convenience function working correctly")
-
 
 def demonstrate_context_management() -> None:
     """Demonstrate context management with scoped logging."""
-    print("\n" + "=" * 80)
-    print("🔄 CONTEXT MANAGEMENT AND SCOPED LOGGING")
-    print("=" * 80)
-
     # 1. Basic context management
-    print("\n1. Basic context management:")
 
     base_logger = FlextLogger("myapp.context", "INFO")
     base_logger.set_context({"service": "user_service", "version": "0.9.0"})
@@ -202,13 +167,11 @@ def demonstrate_context_management() -> None:
     base_logger.info("Service started with base context")
 
     # Temporarily add request context
-    print("   Adding temporary request context:")
     with create_log_context(base_logger, request_id="req_789", user_id="user_456"):
         base_logger.info("Processing user request", action="get_profile")
         base_logger.info("Database query executed", table="users", duration_ms=45)
 
         # Nested context
-        print("   Adding nested operation context:")
         with create_log_context(
             base_logger,
             operation="profile_enrichment",
@@ -220,10 +183,7 @@ def demonstrate_context_management() -> None:
     # Context should be restored
     base_logger.info("Request processing completed", success=True)
 
-    print("✅ Context management completed - contexts should be properly scoped")
-
     # 2. Context inheritance patterns
-    print("\n2. Context inheritance patterns:")
 
     parent_logger = FlextLogger("myapp.parent", "DEBUG")
     parent_logger.set_context({"environment": "production", "datacenter": "us-east-1"})
@@ -241,10 +201,7 @@ def demonstrate_context_management() -> None:
         amount=99.99,
     )
 
-    print("✅ Context inheritance working correctly")
-
     # 3. Convenience context manager
-    print("\n3. Convenience context manager:")
 
     convenience_logger = get_logger("myapp.convenience_context", "INFO")
     convenience_logger.set_context({"application": "ecommerce"})
@@ -261,8 +218,6 @@ def demonstrate_context_management() -> None:
 
     convenience_logger.info("Post-order cleanup completed")
 
-    print("✅ Convenience context manager working correctly")
-
 
 def demonstrate_exception_logging() -> None:
     """Demonstrate exception logging with automatic traceback capture."""
@@ -272,13 +227,10 @@ def demonstrate_exception_logging() -> None:
 
 
 def _print_exception_header() -> None:
-    print("\n" + "=" * 80)
-    print("🚨 EXCEPTION LOGGING AND ERROR HANDLING")
-    print("=" * 80)
+    pass
 
 
 def _basic_exception_logging() -> None:
-    print("\n1. Basic exception logging:")
     error_logger = FlextLogger("myapp.errors", "DEBUG")
     error_logger.set_context({"module": "payment_processor"})
     try:
@@ -310,7 +262,6 @@ def _basic_exception_logging() -> None:
             expected_type="int",
             actual_type=type(number).__name__,
         )
-    print("✅ Exception logging completed - tracebacks should be captured")
 
 
 def _process_payment(amount: float, payment_method: str) -> dict[str, object]:
@@ -355,23 +306,19 @@ def _process_payment(amount: float, payment_method: str) -> dict[str, object]:
 
 
 def _contextual_exception_logging() -> None:
-    print("\n2. Contextual exception logging:")
     test_cases = [
         {"amount": -50, "method": "credit_card"},
         {"amount": 100, "method": "bitcoin"},
         {"amount": 15000, "method": "credit_card"},
         {"amount": 99.99, "method": "credit_card"},
     ]
-    for i, test_case in enumerate(test_cases, 1):
-        print(f"   Test case {i}: ${test_case['amount']} via {test_case['method']}")
+    for test_case in test_cases:
         try:
             amount = float(cast("float", test_case["amount"]))
             method = str(cast("str", test_case["method"]))
-            result_dict = _process_payment(amount, method)
-            print(f"     Success: {result_dict}")
-        except (ValueError, ConnectionError, OSError, RuntimeError) as e:
-            print(f"     Expected error: {type(e).__name__}: {e}")
-    print("✅ Contextual exception logging completed")
+            _process_payment(amount, method)
+        except (ValueError, ConnectionError, OSError, RuntimeError):
+            pass
 
 
 def demonstrate_unified_api() -> None:
@@ -383,13 +330,10 @@ def demonstrate_unified_api() -> None:
 
 
 def _print_unified_header() -> None:
-    print("\n" + "=" * 80)
-    print("🎛️ UNIFIED API AND OBSERVABILITY")
-    print("=" * 80)
+    pass
 
 
 def _unified_api_usage() -> None:
-    print("\n1. Unified FlextLoggerFactory API:")
     api_logger = FlextLoggerFactory.get_logger("myapp.unified_api", "DEBUG")
     metrics_logger = FlextLoggerFactory.get_logger("myapp.metrics", "INFO")
     api_logger.info(
@@ -398,17 +342,14 @@ def _unified_api_usage() -> None:
         workers=4,
     )
     metrics_logger.info("Metrics collection enabled", interval_seconds=30)
-    print("   Setting global level through unified API...")
     FlextLoggerFactory.set_global_level("WARNING")
     api_logger.debug("Debug message after global change")
     api_logger.info("Info message after global change")
     api_logger.warning("Warning message after global change")
     metrics_logger.error("Error message after global change")
-    print("✅ Unified API working correctly")
 
 
 def _log_store_observability() -> None:
-    print("\n2. Log store and observability:")
     FlextLoggerFactory.clear_log_store()
     FlextLoggerFactory.set_global_level("INFO")
     observability_logger = FlextLoggerFactory.get_logger("myapp.observability", "INFO")
@@ -426,7 +367,6 @@ def _log_store_observability() -> None:
             fallback="database",
         )
     log_entries = FlextLoggerFactory.get_log_store()
-    print(f"   Total log entries captured: {len(log_entries)}")
     levels: dict[str, int] = {}
     loggers: dict[str, int] = {}
     has_context = 0
@@ -438,40 +378,27 @@ def _log_store_observability() -> None:
         loggers[logger_name] = loggers.get(logger_name, 0) + 1
         if context:
             has_context += 1
-    print(f"   Entries by level: {levels}")
-    print(f"   Entries by logger: {dict(list(loggers.items())[:5])}")
-    print(f"   Entries with context: {has_context}/{len(log_entries)}")
     if log_entries:
         sample_entry = log_entries[-1]
-        print("   Sample entry structure:")
         for key, value in sample_entry.items():
             if key == "context" and isinstance(value, dict) and value:
-                print(f"     {key}: {dict(list(value.items())[:3])}...")
+                pass
             else:
-                value_str = (
+                (
                     str(value)[:MAX_VALUE_DISPLAY_LENGTH] + "..."
                     if len(str(value)) > MAX_VALUE_DISPLAY_LENGTH
                     else str(value)
                 )
-                print(f"     {key}: {value_str}")
-    print("✅ Log store observability completed")
 
 
 def _testing_utilities_demo() -> None:
-    print("\n3. Testing utilities:")
-    print("   Clearing logger cache...")
-    initial_log_count = len(FlextLoggerFactory.get_log_store())
+    len(FlextLoggerFactory.get_log_store())
     FlextLoggerFactory.clear_loggers()
     fresh_logger = FlextLoggerFactory.get_logger("myapp.fresh", "DEBUG")
     fresh_logger.info("Fresh logger after cache clear", cache_cleared=True)
-    final_log_count = len(FlextLoggerFactory.get_log_store())
-    print(f"   Log entries before clear: {initial_log_count}")
-    print(f"   Log entries after new logger: {final_log_count}")
-    print("   Clearing log store for clean state...")
+    len(FlextLoggerFactory.get_log_store())
     FlextLoggerFactory.clear_log_store()
-    empty_store = FlextLoggerFactory.get_log_store()
-    print(f"   Log store entries after clear: {len(empty_store)}")
-    print("✅ Testing utilities working correctly")
+    FlextLoggerFactory.get_log_store()
 
 
 def demonstrate_enterprise_patterns() -> None:
@@ -483,9 +410,7 @@ def demonstrate_enterprise_patterns() -> None:
 
 
 def _print_enterprise_header() -> None:
-    print("\n" + "=" * 80)
-    print("🏢 ENTERPRISE LOGGING PATTERNS")
-    print("=" * 80)
+    pass
 
 
 def _process_user_request(
@@ -561,19 +486,14 @@ def _process_user_request(
 
 
 def _request_correlation_demo() -> None:
-    print("\n1. Request correlation and distributed tracing:")
     requests = [
         {"user_id": "user_001", "request_id": "req_001", "operation": "profile"},
         {"user_id": "user_002", "request_id": "req_002", "operation": "settings"},
         {"user_id": "user_003", "request_id": "req_003", "operation": "preferences"},
     ]
     for request in requests:
-        try:
-            result = _process_user_request(**request)
-            print(f"   Request {request['request_id']}: {result['status']}")
-        except (ValueError, OSError, RuntimeError) as e:
-            print(f"   Request {request['request_id']}: Failed - {e}")
-    print("✅ Request correlation completed - check logs for trace correlation")
+        with contextlib.suppress(ValueError, OSError, RuntimeError):
+            _process_user_request(**request)
 
 
 class PerformanceMonitor:
@@ -617,7 +537,6 @@ class PerformanceMonitor:
 
 
 def _performance_monitoring_demo() -> None:
-    print("\n2. Performance monitoring and metrics:")
     perf_logger = get_logger("enterprise.performance", "INFO")
     operations = [
         {"op": "database_query", "table": "users", "complexity": "simple"},
@@ -639,11 +558,9 @@ def _performance_monitoring_demo() -> None:
                 time.sleep(0.050)
             elif operation == "data_transformation":
                 time.sleep(0.020)
-    print("✅ Performance monitoring completed")
 
 
 def _business_metrics_demo() -> None:
-    print("\n3. Business metrics and analytics:")
     business_logger = get_logger("enterprise.business", "INFO")
     business_events = [
         {
@@ -687,14 +604,10 @@ def _business_metrics_demo() -> None:
             timestamp=time.time(),
             **event,
         )
-    print("✅ Business metrics logging completed")
 
 
 def main() -> None:
     """Execute all FlextLoggerFactory demonstrations."""
-    print("🚀 FLEXT LOGGING - STRUCTURED SYSTEM EXAMPLE")
-    print("Demonstrating comprehensive logging patterns for enterprise applications")
-
     try:
         demonstrate_basic_logging()
         demonstrate_logger_factory()
@@ -703,27 +616,10 @@ def main() -> None:
         demonstrate_unified_api()
         demonstrate_enterprise_patterns()
 
-        print("\n" + "=" * 80)
-        print("✅ ALL FLEXT LOGGING DEMONSTRATIONS COMPLETED SUCCESSFULLY!")
-        print("=" * 80)
-        print("\n📊 Summary of capabilities demonstrated:")
-        print("   📝 Basic structured logging with level filtering")
-        print("   🏭 Logger factory pattern with caching and global configuration")
-        print("   🔄 Context management with scoped logging and inheritance")
-        print("   🚨 Exception logging with automatic traceback capture")
-        print("   🎛️ Unified API with log store observability")
-        print("   🏢 Enterprise patterns for distributed tracing and monitoring")
-        print("\n💡 FlextLoggerFactory provides enterprise-grade structured logging")
-        print(
-            "   with context management, observability, and performance optimization!",
-        )
-
         # Final log store summary
-        final_logs = FlextLoggerFactory.get_log_store()
-        print(f"\n📈 Total log entries generated during demo: {len(final_logs)}")
+        FlextLoggerFactory.get_log_store()
 
-    except (OSError, RuntimeError, ValueError) as e:
-        print(f"\n❌ Error during FlextLoggerFactory demonstration: {e}")
+    except (OSError, RuntimeError, ValueError):
         traceback.print_exc()
 
 

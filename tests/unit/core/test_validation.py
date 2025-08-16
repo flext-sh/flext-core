@@ -20,14 +20,15 @@ from __future__ import annotations
 from typing import cast
 
 import pytest
-from tests.conftest import TestCase, TestScenario
 
-from flext_core.validation import (
+from flext_core import (
     FlextPredicates,
     FlextValidators,
     flext_validate_email,
     flext_validate_non_empty_string,
 )
+
+from ...conftest import TestCase, TestScenario
 
 # Test markers for organized execution
 pytestmark = [pytest.mark.unit, pytest.mark.core]
@@ -37,7 +38,7 @@ class TestFlextValidatorsAdvanced:
     """Advanced validator testing with consolidated patterns."""
 
     @pytest.fixture
-    def validator_test_cases(self) -> list[TestCase]:
+    def validation_test_cases(self) -> list[TestCase]:
         """Structured test cases for validator testing."""
         return [
             # is_not_none tests
@@ -165,13 +166,13 @@ class TestFlextValidatorsAdvanced:
         ]
 
     @pytest.mark.parametrize_advanced
+    @pytest.mark.usefixtures("assert_helpers")
     def test_validator_scenarios(
         self,
-        validator_test_cases: list[TestCase],
-        assert_helpers: object,
+        validation_test_cases: list[TestCase],
     ) -> None:
         """Test validators using structured parametrized approach."""
-        for test_case in validator_test_cases:
+        for test_case in validation_test_cases:
             input_data = cast("dict[str, object]", test_case.input_data)
             expected = test_case.expected_output
 

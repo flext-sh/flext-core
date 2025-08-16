@@ -2,25 +2,24 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from typing import TYPE_CHECKING, ParamSpec, TypeVar, cast
 
 from flext_core.constants import FlextConstants
 from flext_core.container import (
     FlextContainer,
     FlextServiceKey,
-    get_flext_container,  # re-export for test patching
+    get_flext_container,
 )
 from flext_core.guards import ValidatedModel, immutable, is_dict_of, pure
 from flext_core.loggings import FlextLogger, FlextLoggerFactory, FlextLogLevel
 from flext_core.result import FlextResult
 
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
 # Type variables for function signatures
 P = ParamSpec("P")
 R = TypeVar("R")
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
 
 
 class FlextCore:

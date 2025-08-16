@@ -1,10 +1,13 @@
-"""Tests for FLEXT Core types module."""
+"""Tests for FLEXT Core types module.
+
+# ruff: noqa: ARG
+"""
 
 from __future__ import annotations
 
 import pytest
 
-from flext_core.typings import FlextTypes
+from flext_core import FlextTypes
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 
@@ -13,8 +16,7 @@ class TestFlextTypesTypeGuards:
     """Test FlextTypes.TypeGuards utility class."""
 
     def test_is_instance_of_with_exception_handling(self) -> None:
-        """Test is_instance_of method with exception handling."""
-        # Test normal case
+        """Test is_instance_of method with exception handling."""  # Test normal case
         if not (FlextTypes.TypeGuards.is_instance_of("test", str)):
             raise AssertionError(
                 f"Expected True, got {FlextTypes.TypeGuards.is_instance_of('test', str)}",
@@ -26,12 +28,15 @@ class TestFlextTypesTypeGuards:
 
         # Test exception handling with problematic type
         class ProblematicTypeMeta(type):
+            """ProblematicTypeMeta class."""
+
             def __instancecheck__(cls, instance: object) -> bool:
+                """Instancecheck function."""
                 error_message = "Cannot check instance"
                 raise TypeError(error_message)
 
         class ProblematicType(metaclass=ProblematicTypeMeta):
-            pass
+            """ProblematicType class."""
 
         # Should return False when TypeError/AttributeError occurs
         if FlextTypes.TypeGuards.is_instance_of("test", ProblematicType):
@@ -40,8 +45,7 @@ class TestFlextTypesTypeGuards:
             )
 
     def test_is_callable(self) -> None:
-        """Test is_callable method."""
-        # Callable objects
+        """Test is_callable method."""  # Callable objects
         if not (FlextTypes.TypeGuards.is_callable(lambda x: x)):
             raise AssertionError(
                 f"Expected True, got {FlextTypes.TypeGuards.is_callable(lambda x: x)}",
@@ -64,8 +68,7 @@ class TestFlextTypesTypeGuards:
             )
 
     def test_is_dict_like(self) -> None:
-        """Test is_dict_like method."""
-        # Dict-like objects
+        """Test is_dict_like method."""  # Dict-like objects
         if not (FlextTypes.TypeGuards.is_dict_like({})):
             raise AssertionError(
                 f"Expected True, got {FlextTypes.TypeGuards.is_dict_like({})}",
@@ -74,13 +77,18 @@ class TestFlextTypesTypeGuards:
 
         # Custom dict-like class
         class DictLike:
+            """DictLike class."""
+
             def keys(self) -> list[str]:
+                """Keys function."""
                 return []
 
             def values(self) -> list[object]:
+                """Values function."""
                 return []
 
             def items(self) -> list[tuple[str, object]]:
+                """Items function."""
                 return []
 
         if not (FlextTypes.TypeGuards.is_dict_like(DictLike())):
@@ -100,8 +108,7 @@ class TestFlextTypesTypeGuards:
             )
 
     def test_is_list_like(self) -> None:
-        """Test is_list_like method."""
-        # List-like objects
+        """Test is_list_like method."""  # List-like objects
         if not (FlextTypes.TypeGuards.is_list_like([1, 2, 3])):
             raise AssertionError(
                 f"Expected True, got {FlextTypes.TypeGuards.is_list_like([1, 2, 3])}",
@@ -114,10 +121,14 @@ class TestFlextTypesTypeGuards:
 
         # Custom list-like class
         class ListLike:
+            """ListLike class."""
+
             def __iter__(self) -> object:
+                """Iter function."""
                 return iter([1, 2, 3])
 
             def __len__(self) -> int:
+                """Len function."""
                 return 3
 
         if not (FlextTypes.TypeGuards.is_list_like(ListLike())):
