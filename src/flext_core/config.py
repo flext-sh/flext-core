@@ -16,28 +16,31 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from pydantic import (
     Field,
     SecretStr,
+    SerializationInfo,
     field_serializer,
     field_validator,
     model_serializer,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from flext_core.models import FlextModel
 from flext_core.result import FlextResult
 
-# Security constants for password validation
+# Constants for magic values
 MIN_PASSWORD_LENGTH_HIGH_SECURITY = 12
-MIN_PASSWORD_LENGTH_BASIC = 8
+MIN_PASSWORD_LENGTH_MEDIUM_SECURITY = 8
+MAX_PASSWORD_LENGTH = 64
+MAX_USERNAME_LENGTH = 32
 MIN_SECRET_KEY_LENGTH_STRONG = 64
 MIN_SECRET_KEY_LENGTH_ADEQUATE = 32
-MIN_JWT_PASSWORD_LENGTH = 8
-STRONG_SECRET_KEY_LENGTH = 64
-ADEQUATE_SECRET_KEY_LENGTH = 32
 
 
 class FlextSettings(BaseSettings):
@@ -74,12 +77,13 @@ class FlextSettings(BaseSettings):
     @model_serializer(mode="wrap", when_used="json")
     def serialize_settings_for_api(
         self,
-        serializer: object,
-        info: object,
-    ) -> dict[str, object] | object:
+        serializer: Callable[[FlextSettings], dict[str, object]],
+        info: SerializationInfo,
+    ) -> dict[str, object]:
         """Model serializer for settings API output with environment metadata."""
         _ = info  # Acknowledge parameter for future use
         data = serializer(self)
+        # With JSON mode, Pydantic always returns dict
         if isinstance(data, dict):
             # Add settings-specific API metadata
             data["_settings"] = {
@@ -242,9 +246,9 @@ class FlextConfig(FlextModel):
     @model_serializer(mode="wrap", when_used="json")
     def serialize_config_for_api(
         self,
-        serializer: object,
-        info: object,
-    ) -> dict[str, object] | object:
+        serializer: Callable[[FlextConfig], dict[str, object]],
+        info: SerializationInfo,
+    ) -> dict[str, object]:
         """Model serializer for config API output with comprehensive metadata."""
         _ = info  # Acknowledge parameter for future use
         data = serializer(self)
@@ -356,7 +360,7 @@ class FlextConfig(FlextModel):
             none_keys = [k for k, v in merged.items() if v is None]
             if none_keys:
                 return FlextResult.fail(
-                    f"Configuration cannot contain None values for keys: {', '.join(none_keys)}"
+                    f"Configuration cannot contain None values for keys: {', '.join(none_keys)}",
                 )
 
             instance = cls.model_validate(merged)
@@ -402,7 +406,9 @@ class FlextConfig(FlextModel):
 
     @classmethod
     def _validate_type_value(
-        cls, value: object, validate_type: type
+        cls,
+        value: object,
+        validate_type: type,
     ) -> FlextResult[object]:
         """Helper method to validate and convert value to specific type."""
         if validate_type is int:
@@ -549,11 +555,14 @@ class FlextDatabaseConfig(FlextModel):
     @field_serializer("password", when_used="json")
     def serialize_password(self, value: SecretStr) -> dict[str, object]:
         """Serialize password with security metadata (never expose actual value)."""
+        password_length = (
+            len(value.get_secret_value()) if value.get_secret_value() else 0
+        )
         return {
             "is_set": bool(value.get_secret_value()),
-            "length": len(value.get_secret_value()) if value.get_secret_value() else 0,
+            "length": password_length,
             "security_level": "high"
-            if len(value.get_secret_value()) >= 12
+            if password_length >= MIN_PASSWORD_LENGTH_HIGH_SECURITY
             else "medium",
             "_warning": "Password value hidden for security",
         }
@@ -570,9 +579,9 @@ class FlextDatabaseConfig(FlextModel):
     @model_serializer(mode="wrap", when_used="json")
     def serialize_database_config_for_api(
         self,
-        serializer: object,
-        info: object,
-    ) -> dict[str, object] | object:
+        serializer: Callable[[FlextDatabaseConfig], dict[str, object]],
+        info: SerializationInfo,
+    ) -> dict[str, object]:
         """Database config model serializer for API with connection metadata."""
         _ = info  # Acknowledge parameter for future use
         data = serializer(self)
@@ -581,7 +590,12 @@ class FlextDatabaseConfig(FlextModel):
             data["_database"] = {
                 "type": "PostgreSQL",
                 "connection_ready": bool(data.get("host") and data.get("username")),
-                "pool_configured": data.get("pool_size", 0) > 0,
+                "pool_configured": (
+                    int(pool_size_val)
+                    if isinstance(pool_size_val := data.get("pool_size", 0), (int, str))
+                    else 0
+                )
+                > 0,
                 "ssl_mode": "prefer",  # Default for PostgreSQL
                 "api_version": "v2",
             }
@@ -653,9 +667,9 @@ class FlextRedisConfig(FlextModel):
     @model_serializer(mode="wrap", when_used="json")
     def serialize_redis_config_for_api(
         self,
-        serializer: object,
-        info: object,
-    ) -> dict[str, object] | object:
+        serializer: Callable[[FlextRedisConfig], dict[str, object]],
+        info: SerializationInfo,
+    ) -> dict[str, object]:
         """Redis config model serializer for API with cache metadata."""
         _ = info  # Acknowledge parameter for future use
         data = serializer(self)
@@ -759,20 +773,20 @@ class FlextLDAPConfig(FlextModel):
         }
 
     @field_serializer("use_ssl", "use_tls", when_used="json")
-    def serialize_security_flags(self, value: bool) -> dict[str, object]:
+    def serialize_security_flags(self, value: bool) -> dict[str, object]:  # noqa: FBT001
         """Serialize security flags with context."""
         return {
             "enabled": value,
             "security_level": "high" if value else "medium",
-            "recommended": bool(value),
+            "recommended": value,
         }
 
     @model_serializer(mode="wrap", when_used="json")
     def serialize_ldap_config_for_api(
         self,
-        serializer: object,
-        info: object,
-    ) -> dict[str, object] | object:
+        serializer: Callable[[FlextLDAPConfig], dict[str, object]],
+        info: SerializationInfo,
+    ) -> dict[str, object]:
         """LDAP config model serializer for API with directory metadata."""
         _ = info  # Acknowledge parameter for future use
         data = serializer(self)
@@ -856,7 +870,8 @@ class FlextOracleConfig(FlextModel):
         """Serialize Oracle password with security metadata."""
         return {
             "is_set": bool(value.get_secret_value()),
-            "complexity_check": len(value.get_secret_value()) >= 8,
+            "complexity_check": len(value.get_secret_value())
+            >= MIN_PASSWORD_LENGTH_MEDIUM_SECURITY,
             "_warning": "Password value hidden for security",
         }
 
@@ -874,21 +889,29 @@ class FlextOracleConfig(FlextModel):
     @model_serializer(mode="wrap", when_used="json")
     def serialize_oracle_config_for_api(
         self,
-        serializer: object,
-        info: object,
-    ) -> dict[str, object] | object:
+        serializer: Callable[[FlextOracleConfig], dict[str, object]],
+        info: SerializationInfo,
+    ) -> dict[str, object]:
         """Oracle config model serializer for API with database metadata."""
         _ = info  # Acknowledge parameter for future use
         data = serializer(self)
         if isinstance(data, dict):
             # Add Oracle-specific API metadata
+            pool_max_raw: object = data.get("pool_max", 0)
+            if isinstance(pool_max_raw, int):
+                pool_max_int = pool_max_raw
+            elif isinstance(pool_max_raw, str) and pool_max_raw.isdigit():
+                pool_max_int = int(pool_max_raw)
+            else:
+                pool_max_int = 0
+
             data["_oracle"] = {
                 "type": "Oracle",
                 "version": "21c+",
                 "connection_method": "service_name"
                 if data.get("service_name")
                 else "sid",
-                "pool_enabled": data.get("pool_max", 0) > 1,
+                "pool_enabled": pool_max_int > 1,
                 "api_version": "v2",
             }
         return data
@@ -964,9 +987,9 @@ class FlextJWTConfig(FlextModel):
             "is_set": bool(secret_value),
             "length": len(secret_value),
             "strength": "strong"
-            if len(secret_value) >= 64
+            if len(secret_value) >= MIN_SECRET_KEY_LENGTH_STRONG
             else "adequate"
-            if len(secret_value) >= 32
+            if len(secret_value) >= MIN_SECRET_KEY_LENGTH_ADEQUATE
             else "weak",
             "_warning": "Secret key value hidden for security",
         }
@@ -992,18 +1015,26 @@ class FlextJWTConfig(FlextModel):
     @model_serializer(mode="wrap", when_used="json")
     def serialize_jwt_config_for_api(
         self,
-        serializer: object,
-        info: object,
-    ) -> dict[str, object] | object:
+        serializer: Callable[[FlextJWTConfig], dict[str, object]],
+        info: SerializationInfo,
+    ) -> dict[str, object]:
         """JWT config model serializer for API with token metadata."""
         _ = info  # Acknowledge parameter for future use
         data = serializer(self)
         if isinstance(data, dict):
             # Add JWT-specific API metadata
+            refresh_days_raw: object = data.get("refresh_token_expire_days", 0)
+            if isinstance(refresh_days_raw, int):
+                refresh_days_int = refresh_days_raw
+            elif isinstance(refresh_days_raw, str) and refresh_days_raw.isdigit():
+                refresh_days_int = int(refresh_days_raw)
+            else:
+                refresh_days_int = 0
+
             data["_jwt"] = {
                 "type": "JWT",
                 "token_management": "stateless",
-                "refresh_enabled": data.get("refresh_token_expire_days", 0) > 0,
+                "refresh_enabled": refresh_days_int > 0,
                 "security_compliant": True,
                 "api_version": "v2",
             }

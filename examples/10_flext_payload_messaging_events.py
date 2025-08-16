@@ -270,7 +270,7 @@ def demonstrate_domain_events() -> None:
     )
 
 
-def _print_domain_events_section_header(title: str) -> None:
+def _print_domain_events_section_header(title: str) -> None:  # noqa: ARG001
     """Print formatted domain events section header."""
     "\n" + "=" * 80
 

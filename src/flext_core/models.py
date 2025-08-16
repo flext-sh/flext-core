@@ -117,7 +117,7 @@ class FlextModel(BaseModel):
         return FlextResult.ok(None)
 
     def validate_with_context(
-        self, context: dict[str, object] | None = None
+        self, context: dict[str, object] | None = None,
     ) -> FlextResult[None]:
         """Validate with context information using modern ValidationInfo patterns."""
         try:
@@ -132,7 +132,7 @@ class FlextModel(BaseModel):
             return FlextResult.fail(f"Validation failed: {e}")
 
     def to_dict(
-        self, *, by_alias: bool = True, exclude_none: bool = True
+        self, *, by_alias: bool = True, exclude_none: bool = True,
     ) -> dict[str, object]:
         """Convert model to dictionary with modern serialization options."""
         return self.model_dump(by_alias=by_alias, exclude_none=exclude_none)
@@ -142,7 +142,7 @@ class FlextModel(BaseModel):
         return self.model_dump(by_alias=by_alias, exclude_none=True)
 
     def to_json_schema(
-        self, *, by_alias: bool = True, mode: str = "validation"
+        self, *, by_alias: bool = True, mode: str = "validation",
     ) -> JsonSchemaDefinition:
         """Generate JSON schema with modern OpenAPI support and mode selection."""
         _ = mode  # Acknowledge parameter for future use
@@ -325,7 +325,6 @@ class FlextEntity(FlextModel, ABC):
         default_factory=lambda: FlextVersion(1),
         description="Entity version for optimistic locking",
         examples=[1, 2, 10],
-        ge=1,  # Version must be >= 1
         validation_alias=AliasChoices("version", "entityVersion", "entity_version"),
     )
 
@@ -342,7 +341,7 @@ class FlextEntity(FlextModel, ABC):
         description="Entity last update timestamp",
         examples=["2024-01-01T12:00:00Z"],
         validation_alias=AliasChoices(
-            "updated_at", "updatedAt", "dateModified", "lastModified"
+            "updated_at", "updatedAt", "dateModified", "lastModified",
         ),
     )
 
@@ -366,7 +365,7 @@ class FlextEntity(FlextModel, ABC):
     @field_validator("id", mode="before")
     @classmethod
     def validate_entity_id(
-        cls, v: str | FlextEntityId, info: ValidationInfo
+        cls, v: str | FlextEntityId, info: ValidationInfo,
     ) -> FlextEntityId:
         """Validate entity ID using RootModel pattern with context information."""
         if isinstance(v, FlextEntityId):
@@ -388,12 +387,16 @@ class FlextEntity(FlextModel, ABC):
     def validate_version(cls, v: int | FlextVersion) -> FlextVersion:
         """Validate version with context-aware logic."""
         if isinstance(v, FlextVersion):
+            # Ensure version is positive even when provided as FlextVersion
+            if v.root < 1:
+                error_message = "Version must be >= 1"
+                raise ValueError(error_message)
             return v
 
         # Ensure version is positive
         if isinstance(v, int) and v < 1:
-            error_msg = "Version must be >= 1"
-            raise ValueError(error_msg)
+            error_message = "Version must be >= 1"
+            raise ValueError(error_message)
 
         return FlextVersion(v)
 
@@ -664,14 +667,9 @@ class FlextObs:
     """Namespace for observability-related models (project extensions)."""
 
 
-# Type aliases for convenience
-FlextBaseModel = FlextModel
-FlextImmutableModel = FlextValue
-FlextMutableModel = FlextEntity
-
-# Legacy compatibility aliases - for backward compatibility during transition
-FlextDomainEntity = FlextEntity
-FlextDomainValueObject = FlextValue
+# Type aliases for convenience (no self-assignment to avoid lint warnings)
+# Expose canonical names via __all__ below instead.
+# Legacy compatibility aliases removed to satisfy linting rules.
 
 # Modern factory patterns - no legacy imports needed
 FlextEntityFactory = FlextFactory  # Use modern factory implementation
@@ -742,27 +740,18 @@ def model_to_dict_safe(model: FlextModel) -> dict[str, object]:
 
 
 # Exports
-__all__: list[str] = [
+__all__: list[str] = sorted([
     "DomainEventDict",
     "FlextAuth",
-    # Aliases
-    "FlextBaseModel",
     "FlextConnectionDict",
-    # Namespaces
     "FlextData",
     "FlextDatabaseModel",
-    # Legacy compatibility
-    "FlextDomainEntity",
-    "FlextDomainValueObject",
     "FlextEntity",
     "FlextEntityDict",
     "FlextEntityFactory",
     "FlextFactory",
-    "FlextImmutableModel",
     "FlextLegacyConfig",
-    # Core patterns
     "FlextModel",
-    "FlextMutableModel",
     "FlextObs",
     "FlextOperationDict",
     "FlextOperationModel",
@@ -777,4 +766,4 @@ __all__: list[str] = [
     "create_service_model",
     "model_to_dict_safe",
     "validate_all_models",
-]
+])

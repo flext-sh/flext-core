@@ -14,19 +14,17 @@ from hypothesis import given, strategies as st
 from pydantic import SecretStr
 
 from flext_core import (
-    FlextBaseModel,  # Alias for FlextModel
     FlextDatabaseModel,  # Legacy alias
     FlextDataFormat,
-    FlextDomainEntity,  # Legacy alias
-    FlextDomainValueObject,  # Legacy alias
+    FlextEntity,  # Alias for FlextEntity
     FlextEntityStatus,
     FlextModel,
-    FlextMutableModel,  # Alias for FlextEntity
     FlextOperationModel,  # Legacy alias
     FlextOperationStatus,
     FlextOracleModel,  # Legacy alias
     FlextResult,
     FlextServiceModel,  # Legacy alias
+    FlextValue,  # Legacy alias
     create_database_model,
     create_operation_model,
     create_oracle_model,
@@ -222,7 +220,7 @@ class TestFlextModelValidationAdvanced:
     ) -> None:
         """Test base model validation using advanced fixtures."""
 
-        class TestModel(FlextBaseModel):
+        class TestModel(FlextModel):
             name: str = ""
             value: int = 0
 
@@ -276,7 +274,7 @@ class TestFlextModelValidationAdvanced:
     ) -> None:
         """Property-based testing for model validation."""
 
-        class TestModel(FlextBaseModel):
+        class TestModel(FlextModel):
             name: str = ""
             value: int = 0
 
@@ -309,7 +307,7 @@ class TestFlextModelValidationAdvanced:
     ) -> None:
         """Test model creation performance with monitoring."""
 
-        class TestModel(FlextBaseModel):
+        class TestModel(FlextModel):
             name: str = ""
             value: int = 0
 
@@ -380,7 +378,7 @@ class TestModelInheritanceBehaviorAdvanced:
             def validate_business_rules(self) -> FlextResult[None]:
                 return FlextResult.ok(None)
 
-        class MutableTest(FlextMutableModel):
+        class MutableTest(FlextEntity):
             name: str = "default"
             value: int = 0
 
@@ -458,7 +456,7 @@ class TestModelInheritanceBehaviorAdvanced:
             def validate_business_rules(self) -> FlextResult[None]:
                 return FlextResult.ok(None)
 
-        class MutableTest(FlextMutableModel):
+        class MutableTest(FlextEntity):
             name: str = "default"
             value: int = 0
 
@@ -502,7 +500,7 @@ class TestModelInheritanceBehaviorAdvanced:
             def validate_business_rules(self) -> FlextResult[None]:
                 return FlextResult.ok(None)
 
-        class MutableTest(FlextMutableModel):
+        class MutableTest(FlextEntity):
             name: str = "default"
             value: int = 0
 
@@ -542,12 +540,12 @@ class TestModelInheritanceBehaviorAdvanced:
 
 
 @pytest.mark.unit
-class TestFlextDomainEntityAdvanced:
+class TestFlextEntityAdvanced:
     """Advanced domain entity testing with factory patterns and comprehensive validation."""
 
     def test_domain_entity_with_factory_fixture(
         self,
-        entity_factory: Callable[[str, dict[str, object]], FlextDomainEntity],
+        entity_factory: Callable[[str, dict[str, object]], FlextEntity],
         assert_helpers: AssertHelpers,
     ) -> None:
         """Test domain entity creation using factory fixture."""
@@ -595,7 +593,7 @@ class TestFlextDomainEntityAdvanced:
             .build()
         )
 
-        entity = FlextDomainEntity(**entity_data)
+        entity = FlextEntity(**entity_data)
 
         # Add initial events
         for event in initial_events:
@@ -612,7 +610,7 @@ class TestFlextDomainEntityAdvanced:
     @given(entity_id=st.text(min_size=1, max_size=50))
     def test_domain_entity_properties(self, entity_id: str) -> None:
         """Property-based testing for domain entity invariants."""
-        entity = FlextDomainEntity(id=entity_id)
+        entity = FlextEntity(id=entity_id)
 
         # Entity invariants that should always hold
         assert entity.id == entity_id
@@ -621,7 +619,7 @@ class TestFlextDomainEntityAdvanced:
         assert isinstance(entity.domain_events, list)
 
         # Hash and equality properties
-        entity_copy = FlextDomainEntity(id=entity_id)
+        entity_copy = FlextEntity(id=entity_id)
         assert hash(entity) == hash(entity_copy)
         assert entity == entity_copy
 
@@ -638,10 +636,10 @@ class TestFlextDomainEntityAdvanced:
     ) -> None:
         """Test domain entity performance with monitoring."""
 
-        def create_entities_with_events() -> list[FlextDomainEntity]:
+        def create_entities_with_events() -> list[FlextEntity]:
             entities = []
             for i in range(100):
-                entity = FlextDomainEntity(id=f"entity_{i}")
+                entity = FlextEntity(id=f"entity_{i}")
 
                 # Add multiple events to each entity
                 for j in range(5):
@@ -671,7 +669,7 @@ class TestFlextDomainEntityAdvanced:
         snapshot_manager: object,
     ) -> None:  # SnapshotManager (not yet implemented)
         """Test domain entity structure with snapshot testing."""
-        entity = FlextDomainEntity(id="snapshot-entity")
+        entity = FlextEntity(id="snapshot-entity")
 
         # Add some events
         events = [
@@ -702,12 +700,12 @@ class TestFlextDomainEntityAdvanced:
 
 
 @pytest.mark.unit
-class TestFlextDomainValueObjectAdvanced:
+class TestFlextValueAdvanced:
     """Advanced domain value object testing with immutability validation."""
 
     def test_value_object_with_factory_fixture(
         self,
-        value_object_factory: Callable[[dict[str, object]], FlextDomainValueObject],
+        value_object_factory: Callable[[dict[str, object]], FlextValue],
         assert_helpers: AssertHelpers,
     ) -> None:
         """Test value object creation using factory fixture."""
@@ -745,7 +743,7 @@ class TestFlextDomainValueObjectAdvanced:
         should_equal: list[dict[str, object]],
     ) -> None:
         """Test value object equality and hashing with various metadata."""
-        vo1 = FlextDomainValueObject(metadata=metadata)
+        vo1 = FlextValue(metadata=metadata)
 
         # Test that all expected fields are present
         for field in expected_hash_fields:
@@ -753,7 +751,7 @@ class TestFlextDomainValueObjectAdvanced:
 
         # Test equality with equivalent objects
         for equal_metadata in should_equal:
-            vo_equal: FlextDomainValueObject = FlextDomainValueObject(
+            vo_equal: FlextValue = FlextValue(
                 metadata=equal_metadata,
             )
             assert vo1 == vo_equal
@@ -761,7 +759,7 @@ class TestFlextDomainValueObjectAdvanced:
 
         # Test inequality with different metadata
         different_metadata = {**metadata, "extra_field": "different"}
-        vo_different: FlextDomainValueObject = FlextDomainValueObject(
+        vo_different: FlextValue = FlextValue(
             metadata=different_metadata,
         )
         assert vo1 != vo_different
@@ -781,7 +779,7 @@ class TestFlextDomainValueObjectAdvanced:
         metadata: dict[str, object],
     ) -> None:
         """Property-based testing for value object immutability."""
-        vo = FlextDomainValueObject(metadata=metadata)
+        vo = FlextValue(metadata=metadata)
 
         # Value objects should be immutable
         with pytest.raises((AttributeError, ValueError)):
@@ -792,7 +790,7 @@ class TestFlextDomainValueObjectAdvanced:
         assert hash(vo) == original_hash
 
         # Equality should be based on content
-        vo_copy = FlextDomainValueObject(metadata=metadata)
+        vo_copy = FlextValue(metadata=metadata)
         assert vo == vo_copy
         assert hash(vo) == hash(vo_copy)
 
@@ -806,7 +804,7 @@ class TestFlextDomainValueObjectAdvanced:
         def create_and_compare_value_objects() -> dict[str, object]:
             objects = []
             for i in range(100):
-                vo = FlextDomainValueObject(
+                vo = FlextValue(
                     metadata={"id": i, "name": f"object_{i}", "active": i % 2 == 0},
                 )
                 objects.append(vo)
@@ -1082,7 +1080,7 @@ class TestUtilityFunctionsAdvanced:
         ("input_data", "expected_result", "test_description"),
         [
             (
-                FlextDomainEntity(id="test_entity"),
+                FlextEntity(id="test_entity"),
                 {"id": "test_entity", "version": 1, "status": FlextEntityStatus.ACTIVE},
                 "Valid entity conversion",
             ),
@@ -1113,7 +1111,7 @@ class TestUtilityFunctionsAdvanced:
     def test_validate_all_models_properties(self, models_count: int) -> None:
         """Property-based testing for validate_all_models."""
         # Create valid models
-        models = [FlextDomainEntity(id=f"entity_{i}") for i in range(models_count)]
+        models = [FlextEntity(id=f"entity_{i}") for i in range(models_count)]
 
         result = validate_all_models(*models)
 
@@ -1132,7 +1130,7 @@ class TestUtilityFunctionsAdvanced:
 
         def test_utility_operations() -> dict[str, object]:
             # Create models
-            models = [FlextDomainEntity(id=f"entity_{i}") for i in range(100)]
+            models = [FlextEntity(id=f"entity_{i}") for i in range(100)]
 
             # Test model_to_dict_safe performance
             dicts = [model_to_dict_safe(model) for model in models]
@@ -1161,11 +1159,11 @@ class TestUtilityFunctionsAdvanced:
     ) -> None:  # SnapshotManager (not yet implemented)
         """Test complex model structures with snapshot testing."""
         # Create complex model structure
-        entity = FlextDomainEntity(id="complex_entity")
+        entity = FlextEntity(id="complex_entity")
         entity.add_domain_event({"type": "created", "timestamp": "2024-01-01"})
         entity.increment_version()
 
-        vo = FlextDomainValueObject(
+        vo = FlextValue(
             metadata={"name": "complex_vo", "version": 1, "features": ["a", "b", "c"]},
         )
 
@@ -1210,8 +1208,8 @@ class TestModelsIntegrationAdvanced:
     def test_complete_model_workflow(
         self,
         test_builder: object,  # FlextDatabaseModelBuilder (not yet implemented)
-        entity_factory: Callable[[str, dict[str, object]], FlextDomainEntity],
-        value_object_factory: Callable[[dict[str, object]], FlextDomainValueObject],
+        entity_factory: Callable[[str, dict[str, object]], FlextEntity],
+        value_object_factory: Callable[[dict[str, object]], FlextValue],
         performance_monitor: PerformanceMonitor,
     ) -> None:
         """Test complete model workflow using multiple advanced fixtures."""
@@ -1296,11 +1294,11 @@ class TestModelsIntegrationAdvanced:
         # Test with performance context manager
         with assert_performance(max_time=0.1, max_memory=1_000_000):
             # Create models with edge case data
-            entity = FlextDomainEntity(id="x" * 50)  # Long ID
+            entity = FlextEntity(id="x" * 50)  # Long ID
 
             # Large metadata
             large_metadata = {f"key_{i}": f"value_{i}" for i in range(100)}
-            vo = FlextDomainValueObject(metadata=large_metadata)
+            vo = FlextValue(metadata=large_metadata)
 
             # Test validation
             assert_helpers.assert_entity_valid(entity)
@@ -1329,7 +1327,7 @@ class TestModelsIntegrationAdvanced:
         )
 
         # Create models from async response
-        entity = FlextDomainEntity(id=response["data"]["entity_id"])
+        entity = FlextEntity(id=response["data"]["entity_id"])
         entity.add_domain_event(
             {"type": "async_created", "response_status": response["status"]},
         )

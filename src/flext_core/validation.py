@@ -59,6 +59,7 @@ class FlextAbstractValidator(ABC, Generic[T]):  # noqa: UP046
 # ADVANCED PYDANTIC FUNCTIONAL VALIDATORS
 # =============================================================================
 
+
 # BeforeValidator functions - Transform input before core validation
 def normalize_string(v: object) -> str:
     """BeforeValidator: Normalize string input before validation."""
@@ -200,12 +201,12 @@ def validate_entity_id_with_context(
 
     # Let Pydantic handle basic validation
     try:
-        result = handler(v)
+        result = handler(str(v))
     except Exception:
         # If core validation fails and we can auto-generate, try that
         if auto_generate:
             v = f"{namespace}_{uuid4().hex[:8]}"
-            result = handler(v)
+            result = handler(str(v))
         else:
             raise
 
@@ -234,7 +235,7 @@ def validate_timestamp_with_fallback(
 
     try:
         # Try normal validation first
-        return handler(v)
+        return handler(str(v))
     except Exception:
         # If validation fails and fallback is enabled, use current time
         if use_current_fallback and (not v or v == "auto"):

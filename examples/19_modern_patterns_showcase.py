@@ -305,7 +305,7 @@ class NotificationService:
 
     def send_order_confirmation(
         self,
-        customer: Customer,
+        customer: Customer,  # noqa: ARG002
         order: Order,
     ) -> FlextResult[None]:
         """Send order confirmation email."""
@@ -573,7 +573,7 @@ def _process_order_and_print(_: object, customer: Customer, product_id: str) -> 
         pass
 
 
-def _type_system_demo(customer: Customer) -> None:
+def _type_system_demo(customer: Customer) -> None:  # noqa: ARG001
     def validator(c: Customer) -> bool:
         return c.is_premium
 

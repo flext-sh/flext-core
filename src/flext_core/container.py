@@ -10,11 +10,12 @@ from flext_core.constants import SERVICE_NAME_EMPTY
 from flext_core.exceptions import FlextError
 from flext_core.mixins import FlextLoggableMixin
 from flext_core.result import FlextResult
-from flext_core.typings import T
 from flext_core.validation import flext_validate_service_name
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+    from flext_core.typings import T
 
 
 TService = TypeVar("TService")

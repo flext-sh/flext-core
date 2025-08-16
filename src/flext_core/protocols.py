@@ -6,10 +6,10 @@ from abc import abstractmethod
 from collections.abc import Awaitable, Callable, Iterator
 from typing import TYPE_CHECKING, Generic, Protocol, TypeVar, runtime_checkable
 
-from flext_core.result import FlextResult
-
 if TYPE_CHECKING:
     from pathlib import Path
+
+    from flext_core.result import FlextResult
 
 
 T = TypeVar("T")

@@ -256,9 +256,9 @@ class FlextResult[T]:
             error_kwargs["_unwrap_origin"] = True
             raise FlextOperationError(
                 error_msg,
-                error_code=self._error_code or ERROR_CODES["UNWRAP_ERROR"],
+                code=self._error_code or ERROR_CODES["UNWRAP_ERROR"],
                 operation=None,
-                **error_kwargs,
+                context=error_kwargs,
             )
         # For success cases, return data even if it's None
         #  is a valid value for successful results (e.g., void operations)
@@ -506,7 +506,7 @@ class FlextResult[T]:
             return None
 
         error_msg = self._error or "Result failed"
-        return FlextOperationError(error_msg, error_code=ERROR_CODES["OPERATION_ERROR"])
+        return FlextOperationError(error_msg, code=ERROR_CODES["OPERATION_ERROR"])
 
     @staticmethod
     def from_exception(func: Callable[[], T]) -> FlextResult[T]:

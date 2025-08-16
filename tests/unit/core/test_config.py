@@ -33,10 +33,11 @@ from flext_core import (
 )
 from flext_core.constants import FlextConstants
 from flext_core.result import FlextResult
-from flext_core.typings import TAnyDict
 
 if TYPE_CHECKING:
     from collections.abc import Generator
+
+    from flext_core.typings import TAnyDict
 
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]

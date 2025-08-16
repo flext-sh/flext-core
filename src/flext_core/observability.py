@@ -6,14 +6,17 @@ import json
 import logging
 from collections.abc import Generator
 from contextlib import contextmanager
+from typing import TYPE_CHECKING
 
-from flext_core.protocols import (
-    FlextLoggerProtocol,
-    FlextMetricsProtocol,
-    FlextSpanProtocol,
-    FlextTracerProtocol,
-)
 from flext_core.result import FlextResult
+
+if TYPE_CHECKING:
+    from flext_core.protocols import (
+        FlextLoggerProtocol,
+        FlextMetricsProtocol,
+        FlextSpanProtocol,
+        FlextTracerProtocol,
+    )
 
 GeneratorT = Generator
 

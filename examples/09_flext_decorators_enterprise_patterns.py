@@ -580,7 +580,7 @@ def demonstrate_domain_model_decorators() -> None:
     )
 
 
-def _print_section_header(title: str) -> None:
+def _print_section_header(title: str) -> None:  # noqa: ARG001
     """Print formatted section header."""
     "\n" + "=" * 80
 

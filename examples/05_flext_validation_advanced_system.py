@@ -324,9 +324,9 @@ def demonstrate_basic_validations() -> None:
         isinstance(test_value, list)
         isinstance(test_value, dict)
 
-        # Non-empty string validation
+        # Non-empty string validation (demonstration)
         if is_str and isinstance(test_value, str):
-            len(test_value.strip()) > 0
+            _ = len(test_value.strip()) > 0
 
 
 def demonstrate_format_validations() -> None:

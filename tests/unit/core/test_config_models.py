@@ -211,7 +211,7 @@ class TestConfigUtilities:
         """Test safe_load_json_file function."""
         # Use existing temp_json_file fixture
         with tempfile.NamedTemporaryFile(
-            encoding="utf-8", mode="w", suffix=".json", delete=False
+            encoding="utf-8", mode="w", suffix=".json", delete=False,
         ) as f:
             f.write('{"test": "value"}')
             f.flush()

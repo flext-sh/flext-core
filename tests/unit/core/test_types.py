@@ -18,6 +18,26 @@ if TYPE_CHECKING:
     # Type aliases for testing
     from collections.abc import Callable as _Callable
 
+    from flext_core.typings import (
+        TBusinessCode,
+        TBusinessId,
+        TBusinessName,
+        TBusinessStatus,
+        TBusinessType,
+        TCacheKey,
+        TCacheTTL,
+        TCacheValue,
+        TConfigDict,
+        TConfigValue,
+        TConnectionString,
+        TCorrelationId,
+        TDirectoryPath,
+        TEntityId,
+        TFilePath,
+        TRequestId,
+        TUserId,
+    )
+
 FlextConfigKey = str
 FlextEventType = str
 FlextServiceName = str
@@ -374,8 +394,6 @@ class TestTypeAliasComprehensive:
 
     def test_entity_type_aliases(self) -> None:
         """Test entity-related type aliases."""
-        from flext_core.typings import TEntityId  # noqa: PLC0415
-
         # TEntityId usage
         user_id: TEntityId = "user-123"
         order_id: TEntityId = "order-456"
@@ -387,12 +405,6 @@ class TestTypeAliasComprehensive:
 
     def test_cqrs_type_aliases(self) -> None:
         """Test CQRS-related type aliases."""
-        from flext_core.typings import (  # noqa: PLC0415
-            TCorrelationId,
-            TRequestId,
-            TUserId,
-        )
-
         # Test request/response identifiers
         request_id: TRequestId = "req-123"
         correlation_id: TCorrelationId = "corr-456"
@@ -404,14 +416,6 @@ class TestTypeAliasComprehensive:
 
     def test_business_type_aliases(self) -> None:
         """Test business domain type aliases."""
-        from flext_core.typings import (  # noqa: PLC0415
-            TBusinessCode,
-            TBusinessId,
-            TBusinessName,
-            TBusinessStatus,
-            TBusinessType,
-        )
-
         business_id: TBusinessId = "BUS-001"
         business_name: TBusinessName = "Test Business"
         business_code: TBusinessCode = "TB001"
@@ -426,12 +430,6 @@ class TestTypeAliasComprehensive:
 
     def test_cache_type_aliases(self) -> None:
         """Test cache-related type aliases."""
-        from flext_core.typings import (  # noqa: PLC0415
-            TCacheKey,
-            TCacheTTL,
-            TCacheValue,
-        )
-
         cache_key: TCacheKey = "user:123:profile"
         cache_value: TCacheValue = (
             "John Doe"  # TCacheValue is str|int|float|bool|None, not dict
@@ -473,14 +471,6 @@ class TestTypeAliasComprehensive:
 
     def test_infrastructure_type_aliases(self) -> None:
         """Test infrastructure-related type aliases."""
-        from flext_core.typings import (  # noqa: PLC0415
-            TConfigDict,
-            TConfigValue,
-            TConnectionString,
-            TDirectoryPath,
-            TFilePath,
-        )
-
         conn_string: TConnectionString = "postgresql://user:pass@localhost:5432/db"
         file_path: TFilePath = "/path/to/file.txt"
         dir_path: TDirectoryPath = "/path/to/directory"

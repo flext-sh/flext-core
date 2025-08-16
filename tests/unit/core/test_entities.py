@@ -13,7 +13,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from flext_core import FlextEntity, FlextEntityFactory
+from flext_core import FlextEntity, FlextFactory
 from flext_core.exceptions import FlextValidationError
 from flext_core.payload import FlextEvent
 from flext_core.result import FlextResult
@@ -573,18 +573,18 @@ class TestFlextEntity:
 
 
 @pytest.mark.unit
-class TestFlextEntityFactory:
-    """Test FlextEntityFactory functionality."""
+class TestFlextFactory:
+    """Test FlextFactory functionality."""
 
     def test_create_entity_factory_basic(self) -> None:
         """Test creating a basic entity factory."""
-        factory = FlextEntityFactory.create_entity_factory(SampleUser)
+        factory = FlextFactory.create_entity_factory(SampleUser)
 
         assert callable(factory)
 
     def test_factory_create_entity_success(self) -> None:
         """Test successful entity creation through factory."""
-        factory = FlextEntityFactory.create_entity_factory(SampleUser)
+        factory = FlextFactory.create_entity_factory(SampleUser)
 
         result = cast("EntityFactory", factory)(
             name="John",
@@ -600,14 +600,16 @@ class TestFlextEntityFactory:
         assert user.email == "john@example.com"
         if user.age != 25:
             raise AssertionError(f"Expected {25}, got {user.age}")
-        version_value = user.version.root if hasattr(user.version, "root") else user.version
+        version_value = (
+            user.version.root if hasattr(user.version, "root") else user.version
+        )
         assert version_value == 1
         assert user.id  # Should have generated ID
 
     def test_factory_with_defaults(self) -> None:
         """Test factory with default values."""
         defaults = {"age": 18, "is_active": True}
-        factory = FlextEntityFactory.create_entity_factory(
+        factory = FlextFactory.create_entity_factory(
             SampleUser,
             cast("dict[str, object]", defaults),
         )
@@ -624,7 +626,7 @@ class TestFlextEntityFactory:
     def test_factory_override_defaults(self) -> None:
         """Test factory overriding default values."""
         defaults = {"age": 18, "is_active": False}
-        factory = FlextEntityFactory.create_entity_factory(
+        factory = FlextFactory.create_entity_factory(
             SampleUser,
             cast("dict[str, object]", defaults),
         )
@@ -645,7 +647,7 @@ class TestFlextEntityFactory:
 
     def test_factory_generate_id_when_not_provided(self) -> None:
         """Test factory generates ID when not provided."""
-        factory = FlextEntityFactory.create_entity_factory(SampleUser)
+        factory = FlextFactory.create_entity_factory(SampleUser)
 
         result = cast("EntityFactory", factory)(name="John", email="john@example.com")
 
@@ -657,7 +659,7 @@ class TestFlextEntityFactory:
 
     def test_factory_use_provided_id(self) -> None:
         """Test factory uses provided ID."""
-        factory = FlextEntityFactory.create_entity_factory(SampleUser)
+        factory = FlextFactory.create_entity_factory(SampleUser)
 
         result = cast("EntityFactory", factory)(
             id="custom_id",
@@ -672,7 +674,7 @@ class TestFlextEntityFactory:
 
     def test_factory_handle_empty_id(self) -> None:
         """Test factory handles empty ID by generating new one."""
-        factory = FlextEntityFactory.create_entity_factory(SampleUser)
+        factory = FlextFactory.create_entity_factory(SampleUser)
 
         result = cast("EntityFactory", factory)(
             id="",
@@ -687,19 +689,21 @@ class TestFlextEntityFactory:
 
     def test_factory_set_default_version(self) -> None:
         """Test factory sets default version."""
-        factory = FlextEntityFactory.create_entity_factory(SampleUser)
+        factory = FlextFactory.create_entity_factory(SampleUser)
 
         result = cast("EntityFactory", factory)(name="John", email="john@example.com")
 
         assert result.success
         user = cast("SampleUser", result.data)
-        version_value = user.version.root if hasattr(user.version, "root") else user.version
+        version_value = (
+            user.version.root if hasattr(user.version, "root") else user.version
+        )
         if version_value != 1:
             raise AssertionError(f"Expected {1}, got {version_value}")
 
     def test_factory_use_provided_version(self) -> None:
         """Test factory uses provided version."""
-        factory = FlextEntityFactory.create_entity_factory(SampleUser)
+        factory = FlextFactory.create_entity_factory(SampleUser)
 
         result = cast("EntityFactory", factory)(
             name="John",
@@ -709,13 +713,15 @@ class TestFlextEntityFactory:
 
         assert result.success
         user = cast("SampleUser", result.data)
-        version_value = user.version.root if hasattr(user.version, "root") else user.version
+        version_value = (
+            user.version.root if hasattr(user.version, "root") else user.version
+        )
         if version_value != 5:
             raise AssertionError(f"Expected {5}, got {version_value}")
 
     def test_factory_domain_validation_failure(self) -> None:
         """Test factory with domain validation failure."""
-        factory = FlextEntityFactory.create_entity_factory(SampleBadUser)
+        factory = FlextFactory.create_entity_factory(SampleBadUser)
 
         result = cast("EntityFactory", factory)(name="John", email="john@example.com")
 
@@ -725,7 +731,7 @@ class TestFlextEntityFactory:
 
     def test_factory_model_validation_error(self) -> None:
         """Test factory with model validation error."""
-        factory = FlextEntityFactory.create_entity_factory(SampleUser)
+        factory = FlextFactory.create_entity_factory(SampleUser)
 
         # Missing required field 'name'
         result = cast("EntityFactory", factory)(email="john@example.com")
@@ -736,7 +742,7 @@ class TestFlextEntityFactory:
 
     def test_factory_type_error_handling(self) -> None:
         """Test factory handles TypeError."""
-        factory = FlextEntityFactory.create_entity_factory(SampleUser)
+        factory = FlextFactory.create_entity_factory(SampleUser)
 
         # Mock __init__ to raise TypeError during instantiation
         with patch.object(
@@ -751,11 +757,13 @@ class TestFlextEntityFactory:
 
         assert result.is_failure
         if "Failed to create entity" not in (result.error or ""):
-            raise AssertionError(f"Expected 'Failed to create entity' in {result.error}")
+            raise AssertionError(
+                f"Expected 'Failed to create entity' in {result.error}",
+            )
 
     def test_factory_import_error_handling(self) -> None:
         """Test factory handles ImportError."""
-        factory = FlextEntityFactory.create_entity_factory(SampleUser)
+        factory = FlextFactory.create_entity_factory(SampleUser)
 
         # Mock FlextGenerators.generate_uuid to raise ImportError
         with patch(
@@ -817,7 +825,7 @@ class TestEntityIntegration:
             "is_active": False,
         }
 
-        factory = FlextEntityFactory.create_entity_factory(
+        factory = FlextFactory.create_entity_factory(
             SampleUser,
             cast("dict[str, object]", defaults),
         )
