@@ -12,7 +12,7 @@ from time import sleep
 
 import pytest
 
-from flext_core.context import FlextContext
+from flext_core import FlextContext
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 

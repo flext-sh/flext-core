@@ -6,40 +6,48 @@ configuration classes for comprehensive coverage.
 
 from __future__ import annotations
 
+import tempfile
+
 import pytest
 from pydantic import SecretStr, ValidationError
 
-from flext_core.config import (
-    FlextApplicationConfig,
-    FlextBaseConfigModel,
+from flext_core import (
+    FlextConfig,
     FlextDatabaseConfig,
-    FlextDataIntegrationConfig,
     FlextJWTConfig,
     FlextLDAPConfig,
     FlextObservabilityConfig,
     FlextOracleConfig,
     FlextRedisConfig,
+    FlextSettings,
     FlextSingerConfig,
     load_config_from_env,
     merge_configs,
+    safe_load_json_file,
     validate_config,
 )
 
 
-class TestFlextBaseConfigModel:
-    """Test FlextBaseConfigModel methods."""
+class TestFlextConfig:
+    """Test FlextConfig main configuration class."""
 
-    def test_to_dict(self) -> None:
-        """Test to_dict method."""
-        config = FlextBaseConfigModel()
-        result = config.to_dict()
-        assert isinstance(result, dict)
+    def test_config_creation(self) -> None:
+        """Test FlextConfig creation with defaults."""
+        config = FlextConfig()
+        assert config.name == "flext"
+        assert config.environment == "development"
+        assert config.debug is False
 
-    def test_to_typed_dict(self) -> None:
-        """Test to_typed_dict method."""
-        config = FlextBaseConfigModel()
-        result = config.to_typed_dict()
-        assert isinstance(result, dict)
+    def test_config_custom_values(self) -> None:
+        """Test FlextConfig with custom values."""
+        config = FlextConfig(
+            name="custom-app",
+            environment="production",
+            debug=True,
+        )
+        assert config.name == "custom-app"
+        assert config.environment == "production"
+        assert config.debug is True
 
 
 class TestFlextDatabaseConfig:
@@ -71,19 +79,12 @@ class TestFlextDatabaseConfig:
         with pytest.raises(ValidationError):
             FlextDatabaseConfig(port=70000)  # Invalid port
 
-    def test_database_config_to_dict(self) -> None:
-        """Test database config to_dict method."""
+    def test_database_config_model_dump(self) -> None:
+        """Test database config model_dump method."""
         config = FlextDatabaseConfig(host="test.com", port=5432)
-        result = config.to_dict()
+        result = config.model_dump()
         assert result["host"] == "test.com"
         assert result["port"] == 5432
-
-    def test_database_config_to_typed_dict(self) -> None:
-        """Test database config to_typed_dict method."""
-        config = FlextDatabaseConfig(host="test.com")
-        result = config.to_typed_dict()
-        assert isinstance(result, dict)
-        assert "host" in result
 
 
 class TestFlextRedisConfig:
@@ -115,10 +116,10 @@ class TestFlextRedisConfig:
         with pytest.raises(ValidationError):
             FlextRedisConfig(database=-1)  # Invalid database
 
-    def test_redis_config_to_dict(self) -> None:
-        """Test Redis config to_dict method."""
+    def test_redis_config_model_dump(self) -> None:
+        """Test Redis config model_dump method."""
         config = FlextRedisConfig(host="redis.com", port=6379)
-        result = config.to_dict()
+        result = config.model_dump()
         assert result["host"] == "redis.com"
         assert result["port"] == 6379
 
@@ -194,21 +195,30 @@ class TestConfigUtilities:
         config2 = FlextRedisConfig(host="redis1.com", port=6379)
 
         result = merge_configs(config1, config2)
-        assert isinstance(result, dict)
-        assert "host" in result
-        assert "port" in result
+        assert result.is_success
+        merged_data = result.unwrap()
+        assert isinstance(merged_data, dict)
+        assert "host" in merged_data
 
     def test_validate_config(self) -> None:
         """Test validate_config function."""
         config = FlextDatabaseConfig(host="test-db")
-        result = validate_config(config)
-        assert result is True
+        result = validate_config(config.model_dump())
+        assert result.is_success
+        assert result.unwrap() is None
 
-    def test_validate_config_invalid(self) -> None:
-        """Test validate_config with invalid config."""
-        # Create an invalid config
-        with pytest.raises(ValidationError):
-            FlextDatabaseConfig(port=70000)  # Invalid port
+    def test_safe_load_json_file(self) -> None:
+        """Test safe_load_json_file function."""
+        # Use existing temp_json_file fixture
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".json", delete=False
+        ) as f:
+            f.write('{"test": "value"}')
+            f.flush()
+
+            result = safe_load_json_file(f.name)
+            assert result.is_success
+            assert result.unwrap()["test"] == "value"
 
 
 class TestConfigEdgeCases:
@@ -217,30 +227,31 @@ class TestConfigEdgeCases:
     def test_config_with_defaults(self) -> None:
         """Test config handling with default values."""
         config = FlextDatabaseConfig()  # Uses defaults
-        result = config.to_dict()
+        result = config.model_dump()
         assert "host" in result
         assert result["host"] is not None
 
     def test_config_model_dump(self) -> None:
         """Test model_dump functionality."""
         config = FlextDatabaseConfig(host="test")
-        result = config.to_typed_dict()
+        result = config.model_dump()
         assert isinstance(result, dict)
+        assert result["host"] == "test"
 
     def test_secret_str_handling(self) -> None:
         """Test SecretStr handling in configs."""
         config = FlextDatabaseConfig(password=SecretStr("secret123"))
         # Secret should not be exposed in dict
-        result = config.to_dict()
+        result = config.model_dump()
         # The password should be handled properly by Pydantic
         assert "password" in result
 
     def test_config_inheritance(self) -> None:
         """Test config class inheritance."""
         config = FlextDatabaseConfig()
-        assert isinstance(config, FlextBaseConfigModel)
-        assert hasattr(config, "to_dict")
-        assert hasattr(config, "to_typed_dict")
+        # FlextDatabaseConfig inherits from FlextModel (via BaseModel)
+        assert hasattr(config, "model_dump")
+        assert hasattr(config, "model_validate")
 
     def test_config_field_validation(self) -> None:
         """Test config field validation."""
@@ -258,8 +269,10 @@ class TestConfigEdgeCases:
         redis_config = FlextRedisConfig(host="redis1.com", port=6379)
 
         result = merge_configs(db_config, redis_config)
-        assert isinstance(result, dict)
-        assert len(result) > 0
+        assert result.is_success
+        merged_data = result.unwrap()
+        assert isinstance(merged_data, dict)
+        assert len(merged_data) > 0
 
 
 class TestFlextJWTConfig:
@@ -369,56 +382,28 @@ class TestFlextObservabilityConfig:
         assert result["log_level"] == "INFO"
 
 
-class TestFlextApplicationConfig:
-    """Test FlextApplicationConfig functionality."""
+class TestFlextSettings:
+    """Test FlextSettings base class functionality."""
 
-    def test_application_config_creation(self) -> None:
-        """Test Application config creation."""
-        config = FlextApplicationConfig()
-        assert config.app_name == "FLEXT Application"
-        assert config.version == "1.0.0"
-        assert config.debug is False
-        assert isinstance(config.database, FlextDatabaseConfig)
-        assert isinstance(config.redis, FlextRedisConfig)
-        assert isinstance(config.jwt, FlextJWTConfig)
+    def test_settings_creation(self) -> None:
+        """Test Settings base class creation."""
+        settings = FlextSettings()
+        # FlextSettings is the base class, so test basic functionality
+        assert hasattr(settings, "model_config")
+        assert hasattr(settings, "validate_business_rules")
 
-    def test_application_config_custom_values(self) -> None:
-        """Test Application config with custom values."""
-        config = FlextApplicationConfig(
-            app_name="Custom App",
-            version="2.0.0",
-            debug=True,
-        )
-        assert config.app_name == "Custom App"
-        assert config.version == "2.0.0"
-        assert config.debug is True
+    def test_settings_validation(self) -> None:
+        """Test Settings validation."""
+        settings = FlextSettings()
+        result = settings.validate_business_rules()
+        assert result.is_success
 
-
-class TestFlextDataIntegrationConfig:
-    """Test FlextDataIntegrationConfig functionality."""
-
-    def test_data_integration_config_creation(self) -> None:
-        """Test Data Integration config creation."""
-        config = FlextDataIntegrationConfig()
-        assert config.batch_size == 1000
-        assert config.parallel_workers == 4
-        assert config.oracle is None
-        assert config.ldap is None
-        assert config.singer is None
-
-    def test_data_integration_config_with_sources(self) -> None:
-        """Test Data Integration config with data sources."""
-        oracle_config = FlextOracleConfig(
-            service_name="TEST",
-            username="user",
-            password=SecretStr("pass"),
-        )
-        config = FlextDataIntegrationConfig(
-            oracle=oracle_config,
-            batch_size=2000,
-        )
-        assert config.batch_size == 2000
-        assert config.oracle is oracle_config
+    def test_settings_create_with_validation(self) -> None:
+        """Test Settings create_with_validation method."""
+        result = FlextSettings.create_with_validation()
+        assert result.is_success
+        settings = result.unwrap()
+        assert isinstance(settings, FlextSettings)
 
 
 class TestAdvancedConfigFeatures:
@@ -496,19 +481,19 @@ class TestAdvancedConfigFeatures:
 
     def test_ldap_config_get_connection_string(self) -> None:
         """Test LDAP config connection string generation."""
-        config = FlextLDAPConfig()
+        config = FlextLDAPConfig(base_dn="dc=example,dc=com")
         conn_str = config.get_connection_string()
         assert conn_str == "ldap://localhost:389"
 
     def test_ldap_config_get_connection_string_ssl(self) -> None:
         """Test LDAP config connection string with SSL."""
-        config = FlextLDAPConfig(use_ssl=True)
+        config = FlextLDAPConfig(base_dn="dc=example,dc=com", use_ssl=True)
         conn_str = config.get_connection_string()
         assert conn_str == "ldaps://localhost:389"
 
     def test_ldap_config_to_ldap_dict(self) -> None:
         """Test LDAP config to_ldap_dict method."""
-        config = FlextLDAPConfig()
+        config = FlextLDAPConfig(base_dn="dc=example,dc=com")
         result = config.to_ldap_dict()
         assert isinstance(result, dict)
         assert result["host"] == "localhost"
@@ -555,7 +540,8 @@ class TestConfigFactoryFunctions:
 
     def test_load_config_from_env(self) -> None:
         """Test load_config_from_env function."""
-        from flext_core.config import FlextDatabaseSettings  # noqa: PLC0415
-
-        config = load_config_from_env(FlextDatabaseSettings)
-        assert isinstance(config, FlextDatabaseSettings)
+        # load_config_from_env expects a config_type string, not a class
+        result = load_config_from_env("database")
+        assert result.is_success
+        config = result.unwrap()
+        assert config is not None

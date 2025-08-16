@@ -14,11 +14,14 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from flext_core.constants import FlextConstants
-from flext_core.container import FlextServiceKey
-from flext_core.core import FlextCore, flext_core
-from flext_core.loggings import FlextLogger
-from flext_core.result import FlextResult
+from flext_core import (
+    FlextConstants,
+    FlextCore,
+    FlextLogger,
+    FlextResult,
+    FlextServiceKey,
+    flext_core,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -461,10 +464,10 @@ class TestFlextCoreRailwayProgramming:
         def succeed(x: object) -> FlextResult[object]:
             return FlextResult.ok(f"success_{x}")
 
-        def fail_step(x: object) -> FlextResult[object]:
+        def fail_step(x: object) -> FlextResult[object]:  # noqa: ARG001
             return FlextResult.fail("Pipeline failed")
 
-        def never_reached(x: object) -> FlextResult[object]:
+        def never_reached(x: object) -> FlextResult[object]:  # noqa: ARG001
             return FlextResult.ok("should_not_reach")
 
         pipeline = clean_flext_core.pipe(succeed, fail_step, never_reached)
@@ -596,11 +599,11 @@ class TestFlextCoreRailwayProgramming:
     def test_when_exception_handling(self, clean_flext_core: FlextCore) -> None:
         """Test when with exception in predicate."""
 
-        def failing_predicate(x: object) -> bool:
+        def failing_predicate(x: object) -> bool:  # noqa: ARG001
             msg = "Predicate error"
             raise ValueError(msg)
 
-        def then_func(x: object) -> FlextResult[object]:
+        def then_func(x: object) -> FlextResult[object]:  # noqa: ARG001
             return FlextResult.ok("success")
 
         conditional = clean_flext_core.when(failing_predicate, then_func)
@@ -1162,10 +1165,10 @@ class TestFlextCoreEdgeCases:
     def test_when_predicate_edge_cases(self, clean_flext_core: FlextCore) -> None:
         """Test when predicate edge cases."""
 
-        def always_true(x: object) -> bool:
+        def always_true(x: object) -> bool:  # noqa: ARG001
             return True
 
-        def always_false(x: object) -> bool:
+        def always_false(x: object) -> bool:  # noqa: ARG001
             return False
 
         def success_func(x: object) -> FlextResult[object]:
@@ -1188,7 +1191,7 @@ class TestFlextCoreEdgeCases:
     def test_tap_side_effect_exceptions(self, clean_flext_core: FlextCore) -> None:
         """Test tap with side effect exceptions."""
 
-        def failing_side_effect(x: object) -> None:
+        def failing_side_effect(x: object) -> None:  # noqa: ARG001
             msg = "Side effect error"
             raise RuntimeError(msg)
 

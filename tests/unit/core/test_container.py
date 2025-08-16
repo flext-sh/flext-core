@@ -545,7 +545,7 @@ class TestFlextContainerAdvancedFeatures:
         # This would require mocking the register method to fail
         # For now, we test the constructor failure path
         class FailingService:
-            def __init__(self, test_service: SampleService) -> None:
+            def __init__(self, test_service: SampleService) -> None:  # noqa: ARG002
                 msg = "Constructor failed"
                 raise ValueError(msg)
 
@@ -684,7 +684,7 @@ class TestServiceKey:
         assert result.success
         assert clean_container.has("test_service")
 
-    def test_service_key_with_get_typed(self, clean_container: FlextContainer) -> None:
+    def test_service_key_with_get_typed(self, clean_container: FlextContainer) -> None:  # noqa: ARG002
         """Test FlextServiceKey with get_typed function."""
         key = FlextServiceKey[SampleService]("test_service")
         service = SampleService("test")
@@ -696,7 +696,7 @@ class TestServiceKey:
         assert result.success
         assert result.data is service
 
-    def test_get_typed_service_not_found(self, clean_container: FlextContainer) -> None:
+    def test_get_typed_service_not_found(self, clean_container: FlextContainer) -> None:  # noqa: ARG002
         """Test get_typed with FlextServiceKey for non-existent service."""
         key = FlextServiceKey[SampleService]("nonexistent")
 

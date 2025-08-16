@@ -6,17 +6,20 @@ import time
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, cast
 
-if TYPE_CHECKING:
-    from collections.abc import Callable
-
 import pytest
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
-from flext_core import FlextEntity, FlextEntityFactory
-from flext_core.aggregate_root import FlextAggregateRoot
-from flext_core.payload import FlextEvent
-from flext_core.result import FlextResult
-from flext_core.value_objects import FlextValueObject
+from flext_core import (
+    FlextAggregateRoot,
+    FlextEntity,
+    FlextEntityFactory,
+    FlextEvent,
+    FlextResult,
+    FlextValueObject,
+)
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 # Constants
 EXPECTED_BULK_SIZE = 2
@@ -156,18 +159,21 @@ class TestFlextEntity:
             raise AssertionError(f"Expected {'Test Entity'}, got {entity.name}")
         assert entity.status == "active"
         assert entity.id is not None
-        assert isinstance(entity.id, str)
-        assert len(entity.id) > 0  # Has generated ID
-        if entity.version != 1:
-            raise AssertionError(f"Expected {1}, got {entity.version}")
+        assert len(str(entity.id)) > 0  # Has generated ID
+        # Modern FlextEntityId wrapper - check the string representation
+        assert isinstance(str(entity.id), str)
+        # Modern FlextVersion wrapper - compare root value
+        if entity.version.root != 1:
+            raise AssertionError(f"Expected {1}, got {entity.version.root}")
 
     def test_entity_creation_with_custom_id(self) -> None:
         """Test entity creation with custom ID."""
         custom_id = "custom-entity-123"
         entity = SampleEntity(id=custom_id, name="Test Entity")
 
-        if entity.id != custom_id:
-            raise AssertionError(f"Expected {custom_id}, got {entity.id}")
+        # Modern FlextEntityId wrapper - compare string representation
+        if str(entity.id) != custom_id:
+            raise AssertionError(f"Expected {custom_id}, got {entity.id!s}")
         assert entity.name == "Test Entity"
 
     def test_entity_creation_with_timestamps(self) -> None:
@@ -180,8 +186,9 @@ class TestFlextEntity:
         )
         entity = cast("SampleEntity", entity_obj)
 
-        if entity.created_at != now:
-            raise AssertionError(f"Expected {now}, got {entity.created_at}")
+        # Modern FlextTimestamp wrapper - compare root value
+        if entity.created_at.root != now:
+            raise AssertionError(f"Expected {now}, got {entity.created_at.root}")
 
     def test_entity_mutability(self) -> None:
         """Test that entities are mutable (unlike aggregate roots)."""
@@ -193,7 +200,8 @@ class TestFlextEntity:
         assert entity.name == "New Name"
 
         entity.id = "new-id"
-        assert entity.id == "new-id"
+        # Modern FlextEntityId wrapper - compare string representation
+        assert str(entity.id) == "new-id"
 
     def test_entity_equality_by_id(self) -> None:
         """Test that entities are equal based on ID."""
@@ -464,8 +472,9 @@ class TestFlextAggregateRoot:
             raise AssertionError(f"Expected {'Test Aggregate'}, got {aggregate.title}")
         assert aggregate.description == "Test description"
         assert aggregate.id is not None
-        if aggregate.version != 1:
-            raise AssertionError(f"Expected {1}, got {aggregate.version}")
+        # Modern FlextVersion wrapper - compare root value
+        if aggregate.version.root != 1:
+            raise AssertionError(f"Expected {1}, got {aggregate.version.root}")
         assert len(aggregate.get_domain_events()) == 0
 
     def test_aggregate_root_with_custom_version(self) -> None:
@@ -477,8 +486,9 @@ class TestFlextAggregateRoot:
         )
         aggregate = cast("SampleAggregateRoot", aggregate_obj)
 
-        if aggregate.version != 5:
-            raise AssertionError(f"Expected {5}, got {aggregate.version}")
+        # Modern FlextVersion wrapper - compare root value
+        if aggregate.version.root != 5:
+            raise AssertionError(f"Expected {5}, got {aggregate.version.root}")
 
     def test_aggregate_root_raise_event(self) -> None:
         """Test raising domain events."""
@@ -501,9 +511,10 @@ class TestFlextAggregateRoot:
             )
         event = aggregate.get_domain_events()[0]
         assert isinstance(event, FlextEvent)
-        if event.get_metadata("aggregate_id") != aggregate.id:
+        # Modern FlextEntityId wrapper - compare string representations
+        if str(event.get_metadata("aggregate_id")) != str(aggregate.id):
             raise AssertionError(
-                f"Expected {aggregate.id}, got {event.get_metadata('aggregate_id')}",
+                f"Expected {aggregate.id!s}, got {event.get_metadata('aggregate_id')!s}",
             )
         assert event.get_metadata("event_type") == "test.created"
         assert event.data is not None
@@ -576,9 +587,9 @@ class TestFlextAggregateRoot:
         assert hasattr(aggregate, "id")
         assert hasattr(aggregate, "created_at")
 
-        # Should support entity equality
+        # Should support entity equality - use string representation for ID comparison
         same_id_aggregate = SampleAggregateRoot(
-            id=aggregate.id,
+            id=str(aggregate.id),  # Convert FlextEntityId to string
             title="Different Title",
         )
         if aggregate != same_id_aggregate:
@@ -622,11 +633,13 @@ class TestFlextAggregateRoot:
             title="Test Aggregate",
         )
 
-        if aggregate.id != custom_id:
-            raise AssertionError(f"Expected {custom_id}, got {aggregate.id}")
+        # Modern FlextEntityId wrapper - compare string representation
+        if str(aggregate.id) != custom_id:
+            raise AssertionError(f"Expected {custom_id}, got {aggregate.id!s}")
         assert aggregate.title == "Test Aggregate"
-        if aggregate.version != 1:
-            raise AssertionError(f"Expected {1}, got {aggregate.version}")
+        # Modern FlextVersion wrapper - compare root value
+        if aggregate.version.root != 1:
+            raise AssertionError(f"Expected {1}, got {aggregate.version.root}")
 
     def test_aggregate_root_with_created_at_datetime(self) -> None:
         """Test aggregate root creation with created_at datetime."""
@@ -639,7 +652,8 @@ class TestFlextAggregateRoot:
 
         if aggregate.title != "Test Aggregate":
             raise AssertionError(f"Expected {'Test Aggregate'}, got {aggregate.title}")
-        assert aggregate.created_at == created_time
+        # Modern FlextTimestamp wrapper - compare root value
+        assert aggregate.created_at.root == created_time
 
     def test_add_domain_event_failure_handling(self) -> None:
         """Test add_domain_event when event creation fails."""
@@ -676,12 +690,12 @@ class TestFlextAggregateRoot:
         aggregate_obj = create_test_entity(SampleAggregateRoot, title="Test Aggregate")
         aggregate = cast("SampleAggregateRoot", aggregate_obj)
 
-        # Create a test event
+        # Create a test event - convert FlextEntityId and FlextVersion to primitives
         event_result = FlextEvent.create_event(
             event_type="test.direct",
             event_data={"action": "direct_add"},
-            aggregate_id=aggregate.id,
-            version=aggregate.version,
+            aggregate_id=str(aggregate.id),  # Convert FlextEntityId to string
+            version=aggregate.version.root,  # Extract int from FlextVersion RootModel
         )
         assert event_result.success
         event = event_result.unwrap()
@@ -785,9 +799,10 @@ class TestEntitiesIntegration:
 
         # All events should be for same aggregate
         aggregate_ids = [event.get_metadata("aggregate_id") for event in events]
-        if not all(aid == aggregate.id for aid in aggregate_ids):
+        # Convert both to strings for proper comparison with modern FlextEntityId
+        if not all(str(aid) == str(aggregate.id) for aid in aggregate_ids):
             raise AssertionError(
-                f"Expected all aggregate IDs to be {aggregate.id}, got {aggregate_ids}",
+                f"Expected all aggregate IDs to be {aggregate.id!s}, got {aggregate_ids}",
             )
 
     def test_polymorphic_entity_behavior(self) -> None:
@@ -835,7 +850,8 @@ class TestEntitiesIntegration:
         else:
             # Regular entities should be mutable
             entity.id = "new-id"
-            assert entity.id == "new-id"
+            # Modern FlextEntityId wrapper - compare string representation
+            assert str(entity.id) == "new-id"
 
         # All should be serializable
         data = entity.model_dump()

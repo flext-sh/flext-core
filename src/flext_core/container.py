@@ -10,19 +10,18 @@ from flext_core.constants import SERVICE_NAME_EMPTY
 from flext_core.exceptions import FlextError
 from flext_core.mixins import FlextLoggableMixin
 from flext_core.result import FlextResult
+from flext_core.typings import T
 from flext_core.validation import flext_validate_service_name
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-
-    from flext_core.typings import T
 
 
 TService = TypeVar("TService")
 
 
 class FlextServiceKey(UserString, Generic[TService]):  # noqa: UP046
-    """Typed service key supporting generic subscription for type-safe service resolution.
+    """Typed service key for type-safe service resolution.
 
     A specialized string that acts as a plain string at runtime but provides type safety
     at type-check time. This enables type-safe service registration and retrieval in the

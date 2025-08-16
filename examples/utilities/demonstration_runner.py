@@ -13,16 +13,15 @@ import math
 import time
 from decimal import Decimal
 
-from examples.shared_domain import SharedDomainFactory
 from flext_core import (
     FlextUtilities,
     TEntityId,
     TUserData,
 )
 
+from ..shared_domain import SharedDomainFactory
 from .complexity_helpers import (
     DemonstrationSectionHelper,
-    FormattingHelper,
     ValidationHelper,
 )
 from .domain_models import UtilityDemoUser
@@ -33,10 +32,6 @@ from .formatting_helpers import (
 )
 from .validation_utilities import (
     calculate_discount_price,
-    is_dict,
-    is_int,
-    is_list,
-    is_string,
 )
 
 # =============================================================================
@@ -110,15 +105,10 @@ def demonstrate_type_checking() -> None:
         (math.pi, "float"),
     ]
 
-    for value, expected_type in test_values:
+    for _value, _expected_type in test_values:
         DemonstrationSectionHelper.print_separator()
-        print(f"Testing value: {value} (expected: {expected_type})")
 
         # Test type checking functions
-        print(f"  is_string: {is_string(value)}")
-        print(f"  is_int: {is_int(value)}")
-        print(f"  is_list: {is_list(value)}")
-        print(f"  is_dict: {is_dict(value)}")
 
     DemonstrationSectionHelper.log_success("Type checking demonstration completed")
 
@@ -140,13 +130,11 @@ def demonstrate_validation() -> None:
         "age": "not-a-number",
     }
 
-    print("Validating valid user data:")
     valid_errors = ValidationHelper.validate_user_data(valid_user_data)
     ValidationHelper.report_validation_result(valid_errors)
 
     DemonstrationSectionHelper.print_separator()
 
-    print("Validating invalid user data:")
     invalid_errors = ValidationHelper.validate_user_data(invalid_user_data)
     ValidationHelper.report_validation_result(invalid_errors)
 
@@ -186,12 +174,9 @@ def demonstrate_shared_domain_usage() -> None:
     )
 
     # Demonstrate enhanced functionality
-    print(f"Cache Key: {enhanced_user.get_cache_key()}")
-    print(f"Cache TTL: {enhanced_user.get_cache_ttl()} seconds")
 
     # Serialize the user
-    serialized_data: dict[str, object] = enhanced_user.to_serializable()
-    print(f"Serialized User Keys: {list(serialized_data.keys())}")
+    enhanced_user.to_serializable()
 
     DemonstrationSectionHelper.log_success("Shared domain demonstration completed")
 
@@ -218,20 +203,12 @@ def demonstrate_business_logic() -> None:
         DemonstrationSectionHelper.log_error("Product data is None")
         return
 
-    print(
-        f"Product: {product.name} - "
-        f"{FormattingHelper.format_currency(float(product.price.amount))}",
-    )
-
     # Test discount calculation
     discount_result = calculate_discount_price(product, 20.0)
     if discount_result.success:
         final_price = discount_result.data
         if final_price is not None:
-            print(
-                f"20% discount price: "
-                f"{FormattingHelper.format_currency(float(final_price))}",
-            )
+            pass
     else:
         DemonstrationSectionHelper.log_error(
             f"Discount calculation failed: {discount_result.error}",
@@ -249,9 +226,6 @@ def demonstrate_business_logic() -> None:
 
 def run_all_demonstrations() -> None:
     """Main function to run all utility demonstrations."""
-    print("🚀 Starting FLEXT Utilities Comprehensive Demonstration")
-    print("=" * 70)
-
     try:
         demonstrate_id_generation()
         demonstrate_timestamp_generation()
@@ -260,11 +234,9 @@ def run_all_demonstrations() -> None:
         demonstrate_shared_domain_usage()
         demonstrate_business_logic()
 
-        print("\n" + "=" * 70)
         DemonstrationSectionHelper.log_success(
             "ALL DEMONSTRATIONS COMPLETED SUCCESSFULLY!",
         )
-        print("=" * 70)
 
     except Exception as e:
         DemonstrationSectionHelper.log_error(f"Demonstration failed: {e}")

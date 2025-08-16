@@ -6,17 +6,14 @@ import functools
 import time
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from typing import TYPE_CHECKING, ParamSpec, Protocol, TypeVar, cast
+from typing import ParamSpec, Protocol, TypeVar, cast
 
 from flext_core.exceptions import FlextValidationError
 from flext_core.loggings import FlextLoggerFactory
-from flext_core.protocols import FlextDecoratedFunction
+from flext_core.protocols import FlextDecoratedFunction, FlextLoggerProtocol
 from flext_core.result import FlextResult
+from flext_core.typings import TAnyDict, TErrorHandler
 from flext_core.utilities import safe_call as _util_safe_call
-
-if TYPE_CHECKING:
-    from flext_core.protocols import FlextLoggerProtocol
-    from flext_core.typings import TAnyDict, TErrorHandler
 
 P = ParamSpec("P")
 R = TypeVar("R")

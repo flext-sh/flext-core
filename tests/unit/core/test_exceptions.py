@@ -12,8 +12,8 @@ from typing import cast
 
 import pytest
 
-from flext_core.constants import ERROR_CODES
-from flext_core.exceptions import (
+from flext_core import (
+    ERROR_CODES,
     FlextAlreadyExistsError,
     FlextAttributeError,
     FlextAuthenticationError,
@@ -26,13 +26,13 @@ from flext_core.exceptions import (
     FlextOperationError,
     FlextPermissionError,
     FlextProcessingError,
+    FlextResult,
     FlextTimeoutError,
     FlextTypeError,
     FlextValidationError,
     clear_exception_metrics,
     get_exception_metrics,
 )
-from flext_core.result import FlextResult
 
 # Constants
 EXPECTED_DATA_COUNT = 3

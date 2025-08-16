@@ -1,3 +1,4 @@
+# ruff: noqa: ARG002
 """Comprehensive tests for loggings.py module - CORRECTED VERSION.
 
 This test suite provides complete coverage of the logging system,
@@ -13,23 +14,23 @@ import threading
 import time
 from typing import TYPE_CHECKING, cast
 
-if TYPE_CHECKING:
-    from collections.abc import Generator
-
 import pytest
 
-from flext_core.constants import FlextConstants, FlextLogLevel
-from flext_core.loggings import (
+from flext_core import (
+    FlextConstants,
     FlextLogContext,
     FlextLogContextManager,
     FlextLogger,
     FlextLoggerFactory,
+    FlextLogLevel,
+    TAnyDict,
     create_log_context,
     get_logger,
 )
 
 if TYPE_CHECKING:
-    from flext_core.typings import TAnyDict
+    from collections.abc import Generator
+
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 

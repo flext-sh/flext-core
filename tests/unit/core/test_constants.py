@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_core.constants import FlextLogLevel
+from flext_core import FlextLogLevel
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 

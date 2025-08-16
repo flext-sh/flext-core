@@ -14,8 +14,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from flext_core.result import FlextResult
-from flext_core.schema_processing import (
+from flext_core import (
     BaseConfigManager,
     BaseEntry,
     BaseFileWriter,
@@ -23,10 +22,11 @@ from flext_core.schema_processing import (
     BaseSorter,
     ConfigAttributeValidator,
     EntryType,
+    FlextResult,
+    FlextValueObject,
     ProcessingPipeline,
     RegexProcessor,
 )
-from flext_core.value_objects import FlextValueObject
 
 
 class MockEntry(FlextValueObject):
@@ -113,11 +113,11 @@ class MockEntryValidator:
         self.is_valid_result = is_valid
         self.is_whitelisted_result = is_whitelisted
 
-    def is_valid(self, entry: MockEntry) -> bool:
+    def is_valid(self, entry: MockEntry) -> bool:  # noqa: ARG002
         """Mock validation."""
         return self.is_valid_result
 
-    def is_whitelisted(self, identifier: str) -> bool:
+    def is_whitelisted(self, identifier: str) -> bool:  # noqa: ARG002
         """Mock whitelist check."""
         return self.is_whitelisted_result
 
@@ -159,13 +159,13 @@ class MockFileWriter(BaseFileWriter):
         self.fail_write = fail_write
         self.written_entries: list[object] = []
 
-    def write_header(self, output_file: object) -> None:
+    def write_header(self, output_file: object) -> None:  # noqa: ARG002
         """Write mock header."""
         if self.fail_write:
             msg = "Write failed"
             raise ValueError(msg)
 
-    def write_entry(self, output_file: object, entry: object) -> None:
+    def write_entry(self, output_file: object, entry: object) -> None:  # noqa: ARG002
         """Write mock entry."""
         self.written_entries.append(entry)
 
@@ -530,7 +530,7 @@ class TestBaseSorter:
     def test_sort_entries_exception_handling(self) -> None:
         """Test sort exception handling."""
 
-        def failing_key(x: object) -> object:
+        def failing_key(x: object) -> object:  # noqa: ARG001
             msg = "Sort failed"
             raise ValueError(msg)
 
@@ -612,7 +612,7 @@ class TestProcessingPipeline:
         def step1(data: str) -> FlextResult[str]:
             return FlextResult.ok(data.upper())
 
-        def step2(data: str) -> FlextResult[str]:
+        def step2(_data: str) -> FlextResult[str]:
             return FlextResult.fail("Processing failed")
 
         pipeline.add_step(step1).add_step(step2)

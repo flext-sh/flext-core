@@ -7,9 +7,8 @@ from __future__ import annotations
 
 import pytest
 
-# Import the module directly to force coverage detection
 import flext_core.handlers as handlers_module
-from flext_core.result import FlextResult
+from flext_core import FlextResult
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 

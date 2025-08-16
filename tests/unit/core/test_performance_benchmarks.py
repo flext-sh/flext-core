@@ -12,11 +12,14 @@ from typing import TYPE_CHECKING, cast
 
 import pytest
 
-from flext_core.container import get_flext_container
-from flext_core.core import FlextCore
-from flext_core.handlers import FlextAbstractHandler
-from flext_core.loggings import FlextLogger, FlextLoggerFactory
-from flext_core.result import FlextResult
+from flext_core import (
+    FlextAbstractHandler,
+    FlextCore,
+    FlextLogger,
+    FlextLoggerFactory,
+    FlextResult,
+    get_flext_container,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -111,7 +114,7 @@ class TestPerformanceBenchmarks:
                 """Get handler name."""
                 return f"FastAbstractHandler_{self._handler_id}"
 
-            def can_handle(self, request: object) -> bool:
+            def can_handle(self, _request: object) -> bool:
                 """Check if handler can handle request."""
                 return True
 
@@ -119,7 +122,7 @@ class TestPerformanceBenchmarks:
                 """Handle message and return processed result."""
                 return FlextResult.ok(f"processed_{message}")
 
-            def validate_request(self, request: object) -> FlextResult[None]:
+            def validate_request(self, _request: object) -> FlextResult[None]:
                 """Validate request."""
                 return FlextResult.ok(None)
 

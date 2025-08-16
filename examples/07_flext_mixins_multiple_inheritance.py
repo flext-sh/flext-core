@@ -7,15 +7,14 @@ and enterprise service patterns using mixin combinations.
 
 from __future__ import annotations
 
-import sys as _sys
 import time
-from pathlib import Path as _Path
 from typing import Protocol
 
 from flext_core import (
     FlextCacheableMixin,
     FlextComparableMixin,
     FlextConstants,
+    FlextEntityMixin,
     FlextIdentifiableMixin,
     FlextLoggableMixin,
     FlextResult,
@@ -24,19 +23,15 @@ from flext_core import (
     FlextTimingMixin,
     FlextUtilities,
     FlextValidatableMixin,
+    FlextValueObjectMixin,
 )
-from flext_core.mixins import FlextEntityMixin, FlextValueObjectMixin
 
-_project_root = _Path(__file__).resolve().parents[1]
-if str(_project_root) not in _sys.path:
-    _sys.path.insert(0, str(_project_root))
-
-from examples.shared_domain import (
+from .shared_domain import (
     SharedDomainFactory,
     User as SharedUser,
     log_domain_operation,
 )
-from examples.shared_example_helpers import run_example_demonstration
+from .shared_example_helpers import run_example_demonstration
 
 # =============================================================================
 # PROTOCOL DEFINITIONS - Type protocols for enterprise patterns
@@ -132,7 +127,6 @@ class TimestampedDocument(FlextTimestampMixin):
         """Update document content with timestamp tracking."""
         self.content = new_content
         self._update_timestamp()
-        print(f"📝 Document '{self.title}' updated at {self.updated_at}")
 
     def get_age_seconds(self) -> float:
         """Get document age in seconds."""
@@ -157,7 +151,6 @@ class IdentifiableUser(SharedUser, FlextLoggableMixin):
         """
         # Validate ID presence from shared user
         if not getattr(self, "id", None):
-            print("❌ Cannot change username: User has no valid ID")
             return False
 
         old_username = self.name
@@ -174,8 +167,6 @@ class IdentifiableUser(SharedUser, FlextLoggableMixin):
             old_name=old_username,
             new_name=new_username,
         )
-        print(f"👤 User {self.id}: '{old_username}' → '{new_username}' (validated)")
-        print("   Note: SharedUser is immutable - use copy_with() for actual updates")
         return True
 
     def __str__(self) -> str:
@@ -225,12 +216,10 @@ class ValidatableConfiguration(FlextValidatableMixin):
     def apply_configuration(self) -> bool:
         """Apply configuration if valid."""
         if not self.validate_configuration():
-            print(f"❌ Configuration '{self.config_name}' validation failed:")
-            for error in self.validation_errors:
-                print(f"   - {error}")
+            for _error in self.validation_errors:
+                pass
             return False
 
-        print(f"✅ Configuration '{self.config_name}' applied successfully")
         return True
 
     def __str__(self) -> str:
@@ -316,8 +305,6 @@ class TimedOperation(FlextTimingMixin):
 
     def execute_operation(self, complexity: int = 1000) -> dict[str, object]:
         """Execute operation with timing measurement."""
-        print(f"⏱️ Starting operation: {self.operation_name}")
-
         start_time = self._start_timing()
 
         # Simulate operation complexity
@@ -327,15 +314,12 @@ class TimedOperation(FlextTimingMixin):
 
         execution_time = self._get_execution_time_seconds(start_time)
 
-        result = {
+        return {
             "operation": self.operation_name,
             "result": total,
             "execution_time": execution_time,
             "complexity": complexity,
         }
-
-        print(f"✅ Operation completed in {execution_time:.4f}s")
-        return result
 
 
 class CacheableCalculator(FlextCacheableMixin, SimpleCacheMixin):
@@ -353,16 +337,13 @@ class CacheableCalculator(FlextCacheableMixin, SimpleCacheMixin):
         # Check cache first
         cached_result = self.cache_get(cache_key)
         if cached_result is not None:
-            cached_int = (
+            return (
                 int(cached_result)
                 if isinstance(cached_result, (int, float, str))
                 else 0
             )
-            print(f"💰 Cache hit for fib({n}): {cached_int}")
-            return cached_int
 
         # Calculate if not cached
-        print(f"🔢 Calculating fib({n})")
         self.calculation_count += 1
 
         result = n if n <= 1 else self.fibonacci(n - 1) + self.fibonacci(n - 2)
@@ -572,7 +553,6 @@ class SmartDocument(
         # Check if view is cached
         cached_view = self.cache_get(cache_key)
         if cached_view is not None:
-            print(f"📄 Cached view for: {self.title}")
             self.view_count += 1
             return cached_view if isinstance(cached_view, dict) else {}
 
@@ -592,7 +572,6 @@ class SmartDocument(
         self.cache_set(cache_key, view_data)
         self.view_count += 1
 
-        print(f"📄 Generated view for: {self.title}")
         return view_data
 
     def update_content(self, new_content: str) -> None:
@@ -605,8 +584,6 @@ class SmartDocument(
         cached_view = self.cache_get(cache_key)
         if cached_view is not None:
             self.cache_remove(cache_key)
-
-        print(f"📝 Content updated for: {self.title}")
 
     def compare_with(self, other: SmartDocument) -> dict[str, object]:
         """Compare documents using comparable mixin."""
@@ -789,7 +766,6 @@ class DomainEntity(FlextEntityMixin):
         """Update entity data with timestamp tracking."""
         self.data.update(new_data)
         self._update_timestamp()
-        print(f"🔄 Entity {self.entity_type} updated")
 
     def get_entity_info(self) -> dict[str, object]:
         """Get comprehensive entity information."""
@@ -859,25 +835,17 @@ class ValueObjectExample(FlextValueObjectMixin):
 
 def demonstrate_individual_mixins() -> None:
     """Demonstrate individual mixin patterns."""
-    print("\n🔧 Individual Mixins Demonstration")
-    print("=" * 50)
-
     # Timestamp mixin
-    print("📋 Timestamp Mixin:")
     doc = TimestampedDocument("Test Document", "Initial content")
-    print(f"  📄 Created: {doc}")
     time.sleep(0.1)
     doc.update_content("Updated content")
-    print(f"  📄 After update: {doc}")
 
     # Identifiable mixin
-    print("\n📋 Identifiable Mixin:")
     # Create user using shared domain factory first
     user_result = SharedDomainFactory.create_user("john_doe", "john@example.com", 25)
     if user_result.success:
         shared_user = user_result.data
         if shared_user is None:
-            print("❌ User creation returned None data")
             return
         user = IdentifiableUser(
             id=shared_user.id,
@@ -890,14 +858,9 @@ def demonstrate_individual_mixins() -> None:
             version=shared_user.version,
             created_at=shared_user.created_at,
         )
-        print(f"  👤 User: {user}")
         user.change_username("john_smith")
-        print(f"  👤 Updated: {user}")
-    else:
-        print(f"  ❌ Failed to create user: {user_result.error}")
 
     # Validatable mixin
-    print("\n📋 Validatable Mixin:")
     config = ValidatableConfiguration(
         "database",
         {"database_url": "localhost", "timeout": 30},
@@ -908,59 +871,40 @@ def demonstrate_individual_mixins() -> None:
     invalid_config.apply_configuration()
 
     # Loggable mixin
-    print("\n📋 Loggable Mixin:")
     service = LoggableService("user_service")
-    result = service.process_request("req_001", {"action": "create_user"})
-    print(f"  📊 Result: {result['status']}")
+    service.process_request("req_001", {"action": "create_user"})
 
     # Timing mixin
-    print("\n📋 Timing Mixin:")
     operation = TimedOperation("data_processing")
-    result = operation.execute_operation(500)
-    print(f"  ⚡ Execution time: {result['execution_time']:.4f}s")
+    operation.execute_operation(500)
 
     # Cacheable mixin
-    print("\n📋 Cacheable Mixin:")
     calculator = CacheableCalculator()
 
     # First calculation (no cache)
-    result1 = calculator.fibonacci(10)
-    print(f"  🔢 fib(10) = {result1}")
+    calculator.fibonacci(10)
 
     # Second calculation (cached)
-    result2 = calculator.fibonacci(10)
-    print(f"  🔢 fib(10) = {result2}")
+    calculator.fibonacci(10)
 
-    stats = calculator.get_stats()
-    print(f"  📊 Calculator stats: {stats}")
+    calculator.get_stats()
 
 
 def demonstrate_multiple_inheritance() -> None:
     """Demonstrate multiple inheritance patterns."""
-    print("\n🏗️ Multiple Inheritance Demonstration")
-    print("=" * 50)
-
     # Advanced user with multiple mixins
-    print("📋 Advanced User (4 mixins):")
     user = AdvancedUser("alice_admin", "alice@company.com", 28, "user")
 
     # Validate user
-    is_valid = user.validate_user()
-    print(f"  ✅ User validation: {is_valid}")
+    user.validate_user()
 
     # Promote user
-    promoted = user.promote_to_admin()
-    print(f"  🚀 Promotion successful: {promoted}")
+    user.promote_to_admin()
 
     # Get user info
-    info = user.get_user_info()
-    print(
-        f"  📊 User info: ID={info['id']}, Role={info['role']}, "
-        f"Valid={info['is_valid']}",
-    )
+    user.get_user_info()
 
     # Smart document with multiple mixins
-    print("\n📋 Smart Document (4 mixins):")
     doc1 = SmartDocument(
         "AI Research",
         "Artificial Intelligence is transforming technology...",
@@ -973,22 +917,18 @@ def demonstrate_multiple_inheritance() -> None:
     )
 
     # View documents (caching demo)
-    view1 = doc1.view_document()
-    print(f"  📄 Document 1 word count: {view1['word_count']}")
+    doc1.view_document()
 
     doc1.view_document()  # Should hit cache
 
     # Compare documents
-    comparison = doc1.compare_with(doc2)
-    print(f"  🔍 Documents comparison: category_match={comparison['category_match']}")
+    doc1.compare_with(doc2)
 
     # Update and view again (cache cleared)
     doc1.update_content("Updated AI research content with more details...")
-    view1_updated = doc1.view_document()
-    print(f"  📄 Updated document word count: {view1_updated['word_count']}")
+    doc1.view_document()
 
     # Enterprise service with all mixins
-    print("\n📋 Enterprise Service (5 mixins):")
     service = EnterpriseService(
         "payment_service",
         {
@@ -1001,27 +941,15 @@ def demonstrate_multiple_inheritance() -> None:
     # Process multiple requests
     for i in range(3):
         request_id = f"req_{i:03d}"
-        result = service.process_request(request_id, {"amount": 100 + i * 10})
-        print(
-            f"  📦 Request {request_id}: {result['status']} in "
-            f"{result.get('execution_time', 0):.4f}s",
-        )
+        service.process_request(request_id, {"amount": 100 + i * 10})
 
     # Get service metrics
-    metrics = service.get_service_metrics()
-    print(
-        f"  📊 Service metrics: {metrics['request_count']} requests, "
-        f"{metrics['error_rate']:.2%} error rate",
-    )
+    service.get_service_metrics()
 
 
 def demonstrate_composite_mixins() -> None:
     """Demonstrate composite mixin patterns."""
-    print("\n🏢 Composite Mixins Demonstration")
-    print("=" * 50)
-
     # Domain entity using FlextEntityMixin
-    print("📋 Domain Entity (FlextEntityMixin):")
     entity = DomainEntity(
         "Customer",
         {
@@ -1031,40 +959,31 @@ def demonstrate_composite_mixins() -> None:
         },
     )
 
-    entity_info = entity.get_entity_info()
-    print(f"  🏬 Entity created: {entity_info['type']} (ID: {entity_info['id']})")
+    entity.get_entity_info()
 
     entity.update_data(
         {"status": "premium", "last_login": FlextUtilities.generate_iso_timestamp()},
     )
     updated_info = entity.get_entity_info()
     data_field = updated_info["data"]
-    field_count = len(data_field) if hasattr(data_field, "__len__") else 0
-    print(f"  🔄 Entity updated: {field_count} fields")
+    len(data_field) if hasattr(data_field, "__len__") else 0
 
     # Value object using FlextValueObjectMixin
-    print("\n📋 Value Objects (FlextValueObjectMixin):")
 
     # Valid value object
     price = ValueObjectExample("Price", 99.99, "USD")
-    is_valid = price.validate_value()
-    print(f"  💰 {price} - Valid: {is_valid}")
+    price.validate_value()
 
     # Invalid value object
     invalid_value = ValueObjectExample("", None)
-    is_invalid = invalid_value.validate_value()
-    print(f"  ❌ Invalid value object - Valid: {is_invalid}")
-    print(f"     Errors: {invalid_value.validation_errors}")
+    invalid_value.validate_value()
 
     # Serialization demo
-    price_dict = price.to_dict()
-    print(f"  📋 Serialized price: {price_dict}")
+    price.to_dict()
 
 
 def demonstrate_method_resolution_order() -> None:
     """Demonstrate method resolution order in multiple inheritance."""
-    print("\n🔗 Method Resolution Order Demonstration")
-    print("=" * 50)
 
     class ComplexClass(
         FlextLoggableMixin,
@@ -1116,22 +1035,15 @@ def demonstrate_method_resolution_order() -> None:
 
     # Demonstrate MRO
     complex_obj = ComplexClass("test_object")
-    print("📋 Method Resolution Order:")
-    for i, cls in enumerate(complex_obj.__class__.__mro__):
-        print(f"  {i}: {cls.__name__}")
+    for _i, _cls in enumerate(complex_obj.__class__.__mro__):
+        pass
 
     # Perform operation
-    result = complex_obj.perform_operation()
-    print(
-        f"  📊 Operation result: Valid={result['is_valid']}, "
-        f"Time={result['execution_time']:.4f}s",
-    )
+    complex_obj.perform_operation()
 
 
 def demonstrate_performance_characteristics() -> None:
     """Demonstrate performance characteristics of mixins."""
-    print("\n⚡ Performance Characteristics Demonstration")
-    print("=" * 50)
 
     # Simple class without mixins
     class SimpleClass:
@@ -1192,21 +1104,9 @@ def demonstrate_performance_characteristics() -> None:
         multi_obj.operation()
     multiple_time = time.time() - start_time
 
-    print(f"📋 Performance Comparison ({operations} operations):")
-    print(f"  🔹 Simple class: {simple_time:.4f}s ({operations / simple_time:.0f}/s)")
-    print(f"  🔹 Single mixin: {single_time:.4f}s ({operations / single_time:.0f}/s)")
-    print(
-        f"  🔹 Multiple mixins: {multiple_time:.4f}s "
-        f"({operations / multiple_time:.0f}/s)",
-    )
-
     # Calculate overhead
-    single_overhead = ((single_time - simple_time) / simple_time) * 100
-    multiple_overhead = ((multiple_time - simple_time) / simple_time) * 100
-
-    print("📊 Overhead Analysis:")
-    print(f"  🔹 Single mixin overhead: {single_overhead:.1f}%")
-    print(f"  🔹 Multiple mixins overhead: {multiple_overhead:.1f}%")
+    ((single_time - simple_time) / simple_time) * 100
+    ((multiple_time - simple_time) / simple_time) * 100
 
 
 def demonstrate_enterprise_patterns() -> None:
@@ -1215,9 +1115,6 @@ def demonstrate_enterprise_patterns() -> None:
     Refactored from complexity 37 to follow Single Responsibility Principle.
     Each specialized demonstration method handles a specific pattern.
     """
-    print("\n🏭 Enterprise Patterns Demonstration")
-    print("=" * 50)
-
     # Create repository and service instances
     user_repo = _create_enterprise_user_repository()
     order_service = _create_enterprise_order_service(user_repo)
@@ -1464,19 +1361,14 @@ def _create_enterprise_order_service(
 
 def _demonstrate_repository_pattern(user_repo: UserRepositoryProtocol) -> None:
     """Demonstrate repository pattern with FlextResult."""
-    print("📋 Enterprise Repository Pattern:")
-
     # Save users with FlextResult pattern
-    save_result_1 = user_repo.save_user(
+    user_repo.save_user(
         "user_001",
         {"name": "Alice", "email": "alice@example.com"},
     )
-    save_result_2 = user_repo.save_user(
+    user_repo.save_user(
         "user_002",
         {"name": "Bob", "email": "bob@example.com"},
-    )
-    print(
-        f"  💾 Save results: Alice={save_result_1.is_success}, Bob={save_result_2.is_success}",
     )
 
     # Find users (cache demo) with FlextResult pattern
@@ -1484,15 +1376,11 @@ def _demonstrate_repository_pattern(user_repo: UserRepositoryProtocol) -> None:
     user_repo.find_user("user_001")  # From cache
 
     if user1_result.is_success and user1_result.data:
-        print(f"  👤 Found user: {user1_result.data['name']}")
-    else:
-        print("  ❌ User not found or error occurred")
+        pass
 
 
 def _demonstrate_service_pattern(order_service: OrderServiceProtocol) -> None:
     """Demonstrate service pattern with FlextResult."""
-    print("\n📋 Enterprise Service Pattern:")
-
     # Create valid order with FlextResult pattern
     order_result = order_service.create_order(
         "user_001",
@@ -1505,19 +1393,12 @@ def _demonstrate_service_pattern(order_service: OrderServiceProtocol) -> None:
     if order_result.is_success and order_result.data:
         order = order_result.data
         items = order["items"]
-        item_count = len(items) if hasattr(items, "__len__") else 0
-        print(
-            f"  📦 Order created: {order['order_id']} with {item_count} items",
-        )
-    else:
-        print(f"  ❌ Order creation failed: {order_result.error}")
+        len(items) if hasattr(items, "__len__") else 0
 
     # Try invalid order with FlextResult pattern
     invalid_order_result = order_service.create_order("user_999", [])
     if invalid_order_result.is_failure:
-        print(f"  ❌ Invalid order result: {invalid_order_result.error}")
-    else:
-        print("  ⚠️ Unexpected success for invalid order")
+        pass
 
 
 def main() -> None:

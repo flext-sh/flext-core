@@ -18,44 +18,29 @@ from .shared_domain import SharedDomainFactory, User as SharedUser
 
 
 def _print_header() -> None:
-    print("=== FLEXT Core Working Examples ===\n")
+    pass
 
 
 def _demo_flext_result() -> None:
-    print("1. FlextResult Examples:")
-    success_result = FlextResult.ok("Operation successful")
-    print(f"  Success: {success_result.success}, Data: {success_result.data}")
-    error_result: FlextResult[str] = FlextResult.fail("Something went wrong")
-    print(f"  Error: {error_result.is_failure}, Error: {error_result.error}")
-    print()
+    FlextResult.ok("Operation successful")
+    FlextResult.fail("Something went wrong")
 
 
 def _demo_entity_shared_domain() -> SharedUser | None:
-    print("2. FlextEntity Examples (using shared domain):")
     user_result = SharedDomainFactory.create_user(
         name="John Doe",
         email="john@example.com",
         age=30,
     )
     if user_result.is_failure or user_result.data is None:
-        print(f"Failed to create user: {user_result.error}")
         return None
     user = user_result.data
-    status_value = (
-        user.status.value if hasattr(user.status, "value") else str(user.status)
-    )
-    print(
-        f"  User: {user.name} ({user.email_address.email}), Status: {status_value}",
-    )
-    validation = user.validate_domain_rules()
-    print(f"  Validation: {validation.success}")
-    print()
+    (user.status.value if hasattr(user.status, "value") else str(user.status))
+    user.validate_domain_rules()
     return user
 
 
 def _demo_commands() -> tuple[object, object]:
-    print("3. FlextCommands Examples:")
-
     class CreateUserCommand(FlextCommands.Command):
         email: str
         name: str
@@ -87,19 +72,13 @@ def _demo_commands() -> tuple[object, object]:
         )
     command = CreateUserCommand(email="alice@example.com", name="Alice Smith")
     handler = CreateUserHandler()
-    print(f"  Command: {command.command_type}")
-    print(f"  Command ID: {command.command_id}")
     result = handler.execute(command)
     if result.success and result.data is not None:
-        created_user = result.data
-        print(f"  Created: {created_user.name} ({created_user.email_address.email})")
-    print()
+        pass
     return command, handler
 
 
 def _demo_container() -> None:
-    print("4. FlextContainer Examples:")
-
     class UserService:
         def __init__(self, repository: object) -> None:
             self.repository = repository
@@ -128,17 +107,10 @@ def _demo_container() -> None:
     if service_result.success:
         user_service = service_result.data
         if hasattr(user_service, "create_user"):
-            new_user = user_service.create_user("bob@example.com", "Bob Wilson")
-            print(
-                f"  Service created: {new_user.name} ({new_user.email_address.email})",
-            )
-        else:
-            print("  Service creation failed: no create_user method")
-    print()
+            user_service.create_user("bob@example.com", "Bob Wilson")
 
 
 def _demo_fields() -> None:
-    print("5. FlextFields Examples:")
     email_field = FlextFields.create_string_field(
         field_id="user_email",
         field_name="email",
@@ -146,27 +118,18 @@ def _demo_fields() -> None:
         required=True,
         description="User email address",
     )
-    print(f"  Field: {email_field.field_name} ({email_field.field_type})")
-    valid_email = email_field.validate_value("user@example.com")
-    invalid_email = email_field.validate_value("invalid-email")
-    print(f"  Valid email: {valid_email.success}")
-    print(f"  Invalid email: {invalid_email.success} - {invalid_email.error}")
-    print()
+    email_field.validate_value("user@example.com")
+    email_field.validate_value("invalid-email")
 
 
 def _demo_command_bus(command: object, handler: object) -> None:
-    print("6. Command Bus Examples:")
     bus = FlextCommands.create_command_bus()
     bus.register_handler(cast("type", type(command)), handler)  # type: ignore[arg-type]
-    print("  Handler registered successfully")
     bus_result = bus.execute(command)
     if bus_result.success:
         bus_user = bus_result.data
         if hasattr(bus_user, "name"):
-            print(f"  Bus executed: {bus_user.name} created")
-        else:
-            print(f"  Bus executed: {bus_user}")
-    print()
+            pass
 
 
 def main() -> None:
@@ -180,7 +143,6 @@ def main() -> None:
     _demo_container()
     _demo_fields()
     _demo_command_bus(command, handler)
-    print("=== All Examples Completed Successfully! ===")
 
 
 if __name__ == "__main__":

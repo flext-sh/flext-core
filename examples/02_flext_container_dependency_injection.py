@@ -19,7 +19,6 @@ from flext_core import (
     TConfigDict,
     TEntityId,
     TErrorMessage,
-    TLogMessage,
     TUserData,
     get_flext_container,
 )
@@ -258,7 +257,6 @@ class DemonstrationFormatter:
     @staticmethod
     def print_section_header(section: DemonstrationSection) -> None:
         """Print standardized section headers."""
-        print(DemonstrationFormatter.format_section_header(section))
 
 
 class PrerequisiteValidator:
@@ -346,18 +344,8 @@ class PostgreSQLConnection(DatabaseConnection):
         self.connected = False
         self.connection_id: TEntityId = FlextUtilities.generate_entity_id()
 
-        log_message: TLogMessage = (
-            f"🔧 PostgreSQL connection created: {self.connection_id}"
-        )
-        print(log_message)
-
     def connect(self) -> FlextResult[bool]:
         """Establish database connection."""
-        log_message: TLogMessage = (
-            f"🔌 Connecting to PostgreSQL: {self.host}:{self.port}/{self.database}"
-        )
-        print(log_message)
-
         # Simulate connection with potential failure
         if secrets.SystemRandom().random() < CONNECTION_FAILURE_RATE:
             error_message: TErrorMessage = (
@@ -366,7 +354,6 @@ class PostgreSQLConnection(DatabaseConnection):
             return FlextResult.fail(error_message)
 
         self.connected = True
-        print(f"✅ Connected to PostgreSQL: {self.connection_id}")
         return FlextResult.ok(self.connected)
 
     def execute_query(self, query: str) -> FlextResult[list[TAnyObject]]:
@@ -375,8 +362,7 @@ class PostgreSQLConnection(DatabaseConnection):
             error_message: TErrorMessage = "Database not connected"
             return FlextResult.fail(error_message)
 
-        log_message: TLogMessage = f"🔍 Executing query: {query[:50]}..."
-        print(log_message)
+        f"🔍 Executing query: {query[:50]}..."
 
         # Simulate query execution
         mock_results: list[TAnyObject] = [
@@ -390,7 +376,6 @@ class PostgreSQLConnection(DatabaseConnection):
             ),
         ]
 
-        print(f"✅ Query executed successfully: {len(mock_results)} rows")
         return FlextResult.ok(mock_results)
 
     def close(self) -> FlextResult[None]:
@@ -398,12 +383,7 @@ class PostgreSQLConnection(DatabaseConnection):
         if not self.connected:
             return FlextResult.ok(None)
 
-        log_message: TLogMessage = (
-            f"🔌 Closing PostgreSQL connection: {self.connection_id}"
-        )
-        print(log_message)
         self.connected = False
-        print(f"✅ Connection closed: {self.connection_id}")
         return FlextResult.ok(None)
 
 
@@ -416,21 +396,24 @@ class SMTPEmailService(EmailService):
         self.smtp_port = smtp_port
         self.service_id: TEntityId = FlextUtilities.generate_entity_id()
 
-        log_message: TLogMessage = (
-            f"📧 SMTP service created: {self.smtp_host}:{self.smtp_port}"
-        )
-        print(log_message)
-
     def send_email(self, to: str, subject: str, body: str) -> FlextResult[str]:
-        """Send email and return message ID."""
+        """Send email and return message ID.
+
+        Args:
+            to: Destination email address.
+            subject: Email subject line.
+            body: Email message body.
+
+        Returns:
+            FlextResult containing the generated message identifier.
+
+        """
         preview_len = 30
         preview = (body[:preview_len] + "...") if len(body) > preview_len else body
-        log_message: TLogMessage = f"📧 Sending email to {to}: {subject} | {preview}"
-        print(log_message)
+        _ = preview  # ensure variables are used for linting purposes
 
         # Simulate email sending
         message_id: str = FlextUtilities.generate_entity_id()
-        print(f"✅ Email sent successfully: {message_id}")
         return FlextResult.ok(message_id)
 
 
@@ -442,18 +425,12 @@ class SharedDomainUserRepository(UserRepository):
         self.db_connection = db_connection
         self.repository_id: TEntityId = FlextUtilities.generate_entity_id()
 
-        log_message: TLogMessage = (
-            f"🗄️ Shared domain user repository created: {self.repository_id}"
-        )
-        print(log_message)
-
     def create_user(self, user_data: TUserData) -> FlextResult[TEntityId]:
         """Create user using SharedDomainFactory."""
-        log_message: TLogMessage = (
+        (
             f"👤 Creating enhanced user via repository: "
             f"{user_data.get('name', 'Unknown')}"
         )
-        print(log_message)
 
         # Use SharedDomainFactory for robust user creation
         user_result = SharedDomainFactory.create_user(
@@ -479,14 +456,10 @@ class SharedDomainUserRepository(UserRepository):
             email=user.email_address.email,
         )
 
-        print(f"✅ Shared user entity persisted: {user.id}")
         return FlextResult.ok(user.id)
 
     def get_user(self, user_id: TEntityId) -> FlextResult[SharedUser]:
         """Get user entity by ID using shared domain models."""
-        log_message: TLogMessage = f"🔍 Getting shared user entity: {user_id}"
-        print(log_message)
-
         # Simulate user entity retrieval using shared domain
         mock_user_result = SharedDomainFactory.create_user(
             name="Retrieved User",
@@ -503,7 +476,6 @@ class SharedDomainUserRepository(UserRepository):
         user = mock_user_result.data
         if user is None:
             return FlextResult.fail("Failed to create mock user")
-        print(f"✅ Shared user entity retrieved: {user_id}")
         return FlextResult.ok(user)
 
 
@@ -520,16 +492,8 @@ class EmailNotificationService(NotificationService):
         self.user_repository = user_repository
         self.service_id: TEntityId = FlextUtilities.generate_entity_id()
 
-        log_message: TLogMessage = (
-            f"🔔 Enhanced notification service created: {self.service_id}"
-        )
-        print(log_message)
-
     def notify_user_created(self, user: SharedUser) -> FlextResult[None]:
         """Send user creation notification using shared user entity."""
-        log_message: TLogMessage = f"🔔 Sending notification for shared user: {user.id}"
-        print(log_message)
-
         # Send welcome email using shared user
         email_result = self.email_service.send_email(
             to=user.email_address.email,
@@ -546,7 +510,6 @@ class EmailNotificationService(NotificationService):
             )
             return FlextResult.fail(error_message)
 
-        print(f"✅ Shared user creation notification sent: {user.id}")
         return FlextResult.ok(None)
 
 
@@ -563,11 +526,6 @@ class DatabaseConnectionFactory:
         config: TConfigDict,
     ) -> FlextResult[DatabaseConnection]:
         """Create PostgreSQL connection using TConfigDict."""
-        log_message: TLogMessage = (
-            f"🏭 Creating PostgreSQL connection with config: {config}"
-        )
-        print(log_message)
-
         # Configuration is already validated as TConfigDict
         required_keys = ["host", "port", "database"]
         for key in required_keys:
@@ -581,9 +539,6 @@ class DatabaseConnectionFactory:
                 port=int(cast("int", config["port"])),
                 database=str(config["database"]),
             )
-            print(
-                f"✅ PostgreSQL connection factory created: {connection.connection_id}",
-            )
             return FlextResult.ok(connection)
         except (TypeError, ValueError) as e:
             invalid_config_error: TErrorMessage = f"Invalid configuration: {e}"
@@ -596,9 +551,6 @@ class EmailServiceFactory:
     @staticmethod
     def create_smtp_service(config: TConfigDict) -> FlextResult[EmailService]:
         """Create SMTP service using TConfigDict."""
-        log_message: TLogMessage = f"🏭 Creating SMTP service with config: {config}"
-        print(log_message)
-
         # Configuration is already validated as TConfigDict
         required_keys = ["smtp_host", "smtp_port"]
         for key in required_keys:
@@ -613,7 +565,6 @@ class EmailServiceFactory:
                 smtp_host=str(config["smtp_host"]),
                 smtp_port=int(cast("int", config["smtp_port"])),
             )
-            print(f"✅ SMTP service factory created: {service.service_id}")
             return FlextResult.ok(service)
         except (TypeError, ValueError) as e:
             invalid_smtp_config_error: TErrorMessage = f"Invalid configuration: {e}"
@@ -638,20 +589,12 @@ class UserManagementService:
         self.notification_service = notification_service
         self.service_id: TEntityId = FlextUtilities.generate_entity_id()
 
-        log_message: TLogMessage = (
-            f"👥 Enhanced user management service created: {self.service_id}"
-        )
-        print(log_message)
-
     def register_user(
         self,
         user_data: TUserData,
     ) -> FlextResult[TAnyObject]:
         """Register user using shared domain models."""
-        log_message: TLogMessage = (
-            f"👤 Registering enhanced user: {user_data.get('name', 'Unknown')}"
-        )
-        print(log_message)
+        (f"👤 Registering enhanced user: {user_data.get('name', 'Unknown')}")
 
         # Create user via repository
         create_result = self.user_repository.create_user(user_data)
@@ -677,7 +620,7 @@ class UserManagementService:
         notification_result = self.notification_service.notify_user_created(user)
         if notification_result.is_failure:
             # Log warning but don't fail the registration
-            print(f"⚠️  Notification failed: {notification_result.error}")
+            pass
 
         # Return registration result with shared user data
         registration_result: TAnyObject = cast(
@@ -692,7 +635,6 @@ class UserManagementService:
             },
         )
 
-        print(f"✅ Shared user registered successfully: {user.id}")
         return FlextResult.ok(registration_result)
 
 
@@ -900,9 +842,6 @@ def setup_production_container() -> FlextResult[FlextContainer]:
 
     Single return point for consistent error handling.
     """
-    log_message: TLogMessage = "🏭 Setting up production container..."
-    print(log_message)
-
     container = get_flext_container()
     configurer = ProductionServiceConfigurer(container)
     orchestrator = ContainerSetupOrchestrator(container, configurer)
@@ -915,7 +854,7 @@ def setup_production_container() -> FlextResult[FlextContainer]:
     )
 
     if setup_result.success:
-        print("✅ Production container setup completed")
+        pass
 
     return setup_result
 
@@ -931,7 +870,6 @@ class MockDatabase(DatabaseConnection):
             FlextResult containing True on successful connection.
 
         """
-        print("🧪 Mock database connected")
         return FlextResult.ok(data=True)
 
     def execute_query(self, _query: str) -> FlextResult[list[TAnyObject]]:
@@ -956,7 +894,6 @@ class MockDatabase(DatabaseConnection):
             FlextResult containing None on successful close.
 
         """
-        print("🧪 Mock database closed")
         return FlextResult.ok(None)
 
 
@@ -976,7 +913,6 @@ class MockEmailService(EmailService):
 
         """
         message_id: str = "mock_message_123"
-        print(f"🧪 Mock email sent: {message_id}")
         return FlextResult.ok(message_id)
 
 
@@ -994,7 +930,6 @@ class MockUserRepository(UserRepository):
 
         """
         user_id: TEntityId = "test_user_123"
-        print(f"🧪 Mock user created: {user_id}")
         return FlextResult.ok(user_id)
 
     def get_user(self, user_id: TEntityId) -> FlextResult[SharedUser]:
@@ -1023,7 +958,6 @@ class MockUserRepository(UserRepository):
         user = mock_user_result.data
         if user is None:
             return FlextResult.fail("Failed to create mock shared user")
-        print(f"🧪 Mock shared user retrieved: {user_id}")
         return FlextResult.ok(user)
 
 
@@ -1040,7 +974,6 @@ class MockNotificationService(NotificationService):
             FlextResult containing None on success.
 
         """
-        print(f"🧪 Mock notification sent for shared user: {user.id}")
         return FlextResult.ok(None)
 
 
@@ -1128,9 +1061,6 @@ class MockUserManagementServiceFactoryCreator:
 
 def setup_test_container() -> FlextResult[FlextContainer]:
     """Setup test container using SOLID principles and service configurer."""
-    log_message: TLogMessage = "🧪 Setting up test container..."
-    print(log_message)
-
     container = get_flext_container()
     configurer = TestServiceConfigurer(container)
 
@@ -1146,7 +1076,6 @@ def setup_test_container() -> FlextResult[FlextContainer]:
             f"User management factory setup failed: {factory_result.error}",
         )
 
-    print("✅ Test container setup completed")
     return FlextResult.ok(container)
 
 
@@ -1249,9 +1178,6 @@ def _create_health_data_structure() -> dict[str, object]:
 
 def check_container_health(container: FlextContainer) -> FlextResult[TAnyObject]:
     """Check container health using TAnyObject for health data."""
-    log_message: TLogMessage = "🏥 Checking container health..."
-    print(log_message)
-
     health_data = _create_health_data_structure()
     services_dict = cast("dict[str, object]", health_data["services"])
 
@@ -1263,7 +1189,6 @@ def check_container_health(container: FlextContainer) -> FlextResult[TAnyObject]
     # Determine overall status
     health_data["overall_status"] = _determine_overall_health_status(services_dict)
 
-    print(f"✅ Health check completed: {health_data['overall_status']}")
     return FlextResult.ok(cast("TAnyObject", health_data))
 
 
@@ -1403,10 +1328,6 @@ class UserRegistrationStrategy:
     ) -> FlextResult[None]:
         """Handle user registration result."""
         if registration_result.success:
-            print(
-                f"✅ {self._context_name.title()} registration successful: "
-                f"{registration_result.data}",
-            )
             return FlextResult.ok(None)
         error_msg = registration_result.error or "registration failed"
         return FlextResult.fail(
@@ -1505,14 +1426,12 @@ class HealthCheckDemoCommand(DemonstrationCommand):
     def _display_health_results(self, health_data: object) -> None:
         """Display health check results."""
         health_dict = cast("dict[str, object]", health_data)
-        overall_status = health_dict.get("overall_status", "unknown")
-        print(f"🏥 Container health: {overall_status}")
+        health_dict.get("overall_status", "unknown")
         services = health_dict.get("services")
         if isinstance(services, dict):
-            for service_name, service_health in services.items():
+            for service_health in services.values():
                 if isinstance(service_health, dict):
-                    status = service_health.get("status", "unknown")
-                    print(f"   {service_name}: {status}")
+                    service_health.get("status", "unknown")
 
     # Note: This method is duplicated and should be removed
     # The correct run_production_container_demo is in ContainerDemonstrator
@@ -1542,7 +1461,6 @@ class ProductionContainerDemoCommand(DemonstrationCommand):
             )
 
         self._demonstrator.prod_container = prod_container_result.data
-        print("✅ Production container setup successful")
 
         # Test production user registration
         return self._test_production_user_registration()
@@ -1598,22 +1516,15 @@ class DemonstrationOrchestrator:
         for step in demonstration_steps:
             result = step()
             if result.is_failure:
-                print(f"❌ Demonstration step failed: {result.error}")
                 return
 
         self._print_demonstration_footer()
 
     def _print_demonstration_header(self) -> None:
         """Print demonstration header."""
-        print("=" * 80)
-        print("🚀 FLEXT CONTAINER - DEPENDENCY INJECTION DEMONSTRATION")
-        print("=" * 80)
 
     def _print_demonstration_footer(self) -> None:
         """Print demonstration footer."""
-        print("\n" + "=" * 80)
-        print("🎉 FLEXT CONTAINER DEMONSTRATION COMPLETED")
-        print("=" * 80)
 
     def _create_demonstration_steps(self) -> list[Callable[[], FlextResult[None]]]:
         """Create demonstration steps - SOLID OCP: Open for extension."""

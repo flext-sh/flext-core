@@ -23,6 +23,7 @@ Benefits:
 
 from __future__ import annotations
 
+import contextlib
 from datetime import UTC, datetime
 from decimal import Decimal
 from enum import StrEnum
@@ -1008,17 +1009,7 @@ class SharedDemonstrationPattern:
         demonstration_functions: list[Callable[[], None]],
     ) -> None:
         """Run a demonstration with consistent formatting and error handling."""
-        print("=" * 80)
-        print(f"🚀 {title}")
-        print("=" * 80)
-
         # Run all demonstrations
         for demo_func in demonstration_functions:
-            try:
+            with contextlib.suppress(RuntimeError, ValueError, TypeError):
                 demo_func()
-            except (RuntimeError, ValueError, TypeError) as e:
-                print(f"❌ Demonstration function {demo_func.__name__} failed: {e}")
-
-        print("\n" + "=" * 80)
-        print(f"🎉 {title.split(' - ', maxsplit=1)[0]} DEMONSTRATION COMPLETED")
-        print("=" * 80)

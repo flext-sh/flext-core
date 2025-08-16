@@ -8,8 +8,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_core import FlextResult, TEntityId
-from flext_core.container import FlextContainer, get_flext_container
+from flext_core import FlextContainer, FlextResult, TEntityId, get_flext_container
 
 pytestmark = [pytest.mark.e2e]
 

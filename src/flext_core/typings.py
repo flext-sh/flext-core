@@ -586,7 +586,7 @@ FlextValidatable = Validatable
 FlextValidator = FlextTypes.Protocols.Validator[object]
 
 # Entity identifier alias for convenience
-FlextEntityId = TEntityId
+# FlextEntityId is imported from root_models module - remove local alias
 
 # =============================================================================
 # DEPRECATION WARNING SYSTEM - Encourage migration to centralized types
@@ -627,7 +627,6 @@ __all__: list[str] = [
     "EntryT",
     "F",
     # FlextEntity convenience
-    "FlextEntityId",
     "FlextSerializable",
     # Hierarchical type system (preferred)
     "FlextTypes",

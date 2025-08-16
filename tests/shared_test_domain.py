@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from decimal import Decimal
 
-from tests.test_shared_domain import (
+from .test_shared_domain import (
     TestComplexValueObject,
     TestDomainFactory,
     TestMoney,

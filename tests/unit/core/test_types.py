@@ -4,26 +4,27 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
-from flext_core import FlextEntityId, FlextPayload
-from flext_core.typings import (
+from flext_core import (
+    FlextEntityId,
+    FlextPayload,
     FlextTypes,
     TAnyDict,
     TAnyList,
     TComparable,
+    TData,
 )
 
 if TYPE_CHECKING:
     # Type aliases for testing
     from collections.abc import Callable as _Callable
 
-    FlextConfigKey = str
-    FlextEventType = str
-    FlextServiceName = str
+FlextConfigKey = str
+FlextEventType = str
+FlextServiceName = str
 
 
 # Rebuild Pydantic models to resolve forward references
 # Make types available in the global namespace for model_rebuild()
-from flext_core.typings import TData
 
 globals()["TAnyDict"] = TAnyDict
 globals()["TData"] = TData

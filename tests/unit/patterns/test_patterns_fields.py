@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import pytest
 
-from flext_core.constants import FlextFieldType
-from flext_core.fields import (
+from flext_core import (
     FlextFieldCore,
     FlextFieldCoreMetadata,
     FlextFieldRegistry,
+    FlextFieldType,
+    FlextResult,
 )
-from flext_core.result import FlextResult
 
 # Constants
 EXPECTED_BULK_SIZE = 2

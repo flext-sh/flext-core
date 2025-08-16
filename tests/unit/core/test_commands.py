@@ -22,16 +22,19 @@ from typing import TYPE_CHECKING, TypedDict, cast
 from zoneinfo import ZoneInfo
 
 import pytest
-from tests.conftest import (
+
+from flext_core import (
+    FlextCommands,
+    FlextPayload,
+    FlextResult,
+)
+
+from ...conftest import (
     AssertHelpers,
     PerformanceMetrics,
     TestCase,
     TestScenario,
 )
-
-from flext_core.commands import FlextCommands
-from flext_core.payload import FlextPayload
-from flext_core.result import FlextResult
 
 
 # TypedDict definitions needed at runtime
@@ -240,7 +243,7 @@ class TestFlextCommandsAdvanced:
     def test_command_scenarios(
         self,
         command_test_cases: list[TestCase],
-        assert_helpers: AssertHelpers,
+        assert_helpers: AssertHelpers,  # noqa: ARG002
     ) -> None:
         """Test commands using structured parametrized approach."""
         for test_case in command_test_cases:
@@ -528,7 +531,7 @@ class TestFlextCommandsFactoryMethods:
 
         # Add middleware
         class TestMiddleware:
-            def process(self, command: object, handler: object) -> FlextResult[None]:
+            def process(self, command: object, handler: object) -> FlextResult[None]:  # noqa: ARG002
                 return FlextResult.ok(None)
 
         bus.add_middleware(TestMiddleware())

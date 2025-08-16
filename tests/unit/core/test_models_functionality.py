@@ -6,32 +6,27 @@ performance monitoring, and property-based testing.
 
 from __future__ import annotations
 
+import typing
 from typing import TYPE_CHECKING
 
 import pytest
 from hypothesis import given, strategies as st
 from pydantic import SecretStr
-from tests.conftest import (
-    AssertHelpers,
-    PerformanceMonitor,
-    TestCase,
-    TestScenario,
-    assert_performance,
-)
 
-from flext_core.models import (
-    FlextBaseModel,
-    FlextDatabaseModel,
+from flext_core import (
+    FlextBaseModel,  # Alias for FlextModel
+    FlextDatabaseModel,  # Legacy alias
     FlextDataFormat,
-    FlextDomainEntity,
-    FlextDomainValueObject,
+    FlextDomainEntity,  # Legacy alias
+    FlextDomainValueObject,  # Legacy alias
     FlextEntityStatus,
-    FlextImmutableModel,
-    FlextMutableModel,
-    FlextOperationModel,
+    FlextModel,
+    FlextMutableModel,  # Alias for FlextEntity
+    FlextOperationModel,  # Legacy alias
     FlextOperationStatus,
-    FlextOracleModel,
-    FlextServiceModel,
+    FlextOracleModel,  # Legacy alias
+    FlextResult,
+    FlextServiceModel,  # Legacy alias
     create_database_model,
     create_operation_model,
     create_oracle_model,
@@ -39,14 +34,17 @@ from flext_core.models import (
     model_to_dict_safe,
     validate_all_models,
 )
-from flext_core.result import FlextResult
+
+from ...conftest import (
+    AssertHelpers,
+    PerformanceMonitor,
+    TestCase,
+    TestScenario,
+    assert_performance,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-
-    # Note: These modules don't exist yet - commented out to fix MyPy
-    # from flext_core.builders import FlextDatabaseModelBuilder
-    # from flext_core.snapshot import SnapshotManager
 
 # Test markers
 pytestmark = [pytest.mark.unit, pytest.mark.core]
@@ -152,11 +150,12 @@ class TestFlextModelEnumsAdvanced:
             ("data_format", list(FlextDataFormat), "Data serialization and formats"),
         ],
     )
+    @pytest.mark.usefixtures("validation_test_cases")
     def test_enum_completeness(
         self,
         enum_type: str,
         enum_values: list[object],
-        context: str,
+        context: str,  # noqa: ARG002
     ) -> None:
         """Test enum completeness and consistency."""
         # All enums should have values
@@ -373,7 +372,8 @@ class TestModelInheritanceBehaviorAdvanced:
     ) -> None:
         """Test model inheritance using structured test cases and snapshots."""
 
-        class ImmutableTest(FlextImmutableModel):
+        class ImmutableTest(FlextModel):
+            model_config: typing.ClassVar = {"frozen": True}
             name: str = ""
             value: int = 0
 
@@ -400,7 +400,7 @@ class TestModelInheritanceBehaviorAdvanced:
             )
 
             if model_type == "immutable":
-                model = ImmutableTest.model_validate(model_data)
+                model = ImmutableTest(**model_data)
                 assert model.name == input_data["name"]
                 assert model.value == input_data["value"]
 
@@ -450,7 +450,8 @@ class TestModelInheritanceBehaviorAdvanced:
     def test_inheritance_properties(self, name: str, value: int) -> None:
         """Property-based testing for inheritance behaviors."""
 
-        class ImmutableTest(FlextImmutableModel):
+        class ImmutableTest(FlextModel):
+            model_config: typing.ClassVar = {"frozen": True}
             name: str = ""
             value: int = 0
 
@@ -493,7 +494,8 @@ class TestModelInheritanceBehaviorAdvanced:
     ) -> None:
         """Test performance characteristics of different model types."""
 
-        class ImmutableTest(FlextImmutableModel):
+        class ImmutableTest(FlextModel):
+            model_config: typing.ClassVar = {"frozen": True}
             name: str = ""
             value: int = 0
 
@@ -614,7 +616,7 @@ class TestFlextDomainEntityAdvanced:
 
         # Entity invariants that should always hold
         assert entity.id == entity_id
-        assert entity.version >= 1
+        assert entity.version.root >= 1
         assert entity.status in FlextEntityStatus
         assert isinstance(entity.domain_events, list)
 
@@ -880,10 +882,10 @@ class TestModelFactoryFunctionsAdvanced:
         ]
 
     @pytest.mark.parametrize_advanced
+    @pytest.mark.usefixtures("assert_helpers", "_assert_helpers")
     def test_factory_functions_structured(
         self,
         factory_test_cases: list[TestCase],
-        assert_helpers: AssertHelpers,
     ) -> None:
         """Test factory functions using structured test cases."""
         for test_case in factory_test_cases:
@@ -958,10 +960,10 @@ class TestModelFactoryFunctionsAdvanced:
 class TestDatabaseOracleModelsAdvanced:
     """Advanced testing for database and Oracle models with comprehensive validation."""
 
+    @pytest.mark.usefixtures("assert_helpers")
     def test_database_model_with_fixtures(
         self,
         test_builder: object,  # FlextDatabaseModelBuilder (not yet implemented)
-        assert_helpers: AssertHelpers,
     ) -> None:
         """Test database model using test builder and assert helpers."""
         # Create database model data using builder
@@ -1090,11 +1092,12 @@ class TestUtilityFunctionsAdvanced:
         ],
         ids=["valid_entity", "none_input", "invalid_input", "plain_dict"],
     )
+    @pytest.mark.usefixtures("validation_test_cases")
     def test_model_to_dict_safe_parametrized(
         self,
         input_data: object,
         expected_result: dict[str, object],
-        test_description: str,
+        test_description: str,  # noqa: ARG002
     ) -> None:
         """Test model_to_dict_safe with various input types."""
         result = model_to_dict_safe(input_data)
@@ -1203,13 +1206,13 @@ class TestUtilityFunctionsAdvanced:
 class TestModelsIntegrationAdvanced:
     """Integration tests using multiple model components together."""
 
+    @pytest.mark.usefixtures("assert_helpers")
     def test_complete_model_workflow(
         self,
         test_builder: object,  # FlextDatabaseModelBuilder (not yet implemented)
         entity_factory: Callable[[str, dict[str, object]], FlextDomainEntity],
         value_object_factory: Callable[[dict[str, object]], FlextDomainValueObject],
         performance_monitor: PerformanceMonitor,
-        assert_helpers: AssertHelpers,
     ) -> None:
         """Test complete model workflow using multiple advanced fixtures."""
 

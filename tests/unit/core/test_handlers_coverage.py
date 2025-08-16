@@ -9,15 +9,15 @@ from __future__ import annotations
 
 import pytest
 
-from flext_core.handlers import (
+from flext_core import (
     FlextAuthorizingHandler,
     FlextBaseHandler,
     FlextHandlerChain,
     FlextHandlerRegistry,
     FlextMetricsHandler,
+    FlextResult,
     FlextValidatingHandler,
 )
-from flext_core.result import FlextResult
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 

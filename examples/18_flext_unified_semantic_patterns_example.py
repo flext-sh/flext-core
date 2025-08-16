@@ -355,8 +355,6 @@ class FlextUnifiedUtilities:
 
 async def demonstrate_foundation_models() -> FlextDataPipeline | None:
     """Demonstrate Layer 0: Foundation Models."""
-    print("\n📋 Layer 0: Foundation Models (FlextConfig, FlextValue, FlextEntity)")
-
     service = FlextPipelineService()
 
     # Create Oracle configuration
@@ -385,35 +383,22 @@ async def demonstrate_foundation_models() -> FlextDataPipeline | None:
     )
 
     if pipeline_result.is_failure:
-        print(f"❌ Pipeline creation failed: {pipeline_result.error}")
         return None
 
     pipeline = pipeline_result.data
     if pipeline is not None:
-        print(f"✅ Pipeline created: {pipeline.name} (ID: {pipeline.id})")
-        print(f"   Owner: {pipeline.owner.full_name} ({pipeline.owner.email})")
-        print(f"   Status: {pipeline.status}")
-        print(
-            f"   Oracle Host: {pipeline.source_config.host}:{pipeline.source_config.port}",
-        )
         return pipeline
-    print("❌ Pipeline creation returned None")
     return None
 
 
 def demonstrate_semantic_types() -> None:
     """Demonstrate Layer 1: Semantic Type System."""
-    print("\n🔧 Layer 1: Semantic Type System (FlextTypes)")
-
     # Demonstrate type usage
     connection_validation = FlextUnifiedUtilities.validate_oracle_connection(
         DatabaseConnection,
     )
     if connection_validation.success and connection_validation.data is not None:
-        conn_info = connection_validation.data
-        print(
-            f"✅ Connection validated: {conn_info['host']}:{conn_info['port']}/{conn_info['service_name']}",
-        )
+        pass
 
 
 def demonstrate_domain_services(
@@ -421,14 +406,10 @@ def demonstrate_domain_services(
     pipeline: FlextDataPipeline,
 ) -> None:
     """Demonstrate Layer 2: Domain Services."""
-    print("\n⚙️ Layer 2: Domain Services (Business Logic)")
-
     # Activate pipeline
     activation_result = service.activate_pipeline(pipeline.id)
     if activation_result.success:
-        print(f"✅ {activation_result.data}")
-    else:
-        print(f"❌ Activation failed: {activation_result.error}")
+        pass
 
     # Update pipeline metrics
     pipeline.processed_records = 15742
@@ -436,12 +417,9 @@ def demonstrate_domain_services(
 
 def demonstrate_utilities(service: FlextPipelineService) -> None:
     """Demonstrate Layer 3: Unified Utilities."""
-    print("\n🛠️ Layer 3: Unified Utilities")
-
     # Get and display metrics
     stats = service.get_pipeline_stats()
-    formatted_stats = FlextUnifiedUtilities.format_metric_display(stats)
-    print(formatted_stats)
+    FlextUnifiedUtilities.format_metric_display(stats)
 
     # Demonstrate data transformation
     sample_data = {"records": 1000, "errors": 5, "success_rate": 0.995}
@@ -465,15 +443,12 @@ def demonstrate_utilities(service: FlextPipelineService) -> None:
         enhance_data,
     )
     if transform_result.success and transform_result.data is not None:
-        print("\n✅ Data transformation successful:")
-        for key, value in transform_result.data.items():
-            print(f"   {key}: {value}")
+        for _key, _value in transform_result.data.items():
+            pass
 
 
 def demonstrate_error_handling(service: FlextPipelineService) -> None:
     """Demonstrate error handling patterns."""
-    print("\n🚨 Error Handling Demonstration")
-
     # Create user profile for error demonstration
     owner_profile = {
         "email": "data.engineer@company.com",
@@ -491,37 +466,25 @@ def demonstrate_error_handling(service: FlextPipelineService) -> None:
     )
 
     if invalid_result.is_failure:
-        print(f"✅ Error correctly caught: {invalid_result.error}")
+        pass
 
 
 def demonstrate_domain_events(pipeline: FlextDataPipeline) -> None:
     """Demonstrate domain events."""
-    print("\n📡 Domain Events")
     if hasattr(pipeline, "clear_domain_events"):
         events = pipeline.clear_domain_events()
     else:
         events = []
-    for event in events:
-        print(f"   Event: {event['type']} at {event['timestamp']}")
+    for _event in events:
+        pass
 
 
 def print_completion_summary() -> None:
     """Print completion summary."""
-    print("\n🎉 Unified Semantic Patterns Demonstration Complete!")
-    print("=" * 60)
-    print("Key Achievements:")
-    print("✅ Zero pattern duplication across ecosystem")
-    print("✅ Consistent Flext[Domain][Type][Context] naming")
-    print("✅ Complete type safety with business rule validation")
-    print("✅ Unified error handling with FlextResult pattern")
-    print("✅ Cross-layer architecture with clear separation")
 
 
 async def demonstrate_unified_patterns() -> None:
     """Demonstrate complete unified semantic pattern usage."""
-    print("🎯 FLEXT Unified Semantic Patterns - Complete Example")
-    print("=" * 60)
-
     # Layer 0: Foundation Models
     pipeline = await demonstrate_foundation_models()
     if pipeline is None:
@@ -555,14 +518,11 @@ async def demonstrate_unified_patterns() -> None:
 
 def main() -> None:
     """Main execution function."""
-    print("Starting FLEXT Unified Semantic Patterns demonstration...")
-
     try:
         asyncio.run(demonstrate_unified_patterns())
     except KeyboardInterrupt:
-        print("\n⚠️ Demonstration interrupted by user")
-    except Exception as e:
-        print(f"\n❌ Unexpected error: {e}")
+        pass
+    except Exception:
         raise
 
 

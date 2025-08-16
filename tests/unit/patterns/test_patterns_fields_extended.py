@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from flext_core.constants import FlextFieldType
-from flext_core.fields import (
+from flext_core import (
     FlextFieldRegistry,
     FlextFields,
+    FlextFieldType,
 )
 
 # Constants

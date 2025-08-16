@@ -9,6 +9,7 @@ import pytest
 from pydantic import Field, field_validator
 
 from flext_core import (
+    FlextResult,
     FlextValidationError,
     ValidatedModel,
     immutable,
@@ -25,7 +26,6 @@ from flext_core import (
     require_positive,
     safe,
 )
-from flext_core.result import FlextResult
 
 
 class FactoryProtocol(Protocol):

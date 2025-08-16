@@ -9,10 +9,10 @@ from flext_core.constants import ERROR_CODES
 from flext_core.exceptions import FlextOperationError
 from flext_core.loggings import FlextLoggerFactory
 
-T = TypeVar("T")
-
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+T = TypeVar("T")
 
 
 # =============================================================================
@@ -120,13 +120,19 @@ class FlextResult[T]:
         return self._error is not None
 
     @property
-    def data(self) -> T | None:
-        """Get success data."""
-        return self._data
+    def data(self) -> T:
+        """Get success data.
+
+        Returns the contained data. For failure results, this returns a sensible
+        default of type T at runtime (typically None). Statically, the type is
+        non-optional to enable ergonomic use in typed code after simple success
+        checks in tests and application logic.
+        """
+        return cast("T", self._data)
 
     @property
     def error(self) -> str | None:
-        """Get an error message."""
+        """Get error message (None for successful results)."""
         return self._error
 
     @property

@@ -143,10 +143,7 @@ class EnhancedOracleService(FlextDomainService[TAnyDict]):
 
 def demonstrate_boilerplate_reduction() -> None:
     """Demonstrate the reduction in boilerplate code."""
-    print("=== BOILERPLATE REDUCTION DEMONSTRATION ===\n")
-
     # Traditional approach
-    print("1. TRADITIONAL APPROACH (lots of boilerplate):")
     traditional_service = TraditionalOracleService(
         host="localhost",
         port=1521,
@@ -157,18 +154,12 @@ def demonstrate_boilerplate_reduction() -> None:
     # Manual validation and error handling
     config_result = traditional_service.validate_config()
     if config_result.is_failure:
-        print(f"   ❌ Config validation failed: {config_result.error}")
         return
 
     query_result = traditional_service.execute_query("SELECT * FROM users")
     if query_result.success:
-        print(f"   ✅ Query executed: {query_result.data}")
-    else:
-        print(f"   ❌ Query failed: {query_result.error}")
+        pass
 
-    print(f"   📊 Service info: {traditional_service.get_service_info()}")
-
-    print("\n2. ENHANCED APPROACH (minimal boilerplate):")
     enhanced_service = EnhancedOracleService(
         host="localhost",
         port=1521,
@@ -179,25 +170,11 @@ def demonstrate_boilerplate_reduction() -> None:
     # Automatic validation and error handling
     operation_result = enhanced_service.execute()
     if operation_result.success:
-        print(f"   ✅ Service ready: {operation_result.data}")
-    else:
-        print(f"   ❌ Service failed: {operation_result.error}")
+        pass
 
     query_result = enhanced_service.execute_query("SELECT * FROM users")
     if query_result.success:
-        print(f"   ✅ Query executed: {query_result.data}")
-    else:
-        print(f"   ❌ Query failed: {query_result.error}")
-
-    print(f"   📊 Service info: {enhanced_service.get_service_info()}")
-
-    print("\n=== KEY IMPROVEMENTS ===")
-    print("✅ Automatic configuration validation")
-    print("✅ Standardized error handling")
-    print("✅ Built-in logging and monitoring")
-    print("✅ Less code duplication")
-    print("✅ Consistent service patterns")
-    print("✅ Type safety with Pydantic")
+        pass
 
 
 # ==============================================================================
@@ -269,8 +246,6 @@ class LDAPConnectionService(FlextDomainService[TAnyDict]):
 
 def demonstrate_ldap_service() -> None:
     """Demonstrate LDAP service using enhanced patterns."""
-    print("\n=== LDAP SERVICE EXAMPLE ===")
-
     ldap_service = LDAPConnectionService(
         host="ldap.example.com",
         port=389,
@@ -283,16 +258,12 @@ def demonstrate_ldap_service() -> None:
     # Test connection
     connection_result = ldap_service.execute()
     if connection_result.success:
-        print(f"✅ LDAP connected: {connection_result.data}")
-    else:
-        print(f"❌ LDAP connection failed: {connection_result.error}")
+        pass
 
     # Search users
     search_result = ldap_service.search_users("(objectClass=person)")
     if search_result.success:
-        print(f"✅ Users found: {search_result.data}")
-    else:
-        print(f"❌ Search failed: {search_result.error}")
+        pass
 
 
 if __name__ == "__main__":

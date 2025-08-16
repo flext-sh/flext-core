@@ -34,6 +34,31 @@ class FlextConstants:
         MAX_BRANCHES_ALLOWED = 12
         MAX_RETURN_STATEMENTS_ALLOWED = 6
 
+    class Network:
+        """Network and port constants."""
+
+        # Port ranges
+        MIN_PORT = 1
+        MAX_PORT = 65535
+
+        # Common service ports
+        HTTP_PORT = 80
+        HTTPS_PORT = 443
+        LDAP_PORT = 389
+        LDAPS_PORT = 636
+
+    class Validation:
+        """Validation constants."""
+
+        # String length limits
+        MIN_SERVICE_NAME_LENGTH = 2
+        MAX_SERVICE_NAME_LENGTH = 64
+        MIN_SECRET_KEY_LENGTH = 32
+
+        # Percentage limits
+        MIN_PERCENTAGE = 0.0
+        MAX_PERCENTAGE = 100.0
+
     class Errors:
         """Error codes and messages."""
 
@@ -408,6 +433,160 @@ class FlextConstants:
         FLEXT_SERIALIZATION_VERSION = "1.0.0"
         SERIALIZATION_FORMAT_JSON = "json"
         SERIALIZATION_FORMAT_JSON_COMPRESSED = "json_compressed"
+
+    # NEW: Handler system constants (ADDED from string mapping analysis)
+    class Handlers:
+        """Handler system constants for command/query processing."""
+
+        # Handler registration errors
+        HANDLER_NOT_FOUND: ClassVar[str] = "Handler not found"
+        HANDLER_ALREADY_REGISTERED: ClassVar[str] = "Handler already registered"
+        HANDLER_NOT_CALLABLE: ClassVar[str] = "Handler is not callable"
+        NO_HANDLER_REGISTERED: ClassVar[str] = "No handler registered for type"
+        REGISTRY_NOT_FOUND: ClassVar[str] = "No handlers registry found"
+
+        # Permission and authorization
+        MISSING_PERMISSION: ClassVar[str] = "Missing permission"
+        PERMISSION_DENIED: ClassVar[str] = "Permission denied"
+        AUTH_REQUIRED: ClassVar[str] = "Authentication required"
+
+        # Event processing
+        EVENT_PROCESSING_FAILED: ClassVar[str] = "Event processing failed"
+        EVENT_HANDLER_FAILED: ClassVar[str] = "Event handler failed"
+        CHAIN_HANDLER_FAILED: ClassVar[str] = "Chain handler failed"
+        METRICS_COLLECTION_FAILED: ClassVar[str] = "Metrics collection failed"
+
+        # Handler validation errors
+        REQUEST_CANNOT_BE_NONE: ClassVar[str] = "Request cannot be None"
+        MESSAGE_CANNOT_BE_NONE: ClassVar[str] = "Message cannot be None"
+        VALIDATION_FAILED: ClassVar[str] = "Validation failed"
+        EVENT_MISSING_TYPE: ClassVar[str] = "Event missing event_type"
+        NO_USER_IN_CONTEXT: ClassVar[str] = "No user in context"
+        INVALID_PERMISSIONS_FORMAT: ClassVar[str] = (
+            "Invalid permissions format in context"
+        )
+        HANDLER_NAME_EMPTY: ClassVar[str] = "Handler name must be a non-empty string"
+        INVALID_HANDLER_PROVIDED: ClassVar[str] = "Invalid handler provided"
+        HANDLER_NAME_MUST_BE_STRING: ClassVar[str] = "Handler name must be a string"
+        NO_HANDLER_COULD_PROCESS: ClassVar[str] = "No handler could process the request"
+        CHAIN_PROCESSING_FAILED: ClassVar[str] = "Chain processing failed"
+        NOT_IMPLEMENTED: ClassVar[str] = "Not implemented"
+        AUTHORIZATION_FAILED: ClassVar[str] = "Authorization failed"
+        QUERY_HANDLER_NOT_IMPLEMENTED: ClassVar[str] = "Query handler not implemented"
+
+        # Handler templates (for f-strings)
+        HANDLER_NOT_FOUND_TEMPLATE: ClassVar[str] = (
+            "Handler '{name}' not found. Available: {available}"
+        )
+        MISSING_PERMISSION_TEMPLATE: ClassVar[str] = "Missing permission: {permission}"
+        EVENT_PROCESSING_FAILED_TEMPLATE: ClassVar[str] = (
+            "Event processing failed: {error}"
+        )
+        HANDLER_FAILED_TEMPLATE: ClassVar[str] = "Handler failed: {error}"
+        NO_HANDLER_FOR_TYPE_TEMPLATE: ClassVar[str] = (
+            "No handler registered for {type_name}"
+        )
+        CHAIN_HANDLER_FAILED_TEMPLATE: ClassVar[str] = "Chain handler failed: {error}"
+        METRICS_FAILED_TEMPLATE: ClassVar[str] = "Metrics collection failed: {error}"
+        NO_HANDLER_FOR_COMMAND_TEMPLATE: ClassVar[str] = (
+            "No handler registered for {command_type}"
+        )
+        NO_HANDLER_FOR_QUERY_TEMPLATE: ClassVar[str] = (
+            "No handler registered for {query_type}"
+        )
+
+    # NEW: Entity system constants (ADDED from string mapping analysis)
+    class Entities:
+        """Entity system constants for domain modeling."""
+
+        # Entity validation
+        ENTITY_ID_INVALID: ClassVar[str] = "Invalid entity ID"
+        ENTITY_ID_EMPTY: ClassVar[str] = "Entity ID cannot be empty"
+        ENTITY_NAME_EMPTY: ClassVar[str] = "Entity name cannot be empty"
+        ENTITY_VALIDATION_FAILED: ClassVar[str] = "Entity validation failed"
+
+        # Cache operations
+        CACHE_KEY_TEMPLATE: ClassVar[str] = "{class_name}:{id}"
+        CACHE_KEY_HASH_TEMPLATE: ClassVar[str] = "{class_name}:{hash}"
+
+        # Entity operations
+        OPERATION_LOG_TEMPLATE: ClassVar[str] = "Operation: {operation}"
+        ENTITY_CREATED: ClassVar[str] = "Entity created"
+        ENTITY_UPDATED: ClassVar[str] = "Entity updated"
+        ENTITY_DELETED: ClassVar[str] = "Entity deleted"
+
+        # Entity state
+        ENTITY_ACTIVE: ClassVar[str] = "Entity is active"
+        ENTITY_INACTIVE: ClassVar[str] = "Entity is inactive"
+        ENTITY_STATE_INVALID: ClassVar[str] = "Invalid entity state"
+
+        # Entity templates
+        INVALID_ENTITY_ID_TEMPLATE: ClassVar[str] = "Invalid entity ID: {entity_id}"
+        ENTITY_NOT_FOUND_TEMPLATE: ClassVar[str] = "Entity not found: {entity_id}"
+        ENTITY_OPERATION_TEMPLATE: ClassVar[str] = "Entity {operation}: {entity_id}"
+
+    # NEW: Validation system constants (EXPANDED from string mapping analysis)
+    class ValidationSystem:
+        """Extended validation constants beyond basic patterns."""
+
+        # Error categories
+        VALIDATION_ERROR_CATEGORY: ClassVar[str] = "VALIDATION"
+        BUSINESS_ERROR_CATEGORY: ClassVar[str] = "BUSINESS"
+        INFRASTRUCTURE_ERROR_CATEGORY: ClassVar[str] = "INFRASTRUCTURE"
+        CONFIGURATION_ERROR_CATEGORY: ClassVar[str] = "CONFIGURATION"
+        GENERAL_ERROR_CATEGORY: ClassVar[str] = "GENERAL"
+
+        # Value object validation
+        VALUE_OBJECT_INVALID: ClassVar[str] = "Value object validation failed"
+        VALUE_OBJECT_EMPTY: ClassVar[str] = "Value object cannot be empty"
+        VALUE_OBJECT_FORMAT_INVALID: ClassVar[str] = "Invalid value object format"
+
+        # Type validation
+        TYPE_MISMATCH: ClassVar[str] = "Type mismatch error"
+        TYPE_CONVERSION_FAILED: ClassVar[str] = "Type conversion failed"
+        TYPE_VALIDATION_FAILED: ClassVar[str] = "Type validation failed"
+
+        # Business rule validation
+        BUSINESS_RULE_VIOLATED: ClassVar[str] = "Business rule violated"
+        DOMAIN_RULE_VIOLATION: ClassVar[str] = "Domain rule violation"
+        INVARIANT_VIOLATION: ClassVar[str] = "Invariant violation"
+
+        # Validation templates
+        VALIDATION_ERROR_TEMPLATE: ClassVar[str] = "Validation failed: {details}"
+        BUSINESS_RULE_TEMPLATE: ClassVar[str] = "Business rule violation: {rule}"
+        TYPE_ERROR_TEMPLATE: ClassVar[str] = (
+            "Type error: expected {expected}, got {actual}"
+        )
+
+    # NEW: Infrastructure messaging constants (EXPANDED from string mapping analysis)
+    class InfrastructureMessages:
+        """Infrastructure layer messaging constants."""
+
+        # Serialization
+        SERIALIZATION_FAILED: ClassVar[str] = "Serialization failed"
+        DESERIALIZATION_FAILED: ClassVar[str] = "Deserialization failed"
+        SERIALIZATION_WARNING: ClassVar[str] = "Serialization warning"
+
+        # Delegation system
+        DELEGATION_SUCCESS: ClassVar[str] = "SUCCESS"
+        DELEGATION_FAILED: ClassVar[str] = "FAILED"
+        DELEGATION_STATUS_TEMPLATE: ClassVar[str] = "status: {status}"
+
+        # Configuration
+        CONFIG_LOADING: ClassVar[str] = "Loading configuration"
+        CONFIG_LOADED: ClassVar[str] = "Configuration loaded"
+        CONFIG_FAILED: ClassVar[str] = "Configuration loading failed"
+        CONFIG_FORMAT_JSON: ClassVar[str] = "json"
+
+        # Logging and monitoring
+        OPERATION_STARTED: ClassVar[str] = "Operation started"
+        OPERATION_COMPLETED: ClassVar[str] = "Operation completed"
+        OPERATION_FAILED: ClassVar[str] = "Operation failed"
+
+        # Infrastructure templates
+        SERIALIZATION_ERROR_TEMPLATE: ClassVar[str] = "Serialization error: {error}"
+        CONFIG_ERROR_TEMPLATE: ClassVar[str] = "Configuration error: {details}"
+        OPERATION_LOG_TEMPLATE: ClassVar[str] = "Operation {operation}: {status}"
 
     # NEW: Platform constants (FLEXT specific infrastructure)
     class Platform:

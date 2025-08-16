@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from flext_core.loggings import (
+from flext_core import (
     FlextLogContext,
     FlextLogger,
     FlextLogLevel,

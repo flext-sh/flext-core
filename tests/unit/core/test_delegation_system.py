@@ -12,13 +12,14 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from flext_core.delegation_system import (
+from flext_core import (
     FlextMixinDelegator,
+    FlextOperationError,
+    FlextResult,
+    FlextTypeError,
     create_mixin_delegator,
     validate_delegation_system,
 )
-from flext_core.exceptions import FlextOperationError, FlextTypeError
-from flext_core.result import FlextResult
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -648,7 +649,7 @@ class TestValidateDelegationSystem:
             mock_host.delegator = mock_delegator
             mock_host.is_valid = "not_a_bool"
 
-            def mock_create_delegator(host: object, *mixins: type) -> Mock:
+            def mock_create_delegator(host: object, *_mixins: type) -> Mock:
                 # Use dynamic attribute access in test mocking
                 host.delegator = mock_delegator
                 host.is_valid = "not_a_bool"
@@ -1084,7 +1085,7 @@ class TestDelegationSystemIntegration:
                         "value",
                         f"mixin_{mixin_id}",
                     ),
-                    f"mixin_method_{i}": lambda self,
+                    f"mixin_method_{i}": lambda _self,
                     mixin_id=i: f"mixin_method_{mixin_id}",
                 },
             )

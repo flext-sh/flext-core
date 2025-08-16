@@ -4,8 +4,7 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
-from flext_core.aggregate_root import FlextAggregateRoot
-from flext_core.result import FlextResult
+from flext_core import FlextAggregateRoot, FlextResult
 
 
 class TestAggregateRoot(FlextAggregateRoot):

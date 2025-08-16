@@ -146,11 +146,13 @@ class TestUser(FlextEntity):
     status: TestUserStatus = TestUserStatus.ACTIVE
     balance: Decimal = Decimal("0.00")
 
-    @classmethod
     @field_validator("name")
+    @classmethod
     def validate_name(cls, v: str) -> str:
         """Validate name field at Pydantic level."""
-        # Domain validation handles empty strings; ensure non-None type here
+        if not v or not v.strip():
+            empty_name_error = "Name cannot be empty"
+            raise ValueError(empty_name_error)
         return v
 
     def validate_domain_rules(self) -> FlextResult[None]:
@@ -245,7 +247,7 @@ class TestProduct(FlextEntity):
 
         return FlextResult.ok(None)
 
-    def update_stock(self, *, in_stock: bool) -> FlextResult[None]:
+    def update_stock(self, *, _in_stock: bool) -> FlextResult[None]:
         """Update stock status."""
         # Simulate stock update
         return FlextResult.ok(None)
