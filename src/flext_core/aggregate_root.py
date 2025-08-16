@@ -11,11 +11,12 @@ from flext_core.models import FlextEntity
 from flext_core.payload import FlextEvent
 from flext_core.result import FlextResult
 from flext_core.root_models import FlextEventList
-from flext_core.typings import TAnyDict
 from flext_core.utilities import FlextGenerators
 
 if TYPE_CHECKING:
     from datetime import datetime
+
+    from flext_core.typings import TAnyDict
 
 
 class FlextAggregateRoot(FlextEntity):

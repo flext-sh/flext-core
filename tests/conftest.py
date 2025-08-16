@@ -24,7 +24,6 @@ from unittest.mock import AsyncMock, MagicMock, Mock
 
 import pytest
 import structlog
-from _pytest.fixtures import SubRequest
 from hypothesis import strategies as st
 
 from flext_core import (
@@ -43,6 +42,8 @@ from flext_core import (
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator
+
+    from _pytest.fixtures import SubRequest
 
 
 # Type variables for generic fixtures

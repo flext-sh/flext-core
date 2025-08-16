@@ -6,14 +6,17 @@ import json
 import time
 from abc import ABC, abstractmethod
 from contextlib import suppress
+from typing import TYPE_CHECKING
 
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextValidationError
 from flext_core.loggings import FlextLoggerFactory
-from flext_core.protocols import FlextLoggerProtocol
 from flext_core.result import FlextResult
-from flext_core.typings import TEntityId
 from flext_core.utilities import FlextGenerators
+
+if TYPE_CHECKING:
+    from flext_core.protocols import FlextLoggerProtocol
+    from flext_core.typings import TEntityId
 
 # =============================================================================
 # ABSTRACT BASE CLASSES - Foundation mixin patterns
@@ -366,7 +369,7 @@ class FlextIdentifiableMixin(FlextAbstractIdentifiableMixin):
             raise FlextValidationError(
                 msg,
                 field="entity_id",
-                validation_details={"field": "entity_id", "value": entity_id},
+                value=entity_id,
             )
 
     def generate_id(self) -> None:

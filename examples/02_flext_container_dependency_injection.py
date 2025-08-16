@@ -305,7 +305,24 @@ class EmailService(ABC):
 
     @abstractmethod
     def send_email(self, to: str, subject: str, body: str) -> FlextResult[str]:
-        """Send email and return message ID."""
+        """Send email and return message ID.
+
+        Args:
+            to: Destination email address.
+            subject: Email subject line.
+            body: Email message body.
+
+        Returns:
+            FlextResult containing the generated message identifier.
+
+        """
+        preview_len = 30
+        preview = (body[:preview_len] + "...") if len(body) > preview_len else body
+        _ = preview  # ensure variables are used for linting purposes
+
+        # Simulate email sending
+        message_id: str = FlextUtilities.generate_entity_id()
+        return FlextResult.ok(message_id)
 
 
 class UserRepository(ABC):
@@ -396,7 +413,7 @@ class SMTPEmailService(EmailService):
         self.smtp_port = smtp_port
         self.service_id: TEntityId = FlextUtilities.generate_entity_id()
 
-    def send_email(self, to: str, subject: str, body: str) -> FlextResult[str]:
+    def send_email(self, to: str, subject: str, body: str) -> FlextResult[str]:  # noqa: ARG002
         """Send email and return message ID.
 
         Args:
@@ -964,7 +981,7 @@ class MockUserRepository(UserRepository):
 class MockNotificationService(NotificationService):
     """Mock notification service implementation for testing."""
 
-    def notify_user_created(self, user: SharedUser) -> FlextResult[None]:
+    def notify_user_created(self, user: SharedUser) -> FlextResult[None]:  # noqa: ARG002
         """Send mock notification for user creation.
 
         Args:
@@ -1041,7 +1058,8 @@ class MockUserManagementServiceFactoryCreator:
         """Create factory function for mock UserManagementService."""
 
         def mock_user_management_factory() -> object:
-            # FlextContainer expects factories to return services directly,\n            # not FlextResult
+            # FlextContainer expects factories to return services directly,
+            # not FlextResult
             user_repo_result = self._container.get("UserRepository")
             if user_repo_result.is_failure:
                 msg = f"UserRepository not available: {user_repo_result.error}"

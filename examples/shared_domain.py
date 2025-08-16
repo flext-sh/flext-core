@@ -1005,7 +1005,7 @@ class SharedDemonstrationPattern:
 
     @staticmethod
     def run_demonstration(
-        title: str,
+        title: str,  # noqa: ARG004
         demonstration_functions: list[Callable[[], None]],
     ) -> None:
         """Run a demonstration with consistent formatting and error handling."""

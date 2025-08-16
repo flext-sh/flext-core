@@ -12,8 +12,8 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_valida
 from flext_core import (
     FlextAggregateRoot,
     FlextEntity,
-    FlextEntityFactory,
     FlextEvent,
+    FlextFactory,
     FlextResult,
     FlextValueObject,
 )
@@ -29,7 +29,7 @@ EXPECTED_DATA_COUNT = 3
 def create_test_entity(entity_class: type, **kwargs: object) -> object:
     """Create test entities using factory with proper DDD validation."""
     # Get the factory function directly (not a FlextResult)
-    factory = FlextEntityFactory.create_entity_factory(entity_class)
+    factory = FlextFactory.create_entity_factory(entity_class)
 
     if not callable(factory):
         factory_msg: str = f"Factory for {entity_class.__name__} is not callable"
@@ -262,7 +262,7 @@ class TestFlextEntity:
     def test_entity_validation_error(self) -> None:
         """Test entity validation with invalid data."""
         # Test validation error via factory directly
-        factory_fn = FlextEntityFactory.create_entity_factory(SampleEntity)
+        factory_fn = FlextFactory.create_entity_factory(SampleEntity)
         # Cast to callable returning FlextResult (avoiding explicit Any)
         entity_factory = cast("Callable[[], FlextResult[object]]", factory_fn)
         factory_result = entity_factory()  # Missing required 'name' field

@@ -25,8 +25,15 @@ class DemonstrationSectionHelper:
     """Helper to reduce repetitive demonstration patterns - SOLID SRP."""
 
     @staticmethod
-    def print_section_header(example_num: int, title: str) -> None:
-        """DRY Helper: Print standardized section headers."""
+    def print_section_header(_example_num: int, _title: str) -> None:
+        """DRY Helper: Print standardized section headers.
+
+        Args:
+            _example_num: Example number (for display only).
+            _title: Section title (for display only).
+
+        """
+        # Acknowledge params for Ruff ARG00*
         "\n" + "=" * 60
 
     @staticmethod

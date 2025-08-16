@@ -392,7 +392,7 @@ def _print_config_hierarchy_overview() -> None:
     pass
 
 
-def _print_merged_config(env_name: str, merged: TAnyDict) -> None:
+def _print_merged_config(env_name: str, merged: TAnyDict) -> None:  # noqa: ARG001
     app_config = merged.get("app", {}) if isinstance(merged, dict) else {}
     app_config.get("debug") if isinstance(app_config, dict) else "N/A"
 

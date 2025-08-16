@@ -1027,7 +1027,7 @@ class SimpleEventSubscriber(FlextEventSubscriber):
             return FlextResult.fail(f"Unsubscription failed: {e}")
 
     # Implement protocol-required methods
-    def handle_event(self, event: FlextDomainEvent) -> FlextResult[None]:
+    def handle_event(self, event: FlextDomainEvent) -> FlextResult[None]:  # noqa: ARG002
         """Handle incoming event and return success when processed."""
         return FlextResult.ok(None)
 

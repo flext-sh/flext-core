@@ -74,6 +74,11 @@ from flext_core.constants import (
     FlextLogLevel,
     FlextOperationStatus,
 )
+
+# Performance constants needed by tests
+BYTES_PER_KB = FlextConstants.Performance.BYTES_PER_KB
+SECONDS_PER_MINUTE = FlextConstants.Performance.SECONDS_PER_MINUTE
+SECONDS_PER_HOUR = FlextConstants.Performance.SECONDS_PER_HOUR
 from flext_core.container import (
     FlextContainer,
     FlextContainerUtils,
@@ -258,17 +263,13 @@ from flext_core.mixins import (
 # Domain models
 from flext_core.models import (
     # Additional models
-    FlextBaseModel,
     DomainEventDict,
     FlextAuth,
     FlextConnectionDict,
     FlextData,
     FlextDatabaseModel,
-    FlextDomainEntity,
-    FlextDomainValueObject,
     FlextEntity,
     FlextEntityDict,
-    FlextEntityFactory,
     FlextFactory,
     FlextLegacyConfig,
     FlextModel,
@@ -312,6 +313,15 @@ from flext_core.observability import (
     get_observability,
     get_simple_observability,
     reset_global_observability,
+)
+
+# Legacy compatibility imports needed by tests
+from flext_core.legacy import (
+    _BaseConfigDefaults,
+    BaseConfigManager,
+    ConsoleLogger,
+    FlextValueObjectFactory,
+    LegacyCompatibleCacheableMixin,
 )
 
 # Payload
@@ -518,6 +528,7 @@ from flext_core.validation import (
     FlextValidation,
     FlextValidators,
     flext_validate_email,
+    flext_validate_non_empty_string,
     flext_validate_numeric,
     flext_validate_required,
     flext_validate_service_name,
@@ -537,7 +548,7 @@ except Exception:  # pragma: no cover
 from contextlib import suppress
 
 with suppress(
-    Exception
+    Exception,
 ):  # pragma: no cover - compatibility shim for dynamic import tests
     # Attach a 'constants' attribute on the flext_core function object
     # Note: This is a compatibility shim for tests, not for production use
@@ -626,7 +637,7 @@ __all__: list[str] = [
     "FlextBaseConfigModel",
     "FlextSettings",
     "FlextModel",
-    "FlextBaseModel",
+    "FlextModel",
     # Additional config classes
     "FlextAbstractConfig",
     "FlextAbstractSettings",
@@ -672,9 +683,9 @@ __all__: list[str] = [
     "SERVICE_NAME_EMPTY",
     "FlextEntity",
     "FlextValue",
-    "FlextDomainEntity",
+    "FlextEntity",
     "FlextFactory",
-    "FlextEntityFactory",
+    "FlextFactory",
     "DomainEventDict",
     "FlextData",
     "FlextAuth",
@@ -683,7 +694,7 @@ __all__: list[str] = [
     "FlextValueObjectDict",
     "FlextOperationDict",
     "FlextConnectionDict",
-    "FlextDomainValueObject",
+    "FlextValue",
     "FlextDatabaseModel",
     "FlextOracleModel",
     "FlextLegacyConfig",
@@ -996,6 +1007,18 @@ __all__: list[str] = [
     "flext_record_performance",
     "flext_track_performance",
     "generate_iso_timestamp",
+    # Constants needed by tests
+    "BYTES_PER_KB",
+    "SECONDS_PER_MINUTE",
+    "SECONDS_PER_HOUR",
+    # Legacy compatibility exports
+    "ConsoleLogger",
+    "BaseConfigManager",
+    "LegacyCompatibleCacheableMixin",
+    "FlextEntity",
+    "_BaseConfigDefaults",
+    "flext_validate_non_empty_string",
+    "FlextValueObjectFactory",
     # Delegation System
     "FlextDelegatedProperty",
     "FlextMixinDelegator",
@@ -1016,4 +1039,36 @@ __all__: list[str] = [
     "ITestMocker",
     "TTestData",
     "TTestConfig",
+    # Additional back-compatibility exports that tests need
+    "FlextAbstractConfig",
+    "FlextAbstractSettings",
+    "FlextApplicationConfig",
+    "FlextConfigBuilder",
+    "FlextConfigLoaderProtocol",
+    "FlextConfigManager",
+    "FlextConfigMergerProtocol",
+    "FlextConfigOperations",
+    "FlextConfigSerializerProtocol",
+    "FlextConfigValidator",
+    "FlextConfigValidatorProtocol",
+    "FlextDataIntegrationConfig",
+    "FlextPerformanceConfig",
+    "FlextDatabaseConfigDict",
+    "FlextJWTConfigDict",
+    "FlextLDAPConfigDict",
+    "FlextObservabilityConfigDict",
+    "FlextOracleConfigDict",
+    "FlextRedisConfigDict",
+    "FlextSingerConfigDict",
+    "create_config",
+    "load_config_from_file",
+    "DEFAULT_TIMEOUT",
+    "DEFAULT_RETRIES",
+    "DEFAULT_PAGE_SIZE",
+    "DEFAULT_LOG_LEVEL",
+    "DEFAULT_ENVIRONMENT",
+    "CONFIG_VALIDATION_MESSAGES",
+    # Modern aliases that match the updated pattern
+    "FlextValue",
+    "FlextEntity",
 ]

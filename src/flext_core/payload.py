@@ -7,7 +7,7 @@ import time
 import zlib
 from base64 import b64decode, b64encode
 from collections.abc import Callable, Mapping
-from typing import TypeVar, cast
+from typing import TYPE_CHECKING, TypeVar, cast
 
 from pydantic import (
     BaseModel,
@@ -26,8 +26,10 @@ from flext_core.mixins import (
     FlextSerializableMixin,
 )
 from flext_core.result import FlextResult
-from flext_core.typings import TValue
 from flext_core.validation import FlextValidators
+
+if TYPE_CHECKING:
+    from flext_core.typings import TValue
 
 # =============================================================================
 # CROSS-SERVICE SERIALIZATION CONSTANTS AND TYPES
@@ -322,7 +324,7 @@ class FlextPayload[T](
 
     @field_serializer("metadata", when_used="always")
     def serialize_metadata_enhanced(
-        self, value: dict[str, object]
+        self, value: dict[str, object],
     ) -> dict[str, object]:
         """Enhanced metadata serialization with payload context."""
         enhanced_metadata = dict(value)
@@ -333,7 +335,7 @@ class FlextPayload[T](
     @model_serializer(mode="wrap", when_used="json")
     def serialize_payload_for_api(
         self,
-        serializer: object,
+        serializer: Callable[[FlextPayload[T]], dict[str, object] | object],
         info: object,
     ) -> dict[str, object] | object:
         """Model serializer for API output with comprehensive payload metadata."""
