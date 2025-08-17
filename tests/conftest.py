@@ -56,86 +56,86 @@ def pytest_configure(config: pytest.Config) -> None:
     """Configure pytest with custom markers for organized test execution."""
     # Basic markers
     config.addinivalue_line(
-      "markers",
-      "unit: marks tests as unit tests (deselect with '-m \"not unit\"')",
+        "markers",
+        "unit: marks tests as unit tests (deselect with '-m \"not unit\"')",
     )
     config.addinivalue_line(
-      "markers",
-      "integration: marks tests as integration tests",
+        "markers",
+        "integration: marks tests as integration tests",
     )
     config.addinivalue_line(
-      "markers",
-      "e2e: marks tests as end-to-end tests",
+        "markers",
+        "e2e: marks tests as end-to-end tests",
     )
     config.addinivalue_line(
-      "markers",
-      "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+        "markers",
+        "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     )
     config.addinivalue_line(
-      "markers",
-      "pep8: marks tests for PEP8 compliance validation",
+        "markers",
+        "pep8: marks tests for PEP8 compliance validation",
     )
     config.addinivalue_line(
-      "markers",
-      "core: marks tests for core framework functionality",
+        "markers",
+        "core: marks tests for core framework functionality",
     )
     config.addinivalue_line(
-      "markers",
-      "architecture: marks tests for architectural patterns",
+        "markers",
+        "architecture: marks tests for architectural patterns",
     )
     config.addinivalue_line(
-      "markers",
-      "ddd: marks tests for domain-driven design",
+        "markers",
+        "ddd: marks tests for domain-driven design",
     )
     config.addinivalue_line(
-      "markers",
-      "happy_path: marks tests for successful execution paths",
+        "markers",
+        "happy_path: marks tests for successful execution paths",
     )
     config.addinivalue_line(
-      "markers",
-      "error_path: marks tests for error handling and failure scenarios",
+        "markers",
+        "error_path: marks tests for error handling and failure scenarios",
     )
     config.addinivalue_line(
-      "markers",
-      "boundary: marks tests for boundary conditions and edge cases",
+        "markers",
+        "boundary: marks tests for boundary conditions and edge cases",
     )
     config.addinivalue_line(
-      "markers",
-      "regression: marks tests for preventing regression bugs",
+        "markers",
+        "regression: marks tests for preventing regression bugs",
     )
 
     # Advanced markers
     config.addinivalue_line(
-      "markers",
-      "parametrize_advanced: marks tests using advanced parametrization",
+        "markers",
+        "parametrize_advanced: marks tests using advanced parametrization",
     )
     config.addinivalue_line(
-      "markers",
-      "hypothesis: marks property-based tests using hypothesis",
+        "markers",
+        "hypothesis: marks property-based tests using hypothesis",
     )
     config.addinivalue_line(
-      "markers",
-      "benchmark: marks performance benchmark tests",
+        "markers",
+        "benchmark: marks performance benchmark tests",
     )
     config.addinivalue_line(
-      "markers",
-      "asyncio: marks async tests requiring event loop",
+        "markers",
+        "asyncio: marks async tests requiring event loop",
     )
     config.addinivalue_line(
-      "markers",
-      "snapshot: marks tests using snapshot testing",
+        "markers",
+        "snapshot: marks tests using snapshot testing",
     )
     config.addinivalue_line(
-      "markers",
-      "flaky: marks tests that may fail intermittently",
+        "markers",
+        "flaky: marks tests that may fail intermittently",
     )
     config.addinivalue_line(
-      "markers",
-      "mock_heavy: marks tests with extensive mocking",
+        "markers",
+        "mock_heavy: marks tests with extensive mocking",
     )
     config.addinivalue_line(
-      "markers",
-      "async_integration: marks async integration tests",
+        "markers",
+        "async_integration: marks async integration tests",
     )
 
 
@@ -144,8 +144,8 @@ def reset_environment(monkeypatch: pytest.MonkeyPatch) -> None:
     """Reset environment variables that might interfere with tests."""
     # Clear any FLEXT environment variables that might interfere
     for key in list(os.environ.keys()):
-      if key.startswith("FLEXT_"):
-          monkeypatch.delenv(key, raising=False)
+        if key.startswith("FLEXT_"):
+            monkeypatch.delenv(key, raising=False)
 
     # Set test environment
     monkeypatch.setenv("FLEXT_ENV", "test")
@@ -166,25 +166,25 @@ class TestDataBuilder[T]:
     _type: type[T] | None = None
 
     def with_field(self, name: str, value: object) -> TestDataBuilder[T]:
-      """Add field to test data."""
-      self._data[name] = value
-      return self
+        """Add field to test data."""
+        self._data[name] = value
+        return self
 
     def with_id(self, id_value: str) -> TestDataBuilder[T]:
-      """Add ID to test data."""
-      return self.with_field("id", id_value)
+        """Add ID to test data."""
+        return self.with_field("id", id_value)
 
     def with_status(self, status: FlextEntityStatus) -> TestDataBuilder[T]:
-      """Add status to test data."""
-      return self.with_field("status", status)
+        """Add status to test data."""
+        return self.with_field("status", status)
 
     def build(self) -> dict[str, object]:
-      """Build the test data dictionary."""
-      return self._data.copy()
+        """Build the test data dictionary."""
+        return self._data.copy()
 
     def build_as(self, cls: type[T]) -> T:
-      """Build as specific type."""
-      return cls(**self._data)
+        """Build as specific type."""
+        return cls(**self._data)
 
 
 @pytest.fixture
@@ -235,25 +235,25 @@ def fixture_factory() -> Callable[[str, object], object]:
     created_fixtures: dict[str, object] = {}
 
     def _create_fixture(name: str, value: object) -> object:
-      if name not in created_fixtures:
-          created_fixtures[name] = value
-      return created_fixtures[name]
+        if name not in created_fixtures:
+            created_fixtures[name] = value
+        return created_fixtures[name]
 
     return _create_fixture
 
 
 @pytest.fixture(
     params=[
-      {"type": "minimal", "fields": 1},
-      {"type": "standard", "fields": 5},
-      {"type": "complex", "fields": 10},
+        {"type": "minimal", "fields": 1},
+        {"type": "standard", "fields": 5},
+        {"type": "complex", "fields": 10},
     ],
 )
 def parametrized_data(request: SubRequest) -> dict[str, object]:
     """Parametrized fixture providing various data complexities."""
     config = request.param
     data: dict[str, object] = {
-      f"field_{i}": f"value_{i}" for i in range(config["fields"])
+        f"field_{i}": f"value_{i}" for i in range(config["fields"])
     }
     data["_type"] = config["type"]
     return data
@@ -271,15 +271,15 @@ def sample_data() -> dict[str, object]:
 
     """
     return {
-      "string": "test_string",
-      "integer": 42,
-      "float": math.pi,
-      "boolean": True,
-      "list": [1, 2, 3],
-      "dict": {"key": "value"},
-      "none": None,
-      "timestamp": datetime.now(UTC).isoformat(),
-      "uuid": "550e8400-e29b-41d4-a716-446655440000",
+        "string": "test_string",
+        "integer": 42,
+        "float": math.pi,
+        "boolean": True,
+        "list": [1, 2, 3],
+        "dict": {"key": "value"},
+        "none": None,
+        "timestamp": datetime.now(UTC).isoformat(),
+        "uuid": "550e8400-e29b-41d4-a716-446655440000",
     }
 
 
@@ -287,17 +287,17 @@ def sample_data() -> dict[str, object]:
 def hypothesis_strategies() -> dict[str, object]:
     """Hypothesis strategies for property-based testing."""
     return {
-      "valid_email": st.emails(),
-      "valid_uuid": st.uuids(),
-      "valid_text": st.text(min_size=1, max_size=100),
-      "valid_integer": st.integers(min_value=0, max_value=1000),
-      "valid_float": st.floats(min_value=0.0, max_value=1000.0, allow_nan=False),
-      "valid_datetime": st.datetimes(
-          min_value=datetime(2020, 1, 1, tzinfo=UTC),
-          max_value=datetime(2030, 12, 31, tzinfo=UTC),
-      ),
-      "entity_status": st.sampled_from(list(FlextEntityStatus)),
-      "operation_status": st.sampled_from(list(FlextOperationStatus)),
+        "valid_email": st.emails(),
+        "valid_uuid": st.uuids(),
+        "valid_text": st.text(min_size=1, max_size=100),
+        "valid_integer": st.integers(min_value=0, max_value=1000),
+        "valid_float": st.floats(min_value=0.0, max_value=1000.0, allow_nan=False),
+        "valid_datetime": st.datetimes(
+            min_value=datetime(2020, 1, 1, tzinfo=UTC),
+            max_value=datetime(2030, 12, 31, tzinfo=UTC),
+        ),
+        "entity_status": st.sampled_from(list(FlextEntityStatus)),
+        "operation_status": st.sampled_from(list(FlextOperationStatus)),
     }
 
 
@@ -313,13 +313,13 @@ def sample_metadata() -> dict[str, str | float | list[str] | None]:
 
     """
     return {
-      "source": "test_suite",
-      "timestamp": datetime.now(UTC).timestamp(),
-      "version": "1.0.0",
-      "tags": ["unit", "test", "flext-core"],
-      "correlation_id": "test-correlation-12345",
-      "trace_id": "test-trace-67890",
-      "environment": "test",
+        "source": "test_suite",
+        "timestamp": datetime.now(UTC).timestamp(),
+        "version": "1.0.0",
+        "tags": ["unit", "test", "flext-core"],
+        "correlation_id": "test-correlation-12345",
+        "trace_id": "test-trace-67890",
+        "environment": "test",
     }
 
 
@@ -335,13 +335,13 @@ def error_context() -> dict[str, str | None]:
 
     """
     return {
-      "error_code": "TEST_ERROR_001",
-      "severity": "medium",
-      "component": "test_module",
-      "user_id": "test_user_123",
-      "request_id": "test-request-456",
-      "timestamp": datetime.now(UTC).isoformat(),
-      "stack_trace": None,  # Populated by actual error handling
+        "error_code": "TEST_ERROR_001",
+        "severity": "medium",
+        "component": "test_module",
+        "user_id": "test_user_123",
+        "request_id": "test-request-456",
+        "timestamp": datetime.now(UTC).isoformat(),
+        "stack_trace": None,  # Populated by actual error handling
     }
 
 
@@ -357,13 +357,13 @@ def test_user_data() -> dict[str, str | int | bool | list[str] | None]:
 
     """
     return {
-      "id": "user-12345",
-      "name": "Test User",
-      "email": "test.user@flext.example.com",
-      "age": 30,
-      "is_active": True,
-      "created_at": datetime.now(UTC).isoformat(),
-      "roles": ["user", "tester"],
+        "id": "user-12345",
+        "name": "Test User",
+        "email": "test.user@flext.example.com",
+        "age": 30,
+        "is_active": True,
+        "created_at": datetime.now(UTC).isoformat(),
+        "roles": ["user", "tester"],
     }
 
 
@@ -372,11 +372,11 @@ def mock_factory() -> Callable[[str], Mock]:
     """Advanced mock factory with automatic cleanup."""
 
     def _create_mock(name: str, **kwargs: object) -> Mock:
-      mock = MagicMock(name=name, **kwargs)
-      mock.is_healthy.return_value = True
-      mock.validate.return_value = FlextResult.ok(None)
-      mock.process.return_value = FlextResult.ok("processed")
-      return mock
+        mock = MagicMock(name=name, **kwargs)
+        mock.is_healthy.return_value = True
+        mock.validate.return_value = FlextResult.ok(None)
+        mock.process.return_value = FlextResult.ok("processed")
+        return mock
 
     return _create_mock
 
@@ -386,10 +386,10 @@ def async_mock_factory() -> Callable[[str], AsyncMock]:
     """Async mock factory for testing async patterns."""
 
     def _create_async_mock(name: str, **kwargs: object) -> AsyncMock:
-      mock = AsyncMock(name=name, **kwargs)
-      mock.is_healthy.return_value = True
-      mock.process.return_value = FlextResult.ok("processed")
-      return mock
+        mock = AsyncMock(name=name, **kwargs)
+        mock.is_healthy.return_value = True
+        mock.process.return_value = FlextResult.ok("processed")
+        return mock
 
     return _create_async_mock
 
@@ -426,38 +426,38 @@ def entity_factory() -> Callable[[str, dict[str, object]], FlextEntity]:
     """Factory for creating test entities."""
 
     class TestEntity(FlextEntity):
-      """Test entity for testing purposes."""
+        """Test entity for testing purposes."""
 
-      name: str = "test"
-      value: int = 0
+        name: str = "test"
+        value: int = 0
 
-      def __init__(self, name: str = "test", value: int = 0) -> None:
-          super().__init__()
-          self.name = name
-          self.value = value
+        def __init__(self, name: str = "test", value: int = 0) -> None:
+            super().__init__()
+            self.name = name
+            self.value = value
 
-      def activate(self) -> None:
-          self._status = FlextEntityStatus.ACTIVE
+        def activate(self) -> None:
+            self._status = FlextEntityStatus.ACTIVE
 
-      def deactivate(self) -> None:
-          self._status = FlextEntityStatus.INACTIVE
+        def deactivate(self) -> None:
+            self._status = FlextEntityStatus.INACTIVE
 
-      def get_name(self) -> str:
-          return self.name
+        def get_name(self) -> str:
+            return self.name
 
-      def get_value(self) -> int:
-          return self.value
+        def get_value(self) -> int:
+            return self.value
 
-      def set_value(self, value: int) -> None:
-          self.value = value
+        def set_value(self, value: int) -> None:
+            self.value = value
 
-      def to_dict(self) -> dict[str, object]:
-          return {
-              "id": str(self.id),
-              "name": self.name,
-              "value": self.value,
-              "status": self.status.value,
-          }
+        def to_dict(self) -> dict[str, object]:
+            return {
+                "id": str(self.id),
+                "name": self.name,
+                "value": self.value,
+                "status": self.status.value,
+            }
 
 
 @pytest.fixture
@@ -465,21 +465,21 @@ def value_object_factory() -> Callable[[dict[str, object]], FlextValueObject]:
     """Factory for creating test value objects."""
 
     class TestValueObject(FlextValueObject):
-      value: str
-      metadata: dict[str, object] = field(default_factory=dict)
+        value: str
+        metadata: dict[str, object] = field(default_factory=dict)
 
-      def validate_business_rules(self) -> FlextResult[None]:
-          if not self.value:
-              return FlextResult.fail("Value cannot be empty")
-          return FlextResult.ok(None)
+        def validate_business_rules(self) -> FlextResult[None]:
+            if not self.value:
+                return FlextResult.fail("Value cannot be empty")
+            return FlextResult.ok(None)
 
     def _create_vo(data: dict[str, object]) -> FlextValueObject:
-      # Extract specific fields with type safety
-      value = str(data.get("value", ""))
-      metadata = data.get("metadata", {})
-      if not isinstance(metadata, dict):
-          metadata = {}
-      return TestValueObject(value=value, metadata=metadata)
+        # Extract specific fields with type safety
+        value = str(data.get("value", ""))
+        metadata = data.get("metadata", {})
+        if not isinstance(metadata, dict):
+            metadata = {}
+        return TestValueObject(value=value, metadata=metadata)
 
     return _create_vo
 
@@ -489,18 +489,18 @@ def aggregate_factory() -> Callable[[str], FlextAggregateRoot]:
     """Factory for creating test aggregates."""
 
     class TestAggregate(FlextAggregateRoot):
-      name: str = "test_aggregate"
-      items: list[str] = field(default_factory=list)
+        name: str = "test_aggregate"
+        items: list[str] = field(default_factory=list)
 
-      def add_item(self, item: str) -> FlextResult[None]:
-          if item in self.items:
-              return FlextResult.fail(f"Item {item} already exists")
-          self.items.append(item)
-          self.add_domain_event({"type": "item_added", "item": item})
-          return FlextResult.ok(None)
+        def add_item(self, item: str) -> FlextResult[None]:
+            if item in self.items:
+                return FlextResult.fail(f"Item {item} already exists")
+            self.items.append(item)
+            self.add_domain_event({"type": "item_added", "item": item})
+            return FlextResult.ok(None)
 
     def _create_aggregate(aggregate_id: str) -> FlextAggregateRoot:
-      return TestAggregate(id=aggregate_id)
+        return TestAggregate(id=aggregate_id)
 
     return _create_aggregate
 
@@ -570,7 +570,7 @@ def temp_directory() -> Generator[Path]:
 
     # Cleanup
     if temp_dir.exists():
-      shutil.rmtree(temp_dir)
+        shutil.rmtree(temp_dir)
 
 
 # ============================================================================
@@ -582,9 +582,9 @@ def temp_directory() -> Generator[Path]:
 def isolation_context() -> Generator[dict[str, object]]:
     """Provide complete test isolation context."""
     context = {
-      "original_env": os.environ.copy(),
-      "original_path": sys.path.copy(),
-      "start_time": time.time(),
+        "original_env": os.environ.copy(),
+        "original_path": sys.path.copy(),
+        "start_time": time.time(),
     }
 
     yield context
@@ -593,10 +593,10 @@ def isolation_context() -> Generator[dict[str, object]]:
     os.environ.clear()
     original_env = context["original_env"]
     if isinstance(original_env, dict):
-      os.environ.update(original_env)
+        os.environ.update(original_env)
     original_path = context["original_path"]
     if isinstance(original_path, list):
-      sys.path = original_path
+        sys.path = original_path
 
 
 @pytest.fixture
@@ -605,8 +605,8 @@ def time_machine() -> Callable[[datetime], None]:
 
     # Simplified implementation to avoid MyPy type issues
     def _set_time(target_time: datetime) -> None:
-      # This is a test helper - actual implementation would mock datetime
-      pass
+        # This is a test helper - actual implementation would mock datetime
+        pass
 
     return _set_time
     # Cleanup if needed
@@ -637,15 +637,15 @@ def clean_logging_state() -> Generator[None]:
 
     # Clear structlog caches if they exist
     try:
-      if (
-          hasattr(structlog, "_CONFIG")
-          and hasattr(structlog._CONFIG, "logger_factory")
-          and hasattr(structlog._CONFIG.logger_factory, "_cache")
-      ):
-          structlog._CONFIG.logger_factory._cache.clear()
+        if (
+            hasattr(structlog, "_CONFIG")
+            and hasattr(structlog._CONFIG, "logger_factory")
+            and hasattr(structlog._CONFIG.logger_factory, "_cache")
+        ):
+            structlog._CONFIG.logger_factory._cache.clear()
     except AttributeError:
-      # structlog configuration might not be set up yet
-      pass
+        # structlog configuration might not be set up yet
+        pass
 
 
 # ============================================================================
@@ -667,34 +667,34 @@ def performance_monitor() -> Callable[[Callable[[], object]], PerformanceMetrics
     """Monitor performance metrics for operations."""
 
     def _monitor(
-      func: Callable[[], object],
-      *args: object,
-      **kwargs: object,
+        func: Callable[[], object],
+        *args: object,
+        **kwargs: object,
     ) -> PerformanceMetrics:
-      import gc  # noqa: PLC0415
+        import gc  # noqa: PLC0415
 
-      # Force garbage collection
-      gc.collect()
+        # Force garbage collection
+        gc.collect()
 
-      # Start monitoring
-      tracemalloc.start()
-      start_time = time.perf_counter()
-      start_memory = tracemalloc.get_traced_memory()[0]
+        # Start monitoring
+        tracemalloc.start()
+        start_time = time.perf_counter()
+        start_memory = tracemalloc.get_traced_memory()[0]
 
-      # Execute function
-      result = func(*args, **kwargs)
+        # Execute function
+        result = func(*args, **kwargs)
 
-      # Collect metrics
-      end_time = time.perf_counter()
-      current, peak = tracemalloc.get_traced_memory()
-      tracemalloc.stop()
+        # Collect metrics
+        end_time = time.perf_counter()
+        current, peak = tracemalloc.get_traced_memory()
+        tracemalloc.stop()
 
-      return {
-          "result": result,
-          "execution_time": end_time - start_time,
-          "memory_used": current - start_memory,
-          "peak_memory": peak,
-      }
+        return {
+            "result": result,
+            "execution_time": end_time - start_time,
+            "memory_used": current - start_memory,
+            "peak_memory": peak,
+        }
 
     return _monitor
 
@@ -711,13 +711,13 @@ def benchmark_data() -> dict[str, object]:
 
     """
     return {
-      "small_dataset": list(range(100)),
-      "medium_dataset": list(range(1000)),
-      "large_dataset": list(range(10000)),
-      "complex_dict": {f"key_{i}": f"value_{i}" for i in range(1000)},
-      "nested_structure": {
-          "level1": {"level2": {"level3": {"data": list(range(100))}}},
-      },
+        "small_dataset": list(range(100)),
+        "medium_dataset": list(range(1000)),
+        "large_dataset": list(range(10000)),
+        "complex_dict": {f"key_{i}": f"value_{i}" for i in range(1000)},
+        "nested_structure": {
+            "level1": {"level2": {"level3": {"data": list(range(100))}}},
+        },
     }
 
 
@@ -733,11 +733,11 @@ def performance_threshold() -> dict[str, float]:
 
     """
     return {
-      "result_creation": 0.001,  # 1ms for FlextResult creation
-      "container_registration": 0.005,  # 5ms for service registration
-      "container_retrieval": 0.001,  # 1ms for service retrieval
-      "validation": 0.01,  # 10ms for validation operations
-      "serialization": 0.05,  # 50ms for serialization
+        "result_creation": 0.001,  # 1ms for FlextResult creation
+        "container_registration": 0.005,  # 5ms for service registration
+        "container_retrieval": 0.001,  # 1ms for service retrieval
+        "validation": 0.01,  # 10ms for validation operations
+        "serialization": 0.05,  # 50ms for serialization
     }
 
 
@@ -787,17 +787,17 @@ def snapshot_manager(tmp_path: Path) -> Callable[[str, object], None]:
     snapshot_dir.mkdir(exist_ok=True)
 
     def _snapshot(name: str, data: object) -> None:
-      snapshot_file = snapshot_dir / f"{name}.json"
+        snapshot_file = snapshot_dir / f"{name}.json"
 
-      if snapshot_file.exists():
-          # Compare with existing snapshot
-          with snapshot_file.open(encoding="utf-8") as f:
-              expected = json.load(f)
-          assert data == expected, f"Snapshot mismatch for {name}"
-      else:
-          # Create new snapshot
-          with snapshot_file.open("w", encoding="utf-8") as f:
-              json.dump(data, f, indent=2, default=str)
+        if snapshot_file.exists():
+            # Compare with existing snapshot
+            with snapshot_file.open(encoding="utf-8") as f:
+                expected = json.load(f)
+            assert data == expected, f"Snapshot mismatch for {name}"
+        else:
+            # Create new snapshot
+            with snapshot_file.open("w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2, default=str)
 
     return _snapshot
 
@@ -820,13 +820,13 @@ async def async_client() -> object:
     """Async client fixture for testing async endpoints."""
 
     class _AsyncClient:
-      async def get(self, url: str) -> dict[str, object]:
-          await asyncio.sleep(0.01)  # Simulate network delay
-          return {"status": "success", "url": url}
+        async def get(self, url: str) -> dict[str, object]:
+            await asyncio.sleep(0.01)  # Simulate network delay
+            return {"status": "success", "url": url}
 
-      async def post(self, _url: str, data: dict[str, object]) -> dict[str, object]:
-          await asyncio.sleep(0.01)
-          return {"status": "created", "data": data}
+        async def post(self, _url: str, data: dict[str, object]) -> dict[str, object]:
+            await asyncio.sleep(0.01)
+            return {"status": "created", "data": data}
 
     return _AsyncClient()
     # Cleanup if needed
@@ -841,11 +841,11 @@ async def async_client() -> object:
 def validators() -> dict[str, Callable[[object], bool]]:
     """Collection of validation functions for testing."""
     return {
-      "is_valid_uuid": lambda x: len(str(x)) == 36 and "-" in str(x),
-      "is_valid_email": lambda x: "@" in str(x) and "." in str(x),
-      "is_valid_result": lambda x: hasattr(x, "success") and hasattr(x, "data"),
-      "is_valid_entity": lambda x: hasattr(x, "id") and hasattr(x, "version"),
-      "is_valid_timestamp": lambda x: isinstance(x, (int, float)) and x > 0,
+        "is_valid_uuid": lambda x: len(str(x)) == 36 and "-" in str(x),
+        "is_valid_email": lambda x: "@" in str(x) and "." in str(x),
+        "is_valid_result": lambda x: hasattr(x, "success") and hasattr(x, "data"),
+        "is_valid_entity": lambda x: hasattr(x, "id") and hasattr(x, "version"),
+        "is_valid_timestamp": lambda x: isinstance(x, (int, float)) and x > 0,
     }
 
 
@@ -854,31 +854,31 @@ def assert_helpers() -> object:
     """Advanced assertion helpers."""
 
     class AssertHelpers:
-      @staticmethod
-      def assert_result_ok(
-          result: FlextResult[object],
-          expected_data: object | None = None,
-      ) -> None:
-          """Assert result is successful with optional data check."""
-          assert result.success, f"Expected success but got error: {result.error}"
-          if expected_data is not None:
-              assert result.data == expected_data
+        @staticmethod
+        def assert_result_ok(
+            result: FlextResult[object],
+            expected_data: object | None = None,
+        ) -> None:
+            """Assert result is successful with optional data check."""
+            assert result.success, f"Expected success but got error: {result.error}"
+            if expected_data is not None:
+                assert result.data == expected_data
 
-      @staticmethod
-      def assert_result_fail(
-          result: FlextResult[object],
-          expected_error: str | None = None,
-      ) -> None:
-          """Assert result is failure with optional error check."""
-          assert result.is_failure, "Expected failure but got success"
-          if expected_error:
-              assert expected_error in (result.error or "")
+        @staticmethod
+        def assert_result_fail(
+            result: FlextResult[object],
+            expected_error: str | None = None,
+        ) -> None:
+            """Assert result is failure with optional error check."""
+            assert result.is_failure, "Expected failure but got success"
+            if expected_error:
+                assert expected_error in (result.error or "")
 
-      @staticmethod
-      def assert_entity_valid(entity: FlextEntity) -> None:
-          """Assert entity is valid according to business rules."""
-          assert entity.id, "Entity must have ID"
-          # Basic entity validation - status check removed as not all entities have status
+        @staticmethod
+        def assert_entity_valid(entity: FlextEntity) -> None:
+            """Assert entity is valid according to business rules."""
+            assert entity.id, "Entity must have ID"
+            # Basic entity validation - status check removed as not all entities have status
 
     return AssertHelpers()
 
@@ -892,28 +892,28 @@ def assert_helpers() -> object:
 def test_cases() -> list[TestCase[object]]:
     """Provide structured test cases for parametrized testing."""
     return [
-      TestCase(
-          id="happy_path_simple",
-          description="Simple successful case",
-          input_data={"value": "test"},
-          expected_output="test",
-          scenario=TestScenario.HAPPY_PATH,
-      ),
-      TestCase(
-          id="error_empty_input",
-          description="Error with empty input",
-          input_data={},
-          expected_output=None,
-          expected_error="Input cannot be empty",
-          scenario=TestScenario.ERROR_CASE,
-      ),
-      TestCase(
-          id="boundary_max_size",
-          description="Boundary test with maximum size",
-          input_data={"value": "x" * 1000},
-          expected_output="x" * 1000,
-          scenario=TestScenario.BOUNDARY,
-      ),
+        TestCase(
+            id="happy_path_simple",
+            description="Simple successful case",
+            input_data={"value": "test"},
+            expected_output="test",
+            scenario=TestScenario.HAPPY_PATH,
+        ),
+        TestCase(
+            id="error_empty_input",
+            description="Error with empty input",
+            input_data={},
+            expected_output=None,
+            expected_error="Input cannot be empty",
+            scenario=TestScenario.ERROR_CASE,
+        ),
+        TestCase(
+            id="boundary_max_size",
+            description="Boundary test with maximum size",
+            input_data={"value": "x" * 1000},
+            expected_output="x" * 1000,
+            scenario=TestScenario.BOUNDARY,
+        ),
     ]
 
 
@@ -923,11 +923,11 @@ def parametrize_test_cases(
     """Decorator for parametrizing with test cases."""
 
     def decorator(func: object) -> object:
-      return pytest.mark.parametrize(
-          "test_case",
-          test_cases,
-          ids=[tc.id for tc in test_cases],
-      )(func)
+        return pytest.mark.parametrize(
+            "test_case",
+            test_cases,
+            ids=[tc.id for tc in test_cases],
+        )(func)
 
     return decorator
 
@@ -942,20 +942,20 @@ def command_factory() -> Callable[[str, dict[str, object]], FlextCommands.Comman
     """Factory for creating test commands."""
 
     class TestCommand(FlextCommands.Command):
-      name: str
-      payload: dict[str, object] = field(default_factory=dict)
+        name: str
+        payload: dict[str, object] = field(default_factory=dict)
 
-      def validate_command(self) -> FlextResult[None]:
-          """Validate command - renamed to avoid Pydantic conflict."""
-          if not self.name:
-              return FlextResult.fail("Command name is required")
-          return FlextResult.ok(None)
+        def validate_command(self) -> FlextResult[None]:
+            """Validate command - renamed to avoid Pydantic conflict."""
+            if not self.name:
+                return FlextResult.fail("Command name is required")
+            return FlextResult.ok(None)
 
     def _create_command(
-      name: str,
-      payload: dict[str, object] | None = None,
+        name: str,
+        payload: dict[str, object] | None = None,
     ) -> FlextCommands.Command:
-      return TestCommand(name=name, payload=payload or {})
+        return TestCommand(name=name, payload=payload or {})
 
     return _create_command
 
@@ -965,19 +965,19 @@ def handler_factory() -> Callable[[Callable[[object], object]], FlextBaseHandler
     """Factory for creating test handlers."""
 
     class TestHandler(FlextBaseHandler):
-      def __init__(self, handler_func: Callable[[object], object]) -> None:
-          super().__init__("test_handler")
-          self.handler_func = handler_func
+        def __init__(self, handler_func: Callable[[object], object]) -> None:
+            super().__init__("test_handler")
+            self.handler_func = handler_func
 
-      def process_message(self, message: object) -> FlextResult[object]:
-          try:
-              result = self.handler_func(message)
-              return FlextResult.ok(result)
-          except Exception as e:
-              return FlextResult.fail(str(e))
+        def process_message(self, message: object) -> FlextResult[object]:
+            try:
+                result = self.handler_func(message)
+                return FlextResult.ok(result)
+            except Exception as e:
+                return FlextResult.fail(str(e))
 
     def _create_handler(handler_func: Callable[[object], object]) -> FlextBaseHandler:
-      return TestHandler(handler_func)
+        return TestHandler(handler_func)
 
     return _create_handler
 
@@ -987,16 +987,16 @@ def event_factory() -> Callable[[str, dict[str, object]], FlextEvent]:
     """Factory for creating test events."""
 
     def _create_event(
-      event_type: str,
-      data: dict[str, object] | None = None,
+        event_type: str,
+        data: dict[str, object] | None = None,
     ) -> FlextEvent:
-      result = FlextEvent.create_event(
-          event_type=event_type,
-          event_data=data or {},
-      )
-      if result.is_success:
-          return result.unwrap()
-      raise ValueError(f"Failed to create event: {result.error}")
+        result = FlextEvent.create_event(
+            event_type=event_type,
+            event_data=data or {},
+        )
+        if result.is_success:
+            return result.unwrap()
+        raise ValueError(f"Failed to create event: {result.error}")
 
     return _create_event
 
@@ -1037,9 +1037,9 @@ def database_connection() -> Generator[MagicMock]:
 def e2e_environment() -> dict[str, object]:
     """Setup complete environment for E2E tests."""
     return {
-      "services": [],
-      "containers": [],
-      "ports": {"api": 8080, "db": 5432},
+        "services": [],
+        "containers": [],
+        "ports": {"api": 8080, "db": 5432},
     }
 
 
@@ -1056,33 +1056,33 @@ def pytest_collection_modifyitems(
     # Mark 'config' as intentionally unused while keeping hook signature valid
     del config
     for item in items:
-      # Add markers based on test location - use hasattr for safety
-      if hasattr(item, "fspath") and "unit" in str(item.fspath):
-          if hasattr(item, "add_marker"):
-              item.add_marker(pytest.mark.unit)
-      elif hasattr(item, "fspath") and "integration" in str(item.fspath):
-          if hasattr(item, "add_marker"):
-              item.add_marker(pytest.mark.integration)
-      elif (
-          hasattr(item, "fspath")
-          and "e2e" in str(item.fspath)
-          and hasattr(item, "add_marker")
-      ):
-          item.add_marker(pytest.mark.e2e)
+        # Add markers based on test location - use hasattr for safety
+        if hasattr(item, "fspath") and "unit" in str(item.fspath):
+            if hasattr(item, "add_marker"):
+                item.add_marker(pytest.mark.unit)
+        elif hasattr(item, "fspath") and "integration" in str(item.fspath):
+            if hasattr(item, "add_marker"):
+                item.add_marker(pytest.mark.integration)
+        elif (
+            hasattr(item, "fspath")
+            and "e2e" in str(item.fspath)
+            and hasattr(item, "add_marker")
+        ):
+            item.add_marker(pytest.mark.e2e)
 
-      # Add markers based on test name
-      if (
-          hasattr(item, "name")
-          and "test_performance" in item.name
-          and hasattr(item, "add_marker")
-      ):
-          item.add_marker(pytest.mark.benchmark)
-      if (
-          hasattr(item, "name")
-          and "test_async" in item.name
-          and hasattr(item, "add_marker")
-      ):
-          item.add_marker(pytest.mark.asyncio)
+        # Add markers based on test name
+        if (
+            hasattr(item, "name")
+            and "test_performance" in item.name
+            and hasattr(item, "add_marker")
+        ):
+            item.add_marker(pytest.mark.benchmark)
+        if (
+            hasattr(item, "name")
+            and "test_async" in item.name
+            and hasattr(item, "add_marker")
+        ):
+            item.add_marker(pytest.mark.asyncio)
 
 
 # =============================================================================
@@ -1095,24 +1095,24 @@ class AssertHelpers:
 
     @staticmethod
     def assert_result_success(result: FlextResult[object]) -> None:
-      """Assert that a result is successful."""
-      assert result.is_success, f"Expected success but got: {result.error}"
+        """Assert that a result is successful."""
+        assert result.is_success, f"Expected success but got: {result.error}"
 
     @staticmethod
     def assert_result_failure(result: FlextResult[object]) -> None:
-      """Assert that a result is a failure."""
-      assert result.is_failure, f"Expected failure but got: {result.data}"
+        """Assert that a result is a failure."""
+        assert result.is_failure, f"Expected failure but got: {result.data}"
 
     # Backward-compatible aliases used in some tests
     @staticmethod
     def assert_result_ok(result: FlextResult[object]) -> None:
-      """Assert that a result is successful."""
-      AssertHelpers.assert_result_success(result)
+        """Assert that a result is successful."""
+        AssertHelpers.assert_result_success(result)
 
     @staticmethod
     def assert_result_fail(result: FlextResult[object]) -> None:
-      """Assert that a result is a failure."""
-      AssertHelpers.assert_result_failure(result)
+        """Assert that a result is a failure."""
+        AssertHelpers.assert_result_failure(result)
 
 
 class MockFactory:
@@ -1120,49 +1120,49 @@ class MockFactory:
 
     @staticmethod
     def create_mock_config(**kwargs: object) -> object:
-      """Create a mock configuration."""
-      return type("MockConfig", (), kwargs)()
+        """Create a mock configuration."""
+        return type("MockConfig", (), kwargs)()
 
 
 class PerformanceMonitor:
     """Monitor performance during tests."""
 
     def __init__(self) -> None:
-      """Initialize performance monitor."""
-      self.start_time: float | None = None
-      self.end_time: float | None = None
+        """Initialize performance monitor."""
+        self.start_time: float | None = None
+        self.end_time: float | None = None
 
     def start(self) -> None:
-      """Start timing."""
-      self.start_time = time.time()
+        """Start timing."""
+        self.start_time = time.time()
 
     def stop(self) -> None:
-      """Stop timing."""
-      self.end_time = time.time()
+        """Stop timing."""
+        self.end_time = time.time()
 
     @property
     def duration(self) -> float:
-      """Get duration in seconds."""
-      if self.start_time is not None and self.end_time is not None:
-          return self.end_time - self.start_time
-      return 0.0
+        """Get duration in seconds."""
+        if self.start_time is not None and self.end_time is not None:
+            return self.end_time - self.start_time
+        return 0.0
 
 
 class TestBuilder:
     """Builder for creating test objects."""
 
     def __init__(self) -> None:
-      """Initialize test builder."""
-      self.data: dict[str, object] = {}
+        """Initialize test builder."""
+        self.data: dict[str, object] = {}
 
     def with_field(self, name: str, value: object) -> TestBuilder:
-      """Add a field to the test object."""
-      self.data[name] = value
-      return self
+        """Add a field to the test object."""
+        self.data[name] = value
+        return self
 
     def build(self) -> object:
-      """Build the test object."""
-      return type("TestObject", (), self.data)()
+        """Build the test object."""
+        return type("TestObject", (), self.data)()
 
 
 def assert_function_performance(
@@ -1176,7 +1176,7 @@ def assert_function_performance(
     result = func()
     duration = time.time() - start
     assert duration <= max_duration, (
-      f"Function took {duration}s, max allowed {max_duration}s"
+        f"Function took {duration}s, max allowed {max_duration}s"
     )
     return result
 
@@ -1192,37 +1192,37 @@ def temp_json_file() -> Generator[str]:
     import tempfile  # noqa: PLC0415
 
     with tempfile.NamedTemporaryFile(
-      encoding="utf-8",
-      mode="w",
-      suffix=".json",
-      delete=False,
+        encoding="utf-8",
+        mode="w",
+        suffix=".json",
+        delete=False,
     ) as f:
-      json.dump(
-          {
-              "database_url": "sqlite:///test.db",
-              "secret_key": "test-secret-key",
-              "test": "data",
-              "number": 42,
-              # Compatibility keys expected by some base tests
-              "key1": "value1",
-              "key2": 42,
-          },
-          f,
-      )
-      temp_path = f.name
+        json.dump(
+            {
+                "database_url": "sqlite:///test.db",
+                "secret_key": "test-secret-key",
+                "test": "data",
+                "number": 42,
+                # Compatibility keys expected by some base tests
+                "key1": "value1",
+                "key2": 42,
+            },
+            f,
+        )
+        temp_path = f.name
 
     try:
-      yield temp_path
+        yield temp_path
     finally:
-      Path(temp_path).unlink(missing_ok=True)
+        Path(temp_path).unlink(missing_ok=True)
 
 
 @pytest.fixture
 def validation_test_cases() -> list[dict[str, object]]:
     """Provide common validation test cases."""
     return [
-      {"valid": True, "data": {"name": "test", "value": 123}},
-      {"valid": False, "data": {"name": "", "value": None}},
-      {"valid": True, "data": {"name": "valid", "value": 0}},
-      {"valid": False, "data": {}},
+        {"valid": True, "data": {"name": "test", "value": 123}},
+        {"valid": False, "data": {"name": "", "value": None}},
+        {"valid": True, "data": {"name": "valid", "value": 0}},
+        {"valid": False, "data": {}},
     ]

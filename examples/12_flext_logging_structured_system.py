@@ -77,9 +77,9 @@ def demonstrate_basic_logging() -> None:
     logger.trace("Application startup trace", phase="initialization", step=1)
     logger.debug("Debug information", module="config", settings_loaded=True)
     logger.info(
-      "Service started successfully",
-      port=FlextConstants.Platform.FLEXCORE_PORT,
-      version=FlextConstants.VERSION,
+        "Service started successfully",
+        port=FlextConstants.Platform.FLEXCORE_PORT,
+        version=FlextConstants.VERSION,
     )
     logger.warning("High memory usage detected", memory_usage_percent=85)
     logger.error("Database connection failed", database="users", retry_count=3)
@@ -99,17 +99,17 @@ def demonstrate_basic_logging() -> None:
 
     context_logger = FlextLogger("myapp.context", "INFO")
     context_logger.set_context(
-      {
-          "user_id": "user_123",
-          "session_id": "sess_abc",
-          "request_id": "req_456",
-      },
+        {
+            "user_id": "user_123",
+            "session_id": "sess_abc",
+            "request_id": "req_456",
+        },
     )
 
     context_logger.info(
-      "User authentication successful",
-      method="oauth",
-      provider="google",
+        "User authentication successful",
+        method="oauth",
+        provider="google",
     )
     context_logger.info("User profile loaded", profile_size_kb=45, cache_hit=True)
     context_logger.warning("Rate limit approaching", requests_remaining=5)
@@ -168,17 +168,17 @@ def demonstrate_context_management() -> None:
 
     # Temporarily add request context
     with create_log_context(base_logger, request_id="req_789", user_id="user_456"):
-      base_logger.info("Processing user request", action="get_profile")
-      base_logger.info("Database query executed", table="users", duration_ms=45)
+        base_logger.info("Processing user request", action="get_profile")
+        base_logger.info("Database query executed", table="users", duration_ms=45)
 
-      # Nested context
-      with create_log_context(
-          base_logger,
-          operation="profile_enrichment",
-          source="external_api",
-      ):
-          base_logger.info("Enriching profile data", api_endpoint="/api/v1/profiles")
-          base_logger.warning("API response delayed", expected_ms=100, actual_ms=250)
+        # Nested context
+        with create_log_context(
+            base_logger,
+            operation="profile_enrichment",
+            source="external_api",
+        ):
+            base_logger.info("Enriching profile data", api_endpoint="/api/v1/profiles")
+            base_logger.warning("API response delayed", expected_ms=100, actual_ms=250)
 
     # Context should be restored
     base_logger.info("Request processing completed", success=True)
@@ -190,15 +190,15 @@ def demonstrate_context_management() -> None:
 
     # Create child logger with additional context
     child_logger = parent_logger.with_context(
-      component="payment_processor",
-      correlation_id="corr_123",
+        component="payment_processor",
+        correlation_id="corr_123",
     )
 
     parent_logger.info("Parent logger with base context")
     child_logger.info(
-      "Child logger with inherited + additional context",
-      transaction_id="tx_456",
-      amount=99.99,
+        "Child logger with inherited + additional context",
+        transaction_id="tx_456",
+        amount=99.99,
     )
 
     # 3. Convenience context manager
@@ -207,14 +207,14 @@ def demonstrate_context_management() -> None:
     convenience_logger.set_context({"application": "ecommerce"})
 
     with create_log_context(
-      convenience_logger,
-      order_id="order_789",
-      customer_id="cust_123",
+        convenience_logger,
+        order_id="order_789",
+        customer_id="cust_123",
     ):
-      convenience_logger.info("Order processing started")
-      convenience_logger.info("Payment validation", payment_method="credit_card")
-      convenience_logger.info("Inventory check", items_count=3, available=True)
-      convenience_logger.info("Order processing completed", status="success")
+        convenience_logger.info("Order processing started")
+        convenience_logger.info("Payment validation", payment_method="credit_card")
+        convenience_logger.info("Inventory check", items_count=3, available=True)
+        convenience_logger.info("Order processing completed", status="success")
 
     convenience_logger.info("Post-order cleanup completed")
 
@@ -234,91 +234,91 @@ def _basic_exception_logging() -> None:
     error_logger = FlextLogger("myapp.errors", "DEBUG")
     error_logger.set_context({"module": "payment_processor"})
     try:
-      _ = 10 / 0
+        _ = 10 / 0
     except ZeroDivisionError:
-      error_logger.exception(
-          "Division by zero error",
-          operation="calculate_fee",
-          numerator=10,
-          denominator=0,
-      )
+        error_logger.exception(
+            "Division by zero error",
+            operation="calculate_fee",
+            numerator=10,
+            denominator=0,
+        )
     try:
-      data = {"name": "John"}
-      _ = data["email"]
+        data = {"name": "John"}
+        _ = data["email"]
     except KeyError:
-      error_logger.exception(
-          "Missing required field",
-          operation="user_validation",
-          required_field="email",
-          available_fields=list(data.keys()),
-      )
+        error_logger.exception(
+            "Missing required field",
+            operation="user_validation",
+            required_field="email",
+            available_fields=list(data.keys()),
+        )
     try:
-      number: str = "not_a_number"
-      _ = int(number) + 10
+        number: str = "not_a_number"
+        _ = int(number) + 10
     except Exception:
-      error_logger.exception(
-          "Type conversion error",
-          operation="data_processing",
-          expected_type="int",
-          actual_type=type(number).__name__,
-      )
+        error_logger.exception(
+            "Type conversion error",
+            operation="data_processing",
+            expected_type="int",
+            actual_type=type(number).__name__,
+        )
 
 
 def _process_payment(amount: float, payment_method: str) -> dict[str, object]:
     contextual_logger = get_logger("myapp.payment", "INFO")
     with create_log_context(
-      contextual_logger,
-      amount=amount,
-      payment_method=payment_method,
-      transaction_id=f"tx_{int(time.time())}",
+        contextual_logger,
+        amount=amount,
+        payment_method=payment_method,
+        transaction_id=f"tx_{int(time.time())}",
     ):
-      try:
-          contextual_logger.info("Payment processing started")
-          if amount <= 0:
-              _raise_amount_error()
-          if payment_method not in {"credit_card", "debit_card", "paypal"}:
-              _raise_method_error(payment_method)
-          if amount > MAX_PAYMENT_AMOUNT:
-              _raise_timeout_error()
-          contextual_logger.info("Payment authorization successful")
-          return {"status": "success", "transaction_id": f"tx_{int(time.time())}"}
-      except ValueError as e:
-          contextual_logger.exception(
-              "Payment validation failed",
-              error_type="validation_error",
-              error_details=str(e),
-          )
-          raise
-      except ConnectionError as e:
-          contextual_logger.exception(
-              "Payment gateway error",
-              error_type="gateway_error",
-              error_details=str(e),
-          )
-          raise
-      except (OSError, RuntimeError) as e:
-          contextual_logger.exception(
-              "Unexpected payment error",
-              error_type="unknown_error",
-              error_details=str(e),
-          )
-          raise
+        try:
+            contextual_logger.info("Payment processing started")
+            if amount <= 0:
+                _raise_amount_error()
+            if payment_method not in {"credit_card", "debit_card", "paypal"}:
+                _raise_method_error(payment_method)
+            if amount > MAX_PAYMENT_AMOUNT:
+                _raise_timeout_error()
+            contextual_logger.info("Payment authorization successful")
+            return {"status": "success", "transaction_id": f"tx_{int(time.time())}"}
+        except ValueError as e:
+            contextual_logger.exception(
+                "Payment validation failed",
+                error_type="validation_error",
+                error_details=str(e),
+            )
+            raise
+        except ConnectionError as e:
+            contextual_logger.exception(
+                "Payment gateway error",
+                error_type="gateway_error",
+                error_details=str(e),
+            )
+            raise
+        except (OSError, RuntimeError) as e:
+            contextual_logger.exception(
+                "Unexpected payment error",
+                error_type="unknown_error",
+                error_details=str(e),
+            )
+            raise
 
 
 def _contextual_exception_logging() -> None:
     test_cases = [
-      {"amount": -50, "method": "credit_card"},
-      {"amount": 100, "method": "bitcoin"},
-      {"amount": 15000, "method": "credit_card"},
-      {"amount": 99.99, "method": "credit_card"},
+        {"amount": -50, "method": "credit_card"},
+        {"amount": 100, "method": "bitcoin"},
+        {"amount": 15000, "method": "credit_card"},
+        {"amount": 99.99, "method": "credit_card"},
     ]
     for test_case in test_cases:
-      try:
-          amount = float(cast("float", test_case["amount"]))
-          method = str(cast("str", test_case["method"]))
-          _process_payment(amount, method)
-      except (ValueError, ConnectionError, OSError, RuntimeError):
-          pass
+        try:
+            amount = float(cast("float", test_case["amount"]))
+            method = str(cast("str", test_case["method"]))
+            _process_payment(amount, method)
+        except (ValueError, ConnectionError, OSError, RuntimeError):
+            pass
 
 
 def demonstrate_unified_api() -> None:
@@ -337,9 +337,9 @@ def _unified_api_usage() -> None:
     api_logger = FlextLoggerFactory.get_logger("myapp.unified_api", "DEBUG")
     metrics_logger = FlextLoggerFactory.get_logger("myapp.metrics", "INFO")
     api_logger.info(
-      "API server starting",
-      port=FlextConstants.Platform.FLEXCORE_PORT,
-      workers=4,
+        "API server starting",
+        port=FlextConstants.Platform.FLEXCORE_PORT,
+        workers=4,
     )
     metrics_logger.info("Metrics collection enabled", interval_seconds=30)
     FlextLoggerFactory.set_global_level("WARNING")
@@ -354,41 +354,41 @@ def _log_store_observability() -> None:
     FlextLoggerFactory.set_global_level("INFO")
     observability_logger = FlextLoggerFactory.get_logger("myapp.observability", "INFO")
     with create_log_context(observability_logger, session_id="obs_session_123"):
-      observability_logger.info("Session started", user_agent="Mozilla/5.0")
-      observability_logger.info("Page viewed", page="/dashboard", load_time_ms=245)
-      observability_logger.warning(
-          "Slow query detected",
-          query_time_ms=1500,
-          table="analytics",
-      )
-      observability_logger.error(
-          "Cache miss",
-          cache_key="user_preferences",
-          fallback="database",
-      )
+        observability_logger.info("Session started", user_agent="Mozilla/5.0")
+        observability_logger.info("Page viewed", page="/dashboard", load_time_ms=245)
+        observability_logger.warning(
+            "Slow query detected",
+            query_time_ms=1500,
+            table="analytics",
+        )
+        observability_logger.error(
+            "Cache miss",
+            cache_key="user_preferences",
+            fallback="database",
+        )
     log_entries = FlextLoggerFactory.get_log_store()
     levels: dict[str, int] = {}
     loggers: dict[str, int] = {}
     has_context = 0
     for entry in log_entries:
-      level = entry.get("level", "UNKNOWN")
-      logger_name = entry.get("logger", "unknown")
-      context = entry.get("context", {})
-      levels[level] = levels.get(level, 0) + 1
-      loggers[logger_name] = loggers.get(logger_name, 0) + 1
-      if context:
-          has_context += 1
+        level = entry.get("level", "UNKNOWN")
+        logger_name = entry.get("logger", "unknown")
+        context = entry.get("context", {})
+        levels[level] = levels.get(level, 0) + 1
+        loggers[logger_name] = loggers.get(logger_name, 0) + 1
+        if context:
+            has_context += 1
     if log_entries:
-      sample_entry = log_entries[-1]
-      for key, value in sample_entry.items():
-          if key == "context" and isinstance(value, dict) and value:
-              pass
-          else:
-              (
-                  str(value)[:MAX_VALUE_DISPLAY_LENGTH] + "..."
-                  if len(str(value)) > MAX_VALUE_DISPLAY_LENGTH
-                  else str(value)
-              )
+        sample_entry = log_entries[-1]
+        for key, value in sample_entry.items():
+            if key == "context" and isinstance(value, dict) and value:
+                pass
+            else:
+                (
+                    str(value)[:MAX_VALUE_DISPLAY_LENGTH] + "..."
+                    if len(str(value)) > MAX_VALUE_DISPLAY_LENGTH
+                    else str(value)
+                )
 
 
 def _testing_utilities_demo() -> None:
@@ -423,204 +423,204 @@ def _process_user_request(
     user_logger = get_logger("enterprise.user_service", "INFO")
     db_logger = get_logger("enterprise.database", "INFO")
     correlation_context = {
-      "correlation_id": request_id,
-      "user_id": user_id,
-      "operation": operation,
-      "trace_id": f"trace_{int(time.time())}",
+        "correlation_id": request_id,
+        "user_id": user_id,
+        "operation": operation,
+        "trace_id": f"trace_{int(time.time())}",
     }
     try:
-      with create_log_context(
-          gateway_logger,
-          **correlation_context,
-          service="api_gateway",
-      ):
-          gateway_logger.info(
-              "Request received",
-              endpoint=f"/api/users/{user_id}/{operation}",
-              method="GET",
-              source_ip="192.168.1.100",
-          )
-          with create_log_context(auth_logger, **correlation_context, service="auth"):
-              auth_logger.info("Authentication started", auth_method="jwt")
-              time.sleep(0.01)
-              auth_logger.info("Authentication successful", token_valid=True)
-          with create_log_context(user_logger, **correlation_context, service="user"):
-              user_logger.info("User service processing started")
-              with create_log_context(
-                  db_logger,
-                  **correlation_context,
-                  service="database",
-              ):
-                  db_logger.info(
-                      "Database query started",
-                      table="users",
-                      query_type="SELECT",
-                  )
-                  time.sleep(0.005)
-                  db_logger.info(
-                      "Database query completed",
-                      rows_returned=1,
-                      duration_ms=5,
-                  )
-              user_logger.info(
-                  "User service processing completed",
-                  result_size_kb=2.5,
-              )
-          gateway_logger.info(
-              "Request completed successfully",
-              status_code=200,
-              response_time_ms=16,
-          )
-          return {
-              "status": "success",
-              "correlation_id": request_id,
-              "data": {"user_id": user_id, "operation": operation},
-          }
+        with create_log_context(
+            gateway_logger,
+            **correlation_context,
+            service="api_gateway",
+        ):
+            gateway_logger.info(
+                "Request received",
+                endpoint=f"/api/users/{user_id}/{operation}",
+                method="GET",
+                source_ip="192.168.1.100",
+            )
+            with create_log_context(auth_logger, **correlation_context, service="auth"):
+                auth_logger.info("Authentication started", auth_method="jwt")
+                time.sleep(0.01)
+                auth_logger.info("Authentication successful", token_valid=True)
+            with create_log_context(user_logger, **correlation_context, service="user"):
+                user_logger.info("User service processing started")
+                with create_log_context(
+                    db_logger,
+                    **correlation_context,
+                    service="database",
+                ):
+                    db_logger.info(
+                        "Database query started",
+                        table="users",
+                        query_type="SELECT",
+                    )
+                    time.sleep(0.005)
+                    db_logger.info(
+                        "Database query completed",
+                        rows_returned=1,
+                        duration_ms=5,
+                    )
+                user_logger.info(
+                    "User service processing completed",
+                    result_size_kb=2.5,
+                )
+            gateway_logger.info(
+                "Request completed successfully",
+                status_code=200,
+                response_time_ms=16,
+            )
+            return {
+                "status": "success",
+                "correlation_id": request_id,
+                "data": {"user_id": user_id, "operation": operation},
+            }
     except (RuntimeError, ValueError, TypeError) as e:
-      gateway_logger.exception(
-          "Request processing failed",
-          **correlation_context,
-          error_type=type(e).__name__,
-      )
-      raise
+        gateway_logger.exception(
+            "Request processing failed",
+            **correlation_context,
+            error_type=type(e).__name__,
+        )
+        raise
 
 
 def _request_correlation_demo() -> None:
     requests = [
-      {"user_id": "user_001", "request_id": "req_001", "operation": "profile"},
-      {"user_id": "user_002", "request_id": "req_002", "operation": "settings"},
-      {"user_id": "user_003", "request_id": "req_003", "operation": "preferences"},
+        {"user_id": "user_001", "request_id": "req_001", "operation": "profile"},
+        {"user_id": "user_002", "request_id": "req_002", "operation": "settings"},
+        {"user_id": "user_003", "request_id": "req_003", "operation": "preferences"},
     ]
     for request in requests:
-      with contextlib.suppress(ValueError, OSError, RuntimeError):
-          _process_user_request(**request)
+        with contextlib.suppress(ValueError, OSError, RuntimeError):
+            _process_user_request(**request)
 
 
 class PerformanceMonitor:
     """Context manager for performance monitoring."""
 
     def __init__(self, logger: FlextLogger, operation: str, **context: object) -> None:
-      self.logger = logger
-      self.operation = operation
-      self.context = context
-      self.start_time = 0.0
+        self.logger = logger
+        self.operation = operation
+        self.context = context
+        self.start_time = 0.0
 
     def __enter__(self) -> "PerformanceMonitor":
-      """Enter context; start timer and log begin of operation."""
-      self.start_time = time.time()
-      self.logger.info("Operation started", operation=self.operation, **self.context)
-      return self
+        """Enter context; start timer and log begin of operation."""
+        self.start_time = time.time()
+        self.logger.info("Operation started", operation=self.operation, **self.context)
+        return self
 
     def __exit__(
-      self,
-      exc_type: type[BaseException] | None,
-      exc_val: BaseException | None,
-      exc_tb: TracebackType | None,
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
     ) -> None:
-      """Exit context; log completion with duration and error status."""
-      duration_ms = (time.time() - self.start_time) * 1000
-      if exc_type is None:
-          self.logger.info(
-              "Operation completed successfully",
-              operation=self.operation,
-              duration_ms=round(duration_ms, 2),
-              **self.context,
-          )
-      else:
-          self.logger.error(
-              "Operation failed",
-              operation=self.operation,
-              duration_ms=round(duration_ms, 2),
-              error_type=exc_type.__name__ if exc_type else "Unknown",
-              **self.context,
-          )
+        """Exit context; log completion with duration and error status."""
+        duration_ms = (time.time() - self.start_time) * 1000
+        if exc_type is None:
+            self.logger.info(
+                "Operation completed successfully",
+                operation=self.operation,
+                duration_ms=round(duration_ms, 2),
+                **self.context,
+            )
+        else:
+            self.logger.error(
+                "Operation failed",
+                operation=self.operation,
+                duration_ms=round(duration_ms, 2),
+                error_type=exc_type.__name__ if exc_type else "Unknown",
+                **self.context,
+            )
 
 
 def _performance_monitoring_demo() -> None:
     perf_logger = get_logger("enterprise.performance", "INFO")
     operations = [
-      {"op": "database_query", "table": "users", "complexity": "simple"},
-      {"op": "cache_lookup", "cache_type": "redis", "key_pattern": "user:*"},
-      {"op": "external_api_call", "service": "payment_processor", "timeout_ms": 5000},
-      {"op": "data_transformation", "input_size_mb": 10.5, "output_format": "json"},
+        {"op": "database_query", "table": "users", "complexity": "simple"},
+        {"op": "cache_lookup", "cache_type": "redis", "key_pattern": "user:*"},
+        {"op": "external_api_call", "service": "payment_processor", "timeout_ms": 5000},
+        {"op": "data_transformation", "input_size_mb": 10.5, "output_format": "json"},
     ]
     for op_config in operations:
-      if not isinstance(op_config, dict):
-          msg = "op_config deve ser um dicionário"
-          raise TypeError(msg)
-      operation = op_config.pop("op")
-      with PerformanceMonitor(perf_logger, operation, **op_config):
-          if operation == "database_query":
-              time.sleep(0.005)
-          elif operation == "cache_lookup":
-              time.sleep(0.001)
-          elif operation == "external_api_call":
-              time.sleep(0.050)
-          elif operation == "data_transformation":
-              time.sleep(0.020)
+        if not isinstance(op_config, dict):
+            msg = "op_config deve ser um dicionário"
+            raise TypeError(msg)
+        operation = op_config.pop("op")
+        with PerformanceMonitor(perf_logger, operation, **op_config):
+            if operation == "database_query":
+                time.sleep(0.005)
+            elif operation == "cache_lookup":
+                time.sleep(0.001)
+            elif operation == "external_api_call":
+                time.sleep(0.050)
+            elif operation == "data_transformation":
+                time.sleep(0.020)
 
 
 def _business_metrics_demo() -> None:
     business_logger = get_logger("enterprise.business", "INFO")
     business_events = [
-      {
-          "event": "user_registration",
-          "user_id": "new_user_001",
-          "source": "web_app",
-          "plan": "premium",
-          "revenue_impact": 99.99,
-      },
-      {
-          "event": "subscription_renewal",
-          "user_id": "user_123",
-          "plan": "enterprise",
-          "renewal_period": "yearly",
-          "revenue_impact": 1199.99,
-      },
-      {
-          "event": "feature_usage",
-          "user_id": "user_456",
-          "feature": "advanced_analytics",
-          "usage_count": 1,
-          "session_duration_minutes": 45,
-      },
-      {
-          "event": "support_ticket_created",
-          "user_id": "user_789",
-          "priority": "high",
-          "category": "billing",
-          "agent_assigned": "agent_001",
-      },
+        {
+            "event": "user_registration",
+            "user_id": "new_user_001",
+            "source": "web_app",
+            "plan": "premium",
+            "revenue_impact": 99.99,
+        },
+        {
+            "event": "subscription_renewal",
+            "user_id": "user_123",
+            "plan": "enterprise",
+            "renewal_period": "yearly",
+            "revenue_impact": 1199.99,
+        },
+        {
+            "event": "feature_usage",
+            "user_id": "user_456",
+            "feature": "advanced_analytics",
+            "usage_count": 1,
+            "session_duration_minutes": 45,
+        },
+        {
+            "event": "support_ticket_created",
+            "user_id": "user_789",
+            "priority": "high",
+            "category": "billing",
+            "agent_assigned": "agent_001",
+        },
     ]
     for event in business_events:
-      if not isinstance(event, dict):
-          msg = "event deve ser um dicionário"
-          raise TypeError(msg)
-      event_type = event.pop("event")
-      message = f"Business event: {event_type}"
-      business_logger.info(
-          message,
-          event_type=event_type,
-          timestamp=time.time(),
-          **event,
-      )
+        if not isinstance(event, dict):
+            msg = "event deve ser um dicionário"
+            raise TypeError(msg)
+        event_type = event.pop("event")
+        message = f"Business event: {event_type}"
+        business_logger.info(
+            message,
+            event_type=event_type,
+            timestamp=time.time(),
+            **event,
+        )
 
 
 def main() -> None:
     """Execute all FlextLoggerFactory demonstrations."""
     try:
-      demonstrate_basic_logging()
-      demonstrate_logger_factory()
-      demonstrate_context_management()
-      demonstrate_exception_logging()
-      demonstrate_unified_api()
-      demonstrate_enterprise_patterns()
+        demonstrate_basic_logging()
+        demonstrate_logger_factory()
+        demonstrate_context_management()
+        demonstrate_exception_logging()
+        demonstrate_unified_api()
+        demonstrate_enterprise_patterns()
 
-      # Final log store summary
-      FlextLoggerFactory.get_log_store()
+        # Final log store summary
+        FlextLoggerFactory.get_log_store()
 
     except (OSError, RuntimeError, ValueError):
-      traceback.print_exc()
+        traceback.print_exc()
 
 
 if __name__ == "__main__":

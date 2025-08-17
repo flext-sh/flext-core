@@ -61,9 +61,9 @@ def generate_short_id(length: int = 8) -> TEntityId:
 def get_age_category(age_value: int) -> str:
     """Categorize age into groups with enterprise constants."""
     if age_value < YOUNG_ADULT_AGE_THRESHOLD:
-      return "young_adult"
+        return "young_adult"
     if age_value < ADULT_AGE_THRESHOLD:
-      return "adult"
+        return "adult"
     if age_value < MIDDLE_AGED_THRESHOLD:
-      return "middle_aged"
+        return "middle_aged"
     return "senior"

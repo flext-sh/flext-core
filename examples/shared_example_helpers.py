@@ -21,6 +21,6 @@ def run_example_demonstration(
 
     """
     for _example_title, example_func in examples:
-      example_func()
+        example_func()
 
     title.split(" - ", maxsplit=1)[0] if " - " in title else title

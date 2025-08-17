@@ -1,0 +1,16 @@
+from flext_core import FlextAggregateRoot, FlextResult
+
+class TestAggregateRoot(FlextAggregateRoot):
+    name: str
+    def validate_business_rules(self) -> FlextResult[None]: ...
+
+class FailingEventAggregateRoot(FlextAggregateRoot):
+    name: str
+    def add_domain_event(
+        self, event_type: str, event_data: dict[str, object]
+    ) -> FlextResult[None]: ...
+
+class TestAggregateRootCoverage:
+    def test_add_domain_event_exception_handling(self) -> None: ...
+    def test_add_domain_event_value_error_handling(self) -> None: ...
+    def test_add_domain_event_attribute_error_handling(self) -> None: ...

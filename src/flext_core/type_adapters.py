@@ -59,42 +59,42 @@ class TypeAdapterFactory:
 
     @staticmethod
     def create_adapter[T](type_: type[T]) -> TypeAdapter[T]:
-      """Create TypeAdapter with standard FLEXT configuration.
+        """Create TypeAdapter with standard FLEXT configuration.
 
-      Args:
-          type_: The type to create an adapter for
+        Args:
+            type_: The type to create an adapter for
 
-      Returns:
-          Configured TypeAdapter instance
+        Returns:
+            Configured TypeAdapter instance
 
-      """
-      return TypeAdapter(type_)
+        """
+        return TypeAdapter(type_)
 
     @staticmethod
     def create_list_adapter[T](item_type: type[T]) -> TypeAdapter[list[T]]:
-      """Create TypeAdapter for lists.
+        """Create TypeAdapter for lists.
 
-      Args:
-          item_type: The type of items in the list
+        Args:
+            item_type: The type of items in the list
 
-      Returns:
-          TypeAdapter for List[T]
+        Returns:
+            TypeAdapter for List[T]
 
-      """
-      return TypeAdapter(list[item_type])  # type: ignore[valid-type]
+        """
+        return TypeAdapter(list[item_type])  # type: ignore[valid-type]
 
     @staticmethod
     def create_dict_adapter[T](value_type: type[T]) -> TypeAdapter[dict[str, T]]:
-      """Create TypeAdapter for dictionaries.
+        """Create TypeAdapter for dictionaries.
 
-      Args:
-          value_type: The type of values in the dict
+        Args:
+            value_type: The type of values in the dict
 
-      Returns:
-          TypeAdapter for Dict[str, T]
+        Returns:
+            TypeAdapter for Dict[str, T]
 
-      """
-      return TypeAdapter(dict[str, value_type])  # type: ignore[valid-type]
+        """
+        return TypeAdapter(dict[str, value_type])  # type: ignore[valid-type]
 
 
 # =============================================================================
@@ -135,142 +135,142 @@ class ValidationAdapters:
 
     @classmethod
     def validate_entity_id(cls, value: object) -> FlextResult[str]:
-      """Validate entity ID with business rules.
+        """Validate entity ID with business rules.
 
-      Args:
-          value: Value to validate
+        Args:
+            value: Value to validate
 
-      Returns:
-          FlextResult containing validated entity ID or error
+        Returns:
+            FlextResult containing validated entity ID or error
 
-      """
-      try:
-          if not value or (isinstance(value, str) and len(value.strip()) == 0):
-              return FlextResult.fail("Entity ID cannot be empty")
+        """
+        try:
+            if not value or (isinstance(value, str) and len(value.strip()) == 0):
+                return FlextResult.fail("Entity ID cannot be empty")
 
-          validated = cls.entity_id_adapter.validate_python(value)
-          return FlextResult.ok(validated)
-      except Exception as e:
-          return FlextResult.fail(f"Invalid entity ID: {e}")
+            validated = cls.entity_id_adapter.validate_python(value)
+            return FlextResult.ok(validated)
+        except Exception as e:
+            return FlextResult.fail(f"Invalid entity ID: {e}")
 
     @classmethod
     def validate_version(cls, value: object) -> FlextResult[int]:
-      """Validate version with business rules.
+        """Validate version with business rules.
 
-      Args:
-          value: Value to validate
+        Args:
+            value: Value to validate
 
-      Returns:
-          FlextResult containing validated version or error
+        Returns:
+            FlextResult containing validated version or error
 
-      """
-      try:
-          validated = cls.version_adapter.validate_python(value)
-          if validated < 1:
-              return FlextResult.fail("Version must be >= 1")
-          return FlextResult.ok(validated)
-      except Exception as e:
-          return FlextResult.fail(f"Invalid version: {e}")
+        """
+        try:
+            validated = cls.version_adapter.validate_python(value)
+            if validated < 1:
+                return FlextResult.fail("Version must be >= 1")
+            return FlextResult.ok(validated)
+        except Exception as e:
+            return FlextResult.fail(f"Invalid version: {e}")
 
     @classmethod
     def validate_email(cls, value: object) -> FlextResult[str]:
-      """Validate email address with business rules.
+        """Validate email address with business rules.
 
-      Args:
-          value: Value to validate
+        Args:
+            value: Value to validate
 
-      Returns:
-          FlextResult containing validated email or error
+        Returns:
+            FlextResult containing validated email or error
 
-      """
-      try:
-          validated = cls.email_adapter.validate_python(value)
-          # Basic email validation
-          if "@" not in validated or "." not in validated.split("@")[1]:
-              return FlextResult.fail("Invalid email format")
-          return FlextResult.ok(validated)
-      except Exception as e:
-          return FlextResult.fail(f"Invalid email: {e}")
+        """
+        try:
+            validated = cls.email_adapter.validate_python(value)
+            # Basic email validation
+            if "@" not in validated or "." not in validated.split("@")[1]:
+                return FlextResult.fail("Invalid email format")
+            return FlextResult.ok(validated)
+        except Exception as e:
+            return FlextResult.fail(f"Invalid email: {e}")
 
     @classmethod
     def validate_service_name(cls, value: object) -> FlextResult[str]:
-      """Validate service name with business rules.
+        """Validate service name with business rules.
 
-      Args:
-          value: Value to validate
+        Args:
+            value: Value to validate
 
-      Returns:
-          FlextResult containing validated service name or error
+        Returns:
+            FlextResult containing validated service name or error
 
-      """
-      try:
-          validated = cls.service_name_adapter.validate_python(value)
-          # Service name validation
-          max_service_name_length = 64
-          if len(validated) > max_service_name_length:
-              return FlextResult.fail(
-                  f"Service name too long (max {max_service_name_length} chars)",
-              )
-          if not validated.replace("-", "").replace("_", "").isalnum():
-              return FlextResult.fail("Service name must be alphanumeric with - or _")
-          return FlextResult.ok(validated)
-      except Exception as e:
-          return FlextResult.fail(f"Invalid service name: {e}")
+        """
+        try:
+            validated = cls.service_name_adapter.validate_python(value)
+            # Service name validation
+            max_service_name_length = 64
+            if len(validated) > max_service_name_length:
+                return FlextResult.fail(
+                    f"Service name too long (max {max_service_name_length} chars)",
+                )
+            if not validated.replace("-", "").replace("_", "").isalnum():
+                return FlextResult.fail("Service name must be alphanumeric with - or _")
+            return FlextResult.ok(validated)
+        except Exception as e:
+            return FlextResult.fail(f"Invalid service name: {e}")
 
     @classmethod
     def validate_host_port(
-      cls,
-      host: object,
-      port: object,
+        cls,
+        host: object,
+        port: object,
     ) -> FlextResult[tuple[str, int]]:
-      """Validate host and port combination.
+        """Validate host and port combination.
 
-      Args:
-          host: Host value to validate
-          port: Port value to validate
+        Args:
+            host: Host value to validate
+            port: Port value to validate
 
-      Returns:
-          FlextResult containing validated (host, port) tuple or error
+        Returns:
+            FlextResult containing validated (host, port) tuple or error
 
-      """
-      try:
-          validated_host = cls.host_adapter.validate_python(host)
-          validated_port = cls.port_adapter.validate_python(port)
+        """
+        try:
+            validated_host = cls.host_adapter.validate_python(host)
+            validated_port = cls.port_adapter.validate_python(port)
 
-          # Port range validation
-          min_port = 1
-          max_port = 65535
-          if not (min_port <= validated_port <= max_port):
-              return FlextResult.fail(
-                  f"Port must be between {min_port} and {max_port}",
-              )
+            # Port range validation
+            min_port = 1
+            max_port = 65535
+            if not (min_port <= validated_port <= max_port):
+                return FlextResult.fail(
+                    f"Port must be between {min_port} and {max_port}",
+                )
 
-          return FlextResult.ok((validated_host, validated_port))
-      except Exception as e:
-          return FlextResult.fail(f"Invalid host/port: {e}")
+            return FlextResult.ok((validated_host, validated_port))
+        except Exception as e:
+            return FlextResult.fail(f"Invalid host/port: {e}")
 
     @classmethod
     def validate_percentage(cls, value: object) -> FlextResult[float]:
-      """Validate percentage with business rules.
+        """Validate percentage with business rules.
 
-      Args:
-          value: Value to validate
+        Args:
+            value: Value to validate
 
-      Returns:
-          FlextResult containing validated percentage or error
+        Returns:
+            FlextResult containing validated percentage or error
 
-      """
-      try:
-          validated = cls.percentage_adapter.validate_python(value)
-          min_percentage = 0.0
-          max_percentage = 100.0
-          if not (min_percentage <= validated <= max_percentage):
-              return FlextResult.fail(
-                  f"Percentage must be between {min_percentage} and {max_percentage}",
-              )
-          return FlextResult.ok(validated)
-      except Exception as e:
-          return FlextResult.fail(f"Invalid percentage: {e}")
+        """
+        try:
+            validated = cls.percentage_adapter.validate_python(value)
+            min_percentage = 0.0
+            max_percentage = 100.0
+            if not (min_percentage <= validated <= max_percentage):
+                return FlextResult.fail(
+                    f"Percentage must be between {min_percentage} and {max_percentage}",
+                )
+            return FlextResult.ok(validated)
+        except Exception as e:
+            return FlextResult.fail(f"Invalid percentage: {e}")
 
 
 # =============================================================================
@@ -283,80 +283,80 @@ class SerializationHelpers:
 
     @staticmethod
     def to_json[T](adapter: TypeAdapter[T], value: T) -> FlextResult[str]:
-      """Serialize value to JSON string.
+        """Serialize value to JSON string.
 
-      Args:
-          adapter: TypeAdapter instance
-          value: Value to serialize
+        Args:
+            adapter: TypeAdapter instance
+            value: Value to serialize
 
-      Returns:
-          FlextResult containing JSON string or error
+        Returns:
+            FlextResult containing JSON string or error
 
-      """
-      try:
-          json_bytes = adapter.dump_json(value)
-          return FlextResult.ok(json_bytes.decode("utf-8"))
-      except Exception as e:
-          return FlextResult.fail(f"Serialization failed: {e}")
+        """
+        try:
+            json_bytes = adapter.dump_json(value)
+            return FlextResult.ok(json_bytes.decode("utf-8"))
+        except Exception as e:
+            return FlextResult.fail(f"Serialization failed: {e}")
 
     @staticmethod
     def from_json[T](adapter: TypeAdapter[T], json_str: str) -> FlextResult[T]:
-      """Deserialize value from JSON string.
+        """Deserialize value from JSON string.
 
-      Args:
-          adapter: TypeAdapter instance
-          json_str: JSON string to deserialize
+        Args:
+            adapter: TypeAdapter instance
+            json_str: JSON string to deserialize
 
-      Returns:
-          FlextResult containing deserialized value or error
+        Returns:
+            FlextResult containing deserialized value or error
 
-      """
-      try:
-          value = adapter.validate_json(json_str)
-          return FlextResult.ok(value)
-      except Exception as e:
-          return FlextResult.fail(f"Deserialization failed: {e}")
+        """
+        try:
+            value = adapter.validate_json(json_str)
+            return FlextResult.ok(value)
+        except Exception as e:
+            return FlextResult.fail(f"Deserialization failed: {e}")
 
     @staticmethod
     def to_dict[T](adapter: TypeAdapter[T], value: T) -> FlextResult[dict[str, object]]:
-      """Serialize value to Python dictionary.
+        """Serialize value to Python dictionary.
 
-      Args:
-          adapter: TypeAdapter instance
-          value: Value to serialize
+        Args:
+            adapter: TypeAdapter instance
+            value: Value to serialize
 
-      Returns:
-          FlextResult containing dictionary or error
+        Returns:
+            FlextResult containing dictionary or error
 
-      """
-      try:
-          result = adapter.dump_python(value)
-          if isinstance(result, dict):
-              return FlextResult.ok(result)
-          return FlextResult.fail("Value did not serialize to dictionary")
-      except Exception as e:
-          return FlextResult.fail(f"Dictionary serialization failed: {e}")
+        """
+        try:
+            result = adapter.dump_python(value)
+            if isinstance(result, dict):
+                return FlextResult.ok(result)
+            return FlextResult.fail("Value did not serialize to dictionary")
+        except Exception as e:
+            return FlextResult.fail(f"Dictionary serialization failed: {e}")
 
     @staticmethod
     def from_dict[T](
-      adapter: TypeAdapter[T],
-      data: dict[str, object],
+        adapter: TypeAdapter[T],
+        data: dict[str, object],
     ) -> FlextResult[T]:
-      """Deserialize value from Python dictionary.
+        """Deserialize value from Python dictionary.
 
-      Args:
-          adapter: TypeAdapter instance
-          data: Dictionary to deserialize
+        Args:
+            adapter: TypeAdapter instance
+            data: Dictionary to deserialize
 
-      Returns:
-          FlextResult containing deserialized value or error
+        Returns:
+            FlextResult containing deserialized value or error
 
-      """
-      try:
-          value = adapter.validate_python(data)
-          return FlextResult.ok(value)
-      except Exception as e:
-          return FlextResult.fail(f"Dictionary deserialization failed: {e}")
+        """
+        try:
+            value = adapter.validate_python(data)
+            return FlextResult.ok(value)
+        except Exception as e:
+            return FlextResult.fail(f"Dictionary deserialization failed: {e}")
 
 
 # =============================================================================
@@ -369,46 +369,46 @@ class SchemaHelpers:
 
     @staticmethod
     def generate_schema[T](adapter: TypeAdapter[T]) -> FlextResult[dict[str, object]]:
-      """Generate JSON schema for TypeAdapter.
+        """Generate JSON schema for TypeAdapter.
 
-      Args:
-          adapter: TypeAdapter instance
+        Args:
+            adapter: TypeAdapter instance
 
-      Returns:
-          FlextResult containing JSON schema or error
+        Returns:
+            FlextResult containing JSON schema or error
 
-      """
-      try:
-          schema = adapter.json_schema()
-          return FlextResult.ok(schema)
-      except Exception as e:
-          return FlextResult.fail(f"Schema generation failed: {e}")
+        """
+        try:
+            schema = adapter.json_schema()
+            return FlextResult.ok(schema)
+        except Exception as e:
+            return FlextResult.fail(f"Schema generation failed: {e}")
 
     @staticmethod
     def generate_multiple_schemas(
-      adapters: dict[str, TypeAdapter[object]],
+        adapters: dict[str, TypeAdapter[object]],
     ) -> FlextResult[dict[str, dict[str, object]]]:
-      """Generate schemas for multiple TypeAdapters.
+        """Generate schemas for multiple TypeAdapters.
 
-      Args:
-          adapters: Dictionary mapping names to TypeAdapter instances
+        Args:
+            adapters: Dictionary mapping names to TypeAdapter instances
 
-      Returns:
-          FlextResult containing dictionary of schemas or error
+        Returns:
+            FlextResult containing dictionary of schemas or error
 
-      """
-      try:
-          schemas = {}
-          for name, adapter in adapters.items():
-              schema_result = SchemaHelpers.generate_schema(adapter)
-              if schema_result.is_failure:
-                  return FlextResult.fail(
-                      f"Failed to generate schema for {name}: {schema_result.error}",
-                  )
-              schemas[name] = schema_result.unwrap()
-          return FlextResult.ok(schemas)
-      except Exception as e:
-          return FlextResult.fail(f"Multiple schema generation failed: {e}")
+        """
+        try:
+            schemas = {}
+            for name, adapter in adapters.items():
+                schema_result = SchemaHelpers.generate_schema(adapter)
+                if schema_result.is_failure:
+                    return FlextResult.fail(
+                        f"Failed to generate schema for {name}: {schema_result.error}",
+                    )
+                schemas[name] = schema_result.unwrap()
+            return FlextResult.ok(schemas)
+        except Exception as e:
+            return FlextResult.fail(f"Multiple schema generation failed: {e}")
 
 
 # =============================================================================
@@ -425,90 +425,90 @@ class TypeAdapterExamples:
 
     @staticmethod
     def user_validation_example() -> None:
-      """Example: User data validation with TypeAdapter."""
+        """Example: User data validation with TypeAdapter."""
 
-      # Define user structure
-      @dataclass(
-          config=ConfigDict(
-              extra="forbid",
-              validate_assignment=True,
-              str_strip_whitespace=True,
-          ),
-      )
-      class User:
-          name: str
-          email: str
-          age: int
+        # Define user structure
+        @dataclass(
+            config=ConfigDict(
+                extra="forbid",
+                validate_assignment=True,
+                str_strip_whitespace=True,
+            ),
+        )
+        class User:
+            name: str
+            email: str
+            age: int
 
-          def __post_init__(self) -> None:
-              # Business rule validation
-              if self.age < 0:
-                  msg = "Age cannot be negative"
-                  raise ValueError(msg)
+            def __post_init__(self) -> None:
+                # Business rule validation
+                if self.age < 0:
+                    msg = "Age cannot be negative"
+                    raise ValueError(msg)
 
-      # Create adapter
-      user_adapter = TypeAdapter(User)
+        # Create adapter
+        user_adapter = TypeAdapter(User)
 
-      # Validate from dictionary
-      with contextlib.suppress(Exception):
-          user_data = {"name": "John Doe", "email": "john@example.com", "age": 30}
-          user = user_adapter.validate_python(user_data)
+        # Validate from dictionary
+        with contextlib.suppress(Exception):
+            user_data = {"name": "John Doe", "email": "john@example.com", "age": 30}
+            user = user_adapter.validate_python(user_data)
 
-      # Validate from JSON
-      with contextlib.suppress(Exception):
-          json_data = '{"name": "Jane Doe", "email": "jane@example.com", "age": 25}'
-          user = user_adapter.validate_json(json_data)
+        # Validate from JSON
+        with contextlib.suppress(Exception):
+            json_data = '{"name": "Jane Doe", "email": "jane@example.com", "age": 25}'
+            user = user_adapter.validate_json(json_data)
 
-      # Serialize to JSON
-      with contextlib.suppress(Exception):
-          user_adapter.dump_json(user)
+        # Serialize to JSON
+        with contextlib.suppress(Exception):
+            user_adapter.dump_json(user)
 
     @staticmethod
     def configuration_validation_example() -> None:
-      """Example: Configuration validation with TypeAdapter."""
+        """Example: Configuration validation with TypeAdapter."""
 
-      # Define configuration structure
-      @dataclass(
-          config=ConfigDict(
-              extra="forbid",
-              validate_assignment=True,
-          ),
-      )
-      class DatabaseConfig:
-          host: str
-          port: int
-          username: str
-          password: str
-          database: str
+        # Define configuration structure
+        @dataclass(
+            config=ConfigDict(
+                extra="forbid",
+                validate_assignment=True,
+            ),
+        )
+        class DatabaseConfig:
+            host: str
+            port: int
+            username: str
+            password: str
+            database: str
 
-          def __post_init__(self) -> None:
-              # Validation rules
-              min_port = 1
-              max_port = 65535
-              if not (min_port <= self.port <= max_port):
-                  msg = f"Port must be between {min_port} and {max_port}"
-                  raise ValueError(msg)
-              if not self.host.strip():
-                  msg = "Host cannot be empty"
-                  raise ValueError(msg)
+            def __post_init__(self) -> None:
+                # Validation rules
+                min_port = 1
+                max_port = 65535
+                if not (min_port <= self.port <= max_port):
+                    msg = f"Port must be between {min_port} and {max_port}"
+                    raise ValueError(msg)
+                if not self.host.strip():
+                    msg = "Host cannot be empty"
+                    raise ValueError(msg)
 
-      # Create adapter
-      config_adapter = TypeAdapter(DatabaseConfig)
+        # Create adapter
+        config_adapter = TypeAdapter(DatabaseConfig)
 
-      # Load from environment-like dictionary
-      config_data = {
-          "host": "localhost",
-          "port": 5432,
-          "username": "postgres",
-          "password": "secret",
-          "database": "flext",
-      }
+        # Load from environment-like dictionary
+        config_data = {
+            "host": "localhost",
+            "port": 5432,
+            "username": "postgres",
+            "password": "secret",
+            "database": "flext",
+        }
 
-      with contextlib.suppress(Exception):
-          config_adapter.validate_python(config_data)
+        with contextlib.suppress(Exception):
+            config_adapter.validate_python(config_data)
 
-          # Generate schema for documentation
-          config_adapter.json_schema()
+            # Generate schema for documentation
+            config_adapter.json_schema()
 
 
 # =============================================================================
@@ -521,31 +521,31 @@ class MigrationHelpers:
 
     @staticmethod
     def convert_basemodel_to_dataclass(model_class: type) -> str:
-      """Generate dataclass code from BaseModel definition.
+        """Generate dataclass code from BaseModel definition.
 
-      Args:
-          model_class: BaseModel class to convert
+        Args:
+            model_class: BaseModel class to convert
 
-      Returns:
-          String containing equivalent dataclass definition
+        Returns:
+            String containing equivalent dataclass definition
 
-      """
-      # This would analyze the BaseModel and generate equivalent dataclass code
-      # Implementation would inspect fields, validators, etc.
-      return f"# Convert {model_class.__name__} to dataclass with TypeAdapter"
+        """
+        # This would analyze the BaseModel and generate equivalent dataclass code
+        # Implementation would inspect fields, validators, etc.
+        return f"# Convert {model_class.__name__} to dataclass with TypeAdapter"
 
     @staticmethod
     def create_adapter_for_legacy_model[T](model_class: type[T]) -> TypeAdapter[T]:
-      """Create TypeAdapter for existing model class.
+        """Create TypeAdapter for existing model class.
 
-      Args:
-          model_class: Existing model class
+        Args:
+            model_class: Existing model class
 
-      Returns:
-          TypeAdapter instance for the model
+        Returns:
+            TypeAdapter instance for the model
 
-      """
-      return TypeAdapter(model_class)
+        """
+        return TypeAdapter(model_class)
 
 
 # =============================================================================

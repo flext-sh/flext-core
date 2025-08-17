@@ -52,370 +52,370 @@ class FlextTypes:
     # =========================================================================
 
     class Core:
-      """Core fundamental types used throughout the ecosystem."""
+        """Core fundamental types used throughout the ecosystem."""
 
-      # Basic value types
-      type Value = str | int | float | bool | None
-      type Data = dict[str, object]
-      type Config = dict[str, str | int | float | bool | None]
+        # Basic value types
+        type Value = str | int | float | bool | None
+        type Data = dict[str, object]
+        type Config = dict[str, str | int | float | bool | None]
 
-      # Identifier types
-      type EntityId = str
-      type Id = str
-      type Key = str
+        # Identifier types
+        type EntityId = str
+        type Id = str
+        type Key = str
 
-      # Collection types
-      type AnyDict = dict[str, object]
-      type AnyList = list[object]
-      type StringDict = dict[str, str]
-      # Explicit JSON dictionary alias used widely externally
-      type JsonDict = dict[str, object]
+        # Collection types
+        type AnyDict = dict[str, object]
+        type AnyList = list[object]
+        type StringDict = dict[str, str]
+        # Explicit JSON dictionary alias used widely externally
+        type JsonDict = dict[str, object]
 
-      # Convenience aliases
-      type Dict = FlextTypes.Core.AnyDict  # Convenience alias
-      type List = FlextTypes.Core.AnyList  # Convenience alias
+        # Convenience aliases
+        type Dict = FlextTypes.Core.AnyDict  # Convenience alias
+        type List = FlextTypes.Core.AnyList  # Convenience alias
 
-      # Connection and infrastructure
-      type ConnectionString = str
-      type LogMessage = str
-      type ErrorCode = str
-      type ErrorMessage = str
+        # Connection and infrastructure
+        type ConnectionString = str
+        type LogMessage = str
+        type ErrorCode = str
+        type ErrorMessage = str
 
-      # Callable types
-      type AnyCallable = Callable[[object], object]
-      type Factory[T] = Callable[[], T] | Callable[[object], T]
-      type Transformer[T, U] = Callable[[T], U]
-      type Predicate[T] = Callable[[T], bool]
-      type Validator[T] = Callable[[T], bool]
-      type ErrorHandler = Callable[[Exception], str]
+        # Callable types
+        type AnyCallable = Callable[[object], object]
+        type Factory[T] = Callable[[], T] | Callable[[object], T]
+        type Transformer[T, U] = Callable[[T], U]
+        type Predicate[T] = Callable[[T], bool]
+        type Validator[T] = Callable[[T], bool]
+        type ErrorHandler = Callable[[Exception], str]
 
     # =========================================================================
     # DATA TYPES - Common data structures
     # =========================================================================
 
     class Data:
-      """Common data structure types used across ecosystem."""
+        """Common data structure types used across ecosystem."""
 
-      # Dictionary types
-      type Dict = dict[str, object]  # Generic dictionary for data storage
-      type StringDict = dict[str, str]  # String-only dictionary
-      type JsonDict = dict[str, object]  # JSON-serializable dictionary
+        # Dictionary types
+        type Dict = dict[str, object]  # Generic dictionary for data storage
+        type StringDict = dict[str, str]  # String-only dictionary
+        type JsonDict = dict[str, object]  # JSON-serializable dictionary
 
-      # List types
-      type List = list[object]  # Generic list
-      type StringList = list[str]  # String-only list
+        # List types
+        type List = list[object]  # Generic list
+        type StringList = list[str]  # String-only list
 
     # =========================================================================
     # SERVICE TYPES - Dependency injection and service location
     # =========================================================================
 
     class Service:
-      """Service-related types for dependency injection."""
+        """Service-related types for dependency injection."""
 
-      # Service identification and management
-      type ServiceName = str
-      type FlextServiceKey = str | type[object]
-      type Container = Mapping[str, object]
-      type ServiceLocator = Callable[[str], object]
-      type ServiceFactory[T] = Callable[[], T]
+        # Service identification and management
+        type ServiceName = str
+        type FlextServiceKey = str | type[object]
+        type Container = Mapping[str, object]
+        type ServiceLocator = Callable[[str], object]
+        type ServiceFactory[T] = Callable[[], T]
 
-      # Event and messaging types
-      type EventHandler[TEvent] = Callable[[TEvent], None]
-      type EventBus = Callable[[object], None]
-      type FlextMessageHandler[T] = Callable[[T], object]
+        # Event and messaging types
+        type EventHandler[TEvent] = Callable[[TEvent], None]
+        type EventBus = Callable[[object], None]
+        type FlextMessageHandler[T] = Callable[[T], object]
 
-      # Metadata and configuration types
-      type JsonDict = dict[str, object]  # Standard JSON-serializable dictionary
-      type Metadata = dict[str, object]
-      type Settings = dict[str, object]
-      type Configuration = Mapping[str, object]
+        # Metadata and configuration types
+        type JsonDict = dict[str, object]  # Standard JSON-serializable dictionary
+        type Metadata = dict[str, object]
+        type Settings = dict[str, object]
+        type Configuration = Mapping[str, object]
 
-      # Convenience aliases
-      type Transform[T, U] = Callable[[T], U]  # Alias for Transformer
-      type Handler[T, R] = Callable[[T], R]  # Generic handler
-      ServiceInstance = TypeVar("ServiceInstance")
+        # Convenience aliases
+        type Transform[T, U] = Callable[[T], U]  # Alias for Transformer
+        type Handler[T, R] = Callable[[T], R]  # Generic handler
+        ServiceInstance = TypeVar("ServiceInstance")
 
-      # Context and correlation types
-      type CorrelationId = str
-      type RequestId = str
-      type TraceId = str
+        # Context and correlation types
+        type CorrelationId = str
+        type RequestId = str
+        type TraceId = str
 
     # =========================================================================
     # DOMAIN TYPES - Business domain modeling
     # =========================================================================
 
     class Domain:
-      """Domain modeling and business logic types."""
+        """Domain modeling and business logic types."""
 
-      # Entity and aggregate types
-      type EntityVersion = int  # Entity version for optimistic locking
-      type EntityTimestamp = datetime  # Entity timestamp fields
-      type DomainEventType = str  # Domain event type identifier
-      type DomainEventData = dict[str, object]  # Domain event payload data
-      type AggregateId = str  # Aggregate root identifier
-      type EntityRule = str  # Domain rule identifier for validation
-      type EntityState = str  # Entity state for state machines
-      type EntityMetadata = dict[str, object]  # Entity metadata for extensions
+        # Entity and aggregate types
+        type EntityVersion = int  # Entity version for optimistic locking
+        type EntityTimestamp = datetime  # Entity timestamp fields
+        type DomainEventType = str  # Domain event type identifier
+        type DomainEventData = dict[str, object]  # Domain event payload data
+        type AggregateId = str  # Aggregate root identifier
+        type EntityRule = str  # Domain rule identifier for validation
+        type EntityState = str  # Entity state for state machines
+        type EntityMetadata = dict[str, object]  # Entity metadata for extensions
 
-      # Factory and creation types
-      type EntityDefaults = dict[str, object]  # Default values for entity creation
-      type EntityChanges = dict[str, object]  # Changes for entity updates
-      type FactoryResult[T] = object  # Factory creation result
+        # Factory and creation types
+        type EntityDefaults = dict[str, object]  # Default values for entity creation
+        type EntityChanges = dict[str, object]  # Changes for entity updates
+        type FactoryResult[T] = object  # Factory creation result
 
-      # Event sourcing types
-      type DomainEvents = list[object]  # Collection of domain events
-      type EventStream = list[object]  # Entity event stream
-      type EventVersion = int  # Event version for ordering
+        # Event sourcing types
+        type DomainEvents = list[object]  # Collection of domain events
+        type EventStream = list[object]  # Entity event stream
+        type EventVersion = int  # Event version for ordering
 
-      # Value object types
-      type ValueData = dict[str, object]
-      type ValueValidation = Callable[[object], bool]
+        # Value object types
+        type ValueData = dict[str, object]
+        type ValueValidation = Callable[[object], bool]
 
     # =========================================================================
     # CQRS TYPES - Command Query Responsibility Segregation
     # =========================================================================
 
     class CQRS:
-      """CQRS pattern types for command and query handling."""
+        """CQRS pattern types for command and query handling."""
 
-      # Command types
-      type CommandId = str  # Command instance identifier (correlation ID)
-      type CommandType = str  # Command type name for routing
-      type HandlerName = str  # Command handler service name
-      type CommandPayload = dict[str, object]  # Command data payload
-      type CommandResult = object  # Command execution result
-      type CommandMetadata = dict[str, object]  # Command metadata for middleware
-      type MiddlewareName = str  # Middleware component name
-      type ValidationRule = str  # Command validation rule identifier
-      type CommandBusId = str  # Command bus instance identifier
-      type CommandPriority = int  # Command execution priority (1-10)
+        # Command types
+        type CommandId = str  # Command instance identifier (correlation ID)
+        type CommandType = str  # Command type name for routing
+        type HandlerName = str  # Command handler service name
+        type CommandPayload = dict[str, object]  # Command data payload
+        type CommandResult = object  # Command execution result
+        type CommandMetadata = dict[str, object]  # Command metadata for middleware
+        type MiddlewareName = str  # Middleware component name
+        type ValidationRule = str  # Command validation rule identifier
+        type CommandBusId = str  # Command bus instance identifier
+        type CommandPriority = int  # Command execution priority (1-10)
 
-      # Query types
-      type QueryId = str  # Query instance identifier (correlation ID)
-      type QueryType = str  # Query type name for routing
-      type QueryResult[T] = object  # Query result with type parameter
-      type QueryCriteria = dict[str, object]  # Query filtering criteria
-      type QueryProjection = list[object]  # Query result projection fields
-      type PaginationToken = str  # Query pagination continuation token
+        # Query types
+        type QueryId = str  # Query instance identifier (correlation ID)
+        type QueryType = str  # Query type name for routing
+        type QueryResult[T] = object  # Query result with type parameter
+        type QueryCriteria = dict[str, object]  # Query filtering criteria
+        type QueryProjection = list[object]  # Query result projection fields
+        type PaginationToken = str  # Query pagination continuation token
 
-      # Message types
-      type Event = dict[str, object]
-      type Message = dict[str, object]
+        # Message types
+        type Event = dict[str, object]
+        type Message = dict[str, object]
 
     # =========================================================================
     # VALIDATION TYPES - Validation and business rules
     # =========================================================================
 
     class Validation:
-      """Validation system types for business rule enforcement."""
+        """Validation system types for business rule enforcement."""
 
-      # Core validation types
-      type ValidationRule = str  # Validation rule identifier
-      type ValidationError = str  # Validation error message
-      type ValidationResult = object  # Validation result with data
-      type ValidationContext = dict[str, object]  # Validation context data
-      type ValidatorName = str  # Validator instance name
-      type ValidationConfig = dict[str, object]  # Validator configuration
-      type ValidationConstraint = object  # Validation constraint value
-      type ValidationSchema = dict[str, object]  # Schema definition for validation
+        # Core validation types
+        type ValidationRule = str  # Validation rule identifier
+        type ValidationError = str  # Validation error message
+        type ValidationResult = object  # Validation result with data
+        type ValidationContext = dict[str, object]  # Validation context data
+        type ValidatorName = str  # Validator instance name
+        type ValidationConfig = dict[str, object]  # Validator configuration
+        type ValidationConstraint = object  # Validation constraint value
+        type ValidationSchema = dict[str, object]  # Schema definition for validation
 
-      # Field validation types
-      type FieldName = str  # Field name for validation
-      type FieldValue = object  # Field value to validate
-      type FieldRule = str  # Field-specific validation rule
-      type FieldError = str  # Field-specific error message
-      type FieldInfo = dict[str, object]  # Field metadata
-      type FieldMetadata = dict[str, object]  # Field metadata for validation
+        # Field validation types
+        type FieldName = str  # Field name for validation
+        type FieldValue = object  # Field value to validate
+        type FieldRule = str  # Field-specific validation rule
+        type FieldError = str  # Field-specific error message
+        type FieldInfo = dict[str, object]  # Field metadata
+        type FieldMetadata = dict[str, object]  # Field metadata for validation
 
-      # Field definition types (from fields.py)
-      type FieldId = str  # Field identifier
-      type FieldTypeStr = str  # Field type as string
+        # Field definition types (from fields.py)
+        type FieldId = str  # Field identifier
+        type FieldTypeStr = str  # Field type as string
 
-      # Custom validation types
-      type CustomValidator = Callable[[object], object]  # Custom validator
-      type ValidationPipeline = list[
-          FlextTypes.Validation.CustomValidator
-      ]  # Chain of validators
+        # Custom validation types
+        type CustomValidator = Callable[[object], object]  # Custom validator
+        type ValidationPipeline = list[
+            FlextTypes.Validation.CustomValidator
+        ]  # Chain of validators
 
     # =========================================================================
     # CONFIG TYPES - Configuration management
     # =========================================================================
 
     class Config:
-      """Configuration management types."""
+        """Configuration management types."""
 
-      # Core configuration types
-      type ConfigKey = str  # Configuration key identifier
-      type ConfigValue = object  # Configuration value (any type)
-      type ConfigPath = str  # File a path for configuration files
-      type ConfigEnv = str  # Environment name (dev, prod, test)
-      type ConfigValidationRule = str  # Configuration validation rule
-      type ConfigMergeStrategy = str  # Strategy for merging configurations
-      type ConfigSettings = dict[str, object]  # Settings dictionary
-      type ConfigDefaults = dict[str, object]  # Default configuration values
-      type ConfigOverrides = dict[str, object]  # Configuration overrides
-      type ConfigDict = dict[
-          str,
-          str | int | float | bool | None,
-      ]  # Configuration dictionary
+        # Core configuration types
+        type ConfigKey = str  # Configuration key identifier
+        type ConfigValue = object  # Configuration value (any type)
+        type ConfigPath = str  # File a path for configuration files
+        type ConfigEnv = str  # Environment name (dev, prod, test)
+        type ConfigValidationRule = str  # Configuration validation rule
+        type ConfigMergeStrategy = str  # Strategy for merging configurations
+        type ConfigSettings = dict[str, object]  # Settings dictionary
+        type ConfigDefaults = dict[str, object]  # Default configuration values
+        type ConfigOverrides = dict[str, object]  # Configuration overrides
+        type ConfigDict = dict[
+            str,
+            str | int | float | bool | None,
+        ]  # Configuration dictionary
 
-      # Environment and deployment types
-      type EnvironmentName = str  # Environment identifier
-      type DeploymentStage = str  # Deployment stage (staging, production)
-      type ConfigVersion = str  # Configuration version for tracking
-      # File system types
-      type DirectoryPath = str
-      type FilePath = str
+        # Environment and deployment types
+        type EnvironmentName = str  # Environment identifier
+        type DeploymentStage = str  # Deployment stage (staging, production)
+        type ConfigVersion = str  # Configuration version for tracking
+        # File system types
+        type DirectoryPath = str
+        type FilePath = str
 
-      # Convenience aliases
-      type EnvVar = str
-      type ConfigSection = str
+        # Convenience aliases
+        type EnvVar = str
+        type ConfigSection = str
 
     # =========================================================================
     # LOGGING TYPES - Structured logging and observability
     # =========================================================================
 
     class Logging:
-      """Logging and observability types."""
+        """Logging and observability types."""
 
-      # Core logging types
-      type LoggerName = str  # Logger name identifier
-      type LogLevel = str  # Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-      type LogFormat = str  # Log format string
-      type LogHandler = str  # Log handler type identifier
-      type LogFilter = str  # Log filter identifier
+        # Core logging types
+        type LoggerName = str  # Logger name identifier
+        type LogLevel = str  # Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+        type LogFormat = str  # Log format string
+        type LogHandler = str  # Log handler type identifier
+        type LogFilter = str  # Log filter identifier
 
-      # Correlation and tracing types
-      type CorrelationId = str  # Correlation ID for request tracing
-      type SessionId = str  # Session identifier for user tracking
-      type TransactionId = str  # Transaction identifier for database operations
-      type OperationName = str  # Business operation name for categorization
+        # Correlation and tracing types
+        type CorrelationId = str  # Correlation ID for request tracing
+        type SessionId = str  # Session identifier for user tracking
+        type TransactionId = str  # Transaction identifier for database operations
+        type OperationName = str  # Business operation name for categorization
 
-      # Structured logging types
-      type LogRecord = dict[str, object]  # Complete log record data
-      type LogMetrics = dict[str, object]  # Log metrics and statistics
-      type LogConfiguration = dict[str, object]  # Logger configuration settings
+        # Structured logging types
+        type LogRecord = dict[str, object]  # Complete log record data
+        type LogMetrics = dict[str, object]  # Log metrics and statistics
+        type LogConfiguration = dict[str, object]  # Logger configuration settings
 
     # =========================================================================
     # AUTH TYPES - Authentication and authorization
     # =========================================================================
 
     class Auth:
-      """Authentication and authorization types."""
+        """Authentication and authorization types."""
 
-      # Authentication types
-      type Token = str
-      type UserData = dict[str, object]
-      type Credentials = dict[str, object]
-      type UserId = str
+        # Authentication types
+        type Token = str
+        type UserData = dict[str, object]
+        type Credentials = dict[str, object]
+        type UserId = str
 
-      # Authorization types
-      type Role = str
-      type Permission = str
-      type Provider = object
+        # Authorization types
+        type Role = str
+        type Permission = str
+        type Provider = object
 
-      # Connection types
-      type Connection = str  # Connection string
+        # Connection types
+        type Connection = str  # Connection string
 
-      # Context types
-      type ContextDict = dict[str, object]
+        # Context types
+        type ContextDict = dict[str, object]
 
     # =========================================================================
     # SINGER TYPES - Singer ecosystem integration
     # =========================================================================
 
     class Singer:
-      """Singer specification and data pipeline types."""
+        """Singer specification and data pipeline types."""
 
-      # Stream and schema types
-      type StreamName = str
-      type SchemaName = str
-      type TableName = str
+        # Stream and schema types
+        type StreamName = str
+        type SchemaName = str
+        type TableName = str
 
-      # Record types
-      type Record = dict[str, object]
-      type RecordId = str
+        # Record types
+        type Record = dict[str, object]
+        type RecordId = str
 
-      # Tap and target types
-      type TapConfig = dict[str, object]
-      type TargetConfig = dict[str, object]
+        # Tap and target types
+        type TapConfig = dict[str, object]
+        type TargetConfig = dict[str, object]
 
-      # State and bookmark types
-      type State = dict[str, object]
-      type Bookmark = dict[str, object]
+        # State and bookmark types
+        type State = dict[str, object]
+        type Bookmark = dict[str, object]
 
-      # Catalog types
-      type Catalog = dict[str, object]
-      type Stream = dict[str, object]
-      type Schema = dict[str, object]
+        # Catalog types
+        type Catalog = dict[str, object]
+        type Stream = dict[str, object]
+        type Schema = dict[str, object]
 
     # =========================================================================
     # PROTOCOL TYPES - Interface definitions
     # =========================================================================
 
     class Protocols:
-      """Protocol and interface types."""
+        """Protocol and interface types."""
 
-      # Core protocols
-      type Comparable = object  # Comparable interface
-      type Serializable = object  # Serializable interface
-      type Validatable = object  # Validatable interface
-      type Timestamped = object  # Timestamped interface
-      type Cacheable = object  # Cacheable interface
-      type Configurable = object  # Configurable interface
+        # Core protocols
+        type Comparable = object  # Comparable interface
+        type Serializable = object  # Serializable interface
+        type Validatable = object  # Validatable interface
+        type Timestamped = object  # Timestamped interface
+        type Cacheable = object  # Cacheable interface
+        type Configurable = object  # Configurable interface
 
-      # Functional protocols
-      type Validator[T] = Callable[[T], bool | str]
+        # Functional protocols
+        type Validator[T] = Callable[[T], bool | str]
 
     # -----------------------------------------------------------------
     # CONVENIENCE: Some tests refer to FlextTypes.TypeGuards
     # Provide a minimal implementation to avoid circular imports
     # -----------------------------------------------------------------
     class TypeGuards:
-      """Convenience facade for type guard utilities (tests convenience)."""
+        """Convenience facade for type guard utilities (tests convenience)."""
 
-      @staticmethod
-      def has_attribute(obj: object, attr: str) -> bool:
-          """Check if an object has a specific attribute."""
-          return hasattr(obj, attr)
+        @staticmethod
+        def has_attribute(obj: object, attr: str) -> bool:
+            """Check if an object has a specific attribute."""
+            return hasattr(obj, attr)
 
-      @staticmethod
-      def is_instance_of(obj: object, target_type: type) -> bool:
-          """Check if an object is an instance of a specific type."""
-          try:
-              return isinstance(obj, target_type)
-          except Exception:
-              return False
+        @staticmethod
+        def is_instance_of(obj: object, target_type: type) -> bool:
+            """Check if an object is an instance of a specific type."""
+            try:
+                return isinstance(obj, target_type)
+            except Exception:
+                return False
 
-      @staticmethod
-      def is_dict_like(obj: object) -> bool:
-          """Check if an object is dict-like."""
-          try:
-              return isinstance(obj, dict) or (
-                  hasattr(obj, "keys")
-                  and (
-                      hasattr(obj, "__getitem__")
-                      or (hasattr(obj, "values") and hasattr(obj, "items"))
-                  )
-              )
-          except Exception:
-              return False
+        @staticmethod
+        def is_dict_like(obj: object) -> bool:
+            """Check if an object is dict-like."""
+            try:
+                return isinstance(obj, dict) or (
+                    hasattr(obj, "keys")
+                    and (
+                        hasattr(obj, "__getitem__")
+                        or (hasattr(obj, "values") and hasattr(obj, "items"))
+                    )
+                )
+            except Exception:
+                return False
 
-      @staticmethod
-      def is_list_like(obj: object) -> bool:
-          """Check if object is list-like."""
-          try:
-              if isinstance(obj, (str, bytes)):
-                  return False
-              return isinstance(obj, (list, tuple, set)) or hasattr(obj, "__iter__")
-          except Exception:
-              return False
+        @staticmethod
+        def is_list_like(obj: object) -> bool:
+            """Check if object is list-like."""
+            try:
+                if isinstance(obj, (str, bytes)):
+                    return False
+                return isinstance(obj, (list, tuple, set)) or hasattr(obj, "__iter__")
+            except Exception:
+                return False
 
-      # Extra guards used by tests
-      @staticmethod
-      def is_callable(obj: object) -> bool:
-          """Check if an object is callable."""
-          return callable(obj)
+        # Extra guards used by tests
+        @staticmethod
+        def is_callable(obj: object) -> bool:
+            """Check if an object is callable."""
+            return callable(obj)
 
 
 # =============================================================================
@@ -596,19 +596,19 @@ FlextValidator = FlextTypes.Protocols.Validator[object]
 def _emit_transition_warning(old_name: str, new_name: str) -> None:
     """Emit transition warning for historical usage."""
     warnings.warn(
-      f"'{old_name}' is transitional. "
-      f"Use 'from flext_core.core_types import FlextTypes.{new_name}' instead.",
-      DeprecationWarning,
-      stacklevel=3,
+        f"'{old_name}' is transitional. "
+        f"Use 'from flext_core.core_types import FlextTypes.{new_name}' instead.",
+        DeprecationWarning,
+        stacklevel=3,
     )
 
 
 def get_centralized_types_usage_info() -> str:
     """Get information about centralized type usage."""
     return (
-      "All types are now centralized in typings.py. "
-      "Use 'from flext_core.typings import FlextTypes' for new development. "
-      "T* aliases are available for convenience."
+        "All types are now centralized in typings.py. "
+        "Use 'from flext_core.typings import FlextTypes' for new development. "
+        "T* aliases are available for convenience."
     )
 
 
