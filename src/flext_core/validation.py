@@ -19,7 +19,7 @@ import re
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING, Annotated, Generic, TypeVar
+from typing import Annotated, Generic, TypeVar
 from uuid import uuid4
 
 from pydantic import (
@@ -40,9 +40,6 @@ from flext_core.constants import FlextConstants
 from flext_core.protocols import FlextValidationRule as _FlextValidationRuleProtocol
 from flext_core.result import FlextResult
 
-if TYPE_CHECKING:
-    from collections.abc import Callable
-
 T = TypeVar("T")
 
 
@@ -51,8 +48,8 @@ class FlextAbstractValidator(ABC, Generic[T]):  # noqa: UP046
 
     @abstractmethod
     def validate(self, value: T) -> FlextResult[T]:
-        """Validate value."""
-        ...
+      """Validate value."""
+      ...
 
 
 # =============================================================================
@@ -64,32 +61,32 @@ class FlextAbstractValidator(ABC, Generic[T]):  # noqa: UP046
 def normalize_string(v: object) -> str:
     """BeforeValidator: Normalize string input before validation."""
     if v is None:
-        return ""
+      return ""
     if isinstance(v, str):
-        return v.strip().lower()
+      return v.strip().lower()
     return str(v).strip().lower()
 
 
 def normalize_email(v: object) -> str:
     """BeforeValidator: Normalize email before validation."""
     if isinstance(v, str):
-        return v.strip().lower()
+      return v.strip().lower()
     return str(v).strip().lower()
 
 
 def ensure_string_list(v: object) -> list[str]:
     """BeforeValidator: Convert single string or mixed list to string list."""
     if isinstance(v, str):
-        return [v]
+      return [v]
     if isinstance(v, list):
-        return [str(item) for item in v]
+      return [str(item) for item in v]
     return [str(v)]
 
 
 def generate_id_if_missing(v: object) -> str:
     """BeforeValidator: Generate UUID if ID is missing or empty."""
     if not v or (isinstance(v, str) and not v.strip()):
-        return f"flext_{uuid4().hex[:8]}"
+      return f"flext_{uuid4().hex[:8]}"
     return str(v)
 
 
@@ -102,22 +99,22 @@ def uppercase_code(v: str) -> str:
 def add_flext_prefix(v: str) -> str:
     """AfterValidator: Add flext_ prefix if not present."""
     if not v.startswith("flext_"):
-        return f"flext_{v}"
+      return f"flext_{v}"
     return v
 
 
 def ensure_positive(v: float) -> int | float:
     """AfterValidator: Ensure numeric values are positive."""
     if v <= 0:
-        msg = "Value must be positive"
-        raise ValueError(msg)
+      msg = "Value must be positive"
+      raise ValueError(msg)
     return v
 
 
 def format_timestamp(v: str) -> str:
     """AfterValidator: Ensure timestamp has Z suffix."""
     if not v.endswith("Z"):
-        return f"{v}Z"
+      return f"{v}Z"
     return v
 
 
@@ -125,20 +122,20 @@ def format_timestamp(v: str) -> str:
 def validate_service_name_advanced(v: object) -> str:
     """PlainValidator: Complete custom validation for service names."""
     if not isinstance(v, str):
-        v = str(v)
+      v = str(v)
 
     v = v.strip()
     if not v:
-        msg = "Service name cannot be empty"
-        raise ValueError(msg)
+      msg = "Service name cannot be empty"
+      raise ValueError(msg)
 
     if len(v) < FlextConstants.Validation.MIN_SERVICE_NAME_LENGTH:
-        msg = "Service name must be at least 2 characters"
-        raise ValueError(msg)
+      msg = "Service name must be at least 2 characters"
+      raise ValueError(msg)
 
     if not re.match(r"^[a-zA-Z][a-zA-Z0-9_-]*$", v):
-        msg = "Service name must start with letter and contain only letters, numbers, hyphens, and underscores"
-        raise ValueError(msg)
+      msg = "Service name must start with letter and contain only letters, numbers, hyphens, and underscores"
+      raise ValueError(msg)
 
     return v
 
@@ -146,17 +143,17 @@ def validate_service_name_advanced(v: object) -> str:
 def validate_email_address_advanced(v: object) -> str:
     """PlainValidator: Complete email validation with normalization."""
     if not isinstance(v, str):
-        v = str(v)
+      v = str(v)
 
     v = v.strip().lower()
     if not v:
-        msg = "Email address cannot be empty"
-        raise ValueError(msg)
+      msg = "Email address cannot be empty"
+      raise ValueError(msg)
 
     pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
     if not re.match(pattern, v):
-        msg = "Invalid email address format"
-        raise ValueError(msg)
+      msg = "Invalid email address format"
+      raise ValueError(msg)
 
     return v
 
@@ -164,21 +161,21 @@ def validate_email_address_advanced(v: object) -> str:
 def validate_version_number(v: object) -> int:
     """PlainValidator: Version validation with auto-increment logic."""
     if isinstance(v, str):
-        if v.lower() == "auto":
-            return 1  # Auto-generate starting version
-        try:
-            v = int(v)
-        except ValueError as e:
-            msg = "Version must be a positive integer or 'auto'"
-            raise ValueError(msg) from e
+      if v.lower() == "auto":
+          return 1  # Auto-generate starting version
+      try:
+          v = int(v)
+      except ValueError as e:
+          msg = "Version must be a positive integer or 'auto'"
+          raise ValueError(msg) from e
 
     if not isinstance(v, int):
-        msg = "Version must be an integer"
-        raise TypeError(msg)
+      msg = "Version must be an integer"
+      raise TypeError(msg)
 
     if v < 1:
-        msg = "Version must be >= 1"
-        raise ValueError(msg)
+      msg = "Version must be >= 1"
+      raise ValueError(msg)
 
     return v
 
@@ -197,28 +194,28 @@ def validate_entity_id_with_context(
 
     # Auto-generate if missing and allowed
     if auto_generate and (not v or (isinstance(v, str) and not v.strip())):
-        v = f"{namespace}_{uuid4().hex[:8]}"
+      v = f"{namespace}_{uuid4().hex[:8]}"
 
     # Let Pydantic handle basic validation
     try:
-        result = handler(str(v))
+      result = handler(str(v))
     except Exception:
-        # If core validation fails and we can auto-generate, try that
-        if auto_generate:
-            v = f"{namespace}_{uuid4().hex[:8]}"
-            result = handler(str(v))
-        else:
-            raise
+      # If core validation fails and we can auto-generate, try that
+      if auto_generate:
+          v = f"{namespace}_{uuid4().hex[:8]}"
+          result = handler(str(v))
+      else:
+          raise
 
     # Additional business logic validation
     if isinstance(result, str):
-        if not result.startswith(namespace):
-            result = f"{namespace}_{result}"
+      if not result.startswith(namespace):
+          result = f"{namespace}_{result}"
 
-        # Validate format
-        if not re.match(r"^[a-zA-Z0-9_-]+$", result):
-            msg = "Entity ID contains invalid characters"
-            raise ValueError(msg)
+      # Validate format
+      if not re.match(r"^[a-zA-Z0-9_-]+$", result):
+          msg = "Entity ID contains invalid characters"
+          raise ValueError(msg)
 
     return result
 
@@ -234,14 +231,14 @@ def validate_timestamp_with_fallback(
     use_current_fallback = context.get("use_current_time_fallback", True)
 
     try:
-        # Try normal validation first
-        return handler(str(v))
+      # Try normal validation first
+      return handler(str(v))
     except Exception:
-        # If validation fails and fallback is enabled, use current time
-        if use_current_fallback and (not v or v == "auto"):
-            current_time = datetime.now(UTC).isoformat()
-            return handler(current_time)
-        raise
+      # If validation fails and fallback is enabled, use current time
+      if use_current_fallback and (not v or v == "auto"):
+          current_time = datetime.now(UTC).isoformat()
+          return handler(current_time)
+      raise
 
 
 def validate_list_with_deduplication(
@@ -260,17 +257,17 @@ def validate_list_with_deduplication(
 
     # Apply post-processing based on context
     if deduplicate and isinstance(result, list):
-        # Remove duplicates while preserving order
-        seen: set[str] = set()
-        deduped: list[str] = []
-        for item in result:
-            if item not in seen:
-                seen.add(item)
-                deduped.append(item)
-        result = deduped
+      # Remove duplicates while preserving order
+      seen: set[str] = set()
+      deduped: list[str] = []
+      for item in result:
+          if item not in seen:
+              seen.add(item)
+              deduped.append(item)
+      result = deduped
 
     if sort_lists and isinstance(result, list):
-        result = sorted(result)
+      result = sorted(result)
 
     return result
 
@@ -324,9 +321,9 @@ class _ValidationConfig(BaseModel):
     """Modern validation configuration using Pydantic."""
 
     model_config = ConfigDict(
-        frozen=True,
-        str_strip_whitespace=True,
-        validate_assignment=True,
+      frozen=True,
+      str_strip_whitespace=True,
+      validate_assignment=True,
     )
 
     field_name: str = Field(..., min_length=1)
@@ -336,12 +333,12 @@ class _ValidationConfig(BaseModel):
     @field_validator("max_length")
     @classmethod
     def validate_max_length(cls, v: int | None, info: ValidationInfo) -> int | None:
-        if v is not None and "min_length" in info.data:
-            min_length = info.data["min_length"]
-            if v <= min_length:
-                msg = "max_length must be greater than min_length"
-                raise ValueError(msg)
-        return v
+      if v is not None and "min_length" in info.data:
+          min_length = info.data["min_length"]
+          if v <= min_length:
+              msg = "max_length must be greater than min_length"
+              raise ValueError(msg)
+      return v
 
 
 class _ValidationResult(BaseModel):
@@ -356,11 +353,11 @@ class _ValidationResult(BaseModel):
     @field_validator("error_message")
     @classmethod
     def validate_error_message(cls, v: str, info: ValidationInfo) -> str:
-        # Error message should be present if validation failed
-        if not info.data.get("is_valid", True) and not v:
-            msg = "error_message required when is_valid is False"
-            raise ValueError(msg)
-        return v
+      # Error message should be present if validation failed
+      if not info.data.get("is_valid", True) and not v:
+          msg = "error_message required when is_valid is False"
+          raise ValueError(msg)
+      return v
 
 
 class _BaseValidators:
@@ -369,96 +366,96 @@ class _BaseValidators:
     @staticmethod
     @validate_call
     def is_not_none(value: object) -> bool:
-        """Check if the value is not None with automatic validation."""
-        return value is not None
+      """Check if the value is not None with automatic validation."""
+      return value is not None
 
     @staticmethod
     @validate_call
     def is_string(value: object) -> bool:
-        """Check if the value is string with automatic validation."""
-        return isinstance(value, str)
+      """Check if the value is string with automatic validation."""
+      return isinstance(value, str)
 
     @staticmethod
     @validate_call
     def is_non_empty_string(value: object) -> bool:
-        """Check if the value is non-empty string with automatic validation."""
-        if not isinstance(value, str):
-            return False
-        return len(value.strip()) > 0
+      """Check if the value is non-empty string with automatic validation."""
+      if not isinstance(value, str):
+          return False
+      return len(value.strip()) > 0
 
     @staticmethod
     @validate_call
     def is_email(value: object) -> bool:
-        """Check if the value is valid email with automatic validation."""
-        if not isinstance(value, str):
-            return False
-        pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
-        return bool(re.match(pattern, value))
+      """Check if the value is valid email with automatic validation."""
+      if not isinstance(value, str):
+          return False
+      pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+      return bool(re.match(pattern, value))
 
     @staticmethod
     @validate_call
     def is_uuid(value: object) -> bool:
-        """Check if the value is valid UUID with automatic validation."""
-        if not isinstance(value, str):
-            return False
-        pattern = r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
-        return bool(re.match(pattern, value.lower()))
+      """Check if the value is valid UUID with automatic validation."""
+      if not isinstance(value, str):
+          return False
+      pattern = r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+      return bool(re.match(pattern, value.lower()))
 
     @staticmethod
     @validate_call
     def is_url(value: object) -> bool:
-        """Check if the value is valid URL with automatic validation."""
-        if not isinstance(value, str):
-            return False
-        return value.startswith(("http://", "https://"))
+      """Check if the value is valid URL with automatic validation."""
+      if not isinstance(value, str):
+          return False
+      return value.startswith(("http://", "https://"))
 
     @staticmethod
     @validate_call
     def has_min_length(value: object, min_length: int) -> bool:
-        """Check if string has minimum length with automatic validation."""
-        if not isinstance(value, str):
-            return False
-        return len(value) >= min_length
+      """Check if string has minimum length with automatic validation."""
+      if not isinstance(value, str):
+          return False
+      return len(value) >= min_length
 
     @staticmethod
     @validate_call
     def has_max_length(value: object, max_length: int) -> bool:
-        """Check if string has maximum length with automatic validation."""
-        if not isinstance(value, str):
-            return False
-        return len(value) <= max_length
+      """Check if string has maximum length with automatic validation."""
+      if not isinstance(value, str):
+          return False
+      return len(value) <= max_length
 
     @staticmethod
     @validate_call
     def matches_pattern(value: object, pattern: str) -> bool:
-        """Check if string matches pattern with automatic validation."""
-        if not isinstance(value, str):
-            return False
-        return bool(re.match(pattern, value))
+      """Check if string matches pattern with automatic validation."""
+      if not isinstance(value, str):
+          return False
+      return bool(re.match(pattern, value))
 
     @staticmethod
     @validate_call
     def is_callable(value: object) -> bool:
-        """Check if the value is callable with automatic validation."""
-        return callable(value)
+      """Check if the value is callable with automatic validation."""
+      return callable(value)
 
     @staticmethod
     @validate_call
     def is_list(value: object) -> bool:
-        """Check if the value is a list with automatic validation."""
-        return isinstance(value, list)
+      """Check if the value is a list with automatic validation."""
+      return isinstance(value, list)
 
     @staticmethod
     @validate_call
     def is_dict(value: object) -> bool:
-        """Check if the value is dict with automatic validation."""
-        return isinstance(value, dict)
+      """Check if the value is dict with automatic validation."""
+      return isinstance(value, dict)
 
     @staticmethod
     @validate_call
     def is_none(value: object) -> bool:
-        """Check if the value is None with automatic validation."""
-        return value is None
+      """Check if the value is None with automatic validation."""
+      return value is None
 
 
 class _BasePredicates:
@@ -467,26 +464,26 @@ class _BasePredicates:
     @staticmethod
     @validate_call
     def is_positive(value: float) -> bool:
-        """Check if value is a positive number with automatic validation."""
-        return value > 0
+      """Check if value is a positive number with automatic validation."""
+      return value > 0
 
     @staticmethod
     @validate_call
     def is_negative(value: float) -> bool:
-        """Check if value is negative number with automatic validation."""
-        return value < 0
+      """Check if value is negative number with automatic validation."""
+      return value < 0
 
     @staticmethod
     @validate_call
     def is_zero(value: float) -> bool:
-        """Check if the value is zero with automatic validation."""
-        return value == 0
+      """Check if the value is zero with automatic validation."""
+      return value == 0
 
     @staticmethod
     @validate_call
     def is_in_range(value: float, min_val: float, max_val: float) -> bool:
-        """Check if number is within range with automatic validation."""
-        return min_val <= value <= max_val
+      """Check if number is within range with automatic validation."""
+      return min_val <= value <= max_val
 
 
 # =============================================================================
@@ -501,18 +498,18 @@ def _validate_required_field(
 ) -> _ValidationResult:
     """Modern required field validation using validate_call decorator."""
     if value is None:
-        return _ValidationResult(
-            is_valid=False,
-            error_message=f"{field_name} is required",
-            field_name=field_name,
-        )
+      return _ValidationResult(
+          is_valid=False,
+          error_message=f"{field_name} is required",
+          field_name=field_name,
+      )
 
     if isinstance(value, str) and not value.strip():
-        return _ValidationResult(
-            is_valid=False,
-            error_message=f"{field_name} cannot be empty",
-            field_name=field_name,
-        )
+      return _ValidationResult(
+          is_valid=False,
+          error_message=f"{field_name} cannot be empty",
+          field_name=field_name,
+      )
 
     return _ValidationResult(is_valid=True, field_name=field_name)
 
@@ -526,18 +523,18 @@ def _validate_string_field(
 ) -> _ValidationResult:
     """Modern string validation using validate_call decorator."""
     if len(value) < min_length:
-        return _ValidationResult(
-            is_valid=False,
-            error_message=f"{field_name} must be at least {min_length} characters",
-            field_name=field_name,
-        )
+      return _ValidationResult(
+          is_valid=False,
+          error_message=f"{field_name} must be at least {min_length} characters",
+          field_name=field_name,
+      )
 
     if max_length is not None and len(value) > max_length:
-        return _ValidationResult(
-            is_valid=False,
-            error_message=f"{field_name} must be at most {max_length} characters",
-            field_name=field_name,
-        )
+      return _ValidationResult(
+          is_valid=False,
+          error_message=f"{field_name} must be at most {max_length} characters",
+          field_name=field_name,
+      )
 
     return _ValidationResult(is_valid=True, field_name=field_name)
 
@@ -551,18 +548,18 @@ def _validate_numeric_field(
 ) -> _ValidationResult:
     """Modern numeric validation using validate_call decorator."""
     if min_val is not None and value < min_val:
-        return _ValidationResult(
-            is_valid=False,
-            error_message=f"{field_name} must be at least {min_val}",
-            field_name=field_name,
-        )
+      return _ValidationResult(
+          is_valid=False,
+          error_message=f"{field_name} must be at least {min_val}",
+          field_name=field_name,
+      )
 
     if max_val is not None and value > max_val:
-        return _ValidationResult(
-            is_valid=False,
-            error_message=f"{field_name} must be at most {max_val}",
-            field_name=field_name,
-        )
+      return _ValidationResult(
+          is_valid=False,
+          error_message=f"{field_name} must be at most {max_val}",
+          field_name=field_name,
+      )
 
     return _ValidationResult(is_valid=True, field_name=field_name)
 
@@ -576,11 +573,11 @@ def _validate_email_field(
     # Simple but effective email validation
     email_pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
     if not re.match(email_pattern, value):
-        return _ValidationResult(
-            is_valid=False,
-            error_message=f"{field_name} must be a valid email address",
-            field_name=field_name,
-        )
+      return _ValidationResult(
+          is_valid=False,
+          error_message=f"{field_name} must be a valid email address",
+          field_name=field_name,
+      )
     return _ValidationResult(is_valid=True, field_name=field_name)
 
 
@@ -588,7 +585,7 @@ def _validate_email_field(
 def _validate_entity_id(value: str) -> bool:
     """Modern entity ID validation using validate_call decorator."""
     if not value.strip():
-        return False
+      return False
     # Basic UUID format check
     pattern = r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
     return bool(re.match(pattern, value.lower()))
@@ -604,9 +601,9 @@ def _validate_non_empty_string(value: str) -> bool:
 def _validate_service_name(name: str) -> bool:
     """Modern service name validation using validate_call decorator."""
     if not name.strip():
-        return False
+      return False
     if len(name) < FlextConstants.Validation.MIN_SERVICE_NAME_LENGTH:
-        return False
+      return False
     return bool(re.match(r"^[a-zA-Z][a-zA-Z0-9_-]*$", name))
 
 
@@ -688,117 +685,117 @@ class FlextValidation(FlextValidators):
     @classmethod
     @validate_call
     def validate(cls, value: object) -> FlextResult[object]:
-        """Modern validation with automatic type detection using validate_call."""
-        try:
-            if (
-                isinstance(value, str)
-                and "@" in value
-                and "." in value
-                and not cls.is_email(value)
-            ):
-                return FlextResult.fail("Invalid email format")
-            if isinstance(value, str) and not cls.is_non_empty_string(value):
-                return FlextResult.fail("String cannot be empty")
+      """Modern validation with automatic type detection using validate_call."""
+      try:
+          if (
+              isinstance(value, str)
+              and "@" in value
+              and "." in value
+              and not cls.is_email(value)
+          ):
+              return FlextResult.fail("Invalid email format")
+          if isinstance(value, str) and not cls.is_non_empty_string(value):
+              return FlextResult.fail("String cannot be empty")
 
-            return FlextResult.ok(value)
-        except ValidationError as e:
-            return FlextResult.fail(f"Validation error: {e}")
+          return FlextResult.ok(value)
+      except ValidationError as e:
+          return FlextResult.fail(f"Validation error: {e}")
 
     @staticmethod
     @validate_call
     def chain(*validators: Callable[[object], bool]) -> Callable[[object], bool]:
-        """Chain multiple validators together with AND logic using validate_call.
+      """Chain multiple validators together with AND logic using validate_call.
 
-        Args:
-            *validators: Validator functions to chain
+      Args:
+          *validators: Validator functions to chain
 
-        Returns:
-            Chained validator function that returns True only if all validators pass
+      Returns:
+          Chained validator function that returns True only if all validators pass
 
-        """
+      """
 
-        @validate_call
-        def chained_validator(value: object) -> bool:
-            return all(validator(value) for validator in validators)
+      @validate_call
+      def chained_validator(value: object) -> bool:
+          return all(validator(value) for validator in validators)
 
-        return chained_validator
+      return chained_validator
 
     @staticmethod
     @validate_call
     def any_of(*validators: Callable[[object], bool]) -> Callable[[object], bool]:
-        """Chain multiple validators together with OR logic using validate_call.
+      """Chain multiple validators together with OR logic using validate_call.
 
-        Args:
-            *validators: Validator functions to chain
+      Args:
+          *validators: Validator functions to chain
 
-        Returns:
-            Chained validator function that returns True if any validator passes
+      Returns:
+          Chained validator function that returns True if any validator passes
 
-        """
+      """
 
-        @validate_call
-        def any_validator(value: object) -> bool:
-            return any(validator(value) for validator in validators)
+      @validate_call
+      def any_validator(value: object) -> bool:
+          return any(validator(value) for validator in validators)
 
-        return any_validator
+      return any_validator
 
     @staticmethod
     @validate_call
     def create_validation_config(
-        field_name: str,
-        min_length: int = 0,
-        max_length: int | None = None,
+      field_name: str,
+      min_length: int = 0,
+      max_length: int | None = None,
     ) -> FlextValidationConfig:
-        """Create validation configuration using modern Pydantic patterns.
+      """Create validation configuration using modern Pydantic patterns.
 
-        Args:
-            field_name: Name of the field being validated
-            min_length: Minimum length for string fields
-            max_length: Maximum length for string fields
+      Args:
+          field_name: Name of the field being validated
+          min_length: Minimum length for string fields
+          max_length: Maximum length for string fields
 
-        Returns:
-            Validated configuration object
+      Returns:
+          Validated configuration object
 
-        """
-        return FlextValidationConfig(
-            field_name=field_name,
-            min_length=min_length,
-            max_length=max_length,
-        )
+      """
+      return FlextValidationConfig(
+          field_name=field_name,
+          min_length=min_length,
+          max_length=max_length,
+      )
 
     @classmethod
     @validate_call
     def safe_validate(
-        cls,
-        value: object,
-        validator: Callable[[object], bool],
+      cls,
+      value: object,
+      validator: Callable[[object], bool],
     ) -> FlextResult[object]:
-        """Safely validate value with FlextResult error handling using modern patterns.
+      """Safely validate value with FlextResult error handling using modern patterns.
 
-        Modern orchestration pattern combining validate_call decorated validation
-        with FlextResult patterns for comprehensive safe validation. Automatically
-        captures validation errors and converts them to FlextResult failures.
+      Modern orchestration pattern combining validate_call decorated validation
+      with FlextResult patterns for comprehensive safe validation. Automatically
+      captures validation errors and converts them to FlextResult failures.
 
-        Args:
-            value: Value to validate
-            validator: Validator function to apply
+      Args:
+          value: Value to validate
+          validator: Validator function to apply
 
-        Returns:
-            FlextResult with a validation outcome
+      Returns:
+          FlextResult with a validation outcome
 
-        """
-        try:
-            if validator(value):
-                return FlextResult.ok(value)
-            return FlextResult.fail(f"Validation failed for value: {value}")
-        except (
-            TypeError,
-            ValueError,
-            AttributeError,
-            RuntimeError,
-            ValidationError,
-        ) as e:
-            return FlextResult.fail(f"Validation error: {e}")
+      """
+      try:
+          if validator(value):
+              return FlextResult.ok(value)
+          return FlextResult.fail(f"Validation failed for value: {value}")
+      except (
+          TypeError,
+          ValueError,
+          AttributeError,
+          RuntimeError,
+          ValidationError,
+      ) as e:
+          return FlextResult.fail(f"Validation error: {e}")
 
 
 # =============================================================================
@@ -824,11 +821,11 @@ def flext_validate_required(
     Uses validate_call decorator for automatic type checking and error handling.
 
     Args:
-        value: Value to validate (any type accepted)
-        field_name: Name of field for error messages and debugging
+      value: Value to validate (any type accepted)
+      field_name: Name of field for error messages and debugging
 
     Returns:
-        FlextValidationResult with is_valid boolean and error details.
+      FlextValidationResult with is_valid boolean and error details.
 
     """
     return flext_validate_required_field(value, field_name)
@@ -847,13 +844,13 @@ def flext_validate_string(
     and content verification. Supports configurable length constraints with clear errors.
 
     Args:
-        value: String value to validate (automatically type-checked)
-        field_name: Name of field for error messages and debugging
-        min_length: Minimum required length (inclusive, default 0)
-        max_length: Maximum allowed length (inclusive, None for unlimited)
+      value: String value to validate (automatically type-checked)
+      field_name: Name of field for error messages and debugging
+      min_length: Minimum required length (inclusive, default 0)
+      max_length: Maximum allowed length (inclusive, None for unlimited)
 
     Returns:
-        FlextValidationResult with is_valid boolean and detailed error information.
+      FlextValidationResult with is_valid boolean and detailed error information.
 
     """
     return flext_validate_string_field(value, field_name, min_length, max_length)
@@ -872,13 +869,13 @@ def flext_validate_numeric(
     for numeric values. Supports configurable range constraints with detailed errors.
 
     Args:
-        value: Numeric value to validate (automatically type-checked)
-        field_name: Name of field for error messages and debugging
-        min_val: Minimum allowed value (inclusive, None for no minimum)
-        max_val: Maximum allowed value (inclusive, None for no maximum)
+      value: Numeric value to validate (automatically type-checked)
+      field_name: Name of field for error messages and debugging
+      min_val: Minimum allowed value (inclusive, None for no minimum)
+      max_val: Maximum allowed value (inclusive, None for no maximum)
 
     Returns:
-        FlextValidationResult with is_valid boolean and range error details.
+      FlextValidationResult with is_valid boolean and range error details.
 
     """
     return flext_validate_numeric_field(value, field_name, min_val, max_val)
@@ -895,11 +892,11 @@ def flext_validate_email(
     email validation including format checking and structural verification.
 
     Args:
-        value: Email string to validate (automatically type-checked)
-        field_name: Name of field for error messages and debugging
+      value: Email string to validate (automatically type-checked)
+      field_name: Name of field for error messages and debugging
 
     Returns:
-        FlextValidationResult with is_valid boolean and format error details.
+      FlextValidationResult with is_valid boolean and format error details.
 
     """
     return flext_validate_email_field(value, field_name)
@@ -913,10 +910,10 @@ def flext_validate_service_name(name: str) -> bool:
     with automatic type checking and enhanced validation rules.
 
     Args:
-        name: Service name to validate (automatically type-checked)
+      name: Service name to validate (automatically type-checked)
 
     Returns:
-        True if valid service name, False otherwise.
+      True if valid service name, False otherwise.
 
     """
     return _validate_service_name(name)
@@ -935,24 +932,24 @@ def validate_with_result(
 ) -> FlextResult[object]:
     """Modern validation function returning FlextResult."""
     try:
-        if validator(value):
-            return FlextResult.ok(value)
-        return FlextResult.fail(error_message)
+      if validator(value):
+          return FlextResult.ok(value)
+      return FlextResult.fail(error_message)
     except ValidationError as e:
-        return FlextResult.fail(f"Validation error: {e}")
+      return FlextResult.fail(f"Validation error: {e}")
     except Exception as e:
-        return FlextResult.fail(f"Unexpected validation error: {e}")
+      return FlextResult.fail(f"Unexpected validation error: {e}")
 
 
 @validate_call
 def validate_entity_id(entity_id: str) -> FlextResult[str]:
     """Modern entity ID validation returning FlextResult."""
     if not entity_id.strip():
-        return FlextResult.fail("Entity ID cannot be empty")
+      return FlextResult.fail("Entity ID cannot be empty")
 
     # Basic UUID format check
     if not _BaseValidators.is_uuid(entity_id):
-        return FlextResult.fail("Entity ID must be a valid UUID")
+      return FlextResult.fail("Entity ID must be a valid UUID")
 
     return FlextResult.ok(entity_id)
 
@@ -961,15 +958,15 @@ def validate_entity_id(entity_id: str) -> FlextResult[str]:
 def validate_service_name_with_result(name: str) -> FlextResult[str]:
     """Modern service name validation returning FlextResult."""
     if not name.strip():
-        return FlextResult.fail("Service name cannot be empty")
+      return FlextResult.fail("Service name cannot be empty")
 
     if len(name) < FlextConstants.Validation.MIN_SERVICE_NAME_LENGTH:
-        return FlextResult.fail("Service name must be at least 2 characters")
+      return FlextResult.fail("Service name must be at least 2 characters")
 
     if not re.match(r"^[a-zA-Z][a-zA-Z0-9_-]*$", name):
-        return FlextResult.fail(
-            "Service name must start with letter and contain only letters, numbers, hyphens, and underscores",
-        )
+      return FlextResult.fail(
+          "Service name must start with letter and contain only letters, numbers, hyphens, and underscores",
+      )
 
     return FlextResult.ok(name)
 
@@ -984,25 +981,25 @@ class FlextValidationPipeline:
 
     @validate_call
     def __init__(self) -> None:
-        self.validators: list[Callable[[object], FlextResult[object]]] = []
+      self.validators: list[Callable[[object], FlextResult[object]]] = []
 
     @validate_call
     def add_validator(self, validator: Callable[[object], FlextResult[object]]) -> None:
-        """Add validator to the pipeline."""
-        self.validators.append(validator)
+      """Add validator to the pipeline."""
+      self.validators.append(validator)
 
     @validate_call
     def validate(self, value: object) -> FlextResult[object]:
-        """Run all validators in the pipeline."""
-        current_value = value
+      """Run all validators in the pipeline."""
+      current_value = value
 
-        for validator in self.validators:
-            result = validator(current_value)
-            if not result.is_success:
-                return result
-            current_value = result.data
+      for validator in self.validators:
+          result = validator(current_value)
+          if not result.is_success:
+              return result
+          current_value = result.data
 
-        return FlextResult.ok(current_value)
+      return FlextResult.ok(current_value)
 
 
 # =============================================================================
@@ -1034,25 +1031,25 @@ class FlextDomainValidator(FlextAbstractValidator[T]):
 
     @validate_call
     def __init__(self, business_rules: list[Callable[[T], bool]] | None = None) -> None:
-        """Initialize domain validator with business rules."""
-        self.business_rules = business_rules or []
+      """Initialize domain validator with business rules."""
+      self.business_rules = business_rules or []
 
     @validate_call
     def validate_value(self, value: T) -> FlextResult[T]:
-        """Validate value against business rules with modern patterns."""
-        try:
-            for rule in self.business_rules:
-                if not rule(value):
-                    return FlextResult.fail("Business rule validation failed")
-            return FlextResult.ok(value)
-        except ValidationError as e:
-            return FlextResult.fail(f"Validation error: {e}")
-        except Exception as e:
-            return FlextResult.fail(f"Business rule error: {e}")
+      """Validate value against business rules with modern patterns."""
+      try:
+          for rule in self.business_rules:
+              if not rule(value):
+                  return FlextResult.fail("Business rule validation failed")
+          return FlextResult.ok(value)
+      except ValidationError as e:
+          return FlextResult.fail(f"Validation error: {e}")
+      except Exception as e:
+          return FlextResult.fail(f"Business rule error: {e}")
 
     def validate(self, value: T) -> FlextResult[T]:
-        """Alias to validate_value for compatibility with legacy code."""
-        return self.validate_value(value)
+      """Alias to validate_value for compatibility with legacy code."""
+      return self.validate_value(value)
 
 
 __all__: list[str] = [

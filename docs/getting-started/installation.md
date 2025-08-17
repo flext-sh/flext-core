@@ -113,7 +113,7 @@ if __name__ == "__main__":
 
 def verify_core_imports():
     """Test core pattern imports."""
-    from flext_core import (
+from flext_core import (
         FlextResult,
         FlextContainer,
         get_flext_container,
@@ -142,7 +142,7 @@ def verify_core_imports():
 
 def verify_domain_imports():
     """Test domain pattern imports."""
-    from flext_core import (
+from flext_core import (
         FlextEntity,
         FlextValueObject,
         FlextAggregateRoot,
@@ -153,8 +153,8 @@ def verify_domain_imports():
 
 def verify_utility_imports():
     """Test utility imports."""
-    from flext_core.utilities import generate_id, generate_uuid
-    from flext_core import get_logger
+from flext_core.utilities import generate_id, generate_uuid
+from flext_core import get_logger
 
     # Test utilities
     entity_id = generate_id("test")
@@ -501,7 +501,7 @@ def check_flext_core():
         print(f"✅ FLEXT Core {flext_core.__version__} installed")
 
         # Test core functionality
-        from flext_core import FlextResult
+    from flext_core import FlextResult
         result = FlextResult.ok("test")
         assert result.success
         print("✅ Core functionality working")

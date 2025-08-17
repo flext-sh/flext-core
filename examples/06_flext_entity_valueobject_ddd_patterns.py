@@ -15,8 +15,9 @@ domain events, and aggregate patterns.
 from __future__ import annotations
 
 import time
+from collections.abc import Callable
 from decimal import Decimal
-from typing import TYPE_CHECKING, cast
+from typing import Protocol, cast
 
 from flext_core import (
     FlextEntity,
@@ -37,30 +38,30 @@ from .shared_domain import (
 )
 from .shared_example_helpers import run_example_demonstration
 
-if TYPE_CHECKING:
-    from collections.abc import Callable
-    from typing import Protocol
 
-    class CustomerFactory(Protocol):
-        """Factory protocol for creating `Customer` instances."""
+class CustomerFactory(Protocol):
+    """Factory protocol for creating `Customer` instances."""
 
-        def __call__(self, **kwargs: object) -> FlextResult[Customer]:
-            """Create a new `Customer` from keyword arguments."""
-            ...
+    def __call__(self, **kwargs: object) -> FlextResult[Customer]:
+        """Create a new `Customer` from keyword arguments."""
+        ...
 
-    class ProductFactory(Protocol):
-        """Factory protocol for creating `Product` instances."""
 
-        def __call__(self, **kwargs: object) -> FlextResult[Product]:
-            """Create a new `Product` from keyword arguments."""
-            ...
+class ProductFactory(Protocol):
+    """Factory protocol for creating `Product` instances."""
 
-    class OrderFactory(Protocol):
-        """Factory protocol for creating `Order` instances."""
+    def __call__(self, **kwargs: object) -> FlextResult[Product]:
+        """Create a new `Product` from keyword arguments."""
+        ...
 
-        def __call__(self, **kwargs: object) -> FlextResult[Order]:
-            """Create a new `Order` from keyword arguments."""
-            ...
+
+class OrderFactory(Protocol):
+    """Factory protocol for creating `Order` instances."""
+
+    def __call__(self, **kwargs: object) -> FlextResult[Order]:
+        """Create a new `Order` from keyword arguments."""
+        ...
+
 
 # =============================================================================
 # DDD VALIDATION CONSTANTS - Domain validation constraints

@@ -11,6 +11,14 @@ from flext_core.__version__ import (
     FlextCompatibilityResult,
     FlextVersionInfo,
     __version__,
+    check_python_compatibility,
+    compare_versions,
+    get_available_features,
+    get_version_info,
+    get_version_string,
+    get_version_tuple,
+    is_feature_available,
+    validate_version_format,
 )
 
 __version_info__ = tuple(int(x) for x in __version__.split(".") if x.isdigit())
@@ -36,6 +44,13 @@ from flext_core.commands import FlextCommands
 
 # Configuration models - Only export what actually exists
 from flext_core.config import (
+    DEFAULT_ENVIRONMENT,
+    DEFAULT_LOG_LEVEL,
+    DEFAULT_PAGE_SIZE,
+    DEFAULT_RETRIES,
+    DEFAULT_TIMEOUT,
+    CONFIG_VALIDATION_MESSAGES,
+    FlextAbstractConfig,
     FlextConfig,
     FlextConfigDefaults,
     FlextConfigFactory,
@@ -160,6 +175,7 @@ from flext_core.exceptions import (
     FlextConnectionError,
     FlextCriticalError,
     FlextError,
+    FlextErrorMixin,
     FlextExceptionMetrics,
     FlextExceptions,
     FlextNotFoundError,
@@ -250,6 +266,7 @@ from flext_core.mixins import (
     FlextAbstractTimestampMixin,
     FlextAbstractValidatableMixin,
     FlextCacheableMixin,
+    FlextCommandMixin,
     FlextComparableMixin,
     FlextIdentifiableMixin,
     FlextLoggableMixin,
@@ -257,7 +274,21 @@ from flext_core.mixins import (
     FlextTimestampMixin,
     FlextTimingMixin,
     FlextValidatableMixin,
-    # Modern mixins only - legacy compatibility removed
+    # Legacy compatibility aliases for tests
+    LegacyCompatibleTimestampMixin,
+    LegacyCompatibleIdentifiableMixin,
+    LegacyCompatibleValidatableMixin,
+    LegacyCompatibleSerializableMixin,
+    LegacyCompatibleLoggableMixin,
+    LegacyCompatibleTimingMixin,
+    LegacyCompatibleComparableMixin,
+    LegacyCompatibleCacheableMixin,
+    LegacyCompatibleEntityMixin,
+    LegacyCompatibleCommandMixin,
+    LegacyCompatibleDataMixin,
+    LegacyCompatibleFullMixin,
+    LegacyCompatibleServiceMixin,
+    LegacyCompatibleValueObjectMixin,
 )
 
 # Domain models
@@ -295,6 +326,7 @@ from flext_core.models import (
     create_service_model,
     model_to_dict_safe,
     validate_all_models,
+    flext_alias_generator,
 )
 
 # Observability
@@ -313,6 +345,11 @@ from flext_core.observability import (
     get_observability,
     get_simple_observability,
     reset_global_observability,
+    # Legacy compatibility aliases
+    InMemoryMetrics,
+    MinimalObservability,
+    NoOpTracer,
+    SimpleAlerts,
 )
 
 # Legacy compatibility imports needed by tests
@@ -321,7 +358,14 @@ from flext_core.legacy import (
     BaseConfigManager,
     ConsoleLogger,
     FlextValueObjectFactory,
-    LegacyCompatibleCacheableMixin,
+    # Legacy schema processing aliases
+    BaseEntry,
+    BaseFileWriter,
+    BaseProcessor,
+    BaseSorter,
+    ConfigAttributeValidator,
+    EntryType,
+    # NOTE: Version utilities are imported from __version__.py above, not legacy.py
 )
 
 # Payload
@@ -337,12 +381,17 @@ from flext_core.payload import (
 
 # Protocols
 from flext_core.protocols import (
+    FlextAlertsProtocol,
     FlextConfigurable as FlextConfigurableProtocol,
+    FlextLoggerProtocol,
+    FlextMetricsProtocol,
+    FlextObservabilityProtocol,
     FlextPlugin,
     FlextPluginContext,
     FlextPluginLoader,
     FlextPluginRegistry,
     FlextRepository,
+    FlextTracerProtocol,
     FlextValidator as FlextValidatorProtocol,
 )
 
@@ -382,6 +431,10 @@ from flext_core.schema_processing import (
     FlextBaseSorter,
     FlextConfigAttributeValidator,
     FlextEntryType,
+    FlextProcessingPipeline,
+    FlextRegexProcessor,
+    ProcessingPipeline,
+    RegexProcessor,
 )
 
 # Semantic
@@ -538,14 +591,11 @@ from flext_core.validation import (
 # Value objects
 from flext_core.value_objects import FlextValueObject
 
-try:  # pragma: no cover
-    from flext_core import constants as _constants_module
-
-    constants = _constants_module  # runtime alias to module
-except Exception:  # pragma: no cover
-    constants = FlextConstants  # type: ignore[assignment]
+from flext_core import constants as _constants_module
 
 from contextlib import suppress
+
+constants = _constants_module  # runtime alias to module
 
 with suppress(
     Exception,
@@ -559,10 +609,10 @@ with suppress(
 class _config_base:  # noqa: N801 - keep snake_case to match tests
     @staticmethod
     def dict(
-        *_args: object,
-        **_kwargs: object,
+      *_args: object,
+      **_kwargs: object,
     ) -> dict[str, object]:  # pragma: no cover
-        return {}
+      return {}
 
 
 class FlextCommandHandler(FlextAbstractHandler[T, U], ABC):
@@ -572,10 +622,10 @@ class FlextCommandHandler(FlextAbstractHandler[T, U], ABC):
     def handle_command(self, command: T) -> FlextResult[U]: ...
 
     def handle(
-        self,
-        request: T,
+      self,
+      request: T,
     ) -> FlextResult[U]:  # pragma: no cover - trivial
-        return self.handle_command(request)
+      return self.handle_command(request)
 
 
 class FlextQueryHandler(FlextAbstractHandler[T, U], ABC):
@@ -585,10 +635,10 @@ class FlextQueryHandler(FlextAbstractHandler[T, U], ABC):
     def handle_query(self, query: T) -> FlextResult[U]: ...
 
     def handle(
-        self,
-        request: T,
+      self,
+      request: T,
     ) -> FlextResult[U]:  # pragma: no cover - trivial
-        return self.handle_query(request)
+      return self.handle_query(request)
 
 
 # =============================================================================
@@ -640,30 +690,11 @@ __all__: list[str] = [
     "FlextModel",
     # Additional config classes
     "FlextAbstractConfig",
-    "FlextAbstractSettings",
-    "FlextApplicationConfig",
-    "FlextConfigBuilder",
     "FlextConfigDefaults",
     "FlextConfigFactory",
-    "FlextConfigLoaderProtocol",
-    "FlextConfigManager",
-    "FlextConfigMergerProtocol",
-    "FlextConfigOperations",
     "FlextConfigOps",
-    "FlextConfigSerializerProtocol",
     "FlextConfigValidation",
-    "FlextConfigValidator",
-    "FlextConfigValidatorProtocol",
-    "FlextDataIntegrationConfig",
     "FlextObservabilityConfig",
-    "FlextPerformanceConfig",
-    "FlextDatabaseConfigDict",
-    "FlextJWTConfigDict",
-    "FlextLDAPConfigDict",
-    "FlextObservabilityConfigDict",
-    "FlextOracleConfigDict",
-    "FlextRedisConfigDict",
-    "FlextSingerConfigDict",
     "merge_configs",
     "load_config_from_env",
     "safe_get_env_var",
@@ -904,6 +935,7 @@ __all__: list[str] = [
     "FlextSerializableMixin",
     "FlextComparableMixin",
     "FlextCacheableMixin",
+    "FlextCommandMixin",
     # Modern mixins - no legacy compatibility needed
     "FlextConsoleLogger",
     "FlextNoOpSpan",
@@ -955,14 +987,18 @@ __all__: list[str] = [
     "FlextPlugin",
     "FlextPluginContext",
     "FlextRepository",
+    "FlextAlertsProtocol",
     "FlextConfigurableProtocol",
+    "FlextLoggerProtocol",
+    "FlextMetricsProtocol",
+    "FlextObservabilityProtocol",
+    "FlextTracerProtocol",
     "FlextValidatorProtocol",
     "FlextPluginLoader",
     "FlextPluginRegistry",
     # Protocol interfaces module
     "interfaces",
     "annotations",
-    "TYPE_CHECKING",
     # Decorators adicionales
     "FlextAbstractDecorator",
     "FlextAbstractDecoratorFactory",
@@ -1019,6 +1055,33 @@ __all__: list[str] = [
     "_BaseConfigDefaults",
     "flext_validate_non_empty_string",
     "FlextValueObjectFactory",
+    # Additional legacy mixin aliases for test compatibility
+    "LegacyCompatibleCommandMixin",
+    "LegacyCompatibleComparableMixin",
+    "LegacyCompatibleDataMixin",
+    "LegacyCompatibleEntityMixin",
+    "LegacyCompatibleFullMixin",
+    "LegacyCompatibleIdentifiableMixin",
+    "LegacyCompatibleLoggableMixin",
+    "LegacyCompatibleSerializableMixin",
+    "LegacyCompatibleServiceMixin",
+    "LegacyCompatibleTimestampMixin",
+    "LegacyCompatibleTimingMixin",
+    "LegacyCompatibleValidatableMixin",
+    # Legacy observability aliases
+    "InMemoryMetrics",
+    "MinimalObservability",
+    "NoOpTracer",
+    "SimpleAlerts",
+    # Legacy schema processing aliases
+    "BaseEntry",
+    "BaseFileWriter",
+    "BaseProcessor",
+    "BaseSorter",
+    "ConfigAttributeValidator",
+    "EntryType",
+    "ProcessingPipeline",
+    # NOTE: Version utilities are exported from the main version imports above, not legacy
     # Delegation System
     "FlextDelegatedProperty",
     "FlextMixinDelegator",

@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from functools import wraps
-from typing import TYPE_CHECKING, ParamSpec, Self, TypeVar, cast
+from typing import ParamSpec, Self, TypeVar, cast
 
 from pydantic import BaseModel, ValidationError
 
@@ -14,9 +15,6 @@ from flext_core.mixins import FlextSerializableMixin, FlextValidatableMixin
 from flext_core.result import FlextResult
 from flext_core.utilities import FlextTypeGuards, FlextUtilities
 from flext_core.validation import FlextValidators
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
 
 Platform = FlextConstants.Platform
 
@@ -50,127 +48,127 @@ class FlextGuards:
 
     @staticmethod
     def is_dict_of(obj: object, value_type: type) -> bool:
-        """Check if an object is a dict with values of a specific type."""
-        if not isinstance(obj, dict):
-            return False
-        return all(isinstance(value, value_type) for value in obj.values())
+      """Check if an object is a dict with values of a specific type."""
+      if not isinstance(obj, dict):
+          return False
+      return all(isinstance(value, value_type) for value in obj.values())
 
     @staticmethod
     def immutable(target_class: type[T]) -> type[T]:
-        """Make class immutable using a decorator pattern.
+      """Make class immutable using a decorator pattern.
 
-        Args:
-            target_class: The class to make immutable
+      Args:
+          target_class: The class to make immutable
 
-        Returns:
-            Immutable version of the class
+      Returns:
+          Immutable version of the class
 
-        """
+      """
 
-        def _init(self: object, *args: object, **kwargs: object) -> None:
-            target_class.__init__(self, *args, **kwargs)
-            object.__setattr__(self, "_initialized", True)
+      def _init(self: object, *args: object, **kwargs: object) -> None:
+          target_class.__init__(self, *args, **kwargs)
+          object.__setattr__(self, "_initialized", True)
 
-        def _setattr(self: object, name: str, value: object) -> None:
-            if hasattr(self, "_initialized"):
-                msg = "Cannot modify immutable object attribute '" + name + "'"
-                raise AttributeError(msg)
-            object.__setattr__(self, name, value)
+      def _setattr(self: object, name: str, value: object) -> None:
+          if hasattr(self, "_initialized"):
+              msg = "Cannot modify immutable object attribute '" + name + "'"
+              raise AttributeError(msg)
+          object.__setattr__(self, name, value)
 
-        def _hash(self: object) -> int:
-            try:
-                attrs = tuple(
-                    getattr(self, attr)
-                    for attr in dir(self)
-                    if not attr.startswith("_") and not callable(getattr(self, attr))
-                )
-                return hash((self.__class__.__name__, attrs))
-            except TypeError:
-                return hash(id(self))
+      def _hash(self: object) -> int:
+          try:
+              attrs = tuple(
+                  getattr(self, attr)
+                  for attr in dir(self)
+                  if not attr.startswith("_") and not callable(getattr(self, attr))
+              )
+              return hash((self.__class__.__name__, attrs))
+          except TypeError:
+              return hash(id(self))
 
-        wrapper: type[T] = cast(
-            "type[T]",
-            type(
-                target_class.__name__,
-                (target_class,),
-                {
-                    "__init__": _init,
-                    "__setattr__": _setattr,
-                    "__hash__": _hash,
-                    "__module__": getattr(target_class, "__module__", __name__),
-                    "__qualname__": getattr(
-                        target_class,
-                        "__qualname__",
-                        target_class.__name__,
-                    ),
-                },
-            ),
-        )
+      wrapper: type[T] = cast(
+          "type[T]",
+          type(
+              target_class.__name__,
+              (target_class,),
+              {
+                  "__init__": _init,
+                  "__setattr__": _setattr,
+                  "__hash__": _hash,
+                  "__module__": getattr(target_class, "__module__", __name__),
+                  "__qualname__": getattr(
+                      target_class,
+                      "__qualname__",
+                      target_class.__name__,
+                  ),
+              },
+          ),
+      )
 
-        return wrapper
+      return wrapper
 
     @staticmethod
     def pure(func: Callable[P, R]) -> Callable[P, R]:
-        """Mark function as pure with memoization caching.
+      """Mark function as pure with memoization caching.
 
-        Args:
-            func: Function to make pure
+      Args:
+          func: Function to make pure
 
-        Returns:
-            Pure version of the function with caching
+      Returns:
+          Pure version of the function with caching
 
-        """
-        # Cache for memoization
-        cache: dict[tuple[object, ...], R] = {}
+      """
+      # Cache for memoization
+      cache: dict[tuple[object, ...], R] = {}
 
-        def pure_wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-            """Pure function wrapper with memoization."""
-            # Create a cache key from args and kwargs
-            try:
-                cache_key = (args, tuple(sorted(kwargs.items())))
+      def pure_wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+          """Pure function wrapper with memoization."""
+          # Create a cache key from args and kwargs
+          try:
+              cache_key = (args, tuple(sorted(kwargs.items())))
 
-                # Return cached result if available
-                if cache_key in cache:
-                    return cache[cache_key]
+              # Return cached result if available
+              if cache_key in cache:
+                  return cache[cache_key]
 
-                # Compute and cache result
-                result = func(*args, **kwargs)
-                cache[cache_key] = result
-            except TypeError:
-                # Arguments not hashable, can't cache - just call function
-                return func(*args, **kwargs)
-            else:
-                return result
+              # Compute and cache result
+              result = func(*args, **kwargs)
+              cache[cache_key] = result
+          except TypeError:
+              # Arguments not hashable, can't cache - just call function
+              return func(*args, **kwargs)
+          else:
+              return result
 
-        # Use functools.wraps to properly preserve function metadata
-        wrapped = wraps(func)(pure_wrapper)
-        # Mark as pure and expose cache size for tests and tooling
-        setattr(wrapped, "__pure__", True)  # noqa: B010 - intentional test hint attribute
+      # Use functools.wraps to properly preserve function metadata
+      wrapped = wraps(func)(pure_wrapper)
+      # Mark as pure and expose cache size for tests and tooling
+      setattr(wrapped, "__pure__", True)  # noqa: B010 - intentional test hint attribute
 
-        # Provide a lightweight cache size accessor expected by tests
-        def _cache_size() -> int:
-            return len(cache)
+      # Provide a lightweight cache size accessor expected by tests
+      def _cache_size() -> int:
+          return len(cache)
 
-        wrapped.__dict__["__cache_size__"] = _cache_size
-        return cast("Callable[P, R]", wrapped)
+      wrapped.__dict__["__cache_size__"] = _cache_size
+      return cast("Callable[P, R]", wrapped)
 
     @staticmethod
     def make_factory(target_class: type) -> Callable[[], object]:
-        """Create a simple factory function for safe object construction."""
+      """Create a simple factory function for safe object construction."""
 
-        def factory(*args: object, **kwargs: object) -> object:
-            return target_class(*args, **kwargs)
+      def factory(*args: object, **kwargs: object) -> object:
+          return target_class(*args, **kwargs)
 
-        return factory
+      return factory
 
     @staticmethod
     def make_builder(target_class: type) -> Callable[[], object]:
-        """Create a simple builder function for fluent object construction."""
+      """Create a simple builder function for fluent object construction."""
 
-        def builder(*args: object, **kwargs: object) -> object:
-            return target_class(*args, **kwargs)
+      def builder(*args: object, **kwargs: object) -> object:
+          return target_class(*args, **kwargs)
 
-        return builder
+      return builder
 
 
 # =============================================================================
@@ -186,30 +184,30 @@ class FlextValidatedModel(BaseModel, FlextSerializableMixin, FlextValidatableMix
     """
 
     def __init__(self, **data: object) -> None:
-        """Initialize with proper mixin inheritance and enhanced error handling."""
-        try:
-            super().__init__(**data)
-            # Initialize validation state for mixin integration
-            FlextValidatableMixin.__init__(self)
-        except ValidationError as e:
-            # Convert Pydantic errors to user-friendly format
-            errors = []
-            for error in e.errors():
-                loc = ".".join(str(x) for x in error["loc"]) if error.get("loc") else ""
-                msg = error.get("msg", "Validation error")
-                # Some tests expect messages without 'Input should be' prefix
-                normalized = (
-                    msg.replace("Input should be ", "")
-                    .replace("Input should be a ", "a ")
-                    .strip()
-                )
-                errors.append(f"{loc}: {normalized}" if loc else normalized)
-            # Join messages using '; ' consistent with expectations
-            error_msg: str = f"Invalid data: {'; '.join(errors)}"
-            raise FlextValidationError(
-                error_msg,
-                validation_details={"errors": errors},
-            ) from e
+      """Initialize with proper mixin inheritance and enhanced error handling."""
+      try:
+          super().__init__(**data)
+          # Initialize validation state for mixin integration
+          FlextValidatableMixin.__init__(self)
+      except ValidationError as e:
+          # Convert Pydantic errors to user-friendly format
+          errors = []
+          for error in e.errors():
+              loc = ".".join(str(x) for x in error["loc"]) if error.get("loc") else ""
+              msg = error.get("msg", "Validation error")
+              # Some tests expect messages without 'Input should be' prefix
+              normalized = (
+                  msg.replace("Input should be ", "")
+                  .replace("Input should be a ", "a ")
+                  .strip()
+              )
+              errors.append(f"{loc}: {normalized}" if loc else normalized)
+          # Join messages using '; ' consistent with expectations
+          error_msg: str = f"Invalid data: {'; '.join(errors)}"
+          raise FlextValidationError(
+              error_msg,
+              validation_details={"errors": errors},
+          ) from e
 
     # Mixin functionality is now inherited properly:
     # - Validation methods from FlextValidatableMixin
@@ -217,29 +215,29 @@ class FlextValidatedModel(BaseModel, FlextSerializableMixin, FlextValidatableMix
 
     @classmethod
     def create(cls, **data: object) -> FlextResult[Self]:
-        """Create instance using centralized factory.
+      """Create instance using centralized factory.
 
-        On failure, return FlextResult with normalized 'Invalid data' message
-        instead of raising, to align with tests expecting failure results.
-        """
-        try:
-            instance = cls(**data)
-            return FlextResult.ok(instance)
-        except (ValidationError, FlextValidationError) as e:
-            errors = []
-            if isinstance(e, ValidationError):
-                for error in e.errors():
-                    loc = ".".join(str(x) for x in error.get("loc", []))
-                    msg = error.get("msg", "Validation error")
-                    normalized = (
-                        msg.replace("Input should be ", "")
-                        .replace("Input should be a ", "a ")
-                        .strip()
-                    )
-                    errors.append(f"{loc}: {normalized}" if loc else normalized)
-                return FlextResult.fail(f"Invalid data: {'; '.join(errors)}")
-            # FlextValidationError already has normalized message
-            return FlextResult.fail(str(e))
+      On failure, return FlextResult with normalized 'Invalid data' message
+      instead of raising, to align with tests expecting failure results.
+      """
+      try:
+          instance = cls(**data)
+          return FlextResult.ok(instance)
+      except (ValidationError, FlextValidationError) as e:
+          errors = []
+          if isinstance(e, ValidationError):
+              for error in e.errors():
+                  loc = ".".join(str(x) for x in error.get("loc", []))
+                  msg = error.get("msg", "Validation error")
+                  normalized = (
+                      msg.replace("Input should be ", "")
+                      .replace("Input should be a ", "a ")
+                      .strip()
+                  )
+                  errors.append(f"{loc}: {normalized}" if loc else normalized)
+              return FlextResult.fail(f"Invalid data: {'; '.join(errors)}")
+          # FlextValidationError already has normalized message
+          return FlextResult.fail(str(e))
 
 
 # =============================================================================
@@ -252,64 +250,64 @@ class FlextValidationUtils:
 
     @staticmethod
     def require_not_none(
-        value: object,
-        message: str = "Value cannot be None",
+      value: object,
+      message: str = "Value cannot be None",
     ) -> object:
-        """Require value is not None with assertion-style validation."""
-        if value is None:
-            raise FlextValidationError(
-                message,
-                validation_details={"field": "required_value", "value": value},
-            )
-        return value
+      """Require value is not None with assertion-style validation."""
+      if value is None:
+          raise FlextValidationError(
+              message,
+              validation_details={"field": "required_value", "value": value},
+          )
+      return value
 
     @staticmethod
     def require_positive(
-        value: object,
-        message: str = "Value must be positive",
+      value: object,
+      message: str = "Value must be positive",
     ) -> object:
-        """Require value is a positive integer with comprehensive validation."""
-        if not (isinstance(value, int) and value > 0):
-            raise FlextValidationError(
-                message,
-                validation_details={"field": "positive_value", "value": value},
-            )
-        return value
+      """Require value is a positive integer with comprehensive validation."""
+      if not (isinstance(value, int) and value > 0):
+          raise FlextValidationError(
+              message,
+              validation_details={"field": "positive_value", "value": value},
+          )
+      return value
 
     @staticmethod
     def require_in_range(
-        value: object,
-        min_val: int,
-        max_val: int,
-        message: str | None = None,
+      value: object,
+      min_val: int,
+      max_val: int,
+      message: str | None = None,
     ) -> object:
-        """Require value is within a specified range with bounds validation."""
-        if not (isinstance(value, (int, float)) and min_val <= value <= max_val):
-            if not message:
-                message = f"Value must be between {min_val} and {max_val}"
-            raise FlextValidationError(
-                message,
-                validation_details={
-                    "field": "range_value",
-                    "value": value,
-                    "min_val": min_val,
-                    "max_val": max_val,
-                },
-            )
-        return value
+      """Require value is within a specified range with bounds validation."""
+      if not (isinstance(value, (int, float)) and min_val <= value <= max_val):
+          if not message:
+              message = f"Value must be between {min_val} and {max_val}"
+          raise FlextValidationError(
+              message,
+              validation_details={
+                  "field": "range_value",
+                  "value": value,
+                  "min_val": min_val,
+                  "max_val": max_val,
+              },
+          )
+      return value
 
     @staticmethod
     def require_non_empty(
-        value: object,
-        message: str = "Value cannot be empty",
+      value: object,
+      message: str = "Value cannot be empty",
     ) -> object:
-        """Require value is a non-empty string with comprehensive validation."""
-        if not isinstance(value, str) or not FlextValidators.is_non_empty_string(value):
-            raise FlextValidationError(
-                message,
-                validation_details={"field": "non_empty_string", "value": value},
-            )
-        return value
+      """Require value is a non-empty string with comprehensive validation."""
+      if not isinstance(value, str) or not FlextValidators.is_non_empty_string(value):
+          raise FlextValidationError(
+              message,
+              validation_details={"field": "non_empty_string", "value": value},
+          )
+      return value
 
 
 # Duplicate function removed - methods already exist in FlextGuards class
