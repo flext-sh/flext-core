@@ -83,27 +83,27 @@ class UserEntity(FlextEntity):
     is_active: bool = True
 
     def validate_domain_rules(self) -> FlextResult[None]:
-      """Validate domain rules for user entity."""
-      if not self.name or len(self.name) < MIN_NAME_LENGTH:
-          return FlextResult.fail(
-              f"Name must be at least {MIN_NAME_LENGTH} characters",
-          )
-      if "@" not in self.email:
-          return FlextResult.fail("Invalid email format")
-      return FlextResult.ok(None)
+        """Validate domain rules for user entity."""
+        if not self.name or len(self.name) < MIN_NAME_LENGTH:
+            return FlextResult.fail(
+                f"Name must be at least {MIN_NAME_LENGTH} characters",
+            )
+        if "@" not in self.email:
+            return FlextResult.fail("Invalid email format")
+        return FlextResult.ok(None)
 
     def activate(self) -> FlextResult["UserEntity"]:
-      """Activate user."""
-      if self.is_active:
-          return FlextResult.fail("User is already active")
-      # Since entities are frozen, we need to create a new instance
-      activated_user = UserEntity(
-          id=self.id,
-          name=self.name,
-          email=self.email,
-          is_active=True,
-      )
-      return FlextResult.ok(activated_user)
+        """Activate user."""
+        if self.is_active:
+            return FlextResult.fail("User is already active")
+        # Since entities are frozen, we need to create a new instance
+        activated_user = UserEntity(
+            id=self.id,
+            name=self.name,
+            email=self.email,
+            is_active=True,
+        )
+        return FlextResult.ok(activated_user)
 
 
 # =============================================================================
@@ -119,12 +119,12 @@ class CreateUserCommand:
     email: str
 
     def validate(self) -> FlextResult[None]:
-      """Validate command data."""
-      if not self.name or len(self.name) < MIN_NAME_LENGTH:
-          return FlextResult.fail("Name must be at least 2 characters")
-      if not self.email or "@" not in self.email:
-          return FlextResult.fail("Invalid email format")
-      return FlextResult.ok(None)
+        """Validate command data."""
+        if not self.name or len(self.name) < MIN_NAME_LENGTH:
+            return FlextResult.fail("Name must be at least 2 characters")
+        if not self.email or "@" not in self.email:
+            return FlextResult.fail("Invalid email format")
+        return FlextResult.ok(None)
 
 
 @dataclass
@@ -136,14 +136,14 @@ class UpdateUserCommand:
     email: str | None = None
 
     def validate(self) -> FlextResult[None]:
-      """Validate update command."""
-      if not self.user_id:
-          return FlextResult.fail("User ID is required")
-      if self.name is not None and len(self.name) < MIN_NAME_LENGTH:
-          return FlextResult.fail("Name must be at least 2 characters")
-      if self.email is not None and "@" not in self.email:
-          return FlextResult.fail("Invalid email format")
-      return FlextResult.ok(None)
+        """Validate update command."""
+        if not self.user_id:
+            return FlextResult.fail("User ID is required")
+        if self.name is not None and len(self.name) < MIN_NAME_LENGTH:
+            return FlextResult.fail("Name must be at least 2 characters")
+        if self.email is not None and "@" not in self.email:
+            return FlextResult.fail("Invalid email format")
+        return FlextResult.ok(None)
 
 
 @dataclass
@@ -201,124 +201,124 @@ class CreateUserHandler(FlextBaseHandler):
     """Handler for creating users with validation."""
 
     def __init__(self) -> None:
-      """Initialize CreateUserHandler."""
-      super().__init__("CreateUserHandler")
-      # Use imported FlextLoggerFactory for proper logger initialization
-      self._logger = FlextLoggerFactory.get_logger(
-          f"{self.__class__.__module__}.{self.__class__.__name__}",
-      )
-      # Simulate user storage
-      self.users: dict[str, User] = {}
-      self._next_id = 1
+        """Initialize CreateUserHandler."""
+        super().__init__("CreateUserHandler")
+        # Use imported FlextLoggerFactory for proper logger initialization
+        self._logger = FlextLoggerFactory.get_logger(
+            f"{self.__class__.__module__}.{self.__class__.__name__}",
+        )
+        # Simulate user storage
+        self.users: dict[str, User] = {}
+        self._next_id = 1
 
     @property
     def logger(self) -> FlextLogger:
-      """Access logger."""
-      return self._logger
+        """Access logger."""
+        return self._logger
 
     def can_handle(self, message: object) -> bool:
-      """Check if can handle this message type."""
-      return isinstance(message, CreateUserCommand)
+        """Check if can handle this message type."""
+        return isinstance(message, CreateUserCommand)
 
     def validate_command(self, command: object) -> FlextResult[None]:
-      """Additional command validation."""
-      if not isinstance(command, CreateUserCommand):
-          return FlextResult.fail("Invalid command type")
-      # Check if email already exists
-      for user in self.users.values():
-          if user.email == command.email:
-              return FlextResult.fail(f"Email {command.email} already exists")
-      return FlextResult.ok(None)
+        """Additional command validation."""
+        if not isinstance(command, CreateUserCommand):
+            return FlextResult.fail("Invalid command type")
+        # Check if email already exists
+        for user in self.users.values():
+            if user.email == command.email:
+                return FlextResult.fail(f"Email {command.email} already exists")
+        return FlextResult.ok(None)
 
     def handle(self, command: object) -> FlextResult[object]:
-      """Create new user."""
-      if not isinstance(command, CreateUserCommand):
-          return FlextResult.fail("Invalid command type")
+        """Create new user."""
+        if not isinstance(command, CreateUserCommand):
+            return FlextResult.fail("Invalid command type")
 
-      user_id = f"user_{self._next_id}"
-      self._next_id += 1
+        user_id = f"user_{self._next_id}"
+        self._next_id += 1
 
-      user = User(
-          id=user_id,
-          name=command.name,
-          email=command.email,
-          is_active=True,
-      )
+        user = User(
+            id=user_id,
+            name=command.name,
+            email=command.email,
+            is_active=True,
+        )
 
-      self.users[user_id] = user
+        self.users[user_id] = user
 
-      self.logger.info(
-          "User created successfully",
-          user_id=user_id,
-          name=command.name,
-          email=command.email,
-      )
+        self.logger.info(
+            "User created successfully",
+            user_id=user_id,
+            name=command.name,
+            email=command.email,
+        )
 
-      return FlextResult.ok(user)
+        return FlextResult.ok(user)
 
 
 class UpdateUserHandler(FlextBaseHandler):
     """Handler for updating users."""
 
     def __init__(self, user_storage: dict[str, User]) -> None:
-      """Initialize UpdateUserHandler.
+        """Initialize UpdateUserHandler.
 
-      Args:
-          user_storage: User storage dictionary
+        Args:
+            user_storage: User storage dictionary
 
-      """
-      super().__init__("UpdateUserHandler")
-      # Use imported FlextLoggerFactory for proper logger initialization
+        """
+        super().__init__("UpdateUserHandler")
+        # Use imported FlextLoggerFactory for proper logger initialization
 
-      self._logger = FlextLoggerFactory.get_logger(
-          f"{self.__class__.__module__}.{self.__class__.__name__}",
-      )
-      self.users = user_storage
+        self._logger = FlextLoggerFactory.get_logger(
+            f"{self.__class__.__module__}.{self.__class__.__name__}",
+        )
+        self.users = user_storage
 
     @property
     def logger(self) -> FlextLogger:
-      """Access logger."""
-      return self._logger
+        """Access logger."""
+        return self._logger
 
     def can_handle(self, message: object) -> bool:
-      """Check if can handle this message type."""
-      return isinstance(message, UpdateUserCommand)
+        """Check if can handle this message type."""
+        return isinstance(message, UpdateUserCommand)
 
     def validate_command(self, command: object) -> FlextResult[None]:
-      """Validate update command."""
-      if not isinstance(command, UpdateUserCommand):
-          return FlextResult.fail("Invalid command type")
-      if not command.user_id:
-          return FlextResult.fail("User ID is required")
-      if command.name is None and command.email is None:
-          return FlextResult.fail("At least one field must be provided for update")
-      return FlextResult.ok(None)
+        """Validate update command."""
+        if not isinstance(command, UpdateUserCommand):
+            return FlextResult.fail("Invalid command type")
+        if not command.user_id:
+            return FlextResult.fail("User ID is required")
+        if command.name is None and command.email is None:
+            return FlextResult.fail("At least one field must be provided for update")
+        return FlextResult.ok(None)
 
     def handle(self, command: object) -> FlextResult[object]:
-      """Update user information."""
-      if not isinstance(command, UpdateUserCommand):
-          return FlextResult.fail("Invalid command type")
-      if command.user_id not in self.users:
-          return FlextResult.fail(f"User {command.user_id} not found")
+        """Update user information."""
+        if not isinstance(command, UpdateUserCommand):
+            return FlextResult.fail("Invalid command type")
+        if command.user_id not in self.users:
+            return FlextResult.fail(f"User {command.user_id} not found")
 
-      user = self.users[command.user_id]
-      changes = {}
+        user = self.users[command.user_id]
+        changes = {}
 
-      if command.name is not None:
-          user.name = command.name
-          changes["name"] = command.name
+        if command.name is not None:
+            user.name = command.name
+            changes["name"] = command.name
 
-      if command.email is not None:
-          user.email = command.email
-          changes["email"] = command.email
+        if command.email is not None:
+            user.email = command.email
+            changes["email"] = command.email
 
-      self.logger.info(
-          "User updated successfully",
-          user_id=command.user_id,
-          changes=changes,
-      )
+        self.logger.info(
+            "User updated successfully",
+            user_id=command.user_id,
+            changes=changes,
+        )
 
-      return FlextResult.ok(user)
+        return FlextResult.ok(user)
 
 
 # =============================================================================
@@ -330,115 +330,115 @@ class GetUserHandler(FlextBaseHandler):
     """Handler for retrieving individual users."""
 
     def __init__(self, user_storage: dict[str, User]) -> None:
-      """Initialize GetUserHandler.
+        """Initialize GetUserHandler.
 
-      Args:
-          user_storage: User storage dictionary
+        Args:
+            user_storage: User storage dictionary
 
-      """
-      super().__init__("GetUserHandler")
-      # Use imported FlextLoggerFactory for proper logger initialization
+        """
+        super().__init__("GetUserHandler")
+        # Use imported FlextLoggerFactory for proper logger initialization
 
-      self._logger = FlextLoggerFactory.get_logger(
-          f"{self.__class__.__module__}.{self.__class__.__name__}",
-      )
-      self.users = user_storage
+        self._logger = FlextLoggerFactory.get_logger(
+            f"{self.__class__.__module__}.{self.__class__.__name__}",
+        )
+        self.users = user_storage
 
     @property
     def logger(self) -> FlextLogger:
-      """Access logger."""
-      return self._logger
+        """Access logger."""
+        return self._logger
 
     def can_handle(self, message: object) -> bool:
-      """Check if can handle this message type."""
-      return isinstance(message, GetUserQuery)
+        """Check if can handle this message type."""
+        return isinstance(message, GetUserQuery)
 
     def validate_command(self, query: object) -> FlextResult[None]:
-      """Validate query (renamed from validate_command for consistency)."""
-      if not isinstance(query, GetUserQuery):
-          return FlextResult.fail("Invalid query type")
-      # Simple query validation
-      if not query.user_id:
-          return FlextResult.fail("User ID is required")
-      return FlextResult.ok(None)
+        """Validate query (renamed from validate_command for consistency)."""
+        if not isinstance(query, GetUserQuery):
+            return FlextResult.fail("Invalid query type")
+        # Simple query validation
+        if not query.user_id:
+            return FlextResult.fail("User ID is required")
+        return FlextResult.ok(None)
 
     def authorize_query(self, query: object) -> FlextResult[None]:
-      """Check query authorization."""
-      if not isinstance(query, GetUserQuery):
-          return FlextResult.fail("Invalid query type")
-      # Simple authorization check
-      if not query.user_id:
-          return FlextResult.fail("User ID is required for authorization")
-      return FlextResult.ok(None)
+        """Check query authorization."""
+        if not isinstance(query, GetUserQuery):
+            return FlextResult.fail("Invalid query type")
+        # Simple authorization check
+        if not query.user_id:
+            return FlextResult.fail("User ID is required for authorization")
+        return FlextResult.ok(None)
 
     def handle(self, query: object) -> FlextResult[object]:
-      """Retrieve user by ID."""
-      if not isinstance(query, GetUserQuery):
-          return FlextResult.fail("Invalid query type")
-      if query.user_id not in self.users:
-          return FlextResult.fail(f"User {query.user_id} not found")
+        """Retrieve user by ID."""
+        if not isinstance(query, GetUserQuery):
+            return FlextResult.fail("Invalid query type")
+        if query.user_id not in self.users:
+            return FlextResult.fail(f"User {query.user_id} not found")
 
-      user = self.users[query.user_id]
+        user = self.users[query.user_id]
 
-      # Check if we should include inactive users
-      if not query.include_inactive and not user.is_active:
-          return FlextResult.fail(f"User {query.user_id} is inactive")
+        # Check if we should include inactive users
+        if not query.include_inactive and not user.is_active:
+            return FlextResult.fail(f"User {query.user_id} is inactive")
 
-      self.logger.debug(
-          "User retrieved successfully",
-          user_id=query.user_id,
-          user_name=user.name,
-      )
+        self.logger.debug(
+            "User retrieved successfully",
+            user_id=query.user_id,
+            user_name=user.name,
+        )
 
-      return FlextResult.ok(user)
+        return FlextResult.ok(user)
 
 
 class ListUsersHandler(FlextBaseHandler):
     """Handler for listing users with filtering."""
 
     def __init__(self, user_storage: dict[str, User]) -> None:
-      """Initialize ListUsersHandler.
+        """Initialize ListUsersHandler.
 
-      Args:
-          user_storage: User storage dictionary
+        Args:
+            user_storage: User storage dictionary
 
-      """
-      super().__init__("ListUsersHandler")
-      # Use imported FlextLoggerFactory for proper logger initialization
+        """
+        super().__init__("ListUsersHandler")
+        # Use imported FlextLoggerFactory for proper logger initialization
 
-      self._logger = FlextLoggerFactory.get_logger(
-          f"{self.__class__.__module__}.{self.__class__.__name__}",
-      )
-      self.users = user_storage
+        self._logger = FlextLoggerFactory.get_logger(
+            f"{self.__class__.__module__}.{self.__class__.__name__}",
+        )
+        self.users = user_storage
 
     @property
     def logger(self) -> FlextLogger:
-      """Access logger."""
-      return self._logger
+        """Access logger."""
+        return self._logger
 
     def handle(self, query: object) -> FlextResult[object]:
-      """List users with filtering and pagination."""
-      if not isinstance(query, ListUsersQuery):
-          return FlextResult.fail("Invalid query type")
-      users = list(self.users.values())
+        """List users with filtering and pagination."""
+        if not isinstance(query, ListUsersQuery):
+            return FlextResult.fail("Invalid query type")
+        users = list(self.users.values())
 
-      # Filter by active status
-      if query.active_only:
-          users = [u for u in users if u.is_active]
+        # Filter by active status
+        if query.active_only:
+            users = [u for u in users if u.is_active]
 
-      # Apply pagination
-      start = query.offset
-      end = start + query.limit
-      paginated_users = users[start:end]
+        # Apply pagination
+        start = query.offset
+        end = start + query.limit
+        paginated_users = users[start:end]
 
-      self.logger.debug(
-          "Users listed successfully",
-          total_users=len(users),
-          returned_users=len(paginated_users),
-          active_only=query.active_only,
-      )
+        self.logger.debug(
+            "Users listed successfully",
+            total_users=len(users),
+            returned_users=len(paginated_users),
+            active_only=query.active_only,
+        )
 
-      return FlextResult.ok(paginated_users)
+        return FlextResult.ok(paginated_users)
 
 
 # =============================================================================
@@ -450,142 +450,142 @@ class UserCreatedEventHandler(FlextEventHandler):
     """Handler for user created events."""
 
     def __init__(self) -> None:
-      """Initialize UserCreatedEventHandler."""
-      super().__init__("UserCreatedEventHandler")
-      # Use imported FlextLoggerFactory for proper logger initialization
+        """Initialize UserCreatedEventHandler."""
+        super().__init__("UserCreatedEventHandler")
+        # Use imported FlextLoggerFactory for proper logger initialization
 
-      self._logger = FlextLoggerFactory.get_logger(
-          f"{self.__class__.__module__}.{self.__class__.__name__}",
-      )
-      self._notifications_sent = 0
+        self._logger = FlextLoggerFactory.get_logger(
+            f"{self.__class__.__module__}.{self.__class__.__name__}",
+        )
+        self._notifications_sent = 0
 
     @property
     def logger(self) -> FlextLogger:
-      """Access logger."""
-      return self._logger
+        """Access logger."""
+        return self._logger
 
     def process_event(self, event: object) -> FlextResult[None]:
-      """Process user created event."""
-      if not isinstance(event, UserCreatedEvent):
-          return FlextResult.fail("Invalid event type")
-      # Send welcome email (simulated)
-      self.logger.info(
-          "Sending welcome email",
-          user_id=event.user_id,
-          email=event.email,
-          name=event.name,
-      )
+        """Process user created event."""
+        if not isinstance(event, UserCreatedEvent):
+            return FlextResult.fail("Invalid event type")
+        # Send welcome email (simulated)
+        self.logger.info(
+            "Sending welcome email",
+            user_id=event.user_id,
+            email=event.email,
+            name=event.name,
+        )
 
-      # Update analytics (simulated)
-      self.logger.info(
-          "Updating user creation analytics",
-          user_id=event.user_id,
-          timestamp=event.timestamp,
-      )
+        # Update analytics (simulated)
+        self.logger.info(
+            "Updating user creation analytics",
+            user_id=event.user_id,
+            timestamp=event.timestamp,
+        )
 
-      self._notifications_sent += 1
+        self._notifications_sent += 1
 
-      self.logger.info(
-          "User created event processed",
-          user_id=event.user_id,
-          total_notifications=self._notifications_sent,
-      )
+        self.logger.info(
+            "User created event processed",
+            user_id=event.user_id,
+            total_notifications=self._notifications_sent,
+        )
 
-      return FlextResult.ok(None)
+        return FlextResult.ok(None)
 
 
 class UserUpdatedEventHandler(FlextEventHandler):
     """Handler for user updated events."""
 
     def __init__(self) -> None:
-      """Initialize UserUpdatedEventHandler."""
-      super().__init__("UserUpdatedEventHandler")
-      # Use imported FlextLoggerFactory for proper logger initialization
+        """Initialize UserUpdatedEventHandler."""
+        super().__init__("UserUpdatedEventHandler")
+        # Use imported FlextLoggerFactory for proper logger initialization
 
-      self._logger = FlextLoggerFactory.get_logger(
-          f"{self.__class__.__module__}.{self.__class__.__name__}",
-      )
+        self._logger = FlextLoggerFactory.get_logger(
+            f"{self.__class__.__module__}.{self.__class__.__name__}",
+        )
 
     @property
     def logger(self) -> FlextLogger:
-      """Access logger."""
-      return self._logger
+        """Access logger."""
+        return self._logger
 
     def process_event(self, event: object) -> FlextResult[None]:
-      """Process user updated event."""
-      if not isinstance(event, UserUpdatedEvent):
-          return FlextResult.fail("Invalid event type")
-      # Log audit trail (simulated)
-      self.logger.info(
-          "Recording audit trail for user update",
-          user_id=event.user_id,
-          changes=event.changes,
-          timestamp=event.timestamp,
-      )
+        """Process user updated event."""
+        if not isinstance(event, UserUpdatedEvent):
+            return FlextResult.fail("Invalid event type")
+        # Log audit trail (simulated)
+        self.logger.info(
+            "Recording audit trail for user update",
+            user_id=event.user_id,
+            changes=event.changes,
+            timestamp=event.timestamp,
+        )
 
-      # Invalidate caches (simulated)
-      self.logger.debug(
-          "Invalidating user caches",
-          user_id=event.user_id,
-      )
+        # Invalidate caches (simulated)
+        self.logger.debug(
+            "Invalidating user caches",
+            user_id=event.user_id,
+        )
 
-      self.logger.info(
-          "User updated event processed",
-          user_id=event.user_id,
-          change_count=len(event.changes),
-      )
+        self.logger.info(
+            "User updated event processed",
+            user_id=event.user_id,
+            change_count=len(event.changes),
+        )
 
-      return FlextResult.ok(None)
+        return FlextResult.ok(None)
 
 
 class OrderCreatedEventHandler(FlextEventHandler):
     """Handler for order created events."""
 
     def __init__(self) -> None:
-      """Initialize OrderCreatedEventHandler."""
-      super().__init__("OrderCreatedEventHandler")
-      # Use imported FlextLoggerFactory for proper logger initialization
+        """Initialize OrderCreatedEventHandler."""
+        super().__init__("OrderCreatedEventHandler")
+        # Use imported FlextLoggerFactory for proper logger initialization
 
-      self._logger = FlextLoggerFactory.get_logger(
-          f"{self.__class__.__module__}.{self.__class__.__name__}",
-      )
-      self._orders_processed = 0
+        self._logger = FlextLoggerFactory.get_logger(
+            f"{self.__class__.__module__}.{self.__class__.__name__}",
+        )
+        self._orders_processed = 0
 
     @property
     def logger(self) -> FlextLogger:
-      """Access logger."""
-      return self._logger
+        """Access logger."""
+        return self._logger
 
     def process_event(self, event: object) -> FlextResult[None]:
-      """Process order created event."""
-      # Type guard
-      if not isinstance(event, OrderCreatedEvent):
-          return FlextResult.fail("Invalid event type")
+        """Process order created event."""
+        # Type guard
+        if not isinstance(event, OrderCreatedEvent):
+            return FlextResult.fail("Invalid event type")
 
-      # Send order confirmation (simulated)
-      self.logger.info(
-          "Sending order confirmation",
-          order_id=event.order_id,
-          user_id=event.user_id,
-          total=event.total,
-      )
+        # Send order confirmation (simulated)
+        self.logger.info(
+            "Sending order confirmation",
+            order_id=event.order_id,
+            user_id=event.user_id,
+            total=event.total,
+        )
 
-      # Update inventory (simulated)
-      self.logger.info(
-          "Updating inventory for order",
-          order_id=event.order_id,
-          total=event.total,
-      )
+        # Update inventory (simulated)
+        self.logger.info(
+            "Updating inventory for order",
+            order_id=event.order_id,
+            total=event.total,
+        )
 
-      self._orders_processed += 1
+        self._orders_processed += 1
 
-      self.logger.info(
-          "Order created event processed",
-          order_id=event.order_id,
-          total_orders_processed=self._orders_processed,
-      )
+        self.logger.info(
+            "Order created event processed",
+            order_id=event.order_id,
+            total_orders_processed=self._orders_processed,
+        )
 
-      return FlextResult.ok(None)
+        return FlextResult.ok(None)
 
 
 # =============================================================================
@@ -610,37 +610,37 @@ def _test_create_user_handler(create_handler: CreateUserHandler) -> None:
     valid_command = CreateUserCommand(name="John Doe", email="john@example.com")
     result = create_handler.handle(valid_command)
     if result.success:
-      user_data = result.data
-      if user_data is None:
-          return
-      if isinstance(user_data, User):
-          pass
+        user_data = result.data
+        if user_data is None:
+            return
+        if isinstance(user_data, User):
+            pass
 
     duplicate_command = CreateUserCommand(name="Jane Doe", email="john@example.com")
     result = create_handler.handle(duplicate_command)
     if result.success:
-      user_data = result.data
-      if user_data is None:
-          return
-      if isinstance(user_data, User):
-          pass
+        user_data = result.data
+        if user_data is None:
+            return
+        if isinstance(user_data, User):
+            pass
 
 
 def _test_update_user_handler(create_handler: CreateUserHandler) -> UpdateUserHandler:
     update_handler = UpdateUserHandler(create_handler.users)
     first_user_id = next(iter(create_handler.users.keys()))
     update_command = UpdateUserCommand(
-      user_id=first_user_id,
-      name="John Smith",
-      email="john.smith@example.com",
+        user_id=first_user_id,
+        name="John Smith",
+        email="john.smith@example.com",
     )
     result = update_handler.handle(update_command)
     if result.success:
-      updated_user_data = result.data
-      if updated_user_data is None:
-          return update_handler
-      if isinstance(updated_user_data, User):
-          pass
+        updated_user_data = result.data
+        if updated_user_data is None:
+            return update_handler
+        if isinstance(updated_user_data, User):
+            pass
     return update_handler
 
 
@@ -649,14 +649,14 @@ def _print_command_metrics(
     update_handler: UpdateUserHandler,
 ) -> None:
     getattr(
-      create_handler,
-      "get_metrics",
-      lambda: {"commands_processed": 0},
+        create_handler,
+        "get_metrics",
+        lambda: {"commands_processed": 0},
     )()
     getattr(
-      update_handler,
-      "get_metrics",
-      lambda: {"commands_processed": 0},
+        update_handler,
+        "get_metrics",
+        lambda: {"commands_processed": 0},
     )()
 
 
@@ -680,9 +680,9 @@ def _print_query_handlers_header() -> None:
 
 def _setup_test_users() -> dict[str, User]:
     return {
-      "user_1": User("user_1", "Alice Johnson", "alice@example.com", is_active=True),
-      "user_2": User("user_2", "Bob Wilson", "bob@example.com", is_active=True),
-      "user_3": User("user_3", "Carol Brown", "carol@example.com", is_active=False),
+        "user_1": User("user_1", "Alice Johnson", "alice@example.com", is_active=True),
+        "user_2": User("user_2", "Bob Wilson", "bob@example.com", is_active=True),
+        "user_3": User("user_3", "Carol Brown", "carol@example.com", is_active=False),
     }
 
 
@@ -690,59 +690,59 @@ def _single_user_query(get_handler: GetUserHandler) -> None:
     query = GetUserQuery(user_id="user_1", include_inactive=False)
     result = get_handler.handle(query)
     if result.success:
-      user_data = result.data
-      if user_data is None:
-          return
-      if isinstance(user_data, User):
-          pass
+        user_data = result.data
+        if user_data is None:
+            return
+        if isinstance(user_data, User):
+            pass
 
 
 def _inactive_user_without_permission(get_handler: GetUserHandler) -> None:
     inactive_query = GetUserQuery(user_id="user_3", include_inactive=False)
     result = get_handler.handle(inactive_query)
     if result.success:
-      user_data = result.data
-      if user_data is None:
-          return
-      if isinstance(user_data, User):
-          pass
+        user_data = result.data
+        if user_data is None:
+            return
+        if isinstance(user_data, User):
+            pass
 
 
 def _inactive_user_with_permission(get_handler: GetUserHandler) -> None:
     inactive_query_allowed = GetUserQuery(user_id="user_3", include_inactive=True)
     result = get_handler.handle(inactive_query_allowed)
     if result.success:
-      user_data = result.data
-      if user_data is None:
-          return
-      if isinstance(user_data, User):
-          pass
+        user_data = result.data
+        if user_data is None:
+            return
+        if isinstance(user_data, User):
+            pass
 
 
 def _list_active_users(list_handler: ListUsersHandler) -> None:
     list_query = ListUsersQuery(active_only=True, limit=5, offset=0)
     result = list_handler.handle(list_query)
     if result.success:
-      users_data = result.data
-      if users_data is None:
-          return
-      if isinstance(users_data, list):
-          for user_item in users_data:
-              if isinstance(user_item, User):
-                  pass
+        users_data = result.data
+        if users_data is None:
+            return
+        if isinstance(users_data, list):
+            for user_item in users_data:
+                if isinstance(user_item, User):
+                    pass
 
 
 def _list_all_users(list_handler: ListUsersHandler) -> None:
     all_query = ListUsersQuery(active_only=False, limit=10, offset=0)
     result = list_handler.handle(all_query)
     if result.success:
-      users_data = result.data
-      if users_data is None:
-          return
-      if isinstance(users_data, list):
-          for user_item in users_data:
-              if isinstance(user_item, User):
-                  pass
+        users_data = result.data
+        if users_data is None:
+            return
+        if isinstance(users_data, list):
+            for user_item in users_data:
+                if isinstance(user_item, User):
+                    pass
 
 
 def _print_query_metrics(
@@ -750,14 +750,14 @@ def _print_query_metrics(
     list_handler: ListUsersHandler,
 ) -> None:
     getattr(
-      get_handler,
-      "get_metrics",
-      lambda: {"queries_processed": 0},
+        get_handler,
+        "get_metrics",
+        lambda: {"queries_processed": 0},
     )()
     getattr(
-      list_handler,
-      "get_metrics",
-      lambda: {"queries_processed": 0},
+        list_handler,
+        "get_metrics",
+        lambda: {"queries_processed": 0},
     )()
 
 
@@ -767,58 +767,58 @@ def demonstrate_event_handlers() -> None:
     user_created_handler = UserCreatedEventHandler()
 
     user_created_event = UserCreatedEvent(
-      user_id="user_123",
-      name="David Clark",
-      email="david@example.com",
-      timestamp=time.time(),
+        user_id="user_123",
+        name="David Clark",
+        email="david@example.com",
+        timestamp=time.time(),
     )
 
     result = user_created_handler.handle(user_created_event)
     if result.success:
-      pass
+        pass
 
     # 2. User updated event handler
     user_updated_handler = UserUpdatedEventHandler()
 
     user_updated_event = UserUpdatedEvent(
-      user_id="user_123",
-      changes={"name": "David J. Clark", "email": "david.clark@example.com"},
-      timestamp=time.time(),
+        user_id="user_123",
+        changes={"name": "David J. Clark", "email": "david.clark@example.com"},
+        timestamp=time.time(),
     )
 
     result = user_updated_handler.handle(user_updated_event)
     if result.success:
-      pass
+        pass
 
     # 3. Order created event handler
     order_created_handler = OrderCreatedEventHandler()
 
     order_created_event = OrderCreatedEvent(
-      order_id="order_456",
-      user_id="user_123",
-      total=299.99,
-      timestamp=time.time(),
+        order_id="order_456",
+        user_id="user_123",
+        total=299.99,
+        timestamp=time.time(),
     )
 
     result = order_created_handler.handle(order_created_event)
     if result.success:
-      pass
+        pass
 
     # 4. Event handler metrics
     getattr(
-      user_created_handler,
-      "get_metrics",
-      lambda: {"events_processed": 0},
+        user_created_handler,
+        "get_metrics",
+        lambda: {"events_processed": 0},
     )()
     getattr(
-      user_updated_handler,
-      "get_metrics",
-      lambda: {"events_processed": 0},
+        user_updated_handler,
+        "get_metrics",
+        lambda: {"events_processed": 0},
     )()
     getattr(
-      order_created_handler,
-      "get_metrics",
-      lambda: {"events_processed": 0},
+        order_created_handler,
+        "get_metrics",
+        lambda: {"events_processed": 0},
     )()
 
 
@@ -852,35 +852,35 @@ def _setup_registry() -> FlextHandlerRegistry:
 def _retrieve_handlers_by_key(registry: FlextHandlerRegistry) -> None:
     result = registry.get_handler("create_user")
     if result.success:
-      pass
+        pass
     result = registry.get_handler("non_existent")
     if result.success:
-      pass
+        pass
 
 
 def _retrieve_handlers_by_type(registry: FlextHandlerRegistry) -> None:
     result = registry.get_handler_for_type(CreateUserCommand)
     if result.success:
-      pass
+        pass
     result = registry.get_handler_for_type(GetUserQuery)
     if result.success:
-      pass
+        pass
 
 
 def _process_with_registry(registry: FlextHandlerRegistry) -> None:
     command = CreateUserCommand(name="Registry User", email="registry@example.com")
     handler_result = registry.get_handler_for_type(CreateUserCommand)
     if handler_result.success:
-      handler = handler_result.data
-      if handler is None:
-          return
-      command_result = handler.handle(command)
-      if command_result.success:
-          user_data = command_result.data
-          if user_data is None:
-              return
-          if isinstance(user_data, User):
-              pass
+        handler = handler_result.data
+        if handler is None:
+            return
+        command_result = handler.handle(command)
+        if command_result.success:
+            user_data = command_result.data
+            if user_data is None:
+                return
+            if isinstance(user_data, User):
+                pass
 
 
 def _create_handler_chain() -> tuple[FlextHandlerChain, dict[str, User], str | None]:
@@ -906,11 +906,11 @@ def _create_handler_chain() -> tuple[FlextHandlerChain, dict[str, User], str | N
 
     user_id = None
     if result.success:
-      user = result.data
-      if user is not None and hasattr(user, "name"):
-          pass
-      if hasattr(result.data, "id"):
-          user_id = result.data.id
+        user = result.data
+        if user is not None and hasattr(user, "name"):
+            pass
+        if hasattr(result.data, "id"):
+            user_id = result.data.id
 
     return chain, user_storage, user_id
 
@@ -918,50 +918,50 @@ def _create_handler_chain() -> tuple[FlextHandlerChain, dict[str, User], str | N
 def _process_get_query(chain: FlextHandlerChain, user_id: str | None) -> None:
     """Process get query through the chain."""
     if not user_id:
-      return
+        return
 
     get_query = GetUserQuery(user_id=user_id)
     result = chain.process(get_query)
 
     if result.success:
-      user = result.data
-      if hasattr(user, "name"):
-          pass
+        user = result.data
+        if hasattr(user, "name"):
+            pass
 
 
 def _process_update_command(chain: FlextHandlerChain, user_id: str | None) -> None:
     """Process update command through the chain."""
     if not user_id:
-      return
+        return
 
     update_command = UpdateUserCommand(
-      user_id=user_id,
-      name="Updated Chain User",
+        user_id=user_id,
+        name="Updated Chain User",
     )
     result = chain.process(update_command)
 
     if result.success:
-      user_data = result.data
-      if isinstance(user_data, User):
-          pass
+        user_data = result.data
+        if isinstance(user_data, User):
+            pass
 
 
 def _process_event_through_all_handlers(chain: FlextHandlerChain) -> None:
     """Process event through all applicable handlers."""
     user_event = UserCreatedEvent(
-      user_id="event_user",
-      name="Event User",
-      email="event@example.com",
-      timestamp=time.time(),
+        user_id="event_user",
+        name="Event User",
+        email="event@example.com",
+        timestamp=time.time(),
     )
 
     results: FlextResult[list[object]] = chain.process_all([user_event])
     result_list: list[object] = results.unwrap_or([])
 
     for result in result_list:
-      # Each result in the list should be a FlextResult - need to check that
-      if (hasattr(result, "success") and result.success) or hasattr(result, "error"):
-          pass
+        # Each result in the list should be a FlextResult - need to check that
+        if (hasattr(result, "success") and result.success) or hasattr(result, "error"):
+            pass
 
 
 def demonstrate_handler_chain() -> None:
@@ -997,84 +997,84 @@ def _create_function_handlers() -> tuple[
     FlextBaseHandler,
 ]:
     def process_simple_message(message: str) -> FlextResult[str]:
-      if not message:
-          return FlextResult.fail("Empty message")
-      return FlextResult.ok(f"Processed: {message.upper()}")
+        if not message:
+            return FlextResult.fail("Empty message")
+        return FlextResult.ok(f"Processed: {message.upper()}")
 
     def process_number(number: int) -> FlextResult[int]:
-      if number < 0:
-          return FlextResult.fail("Negative numbers not allowed")
-      return FlextResult.ok(number * 2)
+        if number < 0:
+            return FlextResult.fail("Negative numbers not allowed")
+        return FlextResult.ok(number * 2)
 
     # Functions are defined but not bound; handlers echo input by design here
     message_handler: FlextMessageHandler = FlextBaseHandler("message_handler")
     number_handler: FlextMessageHandler = FlextBaseHandler("number_handler")
     order_handler: FlextMessageHandler = FlextBaseHandler("order_handler")
     return (
-      cast("FlextBaseHandler", message_handler),
-      cast("FlextBaseHandler", number_handler),
-      cast("FlextBaseHandler", order_handler),
+        cast("FlextBaseHandler", message_handler),
+        cast("FlextBaseHandler", number_handler),
+        cast("FlextBaseHandler", order_handler),
     )
 
 
 def _use_message_handler(message_handler: FlextBaseHandler) -> None:
     try:
-      result = message_handler.handle("hello world")
-      if result.success:
-          pass
+        result = message_handler.handle("hello world")
+        if result.success:
+            pass
     except (ValueError, TypeError, KeyError):
-      pass
+        pass
     try:
-      result = message_handler.handle("")
-      if result.success:
-          pass
+        result = message_handler.handle("")
+        if result.success:
+            pass
     except (ValueError, TypeError):
-      pass
+        pass
 
 
 def _use_number_handler(number_handler: FlextBaseHandler) -> None:
     try:
-      result = number_handler.handle(42)
-      if result.success:
-          pass
+        result = number_handler.handle(42)
+        if result.success:
+            pass
     except (ValueError, TypeError):
-      pass
+        pass
     try:
-      result = number_handler.handle(-5)
-      if result.success:
-          pass
+        result = number_handler.handle(-5)
+        if result.success:
+            pass
     except (ValueError, TypeError):
-      pass
+        pass
 
 
 def _process_complex_order(order_handler: FlextBaseHandler) -> None:
     def process_order_total(
-      order_data: dict[str, object],
+        order_data: dict[str, object],
     ) -> FlextResult[dict[str, object]]:
-      if not order_data.get("items"):
-          return FlextResult.fail("Order must have items")
-      items = order_data["items"]
-      if not isinstance(items, list) or len(items) == 0:
-          return FlextResult.fail("Order items must be a non-empty list")
-      item_prices = {"item1": 10.0, "item2": 15.0, "item3": 20.0}
-      total = sum(item_prices.get(item, 5.0) for item in items)
-      if len(items) >= MIN_ITEMS_FOR_DISCOUNT:
-          total *= 0.9
-      result = {
-          "order_id": order_data.get("order_id", "unknown"),
-          "items": items,
-          "total": round(total, 2),
-          "discount_applied": len(items) >= MIN_ITEMS_FOR_DISCOUNT,
-      }
-      return FlextResult.ok(result)
+        if not order_data.get("items"):
+            return FlextResult.fail("Order must have items")
+        items = order_data["items"]
+        if not isinstance(items, list) or len(items) == 0:
+            return FlextResult.fail("Order items must be a non-empty list")
+        item_prices = {"item1": 10.0, "item2": 15.0, "item3": 20.0}
+        total = sum(item_prices.get(item, 5.0) for item in items)
+        if len(items) >= MIN_ITEMS_FOR_DISCOUNT:
+            total *= 0.9
+        result = {
+            "order_id": order_data.get("order_id", "unknown"),
+            "items": items,
+            "total": round(total, 2),
+            "discount_applied": len(items) >= MIN_ITEMS_FOR_DISCOUNT,
+        }
+        return FlextResult.ok(result)
 
     order_data = {"order_id": "ORD001", "items": ["item1", "item2", "item3"]}
     try:
-      result = order_handler.handle(order_data)
-      if result.success:
-          pass
+        result = order_handler.handle(order_data)
+        if result.success:
+            pass
     except (ValueError, TypeError, KeyError):
-      pass
+        pass
 
 
 def _print_function_metrics(
@@ -1083,46 +1083,46 @@ def _print_function_metrics(
     order_handler: FlextBaseHandler,
 ) -> None:
     try:
-      cast(
-          "dict[str, object]",
-          getattr(
-              message_handler,
-              "get_metrics",
-              lambda: {"handler_name": "Message", "handler_type": "Function"},
-          )(),
-      )
-      cast(
-          "dict[str, object]",
-          getattr(
-              number_handler,
-              "get_metrics",
-              lambda: {"handler_name": "Number", "handler_type": "Function"},
-          )(),
-      )
-      cast(
-          "dict[str, object]",
-          getattr(
-              order_handler,
-              "get_metrics",
-              lambda: {"handler_name": "Order", "handler_type": "Function"},
-          )(),
-      )
+        cast(
+            "dict[str, object]",
+            getattr(
+                message_handler,
+                "get_metrics",
+                lambda: {"handler_name": "Message", "handler_type": "Function"},
+            )(),
+        )
+        cast(
+            "dict[str, object]",
+            getattr(
+                number_handler,
+                "get_metrics",
+                lambda: {"handler_name": "Number", "handler_type": "Function"},
+            )(),
+        )
+        cast(
+            "dict[str, object]",
+            getattr(
+                order_handler,
+                "get_metrics",
+                lambda: {"handler_name": "Order", "handler_type": "Function"},
+            )(),
+        )
     except (KeyError, AttributeError):
-      pass
+        pass
 
 
 def main() -> None:
     """Execute all FlextHandlers demonstrations."""
     try:
-      demonstrate_command_handlers()
-      demonstrate_query_handlers()
-      demonstrate_event_handlers()
-      demonstrate_handler_registry()
-      demonstrate_handler_chain()
-      demonstrate_function_handlers()
+        demonstrate_command_handlers()
+        demonstrate_query_handlers()
+        demonstrate_event_handlers()
+        demonstrate_handler_registry()
+        demonstrate_handler_chain()
+        demonstrate_function_handlers()
 
     except (ValueError, TypeError, ImportError, AttributeError):
-      traceback.print_exc()
+        traceback.print_exc()
 
 
 if __name__ == "__main__":

@@ -25,10 +25,10 @@ def is_email(value: str) -> bool:
     """Validate email format using enterprise standards."""
     min_email_length = 5  # user@a.b is minimum valid email
     return (
-      isinstance(value, str)
-      and "@" in value
-      and "." in value.rsplit("@", maxsplit=1)[-1]
-      and len(value) > min_email_length
+        isinstance(value, str)
+        and "@" in value
+        and "." in value.rsplit("@", maxsplit=1)[-1]
+        and len(value) > min_email_length
     )
 
 
@@ -73,32 +73,32 @@ def calculate_discount_price(
 ) -> FlextResult[Decimal]:
     """Calculate discounted price with validation."""
     if discount_percentage < 0 or discount_percentage > MAX_DISCOUNT_PERCENTAGE:
-      return FlextResult.fail(
-          f"Invalid discount: {discount_percentage}%. "
-          f"Must be 0-{MAX_DISCOUNT_PERCENTAGE}%",
-      )
+        return FlextResult.fail(
+            f"Invalid discount: {discount_percentage}%. "
+            f"Must be 0-{MAX_DISCOUNT_PERCENTAGE}%",
+        )
 
     try:
-      discount_amount = product.price.amount * Decimal(str(discount_percentage / 100))
-      final_price = product.price.amount - discount_amount
-      return FlextResult.ok(data=final_price)
+        discount_amount = product.price.amount * Decimal(str(discount_percentage / 100))
+        final_price = product.price.amount - discount_amount
+        return FlextResult.ok(data=final_price)
     except Exception as e:
-      return FlextResult.fail(f"Price calculation failed: {e}")
+        return FlextResult.fail(f"Price calculation failed: {e}")
 
 
 def process_shared_order(order: SharedOrder) -> FlextResult[SharedOrder]:
     """Process shared domain order with validation."""
     if not order.items:
-      return FlextResult.fail("Order must have at least one item")
+        return FlextResult.fail("Order must have at least one item")
 
     # Validate total calculation
     calculated_total = sum(
-      item.quantity * item.unit_price.amount for item in order.items
+        item.quantity * item.unit_price.amount for item in order.items
     )
 
     # Order doesn't have a total attribute, so we calculate the total dynamically
     # This is a placeholder validation that could be extended
     if calculated_total <= 0:
-      return FlextResult.fail("Order total must be positive")
+        return FlextResult.fail("Order total must be positive")
 
     return FlextResult.ok(data=order)

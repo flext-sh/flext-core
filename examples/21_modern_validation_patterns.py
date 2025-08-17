@@ -38,19 +38,19 @@ def demonstrate_modern_validation() -> None:
     # Test string validation with automatic type checking
     print("\n📝 String Validation:")
     result = flext_validate_string(
-      "Hello World",
-      "greeting",
-      min_length=5,
-      max_length=20,
+        "Hello World",
+        "greeting",
+        min_length=5,
+        max_length=20,
     )
     print(f"Valid string: {result.is_valid} - {result.error_message}")
 
     # This will raise ValidationError at runtime due to validate_call
     try:
-      result = flext_validate_string(123, "greeting")
-      print(f"Integer as string: {result.is_valid}")
+        result = flext_validate_string(123, "greeting")
+        print(f"Integer as string: {result.is_valid}")
     except ValidationError as e:
-      print(f"Automatic type validation: ValidationError caught - {type(e).__name__}")
+        print(f"Automatic type validation: ValidationError caught - {type(e).__name__}")
 
     # Test numeric validation with automatic type checking
     print("\n🔢 Numeric Validation:")
@@ -58,10 +58,10 @@ def demonstrate_modern_validation() -> None:
     print(f"Valid number: {result.is_valid} - {result.error_message}")
 
     try:
-      result = flext_validate_numeric("not a number", "age")
-      print(f"String as number: {result.is_valid}")
+        result = flext_validate_numeric("not a number", "age")
+        print(f"String as number: {result.is_valid}")
     except ValidationError as e:
-      print(f"Automatic type validation: ValidationError caught - {type(e).__name__}")
+        print(f"Automatic type validation: ValidationError caught - {type(e).__name__}")
 
     # Test email validation
     print("\n📧 Email Validation:")
@@ -93,21 +93,21 @@ def demonstrate_modern_validators() -> None:
     print(f"is_non_empty_string('hello'): {validators.is_non_empty_string('hello')}")
     print(f"is_email('test@example.com'): {validators.is_email('test@example.com')}")
     print(
-      f"is_uuid('123e4567-e89b-12d3-a456-426614174000'): {validators.is_uuid('123e4567-e89b-12d3-a456-426614174000')}",
+        f"is_uuid('123e4567-e89b-12d3-a456-426614174000'): {validators.is_uuid('123e4567-e89b-12d3-a456-426614174000')}",
     )
     print(f"has_min_length('hello', 3): {validators.has_min_length('hello', 3)}")
 
     # Demonstrate automatic validation errors
     print("\n❌ Automatic Validation Errors:")
     try:
-      validators.is_non_empty_string(123)  # Will raise ValidationError
+        validators.is_non_empty_string(123)  # Will raise ValidationError
     except ValidationError as e:
-      print(f"Type validation error: {e}")
+        print(f"Type validation error: {e}")
 
     try:
-      validators.has_min_length(None, 5)  # Will raise ValidationError
+        validators.has_min_length(None, 5)  # Will raise ValidationError
     except ValidationError as e:
-      print(f"Type validation error: {e}")
+        print(f"Type validation error: {e}")
 
 
 def demonstrate_flext_result_integration() -> None:
@@ -134,16 +134,16 @@ def demonstrate_flext_result_integration() -> None:
     # Test generic validation with result
     print("\n🔧 Generic Validation with Result:")
     result = validate_with_result(
-      "test@example.com",
-      FlextValidation.is_email,
-      "Email validation failed",
+        "test@example.com",
+        FlextValidation.is_email,
+        "Email validation failed",
     )
     print(f"Email validation: success={result.is_success}, data={result.data}")
 
     result = validate_with_result(
-      "invalid-email",
-      FlextValidation.is_email,
-      "Email validation failed",
+        "invalid-email",
+        FlextValidation.is_email,
+        "Email validation failed",
     )
     print(f"Invalid email: success={result.is_success}, error={result.error}")
 
@@ -158,19 +158,19 @@ def demonstrate_validation_pipeline() -> None:
 
     # Add validators to check email format and domain
     pipeline.add_validator(
-      lambda email: validate_with_result(
-          email,
-          FlextValidation.is_email,
-          "Must be valid email format",
-      ),
+        lambda email: validate_with_result(
+            email,
+            FlextValidation.is_email,
+            "Must be valid email format",
+        ),
     )
 
     pipeline.add_validator(
-      lambda email: validate_with_result(
-          email,
-          lambda e: "@company.com" in e,
-          "Must be company email address",
-      ),
+        lambda email: validate_with_result(
+            email,
+            lambda e: "@company.com" in e,
+            "Must be company email address",
+        ),
     )
 
     # Test the pipeline
@@ -195,37 +195,37 @@ def demonstrate_type_safety() -> None:
     # These will work correctly
     print("✅ Correct types:")
     try:
-      result = validate_entity_id("123e4567-e89b-12d3-a456-426614174000")
-      print(f"  UUID validation: {result.is_success}")
+        result = validate_entity_id("123e4567-e89b-12d3-a456-426614174000")
+        print(f"  UUID validation: {result.is_success}")
 
-      result = flext_validate_numeric(42, "number")
-      print(f"  Numeric validation: {result.is_valid}")
+        result = flext_validate_numeric(42, "number")
+        print(f"  Numeric validation: {result.is_valid}")
 
-      result = flext_validate_string("hello", "greeting")
-      print(f"  String validation: {result.is_valid}")
+        result = flext_validate_string("hello", "greeting")
+        print(f"  String validation: {result.is_valid}")
 
     except Exception as e:
-      print(f"  Unexpected error: {e}")
+        print(f"  Unexpected error: {e}")
 
     # These will raise ValidationError due to wrong types
     print("\n❌ Wrong types (automatically caught):")
     wrong_type_tests = [
-      (lambda: validate_entity_id(123), "UUID with int"),
-      (
-          lambda: flext_validate_numeric("not a number", "field"),
-          "Numeric with string",
-      ),
-      (lambda: flext_validate_string(None, "field"), "String with None"),
+        (lambda: validate_entity_id(123), "UUID with int"),
+        (
+            lambda: flext_validate_numeric("not a number", "field"),
+            "Numeric with string",
+        ),
+        (lambda: flext_validate_string(None, "field"), "String with None"),
     ]
 
     for test_func, description in wrong_type_tests:
-      try:
-          test_func()
-          print(f"  {description}: Unexpectedly passed")
-      except ValidationError:
-          print(f"  {description}: ValidationError caught ✅")
-      except Exception as e:
-          print(f"  {description}: Other error - {type(e).__name__}")
+        try:
+            test_func()
+            print(f"  {description}: Unexpectedly passed")
+        except ValidationError:
+            print(f"  {description}: ValidationError caught ✅")
+        except Exception as e:
+            print(f"  {description}: Other error - {type(e).__name__}")
 
 
 def main() -> None:

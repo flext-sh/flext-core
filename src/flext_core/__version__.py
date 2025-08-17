@@ -102,12 +102,12 @@ def get_version_info() -> FlextVersionInfo:
 
     """
     return FlextVersionInfo(
-      major=VERSION_MAJOR,
-      minor=VERSION_MINOR,
-      patch=VERSION_PATCH,
-      release_name=RELEASE_NAME,
-      release_date=RELEASE_DATE,
-      build_type=BUILD_TYPE,
+        major=VERSION_MAJOR,
+        minor=VERSION_MINOR,
+        patch=VERSION_PATCH,
+        release_name=RELEASE_NAME,
+        release_date=RELEASE_DATE,
+        build_type=BUILD_TYPE,
     )
 
 
@@ -132,44 +132,44 @@ def check_python_compatibility() -> FlextCompatibilityResult:
     current_version = sys.version_info[:3]
 
     if current_version < MIN_PYTHON_VERSION:
-      return FlextCompatibilityResult(
-          is_compatible=False,
-          current_version=current_version,
-          required_version=MIN_PYTHON_VERSION,
-          error_message=(
-              f"Python {'.'.join(map(str, current_version))} is too old. "
-              f"Minimum required: {'.'.join(map(str, MIN_PYTHON_VERSION))}"
-          ),
-          recommendations=[
-              f"Upgrade Python to {'.'.join(map(str, MIN_PYTHON_VERSION))} or newer",
-              "Use pyenv or conda to manage multiple Python versions",
-              "Check FLEXT documentation for installation guides",
-          ],
-      )
+        return FlextCompatibilityResult(
+            is_compatible=False,
+            current_version=current_version,
+            required_version=MIN_PYTHON_VERSION,
+            error_message=(
+                f"Python {'.'.join(map(str, current_version))} is too old. "
+                f"Minimum required: {'.'.join(map(str, MIN_PYTHON_VERSION))}"
+            ),
+            recommendations=[
+                f"Upgrade Python to {'.'.join(map(str, MIN_PYTHON_VERSION))} or newer",
+                "Use pyenv or conda to manage multiple Python versions",
+                "Check FLEXT documentation for installation guides",
+            ],
+        )
 
     if current_version >= MAX_PYTHON_VERSION:
-      return FlextCompatibilityResult(
-          is_compatible=False,
-          current_version=current_version,
-          required_version=MAX_PYTHON_VERSION,
-          error_message=(
-              f"Python {'.'.join(map(str, current_version))} is too new. "
-              f"Maximum supported: {'.'.join(map(str, MAX_PYTHON_VERSION))}"
-          ),
-          recommendations=[
-              f"Use Python {'.'.join(map(str, MIN_PYTHON_VERSION))}"
-              f" to {'.'.join(map(str, MAX_PYTHON_VERSION))}",
-              "Check for newer FLEXT Core version with broader Python support",
-              "Use pyenv or conda to install compatible Python version",
-          ],
-      )
+        return FlextCompatibilityResult(
+            is_compatible=False,
+            current_version=current_version,
+            required_version=MAX_PYTHON_VERSION,
+            error_message=(
+                f"Python {'.'.join(map(str, current_version))} is too new. "
+                f"Maximum supported: {'.'.join(map(str, MAX_PYTHON_VERSION))}"
+            ),
+            recommendations=[
+                f"Use Python {'.'.join(map(str, MIN_PYTHON_VERSION))}"
+                f" to {'.'.join(map(str, MAX_PYTHON_VERSION))}",
+                "Check for newer FLEXT Core version with broader Python support",
+                "Use pyenv or conda to install compatible Python version",
+            ],
+        )
 
     return FlextCompatibilityResult(
-      is_compatible=True,
-      current_version=current_version,
-      required_version=MIN_PYTHON_VERSION,
-      error_message="",
-      recommendations=[],
+        is_compatible=True,
+        current_version=current_version,
+        required_version=MIN_PYTHON_VERSION,
+        error_message="",
+        recommendations=[],
     )
 
 
@@ -218,16 +218,16 @@ def compare_versions(version1: str, version2: str) -> int:
     """
 
     def parse_version(version: str) -> tuple[int, ...]:
-      """Parse version string into comparable tuple."""
-      return tuple(int(part) for part in version.split("."))
+        """Parse version string into comparable tuple."""
+        return tuple(int(part) for part in version.split("."))
 
     v1_tuple = parse_version(version1)
     v2_tuple = parse_version(version2)
 
     if v1_tuple < v2_tuple:
-      return -1
+        return -1
     if v1_tuple > v2_tuple:
-      return 1
+        return 1
     return 0
 
 
@@ -245,22 +245,22 @@ def validate_version_format(version: str) -> bool:
 
     """
     try:
-      parts = version.split(".")
-      if len(parts) != SEMVER_PARTS_COUNT:
-          return False
+        parts = version.split(".")
+        if len(parts) != SEMVER_PARTS_COUNT:
+            return False
 
-      for part in parts:
-          if not part.isdigit():
-              return False
-          if int(part) < 0:
-              return False
+        for part in parts:
+            if not part.isdigit():
+                return False
+            if int(part) < 0:
+                return False
     except (ValueError, AttributeError) as e:
-      # Log validation error but maintain API contract
-      logger = FlextLoggerFactory.get_logger(__name__)
-      logger.warning(f"Version validation failed for '{version}': {e}")
-      return False
+        # Log validation error but maintain API contract
+        logger = FlextLoggerFactory.get_logger(__name__)
+        logger.warning(f"Version validation failed for '{version}': {e}")
+        return False
     else:
-      return True
+        return True
 
 
 # =============================================================================

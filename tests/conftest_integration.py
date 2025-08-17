@@ -37,11 +37,11 @@ def sample_settings() -> FlextSettings:
     """Provide sample FlextSettings for testing."""
 
     class TestSettings(FlextSettings):
-      """Test-specific settings with required fields."""
+        """Test-specific settings with required fields."""
 
-      environment: FlextEnvironment = FlextEnvironment.TESTING
-      log_level: FlextLogLevel = FlextLogLevel.DEBUG
-      debug: bool = True
+        environment: FlextEnvironment = FlextEnvironment.TESTING
+        log_level: FlextLogLevel = FlextLogLevel.DEBUG
+        debug: bool = True
 
     return TestSettings()
 
@@ -58,10 +58,10 @@ def temp_config_dir(tmp_path: Path) -> Path:
 def sample_entity_ids() -> list[TEntityId]:
     """Provide sample FlextEntityId instances for testing."""
     return [
-      "user-123",
-      "user-456",
-      "order-789",
-      "product-abc",
+        "user-123",
+        "user-456",
+        "order-789",
+        "product-abc",
     ]
 
 
@@ -106,15 +106,15 @@ class MockService:
     """Mock service class for testing dependency injection."""
 
     def __init__(self, name: str, database: object = None) -> None:
-      """Initialize mock service with name and optional database."""
-      self.name = name
-      self.database = database
-      self.call_count = 0
+        """Initialize mock service with name and optional database."""
+        self.name = name
+        self.database = database
+        self.call_count = 0
 
     def process(self, data: str) -> str:
-      """Mock processing method."""
-      self.call_count += 1
-      return f"Processed {data} by {self.name} (call #{self.call_count})"
+        """Mock processing method."""
+        self.call_count += 1
+        return f"Processed {data} by {self.name} (call #{self.call_count})"
 
 
 @pytest.fixture
@@ -122,7 +122,7 @@ def mock_service_factory() -> object:
     """Provide factory function for creating mock services."""
 
     def create_service(name: str) -> MockService:
-      return MockService(name)
+        return MockService(name)
 
     return create_service
 
@@ -137,7 +137,7 @@ def reset_singletons(monkeypatch: pytest.MonkeyPatch) -> None:
     """Auto-reset singletons between tests to prevent test interference."""
     # Clear any FLEXT environment variables that might interfere
     for key in list(os.environ.keys()):
-      if key.startswith("FLEXT_"):
-          monkeypatch.delenv(key, raising=False)
+        if key.startswith("FLEXT_"):
+            monkeypatch.delenv(key, raising=False)
 
     # Reset global state completed automatically

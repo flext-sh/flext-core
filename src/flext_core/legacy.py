@@ -66,9 +66,9 @@ from flext_core.validation import FlextValidators, flext_validate_non_empty_stri
 def _deprecation_warning(old_name: str, new_name: str) -> None:
     """Issue deprecation warning for legacy APIs."""
     warnings.warn(
-      f"{old_name} is deprecated. Use {new_name} instead.",
-      DeprecationWarning,
-      stacklevel=3,
+        f"{old_name} is deprecated. Use {new_name} instead.",
+        DeprecationWarning,
+        stacklevel=3,
     )
 
 
@@ -138,9 +138,9 @@ def compare_versions(v1: str, v2: str) -> int:
     ver1 = version.parse(v1)
     ver2 = version.parse(v2)
     if ver1 < ver2:
-      return -1
+        return -1
     if ver1 > ver2:
-      return 1
+        return 1
     return 0
 
 
@@ -172,12 +172,12 @@ def is_feature_available(feature: str) -> bool:
 def validate_version_format(version_str: str) -> bool:
     """Legacy version format validation."""
     try:
-      from packaging import version  # noqa: PLC0415
+        from packaging import version  # noqa: PLC0415
 
-      version.parse(version_str)
-      return True
+        version.parse(version_str)
+        return True
     except Exception:
-      return False
+        return False
 
 
 FlextDomainEntity = FlextEntity
@@ -236,64 +236,64 @@ class _BaseConfigValidation:
 
     @staticmethod
     def validate_config(config: dict[str, object]) -> FlextResult[bool]:
-      """Legacy validation function."""
-      if config:
-          return FlextResult.ok(data=True)
-      return FlextResult.fail("Configuration is empty")
+        """Legacy validation function."""
+        if config:
+            return FlextResult.ok(data=True)
+        return FlextResult.fail("Configuration is empty")
 
     @staticmethod
     def validate_config_type(
-      value: object,
-      expected_type: type[object],
-      key_name: str = "value",
+        value: object,
+        expected_type: type[object],
+        key_name: str = "value",
     ) -> FlextResult[bool]:
-      """Legacy type validation function."""
-      try:
-          if isinstance(value, expected_type):
-              return FlextResult.ok(data=True)
-          return FlextResult.fail(
-              f"Configuration '{key_name}' must be {expected_type.__name__}, got {type(value).__name__}",
-          )
-      except Exception as e:
-          return FlextResult.fail(f"Type validation error for '{key_name}': {e}")
+        """Legacy type validation function."""
+        try:
+            if isinstance(value, expected_type):
+                return FlextResult.ok(data=True)
+            return FlextResult.fail(
+                f"Configuration '{key_name}' must be {expected_type.__name__}, got {type(value).__name__}",
+            )
+        except Exception as e:
+            return FlextResult.fail(f"Type validation error for '{key_name}': {e}")
 
     @staticmethod
     def validate_config_value(
-      value: object,
-      validator: object,
-      error_message: str = "Validation failed",
+        value: object,
+        validator: object,
+        error_message: str = "Validation failed",
     ) -> FlextResult[bool]:
-      """Legacy value validation function."""
-      try:
-          if not callable(validator):
-              return FlextResult.fail("Validator must be callable")
+        """Legacy value validation function."""
+        try:
+            if not callable(validator):
+                return FlextResult.fail("Validator must be callable")
 
-          if validator(value):
-              return FlextResult.ok(data=True)
-          return FlextResult.fail(error_message)
-      except Exception as e:
-          return FlextResult.fail(f"Validation error: {e}")
+            if validator(value):
+                return FlextResult.ok(data=True)
+            return FlextResult.fail(error_message)
+        except Exception as e:
+            return FlextResult.fail(f"Validation error: {e}")
 
     @staticmethod
     def validate_config_range(
-      value: float,
-      min_value: float | None = None,
-      max_value: float | None = None,
-      key_name: str = "value",
+        value: float,
+        min_value: float | None = None,
+        max_value: float | None = None,
+        key_name: str = "value",
     ) -> FlextResult[bool]:
-      """Legacy range validation function."""
-      try:
-          if min_value is not None and value < min_value:
-              return FlextResult.fail(
-                  f"Configuration '{key_name}' must be >= {min_value}, got {value}",
-              )
-          if max_value is not None and value > max_value:
-              return FlextResult.fail(
-                  f"Configuration '{key_name}' must be <= {max_value}, got {value}",
-              )
-          return FlextResult.ok(data=True)
-      except Exception as e:
-          return FlextResult.fail(f"Range validation error for '{key_name}': {e}")
+        """Legacy range validation function."""
+        try:
+            if min_value is not None and value < min_value:
+                return FlextResult.fail(
+                    f"Configuration '{key_name}' must be >= {min_value}, got {value}",
+                )
+            if max_value is not None and value > max_value:
+                return FlextResult.fail(
+                    f"Configuration '{key_name}' must be <= {max_value}, got {value}",
+                )
+            return FlextResult.ok(data=True)
+        except Exception as e:
+            return FlextResult.fail(f"Range validation error for '{key_name}': {e}")
 
 
 # Legacy performance config

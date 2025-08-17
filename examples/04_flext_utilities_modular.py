@@ -24,11 +24,11 @@ def main() -> None:
     """
     # Run all demonstrations using the modular runner
     run_all_demonstrations(
-      title="FLEXT Utilities Modular Demo",
-      examples=[
-          ("Formatting helpers", lambda: print("- formatting helpers loaded")),
-          ("Validation utilities", lambda: print("- validation utilities loaded")),
-      ],
+        title="FLEXT Utilities Modular Demo",
+        examples=[
+            ("Formatting helpers", lambda: print("- formatting helpers loaded")),
+            ("Validation utilities", lambda: print("- validation utilities loaded")),
+        ],
     )
 
 
