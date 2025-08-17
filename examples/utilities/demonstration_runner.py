@@ -98,17 +98,17 @@ def demonstrate_type_checking() -> None:
 
     # Test various types
     test_values = [
-        ("Hello World", "string"),
-        (42, "integer"),
-        ([1, 2, 3], "list"),
-        ({"key": "value"}, "dict"),
-        (math.pi, "float"),
+      ("Hello World", "string"),
+      (42, "integer"),
+      ([1, 2, 3], "list"),
+      ({"key": "value"}, "dict"),
+      (math.pi, "float"),
     ]
 
     for _value, _expected_type in test_values:
-        DemonstrationSectionHelper.print_separator()
+      DemonstrationSectionHelper.print_separator()
 
-        # Test type checking functions
+      # Test type checking functions
 
     DemonstrationSectionHelper.log_success("Type checking demonstration completed")
 
@@ -119,15 +119,15 @@ def demonstrate_validation() -> None:
 
     # Test user data validation
     valid_user_data: TUserData = {
-        "name": "John Doe",
-        "email": "john@example.com",
-        "age": 30,
+      "name": "John Doe",
+      "email": "john@example.com",
+      "age": 30,
     }
 
     invalid_user_data: TUserData = {
-        "name": "",
-        "email": "invalid-email",
-        "age": "not-a-number",
+      "name": "",
+      "email": "invalid-email",
+      "age": "not-a-number",
     }
 
     valid_errors = ValidationHelper.validate_user_data(valid_user_data)
@@ -147,30 +147,30 @@ def demonstrate_shared_domain_usage() -> None:
 
     # Create user using shared domain
     user_result = SharedDomainFactory.create_user(
-        name="John Doe",
-        email="john.doe@example.com",
-        age=30,
+      name="John Doe",
+      email="john.doe@example.com",
+      age=30,
     )
 
     if not user_result.success:
-        DemonstrationSectionHelper.log_error(
-            f"Failed to create user: {user_result.error}",
-        )
-        return
+      DemonstrationSectionHelper.log_error(
+          f"Failed to create user: {user_result.error}",
+      )
+      return
 
     shared_user = user_result.data
     if shared_user is None:
-        DemonstrationSectionHelper.log_error("User data is None")
-        return
+      DemonstrationSectionHelper.log_error("User data is None")
+      return
 
     enhanced_user = UtilityDemoUser(
-        id=shared_user.id,
-        name=shared_user.name,
-        email_address=shared_user.email_address,
-        age=shared_user.age,
-        phone=shared_user.phone,
-        status=shared_user.status,
-        created_at=shared_user.created_at,
+      id=shared_user.id,
+      name=shared_user.name,
+      email_address=shared_user.email_address,
+      age=shared_user.age,
+      phone=shared_user.phone,
+      status=shared_user.status,
+      created_at=shared_user.created_at,
     )
 
     # Demonstrate enhanced functionality
@@ -187,39 +187,39 @@ def demonstrate_business_logic() -> None:
 
     # Create a product for discount calculation
     product_result = SharedDomainFactory.create_product(
-        name="Sample Product",
-        price_amount=Decimal("100.00"),
-        description="Test product for discount calculation",
+      name="Sample Product",
+      price_amount=Decimal("100.00"),
+      description="Test product for discount calculation",
     )
 
     if not product_result.success:
-        DemonstrationSectionHelper.log_error(
-            f"Failed to create product: {product_result.error}",
-        )
-        return
+      DemonstrationSectionHelper.log_error(
+          f"Failed to create product: {product_result.error}",
+      )
+      return
 
     product = product_result.data
     if product is None:
-        DemonstrationSectionHelper.log_error("Product data is None")
-        return
+      DemonstrationSectionHelper.log_error("Product data is None")
+      return
 
     # Test discount calculation
     discount_result = calculate_discount_price(product, 20.0)
     if discount_result.success:
-        final_price = discount_result.data
-        if final_price is not None:
-            pass
+      final_price = discount_result.data
+      if final_price is not None:
+          pass
     else:
-        DemonstrationSectionHelper.log_error(
-            f"Discount calculation failed: {discount_result.error}",
-        )
+      DemonstrationSectionHelper.log_error(
+          f"Discount calculation failed: {discount_result.error}",
+      )
 
     # Test invalid discount
     invalid_discount_result = calculate_discount_price(product, 150.0)
     if not invalid_discount_result.success:
-        DemonstrationSectionHelper.log_error(
-            f"Expected error: {invalid_discount_result.error}",
-        )
+      DemonstrationSectionHelper.log_error(
+          f"Expected error: {invalid_discount_result.error}",
+      )
 
     DemonstrationSectionHelper.log_success("Business logic demonstration completed")
 
@@ -227,20 +227,20 @@ def demonstrate_business_logic() -> None:
 def run_all_demonstrations() -> None:
     """Main function to run all utility demonstrations."""
     try:
-        demonstrate_id_generation()
-        demonstrate_timestamp_generation()
-        demonstrate_type_checking()
-        demonstrate_validation()
-        demonstrate_shared_domain_usage()
-        demonstrate_business_logic()
+      demonstrate_id_generation()
+      demonstrate_timestamp_generation()
+      demonstrate_type_checking()
+      demonstrate_validation()
+      demonstrate_shared_domain_usage()
+      demonstrate_business_logic()
 
-        DemonstrationSectionHelper.log_success(
-            "ALL DEMONSTRATIONS COMPLETED SUCCESSFULLY!",
-        )
+      DemonstrationSectionHelper.log_success(
+          "ALL DEMONSTRATIONS COMPLETED SUCCESSFULLY!",
+      )
 
     except Exception as e:
-        DemonstrationSectionHelper.log_error(f"Demonstration failed: {e}")
-        raise
+      DemonstrationSectionHelper.log_error(f"Demonstration failed: {e}")
+      raise
 
 
 if __name__ == "__main__":

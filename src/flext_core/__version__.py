@@ -3,25 +3,18 @@
 from __future__ import annotations
 
 import sys
-from typing import TYPE_CHECKING, NamedTuple
-
-from flext_core.loggings import FlextLoggerFactory
-
-if TYPE_CHECKING:
-    from flext_core.typings import TAnyList
 
 # =============================================================================
 # VERSION INFORMATION - Single source of truth for FLEXT Core version
 # =============================================================================
-
 # Get version from package metadata with fallback
-try:
-    from importlib.metadata import version as _pkg_version
+from importlib.metadata import version as _pkg_version
+from typing import NamedTuple
 
-    __version__ = _pkg_version("flext-core")
-except Exception:  # noqa: BLE001
-    # Fallback when package metadata is not available (development mode)
-    __version__ = "0.9.0-dev"
+from flext_core.loggings import FlextLoggerFactory
+from flext_core.typings import TAnyList
+
+__version__ = _pkg_version("flext-core")
 
 # Version metadata for programmatic access
 VERSION_MAJOR = 0
@@ -95,7 +88,7 @@ def get_version_tuple() -> tuple[int, int, int]:
     """Get a version as tuple for programmatic comparison.
 
     Returns:
-        Tuple containing (major, minor, patch) version components.
+      Tuple containing (major, minor, patch) version components.
 
     """
     return VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH
@@ -105,16 +98,16 @@ def get_version_info() -> FlextVersionInfo:
     """Get comprehensive version information.
 
     Returns:
-        FlextVersionInfo with complete version and metadata information.
+      FlextVersionInfo with complete version and metadata information.
 
     """
     return FlextVersionInfo(
-        major=VERSION_MAJOR,
-        minor=VERSION_MINOR,
-        patch=VERSION_PATCH,
-        release_name=RELEASE_NAME,
-        release_date=RELEASE_DATE,
-        build_type=BUILD_TYPE,
+      major=VERSION_MAJOR,
+      minor=VERSION_MINOR,
+      patch=VERSION_PATCH,
+      release_name=RELEASE_NAME,
+      release_date=RELEASE_DATE,
+      build_type=BUILD_TYPE,
     )
 
 
@@ -122,7 +115,7 @@ def get_version_string() -> str:
     """Get formatted version string for display.
 
     Returns:
-        Formatted version string with release information.
+      Formatted version string with release information.
 
     """
     info = get_version_info()
@@ -133,50 +126,50 @@ def check_python_compatibility() -> FlextCompatibilityResult:
     """Check Python version compatibility.
 
     Returns:
-        FlextCompatibilityResult with compatibility status and recommendations.
+      FlextCompatibilityResult with compatibility status and recommendations.
 
     """
     current_version = sys.version_info[:3]
 
     if current_version < MIN_PYTHON_VERSION:
-        return FlextCompatibilityResult(
-            is_compatible=False,
-            current_version=current_version,
-            required_version=MIN_PYTHON_VERSION,
-            error_message=(
-                f"Python {'.'.join(map(str, current_version))} is too old. "
-                f"Minimum required: {'.'.join(map(str, MIN_PYTHON_VERSION))}"
-            ),
-            recommendations=[
-                f"Upgrade Python to {'.'.join(map(str, MIN_PYTHON_VERSION))} or newer",
-                "Use pyenv or conda to manage multiple Python versions",
-                "Check FLEXT documentation for installation guides",
-            ],
-        )
+      return FlextCompatibilityResult(
+          is_compatible=False,
+          current_version=current_version,
+          required_version=MIN_PYTHON_VERSION,
+          error_message=(
+              f"Python {'.'.join(map(str, current_version))} is too old. "
+              f"Minimum required: {'.'.join(map(str, MIN_PYTHON_VERSION))}"
+          ),
+          recommendations=[
+              f"Upgrade Python to {'.'.join(map(str, MIN_PYTHON_VERSION))} or newer",
+              "Use pyenv or conda to manage multiple Python versions",
+              "Check FLEXT documentation for installation guides",
+          ],
+      )
 
     if current_version >= MAX_PYTHON_VERSION:
-        return FlextCompatibilityResult(
-            is_compatible=False,
-            current_version=current_version,
-            required_version=MAX_PYTHON_VERSION,
-            error_message=(
-                f"Python {'.'.join(map(str, current_version))} is too new. "
-                f"Maximum supported: {'.'.join(map(str, MAX_PYTHON_VERSION))}"
-            ),
-            recommendations=[
-                f"Use Python {'.'.join(map(str, MIN_PYTHON_VERSION))}"
-                f" to {'.'.join(map(str, MAX_PYTHON_VERSION))}",
-                "Check for newer FLEXT Core version with broader Python support",
-                "Use pyenv or conda to install compatible Python version",
-            ],
-        )
+      return FlextCompatibilityResult(
+          is_compatible=False,
+          current_version=current_version,
+          required_version=MAX_PYTHON_VERSION,
+          error_message=(
+              f"Python {'.'.join(map(str, current_version))} is too new. "
+              f"Maximum supported: {'.'.join(map(str, MAX_PYTHON_VERSION))}"
+          ),
+          recommendations=[
+              f"Use Python {'.'.join(map(str, MIN_PYTHON_VERSION))}"
+              f" to {'.'.join(map(str, MAX_PYTHON_VERSION))}",
+              "Check for newer FLEXT Core version with broader Python support",
+              "Use pyenv or conda to install compatible Python version",
+          ],
+      )
 
     return FlextCompatibilityResult(
-        is_compatible=True,
-        current_version=current_version,
-        required_version=MIN_PYTHON_VERSION,
-        error_message="",
-        recommendations=[],
+      is_compatible=True,
+      current_version=current_version,
+      required_version=MIN_PYTHON_VERSION,
+      error_message="",
+      recommendations=[],
     )
 
 
@@ -187,10 +180,10 @@ def is_feature_available(feature_name: str) -> bool:
     of version-dependent functionality with clear feature names.
 
     Args:
-        feature_name: Name of feature to check availability
+      feature_name: Name of feature to check availability
 
     Returns:
-        True if feature is available, False otherwise.
+      True if feature is available, False otherwise.
 
     """
     return AVAILABLE_FEATURES.get(feature_name, False)
@@ -203,7 +196,7 @@ def get_available_features() -> TAnyList:
     dynamic feature discovery and capability reporting.
 
     Returns:
-        List of available feature names.
+      List of available feature names.
 
     """
     return [name for name, available in AVAILABLE_FEATURES.items() if available]
@@ -216,25 +209,25 @@ def compare_versions(version1: str, version2: str) -> int:
     returning a standard comparison result for version ordering.
 
     Args:
-        version1: First version string to compare
-        version2: Second version string to compare
+      version1: First version string to compare
+      version2: Second version string to compare
 
     Returns:
-        -1 of version1 < version2, 0 if equal, 1 of version1 > version2.
+      -1 of version1 < version2, 0 if equal, 1 of version1 > version2.
 
     """
 
     def parse_version(version: str) -> tuple[int, ...]:
-        """Parse version string into comparable tuple."""
-        return tuple(int(part) for part in version.split("."))
+      """Parse version string into comparable tuple."""
+      return tuple(int(part) for part in version.split("."))
 
     v1_tuple = parse_version(version1)
     v2_tuple = parse_version(version2)
 
     if v1_tuple < v2_tuple:
-        return -1
+      return -1
     if v1_tuple > v2_tuple:
-        return 1
+      return 1
     return 0
 
 
@@ -245,29 +238,29 @@ def validate_version_format(version: str) -> bool:
     ensuring compliance with SemVer 2.0.0 specification.
 
     Args:
-        version: Version string to validate
+      version: Version string to validate
 
     Returns:
-        True if a version format is valid, False otherwise.
+      True if a version format is valid, False otherwise.
 
     """
     try:
-        parts = version.split(".")
-        if len(parts) != SEMVER_PARTS_COUNT:
-            return False
+      parts = version.split(".")
+      if len(parts) != SEMVER_PARTS_COUNT:
+          return False
 
-        for part in parts:
-            if not part.isdigit():
-                return False
-            if int(part) < 0:
-                return False
+      for part in parts:
+          if not part.isdigit():
+              return False
+          if int(part) < 0:
+              return False
     except (ValueError, AttributeError) as e:
-        # Log validation error but maintain API contract
-        logger = FlextLoggerFactory.get_logger(__name__)
-        logger.warning(f"Version validation failed for '{version}': {e}")
-        return False
+      # Log validation error but maintain API contract
+      logger = FlextLoggerFactory.get_logger(__name__)
+      logger.warning(f"Version validation failed for '{version}': {e}")
+      return False
     else:
-        return True
+      return True
 
 
 # =============================================================================

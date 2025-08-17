@@ -28,12 +28,12 @@ def _demo_flext_result() -> None:
 
 def _demo_entity_shared_domain() -> SharedUser | None:
     user_result = SharedDomainFactory.create_user(
-        name="John Doe",
-        email="john@example.com",
-        age=30,
+      name="John Doe",
+      email="john@example.com",
+      age=30,
     )
     if user_result.is_failure or user_result.data is None:
-        return None
+      return None
     user = user_result.data
     (user.status.value if hasattr(user.status, "value") else str(user.status))
     user.validate_domain_rules()
@@ -42,61 +42,61 @@ def _demo_entity_shared_domain() -> SharedUser | None:
 
 def _demo_commands() -> tuple[object, object]:
     class CreateUserCommand(FlextCommands.Command):
-        email: str
-        name: str
+      email: str
+      name: str
 
-        def validate_command(self) -> FlextResult[None]:
-            if not self.email or "@" not in self.email:
-                return FlextResult.fail("Invalid email")
-            if not self.name.strip():
-                return FlextResult.fail("Name required")
-            return FlextResult.ok(None)
+      def validate_command(self) -> FlextResult[None]:
+          if not self.email or "@" not in self.email:
+              return FlextResult.fail("Invalid email")
+          if not self.name.strip():
+              return FlextResult.fail("Name required")
+          return FlextResult.ok(None)
 
     class CreateUserHandler(FlextCommands.Handler[CreateUserCommand, SharedUser]):
-        def handle(self, command: CreateUserCommand) -> FlextResult[SharedUser]:
-            return SharedDomainFactory.create_user(
-                name=command.name,
-                email=command.email,
-                age=30,
-            )
+      def handle(self, command: CreateUserCommand) -> FlextResult[SharedUser]:
+          return SharedDomainFactory.create_user(
+              name=command.name,
+              email=command.email,
+              age=30,
+          )
 
     # Ensure Pydantic forward references are resolved for local command
     with contextlib.suppress(Exception):
-        CreateUserCommand.model_rebuild(
-            types_namespace={
-                "TEntityId": str,
-                "TServiceName": str,
-                "TUserId": str,
-                "TCorrelationId": str,
-            },
-        )
+      CreateUserCommand.model_rebuild(
+          types_namespace={
+              "TEntityId": str,
+              "TServiceName": str,
+              "TUserId": str,
+              "TCorrelationId": str,
+          },
+      )
     command = CreateUserCommand(email="alice@example.com", name="Alice Smith")
     handler = CreateUserHandler()
     result = handler.execute(command)
     if result.success and result.data is not None:
-        pass
+      pass
     return command, handler
 
 
 def _demo_container() -> None:
     class UserService:
-        def __init__(self, repository: object) -> None:
-            self.repository = repository
+      def __init__(self, repository: object) -> None:
+          self.repository = repository
 
-        def create_user(self, email: str, name: str) -> SharedUser:
-            result = SharedDomainFactory.create_user(name=name, email=email, age=25)
-            if result.success and result.data is not None:
-                return result.data
-            msg: str = f"Failed to create user: {result.error}"
-            raise ValueError(msg)
+      def create_user(self, email: str, name: str) -> SharedUser:
+          result = SharedDomainFactory.create_user(name=name, email=email, age=25)
+          if result.success and result.data is not None:
+              return result.data
+          msg: str = f"Failed to create user: {result.error}"
+          raise ValueError(msg)
 
     class UserRepository:
-        def __init__(self) -> None:
-            self.users: dict[str, SharedUser] = {}
+      def __init__(self) -> None:
+          self.users: dict[str, SharedUser] = {}
 
-        def save(self, user: SharedUser) -> SharedUser:
-            self.users[user.id] = user
-            return user
+      def save(self, user: SharedUser) -> SharedUser:
+          self.users[user.id] = user
+          return user
 
     container = get_flext_container()
     repository = UserRepository()
@@ -105,18 +105,18 @@ def _demo_container() -> None:
     container.register("user_service", service)
     service_result = container.get("user_service")
     if service_result.success:
-        user_service = service_result.data
-        if hasattr(user_service, "create_user"):
-            user_service.create_user("bob@example.com", "Bob Wilson")
+      user_service = service_result.data
+      if hasattr(user_service, "create_user"):
+          user_service.create_user("bob@example.com", "Bob Wilson")
 
 
 def _demo_fields() -> None:
     email_field = FlextFields.create_string_field(
-        field_id="user_email",
-        field_name="email",
-        pattern=r"^[^@]+@[^@]+\.[^@]+$",
-        required=True,
-        description="User email address",
+      field_id="user_email",
+      field_name="email",
+      pattern=r"^[^@]+@[^@]+\.[^@]+$",
+      required=True,
+      description="User email address",
     )
     email_field.validate_value("user@example.com")
     email_field.validate_value("invalid-email")
@@ -127,9 +127,9 @@ def _demo_command_bus(command: object, handler: object) -> None:
     bus.register_handler(cast("type", type(command)), handler)  # type: ignore[arg-type]
     bus_result = bus.execute(command)
     if bus_result.success:
-        bus_user = bus_result.data
-        if hasattr(bus_user, "name"):
-            pass
+      bus_user = bus_result.data
+      if hasattr(bus_user, "name"):
+          pass
 
 
 def main() -> None:
@@ -138,7 +138,7 @@ def main() -> None:
     _demo_flext_result()
     user = _demo_entity_shared_domain()
     if user is None:
-        return
+      return
     command, handler = _demo_commands()
     _demo_container()
     _demo_fields()

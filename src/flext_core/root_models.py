@@ -13,23 +13,19 @@ Key Benefits:
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING
 
-from pydantic import Field, RootModel
+from pydantic import Field, RootModel, field_validator
 
-if TYPE_CHECKING:
-    from collections.abc import Iterator
-
-
+from flext_core.exceptions import FlextValidationError
+from flext_core.payload import FlextEvent
 from flext_core.result import FlextResult
 
 
 # Delayed import function to avoid circular imports
 def _get_flext_event_class() -> type[object]:
     """Get FlextEvent class with delayed import to avoid circular dependencies."""
-    from flext_core.payload import FlextEvent  # noqa: PLC0415
-
     return FlextEvent
 
 
@@ -44,21 +40,33 @@ class FlextEntityId(RootModel[str]):
 
     root: str = Field(min_length=1, description="Non-empty entity identifier")
 
+    @field_validator("root", mode="before")
+    @classmethod
+    def validate_id(cls, v: str) -> str:
+      """Validate and clean entity ID."""
+      if isinstance(v, str):
+          # Strip whitespace
+          v = v.strip()
+          if not v:
+              msg = "Entity ID cannot be empty"
+              raise FlextValidationError(msg)
+      return v
+
     def __str__(self) -> str:
-        """Return string representation."""
-        return self.root
+      """Return string representation."""
+      return self.root
 
     def __hash__(self) -> int:
-        """Return hash value."""
-        return hash(self.root)
+      """Return hash value."""
+      return hash(self.root)
 
     def __eq__(self, other: object) -> bool:
-        """Compare with string or other FlextEntityId."""
-        if isinstance(other, str):
-            return self.root == other
-        if isinstance(other, FlextEntityId):
-            return self.root == other.root
-        return False
+      """Compare with string or other FlextEntityId."""
+      if isinstance(other, str):
+          return self.root == other
+      if isinstance(other, FlextEntityId):
+          return self.root == other.root
+      return False
 
 
 class FlextVersion(RootModel[int]):
@@ -67,12 +75,84 @@ class FlextVersion(RootModel[int]):
     root: int = Field(ge=1, description="Version number starting from 1")
 
     def __int__(self) -> int:
-        """Return integer representation."""
-        return self.root
+      """Return integer representation."""
+      return self.root
+
+    def __add__(self, other: object) -> FlextVersion:
+      """Addition operation."""
+      if isinstance(other, int):
+          return FlextVersion(root=self.root + other)
+      if isinstance(other, FlextVersion):
+          return FlextVersion(root=self.root + other.root)
+      return NotImplemented
+
+    def __sub__(self, other: object) -> FlextVersion:
+      """Subtraction operation."""
+      if isinstance(other, int):
+          result = self.root - other
+          if result < 1:
+              msg = "Version cannot be less than 1"
+              raise ValueError(msg)
+          return FlextVersion(root=result)
+      if isinstance(other, FlextVersion):
+          result = self.root - other.root
+          if result < 1:
+              msg = "Version cannot be less than 1"
+              raise ValueError(msg)
+          return FlextVersion(root=result)
+      return NotImplemented
+
+    def __eq__(self, other: object) -> bool:
+      """Equality comparison with int or FlextVersion."""
+      if isinstance(other, int):
+          return self.root == other
+      if isinstance(other, FlextVersion):
+          return self.root == other.root
+      return False
+
+    def __ne__(self, other: object) -> bool:
+      """Inequality comparison."""
+      return not self.__eq__(other)
+
+    def __lt__(self, other: object) -> bool:
+      """Less than comparison."""
+      if isinstance(other, int):
+          return self.root < other
+      if isinstance(other, FlextVersion):
+          return self.root < other.root
+      return NotImplemented
+
+    def __le__(self, other: object) -> bool:
+      """Less than or equal comparison."""
+      if isinstance(other, int):
+          return self.root <= other
+      if isinstance(other, FlextVersion):
+          return self.root <= other.root
+      return NotImplemented
+
+    def __gt__(self, other: object) -> bool:
+      """Greater than comparison."""
+      if isinstance(other, int):
+          return self.root > other
+      if isinstance(other, FlextVersion):
+          return self.root > other.root
+      return NotImplemented
+
+    def __ge__(self, other: object) -> bool:
+      """Greater than or equal comparison."""
+      if isinstance(other, int):
+          return self.root >= other
+      if isinstance(other, FlextVersion):
+          return self.root >= other.root
+      return NotImplemented
+
+    def __hash__(self) -> int:
+      """Hash for dictionary usage."""
+      return hash(self.root)
 
     def increment(self) -> FlextVersion:
-        """Return incremented version."""
-        return FlextVersion(self.root + 1)
+      """Return incremented version."""
+      return FlextVersion(self.root + 1)
 
 
 class FlextTimestamp(RootModel[datetime]):
@@ -81,39 +161,39 @@ class FlextTimestamp(RootModel[datetime]):
     root: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     def __str__(self) -> str:
-        """Return ISO format timestamp string."""
-        return self.root.isoformat()
+      """Return ISO format timestamp string."""
+      return self.root.isoformat()
 
     def __lt__(self, other: FlextTimestamp) -> bool:
-        """Less than comparison."""
-        return self.root < other.root
+      """Less than comparison."""
+      return self.root < other.root
 
     def __le__(self, other: FlextTimestamp) -> bool:
-        """Less than or equal comparison."""
-        return self.root <= other.root
+      """Less than or equal comparison."""
+      return self.root <= other.root
 
     def __gt__(self, other: FlextTimestamp) -> bool:
-        """Greater than comparison."""
-        return self.root > other.root
+      """Greater than comparison."""
+      return self.root > other.root
 
     def __ge__(self, other: FlextTimestamp) -> bool:
-        """Greater than or equal comparison."""
-        return self.root >= other.root
+      """Greater than or equal comparison."""
+      return self.root >= other.root
 
     def __eq__(self, other: object) -> bool:
-        """Equality comparison."""
-        if isinstance(other, FlextTimestamp):
-            return self.root == other.root
-        return False
+      """Equality comparison."""
+      if isinstance(other, FlextTimestamp):
+          return self.root == other.root
+      return False
 
     def __hash__(self) -> int:
-        """Hash for dictionary usage."""
-        return hash(self.root)
+      """Hash for dictionary usage."""
+      return hash(self.root)
 
     @classmethod
     def now(cls) -> FlextTimestamp:
-        """Create current timestamp."""
-        return cls(datetime.now(UTC))
+      """Create current timestamp."""
+      return cls(datetime.now(UTC))
 
 
 # =============================================================================
@@ -127,14 +207,14 @@ class FlextMetadata(RootModel[dict[str, object]]):
     root: dict[str, object] = Field(default_factory=dict)
 
     def get(self, key: str, default: object = None) -> object:
-        """Get metadata value."""
-        return self.root.get(key, default)
+      """Get metadata value."""
+      return self.root.get(key, default)
 
     def set(self, key: str, value: object) -> FlextMetadata:
-        """Return new metadata with added key-value pair."""
-        new_data = self.root.copy()
-        new_data[key] = value
-        return FlextMetadata(new_data)
+      """Return new metadata with added key-value pair."""
+      new_data = self.root.copy()
+      new_data[key] = value
+      return FlextMetadata(new_data)
 
 
 class FlextEventList(RootModel[list[dict[str, object]]]):
@@ -143,69 +223,69 @@ class FlextEventList(RootModel[list[dict[str, object]]]):
     root: list[dict[str, object]] = Field(default_factory=list)
 
     def add_event(self, event_type: str, data: dict[str, object]) -> FlextEventList:
-        """Add event and return new list."""
-        new_events = self.root.copy()
-        new_events.append(
-            {
-                "type": event_type,
-                "data": data,
-                "timestamp": datetime.now(UTC).isoformat(),
-            },
-        )
-        return FlextEventList(new_events)
+      """Add event and return new list."""
+      new_events = self.root.copy()
+      new_events.append(
+          {
+              "type": event_type,
+              "data": data,
+              "timestamp": datetime.now(UTC).isoformat(),
+          },
+      )
+      return FlextEventList(new_events)
 
     def clear(self) -> tuple[FlextEventList, list[dict[str, object]]]:
-        """Clear events and return new empty list plus cleared events."""
-        events = self.root.copy()
-        return FlextEventList([]), events
+      """Clear events and return new empty list plus cleared events."""
+      events = self.root.copy()
+      return FlextEventList([]), events
 
     def __len__(self) -> int:
-        """Return length of events list."""
-        return len(self.root)
+      """Return length of events list."""
+      return len(self.root)
 
     def __getitem__(self, index: int) -> object:
-        """Get event by index."""
-        # Check if we have stored FlextEvent objects from legacy add_domain_event
-        if hasattr(self, "_flext_events") and 0 <= index < len(self._flext_events):
-            return self._flext_events[index]
+      """Get event by index."""
+      # Check if we have stored FlextEvent objects from legacy add_domain_event
+      if hasattr(self, "_flext_events") and 0 <= index < len(self._flext_events):
+          return self._flext_events[index]
 
-        event_dict = self.root[index]
+      event_dict = self.root[index]
 
-        # If it's already a FlextEvent object, return it directly
-        if hasattr(event_dict, "event_type"):
-            return event_dict
+      # If it's already a FlextEvent object, return it directly
+      if hasattr(event_dict, "event_type"):
+          return event_dict
 
-        # For legacy compatibility, convert dict to FlextEvent object if needed
-        # This handles the case where tests expect FlextEvent properties
-        if isinstance(event_dict, dict) and "type" in event_dict:
-            # Extract event information from dictionary
-            event_type = event_dict.get("type", "")
-            event_data = event_dict.get("data", {})
-            aggregate_id = event_dict.get(
-                "entity_id",
-                event_dict.get("aggregate_id", ""),
-            )
-            version = event_dict.get("version", 1)
+      # For legacy compatibility, convert dict to FlextEvent object if needed
+      # This handles the case where tests expect FlextEvent properties
+      if isinstance(event_dict, dict) and "type" in event_dict:
+          # Extract event information from dictionary
+          event_type = event_dict.get("type", "")
+          event_data = event_dict.get("data", {})
+          aggregate_id = event_dict.get(
+              "entity_id",
+              event_dict.get("aggregate_id", ""),
+          )
+          version = event_dict.get("version", 1)
 
-            # Create FlextEvent object using delayed import
-            if isinstance(event_type, str) and isinstance(event_data, dict):
-                flext_event_cls = _get_flext_event_class()
-                # Type: ignore needed as dynamic import loses type info
-                event_result = flext_event_cls.create_event(  # type: ignore[attr-defined]
-                    event_type=event_type,
-                    event_data=event_data,
-                    aggregate_id=str(aggregate_id) if aggregate_id else None,
-                    version=int(version) if isinstance(version, (int, str)) else None,
-                )
-                if event_result.is_success:
-                    # Return the FlextEvent object directly for tests
-                    return event_result.unwrap()
+          # Create FlextEvent object using delayed import
+          if isinstance(event_type, str) and isinstance(event_data, dict):
+              flext_event_cls = _get_flext_event_class()
+              # Type: ignore needed as dynamic import loses type info
+              event_result = flext_event_cls.create_event(  # type: ignore[attr-defined]
+                  event_type=event_type,
+                  event_data=event_data,
+                  aggregate_id=str(aggregate_id) if aggregate_id else None,
+                  version=int(version) if isinstance(version, (int, str)) else None,
+              )
+              if event_result.is_success:
+                  # Return the FlextEvent object directly for tests
+                  return event_result.unwrap()
 
-        return event_dict
+      return event_dict
 
     def __iter__(self) -> Iterator[dict[str, object]]:  # type: ignore[override]
-        """Iterate over events."""
-        return iter(self.root)
+      """Iterate over events."""
+      return iter(self.root)
 
 
 # =============================================================================
@@ -219,8 +299,8 @@ class FlextHost(RootModel[str]):
     root: str = Field(min_length=1, description="Non-empty host")
 
     def __str__(self) -> str:
-        """Return string representation."""
-        return self.root
+      """Return string representation."""
+      return self.root
 
 
 class FlextPort(RootModel[int]):
@@ -229,8 +309,8 @@ class FlextPort(RootModel[int]):
     root: int = Field(ge=1, le=65535, description="Valid port number")
 
     def __int__(self) -> int:
-        """Return integer representation."""
-        return self.root
+      """Return integer representation."""
+      return self.root
 
 
 class FlextConnectionString(RootModel[str]):
@@ -239,8 +319,8 @@ class FlextConnectionString(RootModel[str]):
     root: str = Field(min_length=1, description="Non-empty connection string")
 
     def __str__(self) -> str:
-        """Return string representation."""
-        return self.root
+      """Return string representation."""
+      return self.root
 
 
 # =============================================================================
@@ -252,33 +332,33 @@ class FlextEmailAddress(RootModel[str]):
     """Email address with validation."""
 
     root: str = Field(
-        pattern=r"^[^@]+@[^@]+\.[^@]+$",
-        description="Valid email address",
+      pattern=r"^[^@]+@[^@]+\.[^@]+$",
+      description="Valid email address",
     )
 
     def __str__(self) -> str:
-        """Return string representation."""
-        return self.root
+      """Return string representation."""
+      return self.root
 
     @property
     def domain(self) -> str:
-        """Extract domain from email."""
-        return self.root.split("@")[1]
+      """Extract domain from email."""
+      return self.root.split("@")[1]
 
 
 class FlextServiceName(RootModel[str]):
     """Service name with validation."""
 
     root: str = Field(
-        min_length=1,
-        max_length=64,
-        pattern=r"^[a-zA-Z][a-zA-Z0-9_-]*$",
-        description="Valid service name (alphanumeric, underscore, hyphen)",
+      min_length=1,
+      max_length=64,
+      pattern=r"^[a-zA-Z][a-zA-Z0-9_-]*$",
+      description="Valid service name (alphanumeric, underscore, hyphen)",
     )
 
     def __str__(self) -> str:
-        """Return string representation."""
-        return self.root
+      """Return string representation."""
+      return self.root
 
 
 class FlextPercentage(RootModel[float]):
@@ -287,12 +367,12 @@ class FlextPercentage(RootModel[float]):
     root: float = Field(ge=0.0, le=100.0, description="Percentage between 0 and 100")
 
     def __float__(self) -> float:
-        """Return float representation."""
-        return self.root
+      """Return float representation."""
+      return self.root
 
     def as_decimal(self) -> float:
-        """Return as decimal (0.0 to 1.0)."""
-        return self.root / 100.0
+      """Return as decimal (0.0 to 1.0)."""
+      return self.root / 100.0
 
 
 # =============================================================================
@@ -304,15 +384,15 @@ class FlextErrorCode(RootModel[str]):
     """Error code with validation."""
 
     root: str = Field(
-        min_length=1,
-        max_length=32,
-        pattern=r"^[A-Z][A-Z0-9_]*$",
-        description="Error code in UPPER_CASE format",
+      min_length=1,
+      max_length=32,
+      pattern=r"^[A-Z][A-Z0-9_]*$",
+      description="Error code in UPPER_CASE format",
     )
 
     def __str__(self) -> str:
-        """Return string representation."""
-        return self.root
+      """Return string representation."""
+      return self.root
 
 
 class FlextErrorMessage(RootModel[str]):
@@ -321,8 +401,8 @@ class FlextErrorMessage(RootModel[str]):
     root: str = Field(min_length=1, max_length=512, description="Error message")
 
     def __str__(self) -> str:
-        """Return string representation."""
-        return self.root
+      """Return string representation."""
+      return self.root
 
 
 # =============================================================================
@@ -333,43 +413,43 @@ class FlextErrorMessage(RootModel[str]):
 def create_entity_id(value: str) -> FlextResult[FlextEntityId]:
     """Create validated entity ID."""
     try:
-        return FlextResult.ok(FlextEntityId(value))
+      return FlextResult.ok(FlextEntityId(value))
     except Exception as e:
-        return FlextResult.fail(f"Invalid entity ID: {e}")
+      return FlextResult.fail(f"Invalid entity ID: {e}")
 
 
 def create_version(value: int) -> FlextResult[FlextVersion]:
     """Create validated version."""
     try:
-        return FlextResult.ok(FlextVersion(value))
+      return FlextResult.ok(FlextVersion(value))
     except Exception as e:
-        return FlextResult.fail(f"Invalid version: {e}")
+      return FlextResult.fail(f"Invalid version: {e}")
 
 
 def create_email(value: str) -> FlextResult[FlextEmailAddress]:
     """Create validated email address."""
     try:
-        return FlextResult.ok(FlextEmailAddress(value))
+      return FlextResult.ok(FlextEmailAddress(value))
     except Exception as e:
-        return FlextResult.fail(f"Invalid email address: {e}")
+      return FlextResult.fail(f"Invalid email address: {e}")
 
 
 def create_service_name(value: str) -> FlextResult[FlextServiceName]:
     """Create validated service name."""
     try:
-        return FlextResult.ok(FlextServiceName(value))
+      return FlextResult.ok(FlextServiceName(value))
     except Exception as e:
-        return FlextResult.fail(f"Invalid service name: {e}")
+      return FlextResult.fail(f"Invalid service name: {e}")
 
 
 def create_host_port(host: str, port: int) -> FlextResult[tuple[FlextHost, FlextPort]]:
     """Create validated host and port pair."""
     try:
-        host_obj = FlextHost(host)
-        port_obj = FlextPort(port)
-        return FlextResult.ok((host_obj, port_obj))
+      host_obj = FlextHost(host)
+      port_obj = FlextPort(port)
+      return FlextResult.ok((host_obj, port_obj))
     except Exception as e:
-        return FlextResult.fail(f"Invalid host/port: {e}")
+      return FlextResult.fail(f"Invalid host/port: {e}")
 
 
 # =============================================================================

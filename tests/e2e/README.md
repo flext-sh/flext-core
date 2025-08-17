@@ -362,7 +362,7 @@ def test_sustained_load():
 def load_test_data(filename):
     """Load test data from fixtures."""
     import json
-    from pathlib import Path
+from pathlib import Path
 
     data_path = Path(__file__).parent / "fixtures" / filename
     with open(data_path) as f:

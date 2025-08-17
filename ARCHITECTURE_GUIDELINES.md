@@ -73,13 +73,12 @@ Every module MUST follow this structure:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, Any
+from typing import  Optional, Any
 
 from flext_core.result import FlextResult
 from flext_core.exceptions import FlextError
 
-if TYPE_CHECKING:
-    from flext_core.typings import TAnyDict
+from flext_core.typings import TAnyDict
 
 # Public exports
 __all__ = ["FlextComponent", "FlextService"]
