@@ -11,16 +11,15 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable
 from datetime import UTC, datetime
 from inspect import signature
-from typing import Generic, Protocol, TypeGuard, TypeVar
+from typing import Generic, Protocol, cast
 
 from flext_core.constants import FlextConstants
 from flext_core.loggings import FlextLoggerFactory
 from flext_core.result import FlextResult
-from flext_core.typings import TAnyDict
+from flext_core.typings import T, TAnyDict
 from flext_core.validation import FlextValidators
 
-# Type variable for generic utilities
-T = TypeVar("T")
+logger = FlextLoggerFactory.get_logger(__name__)
 
 # =============================================================================
 # CONSTANTS - Default values
@@ -33,9 +32,10 @@ BYTES_PER_GB = 1024 * 1024 * 1024
 # Time constants
 SECONDS_PER_MINUTE = 60
 SECONDS_PER_HOUR = 3600
-
-
-logger = FlextLoggerFactory.get_logger(__name__)
+# =============================================================================
+# CONSTANTS
+# =============================================================================
+PERFORMANCE_METRICS: dict[str, dict[str, int | float]] = {}
 
 
 class FlextConsole:
@@ -74,17 +74,6 @@ class FlextConsole:
     def log(self, *args: object, **kwargs: object) -> None:
         """Log to console (alias for print)."""
         self.print(*args, **kwargs)
-
-
-# Simple Console symbol for tests that patch
-# flext_core.utilities.Console
-Console = FlextConsole
-
-
-# =============================================================================
-# CONSTANTS
-# =============================================================================
-PERFORMANCE_METRICS: dict[str, dict[str, int | float]] = {}
 
 
 class FlextDecoratedFunction(Protocol):
@@ -215,21 +204,30 @@ class FlextUtilities:
             except (ValueError, TypeError, OSError):
                 # If signature inspection fails, fall back to try-catch approach
                 try:
-                    result = func()  # type: ignore[call-arg]
+                    # Try zero parameter call first
+                    zero_param_func = cast("Callable[[], T]", func)
+                    result = zero_param_func()
                     return FlextResult.ok(result)
                 except TypeError:
-                    result = func(object())  # type: ignore[call-arg]
+                    # Try one parameter call
+                    one_param_func = cast("Callable[[object], T]", func)
+                    result = one_param_func(object())
                     return FlextResult.ok(result)
 
-            # Call based on actual parameter count
-            result = func() if param_count == 0 else func(object())  # type: ignore[call-arg]
+            # Call based on actual parameter count with proper casting
+            if param_count == 0:
+                zero_param_func = cast("Callable[[], T]", func)
+                result = zero_param_func()
+            else:
+                one_param_func = cast("Callable[[object], T]", func)
+                result = one_param_func(object())
 
             return FlextResult.ok(result)
         except (TypeError, ValueError, AttributeError, RuntimeError) as e:
             return FlextResult.fail(str(e))
 
     @classmethod
-    def is_not_none_guard(cls, value: T | None) -> TypeGuard[T]:
+    def is_not_none_guard(cls, value: T | None) -> bool:
         """Type guard for not None values."""
         return FlextValidators.is_not_none(value)
 
@@ -439,7 +437,7 @@ class FlextConversions:
         return FlextUtilities.safe_call(func)
 
     @staticmethod
-    def is_not_none(value: T | None) -> TypeGuard[T]:
+    def is_not_none(value: T | None) -> bool:
         """Type guard to check if value is not None."""
         return FlextUtilities.is_not_none_guard(value)
 
@@ -650,13 +648,6 @@ class FlextIdGenerator:
 
 
 # =============================================================================
-# MODERN API - Use FlextUtilities class
-# =============================================================================
-
-# For new code, use the proper FlextXXX classes above.
-
-
-# =============================================================================
 # ALIASES FOR SPECIALIZED CLASSES - Direct access to base functionality
 # =============================================================================
 
@@ -691,9 +682,9 @@ class FlextTypeGuards:
 class FlextGenerators:
     """ID and timestamp generation utilities - SINGLE SOURCE OF TRUTH."""
 
-    # Time constants for duration formatting
-    SECONDS_PER_MINUTE = 60
-    SECONDS_PER_HOUR = 3600
+    # Constants reused by formatting helpers
+    SECONDS_PER_MINUTE: int = 60
+    SECONDS_PER_HOUR: int = 3600
 
     @classmethod
     def generate_uuid(cls) -> str:
@@ -790,9 +781,9 @@ class FlextGenericFactory(FlextBaseFactory[object]):
             # NOTE: Caller is responsible for providing correct kwargs
             # that match the target type's constructor signature
             instance = self._target_type(**kwargs)
-            return FlextResult.ok(instance)
+            return FlextResult[object].ok(instance)
         except (TypeError, ValueError, AttributeError, RuntimeError, OSError) as e:
-            return FlextResult.fail(f"Factory creation failed: {e}")
+            return FlextResult[object].fail(f"Factory creation failed: {e}")
 
 
 class FlextUtilityFactory:
@@ -915,6 +906,10 @@ def flext_track_performance(
 def generate_iso_timestamp() -> str:
     """Generate ISO timestamp."""
     return FlextGenerators.generate_iso_timestamp()
+
+
+# Back-compat alias: some modules/tests import `Console`
+Console = FlextConsole
 
 
 # =============================================================================

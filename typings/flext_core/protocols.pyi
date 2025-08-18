@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from collections.abc import Awaitable, Callable, Iterator
 from pathlib import Path
-from typing import Protocol, TypeVar
+from typing import Protocol
 
 from flext_core.result import FlextResult
 
@@ -23,7 +23,7 @@ __all__ = [
     "FlextEventStreamReader",
     "FlextEventSubscriber",
     "FlextFactory",
-    "FlextHandler",
+    "FlextMessageHandler",
     "FlextLoggerProtocol",
     "FlextMessageHandler",
     "FlextMetricsCollector",
@@ -37,18 +37,17 @@ __all__ = [
     "FlextProjectionBuilder",
     "FlextRepository",
     "FlextService",
-    "FlextServiceFactory",
     "FlextSpanProtocol",
     "FlextTracerProtocol",
     "FlextUnitOfWork",
     "FlextValidatingHandler",
     "FlextValidationRule",
     "FlextValidator",
+    "TFactory",
 ]
 
-T = TypeVar("T")
-type FlextServiceFactory = Callable[[], object]
-type FlextHandler = FlextMessageHandler
+type TFactory = Callable[[], object]
+type FlextMessageHandler = FlextMessageHandler
 
 class FlextConnectionProtocol(Protocol):
     def test_connection(self) -> FlextResult[bool]: ...

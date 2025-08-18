@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from typing import TypeVar
+from typing import ClassVar, TypeVar
 
 from _typeshed import Incomplete
 from pydantic import BaseModel, ValidationInfo, validate_call
@@ -59,11 +59,11 @@ __all__ = [
     "validate_with_result",
 ]
 
-T = TypeVar("T")
+_T = TypeVar("_T")
 
 class FlextAbstractValidator[T](ABC):
     @abstractmethod
-    def validate(self, value: T) -> FlextResult[T]: ...
+    def validate(self, value: _T) -> FlextResult[_T]: ...
 
 def normalize_string(v: object) -> str: ...
 def normalize_email(v: object) -> str: ...
@@ -98,7 +98,7 @@ EmailWithNormalization: Incomplete
 EntityIdWithGeneration: Incomplete
 
 class _ValidationConfig(BaseModel):
-    model_config: Incomplete
+    model_config: ClassVar[Incomplete]
     field_name: str
     min_length: int
     max_length: int | None
@@ -106,7 +106,7 @@ class _ValidationConfig(BaseModel):
     def validate_max_length(cls, v: int | None, info: ValidationInfo) -> int | None: ...
 
 class _ValidationResult(BaseModel):
-    model_config: Incomplete
+    model_config: ClassVar[Incomplete]
     is_valid: bool
     error_message: str
     field_name: str
@@ -172,21 +172,68 @@ FlextValidationConfig: Incomplete
 FlextValidationResult: Incomplete
 FlextValidators: Incomplete
 FlextPredicates: Incomplete
-flext_validate_required_field: Incomplete
-flext_validate_string_field: Incomplete
-flext_validate_numeric_field: Incomplete
-flext_validate_email_field: Incomplete
-flext_validate_entity_id: Incomplete
-flext_validate_non_empty_string: Incomplete
+
+@validate_call
+def flext_validate_required_field(
+    value: object, field_name: str = "field"
+) -> FlextResult[object]: ...
+@validate_call
+def flext_validate_string_field(
+    value: str,
+    field_name: str = "field",
+    min_length: int = 0,
+    max_length: int | None = None,
+) -> FlextResult[object]: ...
+@validate_call
+def flext_validate_numeric_field(
+    value: float,
+    field_name: str = "field",
+    min_val: float | None = None,
+    max_val: float | None = None,
+) -> FlextResult[object]: ...
+@validate_call
+def flext_validate_email_field(
+    value: str, field_name: str = "field"
+) -> FlextResult[object]: ...
+@validate_call
+def flext_validate_entity_id(entity_id: str) -> FlextResult[str]: ...
+@validate_call
+def flext_validate_non_empty_string(value: object) -> FlextResult[str]: ...
 
 class FlextValidation(FlextValidators):
     Validators = FlextValidators
-    flext_validate_entity_id = flext_validate_entity_id
-    flext_validate_non_empty_string = flext_validate_non_empty_string
-    flext_validate_required_field = flext_validate_required_field
-    flext_validate_string_field = flext_validate_string_field
-    flext_validate_numeric_field = flext_validate_numeric_field
-    flext_validate_email_field = flext_validate_email_field
+    @staticmethod
+    @validate_call
+    def flext_validate_entity_id(entity_id: str) -> FlextResult[str]: ...
+    @staticmethod
+    @validate_call
+    def flext_validate_non_empty_string(value: object) -> FlextResult[str]: ...
+    @staticmethod
+    @validate_call
+    def flext_validate_required_field(
+        value: object, field_name: str = "field"
+    ) -> FlextResult[object]: ...
+    @staticmethod
+    @validate_call
+    def flext_validate_string_field(
+        value: str,
+        field_name: str = "field",
+        min_length: int = 0,
+        max_length: int | None = None,
+    ) -> FlextResult[object]: ...
+    @staticmethod
+    @validate_call
+    def flext_validate_numeric_field(
+        value: float,
+        field_name: str = "field",
+        min_val: float | None = None,
+        max_val: float | None = None,
+    ) -> FlextResult[object]: ...
+    @staticmethod
+    @validate_call
+    def flext_validate_email_field(
+        value: str, field_name: str = "field"
+    ) -> FlextResult[object]: ...
     @classmethod
     @validate_call
     def validate(cls, value: object) -> FlextResult[object]: ...
@@ -253,14 +300,14 @@ class FlextValidationPipeline:
     @validate_call
     def validate(self, value: object) -> FlextResult[object]: ...
 
-class FlextDomainValidator(FlextAbstractValidator[T]):
+class FlextDomainValidator(FlextAbstractValidator[_T]):
     business_rules: Incomplete
     @validate_call
     def __init__(
-        self, business_rules: list[Callable[[T], bool]] | None = None
+        self, business_rules: list[Callable[[_T], bool]] | None = None
     ) -> None: ...
     @validate_call
-    def validate_value(self, value: T) -> FlextResult[T]: ...
-    def validate(self, value: T) -> FlextResult[T]: ...
+    def validate_value(self, value: _T) -> FlextResult[_T]: ...
+    def validate(self, value: _T) -> FlextResult[_T]: ...
 
 FlextBaseValidator = FlextAbstractValidator

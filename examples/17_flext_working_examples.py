@@ -124,7 +124,7 @@ def _demo_fields() -> None:
 
 def _demo_command_bus(command: object, handler: object) -> None:
     bus = FlextCommands.create_command_bus()
-    bus.register_handler(cast("type", type(command)), handler)  # type: ignore[arg-type]
+    bus.register_handler(cast("type", type(command)), handler)
     bus_result = bus.execute(command)
     if bus_result.success:
         bus_user = bus_result.data

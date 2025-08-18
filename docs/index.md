@@ -164,7 +164,7 @@ class Account(FlextEntity):
 | **FlextValueObject**   | Immutable value objects         | ✅ Stable  |
 | **FlextAggregateRoot** | Aggregate consistency boundary  | ✅ Stable  |
 | **FlextCommand**       | CQRS command pattern            | 🔄 Active  |
-| **FlextHandler**       | Command/query handlers          | 🔄 Active  |
+| **FlextMessageHandler**       | Command/query handlers          | 🔄 Active  |
 | **FlextEvent**         | Domain events                   | 📋 Planned |
 
 ## Ecosystem Integration

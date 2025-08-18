@@ -2,17 +2,22 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from functools import wraps
-from typing import ParamSpec, Self, TypeVar, cast
+from typing import Callable, Self, cast
 
 from pydantic import BaseModel, ValidationError
 
 from flext_core.constants import FlextConstants
 from flext_core.decorators import FlextDecorators
 from flext_core.exceptions import FlextValidationError
-from flext_core.mixins import FlextSerializableMixin, FlextValidatableMixin
+from flext_core.mixins import FlextSerializableMixin
 from flext_core.result import FlextResult
+from flext_core.typings import (
+    P,
+    R,
+    TCallable,
+    TFactory,
+)
 from flext_core.utilities import FlextTypeGuards, FlextUtilities
 from flext_core.validation import FlextValidators
 
@@ -34,11 +39,6 @@ is_instance_of = FlextTypeGuards.is_instance_of
 # =============================================================================
 
 
-T = TypeVar("T")
-P = ParamSpec("P")
-R = TypeVar("R")
-
-
 class FlextGuards:
     """Static class for type guards, validation, and factory methods.
 
@@ -54,7 +54,7 @@ class FlextGuards:
         return all(isinstance(value, value_type) for value in obj.values())
 
     @staticmethod
-    def immutable(target_class: type[T]) -> type[T]:
+    def immutable(target_class: type) -> type:
         """Make class immutable using a decorator pattern.
 
         Args:
@@ -66,7 +66,12 @@ class FlextGuards:
         """
 
         def _init(self: object, *args: object, **kwargs: object) -> None:
-            target_class.__init__(self, *args, **kwargs)
+            # Call the original class initializer directly to avoid super() pitfalls
+            try:
+                target_class.__init__(self, *args, **kwargs)  # type: ignore[arg-type]
+            except Exception:
+                # If original init fails, attempt base object init as fallback
+                object.__init__(self)
             object.__setattr__(self, "_initialized", True)
 
         def _setattr(self: object, name: str, value: object) -> None:
@@ -86,26 +91,22 @@ class FlextGuards:
             except TypeError:
                 return hash(id(self))
 
-        wrapper: type[T] = cast(
-            "type[T]",
-            type(
-                target_class.__name__,
-                (target_class,),
-                {
-                    "__init__": _init,
-                    "__setattr__": _setattr,
-                    "__hash__": _hash,
-                    "__module__": getattr(target_class, "__module__", __name__),
-                    "__qualname__": getattr(
-                        target_class,
-                        "__qualname__",
-                        target_class.__name__,
-                    ),
-                },
-            ),
+        # Create wrapper class
+        return type(
+            target_class.__name__,
+            (target_class,),
+            {
+                "__init__": _init,
+                "__setattr__": _setattr,
+                "__hash__": _hash,
+                "__module__": getattr(target_class, "__module__", __name__),
+                "__qualname__": getattr(
+                    target_class,
+                    "__qualname__",
+                    target_class.__name__,
+                ),
+            },
         )
-
-        return wrapper
 
     @staticmethod
     def pure(func: Callable[P, R]) -> Callable[P, R]:
@@ -119,7 +120,7 @@ class FlextGuards:
 
         """
         # Cache for memoization
-        cache: dict[tuple[object, ...], R] = {}
+        cache: dict[tuple[object, ...], object] = {}
 
         def pure_wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
             """Pure function wrapper with memoization."""
@@ -129,7 +130,7 @@ class FlextGuards:
 
                 # Return cached result if available
                 if cache_key in cache:
-                    return cache[cache_key]
+                    return cast(R, cache[cache_key])
 
                 # Compute and cache result
                 result = func(*args, **kwargs)
@@ -153,7 +154,7 @@ class FlextGuards:
         return cast("Callable[P, R]", wrapped)
 
     @staticmethod
-    def make_factory(target_class: type) -> Callable[[], object]:
+    def make_factory(target_class: type) -> TFactory:
         """Create a simple factory function for safe object construction."""
 
         def factory(*args: object, **kwargs: object) -> object:
@@ -162,7 +163,7 @@ class FlextGuards:
         return factory
 
     @staticmethod
-    def make_builder(target_class: type) -> Callable[[], object]:
+    def make_builder(target_class: type) -> TFactory:
         """Create a simple builder function for fluent object construction."""
 
         def builder(*args: object, **kwargs: object) -> object:
@@ -176,7 +177,7 @@ class FlextGuards:
 # =============================================================================
 
 
-class FlextValidatedModel(BaseModel, FlextSerializableMixin, FlextValidatableMixin):  # type: ignore[misc]
+class FlextValidatedModel(BaseModel, FlextSerializableMixin):
     """Automatic validation model with Pydantic and FLEXT integration.
 
     Provides validated object construction with enhanced error handling
@@ -187,8 +188,6 @@ class FlextValidatedModel(BaseModel, FlextSerializableMixin, FlextValidatableMix
         """Initialize with proper mixin inheritance and enhanced error handling."""
         try:
             super().__init__(**data)
-            # Initialize validation state for mixin integration
-            FlextValidatableMixin.__init__(self)
         except ValidationError as e:
             # Convert Pydantic errors to user-friendly format
             errors = []
@@ -222,7 +221,7 @@ class FlextValidatedModel(BaseModel, FlextSerializableMixin, FlextValidatableMix
         """
         try:
             instance = cls(**data)
-            return FlextResult.ok(instance)
+            return FlextResult[Self].ok(instance)
         except (ValidationError, FlextValidationError) as e:
             errors = []
             if isinstance(e, ValidationError):
@@ -235,9 +234,9 @@ class FlextValidatedModel(BaseModel, FlextSerializableMixin, FlextValidatableMix
                         .strip()
                     )
                     errors.append(f"{loc}: {normalized}" if loc else normalized)
-                return FlextResult.fail(f"Invalid data: {'; '.join(errors)}")
+                return FlextResult[Self].fail(f"Invalid data: {'; '.join(errors)}")
             # FlextValidationError already has normalized message
-            return FlextResult.fail(str(e))
+            return FlextResult[Self].fail(str(e))
 
 
 # =============================================================================

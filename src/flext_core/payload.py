@@ -139,10 +139,10 @@ class FlextPayload[T](
             # Metadata is already dict[str, object] from **kwargs
             payload = cls(data=data, metadata=metadata)
             logger.debug("Payload created successfully", payload_id=id(payload))
-            return FlextResult.ok(payload)
+            return FlextResult[FlextPayload[T]].ok(payload)
         except (ValidationError, FlextValidationError) as e:
             logger.exception("Failed to create payload")
-            return FlextResult.fail(f"Failed to create payload: {e}")
+            return FlextResult[FlextPayload[T]].fail(f"Failed to create payload: {e}")
 
     def with_metadata(self, **additional: TValue) -> FlextPayload[T]:
         """Create a new payload with additional metadata.
@@ -191,7 +191,7 @@ class FlextPayload[T](
             case dict():
                 pass  # Valid dictionary, continue
             case _:
-                return FlextResult.fail(
+                return FlextResult[FlextPayload[object]].fail(
                     "Failed to create payload from dict: Input is not a dictionary",
                 )
 
@@ -205,10 +205,12 @@ class FlextPayload[T](
                     payload_metadata = {}
             # Cast to proper type for the generic class
             payload = cls(data=payload_data, metadata=payload_metadata)
-            return FlextResult.ok(payload)
+            return FlextResult[FlextPayload[object]].ok(payload)
         except (RuntimeError, ValueError, TypeError, AttributeError) as e2:
             # Broad exception handling for API contract safety in payload creation
-            return FlextResult.fail(f"Failed to create payload from dict: {e2}")
+            return FlextResult[FlextPayload[object]].fail(
+                f"Failed to create payload from dict: {e2}"
+            )
 
     @classmethod
     def from_dict(
@@ -244,8 +246,8 @@ class FlextPayload[T](
 
         """
         if self.data is None:
-            return FlextResult.fail("Payload data is None")
-        return FlextResult.ok(self.data)
+            return FlextResult[T].fail("Payload data is None")
+        return FlextResult[T].ok(self.data)
 
     def get_data_or_default(self, default: T) -> T:
         """Get payload data or return default if None.
@@ -273,15 +275,17 @@ class FlextPayload[T](
 
         """
         if self.data is None:
-            return FlextResult.fail("Cannot transform None data")
+            return FlextResult[FlextPayload[object]].fail("Cannot transform None data")
 
         try:
             transformed_data = transformer(self.data)
             new_payload = FlextPayload(data=transformed_data, metadata=self.metadata)
-            return FlextResult.ok(new_payload)
+            return FlextResult[FlextPayload[object]].ok(new_payload)
         except (RuntimeError, ValueError, TypeError) as e3:
             # Broad exception handling for transformer function safety
-            return FlextResult.fail(f"Data transformation failed: {e3}")
+            return FlextResult[FlextPayload[object]].fail(
+                f"Data transformation failed: {e3}"
+            )
 
     def get_metadata(self, key: str, default: object | None = None) -> object | None:
         """Get metadata value by key.
@@ -715,7 +719,7 @@ class FlextPayload[T](
         missing_fields = required_fields - set(cross_service_dict.keys())
 
         if missing_fields:
-            return FlextResult.fail(
+            return FlextResult[FlextPayload[T]].fail(
                 f"Invalid cross-service dictionary: missing fields {missing_fields}",
             )
 
@@ -727,7 +731,7 @@ class FlextPayload[T](
 
             # Validate protocol version support
             if not cls._is_protocol_supported(str(protocol_version)):
-                return FlextResult.fail(
+                return FlextResult[FlextPayload[T]].fail(
                     f"Unsupported protocol version: {protocol_version}",
                 )
 
@@ -749,10 +753,10 @@ class FlextPayload[T](
 
             # Create payload instance - cast for generic constructor
             payload = cls(data=cast("T | None", reconstructed_data), metadata=metadata)
-            return FlextResult.ok(payload)
+            return FlextResult[FlextPayload[T]].ok(payload)
 
         except (ValueError, TypeError, KeyError) as e5:
-            return FlextResult.fail(
+            return FlextResult[FlextPayload[T]].fail(
                 f"Failed to reconstruct payload from cross-service dict: {e5}",
             )
 
@@ -900,16 +904,16 @@ class FlextPayload[T](
                     "original_size": len(json_str.encode()),
                     "compressed_size": len(compressed_bytes),
                 }
-                return FlextResult.ok(json.dumps(envelope))
+                return FlextResult[str].ok(json.dumps(envelope))
             # Add format information
             envelope = {
                 "format": SERIALIZATION_FORMAT_JSON,
                 "data": payload_dict,
             }
-            return FlextResult.ok(json.dumps(envelope))
+            return FlextResult[str].ok(json.dumps(envelope))
 
         except (TypeError, ValueError, OverflowError) as e7:
-            return FlextResult.fail(f"Failed to serialize to JSON: {e7}")
+            return FlextResult[str].fail(f"Failed to serialize to JSON: {e7}")
 
     @classmethod
     def from_json_string(cls, json_str: str) -> FlextResult[FlextPayload[T]]:
@@ -927,13 +931,13 @@ class FlextPayload[T](
             envelope = json.loads(json_str)
 
             if not isinstance(envelope, dict) or "format" not in envelope:
-                return FlextResult.fail("Invalid JSON envelope format")
+                return FlextResult[FlextPayload[T]].fail("Invalid JSON envelope format")
 
             # Delegate to helper method to reduce complexity
             return cls._process_json_envelope(envelope)
 
         except (json.JSONDecodeError, KeyError, TypeError) as e8:
-            return FlextResult.fail(f"Failed to parse JSON: {e8}")
+            return FlextResult[FlextPayload[T]].fail(f"Failed to parse JSON: {e8}")
 
     @classmethod
     def _process_json_envelope(
@@ -955,7 +959,7 @@ class FlextPayload[T](
             # Compressed format - decompress first
             return cls._process_compressed_json(envelope)
 
-        return FlextResult.fail(f"Unsupported format: {format_type}")
+        return FlextResult[FlextPayload[T]].fail(f"Unsupported format: {format_type}")
 
     @classmethod
     def _process_compressed_json(
@@ -965,7 +969,7 @@ class FlextPayload[T](
         """Process compressed JSON."""
         encoded_data = envelope.get("data", "")
         if not isinstance(encoded_data, str):
-            return FlextResult.fail("Invalid compressed data format")
+            return FlextResult[FlextPayload[T]].fail("Invalid compressed data format")
 
         try:
             compressed_bytes = b64decode(encoded_data.encode())
@@ -974,7 +978,7 @@ class FlextPayload[T](
             return cls.from_cross_service_dict(payload_dict)
 
         except (zlib.error, UnicodeDecodeError) as e9:
-            return FlextResult.fail(f"Decompression failed: {e9}")
+            return FlextResult[FlextPayload[T]].fail(f"Decompression failed: {e9}")
 
     def get_serialization_size(self) -> dict[str, int | float]:
         """Get serialization size information for monitoring.
@@ -1209,7 +1213,7 @@ class FlextMessage(FlextPayload[str]):
         # Validate message using FlextValidation
         if not FlextValidators.is_non_empty_string(message):
             logger.error("Invalid message - empty or not string")
-            return FlextResult.fail("Message cannot be empty")
+            return FlextResult[FlextMessage].fail("Message cannot be empty")
 
         # Validate level
         valid_levels = ["info", "warning", "error", "debug", "critical"]
@@ -1226,9 +1230,9 @@ class FlextMessage(FlextPayload[str]):
         # Create FlextMessage instance directly
         try:
             instance = cls(data=message, metadata=metadata)
-            return FlextResult.ok(instance)
+            return FlextResult[FlextMessage].ok(instance)
         except (ValidationError, FlextValidationError) as e:
-            return FlextResult.fail(f"Failed to create message: {e}")
+            return FlextResult[FlextMessage].fail(f"Failed to create message: {e}")
 
     @property
     def level(self) -> str:
@@ -1306,7 +1310,9 @@ class FlextMessage(FlextPayload[str]):
         message_source = cross_service_dict.get("message_source")
 
         if not message_text or not isinstance(message_text, str):
-            return FlextResult.fail("Invalid message text in cross-service data")
+            return FlextResult[FlextPayload[str]].fail(
+                "Invalid message text in cross-service data",
+            )
 
         # Create a message using factory method
         result: FlextResult[FlextPayload[str]] = cast(
@@ -1354,19 +1360,19 @@ class FlextEvent(FlextPayload[Mapping[str, object]]):
         # Validate event_type using FlextValidation
         if not FlextValidators.is_non_empty_string(event_type):
             logger.error("Invalid event type - empty or not string")
-            return FlextResult.fail("Event type cannot be empty")
+            return FlextResult[FlextEvent].fail("Event type cannot be empty")
 
         # Validate aggregate_id if provided (not None)
         if aggregate_id is not None and not FlextValidators.is_non_empty_string(
             aggregate_id,
         ):
             logger.error("Invalid aggregate ID - empty or not string")
-            return FlextResult.fail("Invalid aggregate ID")
+            return FlextResult[FlextEvent].fail("Invalid aggregate ID")
 
         # Validate version if provided
         if version is not None and version < 0:
             logger.error("Invalid event version", version=version)
-            return FlextResult.fail("Event version must be non-negative")
+            return FlextResult[FlextEvent].fail("Event version must be non-negative")
 
         metadata: dict[str, object] = {"event_type": event_type}
         if aggregate_id:
@@ -1383,9 +1389,10 @@ class FlextEvent(FlextPayload[Mapping[str, object]]):
         # Create FlextEvent instance directly for correct return type
         try:
             instance = cls(data=dict(event_data), metadata=metadata)
-            return FlextResult.ok(instance)
+            return FlextResult[FlextEvent].ok(instance)
         except (ValidationError, FlextValidationError) as e12:
-            return FlextResult.fail(f"Failed to create event: {e12}")
+            # Create failed result directly with correct type
+            return FlextResult[FlextEvent](error=f"Failed to create event: {e12}")
 
     @property
     def event_type(self) -> str | None:
@@ -1483,10 +1490,14 @@ class FlextEvent(FlextPayload[Mapping[str, object]]):
         event_version = cross_service_dict.get("event_version")
 
         if not event_type or not isinstance(event_type, str):
-            return FlextResult.fail("Invalid event type in cross-service data")
+            return FlextResult[FlextPayload[Mapping[str, object]]].fail(
+                "Invalid event type in cross-service data",
+            )
 
         if not isinstance(event_data, dict):
-            return FlextResult.fail("Invalid event data in cross-service data")
+            return FlextResult[FlextPayload[Mapping[str, object]]].fail(
+                "Invalid event data in cross-service data",
+            )
 
         # Convert a version to int if provided
         version_int = None
@@ -1494,7 +1505,9 @@ class FlextEvent(FlextPayload[Mapping[str, object]]):
             try:
                 version_int = int(str(event_version))
             except (ValueError, TypeError):
-                return FlextResult.fail("Invalid event version format")
+                return FlextResult[FlextPayload[Mapping[str, object]]].fail(
+                    "Invalid event version format",
+                )
 
         # Create event using factory method
         result: FlextResult[FlextPayload[Mapping[str, object]]] = cast(
@@ -1565,11 +1578,11 @@ def create_cross_service_event(
             # reads from metadata)
             event = result.data
             new_event = event.with_metadata(correlation_id=correlation_id)
-            return FlextResult.ok(cast("FlextEvent", new_event))
+            return FlextResult[FlextEvent].ok(cast("FlextEvent", new_event))
 
         return result
     except (TypeError, ValueError, AttributeError, KeyError) as e:
-        return FlextResult.fail(f"Cross-service event creation failed: {e}")
+        return FlextResult[FlextEvent].fail(f"Cross-service event creation failed: {e}")
 
 
 def create_cross_service_message(
@@ -1599,11 +1612,13 @@ def create_cross_service_message(
             # reads from metadata)
             message = result.data
             new_message = message.with_metadata(correlation_id=correlation_id)
-            return FlextResult.ok(cast("FlextMessage", new_message))
+            return FlextResult[FlextMessage].ok(cast("FlextMessage", new_message))
 
         return result
     except (TypeError, ValueError, AttributeError, KeyError) as e:
-        return FlextResult.fail(f"Cross-service message creation failed: {e}")
+        return FlextResult[FlextMessage].fail(
+            f"Cross-service message creation failed: {e}"
+        )
 
 
 def get_serialization_metrics(
@@ -1635,17 +1650,17 @@ def validate_cross_service_protocol(payload: object) -> FlextResult[None]:
             try:
                 parsed = json.loads(payload)
                 if isinstance(parsed, dict) and "format" in parsed:
-                    return FlextResult.ok(None)
+                    return FlextResult[None].ok(None)
             except (json.JSONDecodeError, TypeError):
-                return FlextResult.fail("Invalid JSON format")
+                return FlextResult[None].fail("Invalid JSON format")
 
         if isinstance(payload, dict) and ("format" in payload or "data" in payload):
             # Check for minimum required fields
-            return FlextResult.ok(None)
+            return FlextResult[None].ok(None)
 
-        return FlextResult.fail("Invalid protocol format")
+        return FlextResult[None].fail("Invalid protocol format")
     except (TypeError, ValueError, AttributeError, KeyError) as e:
-        return FlextResult.fail(f"Protocol validation error: {e}")
+        return FlextResult[None].fail(f"Protocol validation error: {e}")
 
 
 # =============================================================================

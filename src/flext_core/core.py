@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import ParamSpec, TypeVar, cast
+from typing import ParamSpec, TypeVar
 
 from flext_core.constants import FlextConstants
 from flext_core.container import (
@@ -87,14 +87,11 @@ class FlextCore:
             Result containing service or error
 
         """
-        # Use container method directly for type safety
         key_str = str(key)
-        # Get the service without type checking since S is already constrained
         result = self._container.get(key_str)
         if result.is_failure:
             return FlextResult.fail(result.error or "Service not found")
-        # Cast the result to the expected type
-        return FlextResult.ok(cast("S", result.data))
+        return FlextResult[S].ok(result.data)  # type: ignore[arg-type]
 
     # =========================================================================
     # LOGGING ACCESS
@@ -151,7 +148,7 @@ class FlextCore:
     # =========================================================================
 
     @staticmethod
-    def ok[V](value: V) -> FlextResult[V]:
+    def ok[T](value: T) -> FlextResult[T]:
         """Create successful Result.
 
         Args:
@@ -161,10 +158,10 @@ class FlextCore:
             Success Result
 
         """
-        return FlextResult.ok(value)
+        return FlextResult[T].ok(value)
 
     @staticmethod
-    def fail[V](error: str) -> FlextResult[V]:
+    def fail(error: str) -> FlextResult[object]:
         """Create failed Result.
 
         Args:
@@ -174,7 +171,7 @@ class FlextCore:
             Failed Result
 
         """
-        return FlextResult.fail(error)
+        return FlextResult[object].fail(error)
 
     # =========================================================================
     # RAILWAY PROGRAMMING
@@ -187,7 +184,7 @@ class FlextCore:
         """Create a pipeline of Result-returning functions."""
 
         def pipeline(value: object) -> FlextResult[object]:
-            result = FlextResult.ok(value)
+            result: FlextResult[object] = FlextResult[object].ok(value)
             for func in funcs:
                 if result.is_failure:
                     break
@@ -216,7 +213,7 @@ class FlextCore:
                 return then_func(value)
             if else_func:
                 return else_func(value)
-            return FlextResult.ok(value)
+            return FlextResult[V].ok(value)
 
         return conditional
 
@@ -228,7 +225,7 @@ class FlextCore:
 
         def side_effect_wrapper(value: V) -> FlextResult[V]:
             side_effect(value)
-            return FlextResult.ok(value)
+            return FlextResult[V].ok(value)
 
         return side_effect_wrapper
 
@@ -264,10 +261,10 @@ class FlextCore:
     # =========================================================================
 
     @staticmethod
-    def validate_type(
+    def validate_type[T](
         obj: object,
-        expected_type: type[object],
-    ) -> FlextResult[object]:
+        expected_type: type[T],
+    ) -> FlextResult[T]:
         """Validate an object type using a dependency injection pattern.
 
         Args:
@@ -279,16 +276,16 @@ class FlextCore:
 
         """
         if not isinstance(obj, expected_type):
-            return FlextResult.fail(
+            return FlextResult[T].fail(
                 f"Expected {expected_type.__name__}, got {type(obj).__name__}",
             )
-        return FlextResult.ok(obj)
+        return FlextResult[T].ok(obj)
 
     @staticmethod
-    def validate_dict_structure(
+    def validate_dict_structure[V](
         obj: object,
-        value_type: type[object],
-    ) -> FlextResult[dict[str, object]]:
+        value_type: type[V],
+    ) -> FlextResult[dict[str, V]]:
         """Validate dictionary structure using guards module.
 
         Args:
@@ -299,15 +296,19 @@ class FlextCore:
             FlextResult with validated dictionary or error
 
         """
+        # First check if obj is a dictionary at all
         if not isinstance(obj, dict):
-            return FlextResult.fail("Expected dictionary")
+            return FlextResult[dict[str, V]].fail(
+                "Expected dictionary",
+            )
 
+        # Then check if all values are of the expected type
         if not is_dict_of(obj, value_type):
-            return FlextResult.fail(
+            return FlextResult[dict[str, V]].fail(
                 f"Dictionary values must be of type {value_type.__name__}",
             )
 
-        return FlextResult.ok(obj)
+        return FlextResult[dict[str, V]].ok(obj)
 
     @staticmethod
     def create_validated_model[T: ValidatedModel](
@@ -324,7 +325,6 @@ class FlextCore:
             FlextResult with validated model or error
 
         """
-        # Use the safe creation method from ValidatedModel
         return model_class.create(**data)
 
     @staticmethod
@@ -351,7 +351,7 @@ class FlextCore:
             Pure version of the function
 
         """
-        return cast("Callable[P, R]", pure(func))
+        return pure(func)
 
     # =========================================================================
     # UTILITY METHODS

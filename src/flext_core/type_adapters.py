@@ -71,7 +71,7 @@ class TypeAdapterFactory:
         return TypeAdapter(type_)
 
     @staticmethod
-    def create_list_adapter[T](item_type: type[T]) -> TypeAdapter[list[T]]:
+    def create_list_adapter(item_type: type) -> TypeAdapter[list[object]]:
         """Create TypeAdapter for lists.
 
         Args:
@@ -84,7 +84,7 @@ class TypeAdapterFactory:
         return TypeAdapter(list[item_type])  # type: ignore[valid-type]
 
     @staticmethod
-    def create_dict_adapter[T](value_type: type[T]) -> TypeAdapter[dict[str, T]]:
+    def create_dict_adapter(value_type: type) -> TypeAdapter[dict[str, object]]:
         """Create TypeAdapter for dictionaries.
 
         Args:
@@ -208,14 +208,16 @@ class ValidationAdapters:
             # Service name validation
             max_service_name_length = 64
             if len(validated) > max_service_name_length:
-                return FlextResult.fail(
+                return FlextResult[str].fail(
                     f"Service name too long (max {max_service_name_length} chars)",
                 )
             if not validated.replace("-", "").replace("_", "").isalnum():
-                return FlextResult.fail("Service name must be alphanumeric with - or _")
-            return FlextResult.ok(validated)
+                return FlextResult[str].fail(
+                    "Service name must be alphanumeric with - or _"
+                )
+            return FlextResult[str].ok(validated)
         except Exception as e:
-            return FlextResult.fail(f"Invalid service name: {e}")
+            return FlextResult[str].fail(f"Invalid service name: {e}")
 
     @classmethod
     def validate_host_port(

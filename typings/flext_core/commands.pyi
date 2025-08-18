@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from datetime import datetime
-from typing import Generic, Self, TypeVar
+from typing import ClassVar, Generic, Self, TypeVar
 
 from _typeshed import Incomplete
 from pydantic import BaseModel
@@ -17,10 +17,16 @@ from flext_core.typings import TAnyDict, TServiceName
 
 __all__ = ["FlextCommands"]
 
-TCommand = TypeVar("TCommand")
-TResult = TypeVar("TResult")
-TQuery = TypeVar("TQuery")
-TQueryResult = TypeVar("TQueryResult")
+_TCommand = TypeVar("_TCommand")
+_TResult = TypeVar("_TResult")
+_TQuery = TypeVar("_TQuery")
+_TQueryResult = TypeVar("_TQueryResult")
+
+# Public aliases for external use
+TCommand = _TCommand
+TResult = _TResult
+TQuery = _TQuery
+TQueryResult = _TQueryResult
 
 class FlextAbstractCommand(ABC):
     @abstractmethod
@@ -54,7 +60,7 @@ class FlextCommands:
     class Command(
         BaseModel, FlextAbstractCommand, FlextSerializableMixin, FlextLoggableMixin
     ):
-        model_config: Incomplete
+        model_config: ClassVar[Incomplete]
         command_id: str
         command_type: str
         timestamp: datetime
@@ -80,32 +86,34 @@ class FlextCommands:
         ) -> FlextResult[None]: ...
         def get_metadata(self) -> TAnyDict: ...
 
-    class Result(FlextResult[TResult], Generic[TResult]):
+    class Result(FlextResult[_TResult]):
         metadata: Incomplete
         def __init__(
             self,
-            data: TResult | None = None,
+            data: _TResult | None = None,
             error: str | None = None,
             metadata: TAnyDict | None = None,
         ) -> None: ...
         @classmethod
         def ok(
-            cls, data: TResult, metadata: TAnyDict | None = None
-        ) -> FlextCommands.Result[TResult]: ...
+            cls, data: _TResult, /, *, metadata: TAnyDict | None = None
+        ) -> FlextCommands.Result[_TResult]: ...
         @classmethod
         def fail(
             cls,
             error: str,
+            /,
+            *,
             error_code: str | None = None,
             error_data: dict[str, object] | None = None,
-        ) -> FlextCommands.Result[TResult]: ...
+        ) -> FlextCommands.Result[_TResult]: ...
 
     class Handler(
-        FlextAbstractCommandHandler[TCommand, TResult],
+        FlextAbstractCommandHandler[_TCommand, _TResult],
         FlextLoggableMixin,
         FlextTimingMixin,
         ABC,
-        Generic[TCommand, TResult],
+        Generic[_TCommand, _TResult],
     ):
         handler_id: Incomplete
         def __init__(
@@ -115,24 +123,24 @@ class FlextCommands:
         ) -> None: ...
         @property
         def handler_name(self) -> str: ...
-        def validate_command(self, command: TCommand) -> FlextResult[None]: ...
+        def validate_command(self, command: _TCommand) -> FlextResult[None]: ...
         @abstractmethod
-        def handle(self, command: TCommand) -> FlextResult[TResult]: ...
-        def process_command(self, command: TCommand) -> FlextResult[TResult]: ...
+        def handle(self, command: _TCommand) -> FlextResult[_TResult]: ...
+        def process_command(self, command: _TCommand) -> FlextResult[_TResult]: ...
         def can_handle(self, command: object) -> bool: ...
-        def handle_command(self, command: TCommand) -> FlextResult[TResult]: ...
+        def handle_command(self, command: _TCommand) -> FlextResult[_TResult]: ...
         def get_command_type(self) -> str: ...
-        def execute(self, command: TCommand) -> FlextResult[TResult]: ...
+        def execute(self, command: _TCommand) -> FlextResult[_TResult]: ...
 
     class Bus(FlextAbstractCommandBus, FlextLoggableMixin):
         def __init__(self) -> None: ...
         def register_handler(self, *args: object) -> None: ...
         def register_handler_flexible(
             self,
-            handler_or_command_type: object | type[TCommand],
-            handler: FlextCommands.Handler[TCommand, TResult] | None = None,
+            handler_or_command_type: object | type[_TCommand],
+            handler: FlextCommands.Handler[_TCommand, _TResult] | None = None,
         ) -> FlextResult[None]: ...
-        def execute(self, command: TCommand) -> FlextResult[object]: ...
+        def execute(self, command: FlextAbstractCommand) -> FlextResult[object]: ...
         def add_middleware(self, middleware: object) -> None: ...
         def get_all_handlers(self) -> list[object]: ...
         def find_handler(self, command: object) -> object | None: ...
@@ -149,7 +157,7 @@ class FlextCommands:
         ) -> Callable[[Callable[[object], object]], Callable[[object], object]]: ...
 
     class Query(BaseModel, FlextSerializableMixin):
-        model_config: Incomplete
+        model_config: ClassVar[Incomplete]
         query_id: str | None
         query_type: str | None
         page_size: int
@@ -159,17 +167,17 @@ class FlextCommands:
         def validate_query(self) -> FlextResult[None]: ...
 
     class QueryHandler(
-        FlextAbstractQueryHandler[TQuery, TQueryResult],
+        FlextAbstractQueryHandler[_TQuery, _TQueryResult],
         ABC,
-        Generic[TQuery, TQueryResult],
+        Generic[_TQuery, _TQueryResult],
     ):
         def __init__(self, handler_name: str | None = None) -> None: ...
         @property
         def handler_name(self) -> str: ...
-        def can_handle(self, query: TQuery) -> bool: ...
-        def validate_query(self, query: TQuery) -> FlextResult[None]: ...
+        def can_handle(self, query: _TQuery) -> bool: ...
+        def validate_query(self, query: _TQuery) -> FlextResult[None]: ...
         @abstractmethod
-        def handle(self, query: TQuery) -> FlextResult[TQueryResult]: ...
+        def handle(self, query: _TQuery) -> FlextResult[_TQueryResult]: ...
 
     @staticmethod
     def create_command_bus() -> FlextCommands.Bus: ...

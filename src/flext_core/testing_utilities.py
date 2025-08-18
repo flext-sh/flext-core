@@ -14,8 +14,6 @@ from flext_core.models import FlextModel
 from flext_core.result import FlextResult
 
 T = TypeVar("T")
-TTestData = TypeVar("TTestData")
-TTestConfig = TypeVar("TTestConfig")
 
 
 def _cast[T](_type_hint: type[T], value: object) -> T:
@@ -459,10 +457,10 @@ class FlextTestMocker:
         # Detect whether "new" was explicitly provided (so new=None is honored)
         if "new" in kwargs:
             new_value = kwargs.pop("new")
-            patch_context = patch(target, new=new_value, **kwargs)  # type: ignore[call-overload]
+            patch_context = patch(target, new=new_value)
         else:
-            patch_context = patch(target, **kwargs)  # type: ignore[call-overload]
-        return _cast(object, patch_context)
+            patch_context = patch(target)  # type: ignore[assignment]
+        return patch_context
 
     @staticmethod
     def patch_object(
@@ -481,8 +479,11 @@ class FlextTestMocker:
             Patch context manager.
 
         """
-        # Forward all kwargs to patch.object, preserving explicit new=None
-        return patch.object(target, attribute, **kwargs)  # type: ignore[call-overload]
+        # Handle explicit new value for patch.object
+        if "new" in kwargs:
+            new_value = kwargs.pop("new")
+            return patch.object(target, attribute, new=new_value)
+        return patch.object(target, attribute)
 
     @staticmethod
     def create_async_mock(

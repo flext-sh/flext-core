@@ -114,7 +114,7 @@ class FlextModel(BaseModel):
 
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate business rules - override in subclasses for specific rules."""
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
     def validate_with_context(
         self,
@@ -130,7 +130,7 @@ class FlextModel(BaseModel):
             # Run business rules validation
             return self.validate_business_rules()
         except Exception as e:
-            return FlextResult.fail(f"Validation failed: {e}")
+            return FlextResult[None].fail(f"Validation failed: {e}")
 
     def to_dict(
         self,
@@ -247,20 +247,26 @@ class FlextValue(FlextModel, ABC):
         """Hash based on all attributes for value semantics."""
 
         def make_hashable(item: object) -> object:
-            """Convert unhashable types to hashable equivalents."""
             if isinstance(item, dict):
-                return tuple(sorted(item.items()))
+                # Dict[str, object] guaranteed by model_dump
+                return tuple(
+                    sorted(
+                        (str(k), make_hashable(v))
+                        for k, v in (cast("dict[str, object]", item)).items()
+                    ),
+                )
             if isinstance(item, list):
-                return tuple(item)
+                return tuple(make_hashable(v) for v in item)
             if isinstance(item, set):
-                return frozenset(item)
+                return frozenset(make_hashable(v) for v in item)
             return item
 
-        dumped = self.model_dump()
-        hashable_items = []
+        # Create hashable representation of all attributes
+        dumped: dict[str, object] = self.model_dump()
+        hashable_items: list[tuple[str, object]] = []
         for key, value in sorted(dumped.items()):
-            if key != "metadata":  # Exclude metadata from hash
-                hashable_items.append((key, make_hashable(value)))
+            if key != "metadata":
+                hashable_items.append((str(key), make_hashable(value)))
         return hash(tuple(hashable_items))
 
     def __eq__(self, other: object) -> bool:
@@ -399,7 +405,7 @@ class FlextEntity(FlextModel, ABC):
             return v
 
         # Ensure version is positive
-        if isinstance(v, int) and v < 1:
+        if v < 1:
             error_message = "Version must be >= 1"
             raise ValueError(error_message)
 
@@ -451,7 +457,7 @@ class FlextEntity(FlextModel, ABC):
 
         # Add other fields dynamically, excluding domain_events and timestamps
         excluded_fields = {"id", "version", "domain_events", "created_at", "updated_at"}
-        for field_name in self.model_fields:
+        for field_name in type(self).model_fields:
             if field_name not in excluded_fields:
                 value = getattr(self, field_name, None)
                 if isinstance(value, str):
@@ -466,23 +472,29 @@ class FlextEntity(FlextModel, ABC):
         try:
             new_version_result = create_version(self.version.root + 1)
             if new_version_result.is_failure:
-                return FlextResult.fail(new_version_result.error or "Invalid version")
+                return FlextResult[Self].fail(
+                    new_version_result.error or "Invalid version"
+                )
 
             entity_data = self.model_dump()
-            entity_data["version"] = new_version_result.unwrap().root
-            entity_data["updated_at"] = FlextTimestamp.now().root
+            # Keep RootModel types when reconstructing entity_data so static
+            # type checkers can infer correct shapes
+            entity_data["version"] = new_version_result.unwrap()
+            entity_data["updated_at"] = FlextTimestamp.now()
 
             try:
                 new_entity = type(self)(**entity_data)
             except TypeError as e:
-                return FlextResult.fail(f"Failed to increment version: {e}")
+                return FlextResult[Self].fail(f"Failed to increment version: {e}")
 
             validation_result = new_entity.validate_business_rules()
             if validation_result.is_failure:
-                return FlextResult.fail(validation_result.error or "Validation failed")
-            return FlextResult.ok(new_entity)
+                return FlextResult[Self].fail(
+                    validation_result.error or "Validation failed"
+                )
+            return FlextResult[Self].ok(new_entity)
         except Exception as e:
-            return FlextResult.fail(f"Failed to increment version: {e}")
+            return FlextResult[Self].fail(f"Failed to increment version: {e}")
 
     def with_version(self, new_version: int) -> Self:
         """Create new entity with specified version.
@@ -524,8 +536,9 @@ class FlextEntity(FlextModel, ABC):
 
             # Create entity data with new version
             entity_data = self.model_dump()
-            entity_data["version"] = new_version_result.unwrap().root
-            entity_data["updated_at"] = FlextTimestamp.now().root
+            # Preserve RootModel types for model construction
+            entity_data["version"] = new_version_result.unwrap()
+            entity_data["updated_at"] = FlextTimestamp.now()
 
             try:
                 new_entity = type(self)(**entity_data)
@@ -576,14 +589,16 @@ class FlextEntity(FlextModel, ABC):
             )
 
             if event_result.is_failure:
-                return FlextResult.fail(event_result.error or "Event creation failed")
+                return FlextResult[None].fail(
+                    event_result.error or "Event creation failed"
+                )
 
             # Get the created event
             event = event_result.unwrap()
 
             # Add to domain events using FlextEventList pattern
             # Create event dict with aggregate_id for compatibility
-            event_dict = {
+            event_dict: dict[str, object] = {
                 "type": event_type,
                 "data": event_data,
                 "timestamp": datetime.now(UTC).isoformat(),
@@ -597,23 +612,23 @@ class FlextEntity(FlextModel, ABC):
             new_events = FlextEventList(new_events_list)
 
             # Store the FlextEvent object using proper attribute access
-            # Use setattr/getattr to maintain dynamic attributes while satisfying MyPy
+            # Use object.__setattr__ to satisfy MyPy for RootModel dynamic attributes
             if not hasattr(new_events, "_flext_events"):
-                new_events._flext_events = []
+                object.__setattr__(new_events, "_flext_events", [])
             if hasattr(self.domain_events, "_flext_events"):
                 existing_events = getattr(self.domain_events, "_flext_events", [])
-                new_events._flext_events = existing_events.copy()
+                object.__setattr__(new_events, "_flext_events", existing_events.copy())
             current_events = getattr(new_events, "_flext_events", [])
             current_events.append(event)
 
             # Update the entity's domain_events field
             self.domain_events = new_events
 
-            return FlextResult.ok(None)
+            return FlextResult[None].ok(None)
 
         except Exception as e:
             error_msg = f"Failed to add domain event: {e}"
-            return FlextResult.fail(error_msg)
+            return FlextResult[None].fail(error_msg)
 
     def clear_events(self) -> list[object]:
         """Clear all domain events and return the cleared events.
@@ -630,7 +645,7 @@ class FlextEntity(FlextModel, ABC):
 
         # Clear stored FlextEvent objects
         if hasattr(self.domain_events, "_flext_events"):
-            self.domain_events._flext_events = []
+            object.__setattr__(self.domain_events, "_flext_events", [])
 
         return events
 
@@ -647,13 +662,13 @@ class FlextEntity(FlextModel, ABC):
         """
         try:
             # Check if field exists in model
-            if field_name not in self.model_fields:
+            if field_name not in type(self).model_fields:
                 # For unknown fields, just return success
                 # This handles tests that try to validate non-existent fields
                 return FlextResult.ok(None)
 
             # Get field definition for validation
-            field_info = self.model_fields[field_name]
+            field_info = type(self).model_fields[field_name]
 
             # Basic type validation using Pydantic field information
             if hasattr(field_info, "annotation"):
@@ -663,10 +678,12 @@ class FlextEntity(FlextModel, ABC):
 
             # For field-specific validation, just return success
             # Business rules are validated separately
-            return FlextResult.ok(None)
+            return FlextResult[None].ok(None)
 
         except Exception as e:
-            return FlextResult.fail(f"Validation error for field '{field_name}': {e}")
+            return FlextResult[None].fail(
+                f"Validation error for field '{field_name}': {e}"
+            )
 
     def validate_all_fields(self) -> FlextResult[None]:
         """Validate all entity fields against business rules.
@@ -677,7 +694,7 @@ class FlextEntity(FlextModel, ABC):
         """
         try:
             # Validate each field individually
-            for field_name in self.model_fields:
+            for field_name in type(self).model_fields:
                 field_value = getattr(self, field_name, None)
                 result = self.validate_field(field_name, field_value)
                 if result.is_failure:
@@ -687,7 +704,7 @@ class FlextEntity(FlextModel, ABC):
             return self.validate_business_rules()
 
         except Exception as e:
-            return FlextResult.fail(f"Field validation error: {e}")
+            return FlextResult[None].fail(f"Field validation error: {e}")
 
     def copy_with(self, **changes: object) -> FlextResult[Self]:
         """Create copy with changes and auto-increment version."""
@@ -697,32 +714,33 @@ class FlextEntity(FlextModel, ABC):
 
             # Auto-increment version unless explicitly provided
             if changes and "version" not in changes:
-                entity_data["version"] = self.version.root + 1
+                # Keep RootModel type for version
+                entity_data["version"] = FlextVersion(self.version.root + 1)
 
             # Update timestamp when changes are made
             if changes and "updated_at" not in changes:
-                entity_data["updated_at"] = datetime.now(UTC)
+                entity_data["updated_at"] = FlextTimestamp.now()
 
             try:
                 new_entity = type(self)(**entity_data)
             except TypeError as te:
                 if "Mock error" in str(te):
-                    return FlextResult.fail(f"Failed to increment version: {te}")
+                    return FlextResult[Self].fail(f"Failed to increment version: {te}")
                 new_entity = type(self)(**entity_data)
 
             validation_result = new_entity.validate_business_rules()
             if validation_result.is_failure:
-                return FlextResult.fail(
+                return FlextResult[Self].fail(
                     validation_result.error or "Business rule validation failed",
                 )
 
-            return FlextResult.ok(new_entity)
+            return FlextResult[Self].ok(new_entity)
         except (RuntimeError, ValueError, TypeError, KeyError, AttributeError) as e:
-            return FlextResult.fail(f"Failed to copy entity: {e}")
+            return FlextResult[Self].fail(f"Failed to copy entity: {e}")
 
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate business rules (override in subclasses for specific rules)."""
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
     @field_serializer("created_at", "updated_at", when_used="json")
     def serialize_timestamps(self, value: FlextTimestamp) -> str:
@@ -783,14 +801,14 @@ class FlextFactory:
     def create(cls, name: str, **kwargs: object) -> FlextResult[object]:
         """Create model instance using registered factory."""
         if name not in cls._registry:
-            return FlextResult.fail(f"No factory registered for '{name}'")
+            return FlextResult[object].fail(f"No factory registered for '{name}'")
 
         factory = cls._registry[name]
 
         try:
             return cls._create_with_factory(name, factory, kwargs)
         except (RuntimeError, ValueError, TypeError, KeyError, AttributeError) as e:
-            return FlextResult.fail(f"Failed to create '{name}': {e}")
+            return FlextResult[object].fail(f"Failed to create '{name}': {e}")
 
     @classmethod
     def _create_with_factory(
@@ -808,7 +826,7 @@ class FlextFactory:
         if callable(factory):
             return cls._create_with_callable(factory, kwargs)
 
-        return FlextResult.fail(f"Invalid factory type for '{name}'")
+        return FlextResult[object].fail(f"Invalid factory type for '{name}'")
 
     @classmethod
     def _create_model_instance(
@@ -820,10 +838,10 @@ class FlextFactory:
         instance = factory.model_validate(kwargs)
         validation_result = instance.validate_business_rules()
         if validation_result.is_failure:
-            return FlextResult.fail(
+            return FlextResult[object].fail(
                 validation_result.error or "Business rule validation failed",
             )
-        return FlextResult.ok(instance)
+        return FlextResult[object].ok(instance)
 
     @classmethod
     def _create_with_callable(
@@ -834,9 +852,9 @@ class FlextFactory:
         """Create with callable factory."""
         try:
             if not callable(factory):
-                return FlextResult.fail(f"Factory {factory} is not callable")
+                return FlextResult[object].fail(f"Factory {factory} is not callable")
             instance = factory(**kwargs)
-            return FlextResult.ok(instance)
+            return FlextResult[object].ok(instance)
         except (
             RuntimeError,
             ValueError,
@@ -844,7 +862,7 @@ class FlextFactory:
             KeyError,
             AttributeError,
         ) as e:
-            return FlextResult.fail(f"Factory function failed: {e}")
+            return FlextResult[object].fail(f"Factory function failed: {e}")
 
     @classmethod
     def create_entity_factory(
@@ -885,9 +903,45 @@ class FlextFactory:
                 # Cast to FlextResult[object] for type compatibility
                 return cast("FlextResult[object]", result)
             except ImportError as e:
-                return FlextResult.fail(str(e))
+                return FlextResult[object].fail(str(e))
             except TypeError as e:
-                return FlextResult.fail(f"Failed to create entity: {e}")
+                return FlextResult[object].fail(f"Failed to create entity: {e}")
+
+        return factory
+
+    @classmethod
+    def create_value_object_factory(
+        cls,
+        value_object_class: type[FlextModel],
+        defaults: dict[str, object] | None = None,
+    ) -> object:
+        """Create a factory function for the given value object class.
+
+        Args:
+            value_object_class: The value object class to create a factory for
+            defaults: Default values to use when creating instances
+
+        Returns:
+            A callable factory function that returns FlextResult[value_object_class]
+
+        """
+
+        def factory(**kwargs: object) -> FlextResult[object]:
+            """Factory function that creates value object instances with validation."""
+            try:
+                # Merge defaults with provided kwargs
+                merged_kwargs = {}
+                if defaults:
+                    merged_kwargs.update(defaults)
+                merged_kwargs.update(kwargs)
+
+                result = cls.create_model(value_object_class, **merged_kwargs)
+                # Cast to FlextResult[object] for type compatibility
+                return cast("FlextResult[object]", result)
+            except ImportError as e:
+                return FlextResult[object].fail(str(e))
+            except TypeError as e:
+                return FlextResult[object].fail(f"Failed to create value object: {e}")
 
         return factory
 
@@ -898,19 +952,19 @@ class FlextFactory:
     ) -> FlextResult[T]:
         """Create model with validation."""
         try:
-            instance = model_class.model_validate(kwargs)
+            # Explicitly type kwargs as dict[str, object]
+            instance = model_class.model_validate(dict(kwargs))
             validation_result = instance.validate_business_rules()
             if validation_result.is_failure:
-                return FlextResult.fail(
+                return FlextResult[T].fail(
                     validation_result.error or "Business rule validation failed",
                 )
-            return FlextResult.ok(instance)
+            return FlextResult[T].ok(instance)
         except (RuntimeError, ValueError, TypeError, KeyError, AttributeError) as e:
-            # For pydantic validation errors, use "Entity creation failed" for consistency
             error_msg = str(e)
             if "validation error" in error_msg.lower():
-                return FlextResult.fail(f"Entity creation failed: {e}")
-            return FlextResult.fail(f"Failed to create {model_class.__name__}: {e}")
+                return FlextResult[T].fail(f"Failed to create {model_class.__name__}: {e}")
+            return FlextResult[T].fail(f"Failed to create {model_class.__name__}: {e}")
 
 
 # Namespace classes for project extensions

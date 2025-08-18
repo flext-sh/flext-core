@@ -330,10 +330,10 @@ class TestFlextMixinDelegator:
         FlextMixinDelegator(host, SampleMixin1)
 
         # Test property setter using setattr/getattr to satisfy typing
-        host.writable_property = "new_value"  # type: ignore[attr-defined]
-        if host.writable_property != "new_value":  # type: ignore[attr-defined]
+        host.writable_property = "new_value"
+        if host.writable_property != "new_value":
             raise AssertionError(
-                f"Expected {'new_value'}, got {host.writable_property}",  # type: ignore[attr-defined]
+                f"Expected {'new_value'}, got {host.writable_property}",
             )
 
     def test_property_delegation_readonly(self) -> None:

@@ -5,26 +5,26 @@ from typing import TypeVar
 from _typeshed import Incomplete
 
 __all__ = [
+    "_E",
+    "_F",
+    "_P",
+    "_R",
+    "_T",
     "Cacheable",
     "Comparable",
     "Configurable",
-    "E",
-    "EntryT",
-    "F",
+    "FlextFieldId",
+    "FlextFieldName",
+    "FlextFieldTypeStr",
     "FlextSerializable",
     "FlextTypes",
     "FlextValidatable",
     "FlextValidator",
-    "P",
-    "R",
     "Serializable",
-    "T",
     "TAggregateId",
     "TAnyDict",
     "TAnyList",
-    "TAnyObject",
     "TCallable",
-    "TCommand",
     "TCommandBusId",
     "TCommandId",
     "TCommandMetadata",
@@ -32,7 +32,6 @@ __all__ = [
     "TCommandPriority",
     "TCommandResult",
     "TCommandType",
-    "TComparable",
     "TConfig",
     "TConfigDefaults",
     "TConfigDict",
@@ -57,7 +56,6 @@ __all__ = [
     "TDomainEventData",
     "TDomainEventType",
     "TDomainEvents",
-    "TEntity",
     "TEntityChanges",
     "TEntityDefaults",
     "TEntityId",
@@ -98,18 +96,12 @@ __all__ = [
     "TOptional",
     "TPaginationToken",
     "TPredicate",
-    "TQuery",
     "TQueryCriteria",
     "TQueryId",
     "TQueryProjection",
     "TQueryResult",
     "TQueryType",
-    "TRequest",
     "TRequestId",
-    "TResponse",
-    "TResult",
-    "TSerializable",
-    "TService",
     "TServiceKey",
     "TServiceName",
     "TSessionId",
@@ -119,7 +111,6 @@ __all__ = [
     "TTransformer",
     "TUserData",
     "TUserId",
-    "TValidatable",
     "TValidationConfig",
     "TValidationConstraint",
     "TValidationContext",
@@ -135,29 +126,63 @@ __all__ = [
     "U",
     "V",
     "Validatable",
+    "_EntryT",
+    "_TAnyObject",
+    "_TCommand",
+    "_TComparable",
+    "_TEntity",
+    "_TQuery",
+    "_TRequest",
+    "_TResponse",
+    "_TResult",
+    "_TSerializable",
+    "_TService",
+    "_TValidatable",
     "get_centralized_types_usage_info",
 ]
 
-T = TypeVar("T")
-U = TypeVar("U")
-V = TypeVar("V")
-R = TypeVar("R")
-E = TypeVar("E")
-F = TypeVar("F")
-P = TypeVar("P")
-TComparable = TypeVar("TComparable")
-TSerializable = TypeVar("TSerializable")
-TValidatable = TypeVar("TValidatable")
-TEntity = TypeVar("TEntity")
-TAnyObject = TypeVar("TAnyObject")
-TCommand = TypeVar("TCommand")
-TQuery = TypeVar("TQuery")
-TRequest = TypeVar("TRequest")
-TResponse = TypeVar("TResponse")
-TResult = TypeVar("TResult")
-TService = TypeVar("TService")
-TOptional = TypeVar("TOptional")
-EntryT = TypeVar("EntryT")
+_T = TypeVar("_T")
+_U = TypeVar("_U")
+_V = TypeVar("_V")
+_R = TypeVar("_R")
+_E = TypeVar("_E")
+_F = TypeVar("_F")
+_P = TypeVar("_P")
+_TComparable = TypeVar("_TComparable")
+_TSerializable = TypeVar("_TSerializable")
+_TValidatable = TypeVar("_TValidatable")
+_TEntity = TypeVar("_TEntity")
+_TAnyObject = TypeVar("_TAnyObject")
+_TCommand = TypeVar("_TCommand")
+_TQuery = TypeVar("_TQuery")
+_TRequest = TypeVar("_TRequest")
+_TResponse = TypeVar("_TResponse")
+_TResult = TypeVar("_TResult")
+_TService = TypeVar("_TService")
+_TOptional = TypeVar("_TOptional")
+_EntryT = TypeVar("_EntryT")
+
+# Backward compatibility aliases (kept for compatibility)
+T = _T
+U = _U
+V = _V
+R = _R
+E = _E
+F = _F
+P = _P
+TComparable = _TComparable
+TSerializable = _TSerializable
+TValidatable = _TValidatable
+TEntity = _TEntity
+TAnyObject = _TAnyObject
+TCommand = _TCommand
+TQuery = _TQuery
+TRequest = _TRequest
+TResponse = _TResponse
+TResult = _TResult
+TService = _TService
+TOptional = _TOptional
+EntryT = _EntryT
 
 class FlextTypes:
     class Core:
@@ -206,7 +231,8 @@ class FlextTypes:
         type Configuration = Mapping[str, object]
         type Transform[T, U] = Callable[[T], U]
         type Handler[T, R] = Callable[[T], R]
-        ServiceInstance = TypeVar("ServiceInstance")
+        _ServiceInstance = TypeVar("_ServiceInstance")
+        ServiceInstance = _ServiceInstance  # Backward compatibility
         type CorrelationId = str
         type RequestId = str
         type TraceId = str
@@ -382,11 +408,11 @@ TConnectionString: Incomplete
 TLogMessage: Incomplete
 TErrorCode: Incomplete
 TErrorMessage: Incomplete
-TAnyDict: Incomplete
-TAnyList: Incomplete
-TDict: Incomplete
-TList: Incomplete
-TStringDict: Incomplete
+type TAnyDict = dict[str, object]
+type TAnyList = list[object]
+type TDict = dict[str, object]
+type TList = list[object]
+type TStringDict = dict[str, str]
 TUserData: Incomplete
 TToken: Incomplete
 TCredentials: Incomplete
@@ -465,5 +491,14 @@ Configurable: Incomplete
 FlextSerializable = Serializable
 FlextValidatable = Validatable
 FlextValidator: Incomplete
+
+# Field type definitions
+FlextFieldId = str
+FlextFieldName = str
+FlextFieldTypeStr = str
+
+# Test type definitions
+TTestData = str
+TTestConfig = str
 
 def get_centralized_types_usage_info() -> str: ...

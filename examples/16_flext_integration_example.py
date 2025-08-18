@@ -161,7 +161,7 @@ def _demo_complete_flow(customer: User, order: Order, logger: FlextLogger) -> No
         order2 = order2_result.data
         repository_any = get_flext_container().get("order_repository").unwrap()
         # Hint to type checker
-        repo: _OrderRepositoryProtocol = repository_any  # type: ignore[assignment]
+        repo: _OrderRepositoryProtocol = repository_any
         repo.save(order2)
         total1_result = order.calculate_total()
         total2_result = order2.calculate_total()

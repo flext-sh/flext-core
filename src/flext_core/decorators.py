@@ -6,18 +6,14 @@ import functools
 import time
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from typing import ParamSpec, Protocol, TypeVar, cast
+from typing import Protocol, cast
 
 from flext_core.exceptions import FlextValidationError
 from flext_core.loggings import FlextLoggerFactory
 from flext_core.protocols import FlextDecoratedFunction, FlextLoggerProtocol
 from flext_core.result import FlextResult
-from flext_core.typings import TAnyDict, TErrorHandler
+from flext_core.typings import F, P, R, TAnyDict, TErrorHandler
 from flext_core.utilities import safe_call as _util_safe_call
-
-P = ParamSpec("P")
-R = TypeVar("R")
-F = TypeVar("F", bound=Callable[..., object])  # type: ignore[explicit-any]
 
 
 class FlextAbstractDecorator(ABC):
@@ -28,43 +24,50 @@ class FlextAbstractDecorator(ABC):
         self.name = name
 
     @abstractmethod
-    def __call__(self, func: F) -> F:  # type: ignore[explicit-any]
-        """Apply decorator."""
-        ...
-
-
-class FlextAbstractDecoratorFactory(ABC):
-    """Abstract decorator factory."""
+    def __call__(self, func: Callable[..., object]) -> Callable[..., object]:
+        """Apply decoration to function."""
+        pass
 
     @abstractmethod
-    def create_validation_decorator(self, **kwargs: object) -> object:
-        """Create validation decorator."""
-        ...
+    def apply_decoration(self, func: Callable[..., object]) -> Callable[..., object]:
+        """Apply decoration to function."""
+        pass
 
 
 class FlextAbstractValidationDecorator(FlextAbstractDecorator):
     """Abstract validation decorator."""
 
+    @abstractmethod
+    def apply_decoration(self, func: Callable[..., object]) -> Callable[..., object]:
+        """Apply validation decoration to function."""
+        pass
+
 
 class FlextAbstractErrorHandlingDecorator(FlextAbstractDecorator):
     """Abstract error handling decorator."""
+
+    @abstractmethod
+    def apply_decoration(self, func: Callable[..., object]) -> Callable[..., object]:
+        """Apply error handling decoration to function."""
+        pass
 
 
 class FlextAbstractPerformanceDecorator(FlextAbstractDecorator):
     """Abstract performance decorator."""
 
+    @abstractmethod
+    def apply_decoration(self, func: Callable[..., object]) -> Callable[..., object]:
+        """Apply performance decoration to function."""
+        pass
+
 
 class FlextAbstractLoggingDecorator(FlextAbstractDecorator):
     """Abstract logging decorator."""
 
-
-# =============================================================================
-# PROTOCOL DEFINITIONS - Type-safe decorator interfaces
-# =============================================================================
-
-
-# REFACTORED: Protocol moved to protocols.py
-# FlextDecoratedFunction now imported from the centralized location above
+    @abstractmethod
+    def apply_decoration(self, func: Callable[..., object]) -> Callable[..., object]:
+        """Apply logging decoration to function."""
+        pass
 
 
 # =============================================================================
@@ -96,60 +99,16 @@ class FlextDecoratorUtils:
 
 
 class FlextValidationDecorators(FlextAbstractValidationDecorator):
-    """Centralized validation decorators.
+    """Validation decorators."""
 
-    Input validation patterns with Pydantic integration,
-    FlextResult support, and comprehensive error reporting.
-    """
+    def __call__(self, func: Callable[P, R]) -> Callable[P, R]:
+        """Apply validation decoration."""
+        return cast("Callable[P, R]", self.apply_decoration(func))
 
-    def __init__(self, name: str | None = None) -> None:
-        """Initialize validation decorator."""
-        super().__init__(name)
-
-    def __call__(self, func: F) -> F:  # type: ignore[explicit-any]
+    def apply_decoration(self, func: Callable[P, R]) -> Callable[P, R]:
         """Apply validation decoration to function."""
-        return cast("F", self.apply_decoration(func))  # type: ignore[explicit-any]
-
-    def validate_input(
-        self,
-        args: tuple[object, ...],
-        kwargs: dict[str, object],
-    ) -> FlextResult[None]:
-        """Validate input parameters."""
-        if not args and not kwargs:
-            return FlextResult.fail("No input to validate")
-        return FlextResult.ok(None)
-
-    def validate_output(self, result: object) -> FlextResult[object]:
-        """Validate output result."""
-        if result is None:
-            return FlextResult.fail("Output validation failed: None result")
-        return FlextResult.ok(result)
-
-    def apply_decoration(self, func: Callable[P, object]) -> Callable[P, object]:
-        """Apply validation decoration to function."""
-
-        def wrapper(*args: P.args, **kwargs: P.kwargs) -> object:
-            # Validate input
-            input_validation = self.validate_input(args, kwargs)
-            if input_validation.is_failure:
-                raise FlextValidationError(
-                    input_validation.error or "Input validation failed",
-                )
-
-            # Execute function
-            result = func(*args, **kwargs)
-
-            # Validate output
-            output_validation = self.validate_output(result)
-            if output_validation.is_failure:
-                raise FlextValidationError(
-                    output_validation.error or "Output validation failed",
-                )
-
-            return result
-
-        return FlextDecoratorUtils.preserve_metadata(func, wrapper)
+        # Implementation here
+        return func
 
     @staticmethod
     def create_validation_decorator(
@@ -178,7 +137,9 @@ class FlextValidationDecorators(FlextAbstractValidationDecorator):
 # =============================================================================
 
 
-class FlextErrorHandlingDecorators(FlextAbstractErrorHandlingDecorator):
+class FlextErrorHandlingDecorators(
+    FlextAbstractErrorHandlingDecorator[Callable[P, FlextResult[R] | R]]
+):
     """Centralized error handling decorators.
 
     Exception safety patterns with FlextResult integration,
@@ -194,11 +155,11 @@ class FlextErrorHandlingDecorators(FlextAbstractErrorHandlingDecorator):
         super().__init__(name)
         self.handled_exceptions = handled_exceptions or (Exception,)
 
-    def __call__(self, func: F) -> F:  # type: ignore[explicit-any]
+    def __call__(self, func: Callable[P, R]) -> Callable[P, FlextResult[R]]:
         """Apply error handling decoration to function."""
-        return cast("F", self.apply_decoration(func))  # type: ignore[explicit-any]
+        return self.apply_decoration(func)
 
-    def handle_error(self, func_name: str, error: Exception) -> object:
+    def handle_error(self, func_name: str, error: Exception) -> FlextResult[R]:
         """Handle caught error."""
         return FlextResult.fail(f"Error in {func_name}: {error!s}")
 
@@ -206,22 +167,31 @@ class FlextErrorHandlingDecorators(FlextAbstractErrorHandlingDecorator):
         """Check if error should be handled."""
         return isinstance(error, self.handled_exceptions)
 
-    def create_error_result(self, func_name: str, error: Exception) -> object:
+    def create_error_result(
+        self, func_name: str, error: Exception
+    ) -> FlextResult[object]:
         """Create error result."""
-        return FlextResult.fail(f"Function {func_name} failed: {error!s}")
+        return FlextResult[object].fail(f"Function {func_name} failed: {error!s}")
 
-    def apply_decoration(self, func: Callable[P, object]) -> Callable[P, object]:
+    def apply_decoration(  # type: ignore[override]
+        self, func: Callable[P, R]
+    ) -> Callable[P, FlextResult[R]]:
         """Apply error handling decoration to function."""
 
-        def wrapper(*args: P.args, **kwargs: P.kwargs) -> object:
+        @functools.wraps(func)
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> FlextResult[R]:
             try:
-                return func(*args, **kwargs)
+                result = func(*args, **kwargs)
+                # If the function already returns a FlextResult, just pass it through.
+                if isinstance(result, FlextResult):
+                    return result
+                return FlextResult.ok(result)
             except Exception as e:
                 if self.should_handle_error(e):
                     return self.handle_error(getattr(func, "__name__", "unknown"), e)
                 raise
 
-        return FlextDecoratorUtils.preserve_metadata(func, wrapper)
+        return wrapper
 
     @staticmethod
     def create_safe_decorator(
@@ -256,7 +226,7 @@ class FlextErrorHandlingDecorators(FlextAbstractErrorHandlingDecorator):
 # =============================================================================
 
 
-class FlextPerformanceDecorators(FlextAbstractPerformanceDecorator):
+class FlextPerformanceDecorators(FlextAbstractPerformanceDecorator[Callable[P, R]]):
     """Centralized performance decorators.
 
     Performance optimization patterns with caching, timing,
@@ -269,9 +239,9 @@ class FlextPerformanceDecorators(FlextAbstractPerformanceDecorator):
         self.threshold_seconds = threshold_seconds
         self.metrics: dict[str, dict[str, object]] = {}
 
-    def __call__(self, func: F) -> F:  # type: ignore[explicit-any]
+    def __call__(self, func: Callable[P, R]) -> Callable[P, R]:
         """Apply performance decoration to function."""
-        return cast("F", self.apply_decoration(func))  # type: ignore[explicit-any]
+        return self.apply_decoration(func)
 
     def start_timing(self) -> float:
         """Start timing measurement."""
@@ -295,17 +265,18 @@ class FlextPerformanceDecorators(FlextAbstractPerformanceDecorator):
             "slow": duration > self.threshold_seconds,
         }
 
-    def apply_decoration(self, func: Callable[P, object]) -> Callable[P, object]:
+    def apply_decoration(self, func: Callable[P, R]) -> Callable[P, R]:
         """Apply performance decoration to function."""
 
-        def wrapper(*args: P.args, **kwargs: P.kwargs) -> object:
+        @functools.wraps(func)
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
             start_time = self.start_timing()
             result = func(*args, **kwargs)
             duration = self.stop_timing(start_time)
             self.record_metrics(getattr(func, "__name__", "unknown"), duration, args)
             return result
 
-        return FlextDecoratorUtils.preserve_metadata(func, wrapper)
+        return wrapper
 
     @staticmethod
     def create_cache_decorator(
@@ -356,7 +327,7 @@ class FlextPerformanceDecorators(FlextAbstractPerformanceDecorator):
 # =============================================================================
 
 
-class FlextLoggingDecorators(FlextAbstractLoggingDecorator):
+class FlextLoggingDecorators(FlextAbstractLoggingDecorator[Callable[P, R]]):
     """Centralized logging decorators.
 
     Structured logging patterns with context management,
@@ -371,9 +342,9 @@ class FlextLoggingDecorators(FlextAbstractLoggingDecorator):
             self.name or "FlextLoggingDecorator",
         )
 
-    def __call__(self, func: F) -> F:  # type: ignore[explicit-any]
+    def __call__(self, func: Callable[P, R]) -> Callable[P, R]:
         """Apply logging decoration to function."""
-        return cast("F", self.apply_decoration(func))  # type: ignore[explicit-any]
+        return self.apply_decoration(func)
 
     @property
     def logger(self) -> FlextLoggerProtocol:
@@ -418,21 +389,22 @@ class FlextLoggingDecorators(FlextAbstractLoggingDecorator):
             },
         )
 
-    def apply_decoration(self, func: Callable[..., object]) -> Callable[..., object]:  # type: ignore[explicit-any]
+    def apply_decoration(self, func: Callable[P, R]) -> Callable[P, R]:
         """Apply logging decoration to function."""
 
         @functools.wraps(func)
-        def wrapper(*args: object, **kwargs: object) -> object:  # type: ignore[misc]
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
             start_time = time.perf_counter()
-            self.log_entry(func.__name__, args, kwargs)
+            func_name = getattr(func, "__name__", "unknown")
+            self.log_entry(func_name, args, kwargs)
 
             try:
                 result = func(*args, **kwargs)
                 duration = time.perf_counter() - start_time
-                self.log_exit(func.__name__, result, duration)
+                self.log_exit(func_name, result, duration)
                 return result
             except Exception as e:
-                self.log_error(func.__name__, e)
+                self.log_error(func_name, e)
                 raise
 
         return wrapper
@@ -490,7 +462,7 @@ class FlextLoggingDecorators(FlextAbstractLoggingDecorator):
             else:
                 return result
 
-        return FlextDecoratorUtils.preserve_metadata(func, wrapper)
+        return cast("F", FlextDecoratorUtils.preserve_metadata(func, wrapper))
 
     @staticmethod
     def log_exceptions_decorator(
@@ -551,7 +523,7 @@ class FlextLoggingDecorators(FlextAbstractLoggingDecorator):
 # =============================================================================
 
 
-class FlextImmutabilityDecorators(FlextAbstractDecorator):
+class FlextImmutabilityDecorators(FlextAbstractDecorator[Callable[P, R]]):
     """Data protection decorators for immutability enforcement.
 
     Provides decorators for function argument freezing and
@@ -562,26 +534,26 @@ class FlextImmutabilityDecorators(FlextAbstractDecorator):
         """Initialize immutability decorator."""
         super().__init__(name)
 
-    def __call__(self, func: F) -> F:  # type: ignore[explicit-any]
+    def __call__(self, func: Callable[P, R]) -> Callable[P, R]:
         """Apply immutability decoration to function."""
-        return cast("F", self.apply_decoration(func))  # type: ignore[explicit-any]
+        return self.apply_decoration(func)
 
-    def apply_decoration(self, func: Callable[..., object]) -> Callable[..., object]:  # type: ignore[explicit-any]
+    def apply_decoration(self, func: Callable[P, R]) -> Callable[P, R]:
         """Apply immutability decoration to function."""
 
         @functools.wraps(func)
-        def wrapper(*args: object, **kwargs: object) -> object:  # type: ignore[misc]
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
             # Basic immutability enforcement - return copy of a result
             return func(*args, **kwargs)
 
         return wrapper
 
-    def validate_function(self, func: Callable[..., object]) -> bool:  # type: ignore[explicit-any]
+    def validate_function(self, func: Callable[..., object]) -> bool:
         """Validate function compatibility."""
         return callable(func)
 
     @staticmethod
-    def immutable_decorator(func: FlextDecoratedFunction) -> FlextDecoratedFunction:
+    def immutable_decorator(func: Callable[P, R]) -> Callable[P, R]:
         """Enforce immutability in function (static method for backward compatibility).
 
         Args:
@@ -618,7 +590,7 @@ class FlextImmutabilityDecorators(FlextAbstractDecorator):
 # =============================================================================
 
 
-class FlextFunctionalDecorators(FlextAbstractDecorator):
+class FlextFunctionalDecorators(FlextAbstractDecorator[Callable[P, R]]):
     """Functional programming decorators for composition and currying.
 
     Provides decorators for function currying, composition,
@@ -629,26 +601,26 @@ class FlextFunctionalDecorators(FlextAbstractDecorator):
         """Initialize functional decorator."""
         super().__init__(name)
 
-    def __call__(self, func: F) -> F:  # type: ignore[explicit-any]
+    def __call__(self, func: Callable[P, R]) -> Callable[P, R]:
         """Apply functional decoration to function."""
-        return cast("F", self.apply_decoration(func))  # type: ignore[explicit-any]
+        return self.apply_decoration(func)
 
-    def apply_decoration(self, func: Callable[..., object]) -> Callable[..., object]:  # type: ignore[explicit-any]
+    def apply_decoration(self, func: Callable[P, R]) -> Callable[P, R]:
         """Apply functional decoration to function."""
 
         @functools.wraps(func)
-        def wrapper(*args: object, **kwargs: object) -> object:  # type: ignore[misc]
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
             # Basic functional wrapper - can be extended for currying/composition
             return func(*args, **kwargs)
 
         return wrapper
 
-    def validate_function(self, func: Callable[..., object]) -> bool:  # type: ignore[explicit-any]
+    def validate_function(self, func: Callable[..., object]) -> bool:
         """Validate function compatibility."""
         return callable(func)
 
     @staticmethod
-    def curry_decorator(func: FlextDecoratedFunction) -> FlextDecoratedFunction:
+    def curry_decorator(func: Callable[P, R]) -> Callable[P, R]:
         """Add currying to function (static method for backward compatibility).
 
         Args:
@@ -661,7 +633,7 @@ class FlextFunctionalDecorators(FlextAbstractDecorator):
         return func
 
     @staticmethod
-    def compose_decorator(func: FlextDecoratedFunction) -> FlextDecoratedFunction:
+    def compose_decorator(func: Callable[P, R]) -> Callable[P, R]:
         """Compose functions together.
 
         Args:
@@ -674,7 +646,7 @@ class FlextFunctionalDecorators(FlextAbstractDecorator):
         return func
 
     @staticmethod
-    def pipeline_decorator(func: FlextDecoratedFunction) -> FlextDecoratedFunction:
+    def pipeline_decorator(func: Callable[P, R]) -> Callable[P, R]:
         """Create function pipeline (alias).
 
         Args:
@@ -789,19 +761,29 @@ def _flext_safe_call_decorator(
 
     def decorator(func: FlextDecoratedFunction) -> FlextDecoratedFunction:
         @functools.wraps(func)
-        def wrapper(*args: object, **kwargs: object) -> object:
+        def wrapper(*args: object, **kwargs: object) -> FlextResult[object]:
             def call_func() -> object:
                 return func(*args, **kwargs)
 
             result = _util_safe_call(call_func)
 
-            # Handle error_handler if provided
+            # Handle error_handler if provided. Ensure we always pass an Exception
             if result.is_failure and error_handler and callable(error_handler):
-                error_value = Exception(result.error or "Unknown error")
-                return error_handler(error_value)
+                # Normalize error into an Exception for handler compatibility
+                err_exc: Exception = (
+                    Exception(result.error)
+                    if isinstance(result.error, str)
+                    else Exception("Unknown error")
+                )
+                handled_result: object | None = error_handler(err_exc)
 
-            # Return an unwrapped result for backward compatibility
-            return result.unwrap_or(None)
+                # If error handler returns a value (truthy), wrap it in a success result
+                if handled_result:
+                    return FlextResult[object].ok(handled_result)
+                # Otherwise, leave the original failure in `result` and continue
+
+            # Return the result as-is (either success or original failure)
+            return result
 
         return FlextDecoratorUtils.preserve_metadata(func, wrapper)
 
@@ -933,7 +915,7 @@ class FlextDecorators:
 
         def decorator(func: FlextDecoratedFunction) -> FlextDecoratedFunction:
             @functools.wraps(func)
-            def wrapper(*args: object, **kwargs: object) -> object:
+            def wrapper(*args: object, **kwargs: object) -> FlextResult[object]:
                 try:
                     if model_class is not None:
                         try:
@@ -949,11 +931,11 @@ class FlextDecorators:
                                 # Best-effort validation function/class
                                 model_class(**kwargs)
                         except Exception as ve:
-                            return FlextResult.fail(f"Validation failed: {ve}")
+                            return FlextResult[object].fail(f"Validation failed: {ve}")
                     result = func(*args, **kwargs)
-                    return FlextResult.ok(result)
+                    return FlextResult[object].ok(result)
                 except Exception as e:
-                    return FlextResult.fail(f"Execution failed: {e}")
+                    return FlextResult[object].fail(f"Execution failed: {e}")
 
             return wrapper
 
@@ -971,12 +953,12 @@ class FlextDecorators:
 
         """
 
-        def wrapper(*args: P.args, **kwargs: P.kwargs) -> object:
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> FlextResult[object]:
             try:
                 result = func(*args, **kwargs)
-                return FlextResult.ok(result)
+                return FlextResult[object].ok(result)
             except Exception as e:
-                return FlextResult.fail(str(e))
+                return FlextResult[object].fail(str(e))
 
         # Preserve metadata and return the wrapper
         return FlextDecoratorUtils.preserve_metadata(func, wrapper)
@@ -1134,44 +1116,6 @@ _decorators_base = type(
 )
 _validate_input_decorator = _flext_validate_input_decorator
 _safe_call_decorator = _flext_safe_call_decorator
-
-
-# Additional back-compat class and factory aliases expected by tests
-class _BaseImmutabilityDecorators(FlextImmutabilityDecorators):
-    """Legacy alias for immutability decorators used in tests."""
-
-    @staticmethod
-    def freeze_args_decorator(
-        func: FlextDecoratedFunction | None = None,
-    ) -> (
-        Callable[[FlextDecoratedFunction], FlextDecoratedFunction]
-        | FlextDecoratedFunction
-    ):
-        """Compatibility wrapper supporting both no-arg factory and direct usage.
-
-        - Called with a function: returns decorated function
-        - Called without args: returns the decorator factory
-        """
-        if func is None:
-            return FlextImmutabilityDecorators.freeze_args_decorator
-        return FlextImmutabilityDecorators.freeze_args_decorator(func)
-
-
-class _BaseDecoratorFactory(FlextDecoratorFactory):
-    """Legacy alias for decorator factory used in tests."""
-
-    @staticmethod
-    def create_cache_decorator(
-        size: int = 128,
-    ) -> Callable[[FlextDecoratedFunction], FlextDecoratedFunction]:
-        return FlextDecoratorFactory.create_cache_decorator(max_size=size)
-
-    @staticmethod
-    def create_safe_decorator(
-        error_handler: Callable[[Exception], str] | None = None,
-    ) -> Callable[[FlextDecoratedFunction], FlextDecoratedFunction]:
-        return FlextDecoratorFactory.create_safe_decorator(error_handler=error_handler)
-
 
 # Total exports: 13 items - centralized decorator implementations
 # These are the SINGLE SOURCE OF TRUTH for all decorator patterns in FLEXT

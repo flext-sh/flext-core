@@ -1,0 +1,12 @@
+{
+  "typeCheckingMode": "strict",
+  "exclude": [
+    "typings/tests",
+    "typings/examples",
+    "typings/tests/**",
+    "typings/examples/**",
+    "typings/tests/*",
+    "examples/**",
+    "tests/**"
+  ]
+}

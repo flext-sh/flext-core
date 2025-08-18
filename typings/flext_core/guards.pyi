@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from typing import ParamSpec, Self, TypeVar
+from typing import Self
 
 from _typeshed import Incomplete
 from pydantic import BaseModel
@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from flext_core.constants import FlextConstants
 from flext_core.mixins import FlextSerializableMixin, FlextValidatableMixin
 from flext_core.result import FlextResult
+from flext_core.typings import T
 
 __all__ = [
     "FlextGuards",
@@ -33,9 +34,6 @@ Platform = FlextConstants.Platform
 is_not_none: Incomplete
 is_list_of: Incomplete
 is_instance_of: Incomplete
-T = TypeVar("T")
-P = ParamSpec("P")
-R = TypeVar("R")
 
 class FlextGuards:
     @staticmethod
@@ -43,7 +41,7 @@ class FlextGuards:
     @staticmethod
     def immutable(target_class: type[T]) -> type[T]: ...
     @staticmethod
-    def pure(func: Callable[P, R]) -> Callable[P, R]: ...
+    def pure[P, R](func: Callable[P, R]) -> Callable[P, R]: ...
     @staticmethod
     def make_factory(target_class: type) -> Callable[[], object]: ...
     @staticmethod

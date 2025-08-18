@@ -6,7 +6,7 @@ import re
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from enum import Enum
-from typing import Generic, Protocol, TypeVar
+from typing import Generic, Protocol, cast
 
 from flext_core.result import FlextResult
 from flext_core.typings import EntryT
@@ -38,19 +38,13 @@ class FlextEntryValidator(Protocol):
         ...
 
 
-# Use EntryT from typings instead of local TEntry
-
-
-EntryTypeVar = TypeVar("EntryTypeVar")
-
-
-class FlextBaseProcessor(ABC, Generic[EntryTypeVar]):  # noqa: UP046
+class FlextBaseProcessor(ABC, Generic[EntryT]):  # noqa: UP046
     """Base processor for entries with configurable validation."""
 
     def __init__(self, validator: FlextEntryValidator | None = None) -> None:
         """Initialize processor with optional validator."""
         self.validator = validator
-        self._extracted_entries: list[EntryTypeVar] = []
+        self._extracted_entries: list[EntryT] = []
 
     @abstractmethod
     def _extract_identifier(self, content: str) -> FlextResult[str]:
@@ -64,7 +58,7 @@ class FlextBaseProcessor(ABC, Generic[EntryTypeVar]):  # noqa: UP046
         clean_content: str,
         original_content: str,
         identifier: str,
-    ) -> FlextResult[EntryTypeVar]:
+    ) -> FlextResult[EntryT]:
         """Create concrete entry instance."""
         ...
 
@@ -73,7 +67,7 @@ class FlextBaseProcessor(ABC, Generic[EntryTypeVar]):  # noqa: UP046
         content: str,
         entry_type: str,
         prefix: str = "",
-    ) -> FlextResult[EntryTypeVar]:
+    ) -> FlextResult[EntryT]:
         """Extract entry information from content with type safety."""
         # Step 1: Extract and validate identifier
         identifier_validation = self._validate_identifier_extraction(content)
@@ -126,7 +120,7 @@ class FlextBaseProcessor(ABC, Generic[EntryTypeVar]):  # noqa: UP046
         clean_content: str,
         content: str,
         identifier: str,
-    ) -> FlextResult[EntryTypeVar]:
+    ) -> FlextResult[EntryT]:
         """Validate an entry creation step."""
         entry_result = self._create_entry(
             entry_type,
@@ -151,16 +145,16 @@ class FlextBaseProcessor(ABC, Generic[EntryTypeVar]):  # noqa: UP046
         lines: list[str],
         entry_type: str,
         prefix: str = "",
-    ) -> FlextResult[list[EntryTypeVar]]:
+    ) -> FlextResult[list[EntryT]]:
         """Process multiple content lines and return successful entries."""
-        results: list[EntryTypeVar] = []
+        results: list[EntryT] = []
         errors: list[str] = []
 
         for line in lines:
             if not line.strip():
                 continue
 
-            result: FlextResult[EntryTypeVar] = self.extract_entry_info(
+            result: FlextResult[EntryT] = self.extract_entry_info(
                 line,
                 entry_type,
                 prefix,
@@ -177,7 +171,7 @@ class FlextBaseProcessor(ABC, Generic[EntryTypeVar]):  # noqa: UP046
         # Return success even if some entries failed (partial success)
         return FlextResult.ok(results)
 
-    def get_extracted_entries(self) -> list[EntryTypeVar]:
+    def get_extracted_entries(self) -> list[EntryT]:
         """Get all successfully extracted entries."""
         return self._extracted_entries.copy()
 
@@ -241,7 +235,7 @@ class FlextConfigAttributeValidator:
             return FlextResult.fail(
                 f"Missing required attributes: {', '.join(missing)}",
             )
-        return FlextResult.ok(data=True)
+        return FlextResult.ok(True)  # noqa: FBT003
 
 
 class FlextBaseConfigManager:
@@ -268,7 +262,7 @@ class FlextBaseConfigManager:
                 self.config,
                 required_attrs,
             )
-        return FlextResult.ok(data=True)
+        return FlextResult.ok(True)  # noqa: FBT003
 
 
 class FlextBaseSorter[T]:
@@ -337,9 +331,9 @@ class FlextProcessingPipeline[T, U]:
         for step in self.steps:
             result = step(current_data)
             if result.is_failure:
-                return FlextResult.fail(result.error or "Processing step failed")
+                return FlextResult[U].fail(result.error or "Processing step failed")
             current_data = result.data
-        return FlextResult.ok(current_data)  # type: ignore[arg-type]
+        return FlextResult[U].ok(cast("U", current_data))
 
 
 # =============================================================================

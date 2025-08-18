@@ -47,7 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Observability patterns for monitoring
 - **CQRS Foundation**
   - `FlextCommand` - Command pattern implementation
-  - `FlextHandler` - Command/query handlers
+  - `FlextMessageHandler` - Command/query handlers
   - Basic validation framework
 
 ### Changed

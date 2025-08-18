@@ -297,15 +297,18 @@ class FlextAbstractValidationError(FlextValidationError, ABC):
     def get_validation_context(self) -> dict[str, object]: ...
 
 class FlextAbstractErrorFactory(ABC):
+    @staticmethod
     @abstractmethod
-    def create_error(self, message: str, **kwargs: object) -> FlextError: ...
+    def create_error(message: str, **kwargs: object) -> FlextError: ...
+    @staticmethod
     @abstractmethod
     def create_validation_error(
-        self, message: str, **kwargs: object
+        message: str, **kwargs: object
     ) -> FlextValidationError: ...
+    @staticmethod
     @abstractmethod
     def create_configuration_error(
-        self, message: str, **kwargs: object
+        message: str, **kwargs: object
     ) -> FlextConfigurationError: ...
 
 class FlextExceptions(FlextAbstractErrorFactory, ABC):

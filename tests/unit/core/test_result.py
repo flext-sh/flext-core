@@ -147,9 +147,16 @@ class TestFlextResultUnwrap:
             result.unwrap()
 
         exception = exc_info.value
-        if exception.context != error_data:
-            msg: str = f"Expected {error_data}, got {exception.context}"
+        # Check that error_data is included (may have additional fields)
+        if exception.context is None:
+            msg: str = f"Expected error_data {error_data}, got None"
             raise AssertionError(msg)
+
+        # Verify all expected fields are present with correct values
+        for key, expected_value in error_data.items():
+            if key not in exception.context or exception.context[key] != expected_value:
+                msg: str = f"Expected field {key}={expected_value}, got {exception.context.get(key)}"
+                raise AssertionError(msg)
 
     def test_unwrap_failure_with_none_error(self) -> None:
         """Test unwrap failure when error is None."""
@@ -1348,7 +1355,7 @@ class TestFlextResultPropertyBased:
         value: int,
         func1: Callable[[int], int],
         func2: Callable[[int], int],
-    ) -> None:  # type: ignore[no-untyped-def]
+    ) -> None:
         """Property: map operations compose correctly."""
         result: FlextResult[int] = FlextResult.ok(value)
 

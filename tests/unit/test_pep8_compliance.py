@@ -86,11 +86,11 @@ def _run_ruff_command(command_args: list[str]) -> object:
                 exit_code = 0
                 try:
                     # Execute only with the validated, explicit arguments
-                    ruff_main.main([*command_args])  # type: ignore[arg-type]
+                    ruff_main.main([*command_args])
                 except SystemExit as exc:  # ruff exits via SystemExit
                     exit_code = int(getattr(exc, "code", 0) or 0)
 
-            class CompletedProcess:  # type: ignore[too-many-instance-attributes]
+            class CompletedProcess:
                 def __init__(self, returncode: int, out: str, err: str) -> None:
                     self.returncode: int = returncode
                     self.stdout: str = out
@@ -113,7 +113,7 @@ def _run_ruff_command(command_args: list[str]) -> object:
         _raise_no_supported_runtime("No supported Ruff invocation method available")
     except Exception as exc:  # Robust fallback with error context
 
-        class CompletedProcess:  # type: ignore[too-many-instance-attributes]
+        class CompletedProcess:
             def __init__(self, returncode: int, out: str, err: str) -> None:
                 self.returncode: int = returncode
                 self.stdout: str = out
