@@ -8,7 +8,7 @@ from flext_core import (
     FlextDomainEvent as FlextDomainEvent,
     FlextEventPublisher,
     FlextEventSubscriber,
-    FlextHandler as FlextHandler,
+    FlextMessageHandler as FlextMessageHandler,
     FlextHandlers,
     FlextLoggerProtocol,
     FlextMiddleware,
@@ -187,16 +187,16 @@ class SimpleEventPublisher(FlextEventPublisher):
     def publish(self, event: FlextDomainEvent) -> FlextResult[None]: ...
     def publish_batch(self, events: list[FlextDomainEvent]) -> FlextResult[None]: ...
     def add_subscriber(
-        self, event_type: type[object], handler: FlextHandler
+        self, event_type: type[object], handler: FlextMessageHandler
     ) -> None: ...
 
 class SimpleEventSubscriber(FlextEventSubscriber):
     def __init__(self, publisher: SimpleEventPublisher) -> None: ...
     def subscribe(
-        self, event_type: type[object], handler: FlextHandler
+        self, event_type: type[object], handler: FlextMessageHandler
     ) -> FlextResult[None]: ...
     def unsubscribe(
-        self, event_type: type[object], handler: FlextHandler
+        self, event_type: type[object], handler: FlextMessageHandler
     ) -> FlextResult[None]: ...
     def handle_event(self, event: FlextDomainEvent) -> FlextResult[None]: ...
     def can_handle(self, event_type: str) -> bool: ...

@@ -9,6 +9,8 @@ from contextlib import contextmanager
 from contextvars import ContextVar
 from datetime import UTC, datetime
 
+from flext_core.typings import TAnyDict
+
 # =============================================================================
 # CONTEXT VARIABLES
 # =============================================================================
@@ -34,7 +36,7 @@ _operation_start_time: ContextVar[datetime | None] = ContextVar(
     "operation_start_time",
     default=None,
 )
-_operation_metadata: ContextVar[dict[str, object] | None] = ContextVar(
+_operation_metadata: ContextVar[TAnyDict | None] = ContextVar(
     "operation_metadata",
     default=None,
 )
@@ -240,7 +242,7 @@ class FlextContext:
         user_id: str | None = None,
         operation_name: str | None = None,
         request_id: str | None = None,
-        metadata: dict[str, object] | None = None,
+        metadata: TAnyDict | None = None,
     ) -> Generator[None]:
         """Create request metadata context scope.
 
@@ -295,12 +297,12 @@ class FlextContext:
         _operation_start_time.set(start_time)
 
     @staticmethod
-    def get_operation_metadata() -> dict[str, object] | None:
+    def get_operation_metadata() -> TAnyDict | None:
         """Get operation metadata from context."""
         return _operation_metadata.get()
 
     @staticmethod
-    def set_operation_metadata(metadata: dict[str, object]) -> None:
+    def set_operation_metadata(metadata: TAnyDict) -> None:
         """Set operation metadata in context."""
         _operation_metadata.set(metadata)
 
@@ -315,7 +317,7 @@ class FlextContext:
     @contextmanager
     def timed_operation(
         operation_name: str | None = None,
-    ) -> Generator[dict[str, object]]:
+    ) -> Generator[TAnyDict]:
         """Create timed operation context with performance tracking.
 
         Args:
@@ -327,7 +329,7 @@ class FlextContext:
         """
         start_time = datetime.now(UTC)
         # Type-safe operation metadata
-        operation_metadata: dict[str, object] = {
+        operation_metadata: TAnyDict = {
             "start_time": start_time,
             "operation_name": operation_name,
         }
@@ -366,7 +368,7 @@ class FlextContext:
     # =============================================================================
 
     @staticmethod
-    def get_full_context() -> dict[str, object]:
+    def get_full_context() -> TAnyDict:
         """Get complete current context as dictionary.
 
         Returns:
@@ -393,19 +395,19 @@ class FlextContext:
             Dict[str, str]: Correlation context for HTTP headers/bridge calls
 
         """
-        context = {}
+        context: dict[str, str] = {}
 
         correlation_id = _correlation_id.get()
         if correlation_id:
-            context["X-Correlation-Id"] = correlation_id
+            context["X-Correlation-Id"] = str(correlation_id)
 
         parent_id = _parent_correlation_id.get()
         if parent_id:
-            context["X-Parent-Correlation-Id"] = parent_id
+            context["X-Parent-Correlation-Id"] = str(parent_id)
 
         service_name = _service_name.get()
         if service_name:
-            context["X-Service-Name"] = service_name
+            context["X-Service-Name"] = str(service_name)
 
         return context
 
@@ -495,22 +497,22 @@ class FlextContext:
 
         """
         context = FlextContext.get_full_context()
-        parts = []
+        parts: list[str] = []
 
         correlation_id = context["correlation_id"]
-        if correlation_id and isinstance(correlation_id, str):
+        if isinstance(correlation_id, str) and correlation_id:
             parts.append(f"correlation={correlation_id[:8]}...")
 
         service_name = context["service_name"]
-        if service_name and isinstance(service_name, str):
+        if isinstance(service_name, str) and service_name:
             parts.append(f"service={service_name}")
 
         operation_name = context["operation_name"]
-        if operation_name and isinstance(operation_name, str):
+        if isinstance(operation_name, str) and operation_name:
             parts.append(f"operation={operation_name}")
 
         user_id = context["user_id"]
-        if user_id and isinstance(user_id, str):
+        if isinstance(user_id, str) and user_id:
             parts.append(f"user={user_id}")
 
         return f"FlextContext({', '.join(parts)})" if parts else "FlextContext(empty)"

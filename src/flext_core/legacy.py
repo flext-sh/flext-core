@@ -19,11 +19,12 @@ from __future__ import annotations
 
 import sys
 import warnings
+from collections.abc import Mapping
 
 from packaging import version
 
 from flext_core.__version__ import __version__
-from flext_core.config import FlextSettings
+from flext_core.config import FlextConfigOps, FlextSettings
 from flext_core.constants import FlextConstants
 from flext_core.mixins import (
     FlextCacheableMixin,
@@ -194,6 +195,9 @@ FlextMutableModel = FlextEntity
 FlextBaseSettings = FlextSettings
 FlextConfiguration = FlextSettings
 
+# Legacy config operations for test compatibility
+_BaseConfigOps = FlextConfigOps
+
 # =============================================================================
 # LEGACY VALIDATION PATTERNS - Delegate to modern validation.py
 # =============================================================================
@@ -229,6 +233,44 @@ class _BaseConfigDefaults:
     RETRIES = FlextConstants.Defaults.MAX_RETRIES
     PAGE_SIZE = FlextConstants.Defaults.PAGE_SIZE
 
+    @staticmethod
+    def apply_defaults(
+        config: Mapping[str, object], defaults: Mapping[str, object]
+    ) -> FlextResult[dict[str, object]]:
+        """Apply default values to configuration."""
+        try:
+            # Merge defaults with config, config values take precedence
+            result_config = {**dict(defaults), **dict(config)}
+            return FlextResult.ok(result_config)
+        except Exception as e:
+            return FlextResult.fail(f"Failed to apply defaults: {e}")
+
+    @staticmethod
+    def filter_config_keys(
+        config: Mapping[str, object], allowed_keys: list[str]
+    ) -> FlextResult[dict[str, object]]:
+        """Filter configuration to only include allowed keys."""
+        try:
+            filtered = {k: v for k, v in dict(config).items() if k in allowed_keys}
+            return FlextResult.ok(filtered)
+        except Exception as e:
+            return FlextResult.fail(f"Failed to filter config keys: {e}")
+
+    @staticmethod
+    def merge_configs(*configs: Mapping[str, object]) -> FlextResult[dict[str, object]]:
+        """Merge multiple configuration dictionaries."""
+        try:
+            if not configs:
+                return FlextResult.ok({})
+
+            # Merge all configs, later ones override earlier ones
+            merged: dict[str, object] = {}
+            for config in configs:
+                merged.update(dict(config))
+            return FlextResult.ok(merged)
+        except Exception as e:
+            return FlextResult.fail(f"Failed to merge configs: {e}")
+
 
 # Legacy config validation
 class _BaseConfigValidation:
@@ -238,7 +280,7 @@ class _BaseConfigValidation:
     def validate_config(config: dict[str, object]) -> FlextResult[bool]:
         """Legacy validation function."""
         if config:
-            return FlextResult.ok(data=True)
+            return FlextResult.ok(True)  # noqa: FBT003
         return FlextResult.fail("Configuration is empty")
 
     @staticmethod
@@ -250,12 +292,14 @@ class _BaseConfigValidation:
         """Legacy type validation function."""
         try:
             if isinstance(value, expected_type):
-                return FlextResult.ok(data=True)
-            return FlextResult.fail(
+                return FlextResult[bool].ok(True)  # noqa: FBT003
+            return FlextResult[bool].fail(
                 f"Configuration '{key_name}' must be {expected_type.__name__}, got {type(value).__name__}",
             )
         except Exception as e:
-            return FlextResult.fail(f"Type validation error for '{key_name}': {e}")
+            return FlextResult[bool].fail(
+                f"Type validation error for '{key_name}': {e}"
+            )
 
     @staticmethod
     def validate_config_value(
@@ -266,13 +310,13 @@ class _BaseConfigValidation:
         """Legacy value validation function."""
         try:
             if not callable(validator):
-                return FlextResult.fail("Validator must be callable")
+                return FlextResult[bool].fail("Validator must be callable")
 
             if validator(value):
-                return FlextResult.ok(data=True)
-            return FlextResult.fail(error_message)
+                return FlextResult[bool].ok(True)  # noqa: FBT003
+            return FlextResult[bool].fail(error_message)
         except Exception as e:
-            return FlextResult.fail(f"Validation error: {e}")
+            return FlextResult[bool].fail(f"Validation error: {e}")
 
     @staticmethod
     def validate_config_range(
@@ -284,16 +328,18 @@ class _BaseConfigValidation:
         """Legacy range validation function."""
         try:
             if min_value is not None and value < min_value:
-                return FlextResult.fail(
+                return FlextResult[bool].fail(
                     f"Configuration '{key_name}' must be >= {min_value}, got {value}",
                 )
             if max_value is not None and value > max_value:
-                return FlextResult.fail(
+                return FlextResult[bool].fail(
                     f"Configuration '{key_name}' must be <= {max_value}, got {value}",
                 )
-            return FlextResult.ok(data=True)
+            return FlextResult[bool].ok(True)  # noqa: FBT003
         except Exception as e:
-            return FlextResult.fail(f"Range validation error for '{key_name}': {e}")
+            return FlextResult[bool].fail(
+                f"Range validation error for '{key_name}': {e}"
+            )
 
 
 # Legacy performance config
@@ -352,6 +398,7 @@ __all__: list[str] = [
     "NoOpTracer",
     "SimpleAlerts",
     "_BaseConfigDefaults",
+    "_BaseConfigOps",
     "_BaseConfigValidation",
     "_PerformanceConfig",
     "check_python_compatibility",

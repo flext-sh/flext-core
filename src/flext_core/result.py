@@ -4,14 +4,12 @@ from __future__ import annotations
 
 import contextlib
 from collections.abc import Callable
-from typing import TypeVar, cast
+from typing import cast
 
 from flext_core.constants import ERROR_CODES
 from flext_core.exceptions import FlextOperationError
 from flext_core.loggings import FlextLoggerFactory
-
-T = TypeVar("T")
-
+from flext_core.typings import U
 
 # =============================================================================
 # FLEXT RESULT - Simple implementation
@@ -143,8 +141,13 @@ class FlextResult[T]:
         """Get error metadata."""
         return self._error_data
 
+    @property
+    def metadata(self) -> dict[str, object]:
+        """Get metadata - alias for error_data for command result compatibility."""
+        return self._error_data
+
     @classmethod
-    def ok(cls, data: T) -> FlextResult[T]:
+    def ok(cls: type[FlextResult[T]], data: T, /) -> FlextResult[T]:
         """Create a successful FlextResult containing the provided data.
 
         Factory method for creating successful results. This is the preferred way
@@ -171,8 +174,9 @@ class FlextResult[T]:
 
     @classmethod
     def failure(
-        cls,
+        cls: type[FlextResult[T]],
         error: str,
+        /,
         *,
         error_code: str | None = None,
         error_data: dict[str, object] | None = None,
@@ -182,8 +186,10 @@ class FlextResult[T]:
 
     @classmethod
     def fail(
-        cls,
+        cls: type[FlextResult[T]],
         error: str,
+        /,
+        *,
         error_code: str | None = None,
         error_data: dict[str, object] | None = None,
     ) -> FlextResult[T]:
@@ -215,6 +221,8 @@ class FlextResult[T]:
         actual_error = error.strip() if error else ""
         if not actual_error:
             actual_error = "Unknown error occurred"
+
+        # Create a new instance with the correct type annotation
         return cls(error=actual_error, error_code=error_code, error_data=error_data)
 
     # Operations expected by tests
@@ -225,13 +233,13 @@ class FlextResult[T]:
         If no results are provided, returns success with an empty list.
         """
         if not results:
-            return FlextResult.ok([])
+            return FlextResult[list[object]].ok([])
         aggregated: list[object] = []
         for res in results:
             if res.is_failure:
-                return FlextResult.fail(res.error or "error")
+                return FlextResult[list[object]].fail(res.error or "error")
             aggregated.append(res.data)
-        return FlextResult.ok(aggregated)
+        return FlextResult[list[object]].ok(aggregated)
 
     def unwrap(self) -> T:
         """Extract value or raise exception.
@@ -263,7 +271,7 @@ class FlextResult[T]:
         # Type system guarantees that for success results, _data is of type T
         return cast("T", self._data)
 
-    def map[U](self, func: Callable[[T], U]) -> FlextResult[U]:
+    def map(self, func: Callable[[T], U]) -> FlextResult[U]:
         """Transform success value with function.
 
         Args:
@@ -274,35 +282,34 @@ class FlextResult[T]:
 
         """
         if self.is_failure:
-            return FlextResult.fail(
-                self._error or "Unknown",
-                self._error_code,
-                self._error_data,
+            # Type-safe error propagation
+            new_result: FlextResult[U] = FlextResult(
+                error=self._error,
+                error_code=self._error_code,
+                error_data=self._error_data,
             )
+            return new_result
         try:
-            # Apply function to data, even if it's None
-            # is a valid value for successful results
-            # Type system guarantees that for success results, _data is of type T
             # Apply function to data - type system guarantees _data is T for success
             # Cast is safe here because for successful results, _data must be T
             result = func(cast("T", self._data))
-            return FlextResult.ok(result)
+            return FlextResult[U](data=result)
         except (ValueError, TypeError, AttributeError) as e:
             # Handle specific transformation exceptions
-            return FlextResult.fail(
-                f"Transformation error: {e}",
+            return FlextResult[U](
+                error=f"Transformation error: {e}",
                 error_code=ERROR_CODES["EXCEPTION_ERROR"],
                 error_data={"exception_type": type(e).__name__, "exception": str(e)},
             )
         except Exception as e:
             # Use FLEXT Core structured error handling for all other exceptions
-            return FlextResult.fail(
-                f"Transformation failed: {e}",
+            return FlextResult[U](
+                error=f"Transformation failed: {e}",
                 error_code=ERROR_CODES["MAP_ERROR"],
                 error_data={"exception_type": type(e).__name__, "exception": str(e)},
             )
 
-    def flat_map[U](self, func: Callable[[T], FlextResult[U]]) -> FlextResult[U]:
+    def flat_map(self, func: Callable[[T], FlextResult[U]]) -> FlextResult[U]:
         """Chain operations that return results.
 
         Args:
@@ -313,27 +320,28 @@ class FlextResult[T]:
 
         """
         if self.is_failure:
-            return FlextResult.fail(
-                self._error or "Unknown",
-                self._error_code,
-                self._error_data,
+            # Type-safe error propagation
+            new_result: FlextResult[U] = FlextResult(
+                error=self._error,
+                error_code=self._error_code,
+                error_data=self._error_data,
             )
+            return new_result
         try:
             # Apply function to data, even if it's None
-            #  is a valid value for successful result
             # Type system guarantees that for success results, _data is of type T
             return func(cast("T", self._data))
         except (TypeError, ValueError, AttributeError, IndexError, KeyError) as e:
             # Use FLEXT Core structured error handling
-            return FlextResult.fail(
-                f"Chained operation failed: {e}",
+            return FlextResult[U](
+                error=f"Chained operation failed: {e}",
                 error_code=ERROR_CODES["BIND_ERROR"],
                 error_data={"exception_type": type(e).__name__, "exception": str(e)},
             )
         except Exception as e:
             # Handle any other unexpected exceptions
-            return FlextResult.fail(
-                f"Unexpected chaining error: {e}",
+            return FlextResult[U](
+                error=f"Unexpected chaining error: {e}",
                 error_code=ERROR_CODES["CHAIN_ERROR"],
                 error_data={"exception_type": type(e).__name__, "exception": str(e)},
             )
@@ -344,7 +352,7 @@ class FlextResult[T]:
 
     # Boolean methods as callables removed - use properties instead
 
-    def unwrap_or[U](self, default: U) -> T | U:
+    def unwrap_or(self, default: U) -> T | U:
         """Get data or return default if failure."""
         if self.is_failure:
             return default
@@ -354,11 +362,13 @@ class FlextResult[T]:
         """Check equality with another result."""
         if not isinstance(other, FlextResult):
             return False
+        # After isinstance check, other is FlextResult - cast to match generic types
+        other_result = cast("FlextResult[object]", other)
         return (
-            self._data == other._data
-            and self._error == other._error
-            and self._error_code == other._error_code
-            and self._error_data == other._error_data
+            self._data == other_result._data
+            and self._error == other_result._error
+            and self._error_code == other_result._error_code
+            and self._error_data == other_result._error_data
         )
 
     def __hash__(self) -> int:
@@ -417,7 +427,7 @@ class FlextResult[T]:
         try:
             return func()
         except (TypeError, ValueError, AttributeError) as e:
-            return FlextResult.fail(str(e))
+            return FlextResult[T].fail(str(e))
 
     def recover(self, func: Callable[[str], T]) -> FlextResult[T]:
         """Recover from failure by applying func to error."""
@@ -426,10 +436,10 @@ class FlextResult[T]:
         try:
             if self._error is not None:
                 recovered_data = func(self._error)
-                return FlextResult.ok(recovered_data)
-            return FlextResult.fail("No error to recover from")
+                return FlextResult[T].ok(recovered_data)
+            return FlextResult[T].fail("No error to recover from")
         except (TypeError, ValueError, AttributeError) as e:
-            return FlextResult.fail(str(e))
+            return FlextResult[T].fail(str(e))
 
     def recover_with(self, func: Callable[[str], FlextResult[T]]) -> FlextResult[T]:
         """Recover from failure by applying func to error, returning FlextResult."""
@@ -438,9 +448,9 @@ class FlextResult[T]:
         try:
             if self._error is not None:
                 return func(self._error)
-            return FlextResult.fail("No error to recover from")
+            return FlextResult[T].fail("No error to recover from")
         except (TypeError, ValueError, AttributeError) as e:
-            return FlextResult.fail(str(e))
+            return FlextResult[T].fail(str(e))
 
     def tap(self, func: Callable[[T], None]) -> FlextResult[T]:
         """Execute side effect function on success with non-None data, return self."""
@@ -467,9 +477,9 @@ class FlextResult[T]:
         try:
             if predicate(cast("T", self._data)):
                 return self
-            return FlextResult.fail(error_msg)
+            return FlextResult[T].fail(error_msg)
         except (TypeError, ValueError, AttributeError) as e:
-            return FlextResult.fail(str(e))
+            return FlextResult[T].fail(str(e))
 
     def zip_with[U](
         self,
@@ -478,19 +488,19 @@ class FlextResult[T]:
     ) -> FlextResult[object]:
         """Combine two results with a function."""
         if self.is_failure:
-            return FlextResult.fail(self._error or "First result failed")
+            return FlextResult[object].fail(self._error or "First result failed")
         if other.is_failure:
-            return FlextResult.fail(other._error or "Second result failed")
+            return FlextResult[object].fail(other._error or "Second result failed")
 
         # Check for None data - treat as missing data
         if self._data is None or other._data is None:
-            return FlextResult.fail("Missing data for zip operation")
+            return FlextResult[object].fail("Missing data for zip operation")
 
         try:
             result = func(self._data, other._data)
-            return FlextResult.ok(result)
+            return FlextResult[object].ok(result)
         except (TypeError, ValueError, AttributeError, ZeroDivisionError) as e:
-            return FlextResult.fail(str(e))
+            return FlextResult[object].fail(str(e))
 
     def to_either(self) -> tuple[T | None, str | None]:
         """Convert a result to either tuple (data, error)."""
@@ -506,13 +516,13 @@ class FlextResult[T]:
         error_msg = self._error or "Result failed"
         return FlextOperationError(error_msg, code=ERROR_CODES["OPERATION_ERROR"])
 
-    @staticmethod
-    def from_exception(func: Callable[[], T]) -> FlextResult[T]:
+    @classmethod
+    def from_exception(cls, func: Callable[[], T]) -> FlextResult[T]:
         """Create a result from a function that might raise exception."""
         try:
-            return FlextResult.ok(func())
+            return cls.ok(func())
         except (TypeError, ValueError, AttributeError) as e:
-            return FlextResult.fail(str(e))
+            return cls.fail(str(e))
 
     @staticmethod
     def combine(*results: FlextResult[object]) -> FlextResult[list[object]]:
@@ -520,10 +530,10 @@ class FlextResult[T]:
         data: list[object] = []
         for result in results:
             if result.is_failure:
-                return FlextResult.fail(result.error or "Combine failed")
+                return FlextResult[list[object]].fail(result.error or "Combine failed")
             if result.data is not None:
                 data.append(result.data)
-        return FlextResult.ok(data)
+        return FlextResult[list[object]].ok(data)
 
     @staticmethod
     def all_success(*results: FlextResult[object]) -> bool:
@@ -551,8 +561,8 @@ class FlextResult[T]:
         """
         return any(result.is_success for result in results)
 
-    @staticmethod
-    def first_success(*results: FlextResult[T]) -> FlextResult[T]:
+    @classmethod
+    def first_success(cls, *results: FlextResult[T]) -> FlextResult[T]:
         """Return the first successful result.
 
         Args:
@@ -567,10 +577,10 @@ class FlextResult[T]:
             if result.is_success:
                 return result
             last_error = result.error or "Unknown error"
-        return FlextResult.fail(last_error)
+        return cls.fail(last_error)
 
-    @staticmethod
-    def try_all(*funcs: Callable[[], T]) -> FlextResult[T]:
+    @classmethod
+    def try_all(cls, *funcs: Callable[[], T]) -> FlextResult[T]:
         """Try functions until one succeeds.
 
         Args:
@@ -581,11 +591,11 @@ class FlextResult[T]:
 
         """
         if not funcs:
-            return FlextResult.fail("No functions provided")
+            return cls.fail("No functions provided")
         last_error = "All functions failed"
         for func in funcs:
             try:
-                return FlextResult.ok(func())
+                return cls.ok(func())
             except (
                 TypeError,
                 ValueError,
@@ -595,7 +605,7 @@ class FlextResult[T]:
             ) as e:
                 last_error = str(e)
                 continue
-        return FlextResult.fail(last_error)
+        return cls.fail(last_error)
 
 
 # =============================================================================
@@ -646,9 +656,34 @@ def safe_call[T](func: Callable[[], T]) -> FlextResult[T]:
 
     """
     try:
-        return FlextResult.ok(func())
+        return FlextResult[T].ok(func())
     except Exception as e:
-        return FlextResult.fail(str(e))
+        return FlextResult[T].fail(str(e))
+
+
+def ok_result[TResultLocal](data: TResultLocal) -> FlextResult[TResultLocal]:  # noqa: UP047
+    """Typed helper that wraps FlextResult.ok.
+
+    Use this when passing literals or values whose element types are not
+    easily inferred by the analyzer from a classmethod call.
+    """
+    return FlextResult[TResultLocal].ok(data)
+
+
+def fail_result(
+    error: str,
+    error_code: str | None = None,
+    error_data: dict[str, object] | None = None,
+) -> FlextResult[object]:
+    """Typed helper that wraps FlextResult.fail.
+
+    Returns a FlextResult with an unconstrained generic parameter. Static
+    callers can annotate or cast the returned value when a concrete T is
+    required.
+    """
+    return FlextResult[object](
+        error=error, error_code=error_code, error_data=error_data
+    )
 
 
 # Backward compatibility alias

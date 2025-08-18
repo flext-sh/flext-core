@@ -163,7 +163,7 @@ def process_entity(
 ```python
 # ❌ PROHIBITED
 # file: base_handlers.py
-from flext_core.handlers import FlextHandler
+from flext_core.handlers import FlextMessageHandler
 
 # file: handlers.py
 from flext_core.base_handlers import FlextBaseHandler

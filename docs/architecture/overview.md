@@ -136,7 +136,7 @@ Use case orchestration and application services:
 **CQRS Pattern Example:**
 
 ```python
-from flext_core import FlextCommand, FlextHandler, FlextResult
+from flext_core import FlextCommand, FlextMessageHandler, FlextResult
 
 class TransferMoneyCommand(FlextCommand):
     """Command - represents intent to change state."""
@@ -145,7 +145,7 @@ class TransferMoneyCommand(FlextCommand):
     amount: Decimal
     currency: str
 
-class TransferMoneyHandler(FlextHandler[TransferMoneyCommand, None]):
+class TransferMoneyHandler(FlextMessageHandler[TransferMoneyCommand, None]):
     """Handler - executes business logic."""
 
     def __init__(self, repository, event_bus):

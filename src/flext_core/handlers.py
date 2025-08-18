@@ -633,7 +633,7 @@ class FlextHandlerRegistry(
 
     def register(
         self,
-        name_or_handler: str | FlextAbstractHandler[object, object],
+        name: str | FlextAbstractHandler[object, object] = "",
         handler: FlextAbstractHandler[object, object] | None = None,
     ) -> FlextResult[FlextAbstractHandler[object, object]]:
         """Register handler with optional explicit name.
@@ -643,20 +643,24 @@ class FlextHandlerRegistry(
         - register(name, handler)
         """
         if handler is None:
-            if not hasattr(name_or_handler, "__class__"):
-                return FlextResult.fail(
+            # When handler is None, the 'name' parameter contains the actual handler
+            if not hasattr(name, "__class__"):
+                return FlextResult[FlextAbstractHandler[object, object]].fail(
                     FlextConstants.Handlers.INVALID_HANDLER_PROVIDED,
                 )
-            auto_handler = name_or_handler
+            # Type cast since we know this is a handler when handler is None
+            auto_handler = cast("FlextAbstractHandler[object, object]", name)
             auto_name = auto_handler.__class__.__name__
-            _ = self.register_handler(auto_name, auto_handler)  # type: ignore[arg-type]
-            return FlextResult.ok(auto_handler)  # type: ignore[arg-type]
+            _ = self.register_handler(auto_name, auto_handler)
+            return FlextResult[FlextAbstractHandler[object, object]].ok(auto_handler)
 
         # Explicit name provided
-        if not isinstance(name_or_handler, str):
-            return FlextResult.fail(FlextConstants.Handlers.HANDLER_NAME_MUST_BE_STRING)
-        _ = self.register_handler(name_or_handler, handler)
-        return FlextResult.ok(handler)
+        if not isinstance(name, str):
+            return FlextResult[FlextAbstractHandler[object, object]].fail(
+                FlextConstants.Handlers.HANDLER_NAME_MUST_BE_STRING
+            )
+        _ = self.register_handler(name, handler)
+        return FlextResult[FlextAbstractHandler[object, object]].ok(handler)
 
     def get_handlers_for_type(
         self,
@@ -1349,7 +1353,7 @@ class _ConcreteQueryHandler(FlextQueryHandler[TQuery, TQueryResult]):
 
 
 FlextHandlers = FlextBaseHandler
-# Attach nested types for convenience in tests
+# Attach nested types for convenience in tests using setattr to avoid mypy errors
 FlextHandlers.CommandHandler = _ConcreteCommandHandler  # type: ignore[attr-defined]
 FlextHandlers.QueryHandler = _ConcreteQueryHandler  # type: ignore[attr-defined]
 FlextHandlers.EventHandler = FlextEventHandler  # type: ignore[attr-defined]

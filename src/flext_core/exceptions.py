@@ -1,4 +1,8 @@
-"""Exception hierarchy for FLEXT ecosystem using modern Pydantic patterns."""
+"""FLEXT exception hierarchy and error handling.
+
+This module provides a comprehensive exception hierarchy for the FLEXT ecosystem,
+including error codes, context tracking, and correlation ID management.
+"""
 
 from __future__ import annotations
 
@@ -9,6 +13,8 @@ from abc import ABC, abstractmethod
 from collections.abc import Mapping
 from enum import Enum, StrEnum
 from typing import ClassVar, Self, cast
+
+from flext_core.constants import ERROR_CODES
 
 # Module-level logger (avoid using root logger)
 logger = logging.getLogger(__name__)
@@ -106,6 +112,20 @@ class FlextErrorMixin:
             code_str = FlextErrorCodes.GENERIC_ERROR.value
         else:
             code_str = str(resolved_code)
+
+        # Check if we need to map to the ERROR_CODES format for consistency
+        # ERROR_CODES is now imported at the top of the file
+
+        # Try to map enum names to ERROR_CODES values
+        if code_str.startswith("FLEXT_") and code_str.endswith("_ERROR"):
+            # Extract the key name from enum value (e.g., "FLEXT_GENERIC_ERROR" -> "GENERIC_ERROR")
+            key_name = code_str.replace("FLEXT_", "").replace("_ERROR", "")
+            if key_name in ERROR_CODES:
+                code_str = ERROR_CODES[key_name]
+        elif code_str == "FLEXT_GENERIC_ERROR":
+            # Special case for GENERIC_ERROR mapping
+            code_str = ERROR_CODES.get("GENERIC_ERROR", code_str)
+
         # Store normalized string code for universal compatibility
         self.code = code_str
         self.context = dict(context or {})

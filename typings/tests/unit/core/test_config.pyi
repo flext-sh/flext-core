@@ -1,4 +1,5 @@
 from collections.abc import Generator
+from typing import ClassVar
 
 import pytest
 from _typeshed import Incomplete
@@ -48,7 +49,7 @@ class TestFlextConfig(FlextConfig):
     ) -> FlextResult[dict[str, object]]: ...
 
 class TestFlextSettings(FlextSettings):
-    model_config: Incomplete
+    model_config: ClassVar[Incomplete]
     test_var: str | None
     from_env: str | None
 

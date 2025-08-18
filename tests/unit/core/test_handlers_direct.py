@@ -130,7 +130,7 @@ class TestHandlersModuleDirect:
         assert handler2 is not None
 
         # Test basic functionality using fail-by-default since not implemented
-        result = handler2.pre_handle("test query")  # type: ignore[attr-defined]
+        result = handler2.pre_handle("test query")
         assert isinstance(result, FlextResult)
 
     def test_all_handler_classes_exist(self) -> None:

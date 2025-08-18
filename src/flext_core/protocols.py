@@ -5,18 +5,10 @@ from __future__ import annotations
 from abc import abstractmethod
 from collections.abc import Awaitable, Callable, Iterator
 from pathlib import Path
-from typing import Generic, Protocol, TypeVar, runtime_checkable
+from typing import Generic, Protocol, runtime_checkable
 
 from flext_core.result import FlextResult
-
-T = TypeVar("T")
-
-# =============================================================================
-# TYPE ALIASES - Service factory types
-# =============================================================================
-
-type FlextServiceFactory = Callable[[], object]
-type FlextHandler = FlextMessageHandler
+from flext_core.typings import T, TAnyDict, TFactory
 
 # =============================================================================
 # CORE ECOSYSTEM PROTOCOLS - Layer 1 foundational protocols
@@ -48,20 +40,20 @@ class FlextAuthProtocol(Protocol):
 
     def authenticate(
         self,
-        credentials: dict[str, object],
-    ) -> FlextResult[dict[str, object]]:
+        credentials: TAnyDict,
+    ) -> FlextResult[TAnyDict]:
         """Authenticate user with provided credentials."""
         ...
 
     def authorize(
         self,
-        user_info: dict[str, object],
+        user_info: TAnyDict,
         resource: str,
     ) -> FlextResult[bool]:
         """Authorize user access to resource."""
         ...
 
-    def refresh_token(self, refresh_token: str) -> FlextResult[dict[str, object]]:
+    def refresh_token(self, refresh_token: str) -> FlextResult[TAnyDict]:
         """Refresh authentication token."""
         ...
 
@@ -83,7 +75,7 @@ class FlextObservabilityProtocol(Protocol):
         """Start distributed trace."""
         ...
 
-    def health_check(self) -> FlextResult[dict[str, object]]:
+    def health_check(self) -> FlextResult[TAnyDict]:
         """Perform health check."""
         ...
 
@@ -143,7 +135,7 @@ class FlextService(Protocol):
         ...
 
     @abstractmethod
-    def health_check(self) -> FlextResult[dict[str, object]]:
+    def health_check(self) -> FlextResult[TAnyDict]:
         """Perform health check."""
         ...
 
@@ -253,7 +245,7 @@ class FlextMetricsCollector(Protocol):
 # =============================================================================
 
 
-type FlextDecoratedFunction = Callable[..., object]  # type: ignore[explicit-any]
+FlextDecoratedFunction = Callable[..., object]  # type: ignore[explicit-any]
 
 
 # =============================================================================
@@ -698,7 +690,7 @@ class FlextAsyncService(Protocol):
         """Stop service asynchronously."""
         ...
 
-    async def health_check_async(self) -> FlextResult[dict[str, object]]:
+    async def health_check_async(self) -> FlextResult[TAnyDict]:
         """Perform async health check."""
         ...
 
@@ -778,8 +770,8 @@ __all__: list[str] = [
     "FlextEventStreamReader",
     "FlextEventSubscriber",
     "FlextFactory",
-    "FlextHandler",
     "FlextLoggerProtocol",
+    "FlextMessageHandler",
     "FlextMessageHandler",
     "FlextMetricsCollector",
     "FlextMetricsProtocol",
@@ -792,11 +784,11 @@ __all__: list[str] = [
     "FlextProjectionBuilder",
     "FlextRepository",
     "FlextService",
-    "FlextServiceFactory",
     "FlextSpanProtocol",
     "FlextTracerProtocol",
     "FlextUnitOfWork",
     "FlextValidatingHandler",
     "FlextValidationRule",
     "FlextValidator",
+    "TFactory",
 ]

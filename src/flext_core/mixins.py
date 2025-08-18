@@ -6,14 +6,35 @@ import json
 import time
 from abc import ABC, abstractmethod
 from contextlib import suppress
+from typing import Protocol, cast, runtime_checkable
 
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextValidationError
 from flext_core.loggings import FlextLoggerFactory
 from flext_core.protocols import FlextLoggerProtocol
 from flext_core.result import FlextResult
-from flext_core.typings import TEntityId
+from flext_core.typings import (
+    TAnyDict,
+    TEntityId,
+)
 from flext_core.utilities import FlextGenerators
+
+
+@runtime_checkable
+class HasToDictBasic(Protocol):
+    """Runtime-checkable protocol for objects exposing to_dict_basic."""
+
+    def to_dict_basic(self) -> TAnyDict:  # pragma: no cover - typing helper
+        ...
+
+
+@runtime_checkable
+class HasToDict(Protocol):
+    """Runtime-checkable protocol for objects exposing to_dict."""
+
+    def to_dict(self) -> TAnyDict:  # pragma: no cover - typing helper
+        ...
+
 
 # =============================================================================
 # ABSTRACT BASE CLASSES - Foundation mixin patterns
@@ -165,12 +186,12 @@ class FlextAbstractSerializableMixin(FlextAbstractMixin):
     """Abstract serializable mixin for entity serialization."""
 
     @abstractmethod
-    def to_dict(self) -> dict[str, object]:
+    def to_dict(self) -> TAnyDict:
         """Convert to dictionary - must be implemented by subclasses."""
         ...
 
     @abstractmethod
-    def load_from_dict(self, data: dict[str, object]) -> None:
+    def load_from_dict(self, data: TAnyDict) -> None:
         """Load from dictionary - must be implemented by subclasses."""
         ...
 
@@ -504,8 +525,8 @@ class FlextValidatableMixin(FlextAbstractValidatableMixin):
         """Validate entity - implements abstract method."""
         # Basic validation - can be overridden
         if not self.is_valid:
-            return FlextResult.fail("Entity validation failed")
-        return FlextResult.ok(None)
+            return FlextResult[None].fail("Entity validation failed")
+        return FlextResult[None].ok(None)
 
     @property
     def is_valid(self) -> bool:
@@ -553,9 +574,9 @@ class FlextSerializableMixin(FlextAbstractSerializableMixin):
     Provides JSON serialization capability following SOLID principles.
     """
 
-    def to_dict(self) -> dict[str, object]:
+    def to_dict(self) -> TAnyDict:
         """Convert to dictionary - implements abstract method."""
-        result: dict[str, object] = {}
+        result: TAnyDict = {}
         for key, value in self.__dict__.items():
             if key.startswith("_"):
                 continue
@@ -575,16 +596,15 @@ class FlextSerializableMixin(FlextAbstractSerializableMixin):
         self,
         key: str,
         value: object,
-        out: dict[str, object],
+        out: TAnyDict,
     ) -> bool:
         """Attempt to serialize via to_dict_basic when available."""
-        if hasattr(value, "to_dict_basic") and callable(value.to_dict_basic):
+        if isinstance(value, HasToDictBasic):
             try:
                 basic = value.to_dict_basic()
-                if isinstance(basic, dict):
-                    out[key] = basic
-                    return True
-            except Exception:  # noqa: BLE001
+                out[key] = basic
+                return True
+            except Exception:  # noqa: BLE001 - preserve behavior on runtime errors
                 return False
         return False
 
@@ -592,16 +612,15 @@ class FlextSerializableMixin(FlextAbstractSerializableMixin):
         self,
         key: str,
         value: object,
-        out: dict[str, object],
+        out: TAnyDict,
     ) -> bool:
         """Attempt to serialize via to_dict when available."""
-        if hasattr(value, "to_dict") and callable(value.to_dict):
+        if isinstance(value, HasToDict):
             try:
                 serialized = value.to_dict()
-                if isinstance(serialized, dict):
-                    out[key] = serialized
-                    return True
-            except Exception:  # noqa: BLE001
+                out[key] = serialized
+                return True
+            except Exception:  # noqa: BLE001 - preserve behavior on runtime errors
                 return False
         return False
 
@@ -609,22 +628,21 @@ class FlextSerializableMixin(FlextAbstractSerializableMixin):
         self,
         key: str,
         value: object,
-        out: dict[str, object],
+        out: TAnyDict,
     ) -> bool:
         """Attempt to serialize a list, preserving original items when needed."""
         if not isinstance(value, list):
             return False
         serialized_list: list[object] = []
-        for item in value:
-            if hasattr(item, "to_dict_basic") and callable(item.to_dict_basic):
+        # value is already a list; cast for static checkers
+        items: list[object] = list(cast("list[object]", value))
+        for item in items:
+            if isinstance(item, HasToDictBasic):
                 try:
                     basic_item = item.to_dict_basic()
-                    serialized_list.append(
-                        basic_item if isinstance(basic_item, dict) else item,
-                    )
+                    serialized_list.append(basic_item)
                     continue
-                except Exception:  # noqa: BLE001
-                    # Skip serialization error and keep original item
+                except Exception:  # noqa: BLE001 - preserve behavior on runtime errors
                     serialized_list.append(item)
                     continue
             serialized_list.append(item)
@@ -635,11 +653,11 @@ class FlextSerializableMixin(FlextAbstractSerializableMixin):
         """Convert to JSON string."""
         return json.dumps(self.to_dict(), default=str)
 
-    def to_dict_basic(self) -> dict[str, object]:
+    def to_dict_basic(self) -> TAnyDict:
         """Alias for to_dict for convenience."""
         return self.to_dict()
 
-    def load_from_dict(self, data: dict[str, object]) -> None:
+    def load_from_dict(self, data: TAnyDict) -> None:
         """Load from dictionary - implements abstract method."""
         for key, value in data.items():
             if hasattr(self, key):
@@ -662,14 +680,15 @@ class FlextComparableMixin:
         """Check equality."""
         if not isinstance(other, self.__class__):
             return False
-        if hasattr(self, "to_dict") and hasattr(other, "to_dict"):
+        if isinstance(self, HasToDict) and isinstance(other, HasToDict):
             return bool(self.to_dict() == other.to_dict())
         return bool(self.__dict__ == other.__dict__)
 
     def __hash__(self) -> int:
         """Generate hash."""
-        if hasattr(self, "id"):
-            return hash(self.id)
+        id_attr = getattr(self, "id", None)
+        if isinstance(id_attr, str):
+            return hash(id_attr)
         return hash(str(self.__dict__))
 
     # Rich comparison operators for ordering in tests
@@ -684,9 +703,13 @@ class FlextComparableMixin:
         """Compare two instances using basic dict representations."""
         if not isinstance(other, self.__class__):
             return -1
-        left = self.to_dict_basic() if hasattr(self, "to_dict_basic") else self.__dict__
+        left = (
+            self.to_dict_basic() if isinstance(self, HasToDictBasic) else self.__dict__
+        )
         right = (
-            other.to_dict_basic() if hasattr(other, "to_dict_basic") else other.__dict__
+            other.to_dict_basic()
+            if isinstance(other, HasToDictBasic)
+            else other.__dict__
         )
         left_s = str(left)
         right_s = str(right)
@@ -718,8 +741,9 @@ class FlextCacheableMixin:
 
     def get_cache_key(self) -> str:
         """Generate cache key."""
-        if hasattr(self, "id"):
-            return f"{self.__class__.__name__}:{self.id}"
+        id_attr = getattr(self, "id", None)
+        if isinstance(id_attr, str) and id_attr:
+            return f"{self.__class__.__name__}:{id_attr}"
         return f"{self.__class__.__name__}:{hash(str(self.__dict__))}"
 
     def get_cache_ttl(self) -> int:
@@ -729,7 +753,7 @@ class FlextCacheableMixin:
     # Minimal in-memory cache utilities expected by tests
     def _ensure_cache(self) -> None:
         if not hasattr(self, "_cache_store"):
-            self._cache_store: dict[str, object] = {}
+            self._cache_store: TAnyDict = {}
 
     def cache_set(self, key: str, value: object) -> None:
         """Store a value in the local in-memory cache."""
@@ -805,16 +829,16 @@ class FlextServiceMixin(
         super().mixin_setup()
         # Provide id alias as service name for testing convenience
         service_name_value: str | None = None
-        if hasattr(self, "get_service_name") and callable(self.get_service_name):
+        get_service = getattr(self, "get_service_name", None)
+        if callable(get_service):
             with suppress(Exception):
-                candidate = self.get_service_name()
+                candidate = get_service()
                 if isinstance(candidate, str) and candidate:
                     service_name_value = candidate
-        if service_name_value is None and hasattr(self, "service_name"):
-            with suppress(Exception):
-                candidate_attr = self.service_name
-                if isinstance(candidate_attr, str) and candidate_attr:
-                    service_name_value = candidate_attr
+        if service_name_value is None:
+            candidate_attr = getattr(self, "service_name", None)
+            if isinstance(candidate_attr, str) and candidate_attr:
+                service_name_value = candidate_attr
         if service_name_value:
             with suppress(Exception):
                 self.id = service_name_value
@@ -849,7 +873,7 @@ class FlextDataMixin(
         left = self.to_dict_basic() if hasattr(self, "to_dict_basic") else self.__dict__
         right = (
             other.to_dict_basic()
-            if hasattr(other, "to_dict_basic")
+            if isinstance(other, HasToDictBasic)
             else getattr(other, "__dict__", {})
         )
         left_s = str(left)

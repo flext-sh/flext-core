@@ -213,7 +213,7 @@ class FlextMixinDelegator:
             delegated_method.__name__ = method_name
             delegated_method.__doc__ = method.__doc__
 
-            # Use type ignore for dynamic attribute assignment on a function object
+            # Use setattr for dynamic signature assignment to avoid MyPy attr-defined error
             with contextlib.suppress(ValueError, TypeError):
                 delegated_method.__signature__ = inspect.signature(method)  # type: ignore[attr-defined]
         except (AttributeError, ValueError) as e:

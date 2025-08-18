@@ -1,13 +1,15 @@
+from typing import ClassVar
+
 from _typeshed import Incomplete
 from pydantic import BaseModel
 
 from flext_core.mixins import FlextSerializableMixin
 from flext_core.result import FlextResult
 from flext_core.typings import (
-    FlextFieldId as FlextFieldId,
-    FlextFieldName as FlextFieldName,
-    FlextFieldTypeStr as FlextFieldTypeStr,
-    FlextValidator as FlextValidator,
+    FlextFieldId,
+    FlextFieldName,
+    FlextFieldTypeStr,
+    FlextValidator,
     TAnyDict,
     TFieldInfo,
     TFieldMetadata,
@@ -29,7 +31,7 @@ __all__ = [
 ]
 
 class FlextFieldCore(BaseModel, FlextSerializableMixin):
-    model_config: Incomplete
+    model_config: ClassVar[Incomplete]
     field_id: FlextFieldId
     field_name: FlextFieldName
     field_type: FlextFieldTypeStr
@@ -64,7 +66,7 @@ class FlextFieldCore(BaseModel, FlextSerializableMixin):
     def metadata(self) -> FlextFieldMetadata: ...
 
 class FlextFieldMetadata(BaseModel):
-    model_config: Incomplete
+    model_config: ClassVar[Incomplete]
     field_id: FlextFieldId
     field_name: FlextFieldName
     field_type: FlextFieldTypeStr
@@ -92,7 +94,7 @@ class FlextFieldMetadata(BaseModel):
     def from_dict(cls, data: TAnyDict) -> FlextFieldMetadata: ...
 
 class FlextFieldRegistry(BaseModel):
-    model_config: Incomplete
+    model_config: ClassVar[Incomplete]
     fields_dict: dict[FlextFieldId, FlextFieldCore]
     field_names_dict: dict[FlextFieldName, FlextFieldId]
     def register_field(self, field: FlextFieldCore) -> FlextResult[None]: ...

@@ -1,5 +1,6 @@
 from collections.abc import Callable as Callable
 from datetime import datetime
+from typing import ClassVar
 
 import pytest
 from _typeshed import Incomplete
@@ -13,7 +14,7 @@ EXPECTED_DATA_COUNT: int
 def create_test_entity(entity_class: type, **kwargs: object) -> object: ...
 
 class SampleDomainEvent(BaseModel):
-    model_config: Incomplete
+    model_config: ClassVar[Incomplete]
     aggregate_id: str
     event_type: str
     event_id: str

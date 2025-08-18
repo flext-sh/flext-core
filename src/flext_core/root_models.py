@@ -16,6 +16,8 @@ from __future__ import annotations
 from collections.abc import Iterator
 from datetime import UTC, datetime
 
+# Import types needed for type hints and factory functions
+# These will be re-imported properly below from their actual modules
 from pydantic import Field, RootModel, field_validator
 
 from flext_core.exceptions import FlextValidationError
@@ -24,7 +26,7 @@ from flext_core.result import FlextResult
 
 
 # Delayed import function to avoid circular imports
-def _get_flext_event_class() -> type[object]:
+def _get_flext_event_class() -> type[FlextEvent]:
     """Get FlextEvent class with delayed import to avoid circular dependencies."""
     return FlextEvent
 
@@ -222,6 +224,12 @@ class FlextEventList(RootModel[list[dict[str, object]]]):
 
     root: list[dict[str, object]] = Field(default_factory=list)
 
+    def __init__(self, root: list[dict[str, object]] | None = None) -> None:
+        """Initialize with optional internal event storage."""
+        super().__init__(root=root or [])
+        # Internal storage for FlextEvent objects - this satisfies MyPy
+        object.__setattr__(self, "_flext_events", [])
+
     def add_event(self, event_type: str, data: dict[str, object]) -> FlextEventList:
         """Add event and return new list."""
         new_events = self.root.copy()
@@ -232,7 +240,15 @@ class FlextEventList(RootModel[list[dict[str, object]]]):
                 "timestamp": datetime.now(UTC).isoformat(),
             },
         )
-        return FlextEventList(new_events)
+        new_list = FlextEventList(new_events)
+        # Copy existing FlextEvent objects
+        if hasattr(self, "_flext_events"):
+            object.__setattr__(
+                new_list,
+                "_flext_events",
+                getattr(self, "_flext_events", []).copy(),
+            )
+        return new_list
 
     def clear(self) -> tuple[FlextEventList, list[dict[str, object]]]:
         """Clear events and return new empty list plus cleared events."""
@@ -270,8 +286,8 @@ class FlextEventList(RootModel[list[dict[str, object]]]):
             # Create FlextEvent object using delayed import
             if isinstance(event_type, str) and isinstance(event_data, dict):
                 flext_event_cls = _get_flext_event_class()
-                # Type: ignore needed as dynamic import loses type info
-                event_result = flext_event_cls.create_event(  # type: ignore[attr-defined]
+                # Dynamic method call requires casting
+                event_result: FlextResult[FlextEvent] = flext_event_cls.create_event(
                     event_type=event_type,
                     event_data=event_data,
                     aggregate_id=str(aggregate_id) if aggregate_id else None,
@@ -283,9 +299,11 @@ class FlextEventList(RootModel[list[dict[str, object]]]):
 
         return event_dict
 
-    def __iter__(self) -> Iterator[dict[str, object]]:  # type: ignore[override]
-        """Iterate over events."""
-        return iter(self.root)
+    def __iter__(self) -> Iterator[tuple[str, object]]:  # type: ignore[override]
+        """Iterate over events - compatibility override."""
+        # Convert dict iteration to tuple pairs for compatibility
+        for event_dict in self.root:
+            yield from event_dict.items()
 
 
 # =============================================================================
@@ -413,33 +431,33 @@ class FlextErrorMessage(RootModel[str]):
 def create_entity_id(value: str) -> FlextResult[FlextEntityId]:
     """Create validated entity ID."""
     try:
-        return FlextResult.ok(FlextEntityId(value))
+        return FlextResult[FlextEntityId].ok(FlextEntityId(value))
     except Exception as e:
-        return FlextResult.fail(f"Invalid entity ID: {e}")
+        return FlextResult[FlextEntityId].fail(f"Invalid entity ID: {e}")
 
 
 def create_version(value: int) -> FlextResult[FlextVersion]:
     """Create validated version."""
     try:
-        return FlextResult.ok(FlextVersion(value))
+        return FlextResult[FlextVersion].ok(FlextVersion(value))
     except Exception as e:
-        return FlextResult.fail(f"Invalid version: {e}")
+        return FlextResult[FlextVersion].fail(f"Invalid version: {e}")
 
 
 def create_email(value: str) -> FlextResult[FlextEmailAddress]:
     """Create validated email address."""
     try:
-        return FlextResult.ok(FlextEmailAddress(value))
+        return FlextResult[FlextEmailAddress].ok(FlextEmailAddress(value))
     except Exception as e:
-        return FlextResult.fail(f"Invalid email address: {e}")
+        return FlextResult[FlextEmailAddress].fail(f"Invalid email address: {e}")
 
 
 def create_service_name(value: str) -> FlextResult[FlextServiceName]:
     """Create validated service name."""
     try:
-        return FlextResult.ok(FlextServiceName(value))
+        return FlextResult[FlextServiceName].ok(FlextServiceName(value))
     except Exception as e:
-        return FlextResult.fail(f"Invalid service name: {e}")
+        return FlextResult[FlextServiceName].fail(f"Invalid service name: {e}")
 
 
 def create_host_port(host: str, port: int) -> FlextResult[tuple[FlextHost, FlextPort]]:
@@ -447,9 +465,9 @@ def create_host_port(host: str, port: int) -> FlextResult[tuple[FlextHost, Flext
     try:
         host_obj = FlextHost(host)
         port_obj = FlextPort(port)
-        return FlextResult.ok((host_obj, port_obj))
+        return FlextResult[tuple[FlextHost, FlextPort]].ok((host_obj, port_obj))
     except Exception as e:
-        return FlextResult.fail(f"Invalid host/port: {e}")
+        return FlextResult[tuple[FlextHost, FlextPort]].fail(f"Invalid host/port: {e}")
 
 
 # =============================================================================

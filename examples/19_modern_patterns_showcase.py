@@ -534,7 +534,7 @@ def _create_and_register_customer(container: object) -> Customer | None:
     if not customer_result.success or customer_result.data is None:
         return None
     customer = customer_result.data
-    cast("object", container).register(f"customer_{customer.id}", customer)  # type: ignore[attr-defined]
+    cast("object", container).register(f"customer_{customer.id}", customer)
     return customer
 
 
@@ -548,7 +548,7 @@ def _create_and_register_products(container: object) -> None:
         product_result = create_product(name, price, stock, category)
         if product_result.success and product_result.data is not None:
             product = product_result.data
-            cast("object", container).register(key, product)  # type: ignore[attr-defined]
+            cast("object", container).register(key, product)
 
 
 def _select_first_available_product_id(
@@ -556,7 +556,7 @@ def _select_first_available_product_id(
     keys: list[str],
 ) -> str | None:
     for key in keys:
-        result = cast("object", container).get(key)  # type: ignore[attr-defined]
+        result = cast("object", container).get(key)
         if result.success and result.data is not None:
             product = cast("Product", result.data)
             return product.id

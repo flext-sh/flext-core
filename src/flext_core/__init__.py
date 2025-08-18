@@ -4,6 +4,12 @@ from __future__ import annotations
 
 from types import ModuleType as _ModuleType
 
+# Initialize public exports early so modules can safely extend/modify
+# this list before the full export table is built. Defining it here
+# prevents "used before definition" diagnostics from linters/type
+# checkers when other imports mutate `__all__` during module init.
+__all__: list[str] = []
+
 # =============================================================================
 # VERSION INFORMATION
 # =============================================================================
@@ -11,6 +17,14 @@ from flext_core.__version__ import (
     FlextCompatibilityResult,
     FlextVersionInfo,
     __version__,
+    check_python_compatibility,
+    compare_versions,
+    get_available_features,
+    get_version_info,
+    get_version_string,
+    get_version_tuple,
+    is_feature_available,
+    validate_version_format,
 )
 
 __version_info__ = tuple(int(x) for x in __version__.split(".") if x.isdigit())
@@ -23,7 +37,7 @@ __version_info__ = tuple(int(x) for x in __version__.split(".") if x.isdigit())
 # Provide abstract handler shims for top-level exports to satisfy tests that
 # assert abstractness while keeping flext_core.handlers module concrete for
 # direct-instantiation tests.
-from abc import ABC, abstractmethod as _abstractmethod
+# NOTE: Avoid TYPE_CHECKING usage here to keep Pydantic runtime stable.
 
 # Utilities - Back-compat module namespace for tests
 from flext_core import interfaces  # Back-compat module namespace for tests
@@ -84,20 +98,25 @@ from flext_core.constants import (
 BYTES_PER_KB = FlextConstants.Performance.BYTES_PER_KB
 SECONDS_PER_MINUTE = FlextConstants.Performance.SECONDS_PER_MINUTE
 SECONDS_PER_HOUR = FlextConstants.Performance.SECONDS_PER_HOUR
-from flext_core.container import (
-    FlextContainer,
-    FlextContainerUtils,
-    FlextGlobalContainerManager,
-    # Additional container classes and utilities
-    FlextServiceKey,
-    FlextServiceRegistrar,
-    FlextServiceRetriever,
-    configure_flext_container,
-    create_module_container_utilities,
-    get_flext_container,
-    get_typed,
-    register_typed,
-)
+
+
+# Bind the runtime objects via the module to avoid import-time cycles and
+# to keep a single runtime identity for the exported names.
+from flext_core import container as _container_module
+
+# Runtime aliases (direct attribute access is preferred over getattr with
+# constant attribute names; this keeps tools like Pylance happy.)
+FlextContainer = _container_module.FlextContainer
+FlextContainerUtils = _container_module.FlextContainerUtils
+FlextGlobalContainerManager = _container_module.FlextGlobalContainerManager
+FlextServiceKey = _container_module.FlextServiceKey
+FlextServiceRegistrar = _container_module.FlextServiceRegistrar
+FlextServiceRetriever = _container_module.FlextServiceRetriever
+configure_flext_container = _container_module.configure_flext_container
+create_module_container_utilities = _container_module.create_module_container_utilities
+get_flext_container = _container_module.get_flext_container
+get_typed = _container_module.get_typed
+register_typed = _container_module.register_typed
 
 # Context
 from flext_core.context import FlextContext
@@ -142,7 +161,6 @@ from flext_core.delegation_system import (
 from flext_core.domain_services import (
     FlextDomainService,
     OperationType,
-    TDomainResult,
 )
 
 # Exception handling
@@ -176,42 +194,38 @@ from flext_core.exceptions import (
     get_exception_metrics,
 )
 
-# Fields
+# Fields - Fixed imports using proper source
 from flext_core.fields import (
     FlextFieldCore,
-    FlextFieldCoreMetadata,
-    FlextFieldId,
     FlextFieldMetadata,
-    FlextFieldName,
     FlextFieldRegistry,
     FlextFields,
-    FlextFieldTypeStr,
-    FlextValidator,
     flext_create_boolean_field,
     flext_create_integer_field,
     flext_create_string_field,
 )
 
-# Guards
-from flext_core.guards import (
-    FlextGuards,
-    FlextValidatedModel,
-    FlextValidationUtils,
-    ValidatedModel,
-    immutable,
-    is_dict_of,
-    is_instance_of,
-    is_list_of,
-    make_builder,
-    make_factory,
-    pure,
-    require_in_range,
-    require_non_empty,
-    require_not_none,
-    require_positive,
-    safe,
-    validated,
+
+# Back-compat alias: expose FlextFieldCoreMetadata at module level
+FlextFieldCoreMetadata = FlextFieldMetadata
+
+# Import field types from fields module (now defined locally to avoid circular imports)
+from flext_core.typings import (
+    FlextFieldId,
+    FlextFieldName,
+    FlextFieldTypeStr,
 )
+
+# Protocols
+from flext_core.protocols import (
+    FlextValidator,
+)
+
+# Type-only imports were previously used here. Avoiding empty TYPE_CHECKING
+# import blocks because they cause syntax errors and can interfere with
+# Pydantic runtime behavior. Heavy typing-only symbols are imported from
+# `flext_core.typings` at runtime below where necessary.
+
 
 # Handlers
 from flext_core.handlers import (
@@ -228,6 +242,8 @@ from flext_core.handlers import (
     FlextMetricsHandler,
     FlextValidatingHandler,
     HandlersFacade,
+    FlextCommandHandler as _FlextCommandHandler,
+    FlextQueryHandler as _FlextQueryHandler,
 )
 from flext_core.loggings import (
     FlextLogContext,
@@ -272,6 +288,7 @@ from flext_core.mixins import (
     LegacyCompatibleDataMixin,
     LegacyCompatibleFullMixin,
     LegacyCompatibleServiceMixin,
+    LegacyCompatibleValueObjectMixin,
 )
 
 # Domain models
@@ -416,6 +433,8 @@ from flext_core.schema_processing import (
     FlextProcessingPipeline,
     FlextRegexProcessor,
     ProcessingPipeline,
+    # Legacy alias
+    RegexProcessor,
 )
 
 # Semantic
@@ -429,20 +448,23 @@ from flext_core.semantic import (
 # Testing Utilities
 from flext_core.testing_utilities import (
     FlextTestAssertion,
-    FlextTestConfig,
     FlextTestFactory,
     FlextTestMocker,
     FlextTestModel,
     FlextTestUtilities,
+    FlextTestConfig,
     ITestAssertion,
     ITestFactory,
     ITestMocker,
-    TTestConfig,
-    TTestData,
     create_api_test_response,
     create_ldap_test_config,
     create_oud_connection_config,
 )
+
+# Explicit runtime exposure for testing type variables to avoid circular
+# resolution issues in static analyzers and to keep runtime behavior stable.
+__all__ += ["TTestConfig", "TTestData"]
+
 
 # Type definitions - complete set
 from flext_core.typings import (
@@ -519,8 +541,13 @@ from flext_core.typings import (
     TValidationRule,
     TValidator,
     TValue,
+    # Field ids and names used at runtime
     U,
     V,
+    # Test type variables (exposed for testing helpers)
+    TTestData,
+    TTestConfig,
+    # Domain-level TypeVars
 )
 
 # Additional utilities
@@ -569,12 +596,34 @@ from flext_core.validation import (
     flext_validate_string,
 )
 
+# Guard utilities (exported in __all__)
+from flext_core.guards import (
+    FlextGuards,
+    FlextValidatedModel,
+    FlextValidationUtils,
+    ValidatedModel,
+    immutable,
+    is_dict_of,
+    is_instance_of,
+    is_list_of,
+    make_builder,
+    make_factory,
+    pure,
+    require_in_range,
+    require_non_empty,
+    require_not_none,
+    require_positive,
+    safe,
+    validated,
+)
+
 # Value objects
 from flext_core.value_objects import FlextValueObject
 
 from flext_core import constants as _constants_module
 
 from contextlib import suppress
+# (typing aliases already imported above for runtime exports)
 
 constants = _constants_module  # runtime alias to module
 
@@ -596,30 +645,11 @@ class _config_base:  # noqa: N801 - keep snake_case to match tests  # pyright: i
         return {}
 
 
-class FlextCommandHandler(FlextAbstractHandler[T, U], ABC):
-    """Abstract command handler (top-level export shim)."""
-
-    @_abstractmethod
-    def handle_command(self, command: T) -> FlextResult[U]: ...
-
-    def handle(
-        self,
-        request: T,
-    ) -> FlextResult[U]:  # pragma: no cover - trivial
-        return self.handle_command(request)
-
-
-class FlextQueryHandler(FlextAbstractHandler[T, U], ABC):
-    """Abstract query handler (top-level export shim)."""
-
-    @_abstractmethod
-    def handle_query(self, query: T) -> FlextResult[U]: ...
-
-    def handle(
-        self,
-        request: T,
-    ) -> FlextResult[U]:  # pragma: no cover - trivial
-        return self.handle_query(request)
+# NOTE: Command/Query handler abstract classes are provided by
+# `flext_core.handlers` module. Avoid redefining them here to prevent
+# type identity mismatches between runtime classes and `.pyi` stubs
+# which cause mypy/pyright errors about incompatible method overrides.
+# Re-export the concrete definitions from the handlers module instead.
 
 
 # =============================================================================
@@ -633,11 +663,19 @@ _module_type_ref: type[_ModuleType] | None = _ModuleType
 # EXPORTS - Clean, collision-free public API
 # =============================================================================
 
-__all__: list[str] = [
+__all__ += [
     "__version__",
     "__version_info__",
     "FlextVersionInfo",
     "FlextCompatibilityResult",
+    "check_python_compatibility",
+    "compare_versions",
+    "get_available_features",
+    "get_version_info",
+    "get_version_string",
+    "get_version_tuple",
+    "is_feature_available",
+    "validate_version_format",
     "FlextResult",
     "FlextContainer",
     "get_flext_container",
@@ -823,7 +861,6 @@ __all__: list[str] = [
     "FlextValueObject",
     "FlextDomainService",
     "OperationType",
-    "TDomainResult",
     "FlextAggregateRoot",
     "FlextValidation",
     "FlextCommands",
@@ -1043,6 +1080,7 @@ __all__: list[str] = [
     "LegacyCompatibleTimestampMixin",
     "LegacyCompatibleTimingMixin",
     "LegacyCompatibleValidatableMixin",
+    "LegacyCompatibleValueObjectMixin",
     # Legacy observability aliases
     "InMemoryMetrics",
     "MinimalObservability",
@@ -1056,7 +1094,9 @@ __all__: list[str] = [
     "ConfigAttributeValidator",
     "EntryType",
     "ProcessingPipeline",
-    # NOTE: Version utilities are exported from the main version imports above, not legacy
+    "RegexProcessor",
+    # NOTE: Version utilities are exported from the main version imports above,
+    # not legacy
     # Delegation System
     "FlextDelegatedProperty",
     "FlextMixinDelegator",
@@ -1068,7 +1108,6 @@ __all__: list[str] = [
     "FlextTestAssertion",
     "FlextTestMocker",
     "FlextTestModel",
-    "FlextTestConfig",
     "create_oud_connection_config",
     "create_ldap_test_config",
     "create_api_test_response",
@@ -1077,8 +1116,15 @@ __all__: list[str] = [
     "ITestMocker",
     "TTestData",
     "TTestConfig",
+    "FlextTestConfig",
     # Additional back-compatibility exports that tests need
     "FlextAbstractConfig",
     # Modern aliases that match the updated pattern
     "FlextValue",
 ]
+
+# Public re-exports for compatibility. Use the concrete classes from
+# flext_core.handlers to ensure a single type identity across runtime and
+# typings to avoid mypy/pyright incompatible method override errors.
+FlextCommandHandler = _FlextCommandHandler
+FlextQueryHandler = _FlextQueryHandler

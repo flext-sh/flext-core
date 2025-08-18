@@ -131,12 +131,9 @@ from flext_core.exceptions import (
 from flext_core.fields import (
     FlextFieldCore as FlextFieldCore,
     FlextFieldCoreMetadata as FlextFieldCoreMetadata,
-    FlextFieldId as FlextFieldId,
     FlextFieldMetadata as FlextFieldMetadata,
-    FlextFieldName as FlextFieldName,
     FlextFieldRegistry as FlextFieldRegistry,
     FlextFields as FlextFields,
-    FlextFieldTypeStr as FlextFieldTypeStr,
     FlextValidator as FlextValidator,
     flext_create_boolean_field as flext_create_boolean_field,
     flext_create_integer_field as flext_create_integer_field,
@@ -304,7 +301,11 @@ from flext_core.protocols import (
     FlextTracerProtocol as FlextTracerProtocol,
     FlextValidator as FlextValidatorProtocol,
 )
-from flext_core.result import FlextResult as FlextResult
+from flext_core.result import (
+    FlextResult as FlextResult,
+    fail_result as fail_result,
+    ok_result as ok_result,
+)
 from flext_core.root_models import (
     FlextConnectionString as FlextConnectionString,
     FlextEmailAddress as FlextEmailAddress,
@@ -365,6 +366,9 @@ from flext_core.testing_utilities import (
 from flext_core.typings import (
     E as E,
     F as F,
+    FlextFieldId as FlextFieldId,
+    FlextFieldName as FlextFieldName,
+    FlextFieldTypeStr as FlextFieldTypeStr,
     FlextTypes as FlextTypes,
     P as P,
     R as R,
@@ -527,7 +531,6 @@ __all__ = [
     "FlextAbstractPerformanceDecorator",
     "FlextAbstractSerializableMixin",
     "FlextAbstractServiceMixin",
-    "FlextAbstractSettings",
     "FlextAbstractTimestampMixin",
     "FlextAbstractValidatableMixin",
     "FlextAbstractValidationDecorator",
@@ -535,7 +538,6 @@ __all__ = [
     "FlextAggregateRoot",
     "FlextAlertsProtocol",
     "FlextAlreadyExistsError",
-    "FlextApplicationConfig",
     "FlextAttributeError",
     "FlextAuth",
     "FlextAuthenticationError",
@@ -556,18 +558,10 @@ __all__ = [
     "FlextCompatibilityResult",
     "FlextConfig",
     "FlextConfigAttributeValidator",
-    "FlextConfigBuilder",
     "FlextConfigDefaults",
     "FlextConfigFactory",
-    "FlextConfigLoaderProtocol",
-    "FlextConfigManager",
-    "FlextConfigMergerProtocol",
-    "FlextConfigOperations",
     "FlextConfigOps",
-    "FlextConfigSerializerProtocol",
     "FlextConfigValidation",
-    "FlextConfigValidator",
-    "FlextConfigValidatorProtocol",
     "FlextConfigurableProtocol",
     "FlextConfigurationError",
     "FlextConnectionDict",
@@ -585,9 +579,7 @@ __all__ = [
     "FlextCriticalError",
     "FlextData",
     "FlextDataFormat",
-    "FlextDataIntegrationConfig",
     "FlextDatabaseConfig",
-    "FlextDatabaseConfigDict",
     "FlextDatabaseModel",
     "FlextDecoratedFunction",
     "FlextDecoratorFactory",
@@ -597,14 +589,6 @@ __all__ = [
     "FlextDomainService",
     "FlextDomainValidator",
     "FlextEmailAddress",
-    "FlextEntity",
-    "FlextEntity",
-    "FlextEntity",
-    "FlextEntity",
-    "FlextEntityDict",
-    "FlextEntityId",
-    "FlextEntityId",
-    "FlextEntityStatus",
     "FlextEntryType",
     "FlextEntryValidator",
     "FlextEnvironment",
@@ -617,7 +601,6 @@ __all__ = [
     "FlextEventList",
     "FlextExceptionMetrics",
     "FlextExceptions",
-    "FlextFactory",
     "FlextFactory",
     "FlextFieldCore",
     "FlextFieldCoreMetadata",
@@ -644,9 +627,7 @@ __all__ = [
     "FlextImmutabilityDecorators",
     "FlextInMemoryMetrics",
     "FlextJWTConfig",
-    "FlextJWTConfigDict",
     "FlextLDAPConfig",
-    "FlextLDAPConfigDict",
     "FlextLegacyConfig",
     "FlextLogContext",
     "FlextLogContextManager",
@@ -670,19 +651,16 @@ __all__ = [
     "FlextNotFoundError",
     "FlextObs",
     "FlextObservabilityConfig",
-    "FlextObservabilityConfigDict",
     "FlextObservabilityProtocol",
     "FlextOperationDict",
     "FlextOperationError",
     "FlextOperationModel",
     "FlextOperationStatus",
     "FlextOracleConfig",
-    "FlextOracleConfigDict",
     "FlextOracleModel",
     "FlextPayload",
     "FlextPercentage",
     "FlextPerformance",
-    "FlextPerformanceConfig",
     "FlextPerformanceDecorators",
     "FlextPermissionError",
     "FlextPlugin",
@@ -695,7 +673,6 @@ __all__ = [
     "FlextProcessingPipeline",
     "FlextQueryHandler",
     "FlextRedisConfig",
-    "FlextRedisConfigDict",
     "FlextRegexProcessor",
     "FlextRepository",
     "FlextResult",
@@ -713,7 +690,6 @@ __all__ = [
     "FlextSimpleAlerts",
     "FlextSimpleObservability",
     "FlextSingerConfig",
-    "FlextSingerConfigDict",
     "FlextSingerStreamModel",
     "FlextTestAssertion",
     "FlextTestConfig",
@@ -852,7 +828,6 @@ __all__ = [
     "_flext_safe_call_decorator",
     "_flext_timing_decorator",
     "_flext_validate_input_decorator",
-    "annotations",
     "clear_exception_metrics",
     "configure_flext_container",
     "create_api_test_response",
@@ -946,38 +921,16 @@ BYTES_PER_KB: Incomplete
 SECONDS_PER_MINUTE: Incomplete
 SECONDS_PER_HOUR: Incomplete
 
-class _config_base:
+class _ConfigBase:
     @staticmethod
     def dict(*_args: object, **_kwargs: object) -> dict[str, object]: ...
 
-class FlextCommandHandler(FlextAbstractHandler[T, U], ABC):
+class FlextCommandHandler(FlextAbstractHandler[object, object], ABC):
     @_abstractmethod
-    def handle_command(self, command: T) -> FlextResult[U]: ...
-    def handle(self, request: T) -> FlextResult[U]: ...
+    def handle_command(self, command: object) -> FlextResult[object]: ...
+    def handle(self, request: object) -> FlextResult[object]: ...
 
-class FlextQueryHandler(FlextAbstractHandler[T, U], ABC):
+class FlextQueryHandler(FlextAbstractHandler[object, object], ABC):
     @_abstractmethod
-    def handle_query(self, query: T) -> FlextResult[U]: ...
-    def handle(self, request: T) -> FlextResult[U]: ...
-
-# Names in __all__ with no definition:
-#   FlextAbstractSettings
-#   FlextApplicationConfig
-#   FlextConfigBuilder
-#   FlextConfigLoaderProtocol
-#   FlextConfigManager
-#   FlextConfigMergerProtocol
-#   FlextConfigOperations
-#   FlextConfigSerializerProtocol
-#   FlextConfigValidator
-#   FlextConfigValidatorProtocol
-#   FlextDataIntegrationConfig
-#   FlextDatabaseConfigDict
-#   FlextJWTConfigDict
-#   FlextLDAPConfigDict
-#   FlextObservabilityConfigDict
-#   FlextOracleConfigDict
-#   FlextPerformanceConfig
-#   FlextRedisConfigDict
-#   FlextSingerConfigDict
-#   annotations
+    def handle_query(self, query: object) -> FlextResult[object]: ...
+    def handle(self, request: object) -> FlextResult[object]: ...

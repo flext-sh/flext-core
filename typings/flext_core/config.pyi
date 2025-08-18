@@ -43,7 +43,7 @@ __all__ = [
 ]
 
 class FlextSettings(BaseSettings):
-    model_config: Incomplete
+    model_config: ClassVar[Incomplete]
     def validate_business_rules(self) -> FlextResult[None]: ...
     def serialize_settings_for_api(
         self,

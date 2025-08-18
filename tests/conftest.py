@@ -1051,7 +1051,7 @@ def e2e_environment() -> dict[str, object]:
 def pytest_collection_modifyitems(
     config: object,
     items: list[object],
-) -> None:  # type: ignore[unused-argument]
+) -> None:
     """Modify test collection to add custom markers."""
     # Mark 'config' as intentionally unused while keeping hook signature valid
     del config

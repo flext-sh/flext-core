@@ -15,7 +15,7 @@ Key Components:
     - FlextValidationRule: ABC for reusable validation rules
     - FlextService: ABC for service lifecycle management
     - FlextConfigurable: Protocol for configuration injection
-    - FlextHandler/FlextMiddleware: ABCs for message processing pipelines
+    - FlextMessageHandler/FlextMiddleware: ABCs for message processing pipelines
     - FlextRepository/FlextUnitOfWork: ABCs for data access patterns
     - FlextPlugin/FlextPluginContext: ABCs and protocols for extensibility
     - FlextEventPublisher/FlextEventSubscriber: ABCs for event-driven patterns
@@ -36,7 +36,7 @@ from flext_core import (
     FlextDomainEvent,
     FlextEventPublisher,
     FlextEventSubscriber,
-    FlextHandler,
+    FlextMessageHandler,
     FlextHandlers,
     FlextLoggerProtocol,
     FlextMiddleware,
@@ -422,7 +422,7 @@ class ConfigurableEmailService:
 
 
 class UserCommandHandler(FlextHandlers.CommandHandler):
-    """User command handler demonstrating FlextHandler."""
+    """User command handler demonstrating FlextMessageHandler."""
 
     def __init__(self, user_service: UserService) -> None:
         """Initialize UserCommandHandler.
@@ -940,7 +940,7 @@ class SimpleEventPublisher(FlextEventPublisher):
 
     def __init__(self) -> None:
         """Initialize SimpleEventPublisher."""
-        self._subscribers: dict[type[object], list[FlextHandler]] = {}
+        self._subscribers: dict[type[object], list[FlextMessageHandler]] = {}
 
     def publish(self, event: FlextDomainEvent) -> FlextResult[None]:
         """Publish event to subscribers."""
@@ -974,7 +974,9 @@ class SimpleEventPublisher(FlextEventPublisher):
                 return result
         return FlextResult.ok(None)
 
-    def add_subscriber(self, event_type: type[object], handler: FlextHandler) -> None:
+    def add_subscriber(
+        self, event_type: type[object], handler: FlextMessageHandler
+    ) -> None:
         """Add subscriber (helper method)."""
         if event_type not in self._subscribers:
             self._subscribers[event_type] = []
@@ -987,12 +989,12 @@ class SimpleEventSubscriber(FlextEventSubscriber):
     def __init__(self, publisher: SimpleEventPublisher) -> None:
         """Initialize SimpleEventSubscriber."""
         self._publisher = publisher
-        self._subscriptions: dict[type[object], list[FlextHandler]] = {}
+        self._subscriptions: dict[type[object], list[FlextMessageHandler]] = {}
 
     def subscribe(
         self,
         event_type: type[object],
-        handler: FlextHandler,
+        handler: FlextMessageHandler,
     ) -> FlextResult[None]:
         """Subscribe to event type."""
         try:
@@ -1010,7 +1012,7 @@ class SimpleEventSubscriber(FlextEventSubscriber):
     def unsubscribe(
         self,
         event_type: type[object],
-        handler: FlextHandler,
+        handler: FlextMessageHandler,
     ) -> FlextResult[None]:
         """Unsubscribe from event type."""
         try:

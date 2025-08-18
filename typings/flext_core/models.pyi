@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from typing import Self
+from typing import ClassVar, Self
 
 from _typeshed import Incomplete
 from pydantic import BaseModel, SerializationInfo, ValidationInfo, computed_field
@@ -43,7 +43,7 @@ __all__ = [
 ]
 
 class FlextModel(BaseModel):
-    model_config: Incomplete
+    model_config: ClassVar[Incomplete]
     @computed_field
     @property
     def model_type(self) -> str: ...
@@ -73,14 +73,12 @@ class FlextModel(BaseModel):
     ) -> dict[str, object]: ...
 
 class FlextValue(FlextModel, ABC):
-    model_config: Incomplete
     def __hash__(self) -> int: ...
     def __eq__(self, other: object) -> bool: ...
     @abstractmethod
     def validate_business_rules(self) -> FlextResult[None]: ...
 
 class FlextEntity(FlextModel, ABC):
-    model_config: Incomplete
     id: FlextEntityId
     version: FlextVersion
     created_at: FlextTimestamp

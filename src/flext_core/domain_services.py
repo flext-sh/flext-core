@@ -56,7 +56,7 @@ class FlextDomainService[TDomainResult](
 
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate domain service business rules (override in subclasses)."""
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
     @abstractmethod
     def execute(self) -> FlextResult[TDomainResult]:
@@ -64,6 +64,7 @@ class FlextDomainService[TDomainResult](
 
         Must be implemented by concrete services.
         """
+        raise NotImplementedError
 
     def validate_config(self) -> FlextResult[None]:
         """Validate service configuration - override in subclasses.
@@ -96,15 +97,17 @@ class FlextDomainService[TDomainResult](
             config_result = self.validate_config()
             if config_result.is_failure:
                 error_message = config_result.error or "Configuration validation failed"
-                return FlextResult.fail(error_message)
+                return FlextResult[object].fail(error_message)
 
             # Execute operation
             if not callable(operation):
-                return FlextResult.fail(f"Operation {operation_name} is not callable")
+                return FlextResult[object].fail(
+                    f"Operation {operation_name} is not callable"
+                )
             result = operation(*args, **kwargs)
-            return FlextResult.ok(result)
+            return FlextResult[object].ok(result)
         except (RuntimeError, ValueError, TypeError) as e:
-            return FlextResult.fail(f"Operation {operation_name} failed: {e}")
+            return FlextResult[object].fail(f"Operation {operation_name} failed: {e}")
 
     def get_service_info(self) -> dict[str, object]:
         """Get service information for monitoring."""

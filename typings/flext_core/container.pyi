@@ -1,6 +1,6 @@
 from collections import UserString
 from collections.abc import Callable
-from typing import Self, TypeVar
+from typing import Self
 
 from flext_core.mixins import FlextLoggableMixin
 from flext_core.result import FlextResult
@@ -17,8 +17,6 @@ __all__ = [
     "get_typed",
     "register_typed",
 ]
-
-TService = TypeVar("TService")
 
 class FlextServiceKey[TService](UserString):
     def __new__(cls, name: str) -> Self: ...

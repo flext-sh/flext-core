@@ -131,7 +131,7 @@ class TestFlextCommandHandler:
 
         # Cannot instantiate directly
         with pytest.raises(TypeError, match="Can't instantiate abstract class"):
-            FlextCommandHandler()  # type: ignore[abstract]
+            FlextCommandHandler()
 
     def test_concrete_command_handler_handle_command(self) -> None:
         """Test concrete command handler handle_command (lines 48-50)."""
@@ -204,7 +204,7 @@ class TestFlextQueryHandler:
 
         # Cannot instantiate directly
         with pytest.raises(TypeError, match="Can't instantiate abstract class"):
-            FlextQueryHandler()  # type: ignore[abstract]
+            FlextQueryHandler()
 
     def test_concrete_query_handler_handle_query(self) -> None:
         """Test concrete query handler handle_query (lines 69-71)."""

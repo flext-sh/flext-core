@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from typing import TypeVar
+from typing import ClassVar, TypeVar
 
 from _typeshed import Incomplete
 
@@ -16,14 +16,16 @@ type OperationType = (
     | Callable[[object, object], object]
     | Callable[[object, object, object], object]
 )
-TDomainResult = TypeVar("TDomainResult")
+_TDomainResult = TypeVar("_TDomainResult")
 
-class FlextDomainService[TDomainResult](FlextModel, FlextSerializableMixin, ABC):
-    model_config: Incomplete
+TDomainResult = _TDomainResult
+
+class FlextDomainService[_TDomainResult](FlextModel, FlextSerializableMixin, ABC):
+    model_config: ClassVar[Incomplete]
     def is_valid(self) -> bool: ...
     def validate_business_rules(self) -> FlextResult[None]: ...
     @abstractmethod
-    def execute(self) -> FlextResult[TDomainResult]: ...
+    def execute(self) -> FlextResult[_TDomainResult]: ...
     def validate_config(self) -> FlextResult[None]: ...
     def execute_operation(
         self, operation_name: str, operation: object, *args: object, **kwargs: object

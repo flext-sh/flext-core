@@ -670,7 +670,7 @@ def _demonstrate_performance_decorators() -> FlextResult[None]:
         _find_user_by_email_impl,
     )
     find_user_by_email = FlextPerformanceDecorators.memoize_decorator(
-        find_user_with_timing,  # type: ignore[arg-type]
+        find_user_with_timing,
     )
 
     return _execute_performance_lookups(find_user_by_email)

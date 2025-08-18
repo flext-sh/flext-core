@@ -19,7 +19,7 @@ import re
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from datetime import UTC, datetime
-from typing import Annotated, Generic, TypeVar
+from typing import Annotated, TypeVar
 from uuid import uuid4
 
 from pydantic import (
@@ -43,7 +43,7 @@ from flext_core.result import FlextResult
 T = TypeVar("T")
 
 
-class FlextAbstractValidator(ABC, Generic[T]):  # noqa: UP046
+class FlextAbstractValidator[T](ABC):
     """Abstract validator for validation patterns."""
 
     @abstractmethod
@@ -1022,7 +1022,7 @@ class FlextValidationPipeline:
 # =============================================================================
 
 
-class FlextDomainValidator(FlextAbstractValidator[T]):
+class FlextDomainValidator[T](FlextAbstractValidator[T]):
     """Modern domain-specific validation with business rules using validate_call.
 
     SOLID compliance: Single responsibility for domain validation.

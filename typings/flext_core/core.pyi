@@ -9,8 +9,8 @@ from flext_core.result import FlextResult
 
 __all__ = ["FlextCore", "flext_core"]
 
-P = ParamSpec("P")
-R = TypeVar("R")
+_P = ParamSpec("_P")
+_R = TypeVar("_R")
 
 class FlextCore:
     def __init__(self) -> None: ...
@@ -66,6 +66,6 @@ class FlextCore:
     @staticmethod
     def make_immutable[T](target_class: type[T]) -> type[T]: ...
     @staticmethod
-    def make_pure(func: Callable[P, R]) -> Callable[P, R]: ...
+    def make_pure(func: Callable[_P, _R]) -> Callable[_P, _R]: ...
 
 def flext_core() -> FlextCore: ...

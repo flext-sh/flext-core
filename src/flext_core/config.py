@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import json
 import os
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import ClassVar
 
@@ -68,7 +68,8 @@ class FlextSettings(BaseSettings):
 
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate business rules - override in subclasses for specific rules."""
-        return FlextResult.ok(None)
+        # Default implementation: no business rules => success
+        return FlextResult[None].ok(None)
 
     # Note: Do not use field_serializer for model_config; it's not a model field.
 
@@ -96,7 +97,7 @@ class FlextSettings(BaseSettings):
     @classmethod
     def create_with_validation(
         cls,
-        overrides: dict[str, object] | None = None,
+        overrides: Mapping[str, object] | None = None,
         **kwargs: object,
     ) -> FlextResult[FlextSettings]:
         """Create settings instance with validation and proper override handling."""
@@ -107,7 +108,8 @@ class FlextSettings(BaseSettings):
             # Prepare overrides dict - support both overrides parameter and kwargs
             all_overrides: dict[str, object] = {}
             if overrides:
-                all_overrides.update(overrides)
+                # Mapping -> dict
+                all_overrides.update(dict(overrides))
             all_overrides.update(kwargs)
 
             # Apply overrides if any provided
@@ -121,10 +123,12 @@ class FlextSettings(BaseSettings):
 
             validation_result = instance.validate_business_rules()
             if validation_result.is_failure:
-                return FlextResult.fail(validation_result.error or "Validation failed")
-            return FlextResult.ok(instance)
+                return FlextResult[FlextSettings].fail(
+                    validation_result.error or "Validation failed"
+                )
+            return FlextResult[FlextSettings].ok(instance)
         except Exception as e:
-            return FlextResult.fail(f"Settings creation failed: {e}")
+            return FlextResult[FlextSettings].fail(f"Settings creation failed: {e}")
 
 
 class FlextBaseConfigModel(FlextSettings):
@@ -287,7 +291,7 @@ class FlextConfig(FlextModel):
     @classmethod
     def create_complete_config(
         cls,
-        config_data: dict[str, object],
+        config_data: Mapping[str, object],
         *,
         apply_defaults: bool = True,
         validate_all: bool = True,
@@ -297,7 +301,8 @@ class FlextConfig(FlextModel):
             # Apply defaults if requested
             if apply_defaults:
                 default_config = cls().model_dump()
-                config_data = {**default_config, **config_data}
+                # Ensure mapping -> dict merge
+                config_data = {**default_config, **dict(config_data)}
 
             # Create and validate instance
             instance = cls.model_validate(config_data)
@@ -305,13 +310,15 @@ class FlextConfig(FlextModel):
             if validate_all:
                 validation_result = instance.validate_business_rules()
                 if validation_result.is_failure:
-                    return FlextResult.fail(
+                    return FlextResult[dict[str, object]].fail(
                         validation_result.error or "Validation failed",
                     )
 
-            return FlextResult.ok(instance.model_dump())
+            return FlextResult[dict[str, object]].ok(instance.model_dump())
         except Exception as e:
-            return FlextResult.fail(f"Failed to create complete config: {e}")
+            return FlextResult[dict[str, object]].fail(
+                f"Failed to create complete config: {e}"
+            )
 
     @classmethod
     def load_and_validate_from_file(
@@ -323,8 +330,11 @@ class FlextConfig(FlextModel):
         try:
             file_result = safe_load_json_file(file_path)
             if file_result.is_failure:
-                return FlextResult.fail(file_result.error or "Failed to load file")
+                return FlextResult[dict[str, object]].fail(
+                    file_result.error or "Failed to load file"
+                )
 
+            # file_result.data is typed as dict[str, object] on success
             data = file_result.data
             # safe_load_json_file already ensures data is dict[str, object] on success
 
@@ -333,7 +343,7 @@ class FlextConfig(FlextModel):
                 missing_keys = [key for key in required_keys if key not in data]
                 if missing_keys:
                     missing_str = ", ".join(missing_keys)
-                    return FlextResult.fail(
+                    return FlextResult[dict[str, object]].fail(
                         f"Missing required configuration keys: {missing_str}",
                     )
 
@@ -349,11 +359,11 @@ class FlextConfig(FlextModel):
     @classmethod
     def safe_load_from_dict(
         cls,
-        config_data: dict[str, object],
+        config_data: Mapping[str, object],
     ) -> FlextResult[dict[str, object]]:
         """Safely load configuration from dictionary."""
         try:
-            instance = cls.model_validate(config_data)
+            instance = cls.model_validate(dict(config_data))
             validation_result = instance.validate_business_rules()
             if validation_result.is_failure:
                 return FlextResult.fail(validation_result.error or "Validation failed")
@@ -365,12 +375,12 @@ class FlextConfig(FlextModel):
     @classmethod
     def merge_and_validate_configs(
         cls,
-        base_config: dict[str, object],
-        override_config: dict[str, object],
+        base_config: Mapping[str, object],
+        override_config: Mapping[str, object],
     ) -> FlextResult[dict[str, object]]:
         """Merge two configurations and validate the result."""
         try:
-            merged = {**base_config, **override_config}
+            merged = {**dict(base_config), **dict(override_config)}
 
             # Check for None values which are not allowed in config
             none_keys = [k for k, v in merged.items() if v is None]
@@ -396,29 +406,36 @@ class FlextConfig(FlextModel):
         validate_type: type = str,
         default: object = None,
         required: bool = False,
-    ) -> FlextResult[object]:
+    ) -> FlextResult[str]:
         """Get environment variable with type validation."""
         try:
-            env_result = safe_get_env_var(
+            env_result: FlextResult[str] = safe_get_env_var(
                 env_var,
                 str(default) if default is not None else "",
                 required=required,
             )
             if env_result.is_failure:
-                return FlextResult.fail(env_result.error or "Failed to get env var")
+                return FlextResult[str].fail(
+                    env_result.error or "Failed to get env var"
+                )
 
-            value = env_result.data
+            # env_result.data is str when success
+            value: str = env_result.data
             if value == "" and default is not None:
-                return FlextResult.ok(default)
+                return FlextResult[str].ok(str(default))
 
             # Type validation
             if validate_type is str:
-                return FlextResult.ok(value)
+                return FlextResult[str].ok(value)
 
             # Type-specific validation using helper method
-            return cls._validate_type_value(value, validate_type)
+            result = cls._validate_type_value(value, validate_type)
+            if result.success:
+                # result.data may be of various types; coerce to str for env API
+                return FlextResult[str].ok(str(result.data))
+            return FlextResult[str].fail(result.error or "Type validation failed")
         except Exception as e:
-            return FlextResult.fail(f"Failed to get env with validation: {e}")
+            return FlextResult[str].fail(f"Failed to get env with validation: {e}")
 
     @classmethod
     def _validate_type_value(
@@ -429,16 +446,18 @@ class FlextConfig(FlextModel):
         """Helper method to validate and convert value to specific type."""
         if validate_type is int:
             try:
-                return FlextResult.ok(int(str(value)))
+                return FlextResult[object].ok(int(str(value)))
             except ValueError:
-                return FlextResult.fail(f"Cannot convert '{value}' to int")
+                return FlextResult[object].fail(f"Cannot convert '{value}' to int")
         elif validate_type is bool:
             if isinstance(value, str):
-                return FlextResult.ok(value.lower() in {"true", "1", "yes", "on"})
-            return FlextResult.ok(bool(value))
+                return FlextResult[object].ok(
+                    value.lower() in {"true", "1", "yes", "on"}
+                )
+            return FlextResult[object].ok(bool(value))
         else:
             # Default case for any other type
-            return FlextResult.ok(value)
+            return FlextResult[object].ok(value)
 
     @classmethod
     def merge_configs(
@@ -482,7 +501,7 @@ class FlextConfig(FlextModel):
                 result = validator(value)
                 if not result:
                     return FlextResult.fail(error_message)
-                return FlextResult.ok(data=True)
+                return FlextResult.ok(True)  # noqa: FBT003
             except Exception as e:
                 return FlextResult.fail(f"Validation error: {e}")
         except Exception as e:
@@ -1236,21 +1255,25 @@ class FlextConfigFactory:
     ) -> FlextResult[FlextModel]:
         """Create configuration from JSON file."""
         if config_type not in cls._config_registry:
-            return FlextResult.fail(f"Unknown config type: {config_type}")
+            return FlextResult[FlextModel].fail(f"Unknown config type: {config_type}")
 
         try:
             file_data_result = cls._load_from_file(file_path)
             if file_data_result.is_failure:
-                return FlextResult.fail(file_data_result.error or "Failed to load file")
+                return FlextResult[FlextModel].fail(
+                    file_data_result.error or "Failed to load file"
+                )
 
             config_class = cls._config_registry[config_type]
             instance = config_class.model_validate(file_data_result.data)
             validation_result = instance.validate_business_rules()
             if validation_result.is_failure:
-                return FlextResult.fail(validation_result.error or "Validation failed")
-            return FlextResult.ok(instance)
+                return FlextResult[FlextModel].fail(
+                    validation_result.error or "Validation failed"
+                )
+            return FlextResult[FlextModel].ok(instance)
         except Exception as e:
-            return FlextResult.fail(
+            return FlextResult[FlextModel].fail(
                 f"Failed to create {config_type} config from file: {e}",
             )
 
@@ -1285,18 +1308,20 @@ class FlextConfigFactory:
 
         path = Path(file_path)
         if not path.exists():
-            return FlextResult.fail("Configuration file not found")
+            return FlextResult[dict[str, object]].fail("Configuration file not found")
         if not path.is_file():
-            return FlextResult.fail("Path is not a file")
+            return FlextResult[dict[str, object]].fail("Path is not a file")
 
         try:
             content = path.read_text(encoding="utf-8")
             data = json.loads(content)
             if not isinstance(data, dict):
-                return FlextResult.fail("JSON file must contain a dictionary")
-            return FlextResult.ok(data)
+                return FlextResult[dict[str, object]].fail(
+                    "JSON file must contain a dictionary"
+                )
+            return FlextResult[dict[str, object]].ok(data)
         except Exception as e:
-            return FlextResult.fail(f"Failed to load JSON file: {e}")
+            return FlextResult[dict[str, object]].fail(f"Failed to load JSON file: {e}")
 
 
 # Convenience functions for common configuration operations
@@ -1333,13 +1358,15 @@ def safe_get_env_var(
         value = os.environ.get(var_name)
         if value is None:
             if required:
-                return FlextResult.fail(
+                return FlextResult[str].fail(
                     f"Required environment variable {var_name} not found",
                 )
-            return FlextResult.ok(default)
-        return FlextResult.ok(value)
+            return FlextResult[str].ok(default)
+        return FlextResult[str].ok(value)
     except Exception as e:
-        return FlextResult.fail(f"Failed to get environment variable {var_name}: {e}")
+        return FlextResult[str].fail(
+            f"Failed to get environment variable {var_name}: {e}"
+        )
 
 
 def safe_load_json_file(file_path: str | Path) -> FlextResult[dict[str, object]]:
@@ -1347,15 +1374,13 @@ def safe_load_json_file(file_path: str | Path) -> FlextResult[dict[str, object]]
     try:
         path = Path(file_path)
         if not path.exists():
-            return FlextResult.fail(f"File not found: {file_path}")
+            return FlextResult[dict[str, object]].fail(f"File not found: {file_path}")
 
         content = path.read_text(encoding="utf-8")
-        data = json.loads(content)
-        if not isinstance(data, dict):
-            return FlextResult.fail("JSON file must contain a dictionary")
-        return FlextResult.ok(data)
+        data: dict[str, object] = json.loads(content)
+        return FlextResult[dict[str, object]].ok(data)
     except Exception as e:
-        return FlextResult.fail(f"Failed to load JSON file: {e}")
+        return FlextResult[dict[str, object]].fail(f"Failed to load JSON file: {e}")
 
 
 def merge_configs(
@@ -1364,16 +1389,16 @@ def merge_configs(
     """Merge multiple configuration objects into a dictionary."""
     try:
         if not configs:
-            return FlextResult.ok({})
+            return FlextResult[dict[str, object]].ok({})
 
-        merged = {}
+        merged: dict[str, object] = {}
         for config in configs:
             config_dict = config.model_dump()
             merged.update(config_dict)
 
-        return FlextResult.ok(merged)
+        return FlextResult[dict[str, object]].ok(merged)
     except Exception as e:
-        return FlextResult.fail(f"Config merge failed: {e}")
+        return FlextResult[dict[str, object]].fail(f"Config merge failed: {e}")
 
 
 def validate_config(
@@ -1387,9 +1412,9 @@ def validate_config(
         if schema is not None:
             # Future: schema validation logic can be added here
             pass
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
     except Exception as e:
-        return FlextResult.fail(f"Configuration validation failed: {e}")
+        return FlextResult[None].fail(f"Configuration validation failed: {e}")
 
 
 # Namespace classes for test compatibility
@@ -1408,13 +1433,13 @@ class FlextConfigOps:
                 missing_keys = [key for key in required_keys if key not in data]
                 if missing_keys:
                     missing_str = ", ".join(missing_keys)
-                    return FlextResult.fail(
+                    return FlextResult[dict[str, object]].fail(
                         f"Missing required configuration keys: {missing_str}",
                     )
 
-            return FlextResult.ok(data.copy())
+            return FlextResult[dict[str, object]].ok(data.copy())
         except Exception as e:
-            return FlextResult.fail(f"Failed to load from dict: {e}")
+            return FlextResult[dict[str, object]].fail(f"Failed to load from dict: {e}")
 
     @staticmethod
     def safe_get_env_var(
@@ -1445,13 +1470,15 @@ class FlextConfigOps:
             if create_dirs:
                 path.parent.mkdir(parents=True, exist_ok=True)
             elif not path.parent.exists():
-                return FlextResult.fail(f"Directory does not exist: {path.parent}")
+                return FlextResult[None].fail(
+                    f"Directory does not exist: {path.parent}"
+                )
 
             content = json.dumps(data, indent=2, ensure_ascii=False)
             path.write_text(content, encoding="utf-8")
-            return FlextResult.ok(None)
+            return FlextResult[None].ok(None)
         except Exception as e:
-            return FlextResult.fail(f"Failed to save JSON file: {e}")
+            return FlextResult[None].fail(f"Failed to save JSON file: {e}")
 
 
 class FlextConfigDefaults:
@@ -1466,9 +1493,9 @@ class FlextConfigDefaults:
         try:
             result = defaults.copy()
             result.update(config)
-            return FlextResult.ok(result)
+            return FlextResult[dict[str, object]].ok(result)
         except Exception as e:
-            return FlextResult.fail(f"Failed to apply defaults: {e}")
+            return FlextResult[dict[str, object]].fail(f"Failed to apply defaults: {e}")
 
 
 class FlextConfigValidation:
@@ -1484,11 +1511,11 @@ class FlextConfigValidation:
         try:
             if callable(validator):
                 result = validator(value)
-                return FlextResult.ok(bool(result))
+                return FlextResult[bool].ok(bool(result))
             validation_success = True
-            return FlextResult.ok(validation_success)
+            return FlextResult[bool].ok(validation_success)
         except Exception as e:
-            return FlextResult.fail(f"Validation failed for {key}: {e}")
+            return FlextResult[bool].fail(f"Validation failed for {key}: {e}")
 
     @staticmethod
     def validate_config_type(
@@ -1499,14 +1526,14 @@ class FlextConfigValidation:
         """Validate configuration value type."""
         try:
             if isinstance(value, expected_type):
-                return FlextResult.ok(data=True)
+                return FlextResult[bool].ok(True)  # noqa: FBT003
             expected_name = expected_type.__name__
             actual_name = type(value).__name__
-            return FlextResult.fail(
+            return FlextResult[bool].fail(
                 f"Expected {expected_name} for {key_name}, got {actual_name}",
             )
         except Exception as e:
-            return FlextResult.fail(f"Type validation failed for {key_name}: {e}")
+            return FlextResult[bool].fail(f"Type validation failed for {key_name}: {e}")
 
     @staticmethod
     def validate_config_range(
@@ -1518,12 +1545,14 @@ class FlextConfigValidation:
         """Validate numeric configuration value range."""
         try:
             if min_val is not None and value < min_val:
-                return FlextResult.fail(f"{key_name} must be at least {min_val}")
+                return FlextResult[bool].fail(f"{key_name} must be at least {min_val}")
             if max_val is not None and value > max_val:
-                return FlextResult.fail(f"{key_name} must be at most {max_val}")
-            return FlextResult.ok(data=True)
+                return FlextResult[bool].fail(f"{key_name} must be at most {max_val}")
+            return FlextResult[bool].ok(True)  # noqa: FBT003
         except Exception as e:
-            return FlextResult.fail(f"Range validation failed for {key_name}: {e}")
+            return FlextResult[bool].fail(
+                f"Range validation failed for {key_name}: {e}"
+            )
 
 
 # Base configuration validation alias

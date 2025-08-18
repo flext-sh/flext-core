@@ -11,17 +11,95 @@ from flext_core.exceptions import FlextValidationError
 from flext_core.models import FlextEntity
 from flext_core.payload import FlextEvent
 from flext_core.result import FlextResult
-from flext_core.root_models import FlextEventList
-from flext_core.typings import TAnyDict
+from flext_core.root_models import (
+    FlextEntityId,
+    FlextEventList,
+    FlextMetadata,
+    FlextTimestamp,
+    FlextVersion,
+)
 from flext_core.utilities import FlextGenerators
+
+
+def _coerce_metadata_to_root(meta: object | None) -> FlextMetadata | None:
+    """Coerce various metadata inputs into FlextMetadata or return None.
+
+    This helper centralizes the conversion and keeps _initialize_parent small.
+    """
+    if meta is None:
+        return None
+    if isinstance(meta, FlextMetadata):
+        return meta
+    if isinstance(meta, dict):
+        coerced = {str(k): v for k, v in cast("dict[str, object]", meta).items()}
+        return FlextMetadata(coerced)
+    try:
+        # Use cast to handle dict conversion from object
+        coerced = dict(cast("dict[str, object]", meta))
+        coerced_meta = {str(k): v for k, v in coerced.items()}
+        return FlextMetadata(coerced_meta)
+    except Exception:
+        return FlextMetadata({"raw": str(meta)})
+
+
+def _normalize_domain_event_list(raw: list[object]) -> list[dict[str, object]]:
+    """Normalize a raw domain events list into list[dict[str, object]]."""
+    normalized: list[dict[str, object]] = []
+    for ev in raw:
+        if isinstance(ev, dict):
+            normalized.append(
+                {str(k): v for k, v in cast("dict[object, object]", ev).items()},
+            )
+            continue
+
+        model_dump_fn = getattr(ev, "model_dump", None)
+        if callable(model_dump_fn):
+            dumped = model_dump_fn()
+            if isinstance(dumped, dict):
+                normalized.append(
+                    {
+                        str(k): v
+                        for k, v in cast("dict[object, object]", dumped).items()
+                    },
+                )
+                continue
+
+        normalized.append({"event": str(ev)})
+    return normalized
+
+
+def _apply_entity_data(target: object, entity_data: dict[str, object]) -> None:
+    """Apply entity_data fields to target object using object.__setattr__ for known fields.
+
+    Kept as a helper to reduce complexity in `_initialize_parent`.
+    """
+    for key, value in entity_data.items():
+        # Use getattr on the class to avoid Pydantic deprecated instance access
+        model_fields = getattr(type(target), "model_fields", None)
+        if (
+            model_fields
+            and key in model_fields
+            and key
+            not in {
+                "id",
+                "version",
+                "created_at",
+                "updated_at",
+                "domain_events",
+                "metadata",
+            }
+        ):
+            object.__setattr__(target, key, value)
 
 
 class FlextAggregateRoot(FlextEntity):
     """DDD aggregate root with transactional boundaries and event management.
 
-    Extends FlextEntity with aggregate-specific capabilities for business
-    operations, domain events, and transactional consistency.
+    Extends FlextEntity com capacidades específicas de agregados para operações de negócio, eventos de domínio e consistência transacional.
+
     """
+
+    _domain_event_objects: list[FlextEvent]
 
     model_config = ConfigDict(
         # Type safety and validation
@@ -81,26 +159,21 @@ class FlextAggregateRoot(FlextEntity):
             return entity_id
         return FlextGenerators.generate_uuid()
 
-    def _process_domain_events(self, data: dict[str, object]) -> list[object]:
+    def _process_domain_events(
+        self,
+        data: dict[str, object],
+    ) -> list[dict[str, object]]:
         """Process and convert domain events to the proper format."""
-        domain_events_raw = data.pop("domain_events", [])
-        domain_events_objects: list[object] = []
+        domain_events_raw: object = data.pop("domain_events", [])
         if isinstance(domain_events_raw, list):
-            for ev in domain_events_raw:
-                if isinstance(ev, dict):
-                    domain_events_objects.append(ev)
-                elif hasattr(ev, "model_dump"):
-                    dumped = ev.model_dump()
-                    if isinstance(dumped, dict):
-                        domain_events_objects.append(dumped)
-                else:
-                    domain_events_objects.append(ev)
-        return domain_events_objects
+            return _normalize_domain_event_list(cast("list[object]", domain_events_raw))
+        return []
 
     def _extract_created_at(self, data: dict[str, object]) -> datetime | None:
         """Extract and validate created_at datetime from data."""
-        if "created_at" in data and hasattr(data["created_at"], "year"):
-            return cast("datetime", data["created_at"])
+        created_at = data.get("created_at")
+        if isinstance(created_at, datetime):
+            return created_at
         return None
 
     def _initialize_parent(
@@ -108,85 +181,118 @@ class FlextAggregateRoot(FlextEntity):
         actual_id: str,
         version: int,
         created_at: datetime | None,
-        domain_events_objects: list[object],
+        domain_events_objects: list[dict[str, object]],
         entity_data: dict[str, object],
     ) -> None:
         """Initialize parent class with all parameters."""
-        # Initialize base entity first with all parameters
-        init_params: dict[str, object] = {"id": actual_id, "version": version}
+        # Conversão explícita dos tipos esperados
+        id_value = (
+            FlextEntityId(actual_id)
+            if not isinstance(actual_id, FlextEntityId)  # type: ignore[unreachable]
+            else cast("FlextEntityId", actual_id)
+        )
+        version_value = (
+            FlextVersion(version)
+            if not isinstance(version, FlextVersion)  # type: ignore[unreachable]
+            else cast("FlextVersion", version)
+        )
+        created_at_value: FlextTimestamp | None = None
         if created_at is not None:
-            init_params["created_at"] = created_at
-        # Add all other entity data
-        init_params.update(entity_data)
-        super().__init__(**init_params)  # type: ignore[arg-type]
-        # Set domain events using FlextEventList to match FlextEntity field type
-        # Convert objects to dicts as needed for FlextEventList
-        event_dicts: list[dict[str, object]] = []
-        for event in domain_events_objects:
-            if isinstance(event, dict):
-                event_dicts.append(event)
-            elif hasattr(event, "model_dump"):
-                event_dicts.append(event.model_dump())
-            else:
-                # Fallback: create a minimal dict representation
-                event_dicts.append({"event": str(event)})
-        object.__setattr__(self, "domain_events", FlextEventList(event_dicts))
+            created_at_value = (
+                FlextTimestamp(created_at)
+                if not isinstance(created_at, FlextTimestamp)  # type: ignore[unreachable]
+                else cast("FlextTimestamp", created_at)
+            )
 
-    def add_domain_event(self, *args: object) -> FlextResult[None]:
+        # domain_events_objects is expected to be normalized by _process_domain_events
+        domain_events_value = FlextEventList(domain_events_objects)
+
+        # Se houver metadata, converter
+        metadata_value = None
+        if "metadata" in entity_data:
+            meta = entity_data.pop("metadata")
+            metadata_value = _coerce_metadata_to_root(meta)
+
+        # Call parent with core strongly-typed parameters.
+        # Provide created_at, updated_at and metadata explicitly to satisfy
+        # static analysers (Pylance) which expect these arguments. Use the
+        # coerced values when available, otherwise fall back to sensible
+        # defaults defined by the root models.
+        super().__init__(
+            id=id_value,
+            version=version_value,
+            created_at=(
+                created_at_value
+                if created_at_value is not None
+                else FlextTimestamp.now()
+            ),
+            updated_at=FlextTimestamp.now(),
+            domain_events=domain_events_value,
+            metadata=(
+                metadata_value if metadata_value is not None else FlextMetadata({})
+            ),
+        )
+
+        # Set optional fields via object.__setattr__ to avoid passing untyped objects to super
+        if created_at_value is not None:
+            object.__setattr__(self, "created_at", created_at_value)
+        if metadata_value is not None:
+            object.__setattr__(self, "metadata", metadata_value)
+
+        # Apply remaining entity data
+        _apply_entity_data(self, entity_data)
+
+        object.__setattr__(self, "domain_events", domain_events_value)
+
+    def add_domain_event(
+        self,
+        event_type: str,
+        event_data: dict[str, object],
+    ) -> FlextResult[None]:
         """Add domain event for event sourcing.
 
-        Supports both legacy signature (event: dict) and modern
-        (event_type: str, data: dict).
+        Args:
+            event_type: Tipo do evento de domínio
+            event_data: Dados do evento
+
+        Returns:
+            FlextResult indicando sucesso ou falha
+
         """
         try:
-            legacy_args_count = 1
-            modern_args_count = 2
-
-            if len(args) == legacy_args_count and isinstance(args[0], dict):
-                # Legacy signature: event dict
-                event_dict = args[0]
-                event_type = event_dict.get("type", "unknown")
-                event_data = event_dict.get("data", {})
-            elif (
-                len(args) == modern_args_count
-                and isinstance(args[0], str)
-                and isinstance(args[1], dict)
-            ):
-                # Modern signature: event_type, event_data
-                event_type = args[0]
-                event_data = args[1]
-            else:
-                return FlextResult.fail("Invalid event arguments")
-
-            # Create FlextEvent instance for proper type support
-            event_result = FlextEvent.create_event(
-                event_type=str(event_type),
-                event_data=cast("TAnyDict", event_data),
+            event_result: FlextResult[FlextEvent] = FlextEvent.create_event(
+                event_type=event_type,
+                event_data=event_data,
                 aggregate_id=self.id.root,
                 version=self.version.root,
             )
             if event_result.is_failure:
-                return FlextResult.fail(f"Failed to create event: {event_result.error}")
+                return FlextResult[None].fail(
+                    f"Failed to create event: {event_result.error}",
+                )
 
-            # Store the FlextEvent directly and also in domain_events for compatibility
-            event = event_result.unwrap()
-            # Store as FlextEvent instance in a separate list for aggregate root tests
-            # Use object.__setattr__ because the model is frozen
-            current_events = getattr(self, "_domain_event_objects", [])
-            new_events = [*current_events, event]
+            event: FlextEvent = event_result.unwrap()
+            current_events: list[FlextEvent] = getattr(
+                self,
+                "_domain_event_objects",
+                [],
+            )
+            new_events: list[FlextEvent] = [*current_events, event]
             object.__setattr__(self, "_domain_event_objects", new_events)
-            # Store as dict for FlextEntity compatibility
-            current_dict_events = list(self.domain_events.root)
-            new_dict_events = [*current_dict_events, event.model_dump()]
+            current_dict_events: list[dict[str, object]] = list(self.domain_events.root)
+            new_dict_events: list[dict[str, object]] = [
+                *current_dict_events,
+                event.model_dump(),
+            ]
             object.__setattr__(self, "domain_events", FlextEventList(new_dict_events))
-            return FlextResult.ok(None)
+            return FlextResult[None].ok(None)
         except (TypeError, ValueError, AttributeError, KeyError) as e:
-            return FlextResult.fail(f"Failed to add domain event: {e}")
+            return FlextResult[None].fail(f"Failed to add domain event: {e}")
 
     def add_typed_domain_event(
         self,
         event_type: str,
-        event_data: TAnyDict,
+        event_data: dict[str, object],
     ) -> FlextResult[None]:
         """Add typed domain event with validation.
 
@@ -199,23 +305,23 @@ class FlextAggregateRoot(FlextEntity):
 
         """
         try:
-            event_result = FlextEvent.create_event(
+            event_result: FlextResult[FlextEvent] = FlextEvent.create_event(
                 event_type=event_type,
                 event_data=event_data,
                 aggregate_id=self.id.root,
                 version=self.version.root,
             )
             if event_result.is_failure:
-                return FlextResult.fail(f"Failed to create event: {event_result.error}")
+                return FlextResult[None].fail(
+                    f"Failed to create event: {event_result.error}",
+                )
 
-            # Convert FlextEvent to dict for compatibility with FlextEntity
-            event = event_result.unwrap()
-            event_dict = event.model_dump()
-            # Access the underlying list and append the event
+            event: FlextEvent = event_result.unwrap()
+            event_dict: dict[str, object] = event.model_dump()
             self.domain_events.root.append(event_dict)
-            return FlextResult.ok(None)
+            return FlextResult[None].ok(None)
         except (TypeError, ValueError, AttributeError) as e:
-            return FlextResult.fail(f"Failed to add domain event: {e}")
+            return FlextResult[None].fail(f"Failed to add domain event: {e}")
 
     def add_event_object(self, event: FlextEvent) -> None:
         """Add a domain event object directly (convenience method).
@@ -224,14 +330,14 @@ class FlextAggregateRoot(FlextEntity):
             event: Domain event object to add
 
         """
-        # Store as FlextEvent instance in a separate list for aggregate root tests
-        # Use object.__setattr__ because the model is frozen
-        current_events = getattr(self, "_domain_event_objects", [])
-        new_events = [*current_events, event]
+        current_events: list[FlextEvent] = getattr(self, "_domain_event_objects", [])
+        new_events: list[FlextEvent] = [*current_events, event]
         object.__setattr__(self, "_domain_event_objects", new_events)
-        # Convert FlextEvent to dict for compatibility with FlextEntity
-        current_dict_events = list(self.domain_events.root)
-        new_dict_events = [*current_dict_events, event.model_dump()]
+        current_dict_events: list[dict[str, object]] = list(self.domain_events.root)
+        new_dict_events: list[dict[str, object]] = [
+            *current_dict_events,
+            event.model_dump(),
+        ]
         object.__setattr__(self, "domain_events", FlextEventList(new_dict_events))
 
     def get_domain_events(self) -> list[FlextEvent]:
@@ -242,7 +348,7 @@ class FlextAggregateRoot(FlextEntity):
 
         """
         if hasattr(self, "_domain_event_objects"):
-            return list(self._domain_event_objects)
+            return list(getattr(self, "_domain_event_objects", []))
         return []
 
     def clear_domain_events(self) -> list[dict[str, object]]:
@@ -253,7 +359,7 @@ class FlextAggregateRoot(FlextEntity):
 
         """
         if hasattr(self, "_domain_event_objects"):
-            events = list(getattr(self, "_domain_event_objects", []))
+            events: list[FlextEvent] = list(getattr(self, "_domain_event_objects", []))
             # Use object.__setattr__ because the model is frozen
             object.__setattr__(self, "_domain_event_objects", [])
             object.__setattr__(
@@ -265,8 +371,6 @@ class FlextAggregateRoot(FlextEntity):
             return [
                 event.model_dump()
                 if hasattr(event, "model_dump")
-                else event.__dict__
-                if hasattr(event, "__dict__")
                 else {"event": str(event)}
                 for event in events
             ]
@@ -288,4 +392,4 @@ class FlextAggregateRoot(FlextEntity):
 # FlextAggregateRoot.model_rebuild()
 
 # Export API
-__all__: list[str] = ["FlextAggregateRoot"]
+__all__ = ["FlextAggregateRoot"]

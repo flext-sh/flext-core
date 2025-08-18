@@ -1,4 +1,5 @@
 from enum import StrEnum
+from typing import ClassVar
 
 from _typeshed import Incomplete
 
@@ -17,7 +18,7 @@ class AppConfig(FlextSettings):
     payment_endpoint: str
     max_order_value: int
     min_order_value: int
-    model_config: Incomplete
+    model_config: ClassVar[Incomplete]
 
 class OrderStatus(StrEnum):
     DRAFT = "draft"

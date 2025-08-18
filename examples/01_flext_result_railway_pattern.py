@@ -1,11 +1,24 @@
 #!/usr/bin/env python3
-"""Railway-oriented programming with FlextResult patterns.
+"""01 - Railway-Oriented Programming: The Foundation Pattern.
 
-Demonstrates type-safe error handling and composable operation chains
-using FlextResult for predictable error propagation without exceptions.
+Demonstrates FlextResult[T] - the core pattern for type-safe error handling
+throughout the entire FLEXT ecosystem. This eliminates exceptions in business
+logic and enables composable, predictable operations.
+
+Key Patterns Demonstrated:
+• FlextResult[T].ok() / FlextResult[T].fail() creation
+• Railway composition with .map() and .flat_map()
+• Error handling without try/catch boilerplate
+• Chaining operations with automatic error propagation
+• Type-safe success/failure checking
+
+Architecture Benefits:
+• Zero exceptions in business logic
+• Composable operation chains
+• Predictable error propagation
+• Type-safe error handling
+• 90% less error handling boilerplate
 """
-
-from __future__ import annotations
 
 import json
 import secrets
@@ -13,17 +26,20 @@ from typing import cast
 
 from flext_core import FlextResult, FlextValidation, safe_call
 
-from .shared_domain import (
-    SharedDomainFactory,
-    User as SharedUser,
-)
+from .shared_domain import SharedDomainFactory, User as SharedUser
 
-# Type aliases for better readability
+# =============================================================================
+# TYPE DEFINITIONS - Centralized type aliases
+# =============================================================================
+
 UserDataDict = dict[str, object]
 ProcessingResultDict = dict[str, object]
 
-# Constants to avoid magic numbers
-FAILURE_RATE = 0.2  # 20% chance of failure
+# =============================================================================
+# BUSINESS CONSTANTS - Configuration values
+# =============================================================================
+
+FAILURE_RATE = 0.2  # 20% simulated failure rate for demonstrations
 
 
 # =============================================================================
@@ -169,7 +185,10 @@ def send_welcome_email(user: SharedUser) -> FlextResult[bool]:
 
 
 def process_user_registration(data: UserDataDict) -> FlextResult[dict[str, object]]:
-    """P."""
+    """🚀 PERFECT Railway-Oriented Programming: ONE-LINE registration pipeline.
+
+    Demonstrates FlextResult[Type].ok/false pattern with proper type safety.
+    """
     return (
         validate_user_data(data)
         .flat_map(create_user)
@@ -185,7 +204,11 @@ def process_user_registration(data: UserDataDict) -> FlextResult[dict[str, objec
                 ),
             ),
         )
-        .tap(lambda _: print("🎉 Registration completed!"))
+        .tap(
+            lambda result: print(
+                f"🎉 Registration completed! User: {result.get('user_id', 'unknown')}"
+            )
+        )
     )
 
 
@@ -206,8 +229,12 @@ def process_multiple_users(
         else 0,
         "results": successful,
     }
-    return FlextResult.ok(result_dict).tap(
-        lambda s: print(f"📊 Processed {s['successful']}/{s['total']} users"),
+    return (
+        FlextResult[ProcessingResultDict]
+        .ok(result_dict)
+        .tap(
+            lambda s: print(f"📊 Processed {s['successful']}/{s['total']} users"),
+        )
     )
 
 
@@ -220,28 +247,29 @@ def process_with_retry(
     data: UserDataDict,
     max_retries: int = 3,
 ) -> FlextResult[dict[str, object]]:
-    """🚀 ZERO-BOILERPLATE retry using FlextResult composition."""
+    """🚀 PERFECT retry pattern with FlextResult[Type] composition.
+
+    Demonstrates proper success/failure handling with type-safe retries.
+    """
     for attempt in range(1, max_retries + 1):
         result = process_user_registration(data)
-        if result.success:
-            msg = f"✅ Succeeded on attempt {attempt + 1}"
+        if result.is_success:
+            return result.tap(
+                lambda _, a=attempt: print(f"✅ Success on attempt {a}/{max_retries}")
+            )
+        print(f"⚠️ Attempt {attempt}/{max_retries} failed: {result.error}")
 
-            def _printer(_: object, _m: str = msg) -> None:
-                pass
-
-            return result.tap(_printer)
-    error_result = {
-        "status": "failed_after_retries",
-        "error": "All attempts failed",
-        "attempts": max_retries,
-    }
-    return FlextResult.ok(error_result)
+    # All attempts failed - return proper failure result
+    return FlextResult[dict[str, object]].fail(
+        f"Registration failed after {max_retries} attempts. Last error: {result.error if 'result' in locals() else 'Unknown error'}"
+    )
 
 
 def transform_user_data(raw_data: str) -> FlextResult[UserDataDict]:
     """🚀 ONE-LINE JSON transformation using safe_call."""
     return (
-        FlextResult.ok(raw_data)
+        FlextResult[UserDataDict]
+        .ok(raw_data)
         .filter(lambda s: bool(s) and isinstance(s, str), "Invalid input")
         .flat_map(lambda s: safe_call(lambda: json.loads(s)))
         .filter(lambda d: isinstance(d, dict), "Must be dict")
@@ -255,7 +283,8 @@ def transform_user_data(raw_data: str) -> FlextResult[UserDataDict]:
 
 
 def demo_successful_registration() -> None:
-    """Demonstrate successful user registration."""
+    """Demonstrate successful user registration with proper FlextResult[Type] handling."""
+    print("\n🧪 Testing successful registration...")
     valid_user: UserDataDict = {
         "name": "Alice Johnson",
         "email": "alice@example.com",
@@ -263,17 +292,22 @@ def demo_successful_registration() -> None:
     }
 
     result = process_user_registration(valid_user)
-    if result.success:
-        pass
+    if result.is_success:
+        print(f"✅ Registration successful: {result.data}")
+    else:
+        print(f"❌ Registration failed: {result.error}")
 
 
 def demo_validation_failure() -> None:
-    """Demonstrate validation failure handling."""
+    """Demonstrate validation failure handling with FlextResult[Type].is_failure."""
+    print("\n🧪 Testing validation failure...")
     invalid_user: UserDataDict = {"name": "", "email": "not-an-email", "age": 15}
 
     result = process_user_registration(invalid_user)
-    if result.success:
-        pass
+    if result.is_failure:
+        print(f"✅ Validation correctly failed: {result.error}")
+    else:
+        print("❌ Unexpected success with invalid data")
 
 
 def demo_batch_processing() -> None:
@@ -307,7 +341,7 @@ def demo_json_transformation() -> None:
 
     result = transform_user_data(json_data).flat_map(process_user_registration)
 
-    if result.success:
+    if result.is_success:
         data = result.data
         if isinstance(data, dict) and "user" in data and isinstance(data["user"], dict):
             data["user"].get("name", "Unknown")
@@ -322,7 +356,7 @@ def demo_retry_pattern() -> None:
     }
 
     result = process_with_retry(retry_user, max_retries=3)
-    if result.success:
+    if result.is_success:
         pass
 
 
@@ -346,15 +380,51 @@ def demo_boilerplate_comparison() -> None:
 
 
 def main() -> None:
-    """🚀 FLEXT Railway Pattern - Boilerplate Elimination Showcase."""
-    # Main showcase: before vs after
+    """🎯 Example 01: Railway-Oriented Programming Foundation.
+
+    Demonstrates the core FlextResult[T] pattern that eliminates exceptions
+    and enables composable, type-safe error handling throughout FLEXT.
+    """
+    print("=" * 70)
+    print("🚂 EXAMPLE 01: RAILWAY-ORIENTED PROGRAMMING FOUNDATION")
+    print("=" * 70)
+    print("\n📚 Learning Objectives:")
+    print("  • Master FlextResult[T].ok() and .fail() patterns")
+    print("  • Understand railway composition with .map()/.flat_map()")
+    print("  • Eliminate exceptions from business logic")
+    print("  • Chain operations with automatic error propagation")
+
+    print("\n" + "=" * 70)
+    print("🎯 DEMONSTRATION: Before vs After Comparison")
+    print("=" * 70)
+
+    # Core demonstration
     demo_boilerplate_comparison()
 
-    # Additional examples showing different patterns
+    print("\n" + "=" * 70)
+    print("🔍 PRACTICAL SCENARIOS")
+    print("=" * 70)
+
+    # Practical examples
     demo_successful_registration()
     demo_validation_failure()
+    demo_batch_processing()
     demo_json_transformation()
     demo_retry_pattern()
+
+    print("\n" + "=" * 70)
+    print("✅ EXAMPLE 01 COMPLETED SUCCESSFULLY!")
+    print("=" * 70)
+    print("\n🎓 Key Takeaways:")
+    print("  • FlextResult[T] eliminates try/catch boilerplate")
+    print("  • Railway composition enables elegant error handling")
+    print("  • Type safety is preserved throughout operation chains")
+    print("  • Business logic becomes predictable and testable")
+
+    print("\n💡 Next Steps:")
+    print("  → Run example 02 for dependency injection patterns")
+    print("  → Study shared_domain.py for domain modeling patterns")
+    print("  → Explore FlextResult[T] API documentation")
 
 
 if __name__ == "__main__":

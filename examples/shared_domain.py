@@ -655,11 +655,11 @@ class SharedDomainFactory:
     ) -> FlextResult[User]:
         """Create user with validation."""
         # Create value objects
-        email_result = EmailAddress(email=email).validate_flext()
+        email_result = EmailAddress(email=email).validate_business_rules()
         if email_result.is_failure:
             return FlextResult.fail(f"Invalid email: {email_result.error}")
 
-        age_result = Age(value=age).validate_flext()
+        age_result = Age(value=age).validate_business_rules()
         if age_result.is_failure:
             return FlextResult.fail(f"Invalid age: {age_result.error}")
 

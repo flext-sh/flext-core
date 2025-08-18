@@ -1,4 +1,3 @@
-from typing import Protocol
 
 from _typeshed import Incomplete
 
@@ -10,11 +9,6 @@ __all__ = [
     "validate_delegation_system",
 ]
 
-class _HasDelegator(Protocol):
-    delegator: _DelegatorProtocol
-
-class _DelegatorProtocol(Protocol):
-    def get_delegation_info(self) -> dict[str, object]: ...
 
 class FlextDelegatedProperty:
     prop_name: Incomplete

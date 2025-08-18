@@ -29,9 +29,7 @@ __all__ = [
     "Version",
 ]
 
-T = TypeVar("T")
-K = TypeVar("K")
-V = TypeVar("V")
+_T = TypeVar("_T")
 EntityId = str
 Version = int
 Timestamp = datetime
@@ -49,11 +47,11 @@ Percentage = float
 
 class TypeAdapterFactory:
     @staticmethod
-    def create_adapter[T](type_: type[T]) -> TypeAdapter[T]: ...
+    def create_adapter(type_: type[_T]) -> TypeAdapter[_T]: ...
     @staticmethod
-    def create_list_adapter[T](item_type: type[T]) -> TypeAdapter[list[T]]: ...
+    def create_list_adapter(item_type: type[_T]) -> TypeAdapter[list[_T]]: ...
     @staticmethod
-    def create_dict_adapter[T](value_type: type[T]) -> TypeAdapter[dict[str, T]]: ...
+    def create_dict_adapter(value_type: type[_T]) -> TypeAdapter[dict[str, _T]]: ...
 
 class ValidationAdapters:
     entity_id_adapter: Incomplete
@@ -87,22 +85,22 @@ class ValidationAdapters:
 
 class SerializationHelpers:
     @staticmethod
-    def to_json[T](adapter: TypeAdapter[T], value: T) -> FlextResult[str]: ...
+    def to_json(adapter: TypeAdapter[_T], value: _T) -> FlextResult[str]: ...
     @staticmethod
-    def from_json[T](adapter: TypeAdapter[T], json_str: str) -> FlextResult[T]: ...
+    def from_json(adapter: TypeAdapter[_T], json_str: str) -> FlextResult[_T]: ...
     @staticmethod
-    def to_dict[T](
-        adapter: TypeAdapter[T], value: T
+    def to_dict(
+        adapter: TypeAdapter[_T], value: _T
     ) -> FlextResult[dict[str, object]]: ...
     @staticmethod
-    def from_dict[T](
-        adapter: TypeAdapter[T], data: dict[str, object]
-    ) -> FlextResult[T]: ...
+    def from_dict(
+        adapter: TypeAdapter[_T], data: dict[str, object]
+    ) -> FlextResult[_T]: ...
 
 class SchemaHelpers:
     @staticmethod
-    def generate_schema[T](
-        adapter: TypeAdapter[T],
+    def generate_schema(
+        adapter: TypeAdapter[_T],
     ) -> FlextResult[dict[str, object]]: ...
     @staticmethod
     def generate_multiple_schemas(
@@ -119,4 +117,4 @@ class MigrationHelpers:
     @staticmethod
     def convert_basemodel_to_dataclass(model_class: type) -> str: ...
     @staticmethod
-    def create_adapter_for_legacy_model[T](model_class: type[T]) -> TypeAdapter[T]: ...
+    def create_adapter_for_legacy_model(model_class: type[_T]) -> TypeAdapter[_T]: ...
