@@ -1,8 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Generic, TypeVar
 
-from _typeshed import Incomplete
-
 from flext_core.commands import FlextCommands
 from flext_core.result import FlextResult
 
@@ -32,7 +30,7 @@ class FlextAbstractHandler[TInput, TOutput](ABC):
     @abstractmethod
     def handler_name(self) -> str: ...
     @abstractmethod
-    def handle(self, request: _TInput) -> FlextResult[_TOutput]: ...
+    def handle(self, request: TInput) -> FlextResult[TOutput]: ...
     @abstractmethod
     def can_handle(self, message_type: object) -> bool: ...
 
@@ -40,7 +38,7 @@ class FlextAbstractHandlerChain[TInput, TOutput](ABC):
     @property
     def handler_name(self) -> str: ...
     @abstractmethod
-    def handle(self, request: _TInput) -> FlextResult[_TOutput]: ...
+    def handle(self, request: TInput) -> FlextResult[TOutput]: ...
 
 class FlextAbstractHandlerRegistry[TH](ABC):
     @abstractmethod
@@ -48,13 +46,17 @@ class FlextAbstractHandlerRegistry[TH](ABC):
     @abstractmethod
     def get_all_handlers(self) -> dict[str, TH]: ...
 
-class FlextAbstractMetricsHandler(FlextAbstractHandler[_TInput, _TOutput], ABC):
+class FlextAbstractMetricsHandler[TInput, TOutput](
+    FlextAbstractHandler[TInput, TOutput], ABC
+):
     @abstractmethod
     def collect_metrics(self) -> dict[str, object]: ...
 
-class FlextAbstractValidatingHandler(FlextAbstractHandler[_TInput, _TOutput], ABC):
+class FlextAbstractValidatingHandler[TInput, TOutput](
+    FlextAbstractHandler[TInput, TOutput], ABC
+):
     @abstractmethod
-    def validate_request(self, request: _TInput) -> FlextResult[None]: ...
+    def validate_request(self, request: TInput) -> FlextResult[None]: ...
 
 _TQuery = TypeVar("_TQuery")
 _TQueryResult = TypeVar("_TQueryResult")
@@ -98,7 +100,7 @@ class FlextValidatingHandler(
     def get_handler_metadata(self) -> dict[str, object]: ...
 
 class FlextAuthorizingHandler(FlextBaseHandler):
-    required_permissions: Incomplete
+    required_permissions: list[str] | None
     def __init__(
         self, name: str | None = None, required_permissions: list[str] | None = None
     ) -> None: ...
@@ -223,7 +225,9 @@ class FlextQueryHandler(FlextCommands.QueryHandler[_TInput, _TOutput], ABC):
     def validate_message(message: object) -> FlextResult[None]: ...
 
 class HandlersFacade:
-    class CommandHandler(FlextCommandHandler[object, object], ABC): ...
+    class CommandHandler(FlextCommandHandler[object, object], ABC):
+        @abstractmethod
+        def handle_command(self, command: object) -> FlextResult[object]: ...
 
     class QueryHandler(Generic[_TQuery, _TQueryResult]):
         def __init__(
@@ -235,7 +239,10 @@ class HandlersFacade:
         @staticmethod
         def validate_message(message: object) -> FlextResult[None]: ...
 
-    class Handler(FlextCommands.Handler[object, object], ABC): ...
+    class Handler(FlextCommands.Handler[object, object], ABC):
+        @abstractmethod
+        def handle(self, command: object) -> FlextResult[object]: ...
+
     class EventHandler(FlextEventHandler): ...
 
     @staticmethod

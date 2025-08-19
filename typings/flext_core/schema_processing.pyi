@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from enum import Enum
-from typing import Protocol, TypeVar
+from typing import Protocol
 
 from _typeshed import Incomplete
 
@@ -24,30 +24,32 @@ __all__ = [
     "ProcessingPipeline",
 ]
 
-class FlextEntryType(Enum): ...
+class FlextEntryType(Enum):
+    UNKNOWN = "unknown"
+    DEFAULT = "default"
 
 class FlextBaseEntry(FlextValueObject, ABC):
     entry_type: str
     clean_content: str
     original_content: str
     identifier: str
+    @abstractmethod
+    def validate_business_rules(self) -> FlextResult[None]: ...
 
 class FlextEntryValidator(Protocol):
-    def is_valid(self, entry: EntryT) -> bool: ...
+    def is_valid(self, entry: object) -> bool: ...
     def is_whitelisted(self, identifier: str) -> bool: ...
-
-_EntryTypeVar = TypeVar("_EntryTypeVar")
 
 class FlextBaseProcessor[EntryTypeVar](ABC):
     validator: Incomplete
     def __init__(self, validator: FlextEntryValidator | None = None) -> None: ...
     def extract_entry_info(
         self, content: str, entry_type: str, prefix: str = ""
-    ) -> FlextResult[_EntryTypeVar]: ...
+    ) -> FlextResult[EntryTypeVar]: ...
     def process_content_lines(
         self, lines: list[str], entry_type: str, prefix: str = ""
-    ) -> FlextResult[list[_EntryTypeVar]]: ...
-    def get_extracted_entries(self) -> list[_EntryTypeVar]: ...
+    ) -> FlextResult[list[EntryTypeVar]]: ...
+    def get_extracted_entries(self) -> list[EntryTypeVar]: ...
     def clear_extracted_entries(self) -> None: ...
 
 class FlextRegexProcessor(FlextBaseProcessor[EntryT], ABC):

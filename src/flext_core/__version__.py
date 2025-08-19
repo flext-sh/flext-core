@@ -1,40 +1,34 @@
-"""Version management and compatibility for FLEXT ecosystem."""
-
-from __future__ import annotations
+"""Version management and compatibility checking for FLEXT Core."""
 
 import sys
-
-# =============================================================================
-# VERSION INFORMATION - Single source of truth for FLEXT Core version
-# =============================================================================
-# Get version from package metadata with fallback
+from dataclasses import dataclass
 from importlib.metadata import version as _pkg_version
 from typing import NamedTuple
 
 from flext_core.loggings import FlextLoggerFactory
 from flext_core.typings import TAnyList
 
-__version__ = _pkg_version("flext-core")
+__version__: str = _pkg_version("flext-core")
 
 # Version metadata for programmatic access
-VERSION_MAJOR = 0
-VERSION_MINOR = 9
-VERSION_PATCH = 0
+VERSION_MAJOR: int = 0
+VERSION_MINOR: int = 9
+VERSION_PATCH: int = 0
 
 # Semantic version format constants
-SEMVER_PARTS_COUNT = 3  # major.minor.patch
+SEMVER_PARTS_COUNT: int = 3  # major.minor.patch
 
 # Release information
-RELEASE_NAME = "Foundation"
-RELEASE_DATE = "2025-06-27"
-BUILD_TYPE = "stable"
+RELEASE_NAME: str = "Foundation"
+RELEASE_DATE: str = "2025-06-27"
+BUILD_TYPE: str = "stable"
 
 # Compatibility information
-MIN_PYTHON_VERSION = (3, 13, 0)
-MAX_PYTHON_VERSION = (3, 14, 0)
+MIN_PYTHON_VERSION: tuple[int, int, int] = (3, 13, 0)
+MAX_PYTHON_VERSION: tuple[int, int, int] = (3, 14, 0)
 
 # Feature availability matrix
-AVAILABLE_FEATURES = {
+AVAILABLE_FEATURES: dict[str, bool] = {
     "core_validation": True,
     "dependency_injection": True,
     "domain_driven_design": True,
@@ -70,18 +64,15 @@ class FlextVersionInfo(NamedTuple):
     build_type: str
 
 
-class FlextCompatibilityResult(NamedTuple):
-    """Result of compatibility checking operations.
-
-    Structured compatibility information for Python version validation
-    with detailed error reporting and actionable recommendations.
-    """
+@dataclass
+class FlextCompatibilityResult:
+    """Result of Python version compatibility check."""
 
     is_compatible: bool
     current_version: tuple[int, ...]
     required_version: tuple[int, ...]
     error_message: str
-    recommendations: TAnyList
+    recommendations: list[str]
 
 
 def get_version_tuple() -> tuple[int, int, int]:

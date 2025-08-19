@@ -38,7 +38,6 @@ from flext_core.schema_processing import (
 from flext_core.utilities import FlextUtilities
 from flext_core.validation import (
     FlextValidators,
-    flext_validate_non_empty_string as flext_validate_non_empty_string,
 )
 
 __all__ = [
@@ -85,7 +84,6 @@ __all__ = [
     "_PerformanceConfig",
     "check_python_compatibility",
     "compare_versions",
-    "flext_validate_non_empty_string",
     "get_available_features",
     "get_version_info",
     "get_version_string",

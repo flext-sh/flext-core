@@ -142,16 +142,16 @@ from flext_core.decorators import (
     FlextValidationDecorators,
     # Internal decorators for testing
     # Individual decorator functions
-    _flext_cache_decorator,  # pyright: ignore[reportPrivateUsage]
-    _flext_safe_call_decorator,  # pyright: ignore[reportPrivateUsage]
-    _flext_timing_decorator,  # pyright: ignore[reportPrivateUsage]
-    _flext_validate_input_decorator,  # pyright: ignore[reportPrivateUsage]
+    _flext_cache_decorator,
+    _flext_safe_call_decorator,
+    _flext_timing_decorator,
+    _flext_validate_input_decorator,
     # Aliases for backward compatibility
-    _validate_input_decorator,  # pyright: ignore[reportPrivateUsage]
-    _safe_call_decorator,  # pyright: ignore[reportPrivateUsage]
-    _decorators_base,  # pyright: ignore[reportPrivateUsage]
-    _BaseImmutabilityDecorators,  # pyright: ignore[reportPrivateUsage]
-    _BaseDecoratorFactory,  # pyright: ignore[reportPrivateUsage]
+    _validate_input_decorator,
+    _safe_call_decorator,
+    _decorators_base,
+    _BaseImmutabilityDecorators,
+    _BaseDecoratorFactory,
 )
 
 # Delegation System
@@ -594,7 +594,6 @@ from flext_core.validation import (
     FlextValidation,
     FlextValidators,
     flext_validate_email,
-    flext_validate_non_empty_string,
     flext_validate_numeric,
     flext_validate_required,
     flext_validate_service_name,
@@ -608,7 +607,6 @@ from flext_core.guards import (
     FlextValidationUtils,
     ValidatedModel,
     immutable,
-    is_dict_of,
     is_instance_of,
     is_list_of,
     make_builder,
@@ -976,7 +974,6 @@ __all__ += [
     "FlextValidationUtils",
     "ValidatedModel",
     "immutable",
-    "is_dict_of",
     "is_instance_of",
     "is_list_of",
     "is_not_none",
@@ -1076,7 +1073,6 @@ __all__ += [
     "ConsoleLogger",
     "BaseConfigManager",
     "LegacyCompatibleCacheableMixin",
-    "flext_validate_non_empty_string",
     "FlextValueObjectFactory",
     # Additional legacy mixin aliases for test compatibility
     "LegacyCompatibleCommandMixin",

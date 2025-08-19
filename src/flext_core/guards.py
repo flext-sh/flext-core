@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import functools
 from collections.abc import Callable
 from typing import Self, cast
 
@@ -64,6 +65,15 @@ class _PureWrapper[R]:
     def __cache_size__(self) -> int:
         """Return the size of the cache."""
         return len(self.cache)
+
+    def __get__(self, instance: object, owner: type | None = None) -> object:
+        """Descriptor protocol to handle method binding."""
+        if instance is None:
+            return self
+        # Create a bound method-like callable that preserves __pure__ attribute
+        bound_method = functools.partial(self, instance)
+        bound_method.__pure__ = True  # type: ignore[attr-defined]
+        return bound_method
 
 
 class FlextGuards:

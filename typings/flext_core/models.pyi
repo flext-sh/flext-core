@@ -2,8 +2,13 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable
 from typing import ClassVar, Self
 
-from _typeshed import Incomplete
-from pydantic import BaseModel, SerializationInfo, ValidationInfo, computed_field
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    SerializationInfo,
+    ValidationInfo,
+    computed_field,
+)
 
 from flext_core.result import FlextResult
 from flext_core.root_models import (
@@ -13,6 +18,13 @@ from flext_core.root_models import (
     FlextTimestamp,
     FlextVersion,
 )
+
+# Type aliases for JSON schema
+type JsonSchemaValue = (
+    str | int | float | bool | None | dict[str, object] | list[object]
+)
+type JsonSchemaFieldInfo = dict[str, JsonSchemaValue]
+type JsonSchemaDefinition = dict[str, JsonSchemaValue]
 
 __all__ = [
     "DomainEventDict",
@@ -24,8 +36,10 @@ __all__ = [
     "FlextEntityDict",
     "FlextEntityFactory",
     "FlextFactory",
+    "FlextFieldValidationInfo",
     "FlextLegacyConfig",
     "FlextModel",
+    "FlextModelDict",
     "FlextObs",
     "FlextOperationDict",
     "FlextOperationModel",
@@ -34,6 +48,9 @@ __all__ = [
     "FlextSingerStreamModel",
     "FlextValue",
     "FlextValueObjectDict",
+    "JsonSchemaDefinition",
+    "JsonSchemaFieldInfo",
+    "JsonSchemaValue",
     "create_database_model",
     "create_operation_model",
     "create_oracle_model",
@@ -43,12 +60,12 @@ __all__ = [
 ]
 
 class FlextModel(BaseModel):
-    model_config: ClassVar[Incomplete]
-    @computed_field
+    model_config: ClassVar[ConfigDict]
     @property
+    @computed_field
     def model_type(self) -> str: ...
-    @computed_field
     @property
+    @computed_field
     def model_namespace(self) -> str: ...
     def validate_business_rules(self) -> FlextResult[None]: ...
     def validate_with_context(
@@ -91,16 +108,12 @@ class FlextEntity(FlextModel, ABC):
     ) -> FlextEntityId: ...
     @classmethod
     def validate_version(cls, v: int | FlextVersion) -> FlextVersion: ...
-    @computed_field
     @property
     def entity_type(self) -> str: ...
-    @computed_field
     @property
     def entity_age_seconds(self) -> float: ...
-    @computed_field
     @property
     def is_new_entity(self) -> bool: ...
-    @computed_field
     @property
     def has_events(self) -> bool: ...
     def __hash__(self) -> int: ...
@@ -108,7 +121,9 @@ class FlextEntity(FlextModel, ABC):
     def increment_version(self) -> FlextResult[Self]: ...
     def with_version(self, new_version: int) -> Self: ...
     def add_domain_event(
-        self, event_type: str, event_data: dict[str, object]
+        self,
+        event_type_or_dict: str | dict[str, object],
+        event_data: dict[str, object] | None = None,
     ) -> FlextResult[None]: ...
     def clear_events(self) -> list[object]: ...
     def validate_field(self, field_name: str, _value: object) -> FlextResult[None]: ...
@@ -145,19 +160,14 @@ class FlextAuth: ...
 class FlextObs: ...
 
 FlextEntityFactory = FlextFactory
-type JsonSchemaValue = (
-    str | int | float | bool | None | dict[str, object] | list[object]
-)
-type JsonSchemaFieldInfo = dict[str, JsonSchemaValue]
-type JsonSchemaDefinition = dict[str, JsonSchemaValue]
 type DomainEventDict = dict[str, object]
 type FlextEntityDict = dict[str, object]
 type FlextValueObjectDict = dict[str, object]
 type FlextOperationDict = dict[str, object]
 type FlextConnectionDict = dict[str, object]
-type FlextModelDict = dict[str, JsonSchemaValue]
+type FlextModelDict = dict[str, JsonSchemaDefinition]
 type FlextValidationContext = dict[str, object]
-type FlextFieldValidationInfo = dict[str, JsonSchemaValue]
+type FlextFieldValidationInfo = dict[str, JsonSchemaDefinition]
 FlextDatabaseModel = FlextModel
 FlextOracleModel = FlextModel
 FlextLegacyConfig = FlextModel

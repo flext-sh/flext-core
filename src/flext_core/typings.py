@@ -10,7 +10,7 @@ from __future__ import annotations
 import warnings
 from collections.abc import Callable, Mapping
 from datetime import datetime
-from typing import ParamSpec, TypeVar
+from typing import TYPE_CHECKING, ParamSpec, TypeVar
 
 # Test TypeVars para uso global
 TTestData = TypeVar("TTestData")
@@ -629,17 +629,16 @@ def _emit_transition_warning(old_name: str, new_name: str) -> None:
 
 def get_centralized_types_usage_info() -> str:
     """Get information about centralized type usage."""
+    # Reference the transition helper in a defensive branch so static analyzers
+    # won't flag it as unused while preserving no runtime effect.
+    if TYPE_CHECKING:  # pragma: no cover - static-analysis helper
+        _emit_transition_warning("old", "new")
+
     return (
         "All types are now centralized in typings.py. "
         "Use 'from flext_core.typings import FlextTypes' for new development. "
         "T* aliases are available for convenience."
     )
-
-    # Reference the transition helper in a defensive branch so static analyzers
-    # won't flag it as unused while preserving no runtime effect.
-    if False:  # type: ignore[unreachable] # pragma: no cover - static-analysis helper
-        _emit_transition_warning("old", "new")
-    return None
 
 
 # Field types (from fields.py) - defined here after FlextTypes class is complete

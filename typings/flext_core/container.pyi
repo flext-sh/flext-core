@@ -1,10 +1,12 @@
 from collections import UserString
 from collections.abc import Callable
-from typing import Self
+from typing import TypeVar
 
 from flext_core.mixins import FlextLoggableMixin
 from flext_core.result import FlextResult
 from flext_core.typings import T
+
+TService = TypeVar("TService")  # noqa: PYI001
 
 __all__ = [
     "FlextContainer",
@@ -19,11 +21,12 @@ __all__ = [
 ]
 
 class FlextServiceKey[TService](UserString):
-    def __new__(cls, name: str) -> Self: ...
+    def __new__(cls, name: str) -> FlextServiceKey[TService]: ...
+    def __init__(self, name: str) -> None: ...
     @property
     def name(self) -> str: ...
     @classmethod
-    def __class_getitem__(cls, _item: object) -> type[FlextServiceKey]: ...
+    def __class_getitem__(cls, _item: object) -> type[FlextServiceKey[TService]]: ...
 
 class FlextServiceRegistrar(FlextLoggableMixin):
     def __init__(self) -> None: ...

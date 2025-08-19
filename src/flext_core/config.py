@@ -1408,7 +1408,9 @@ class FlextConfigFactory:
                 elif source_type == "env":
                     result = cls.create_from_env(str(source_data))
                 elif source_type == "defaults" and isinstance(source_data, dict):
-                    result = FlextResult[dict[str, object]].ok(cast("dict[str, object]", source_data))
+                    result = FlextResult[dict[str, object]].ok(
+                        cast("dict[str, object]", source_data)
+                    )
                 else:
                     continue
 
@@ -1451,13 +1453,13 @@ class FlextConfigFactory:
 
         try:
             content = path.read_text(encoding="utf-8")
-            data = json.loads(content)
-            if not isinstance(data, dict):
+            loaded_data = json.loads(content)
+            if not isinstance(loaded_data, dict):
                 return FlextResult[dict[str, object]].fail(
                     "JSON file must contain a dictionary"
                 )
-            typed_data = cast("dict[str, object]", data)
-            return FlextResult[dict[str, object]].ok(typed_data)
+            data: dict[str, object] = cast("dict[str, object]", loaded_data)
+            return FlextResult[dict[str, object]].ok(data)
         except Exception as e:
             return FlextResult[dict[str, object]].fail(f"Failed to load JSON file: {e}")
 
@@ -1494,14 +1496,20 @@ def safe_get_env_var(
     """Safely get environment variable with FlextResult error handling."""
     try:
         if not var_name or not var_name.strip():
-            return FlextResult[str].fail("Environment variable name must be a non-empty string")
+            return FlextResult[str].fail(
+                "Environment variable name must be a non-empty string"
+            )
 
         value = os.environ.get(var_name)
         if value is None:
             if required:
-                return FlextResult[str].fail(f"Required environment variable '{var_name}' not found")
+                return FlextResult[str].fail(
+                    f"Required environment variable '{var_name}' not found"
+                )
             if default is None:
-                return FlextResult[str].fail(f"Environment variable '{var_name}' not found")
+                return FlextResult[str].fail(
+                    f"Environment variable '{var_name}' not found"
+                )
             return FlextResult[str].ok(default)
         return FlextResult[str].ok(value)
     except Exception as e:
@@ -1516,7 +1524,15 @@ def safe_load_json_file(file_path: str | Path) -> FlextResult[dict[str, object]]
             return FlextResult[dict[str, object]].fail(f"File not found: {file_path}")
 
         content = path.read_text(encoding="utf-8")
-        data: dict[str, object] = json.loads(content)
+        loaded_data = json.loads(content)
+
+        # Validate that the JSON contains a dictionary
+        if not isinstance(loaded_data, dict):
+            return FlextResult[dict[str, object]].fail(
+                "JSON file must contain a dictionary"
+            )
+
+        data: dict[str, object] = cast("dict[str, object]", loaded_data)
         return FlextResult[dict[str, object]].ok(data)
     except Exception as e:
         return FlextResult[dict[str, object]].fail(f"Failed to load JSON file: {e}")
@@ -1688,7 +1704,7 @@ class FlextConfigDefaults:
     def get_default_config() -> FlextResult[dict[str, object]]:
         """Get the default configuration."""
         try:
-            defaults = {
+            defaults: dict[str, object] = {
                 "debug": False,
                 "timeout": DEFAULT_TIMEOUT,
                 "retries": DEFAULT_RETRIES,
@@ -1697,7 +1713,7 @@ class FlextConfigDefaults:
                 "environment": DEFAULT_ENVIRONMENT,
                 "port": 8000,
             }
-            return FlextResult[dict[str, object]].ok(cast("dict[str, object]", defaults))
+            return FlextResult[dict[str, object]].ok(defaults)
         except Exception as e:
             return FlextResult[dict[str, object]].fail(
                 f"Failed to get default config: {e}"
@@ -1764,8 +1780,9 @@ class FlextConfigValidation:
     def validate_config(config: dict[str, object]) -> FlextResult[None]:
         """Validate configuration dictionary."""
         try:
-            # Basic validation - config is already typed as dict[str, object]
-            # No additional validation needed, type system ensures correctness
+            # Basic validation - ensure config is not empty
+            if not config:
+                return FlextResult[None].fail("Configuration cannot be empty")
             return FlextResult[None].ok(None)
         except Exception as e:
             return FlextResult[None].fail(f"Configuration validation failed: {e}")

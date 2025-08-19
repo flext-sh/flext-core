@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 from collections.abc import Callable
-from typing import ClassVar, Protocol, TypeVar, cast, runtime_checkable
+from typing import ClassVar, Protocol, TypeVar, runtime_checkable
 from unittest.mock import MagicMock, Mock, patch
 
 from flext_core.constants import (
@@ -330,8 +330,9 @@ class FlextTestAssertion:
         try:
             # Use hasattr to check if container supports 'in' operator
             if hasattr(container, "__contains__"):
-                # Use type: ignore to handle container protocol compatibility
-                if item not in container:
+                # Support container protocol compatibility
+                contains_method = getattr(container, "__contains__", None)
+                if contains_method is not None and not contains_method(item):
                     msg = message or f"{item!r} not found in {container!r}"
                     raise AssertionError(msg)
             else:
@@ -363,9 +364,11 @@ class FlextTestAssertion:
         """
         try:
             # Use hasattr to check if container supports 'in' operator
-            if hasattr(container, "__contains__") and item in container:
-                msg = message or f"{item!r} found in {container!r}"
-                raise AssertionError(msg)
+            if hasattr(container, "__contains__"):
+                contains_method = getattr(container, "__contains__", None)
+                if contains_method is not None and contains_method(item):
+                    msg = message or f"{item!r} found in {container!r}"
+                    raise AssertionError(msg)
         except (TypeError, AttributeError):
             # Fallback for containers that don't support 'in' operator
             pass  # If we can't check, assume item is not in container
@@ -498,8 +501,8 @@ class FlextTestMocker:
             Patch context manager.
 
         """
-        # Pass all kwargs to patch.object - using Any to avoid overload complexity
-        return cast("object", patch.object(target, attribute, **cast("dict[str, object]", kwargs)))
+        # patch.object overload complexity - suppress typing for mock compatibility
+        return patch.object(target, attribute, **kwargs)  # type: ignore[call-overload]
 
     @staticmethod
     def create_async_mock(
@@ -522,7 +525,8 @@ class FlextTestMocker:
         mock_kwargs: dict[str, object] = {}
         if kwargs:
             filtered_kwargs = {
-                str(k): v for k, v in kwargs.items()
+                str(k): v
+                for k, v in kwargs.items()
                 if isinstance(v, (str, int, bool, type(None)))
             }
             mock_kwargs.update(filtered_kwargs)

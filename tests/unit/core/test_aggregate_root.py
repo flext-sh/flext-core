@@ -24,10 +24,18 @@ class FailingEventAggregateRoot(FlextAggregateRoot):
 
     def add_domain_event(
         self,
-        event_type: str,
-        event_data: dict[str, object],
+        event_type_or_dict: str | dict[str, object],
+        event_data: dict[str, object] | None = None,
     ) -> FlextResult[None]:
         """Override to simulate different error types based on event_type."""
+        # Extract event_type from parameter
+        if isinstance(event_type_or_dict, str):
+            event_type = event_type_or_dict
+        else:
+            event_type = str(event_type_or_dict.get("event_type", ""))
+            if event_data is None:
+                event_data = event_type_or_dict
+
         # Define event handlers for different event types
         event_handlers = {
             "type_error_event": self._handle_type_error_event,
@@ -38,10 +46,13 @@ class FailingEventAggregateRoot(FlextAggregateRoot):
         # Get handler for the event type, default to normal behavior
         handler = event_handlers.get(event_type)
         if handler:
-            return handler(event_data)
+            return handler(event_data or {})
 
-        # Default case
-        return super().add_domain_event(event_type, event_data)
+        # Default case - when no special handler, use event_type string
+        if isinstance(event_type_or_dict, str):
+            return super().add_domain_event(event_type_or_dict, event_data or {})
+        # Convert dict to event_type string for super call
+        return super().add_domain_event(event_type, event_data or {})
 
     def _handle_type_error_event(
         self,

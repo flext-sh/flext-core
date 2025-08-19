@@ -69,7 +69,7 @@ class FlextServiceKey(UserString, Generic[TService]):  # noqa: UP046
 class RegisterServiceCommand(FlextCommands.Command):
     """Command to register a service instance."""
 
-    service_name: str
+    service_name: str = ""
     service_instance: object
 
     @classmethod
@@ -77,7 +77,7 @@ class RegisterServiceCommand(FlextCommands.Command):
         cls, service_name: str, service_instance: object
     ) -> RegisterServiceCommand:
         """Create command with default values."""
-        return cls(
+        return cls(  # pyright: ignore[reportCallIssue]
             service_name=service_name,
             service_instance=service_instance,
             command_type="register_service",
@@ -85,7 +85,6 @@ class RegisterServiceCommand(FlextCommands.Command):
             timestamp=datetime.now(tz=ZoneInfo("UTC")),
             user_id=None,
             correlation_id=FlextGenerators.generate_uuid(),
-            legacy_mixin_setup=None,
         )
 
     def validate_command(self) -> FlextResult[None]:
@@ -98,13 +97,13 @@ class RegisterServiceCommand(FlextCommands.Command):
 class RegisterFactoryCommand(FlextCommands.Command):
     """Command to register a service factory."""
 
-    service_name: str
+    service_name: str = ""
     factory: object  # Callable[[], object] - using object for validation
 
     @classmethod
     def create(cls, service_name: str, factory: object) -> RegisterFactoryCommand:
         """Create command with default values."""
-        return cls(
+        return cls(  # pyright: ignore[reportCallIssue]
             service_name=service_name,
             factory=factory,
             command_type="register_factory",
@@ -112,7 +111,6 @@ class RegisterFactoryCommand(FlextCommands.Command):
             timestamp=datetime.now(tz=ZoneInfo("UTC")),
             user_id=None,
             correlation_id=FlextGenerators.generate_uuid(),
-            legacy_mixin_setup=None,
         )
 
     def validate_command(self) -> FlextResult[None]:
@@ -127,19 +125,18 @@ class RegisterFactoryCommand(FlextCommands.Command):
 class UnregisterServiceCommand(FlextCommands.Command):
     """Command to unregister a service."""
 
-    service_name: str
+    service_name: str = ""
 
     @classmethod
     def create(cls, service_name: str) -> UnregisterServiceCommand:
         """Create command with default values."""
-        return cls(
+        return cls(  # pyright: ignore[reportCallIssue]
             service_name=service_name,
             command_type="unregister_service",
             command_id=FlextGenerators.generate_uuid(),
             timestamp=datetime.now(tz=ZoneInfo("UTC")),
             user_id=None,
             correlation_id=FlextGenerators.generate_uuid(),
-            legacy_mixin_setup=None,
         )
 
     def validate_command(self) -> FlextResult[None]:
@@ -152,7 +149,7 @@ class UnregisterServiceCommand(FlextCommands.Command):
 class GetServiceQuery(FlextCommands.Query):
     """Query to retrieve a service."""
 
-    service_name: str
+    service_name: str = ""
     expected_type: str | None = None  # Optional type validation
 
     @classmethod

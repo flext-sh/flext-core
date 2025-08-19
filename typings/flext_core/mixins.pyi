@@ -1,7 +1,5 @@
 from abc import ABC, abstractmethod
 
-from _typeshed import Incomplete
-
 from flext_core.protocols import FlextLoggerProtocol
 from flext_core.result import FlextResult
 from flext_core.typings import TEntityId
@@ -49,8 +47,9 @@ __all__ = [
 class FlextAbstractMixin(ABC):
     @abstractmethod
     def mixin_setup(self) -> None: ...
-    service_name: Incomplete
-    id: Incomplete
+    service_name: str | None
+    @property
+    def id(self) -> TEntityId | None: ...
     def __init__(self, *args: object, **kwargs: object) -> None: ...
 
 class FlextAbstractTimestampMixin(FlextAbstractMixin, ABC):
@@ -209,13 +208,14 @@ class FlextCommandMixin(
     def mixin_setup(self) -> None: ...
 
 class FlextServiceMixin(FlextLoggableMixin, FlextValidatableMixin):
-    id: Incomplete
+    @property
+    def id(self) -> TEntityId | None: ...
     def mixin_setup(self) -> None: ...
 
 class FlextDataMixin(
     FlextTimestampMixin, FlextSerializableMixin, FlextValidatableMixin
 ):
-    validate_data: Incomplete
+    validate_data: object | None
     def mixin_setup(self) -> None: ...
 
 class FlextFullMixin(

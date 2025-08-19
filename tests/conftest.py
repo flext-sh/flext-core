@@ -431,7 +431,9 @@ def entity_factory() -> Callable[[str, dict[str, object]], FlextEntity]:
         name: str = "test"
         value: int = 0
 
-        def __init__(self, entity_id: str = "test-entity", name: str = "test", value: int = 0) -> None:
+        def __init__(
+            self, entity_id: str = "test-entity", name: str = "test", value: int = 0
+        ) -> None:
             super().__init__(id=entity_id)
             self.name = name
             self.value = value

@@ -104,7 +104,9 @@ class FlextPerformance:
 
 class FlextConversions:
     @staticmethod
-    def safe_call(func: Callable[[], _T] | Callable[[object], _T]) -> FlextResult[_T]: ...
+    def safe_call(
+        func: Callable[[], _T] | Callable[[object], _T],
+    ) -> FlextResult[_T]: ...
     @staticmethod
     def is_not_none(value: _T | None) -> TypeGuard[_T]: ...
 
@@ -190,7 +192,7 @@ class FlextFormatters:
 
 class FlextBaseFactory[T](ABC):
     @abstractmethod
-    def create(self, **kwargs: object) -> FlextResult[_T]: ...
+    def create(self, **kwargs: object) -> FlextResult[T]: ...
 
 class FlextGenericFactory(FlextBaseFactory[object]):
     def __init__(self, target_type: type[object]) -> None: ...

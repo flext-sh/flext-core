@@ -165,19 +165,19 @@ class FlextAggregateRoot(FlextEntity):
         # Conversão explícita dos tipos esperados
         id_value = (
             FlextEntityId(actual_id)
-            if not isinstance(actual_id, FlextEntityId)  # type: ignore[unreachable]
+            if not isinstance(actual_id, FlextEntityId)
             else cast("FlextEntityId", actual_id)
         )
         version_value = (
             FlextVersion(version)
-            if not isinstance(version, FlextVersion)  # type: ignore[unreachable]
+            if not isinstance(version, FlextVersion)
             else cast("FlextVersion", version)
         )
         created_at_value: FlextTimestamp | None = None
         if created_at is not None:
             created_at_value = (
                 FlextTimestamp(created_at)
-                if not isinstance(created_at, FlextTimestamp)  # type: ignore[unreachable]
+                if not isinstance(created_at, FlextTimestamp)
                 else cast("FlextTimestamp", created_at)
             )
 
@@ -217,23 +217,38 @@ class FlextAggregateRoot(FlextEntity):
 
     def add_domain_event(
         self,
-        event_type: str,
-        event_data: dict[str, object],
+        event_type_or_dict: str | dict[str, object],
+        event_data: dict[str, object] | None = None,
     ) -> FlextResult[None]:
         """Add domain event for event sourcing.
 
         Args:
-            event_type: Tipo do evento de domínio
-            event_data: Dados do evento
+            event_type_or_dict: Event type string or event dictionary
+            event_data: Event data (used when first arg is string)
 
         Returns:
-            FlextResult indicando sucesso ou falha
+            FlextResult indicating success or failure
 
         """
         try:
+            # Handle both signatures
+            if isinstance(event_type_or_dict, str):
+                event_type = event_type_or_dict
+                data = event_data or {}
+            else:
+                # Assume it's a dict
+                event_dict = event_type_or_dict
+                event_type = str(event_dict.get("type", "unknown"))
+                data_raw = event_dict.get("data", {})
+                data = (
+                    cast("dict[str, object]", data_raw)
+                    if isinstance(data_raw, dict)
+                    else {}
+                )
+
             event_result: FlextResult[FlextEvent] = FlextEvent.create_event(
                 event_type=event_type,
-                event_data=event_data,
+                event_data=data,
                 aggregate_id=str(self.id),
                 version=int(self.version),
             )

@@ -208,7 +208,7 @@ class FlextCommands:
             payload_dict: dict[str, object]
             # Extract dict data with explicit type handling for pyright compatibility
             raw_data = payload.data
-            if raw_data is not None and isinstance(raw_data, dict):
+            if raw_data is not None:
                 # Explicit cast to satisfy pyright's type checking
                 payload_dict = {
                     str(k): v for k, v in cast("dict[object, object]", raw_data).items()
@@ -327,7 +327,7 @@ class FlextCommands:
                 return FlextResult[None].fail(error_msg)
             return FlextResult[None].ok(None)
 
-        def get_metadata(self) -> TAnyDict:
+        def get_metadata(self) -> dict[str, str | None]:
             """Get command metadata."""
             return {
                 "command_id": self.command_id,
@@ -338,7 +338,7 @@ class FlextCommands:
                 "correlation_id": self.correlation_id,
             }
 
-        def to_payload(self) -> FlextPayload[TAnyDict]:
+        def to_payload(self) -> FlextPayload[dict[str, str | None]]:
             """Convert command to FlextPayload for serialization."""
             # Convert the command model to a dictionary
             command_dict = self.model_dump()
@@ -354,7 +354,10 @@ class FlextCommands:
             metadata["type"] = self.command_type or self.__class__.__name__.lower()
 
             # Create and return payload
-            return FlextPayload.create(data=command_dict, **metadata).unwrap()
+            result = FlextPayload[dict[str, object]].create(
+                data=command_dict, **metadata
+            )
+            return cast("FlextPayload[dict[str, str | None]]", result.unwrap())
 
     # =============================================================================
     # COMMAND RESULT HELPERS - Use FlextResult directly as requested

@@ -278,7 +278,11 @@ class FlextSemanticError:
                 context_val = kwargs.pop("context", None)
                 cause_val = kwargs.pop("cause", None)
                 # Type-safe context and cause handling
-                context_dict = cast("dict[str, object]", context_val) if isinstance(context_val, dict) else None
+                context_dict = (
+                    cast("dict[str, object]", context_val)
+                    if isinstance(context_val, dict)
+                    else None
+                )
                 cause_exception = (
                     cause_val if isinstance(cause_val, Exception) else None
                 )
@@ -295,7 +299,11 @@ class FlextSemanticError:
             def __init__(self, message: str, **kwargs: object) -> None:
                 context_val = kwargs.pop("context", None)
                 cause_val = kwargs.pop("cause", None)
-                context_dict = cast("dict[str, object]", context_val) if isinstance(context_val, dict) else None
+                context_dict = (
+                    cast("dict[str, object]", context_val)
+                    if isinstance(context_val, dict)
+                    else None
+                )
                 cause_exception = (
                     cause_val if isinstance(cause_val, Exception) else None
                 )
@@ -312,7 +320,11 @@ class FlextSemanticError:
             def __init__(self, message: str, **kwargs: object) -> None:
                 context_val = kwargs.pop("context", None)
                 cause_val = kwargs.pop("cause", None)
-                context_dict = cast("dict[str, object]", context_val) if isinstance(context_val, dict) else None
+                context_dict = (
+                    cast("dict[str, object]", context_val)
+                    if isinstance(context_val, dict)
+                    else None
+                )
                 cause_exception = (
                     cause_val if isinstance(cause_val, Exception) else None
                 )
@@ -329,7 +341,11 @@ class FlextSemanticError:
             def __init__(self, message: str, **kwargs: object) -> None:
                 context_val = kwargs.pop("context", None)
                 cause_val = kwargs.pop("cause", None)
-                context_dict = cast("dict[str, object]", context_val) if isinstance(context_val, dict) else None
+                context_dict = (
+                    cast("dict[str, object]", context_val)
+                    if isinstance(context_val, dict)
+                    else None
+                )
                 cause_exception = (
                     cause_val if isinstance(cause_val, Exception) else None
                 )

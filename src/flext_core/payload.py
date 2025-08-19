@@ -199,16 +199,17 @@ class FlextPayload[T](
         try:
             payload_data = validated_dict.get("data")
             payload_metadata_raw = validated_dict.get("metadata", {})
-            match payload_metadata_raw:
-                case dict() as metadata_dict:
-                    payload_metadata = cast("dict[str, object]", metadata_dict)
-                case _:
-                    payload_metadata = {}
+            if isinstance(payload_metadata_raw, dict):
+                payload_metadata = cast("dict[str, object]", payload_metadata_raw)
+            else:
+                payload_metadata = {}
             # Cast to proper type for the generic class
             payload = cls(
                 data=cast("T | None", payload_data), metadata=payload_metadata
             )
-            return FlextResult[FlextPayload[object]].ok(payload)
+            return FlextResult[FlextPayload[object]].ok(
+                cast("FlextPayload[object]", payload)
+            )
         except (RuntimeError, ValueError, TypeError, AttributeError) as e2:
             # Broad exception handling for API contract safety in payload creation
             return FlextResult[FlextPayload[object]].fail(
@@ -225,11 +226,10 @@ class FlextPayload[T](
         Accepts dict-like inputs to satisfy broader call sites and delegates
         to ``create_from_dict`` after minimal normalization.
         """
-        match data_dict:
-            case Mapping() as mapping:
-                data_obj = dict(mapping)
-            case _:
-                data_obj = cast("dict[str, object]", data_dict)
+        if isinstance(data_dict, Mapping):
+            data_obj = dict(cast("Mapping[str, object]", data_dict))
+        else:
+            data_obj = cast("dict[str, object]", data_dict)
         return cls.create_from_dict(data_obj)
 
     def has_data(self) -> bool:
@@ -357,7 +357,7 @@ class FlextPayload[T](
                 "api_version": "v2",
                 "cross_service_ready": True,
             }
-        return data
+        return cast("dict[str, object]", data)
 
     def to_dict(self) -> dict[str, object]:
         """Convert payload to dictionary representation.
@@ -406,26 +406,24 @@ class FlextPayload[T](
 
     def _serialize_value(self, value: object) -> object | None:
         """Serialize a single value for dict conversion."""
-        match value:
-            # Simple types
-            case str() | int() | float() | bool() | None:
-                return value
-            # Collections
-            case list() | tuple() as collection:
-                return self._serialize_collection(collection)
-            case dict() as dict_value:
-                return self._serialize_dict(dict_value)
-            case _:
-                # Objects with serialization method
-                to_dict_method = getattr(value, "to_dict_basic", None)
-                if callable(to_dict_method):
-                    result = to_dict_method()
-                    match result:
-                        case dict() as dict_result:
-                            return dict_result
-                        case _:
-                            return None
-                return None
+        # Simple types
+        if isinstance(value, (str, int, float, bool)) or value is None:
+            return value
+        # Collections
+        if isinstance(value, (list, tuple)):
+            return self._serialize_collection(
+                cast("list[object] | tuple[object, ...]", value)
+            )
+        if isinstance(value, dict):
+            return self._serialize_dict(cast("dict[str, object]", value))
+        # Objects with serialization method
+        to_dict_method = getattr(value, "to_dict_basic", None)
+        if callable(to_dict_method):
+            result = to_dict_method()
+            if isinstance(result, dict):
+                return cast("dict[str, object]", result)
+            return None
+        return None
 
     @staticmethod
     def _serialize_collection(
@@ -434,18 +432,16 @@ class FlextPayload[T](
         """Serialize list or tuple values."""
         serialized_list: list[object] = []
         for item in collection:
-            match item:
-                case str() | int() | float() | bool() | None:
-                    serialized_list.append(item)
-                case _:
-                    to_dict_method = getattr(item, "to_dict_basic", None)
-                    if callable(to_dict_method):
-                        result = to_dict_method()
-                        match result:
-                            case dict() as dict_result:
-                                serialized_list.append(dict_result)
-                            case _:
-                                pass  # Skip non-dict results
+            if isinstance(item, (str, int, float, bool)) or item is None:
+                serialized_list.append(item)
+            else:
+                to_dict_method = getattr(item, "to_dict_basic", None)
+                if callable(to_dict_method):
+                    result = to_dict_method()
+                    if isinstance(result, dict):
+                        serialized_list.append(cast("dict[str, object]", result))
+                    else:
+                        pass  # Skip non-dict results
         return serialized_list
 
     @staticmethod
@@ -562,16 +558,18 @@ class FlextPayload[T](
 
     def _handle_collections(self, value: object) -> object | None:
         """Handle collection types."""
-        match value:
-            case list() | tuple() as collection:
-                return [self._serialize_for_cross_service(item) for item in collection]
-            case dict() as dict_value:
-                return {
-                    str(k): self._serialize_for_cross_service(v)
-                    for k, v in dict_value.items()
-                }
-            case _:
-                return None
+        if isinstance(value, (list, tuple)):
+            typed_collection = cast("list[object] | tuple[object, ...]", value)
+            return [
+                self._serialize_for_cross_service(item) for item in typed_collection
+            ]
+        if isinstance(value, dict):
+            typed_dict = cast("dict[str, object]", value)
+            return {
+                str(k): self._serialize_for_cross_service(v)
+                for k, v in typed_dict.items()
+            }
+        return None
 
     @staticmethod
     def _handle_serializable_objects(value: object) -> object | None:
@@ -586,11 +584,8 @@ class FlextPayload[T](
         to_dict_method = getattr(value, "to_dict", None)
         if callable(to_dict_method):
             result = to_dict_method()
-            match result:
-                case dict() as dict_result:
-                    return dict_result
-                case _:
-                    pass
+            if isinstance(result, dict):
+                return cast("dict[str, object]", result)
 
         # Return None to indicate no serialization found
         return None
@@ -740,22 +735,21 @@ class FlextPayload[T](
 
             # Reconstruct data with type information if available
             type_info_raw = cross_service_dict.get("type_info", {})
-            match type_info_raw:
-                case dict() as type_info_dict:
-                    type_info = type_info_dict
-                case _:
-                    type_info = {}
+            if isinstance(type_info_raw, dict):
+                type_info = cast("dict[str, object]", type_info_raw)
+            else:
+                type_info = {}
             reconstructed_data = cls._reconstruct_data_with_types(data, type_info)
 
             # Validate metadata is dictionary
-            match metadata:
-                case dict():
-                    pass  # Valid metadata dict
-                case _:
-                    metadata = {}
+            if not isinstance(metadata, dict):
+                metadata = {}
 
             # Create payload instance - cast for generic constructor
-            payload = cls(data=cast("T | None", reconstructed_data), metadata=metadata)
+            payload = cls(
+                data=cast("T | None", reconstructed_data),
+                metadata=cast("dict[str, object]", metadata),
+            )
             return FlextResult[FlextPayload[T]].ok(payload)
 
         except (ValueError, TypeError, KeyError) as e5:
@@ -797,21 +791,14 @@ class FlextPayload[T](
             Data with proper types reconstructed
 
         """
-        match type_info:
-            case dict() as type_dict if type_dict:
-                pass  # Valid type info
-            case _:
-                return data
+        if not type_info:
+            return data
 
         go_type = type_info.get("data_type")
-        match go_type:
-            case str() as go_type_str if go_type_str in GO_TYPE_MAPPINGS:
-                pass  # Valid go type
-            case _:
-                return data
-
-        target_type = GO_TYPE_MAPPINGS[go_type]
-        return cls._convert_to_target_type(data, target_type)
+        if isinstance(go_type, str) and go_type in GO_TYPE_MAPPINGS:
+            target_type = GO_TYPE_MAPPINGS[go_type]
+            return cls._convert_to_target_type(data, target_type)
+        return data
 
     @classmethod
     def _convert_to_target_type(cls, data: object, target_type: type) -> object:
@@ -937,7 +924,7 @@ class FlextPayload[T](
                 return FlextResult[FlextPayload[T]].fail("Invalid JSON envelope format")
 
             # Delegate to helper method to reduce complexity
-            return cls._process_json_envelope(envelope)
+            return cls._process_json_envelope(cast("dict[str, object]", envelope))
 
         except (json.JSONDecodeError, KeyError, TypeError) as e8:
             return FlextResult[FlextPayload[T]].fail(f"Failed to parse JSON: {e8}")
@@ -954,7 +941,9 @@ class FlextPayload[T](
             # Direct JSON format
             payload_data = envelope.get("data", {})
             if isinstance(payload_data, dict):
-                return cls.from_cross_service_dict(payload_data)
+                return cls.from_cross_service_dict(
+                    cast("dict[str, object]", payload_data)
+                )
             msg = f"Expected dict for JSON format, got {type(payload_data)}"
             raise ValueError(msg)
 
@@ -1517,7 +1506,7 @@ class FlextEvent(FlextPayload[Mapping[str, object]]):
             "FlextResult[FlextPayload[Mapping[str, object]]]",
             cls.create_event(
                 event_type=str(event_type),
-                event_data=event_data,
+                event_data=cast("dict[str, object]", event_data),
                 aggregate_id=str(aggregate_id) if aggregate_id else None,
                 version=version_int,
             ),
@@ -1638,7 +1627,7 @@ def get_serialization_metrics(
         data_obj = getattr(payload, "data", None)
         metrics["data_type"] = type(data_obj).__name__
     elif isinstance(payload, dict) and "data" in payload:
-        data_obj = payload.get("data")
+        data_obj = cast("dict[str, object]", payload).get("data")
         metrics["data_type"] = type(data_obj).__name__
 
     return metrics

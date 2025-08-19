@@ -30,11 +30,6 @@ from typing import cast
 
 from pydantic import ConfigDict
 
-from examples.shared_domain import (
-    SharedDemonstrationPattern,
-    SharedDomainFactory,
-    log_domain_operation,
-)
 from flext_core import (
     FlextConstants,
     FlextResult,
@@ -43,6 +38,12 @@ from flext_core import (
     TConfigDict,
     TErrorMessage,
     merge_configs,
+)
+
+from .shared_domain import (
+    SharedDemonstrationPattern,
+    SharedDomainFactory,
+    log_domain_operation,
 )
 
 
@@ -63,7 +64,7 @@ def demonstrate_basic_configuration() -> None:
 
     # Cast TConfigDict to TAnyDict for method compatibility
     # Create basic configuration using available methods
-    config_result = FlextResult[None].ok(dict(config_data))  # Simplified for demonstration
+    config_result = FlextResult.ok(dict(config_data))  # Simplified for demonstration
     if config_result.success:
         config = config_result.data
         if config is not None:
@@ -251,11 +252,11 @@ def _create_configuration_file() -> FlextResult[str]:
             json.dump(config_data, f, indent=2)
             temp_file_path = f.name
 
-        return FlextResult[None].ok(temp_file_path)
+        return FlextResult.ok(temp_file_path)
 
     except (RuntimeError, ValueError, TypeError) as e:
         error_message: TErrorMessage = f"Failed to create config file: {e}"
-        return FlextResult[None].fail(error_message)
+        return FlextResult.fail(error_message)
 
 
 def _build_file_configuration_data() -> TAnyDict:
@@ -289,11 +290,11 @@ def _load_configuration_from_file(
 
         _display_loaded_configuration(loaded_config)
 
-        return FlextResult[None].ok((temp_file_path, loaded_config))
+        return FlextResult.ok((temp_file_path, loaded_config))
 
     except (RuntimeError, ValueError, TypeError) as e:
         error_message: TErrorMessage = f"Failed to load config file: {e}"
-        return FlextResult[None].fail(error_message)
+        return FlextResult.fail(error_message)
 
 
 def _display_loaded_configuration(loaded_config: TAnyDict) -> None:
@@ -322,7 +323,7 @@ def _validate_loaded_configuration(
     if isinstance(app_name, str) and app_name:
         pass
 
-    return FlextResult[None].ok(temp_file_path)
+    return FlextResult.ok(temp_file_path)
 
 
 def _extract_app_name_from_config(loaded_config: TAnyDict) -> str | None:
@@ -338,10 +339,10 @@ def _cleanup_configuration_file(temp_file_path: str) -> FlextResult[None]:
     """Clean up temporary configuration file."""
     try:
         pathlib.Path(temp_file_path).unlink()
-        return FlextResult[None].ok(None)
+        return FlextResult.ok(None)
     except (RuntimeError, ValueError, TypeError) as e:
         error_message = f"Failed to clean up file: {e}"
-        return FlextResult[None].fail(error_message)
+        return FlextResult.fail(error_message)
 
 
 def demonstrate_configuration_hierarchies() -> None:
@@ -500,7 +501,7 @@ def _validate_configuration_structure(
             )
 
     is_valid = len(validation_errors) == 0
-    return FlextResult[None].ok((is_valid, validation_errors))
+    return FlextResult.ok((is_valid, validation_errors))
 
 
 def _validate_config_field(
@@ -515,7 +516,7 @@ def _validate_config_field(
         if isinstance(value, dict):
             value = value.get(key)
         else:
-            return FlextResult[None].fail(
+            return FlextResult.fail(
                 f"Field path '{field_path}' not found in configuration",
             )
 
@@ -525,9 +526,9 @@ def _validate_config_field(
             f"Field '{field_path}' must be {expected_type.__name__}, "
             f"got {type(value).__name__}"
         )
-        return FlextResult[None].fail(error_message)
+        return FlextResult.fail(error_message)
 
-    return FlextResult[None].ok(None)
+    return FlextResult.ok(None)
 
 
 def _display_validation_results(
@@ -540,7 +541,7 @@ def _display_validation_results(
         for _error in validation_errors:
             pass
 
-    return FlextResult[None].ok(None)
+    return FlextResult.ok(None)
 
 
 def _demonstrate_configuration_transformation() -> FlextResult[None]:
@@ -592,29 +593,29 @@ def _transform_to_connection_strings(config: TAnyDict) -> FlextResult[TAnyDict]:
         if redis_result.is_success and redis_result.data:
             transformed_config["redis_url"] = redis_result.data
 
-    return FlextResult[None].ok(transformed_config)
+    return FlextResult.ok(transformed_config)
 
 
 def _transform_database_config(db_config: TAnyDict) -> FlextResult[str]:
     """Transform database configuration to connection string."""
     required_keys = ["host", "port", "name", "user", "password"]
     if not all(key in db_config for key in required_keys):
-        return FlextResult[None].fail("Missing required database configuration keys")
+        return FlextResult.fail("Missing required database configuration keys")
 
     db_url = f"postgresql://{db_config['user']}:{db_config['password']}@{db_config['host']}:{db_config['port']}/{db_config['name']}"
-    return FlextResult[None].ok(db_url)
+    return FlextResult.ok(db_url)
 
 
 def _transform_redis_config(redis_config: TAnyDict) -> FlextResult[str]:
     """Transform Redis configuration to connection string."""
     required_keys = ["host", "port", "db"]
     if not all(key in redis_config for key in required_keys):
-        return FlextResult[None].fail("Missing required Redis configuration keys")
+        return FlextResult.fail("Missing required Redis configuration keys")
 
     redis_url = (
         f"redis://{redis_config['host']}:{redis_config['port']}/{redis_config['db']}"
     )
-    return FlextResult[None].ok(redis_url)
+    return FlextResult.ok(redis_url)
 
 
 def _display_transformed_configuration(
@@ -626,7 +627,7 @@ def _display_transformed_configuration(
         # Mask sensitive information
         _mask_sensitive_data(str(value), original_config)
 
-    return FlextResult[None].ok(None)
+    return FlextResult.ok(None)
 
 
 def _mask_sensitive_data(value: str, original_config: TAnyDict) -> str:
@@ -670,7 +671,7 @@ def _compose_configuration_from_sources(
         for key, value in source_config.items():
             composed_config[key] = value
 
-    return FlextResult[None].ok(composed_config)
+    return FlextResult.ok(composed_config)
 
 
 def _display_composed_configuration(composed_config: TAnyDict) -> FlextResult[None]:
@@ -678,7 +679,7 @@ def _display_composed_configuration(composed_config: TAnyDict) -> FlextResult[No
     for _key, _value in composed_config.items():
         pass
 
-    return FlextResult[None].ok(None)
+    return FlextResult.ok(None)
 
 
 def demonstrate_domain_configuration_integration() -> None:
@@ -732,7 +733,7 @@ def _demonstrate_domain_model_validation() -> FlextResult[TAnyDict]:
         },
     }
 
-    return FlextResult[None].ok(user_service_config)
+    return FlextResult.ok(user_service_config)
 
 
 def _demonstrate_admin_user_validation(
@@ -749,13 +750,13 @@ def _demonstrate_admin_user_validation(
                 validated_users.append(validation_result.data)
 
     len(admin_users) if isinstance(admin_users, list) else 0
-    return FlextResult[None].ok((config, validated_users))
+    return FlextResult.ok((config, validated_users))
 
 
 def _validate_single_admin_user(user_data: object) -> FlextResult[object]:
     """Validate a single admin user using domain factory."""
     if not isinstance(user_data, dict):
-        return FlextResult[None].fail("Invalid user data format")
+        return FlextResult.fail("Invalid user data format")
 
     name = user_data.get("name", "")
     email = user_data.get("email", "")
@@ -774,9 +775,9 @@ def _validate_single_admin_user(user_data: object) -> FlextResult[object]:
                 service="user_management",
                 config_role="admin",
             )
-            return FlextResult[None].ok(user)
+            return FlextResult.ok(user)
 
-    return FlextResult[None].fail(f"Validation failed: {user_result.error}")
+    return FlextResult.fail(f"Validation failed: {user_result.error}")
 
 
 def _demonstrate_user_creation_from_config(
@@ -799,13 +800,13 @@ def _demonstrate_user_creation_from_config(
         if creation_result.is_success and creation_result.data:
             created_users.append(creation_result.data)
 
-    return FlextResult[None].ok((config, validated_users, created_users))
+    return FlextResult.ok((config, validated_users, created_users))
 
 
 def _create_user_from_config(config: object) -> FlextResult[object]:
     """Create a user from configuration data."""
     if not isinstance(config, dict):
-        return FlextResult[None].fail("Invalid config format")
+        return FlextResult.fail("Invalid config format")
 
     user_result = SharedDomainFactory.create_user(
         config.get("name", ""),
@@ -816,9 +817,9 @@ def _create_user_from_config(config: object) -> FlextResult[object]:
     if user_result.success:
         user = user_result.data
         if user is not None:
-            return FlextResult[None].ok(user)
+            return FlextResult.ok(user)
 
-    return FlextResult[None].fail(f"Creation failed: {user_result.error}")
+    return FlextResult.fail(f"Creation failed: {user_result.error}")
 
 
 def _demonstrate_domain_rule_validation(
@@ -842,7 +843,7 @@ def _demonstrate_domain_rule_validation(
     for test_age in test_ages:
         _validate_age_against_domain_rules(test_age)
 
-    return FlextResult[None].ok((config, validated_users, created_users))
+    return FlextResult.ok((config, validated_users, created_users))
 
 
 def _validate_age_against_domain_rules(test_age: int) -> FlextResult[None]:
@@ -858,7 +859,7 @@ def _validate_age_against_domain_rules(test_age: int) -> FlextResult[None]:
     except (RuntimeError, ValueError, TypeError):
         pass
 
-    return FlextResult[None].ok(None)
+    return FlextResult.ok(None)
 
 
 def _demonstrate_feature_flag_configuration(
@@ -873,7 +874,7 @@ def _demonstrate_feature_flag_configuration(
         for feature_name, enabled in features.items():
             _configure_single_feature_flag(feature_name, enabled)
 
-    return FlextResult[None].ok(None)
+    return FlextResult.ok(None)
 
 
 def _configure_single_feature_flag(
@@ -891,7 +892,7 @@ def _configure_single_feature_flag(
             service="user_management",
         )
 
-    return FlextResult[None].ok(None)
+    return FlextResult.ok(None)
 
 
 def main() -> None:

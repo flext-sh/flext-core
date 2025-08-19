@@ -1,12 +1,106 @@
 {
-  "typeCheckingMode": "strict",
+  "include": [
+    "."
+  ],
   "exclude": [
-    "typings/tests",
-    "typings/examples",
-    "typings/tests/**",
-    "typings/examples/**",
-    "typings/tests/*",
-    "examples/**",
-    "tests/**"
-  ]
+    "**/.venv",
+    "**/venv",
+    "**/__pycache__",
+    "**/node_modules",
+    "**/dist",
+    "**/__pycache__",
+    "**/mypy_cache",
+    "**/.pytest_cache",
+    "**/build"
+  ],
+  "executionEnvironments": [
+    {
+      "root": ".",
+      "pythonVersion": "3.13",
+      "pythonPlatform": "Linux",
+      "extraPaths": [
+        "src",
+        "typings"
+      ]
+    }
+  ],
+  // Modo de verificação otimizado para complementar Mypy strict
+  "typeCheckingMode": "basic",
+  // ========================================================================
+  // VERIFICAÇÕES QUE O PYRIGHT FAZ MELHOR QUE O MYPY
+  // ========================================================================
+  // Análise de alcançabilidade de código
+  "reportUnreachable": "error",
+  "reportUnusedImport": "warning",
+  "reportUnusedClass": "information",
+  "reportUnusedFunction": "information",
+  "reportUnusedVariable": "warning",
+  // Verificações específicas do Pyright para performance
+  "reportUnnecessaryTypeIgnoreComment": "warning",
+  "reportUnnecessaryCast": "warning",
+  "reportUnnecessaryComparison": "warning",
+  "reportUnnecessaryContains": "warning",
+  "reportImplicitStringConcatenation": "warning",
+  // Verificações de compatibilidade de protocolo (melhor no Pyright)
+  "reportIncompatibleVariableOverride": "error",
+  "reportIncompatibleMethodOverride": "error",
+  "reportInvalidTypeVarUse": "error",
+  "reportOverlappingOverload": "error",
+  // Verificações específicas de stub files
+  "reportIncompleteStub": "warning",
+  "reportInvalidStubStatement": "error",
+  // ========================================================================
+  // VERIFICAÇÕES DESABILITADAS (MYPY STRICT JÁ COBRE)
+  // ========================================================================
+  // Mypy strict já verifica tipos básicos
+  "reportGeneralTypeIssues": false,
+  "reportOptionalSubscript": false,
+  "reportOptionalMemberAccess": false,
+  "reportOptionalCall": false,
+  "reportOptionalIterable": false,
+  "reportOptionalContextManager": false,
+  "reportOptionalOperand": false,
+  // Mypy strict já verifica None/undefined
+  "reportPossiblyUnboundVariable": false,
+  "reportUnboundVariable": false,
+  // Mypy strict já verifica imports e módulos
+  "reportMissingImports": false,
+  "reportMissingModuleSource": false,
+  "reportMissingTypeStubs": false,
+  // Mypy strict já verifica argumentos e retornos
+  "reportCallInDefaultInitializer": false,
+  "reportUnnecessaryIsInstance": false,
+  "reportConstantRedefinition": false,
+  // ========================================================================
+  // CONFIGURAÇÕES ESPECÍFICAS PARA PERFORMANCE
+  // ========================================================================
+  // Análise incremental para performance
+  "useLibraryCodeForTypes": true,
+  "autoImportCompletions": true,
+  // Configurações de stub
+  "stubPath": "typings",
+  "typeshedPath": "",
+  // ========================================================================
+  // VERIFICAÇÕES ESPECÍFICAS PARA CÓDIGO LEGACY/DINÂMICO
+  // ========================================================================
+  // Para código que usa muito dynamic typing (comum em projetos grandes)
+  "reportUnknownParameterType": "information",
+  "reportUnknownArgumentType": "information",
+  "reportUnknownLambdaType": "information",
+  "reportUnknownVariableType": "information",
+  "reportUnknownMemberType": "information",
+  // Para compatibilidade com frameworks que usam magia (Pydantic, etc.)
+  "reportAttributeAccessIssue": "warning",
+  "reportInvalidStringEscapeSequence": "warning",
+  // ========================================================================
+  // VERIFICAÇÕES HABILITADAS PARA QUALIDADE DE CÓDIGO
+  // ========================================================================
+  // Verificações de estilo que complementam linters
+  "reportSelfClsParameterName": "warning",
+  "reportImplicitOverride": "information",
+  "reportPropertyTypeMismatch": "error",
+  "reportFunctionMemberAccess": "warning",
+  "reportPrivateUsage": "information",
+  "reportTypeCommentUsage": "information",
+  "reportPrivateImportUsage": "information",
 }

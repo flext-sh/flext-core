@@ -44,12 +44,19 @@ class ValueObjectCompatibilityMixin:
         # In the new implementation, this just calls the main extraction method.
         return self._extract_serializable_attributes()
 
-    def _process_serializable_values(self, data: dict[str, object]) -> dict[str, object]:
+    def _process_serializable_values(
+        self, data: dict[str, object]
+    ) -> dict[str, object]:
         """Processes values for serialization, converting complex types to string."""
         processed: dict[str, object] = {}
         for key, value in data.items():
             if isinstance(value, (dict, list, tuple)):
-                processed[key] = str(cast("dict[object, object] | list[object] | tuple[object, ...]", value))
+                processed[key] = str(
+                    cast(
+                        "dict[object, object] | list[object] | tuple[object, ...]",
+                        value,
+                    )
+                )
             else:
                 processed[key] = value
         return processed
@@ -57,7 +64,7 @@ class ValueObjectCompatibilityMixin:
     def _extract_serializable_attributes(self) -> dict[str, object]:
         """Extracts serializable attributes from the value object."""
         try:
-            processed = {}
+            processed: dict[str, object] = {}
             model_fields = cast(
                 "dict[str, object]", getattr(self.__class__, "model_fields", {})
             )
@@ -65,6 +72,6 @@ class ValueObjectCompatibilityMixin:
                 attr_name_str = attr_name
                 if self._should_include_attribute(attr_name_str):
                     processed[attr_name_str] = self._safely_get_attribute(attr_name_str)
-            return cast("dict[str, object]", processed)
+            return processed
         except Exception:
             return self._get_fallback_info()

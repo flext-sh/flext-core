@@ -2,17 +2,13 @@ from collections.abc import Callable, Mapping
 from datetime import datetime
 from typing import TypeVar
 
-from _typeshed import Incomplete
-
-__all__ = [
-    "_E",
-    "_F",
-    "_P",
-    "_R",
-    "_T",
+__all__ = [  # noqa: RUF022
     "Cacheable",
     "Comparable",
     "Configurable",
+    # Core type variables (only for truly generic types)
+    "E",
+    "F",
     "FlextFieldId",
     "FlextFieldName",
     "FlextFieldTypeStr",
@@ -20,7 +16,13 @@ __all__ = [
     "FlextTypes",
     "FlextValidatable",
     "FlextValidator",
+    "P",
+    "R",
     "Serializable",
+    "T",
+    "U",
+    "V",
+    # Type aliases for domain types (not TypeVars)
     "TAggregateId",
     "TAnyDict",
     "TAnyList",
@@ -99,90 +101,33 @@ __all__ = [
     "TQueryCriteria",
     "TQueryId",
     "TQueryProjection",
-    "TQueryResult",
-    "TQueryType",
-    "TRequestId",
-    "TServiceKey",
-    "TServiceName",
-    "TSessionId",
-    "TStringDict",
-    "TToken",
-    "TTransactionId",
-    "TTransformer",
-    "TUserData",
-    "TUserId",
-    "TValidationConfig",
-    "TValidationConstraint",
-    "TValidationContext",
-    "TValidationError",
-    "TValidationPipeline",
-    "TValidationResult",
-    "TValidationRule",
-    "TValidationSchema",
-    "TValidator",
-    "TValidatorName",
-    "TValue",
-    "Timestamped",
-    "U",
-    "V",
-    "Validatable",
-    "_EntryT",
-    "_TAnyObject",
-    "_TCommand",
-    "_TComparable",
-    "_TEntity",
-    "_TQuery",
-    "_TRequest",
-    "_TResponse",
-    "_TResult",
-    "_TSerializable",
-    "_TService",
-    "_TValidatable",
-    "get_centralized_types_usage_info",
 ]
 
-_T = TypeVar("_T")
-_U = TypeVar("_U")
-_V = TypeVar("_V")
-_R = TypeVar("_R")
-_E = TypeVar("_E")
-_F = TypeVar("_F")
-_P = TypeVar("_P")
-_TComparable = TypeVar("_TComparable")
-_TSerializable = TypeVar("_TSerializable")
-_TValidatable = TypeVar("_TValidatable")
-_TEntity = TypeVar("_TEntity")
-_TAnyObject = TypeVar("_TAnyObject")
-_TCommand = TypeVar("_TCommand")
-_TQuery = TypeVar("_TQuery")
-_TRequest = TypeVar("_TRequest")
-_TResponse = TypeVar("_TResponse")
-_TResult = TypeVar("_TResult")
-_TService = TypeVar("_TService")
-_TOptional = TypeVar("_TOptional")
-_EntryT = TypeVar("_EntryT")
+# Core type variables (only for truly generic types that need to be variable)
+T = TypeVar("T")  # noqa: PYI001
+U = TypeVar("U")  # noqa: PYI001
+V = TypeVar("V")  # noqa: PYI001
+R = TypeVar("R")  # noqa: PYI001
+E = TypeVar("E")  # noqa: PYI001
+F = TypeVar("F")  # noqa: PYI001
+P = TypeVar("P")  # noqa: PYI001
 
-# Backward compatibility aliases (kept for compatibility)
-T = _T
-U = _U
-V = _V
-R = _R
-E = _E
-F = _F
-P = _P
-TComparable = _TComparable
-TSerializable = _TSerializable
-TValidatable = _TValidatable
-TEntity = _TEntity
-TAnyObject = _TAnyObject
-TCommand = _TCommand
-TQuery = _TQuery
-TRequest = _TRequest
-TResponse = _TResponse
-TResult = _TResult
-TService = _TService
-TOptional = _TOptional
-EntryT = _EntryT
+# Type aliases for domain types (not TypeVars - these are concrete types)
+type TComparable = object
+type TSerializable = object
+type TValidatable = object
+type TEntity = object
+type TAnyObject = object
+type TCommand = object
+type TQuery = object
+type TRequest = object
+type TResponse = object
+type TResult = object
+type TService = object
+type TOptional = object
+type EntryT = object
+
+# Backward compatibility - export TypeVars directly without aliases
 
 class FlextTypes:
     class Core:
@@ -374,131 +319,181 @@ class FlextTypes:
         @staticmethod
         def is_callable(obj: object) -> bool: ...
 
-TEntityId: Incomplete
-TValue: Incomplete
-TData: Incomplete
-TConfig: Incomplete
-TEvent: Incomplete
-TMessage: Incomplete
-TCommandId: Incomplete
-TCommandType: Incomplete
-THandlerName: Incomplete
-TCommandPayload: Incomplete
-TCommandResult: Incomplete
-TCommandMetadata: Incomplete
-TMiddlewareName: Incomplete
-TValidationRule: Incomplete
-TCommandBusId: Incomplete
-TCommandPriority: Incomplete
-TQueryId: Incomplete
-TQueryType: Incomplete
-TQueryResult: Incomplete
-TQueryCriteria: Incomplete
-TQueryProjection: Incomplete
-TPaginationToken: Incomplete
-TServiceName: Incomplete
-TServiceKey: Incomplete
-TFactory: Incomplete
-TTransformer: Incomplete
-TPredicate: Incomplete
-TValidator: Incomplete
-TCallable: Incomplete
-TErrorHandler: Incomplete
-TConnectionString: Incomplete
-TLogMessage: Incomplete
-TErrorCode: Incomplete
-TErrorMessage: Incomplete
+# =============================================================================
+# TYPE VARIABLES - All TypeVars properly defined
+# =============================================================================
+
+# Core type variables (already defined above)
+# T, U, V, R, E, F, P, TComparable, TSerializable, TValidatable, TEntity, TAnyObject, TCommand, TQuery, TRequest, TResponse, TResult, TService, TOptional, EntryT
+
+# Domain and data type aliases
+type TEntityId = str
+type TValue = str | int | float | bool | None
+type TData = dict[str, object]
+type TConfig = dict[str, str | int | float | bool | None]
+
+# CQRS type aliases
+type TEvent = dict[str, object]
+type TMessage = dict[str, object]
+type TCommandId = str
+type TCommandType = str
+type THandlerName = str
+type TCommandPayload = dict[str, object]
+type TCommandResult = object
+type TCommandMetadata = dict[str, object]
+type TMiddlewareName = str
+type TValidationRule = str
+type TCommandBusId = str
+type TCommandPriority = int
+type TQueryId = str
+type TQueryType = str
+type TQueryResult = object
+type TQueryCriteria = dict[str, object]
+type TQueryProjection = list[object]
+type TPaginationToken = str
+
+# Service type aliases
+type TServiceName = str
+type TServiceKey = str | type[object]
+
+# Callable type aliases
+type TFactory = Callable[[], object] | Callable[[object], object]
+type TTransformer = Callable[[object], object]
+type TPredicate = Callable[[object], bool]
+type TValidator = Callable[[object], bool]
+type TCallable = Callable[[object], object]
+type TErrorHandler = Callable[[Exception], str]
+
+# Infrastructure type aliases
+type TConnectionString = str
+type TLogMessage = str
+type TErrorCode = str
+type TErrorMessage = str
+
+# Collection type aliases
 type TAnyDict = dict[str, object]
 type TAnyList = list[object]
 type TDict = dict[str, object]
 type TList = list[object]
 type TStringDict = dict[str, str]
-TUserData: Incomplete
-TToken: Incomplete
-TCredentials: Incomplete
-TConnection: Incomplete
-TUserId: Incomplete
-TContextDict: Incomplete
-TCorrelationId: Incomplete
-TRequestId: Incomplete
-TConfigDict: Incomplete
-TFieldInfo: Incomplete
-TFieldMetadata: Incomplete
-TConfigKey: Incomplete
-TConfigValue: Incomplete
-TConfigPath: Incomplete
-TConfigEnv: Incomplete
-TConfigValidationRule: Incomplete
-TConfigMergeStrategy: Incomplete
-TConfigSettings: Incomplete
-TConfigDefaults: Incomplete
-TConfigOverrides: Incomplete
-TEnvironmentName: Incomplete
-TDeploymentStage: Incomplete
-TConfigVersion: Incomplete
-TValidationError: Incomplete
-TValidationResult: Incomplete
-TValidationContext: Incomplete
-TValidatorName: Incomplete
-TValidationConfig: Incomplete
-TValidationConstraint: Incomplete
-TValidationSchema: Incomplete
-TFieldName: Incomplete
-TFieldValue: Incomplete
-TFieldRule: Incomplete
-TFieldError: Incomplete
-TCustomValidator: Incomplete
-TValidationPipeline: Incomplete
-TLoggerName: Incomplete
-TBusinessId = str
-TBusinessName = str
-TBusinessCode = str
-TBusinessStatus = str
-TBusinessType = str
-TCacheKey = str
+
+# Authentication and token types
+type TUserData = dict[str, object]
+type TToken = str
+type TCredentials = dict[str, object]
+type TConnection = str
+type TUserId = str
+
+# Context and correlation types
+type TContextDict = dict[str, object]
+type TCorrelationId = str
+type TRequestId = str
+type TConfigDict = dict[str, str | int | float | bool | None]
+
+# Field and metadata types
+type TFieldInfo = dict[str, object]
+type TFieldMetadata = dict[str, object]
+
+# Config types
+type TConfigKey = str
+type TConfigValue = object
+type TConfigPath = str
+type TConfigEnv = str
+type TConfigValidationRule = str
+type TConfigMergeStrategy = str
+type TConfigSettings = dict[str, object]
+type TConfigDefaults = dict[str, object]
+type TConfigOverrides = dict[str, object]
+type TEnvironmentName = str
+type TDeploymentStage = str
+type TConfigVersion = str
+
+# Validation types
+type TValidationError = str
+type TValidationResult = object
+type TValidationContext = dict[str, object]
+type TValidatorName = str
+type TValidationConfig = dict[str, object]
+type TValidationConstraint = object
+type TValidationSchema = dict[str, object]
+type TFieldName = str
+type TFieldValue = object
+type TFieldRule = str
+type TFieldError = str
+type TCustomValidator = Callable[[object], object]
+type TValidationPipeline = list[Callable[[object], object]]
+
+# Type guard types
+type TTypeGuard = Callable[[object], bool]
+type TGuardFunction = Callable[[object], bool]
+type TGuardResult = bool
+type TGuardContext = dict[str, object]
+
+# Logging types
+type TLoggerName = str
+
+# Business types (testing convenience)
+type TBusinessId = str
+type TBusinessName = str
+type TBusinessCode = str
+type TBusinessStatus = str
+type TBusinessType = str
+
+# Cache types (testing convenience)
+type TCacheKey = str
 type TCacheValue = str | int | float | bool | None
-TCacheTTL = int
-TLogLevel: Incomplete
-TLogFormat: Incomplete
-TLogHandler: Incomplete
-TLogFilter: Incomplete
-TSessionId: Incomplete
-TTransactionId: Incomplete
-TOperationName: Incomplete
-TLogRecord: Incomplete
-TLogMetrics: Incomplete
-TLogConfiguration: Incomplete
-TEntityVersion: Incomplete
-TEntityTimestamp: Incomplete
-TDomainEventType: Incomplete
-TDomainEventData: Incomplete
-TAggregateId: Incomplete
-TEntityRule: Incomplete
-TEntityState: Incomplete
-TEntityMetadata: Incomplete
-TEntityDefaults: Incomplete
-TEntityChanges: Incomplete
-TFactoryResult: Incomplete
-TDomainEvents: Incomplete
-TEventStream: Incomplete
-TEventVersion: Incomplete
-Comparable: Incomplete
-Serializable: Incomplete
-Timestamped: Incomplete
-Validatable: Incomplete
-Cacheable: Incomplete
-Configurable: Incomplete
-FlextSerializable = Serializable
-FlextValidatable = Validatable
-FlextValidator: Incomplete
+type TCacheTTL = int
+
+# Filesystem aliases
+type TDirectoryPath = str
+type TFilePath = str
+type TLogLevel = str
+type TLogFormat = str
+type TLogHandler = str
+type TLogFilter = str
+type TSessionId = str
+type TTransactionId = str
+type TOperationName = str
+type TLogRecord = dict[str, object]
+type TLogMetrics = dict[str, object]
+type TLogConfiguration = dict[str, object]
+
+# Entity types
+type TEntityVersion = int
+type TEntityTimestamp = datetime
+type TDomainEventType = str
+type TDomainEventData = dict[str, object]
+type TAggregateId = str
+type TEntityRule = str
+type TEntityState = str
+type TEntityMetadata = dict[str, object]
+type TEntityDefaults = dict[str, object]
+type TEntityChanges = dict[str, object]
+type TFactoryResult = object
+type TDomainEvents = list[object]
+type TEventStream = list[object]
+type TEventVersion = int
+
+# Protocol convenience aliases
+type Comparable = object
+type Serializable = object
+type Timestamped = object
+type Validatable = object
+type Cacheable = object
+type Configurable = object
+
+# Convenience protocol aliases with transition support
+type FlextSerializable = object
+type FlextValidatable = object
+type FlextValidator = Callable[[object], bool | str]
 
 # Field type definitions
-FlextFieldId = str
-FlextFieldName = str
-FlextFieldTypeStr = str
+type FlextFieldId = str
+type FlextFieldName = str
+type FlextFieldTypeStr = str
 
 # Test type definitions
-TTestData = str
-TTestConfig = str
+type TTestData = str
+type TTestConfig = str
 
 def get_centralized_types_usage_info() -> str: ...

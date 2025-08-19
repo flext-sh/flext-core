@@ -1,4 +1,3 @@
-
 from _typeshed import Incomplete
 
 from flext_core.result import FlextResult

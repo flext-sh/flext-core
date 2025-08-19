@@ -224,11 +224,11 @@ class FlextEventList(RootModel[list[dict[str, object]]]):
 
     # root annotation is inherited from RootModel
 
-    def __init__(self, root: list[dict[str, object]] | None = None, **data: object) -> None:
+    def __init__(self, root: list[dict[str, object]] | None = None) -> None:
         """Initialize with optional internal event storage."""
         if root is None:
             root = []
-        super().__init__(root, **data)
+        super().__init__(root)  # type: ignore[misc]
         # Internal storage for Flext Event objects - this satisfies MyPy
         object.__setattr__(self, "_flext_events", [])
 

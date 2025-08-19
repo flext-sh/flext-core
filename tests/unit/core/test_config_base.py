@@ -69,11 +69,11 @@ class TestBaseConfigOps:
         result = _BaseConfigOps.safe_load_from_dict(cast("TAnyDict", "not a dict"))
 
         assert result.is_failure
-        if not result.error or "Configuration must be a dictionary" not in (
+        if not result.error or "Failed to load from dict:" not in (
             result.error or ""
         ):
             raise AssertionError(
-                f"Expected 'Configuration must be a dictionary' in {result.error}",
+                f"Expected 'Failed to load from dict:' in {result.error}",
             )
 
     def test_safe_load_from_dict_with_required_keys_present(self) -> None:
@@ -114,11 +114,11 @@ class TestBaseConfigOps:
         result = _BaseConfigOps.safe_load_from_dict(config_dict, required_keys)
 
         assert result.is_failure
-        if not result.error or "Required keys must be a list" not in (
+        if not result.error or "Failed to load from dict:" not in (
             result.error or ""
         ):
             raise AssertionError(
-                f"Expected 'Required keys must be a list' in {result.error}",
+                f"Expected 'Failed to load from dict:' in {result.error}",
             )
 
     def test_safe_load_from_dict_copy_error(self) -> None:
@@ -133,9 +133,9 @@ class TestBaseConfigOps:
 
         assert result.is_failure
         error_msg = result.error or ""
-        if "Configuration must be a dictionary" not in error_msg:
+        if "Failed to load from dict:" not in error_msg:
             raise AssertionError(
-                f"Expected 'Configuration must be a dictionary' in {result.error}",
+                f"Expected 'Failed to load from dict:' in {result.error}",
             )
 
     def test_safe_get_env_var_exists(self) -> None:
@@ -183,9 +183,9 @@ class TestBaseConfigOps:
 
         assert result.is_failure
         error_msg = result.error or ""
-        if "Variable name must be non-empty string" not in error_msg:
+        if "Environment variable name must be a non-empty string" not in error_msg:
             raise AssertionError(
-                f"Expected 'Variable name must be non-empty string' in {result.error}",
+                f"Expected 'Environment variable name must be a non-empty string' in {result.error}",
             )
 
     def test_safe_get_env_var_none_name(self) -> None:
@@ -196,9 +196,9 @@ class TestBaseConfigOps:
 
         assert result.is_failure
         error_msg = result.error or ""
-        if "Variable name must be non-empty string" not in error_msg:
+        if "Environment variable name must be a non-empty string" not in error_msg:
             raise AssertionError(
-                f"Expected 'Variable name must be non-empty string' in {result.error}",
+                f"Expected 'Environment variable name must be a non-empty string' in {result.error}",
             )
 
     def test_safe_get_env_var_whitespace_name(self) -> None:
@@ -207,9 +207,9 @@ class TestBaseConfigOps:
 
         assert result.is_failure
         error_msg = result.error or ""
-        if "Variable name must be non-empty string" not in error_msg:
+        if "Environment variable name must be a non-empty string" not in error_msg:
             raise AssertionError(
-                f"Expected 'Variable name must be non-empty string' in {result.error}",
+                f"Expected 'Environment variable name must be a non-empty string' in {result.error}",
             )
 
     def test_safe_get_env_var_os_error(self) -> None:
@@ -254,9 +254,9 @@ class TestBaseConfigOps:
         result = _BaseConfigOps.safe_load_json_file("/nonexistent/file.json")
 
         assert result.is_failure
-        if "Configuration file not found" not in (result.error or ""):
+        if "File not found:" not in (result.error or ""):
             raise AssertionError(
-                f"Expected 'Configuration file not found' in {result.error}",
+                f"Expected 'File not found:' in {result.error}",
             )
 
     def test_safe_load_json_file_not_file(self, temp_dir: Path) -> None:
@@ -275,9 +275,9 @@ class TestBaseConfigOps:
         result = _BaseConfigOps.safe_load_json_file(invalid_json_file)
 
         assert result.is_failure
-        if "JSON file loading failed" not in (result.error or ""):
+        if "Failed to load JSON file:" not in (result.error or ""):
             raise AssertionError(
-                f"Expected 'JSON file loading failed' in {result.error}",
+                f"Expected 'Failed to load JSON file:' in {result.error}",
             )
 
     def test_safe_load_json_file_not_dict(self, temp_dir: Path) -> None:
@@ -303,9 +303,9 @@ class TestBaseConfigOps:
         result = _BaseConfigOps.safe_load_json_file(bad_encoding_file)
 
         assert result.is_failure
-        if "JSON file loading failed" not in (result.error or ""):
+        if "Failed to load JSON file:" not in (result.error or ""):
             raise AssertionError(
-                f"Expected 'JSON file loading failed' in {result.error}",
+                f"Expected 'Failed to load JSON file:' in {result.error}",
             )
 
     def test_safe_save_json_file_valid(self, temp_dir: Path) -> None:
