@@ -266,3 +266,5 @@ lint.isort.known-first-party = ["flext_core"]
 
 [tool.vulture]
 extend = "../.vulture-shared.toml"
+allow-explicit-any = true
+disallow_explicit_any = false

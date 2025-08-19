@@ -194,7 +194,7 @@ class TestConfigUtilities:
         config1 = FlextDatabaseConfig(host="db1.com", port=5432)
         config2 = FlextRedisConfig(host="redis1.com", port=6379)
 
-        result = merge_configs(config1, config2)
+        result = merge_configs(config1.model_dump(), config2.model_dump())
         assert result.is_success
         merged_data = result.unwrap()
         assert isinstance(merged_data, dict)
@@ -271,11 +271,15 @@ class TestConfigEdgeCases:
         db_config = FlextDatabaseConfig(host="db1.com", port=5432)
         redis_config = FlextRedisConfig(host="redis1.com", port=6379)
 
-        result = merge_configs(db_config, redis_config)
+        # Convert to dictionaries for merge_configs function
+        result = merge_configs(db_config.model_dump(), redis_config.model_dump())
         assert result.is_success
         merged_data = result.unwrap()
         assert isinstance(merged_data, dict)
         assert len(merged_data) > 0
+        # Verify merge contains data from both configs
+        assert "host" in merged_data  # Should have redis host as it comes second
+        assert "port" in merged_data
 
 
 class TestFlextJWTConfig:

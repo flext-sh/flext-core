@@ -89,7 +89,7 @@ class TestFlextBaseHandler:
         """Test post_process hook."""
         handler = FlextBaseHandler()
 
-        dummy_result = FlextResult.ok("test")
+        dummy_result = FlextResult[object].ok("test")
         result = handler.post_process("message", dummy_result)
         assert result.success
 

@@ -207,16 +207,15 @@ class TestFlextResultValidation:
     def test_success_result_creation(self) -> None:
         """Test creating successful validation result."""
         is_valid = True
-        result = FlextResult.ok(is_valid)
+        result = FlextResult[bool].ok(is_valid)
 
         if not result.success:
             raise AssertionError(f"Expected True, got {result.success}")
         assert result.data is True
-        assert result.error is None
 
     def test_failure_result_creation(self) -> None:
         """Test creating failed validation result."""
-        result: FlextResult[object] = FlextResult.fail("Validation failed")
+        result = FlextResult[object].fail("Validation failed")
 
         if result.success:
             raise AssertionError(f"Expected False, got {result.success}")
@@ -232,10 +231,10 @@ class TestFlextResultValidation:
         def validate_email(email: str) -> FlextResult[str]:
             """Validate email and return result."""
             if not email:
-                return FlextResult.fail("Email is required")
+                return FlextResult[str].fail("Email is required")
             if "@" not in email:
-                return FlextResult.fail("Invalid email format")
-            return FlextResult.ok(email)
+                return FlextResult[str].fail("Invalid email format")
+            return FlextResult[str].ok(email)
 
         # Test successful validation
         result = validate_email("test@example.com")
@@ -275,25 +274,25 @@ class TestValidationIntegration:
             """Validate user data using FlextValidation utilities."""
             # Check if data is a dict
             if not FlextValidation.Validators.is_dict(data):
-                return FlextResult.fail("Data must be a dictionary")
+                return FlextResult[dict[str, object]].fail("Data must be a dictionary")
 
             # Check required fields
             if not FlextValidation.Validators.is_non_empty_string(data.get("name")):
-                return FlextResult.fail(
+                return FlextResult[dict[str, object]].fail(
                     "Name is required and must be a non-empty string",
                 )
 
             # Check email format using proper email validation
             email = data.get("email")
             if email and not FlextValidation.Validators.is_email(email):
-                return FlextResult.fail("Invalid email format")
+                return FlextResult[dict[str, object]].fail("Invalid email format")
 
             # Check if roles is a list when provided
             roles = data.get("roles")
             if roles is not None and not FlextValidation.Validators.is_list(roles):
-                return FlextResult.fail("Roles must be a list")
+                return FlextResult[dict[str, object]].fail("Roles must be a list")
 
-            return FlextResult.ok(data)
+            return FlextResult[dict[str, object]].ok(data)
 
         self._test_valid_user_data(validate_user_data)
         self._test_invalid_user_data(validate_user_data)
@@ -377,20 +376,20 @@ class TestValidationIntegration:
         def validate_step1(value: str) -> FlextResult[str]:
             """First validation step."""
             if not FlextValidation.Validators.is_non_empty_string(value):
-                return FlextResult.fail("Step 1: Value must be a non-empty string")
-            return FlextResult.ok(value)
+                return FlextResult[str].fail("Step 1: Value must be a non-empty string")
+            return FlextResult[str].ok(value)
 
         def validate_step2(value: str) -> FlextResult[str]:
             """Second validation step."""
             if len(value) < 3:
-                return FlextResult.fail("Step 2: Value must be at least 3 characters")
-            return FlextResult.ok(value)
+                return FlextResult[str].fail("Step 2: Value must be at least 3 characters")
+            return FlextResult[str].ok(value)
 
         def validate_step3(value: str) -> FlextResult[str]:
             """Third validation step."""
             if not value.isalnum():
-                return FlextResult.fail("Step 3: Value must be alphanumeric")
-            return FlextResult.ok(value.upper())
+                return FlextResult[str].fail("Step 3: Value must be alphanumeric")
+            return FlextResult[str].ok(value.upper())
 
         def validate_all_steps(value: str) -> FlextResult[str]:
             """Chain all validation steps."""

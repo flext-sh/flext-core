@@ -281,9 +281,9 @@ class FlextSimpleObservability:
         """Record metric value."""
         try:
             self.metrics.record_gauge(name, value, tags)
-            return FlextResult.ok(None)
+            return FlextResult[None].ok(None)
         except Exception as e:
-            return FlextResult.fail(f"Failed to record metric: {e}")
+            return FlextResult[None].fail(f"Failed to record metric: {e}")
 
     def start_trace(self, operation_name: str) -> FlextResult[str]:
         """Start distributed trace."""
@@ -291,13 +291,13 @@ class FlextSimpleObservability:
             self.tracer.start_span(operation_name)
             # Generate trace ID (simplified for foundation implementation)
             trace_id = f"trace_{hash(operation_name)}"
-            return FlextResult.ok(trace_id)
+            return FlextResult[str].ok(trace_id)
         except Exception as e:
-            return FlextResult.fail(f"Failed to start trace: {e}")
+            return FlextResult[str].fail(f"Failed to start trace: {e}")
 
     def health_check(self) -> FlextResult[dict[str, object]]:
         """Perform health check."""
-        return FlextResult.ok(
+        return FlextResult[dict[str, object]].ok(
             {
                 "status": "healthy",
                 "logger": "available",
@@ -377,21 +377,21 @@ class FlextMinimalObservability:
         """Record metric with gauge value."""
         try:
             self.metrics.gauge(name, value, tags)
-            return FlextResult.ok(None)
+            return FlextResult[None].ok(None)
         except Exception as e:  # pragma: no cover - defensive
-            return FlextResult.fail(str(e))
+            return FlextResult[None].fail(str(e))
 
     def start_trace(self, operation_name: str) -> FlextResult[str]:
         """Start trace operation."""
         try:
             _ = self.trace.start_span(operation_name)
-            return FlextResult.ok(f"trace_{hash(operation_name)}")
+            return FlextResult[str].ok(f"trace_{hash(operation_name)}")
         except Exception as e:  # pragma: no cover - defensive
-            return FlextResult.fail(str(e))
+            return FlextResult[str].fail(str(e))
 
     def health_check(self) -> FlextResult[dict[str, object]]:
         """Perform health check."""
-        return FlextResult.ok(self.health.health_check())
+        return FlextResult[dict[str, object]].ok(self.health.health_check())
 
 
 # =============================================================================

@@ -6,8 +6,6 @@ in core module implementation.
 
 from __future__ import annotations
 
-from typing import Any
-
 import pytest
 
 from flext_core import FlextCore, FlextResult, ValidatedModel
@@ -110,7 +108,7 @@ class TestCoreSOLIDImplementation:
 
         # Should return a function-like object
         assert pure_func is not None
-        assert callable(pure_func) or pure_func is impure_function
+        assert callable(pure_func)
 
         # Test that it works (implementation might be a placeholder)
         if callable(pure_func):
@@ -137,7 +135,7 @@ class TestCoreSOLIDImplementation:
         class SimpleModel(ValidatedModel):
             value: str
 
-        result3: FlextResult[SimpleModel] = self.core.create_validated_model(
+        result3 = self.core.create_validated_model(
             SimpleModel,
             value="test",
         )
@@ -175,7 +173,7 @@ class TestCoreSOLIDImplementation:
                     raise ValueError(email_error)
 
         # Core validation system works with our extension
-        result: FlextResult[ExtendedModel] = self.core.create_validated_model(
+        result = self.core.create_validated_model(
             ExtendedModel,
             email="test@example.com",
         )
@@ -228,7 +226,7 @@ class TestCoreSOLIDImplementation:
     def test_error_handling_consistency(self) -> None:
         """Test consistent error handling across validation methods."""
         # All validation methods return FlextResult
-        results: list[FlextResult[Any]] = [
+        results = [
             self.core.validate_type(123, str),  # Should fail
             self.core.validate_dict_structure("not_dict", str),  # Should fail
         ]
@@ -309,7 +307,7 @@ class TestCoreSOLIDCompliance:
         ]
 
         for method, args, should_succeed in scenarios:
-            result: FlextResult[object] = method(*args)
+            result = method(*args)
             assert isinstance(result, FlextResult)
             if should_succeed:
                 assert result.success

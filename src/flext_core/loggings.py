@@ -158,7 +158,9 @@ def _inject_trace_methods() -> None:
         **kwargs: object,
     ) -> object:
         if hasattr(self, "_proxy_to_logger"):
-            return self._proxy_to_logger("trace", event, **kwargs)
+            proxy_method = getattr(self, "_proxy_to_logger", None)
+            if callable(proxy_method):
+                return proxy_method("trace", event, **kwargs)
         return None
 
     try:
@@ -361,15 +363,16 @@ class FlextLogger:
         # Handle both string and enum inputs safely
         try:
             # Try to get value attribute first (for enums)
-            if hasattr(level, "value"):
-                level_str = level.value.upper()
+            level_value = getattr(level, "value", None)
+            if level_value is not None:
+                level_str: str = str(level_value).upper()
             else:
                 level_str = str(level).upper()
         except AttributeError:
             # Fallback to string conversion
             level_str = str(level).upper()
-        level_value = numeric_levels.get(level_str, numeric_levels["INFO"])
-        return level_value >= self._level_value
+        level_numeric = numeric_levels.get(level_str, numeric_levels["INFO"])
+        return level_numeric >= self._level_value
 
     def _log_with_structlog(
         self,
@@ -670,11 +673,11 @@ class FlextLoggerFactory:
 
         """
         # Validate and normalize name
-        if not (isinstance(name, str) and len(name.strip()) > 0):
+        if not (name and len(name.strip()) > 0):
             name = "flext.unknown"
 
         # Validate and normalize level
-        if not (isinstance(level, str) and len(level.strip()) > 0):
+        if not (level and len(level.strip()) > 0):
             level = "INFO"
 
         # Use global level if not specified
@@ -803,17 +806,6 @@ class FlextLogContextManager:
 
 
 # Add missing interface methods to FlextLogger class that tests expect
-class _ContextManagerLogger:
-    """Wrapper for structlog.BoundLogger to provide context manager functionality."""
-
-    def __init__(self, logger: object) -> None:
-        self._logger = logger
-
-    def __enter__(self) -> object:
-        return self._logger
-
-    def __exit__(self, exc_type: object, exc_val: object, exc_tb: object) -> None:
-        pass
 
 
 # =============================================================================

@@ -28,6 +28,11 @@ import time
 from collections.abc import Callable
 from typing import cast
 
+from examples.shared_domain import (
+    SharedDomainFactory,
+    User as SharedUser,
+    log_domain_operation,
+)
 from flext_core import (
     FlextDecorators,
     FlextErrorHandlingDecorators,
@@ -39,12 +44,6 @@ from flext_core import (
     FlextValidationError,
     TAnyObject,
     TUserData,
-)
-
-from .shared_domain import (
-    SharedDomainFactory,
-    User as SharedUser,
-    log_domain_operation,
 )
 
 # Constants to avoid magic numbers
@@ -621,7 +620,7 @@ def _log_user_creation(
         user.id,
         decorator_stack=decorator_stack,
     )
-    return FlextResult.ok(user)
+    return FlextResult[None].ok(user)
 
 
 def _test_valid_user_creation(create_user_func: object) -> FlextResult[None]:
@@ -633,10 +632,10 @@ def _test_valid_user_creation(create_user_func: object) -> FlextResult[None]:
                 f"✅ User created with decorators: {getattr(user, 'name', 'N/A')} "
                 f"(ID: {getattr(user, 'id', 'N/A')})"
             )
-            return FlextResult.ok(None)
-        return FlextResult.fail("Invalid create_user_func provided")
+            return FlextResult[None].ok(None)
+        return FlextResult[None].fail("Invalid create_user_func provided")
     except (RuntimeError, ValueError, TypeError, FlextValidationError):
-        return FlextResult.ok(None)  # Expected for demo
+        return FlextResult[None].ok(None)  # Expected for demo
 
 
 def _test_invalid_user_creation(create_user_func: object) -> FlextResult[None]:
@@ -645,9 +644,9 @@ def _test_invalid_user_creation(create_user_func: object) -> FlextResult[None]:
         if callable(create_user_func):
             user = create_user_func("", "invalid-email", 15)  # Invalid data
             f"✅ Invalid user created: {getattr(user, 'name', 'N/A')}"
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
     except (RuntimeError, ValueError, TypeError, FlextValidationError):
-        return FlextResult.ok(None)  # Expected failure for demo
+        return FlextResult[None].ok(None)  # Expected failure for demo
 
 
 def _demonstrate_performance_decorators() -> FlextResult[None]:
@@ -679,7 +678,7 @@ def _demonstrate_performance_decorators() -> FlextResult[None]:
 def _execute_performance_lookups(lookup_func: object) -> FlextResult[None]:
     """Execute performance lookup demonstrations."""
     if not callable(lookup_func):
-        return FlextResult.fail("Invalid lookup function provided")
+        return FlextResult[None].fail("Invalid lookup function provided")
 
     # First lookup (expensive)
     user1 = lookup_func("cached@example.com")
@@ -691,7 +690,7 @@ def _execute_performance_lookups(lookup_func: object) -> FlextResult[None]:
     if user2:
         f"✅ Second lookup (cached): {getattr(user2, 'name', 'N/A')}"
 
-    return FlextResult.ok(None)
+    return FlextResult[None].ok(None)
 
 
 def _demonstrate_error_handling_decorators() -> FlextResult[None]:
@@ -720,20 +719,20 @@ def _demonstrate_error_handling_decorators() -> FlextResult[None]:
 def _validate_user_not_active(user: SharedUser) -> FlextResult[None]:
     """Validate that user is not already active."""
     if user.status.value == "active":
-        return FlextResult.fail("User is already active")
-    return FlextResult.ok(None)
+        return FlextResult[None].fail("User is already active")
+    return FlextResult[None].ok(None)
 
 
 def _perform_user_activation(user: SharedUser) -> FlextResult[SharedUser]:
     """Perform user activation operation."""
     activation_result = user.activate()
     if activation_result.is_failure:
-        return FlextResult.fail(f"Activation failed: {activation_result.error}")
+        return FlextResult[None].fail(f"Activation failed: {activation_result.error}")
 
     activated_user = activation_result.data
     if activated_user is not None:
-        return FlextResult.ok(activated_user)
-    return FlextResult.fail("User activation returned None data")
+        return FlextResult[None].ok(activated_user)
+    return FlextResult[None].fail("User activation returned None data")
 
 
 def _log_user_activation(
@@ -748,7 +747,7 @@ def _log_user_activation(
         old_status=user.status.value,
         new_status=activated_user.status.value,
     )
-    return FlextResult.ok(activated_user)
+    return FlextResult[None].ok(activated_user)
 
 
 def _test_user_activation_scenarios(activate_func: object) -> FlextResult[None]:
@@ -759,14 +758,14 @@ def _test_user_activation_scenarios(activate_func: object) -> FlextResult[None]:
         30,
     )
     if not test_user_result.success:
-        return FlextResult.fail("Failed to create test user")
+        return FlextResult[None].fail("Failed to create test user")
 
     test_user = test_user_result.data
     if test_user is not None:
         return _test_successful_activation(activate_func, test_user).flat_map(
             lambda activated: _test_duplicate_activation(activate_func, activated),
         )
-    return FlextResult.fail("Test user creation returned None")
+    return FlextResult[None].fail("Test user creation returned None")
 
 
 def _test_successful_activation(
@@ -775,7 +774,7 @@ def _test_successful_activation(
 ) -> FlextResult[SharedUser]:
     """Test successful user activation."""
     if not callable(activate_func):
-        return FlextResult.fail("Invalid activation function")
+        return FlextResult[None].fail("Invalid activation function")
 
     try:
         activated_user = activate_func(test_user)
@@ -783,10 +782,10 @@ def _test_successful_activation(
             f"✅ User activated: {getattr(activated_user, 'name', 'N/A')} "
             f"(Status: {getattr(getattr(activated_user, 'status', None), 'value', 'N/A') if hasattr(activated_user, 'status') else 'N/A'})"
         )
-        return FlextResult.ok(activated_user)
+        return FlextResult[None].ok(activated_user)
     except Exception as e:
         error_message = f"Activation failed: {e}"
-        return FlextResult.fail(error_message)
+        return FlextResult[None].fail(error_message)
 
 
 def _test_duplicate_activation(
@@ -795,12 +794,12 @@ def _test_duplicate_activation(
 ) -> FlextResult[None]:
     """Test duplicate activation scenario (should fail)."""
     if not callable(activate_func):
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
     with contextlib.suppress(Exception):
         activate_func(activated_user)
 
-    return FlextResult.ok(None)
+    return FlextResult[None].ok(None)
 
 
 def _demonstrate_domain_validation_decorators() -> FlextResult[None]:
@@ -842,7 +841,7 @@ def _demonstrate_domain_validation_decorators() -> FlextResult[None]:
 def _validate_user_data_structure(user_data: object) -> FlextResult[dict[str, object]]:
     """Validate user data structure and types."""
     if not isinstance(user_data, dict):
-        return FlextResult.fail("User data must be a dictionary")
+        return FlextResult[None].fail("User data must be a dictionary")
 
     name = user_data.get("name", "")
     email = user_data.get("email", "")
@@ -853,9 +852,9 @@ def _validate_user_data_structure(user_data: object) -> FlextResult[dict[str, ob
         or not isinstance(email, str)
         or not isinstance(age, int)
     ):
-        return FlextResult.fail("Invalid data types in user data")
+        return FlextResult[None].fail("Invalid data types in user data")
 
-    return FlextResult.ok({"name": name, "email": email, "age": age})
+    return FlextResult[None].ok({"name": name, "email": email, "age": age})
 
 
 def _validate_with_domain_factory(
@@ -867,7 +866,7 @@ def _validate_with_domain_factory(
     age = int(cast("int", user_data["age"]))
 
     user_result = SharedDomainFactory.create_user(name, email, age)
-    return FlextResult.ok(user_result)
+    return FlextResult[None].ok(user_result)
 
 
 def _extract_user_data(
@@ -880,13 +879,13 @@ def _extract_user_data(
 
     # Type validation and casting
     if not isinstance(name, str):
-        return FlextResult.fail("Name must be a string")
+        return FlextResult[None].fail("Name must be a string")
     if not isinstance(email, str):
-        return FlextResult.fail("Email must be a string")
+        return FlextResult[None].fail("Email must be a string")
     if not isinstance(age, int):
-        return FlextResult.fail("Age must be an integer")
+        return FlextResult[None].fail("Age must be an integer")
 
-    return FlextResult.ok((name, email, age))
+    return FlextResult[None].ok((name, email, age))
 
 
 def _create_user_from_data(data: tuple[str, str, int]) -> FlextResult[SharedUser]:
@@ -894,12 +893,12 @@ def _create_user_from_data(data: tuple[str, str, int]) -> FlextResult[SharedUser
     name, email, age = data
     user_result = SharedDomainFactory.create_user(name, email, age)
     if user_result.is_failure:
-        return FlextResult.fail(f"Registration failed: {user_result.error}")
+        return FlextResult[None].fail(f"Registration failed: {user_result.error}")
 
     user = user_result.data
     if user is not None:
-        return FlextResult.ok(user)
-    return FlextResult.fail("User registration returned None data")
+        return FlextResult[None].ok(user)
+    return FlextResult[None].fail("User registration returned None data")
 
 
 def _log_user_registration(user: SharedUser) -> FlextResult[SharedUser]:
@@ -910,7 +909,7 @@ def _log_user_registration(user: SharedUser) -> FlextResult[SharedUser]:
         user.id,
         validation_method="domain_aware",
     )
-    return FlextResult.ok(user)
+    return FlextResult[None].ok(user)
 
 
 def _test_domain_validation_scenarios(register_func: object) -> FlextResult[None]:
@@ -923,21 +922,21 @@ def _test_domain_validation_scenarios(register_func: object) -> FlextResult[None
 def _test_valid_registration(register_func: object) -> FlextResult[None]:
     """Test valid user registration."""
     if not callable(register_func):
-        return FlextResult.fail("Invalid registration function")
+        return FlextResult[None].fail("Invalid registration function")
 
     try:
         valid_data = {"name": "Domain User", "email": "domain@example.com", "age": 32}
         user = register_func(valid_data)
         f"✅ Domain validation passed: {getattr(user, 'name', 'N/A')}"
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
     except (RuntimeError, ValueError, TypeError, FlextValidationError):
-        return FlextResult.ok(None)  # Continue demo
+        return FlextResult[None].ok(None)  # Continue demo
 
 
 def _test_invalid_registration(register_func: object) -> FlextResult[None]:
     """Test invalid user registration."""
     if not callable(register_func):
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
     try:
         invalid_data = {
@@ -950,12 +949,12 @@ def _test_invalid_registration(register_func: object) -> FlextResult[None]:
     except (RuntimeError, ValueError, TypeError, FlextValidationError):
         pass
 
-    return FlextResult.ok(None)
+    return FlextResult[None].ok(None)
 
 
 def _complete_domain_decorators_demo() -> FlextResult[None]:
     """Complete the domain decorators demonstration."""
-    return FlextResult.ok(None)
+    return FlextResult[None].ok(None)
 
 
 def main() -> None:

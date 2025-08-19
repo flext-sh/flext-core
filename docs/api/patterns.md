@@ -23,16 +23,16 @@ class CreateOrderCommand:
     def validate(self) -> FlextResult[None]:
         """Validate command data."""
         if not self.customer_id:
-            return FlextResult.fail("Customer ID required")
+            return FlextResult[None].fail("Customer ID required")
 
         if not self.items:
-            return FlextResult.fail("Order must have items")
+            return FlextResult[None].fail("Order must have items")
 
         for item in self.items:
             if item.get("quantity", 0) <= 0:
-                return FlextResult.fail("Invalid item quantity")
+                return FlextResult[None].fail("Invalid item quantity")
 
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 ```
 
 ### Command Handler
@@ -53,7 +53,7 @@ class CreateOrderHandler:
         # Validate command
         validation = command.validate()
         if validation.is_failure:
-            return FlextResult.fail(validation.error)
+            return FlextResult[None].fail(validation.error)
 
         # Check inventory
         for item in command.items:
@@ -62,7 +62,7 @@ class CreateOrderHandler:
                 item["quantity"]
             )
             if stock_check.is_failure:
-                return FlextResult.fail(f"Insufficient stock: {stock_check.error}")
+                return FlextResult[None].fail(f"Insufficient stock: {stock_check.error}")
 
         # Create order
         order = Order(
@@ -84,7 +84,7 @@ class CreateOrderHandler:
             total=order.calculate_total()
         ))
 
-        return FlextResult.ok(order)
+        return FlextResult[None].ok(order)
 ```
 
 ### Command Bus
@@ -104,12 +104,12 @@ class CommandBus:
         """Dispatch command to handler."""
         handler = self.handlers.get(type(command))
         if not handler:
-            return FlextResult.fail(f"No handler for {type(command).__name__}")
+            return FlextResult[None].fail(f"No handler for {type(command).__name__}")
 
         try:
             return handler.handle(command)
         except Exception as e:
-            return FlextResult.fail(f"Handler error: {str(e)}")
+            return FlextResult[None].fail(f"Handler error: {str(e)}")
 
 # Usage
 bus = CommandBus()
@@ -157,12 +157,12 @@ class OrderQueryHandler:
         """Get order by ID."""
         order = self.repository.find_by_id(query.order_id)
         if not order:
-            return FlextResult.fail(f"Order {query.order_id} not found")
+            return FlextResult[None].fail(f"Order {query.order_id} not found")
 
         if not query.include_items:
             order.items = []  # Clear items if not requested
 
-        return FlextResult.ok(order)
+        return FlextResult[None].ok(order)
 
     def get_by_customer(self, query: GetOrdersByCustomerQuery) -> FlextResult[list[Order]]:
         """Get orders by customer."""
@@ -176,7 +176,7 @@ class OrderQueryHandler:
             offset=query.offset
         )
 
-        return FlextResult.ok(orders)
+        return FlextResult[None].ok(orders)
 ```
 
 ## Handler Chain Pattern
@@ -214,7 +214,7 @@ class LoggingMiddleware(HandlerMiddleware):
             self.logger.info(f"Result: {'success' if result.success else 'failure'}")
             return result
 
-        return FlextResult.fail("No handler configured")
+        return FlextResult[None].fail("No handler configured")
 
 class ValidationMiddleware(HandlerMiddleware):
     """Validate requests."""
@@ -228,7 +228,7 @@ class ValidationMiddleware(HandlerMiddleware):
         if self.next:
             return self.next.handle(request)
 
-        return FlextResult.fail("No handler configured")
+        return FlextResult[None].fail("No handler configured")
 
 class AuthorizationMiddleware(HandlerMiddleware):
     """Authorize requests."""
@@ -244,12 +244,12 @@ class AuthorizationMiddleware(HandlerMiddleware):
                 type(request).__name__
             )
             if auth_result.is_failure:
-                return FlextResult.fail(f"Unauthorized: {auth_result.error}")
+                return FlextResult[None].fail(f"Unauthorized: {auth_result.error}")
 
         if self.next:
             return self.next.handle(request)
 
-        return FlextResult.fail("No handler configured")
+        return FlextResult[None].fail("No handler configured")
 ```
 
 ### Building Handler Pipeline
@@ -300,8 +300,8 @@ class RequiredRule:
 
     def validate(self, value: Any) -> FlextResult[Any]:
         if value is None or (isinstance(value, str) and not value.strip()):
-            return FlextResult.fail(self.message)
-        return FlextResult.ok(value)
+            return FlextResult[None].fail(self.message)
+        return FlextResult[None].ok(value)
 
 class MinLengthRule:
     """Minimum length validation."""
@@ -312,16 +312,16 @@ class MinLengthRule:
 
     def validate(self, value: str) -> FlextResult[str]:
         if len(value) < self.min_length:
-            return FlextResult.fail(self.message)
-        return FlextResult.ok(value)
+            return FlextResult[None].fail(self.message)
+        return FlextResult[None].ok(value)
 
 class EmailRule:
     """Email format validation."""
 
     def validate(self, value: str) -> FlextResult[str]:
         if "@" not in value or "." not in value.split("@")[1]:
-            return FlextResult.fail("Invalid email format")
-        return FlextResult.ok(value.lower())
+            return FlextResult[None].fail("Invalid email format")
+        return FlextResult[None].ok(value.lower())
 
 class RangeRule:
     """Numeric range validation."""
@@ -332,10 +332,10 @@ class RangeRule:
 
     def validate(self, value: float) -> FlextResult[float]:
         if self.min_val is not None and value < self.min_val:
-            return FlextResult.fail(f"Value must be >= {self.min_val}")
+            return FlextResult[None].fail(f"Value must be >= {self.min_val}")
         if self.max_val is not None and value > self.max_val:
-            return FlextResult.fail(f"Value must be <= {self.max_val}")
-        return FlextResult.ok(value)
+            return FlextResult[None].fail(f"Value must be <= {self.max_val}")
+        return FlextResult[None].ok(value)
 ```
 
 ### Composite Validator
@@ -373,9 +373,9 @@ class Validator:
                 validated[field] = value
 
         if errors:
-            return FlextResult.fail("; ".join(errors))
+            return FlextResult[None].fail("; ".join(errors))
 
-        return FlextResult.ok(validated)
+        return FlextResult[None].ok(validated)
 
 # Usage
 user_validator = (
@@ -521,10 +521,10 @@ class OrderRepository(Repository):
         try:
             data = self.db.query_one("SELECT * FROM orders WHERE id = ?", order_id)
             if not data:
-                return FlextResult.fail(f"Order {order_id} not found")
-            return FlextResult.ok(Order.from_dict(data))
+                return FlextResult[None].fail(f"Order {order_id} not found")
+            return FlextResult[None].ok(Order.from_dict(data))
         except Exception as e:
-            return FlextResult.fail(f"Database error: {e}")
+            return FlextResult[None].fail(f"Database error: {e}")
 
     def save(self, order: Order) -> FlextResult[None]:
         try:
@@ -532,9 +532,9 @@ class OrderRepository(Repository):
                 "INSERT OR REPLACE INTO orders VALUES (?, ?, ?, ?)",
                 order.id, order.customer_id, order.status, order.to_json()
             )
-            return FlextResult.ok(None)
+            return FlextResult[None].ok(None)
         except Exception as e:
-            return FlextResult.fail(f"Save failed: {e}")
+            return FlextResult[None].fail(f"Save failed: {e}")
 ```
 
 ## Unit of Work Pattern
@@ -567,9 +567,9 @@ class UnitOfWork:
         """Commit transaction."""
         try:
             self.database.commit()
-            return FlextResult.ok(None)
+            return FlextResult[None].ok(None)
         except Exception as e:
-            return FlextResult.fail(f"Commit failed: {e}")
+            return FlextResult[None].fail(f"Commit failed: {e}")
 
     def rollback(self) -> None:
         """Rollback transaction."""

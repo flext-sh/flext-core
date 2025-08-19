@@ -29,10 +29,10 @@ from flext_core import FlextResult
 
 def validate_age(age: int) -> FlextResult[int]:
     if age < 0:
-        return FlextResult.fail("Age cannot be negative")
+        return FlextResult[None].fail("Age cannot be negative")
     if age > 150:
-        return FlextResult.fail("Age seems unrealistic")
-    return FlextResult.ok(age)
+        return FlextResult[None].fail("Age seems unrealistic")
+    return FlextResult[None].ok(age)
 
 # Chain operations safely
 result = (
@@ -78,8 +78,8 @@ class Money(FlextValueObject):
 
     def add(self, other: Money) -> FlextResult[Money]:
         if self.currency != other.currency:
-            return FlextResult.fail("Currency mismatch")
-        return FlextResult.ok(Money(
+            return FlextResult[None].fail("Currency mismatch")
+        return FlextResult[None].ok(Money(
             amount=self.amount + other.amount,
             currency=self.currency
         ))
@@ -92,7 +92,7 @@ class Account(FlextEntity):
 
     def deposit(self, amount: Money) -> FlextResult[None]:
         if not self.is_active:
-            return FlextResult.fail("Account is inactive")
+            return FlextResult[None].fail("Account is inactive")
 
         result = self.balance.add(amount)
         if result.success:
@@ -195,9 +195,9 @@ class OracleService:
         """All operations return FlextResult."""
         try:
             results = self.connection.execute(sql)
-            return FlextResult.ok(results)
+            return FlextResult[None].ok(results)
         except Exception as e:
-            return FlextResult.fail(str(e))
+            return FlextResult[None].fail(str(e))
 
 # Register in global container
 container = get_flext_container()

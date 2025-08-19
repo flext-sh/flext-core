@@ -32,9 +32,9 @@ class SampleCalculationService(FlextDomainService[float]):
     def execute(self) -> FlextResult[float]:
         """Execute calculation operation."""
         if self.value < 0:
-            return FlextResult.fail("Value cannot be negative")
+            return FlextResult[float].fail("Value cannot be negative")
         result = self.value * self.multiplier
-        return FlextResult.ok(result)
+        return FlextResult[float].ok(result)
 
     def calculate_sum(self, a: int, b: int) -> int:
         """Calculate sum of two numbers."""
@@ -54,16 +54,16 @@ class SampleValidationService(FlextDomainService[str]):
     def execute(self) -> FlextResult[str]:
         """Execute validation operation."""
         if len(self.name) < self.min_length:
-            return FlextResult.fail("Name too short")
-        return FlextResult.ok(self.name.upper())
+            return FlextResult[str].fail("Name too short")
+        return FlextResult[str].ok(self.name.upper())
 
     def validate_config(self) -> FlextResult[None]:
         """Validate service configuration."""
         if not self.name or not self.name.strip():
-            return FlextResult.fail("Name cannot be empty")
+            return FlextResult[None].fail("Name cannot be empty")
         if self.min_length < 0:
-            return FlextResult.fail("Min length cannot be negative")
-        return FlextResult.ok(None)
+            return FlextResult[None].fail("Min length cannot be negative")
+        return FlextResult[None].ok(None)
 
     def validate_email(self, email: str) -> bool:
         """Validate email format."""
@@ -79,15 +79,15 @@ class SampleErrorService(FlextDomainService[None]):
 
     def execute(self) -> FlextResult[None]:
         """Execute operation that always fails."""
-        return FlextResult.fail("Service always fails")
+        return FlextResult[None].fail("Service always fails")
 
     def always_fail(self) -> FlextResult[None]:
         """Return failure for testing."""
-        return FlextResult.fail("Service always fails")
+        return FlextResult[None].fail("Service always fails")
 
     def fail_with_context(self, context: str) -> FlextResult[None]:
         """Fail with specific context."""
-        return FlextResult.fail(f"Failed with context: {context}")
+        return FlextResult[None].fail(f"Failed with context: {context}")
 
 
 class SampleExceptionService(FlextDomainService[None]):
@@ -113,11 +113,11 @@ class SampleConfigErrorService(FlextDomainService[None]):
 
     def execute(self) -> FlextResult[None]:
         """Execute operation with config error."""
-        return FlextResult.fail("Configuration error in execution")
+        return FlextResult[None].fail("Configuration error in execution")
 
     def validate_config(self) -> FlextResult[None]:
         """Validate configuration (always fails for this test service)."""
-        return FlextResult.fail("Configuration validation failed")
+        return FlextResult[None].fail("Configuration validation failed")
 
 
 @pytest.mark.unit
@@ -146,17 +146,17 @@ class TestFlextDomainService:
         service = SampleCalculationService()
 
         with pytest.raises(ValueError, match=".*"):  # ValidationError or AttributeError
-            service.value = 20.0
+            service.value = 20.0  # type: ignore[misc]  # Intentional test of read-only property
 
     def test_domain_service_extra_fields_forbidden(self) -> None:
         """Test domain service forbids extra fields."""
         with pytest.raises(ValueError, match=".*"):  # ValidationError
-            SampleCalculationService(value=10.0, extra_field="not allowed")
+            SampleCalculationService.model_validate({"value": 10.0, "extra_field": "not allowed"})
 
     def test_execute_method_is_abstract(self) -> None:
         """Test that execute method is abstract."""
         with pytest.raises(TypeError, match="Can't instantiate abstract class"):
-            FlextDomainService()
+            FlextDomainService()  # type: ignore[abstract]  # Intentional test of abstract class
 
     def test_execute_success(self) -> None:
         """Test successful service execution."""
@@ -170,7 +170,7 @@ class TestFlextDomainService:
 
     def test_execute_business_logic_failure(self) -> None:
         """Test service execution with business logic failure."""
-        service = SampleCalculationService(value=-5.0)
+        service = SampleCalculationService.model_validate({"value": -5.0})
 
         result = service.execute()
 
@@ -202,7 +202,7 @@ class TestFlextDomainService:
 
     def test_validate_config_default_success(self) -> None:
         """Test default validate_config returns success."""
-        service = SampleCalculationService(value=10.0)
+        service = SampleCalculationService.model_validate({"value": 10.0})
 
         result = service.validate_config()
 
@@ -241,7 +241,7 @@ class TestFlextDomainService:
 
     def test_execute_operation_success(self) -> None:
         """Test execute_operation with successful operation."""
-        service = SampleCalculationService(value=10.0)
+        service = SampleCalculationService.model_validate({"value": 10.0})
 
         def test_operation(x: float, y: float) -> float:
             return x + y
@@ -254,7 +254,7 @@ class TestFlextDomainService:
 
     def test_execute_operation_with_kwargs(self) -> None:
         """Test execute_operation with keyword arguments."""
-        service = SampleCalculationService(value=10.0)
+        service = SampleCalculationService.model_validate({"value": 10.0})
 
         def test_operation(x: float, multiplier: float = 1.0) -> float:
             return x * multiplier
@@ -291,10 +291,10 @@ class TestFlextDomainService:
         # Create a service that returns empty error messages
         class EmptyErrorService(FlextDomainService[str]):
             def execute(self) -> FlextResult[str]:
-                return FlextResult.ok("executed")
+                return FlextResult[str].ok("executed")
 
             def validate_config(self) -> FlextResult[None]:
-                return FlextResult.fail("")  # Empty error message
+                return FlextResult[None].fail("")  # Empty error message
 
         service = EmptyErrorService()
 
@@ -314,7 +314,7 @@ class TestFlextDomainService:
 
     def test_execute_operation_exception_handling(self) -> None:
         """Test execute_operation with exception in operation."""
-        service = SampleCalculationService(value=10.0)
+        service = SampleCalculationService.model_validate({"value": 10.0})
 
         def failing_operation() -> None:
             msg = "Operation failed"
@@ -330,7 +330,7 @@ class TestFlextDomainService:
 
     def test_execute_operation_type_error_handling(self) -> None:
         """Test execute_operation with TypeError in operation."""
-        service = SampleCalculationService(value=10.0)
+        service = SampleCalculationService.model_validate({"value": 10.0})
 
         def type_error_operation() -> None:
             msg = "Type error"
@@ -346,7 +346,7 @@ class TestFlextDomainService:
 
     def test_execute_operation_runtime_error_handling(self) -> None:
         """Test execute_operation with RuntimeError in operation."""
-        service = SampleCalculationService(value=10.0)
+        service = SampleCalculationService.model_validate({"value": 10.0})
 
         def runtime_error_operation() -> None:
             msg = "Runtime error"
@@ -362,7 +362,7 @@ class TestFlextDomainService:
 
     def test_get_service_info_success(self) -> None:
         """Test get_service_info with valid service."""
-        service = SampleCalculationService(value=10.0)
+        service = SampleCalculationService.model_validate({"value": 10.0})
 
         info = service.get_service_info()
 
@@ -414,7 +414,7 @@ class TestFlextDomainService:
 
     def test_inheritance_from_mixins(self) -> None:
         """Test that domain service inherits from mixins."""
-        service = SampleCalculationService(value=10.0)
+        service = SampleCalculationService.model_validate({"value": 10.0})
 
         # Should inherit from FlextValidatableMixin
         assert hasattr(service, "is_valid")
@@ -424,7 +424,7 @@ class TestFlextDomainService:
 
     def test_mixin_validation_functionality(self) -> None:
         """Test mixin validation functionality works."""
-        service = SampleCalculationService(value=10.0)
+        service = SampleCalculationService.model_validate({"value": 10.0})
 
         # Test that validation properties exist
         assert hasattr(service, "is_valid")
@@ -433,7 +433,7 @@ class TestFlextDomainService:
 
     def test_mixin_serialization_functionality(self) -> None:
         """Test mixin serialization functionality works."""
-        service = SampleCalculationService(value=10.0, multiplier=3.0)
+        service = SampleCalculationService.model_validate({"value": 10.0, "multiplier": 3.0})
 
         # Test that serialization methods exist
         assert hasattr(service, "to_dict_basic")
@@ -499,7 +499,7 @@ class TestDomainServiceIntegration:
 
     def test_service_composition_with_failure(self) -> None:
         """Test service composition when one service fails."""
-        calc_service = SampleCalculationService(value=-5.0)  # Will fail
+        calc_service = SampleCalculationService.model_validate({"value": -5.0})  # Will fail
         validation_service = SampleValidationService(name="test", min_length=2)
 
         calc_result = calc_service.execute()
@@ -510,7 +510,7 @@ class TestDomainServiceIntegration:
 
     def test_service_chaining_with_results(self) -> None:
         """Test chaining services using results."""
-        calc_service = SampleCalculationService(value=5.0, multiplier=2.0)
+        calc_service = SampleCalculationService.model_validate({"value": 5.0, "multiplier": 2.0})
 
         calc_result = calc_service.execute()
         if calc_result.success and calc_result.data is not None:
@@ -531,7 +531,7 @@ class TestDomainServiceIntegration:
 
     def test_multiple_service_info_collection(self) -> None:
         """Test collecting service info from multiple services."""
-        calc_service = SampleCalculationService(value=10.0)
+        calc_service = SampleCalculationService.model_validate({"value": 10.0})
         validation_service = SampleValidationService(name="test", min_length=2)
         error_service = SampleErrorService()
         config_error_service = SampleConfigErrorService()
@@ -569,7 +569,7 @@ class TestDomainServiceIntegration:
 
     def test_service_execute_operation_complex_workflow(self) -> None:
         """Test complex workflow using execute_operation."""
-        service = SampleCalculationService(value=10.0)
+        service = SampleCalculationService.model_validate({"value": 10.0})
 
         def complex_operation(base: float, operations: list[dict[str, float]]) -> float:
             result = base
@@ -605,7 +605,7 @@ class TestDomainServiceEdgeCases:
 
     def test_service_with_empty_operation_name(self) -> None:
         """Test execute_operation with empty operation name."""
-        service = SampleCalculationService(value=10.0)
+        service = SampleCalculationService.model_validate({"value": 10.0})
 
         def test_operation() -> str:
             return "executed"
@@ -618,7 +618,7 @@ class TestDomainServiceEdgeCases:
 
     def test_service_operation_with_no_args(self) -> None:
         """Test execute_operation with no arguments."""
-        service = SampleCalculationService(value=10.0)
+        service = SampleCalculationService.model_validate({"value": 10.0})
 
         def no_args_operation() -> str:
             return "no args"
@@ -631,7 +631,7 @@ class TestDomainServiceEdgeCases:
 
     def test_service_operation_returning_none(self) -> None:
         """Test execute_operation with operation returning None."""
-        service = SampleCalculationService(value=10.0)
+        service = SampleCalculationService.model_validate({"value": 10.0})
 
         def none_operation() -> None:
             return None
@@ -643,7 +643,7 @@ class TestDomainServiceEdgeCases:
 
     def test_service_operation_returning_complex_object(self) -> None:
         """Test execute_operation with operation returning complex object."""
-        service = SampleCalculationService(value=10.0)
+        service = SampleCalculationService.model_validate({"value": 10.0})
 
         def complex_operation() -> dict[str, object]:
             return {
@@ -662,7 +662,7 @@ class TestDomainServiceEdgeCases:
 
     def test_service_with_zero_values(self) -> None:
         """Test service with zero values."""
-        service = SampleCalculationService(value=0.0, multiplier=0.0)
+        service = SampleCalculationService.model_validate({"value": 0.0, "multiplier": 0.0})
 
         result = service.execute()
 
@@ -672,7 +672,7 @@ class TestDomainServiceEdgeCases:
 
     def test_service_with_large_values(self) -> None:
         """Test service with large values."""
-        service = SampleCalculationService(value=1e10, multiplier=1e5)
+        service = SampleCalculationService.model_validate({"value": 1e10, "multiplier": 1e5})
 
         result = service.execute()
 
@@ -716,7 +716,7 @@ class TestDomainServiceTypes:
 
     def test_service_type_annotations(self) -> None:
         """Test that service type annotations are preserved."""
-        service = SampleCalculationService(value=10.0)
+        service = SampleCalculationService.model_validate({"value": 10.0})
 
         # Check that field annotations are preserved
         annotations = service.__annotations__
@@ -727,13 +727,13 @@ class TestDomainServiceTypes:
     def test_service_field_types(self) -> None:
         """Test service field type validation."""
         # Valid types should work
-        service = SampleCalculationService(value=10.0, multiplier=2.5)
+        service = SampleCalculationService.model_validate({"value": 10.0, "multiplier": 2.5})
         if service.value != 10.0:
             raise AssertionError(f"Expected {10.0}, got {service.value}")
         assert service.multiplier == 2.5
 
         # Test with integer (should be coerced to float)
-        service = SampleCalculationService(value=10, multiplier=2)
+        service = SampleCalculationService.model_validate({"value": 10, "multiplier": 2})
         if service.value != 10.0:
             raise AssertionError(f"Expected {10.0}, got {service.value}")
         assert service.multiplier == 2.0
@@ -753,7 +753,7 @@ class TestDomainServiceTypes:
 
     def test_service_model_config_attributes(self) -> None:
         """Test service model config attributes."""
-        service = SampleCalculationService(value=10.0)
+        service = SampleCalculationService.model_validate({"value": 10.0})
 
         # Should be frozen (immutable)
         config = service.model_config
@@ -788,7 +788,7 @@ class TestDomainServiceMockIntegration:
 
     def test_service_operation_callback_pattern(self) -> None:
         """Test service operation with callback pattern."""
-        service = SampleCalculationService(value=10.0)
+        service = SampleCalculationService.model_validate({"value": 10.0})
         callback_results: list[str] = []
 
         def callback_operation(value: float, callback: Callable[[str], None]) -> float:

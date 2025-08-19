@@ -4,7 +4,7 @@
 
 ### CATEGORY COUNTS (Total: 200+ strings identified)
 
-1. **FlextResult.fail() calls**: ~100+ instances across multiple files
+1. **FlextResult[None].fail() calls**: ~100+ instances across multiple files
 2. **Logger messages**: ~50+ instances with hardcoded strings
 3. **Exception messages**: ~30+ hardcoded in exception raises
 4. **Return string literals**: ~20+ direct string returns
@@ -13,7 +13,7 @@
 
 ### MOST PROBLEMATIC FILES (Priority Order)
 
-1. **src/flext_core/handlers.py**: 15+ FlextResult.fail() calls, complex error messages
+1. **src/flext_core/handlers.py**: 15+ FlextResult[None].fail() calls, complex error messages
 2. **src/flext_core/mixins.py**: 10+ validation errors, entity validation messages
 3. **src/flext_core/payload.py**: 8+ logger warning messages, serialization errors
 4. **src/flext_core/exceptions.py**: 6+ hardcoded category strings ("VALIDATION", "BUSINESS", etc.)

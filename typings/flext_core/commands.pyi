@@ -86,7 +86,7 @@ class FlextCommands:
         ) -> FlextResult[None]: ...
         def get_metadata(self) -> TAnyDict: ...
 
-    class Result(FlextResult[_TResult]):
+    class Result(FlextResult[_TResult], Generic[_TResult]):
         metadata: Incomplete
         def __init__(
             self,

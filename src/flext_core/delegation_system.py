@@ -235,7 +235,7 @@ class FlextMixinDelegator:
 
     def _validate_delegation(self) -> FlextResult[None]:
         """Validate that delegation system is working correctly."""
-        validation_errors = []
+        validation_errors: list[str] = []
 
         # Check that all mixins were initialized
         if not self._mixin_instances:
@@ -249,16 +249,18 @@ class FlextMixinDelegator:
         # to be callable so we skip the runtime callable check that would be unreachable
 
         # Check initialization log for errors
-        failed_inits = [log for log in self._initialization_log if log.startswith("✗")]
+        failed_inits: list[str] = [
+            log for log in self._initialization_log if log.startswith("✗")
+        ]
         if failed_inits:
             validation_errors.extend(failed_inits)
 
         if validation_errors:
-            return FlextResult.fail(
+            return FlextResult[None].fail(
                 f"Delegation validation failed: {'; '.join(validation_errors)}",
             )
 
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
     def get_mixin_instance(self, mixin_class: type) -> object | None:
         """Get a specific mixin instance for direct access if needed."""
@@ -345,10 +347,7 @@ def _validate_delegation_info(
         _raise_delegation_error("Delegator must have get_delegation_info method")
 
     info = delegator.get_delegation_info()
-    if not isinstance(info, dict):
-        _raise_delegation_error("Delegation info must be a dictionary")
-
-    # Type cast for MyPy after isinstance check
+    # info is already typed as dict[str, object] from the protocol
     typed_info: dict[str, object] = info
 
     validation_result_obj = typed_info.get("validation_result", False)
@@ -389,7 +388,7 @@ def validate_delegation_system() -> FlextResult[
         _validate_method_functionality(host, test_results)
         info = _validate_delegation_info(host, test_results)
 
-        return FlextResult.ok(
+        return FlextResult[dict[str, str | list[str] | dict[str, object]]].ok(
             {
                 "status": "SUCCESS",
                 "test_results": test_results,
@@ -409,7 +408,9 @@ def validate_delegation_system() -> FlextResult[
         error_msg: str = (
             f"Delegation system validation failed: {'; '.join(test_results)}"
         )
-        return FlextResult.fail(error_msg)
+        return FlextResult[dict[str, str | list[str] | dict[str, object]]].fail(
+            error_msg
+        )
 
 
 __all__: list[str] = [

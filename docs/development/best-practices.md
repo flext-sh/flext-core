@@ -15,13 +15,13 @@ from flext_core import FlextResult
 def process_payment(amount: Decimal, card: str) -> FlextResult[Transaction]:
     """Process payment with explicit error handling."""
     if amount <= 0:
-        return FlextResult.fail("Amount must be positive")
+        return FlextResult[None].fail("Amount must be positive")
 
     if not validate_card(card):
-        return FlextResult.fail("Invalid card number")
+        return FlextResult[None].fail("Invalid card number")
 
     transaction = Transaction(amount=amount, card=card)
-    return FlextResult.ok(transaction)
+    return FlextResult[None].ok(transaction)
 
 # ❌ BAD - Using exceptions for business logic
 def process_payment_bad(amount: Decimal, card: str) -> Transaction:
@@ -50,9 +50,9 @@ def transform_data[T, U](
     """Transform data with type safety."""
     try:
         result = transformer(data)
-        return FlextResult.ok(result)
+        return FlextResult[None].ok(result)
     except Exception as e:
-        return FlextResult.fail(f"Transformation failed: {e}")
+        return FlextResult[None].fail(f"Transformation failed: {e}")
 
 # ❌ BAD - Missing type hints
 def transform_data_bad(data, transformer):
@@ -79,7 +79,7 @@ class OrderService:
         if payment_result.is_failure:
             return payment_result
 
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
 # Setup with container
 container = get_flext_container()
@@ -118,7 +118,7 @@ class Product(FlextEntity):
     def reserve(self, quantity: int) -> FlextResult[None]:
         """Business operation."""
         if not self.can_fulfill(quantity):
-            return FlextResult.fail(f"Insufficient stock: {self.stock} < {quantity}")
+            return FlextResult[None].fail(f"Insufficient stock: {self.stock} < {quantity}")
 
         self.stock -= quantity
         self.add_domain_event("ProductReserved", {
@@ -126,7 +126,7 @@ class Product(FlextEntity):
             "quantity": quantity,
             "remaining": self.stock
         })
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
 # Application Layer - Use case orchestration
 # application/use_cases.py
@@ -178,9 +178,9 @@ class OrderRepository:
                 "INSERT INTO orders ...",
                 order.to_dict()
             )
-            return FlextResult.ok(order)
+            return FlextResult[None].ok(order)
         except DatabaseError as e:
-            return FlextResult.fail(f"Database error: {e}")
+            return FlextResult[None].fail(f"Database error: {e}")
 ```
 
 ### Domain-Driven Design
@@ -218,7 +218,7 @@ class OrderItem(FlextEntity):
     def adjust_quantity(self, new_quantity: int) -> FlextResult[None]:
         """Adjust item quantity."""
         if new_quantity <= 0:
-            return FlextResult.fail("Quantity must be positive")
+            return FlextResult[None].fail("Quantity must be positive")
 
         old_quantity = self.quantity
         self.quantity = new_quantity
@@ -229,7 +229,7 @@ class OrderItem(FlextEntity):
             "new_quantity": new_quantity
         })
 
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
 # Aggregate Root - Consistency boundary
 class Order(FlextAggregateRoot):
@@ -242,11 +242,11 @@ class Order(FlextAggregateRoot):
     def add_item(self, product: Product, quantity: int) -> FlextResult[None]:
         """Add item maintaining invariants."""
         if self.status != OrderStatus.DRAFT:
-            return FlextResult.fail("Cannot modify confirmed order")
+            return FlextResult[None].fail("Cannot modify confirmed order")
 
         # Check product availability
         if not product.can_fulfill(quantity):
-            return FlextResult.fail(f"Product {product.name} insufficient stock")
+            return FlextResult[None].fail(f"Product {product.name} insufficient stock")
 
         # Reserve stock
         reserve_result = product.reserve(quantity)
@@ -270,7 +270,7 @@ class Order(FlextAggregateRoot):
             "quantity": quantity
         })
 
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
     @property
     def total(self) -> Decimal:
@@ -309,7 +309,7 @@ def get_user_preferences(user_id: str) -> FlextResult[dict]:
 
     # Return defaults
     logger.warning(f"Using default preferences for user {user_id}")
-    return FlextResult.ok(DEFAULT_PREFERENCES)
+    return FlextResult[None].ok(DEFAULT_PREFERENCES)
 ```
 
 ### Error Aggregation
@@ -341,9 +341,9 @@ def validate_order(order: Order) -> FlextResult[Order]:
 
     # Return aggregated result
     if errors:
-        return FlextResult.fail(" | ".join(errors))
+        return FlextResult[None].fail(" | ".join(errors))
 
-    return FlextResult.ok(order)
+    return FlextResult[None].ok(order)
 ```
 
 ## Testing Strategies
@@ -497,12 +497,12 @@ def process_orders_batch(order_ids: list[str]) -> FlextResult[list[Order]]:
 
     # Return results
     if errors and not processed:
-        return FlextResult.fail(" | ".join(errors))
+        return FlextResult[None].fail(" | ".join(errors))
 
     if errors:
         logger.warning(f"Partial batch failure: {errors}")
 
-    return FlextResult.ok(processed)
+    return FlextResult[None].ok(processed)
 ```
 
 ## Code Quality
@@ -569,17 +569,17 @@ def create_user(request_data: dict) -> FlextResult[User]:
 
     # Validate
     if not email or "@" not in email:
-        return FlextResult.fail("Invalid email")
+        return FlextResult[None].fail("Invalid email")
 
     if not name or len(name) < 2:
-        return FlextResult.fail("Invalid name")
+        return FlextResult[None].fail("Invalid name")
 
     if len(email) > 255:  # Prevent DoS
-        return FlextResult.fail("Email too long")
+        return FlextResult[None].fail("Email too long")
 
     # Create user
     user = User(email=email, name=name)
-    return FlextResult.ok(user)
+    return FlextResult[None].ok(user)
 ```
 
 ### Sensitive Data
@@ -595,15 +595,15 @@ def authenticate(email: str, password: str) -> FlextResult[User]:
     user_result = find_user_by_email(email)
     if user_result.is_failure:
         logger.warning(f"User not found: {email}")
-        return FlextResult.fail("Invalid credentials")  # Generic message
+        return FlextResult[None].fail("Invalid credentials")  # Generic message
 
     user = user_result.unwrap()
     if not verify_password(password, user.password_hash):
         logger.warning(f"Invalid password for: {email}")
-        return FlextResult.fail("Invalid credentials")  # Same generic message
+        return FlextResult[None].fail("Invalid credentials")  # Same generic message
 
     logger.info(f"Successful authentication: {email}")
-    return FlextResult.ok(user)
+    return FlextResult[None].ok(user)
 ```
 
 ## Summary

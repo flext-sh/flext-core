@@ -23,8 +23,8 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from datetime import UTC, datetime
-from typing import ClassVar, Self, cast
+from datetime import UTC, datetime, timezone
+from typing import Any, ClassVar, Self, cast
 
 from pydantic import (
     AliasChoices,
@@ -33,14 +33,21 @@ from pydantic import (
     ConfigDict,
     Field,
     SerializationInfo,
+    ValidationError,
     ValidationInfo,
     computed_field,
     field_serializer,
     field_validator,
     model_serializer,
 )
+from pydantic.alias_generators import to_camel, to_snake
 
 from flext_core.exceptions import FlextValidationError
+
+# Import modules used conditionally
+from flext_core.fields import FlextFields
+from flext_core.loggings import FlextLoggerFactory
+from flext_core.payload import FlextPayload
 from flext_core.result import FlextResult
 from flext_core.root_models import (
     FlextEntityId,
@@ -48,232 +55,173 @@ from flext_core.root_models import (
     FlextMetadata,
     FlextTimestamp,
     FlextVersion,
-    create_version,
 )
 from flext_core.utilities import FlextGenerators
 
+# =============================================================================
+# Constants
+# =============================================================================
 
-# Modern AliasGenerator for consistent field naming across FLEXT ecosystem
+# Re-export UTC timezone for this module
+UTC_TIMEZONE: timezone = UTC
+
+# =============================================================================
+# Alias Generator
+# =============================================================================
+
+
 def flext_alias_generator(field_name: str) -> str:
-    """Generate consistent aliases for FLEXT fields using snake_case to camelCase."""
-    components = field_name.split("_")
-    return components[0] + "".join(word.capitalize() for word in components[1:])
+    """FLEXT-specific alias generator that converts snake_case to camelCase."""
+    return to_camel(field_name)
+
+
+# =============================================================================
+# Type Aliases (now using RootModel types for validation)
+# =============================================================================
+
+# FlextEntityId and FlextVersion are now imported above from root_models
+
+# =============================================================================
+# Helper Functions
+# =============================================================================
+
+
+def create_timestamp() -> FlextTimestamp:
+    """Create a new timestamp."""
+    return FlextTimestamp.now()
+
+
+def create_version(value: int) -> FlextResult[FlextVersion]:
+    """Create a new version number."""
+    if value < 1:
+        return FlextResult[FlextVersion].fail("Version must be >= 1")
+    return FlextResult[FlextVersion].ok(FlextVersion(value))
+
+
+# =============================================================================
+# Base Models
+# =============================================================================
 
 
 class FlextModel(BaseModel):
-    """Modern Pydantic BaseModel foundation for FLEXT ecosystem.
-
-    Uses advanced Pydantic v2 patterns including:
-    - AliasGenerator for consistent API naming (snake_case to camelCase)
-    - Field aliases for flexible data input/output
-    - Computed fields for derived properties
-    - Enhanced validation with ValidationInfo
-    - Type-safe serialization and deserialization
-
-    This is the foundation for all FLEXT entities and value objects.
-    """
+    """Base model for all FLEXT data structures."""
 
     model_config = ConfigDict(
-        # Modern Pydantic patterns with AliasGenerator
-        alias_generator=AliasGenerator(
-            alias=flext_alias_generator,
-            validation_alias=flext_alias_generator,
-            serialization_alias=flext_alias_generator,
-        ),
-        # Enhanced type safety and validation
-        extra="allow",
-        validate_assignment=True,
-        use_enum_values=True,
-        str_strip_whitespace=True,
-        # Modern serialization features
-        arbitrary_types_allowed=True,
+        populate_by_name=True,
         validate_default=True,
-        populate_by_name=True,  # Allow both alias and field names
-        # JSON schema generation with OpenAPI support
-        json_schema_extra={
-            "examples": [],
-            "description": "Modern FLEXT Core model with AliasGenerator patterns",
-            "title": "FlextModel",
-        },
-        # Performance optimizations
-        frozen=False,  # Override in subclasses for value objects
-        use_attribute_docstrings=True,
+        alias_generator=AliasGenerator(
+            validation_alias=to_snake, serialization_alias=to_camel
+        ),
+        use_enum_values=True,
+        protected_namespaces=("model_",),
     )
 
     @computed_field  # type: ignore[prop-decorator]
     @property
     def model_type(self) -> str:
-        """Computed field providing the model type name."""
+        """Returns the type of the model, typically the class name."""
         return self.__class__.__name__
 
     @computed_field  # type: ignore[prop-decorator]
     @property
     def model_namespace(self) -> str:
-        """Computed field providing the model namespace."""
+        """Returns the namespace of the model, based on its module path."""
         return self.__class__.__module__
 
-    def validate_business_rules(self) -> FlextResult[None]:
-        """Validate business rules - override in subclasses for specific rules."""
-        return FlextResult[None].ok(None)
-
-    def validate_with_context(
-        self,
-        context: dict[str, object] | None = None,
-    ) -> FlextResult[None]:
-        """Validate with context information using modern ValidationInfo patterns."""
-        try:
-            # Use Pydantic's built-in validation with context
-            if context:
-                # Re-validate the model with context
-                self.__class__.model_validate(self.model_dump(), context=context)
-
-            # Run business rules validation
-            return self.validate_business_rules()
-        except Exception as e:
-            return FlextResult[None].fail(f"Validation failed: {e}")
-
-    def to_dict(
-        self,
-        *,
-        by_alias: bool = True,
-        exclude_none: bool = True,
-    ) -> dict[str, object]:
-        """Convert model to dictionary with modern serialization options."""
-        return self.model_dump(by_alias=by_alias, exclude_none=exclude_none)
-
-    def to_typed_dict(self, *, by_alias: bool = False) -> dict[str, object]:
-        """Convert model to typed dictionary using original field names."""
-        return self.model_dump(by_alias=by_alias, exclude_none=True)
-
-    def to_json_schema(
-        self,
-        *,
-        by_alias: bool = True,
-        mode: str = "validation",
-    ) -> JsonSchemaDefinition:
-        """Generate JSON schema with modern OpenAPI support and mode selection."""
-        _ = mode  # Acknowledge parameter for future use
-        return self.model_json_schema(by_alias=by_alias)
-
-    def to_json_schema_serialization(self) -> JsonSchemaDefinition:
-        """Generate JSON schema optimized for serialization."""
-        return self.to_json_schema(mode="serialization")
-
-    def to_openapi_schema(self) -> JsonSchemaDefinition:
-        """Generate OpenAPI-compatible JSON schema."""
-        schema = self.to_json_schema(by_alias=True)
-        # Add OpenAPI-specific metadata
-        if "properties" in schema and isinstance(schema["properties"], dict):
-            for prop_name, prop_schema in schema["properties"].items():
-                if isinstance(prop_schema, dict) and "description" not in prop_schema:
-                    # Add OpenAPI field metadata
-                    prop_schema["description"] = f"Field {prop_name}"
-        return schema
-
-    def to_camel_case_dict(self) -> dict[str, object]:
-        """Convert to camelCase dictionary using AliasGenerator."""
+    def to_dict(self) -> dict[str, object]:
+        """Serializes the model to a dictionary."""
         return self.model_dump(by_alias=True, exclude_none=True)
+
+    def to_json(self, **kwargs: Any) -> str:  # type: ignore[explicit-any]  # noqa: ANN401
+        """Serializes the model to a JSON string."""
+        return self.model_dump_json(by_alias=True, exclude_none=True, **kwargs)
 
     @field_serializer("model_type", when_used="json")
     def serialize_model_type(self, value: str) -> str:
-        """Custom field serializer for model_type in JSON mode."""
-        return f"FLEXT::{value}"
+        """Ensures model_type is always serialized, even if default."""
+        return value
 
     @field_serializer("model_namespace", when_used="json")
     def serialize_model_namespace(self, value: str) -> str:
-        """Custom field serializer for model_namespace in JSON mode."""
-        return value.replace("flext_core", "FLEXT-CORE")
+        """Ensures model_namespace is always serialized, even if default."""
+        return value
 
     @model_serializer(mode="wrap", when_used="json")
-    def serialize_model_for_api(
-        self,
-        serializer: Callable[[FlextModel], dict[str, object]],
-        info: SerializationInfo,
+    def serialize_model_wrapper(
+        self, serializer: Callable[[object], dict[str, object]]
     ) -> dict[str, object]:
-        """Model serializer for API output with enhanced metadata."""
-        _ = info  # Acknowledge parameter for future use
+        """Wraps the serialized model with metadata."""
         data = serializer(self)
-        if isinstance(data, dict):
-            # Add API metadata in JSON mode
-            data["_meta"] = {
-                "serialized_at": datetime.now(UTC).isoformat(),
-                "serializer_version": "2.0",
-                "flext_core_version": "2.0.0-dev",
-            }
+        data["metadata"] = {
+            "model_type": self.model_type,
+            "model_namespace": self.model_namespace,
+            "serialized_at": datetime.now(UTC_TIMEZONE).isoformat(),
+        }
         return data
+
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Default business rule validation - override in subclasses for specific rules."""
+        return FlextResult[None].ok(None)
+
+
+class FlextRootModel(FlextModel):
+    """A base model for root data structures in the FLEXT ecosystem."""
+
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_default=True,
+        alias_generator=AliasGenerator(
+            validation_alias=to_snake, serialization_alias=to_camel
+        ),
+        use_enum_values=True,
+        protected_namespaces=("model_",),
+    )
+
+
+# =============================================================================
+# Value Objects
+# =============================================================================
+
+
+def make_hashable(
+    item: object,
+) -> frozenset[tuple[str, object]] | tuple[object, ...] | object:
+    """Recursively converts mutable collections to their immutable counterparts."""
+    if isinstance(item, dict):
+        dict_cast = cast("dict[str, object]", item)
+        return frozenset((str(k), make_hashable(v)) for k, v in dict_cast.items())
+    if isinstance(item, list):
+        list_cast = cast("list[object]", item)
+        return tuple(make_hashable(v) for v in list_cast)
+    if isinstance(item, set):
+        set_cast = cast("set[object]", item)
+        return frozenset(make_hashable(v) for v in set_cast)
+    return item
 
 
 class FlextValue(FlextModel, ABC):
-    """Modern immutable value objects with attribute-based equality.
+    """Abstract base class for Value Objects in the FLEXT ecosystem."""
 
-    Foundation for Domain-Driven Design value objects across the ecosystem.
-    Inherits all modern Pydantic patterns from FlextModel while ensuring immutability.
+    model_config = ConfigDict(frozen=True)
 
-    Features:
-    - Inherits AliasGenerator from FlextModel for consistent naming
-    - Frozen model for immutability
-    - Attribute-based equality and hashing
-    - Modern validation with context support
-    """
-
-    model_config = ConfigDict(
-        # Inherit from FlextModel but override for immutability
-        alias_generator=AliasGenerator(
-            alias=flext_alias_generator,
-            validation_alias=flext_alias_generator,
-            serialization_alias=flext_alias_generator,
-        ),
-        # Type safety and validation
-        extra="allow",
-        validate_assignment=True,
-        use_enum_values=True,
-        str_strip_whitespace=True,
-        # Modern serialization features
-        arbitrary_types_allowed=True,
-        validate_default=True,
-        populate_by_name=True,
-        # Value object specific: IMMUTABLE
-        frozen=True,
-        use_attribute_docstrings=True,
-        # JSON schema for value objects
-        json_schema_extra={
-            "examples": [],
-            "description": "Immutable FLEXT value object with modern patterns",
-            "title": "FlextValue",
-        },
-    )
+    def __init_subclass__(cls, **kwargs: object) -> None:
+        """Log subclass creation for monitoring."""
+        super().__init_subclass__()
+        try:
+            logger = FlextLoggerFactory.get_logger(cls.__name__)
+            logger.debug(f"FlextValue subclass created: {cls.__name__}")
+        except ImportError:
+            pass  # Silently continue if logging is not available
 
     def __hash__(self) -> int:
-        """Hash based on all attributes for value semantics."""
-
-        def make_hashable(item: object) -> object:
-            if isinstance(item, dict):
-                # Dict[str, object] guaranteed by model_dump
-                return tuple(
-                    sorted(
-                        (str(k), make_hashable(v))
-                        for k, v in (cast("dict[str, object]", item)).items()
-                    ),
-                )
-            if isinstance(item, list):
-                return tuple(make_hashable(v) for v in item)
-            if isinstance(item, set):
-                return frozenset(make_hashable(v) for v in item)
-            return item
-
-        # Create hashable representation of all attributes
-        dumped: dict[str, object] = self.model_dump()
-        hashable_items: list[tuple[str, object]] = []
-        for key, value in sorted(dumped.items()):
-            if key != "metadata":
-                hashable_items.append((str(key), make_hashable(value)))
-        return hash(tuple(hashable_items))
+        """Generates a hash based on the model's attributes."""
+        hashable_items = make_hashable(self.model_dump())
+        return hash(hashable_items)
 
     def __eq__(self, other: object) -> bool:
-        """Equality based on all attributes (value semantics)."""
-        if not isinstance(other, type(self)):
-            return False
-        # Compare without metadata for value equality
+        """Compares this Value Object with another for equality."""
+        if not isinstance(other, FlextValue):
+            return NotImplemented
         self_data = {k: v for k, v in self.model_dump().items() if k != "metadata"}
         other_data = {k: v for k, v in other.model_dump().items() if k != "metadata"}
         return self_data == other_data
@@ -281,6 +229,374 @@ class FlextValue(FlextModel, ABC):
     @abstractmethod
     def validate_business_rules(self) -> FlextResult[None]:
         """Abstract business rule validation - must be implemented."""
+
+    def __str__(self) -> str:
+        """Return human-readable string representation."""
+        class_name = self.__class__.__name__
+        attrs = self.model_dump()
+        formatted_attrs = self.format_dict(attrs)
+        return f"{class_name}({formatted_attrs})"
+
+    def format_dict(self, data: dict[str, object]) -> str:
+        """Format a dictionary as a string representation."""
+        formatted_items = []
+        for key, value in data.items():
+            if isinstance(value, str):
+                formatted_items.append(f"{key}='{value}'")
+            else:
+                formatted_items.append(f"{key}={value}")
+        return ", ".join(formatted_items)
+
+    def validate_flext(self) -> FlextResult[Self]:
+        """Validate the value object using its business rules."""
+        result = self.validate_business_rules()
+        if result.is_failure:
+            return FlextResult[Self].fail(result.error or "Unknown validation error")
+        return FlextResult[Self].ok(self)
+
+    def to_payload(self) -> FlextPayload[dict[str, object | str]]:
+        """Converts the value object to a FlextPayload."""
+        validation_result = self.validate_business_rules()
+        status = "valid" if validation_result.is_success else "invalid"
+
+        try:
+            value_object_data = self._extract_serializable_attributes()
+        except Exception:
+            value_object_data = self._get_fallback_info()
+            status = "serialization_fallback"
+
+        payload_data = {
+            "value_object_data": value_object_data,
+            "class_info": f"{self.__class__.__module__}.{self.__class__.__name__}",
+            "validation_status": status,
+        }
+
+        # First attempt to create payload
+        payload_result = FlextPayload.create(
+            data=payload_data,
+            metadata={"type": "ValueObjectPayload"},
+        )
+
+        # If first attempt fails, try with fallback data
+        if payload_result.is_failure:
+            fallback_data = {
+                "value_object_data": self._get_fallback_info(),
+                "class_info": f"{self.__class__.__module__}.{self.__class__.__name__}",
+                "validation_status": "serialization_fallback",
+            }
+
+            payload_result = FlextPayload.create(
+                data=fallback_data,
+                metadata={"type": "ValueObjectPayload"},
+            )
+
+            # If both attempts fail, raise exception
+            if payload_result.is_failure:
+                error_msg = f"Failed to create payload: {payload_result.error}"
+                raise FlextValidationError(error_msg)
+
+        return cast("FlextPayload[dict[str, object | str]]", payload_result.unwrap())
+
+    def _extract_serializable_attributes(self) -> dict[str, object]:
+        """Extracts serializable attributes from the value object."""
+        processed: dict[str, object] = {}
+        for attr_name, attr_value in self:
+            if self._is_serializable(attr_name):
+                processed[attr_name] = self._process_attribute_value(attr_value)
+        return processed
+
+    def _get_fallback_info(self) -> dict[str, object]:
+        """Provides fallback information for serialization errors."""
+        return {
+            "class_name": self.__class__.__name__,
+            "module": self.__class__.__module__,
+            "error": "Could not serialize value object",
+        }
+
+    def _try_manual_extraction(self) -> dict[str, object]:
+        """Try manual attribute extraction."""
+        result: dict[str, object] = {}
+        for attr_name in dir(self):
+            if self._should_include_attribute(attr_name):
+                result[attr_name] = self._safely_get_attribute(attr_name)
+        return result
+
+    def _should_include_attribute(self, attr_name: str) -> bool:
+        """Check if attribute should be included in serialization."""
+        if attr_name.startswith("_"):
+            return False
+        attr = getattr(self, attr_name, None)
+        return not callable(attr)
+
+    def _process_serializable_values(self, data: dict[str, object]) -> dict[str, object]:
+        """Process values to make them serializable."""
+        processed: dict[str, object] = {}
+        for key, value in data.items():
+            if isinstance(value, (str, int, float, bool, type(None))):
+                processed[key] = value
+            else:
+                # Convert complex types to string representation
+                processed[key] = str(value)
+        return processed
+
+    def validate_field(self, field_name: str, _value: object = None) -> FlextResult[None]:
+        """Validate a single field using FlextFields registry if available."""
+        # Try to use FlextFields registry first (for comprehensive validation)
+        try:
+            field_result = FlextFields.get_field_by_name(field_name)
+            if field_result.is_success:
+                field_obj = field_result.unwrap()
+                if hasattr(field_obj, "validate_value"):
+                    validation_result = field_obj.validate_value(_value)
+                    if validation_result.is_failure:
+                        return FlextResult[None].fail(validation_result.error or "Validation failed")
+                    return FlextResult[None].ok(None)
+        except (ImportError, AttributeError):
+            pass  # Fall back to Pydantic validation
+
+        # If field doesn't exist in model, return success for unknown fields
+        if field_name not in self.__class__.model_fields:
+            return FlextResult[None].ok(None)
+
+        # Fallback to Pydantic validation for model fields
+        try:
+            self.__class__.model_validate(self.model_dump())
+        except ValidationError as e:
+            for error in e.errors():
+                if field_name in error["loc"]:
+                    return FlextResult[None].fail(error["msg"])
+        return FlextResult[None].ok(None)
+
+    def validate_all_fields(self) -> FlextResult[None]:
+        """Validate all fields and return a consolidated result."""
+        errors: dict[str, object] = {}
+
+        # Get all fields from model_dump (includes dynamic fields for testing)
+        try:
+            all_fields = self.model_dump()
+        except Exception:
+            # Fallback to model_fields if model_dump fails
+            all_fields = {name: getattr(self, name, None) for name in self.__class__.model_fields}
+
+        for field_name, field_value in all_fields.items():
+            # Skip internal fields
+            if field_name.startswith("_"):
+                continue
+            result = self.validate_field(field_name, field_value)
+            if result.is_failure:
+                errors[field_name] = result.error or "Unknown error"
+
+        if errors:
+            # Format errors into string for test compatibility
+            error_parts = ["Field validation errors:"]
+            for field, error in errors.items():
+                error_parts.append(f"{field}: {error}")
+            error_message = " ".join(error_parts)
+            return FlextResult[None].fail(error_message, error_data=errors)
+        return FlextResult[None].ok(None)
+
+    def _is_serializable(self, attr_name: str) -> bool:
+        """Determines if an attribute should be included in serialization."""
+        if attr_name.startswith("_") or attr_name == "metadata":
+            return False
+        attr = getattr(self, attr_name, None)
+        return not callable(attr)
+
+    def _safely_get_attribute(self, attr_name: str) -> object | None:
+        """Safely gets an attribute value from the instance by name."""
+        try:
+            attr_value = getattr(self, attr_name, None)
+            if attr_value is None:
+                return None
+            return self._process_attribute_value(attr_value)
+        except Exception:
+            return None
+
+    def _process_attribute_value(self, attr_value: object) -> object:
+        """Process an attribute value for safe serialization."""
+        if hasattr(attr_value, "__str__") and not isinstance(
+            attr_value, (str, int, float, bool, dict, list, tuple)
+        ):
+            try:
+                return str(attr_value)
+            except Exception:
+                return repr(attr_value)
+        return attr_value
+
+
+class FlextValueObject(FlextValue, ABC):
+    """Alias for `FlextValue` for backward compatibility."""
+
+    model_config = ConfigDict(frozen=True)
+
+    def to_payload(self) -> FlextPayload[dict[str, object | str]]:
+        """Converts the value object to a FlextPayload."""
+        validation_result = self.validate_business_rules()
+        status = "valid" if validation_result.is_success else "invalid"
+
+        try:
+            value_object_data = self._extract_serializable_attributes()
+        except Exception:
+            value_object_data = self._get_fallback_info()
+            status = "serialization_fallback"
+
+        payload_data = {
+            "value_object_data": value_object_data,
+            "class_info": f"{self.__class__.__module__}.{self.__class__.__name__}",
+            "validation_status": status,
+        }
+
+        # First attempt to create payload
+        payload_result = FlextPayload.create(
+            data=payload_data,
+            metadata={"type": "ValueObjectPayload"},
+        )
+
+        # If first attempt fails, try with fallback data
+        if payload_result.is_failure:
+            fallback_data = {
+                "value_object_data": self._get_fallback_info(),
+                "class_info": f"{self.__class__.__module__}.{self.__class__.__name__}",
+                "validation_status": "serialization_fallback",
+            }
+
+            payload_result = FlextPayload.create(
+                data=fallback_data,
+                metadata={"type": "ValueObjectPayload"},
+            )
+
+            # If both attempts fail, raise exception
+            if payload_result.is_failure:
+                error_msg = f"Failed to create payload: {payload_result.error}"
+                raise FlextValidationError(error_msg)
+
+        return cast("FlextPayload[dict[str, object | str]]", payload_result.unwrap())
+
+    def _extract_serializable_attributes(self) -> dict[str, object]:
+        """Extracts serializable attributes from the value object."""
+        processed: dict[str, object] = {}
+        for attr_name, attr_value in self:
+            if self._is_serializable(attr_name):
+                processed[attr_name] = self._process_attribute_value(attr_value)
+        return processed
+
+    def _get_fallback_info(self) -> dict[str, object]:
+        """Provides fallback information for serialization errors."""
+        return {
+            "class_name": self.__class__.__name__,
+            "module": self.__class__.__module__,
+            "error": "Could not serialize value object",
+        }
+
+    def _try_manual_extraction(self) -> dict[str, object]:
+        """Try manual attribute extraction."""
+        result: dict[str, object] = {}
+        for attr_name in dir(self):
+            if self._should_include_attribute(attr_name):
+                result[attr_name] = self._safely_get_attribute(attr_name)
+        return result
+
+    def _should_include_attribute(self, attr_name: str) -> bool:
+        """Check if attribute should be included in serialization."""
+        if attr_name.startswith("_"):
+            return False
+        attr = getattr(self, attr_name, None)
+        return not callable(attr)
+
+    def _process_serializable_values(self, data: dict[str, object]) -> dict[str, object]:
+        """Process values to make them serializable."""
+        processed: dict[str, object] = {}
+        for key, value in data.items():
+            if isinstance(value, (str, int, float, bool, type(None))):
+                processed[key] = value
+            else:
+                # Convert complex types to string representation
+                processed[key] = str(value)
+        return processed
+
+    def validate_field(self, field_name: str, _value: object = None) -> FlextResult[None]:
+        """Validate a single field using FlextFields registry if available."""
+        # Try to use FlextFields registry first (for comprehensive validation)
+        try:
+            field_result = FlextFields.get_field_by_name(field_name)
+            if field_result.is_success:
+                field_obj = field_result.unwrap()
+                if hasattr(field_obj, "validate_value"):
+                    validation_result = field_obj.validate_value(_value)
+                    if validation_result.is_failure:
+                        return FlextResult[None].fail(validation_result.error or "Validation failed")
+                    return FlextResult[None].ok(None)
+        except (ImportError, AttributeError):
+            pass  # Fall back to Pydantic validation
+
+        # If field doesn't exist in model, return success for unknown fields
+        if field_name not in self.__class__.model_fields:
+            return FlextResult[None].ok(None)
+
+        # Fallback to Pydantic validation for model fields
+        try:
+            self.__class__.model_validate(self.model_dump())
+        except ValidationError as e:
+            for error in e.errors():
+                if field_name in error["loc"]:
+                    return FlextResult[None].fail(error["msg"])
+        return FlextResult[None].ok(None)
+
+    def validate_all_fields(self) -> FlextResult[None]:
+        """Validate all fields and return a consolidated result."""
+        errors: dict[str, object] = {}
+
+        # Get all fields from model_dump (includes dynamic fields for testing)
+        try:
+            all_fields = self.model_dump()
+        except Exception:
+            # Fallback to model_fields if model_dump fails
+            all_fields = {name: getattr(self, name, None) for name in self.__class__.model_fields}
+
+        for field_name, field_value in all_fields.items():
+            # Skip internal fields
+            if field_name.startswith("_"):
+                continue
+            result = self.validate_field(field_name, field_value)
+            if result.is_failure:
+                errors[field_name] = result.error or "Unknown error"
+
+        if errors:
+            # Format errors into string for test compatibility
+            error_parts = ["Field validation errors:"]
+            for field, error in errors.items():
+                error_parts.append(f"{field}: {error}")
+            error_message = " ".join(error_parts)
+            return FlextResult[None].fail(error_message, error_data=errors)
+        return FlextResult[None].ok(None)
+
+    def _is_serializable(self, attr_name: str) -> bool:
+        """Determines if an attribute should be included in serialization."""
+        if attr_name.startswith("_") or attr_name == "metadata":
+            return False
+        attr = getattr(self, attr_name, None)
+        return not callable(attr)
+
+    def _safely_get_attribute(self, attr_name: str) -> object | None:
+        """Safely gets an attribute value from the instance by name."""
+        try:
+            attr_value = getattr(self, attr_name, None)
+            if attr_value is None:
+                return None
+            return self._process_attribute_value(attr_value)
+        except Exception:
+            return None
+
+    def _process_attribute_value(self, attr_value: object) -> object:
+        """Process an attribute value for safe serialization."""
+        if hasattr(attr_value, "__str__") and not isinstance(
+            attr_value, (str, int, float, bool, dict, list, tuple)
+        ):
+            try:
+                return str(attr_value)
+            except Exception:
+                return repr(attr_value)
+        return attr_value
 
 
 class FlextEntity(FlextModel, ABC):
@@ -343,14 +659,14 @@ class FlextEntity(FlextModel, ABC):
 
     # Timestamp fields - using RootModel timestamp with aliases
     created_at: FlextTimestamp = Field(
-        default_factory=FlextTimestamp.now,
+        default_factory=create_timestamp,
         description="Entity creation timestamp",
         examples=["2024-01-01T00:00:00Z"],
         validation_alias=AliasChoices("created_at", "createdAt", "dateCreated"),
     )
 
     updated_at: FlextTimestamp = Field(
-        default_factory=FlextTimestamp.now,
+        default_factory=create_timestamp,
         description="Entity last update timestamp",
         examples=["2024-01-01T12:00:00Z"],
         validation_alias=AliasChoices(
@@ -386,30 +702,23 @@ class FlextEntity(FlextModel, ABC):
         info: ValidationInfo,
     ) -> FlextEntityId:
         """Validate entity ID using RootModel pattern with context information."""
-        if isinstance(v, FlextEntityId):
-            return v
-
-        # Do not auto-prefix IDs to avoid altering provided values in callers/tests
-        _ = info
+        # FlextEntityId is a type alias for str, so no isinstance check needed
+        _ = info  # Acknowledge parameter for future use
         return FlextEntityId(str(v))
 
     @field_validator("version", mode="before")
     @classmethod
     def validate_version(cls, v: int | FlextVersion) -> FlextVersion:
         """Validate version with context-aware logic."""
-        if isinstance(v, FlextVersion):
-            # Ensure version is positive even when provided as FlextVersion
-            if v.root < 1:
-                error_message = "Version must be >= 1"
-                raise ValueError(error_message)
-            return v
+        # FlextVersion is a type alias for int, so just validate the value directly
+        version_value = int(v)
 
         # Ensure version is positive
-        if v < 1:
+        if version_value < 1:
             error_message = "Version must be >= 1"
             raise ValueError(error_message)
 
-        return FlextVersion(v)
+        return FlextVersion(version_value)
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -421,7 +730,7 @@ class FlextEntity(FlextModel, ABC):
     @property
     def entity_age_seconds(self) -> float:
         """Computed field providing entity age in seconds."""
-        now = datetime.now(UTC)
+        now = datetime.now(UTC_TIMEZONE)
         created = datetime.fromisoformat(str(self.created_at))
         return (now - created).total_seconds()
 
@@ -429,13 +738,13 @@ class FlextEntity(FlextModel, ABC):
     @property
     def is_new_entity(self) -> bool:
         """Computed field indicating if this is a new entity (version 1)."""
-        return self.version.root == 1
+        return self.version == 1
 
     @computed_field  # type: ignore[prop-decorator]
     @property
     def has_events(self) -> bool:
         """Computed field indicating if entity has pending domain events."""
-        return len(self.domain_events.root) > 0
+        return len(self.domain_events) > 0
 
     def __hash__(self) -> int:
         """Hash based on entity ID (identity-based)."""
@@ -470,7 +779,7 @@ class FlextEntity(FlextModel, ABC):
     def increment_version(self) -> FlextResult[Self]:
         """Increment version for optimistic locking and return new entity."""
         try:
-            new_version_result = create_version(self.version.root + 1)
+            new_version_result = create_version(int(self.version) + 1)
             if new_version_result.is_failure:
                 return FlextResult[Self].fail(
                     new_version_result.error or "Invalid version"
@@ -480,7 +789,7 @@ class FlextEntity(FlextModel, ABC):
             # Keep RootModel types when reconstructing entity_data so static
             # type checkers can infer correct shapes
             entity_data["version"] = new_version_result.unwrap()
-            entity_data["updated_at"] = FlextTimestamp.now()
+            entity_data["updated_at"] = create_timestamp()
 
             try:
                 new_entity = type(self)(**entity_data)
@@ -523,7 +832,7 @@ class FlextEntity(FlextModel, ABC):
             raise FlextValidationError(error_msg)
 
         # Validate new version is greater than current
-        if new_version <= self.version.root:
+        if new_version <= self.version:
             _raise_version_error()
 
         try:
@@ -538,7 +847,7 @@ class FlextEntity(FlextModel, ABC):
             entity_data = self.model_dump()
             # Preserve RootModel types for model construction
             entity_data["version"] = new_version_result.unwrap()
-            entity_data["updated_at"] = FlextTimestamp.now()
+            entity_data["updated_at"] = create_timestamp()
 
             try:
                 new_entity = type(self)(**entity_data)
@@ -585,7 +894,7 @@ class FlextEntity(FlextModel, ABC):
                 event_type=event_type,
                 event_data=event_data,
                 aggregate_id=str(self.id),
-                version=self.version.root,
+                version=int(self.version),
             )
 
             if event_result.is_failure:
@@ -601,13 +910,14 @@ class FlextEntity(FlextModel, ABC):
             event_dict: dict[str, object] = {
                 "type": event_type,
                 "data": event_data,
-                "timestamp": datetime.now(UTC).isoformat(),
+                "timestamp": datetime.now(UTC_TIMEZONE).isoformat(),
                 "aggregate_id": str(self.id),  # Include aggregate_id in dict
-                "version": self.version.root,
+                "version": self.version,
             }
 
             # Create new events list
-            new_events_list = self.domain_events.root.copy()
+            new_events_list: list[dict[str, object]] = []
+            new_events_list.extend(self.domain_events.root)
             new_events_list.append(event_dict)
             new_events = FlextEventList(new_events_list)
 
@@ -650,22 +960,13 @@ class FlextEntity(FlextModel, ABC):
         return events
 
     def validate_field(self, field_name: str, _value: object) -> FlextResult[None]:
-        """Validate individual field value against business rules.
-
-        Args:
-            field_name: Name of the field to validate
-            _value: Value to validate for the field (currently unused)
-
-        Returns:
-            FlextResult indicating validation success or failure
-
-        """
+        """Validate individual field value against business rules."""
         try:
             # Check if field exists in model
             if field_name not in type(self).model_fields:
                 # For unknown fields, just return success
                 # This handles tests that try to validate non-existent fields
-                return FlextResult.ok(None)
+                return FlextResult[None].ok(None)
 
             # Get field definition for validation
             field_info = type(self).model_fields[field_name]
@@ -715,11 +1016,11 @@ class FlextEntity(FlextModel, ABC):
             # Auto-increment version unless explicitly provided
             if changes and "version" not in changes:
                 # Keep RootModel type for version
-                entity_data["version"] = FlextVersion(self.version.root + 1)
+                entity_data["version"] = FlextVersion(int(self.version) + 1)
 
             # Update timestamp when changes are made
             if changes and "updated_at" not in changes:
-                entity_data["updated_at"] = FlextTimestamp.now()
+                entity_data["updated_at"] = create_timestamp()
 
             try:
                 new_entity = type(self)(**entity_data)
@@ -745,23 +1046,23 @@ class FlextEntity(FlextModel, ABC):
     @field_serializer("created_at", "updated_at", when_used="json")
     def serialize_timestamps(self, value: FlextTimestamp) -> str:
         """Serialize timestamps in ISO format for JSON."""
-        return str(value) if value else datetime.now(UTC).isoformat()
+        return str(value) if value else datetime.now(UTC_TIMEZONE).isoformat()
 
     @field_serializer("version", when_used="json")
     def serialize_version(self, value: FlextVersion) -> dict[str, object]:
         """Serialize version with additional metadata in JSON mode."""
         return {
-            "number": value.root,
-            "is_initial": value.root == 1,
-            "timestamp": datetime.now(UTC).isoformat(),
+            "number": value,
+            "is_initial": value == 1,
+            "timestamp": datetime.now(UTC_TIMEZONE).isoformat(),
         }
 
     @field_serializer("metadata", when_used="always")
     def serialize_metadata(self, value: FlextMetadata) -> dict[str, object]:
         """Serialize metadata with type preservation."""
-        base_metadata = dict(value.root)
+        base_metadata = dict(value)
         base_metadata["_entity_type"] = self.__class__.__name__
-        base_metadata["_serialized_at"] = datetime.now(UTC).isoformat()
+        base_metadata["_serialized_at"] = datetime.now(UTC_TIMEZONE).isoformat()
         return base_metadata
 
     @model_serializer(mode="wrap", when_used="json")
@@ -773,17 +1074,18 @@ class FlextEntity(FlextModel, ABC):
         """Entity-specific model serializer for API with computed fields."""
         _ = info  # Acknowledge parameter for future use
         data = serializer(self)
-        if isinstance(data, dict):
-            # Add entity-specific API metadata
-            data["_entity"] = {
-                "type": self.entity_type,
-                "age_seconds": self.entity_age_seconds,
-                "is_new": self.is_new_entity,
-                "has_events": self.has_events,
-                "api_version": "v2",
-            }
-            # Remove domain events from API output (they're excluded but double-check)
-            data.pop("domain_events", None)
+        # Data is already dict type from serializer
+        # Add entity-specific API metadata
+        # data is already dict[str, object] from serializer
+        data["_entity"] = {
+            "type": self.entity_type,
+            "age_seconds": self.entity_age_seconds,
+            "is_new": self.is_new_entity,
+            "has_events": self.has_events,
+            "api_version": "v2",
+        }
+        # Remove domain events from API output (they're excluded but double-check)
+        data.pop("domain_events", None)
         return data
 
 
@@ -824,7 +1126,8 @@ class FlextFactory:
 
         # Handle callable factory function
         if callable(factory):
-            return cls._create_with_callable(factory, kwargs)
+            callable_factory: Callable[..., object] = factory  # type: ignore[explicit-any]
+            return cls._create_with_callable(callable_factory, kwargs)
 
         return FlextResult[object].fail(f"Invalid factory type for '{name}'")
 
@@ -885,7 +1188,7 @@ class FlextFactory:
             """Factory function that creates entity instances with validation."""
             try:
                 # Merge defaults with provided kwargs
-                merged_kwargs = {}
+                merged_kwargs: dict[str, object] = {}
                 if defaults:
                     merged_kwargs.update(defaults)
                 merged_kwargs.update(kwargs)
@@ -899,9 +1202,8 @@ class FlextFactory:
                     if "version" not in merged_kwargs:
                         merged_kwargs["version"] = 1
 
-                result = cls.create_model(entity_class, **merged_kwargs)
-                # Cast to FlextResult[object] for type compatibility
-                return cast("FlextResult[object]", result)
+                # Return directly without redundant cast
+                return cls.create_model(entity_class, **merged_kwargs)
             except ImportError as e:
                 return FlextResult[object].fail(str(e))
             except TypeError as e:
@@ -922,49 +1224,63 @@ class FlextFactory:
             defaults: Default values to use when creating instances
 
         Returns:
-            A callable factory function that returns FlextResult[value_object_class]
+            A factory object with model_validate method that returns FlextResult[value_object_class]
 
         """
 
-        def factory(**kwargs: object) -> FlextResult[object]:
-            """Factory function that creates value object instances with validation."""
-            try:
-                # Merge defaults with provided kwargs
-                merged_kwargs = {}
-                if defaults:
-                    merged_kwargs.update(defaults)
-                merged_kwargs.update(kwargs)
+        class ValueObjectFactory:
+            """Factory wrapper with model_validate method."""
 
-                result = cls.create_model(value_object_class, **merged_kwargs)
-                # Cast to FlextResult[object] for type compatibility
-                return cast("FlextResult[object]", result)
-            except ImportError as e:
-                return FlextResult[object].fail(str(e))
-            except TypeError as e:
-                return FlextResult[object].fail(f"Failed to create value object: {e}")
+            def __init__(self, vo_class: type[FlextModel], default_values: dict[str, object] | None) -> None:
+                self.vo_class = vo_class
+                self.defaults = default_values or {}
 
-        return factory
+            def model_validate(self, data: dict[str, object]) -> FlextResult[object]:
+                """Validate and create a value object instance."""
+                try:
+                    # Merge defaults with provided data
+                    merged_data: dict[str, object] = {}
+                    merged_data.update(self.defaults)
+                    merged_data.update(data)
+
+                    # Return directly without redundant cast
+                    return cls.create_model(self.vo_class, **merged_data)
+                except ImportError as e:
+                    return FlextResult[object].fail(str(e))
+                except TypeError as e:
+                    return FlextResult[object].fail(f"Failed to create value object: {e}")
+
+            def __call__(self, **kwargs: object) -> FlextResult[object]:
+                """Allow calling factory directly."""
+                return self.model_validate(kwargs)
+
+        return ValueObjectFactory(value_object_class, defaults)
 
     @staticmethod
-    def create_model[T: FlextModel](
-        model_class: type[T],
+    def create_model(
+        model_class: type,
         **kwargs: object,
-    ) -> FlextResult[T]:
+    ) -> FlextResult[object]:
         """Create model with validation."""
         try:
             # Explicitly type kwargs as dict[str, object]
-            instance = model_class.model_validate(dict(kwargs))
+            # Type: ignore because we're checking the attribute exists
+            instance = model_class.model_validate(kwargs)  # type: ignore[attr-defined]
+            # Type: ignore for validate_business_rules method that exists on FlextModel instances
             validation_result = instance.validate_business_rules()
             if validation_result.is_failure:
-                return FlextResult[T].fail(
-                    validation_result.error or "Business rule validation failed",
-                )
-            return FlextResult[T].ok(instance)
+                error_msg = str(validation_result.error or "Business rule validation failed")
+                return FlextResult[object].fail(error_msg)
+            return FlextResult[object].ok(instance)
         except (RuntimeError, ValueError, TypeError, KeyError, AttributeError) as e:
             error_msg = str(e)
             if "validation error" in error_msg.lower():
-                return FlextResult[T].fail(f"Failed to create {model_class.__name__}: {e}")
-            return FlextResult[T].fail(f"Failed to create {model_class.__name__}: {e}")
+                return FlextResult[object].fail(
+                    f"Failed to create {model_class.__name__}: {e}"
+                )
+            return FlextResult[object].fail(
+                f"Failed to create {model_class.__name__}: {e}"
+            )
 
 
 # Namespace classes for project extensions
@@ -990,23 +1306,21 @@ FlextEntityFactory = FlextFactory  # Use modern factory implementation
 # Modern Python 3.13 type aliases for advanced patterns
 
 # JSON Schema type aliases following modern Pydantic patterns
-type JsonSchemaValue = (
-    str | int | float | bool | None | dict[str, object] | list[object]
-)
-type JsonSchemaFieldInfo = dict[str, JsonSchemaValue]
-type JsonSchemaDefinition = dict[str, JsonSchemaValue]
+JsonSchemaValue = str | int | float | bool | None | dict[str, object] | list[object]
+JsonSchemaFieldInfo = dict[str, JsonSchemaValue]
+JsonSchemaDefinition = dict[str, JsonSchemaValue]
 
 # Core FLEXT type aliases
-type DomainEventDict = dict[str, object]
-type FlextEntityDict = dict[str, object]
-type FlextValueObjectDict = dict[str, object]
-type FlextOperationDict = dict[str, object]
-type FlextConnectionDict = dict[str, object]
+DomainEventDict = dict[str, object]
+FlextEntityDict = dict[str, object]
+FlextValueObjectDict = dict[str, object]
+FlextOperationDict = dict[str, object]
+FlextConnectionDict = dict[str, object]
 
 # Advanced type aliases for model patterns
-type FlextModelDict = dict[str, JsonSchemaValue]
-type FlextValidationContext = dict[str, object]
-type FlextFieldValidationInfo = dict[str, JsonSchemaValue]
+FlextModelDict = dict[str, JsonSchemaValue]
+FlextValidationContext = dict[str, object]
+FlextFieldValidationInfo = dict[str, JsonSchemaValue]
 
 # Legacy model aliases - maintained for ecosystem compatibility
 FlextDatabaseModel = FlextModel
@@ -1018,24 +1332,46 @@ FlextSingerStreamModel = FlextModel
 
 
 # Legacy factory functions - maintained for ecosystem compatibility
+# Note: Model classes are aliased above - these factory functions create instances
+
+
 def create_database_model(**kwargs: object) -> FlextResult[FlextModel]:
     """Create database model instance."""
-    return FlextFactory.create_model(FlextModel, **kwargs)
+    try:
+        # Create with defaults first, then update with provided kwargs
+        model_data = {"host": "localhost", "port": 5432, "database": "flext_db"}
+        model_data.update(kwargs)
+        return FlextResult[FlextModel].ok(FlextDatabaseModel(**model_data))
+    except Exception as e:
+        return FlextResult[FlextModel].fail(f"Failed to create database model: {e}")
 
 
 def create_oracle_model(**kwargs: object) -> FlextResult[FlextModel]:
     """Create Oracle model instance."""
-    return FlextFactory.create_model(FlextModel, **kwargs)
+    try:
+        # Create with defaults first, then update with provided kwargs
+        model_data = {"host": "localhost", "port": 1521, "sid": "ORCL", "service_name": "XEPDB1"}
+        model_data.update(kwargs)
+        return FlextResult[FlextModel].ok(FlextOracleModel(**model_data))
+    except Exception as e:
+        return FlextResult[FlextModel].fail(f"Failed to create oracle model: {e}")
 
 
 def create_operation_model(**kwargs: object) -> FlextResult[FlextModel]:
     """Create operation model instance."""
-    return FlextFactory.create_model(FlextModel, **kwargs)
+    result = FlextFactory.create_model(FlextModel, **kwargs)
+    return result.map(lambda obj: obj if isinstance(obj, FlextModel) else FlextModel())
 
 
 def create_service_model(**kwargs: object) -> FlextResult[FlextModel]:
     """Create service model instance."""
-    return FlextFactory.create_model(FlextModel, **kwargs)
+    try:
+        # Create with defaults first, then update with provided kwargs
+        model_data = {"host": "localhost", "port": 8080, "service_name": "flext_service", "version": "1.0.0"}
+        model_data.update(kwargs)
+        return FlextResult[FlextModel].ok(FlextServiceModel(**model_data))
+    except Exception as e:
+        return FlextResult[FlextModel].fail(f"Failed to create service model: {e}")
 
 
 def validate_all_models(models: list[FlextModel]) -> FlextResult[None]:
@@ -1044,12 +1380,17 @@ def validate_all_models(models: list[FlextModel]) -> FlextResult[None]:
         validation_result = model.validate_business_rules()
         if validation_result.is_failure:
             return validation_result
-    return FlextResult.ok(None)
+    return FlextResult[None].ok(None)
 
 
-def model_to_dict_safe(model: FlextModel) -> dict[str, object]:
+def model_to_dict_safe(model: object) -> dict[str, object]:
     """Safely convert model to dictionary."""
-    return model.model_dump()
+    if hasattr(model, "model_dump") and callable(model.model_dump):
+        return model.model_dump()  # type: ignore[union-attr]
+    if isinstance(model, dict):
+        return model
+    # For invalid inputs (None, strings, etc.), return empty dict
+    return {}
 
 
 # Exports
@@ -1077,6 +1418,7 @@ __all__: list[str] = [
     "create_operation_model",
     "create_oracle_model",
     "create_service_model",
+    "flext_alias_generator",
     "model_to_dict_safe",
     "validate_all_models",
 ]

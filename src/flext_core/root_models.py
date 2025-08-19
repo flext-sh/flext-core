@@ -15,9 +15,8 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 from datetime import UTC, datetime
+from typing import cast
 
-# Import types needed for type hints and factory functions
-# These will be re-imported properly below from their actual modules
 from pydantic import Field, RootModel, field_validator
 
 from flext_core.exceptions import FlextValidationError
@@ -46,12 +45,11 @@ class FlextEntityId(RootModel[str]):
     @classmethod
     def validate_id(cls, v: str) -> str:
         """Validate and clean entity ID."""
-        if isinstance(v, str):
-            # Strip whitespace
-            v = v.strip()
-            if not v:
-                msg = "Entity ID cannot be empty"
-                raise FlextValidationError(msg)
+        # Strip whitespace
+        v = v.strip()
+        if not v:
+            msg = "Entity ID cannot be empty"
+            raise FlextValidationError(msg)
         return v
 
     def __str__(self) -> str:
@@ -186,6 +184,8 @@ class FlextTimestamp(RootModel[datetime]):
         """Equality comparison."""
         if isinstance(other, FlextTimestamp):
             return self.root == other.root
+        if isinstance(other, datetime):
+            return self.root == other
         return False
 
     def __hash__(self) -> int:
@@ -222,12 +222,14 @@ class FlextMetadata(RootModel[dict[str, object]]):
 class FlextEventList(RootModel[list[dict[str, object]]]):
     """Domain events list with validation."""
 
-    root: list[dict[str, object]] = Field(default_factory=list)
+    # root annotation is inherited from RootModel
 
-    def __init__(self, root: list[dict[str, object]] | None = None) -> None:
+    def __init__(self, root: list[dict[str, object]] | None = None, **data: object) -> None:
         """Initialize with optional internal event storage."""
-        super().__init__(root=root or [])
-        # Internal storage for FlextEvent objects - this satisfies MyPy
+        if root is None:
+            root = []
+        super().__init__(root, **data)
+        # Internal storage for Flext Event objects - this satisfies MyPy
         object.__setattr__(self, "_flext_events", [])
 
     def add_event(self, event_type: str, data: dict[str, object]) -> FlextEventList:
@@ -262,8 +264,9 @@ class FlextEventList(RootModel[list[dict[str, object]]]):
     def __getitem__(self, index: int) -> object:
         """Get event by index."""
         # Check if we have stored FlextEvent objects from legacy add_domain_event
-        if hasattr(self, "_flext_events") and 0 <= index < len(self._flext_events):
-            return self._flext_events[index]
+        flext_events = getattr(self, "_flext_events", [])
+        if flext_events and 0 <= index < len(flext_events):
+            return flext_events[index]
 
         event_dict = self.root[index]
 
@@ -273,7 +276,7 @@ class FlextEventList(RootModel[list[dict[str, object]]]):
 
         # For legacy compatibility, convert dict to FlextEvent object if needed
         # This handles the case where tests expect FlextEvent properties
-        if isinstance(event_dict, dict) and "type" in event_dict:
+        if hasattr(event_dict, "get") and "type" in event_dict:
             # Extract event information from dictionary
             event_type = event_dict.get("type", "")
             event_data = event_dict.get("data", {})
@@ -284,12 +287,13 @@ class FlextEventList(RootModel[list[dict[str, object]]]):
             version = event_dict.get("version", 1)
 
             # Create FlextEvent object using delayed import
-            if isinstance(event_type, str) and isinstance(event_data, dict):
+            if isinstance(event_type, str) and hasattr(event_data, "get"):
                 flext_event_cls = _get_flext_event_class()
                 # Dynamic method call requires casting
+                typed_event_data = cast("dict[str, object]", event_data)
                 event_result: FlextResult[FlextEvent] = flext_event_cls.create_event(
                     event_type=event_type,
-                    event_data=event_data,
+                    event_data=typed_event_data,
                     aggregate_id=str(aggregate_id) if aggregate_id else None,
                     version=int(version) if isinstance(version, (int, str)) else None,
                 )
@@ -490,16 +494,16 @@ def to_legacy_dict(metadata: FlextMetadata) -> dict[str, object]:
 # =============================================================================
 
 # These type aliases help with migration from legacy patterns
-type EntityId = FlextEntityId
-type Version = FlextVersion
-type Timestamp = FlextTimestamp
-type Metadata = FlextMetadata
-type Host = FlextHost
-type Port = FlextPort
-type EmailAddress = FlextEmailAddress
-type ServiceName = FlextServiceName
-type ErrorCode = FlextErrorCode
-type ErrorMessage = FlextErrorMessage
+EntityId = FlextEntityId
+Version = FlextVersion
+Timestamp = FlextTimestamp
+Metadata = FlextMetadata
+Host = FlextHost
+Port = FlextPort
+EmailAddress = FlextEmailAddress
+ServiceName = FlextServiceName
+ErrorCode = FlextErrorCode
+ErrorMessage = FlextErrorMessage
 
 # =============================================================================
 # EXPORTS

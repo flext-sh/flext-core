@@ -12,9 +12,8 @@ from __future__ import annotations
 from decimal import Decimal
 
 from examples.shared_domain import Order as SharedOrder, Product as SharedProduct
+from examples.utilities.formatting_helpers import MAX_DISCOUNT_PERCENTAGE
 from flext_core import FlextResult
-
-from .formatting_helpers import MAX_DISCOUNT_PERCENTAGE
 
 # =============================================================================
 # TYPE CHECKING FUNCTIONS - Using FlextTypes.TypeGuards for safety
@@ -73,7 +72,7 @@ def calculate_discount_price(
 ) -> FlextResult[Decimal]:
     """Calculate discounted price with validation."""
     if discount_percentage < 0 or discount_percentage > MAX_DISCOUNT_PERCENTAGE:
-        return FlextResult.fail(
+        return FlextResult[None].fail(
             f"Invalid discount: {discount_percentage}%. "
             f"Must be 0-{MAX_DISCOUNT_PERCENTAGE}%",
         )
@@ -81,15 +80,15 @@ def calculate_discount_price(
     try:
         discount_amount = product.price.amount * Decimal(str(discount_percentage / 100))
         final_price = product.price.amount - discount_amount
-        return FlextResult.ok(data=final_price)
+        return FlextResult[None].ok(final_price)
     except Exception as e:
-        return FlextResult.fail(f"Price calculation failed: {e}")
+        return FlextResult[None].fail(f"Price calculation failed: {e}")
 
 
 def process_shared_order(order: SharedOrder) -> FlextResult[SharedOrder]:
     """Process shared domain order with validation."""
     if not order.items:
-        return FlextResult.fail("Order must have at least one item")
+        return FlextResult[None].fail("Order must have at least one item")
 
     # Validate total calculation
     calculated_total = sum(
@@ -99,6 +98,6 @@ def process_shared_order(order: SharedOrder) -> FlextResult[SharedOrder]:
     # Order doesn't have a total attribute, so we calculate the total dynamically
     # This is a placeholder validation that could be extended
     if calculated_total <= 0:
-        return FlextResult.fail("Order total must be positive")
+        return FlextResult[None].fail("Order total must be positive")
 
-    return FlextResult.ok(data=order)
+    return FlextResult[None].ok(order)

@@ -85,7 +85,7 @@ from flext_core import FlextResult, FlextContainer
 def test_installation():
     """Test core functionality."""
     # Test FlextResult
-    result = FlextResult.ok("Installation successful!")
+    result = FlextResult[None].ok("Installation successful!")
     assert result.success
     print(f"✅ FlextResult: {result.data}")
 
@@ -121,7 +121,7 @@ from flext_core import (
     )
 
     # Test FlextResult
-    result = FlextResult.ok("Success")
+    result = FlextResult[None].ok("Success")
     assert result.success
     assert result.unwrap() == "Success"
     print("✅ FlextResult working")
@@ -305,8 +305,8 @@ from flext_core import FlextResult
 
 def process_data(data: str) -> FlextResult[str]:
     if not data:
-        return FlextResult.fail("Empty data")
-    return FlextResult.ok(data.upper())
+        return FlextResult[None].fail("Empty data")
+    return FlextResult[None].ok(data.upper())
 
 # Usage
 result = process_data("hello")
@@ -359,9 +359,9 @@ class User(FlextEntity):
     def activate(self) -> FlextResult[None]:
         """Activate user account."""
         if self.is_active:
-            return FlextResult.fail("Already active")
+            return FlextResult[None].fail("Already active")
         self.is_active = True
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
 # Usage
 email = Email(address="john@example.com")
@@ -502,7 +502,7 @@ def check_flext_core():
 
         # Test core functionality
     from flext_core import FlextResult
-        result = FlextResult.ok("test")
+        result = FlextResult[None].ok("test")
         assert result.success
         print("✅ Core functionality working")
 

@@ -42,10 +42,10 @@ from flext_core import FlextResult
 def process_user(user_id: str) -> FlextResult[User]:
     """All operations return FlextResult for composability."""
     if not user_id:
-        return FlextResult.fail("Invalid user ID")
+        return FlextResult[None].fail("Invalid user ID")
 
     user = User(id=user_id, name="John Doe")
-    return FlextResult.ok(user)
+    return FlextResult[None].ok(user)
 
 # Chain operations safely
 result = (
@@ -92,8 +92,8 @@ class Email(FlextValueObject):
 
     def validate(self) -> FlextResult[None]:
         if "@" not in self.address:
-            return FlextResult.fail("Invalid email format")
-        return FlextResult.ok(None)
+            return FlextResult[None].fail("Invalid email format")
+        return FlextResult[None].ok(None)
 
 class User(FlextEntity):
     """Entity with identity and business logic."""
@@ -104,11 +104,11 @@ class User(FlextEntity):
     def activate(self) -> FlextResult[None]:
         """Business operations return FlextResult."""
         if self.is_active:
-            return FlextResult.fail("User already active")
+            return FlextResult[None].fail("User already active")
 
         self.is_active = True
         self.add_domain_event("UserActivated", {"user_id": self.id})
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
 class Account(FlextAggregateRoot):
     """Aggregate root managing consistency boundaries."""
@@ -117,14 +117,14 @@ class Account(FlextAggregateRoot):
 
     def withdraw(self, amount: Decimal) -> FlextResult[None]:
         if amount > self.balance:
-            return FlextResult.fail("Insufficient funds")
+            return FlextResult[None].fail("Insufficient funds")
 
         self.balance -= amount
         self.add_domain_event("MoneyWithdrawn", {
             "account_id": self.id,
             "amount": str(amount)
         })
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 ```
 
 ## Architecture

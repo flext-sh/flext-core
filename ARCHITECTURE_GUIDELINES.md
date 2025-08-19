@@ -37,13 +37,13 @@ This document defines the mandatory architectural guidelines for FLEXT Core, the
 ```python
 def process_data(data: str) -> FlextResult[ProcessedData]:
     if not data:
-        return FlextResult.fail("Empty data provided")
+        return FlextResult[None].fail("Empty data provided")
 
     try:
         processed = ProcessedData(data)
-        return FlextResult.ok(processed)
+        return FlextResult[None].ok(processed)
     except Exception as e:
-        return FlextResult.fail(str(e))
+        return FlextResult[None].fail(str(e))
 ```
 
 ### Naming Convention
@@ -89,7 +89,7 @@ class FlextComponent:
 
     def process(self, data: Any) -> FlextResult[str]:
         """All public methods return FlextResult."""
-        return FlextResult.ok("processed")
+        return FlextResult[None].ok("processed")
 ```
 
 ### Abstraction → Implementation Pattern
@@ -112,7 +112,7 @@ class FlextService(FlextBaseService):
 
     def execute(self, request: Any) -> FlextResult[Any]:
         """Concrete implementation."""
-        return FlextResult.ok({"status": "success"})
+        return FlextResult[None].ok({"status": "success"})
 ```
 
 ### Exception Handling Pattern
@@ -129,13 +129,13 @@ def bad_function(value: str) -> str:
 # ✅ CORRECT
 def good_function(value: str) -> FlextResult[str]:
     if not value:
-        return FlextResult.fail("Empty value provided")
+        return FlextResult[None].fail("Empty value provided")
 
     try:
         result = value.upper()
-        return FlextResult.ok(result)
+        return FlextResult[None].ok(result)
     except Exception as e:
-        return FlextResult.fail(f"Processing error: {e}")
+        return FlextResult[None].fail(f"Processing error: {e}")
 ```
 
 ### Type Safety Pattern
@@ -153,7 +153,7 @@ def process_entity(
 ) -> FlextResult[bool]:
     """Process entity with proper typing."""
     # Implementation
-    return FlextResult.ok(True)
+    return FlextResult[None].ok(True)
 ```
 
 ## Anti-Patterns (Prohibited)
@@ -353,11 +353,11 @@ class FlextUser(FlextEntity):
     def activate(self) -> FlextResult[None]:
         """Business operation returning FlextResult."""
         if self.is_active:
-            return FlextResult.fail("Already active")
+            return FlextResult[None].fail("Already active")
 
         self.is_active = True
         self.add_event(UserActivatedEvent(self.id))
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 ```
 
 ### Service Layer

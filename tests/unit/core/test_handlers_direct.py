@@ -5,6 +5,8 @@ This test imports the handlers module directly to ensure coverage detection.
 
 from __future__ import annotations
 
+import typing
+
 import pytest
 
 import flext_core.handlers as handlers_module
@@ -115,6 +117,7 @@ class TestHandlersModuleDirect:
         result = handler.handle("test event")
         assert isinstance(result, FlextResult)
 
+    @typing.no_type_check  # Suppress type checking for dynamic attribute access
     def test_command_handler_direct(self) -> None:
         """Test FlextCommandHandler directly from module."""
         command_handler_cls = handlers_module.FlextHandlers.CommandHandler
@@ -122,6 +125,7 @@ class TestHandlersModuleDirect:
         handler2: object = command_handler_cls()
         assert handler2 is not None
 
+    @typing.no_type_check  # Suppress type checking for dynamic attribute access
     def test_query_handler_direct(self) -> None:
         """Test FlextQueryHandler directly from module."""
         query_handler_cls = handlers_module.FlextHandlers.QueryHandler

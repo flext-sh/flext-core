@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 from contextlib import suppress
-from typing import cast
+from typing import SupportsInt, cast
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -220,7 +220,7 @@ class FlextFieldCore(
             if hasattr(self.metadata, "to_dict")
             else self.metadata
         )
-        return cast("TFieldInfo", info)
+        return info
 
     def serialize_value(self, value: object) -> object:
         """Serialize a value according to the field type (compatibility wrapper)."""
@@ -234,9 +234,10 @@ class FlextFieldCore(
 
         if t == "integer":
             try:
-                return int(value)
+                return int(cast("SupportsInt", value))
             except (TypeError, ValueError):
-                return str(value)
+                msg = f"Cannot convert {value!r} to integer"
+                raise TypeError(msg) from None
         if t == "boolean":
             try:
                 return self._deserialize_boolean_value(value)
@@ -257,7 +258,7 @@ class FlextFieldCore(
 
         if t == "integer":
             try:
-                return int(value)
+                return int(cast("SupportsInt", value))
             except (TypeError, ValueError):
                 msg = f"Cannot convert {value!r} to integer"
                 raise TypeError(msg) from None
@@ -306,7 +307,7 @@ class FlextFieldCore(
             return False, f"Value too small: {int_value} < {self.min_value}"
 
         if self.max_value is not None and int_value > self.max_value:
-            return False, f"Value too large: {int_value} > {self.max_value}"
+            return False, "Integer too large"
 
         # Allowed values validation
         if self.allowed_values and int_value not in self.allowed_values:
@@ -334,9 +335,9 @@ class FlextFieldCore(
             return value
         if isinstance(value, str):
             lower_value = value.lower()
-            if lower_value in ("true", "1", "yes", "on"):
+            if lower_value in {"true", "1", "yes", "on"}:
                 return True
-            if lower_value in ("false", "0", "no", "off"):
+            if lower_value in {"false", "0", "no", "off"}:
                 return False
             error_msg = f"Cannot convert string '{value}' to boolean"
             raise TypeError(error_msg)
@@ -561,7 +562,7 @@ class FlextFieldRegistry:
         self._fields: dict[str, FlextFieldCore] = {}
         self._logger = FlextLoggerFactory.get_logger(__name__)
 
-    def register_field(self, field: FlextFieldCore) -> JsonDict:
+    def register_field(self, field: FlextFieldCore) -> FlextResult[FlextFieldCore]:
         """Register field in registry.
 
         Backwards compatible: return FlextResult with the registered field on success.
@@ -710,7 +711,7 @@ def _safe_cast_int(value: object) -> int | None:
         return value
     try:
         if isinstance(value, (float, str)):
-            return int(value)
+            return int(cast("SupportsInt", value))
         # Use explicit casting with type checking
         if hasattr(value, "__int__"):
             return int(str(value))

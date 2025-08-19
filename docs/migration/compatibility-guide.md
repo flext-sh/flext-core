@@ -70,29 +70,29 @@ class UserService:
     def get_user(self, user_id: str) -> FlextResult[User]:
         """Get user with type-safe error handling."""
         if not user_id:
-            return FlextResult.fail("User ID is required")
+            return FlextResult[None].fail("User ID is required")
 
         user = self.repository.find_by_id(user_id)
         if not user:
-            return FlextResult.fail(f"User {user_id} not found")
+            return FlextResult[None].fail(f"User {user_id} not found")
 
-        return FlextResult.ok(user)
+        return FlextResult[None].ok(user)
 
     def create_user(self, name: str, email: str) -> FlextResult[User]:
         """Create user with comprehensive error handling."""
         if not name or not email:
-            return FlextResult.fail("Name and email are required")
+            return FlextResult[None].fail("Name and email are required")
 
         if "@" not in email:
-            return FlextResult.fail("Invalid email format")
+            return FlextResult[None].fail("Invalid email format")
 
         user = User(name=name, email=email)
         save_result = self.repository.save(user)
 
         if save_result.is_failure:
-            return FlextResult.fail(f"Failed to save user: {save_result.error}")
+            return FlextResult[None].fail(f"Failed to save user: {save_result.error}")
 
-        return FlextResult.ok(user)
+        return FlextResult[None].ok(user)
 
 # Usage with functional composition
 result = user_service.get_user("123")
@@ -162,21 +162,21 @@ def setup_services() -> FlextResult[FlextContainer]:
     db_service = DatabaseService("sqlite:///app.db")
     db_result = container.register("database", db_service)
     if db_result.is_failure:
-        return FlextResult.fail(f"Failed to register database: {db_result.error}")
+        return FlextResult[None].fail(f"Failed to register database: {db_result.error}")
 
     # Register user service
     user_service = UserService(db_service)
     user_result = container.register("user_service", user_service)
     if user_result.is_failure:
-        return FlextResult.fail(f"Failed to register user service: {user_result.error}")
+        return FlextResult[None].fail(f"Failed to register user service: {user_result.error}")
 
-    return FlextResult.ok(container)
+    return FlextResult[None].ok(container)
 
 # Usage with error handling
 def get_user_service() -> FlextResult[UserService]:
     container_result = setup_services()
     if container_result.is_failure:
-        return FlextResult.fail(f"Container setup failed: {container_result.error}")
+        return FlextResult[None].fail(f"Container setup failed: {container_result.error}")
 
     container = container_result.data
     return container.get("user_service")
@@ -243,9 +243,9 @@ def load_config() -> FlextResult[AppSettings]:
     """Load configuration with validation."""
     try:
         settings = AppSettings()
-        return FlextResult.ok(settings)
+        return FlextResult[None].ok(settings)
     except Exception as e:
-        return FlextResult.fail(f"Configuration error: {e}")
+        return FlextResult[None].fail(f"Configuration error: {e}")
 
 # Load and use configuration
 config_result = load_config()
@@ -304,43 +304,43 @@ class User(FlextEntity):
     def activate(self) -> FlextResult[None]:
         """Activate the user."""
         if self.is_active:
-            return FlextResult.fail("User is already active")
+            return FlextResult[None].fail("User is already active")
 
         self.is_active = True
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
     def deactivate(self) -> FlextResult[None]:
         """Deactivate the user."""
         if not self.is_active:
-            return FlextResult.fail("User is already inactive")
+            return FlextResult[None].fail("User is already inactive")
 
         self.is_active = False
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
     def change_email(self, new_email: str) -> FlextResult[None]:
         """Change user email with validation."""
         if "@" not in new_email:
-            return FlextResult.fail("Invalid email format")
+            return FlextResult[None].fail("Invalid email format")
 
         if self.email == new_email:
-            return FlextResult.fail("New email is the same as current email")
+            return FlextResult[None].fail("New email is the same as current email")
 
         self.email = new_email
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
     @classmethod
     def create(cls, name: str, email: str) -> FlextResult["User"]:
         """Factory method for creating users."""
         if not name or not email:
-            return FlextResult.fail("Name and email are required")
+            return FlextResult[None].fail("Name and email are required")
 
         if "@" not in email:
-            return FlextResult.fail("Invalid email format")
+            return FlextResult[None].fail("Invalid email format")
 
         user_id = f"user_{hash((name, email)) % 10000:04d}"
         user = cls(user_id, name, email)
 
-        return FlextResult.ok(user)
+        return FlextResult[None].ok(user)
 
 # Usage with rich domain model
 def create_and_activate_user(name: str, email: str) -> FlextResult[User]:
@@ -352,9 +352,9 @@ def create_and_activate_user(name: str, email: str) -> FlextResult[User]:
     user = create_result.data
     activate_result = user.activate()
     if activate_result.is_failure:
-        return FlextResult.fail(f"Activation failed: {activate_result.error}")
+        return FlextResult[None].fail(f"Activation failed: {activate_result.error}")
 
-    return FlextResult.ok(user)
+    return FlextResult[None].ok(user)
 
 # Functional composition
 result = create_and_activate_user("John Doe", "john@example.com")
@@ -472,13 +472,13 @@ def setup_application() -> FlextResult[None]:
     """Setup entire application with error handling."""
     container_result = setup_services()
     if container_result.is_failure:
-        return FlextResult.fail(f"Service setup failed: {container_result.error}")
+        return FlextResult[None].fail(f"Service setup failed: {container_result.error}")
 
     config_result = load_config()
     if config_result.is_failure:
-        return FlextResult.fail(f"Config load failed: {config_result.error}")
+        return FlextResult[None].fail(f"Config load failed: {config_result.error}")
 
-    return FlextResult.ok(None)
+    return FlextResult[None].ok(None)
 ```
 
 ## 🔍 Common Migration Issues
@@ -525,9 +525,9 @@ def load_configuration() -> FlextResult[AppSettings]:
     """Load configuration with detailed error handling."""
     try:
         settings = AppSettings()
-        return FlextResult.ok(settings)
+        return FlextResult[None].ok(settings)
     except Exception as e:
-        return FlextResult.fail(f"Configuration validation failed: {e}")
+        return FlextResult[None].fail(f"Configuration validation failed: {e}")
 
 # Use at application startup
 config_result = load_configuration()

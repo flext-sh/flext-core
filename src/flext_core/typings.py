@@ -37,17 +37,24 @@ TComparable = TypeVar("TComparable")  # For comparable types
 TSerializable = TypeVar("TSerializable")  # For serializable types
 TValidatable = TypeVar("TValidatable")  # For validatable types
 
-# Entity and domain type variables
+# Entity and domain type variables - UPDATED TO AVOID CONFLICTS
 TEntity = TypeVar("TEntity")  # Domain entity
 TAnyObject = TypeVar("TAnyObject")  # Any object type
-TCommand = TypeVar("TCommand")  # CQRS command
-TQuery = TypeVar("TQuery")  # CQRS query
-TQueryResult = TypeVar("TQueryResult")  # CQRS query result
+# NEW: Command and Query TypeVars with different names
+CommandTypeVar = TypeVar("CommandTypeVar")  # CQRS command
+QueryTypeVar = TypeVar("QueryTypeVar")  # CQRS query
+QueryResultTypeVar = TypeVar("QueryResultTypeVar")  # CQRS query result
 TRequest = TypeVar("TRequest")  # Request type
 TResponse = TypeVar("TResponse")  # Response type
-TResult = TypeVar("TResult")  # Result type
+ResultTypeVar = TypeVar("ResultTypeVar")  # Result type
 TService = TypeVar("TService")  # Service type
 TOptional = TypeVar("TOptional")  # Optional value type
+
+# Backwards compatibility aliases for old names - create new TypeVars with same names
+TCommand = TypeVar("TCommand")  # Recreated for backward compatibility
+TQuery = TypeVar("TQuery")  # Recreated for backward compatibility
+TQueryResult = TypeVar("TQueryResult")  # Recreated for backward compatibility
+TResult = TypeVar("TResult")  # Recreated for backward compatibility
 
 # Schema processing type variables
 EntryT = TypeVar("EntryT")  # Generic entry type for schema processing
@@ -83,10 +90,6 @@ class FlextTypes:
         type StringDict = dict[str, str]
         # Explicit JSON dictionary alias used widely externally
         type JsonDict = dict[str, object]
-
-        # Convenience aliases
-        type Dict = FlextTypes.Core.AnyDict  # Convenience alias
-        type List = FlextTypes.Core.AnyList  # Convenience alias
 
         # Connection and infrastructure
         type ConnectionString = str
@@ -490,8 +493,8 @@ TErrorMessage = FlextTypes.Core.ErrorMessage
 # Collection type aliases (from types.py)
 TAnyDict = FlextTypes.Core.AnyDict
 TAnyList = FlextTypes.Core.AnyList
-TDict = FlextTypes.Core.Dict
-TList = FlextTypes.Core.List
+TDict = FlextTypes.Core.AnyDict
+TList = FlextTypes.Core.AnyList
 TStringDict = FlextTypes.Core.StringDict
 
 # Authentication and token types (from types.py)
@@ -662,6 +665,11 @@ __all__: list[str] = [  # noqa: RUF022
     "T",
     "U",
     "V",
+    # NEW TypeVars for CQRS
+    "CommandTypeVar",
+    "QueryTypeVar",
+    "QueryResultTypeVar",
+    "ResultTypeVar",
     # Schema processing types
     "EntryT",
     # FlextEntity convenience
@@ -683,6 +691,9 @@ __all__: list[str] = [  # noqa: RUF022
     "TAnyObject",
     "TCallable",
     "TCommand",
+    "TQuery",
+    "TQueryResult",
+    "TResult",
     # T* aliases - CQRS types
     "TCommandBusId",
     "TCommandId",
@@ -763,16 +774,13 @@ __all__: list[str] = [  # noqa: RUF022
     "TOptional",
     "TPaginationToken",
     "TPredicate",
-    "TQuery",
     "TQueryCriteria",
     "TQueryId",
     "TQueryProjection",
-    "TQueryResult",
     "TQueryType",
     "TRequest",
     "TRequestId",
     "TResponse",
-    "TResult",
     "TSerializable",
     "TService",
     "TServiceKey",

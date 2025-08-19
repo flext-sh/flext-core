@@ -10,6 +10,12 @@ from __future__ import annotations
 import time
 from typing import Protocol
 
+from examples.shared_domain import (
+    SharedDomainFactory,
+    User as SharedUser,
+    log_domain_operation,
+)
+from examples.shared_example_helpers import run_example_demonstration
 from flext_core import (
     FlextCacheableMixin,
     FlextComparableMixin,
@@ -25,13 +31,6 @@ from flext_core import (
     FlextValidatableMixin,
     FlextValueObjectMixin,
 )
-
-from .shared_domain import (
-    SharedDomainFactory,
-    User as SharedUser,
-    log_domain_operation,
-)
-from .shared_example_helpers import run_example_demonstration
 
 # =============================================================================
 # PROTOCOL DEFINITIONS - Type protocols for enterprise patterns
@@ -1148,9 +1147,9 @@ def _create_enterprise_user_repository() -> UserRepositoryProtocol:
             try:
                 self.users[user_id] = user_data
                 self.cache_set(f"user_{user_id}", user_data)
-                return FlextResult.ok(None)
+                return FlextResult[None].ok(None)
             except (RuntimeError, ValueError, TypeError) as e:
-                return FlextResult.fail(f"Failed to save user data: {e}")
+                return FlextResult[None].fail(f"Failed to save user data: {e}")
 
         def _get_execution_time_seconds(self, start_time: float) -> float:
             """Convert execution time from milliseconds to seconds."""
@@ -1186,7 +1185,7 @@ def _create_enterprise_user_repository() -> UserRepositoryProtocol:
                 lambda _: self._log_save_result(
                     user_id,
                     start_time,
-                    FlextResult.ok(None),
+                    FlextResult[None].ok(None),
                 ),
             )
 
@@ -1200,8 +1199,8 @@ def _create_enterprise_user_repository() -> UserRepositoryProtocol:
             if cached_user is not None:
                 self.logger.info("Cache hit for user", user_id=user_id)
                 user_dict = cached_user if isinstance(cached_user, dict) else None
-                return FlextResult.ok(user_dict)
-            return FlextResult.ok(None)
+                return FlextResult[None].ok(user_dict)
+            return FlextResult[None].ok(None)
 
         def _check_storage_for_user(
             self,
@@ -1213,8 +1212,8 @@ def _create_enterprise_user_repository() -> UserRepositoryProtocol:
                 cache_key = f"user:{user_id}"
                 self.cache_set(cache_key, user_data)
                 self.logger.info("User found in storage", user_id=user_id)
-                return FlextResult.ok(user_data)
-            return FlextResult.ok(None)
+                return FlextResult[None].ok(user_data)
+            return FlextResult[None].ok(None)
 
         def _handle_user_not_found(
             self,
@@ -1222,7 +1221,7 @@ def _create_enterprise_user_repository() -> UserRepositoryProtocol:
         ) -> FlextResult[dict[str, object] | None]:
             """Handle case when user is not found."""
             self.logger.warning("User not found", user_id=user_id)
-            return FlextResult.ok(None)
+            return FlextResult[None].ok(None)
 
         def find_user(self, user_id: str) -> FlextResult[dict[str, object] | None]:
             """Find user with caching and logging using railway-oriented programming."""
@@ -1271,7 +1270,7 @@ def _create_enterprise_order_service(
             """Validate that user exists in repository."""
             user_result = self.user_repo.find_user(user_id)
             if user_result.is_failure:
-                return FlextResult.fail(
+                return FlextResult[None].fail(
                     f"Failed to check user existence: {user_result.error}",
                 )
 
@@ -1281,9 +1280,9 @@ def _create_enterprise_order_service(
                     "Cannot create order: User not found",
                     user_id=user_id,
                 )
-                return FlextResult.fail(f"User not found: {user_id}")
+                return FlextResult[None].fail(f"User not found: {user_id}")
 
-            return FlextResult.ok(user)
+            return FlextResult[None].ok(user)
 
         def _validate_order_items(
             self,
@@ -1304,11 +1303,11 @@ def _create_enterprise_order_service(
                     "Order validation failed",
                     errors=self.validation_errors,
                 )
-                return FlextResult.fail(
+                return FlextResult[None].fail(
                     f"Order validation failed: {'; '.join(self.validation_errors)}",
                 )
 
-            return FlextResult.ok(None)
+            return FlextResult[None].ok(None)
 
         def _create_order_entity(
             self,
@@ -1326,9 +1325,9 @@ def _create_enterprise_order_service(
                     "created_at": FlextUtilities.generate_iso_timestamp(),
                 }
                 self.orders[order_id] = order
-                return FlextResult.ok(order)
+                return FlextResult[None].ok(order)
             except (RuntimeError, ValueError, TypeError) as e:
-                return FlextResult.fail(f"Failed to create order entity: {e}")
+                return FlextResult[None].fail(f"Failed to create order entity: {e}")
 
         def _log_order_creation(
             self,
@@ -1338,7 +1337,7 @@ def _create_enterprise_order_service(
             """Log successful order creation with execution time."""
             _ = self._get_execution_time_seconds(start_time)
             self.logger.info("Order created", order_id=order["order_id"])
-            return FlextResult.ok(order)
+            return FlextResult[None].ok(order)
 
         def create_order(
             self,

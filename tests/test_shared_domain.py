@@ -14,7 +14,7 @@ import logging
 from decimal import Decimal
 from enum import StrEnum
 
-from pydantic import Field, field_validator
+from pydantic import ConfigDict, Field, field_validator
 
 from flext_core import FlextEntity, FlextResult, FlextValueObject, TEntityId
 
@@ -66,16 +66,23 @@ class TestEmailAddress(FlextValueObject):
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate email address for testing."""
         if not self.email or not isinstance(self.email, str):
-            return FlextResult.fail("Email must be a non-empty string")
+            return FlextResult[None].fail("Email must be a non-empty string")
 
         if "@" not in self.email:
-            return FlextResult.fail("Email must contain @ symbol")
+            return FlextResult[None].fail("Email must contain @ symbol")
 
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
 
 class TestMoney(FlextValueObject):
     """Test money value object."""
+
+    model_config = ConfigDict(
+        frozen=True,
+        extra="forbid",
+        str_strip_whitespace=True,
+        validate_assignment=True,
+    )
 
     amount: Decimal
     currency: str = "USD"
@@ -84,17 +91,17 @@ class TestMoney(FlextValueObject):
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate money for testing."""
         if self.amount < 0:
-            return FlextResult.fail("Amount cannot be negative")
+            return FlextResult[None].fail("Amount cannot be negative")
 
         if len(self.currency) != CURRENCY_CODE_LENGTH:
-            return FlextResult.fail(
+            return FlextResult[None].fail(
                 f"Currency must be {CURRENCY_CODE_LENGTH} characters",
             )
 
         if self.currency != self.currency.upper():
-            return FlextResult.fail("Currency must be uppercase")
+            return FlextResult[None].fail("Currency must be uppercase")
 
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
 
 class TestAddress(FlextValueObject):
@@ -109,13 +116,20 @@ class TestAddress(FlextValueObject):
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate address for testing."""
         if not all([self.street, self.city, self.state, self.zip_code]):
-            return FlextResult.fail("All address fields are required")
+            return FlextResult[None].fail("All address fields are required")
 
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
 
 class TestComplexValueObject(FlextValueObject):
     """Test complex value object with name, tags, and metadata."""
+
+    model_config = ConfigDict(
+        frozen=True,
+        extra="forbid",
+        str_strip_whitespace=True,
+        validate_assignment=True,
+    )
 
     name: str
     tags: list[str] = Field(default_factory=list)
@@ -124,12 +138,12 @@ class TestComplexValueObject(FlextValueObject):
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate complex value object for testing."""
         if not self.name or not self.name.strip():
-            return FlextResult.fail("Name cannot be empty or whitespace")
+            return FlextResult[None].fail("Name cannot be empty or whitespace")
 
         if len(self.name.strip()) < 2:
-            return FlextResult.fail("Name must be at least 2 characters")
+            return FlextResult[None].fail("Name must be at least 2 characters")
 
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
 
 # =============================================================================
@@ -158,34 +172,34 @@ class TestUser(FlextEntity):
     def validate_domain_rules(self) -> FlextResult[None]:
         """Validate user domain rules for testing."""
         if not self.name:
-            return FlextResult.fail("Entity name cannot be empty")
+            return FlextResult[None].fail("Entity name cannot be empty")
 
         if len(self.name) < 2:
-            return FlextResult.fail("Name must be at least 2 characters")
+            return FlextResult[None].fail("Name must be at least 2 characters")
 
         if self.age < MIN_AGE:
-            return FlextResult.fail(f"Age must be at least {MIN_AGE}")
+            return FlextResult[None].fail(f"Age must be at least {MIN_AGE}")
 
         if "@" not in self.email:
-            return FlextResult.fail("Invalid email format")
+            return FlextResult[None].fail("Invalid email format")
 
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
     def activate(self) -> FlextResult[None]:
         """Activate user account."""
         if self.status == TestUserStatus.ACTIVE:
-            return FlextResult.fail("User is already active")
+            return FlextResult[None].fail("User is already active")
 
         # In a real entity, this would be done through a proper method
         # For testing purposes, we simulate the state change
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
     def deactivate(self) -> FlextResult[None]:
         """Deactivate user account."""
         if self.status == TestUserStatus.INACTIVE:
-            return FlextResult.fail("User is already inactive")
+            return FlextResult[None].fail("User is already inactive")
 
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
 
 class TestOrder(FlextEntity):
@@ -199,33 +213,33 @@ class TestOrder(FlextEntity):
     def validate_domain_rules(self) -> FlextResult[None]:
         """Validate order domain rules for testing."""
         if not self.user_id:
-            return FlextResult.fail("User ID is required")
+            return FlextResult[None].fail("User ID is required")
 
         if self.total_amount <= 0:
-            return FlextResult.fail("Total amount must be positive")
+            return FlextResult[None].fail("Total amount must be positive")
 
         if not self.items:
-            return FlextResult.fail("Order must have at least one item")
+            return FlextResult[None].fail("Order must have at least one item")
 
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
     def add_item(self, item: str) -> FlextResult[None]:
         """Add item to order."""
         if not item:
-            return FlextResult.fail("Item cannot be empty")
+            return FlextResult[None].fail("Item cannot be empty")
 
         if item in self.items:
-            return FlextResult.fail("Item already exists in order")
+            return FlextResult[None].fail("Item already exists in order")
 
         # Simulate adding item
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
     def confirm(self) -> FlextResult[None]:
         """Confirm order."""
         if self.status != TestOrderStatus.PENDING:
-            return FlextResult.fail("Only pending orders can be confirmed")
+            return FlextResult[None].fail("Only pending orders can be confirmed")
 
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
 
 class TestProduct(FlextEntity):
@@ -240,17 +254,17 @@ class TestProduct(FlextEntity):
     def validate_domain_rules(self) -> FlextResult[None]:
         """Validate product domain rules for testing."""
         if not self.name or len(self.name) < 2:
-            return FlextResult.fail("Product name must be at least 2 characters")
+            return FlextResult[None].fail("Product name must be at least 2 characters")
 
         if self.price <= 0:
-            return FlextResult.fail("Price must be positive")
+            return FlextResult[None].fail("Price must be positive")
 
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
     def update_stock(self, *, _in_stock: bool) -> FlextResult[None]:
         """Update stock status."""
         # Simulate stock update
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
 
 # =============================================================================
@@ -292,12 +306,12 @@ class TestDomainFactory:
 
             validation = user.validate_domain_rules()
             if validation.is_failure:
-                return FlextResult.fail(f"User validation failed: {validation.error}")
+                return FlextResult[TestUser].fail(f"User validation failed: {validation.error}")
 
-            return FlextResult.ok(user)
+            return FlextResult[TestUser].ok(user)
 
         except Exception as e:
-            return FlextResult.fail(f"Failed to create test user: {e}")
+            return FlextResult[TestUser].fail(f"Failed to create test user: {e}")
 
     @classmethod
     def create_test_order(
@@ -332,12 +346,12 @@ class TestDomainFactory:
 
             validation = order.validate_domain_rules()
             if validation.is_failure:
-                return FlextResult.fail(f"Order validation failed: {validation.error}")
+                return FlextResult[TestOrder].fail(f"Order validation failed: {validation.error}")
 
-            return FlextResult.ok(order)
+            return FlextResult[TestOrder].ok(order)
 
         except Exception as e:
-            return FlextResult.fail(f"Failed to create test order: {e}")
+            return FlextResult[TestOrder].fail(f"Failed to create test order: {e}")
 
     @classmethod
     def create_test_product(
@@ -364,14 +378,14 @@ class TestDomainFactory:
 
             validation = product.validate_domain_rules()
             if validation.is_failure:
-                return FlextResult.fail(
+                return FlextResult[TestProduct].fail(
                     f"Product validation failed: {validation.error}",
                 )
 
-            return FlextResult.ok(product)
+            return FlextResult[TestProduct].ok(product)
 
         except Exception as e:
-            return FlextResult.fail(f"Failed to create test product: {e}")
+            return FlextResult[TestProduct].fail(f"Failed to create test product: {e}")
 
     @classmethod
     def create_test_email(
@@ -380,15 +394,15 @@ class TestDomainFactory:
     ) -> FlextResult[TestEmailAddress]:
         """Create test email address with validation."""
         try:
-            email_obj = TestEmailAddress(email=email)
+            email_obj = TestEmailAddress.model_validate({"email": email})
             validation = email_obj.validate_business_rules()
             if validation.is_failure:
-                return FlextResult.fail(f"Email validation failed: {validation.error}")
+                return FlextResult[TestEmailAddress].fail(f"Email validation failed: {validation.error}")
 
-            return FlextResult.ok(email_obj)
+            return FlextResult[TestEmailAddress].ok(email_obj)
 
         except Exception as e:
-            return FlextResult.fail(f"Failed to create test email: {e}")
+            return FlextResult[TestEmailAddress].fail(f"Failed to create test email: {e}")
 
     @classmethod
     def create_test_money(
@@ -400,19 +414,19 @@ class TestDomainFactory:
         """Create test money with validation."""
         try:
             money_amount = Decimal(str(amount))
-            money_obj = TestMoney(
-                amount=money_amount,
-                currency=currency,
-                description=description,
-            )
+            money_obj = TestMoney.model_validate({
+                "amount": money_amount,
+                "currency": currency,
+                "description": description,
+            })
             validation = money_obj.validate_business_rules()
             if validation.is_failure:
-                return FlextResult.fail(f"Money validation failed: {validation.error}")
+                return FlextResult[TestMoney].fail(f"Money validation failed: {validation.error}")
 
-            return FlextResult.ok(money_obj)
+            return FlextResult[TestMoney].ok(money_obj)
 
         except Exception as e:
-            return FlextResult.fail(f"Failed to create test money: {e}")
+            return FlextResult[TestMoney].fail(f"Failed to create test money: {e}")
 
     # Add compatibility aliases for test methods
     @classmethod
@@ -451,18 +465,22 @@ class TestDomainFactory:
     ) -> FlextResult[TestComplexValueObject]:
         """Create complex value object for testing."""
         try:
-            complex_vo = TestComplexValueObject(name=name, tags=tags, metadata=metadata)
+            complex_vo = TestComplexValueObject.model_validate({
+                "name": name,
+                "tags": tags,
+                "metadata": metadata,
+            })
 
             validation = complex_vo.validate_business_rules()
             if validation.is_failure:
-                return FlextResult.fail(
+                return FlextResult[TestComplexValueObject].fail(
                     f"Complex value object validation failed: {validation.error}",
                 )
 
-            return FlextResult.ok(complex_vo)
+            return FlextResult[TestComplexValueObject].ok(complex_vo)
 
         except Exception as e:
-            return FlextResult.fail(f"Failed to create test complex value object: {e}")
+            return FlextResult[TestComplexValueObject].fail(f"Failed to create test complex value object: {e}")
 
 
 # =============================================================================
@@ -479,9 +497,6 @@ def create_test_user_safe(
     result = TestDomainFactory.create_test_user(name, email, **kwargs)
     if result.is_failure:
         raise ValueError(f"Failed to create test user: {result.error}")
-    if result.data is None:
-        error_msg = "Failed to create test user: result data is None"
-        raise ValueError(error_msg)
     return result.data
 
 
@@ -494,9 +509,6 @@ def create_test_order_safe(
     result = TestDomainFactory.create_test_order(user_id, total_amount, **kwargs)
     if result.is_failure:
         raise ValueError(f"Failed to create test order: {result.error}")
-    if result.data is None:
-        error_msg = "Failed to create test order: result data is None"
-        raise ValueError(error_msg)
     return result.data
 
 
@@ -519,9 +531,6 @@ def create_test_product_safe(
     )
     if result.is_failure:
         raise ValueError(f"Failed to create test product: {result.error}")
-    if result.data is None:
-        error_msg = "Failed to create test product: result data is None"
-        raise ValueError(error_msg)
     return result.data
 
 

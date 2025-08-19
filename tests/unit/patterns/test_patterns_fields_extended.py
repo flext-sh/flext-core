@@ -145,10 +145,10 @@ class TestFlextFieldsFactory:
             field_name="test_field",
         )
 
-        result = field.validate_value(value=True)
+        result = field.validate_value(True)
         assert result.success
 
-        result = field.validate_value(value=False)
+        result = field.validate_value(False)
         assert result.success
 
     def test_boolean_field_validate_value_failure(self) -> None:

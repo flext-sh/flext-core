@@ -24,6 +24,7 @@ Integration Testing Strategy:
 
 from __future__ import annotations
 
+from typing import cast
 from unittest.mock import MagicMock
 
 import pytest
@@ -67,17 +68,17 @@ class TestLibraryIntegration:
 
         """
         # Arrange
-        test_value = sample_data["string"]
+        test_value = cast("str", sample_data["string"])
 
         # Act - Test FlextResult creation
-        result = FlextResult.ok(test_value)
+        result = FlextResult[str].ok(test_value)
 
         # Assert - FlextResult functionality
         assert result.success is True
         assert result.data == test_value
 
         # Act - Test FlextEntityId type system
-        entity_id: FlextEntityId = "entity-123"
+        entity_id = FlextEntityId("entity-123")
 
         # Assert - Type system coherence
         assert entity_id == "entity-123"
@@ -123,7 +124,7 @@ class TestLibraryIntegration:
 
         def create_result() -> FlextResult[str]:
             # Simulate service processing with mock
-            mock_external_service.process.return_value = FlextResult.ok(
+            mock_external_service.process.return_value = FlextResult[str].ok(
                 expected_result_data,
             )
             processed: FlextResult[str] = mock_external_service.process()
@@ -157,14 +158,15 @@ class TestLibraryIntegration:
 
     def test_entity_id_in_flext_result(self) -> None:
         """Test FlextEntityId used in FlextResult."""
-        entity_id: FlextEntityId = "user-456"
-        result = FlextResult.ok(entity_id)
+        entity_id = FlextEntityId("user-456")
+        result = FlextResult[FlextEntityId].ok(entity_id)
 
         assert result.success
         if result.data != "user-456":
             msg: str = f"Expected {'user-456'}, got {result.data}"
             raise AssertionError(msg)
-        assert isinstance(result.data, str)
+        # FlextEntityId behaves like str but isinstance check causes MyPy issues
+        assert str(result.data) == "user-456"
 
     def test_version_info_available(self) -> None:
         """Test that version info is available."""

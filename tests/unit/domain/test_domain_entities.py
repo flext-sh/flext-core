@@ -101,8 +101,8 @@ class SampleEntity(FlextEntity):
     def validate_domain_rules(self) -> FlextResult[None]:
         """Validate test entity domain rules."""
         if not self.name.strip():
-            return FlextResult.fail("Entity name cannot be empty")
-        return FlextResult.ok(None)
+            return FlextResult[None].fail("Entity name cannot be empty")
+        return FlextResult[None].ok(None)
 
 
 class SampleValueObject(FlextValueObject):
@@ -114,8 +114,8 @@ class SampleValueObject(FlextValueObject):
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate test value object business rules."""
         if self.amount < 0:
-            return FlextResult.fail("Amount cannot be negative")
-        return FlextResult.ok(None)
+            return FlextResult[None].fail("Amount cannot be negative")
+        return FlextResult[None].ok(None)
 
 
 class SampleAggregateRoot(FlextAggregateRoot):
@@ -127,8 +127,8 @@ class SampleAggregateRoot(FlextAggregateRoot):
     def validate_domain_rules(self) -> FlextResult[None]:
         """Validate test aggregate root domain rules."""
         if not self.title.strip():
-            return FlextResult.fail("Aggregate title cannot be empty")
-        return FlextResult.ok(None)
+            return FlextResult[None].fail("Aggregate title cannot be empty")
+        return FlextResult[None].ok(None)
 
     def perform_action(self, action: str) -> None:
         """Test method that raises domain event."""
@@ -161,8 +161,8 @@ class TestFlextEntity:
         # Modern FlextEntityId wrapper - check the string representation
         assert isinstance(str(entity.id), str)
         # Modern FlextVersion wrapper - compare root value
-        if entity.version.root != 1:
-            raise AssertionError(f"Expected {1}, got {entity.version.root}")
+        if entity.version != 1:
+            raise AssertionError(f"Expected {1}, got {entity.version}")
 
     def test_entity_creation_with_custom_id(self) -> None:
         """Test entity creation with custom ID."""
@@ -471,8 +471,8 @@ class TestFlextAggregateRoot:
         assert aggregate.description == "Test description"
         assert aggregate.id is not None
         # Modern FlextVersion wrapper - compare root value
-        if aggregate.version.root != 1:
-            raise AssertionError(f"Expected {1}, got {aggregate.version.root}")
+        if aggregate.version != 1:
+            raise AssertionError(f"Expected {1}, got {aggregate.version}")
         assert len(aggregate.get_domain_events()) == 0
 
     def test_aggregate_root_with_custom_version(self) -> None:
@@ -485,8 +485,8 @@ class TestFlextAggregateRoot:
         aggregate = cast("SampleAggregateRoot", aggregate_obj)
 
         # Modern FlextVersion wrapper - compare root value
-        if aggregate.version.root != 5:
-            raise AssertionError(f"Expected {5}, got {aggregate.version.root}")
+        if aggregate.version != 5:
+            raise AssertionError(f"Expected {5}, got {aggregate.version}")
 
     def test_aggregate_root_raise_event(self) -> None:
         """Test raising domain events."""
@@ -636,8 +636,8 @@ class TestFlextAggregateRoot:
             raise AssertionError(f"Expected {custom_id}, got {aggregate.id!s}")
         assert aggregate.title == "Test Aggregate"
         # Modern FlextVersion wrapper - compare root value
-        if aggregate.version.root != 1:
-            raise AssertionError(f"Expected {1}, got {aggregate.version.root}")
+        if aggregate.version != 1:
+            raise AssertionError(f"Expected {1}, got {aggregate.version}")
 
     def test_aggregate_root_with_created_at_datetime(self) -> None:
         """Test aggregate root creation with created_at datetime."""
@@ -693,7 +693,7 @@ class TestFlextAggregateRoot:
             event_type="test.direct",
             event_data={"action": "direct_add"},
             aggregate_id=str(aggregate.id),  # Convert FlextEntityId to string
-            version=aggregate.version.root,  # Extract int from FlextVersion RootModel
+            version=aggregate.version,  # FlextVersion is now just an int
         )
         assert event_result.success
         event = event_result.unwrap()

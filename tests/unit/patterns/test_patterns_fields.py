@@ -274,10 +274,10 @@ class ConcreteFlextFieldCore(FlextFieldCore):
     def validate_value(self, value: object) -> FlextResult[object]:
         """Validate the provided value against field requirements."""
         if self.required and value is None:
-            return FlextResult.fail(f"Field '{self.field_name}' is required")
+            return FlextResult[object].fail(f"Field '{self.field_name}' is required")
         if value is not None and not isinstance(value, str):
-            return FlextResult.fail(f"Field '{self.field_name}' must be a string")
-        return FlextResult.ok(str(value) if value is not None else "")
+            return FlextResult[object].fail(f"Field '{self.field_name}' must be a string")
+        return FlextResult[object].ok(str(value) if value is not None else "")
 
     def serialize_value(self, value: object) -> str:
         """Convert value to serialized format."""
@@ -719,7 +719,7 @@ class TestFlextFieldCoreBoolean:
             field_type="boolean",
         )
 
-        result = field.validate_value(value=True)
+        result = field.validate_value(True)
         assert result.success
 
     def test_boolean_field_validate_value_success_case(self) -> None:

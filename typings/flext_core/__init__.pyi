@@ -98,7 +98,6 @@ from flext_core.delegation_system import (
 from flext_core.domain_services import (
     FlextDomainService as FlextDomainService,
     OperationType as OperationType,
-    TDomainResult as TDomainResult,
 )
 from flext_core.exceptions import (
     FlextAbstractBusinessError as FlextAbstractBusinessError,
@@ -778,7 +777,6 @@ __all__ = [
     "TCredentials",
     "TData",
     "TDict",
-    "TDomainResult",
     "TEntity",
     "TEntityId",
     "TErrorCode",

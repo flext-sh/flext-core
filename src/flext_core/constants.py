@@ -800,9 +800,14 @@ class FlextEntityStatus(Enum):
 # numeric codes for key infrastructure errors, textual identifiers otherwise.
 _special_numeric = {
     "GENERIC_ERROR": FlextConstants.Errors.GENERIC_ERROR,
-    "VALIDATION_ERROR": FlextConstants.Errors.VALIDATION_ERROR,
+    "VALIDATION_ERROR": "FLEXT_VALIDATION_ERROR",
     "CONNECTION_ERROR": FlextConstants.Errors.CONNECTION_ERROR,
     "TIMEOUT_ERROR": FlextConstants.Errors.TIMEOUT_ERROR,
+    "OPERATION_ERROR": "FLEXT_OPERATION_ERROR",
+    "TYPE_ERROR": "FLEXT_TYPE_ERROR",
+    "CONFIG_ERROR": "FLEXT_CONFIG_ERROR",
+    "AUTH_ERROR": "FLEXT_AUTH_ERROR",
+    "PERMISSION_ERROR": "FLEXT_PERMISSION_ERROR",
 }
 ERROR_CODES: dict[str, str] = {}
 for name in [n for n in dir(FlextConstants.Errors) if not n.startswith("_")]:

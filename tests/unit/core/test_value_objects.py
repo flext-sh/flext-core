@@ -40,8 +40,8 @@ class SimpleValueObject(FlextValueObject):
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate that value is not empty."""
         if not self.value or not self.value.strip():
-            return FlextResult.fail("Value cannot be empty")
-        return FlextResult.ok(None)
+            return FlextResult[None].fail("Value cannot be empty")
+        return FlextResult[None].ok(None)
 
 
 class EmailAddress(FlextValueObject):
@@ -52,10 +52,10 @@ class EmailAddress(FlextValueObject):
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate email format."""
         if "@" not in self.address:
-            return FlextResult.fail("Invalid email format")
+            return FlextResult[None].fail("Invalid email format")
         if "." not in self.address.split("@")[1]:
-            return FlextResult.fail("Invalid domain format")
-        return FlextResult.ok(None)
+            return FlextResult[None].fail("Invalid domain format")
+        return FlextResult[None].ok(None)
 
 
 class MoneyAmount(FlextValueObject):
@@ -67,10 +67,10 @@ class MoneyAmount(FlextValueObject):
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate money amount."""
         if self.amount < 0:
-            return FlextResult.fail("Amount cannot be negative")
+            return FlextResult[None].fail("Amount cannot be negative")
         if self.currency not in {"USD", "EUR", "GBP"}:
-            return FlextResult.fail("Unsupported currency")
-        return FlextResult.ok(None)
+            return FlextResult[None].fail("Unsupported currency")
+        return FlextResult[None].ok(None)
 
 
 class ComplexValueObject(FlextValueObject):
@@ -84,10 +84,10 @@ class ComplexValueObject(FlextValueObject):
     def validate_business_rules(self) -> FlextResult[None]:
         """Complex validation."""
         if len(self.name) < 2:
-            return FlextResult.fail("Name too short")
+            return FlextResult[None].fail("Name too short")
         if not self.metadata:
-            return FlextResult.fail("Metadata required")
-        return FlextResult.ok(None)
+            return FlextResult[None].fail("Metadata required")
+        return FlextResult[None].ok(None)
 
 
 class InvalidValueObject(FlextValueObject):
@@ -97,7 +97,7 @@ class InvalidValueObject(FlextValueObject):
 
     def validate_business_rules(self) -> FlextResult[None]:
         """Fail validation always."""
-        return FlextResult.fail("Always invalid")
+        return FlextResult[None].fail("Always invalid")
 
 
 class SerializationTestValueObject(FlextValueObject):
@@ -109,8 +109,8 @@ class SerializationTestValueObject(FlextValueObject):
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate name is not empty."""
         if not self.name:
-            return FlextResult.fail("Name required")
-        return FlextResult.ok(None)
+            return FlextResult[None].fail("Name required")
+        return FlextResult[None].ok(None)
 
 
 # =============================================================================
@@ -123,27 +123,27 @@ class TestFlextValueObjectBasics:
 
     def test_value_object_creation_success(self) -> None:
         """Test successful value object creation."""
-        vo = SimpleValueObject(value="test")
+        vo = SimpleValueObject.model_validate({"value": "test"})
         assert vo.value == "test"
         assert isinstance(vo, FlextValueObject)
 
     def test_value_object_creation_with_validation(self) -> None:
         """Test value object creation with validation."""
-        email = EmailAddress(address="user@example.com")
+        email = EmailAddress.model_validate({"address": "user@example.com"})
         assert email.address == "user@example.com"
 
     def test_value_object_immutability(self) -> None:
         """Test that value objects are immutable."""
-        vo = SimpleValueObject(value="test")
+        vo = SimpleValueObject.model_validate({"value": "test"})
 
         with pytest.raises(ValidationError):
             vo.value = "changed"  # Should fail due to frozen=True
 
     def test_value_object_equality(self) -> None:
         """Test attribute-based equality."""
-        vo1 = SimpleValueObject(value="test")
-        vo2 = SimpleValueObject(value="test")
-        vo3 = SimpleValueObject(value="different")
+        vo1 = SimpleValueObject.model_validate({"value": "test"})
+        vo2 = SimpleValueObject.model_validate({"value": "test"})
+        vo3 = SimpleValueObject.model_validate({"value": "different"})
 
         assert vo1 == vo2  # Same values
         assert vo1 != vo3  # Different values
@@ -151,9 +151,9 @@ class TestFlextValueObjectBasics:
 
     def test_value_object_hash_consistency(self) -> None:
         """Test hash consistency for value objects."""
-        vo1 = SimpleValueObject(value="test")
-        vo2 = SimpleValueObject(value="test")
-        vo3 = SimpleValueObject(value="different")
+        vo1 = SimpleValueObject.model_validate({"value": "test"})
+        vo2 = SimpleValueObject.model_validate({"value": "test"})
+        vo3 = SimpleValueObject.model_validate({"value": "different"})
 
         assert hash(vo1) == hash(vo2)  # Same values, same hash
         assert hash(vo1) != hash(vo3)  # Different values, different hash
@@ -182,13 +182,13 @@ class TestValueObjectValidation:
 
     def test_validate_business_rules_success(self) -> None:
         """Test successful business rule validation."""
-        vo = SimpleValueObject(value="test")
+        vo = SimpleValueObject.model_validate({"value": "test"})
         result = vo.validate_business_rules()
         assert result.success is True
 
     def test_validate_business_rules_failure(self) -> None:
         """Test business rule validation failure."""
-        vo = SimpleValueObject(value="")
+        vo = SimpleValueObject.model_validate({"value": ""})
         result = vo.validate_business_rules()
         assert result.success is False
         assert result.error is not None
@@ -196,14 +196,14 @@ class TestValueObjectValidation:
 
     def test_validate_flext_success(self) -> None:
         """Test FlextValidation success."""
-        vo = SimpleValueObject(value="test")
+        vo = SimpleValueObject.model_validate({"value": "test"})
         result = vo.validate_flext()
         assert result.success is True
         assert result.data is vo
 
     def test_validate_flext_failure(self) -> None:
         """Test FlextValidation failure."""
-        vo = SimpleValueObject(value="")
+        vo = SimpleValueObject.model_validate({"value": ""})
         result = vo.validate_flext()
         assert result.success is False
         assert result.error is not None
@@ -224,7 +224,7 @@ class TestValueObjectValidation:
 
     def test_validate_field_with_registry(self) -> None:
         """Test field validation using registry."""
-        vo = SimpleValueObject(value="test")
+        vo = SimpleValueObject.model_validate({"value": "test"})
 
         # Test with non-existent field (should pass)
         result = vo.validate_field("unknown_field", "value")
@@ -232,7 +232,7 @@ class TestValueObjectValidation:
 
     def test_validate_all_fields(self) -> None:
         """Test validation of all fields."""
-        vo = SimpleValueObject(value="test")
+        vo = SimpleValueObject.model_validate({"value": "test"})
         result = vo.validate_all_fields()
         assert result.success is True  # No registered fields to validate
 
@@ -243,7 +243,7 @@ class TestValueObjectValidation:
         class TestVO(SimpleValueObject):
             _internal: str = "private"
 
-        vo = TestVO(value="test")
+        vo = TestVO.model_validate({"value": "test"})
         result = vo.validate_all_fields()
         assert result.success is True
 
@@ -258,7 +258,7 @@ class TestValueObjectFormatting:
 
     def test_format_dict_simple(self) -> None:
         """Test dictionary formatting."""
-        vo = SimpleValueObject(value="test")
+        vo = SimpleValueObject.model_validate({"value": "test"})
         data = {"name": "test", "count": 42, "active": True}
         formatted = vo.format_dict(data)
 
@@ -268,7 +268,7 @@ class TestValueObjectFormatting:
 
     def test_format_dict_complex(self) -> None:
         """Test formatting complex dictionary."""
-        vo = SimpleValueObject(value="test")
+        vo = SimpleValueObject.model_validate({"value": "test"})
         data = {
             "string": "value",
             "number": 123,
@@ -284,7 +284,7 @@ class TestValueObjectFormatting:
 
     def test_str_representation(self) -> None:
         """Test string representation."""
-        vo = SimpleValueObject(value="test")
+        vo = SimpleValueObject.model_validate({"value": "test"})
         str_repr = str(vo)
 
         assert "SimpleValueObject" in str_repr
@@ -314,7 +314,7 @@ class TestValueObjectPayloadConversion:
 
     def test_to_payload_success(self) -> None:
         """Test successful payload conversion."""
-        vo = SimpleValueObject(value="test")
+        vo = SimpleValueObject.model_validate({"value": "test"})
 
         payload = vo.to_payload()
 
@@ -328,7 +328,7 @@ class TestValueObjectPayloadConversion:
     def test_to_payload_with_validation_failure(self) -> None:
         """Test payload conversion with validation failure."""
         # Use a simple value object that will pass payload creation
-        vo = SimpleValueObject(value="test")
+        vo = SimpleValueObject.model_validate({"value": "test"})
 
         # Create a mock payload with expected data structure
         mock_payload_data = {
@@ -344,12 +344,12 @@ class TestValueObjectPayloadConversion:
             patch.object(
                 SimpleValueObject,
                 "validate_business_rules",
-                return_value=FlextResult.fail("Validation failed"),
+                return_value=FlextResult[None].fail("Validation failed"),
             ),
             patch.object(
                 FlextPayload,
                 "create",
-                return_value=FlextResult.ok(mock_payload),
+                return_value=FlextResult[None].ok(mock_payload),
             ),
         ):
             payload = vo.to_payload()
@@ -375,7 +375,7 @@ class TestValueObjectPayloadConversion:
             nonlocal call_count
             call_count += 1
             if call_count == 1:
-                return FlextResult.fail("Serialization error")
+                return FlextResult[None].fail("Serialization error")
             return original_create(data, **kwargs)
 
         with patch.object(FlextPayload, "create", side_effect=mock_create):
@@ -391,7 +391,7 @@ class TestValueObjectPayloadConversion:
             patch.object(
                 FlextPayload,
                 "create",
-                return_value=FlextResult.fail("Error"),
+                return_value=FlextResult[None].fail("Error"),
             ),
             pytest.raises(FlextValidationError),
         ):
@@ -399,7 +399,7 @@ class TestValueObjectPayloadConversion:
 
     def test_extract_serializable_attributes_pydantic(self) -> None:
         """Test serializable attribute extraction via Pydantic."""
-        vo = SimpleValueObject(value="test")
+        vo = SimpleValueObject.model_validate({"value": "test"})
         result = vo._extract_serializable_attributes()
 
         assert isinstance(result, dict)
@@ -408,7 +408,7 @@ class TestValueObjectPayloadConversion:
 
     def test_extract_serializable_attributes_manual(self) -> None:
         """Test manual attribute extraction directly."""
-        vo = SimpleValueObject(value="test")
+        vo = SimpleValueObject.model_validate({"value": "test"})
 
         # Test the manual extraction method directly
         result = vo._try_manual_extraction()
@@ -420,7 +420,7 @@ class TestValueObjectPayloadConversion:
 
     def test_extract_serializable_no_model_dump(self) -> None:
         """Test the fallback info when neither Pydantic nor manual extraction work."""
-        vo = SimpleValueObject(value="test")
+        vo = SimpleValueObject.model_validate({"value": "test"})
 
         # Test the fallback info method directly
         result = vo._get_fallback_info()
@@ -431,7 +431,7 @@ class TestValueObjectPayloadConversion:
 
     def test_process_serializable_values(self) -> None:
         """Test processing of serializable values."""
-        vo = SimpleValueObject(value="test")
+        vo = SimpleValueObject.model_validate({"value": "test"})
         data = {
             "string": "value",
             "int": 42,
@@ -452,7 +452,7 @@ class TestValueObjectPayloadConversion:
 
     def test_should_include_attribute(self) -> None:
         """Test attribute inclusion logic."""
-        vo = SimpleValueObject(value="test")
+        vo = SimpleValueObject.model_validate({"value": "test"})
 
         assert vo._should_include_attribute("value") is True
         assert vo._should_include_attribute("_private") is False
@@ -460,7 +460,7 @@ class TestValueObjectPayloadConversion:
 
     def test_safely_get_attribute(self) -> None:
         """Test safe attribute retrieval."""
-        vo = SimpleValueObject(value="test")
+        vo = SimpleValueObject.model_validate({"value": "test"})
 
         # Test successful retrieval
         result = vo._safely_get_attribute("value")
@@ -477,7 +477,7 @@ class TestValueObjectPayloadConversion:
             def __str__(self) -> str:
                 return "string_repr"
 
-        vo = SimpleValueObject(value="test")
+        vo = SimpleValueObject.model_validate({"value": "test"})
         # Create a test attribute on the value object
         object.__setattr__(vo, "_test_attr", ObjectWithStr())
 
@@ -486,7 +486,7 @@ class TestValueObjectPayloadConversion:
 
     def test_safely_get_attribute_exception(self) -> None:
         """Test safe attribute retrieval with exception."""
-        vo = SimpleValueObject(value="test")
+        vo = SimpleValueObject.model_validate({"value": "test"})
 
         # Test with a non-existent attribute - this will naturally raise AttributeError
         result = vo._safely_get_attribute("nonexistent_attribute")
@@ -494,7 +494,7 @@ class TestValueObjectPayloadConversion:
 
     def test_get_fallback_info(self) -> None:
         """Test fallback information generation."""
-        vo = SimpleValueObject(value="test")
+        vo = SimpleValueObject.model_validate({"value": "test"})
         result = vo._get_fallback_info()
 
         assert "class_name" in result
@@ -523,7 +523,7 @@ class TestValueObjectSubclassing:
                 test_field: str
 
                 def validate_business_rules(self) -> FlextResult[None]:
-                    return FlextResult.ok(None)
+                    return FlextResult[None].ok(None)
 
             # Check that logging was called
             mock_get_logger.assert_called()
@@ -545,7 +545,7 @@ class TestFlextValueObjectFactory:
         assert callable(factory)
 
         # Test factory usage
-        result = factory(value="test")
+        result = factory.model_validate({"value": "test"})
         assert result.success is True
         assert isinstance(result.data, SimpleValueObject)
         assert result.data.value == "test"
@@ -572,7 +572,7 @@ class TestFlextValueObjectFactory:
         """Test factory with validation failure."""
         factory = FlextValueObjectFactory.create_value_object_factory(SimpleValueObject)
 
-        result = factory(value="")  # Should fail validation
+        result = factory.model_validate({"value": ""})  # Should fail validation
         assert result.success is False
         assert "cannot be empty" in result.error
 
@@ -581,7 +581,7 @@ class TestFlextValueObjectFactory:
         factory = FlextValueObjectFactory.create_value_object_factory(SimpleValueObject)
 
         # Pass invalid parameter type
-        result = factory(value=123)  # Should be string
+        result = factory.model_validate({"value": 123})  # Should be string
         assert result.success is False
         assert "Failed to create" in result.error
 
@@ -592,7 +592,7 @@ class TestFlextValueObjectFactory:
             defaults=None,
         )
 
-        result = factory(value="test")
+        result = factory.model_validate({"value": "test"})
         assert result.success is True
         assert result.data.value == "test"
 
@@ -607,7 +607,7 @@ class TestValueObjectIntegration:
 
     def test_value_object_with_complex_validation(self) -> None:
         """Test value object with complex validation scenario."""
-        email = EmailAddress(address="user@example.com")
+        email = EmailAddress.model_validate({"address": "user@example.com"})
 
         # Test validation
         validation_result = email.validate_flext()
@@ -721,7 +721,7 @@ class TestValueObjectEdgeCases:
 
     def test_equality_with_different_types(self) -> None:
         """Test equality comparison with different types."""
-        vo = SimpleValueObject(value="test")
+        vo = SimpleValueObject.model_validate({"value": "test"})
 
         # Compare with non-value object
         assert vo != "string"
@@ -741,13 +741,13 @@ class TestValueObjectEdgeCases:
 
     def test_field_validation_error_handling(self) -> None:
         """Test field validation with error conditions."""
-        vo = SimpleValueObject(value="test")
+        vo = SimpleValueObject.model_validate({"value": "test"})
 
         # Mock field validation to return error
         with patch("flext_core.fields.FlextFields.get_field_by_name") as mock_get:
             mock_field = Mock()
-            mock_field.validate_value.return_value = FlextResult.fail("Field error")
-            mock_get.return_value = FlextResult.ok(mock_field)
+            mock_field.validate_value.return_value = FlextResult[None].fail("Field error")
+            mock_get.return_value = FlextResult[None].ok(mock_field)
 
             result = vo.validate_field("test_field", "value")
             assert result.success is False
@@ -755,7 +755,7 @@ class TestValueObjectEdgeCases:
 
     def test_all_fields_validation_with_errors(self) -> None:
         """Test validation of all fields with multiple errors."""
-        vo = SimpleValueObject(value="test")
+        vo = SimpleValueObject.model_validate({"value": "test"})
 
         # Mock field validation to return specific errors for specific fields
         def mock_validate_field(
@@ -763,10 +763,10 @@ class TestValueObjectEdgeCases:
             _field_value: object,
         ) -> FlextResult[None]:
             if field_name == "field1":
-                return FlextResult.fail("Field1 error")
+                return FlextResult[None].fail("Field1 error")
             if field_name == "field2":
-                return FlextResult.fail("Field2 error")
-            return FlextResult.ok(None)
+                return FlextResult[None].fail("Field2 error")
+            return FlextResult[None].ok(None)
 
         with (
             patch.object(

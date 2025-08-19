@@ -8,6 +8,7 @@ domain models.
 from decimal import Decimal
 from typing import cast
 
+from examples.shared_domain import EmailAddress, Money, Order, SharedDomainFactory, User
 from flext_core import (
     FlextFields,
     FlextLogger,
@@ -15,8 +16,6 @@ from flext_core import (
     get_flext_container,
     get_logger,
 )
-
-from .shared_domain import EmailAddress, Money, Order, SharedDomainFactory, User
 
 # =============================================================================
 # VALIDATION CONSTANTS - Integration example constraints
@@ -82,10 +81,10 @@ def _demo_command_pattern(customer_id: str, order_items: list[dict[str, str]]) -
 
         def validate_command(self) -> FlextResult[None]:
             if not self.customer_id.strip():
-                return FlextResult.fail("Customer ID required")
+                return FlextResult[None].fail("Customer ID required")
             if not self.items:
-                return FlextResult.fail("Order items required")
-            return FlextResult.ok(None)
+                return FlextResult[None].fail("Order items required")
+            return FlextResult[None].ok(None)
 
     create_command = CreateOrderCommand(customer_id=customer_id, items=order_items)
     create_command.validate_command()
@@ -99,13 +98,13 @@ def _demo_repository_pattern(order: Order) -> object:
         def save(self, order: object) -> FlextResult[object]:
             if hasattr(order, "id"):
                 self.orders[order.id] = order
-                return FlextResult.ok(order)
-            return FlextResult.fail("Order must have an id")
+                return FlextResult[None].ok(order)
+            return FlextResult[None].fail("Order must have an id")
 
         def get_by_id(self, order_id: str) -> FlextResult[object]:
             if order_id in self.orders:
-                return FlextResult.ok(self.orders[order_id])
-            return FlextResult.fail(f"Order {order_id} not found")
+                return FlextResult[None].ok(self.orders[order_id])
+            return FlextResult[None].fail(f"Order {order_id} not found")
 
     repository = OrderRepository()
     repository.save(order)

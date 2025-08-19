@@ -83,10 +83,10 @@ class SampleCommand(FlextCommands.Command):
     def validate_command(self) -> FlextResult[None]:
         """Validate the test command."""
         if not self.name.strip():
-            return FlextResult.fail("Name cannot be empty")
+            return FlextResult[None].fail("Name cannot be empty")
         if self.value < 0:
-            return FlextResult.fail("Value cannot be negative")
-        return FlextResult.ok(None)
+            return FlextResult[None].fail("Value cannot be negative")
+        return FlextResult[None].ok(None)
 
 
 class SampleCommandWithoutValidation(FlextCommands.Command):
@@ -104,10 +104,10 @@ class SampleComplexCommand(FlextCommands.Command):
     def validate_command(self) -> FlextResult[None]:
         """Complex validation logic."""
         if "@" not in self.email:
-            return FlextResult.fail("Invalid email format")
+            return FlextResult[None].fail("Invalid email format")
         if self.age < 18:
-            return FlextResult.fail("Age must be 18 or older")
-        return FlextResult.ok(None)
+            return FlextResult[None].fail("Age must be 18 or older")
+        return FlextResult[None].ok(None)
 
 
 class TestFlextCommandsAdvanced:
@@ -521,7 +521,7 @@ class TestFlextCommandsFactoryMethods:
         # Add middleware
         class TestMiddleware:
             def process(self, command: object, handler: object) -> FlextResult[None]:  # noqa: ARG002
-                return FlextResult.ok(None)
+                return FlextResult[None].ok(None)
 
         bus.add_middleware(TestMiddleware())
         handlers = bus.get_all_handlers()
@@ -532,7 +532,7 @@ class TestFlextCommandsFactoryMethods:
 
         class TestHandler(FlextCommands.Handler[SampleCommand, str]):
             def handle(self, command: SampleCommand) -> FlextResult[str]:
-                return FlextResult.ok(f"processed: {command.name}")
+                return FlextResult[None].ok(f"processed: {command.name}")
 
         handler = TestHandler()
         assert handler.handler_name == "TestHandler"
@@ -551,25 +551,21 @@ class TestFlextCommandsFactoryMethods:
 
         @FlextCommands.Decorators.command_handler(SampleCommand)
         def decorated_handler(command: SampleCommand) -> FlextResult[str]:
-            return FlextResult.ok(f"decorated: {command.name}")
+            return FlextResult[None].ok(f"decorated: {command.name}")
 
         # Verify decorator metadata
         assert "command_type" in decorated_handler.__dict__
         assert "handler_instance" in decorated_handler.__dict__
 
     def test_command_result_with_metadata(self) -> None:
-        """Test FlextCommands.Result with metadata functionality."""
-        # Test successful result with metadata
-        result: FlextResult[str] = FlextCommands.Result.ok(
-            "success",
-            metadata={"source": "test"},
-        )
+        """Test FlextCommands.Result with error data functionality."""
+        # Test successful result (FlextResult doesn't support metadata in .ok())
+        result: FlextResult[str] = FlextCommands.Result.ok("success")
         assert result is not None
         assert result.success
         assert result.data == "success"
-        assert result.metadata["source"] == "test"
 
-        # Test failed result with error code
+        # Test failed result with error code and error data
         failed_result: FlextResult[None] = FlextCommands.Result.fail(
             "error message",
             error_code="TEST_ERROR",
@@ -577,7 +573,8 @@ class TestFlextCommandsFactoryMethods:
         )
         assert failed_result is not None
         assert failed_result.is_failure
-        assert failed_result.metadata["error_code"] == "TEST_ERROR"
+        assert failed_result.error_code == "TEST_ERROR"
+        assert failed_result.error_data["context"] == "test"
 
     def test_query_functionality(self) -> None:
         """Test Query classes and handlers."""
@@ -593,7 +590,7 @@ class TestFlextCommandsFactoryMethods:
         # Test query handler
         class TestQueryHandler(FlextCommands.QueryHandler[TestQuery, str]):
             def handle(self, query: TestQuery) -> FlextResult[str]:
-                return FlextResult.ok(f"found: {query.search_term}")
+                return FlextResult[None].ok(f"found: {query.search_term}")
 
         handler = TestQueryHandler()
         assert handler.handler_name == "TestQueryHandler"

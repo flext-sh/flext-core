@@ -142,7 +142,7 @@ class TestFlextFieldCoreAdvanced:
             field: FlextFieldCore = FlextFieldCore(**test_case.input_data)
 
             # Validate field creation
-            assert_helpers.assert_result_ok(FlextResult.ok(field))
+            assert_helpers.assert_result_ok(FlextResult[None].ok(field))
 
             # Verify expected output attributes
             for attr_name, expected_value in test_case.expected_output.items():
@@ -592,10 +592,10 @@ class TestFlextFieldCoreWithFixtures:
         """Test field integration with external services using mock factory."""
         # Create mock external validation service
         validator_service = mock_factory("field_validator_service")
-        validator_service.validate_field_value.return_value = FlextResult.ok(
+        validator_service.validate_field_value.return_value = FlextResult[None].ok(
             "validated",
         )
-        validator_service.get_field_metadata.return_value = FlextResult.ok(
+        validator_service.get_field_metadata.return_value = FlextResult[None].ok(
             {
                 "source": "external_system",
                 "validation_rules": ["required", "format_check"],
@@ -826,7 +826,7 @@ class TestFlextFieldCoreIntegration:
             for result in workflow_result["validation_results"]
         )
 
-        assert_helpers.assert_result_ok(FlextResult.ok(workflow_result["field"]))
+        assert_helpers.assert_result_ok(FlextResult[None].ok(workflow_result["field"]))
 
         # Verify field properties
         field = workflow_result["field"]

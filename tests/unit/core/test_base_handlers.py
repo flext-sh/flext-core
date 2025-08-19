@@ -40,14 +40,14 @@ class ConcreteBaseHandler(FlextAbstractHandler[object, object]):
     def handle(self, request: object) -> FlextResult[object]:
         """Handle request."""
         if request is None:
-            return FlextResult.fail("Request cannot be None")
-        return FlextResult.ok(request)
+            return FlextResult[None].fail("Request cannot be None")
+        return FlextResult[None].ok(request)
 
     def validate_request(self, request: object) -> FlextResult[None]:
         """Validate request."""
         if request is None:
-            return FlextResult.fail("Request validation failed: None request")
-        return FlextResult.ok(None)
+            return FlextResult[None].fail("Request validation failed: None request")
+        return FlextResult[None].ok(None)
 
 
 class TestFlextBaseHandler:
@@ -114,8 +114,8 @@ class ConcreteCommandHandler(FlextCommandHandler[str, int]):
     def handle_command(self, command: str) -> FlextResult[int]:
         """Handle string command and return length."""
         if not command:
-            return FlextResult.fail("Empty command")
-        return FlextResult.ok(len(command))
+            return FlextResult[None].fail("Empty command")
+        return FlextResult[None].ok(len(command))
 
     def process_request(self, request: str) -> FlextResult[int]:
         """Process request - delegates to handle_command."""
@@ -186,9 +186,9 @@ class ConcreteQueryHandler(FlextQueryHandler[dict[str, str], str]):
     def handle_query(self, query: dict[str, str]) -> FlextResult[str]:
         """Handle dict query and return formatted string."""
         if not query:
-            return FlextResult.fail("Empty query")
+            return FlextResult[None].fail("Empty query")
         name = query.get("name", "Unknown")
-        return FlextResult.ok(f"Hello, {name}!")
+        return FlextResult[None].ok(f"Hello, {name}!")
 
     def process_request(self, request: dict[str, str]) -> FlextResult[str]:
         """Process request - delegates to handle_query."""

@@ -60,7 +60,7 @@ class TestServiceIntegrationPatterns:
         """
         # Arrange
         large_dataset = benchmark_data["large_dataset"]
-        mock_external_service.process.return_value = FlextResult.ok("processed")
+        mock_external_service.process.return_value = FlextResult[str].ok(FlextResult[None].ok("processed"))
 
         def process_pipeline(
             data: list[int]
@@ -68,7 +68,7 @@ class TestServiceIntegrationPatterns:
             | dict[str, dict[str, dict[str, list[int]]]],
         ) -> FlextResult[str]:
             # Simulate service pipeline with realistic operations
-            result = FlextResult.ok(data)
+            result = FlextResult[None].ok(data)
             return result.flat_map(mock_external_service.process).map(
                 lambda _r: f"pipeline_result_{len(str(data))}",
             )
@@ -106,11 +106,11 @@ class TestServiceIntegrationPatterns:
         """
         # Arrange - Configure mock to simulate service failure
         error_message = f"Service error: {error_context['error_code']}"
-        mock_external_service.process.return_value = FlextResult.fail(error_message)
+        mock_external_service.process.return_value = FlextResult[None].fail(error_message)
 
         def failing_pipeline(data: str) -> FlextResult[str]:
             return (
-                FlextResult.ok(data)
+                FlextResult[None].ok(data)
                 .flat_map(mock_external_service.process)
                 .map(lambda _r: f"processed_{_r}")
             )
@@ -146,8 +146,8 @@ class TestServiceIntegrationPatterns:
         mock_notification_service = MagicMock()
 
         # Configure mock behavior
-        mock_user_service.get_user.return_value = FlextResult.ok(test_user_data)
-        mock_notification_service.send.return_value = FlextResult.ok("sent")
+        mock_user_service.get_user.return_value = FlextResult[None].ok(test_user_data)
+        mock_notification_service.send.return_value = FlextResult[str].ok(FlextResult[None].ok("sent"))
 
         # Register services in container
         clean_container.register("user_service", mock_user_service)
@@ -162,7 +162,7 @@ class TestServiceIntegrationPatterns:
                 not user_service_result.success
                 or not notification_service_result.success
             ):
-                return FlextResult.fail("Service unavailable")
+                return FlextResult[None].fail("Service unavailable")
 
             user_service = user_service_result.data
             notification_service = notification_service_result.data
@@ -170,7 +170,7 @@ class TestServiceIntegrationPatterns:
             # Get user data first
             user_result = user_service.get_user(user_id)
             if not user_result.success:
-                return FlextResult.fail("User not found")
+                return FlextResult[None].fail("User not found")
 
             # Send notification
             return notification_service.send(user_result.data["email"])
@@ -208,9 +208,9 @@ class TestServiceIntegrationPatterns:
         """
         # Arrange - Create lifecycle-aware mock service
         mock_service = MagicMock()
-        mock_service.initialize.return_value = FlextResult.ok("initialized")
+        mock_service.initialize.return_value = FlextResult[str].ok(FlextResult[None].ok("initialized"))
         mock_service.is_healthy.return_value = True
-        mock_service.shutdown.return_value = FlextResult.ok("shutdown")
+        mock_service.shutdown.return_value = FlextResult[str].ok(FlextResult[None].ok("shutdown"))
 
         service_config = {
             "name": "test_service",

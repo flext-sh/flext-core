@@ -40,19 +40,19 @@ class TestFlextResultProperties:
 
     def test_error_code_property_success(self) -> None:
         """Test error_code property on success result."""
-        result = FlextResult.ok("data")
+        result = FlextResult[str].ok("data")
         assert result.error_code is None
 
     def test_error_code_property_failure(self) -> None:
         """Test error_code property on failure result."""
-        result: FlextResult[None] = FlextResult.fail("error", error_code="E001")
+        result: FlextResult[None] = FlextResult[None].fail("error", error_code="E001")
         if result.error_code != "E001":
             msg: str = f"Expected {'E001'}, got {result.error_code}"
             raise AssertionError(msg)
 
     def test_error_data_property_success(self) -> None:
         """Test error_data property on success result."""
-        result = FlextResult.ok("data")
+        result = FlextResult[str].ok("data")
         if result.error_data != {}:
             msg: str = f"Expected {{}}, got {result.error_data}"
             raise AssertionError(msg)
@@ -60,14 +60,14 @@ class TestFlextResultProperties:
     def test_error_data_property_failure(self) -> None:
         """Test error_data property on failure result."""
         error_data = {"field": "value", "code": 123}
-        result: FlextResult[None] = FlextResult.fail("error", error_data=error_data)
+        result: FlextResult[None] = FlextResult[None].fail("error", error_data=error_data)
         if result.error_data != error_data:
             error_data_msg: str = f"Expected {error_data}, got {result.error_data}"
             raise AssertionError(error_data_msg)
 
     def test_error_data_property_failure_none(self) -> None:
         """Test error_data property when None passed."""
-        result: FlextResult[None] = FlextResult.fail("error", error_data=None)
+        result: FlextResult[None] = FlextResult[None].fail("error", error_data=None)
         if result.error_data != {}:
             msg: str = f"Expected {{}}, got {result.error_data}"
             raise AssertionError(msg)
@@ -79,14 +79,14 @@ class TestFlextResultFactoryMethods:
 
     def test_fail_with_empty_error(self) -> None:
         """Test fail method with empty error string."""
-        result: FlextResult[None] = FlextResult.fail("")
+        result: FlextResult[None] = FlextResult[None].fail("")
         if result.error != "Unknown error occurred":
             msg: str = f"Expected {'Unknown error occurred'}, got {result.error}"
             raise AssertionError(msg)
 
     def test_fail_with_whitespace_error(self) -> None:
         """Test fail method with whitespace-only error."""
-        result: FlextResult[None] = FlextResult.fail("   ")
+        result: FlextResult[None] = FlextResult[None].fail("   ")
         if result.error != "Unknown error occurred":
             msg: str = f"Expected {'Unknown error occurred'}, got {result.error}"
             raise AssertionError(msg)
@@ -94,7 +94,7 @@ class TestFlextResultFactoryMethods:
     def test_fail_with_all_parameters(self) -> None:
         """Test fail method with all parameters."""
         error_data: dict[str, object] = {"key": "value"}
-        result: FlextResult[None] = FlextResult.fail(
+        result: FlextResult[None] = FlextResult[None].fail(
             "Test error",
             error_code="E001",
             error_data=error_data,
@@ -116,12 +116,12 @@ class TestFlextResultUnwrap:
 
     def test_unwrap_success_with_none_data(self) -> None:
         """Test unwrap with None data (valid for success)."""
-        result = FlextResult.ok(None)
+        result = FlextResult[None].ok(None)
         assert result.unwrap() is None
 
     def test_unwrap_failure_raises_with_error_code(self) -> None:
         """Test unwrap failure raises FlextOperationError with error code."""
-        result: FlextResult[None] = FlextResult.fail("Test error", error_code="E001")
+        result: FlextResult[None] = FlextResult[None].fail("Test error", error_code="E001")
 
         with pytest.raises(FlextOperationError) as exc_info:
             result.unwrap()
@@ -138,7 +138,7 @@ class TestFlextResultUnwrap:
     def test_unwrap_failure_raises_with_error_data(self) -> None:
         """Test unwrap failure raises FlextOperationError with error data."""
         error_data = {"field": "test", "value": 123}
-        result: FlextResult[None] = FlextResult.fail(
+        result: FlextResult[None] = FlextResult[None].fail(
             "Test error",
             error_data=error_data,
         )
@@ -149,14 +149,13 @@ class TestFlextResultUnwrap:
         exception = exc_info.value
         # Check that error_data is included (may have additional fields)
         if exception.context is None:
-            msg: str = f"Expected error_data {error_data}, got None"
-            raise AssertionError(msg)
+            raise AssertionError(f"Expected error_data {error_data}, got None")
 
         # Verify all expected fields are present with correct values
         for key, expected_value in error_data.items():
             if key not in exception.context or exception.context[key] != expected_value:
-                msg: str = f"Expected field {key}={expected_value}, got {exception.context.get(key)}"
-                raise AssertionError(msg)
+                field_msg: str = f"Expected field {key}={expected_value}, got {exception.context.get(key)}"
+                raise AssertionError(field_msg)
 
     def test_unwrap_failure_with_none_error(self) -> None:
         """Test unwrap failure when error is None."""
@@ -175,7 +174,7 @@ class TestFlextResultMapExceptions:
 
     def test_map_type_error_exception(self) -> None:
         """Test map method with TypeError exception."""
-        result = FlextResult.ok("test")
+        result = FlextResult[str].ok("test")
 
         def failing_func(x: str) -> int:
             return int(x)  # Will raise TypeError
@@ -194,7 +193,7 @@ class TestFlextResultMapExceptions:
 
     def test_map_value_error_exception(self) -> None:
         """Test map method with ValueError exception."""
-        result = FlextResult.ok("not_a_number")
+        result = FlextResult[str].ok("not_a_number")
 
         def failing_func(x: str) -> int:
             return int(x)  # Will raise ValueError
@@ -211,7 +210,7 @@ class TestFlextResultMapExceptions:
 
     def test_map_runtime_error_exception(self) -> None:
         """Test map method with RuntimeError exception."""
-        result = FlextResult.ok("test")
+        result = FlextResult[str].ok("test")
 
         def failing_func(_x: str) -> str:
             msg = "Custom runtime error"
@@ -228,7 +227,7 @@ class TestFlextResultMapExceptions:
 
     def test_map_unexpected_exception(self) -> None:
         """Test map method with unexpected exception type."""
-        result = FlextResult.ok("test")
+        result = FlextResult[str].ok("test")
 
         def failing_func(_x: str) -> str:
             msg = "Unexpected key error"
@@ -247,7 +246,7 @@ class TestFlextResultMapExceptions:
 
     def test_map_with_none_data(self) -> None:
         """Test map method with None data (valid for success)."""
-        result = FlextResult.ok(None)
+        result = FlextResult[None].ok(None)
 
         def func(x: object) -> str:
             return f"processed_{x}"
@@ -265,14 +264,14 @@ class TestFlextResultFlatMapExceptions:
 
     def test_flat_map_type_error_exception(self) -> None:
         """Test flat_map method with TypeError exception."""
-        result = FlextResult.ok("test")
+        result = FlextResult[str].ok("test")
 
         def failing_func(_x: str) -> FlextResult[int]:
             # This will raise AttributeError when accessing non-existent method
             # x.non_existent_method()
             msg = "Simulated AttributeError"
             raise AttributeError(msg)
-            # return FlextResult.ok(42)  # Never reached
+            # return FlextResult[None].ok(42)  # Never reached
 
         mapped = result.flat_map(failing_func)
         assert mapped.is_failure
@@ -286,10 +285,10 @@ class TestFlextResultFlatMapExceptions:
 
     def test_flat_map_index_error_exception(self) -> None:
         """Test flat_map method with IndexError exception."""
-        result = FlextResult.ok([1, 2, 3])
+        result = FlextResult[list[int]].ok([1, 2, 3])
 
         def failing_func(x: list[int]) -> FlextResult[int]:
-            return FlextResult.ok(x[10])  # Index out of range
+            return FlextResult[int].ok(x[10])  # Index out of range
 
         mapped = result.flat_map(failing_func)
         assert mapped.is_failure
@@ -300,10 +299,10 @@ class TestFlextResultFlatMapExceptions:
 
     def test_flat_map_key_error_exception(self) -> None:
         """Test flat_map method with KeyError exception."""
-        result = FlextResult.ok({"a": 1})
+        result = FlextResult[dict[str, int]].ok({"a": 1})
 
         def failing_func(x: dict[str, int]) -> FlextResult[int]:
-            return FlextResult.ok(x["missing_key"])
+            return FlextResult[int].ok(x["missing_key"])
 
         mapped = result.flat_map(failing_func)
         assert mapped.is_failure
@@ -314,7 +313,7 @@ class TestFlextResultFlatMapExceptions:
 
     def test_flat_map_unexpected_exception(self) -> None:
         """Test flat_map method with unexpected exception type."""
-        result = FlextResult.ok("test")
+        result = FlextResult[str].ok("test")
 
         def failing_func(_x: str) -> FlextResult[str]:
             msg = "Unexpected OS error"
@@ -332,10 +331,10 @@ class TestFlextResultFlatMapExceptions:
 
     def test_flat_map_with_none_data(self) -> None:
         """Test flat_map method with None data (valid for success)."""
-        result = FlextResult.ok(None)
+        result = FlextResult[None].ok(None)
 
         def func(x: object) -> FlextResult[str]:
-            return FlextResult.ok(f"processed_{x}")
+            return FlextResult[str].ok(f"processed_{x}")
 
         mapped = result.flat_map(func)
         assert mapped.success
@@ -350,21 +349,21 @@ class TestFlextResultUnwrapOr:
 
     def test_unwrap_or_success_with_none_data(self) -> None:
         """Test unwrap_or with None data returns default."""
-        result = FlextResult.ok(None)
+        result = FlextResult[None].ok(None)
         if result.unwrap_or("default") != "default":
             msg: str = f"Expected {'default'}, got {result.unwrap_or('default')}"
             raise AssertionError(msg)
 
     def test_unwrap_or_success_with_data(self) -> None:
         """Test unwrap_or with actual data returns data."""
-        result = FlextResult.ok("actual")
+        result = FlextResult[str].ok("actual")
         if result.unwrap_or("default") != "actual":
             msg: str = f"Expected {'actual'}, got {result.unwrap_or('default')}"
             raise AssertionError(msg)
 
     def test_unwrap_or_failure_returns_default(self) -> None:
         """Test unwrap_or with failure returns default."""
-        result: FlextResult[object] = FlextResult.fail("error")
+        result: FlextResult[None] = FlextResult[None].fail("error")
         if result.unwrap_or("default") != "default":
             msg: str = f"Expected {'default'}, got {result.unwrap_or('default')}"
             raise AssertionError(msg)
@@ -376,16 +375,16 @@ class TestFlextResultHash:
 
     def test_hash_success_with_hashable_data(self) -> None:
         """Test hash with hashable data."""
-        result1 = FlextResult.ok("test")
-        result2 = FlextResult.ok("test")
+        result1 = FlextResult[str].ok("test")
+        result2 = FlextResult[str].ok("test")
         if hash(result1) != hash(result2):
             msg: str = f"Expected {hash(result2)}, got {hash(result1)}"
             raise AssertionError(msg)
 
     def test_hash_success_with_unhashable_data(self) -> None:
         """Test hash with unhashable data."""
-        result1 = FlextResult.ok({"key": "value"})
-        result2 = FlextResult.ok({"key": "value"})
+        result1 = FlextResult[dict[str, str]].ok({"key": "value"})
+        result2 = FlextResult[dict[str, str]].ok({"key": "value"})
 
         # Should not raise error and should produce consistent hashes
         hash1 = hash(result1)
@@ -395,16 +394,16 @@ class TestFlextResultHash:
 
     def test_hash_failure_results(self) -> None:
         """Test hash with failure results."""
-        result1: FlextResult[object] = FlextResult.fail("error", error_code="E001")
-        result2: FlextResult[object] = FlextResult.fail("error", error_code="E001")
+        result1 = FlextResult[object].fail("error", error_code="E001")
+        result2 = FlextResult[object].fail("error", error_code="E001")
         if hash(result1) != hash(result2):
             msg: str = f"Expected {hash(result2)}, got {hash(result1)}"
             raise AssertionError(msg)
 
     def test_hash_different_results(self) -> None:
         """Test hash with different results."""
-        result1 = FlextResult.ok("test1")
-        result2 = FlextResult.ok("test2")
+        result1 = FlextResult[str].ok("test1")
+        result2 = FlextResult[str].ok("test2")
         assert hash(result1) != hash(result2)
 
 
@@ -414,10 +413,10 @@ class TestFlextResultRailwayMethods:
 
     def test_then_success(self) -> None:
         """Test then method (alias for flat_map) with success."""
-        result = FlextResult.ok(5)
+        result = FlextResult[int].ok(5)
 
         def double(x: int) -> FlextResult[int]:
-            return FlextResult.ok(x * 2)
+            return FlextResult[int].ok(x * 2)
 
         chained = result.then(double)
         assert chained.success
@@ -427,10 +426,10 @@ class TestFlextResultRailwayMethods:
 
     def test_then_failure(self) -> None:
         """Test then method with failure."""
-        result: FlextResult[int] = FlextResult.fail("initial error")
+        result = FlextResult[int].fail("initial error")
 
         def double(x: int) -> FlextResult[int]:
-            return FlextResult.ok(x * 2)
+            return FlextResult[int].ok(x * 2)
 
         chained = result.then(double)
         assert chained.is_failure
@@ -440,10 +439,10 @@ class TestFlextResultRailwayMethods:
 
     def test_bind_success(self) -> None:
         """Test bind method (alias for flat_map) with success."""
-        result = FlextResult.ok(5)
+        result = FlextResult[int].ok(5)
 
         def double(x: int) -> FlextResult[int]:
-            return FlextResult.ok(x * 2)
+            return FlextResult[int].ok(x * 2)
 
         bound = result.bind(double)
         assert bound.success
@@ -453,8 +452,8 @@ class TestFlextResultRailwayMethods:
 
     def test_or_else_success(self) -> None:
         """Test or_else method with success result."""
-        result = FlextResult.ok("success")
-        alternative = FlextResult.ok("alternative")
+        result = FlextResult[str].ok("success")
+        alternative = FlextResult[str].ok("alternative")
 
         chosen = result.or_else(alternative)
         if chosen.data != "success":
@@ -463,8 +462,8 @@ class TestFlextResultRailwayMethods:
 
     def test_or_else_failure(self) -> None:
         """Test or_else method with failure result."""
-        result: FlextResult[str] = FlextResult.fail("error")
-        alternative = FlextResult.ok("alternative")
+        result: FlextResult[None] = FlextResult[None].fail("error")
+        alternative = FlextResult[str].ok("alternative")
 
         chosen = result.or_else(alternative)
         if chosen.data != "alternative":
@@ -473,10 +472,10 @@ class TestFlextResultRailwayMethods:
 
     def test_or_else_get_success(self) -> None:
         """Test or_else_get method with success result."""
-        result = FlextResult.ok("success")
+        result = FlextResult[str].ok("success")
 
         def get_alternative() -> FlextResult[str]:
-            return FlextResult.ok("alternative")
+            return FlextResult[str].ok("alternative")
 
         chosen = result.or_else_get(get_alternative)
         if chosen.data != "success":
@@ -485,10 +484,10 @@ class TestFlextResultRailwayMethods:
 
     def test_or_else_get_failure(self) -> None:
         """Test or_else_get method with failure result."""
-        result: FlextResult[str] = FlextResult.fail("error")
+        result: FlextResult[None] = FlextResult[None].fail("error")
 
         def get_alternative() -> FlextResult[str]:
-            return FlextResult.ok("alternative")
+            return FlextResult[str].ok("alternative")
 
         chosen = result.or_else_get(get_alternative)
         if chosen.data != "alternative":
@@ -497,7 +496,7 @@ class TestFlextResultRailwayMethods:
 
     def test_or_else_get_with_exception(self) -> None:
         """Test or_else_get method when function raises exception."""
-        result: FlextResult[str] = FlextResult.fail("error")
+        result: FlextResult[None] = FlextResult[None].fail("error")
 
         def failing_func() -> FlextResult[str]:
             msg = "Function failed"
@@ -512,7 +511,7 @@ class TestFlextResultRailwayMethods:
 
     def test_recover_success(self) -> None:
         """Test recover method with success result."""
-        result = FlextResult.ok("success")
+        result = FlextResult[str].ok("success")
 
         def recovery(error: str) -> str:
             return f"recovered_from_{error}"
@@ -524,7 +523,7 @@ class TestFlextResultRailwayMethods:
 
     def test_recover_failure(self) -> None:
         """Test recover method with failure result."""
-        result: FlextResult[object] = FlextResult.fail("error")
+        result: FlextResult[None] = FlextResult[None].fail("error")
 
         def recovery(error: str) -> str:
             return f"recovered_from_{error}"
@@ -550,7 +549,7 @@ class TestFlextResultRailwayMethods:
 
     def test_recover_with_exception(self) -> None:
         """Test recover method when recovery function raises exception."""
-        result: FlextResult[object] = FlextResult.fail("error")
+        result: FlextResult[None] = FlextResult[None].fail("error")
 
         def failing_recovery(_error: str) -> str:
             msg = "Recovery failed"
@@ -565,10 +564,10 @@ class TestFlextResultRailwayMethods:
 
     def test_recover_with_success(self) -> None:
         """Test recover_with method with success result."""
-        result = FlextResult.ok("success")
+        result = FlextResult[str].ok("success")
 
         def recovery(error: str) -> FlextResult[str]:
-            return FlextResult.ok(f"recovered_from_{error}")
+            return FlextResult[str].ok(f"recovered_from_{error}")
 
         recovered = result.recover_with(recovery)
         if recovered.data != "success":
@@ -577,10 +576,10 @@ class TestFlextResultRailwayMethods:
 
     def test_recover_with_failure(self) -> None:
         """Test recover_with method with failure result."""
-        result: FlextResult[str] = FlextResult.fail("error")
+        result: FlextResult[None] = FlextResult[None].fail("error")
 
         def recovery(error: str) -> FlextResult[str]:
-            return FlextResult.ok(f"recovered_from_{error}")
+            return FlextResult[str].ok(f"recovered_from_{error}")
 
         recovered = result.recover_with(recovery)
         assert recovered.success
@@ -594,7 +593,7 @@ class TestFlextResultRailwayMethods:
         result._error = None  # Manually set to None
 
         def recovery(error: str) -> FlextResult[str]:  # noqa: ARG001
-            return FlextResult.ok("recovered")
+            return FlextResult[str].ok("recovered")
 
         recovered = result.recover_with(recovery)
         # When error is None, result should be treated as success, so return self
@@ -604,7 +603,7 @@ class TestFlextResultRailwayMethods:
 
     def test_recover_with_exception_add(self) -> None:
         """Test recover_with method when recovery function raises exception."""
-        result: FlextResult[str] = FlextResult.fail("error")
+        result: FlextResult[None] = FlextResult[None].fail("error")
 
         def failing_recovery(_error: str) -> FlextResult[str]:
             msg = "Recovery failed"
@@ -624,7 +623,7 @@ class TestFlextResultSideEffects:
 
     def test_tap_success_with_data(self) -> None:
         """Test tap method with success result and data."""
-        result = FlextResult.ok("test")
+        result = FlextResult[str].ok("test")
         side_effect_called = []
 
         def side_effect(data: str) -> None:
@@ -638,7 +637,7 @@ class TestFlextResultSideEffects:
 
     def test_tap_success_with_none_data(self) -> None:
         """Test tap method with success result but None data."""
-        result = FlextResult.ok(None)
+        result = FlextResult[None].ok(None)
         side_effect_called = []
 
         def side_effect(data: object) -> None:
@@ -654,7 +653,7 @@ class TestFlextResultSideEffects:
 
     def test_tap_failure(self) -> None:
         """Test tap method with failure result."""
-        result: FlextResult[str] = FlextResult.fail("error")
+        result: FlextResult[None] = FlextResult[None].fail("error")
         side_effect_called = []
 
         def side_effect(data: str) -> None:
@@ -670,7 +669,7 @@ class TestFlextResultSideEffects:
 
     def test_tap_with_exception(self) -> None:
         """Test tap method when side effect raises exception."""
-        result = FlextResult.ok("test")
+        result = FlextResult[str].ok("test")
 
         def failing_side_effect(_data: str) -> None:
             msg = "Side effect failed"
@@ -683,7 +682,7 @@ class TestFlextResultSideEffects:
 
     def test_tap_error_success(self) -> None:
         """Test tap_error method with success result."""
-        result = FlextResult.ok("success")
+        result = FlextResult[str].ok("success")
         side_effect_called = []
 
         def error_side_effect(error: str) -> None:
@@ -699,7 +698,7 @@ class TestFlextResultSideEffects:
 
     def test_tap_error_failure(self) -> None:
         """Test tap_error method with failure result."""
-        result: FlextResult[object] = FlextResult.fail("test_error")
+        result: FlextResult[None] = FlextResult[None].fail("test_error")
         side_effect_called = []
 
         def error_side_effect(error: str) -> None:
@@ -730,7 +729,7 @@ class TestFlextResultSideEffects:
 
     def test_tap_error_with_exception(self) -> None:
         """Test tap_error method when side effect raises exception."""
-        result: FlextResult[object] = FlextResult.fail("error")
+        result: FlextResult[None] = FlextResult[None].fail("error")
 
         def failing_error_side_effect(_error: str) -> None:
             msg = "Error side effect failed"
@@ -748,7 +747,7 @@ class TestFlextResultFilter:
 
     def test_filter_success_predicate_true(self) -> None:
         """Test filter method with success result and true predicate."""
-        result = FlextResult.ok(10)
+        result = FlextResult[int].ok(10)
 
         def is_positive(x: int) -> bool:
             return x > 0
@@ -761,7 +760,7 @@ class TestFlextResultFilter:
 
     def test_filter_success_predicate_false(self) -> None:
         """Test filter method with success result and false predicate."""
-        result = FlextResult.ok(-5)
+        result = FlextResult[None].ok(-5)
 
         def is_positive(x: int) -> bool:
             return x > 0
@@ -774,7 +773,7 @@ class TestFlextResultFilter:
 
     def test_filter_success_predicate_false_default_message(self) -> None:
         """Test filter method with default error message."""
-        result = FlextResult.ok(-5)
+        result = FlextResult[None].ok(-5)
 
         def is_positive(x: int) -> bool:
             return x > 0
@@ -787,7 +786,7 @@ class TestFlextResultFilter:
 
     def test_filter_failure(self) -> None:
         """Test filter method with failure result."""
-        result: FlextResult[int] = FlextResult.fail("initial error")
+        result: FlextResult[int] = FlextResult[None].fail("initial error")
 
         def always_true(_x: int) -> bool:
             return True
@@ -800,7 +799,7 @@ class TestFlextResultFilter:
 
     def test_filter_with_none_data(self) -> None:
         """Test filter method with None data."""
-        result = FlextResult.ok(None)
+        result = FlextResult[None].ok(None)
 
         def is_not_none(x: object) -> bool:
             return x is not None
@@ -813,7 +812,7 @@ class TestFlextResultFilter:
 
     def test_filter_with_predicate_exception(self) -> None:
         """Test filter method when predicate raises exception."""
-        result = FlextResult.ok("test")
+        result = FlextResult[str].ok("test")
 
         def failing_predicate(_x: str) -> bool:
             msg = "Predicate failed"
@@ -833,8 +832,8 @@ class TestFlextResultZipWith:
 
     def test_zip_with_both_success(self) -> None:
         """Test zip_with with both results successful."""
-        result1 = FlextResult.ok(5)
-        result2 = FlextResult.ok(10)
+        result1 = FlextResult[int].ok(5)
+        result2 = FlextResult[int].ok(10)
 
         def add(x: int, y: int) -> int:
             return x + y
@@ -847,8 +846,8 @@ class TestFlextResultZipWith:
 
     def test_zip_with_first_failure(self) -> None:
         """Test zip_with with first result failed."""
-        result1: FlextResult[int] = FlextResult.fail("first error")
-        result2 = FlextResult.ok(10)
+        result1: FlextResult[int] = FlextResult[None].fail("first error")
+        result2 = FlextResult[int].ok(10)
 
         def add(x: int, y: int) -> int:
             return x + y
@@ -861,8 +860,8 @@ class TestFlextResultZipWith:
 
     def test_zip_with_second_failure(self) -> None:
         """Test zip_with with second result failed."""
-        result1 = FlextResult.ok(5)
-        result2: FlextResult[int] = FlextResult.fail("second error")
+        result1 = FlextResult[int].ok(5)
+        result2: FlextResult[int] = FlextResult[None].fail("second error")
 
         def add(x: int, y: int) -> int:
             return x + y
@@ -875,8 +874,8 @@ class TestFlextResultZipWith:
 
     def test_zip_with_first_none_data(self) -> None:
         """Test zip_with when first result has None data."""
-        result1 = FlextResult.ok(None)
-        result2 = FlextResult.ok(10)
+        result1 = FlextResult[None].ok(None)
+        result2 = FlextResult[int].ok(10)
 
         def combine(x: object, y: int) -> str:
             return f"{x}_{y}"
@@ -891,8 +890,8 @@ class TestFlextResultZipWith:
 
     def test_zip_with_second_none_data(self) -> None:
         """Test zip_with when second result has None data."""
-        result1 = FlextResult.ok(5)
-        result2 = FlextResult.ok(None)
+        result1 = FlextResult[int].ok(5)
+        result2 = FlextResult[None].ok(None)
 
         def combine(x: int, y: object) -> str:
             return f"{x}_{y}"
@@ -907,8 +906,8 @@ class TestFlextResultZipWith:
 
     def test_zip_with_function_exception(self) -> None:
         """Test zip_with when combining function raises exception."""
-        result1 = FlextResult.ok(5)
-        result2 = FlextResult.ok(0)
+        result1 = FlextResult[int].ok(5)
+        result2 = FlextResult[int].ok(0)
 
         def divide(x: int, y: int) -> float:
             return x / y  # Will raise ZeroDivisionError
@@ -927,7 +926,7 @@ class TestFlextResultConversion:
 
     def test_to_either_success(self) -> None:
         """Test to_either method with success result."""
-        result = FlextResult.ok("data")
+        result = FlextResult[str].ok("data")
         data, error = result.to_either()
         if data != "data":
             msg: str = f"Expected {'data'}, got {data}"
@@ -936,7 +935,7 @@ class TestFlextResultConversion:
 
     def test_to_either_failure(self) -> None:
         """Test to_either method with failure result."""
-        result: FlextResult[object] = FlextResult.fail("error")
+        result: FlextResult[None] = FlextResult[None].fail("error")
         data, error = result.to_either()
         assert data is None
         if error != "error":
@@ -945,13 +944,13 @@ class TestFlextResultConversion:
 
     def test_to_exception_success(self) -> None:
         """Test to_exception method with success result."""
-        result = FlextResult.ok("data")
+        result = FlextResult[str].ok("data")
         exception = result.to_exception()
         assert exception is None
 
     def test_to_exception_failure(self) -> None:
         """Test to_exception method with failure result."""
-        result: FlextResult[object] = FlextResult.fail("error message")
+        result: FlextResult[None] = FlextResult[None].fail("error message")
         exception = result.to_exception()
         assert isinstance(exception, FlextOperationError)
         if "error message" not in str(exception):
@@ -1000,9 +999,9 @@ class TestFlextResultStaticMethods:
     def test_combine_all_success(self) -> None:
         """Test combine method with all successful results."""
         results: list[FlextResult[object]] = [
-            FlextResult.ok("a"),
-            FlextResult.ok("b"),
-            FlextResult.ok("c"),
+            FlextResult[str].ok("a"),
+            FlextResult[str].ok("b"),
+            FlextResult[str].ok("c"),
         ]
 
         combined = FlextResult.combine(*results)
@@ -1014,9 +1013,9 @@ class TestFlextResultStaticMethods:
     def test_combine_with_failure(self) -> None:
         """Test combine method with one failure."""
         results: list[FlextResult[object]] = [
-            FlextResult.ok("a"),
-            FlextResult.fail("error"),
-            FlextResult.ok("c"),
+            FlextResult[str].ok("a"),
+            FlextResult[None].fail("error"),
+            FlextResult[str].ok("c"),
         ]
 
         combined = FlextResult.combine(*results)
@@ -1028,9 +1027,9 @@ class TestFlextResultStaticMethods:
     def test_combine_with_none_data(self) -> None:
         """Test combine method with None data results."""
         results: list[FlextResult[object]] = [
-            FlextResult.ok("a"),
-            FlextResult.ok(None),  # This should be skipped
-            FlextResult.ok("c"),
+            FlextResult[str].ok("a"),
+            FlextResult[None].ok(None),  # This should be skipped
+            FlextResult[str].ok("c"),
         ]
 
         combined = FlextResult.combine(*results)
@@ -1042,9 +1041,9 @@ class TestFlextResultStaticMethods:
     def test_all_success_true(self) -> None:
         """Test all_success method with all successful results."""
         results: list[FlextResult[object]] = [
-            FlextResult.ok("a"),
-            FlextResult.ok("b"),
-            FlextResult.ok("c"),
+            FlextResult[str].ok("a"),
+            FlextResult[str].ok("b"),
+            FlextResult[str].ok("c"),
         ]
 
         if not (FlextResult.all_success(*results)):
@@ -1054,9 +1053,9 @@ class TestFlextResultStaticMethods:
     def test_all_success_false(self) -> None:
         """Test all_success method with one failure."""
         results: list[FlextResult[object]] = [
-            FlextResult.ok("a"),
-            FlextResult.fail("error"),
-            FlextResult.ok("c"),
+            FlextResult[str].ok("a"),
+            FlextResult[None].fail("error"),
+            FlextResult[str].ok("c"),
         ]
 
         if FlextResult.all_success(*results):
@@ -1066,9 +1065,9 @@ class TestFlextResultStaticMethods:
     def test_any_success_true(self) -> None:
         """Test any_success method with one success."""
         results: list[FlextResult[object]] = [
-            FlextResult.fail("error1"),
-            FlextResult.ok("success"),
-            FlextResult.fail("error2"),
+            FlextResult[None].fail("error1"),
+            FlextResult[str].ok("success"),
+            FlextResult[None].fail("error2"),
         ]
 
         if not (FlextResult.any_success(*results)):
@@ -1078,9 +1077,9 @@ class TestFlextResultStaticMethods:
     def test_any_success_false(self) -> None:
         """Test any_success method with all failures."""
         results: list[FlextResult[object]] = [
-            FlextResult.fail("error1"),
-            FlextResult.fail("error2"),
-            FlextResult.fail("error3"),
+            FlextResult[None].fail("error1"),
+            FlextResult[None].fail("error2"),
+            FlextResult[None].fail("error3"),
         ]
 
         if FlextResult.any_success(*results):
@@ -1090,9 +1089,9 @@ class TestFlextResultStaticMethods:
     def test_first_success_found(self) -> None:
         """Test first_success method when success is found."""
         results: list[FlextResult[object]] = [
-            FlextResult.fail("error1"),
-            FlextResult.ok("first_success"),
-            FlextResult.ok("second_success"),
+            FlextResult[None].fail("error1"),
+            FlextResult[str].ok("first_success"),
+            FlextResult[str].ok("second_success"),
         ]
 
         first = FlextResult.first_success(*results)
@@ -1104,9 +1103,9 @@ class TestFlextResultStaticMethods:
     def test_first_success_not_found(self) -> None:
         """Test first_success method when no success is found."""
         results: list[FlextResult[object]] = [
-            FlextResult.fail("error1"),
-            FlextResult.fail("error2"),
-            FlextResult.fail("last_error"),
+            FlextResult[None].fail("error1"),
+            FlextResult[None].fail("error2"),
+            FlextResult[None].fail("last_error"),
         ]
 
         first = FlextResult.first_success(*results)
@@ -1188,9 +1187,9 @@ class TestModuleLevelFunctions:
     def test_chain_all_success(self) -> None:
         """Test chain function with all successful results."""
         results: list[FlextResult[object]] = [
-            FlextResult.ok("a"),
-            FlextResult.ok("b"),
-            FlextResult.ok("c"),
+            FlextResult[str].ok("a"),
+            FlextResult[str].ok("b"),
+            FlextResult[str].ok("c"),
         ]
 
         # Use FlextResult.combine instead of legacy chain
@@ -1203,9 +1202,9 @@ class TestModuleLevelFunctions:
     def test_chain_with_failure(self) -> None:
         """Test chain function with one failure."""
         results: list[FlextResult[object]] = [
-            FlextResult.ok("a"),
-            FlextResult.fail("chain error"),
-            FlextResult.ok("c"),
+            FlextResult[str].ok("a"),
+            FlextResult[None].fail("chain error"),
+            FlextResult[str].ok("c"),
         ]
 
         # Use FlextResult.combine instead of legacy chain
@@ -1218,9 +1217,9 @@ class TestModuleLevelFunctions:
     def test_chain_with_none_data(self) -> None:
         """Test chain function with None data results."""
         results: list[FlextResult[object]] = [
-            FlextResult.ok("a"),
-            FlextResult.ok(None),  # Should be skipped
-            FlextResult.ok("c"),
+            FlextResult[str].ok("a"),
+            FlextResult[None].ok(None),  # Should be skipped
+            FlextResult[str].ok("c"),
         ]
 
         # Use FlextResult.combine instead of legacy chain
@@ -1233,8 +1232,8 @@ class TestModuleLevelFunctions:
     def test_compose_alias(self) -> None:
         """Test compose function (alias for chain)."""
         results: list[FlextResult[object]] = [
-            FlextResult.ok("a"),
-            FlextResult.ok("b"),
+            FlextResult[str].ok("a"),
+            FlextResult[str].ok("b"),
         ]
 
         # Use FlextResult.combine instead of legacy compose
@@ -1292,7 +1291,7 @@ class TestModuleLevelFunctions:
 
         result = safe_call(failing_func)
         assert result.is_failure
-        # Empty error messages are converted to "Unknown error occurred" by FlextResult.fail()
+        # Empty error messages are converted to "Unknown error occurred" by FlextResult[None].fail()
         if result.error != "Unknown error occurred":
             msg: str = f"Expected 'Unknown error occurred', got {result.error}"
             raise AssertionError(msg)
@@ -1317,8 +1316,8 @@ class TestFlextResultPropertyBased:
         ),
     )
     def test_result_ok_preserves_value(self, value: object) -> None:
-        """Property: FlextResult.ok preserves any value."""
-        result = FlextResult.ok(value)
+        """Property: FlextResult[object].ok preserves any value."""
+        result = FlextResult[None].ok(value)
         assert result.success
         assert result.data == value
         assert result.error is None
@@ -1326,8 +1325,8 @@ class TestFlextResultPropertyBased:
     @pytest.mark.hypothesis
     @given(error_msg=st.text(min_size=1).filter(lambda s: s.strip()))
     def test_result_fail_preserves_error(self, error_msg: str) -> None:
-        """Property: FlextResult.fail preserves non-empty error message."""
-        result: FlextResult[None] = FlextResult.fail(error_msg)
+        """Property: FlextResult[object].fail preserves non-empty error message."""
+        result: FlextResult[None] = FlextResult[None].fail(error_msg)
         assert result.is_failure
         assert result.error == error_msg.strip()
         assert result.data is None
@@ -1357,7 +1356,7 @@ class TestFlextResultPropertyBased:
         func2: Callable[[int], int],
     ) -> None:
         """Property: map operations compose correctly."""
-        result: FlextResult[int] = FlextResult.ok(value)
+        result: FlextResult[int] = FlextResult[None].ok(value)
 
         # Apply functions separately
         result1: FlextResult[int] = result.map(func1).map(func2)
@@ -1420,11 +1419,11 @@ class TestFlextResultParametrized:
                 continue
 
             if input_data.get("success"):
-                result = FlextResult.ok(test_case.expected_output)
+                result = FlextResult[None].ok(test_case.expected_output)
                 assert result.success
                 assert result.data == test_case.expected_output
             else:
-                result = FlextResult.fail(test_case.expected_error or "Unknown error")
+                result = FlextResult[None].fail(test_case.expected_error or "Unknown error")
                 assert result.is_failure
                 assert result.error == test_case.expected_error
 
@@ -1446,7 +1445,7 @@ class TestFlextResultPerformance:
         """Benchmark FlextResult creation performance."""
 
         def create_results() -> list[FlextResult[str]]:
-            return [FlextResult.ok(f"value_{i}") for i in range(1000)]
+            return [FlextResult[str].ok(f"value_{i}") for i in range(1000)]
 
         metrics = performance_monitor(create_results)
         threshold = performance_threshold.get("result_creation", 1.0)
@@ -1465,7 +1464,7 @@ class TestFlextResultPerformance:
 
         def chain_operations() -> FlextResult[int]:
             return (
-                FlextResult.ok(1)
+                FlextResult[None].ok(1)
                 .map(lambda x: x + 1)
                 .map(lambda x: x * 2)
                 .map(lambda x: x**2)
@@ -1489,7 +1488,7 @@ class TestFlextResultPerformance:
                 raise ValueError(error_msg)
             return x * 2
 
-        result = FlextResult.ok(10)
+        result = FlextResult[int].ok(10)
 
         # The map method should catch the exception and return a failure result
         mapped_result: FlextResult[int] = result.map(risky_operation)
@@ -1514,28 +1513,28 @@ class TestFlextResultIntegration:
         # Simulate data processing pipeline
         def validate_data(data: object) -> FlextResult[dict[str, object]]:
             if not isinstance(data, dict):
-                return FlextResult.fail("Data must be dictionary")
+                return FlextResult[None].fail("Data must be dictionary")
             if "id" not in data:
-                return FlextResult.fail("Missing required 'id' field")
-            return FlextResult.ok(data)
+                return FlextResult[None].fail("Missing required 'id' field")
+            return FlextResult[None].ok(data)
 
         def enrich_data(data: dict[str, object]) -> FlextResult[dict[str, object]]:
             enriched = dict(data)
             enriched["timestamp"] = "2024-01-01T00:00:00Z"
             enriched["processed"] = True
-            return FlextResult.ok(enriched)
+            return FlextResult[None].ok(enriched)
 
         def transform_data(data: dict[str, object]) -> FlextResult[dict[str, object]]:
             transformed = dict(data)
             if "name" in transformed:
                 transformed["name"] = str(transformed["name"]).upper()
-            return FlextResult.ok(transformed)
+            return FlextResult[None].ok(transformed)
 
         # Test successful pipeline
         initial_data = {"id": 123, "name": "test user"}
 
         result = (
-            FlextResult.ok(initial_data)
+            FlextResult[None].ok(initial_data)
             .flat_map(validate_data)
             .flat_map(enrich_data)
             .flat_map(transform_data)
@@ -1552,14 +1551,14 @@ class TestFlextResultIntegration:
         """Test error propagation through data pipeline."""
 
         def failing_step(_data: object) -> FlextResult[object]:
-            return FlextResult.fail("Processing failed at step 2")
+            return FlextResult[None].fail("Processing failed at step 2")
 
         def later_step(data: object) -> FlextResult[object]:
-            return FlextResult.ok(f"processed: {data}")
+            return FlextResult[str].ok(f"processed: {data}")
 
         # Pipeline should stop at first failure
         result = (
-            FlextResult.ok("initial data")
+            FlextResult[str].ok("initial data")
             .map(lambda x: f"step1: {x}")
             .flat_map(failing_step)
             .flat_map(later_step)  # This should not execute
@@ -1581,7 +1580,7 @@ class TestFlextResultBoundary:
     @pytest.mark.boundary
     def test_deep_nesting_chain(self) -> None:
         """Test deeply nested chain operations."""
-        result: FlextResult[int] = FlextResult.ok(1)
+        result: FlextResult[int] = FlextResult[None].ok(1)
 
         # Create a deep chain (50 operations)
         for i in range(50):
@@ -1599,7 +1598,7 @@ class TestFlextResultBoundary:
     def test_large_data_handling(self) -> None:
         """Test FlextResult with large data structures."""
         large_list = list(range(10000))
-        result = FlextResult.ok(large_list)
+        result = FlextResult[None].ok(large_list)
 
         # Test map operation on large data
         transformed: FlextResult[list[int]] = result.map(
@@ -1622,7 +1621,7 @@ class TestFlextResultBoundary:
                 raise ValueError(error_msg)
             return x * 2
 
-        result = FlextResult.ok(10)
+        result = FlextResult[int].ok(10)
 
         # The map method should catch the exception and return a failure result
         mapped_result: FlextResult[int] = result.map(risky_operation)
@@ -1648,7 +1647,7 @@ class TestFlextResultAsync:
 
         async def async_operation(value: int) -> FlextResult[int]:
             await asyncio.sleep(0.001)  # Simulate async work
-            return FlextResult.ok(value * 2)
+            return FlextResult[None].ok(value * 2)
 
         result = await async_operation(21)
         assert result.success
@@ -1668,12 +1667,12 @@ class TestFlextResultAsync:
             return x * 2
 
         # Start with sync result, chain async operations
-        initial = FlextResult.ok(5)
+        initial = FlextResult[int].ok(5)
 
         # Chain async operations (would need async map in real implementation)
         result1 = await async_add(initial.unwrap())
         result2 = await async_multiply(result1)
-        final_result = FlextResult.ok(result2)
+        final_result = FlextResult[int].ok(result2)
 
         assert final_result.success
         assert final_result.data == 30  # (5 + 10) * 2

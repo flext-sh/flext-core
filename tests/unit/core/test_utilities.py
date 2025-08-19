@@ -271,7 +271,7 @@ class TestFlextUtilitiesWithFixtures:
         """Test utilities with mock factory fixture."""
         # Create mock external service
         service = mock_factory("external_service")
-        service.process_id.return_value = FlextResult.ok("processed_id_123")
+        service.process_id.return_value = FlextResult[str].ok("processed_id_123")
 
         # Generate ID and process through service
         generated_id = FlextUtilities.generate_id()
@@ -511,13 +511,13 @@ class TestFlextUtilitiesIntegration:
 
             # Validate and wrap in result
             if FlextUtilities.is_not_none_guard(entity_data.get("id")):
-                return FlextResult.ok(
+                return FlextResult[dict[str, object]].ok(
                     {
                         "entity": entity_data,
                         "description": truncated_desc,
                     },
                 )
-            return FlextResult.fail("Invalid entity data")
+            return FlextResult[dict[str, object]].fail("Invalid entity data")
 
         # Monitor performance
         metrics = performance_monitor(create_entity_workflow)
@@ -529,14 +529,14 @@ class TestFlextUtilitiesIntegration:
         # Validate entity structure
         entity = cast(
             "dict[str, object]",
-            cast("dict[str, object]", result.data)["entity"],
+            result.data["entity"],
         )
         assert cast("str", entity["id"]).startswith("entity_")
         assert cast("str", entity["correlation_id"]).startswith("corr_")
         assert isinstance(entity["created_at"], float)
 
         # Validate description
-        description = cast("str", cast("dict[str, object]", result.data)["description"])
+        description = cast("str", result.data["description"])
         assert len(description) <= 50
 
     @pytest.mark.integration

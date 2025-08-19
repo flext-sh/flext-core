@@ -18,6 +18,13 @@ from collections.abc import Callable
 from decimal import Decimal
 from typing import cast
 
+from examples.shared_domain import (
+    Money,
+    Product as SharedProduct,
+    SharedDemonstrationPattern,
+    SharedDomainFactory,
+    User as SharedUser,
+)
 from flext_core import (
     FlextComparableMixin,
     FlextLoggableMixin,
@@ -25,14 +32,6 @@ from flext_core import (
     TAnyObject,
     TErrorMessage,
     TUserData,
-)
-
-from .shared_domain import (
-    Money,
-    Product as SharedProduct,
-    SharedDemonstrationPattern,
-    SharedDomainFactory,
-    User as SharedUser,
 )
 
 # =============================================================================
@@ -87,8 +86,8 @@ class ValidationResult:
     def to_flext_result(self) -> FlextResult[None]:
         """Convert validation result to FlextResult - eliminates early returns."""
         if self.has_errors():
-            return FlextResult.fail(self.get_combined_error())
-        return FlextResult.ok(None)
+            return FlextResult[None].fail(self.get_combined_error())
+        return FlextResult[None].ok(None)
 
 
 class ProductFieldValidator:
@@ -235,9 +234,9 @@ class ValidationDemoUser(SharedUser, FlextLoggableMixin):
             self,
             "requires_guardian_consent",
         ):
-            return FlextResult.fail("Users under 21 require guardian consent")
+            return FlextResult[None].fail("Users under 21 require guardian consent")
 
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
 
 class ValidationDemoProduct(SharedProduct, FlextComparableMixin):
@@ -266,9 +265,9 @@ class ValidationDemoProduct(SharedProduct, FlextComparableMixin):
         # Advanced inventory rules
         high_value_threshold = Money(amount=Decimal(1000), currency="USD")
         if not self.in_stock and self.price.amount > high_value_threshold.amount:
-            return FlextResult.fail("High-value items must be in stock")
+            return FlextResult[None].fail("High-value items must be in stock")
 
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
 
 # =============================================================================
@@ -286,12 +285,12 @@ def validate_user_business_rules(user: SharedUser) -> FlextResult[None]:
     # Additional business rules specific to this validation system
     if user.age.value < MIN_GUARDIAN_AGE:
         # Check if this is a restricted activity
-        return FlextResult.fail(f"Users under {MIN_GUARDIAN_AGE} have restrictions")
+        return FlextResult[None].fail(f"Users under {MIN_GUARDIAN_AGE} have restrictions")
 
     if user.status == "suspended":
-        return FlextResult.fail("Suspended users cannot perform operations")
+        return FlextResult[None].fail("Suspended users cannot perform operations")
 
-    return FlextResult.ok(None)
+    return FlextResult[None].ok(None)
 
 
 # =============================================================================
@@ -494,12 +493,12 @@ def validate_customer_complete(
     # Extract and validate input data types
     input_result = _extract_and_validate_customer_input(customer_data)
     if input_result.is_failure:
-        return FlextResult.fail(input_result.error or "Input validation failed")
+        return FlextResult[None].fail(input_result.error or "Input validation failed")
 
     if input_result.data is not None:
         name_value, email_value, age_value = input_result.data
     else:
-        return FlextResult.fail("Input validation returned None")
+        return FlextResult[None].fail("Input validation returned None")
 
     # Create user with factory
     user_result = _create_user_with_factory(name_value, email_value, age_value)
@@ -511,7 +510,7 @@ def validate_customer_complete(
     # Apply business validation
     if user is not None:
         return _validate_and_finalize_customer(user)
-    return FlextResult.fail("User creation returned None")
+    return FlextResult[None].fail("User creation returned None")
 
 
 def _extract_and_validate_customer_input(
@@ -524,13 +523,13 @@ def _extract_and_validate_customer_input(
 
     # Type validation
     if not isinstance(name_value, str):
-        return FlextResult.fail("Name must be a string")
+        return FlextResult[None].fail("Name must be a string")
     if not isinstance(email_value, str):
-        return FlextResult.fail("Email must be a string")
+        return FlextResult[None].fail("Email must be a string")
     if not isinstance(age_value, int):
-        return FlextResult.fail("Age must be an integer")
+        return FlextResult[None].fail("Age must be an integer")
 
-    return FlextResult.ok((name_value, email_value, age_value))
+    return FlextResult[None].ok((name_value, email_value, age_value))
 
 
 def _create_user_with_factory(
@@ -546,12 +545,12 @@ def _create_user_with_factory(
     )
 
     if user_result.is_failure:
-        return FlextResult.fail(f"User creation failed: {user_result.error}")
+        return FlextResult[None].fail(f"User creation failed: {user_result.error}")
 
     user = user_result.data
     if user is None:
-        return FlextResult.fail("User creation returned None data")
-    return FlextResult.ok(user)
+        return FlextResult[None].fail("User creation returned None data")
+    return FlextResult[None].ok(user)
 
 
 def _validate_and_finalize_customer(user: SharedUser) -> FlextResult[SharedUser]:
@@ -560,15 +559,15 @@ def _validate_and_finalize_customer(user: SharedUser) -> FlextResult[SharedUser]
         business_validation = validate_user_business_rules(user)
         if business_validation.is_failure:
             error_msg = business_validation.error or "Business validation failed"
-            return FlextResult.fail(error_msg)
+            return FlextResult[None].fail(error_msg)
 
         # Log successful validation
 
-        return FlextResult.ok(user)
+        return FlextResult[None].ok(user)
 
     except (RuntimeError, ValueError, TypeError) as e:
         error_message = f"Failed to validate shared customer: {e}"
-        return FlextResult.fail(error_message)
+        return FlextResult[None].fail(error_message)
 
 
 def validate_product_complete(
@@ -583,19 +582,19 @@ def validate_product_complete(
     # Validate fields using orchestrator pattern
     field_result = _validate_product_fields(product_data)
     if field_result.is_failure:
-        return FlextResult.fail(field_result.error or "Field validation failed")
+        return FlextResult[None].fail(field_result.error or "Field validation failed")
 
     # Extract and validate types
     type_result = _extract_and_validate_product_types(product_data)
     if type_result.is_failure:
-        return FlextResult.fail(type_result.error or "Type validation failed")
+        return FlextResult[None].fail(type_result.error or "Type validation failed")
 
     validated_data = type_result.data
 
     # Create and finalize product
     if validated_data is not None:
         return _create_and_finalize_product(validated_data)
-    return FlextResult.fail("Type validation returned None")
+    return FlextResult[None].fail("Type validation returned None")
 
 
 def _validate_product_fields(product_data: TAnyObject) -> FlextResult[None]:
@@ -605,9 +604,9 @@ def _validate_product_fields(product_data: TAnyObject) -> FlextResult[None]:
 
     if field_validation.is_failure:
         error_msg = field_validation.error or "Field validation failed"
-        return FlextResult.fail(error_msg)
+        return FlextResult[None].fail(error_msg)
 
-    return FlextResult.ok(None)
+    return FlextResult[None].ok(None)
 
 
 def _extract_and_validate_product_types(
@@ -624,15 +623,15 @@ def _extract_and_validate_product_types(
 
     # Type validation for required fields
     if not isinstance(name, str):
-        return FlextResult.fail("Product name must be a string")
+        return FlextResult[None].fail("Product name must be a string")
     if not isinstance(price, (int, float)):
-        return FlextResult.fail("Product price must be a number")
+        return FlextResult[None].fail("Product price must be a number")
     if not isinstance(category, str):
-        return FlextResult.fail("Product category must be a string")
+        return FlextResult[None].fail("Product category must be a string")
     if not isinstance(stock, int):
-        return FlextResult.fail("Product stock must be an integer")
+        return FlextResult[None].fail("Product stock must be an integer")
 
-    return FlextResult.ok(
+    return FlextResult[None].ok(
         {
             "name": name,
             "price": price,
@@ -663,17 +662,17 @@ def _create_and_finalize_product(
         )
 
         if product_result.is_failure:
-            return FlextResult.fail(f"Product creation failed: {product_result.error}")
+            return FlextResult[None].fail(f"Product creation failed: {product_result.error}")
 
         shared_product = product_result.data
         if shared_product is None:
-            return FlextResult.fail("Product creation returned None data")
+            return FlextResult[None].fail("Product creation returned None data")
 
         # Create enhanced demo product and validate inventory
         return _create_enhanced_demo_product(shared_product)
 
     except (RuntimeError, ValueError, TypeError) as e:
-        return FlextResult.fail(f"Product validation error: {e}")
+        return FlextResult[None].fail(f"Product validation error: {e}")
 
 
 def _create_enhanced_demo_product(
@@ -696,12 +695,12 @@ def _create_enhanced_demo_product(
         inventory_validation = enhanced_product.validate_inventory_rules()
         if inventory_validation.is_failure:
             error_msg = inventory_validation.error or "Inventory validation failed"
-            return FlextResult.fail(error_msg)
+            return FlextResult[None].fail(error_msg)
 
-        return FlextResult.ok(enhanced_product)
+        return FlextResult[None].ok(enhanced_product)
 
     except (RuntimeError, ValueError, TypeError) as e:
-        return FlextResult.fail(f"Failed to create enhanced product: {e}")
+        return FlextResult[None].fail(f"Failed to create enhanced product: {e}")
 
 
 def demonstrate_customer_validation() -> None:

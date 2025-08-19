@@ -19,13 +19,7 @@ from collections.abc import Callable
 from decimal import Decimal
 from typing import Protocol, cast
 
-from flext_core import (
-    FlextEntity,
-    FlextResult,
-    FlextUtilities,
-)
-
-from .shared_domain import (
+from examples.shared_domain import (
     Address,
     Age,
     EmailAddress as Email,
@@ -36,7 +30,12 @@ from .shared_domain import (
     User as SharedUser,
     UserStatus,
 )
-from .shared_example_helpers import run_example_demonstration
+from examples.shared_example_helpers import run_example_demonstration
+from flext_core import (
+    FlextEntity,
+    FlextResult,
+    FlextUtilities,
+)
 
 
 class CustomerFactory(Protocol):
@@ -121,19 +120,19 @@ class Customer(SharedUser):
         # Validate credit limit
         credit_validation = self.credit_limit.validate_business_rules()
         if credit_validation.is_failure:
-            return FlextResult.fail(
+            return FlextResult[object].fail(
                 f"Credit limit validation failed: {credit_validation.error}",
             )
 
         # Business rule: Credit limit must be reasonable
         if self.credit_limit.amount > MAX_CREDIT_LIMIT:
-            return FlextResult.fail("Credit limit cannot exceed 100,000")
+            return FlextResult[object].fail("Credit limit cannot exceed 100,000")
 
         # Business rule: Total orders cannot be negative
         if self.total_orders < 0:
-            return FlextResult.fail("Total orders cannot be negative")
+            return FlextResult[object].fail("Total orders cannot be negative")
 
-        return FlextResult.ok(None)
+        return FlextResult[object].ok(None)
 
     def validate_domain_rules(self) -> FlextResult[None]:
         """Validate customer domain rules."""
@@ -147,13 +146,13 @@ class Customer(SharedUser):
     def activate(self) -> FlextResult[User]:
         """Activate customer account."""
         if self.is_active:
-            return FlextResult.fail("Customer is already active")
+            return FlextResult[object].fail("Customer is already active")
 
         # Create new version with activation
         try:
             activated_customer = self.model_copy(update={"status": UserStatus.ACTIVE})
         except Exception as e:
-            return FlextResult.fail(f"Failed to create activated customer: {e}")
+            return FlextResult[object].fail(f"Failed to create activated customer: {e}")
 
         # Add domain event
         activated_customer.add_domain_event(
@@ -165,7 +164,7 @@ class Customer(SharedUser):
             },
         )
 
-        return FlextResult.ok(cast("User", activated_customer))
+        return FlextResult[object].ok(cast("User", activated_customer))
 
     def deactivate(self, reason: str) -> FlextResult[Customer]:
         """Deactivate customer account using structured validation."""
@@ -178,7 +177,7 @@ class Customer(SharedUser):
         for validation_method in validation_methods:
             result = validation_method()
             if result.is_failure:
-                return FlextResult.fail(result.error or "Validation failed")
+                return FlextResult[object].fail(result.error or "Validation failed")
 
         # Execute deactivation process
         return self._create_deactivated_customer().flat_map(
@@ -188,16 +187,16 @@ class Customer(SharedUser):
     def _validate_customer_is_active_for_deactivation(self) -> FlextResult[None]:
         """Validate customer is active and can be deactivated."""
         if not self.is_active:
-            return FlextResult.fail("Customer is already inactive")
-        return FlextResult.ok(None)
+            return FlextResult[object].fail("Customer is already inactive")
+        return FlextResult[object].ok(None)
 
     def _validate_deactivation_reason(self, reason: str) -> FlextResult[None]:
         """Validate deactivation reason meets requirements."""
         if not reason or len(reason.strip()) < MIN_STATUS_CHANGE_REASON_LENGTH:
-            return FlextResult.fail(
+            return FlextResult[object].fail(
                 "Deactivation reason must be at least 10 characters",
             )
-        return FlextResult.ok(None)
+        return FlextResult[object].ok(None)
 
     def _create_deactivated_customer(self) -> FlextResult[Customer]:
         """Create new customer instance with inactive status."""
@@ -205,9 +204,9 @@ class Customer(SharedUser):
             deactivated_customer = self.model_copy(
                 update={"status": UserStatus.INACTIVE},
             )
-            return FlextResult.ok(deactivated_customer)
+            return FlextResult[object].ok(deactivated_customer)
         except Exception as e:
-            return FlextResult.fail(f"Failed to create deactivated customer: {e}")
+            return FlextResult[object].fail(f"Failed to create deactivated customer: {e}")
 
     def _add_deactivation_event(
         self,
@@ -225,7 +224,7 @@ class Customer(SharedUser):
             },
         )
 
-        return FlextResult.ok(customer)
+        return FlextResult[object].ok(customer)
 
     def update_address(self, new_address: Address) -> FlextResult[Customer]:
         """Update customer address using railway-oriented programming."""
@@ -241,17 +240,17 @@ class Customer(SharedUser):
     def _validate_customer_active_for_address_update(self) -> FlextResult[None]:
         """Validate customer is active for address updates."""
         if not self.is_active:
-            return FlextResult.fail("Cannot update address for inactive customer")
-        return FlextResult.ok(None)
+            return FlextResult[object].fail("Cannot update address for inactive customer")
+        return FlextResult[object].ok(None)
 
     def _validate_new_address(self, new_address: Address) -> FlextResult[None]:
         """Validate new address meets domain requirements."""
         validation = new_address.validate_business_rules()
         if validation.is_failure:
-            return FlextResult.fail(
+            return FlextResult[object].fail(
                 f"New address validation failed: {validation.error}",
             )
-        return FlextResult.ok(None)
+        return FlextResult[object].ok(None)
 
     def _create_customer_with_updated_address(
         self,
@@ -260,9 +259,9 @@ class Customer(SharedUser):
         """Create new customer instance with updated address."""
         try:
             updated_customer = self.model_copy(update={"address": new_address})
-            return FlextResult.ok(updated_customer)
+            return FlextResult[object].ok(updated_customer)
         except Exception as e:
-            return FlextResult.fail(f"Failed to create updated customer: {e}")
+            return FlextResult[object].fail(f"Failed to create updated customer: {e}")
 
     def _add_address_update_event(
         self,
@@ -280,7 +279,7 @@ class Customer(SharedUser):
             },
         )
 
-        return FlextResult.ok(customer)
+        return FlextResult[object].ok(customer)
 
     def increase_credit_limit(self, amount: Money) -> FlextResult[Customer]:
         """Increase customer credit limit using railway-oriented programming.
@@ -300,48 +299,48 @@ class Customer(SharedUser):
     def _validate_customer_active(self) -> FlextResult[None]:
         """Validate customer is active for credit limit operations."""
         if not self.is_active:
-            return FlextResult.fail(
+            return FlextResult[object].fail(
                 "Cannot increase credit limit for inactive customer",
             )
-        return FlextResult.ok(None)
+        return FlextResult[object].ok(None)
 
     def _validate_currency_match(self, amount: Money) -> FlextResult[None]:
         """Validate currency matches current credit limit."""
         if self.credit_limit.currency != amount.currency:
-            return FlextResult.fail(
+            return FlextResult[object].fail(
                 f"Currency mismatch: {self.credit_limit.currency} vs {amount.currency}",
             )
-        return FlextResult.ok(None)
+        return FlextResult[object].ok(None)
 
     def _calculate_new_credit_limit(self, amount: Money) -> FlextResult[Money]:
         """Calculate new credit limit safely."""
         new_limit_result = self.credit_limit.add(amount)
         if new_limit_result.is_failure:
-            return FlextResult.fail(
+            return FlextResult[object].fail(
                 f"Failed to calculate new credit limit: {new_limit_result.error}",
             )
 
         new_limit = new_limit_result.data
         if new_limit is None:
-            return FlextResult.fail("Failed to calculate new credit limit")
+            return FlextResult[object].fail("Failed to calculate new credit limit")
 
-        return FlextResult.ok(new_limit)
+        return FlextResult[object].ok(new_limit)
 
     def _validate_credit_limit_maximum(self, new_limit: Money) -> FlextResult[Money]:
         """Validate new credit limit doesn't exceed maximum."""
         if new_limit.amount > MAX_CREDIT_LIMIT:
-            return FlextResult.fail(
+            return FlextResult[object].fail(
                 "Credit limit increase would exceed maximum of 100,000",
             )
-        return FlextResult.ok(new_limit)
+        return FlextResult[object].ok(new_limit)
 
     def _create_updated_customer(self, new_limit: Money) -> FlextResult[Customer]:
         """Create updated customer with new credit limit."""
         try:
             updated_customer = self.model_copy(update={"credit_limit": new_limit})
-            return FlextResult.ok(updated_customer)
+            return FlextResult[object].ok(updated_customer)
         except Exception as e:
-            return FlextResult.fail(f"Failed to create updated customer: {e}")
+            return FlextResult[object].fail(f"Failed to create updated customer: {e}")
 
     def _add_credit_limit_event(
         self,
@@ -361,12 +360,12 @@ class Customer(SharedUser):
             },
         )
 
-        return FlextResult.ok(updated_customer)
+        return FlextResult[object].ok(updated_customer)
 
     def increment_order_count(self) -> FlextResult[Customer]:
         """Increment total order count."""
         if not self.is_active:
-            return FlextResult.fail("Cannot increment orders for inactive customer")
+            return FlextResult[object].fail("Cannot increment orders for inactive customer")
 
         # Create new version with incremented order count
         try:
@@ -374,7 +373,7 @@ class Customer(SharedUser):
                 update={"total_orders": self.total_orders + 1},
             )
         except Exception as e:
-            return FlextResult.fail(f"Failed to create updated customer: {e}")
+            return FlextResult[object].fail(f"Failed to create updated customer: {e}")
 
         # Add domain event
         updated_customer.add_domain_event(
@@ -387,7 +386,7 @@ class Customer(SharedUser):
             },
         )
 
-        return FlextResult.ok(updated_customer)
+        return FlextResult[object].ok(updated_customer)
 
 
 class Product(FlextEntity):
@@ -415,7 +414,7 @@ class Product(FlextEntity):
             if result.is_failure:
                 return result
 
-        return FlextResult.ok(None)
+        return FlextResult[object].ok(None)
 
     def validate_domain_rules(self) -> FlextResult[None]:
         """Validate product domain rules."""
@@ -424,47 +423,47 @@ class Product(FlextEntity):
     def _validate_product_name(self) -> FlextResult[None]:
         """Validate product name requirements."""
         if not self.name or len(self.name.strip()) < MIN_NAME_LENGTH:
-            return FlextResult.fail("Product name must be at least 2 characters")
+            return FlextResult[object].fail("Product name must be at least 2 characters")
 
         if len(self.name) > MAX_COMPANY_NAME_LENGTH:
-            return FlextResult.fail("Product name cannot exceed 200 characters")
+            return FlextResult[object].fail("Product name cannot exceed 200 characters")
 
-        return FlextResult.ok(None)
+        return FlextResult[object].ok(None)
 
     def _validate_product_price(self) -> FlextResult[None]:
         """Validate product price requirements."""
         # Validate price domain rules first
         price_validation = self.price.validate_business_rules()
         if price_validation.is_failure:
-            return FlextResult.fail(
+            return FlextResult[object].fail(
                 f"Price validation failed: {price_validation.error}",
             )
 
         # Business rule: Price must be positive
         if self.price.amount <= 0:
-            return FlextResult.fail("Product price must be positive")
+            return FlextResult[object].fail("Product price must be positive")
 
-        return FlextResult.ok(None)
+        return FlextResult[object].ok(None)
 
     def _validate_stock_quantities(self) -> FlextResult[None]:
         """Validate stock quantity requirements."""
         if self.stock_quantity < 0:
-            return FlextResult.fail("Stock quantity cannot be negative")
+            return FlextResult[object].fail("Stock quantity cannot be negative")
 
         if self.minimum_stock < 0:
-            return FlextResult.fail("Minimum stock cannot be negative")
+            return FlextResult[object].fail("Minimum stock cannot be negative")
 
-        return FlextResult.ok(None)
+        return FlextResult[object].ok(None)
 
     def _validate_product_category(self) -> FlextResult[None]:
         """Validate product category requirements."""
         valid_categories = ["electronics", "clothing", "books", "home", "sports"]
         if self.category not in valid_categories:
-            return FlextResult.fail(
+            return FlextResult[object].fail(
                 f"Invalid category. Must be one of: {valid_categories}",
             )
 
-        return FlextResult.ok(None)
+        return FlextResult[object].ok(None)
 
     def is_low_stock(self) -> bool:
         """Check if product is low on stock."""
@@ -488,27 +487,27 @@ class Product(FlextEntity):
     def _validate_product_available(self) -> FlextResult[None]:
         """Validate that product is available for price updates."""
         if not self.is_available:
-            return FlextResult.fail("Cannot update price for unavailable product")
-        return FlextResult.ok(None)
+            return FlextResult[object].fail("Cannot update price for unavailable product")
+        return FlextResult[object].ok(None)
 
     def _validate_new_price(self, new_price: Money) -> FlextResult[None]:
         """Validate the new price meets business rules."""
         validation = new_price.validate_business_rules()
         if validation.is_failure:
-            return FlextResult.fail(f"New price validation failed: {validation.error}")
+            return FlextResult[object].fail(f"New price validation failed: {validation.error}")
 
         if new_price.amount <= 0:
-            return FlextResult.fail("New price must be positive")
+            return FlextResult[object].fail("New price must be positive")
 
-        return FlextResult.ok(None)
+        return FlextResult[object].ok(None)
 
     def _validate_price_currency_match(self, new_price: Money) -> FlextResult[None]:
         """Validate that new price currency matches current price currency."""
         if self.price.currency != new_price.currency:
-            return FlextResult.fail(
+            return FlextResult[object].fail(
                 f"Currency mismatch: {self.price.currency} vs {new_price.currency}",
             )
-        return FlextResult.ok(None)
+        return FlextResult[object].ok(None)
 
     def _create_updated_product_with_price(
         self,
@@ -517,9 +516,9 @@ class Product(FlextEntity):
         """Create new product instance with updated price."""
         try:
             updated_product = self.model_copy(update={"price": new_price})
-            return FlextResult.ok(updated_product)
+            return FlextResult[object].ok(updated_product)
         except Exception as e:
-            return FlextResult.fail(f"Failed to create updated product: {e}")
+            return FlextResult[object].fail(f"Failed to create updated product: {e}")
 
     def _add_price_update_event(
         self,
@@ -537,7 +536,7 @@ class Product(FlextEntity):
             },
         )
 
-        return FlextResult.ok(updated_product)
+        return FlextResult[object].ok(updated_product)
 
     def adjust_stock(self, quantity_change: int, reason: str) -> FlextResult[Product]:
         """Adjust stock quantity with reason using railway-oriented programming.
@@ -561,20 +560,20 @@ class Product(FlextEntity):
     def _validate_stock_adjustment_reason(self, reason: str) -> FlextResult[None]:
         """Validate stock adjustment reason requirements."""
         if not reason or len(reason.strip()) < MIN_REASON_LENGTH:
-            return FlextResult.fail(
+            return FlextResult[object].fail(
                 "Stock adjustment reason must be at least 5 characters",
             )
-        return FlextResult.ok(None)
+        return FlextResult[object].ok(None)
 
     def _validate_stock_availability(self, quantity_change: int) -> FlextResult[int]:
         """Validate stock availability and return new stock quantity."""
         new_stock = self.stock_quantity + quantity_change
         if new_stock < 0:
-            return FlextResult.fail(
+            return FlextResult[object].fail(
                 f"Insufficient stock. Current: {self.stock_quantity}, "
                 f"Requested: {abs(quantity_change)}",
             )
-        return FlextResult.ok(new_stock)
+        return FlextResult[object].ok(new_stock)
 
     def _create_updated_product_with_stock(
         self,
@@ -583,9 +582,9 @@ class Product(FlextEntity):
         """Create new product instance with updated stock quantity."""
         try:
             updated_product = self.model_copy(update={"stock_quantity": new_stock})
-            return FlextResult.ok(updated_product)
+            return FlextResult[object].ok(updated_product)
         except Exception as e:
-            return FlextResult.fail(f"Failed to create updated product: {e}")
+            return FlextResult[object].fail(f"Failed to create updated product: {e}")
 
     def _add_stock_adjustment_event(
         self,
@@ -614,7 +613,7 @@ class Product(FlextEntity):
             },
         )
 
-        return FlextResult.ok(updated_product)
+        return FlextResult[object].ok(updated_product)
 
     def make_unavailable(self, reason: str) -> FlextResult[Product]:
         """Make product unavailable using railway-oriented programming.
@@ -632,24 +631,24 @@ class Product(FlextEntity):
     def _validate_product_is_available(self) -> FlextResult[None]:
         """Validate product is available and can be made unavailable."""
         if not self.is_available:
-            return FlextResult.fail("Product is already unavailable")
-        return FlextResult.ok(None)
+            return FlextResult[object].fail("Product is already unavailable")
+        return FlextResult[object].ok(None)
 
     def _validate_unavailability_reason(self, reason: str) -> FlextResult[None]:
         """Validate unavailability reason meets requirements."""
         if not reason or len(reason.strip()) < MIN_STATUS_CHANGE_REASON_LENGTH:
-            return FlextResult.fail(
+            return FlextResult[object].fail(
                 "Unavailability reason must be at least 10 characters",
             )
-        return FlextResult.ok(None)
+        return FlextResult[object].ok(None)
 
     def _create_unavailable_product(self) -> FlextResult[Product]:
         """Create new product instance with unavailable status."""
         try:
             unavailable_product = self.model_copy(update={"is_available": False})
-            return FlextResult.ok(unavailable_product)
+            return FlextResult[object].ok(unavailable_product)
         except Exception as e:
-            return FlextResult.fail(f"Failed to create unavailable product: {e}")
+            return FlextResult[object].fail(f"Failed to create unavailable product: {e}")
 
     def _add_unavailability_event(
         self,
@@ -667,7 +666,7 @@ class Product(FlextEntity):
             },
         )
 
-        return FlextResult.ok(unavailable_product)
+        return FlextResult[object].ok(unavailable_product)
 
 
 # =============================================================================
@@ -690,15 +689,15 @@ class CustomerRepository:
     def save(self, customer: Customer) -> FlextResult[str]:
         """Save customer to repository."""
         self.customers[customer.id] = customer
-        return FlextResult.ok(customer.id)
+        return FlextResult[object].ok(customer.id)
 
     def find_by_id(self, customer_id: str) -> FlextResult[Customer]:
         """Find customer by ID."""
         if customer_id not in self.customers:
-            return FlextResult.fail(f"Customer not found: {customer_id}")
+            return FlextResult[object].fail(f"Customer not found: {customer_id}")
 
         customer = self.customers[customer_id]
-        return FlextResult.ok(customer)
+        return FlextResult[object].ok(customer)
 
     def find_by_email(self, email: str) -> FlextResult[Customer]:
         """Find customer by email."""
@@ -709,9 +708,9 @@ class CustomerRepository:
                 None,
             )
             if customer_email and getattr(customer_email, "email", None) == email:
-                return FlextResult.ok(customer)
+                return FlextResult[object].ok(customer)
 
-        return FlextResult.fail(f"Customer not found with email: {email}")
+        return FlextResult[object].fail(f"Customer not found with email: {email}")
 
     def find_active_customers(self) -> list[Customer]:
         """Find all active customers."""
@@ -732,15 +731,15 @@ class ProductRepository:
     def save(self, product: Product) -> FlextResult[str]:
         """Save product to repository."""
         self.products[product.id] = product
-        return FlextResult.ok(product.id)
+        return FlextResult[object].ok(product.id)
 
     def find_by_id(self, product_id: str) -> FlextResult[Product]:
         """Find product by ID."""
         if product_id not in self.products:
-            return FlextResult.fail(f"Product not found: {product_id}")
+            return FlextResult[object].fail(f"Product not found: {product_id}")
 
         product = self.products[product_id]
-        return FlextResult.ok(product)
+        return FlextResult[object].ok(product)
 
     def find_available_products(self) -> list[Product]:
         """Find all available products."""
@@ -765,15 +764,15 @@ class OrderRepository:
     def save(self, order: Order) -> FlextResult[str]:
         """Save order to repository."""
         self.orders[order.id] = order
-        return FlextResult.ok(order.id)
+        return FlextResult[object].ok(order.id)
 
     def find_by_id(self, order_id: str) -> FlextResult[Order]:
         """Find order by ID."""
         if order_id not in self.orders:
-            return FlextResult.fail(f"Order not found: {order_id}")
+            return FlextResult[object].fail(f"Order not found: {order_id}")
 
         order = self.orders[order_id]
-        return FlextResult.ok(order)
+        return FlextResult[object].ok(order)
 
     def find_by_customer(self, customer_id: str) -> list[Order]:
         """Find orders by customer."""
@@ -828,23 +827,23 @@ class OrderDomainService:
         # Validate prerequisites
         customer_result = self._validate_customer_for_order(customer_id)
         if customer_result.is_failure:
-            return FlextResult.fail(
+            return FlextResult[object].fail(
                 customer_result.error or "Customer validation failed",
             )
 
         address_result = self._validate_shipping_address(shipping_address)
         if address_result.is_failure:
-            return FlextResult.fail(address_result.error or "Address validation failed")
+            return FlextResult[object].fail(address_result.error or "Address validation failed")
 
         # Process order items
         items_result = self._create_and_validate_order_items(product_orders)
         if items_result.is_failure:
-            return FlextResult.fail(
+            return FlextResult[object].fail(
                 items_result.error or "Order items validation failed",
             )
 
         if items_result.data is None:
-            return FlextResult.fail("Order items creation returned None")
+            return FlextResult[object].fail("Order items creation returned None")
 
         order_items, total_amount = items_result.data
 
@@ -860,27 +859,27 @@ class OrderDomainService:
         """Validate customer exists and is eligible for orders."""
         customer_result = self.customer_repo.find_by_id(customer_id)
         if customer_result.is_failure:
-            return FlextResult.fail(
+            return FlextResult[object].fail(
                 f"Customer validation failed: {customer_result.error}",
             )
 
         customer = customer_result.data
         if customer is None:
-            return FlextResult.fail("Customer validation returned None data")
+            return FlextResult[object].fail("Customer validation returned None data")
 
         if not customer.is_active:
-            return FlextResult.fail("Cannot create order for inactive customer")
+            return FlextResult[object].fail("Cannot create order for inactive customer")
 
-        return FlextResult.ok(None)
+        return FlextResult[object].ok(None)
 
     def _validate_shipping_address(self, address: Address) -> FlextResult[None]:
         """Validate shipping address meets domain requirements."""
         address_validation = address.validate_business_rules()
         if address_validation.is_failure:
-            return FlextResult.fail(
+            return FlextResult[object].fail(
                 f"Shipping address validation failed: {address_validation.error}",
             )
-        return FlextResult.ok(None)
+        return FlextResult[object].ok(None)
 
     def _create_and_validate_order_items(
         self,
@@ -893,28 +892,28 @@ class OrderDomainService:
         for product_id, quantity in product_orders:
             item_result = self._create_single_order_item(product_id, quantity)
             if item_result.is_failure:
-                return FlextResult.fail(
+                return FlextResult[object].fail(
                     item_result.error or "Failed to create order item",
                 )
 
             order_item = item_result.data
             if order_item is None:
-                return FlextResult.fail("Failed to create order item")
+                return FlextResult[object].fail("Failed to create order item")
             order_items.append(order_item)
 
             # Update total amount
             total_result = self._add_item_to_total(order_item, total_amount)
             if total_result.is_failure:
-                return FlextResult.fail(
+                return FlextResult[object].fail(
                     total_result.error or "Failed to calculate total",
                 )
 
             new_total = total_result.data
             if new_total is None:
-                return FlextResult.fail("Failed to calculate total amount")
+                return FlextResult[object].fail("Failed to calculate total amount")
             total_amount = new_total
 
-        return FlextResult.ok((order_items, total_amount))
+        return FlextResult[object].ok((order_items, total_amount))
 
     def _create_single_order_item(
         self,
@@ -925,11 +924,11 @@ class OrderDomainService:
         # Get and validate product
         product_result = self._get_and_validate_product(product_id, quantity)
         if product_result.is_failure:
-            return FlextResult.fail(product_result.error or "Product validation failed")
+            return FlextResult[object].fail(product_result.error or "Product validation failed")
 
         product = product_result.data
         if product is None:
-            return FlextResult.fail("Product data is None")
+            return FlextResult[object].fail("Product data is None")
 
         # Create order item
         order_item = OrderItem(
@@ -942,11 +941,11 @@ class OrderDomainService:
         # Validate order item domain rules
         item_validation = order_item.validate_business_rules()
         if item_validation.is_failure:
-            return FlextResult.fail(
+            return FlextResult[object].fail(
                 f"Order item validation failed: {item_validation.error}",
             )
 
-        return FlextResult.ok(order_item)
+        return FlextResult[object].ok(order_item)
 
     def _get_and_validate_product(
         self,
@@ -956,22 +955,22 @@ class OrderDomainService:
         """Get product and validate availability and stock."""
         product_result = self.product_repo.find_by_id(product_id)
         if product_result.is_failure:
-            return FlextResult.fail(f"Product not found: {product_id}")
+            return FlextResult[object].fail(f"Product not found: {product_id}")
 
         product = product_result.data
         if product is None:
-            return FlextResult.fail("Product lookup returned None data")
+            return FlextResult[object].fail("Product lookup returned None data")
 
         if not product.is_available:
-            return FlextResult.fail(f"Product not available: {product.name}")
+            return FlextResult[object].fail(f"Product not available: {product.name}")
 
         if product.stock_quantity < quantity:
-            return FlextResult.fail(
+            return FlextResult[object].fail(
                 f"Insufficient stock for {product.name}. "
                 f"Available: {product.stock_quantity}, Requested: {quantity}",
             )
 
-        return FlextResult.ok(product)
+        return FlextResult[object].ok(product)
 
     def _add_item_to_total(
         self,
@@ -982,26 +981,26 @@ class OrderDomainService:
         if hasattr(order_item, "total_price"):
             item_total_result = order_item.total_price()
         else:
-            item_total_result = FlextResult.fail("total_price method not available")
+            item_total_result = FlextResult[None].fail("total_price method not available")
 
         if item_total_result.is_failure:
-            return FlextResult.fail(
+            return FlextResult[object].fail(
                 f"Failed to calculate item total: {item_total_result.error}",
             )
 
         if item_total_result.data is None:
-            return FlextResult.fail("Item total calculation returned None")
+            return FlextResult[object].fail("Item total calculation returned None")
 
         total_result = current_total.add(item_total_result.data)
         if total_result.is_failure:
-            return FlextResult.fail(
+            return FlextResult[object].fail(
                 f"Failed to calculate order total: {total_result.error}",
             )
 
         total_data = total_result.data
         if total_data is None:
-            return FlextResult.fail("Failed to calculate total")
-        return FlextResult.ok(total_data)
+            return FlextResult[object].fail("Failed to calculate total")
+        return FlextResult[object].ok(total_data)
 
     def _create_and_persist_order(
         self,
@@ -1020,32 +1019,32 @@ class OrderDomainService:
         )
 
         if order_result.is_failure:
-            return FlextResult.fail(f"Failed to create order: {order_result.error}")
+            return FlextResult[object].fail(f"Failed to create order: {order_result.error}")
 
         order = order_result.data
         if order is None:
-            return FlextResult.fail("Order creation returned None")
+            return FlextResult[object].fail("Order creation returned None")
 
         # Validate complete order
         order_validation = order.validate_domain_rules()
         if order_validation.is_failure:
-            return FlextResult.fail(
+            return FlextResult[object].fail(
                 f"Order validation failed: {order_validation.error}",
             )
 
         # Add domain event
         event_result = self._add_order_creation_event(order, customer_id, total_amount)
         if event_result.is_failure:
-            return FlextResult.fail(event_result.error or "Failed to add domain event")
+            return FlextResult[object].fail(event_result.error or "Failed to add domain event")
 
         order = event_result.data or order
 
         # Persist order
         save_result = self.order_repo.save(order)
         if save_result.is_failure:
-            return FlextResult.fail(f"Failed to save order: {save_result.error}")
+            return FlextResult[object].fail(f"Failed to save order: {save_result.error}")
 
-        return FlextResult.ok(order)
+        return FlextResult[object].ok(order)
 
     def _add_order_creation_event(
         self,
@@ -1066,7 +1065,7 @@ class OrderDomainService:
             },
         )
 
-        return FlextResult.ok(order)
+        return FlextResult[object].ok(order)
 
     def fulfill_order(self, order_id: str, tracking_number: str) -> FlextResult[Order]:
         """Fulfill order by confirming and shipping using railway-oriented programming.
@@ -1101,9 +1100,9 @@ class OrderDomainService:
 
         order = order_result.data
         if order is None:
-            return FlextResult.fail(f"Order not found: {order_id}")
+            return FlextResult[object].fail(f"Order not found: {order_id}")
 
-        return FlextResult.ok(order)
+        return FlextResult[object].ok(order)
 
     def _confirm_order_safely(self, order: Order) -> FlextResult[Order]:
         """Confirm order safely, handling missing methods."""
@@ -1114,22 +1113,22 @@ class OrderDomainService:
                     return confirmed_result
                 confirmed_order = confirmed_result.data
                 if confirmed_order is None:
-                    return FlextResult.fail("Order confirmation returned None")
-                return FlextResult.ok(confirmed_order)
+                    return FlextResult[object].fail("Order confirmation returned None")
+                return FlextResult[object].ok(confirmed_order)
             # If method doesn't exist, use the order as-is
-            return FlextResult.ok(order)
+            return FlextResult[object].ok(order)
         except AttributeError:
             # If method doesn't exist, use the order as-is
-            return FlextResult.ok(order)
+            return FlextResult[object].ok(order)
 
     def _save_confirmed_order(self, confirmed_order: Order) -> FlextResult[Order]:
         """Save confirmed order to repository."""
         save_result = self.order_repo.save(confirmed_order)
         if save_result.is_failure:
-            return FlextResult.fail(
+            return FlextResult[object].fail(
                 f"Failed to save confirmed order: {save_result.error}",
             )
-        return FlextResult.ok(confirmed_order)
+        return FlextResult[object].ok(confirmed_order)
 
     def _ship_order_safely(
         self,
@@ -1141,27 +1140,27 @@ class OrderDomainService:
             if hasattr(confirmed_order, "ship_order"):
                 shipped_result = confirmed_order.ship_order(tracking_number)
                 if hasattr(shipped_result, "is_failure") and shipped_result.is_failure:
-                    return FlextResult.fail("Order shipping failed")
+                    return FlextResult[object].fail("Order shipping failed")
                 if hasattr(shipped_result, "data"):
                     shipped_order = shipped_result.data
                     if shipped_order is None:
-                        return FlextResult.fail("Order shipping returned None")
-                    return FlextResult.ok(cast("Order", shipped_order))
-                return FlextResult.ok(confirmed_order)
+                        return FlextResult[object].fail("Order shipping returned None")
+                    return FlextResult[object].ok(cast("Order", shipped_order))
+                return FlextResult[object].ok(confirmed_order)
             # If method doesn't exist, use the confirmed order as-is
-            return FlextResult.ok(confirmed_order)
+            return FlextResult[object].ok(confirmed_order)
         except (AttributeError, TypeError):
             # If method doesn't exist or fails, use the confirmed order as-is
-            return FlextResult.ok(confirmed_order)
+            return FlextResult[object].ok(confirmed_order)
 
     def _save_shipped_order(self, shipped_order: Order) -> FlextResult[Order]:
         """Save shipped order to repository."""
         save_result = self.order_repo.save(shipped_order)
         if save_result.is_failure:
-            return FlextResult.fail(
+            return FlextResult[object].fail(
                 f"Failed to save shipped order: {save_result.error}",
             )
-        return FlextResult.ok(shipped_order)
+        return FlextResult[object].ok(shipped_order)
 
     def _update_product_stock_for_order(
         self,
@@ -1182,7 +1181,7 @@ class OrderDomainService:
                     if stock_result.success and stock_result.data is not None:
                         self.product_repo.save(stock_result.data)
 
-        return FlextResult.ok(shipped_order)
+        return FlextResult[object].ok(shipped_order)
 
 
 # =============================================================================
@@ -1216,13 +1215,13 @@ def create_customer_factory() -> CustomerFactory:
             # Validate the customer
             validation = customer.validate_business_rules()
             if validation.is_failure:
-                return FlextResult.fail(
+                return FlextResult[object].fail(
                     f"Customer validation failed: {validation.error}",
                 )
 
-            return FlextResult.ok(customer)
+            return FlextResult[object].ok(customer)
         except Exception as e:
-            return FlextResult.fail(f"Failed to create customer: {e}")
+            return FlextResult[object].fail(f"Failed to create customer: {e}")
 
     return factory
 
@@ -1250,13 +1249,13 @@ def create_product_factory() -> ProductFactory:
             # Validate the product
             validation = product.validate_business_rules()
             if validation.is_failure:
-                return FlextResult.fail(
+                return FlextResult[object].fail(
                     f"Product validation failed: {validation.error}",
                 )
 
-            return FlextResult.ok(product)
+            return FlextResult[object].ok(product)
         except Exception as e:
-            return FlextResult.fail(f"Failed to create product: {e}")
+            return FlextResult[object].fail(f"Failed to create product: {e}")
 
     return factory
 
@@ -1281,11 +1280,11 @@ def create_order_factory() -> OrderFactory:
             # Validate the order
             validation = order.validate_domain_rules()
             if validation.is_failure:
-                return FlextResult.fail(f"Order validation failed: {validation.error}")
+                return FlextResult[object].fail(f"Order validation failed: {validation.error}")
 
-            return FlextResult.ok(order)
+            return FlextResult[object].ok(order)
         except Exception as e:
-            return FlextResult.fail(f"Failed to create order: {e}")
+            return FlextResult[object].fail(f"Failed to create order: {e}")
 
     return factory
 

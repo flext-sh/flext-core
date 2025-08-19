@@ -14,8 +14,8 @@ from flext_core import FlextResult
 def divide(a: float, b: float) -> FlextResult[float]:
     """Safe division without exceptions."""
     if b == 0:
-        return FlextResult.fail("Cannot divide by zero")
-    return FlextResult.ok(a / b)
+        return FlextResult[None].fail("Cannot divide by zero")
+    return FlextResult[None].ok(a / b)
 
 # Use the result
 result = divide(10, 2)
@@ -30,7 +30,7 @@ else:
 ```python
 # Railway-oriented composition
 result = (
-    divide(10, 2)                    # FlextResult.ok(5.0)
+    divide(10, 2)                    # FlextResult[None].ok(5.0)
     .map(lambda x: x * 2)            # Transform: 10.0
     .flat_map(lambda x: divide(x, 4)) # Chain: 2.5
     .map_error(lambda e: f"Math error: {e}")  # Transform errors
@@ -42,7 +42,7 @@ def process_number(n: float) -> FlextResult[str]:
         validate_positive(n)
         .map(lambda x: x ** 2)
         .map(lambda x: f"Result: {x}")
-        .or_else(lambda _: FlextResult.ok("Using default"))
+        .or_else(lambda _: FlextResult[None].ok("Using default"))
     )
 ```
 
@@ -261,19 +261,19 @@ class User(FlextEntity):
     def activate(self) -> FlextResult[None]:
         """Activate user account."""
         if self.is_active:
-            return FlextResult.fail("User already active")
+            return FlextResult[None].fail("User already active")
 
         self.is_active = True
         self.add_domain_event("UserActivated", {
             "user_id": self.id,
             "activated_at": datetime.now().isoformat()
         })
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
     def change_email(self, new_email: str) -> FlextResult[None]:
         """Change user email with validation."""
         if "@" not in new_email:
-            return FlextResult.fail("Invalid email format")
+            return FlextResult[None].fail("Invalid email format")
 
         old_email = self.email
         self.email = new_email
@@ -283,7 +283,7 @@ class User(FlextEntity):
             "old_email": old_email,
             "new_email": new_email
         })
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 ```
 
 ### FlextValueObject - Immutable Values
@@ -302,9 +302,9 @@ class Money(FlextValueObject):
     def add(self, other: 'Money') -> FlextResult['Money']:
         """Add money amounts with same currency."""
         if self.currency != other.currency:
-            return FlextResult.fail(f"Currency mismatch: {self.currency} != {other.currency}")
+            return FlextResult[None].fail(f"Currency mismatch: {self.currency} != {other.currency}")
 
-        return FlextResult.ok(Money(
+        return FlextResult[None].ok(Money(
             amount=self.amount + other.amount,
             currency=self.currency
         ))
@@ -358,10 +358,10 @@ class ShoppingCart(FlextAggregateRoot):
                  price: Money) -> FlextResult[None]:
         """Add item to cart with validation."""
         if self.status != "active":
-            return FlextResult.fail("Cannot modify inactive cart")
+            return FlextResult[None].fail("Cannot modify inactive cart")
 
         if quantity <= 0:
-            return FlextResult.fail("Quantity must be positive")
+            return FlextResult[None].fail("Quantity must be positive")
 
         # Check for existing item
         for item in self.items:
@@ -372,7 +372,7 @@ class ShoppingCart(FlextAggregateRoot):
                     "product_id": product_id,
                     "new_quantity": item.quantity
                 })
-                return FlextResult.ok(None)
+                return FlextResult[None].ok(None)
 
         # Add new item
         self.items.append(CartItem(
@@ -388,15 +388,15 @@ class ShoppingCart(FlextAggregateRoot):
             "price": str(price.amount)
         })
 
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
     def checkout(self) -> FlextResult[Money]:
         """Checkout cart and calculate total."""
         if not self.items:
-            return FlextResult.fail("Cart is empty")
+            return FlextResult[None].fail("Cart is empty")
 
         if self.status != "active":
-            return FlextResult.fail("Cart already checked out")
+            return FlextResult[None].fail("Cart already checked out")
 
         total = Money(amount=Decimal("0"), currency="USD")
         for item in self.items:
@@ -413,7 +413,7 @@ class ShoppingCart(FlextAggregateRoot):
             "items_count": len(self.items)
         })
 
-        return FlextResult.ok(total)
+        return FlextResult[None].ok(total)
 ```
 
 ## Utility Functions
@@ -466,7 +466,7 @@ def get_user_with_fallback(user_id: str) -> FlextResult[User]:
         return cache_result
 
     # Return error
-    return FlextResult.fail(f"User {user_id} not found")
+    return FlextResult[None].fail(f"User {user_id} not found")
 ```
 
 ### Error Aggregation
@@ -486,9 +486,9 @@ def validate_order(order: Order) -> FlextResult[Order]:
         errors.append("Customer ID is required")
 
     if errors:
-        return FlextResult.fail("; ".join(errors))
+        return FlextResult[None].fail("; ".join(errors))
 
-    return FlextResult.ok(order)
+    return FlextResult[None].ok(order)
 ```
 
 ## Best Practices

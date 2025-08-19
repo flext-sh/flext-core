@@ -9,7 +9,6 @@ __all__ = [
     "validate_delegation_system",
 ]
 
-
 class FlextDelegatedProperty:
     prop_name: Incomplete
     mixin_instance: Incomplete

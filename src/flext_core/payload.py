@@ -189,22 +189,25 @@ class FlextPayload[T](
         # Validate input is actually a dictionary first
         match data_dict:
             case dict():
-                pass  # Valid dictionary, continue
+                # Type narrowing: data_dict is now known to be a dict
+                validated_dict = cast("dict[str, object]", data_dict)
             case _:
                 return FlextResult[FlextPayload[object]].fail(
                     "Failed to create payload from dict: Input is not a dictionary",
                 )
 
         try:
-            payload_data = data_dict.get("data")
-            payload_metadata_raw = data_dict.get("metadata", {})
+            payload_data = validated_dict.get("data")
+            payload_metadata_raw = validated_dict.get("metadata", {})
             match payload_metadata_raw:
                 case dict() as metadata_dict:
-                    payload_metadata = metadata_dict
+                    payload_metadata = cast("dict[str, object]", metadata_dict)
                 case _:
                     payload_metadata = {}
             # Cast to proper type for the generic class
-            payload = cls(data=payload_data, metadata=payload_metadata)
+            payload = cls(
+                data=cast("T | None", payload_data), metadata=payload_metadata
+            )
             return FlextResult[FlextPayload[object]].ok(payload)
         except (RuntimeError, ValueError, TypeError, AttributeError) as e2:
             # Broad exception handling for API contract safety in payload creation
