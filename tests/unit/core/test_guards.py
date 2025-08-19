@@ -226,10 +226,10 @@ class TestValidationDecorators:
             return x * 2
 
         # The decorator is a placeholder, so it just returns the function
-        result: int = test_function(5)  # type: ignore[call-arg]
-        # if result != 10:  # Unreachable due to pure decorator typing
-        #     msg: str = f"Expected {10}, got {result}"
-        #     raise AssertionError(msg)
+        test_result: int = test_function(5)  # type: ignore[call-arg]
+        if test_result != 10:  # Verify the function works
+            msg: str = f"Expected {10}, got {test_result}"
+            raise AssertionError(msg)
 
         # Verify the decorator returned the function unchanged
         # assert callable(test_function)  # Unreachable due to pure decorator typing

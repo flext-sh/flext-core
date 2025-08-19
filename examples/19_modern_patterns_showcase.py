@@ -15,12 +15,6 @@ from typing import cast
 
 from pydantic import ConfigDict
 
-from examples.shared_domain import (
-    Age,
-    EmailAddress as Email,
-    Money,
-    User as SharedUser,
-)
 from flext_core import (
     FlextEntity,
     FlextResult,
@@ -28,6 +22,13 @@ from flext_core import (
     FlextUtilities,
     FlextValueObject,
     get_flext_container,
+)
+
+from .shared_domain import (
+    Age,
+    EmailAddress as Email,
+    Money,
+    User as SharedUser,
 )
 
 # =============================================================================
@@ -106,8 +107,8 @@ class Customer(SharedUser):
                     "timestamp": FlextUtilities.generate_iso_timestamp(),
                 },
             )
-            return FlextResult[None].ok(customer)
-        return FlextResult[None].fail(result.error or "Failed to promote customer")
+            return FlextResult.ok(customer)
+        return FlextResult.fail(result.error or "Failed to promote customer")
 
 
 class Product(FlextEntity):
@@ -125,33 +126,33 @@ class Product(FlextEntity):
     def reserve_stock(self, quantity: int) -> FlextResult[None]:
         """Reserve stock for an order."""
         if not self.is_available(quantity):
-            return FlextResult[None].fail(
+            return FlextResult.fail(
                 f"Insufficient stock: {self.stock_quantity} available, {quantity} requested",
             )
 
         # Update stock (in real implementation would persist to database)
         self.stock_quantity -= quantity
-        return FlextResult[None].ok(None)
+        return FlextResult.ok(None)
 
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate product business rules."""
         if not self.name or len(self.name.strip()) < MIN_PRODUCT_NAME_LENGTH:
-            return FlextResult[None].fail("Product name must be at least 2 characters")
+            return FlextResult.fail("Product name must be at least 2 characters")
 
         if self.stock_quantity < 0:
-            return FlextResult[None].fail("Stock quantity cannot be negative")
+            return FlextResult.fail("Stock quantity cannot be negative")
 
         if not self.category:
-            return FlextResult[None].fail("Product category is required")
+            return FlextResult.fail("Product category is required")
 
         # Validate price
         price_validation = self.price.validate_business_rules()
         if price_validation.is_failure:
-            return FlextResult[None].fail(
+            return FlextResult.fail(
                 f"Price validation failed: {price_validation.error}",
             )
 
-        return FlextResult[None].ok(None)
+        return FlextResult.ok(None)
 
 
 class OrderItem(FlextValueObject):
@@ -164,22 +165,22 @@ class OrderItem(FlextValueObject):
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate order item business rules."""
         if not self.product_id:
-            return FlextResult[None].fail("Product ID cannot be empty")
+            return FlextResult.fail("Product ID cannot be empty")
 
         if self.quantity <= 0:
-            return FlextResult[None].fail("Quantity must be positive")
+            return FlextResult.fail("Quantity must be positive")
 
         if self.quantity > MAX_ORDER_ITEM_QUANTITY:
-            return FlextResult[None].fail("Quantity cannot exceed 100")
+            return FlextResult.fail("Quantity cannot exceed 100")
 
         # Validate unit price
         price_validation = self.unit_price.validate_business_rules()
         if price_validation.is_failure:
-            return FlextResult[None].fail(
+            return FlextResult.fail(
                 f"Unit price validation failed: {price_validation.error}",
             )
 
-        return FlextResult[None].ok(None)
+        return FlextResult.ok(None)
 
     def total_price(self) -> Money:
         """Calculate total price for this item."""
@@ -201,7 +202,7 @@ class Order(FlextEntity):
     def add_item(self, product: Product, quantity: int) -> FlextResult[Order]:
         """Add item to order with validation."""
         if not product.is_available(quantity):
-            return FlextResult[None].fail(
+            return FlextResult.fail(
                 f"Product {product.name} not available in quantity {quantity}",
             )
 
@@ -221,10 +222,10 @@ class Order(FlextEntity):
         config = cast("AppConfig", get_flext_container().get("config").unwrap())
 
         if self.total.amount < config.min_order_value:
-            return FlextResult[None].fail(f"Order below minimum value: {self.total}")
+            return FlextResult.fail(f"Order below minimum value: {self.total}")
 
         if self.total.amount > config.max_order_value:
-            return FlextResult[None].fail(f"Order exceeds maximum value: {self.total}")
+            return FlextResult.fail(f"Order exceeds maximum value: {self.total}")
 
         return self.copy_with(status=OrderStatus.CONFIRMED)
 
@@ -236,28 +237,28 @@ class Order(FlextEntity):
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate order business rules."""
         if not self.customer_id:
-            return FlextResult[None].fail("Customer ID is required")
+            return FlextResult.fail("Customer ID is required")
 
         if not self.items:
-            return FlextResult[None].fail("Order must have at least one item")
+            return FlextResult.fail("Order must have at least one item")
 
         if len(self.items) > MAX_ORDER_ITEMS:
-            return FlextResult[None].fail("Order cannot have more than 50 items")
+            return FlextResult.fail("Order cannot have more than 50 items")
 
         # Validate all items
         for i, item in enumerate(self.items):
             item_validation = item.validate_business_rules()
             if item_validation.is_failure:
-                return FlextResult[None].fail(
+                return FlextResult.fail(
                     f"Item {i + 1} validation failed: {item_validation.error}",
                 )
 
         # Validate total is consistent
         calculated_total = self._calculate_total(self.items)
         if abs(self.total.amount - calculated_total.amount) > Decimal("0.01"):
-            return FlextResult[None].fail("Order total is inconsistent with item totals")
+            return FlextResult.fail("Order total is inconsistent with item totals")
 
-        return FlextResult[None].ok(None)
+        return FlextResult.ok(None)
 
 
 # =============================================================================
@@ -275,14 +276,14 @@ class InventoryService:
         for item in items:
             product_result = container.get(f"product_{item.product_id}")
             if not product_result.success:
-                return FlextResult[None].fail(f"Product not found: {item.product_id}")
+                return FlextResult.fail(f"Product not found: {item.product_id}")
 
             product = cast("Product", product_result.data)
             reserve_result = product.reserve_stock(item.quantity)
             if not reserve_result.success:
                 return reserve_result
 
-        return FlextResult[None].ok(None)
+        return FlextResult.ok(None)
 
 
 class PaymentService:
@@ -292,11 +293,11 @@ class PaymentService:
         """Process payment and return transaction ID."""
         # Simulate payment processing
         if amount.amount <= 0:
-            return FlextResult[None].fail("Invalid payment amount")
+            return FlextResult.fail("Invalid payment amount")
 
         # In real implementation, call payment API
         transaction_id = f"txn_{customer_id}_{amount.amount}"
-        return FlextResult[None].ok(transaction_id)
+        return FlextResult.ok(transaction_id)
 
 
 class NotificationService:
@@ -310,7 +311,7 @@ class NotificationService:
         """Send order confirmation email."""
         f"Order confirmed: {order.id} for ${order.total.amount / 100:.2f}"
         # In real implementation, send actual email
-        return FlextResult[None].ok(None)
+        return FlextResult.ok(None)
 
 
 # =============================================================================
@@ -320,7 +321,7 @@ class NotificationService:
 
 def create_customer(name: str, email_address: str) -> FlextResult[Customer]:
     """Create customer with validation."""
-    email_result = FlextResult[None].ok(Email(email=email_address)).flat_map(
+    email_result = FlextResult.ok(Email(email=email_address)).flat_map(
         lambda e: e.validate_business_rules().map(lambda _: e),
     )
 
@@ -342,10 +343,10 @@ def create_product(
 ) -> FlextResult[Product]:
     """Create product with business rules."""
     if price_cents <= 0:
-        return FlextResult[None].fail("Price must be positive")
+        return FlextResult.fail("Price must be positive")
 
     if stock < 0:
-        return FlextResult[None].fail("Stock cannot be negative")
+        return FlextResult.fail("Stock cannot be negative")
 
     price = Money(amount=Decimal(str(price_cents)), currency="USD")
     return FlextResult[None].ok(
@@ -411,53 +412,53 @@ class OrderProcessingService:
         ) -> FlextResult[list[dict[str, object]]]:
             items_value = data.get("items", [])
             if not isinstance(items_value, list):
-                return FlextResult[None].fail("Items must be a list")
+                return FlextResult.fail("Items must be a list")
             normalized: list[dict[str, object]] = []
             for entry in items_value:
                 if not isinstance(entry, dict):
-                    return FlextResult[None].fail("Item data must be a dictionary")
+                    return FlextResult.fail("Item data must be a dictionary")
                 normalized.append(entry)
-            return FlextResult[None].ok(normalized)
+            return FlextResult.ok(normalized)
 
         def _parse_quantity(raw_quantity: object) -> FlextResult[int]:
             if not isinstance(raw_quantity, (int, str)):
-                return FlextResult[None].fail("Quantity must be a number")
+                return FlextResult.fail("Quantity must be a number")
             try:
-                return FlextResult[None].ok(int(str(raw_quantity)))
+                return FlextResult.ok(int(str(raw_quantity)))
             except (ValueError, TypeError):
-                return FlextResult[None].fail("Invalid quantity format")
+                return FlextResult.fail("Invalid quantity format")
 
         def _get_product_for_item(
             item: dict[str, object],
         ) -> FlextResult[tuple[object, int]]:
             product_id = item.get("product_id")
             if not isinstance(product_id, str):
-                return FlextResult[None].fail("Product ID must be a string")
+                return FlextResult.fail("Product ID must be a string")
             product_result = self._get_product(product_id)
             if product_result.is_failure or product_result.data is None:
-                return FlextResult[None].fail(product_result.error or "Product not found")
+                return FlextResult.fail(product_result.error or "Product not found")
             quantity_result = _parse_quantity(item.get("quantity", 1))
             if quantity_result.is_failure or quantity_result.data is None:
-                return FlextResult[None].fail(quantity_result.error or "Invalid quantity")
-            return FlextResult[None].ok((product_result.data, quantity_result.data))
+                return FlextResult.fail(quantity_result.error or "Invalid quantity")
+            return FlextResult.ok((product_result.data, quantity_result.data))
 
         items_result = _ensure_items(order_data)
         if items_result.is_failure or items_result.data is None:
-            return FlextResult[None].fail(items_result.error or "Invalid items")
+            return FlextResult.fail(items_result.error or "Invalid items")
 
         order = _start_empty_order()
         for item_data in items_result.data:
             pair_result = _get_product_for_item(item_data)
             if pair_result.is_failure or pair_result.data is None:
-                return FlextResult[None].fail(pair_result.error or "Invalid item")
+                return FlextResult.fail(pair_result.error or "Invalid item")
             product, quantity_int = cast("tuple[Product, int]", pair_result.data)
             order_result = order.add_item(product, quantity_int)
             if not order_result.success:
-                return FlextResult[None].fail(order_result.error or "Failed to add item")
+                return FlextResult.fail(order_result.error or "Failed to add item")
             if order_result.data is None:
-                return FlextResult[None].fail("Order result data is None")
+                return FlextResult.fail("Order result data is None")
             order = order_result.data
-        return FlextResult[None].ok(order)
+        return FlextResult.ok(order)
 
     def _validate_inventory(self, order: Order) -> FlextResult[Order]:
         """Validate inventory availability."""
@@ -484,10 +485,10 @@ class OrderProcessingService:
         customer_result = container.get(f"customer_{order.customer_id}")
 
         if not customer_result.success:
-            return FlextResult[None].fail("Customer not found for notification")
+            return FlextResult.fail("Customer not found for notification")
 
         if customer_result.data is None:
-            return FlextResult[None].fail("Customer data is None")
+            return FlextResult.fail("Customer data is None")
 
         customer = cast("Customer", customer_result.data)
         notification_result = self.notifications.send_order_confirmation(
@@ -501,12 +502,12 @@ class OrderProcessingService:
         container = get_flext_container()
         result = container.get(f"product_{product_id}")
         if result.is_failure:
-            return FlextResult[None].fail(result.error or "Product not found")
+            return FlextResult.fail(result.error or "Product not found")
 
         if result.data is None:
-            return FlextResult[None].fail("Product data is None")
+            return FlextResult.fail("Product data is None")
 
-        return FlextResult[None].ok(cast("Product", result.data))
+        return FlextResult.ok(cast("Product", result.data))
 
     def _log_success(self, order: Order) -> None:
         """Log successful order processing."""

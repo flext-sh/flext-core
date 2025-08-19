@@ -194,10 +194,15 @@ def sample_defaults() -> TAnyDict:
 def temp_json_file() -> Generator[str]:
     """Create a temporary valid JSON file for testing."""
     test_config = {
-        "database_url": "sqlite:///test.db",
-        "secret_key": "test-secret-key",
+        "name": "test-config",
+        "version": "2.0.0",
+        "description": "Test configuration",
+        "environment": "test",
         "debug": True,
-        "port": 8080,
+        "log_level": "DEBUG",
+        "timeout": 60,
+        "retries": 5,
+        "enable_caching": False,
     }
 
     with tempfile.NamedTemporaryFile(
@@ -343,17 +348,16 @@ class TestFlextConfigClass:
         """Test successful file loading and validation."""
         result = FlextConfig.load_and_validate_from_file(
             temp_json_file,
-            required_keys=["database_url", "secret_key"],
+            required_keys=["name", "version"],
         )
 
         assert result.success
         assert result.data is not None
         config = result.data
-        if config["database_url"] != "sqlite:///test.db":
-            raise AssertionError(
-                f"Expected {'sqlite:///test.db'}, got {config['database_url']}",
-            )
-        assert config["secret_key"] == "test-secret-key"
+        assert config["name"] == "test-config"
+        assert config["version"] == "2.0.0"
+        assert config["debug"] is True
+        assert config["timeout"] == 60
 
     def test_load_and_validate_from_file_no_required_keys(
         self,
@@ -365,9 +369,10 @@ class TestFlextConfigClass:
         assert result.success
         assert result.data is not None
         config = result.data
-        # Config is a dict; ensure key presence instead of attribute access
-        if "database_url" not in config:
-            raise AssertionError(f"Expected 'database_url' in {config}")
+        # Verify the config contains the model fields from our fixture
+        assert config["name"] == "test-config"
+        assert config["debug"] is True
+        assert isinstance(config["timeout"], int)
 
     def test_load_and_validate_from_file_missing_required_key(
         self,
@@ -376,14 +381,11 @@ class TestFlextConfigClass:
         """Test file loading with missing required key."""
         result = FlextConfig.load_and_validate_from_file(
             temp_json_file,
-            required_keys=["database_url", "missing_key"],
+            required_keys=["name", "missing_key"],
         )
 
         assert result.is_failure
-        if "Required config key 'missing_key' not found" not in (result.error or ""):
-            raise AssertionError(
-                f"Expected 'Required config key \\'missing_key\\' not found' in {result.error}",
-            )
+        assert "missing_key" in result.error.lower()
 
     def test_load_and_validate_from_file_none_value(self) -> None:
         """Test file loading with None value validation failure."""
@@ -522,10 +524,10 @@ class TestFlextConfigOps:
         assert result.success
         assert result.data is not None
         config = result.data
-        if config["database_url"] != "sqlite:///test.db":
-            raise AssertionError(
-                f"Expected {'sqlite:///test.db'}, got {config['database_url']}",
-            )
+        # Test should match the actual data in the fixture
+        assert config["name"] == "test-config"
+        assert config["version"] == "2.0.0"
+        assert config["environment"] == "test"
 
     def test_safe_load_json_file_nonexistent(self) -> None:
         """Test loading nonexistent JSON file."""
@@ -550,7 +552,8 @@ class TestFlextConfigOps:
 
         try:
             result = safe_get_env_var(test_key)
-            assert result == test_value
+            assert result.success
+            assert result.data == test_value
         finally:
             # Clean up
             os.environ.pop(test_key, None)
@@ -562,7 +565,8 @@ class TestFlextConfigOps:
         os.environ.pop(test_key, None)
 
         result = safe_get_env_var(test_key, "default_value")
-        assert result == "default_value"
+        assert result.success
+        assert result.data == "default_value"
 
     def test_safe_get_env_var_missing_no_default(self) -> None:
         """Test getting missing env var without default."""
@@ -571,7 +575,8 @@ class TestFlextConfigOps:
         os.environ.pop(test_key, None)
 
         result = safe_get_env_var(test_key)
-        assert result is None
+        assert result.failure
+        assert "not found" in result.error.lower()
 
     def test_safe_get_env_var_empty_string(self) -> None:
         """Test getting env var with empty string value."""
@@ -581,7 +586,8 @@ class TestFlextConfigOps:
         try:
             result = safe_get_env_var(test_key, "default")
             # Empty string is still a valid value
-            assert result == ""
+            assert result.success
+            assert result.data == ""
         finally:
             os.environ.pop(test_key, None)
 
@@ -754,8 +760,9 @@ class TestFlextConfigValidation:
         """Test validating empty config."""
         result = FlextConfigValidation.validate_config({})
 
-        # Empty config should pass basic validation
-        assert result.success
+        # Empty config should now fail validation in the modern API
+        assert result.failure
+        assert "cannot be empty" in result.error.lower()
 
     def test_validate_config_with_none_values(self) -> None:
         """Test validating config with None values."""

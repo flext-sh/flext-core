@@ -1,8 +1,6 @@
 from enum import Enum
 from typing import ClassVar
 
-from _typeshed import Incomplete
-
 __all__ = [
     "ERROR_CODES",
     "MESSAGES",
@@ -46,10 +44,10 @@ class FlextConstants:
         MAX_PERCENTAGE: float
 
     class Errors:
-        BUSINESS_ERROR_RANGE: Incomplete
-        TECHNICAL_ERROR_RANGE: Incomplete
-        VALIDATION_ERROR_RANGE: Incomplete
-        SECURITY_ERROR_RANGE: Incomplete
+        BUSINESS_ERROR_RANGE: tuple[int, int]
+        TECHNICAL_ERROR_RANGE: tuple[int, int]
+        VALIDATION_ERROR_RANGE: tuple[int, int]
+        SECURITY_ERROR_RANGE: tuple[int, int]
         GENERIC_ERROR: str
         VALIDATION_ERROR: str
         BUSINESS_RULE_VIOLATION: str
@@ -187,7 +185,7 @@ class FlextConstants:
         MAX_LIST_SIZE: int
         MIN_PASSWORD_LENGTH: int
         MAX_PASSWORD_LENGTH: int
-        MAX_FILE_SIZE: Incomplete
+        MAX_FILE_SIZE: int
         MAX_BATCH_SIZE: int
         MIN_PORT: int
         MAX_PORT: int
@@ -384,15 +382,15 @@ class FlextConstants:
         DEFAULT_HOST: str
         PRODUCTION_HOST: str
         LOOPBACK_HOST: str
-        DEFAULT_BASE_URL: Incomplete
+        DEFAULT_BASE_URL: str
         PRODUCTION_BASE_URL: str
         DB_MIN_CONNECTIONS: int
         DB_MAX_CONNECTIONS: int
         DB_CONNECTION_TIMEOUT: int
         DB_QUERY_TIMEOUT: int
-        DEFAULT_POSTGRES_URL: Incomplete
+        DEFAULT_POSTGRES_URL: str
         DEFAULT_SQLITE_URL: str
-        REDIS_URL: Incomplete
+        REDIS_URL: str
         REDIS_TIMEOUT: int
         CACHE_TTL_SHORT: int
         CACHE_TTL_MEDIUM: int
@@ -415,7 +413,7 @@ class FlextConstants:
         MIN_PORT_NUMBER: int
         MAX_PORT_NUMBER: int
 
-    DEFAULT_TIMEOUT: Incomplete
+    DEFAULT_TIMEOUT: int
 
 class FlextFieldType(Enum):
     STRING = "string"

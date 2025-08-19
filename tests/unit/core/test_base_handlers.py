@@ -40,8 +40,8 @@ class ConcreteBaseHandler(FlextAbstractHandler[object, object]):
     def handle(self, request: object) -> FlextResult[object]:
         """Handle request."""
         if request is None:
-            return FlextResult[None].fail("Request cannot be None")
-        return FlextResult[None].ok(request)
+            return FlextResult[object].fail("Request cannot be None")
+        return FlextResult[object].ok(request)
 
     def validate_request(self, request: object) -> FlextResult[None]:
         """Validate request."""
@@ -114,8 +114,8 @@ class ConcreteCommandHandler(FlextCommandHandler[str, int]):
     def handle_command(self, command: str) -> FlextResult[int]:
         """Handle string command and return length."""
         if not command:
-            return FlextResult[None].fail("Empty command")
-        return FlextResult[None].ok(len(command))
+            return FlextResult[int].fail("Empty command")
+        return FlextResult[int].ok(len(command))
 
     def process_request(self, request: str) -> FlextResult[int]:
         """Process request - delegates to handle_command."""
@@ -131,7 +131,7 @@ class TestFlextCommandHandler:
 
         # Cannot instantiate directly
         with pytest.raises(TypeError, match="Can't instantiate abstract class"):
-            FlextCommandHandler()
+            FlextCommandHandler()  # type: ignore[abstract]
 
     def test_concrete_command_handler_handle_command(self) -> None:
         """Test concrete command handler handle_command (lines 48-50)."""
@@ -186,9 +186,9 @@ class ConcreteQueryHandler(FlextQueryHandler[dict[str, str], str]):
     def handle_query(self, query: dict[str, str]) -> FlextResult[str]:
         """Handle dict query and return formatted string."""
         if not query:
-            return FlextResult[None].fail("Empty query")
+            return FlextResult[str].fail("Empty query")
         name = query.get("name", "Unknown")
-        return FlextResult[None].ok(f"Hello, {name}!")
+        return FlextResult[str].ok(f"Hello, {name}!")
 
     def process_request(self, request: dict[str, str]) -> FlextResult[str]:
         """Process request - delegates to handle_query."""
@@ -204,7 +204,7 @@ class TestFlextQueryHandler:
 
         # Cannot instantiate directly
         with pytest.raises(TypeError, match="Can't instantiate abstract class"):
-            FlextQueryHandler()
+            FlextQueryHandler()  # type: ignore[abstract]
 
     def test_concrete_query_handler_handle_query(self) -> None:
         """Test concrete query handler handle_query (lines 69-71)."""
@@ -359,20 +359,20 @@ class TestFlextHandlersIntegration:
         registry.register(base_handler)
         registry.register(validating_handler)
         registry.register(event_handler)
-        registry.register(command_handler)
-        registry.register(query_handler)
+        registry.register(command_handler)  # type: ignore[arg-type]
+        registry.register(query_handler)  # type: ignore[arg-type]
 
         handlers = registry.get_handlers()
         assert len(handlers) == 5
 
         # Test all handlers can process requests
         for handler in handlers:
-            if isinstance(handler, ConcreteCommandHandler):
-                result = handler.process_request("test")
+            if isinstance(handler, ConcreteCommandHandler):  # type: ignore[unreachable]
+                result = handler.process_request("test")  # type: ignore[unreachable]
                 assert result.success
                 assert result.data == 4
-            elif isinstance(handler, ConcreteQueryHandler):
-                query_result: FlextResult[str] = handler.process_request(
+            elif isinstance(handler, ConcreteQueryHandler):  # type: ignore[unreachable]
+                query_result: FlextResult[str] = handler.process_request(  # type: ignore[unreachable]
                     {"name": "Test"},
                 )
                 assert query_result.success

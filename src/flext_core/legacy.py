@@ -239,8 +239,14 @@ class _BaseConfigDefaults:
         config: Mapping[str, object], allowed_keys: list[str]
     ) -> FlextResult[dict[str, object]]:
         """Filter configuration to only include allowed keys."""
+        # Type validation for better error messages
+        if not isinstance(config, dict):
+            return FlextResult[dict[str, object]].fail(
+                "Configuration must be a dictionary"
+            )
+
         try:
-            filtered = {k: v for k, v in dict(config).items() if k in allowed_keys}
+            filtered = {k: v for k, v in config.items() if k in allowed_keys}
             return FlextResult[dict[str, object]].ok(filtered)
         except Exception as e:
             return FlextResult[dict[str, object]].fail(
@@ -307,7 +313,7 @@ class _BaseConfigValidation:
                 return FlextResult[bool].ok(True)  # noqa: FBT003
             return FlextResult[bool].fail(error_message)
         except Exception as e:
-            return FlextResult[bool].fail(f"Validation error: {e}")
+            return FlextResult[bool].fail(f"Validation failed: {e}")
 
     @staticmethod
     def validate_config_range(

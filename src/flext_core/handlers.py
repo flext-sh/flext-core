@@ -28,17 +28,21 @@ TOutput = TypeVar("TOutput")
 # SOLID PRINCIPLE: Dependency Inversion - Import Commands patterns
 # =============================================================================
 
+
 def _get_flext_commands_module() -> type:
     """Lazy import to avoid circular dependencies.
 
     SOLID: Dependency Inversion - depend on abstraction, not concrete implementation.
     """
     from flext_core.commands import FlextCommands  # noqa: PLC0415
+
     return FlextCommands
+
 
 # =============================================================================
 # SOLID PRINCIPLE: Interface Segregation - Abstract Handler Contracts
 # =============================================================================
+
 
 class FlextAbstractHandler(ABC, Generic[TInput, TOutput]):  # noqa: UP046
     """Abstract handler base class following Interface Segregation Principle.
@@ -1257,7 +1261,9 @@ class FlextQueryHandler(ABC, Generic[TInput, TOutput]):  # noqa: UP046
                     flext_result = cast("FlextResult[object]", result)
                     if flext_result.is_success:
                         return FlextResult[None].ok(None)
-                    return FlextResult[None].fail(str(flext_result.error or "Authorization failed"))
+                    return FlextResult[None].fail(
+                        str(flext_result.error or "Authorization failed")
+                    )
                 if isinstance(result, bool):
                     return (
                         FlextResult[None].ok(None)
@@ -1326,7 +1332,9 @@ class HandlersFacade:
                         flext_result = cast("FlextResult[object]", result)
                         if flext_result.is_success:
                             return FlextResult[None].ok(None)
-                        return FlextResult[None].fail(str(flext_result.error or "Authorization failed"))
+                        return FlextResult[None].fail(
+                            str(flext_result.error or "Authorization failed")
+                        )
                     if isinstance(result, bool):
                         return (
                             FlextResult[None].ok(None)
@@ -1460,7 +1468,9 @@ class HandlersFacade:
             if callable(handle_method):
                 # Handler is expected to implement .handle(command) -> FlextResult
                 result = handle_method(command)
-                if hasattr(result, "is_success") and getattr(result, "is_success", False):
+                if hasattr(result, "is_success") and getattr(
+                    result, "is_success", False
+                ):
                     self._metrics["successful_commands"] += 1
                 else:
                     self._metrics["failed_commands"] += 1
@@ -1506,7 +1516,9 @@ class HandlersFacade:
             handle_method = getattr(handler, "handle", None)
             if callable(handle_method):
                 result = handle_method(query)
-                if hasattr(result, "is_success") and getattr(result, "is_success", False):
+                if hasattr(result, "is_success") and getattr(
+                    result, "is_success", False
+                ):
                     self._metrics["successful_queries"] += 1
                 else:
                     self._metrics["failed_queries"] += 1

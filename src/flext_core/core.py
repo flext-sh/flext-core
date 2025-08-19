@@ -17,6 +17,7 @@ from flext_core.result import FlextResult
 # Type variables for function signatures
 P = ParamSpec("P")
 R = TypeVar("R")
+T = TypeVar("T")
 
 
 class FlextCore:
@@ -302,7 +303,7 @@ class FlextCore:
             )
 
         # Then check if all values are of the expected type
-        if not is_dict_of(obj, value_type):
+        if not is_dict_of(cast("dict[object, object]", obj), value_type):
             return FlextResult[dict[str, object]].fail(
                 f"Dictionary values must be of type {value_type.__name__}",
             )
@@ -328,8 +329,8 @@ class FlextCore:
             # Try Pydantic model validation first
             model_validate_attr = getattr(model_class, "model_validate", None)
             if callable(model_validate_attr):
-                    instance: object = model_validate_attr(data)
-                    return FlextResult[object].ok(instance)
+                instance: object = model_validate_attr(data)
+                return FlextResult[object].ok(instance)
             # Fallback to direct instantiation
             instance_fallback: object = model_class(**data)
             return FlextResult[object].ok(instance_fallback)
@@ -337,7 +338,7 @@ class FlextCore:
             return FlextResult[object].fail(f"Model validation failed: {e}")
 
     @staticmethod
-    def make_immutable(target_class: type) -> type:
+    def make_immutable(target_class: type[T]) -> type[T]:
         """Make class immutable using guards module.
 
         Args:

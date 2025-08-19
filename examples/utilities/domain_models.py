@@ -9,16 +9,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from examples.shared_domain import (
-    Order as SharedOrder,
-    Product as SharedProduct,
-    User as SharedUser,
-)
-from examples.utilities.formatting_helpers import (
-    ADULT_AGE_THRESHOLD,
-    MIDDLE_AGED_THRESHOLD,
-    YOUNG_ADULT_AGE_THRESHOLD,
-)
 from flext_core import (
     FlextCacheableMixin,
     FlextComparableMixin,
@@ -26,6 +16,17 @@ from flext_core import (
     FlextSerializableMixin,
     FlextTimestampMixin,
     FlextUtilities,
+)
+
+from ..shared_domain import (
+    Order as SharedOrder,
+    Product as SharedProduct,
+    User as SharedUser,
+)
+from .formatting_helpers import (
+    ADULT_AGE_THRESHOLD,
+    MIDDLE_AGED_THRESHOLD,
+    YOUNG_ADULT_AGE_THRESHOLD,
 )
 
 # =============================================================================
@@ -51,7 +52,7 @@ class UtilityDemoUser(SharedUser, FlextCacheableMixin, FlextSerializableMixin):
     def to_serializable(self) -> dict[str, object]:
         """Convert to serializable format with enhanced data."""
         base_data = {
-            "id": self.id,
+            "id": str(self.id),
             "name": self.name,
             "email": self.email_address.email,
             "age": self.age.value,
@@ -103,7 +104,7 @@ class UtilityDemoProduct(
     def to_serializable(self) -> dict[str, object]:
         """Convert to serializable format with enhanced data."""
         return {
-            "id": self.id,
+            "id": str(self.id),
             "name": self.name,
             "description": self.description,
             "price": {
@@ -165,11 +166,11 @@ class UtilityDemoOrder(
         currency = self.items[0].unit_price.currency if self.items else "USD"
 
         return {
-            "id": self.id,
-            "customer_id": self.customer_id,
+            "id": str(self.id),
+            "customer_id": str(self.customer_id),
             "items": [
                 {
-                    "product_id": item.product_id,
+                    "product_id": str(item.product_id),
                     "product_name": item.product_name,
                     "quantity": item.quantity,
                     "unit_price": str(item.unit_price.amount),
@@ -182,11 +183,7 @@ class UtilityDemoOrder(
                 "currency": currency,
             },
             "status": self.status.value,
-            "created_at": getattr(
-                self,
-                "created_at",
-                FlextUtilities.generate_iso_timestamp(),
-            ),
+            "created_at": self.created_at,
             "serialized_at": FlextUtilities.generate_iso_timestamp(),
             "summary": {
                 "items_count": len(self.items),

@@ -11,13 +11,6 @@ from typing import cast
 
 from pydantic import ConfigDict
 
-from examples.shared_domain import (
-    EmailAddress,
-    Money,
-    Order as SharedOrder,
-    SharedDomainFactory,
-    User as SharedUser,
-)
 from flext_core import (
     FlextCommands,
     FlextDecoratedFunction,
@@ -25,6 +18,14 @@ from flext_core import (
     FlextResult,
     FlextSettings,
     get_logger,
+)
+
+from .shared_domain import (
+    EmailAddress,
+    Money,
+    Order as SharedOrder,
+    SharedDomainFactory,
+    User as SharedUser,
 )
 
 # =============================================================================
@@ -60,7 +61,7 @@ def _demonstrate_value_objects() -> FlextResult[None]:
     # Test equality (value objects are equal by value, not identity)
     EmailAddress(email="user@example.com")
 
-    return FlextResult[None].ok(None)
+    return FlextResult.ok(None)
 
 
 def _demonstrate_aggregate_root() -> FlextResult[SharedOrder]:
@@ -86,9 +87,9 @@ def _create_test_user(email: EmailAddress) -> FlextResult[SharedUser]:
     if user_result.success:
         user = user_result.data
         if user is None:
-            return FlextResult[None].fail("User creation returned None data")
-        return FlextResult[None].ok(user)
-    return FlextResult[None].fail(f"Failed to create user: {user_result.error}")
+            return FlextResult.fail("User creation returned None data")
+        return FlextResult.ok(user)
+    return FlextResult.fail(f"Failed to create user: {user_result.error}")
 
 
 def _create_test_order(user: SharedUser, money: Money) -> FlextResult[SharedOrder]:
@@ -111,9 +112,9 @@ def _create_test_order(user: SharedUser, money: Money) -> FlextResult[SharedOrde
     if order_result.success:
         order = order_result.data
         if order is None:
-            return FlextResult[None].fail("Order creation returned None data")
-        return FlextResult[None].ok(order)
-    return FlextResult[None].fail(f"Failed to create order: {order_result.error}")
+            return FlextResult.fail("Order creation returned None data")
+        return FlextResult.ok(order)
+    return FlextResult.fail(f"Failed to create order: {order_result.error}")
 
 
 def _display_order_information(order: SharedOrder) -> FlextResult[SharedOrder]:
@@ -122,11 +123,11 @@ def _display_order_information(order: SharedOrder) -> FlextResult[SharedOrder]:
     if total_result.success:
         total = total_result.data
         if total is None:
-            return FlextResult[None].fail("Total calculation returned None data")
+            return FlextResult.fail("Total calculation returned None data")
 
     # SharedOrder has built-in domain events
 
-    return FlextResult[None].ok(order)
+    return FlextResult.ok(order)
 
 
 def _demonstrate_query_pattern(_order: SharedOrder) -> FlextResult[None]:
@@ -143,8 +144,8 @@ def _demonstrate_query_pattern(_order: SharedOrder) -> FlextResult[None]:
                 return result
 
             if not self.customer_email or "@" not in self.customer_email:
-                return FlextResult[None].fail("Invalid customer email")
-            return FlextResult[None].ok(None)
+                return FlextResult.fail("Invalid customer email")
+            return FlextResult.ok(None)
 
     class GetOrdersHandler(
         FlextCommands.QueryHandler[GetOrdersQuery, list[SharedOrder]],
@@ -158,12 +159,12 @@ def _demonstrate_query_pattern(_order: SharedOrder) -> FlextResult[None]:
             )
 
             if user_result.is_failure:
-                return FlextResult[None].fail(f"Failed to create user: {user_result.error}")
+                return FlextResult.fail(f"Failed to create user: {user_result.error}")
 
             user = user_result.data
 
             if user is None:
-                return FlextResult[None].fail("User creation returned None data")
+                return FlextResult.fail("User creation returned None data")
 
             # Simulate database query with SharedOrder
             order1_result = SharedDomainFactory.create_order(
@@ -197,13 +198,13 @@ def _demonstrate_query_pattern(_order: SharedOrder) -> FlextResult[None]:
                 order1 = order1_result.data
 
                 if order1 is None:
-                    return FlextResult[None].fail("Order creation returned None data")
+                    return FlextResult.fail("Order creation returned None data")
                 orders.append(order1)
             if order2_result.success:
                 order2 = order2_result.data
 
                 if order2 is None:
-                    return FlextResult[None].fail("Order creation returned None data")
+                    return FlextResult.fail("Order creation returned None data")
                 orders.append(order2)
 
             # Filter by status if provided
@@ -214,7 +215,7 @@ def _demonstrate_query_pattern(_order: SharedOrder) -> FlextResult[None]:
                     if o is not None and o.status.value == query.status
                 ]
 
-            return FlextResult[None].ok(orders)
+            return FlextResult.ok(orders)
 
     query = GetOrdersQuery(
         customer_email="user@example.com",
@@ -233,11 +234,11 @@ def _demonstrate_query_pattern(_order: SharedOrder) -> FlextResult[None]:
             orders = query_result.data
 
             if orders is None:
-                return FlextResult[None].fail("Orders query returned None data")
+                return FlextResult.fail("Orders query returned None data")
             for o in orders:
                 if hasattr(o, "total") and o.total is not None:
                     pass
-    return FlextResult[None].ok(None)
+    return FlextResult.ok(None)
 
 
 def _demonstrate_decorators() -> FlextResult[None]:
@@ -258,7 +259,7 @@ def _demonstrate_decorators() -> FlextResult[None]:
     safe_calculation(10.0, 2.0)
 
     safe_calculation(10.0, 0.0)
-    return FlextResult[None].ok(None)
+    return FlextResult.ok(None)
 
 
 def _demonstrate_logging() -> FlextResult[None]:
@@ -284,7 +285,7 @@ def _demonstrate_logging() -> FlextResult[None]:
     except (RuntimeError, ValueError, TypeError) as e:
         logger.exception("Calculation failed", error=str(e))
 
-    return FlextResult[None].ok(None)
+    return FlextResult.ok(None)
 
 
 def _demonstrate_configuration() -> FlextResult[None]:
@@ -304,14 +305,14 @@ def _demonstrate_configuration() -> FlextResult[None]:
             debug=True,
             max_workers=8,
         )
-        settings_result = FlextResult[None].ok(settings)
+        settings_result = FlextResult.ok(settings)
     except Exception as e:
-        settings_result = FlextResult[None].fail(f"Configuration creation failed: {e}")
+        settings_result = FlextResult.fail(f"Configuration creation failed: {e}")
 
     if settings_result.success:
         settings = settings_result.unwrap()
 
-    return FlextResult[None].ok(None)
+    return FlextResult.ok(None)
 
 
 if __name__ == "__main__":

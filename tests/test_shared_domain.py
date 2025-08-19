@@ -65,7 +65,7 @@ class TestEmailAddress(FlextValueObject):
 
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate email address for testing."""
-        if not self.email or not isinstance(self.email, str):
+        if not self.email:
             return FlextResult[None].fail("Email must be a non-empty string")
 
         if "@" not in self.email:
@@ -306,7 +306,9 @@ class TestDomainFactory:
 
             validation = user.validate_domain_rules()
             if validation.is_failure:
-                return FlextResult[TestUser].fail(f"User validation failed: {validation.error}")
+                return FlextResult[TestUser].fail(
+                    f"User validation failed: {validation.error}"
+                )
 
             return FlextResult[TestUser].ok(user)
 
@@ -346,7 +348,9 @@ class TestDomainFactory:
 
             validation = order.validate_domain_rules()
             if validation.is_failure:
-                return FlextResult[TestOrder].fail(f"Order validation failed: {validation.error}")
+                return FlextResult[TestOrder].fail(
+                    f"Order validation failed: {validation.error}"
+                )
 
             return FlextResult[TestOrder].ok(order)
 
@@ -397,12 +401,16 @@ class TestDomainFactory:
             email_obj = TestEmailAddress.model_validate({"email": email})
             validation = email_obj.validate_business_rules()
             if validation.is_failure:
-                return FlextResult[TestEmailAddress].fail(f"Email validation failed: {validation.error}")
+                return FlextResult[TestEmailAddress].fail(
+                    f"Email validation failed: {validation.error}"
+                )
 
             return FlextResult[TestEmailAddress].ok(email_obj)
 
         except Exception as e:
-            return FlextResult[TestEmailAddress].fail(f"Failed to create test email: {e}")
+            return FlextResult[TestEmailAddress].fail(
+                f"Failed to create test email: {e}"
+            )
 
     @classmethod
     def create_test_money(
@@ -414,14 +422,18 @@ class TestDomainFactory:
         """Create test money with validation."""
         try:
             money_amount = Decimal(str(amount))
-            money_obj = TestMoney.model_validate({
-                "amount": money_amount,
-                "currency": currency,
-                "description": description,
-            })
+            money_obj = TestMoney.model_validate(
+                {
+                    "amount": money_amount,
+                    "currency": currency,
+                    "description": description,
+                }
+            )
             validation = money_obj.validate_business_rules()
             if validation.is_failure:
-                return FlextResult[TestMoney].fail(f"Money validation failed: {validation.error}")
+                return FlextResult[TestMoney].fail(
+                    f"Money validation failed: {validation.error}"
+                )
 
             return FlextResult[TestMoney].ok(money_obj)
 
@@ -465,11 +477,13 @@ class TestDomainFactory:
     ) -> FlextResult[TestComplexValueObject]:
         """Create complex value object for testing."""
         try:
-            complex_vo = TestComplexValueObject.model_validate({
-                "name": name,
-                "tags": tags,
-                "metadata": metadata,
-            })
+            complex_vo = TestComplexValueObject.model_validate(
+                {
+                    "name": name,
+                    "tags": tags,
+                    "metadata": metadata,
+                }
+            )
 
             validation = complex_vo.validate_business_rules()
             if validation.is_failure:
@@ -480,7 +494,9 @@ class TestDomainFactory:
             return FlextResult[TestComplexValueObject].ok(complex_vo)
 
         except Exception as e:
-            return FlextResult[TestComplexValueObject].fail(f"Failed to create test complex value object: {e}")
+            return FlextResult[TestComplexValueObject].fail(
+                f"Failed to create test complex value object: {e}"
+            )
 
 
 # =============================================================================

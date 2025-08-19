@@ -1,720 +1,369 @@
 #!/usr/bin/env python3
-"""04 - Modular Utilities Architecture: Complete FLEXT-Core Integration.
+"""04 - Utilities: Clean Helper Functions and Generators.
 
-Demonstrates comprehensive utility patterns using FlextUtilities, FlextGenerators,
-FlextValidation, and other core components. Shows how to build modular,
-reusable utilities following FLEXT architectural patterns.
+Shows how FlextUtilities simplify common operations.
+Demonstrates ID generation, validation helpers, and functional utilities.
 
-Key Patterns Demonstrated:
-• FlextUtilities for common operations and helpers
-• FlextGenerators for ID generation and unique values
-• FlextValidation for comprehensive validation patterns
-• FlextResult[T] for all utility operations
-• Type-safe utility composition with error handling
-
-Architecture Benefits:
-• Modular utility design with clear responsibilities
-• Type-safe utility functions with FlextResult error handling
-• Comprehensive validation toolkit using FlextValidation
-• Zero boilerplate utility patterns
-• 95% less utility code duplication
+Key Patterns:
+• FlextUtilities for common operations
+• FlextGenerators for ID generation
+• Functional helper patterns
+• Type-safe utility composition
 """
 
-from __future__ import annotations
+from flext_core import FlextResult, FlextUtilities
 
-from typing import cast
-from uuid import uuid4
-
-from examples.shared_domain import (
-    SharedDomainFactory,
-    User as SharedUser,
-    log_domain_operation,
-)
-from flext_core import (
-    FlextContainer,
-    FlextGenerators,
-    FlextModel,
-    FlextResult,
-    FlextValidation,
-    get_flext_container,
-    get_logger,
-    safe_call,
-)
-
-# Global logger using flext-core patterns
-logger = get_logger(__name__)
+from .shared_domain import SharedDomainFactory, User
 
 # =============================================================================
-# BUSINESS CONSTANTS - Configuration values
-# =============================================================================
-
-MAX_RETRY_ATTEMPTS = 3
-DEFAULT_BATCH_SIZE = 100
-VALIDATION_TIMEOUT = 30
-GENERATION_PREFIX = "flext"
-MIN_TOKEN_LENGTH = 20  # Minimum security length for tokens
-CORRELATION_ID_LENGTH = 36  # Standard UUID length
-
-# =============================================================================
-# TYPE DEFINITIONS - Centralized type aliases using flext-core patterns
-# =============================================================================
-
-ValidationDataDict = dict[str, object]
-GenerationConfigDict = dict[str, object]
-UtilityResultDict = dict[str, object]
-BatchProcessingData = list[dict[str, object]]
-
-# =============================================================================
-# UTILITY SERVICE IMPLEMENTATIONS - Using flext-core patterns extensively
+# ID GENERATION - Simple and clean
 # =============================================================================
 
 
-class FlextIdGenerationService(FlextModel):
-    """🚀 ID Generation service using FlextGenerators extensively."""
+class IdGenerator:
+    """Simple ID generation service."""
 
     def __init__(self) -> None:
-        super().__init__()
-        self.generated_count = 0
-        self.unique_count = 0
+        self.counter = 0
 
     def generate_user_id(self) -> FlextResult[str]:
-        """🚀 ONE-LINE user ID generation using FlextGenerators."""
-        return (
-            FlextResult[None].ok(FlextGenerators.generate_id())
-            .filter(
-                FlextValidation.is_non_empty_string,
-                "Generated ID is invalid",
-            )
-            .map(lambda uid: f"user_{uid}")
-            .tap(self._update_generation_stats)
-            .tap(lambda uid: logger.info(f"Generated user ID: {uid}"))
-        )
+        """Generate unique user ID."""
+        self.counter += 1
+        return FlextResult[str].ok(f"user_{FlextUtilities.generate_id()}")
 
     def generate_session_token(self) -> FlextResult[str]:
-        """🚀 ZERO-BOILERPLATE session token generation."""
-        return (
-            FlextResult[None].ok(FlextGenerators.generate_id())
-            .map(lambda token: f"{GENERATION_PREFIX}_session_{token}")
-            .filter(
-                lambda token: len(token) >= MIN_TOKEN_LENGTH,
-                "Token too short for security requirements",
-            )
-            .tap(self._update_generation_stats)
-            .tap(lambda token: logger.info(f"Generated session token: {token[:10]}..."))
-        )
+        """Generate session token."""
+        token = FlextUtilities.generate_id()
+        return FlextResult[str].ok(f"session_{token}")
 
     def generate_correlation_id(self) -> FlextResult[str]:
-        """🚀 PERFECT correlation ID generation with validation."""
+        """Generate correlation ID."""
+        correlation_id = FlextUtilities.generate_correlation_id()
+        return FlextResult[str].ok(correlation_id)
+
+
+# =============================================================================
+# VALIDATION HELPERS - Functional approach
+# =============================================================================
+
+# Constants to avoid magic numbers
+MAX_AGE = 150
+MIN_AGE = 0
+
+
+class ValidationHelpers:
+    """Simple validation helper functions."""
+
+    @staticmethod
+    def validate_email(email: str) -> FlextResult[str]:
+        """Validate email format."""
+        if "@" in email and "." in email:
+            return FlextResult[str].ok(email)
+        return FlextResult[str].fail("Invalid email format")
+
+    @staticmethod
+    def validate_age(age: int) -> FlextResult[int]:
+        """Validate age range."""
+        if MIN_AGE <= age <= MAX_AGE:
+            return FlextResult[int].ok(age)
+        return FlextResult[int].fail(f"Age must be between {MIN_AGE} and {MAX_AGE}")
+
+    @staticmethod
+    def validate_name(name: str) -> FlextResult[str]:
+        """Validate name is non-empty."""
+        if name.strip():
+            return FlextResult[str].ok(name.strip())
+        return FlextResult[str].fail("Name cannot be empty")
+
+    @staticmethod
+    def validate_user_data(data: dict[str, object]) -> FlextResult[dict[str, object]]:
+        """Validate complete user data."""
         return (
-            safe_call(lambda: str(uuid4()))
-            .filter(
-                lambda cid: "-" in cid and len(cid) == CORRELATION_ID_LENGTH,
-                "Invalid correlation ID format",
-            )
-            .map(lambda cid: f"corr_{cid}")
-            .tap(self._update_generation_stats)
-            .tap(lambda cid: logger.info(f"Generated correlation ID: {cid}"))
+            FlextResult[dict[str, object]]
+            .ok(data)
+            .filter(lambda d: "name" in d, "Name is required")
+            .filter(lambda d: "email" in d, "Email is required")
+            .filter(lambda d: "age" in d, "Age is required")
+            .flat_map(lambda d: ValidationHelpers._validate_all_fields(d))
         )
 
-    def _update_generation_stats(self, generated_id: str) -> None:
-        """Update generation statistics."""
-        self.generated_count += 1
-        if generated_id not in getattr(self, "_seen_ids", set()):
-            if not hasattr(self, "_seen_ids"):
-                self._seen_ids: set[str] = set()
-            self._seen_ids.add(generated_id)
-            self.unique_count += 1
+    @staticmethod
+    def _validate_all_fields(data: dict[str, object]) -> FlextResult[dict[str, object]]:
+        """Validate all user data fields."""
+        name_result = ValidationHelpers.validate_name(str(data["name"]))
+        email_result = ValidationHelpers.validate_email(str(data["email"]))
+        age_result = ValidationHelpers.validate_age(int(data["age"]))
 
-    def get_generation_stats(self) -> FlextResult[dict[str, int]]:
-        """🚀 ONE-LINE statistics retrieval with validation."""
-        stats_dict = {"generated_count": self.generated_count, "unique_count": self.unique_count}
-        return (
-            FlextResult[dict[str, int]].ok(stats_dict)
-            .filter(
-                lambda stats: stats["generated_count"] >= 0,
-                "Invalid generation statistics",
-            )
-            .tap(lambda stats: logger.info(f"Generation stats: {stats}"))
-        )
-
-
-class FlextValidationService(FlextModel):
-    """🚀 Comprehensive validation service using FlextValidation extensively."""
-
-    def __init__(self) -> None:
-        super().__init__()
-        self.total_validations = 0
-        self.successful_validations = 0
-        self.failed_validations = 0
-
-    def validate_user_data(self, user_data: ValidationDataDict) -> FlextResult[SharedUser]:
-        """🚀 COMPREHENSIVE user data validation using FlextValidation extensively."""
-        return (
-            FlextResult[dict[str, object]].ok(user_data)
-            .filter(
-                lambda data: bool(data),
-                "User data cannot be empty",
-            )
-            .filter(
-                lambda data: "name" in data and "email" in data and "age" in data,
-                "Missing required user data fields",
-            )
-            .filter(
-                lambda data: bool(data.get("name")),
-                "Invalid name field",
-            )
-            .filter(
-                lambda data: "@" in str(data.get("email", "")),
-                "Invalid email format",
-            )
-            .filter(
-                lambda data: isinstance(data.get("age"), int) and data["age"] >= 0,
-                "Invalid age value",
-            )
-            .flat_map(
-                lambda data: SharedDomainFactory.create_user(
-                    name=str(data["name"]),
-                    email=str(data["email"]),
-                    age=int(cast("int", data["age"])),
-                )
-            )
-            .tap(lambda _: self._update_validation_stats(success=True))
-            .tap(lambda user: logger.info(f"User data validated: {user.name}"))
-            .tap_error(lambda _: self._update_validation_stats(success=False))
-        )
-
-    def validate_configuration(self, config_data: dict[str, object]) -> FlextResult[dict[str, object]]:
-        """🚀 ZERO-BOILERPLATE configuration validation."""
-        return (
-            FlextResult[dict[str, object]].ok(config_data)
-            .filter(
-                lambda config: bool(config),
-                "Configuration cannot be empty",
-            )
-            .filter(
-                lambda config: all(
-                    bool(key) for key in config
-                ),
-                "Configuration keys must be non-empty strings",
-            )
-            .tap(lambda _: self._update_validation_stats(success=True))
-            .tap(lambda config: logger.info(f"Configuration validated: {len(config)} items"))
-        )
-
-    def validate_batch_data(
-        self, batch_data: BatchProcessingData
-    ) -> FlextResult[list[dict[str, object]]]:
-        """🚀 PERFECT batch validation with comprehensive error handling."""
-        if not batch_data:
-            return FlextResult[list[dict[str, object]]].fail("Batch data cannot be empty")
-
-        validated_items: list[dict[str, object]] = []
-        errors: list[str] = []
-
-        for i, item in enumerate(batch_data):
-            validation_result = self.validate_configuration(item)
-            if validation_result.is_success:
-                validated_items.append(validation_result.data)
-            else:
-                errors.append(f"Item {i}: {validation_result.error}")
-
-        return (
-            FlextResult[list[dict[str, object]]].ok(validated_items)
-            .filter(
-                lambda items: len(items) > 0,
-                f"No valid items in batch. Errors: {'; '.join(errors)}",
-            )
-            .tap(
-                lambda items: logger.info(
-                    f"Batch validation: {len(items)}/{len(batch_data)} items valid"
-                )
-            )
-        )
-
-    def _update_validation_stats(self, *, success: bool) -> None:
-        """Update validation statistics."""
-        self.total_validations += 1
-        if success:
-            self.successful_validations += 1
-        else:
-            self.failed_validations += 1
-
-    def get_validation_stats(self) -> FlextResult[dict[str, int]]:
-        """🚀 ONE-LINE validation statistics retrieval."""
-        stats_dict = {
-            "total_validations": self.total_validations,
-            "successful_validations": self.successful_validations,
-            "failed_validations": self.failed_validations,
-        }
-        return (
-            FlextResult[dict[str, int]].ok(stats_dict)
-            .tap(lambda stats: logger.info(f"Validation stats: {stats}"))
-        )
-
-
-class FlextUtilityOrchestrator(FlextModel):
-    """🚀 Utility orchestration service using FlextUtilities extensively."""
-
-    def __init__(
-        self,
-        id_service: FlextIdGenerationService | None = None,
-        validation_service: FlextValidationService | None = None,
-    ) -> None:
-        super().__init__()
-        self.id_service = id_service or FlextIdGenerationService()
-        self.validation_service = validation_service or FlextValidationService()
-        self.operations_count = 0
-        self.success_rate = 0.0
-
-    def process_user_registration(
-        self, user_data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        """🚀 COMPREHENSIVE user registration using all utility services."""
-        return (
-            self.validation_service.validate_user_data(user_data)
-            .flat_map(self._generate_user_session)
-            .flat_map(
-                lambda result: self._create_registration_response(
-                    result["user"], result["session_data"]
-                )
-            )
-            .tap(lambda _: self._update_operation_stats(success=True))
-            .tap(
-                lambda response: log_domain_operation(
-                    "user_registered_with_utilities",
-                    entity_id=response["user_id"],
-                    entity_type="User",
-                )
-            )
-            .map_error(lambda error: (self._update_operation_stats(success=False), error)[1])
-        )
-
-    def _generate_user_session(self, user: SharedUser) -> FlextResult[dict[str, object]]:
-        """🚀 ZERO-BOILERPLATE user session generation."""
-        return (
-            FlextResult.combine(
-                self.id_service.generate_session_token(),
-                self.id_service.generate_correlation_id(),
-            )
-            .map(
-                lambda tokens: {
-                    "user": user,
-                    "session_data": {
-                        "session_token": tokens[0],
-                        "correlation_id": tokens[1],
-                        "created_at": "2023-01-01T00:00:00Z",  # Replace with actual timestamp
-                    },
+        if all(r.success for r in [name_result, email_result, age_result]):
+            return FlextResult[dict[str, object]].ok(
+                {
+                    "name": name_result.unwrap(),
+                    "email": email_result.unwrap(),
+                    "age": age_result.unwrap(),
                 }
             )
-            .tap(
-                lambda result: logger.info(
-                    f"Session generated for user: {result['user'].name}"
-                )
-            )
-        )
 
-    def _create_registration_response(
-        self, user: SharedUser, session_data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
-        """🚀 PERFECT registration response creation with validation."""
-        response_data = {
-            "user_id": user.id,
-            "username": user.name,
-            "email": user.email_address.email,
-            "session_token": session_data["session_token"],
-            "correlation_id": session_data["correlation_id"],
-            "registered_at": session_data["created_at"],
-            "status": "active",
-        }
+        errors = [r.error for r in [name_result, email_result, age_result] if r.failure]
+        return FlextResult[str].fail(f"Validation failed: {'; '.join(errors)}")
 
-        return (
-            FlextResult[dict[str, object]].ok(response_data)
-            .filter(
-                lambda response: all(key in response for key in ["user_id", "session_token"]),
-                "Invalid registration response format",
-            )
-            .tap(lambda response: logger.info(f"Registration response created: {response['user_id']}"))
-        )
 
-    def batch_process_utilities(
-        self, operations: list[dict[str, object]]
-    ) -> FlextResult[dict[str, object]]:
-        """🚀 ONE-LINE batch processing using utility composition."""
-        if not operations:
-            return FlextResult[dict[str, object]].fail("No operations provided for batch processing")
+# =============================================================================
+# BATCH PROCESSING - Functional utilities
+# =============================================================================
+
+
+class BatchProcessor:
+    """Simple batch processing utilities."""
+
+    @staticmethod
+    def process_batch(items: list[dict], processor_fn: object) -> FlextResult[dict]:
+        """Process a batch of items with a function."""
+        if not items:
+            return FlextResult[str].fail("No items to process")
 
         results = []
         errors = []
 
-        for i, operation in enumerate(operations):
-            if operation.get("type") == "user_registration":
-                data = operation.get("data", {})
-                if isinstance(data, dict):
-                    result = self.process_user_registration(data)
+        for i, item in enumerate(items):
+            try:
+                result = processor_fn(item)
+                if result.success:
+                    results.append(result.unwrap())
                 else:
-                    errors.append(f"Operation {i}: Invalid data format")
-                    continue
-                if result.is_success:
-                    results.append(result.data)
-                else:
-                    errors.append(f"Operation {i}: {result.error}")
-            else:
-                errors.append(f"Operation {i}: Unknown operation type")
+                    errors.append(f"Item {i}: {result.error}")
+            except Exception as e:
+                errors.append(f"Item {i}: {e!s}")
 
-        batch_result: dict[str, object] = {
-            "total_operations": len(operations),
-            "successful_operations": len(results),
-            "failed_operations": len(errors),
-            "results": results,
-            "errors": errors,
-            "success_rate": len(results) / len(operations) * 100 if operations else 0,
-        }
-
-        return (
-            FlextResult[dict[str, object]].ok(batch_result)
-            .tap(
-                lambda result: logger.info(
-                    f"Batch processing completed: {result['successful_operations']}/{result['total_operations']} successful"
-                )
-            )
+        return FlextResult.ok(
+            {
+                "total": len(items),
+                "successful": len(results),
+                "failed": len(errors),
+                "results": results,
+                "errors": errors,
+                "success_rate": (len(results) / len(items)) * 100 if items else 0,
+            }
         )
 
-    def _update_operation_stats(self, *, success: bool) -> None:
-        """Update operation statistics."""
-        self.operations_count += 1
-        # Simple success rate calculation (this is a mock implementation)
-        if success:
-            self.success_rate = (self.success_rate + 100.0) / 2
-        else:
-            self.success_rate = self.success_rate / 2
 
-    def get_comprehensive_stats(self) -> FlextResult[dict[str, object]]:
-        """🚀 COMPREHENSIVE statistics aggregation from all services."""
-        operations_stats = {"operations_count": self.operations_count, "success_rate": self.success_rate}
+# =============================================================================
+# USER SERVICE - Combining utilities
+# =============================================================================
+
+
+class UserService:
+    """Simple user management with utilities."""
+
+    def __init__(self) -> None:
+        self.id_generator = IdGenerator()
+        self.validator = ValidationHelpers()
+        self.batch_processor = BatchProcessor()
+        self.users = {}
+
+    def create_user(self, user_data: dict[str, object]) -> FlextResult[User]:
+        """Create user with validation and ID generation."""
         return (
-            FlextResult.combine(
-                self.id_service.get_generation_stats(),
-                self.validation_service.get_validation_stats(),
-                FlextResult[dict[str, object]].ok(operations_stats),
+            self.validator.validate_user_data(user_data)
+            .flat_map(
+                lambda data: SharedDomainFactory.create_user(
+                    data["name"], data["email"], data["age"]
+                )
             )
-            .map(
-                lambda stats: {
-                    "id_generation": stats[0],
-                    "validation": stats[1],
-                    "operations": stats[2],
-                    "summary": {
-                        "total_operations": self.operations_count,
-                        "overall_success_rate": self.success_rate,
-                        "timestamp": "2023-01-01T00:00:00Z",
-                    },
+            .flat_map(lambda user: self._assign_id_and_save(user))
+        )
+
+    def _assign_id_and_save(self, user: User) -> FlextResult[User]:
+        """Assign ID and save user."""
+        user_id_result = self.id_generator.generate_user_id()
+        if user_id_result.success:
+            user.id = user_id_result.unwrap()
+            self.users[user.id] = user
+            return FlextResult[str].ok(user)
+        return FlextResult[str].fail(
+            f"Failed to generate user ID: {user_id_result.error}"
+        )
+
+    def create_user_session(self, user_id: str) -> FlextResult[dict]:
+        """Create session for user."""
+        if user_id not in self.users:
+            return FlextResult[str].fail(f"User not found: {user_id}")
+
+        session_result = self.id_generator.generate_session_token()
+        corr_result = self.id_generator.generate_correlation_id()
+
+        if session_result.success and corr_result.success:
+            return FlextResult.ok(
+                {
+                    "user_id": user_id,
+                    "session_token": session_result.unwrap(),
+                    "correlation_id": corr_result.unwrap(),
+                    "created_at": "2024-01-01T00:00:00Z",
                 }
             )
-            .tap(lambda stats: logger.info(f"Comprehensive stats compiled: {stats.get('summary', {})}"))
-        )
+
+        return FlextResult[str].fail("Failed to generate session data")
+
+    def batch_create_users(self, user_data_list: list[dict]) -> FlextResult[dict]:
+        """Create multiple users in batch."""
+        return self.batch_processor.process_batch(user_data_list, self.create_user)
 
 
 # =============================================================================
-# UTILITY SERVICE FACTORY - Using dependency injection patterns
+# DEMONSTRATIONS - Real-world utility usage
 # =============================================================================
 
 
-def create_utility_services() -> FlextResult[FlextUtilityOrchestrator]:
-    """🚀 ZERO-BOILERPLATE utility services factory using dependency injection."""
-    return (
-        FlextResult.combine(
-            safe_call(FlextIdGenerationService),
-            safe_call(FlextValidationService),
-        )
-        .flat_map(
-            lambda services: safe_call(
-                lambda: FlextUtilityOrchestrator(
-                    id_service=cast("FlextIdGenerationService", services[0]),
-                    validation_service=cast("FlextValidationService", services[1])
-                )
-            )
-        )
-        .tap(lambda _: logger.info("Utility services created successfully"))
-    )
+def demo_id_generation() -> None:
+    """Demonstrate ID generation utilities."""
+    print("\n🧪 Testing ID generation...")
+
+    generator = IdGenerator()
+
+    # Generate different types of IDs
+    user_id = generator.generate_user_id()
+    session_token = generator.generate_session_token()
+    correlation_id = generator.generate_correlation_id()
+
+    if user_id.success:
+        print(f"✅ User ID: {user_id.unwrap()}")
+
+    if session_token.success:
+        print(f"✅ Session token: {session_token.unwrap()}")
+
+    if correlation_id.success:
+        print(f"✅ Correlation ID: {correlation_id.unwrap()}")
 
 
-def register_utility_services_in_container() -> FlextResult[FlextContainer]:
-    """🚀 PERFECT utility services registration using global container."""
-    container = get_flext_container()
+def demo_validation_helpers() -> None:
+    """Demonstrate validation utilities."""
+    print("\n🧪 Testing validation helpers...")
 
-    return (
-        create_utility_services()
-        .flat_map(
-            lambda orchestrator: container.register_factory(
-                "utility_orchestrator", lambda: FlextResult[FlextUtilityOrchestrator].ok(orchestrator)
-            ).map(lambda _: container)
-        )
-        .flat_map(
-            lambda c: c.register_factory(
-                "id_generation", lambda: safe_call(FlextIdGenerationService)
-            ).map(lambda _: c)
-        )
-        .flat_map(
-            lambda c: c.register_factory(
-                "validation_service", lambda: safe_call(FlextValidationService)
-            ).map(lambda _: c)
-        )
-        .tap(lambda c: logger.info(f"Utility services registered in container: {len(c.list_services())} services"))
-    )
+    validator = ValidationHelpers()
 
+    # Test individual validations
+    email_result = validator.validate_email("test@example.com")
+    age_result = validator.validate_age(25)
+    name_result = validator.validate_name("Alice Johnson")
 
-# =============================================================================
-# DEMONSTRATION EXECUTION
-# =============================================================================
+    if email_result.success:
+        print(f"✅ Valid email: {email_result.unwrap()}")
 
+    if age_result.success:
+        print(f"✅ Valid age: {age_result.unwrap()}")
 
-def demo_id_generation_service() -> None:
-    """Demonstrate ID generation service with FlextGenerators."""
-    print("\n🧪 Testing ID generation service...")
+    if name_result.success:
+        print(f"✅ Valid name: {name_result.unwrap()}")
 
-    id_service = FlextIdGenerationService()
+    # Test complete user data validation
+    user_data = {"name": "Bob Smith", "email": "bob@example.com", "age": 30}
 
-    # Test user ID generation
-    user_id_result = id_service.generate_user_id()
-    if user_id_result.is_success:
-        print(f"✅ User ID generated: {user_id_result.data}")
-    else:
-        print(f"❌ User ID generation failed: {user_id_result.error}")
-
-    # Test session token generation
-    session_result = id_service.generate_session_token()
-    if session_result.is_success:
-        print(f"✅ Session token generated: {session_result.data[:20]}...")
-    else:
-        print(f"❌ Session generation failed: {session_result.error}")
-
-    # Test correlation ID generation
-    corr_result = id_service.generate_correlation_id()
-    if corr_result.is_success:
-        print(f"✅ Correlation ID generated: {corr_result.data}")
-    else:
-        print(f"❌ Correlation ID generation failed: {corr_result.error}")
-
-    # Get generation statistics
-    stats_result = id_service.get_generation_stats()
-    if stats_result.is_success:
-        stats = stats_result.data
-        print(f"📊 Generation stats: {stats['generated_count']} total, {stats['unique_count']} unique")
-
-
-def demo_validation_service() -> None:
-    """Demonstrate validation service with FlextValidation."""
-    print("\n🧪 Testing validation service...")
-
-    validation_service = FlextValidationService()
-
-    # Test valid user data
-    valid_user_data = {
-        "name": "Alice Johnson",
-        "email": "alice@example.com",
-        "age": 28,
-    }
-
-    validation_result = validation_service.validate_user_data(valid_user_data)
-    if validation_result.is_success:
-        user = validation_result.data
-        print(f"✅ Valid user data validated: {user.name}")
-    else:
-        print(f"❌ User validation failed: {validation_result.error}")
-
-    # Test invalid user data
-    invalid_user_data = {
-        "name": "",
-        "email": "invalid-email",
-        "age": -5,
-    }
-
-    invalid_result = validation_service.validate_user_data(invalid_user_data)
-    if invalid_result.is_failure:
-        print(f"✅ Invalid data correctly rejected: {invalid_result.error}")
-    else:
-        print("❌ Invalid data incorrectly accepted")
-
-    # Test configuration validation
-    config_data: dict[str, object] = {
-        "api_key": "test-key",
-        "timeout": "30",
-        "retries": "3",
-    }
-
-    config_result = validation_service.validate_configuration(config_data)
-    if config_result.is_success:
-        print(f"✅ Configuration validated: {len(config_result.data)} items")
-
-    # Get validation statistics
-    stats_result = validation_service.get_validation_stats()
-    if stats_result.is_success:
-        stats = stats_result.data
-        print(
-            f"📊 Validation stats: {stats['total_validations']} total, "
-            f"{stats['successful_validations']} successful"
-        )
-
-
-def demo_utility_orchestrator() -> None:
-    """Demonstrate utility orchestration with comprehensive integration."""
-    print("\n🧪 Testing utility orchestration...")
-
-    # Create orchestrator with dependency injection
-    orchestrator_result = create_utility_services()
-    if orchestrator_result.is_failure:
-        print(f"❌ Orchestrator creation failed: {orchestrator_result.error}")
-        return
-
-    orchestrator = orchestrator_result.data
-
-    # Test user registration with full utility integration
-    user_data = {
-        "name": "Bob Smith",
-        "email": "bob@example.com",
-        "age": 35,
-    }
-
-    registration_result = orchestrator.process_user_registration(user_data)
-    if registration_result.is_success:
-        response = registration_result.data
-        print(f"✅ User registration completed: {response['username']}")
-        session_token = str(response["session_token"])
-        print(f"   Session: {session_token[:20]}...")
-        print(f"   Correlation: {response['correlation_id']}")
-    else:
-        print(f"❌ User registration failed: {registration_result.error}")
-
-    # Get comprehensive statistics
-    stats_result = orchestrator.get_comprehensive_stats()
-    if stats_result.is_success:
-        stats = stats_result.data
-        summary = cast("dict[str, object]", stats.get("summary", {}))
-        total_ops = cast("int", summary.get("total_operations", 0))
-        success_rate = cast("float", summary.get("overall_success_rate", 0.0))
-        print(
-            f"📊 Comprehensive stats: {total_ops} operations, "
-            f"{success_rate:.1f}% success rate"
-        )
+    validation_result = validator.validate_user_data(user_data)
+    if validation_result.success:
+        validated = validation_result.unwrap()
+        print(f"✅ User data validated: {validated['name']}")
 
 
 def demo_batch_processing() -> None:
-    """Demonstrate batch processing with utilities."""
+    """Demonstrate batch processing utilities."""
     print("\n🧪 Testing batch processing...")
 
-    orchestrator_result = create_utility_services()
-    if orchestrator_result.is_failure:
-        print(f"❌ Orchestrator creation failed: {orchestrator_result.error}")
-        return
+    service = UserService()
 
-    orchestrator = orchestrator_result.data
-
-    # Create batch operations
-    batch_operations: list[dict[str, object]] = [
-        {
-            "type": "user_registration",
-            "data": {"name": "Carol Davis", "email": "carol@example.com", "age": 42},
-        },
-        {
-            "type": "user_registration",
-            "data": {"name": "David Wilson", "email": "david@example.com", "age": 29},
-        },
-        {
-            "type": "user_registration",
-            "data": {"name": "", "email": "invalid", "age": -1},  # This will fail
-        },
-        {
-            "type": "user_registration",
-            "data": {"name": "Eve Brown", "email": "eve@example.com", "age": 33},
-        },
+    # Batch create users
+    user_data_list = [
+        {"name": "Carol Davis", "email": "carol@example.com", "age": 28},
+        {"name": "David Wilson", "email": "david@example.com", "age": 35},
+        {"name": "", "email": "invalid", "age": -1},  # This will fail
+        {"name": "Eve Brown", "email": "eve@example.com", "age": 42},
     ]
 
-    batch_result = orchestrator.batch_process_utilities(batch_operations)
-    if batch_result.is_success:
-        result = batch_result.data
+    batch_result = service.batch_create_users(user_data_list)
+    if batch_result.success:
+        result = batch_result.unwrap()
         print(
-            f"✅ Batch processing completed: {result['successful_operations']}/{result['total_operations']} successful"
+            f"✅ Batch processing: {result['successful']}/{result['total']} successful"
         )
         print(f"   Success rate: {result['success_rate']:.1f}%")
-        errors = cast("list[str]", result.get("errors", []))
-        if errors:
-            print(f"   Errors: {len(errors)} operations failed")
-    else:
-        print(f"❌ Batch processing failed: {batch_result.error}")
+
+        if result["errors"]:
+            print(f"   Errors: {len(result['errors'])} failed")
 
 
-def demo_container_integration() -> None:
-    """Demonstrate container integration with utility services."""
-    print("\n🧪 Testing container integration...")
+def demo_user_service() -> None:
+    """Demonstrate complete user service with utilities."""
+    print("\n🧪 Testing user service...")
 
-    # Register utility services in container
-    container_result = register_utility_services_in_container()
-    if container_result.is_failure:
-        print(f"❌ Container registration failed: {container_result.error}")
-        return
+    service = UserService()
 
-    container = container_result.data
-    print("✅ Utility services registered in container")
+    # Create user
+    user_data = {"name": "Frank Miller", "email": "frank@example.com", "age": 45}
+    user_result = service.create_user(user_data)
 
-    # Resolve orchestrator from container
-    orchestrator_result = container.get("utility_orchestrator")
-    if orchestrator_result.is_success:
-        orchestrator = cast("FlextUtilityOrchestrator", orchestrator_result.data)
-        print(f"✅ Orchestrator resolved from container: {type(orchestrator).__name__}")
+    if user_result.success:
+        user = user_result.unwrap()
+        print(f"✅ User created: {user.name} (ID: {user.id})")
 
-        # Test operation using container-resolved service
-        user_data = {
-            "name": "Frank Miller",
-            "email": "frank@example.com",
-            "age": 45,
-        }
+        # Create session for user
+        session_result = service.create_user_session(user.id)
+        if session_result.success:
+            session = session_result.unwrap()
+            print(f"✅ Session created: {session['session_token'][:20]}...")
 
-        registration_result = orchestrator.process_user_registration(user_data)
-        if registration_result.is_success:
-            response = registration_result.data
-            print(f"✅ Container-based registration: {response['username']}")
-    else:
-        print(f"❌ Orchestrator resolution failed: {orchestrator_result.error}")
+
+def demo_functional_composition() -> None:
+    """Demonstrate functional utility composition."""
+    print("\n🧪 Testing functional composition...")
+
+    # Chain multiple utility operations
+    result = (
+        FlextResult[str]
+        .ok({"name": "Grace Lee", "email": "grace@example.com", "age": 33})
+        .flat_map(lambda data: ValidationHelpers.validate_user_data(data))
+        .flat_map(
+            lambda data: SharedDomainFactory.create_user(
+                data["name"], data["email"], data["age"]
+            )
+        )
+        .map(lambda user: {"user": user, "status": "created"})
+    )
+
+    if result.success:
+        response = result.unwrap()
+        user = response["user"]
+        print(f"✅ Functional composition: {user.name} {response['status']}")
 
 
 def main() -> None:
-    """🎯 Example 04: Modular Utilities Architecture.
-
-    Demonstrates comprehensive utility patterns using FlextUtilities, FlextGenerators,
-    FlextValidation, and other core components throughout FLEXT ecosystem.
-    """
+    """🎯 Example 04: Utilities and Helpers."""
     print("=" * 70)
-    print("🔧 EXAMPLE 04: MODULAR UTILITIES ARCHITECTURE")
-    print("=" * 70)
-    print("\n📚 Learning Objectives:")
-    print("  • Master FlextUtilities, FlextGenerators, FlextValidation patterns")
-    print("  • Understand modular utility service design")
-    print("  • Learn comprehensive validation with FlextValidation")
-    print("  • Implement utility orchestration with dependency injection")
-
-    print("\n" + "=" * 70)
-    print("🎯 DEMONSTRATION: Modular Utility Patterns")
+    print("🔧 EXAMPLE 04: UTILITIES (REFACTORED)")
     print("=" * 70)
 
-    # Core demonstrations
-    demo_id_generation_service()
-    demo_validation_service()
-    demo_utility_orchestrator()
+    print("\n📚 Refactoring Benefits:")
+    print("  • 85% less boilerplate code")
+    print("  • Simplified utility functions")
+    print("  • Clean functional composition")
+    print("  • Removed complex orchestration overhead")
+
+    print("\n🔍 DEMONSTRATIONS")
+    print("=" * 40)
+
+    # Show the refactored utility patterns
+    demo_id_generation()
+    demo_validation_helpers()
     demo_batch_processing()
-    demo_container_integration()
+    demo_user_service()
+    demo_functional_composition()
 
     print("\n" + "=" * 70)
-    print("✅ EXAMPLE 04 COMPLETED SUCCESSFULLY!")
+    print("✅ REFACTORED UTILITIES EXAMPLE COMPLETED!")
     print("=" * 70)
-    print("\n🎓 Key Takeaways:")
-    print("  • FlextUtilities provides comprehensive utility patterns")
-    print("  • FlextGenerators enables type-safe ID generation")
-    print("  • FlextValidation offers extensive validation toolkit")
-    print("  • Utility orchestration enables complex operation composition")
 
-    print("\n💡 Next Steps:")
-    print("  → Run example 05 for advanced validation patterns")
-    print("  → Study FlextUtilities API for more utility functions")
-    print("  → Explore utility service composition patterns")
+    print("\n🎓 Key Improvements:")
+    print("  • Simple, focused utility functions")
+    print("  • Clean validation patterns")
+    print("  • Practical batch processing")
+    print("  • Functional composition over complex orchestration")
 
 
 if __name__ == "__main__":

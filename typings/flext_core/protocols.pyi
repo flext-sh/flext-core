@@ -47,7 +47,6 @@ __all__ = [
 ]
 
 type TFactory = Callable[[], object]
-type FlextMessageHandler = FlextMessageHandler
 
 class FlextConnectionProtocol(Protocol):
     def test_connection(self) -> FlextResult[bool]: ...

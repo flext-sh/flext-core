@@ -9,6 +9,7 @@ from __future__ import annotations
 import typing
 from collections.abc import Callable
 from decimal import Decimal
+from typing import ClassVar
 
 import pytest
 from hypothesis import given, strategies as st
@@ -1172,9 +1173,16 @@ class TestUtilityFunctionsAdvanced:
         entity.add_domain_event({"type": "created", "timestamp": "2024-01-01"})
         entity.increment_version()
 
-        vo = FlextValueObject(
-            metadata={"name": "complex_vo", "version": 1, "features": ["a", "b", "c"]},
-        )
+        # Move import to top level
+        class SimpleValueObject(FlextValueObject):
+            name: str
+            value: int
+            metadata: ClassVar[dict[str, object]] = {"type": "test", "version": 1}
+
+            def validate_business_rules(self) -> FlextResult[None]:
+                return FlextResult[None].ok(None)
+
+        vo = SimpleValueObject(name="test", value=42, metadata={"type": "test", "version": 1})
 
         db_model = FlextDatabaseModel(
             host="localhost",

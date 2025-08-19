@@ -2,8 +2,6 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable
 from typing import ParamSpec, TypeVar
 
-from _typeshed import Incomplete
-
 from flext_core.protocols import (
     FlextDecoratedFunction as FlextDecoratedFunction,
     FlextLoggerProtocol,
@@ -33,22 +31,33 @@ __all__ = [
 
 _P = ParamSpec("_P")
 _R = TypeVar("_R")
-_F = TypeVar("_F", bound=Callable[..., object])
+_F = TypeVar("_F")
 
 class FlextAbstractDecorator(ABC):
-    name: Incomplete
+    name: str | None
     def __init__(self, name: str | None = None) -> None: ...
     @abstractmethod
-    def __call__(self, func: _F) -> _F: ...
+    def __call__(self, func: object) -> object: ...
 
 class FlextAbstractDecoratorFactory(ABC):
     @abstractmethod
     def create_validation_decorator(self, **kwargs: object) -> object: ...
 
-class FlextAbstractValidationDecorator(FlextAbstractDecorator, ABC): ...
-class FlextAbstractErrorHandlingDecorator(FlextAbstractDecorator, ABC): ...
-class FlextAbstractPerformanceDecorator(FlextAbstractDecorator, ABC): ...
-class FlextAbstractLoggingDecorator(FlextAbstractDecorator, ABC): ...
+class FlextAbstractValidationDecorator(FlextAbstractDecorator, ABC):
+    @abstractmethod
+    def __call__(self, func: object) -> object: ...
+
+class FlextAbstractErrorHandlingDecorator(FlextAbstractDecorator, ABC):
+    @abstractmethod
+    def __call__(self, func: object) -> object: ...
+
+class FlextAbstractPerformanceDecorator(FlextAbstractDecorator, ABC):
+    @abstractmethod
+    def __call__(self, func: object) -> object: ...
+
+class FlextAbstractLoggingDecorator(FlextAbstractDecorator, ABC):
+    @abstractmethod
+    def __call__(self, func: object) -> object: ...
 
 class FlextDecoratorUtils:
     @staticmethod
@@ -76,7 +85,7 @@ class FlextValidationDecorators(FlextAbstractValidationDecorator):
     ) -> Callable[[FlextDecoratedFunction], FlextDecoratedFunction]: ...
 
 class FlextErrorHandlingDecorators(FlextAbstractErrorHandlingDecorator):
-    handled_exceptions: Incomplete
+    handled_exceptions: tuple[type[Exception], ...] | None
     def __init__(
         self,
         name: str | None = None,
@@ -103,7 +112,7 @@ class FlextErrorHandlingDecorators(FlextAbstractErrorHandlingDecorator):
     ) -> Callable[[FlextDecoratedFunction], FlextDecoratedFunction]: ...
 
 class FlextPerformanceDecorators(FlextAbstractPerformanceDecorator):
-    threshold_seconds: Incomplete
+    threshold_seconds: float
     metrics: dict[str, dict[str, object]]
     def __init__(
         self, name: str | None = None, threshold_seconds: float = 1.0
@@ -136,7 +145,7 @@ class FlextPerformanceDecorators(FlextAbstractPerformanceDecorator):
     def time_execution(func: FlextDecoratedFunction) -> FlextDecoratedFunction: ...
 
 class FlextLoggingDecorators(FlextAbstractLoggingDecorator):
-    log_level: Incomplete
+    log_level: str
     def __init__(self, name: str | None = None, log_level: str = "INFO") -> None: ...
     def __call__(self, func: _F) -> _F: ...
     @property
@@ -265,7 +274,7 @@ class FlextDecorators:
 
 class _BaseDecoratorUtils: ...
 
-_decorators_base: Incomplete
+_decorators_base: FlextDecoratedFunction
 _validate_input_decorator = _flext_validate_input_decorator
 _safe_call_decorator = _flext_safe_call_decorator
 

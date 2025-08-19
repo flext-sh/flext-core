@@ -36,17 +36,17 @@ class TraditionalOracleService:
         """Validate configuration."""
         try:
             if not self.host:
-                return FlextResult[None].fail("Host is required")
+                return FlextResult.fail("Host is required")
             if not self.username:
-                return FlextResult[None].fail("Username is required")
+                return FlextResult.fail("Username is required")
             if not self.password:
-                return FlextResult[None].fail("Password is required")
+                return FlextResult.fail("Password is required")
             if self.port <= 0:
-                return FlextResult[None].fail("Port must be positive")
-            return FlextResult[None].ok(None)
+                return FlextResult.fail("Port must be positive")
+            return FlextResult.ok(None)
         except (RuntimeError, ValueError, TypeError) as e:
             logger.exception("Configuration validation failed")
-            return FlextResult[None].fail(f"Validation failed: {e}")
+            return FlextResult.fail(f"Validation failed: {e}")
 
     def execute_query(self, query: str) -> FlextResult[TAnyDict]:
         """Execute database query."""
@@ -54,7 +54,7 @@ class TraditionalOracleService:
             # Validate configuration first
             config_result = self.validate_config()
             if config_result.is_failure:
-                return FlextResult[None].fail(
+                return FlextResult[dict[str, object]].fail(
                     config_result.error or "Configuration validation failed",
                 )
 
@@ -67,11 +67,11 @@ class TraditionalOracleService:
             }
 
             logger.info("Query executed successfully")
-            return FlextResult[None].ok(result)
+            return FlextResult[dict[str, object]].ok(result)
 
         except (RuntimeError, ValueError, TypeError) as e:
             logger.exception("Query execution failed")
-            return FlextResult[None].fail(f"Query failed: {e}")
+            return FlextResult[dict[str, object]].fail(f"Query failed: {e}")
 
     def get_service_info(self) -> dict[str, object]:
         """Get service information."""
@@ -108,14 +108,14 @@ class EnhancedOracleService(FlextDomainService[TAnyDict]):
     def validate_config(self) -> FlextResult[None]:
         """Validate service configuration - override from base class."""
         if not self.host:
-            return FlextResult[None].fail("Host is required")
+            return FlextResult.fail("Host is required")
         if not self.username:
-            return FlextResult[None].fail("Username is required")
+            return FlextResult.fail("Username is required")
         if not self.password:
-            return FlextResult[None].fail("Password is required")
+            return FlextResult.fail("Password is required")
         if self.port <= 0:
-            return FlextResult[None].fail("Port must be positive")
-        return FlextResult[None].ok(None)
+            return FlextResult.fail("Port must be positive")
+        return FlextResult.ok(None)
 
     def execute_query(self, query: str) -> FlextResult[TAnyDict]:
         """Execute database query using enhanced error handling."""
@@ -203,15 +203,15 @@ class LDAPConnectionService(FlextDomainService[TAnyDict]):
     def validate_config(self) -> FlextResult[None]:
         """Validate LDAP configuration."""
         if not self.host:
-            return FlextResult[None].fail("LDAP host is required")
+            return FlextResult.fail("LDAP host is required")
         if not self.bind_dn:
-            return FlextResult[None].fail("Bind DN is required")
+            return FlextResult.fail("Bind DN is required")
         if not self.password:
-            return FlextResult[None].fail("Password is required")
+            return FlextResult.fail("Password is required")
         max_port = 65535  # Standard TCP port range
         if self.port <= 0 or self.port > max_port:
-            return FlextResult[None].fail(f"Port must be between 1 and {max_port}")
-        return FlextResult[None].ok(None)
+            return FlextResult.fail(f"Port must be between 1 and {max_port}")
+        return FlextResult.ok(None)
 
     def search_users(self, filter_expr: str) -> FlextResult[TAnyDict]:
         """Search users in LDAP."""

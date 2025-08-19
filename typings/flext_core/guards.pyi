@@ -1,13 +1,15 @@
 from collections.abc import Callable
-from typing import Self
+from typing import ParamSpec, TypeVar
 
-from _typeshed import Incomplete
 from pydantic import BaseModel
 
 from flext_core.constants import FlextConstants
-from flext_core.mixins import FlextSerializableMixin, FlextValidatableMixin
+from flext_core.mixins import FlextSerializableMixin
 from flext_core.result import FlextResult
 from flext_core.typings import T
+
+P = ParamSpec("P")  # noqa: PYI001
+R = TypeVar("R")  # noqa: PYI001
 
 __all__ = [
     "FlextGuards",
@@ -31,26 +33,32 @@ __all__ = [
 ]
 
 Platform = FlextConstants.Platform
-is_not_none: Incomplete
-is_list_of: Incomplete
-is_instance_of: Incomplete
 
 class FlextGuards:
     @staticmethod
-    def is_dict_of(obj: object, value_type: type) -> bool: ...
+    def is_dict_of(obj: object, value_type: type[object]) -> bool: ...
+    @staticmethod
+    def is_not_none(obj: object) -> bool: ...
+    @staticmethod
+    def is_list_of(obj: object, value_type: type[object]) -> bool: ...
+    @staticmethod
+    def is_instance_of(obj: object, value_type: type[object]) -> bool: ...
     @staticmethod
     def immutable(target_class: type[T]) -> type[T]: ...
     @staticmethod
-    def pure[P, R](func: Callable[P, R]) -> Callable[P, R]: ...
+    def pure(func: Callable[P, R]) -> Callable[P, R]: ...
     @staticmethod
-    def make_factory(target_class: type) -> Callable[[], object]: ...
+    def make_factory(target_class: type[object]) -> Callable[[], object]: ...
     @staticmethod
-    def make_builder(target_class: type) -> Callable[[], object]: ...
+    def make_builder(target_class: type[object]) -> Callable[[], object]: ...
 
-class FlextValidatedModel(BaseModel, FlextSerializableMixin, FlextValidatableMixin):
+class FlextValidatedModel(BaseModel, FlextSerializableMixin):
     def __init__(self, **data: object) -> None: ...
+    def validate_flext(self) -> FlextResult[None]: ...
+    @property
+    def is_valid(self) -> bool: ...
     @classmethod
-    def create(cls, **data: object) -> FlextResult[Self]: ...
+    def create(cls, **data: object) -> FlextResult[FlextValidatedModel]: ...
 
 class FlextValidationUtils:
     @staticmethod
@@ -70,15 +78,22 @@ class FlextValidationUtils:
         value: object, message: str = "Value cannot be empty"
     ) -> object: ...
 
-validated: Incomplete
-safe: Incomplete
-is_dict_of: Incomplete
-immutable: Incomplete
-pure: Incomplete
-make_factory: Incomplete
-make_builder: Incomplete
-require_not_none: Incomplete
-require_positive: Incomplete
-require_in_range: Incomplete
-require_non_empty: Incomplete
+# Type aliases for backward compatibility
+is_not_none = FlextGuards.is_not_none  # Direct reference
+is_list_of = FlextGuards.is_list_of  # Direct reference
+is_instance_of = FlextGuards.is_instance_of  # Direct reference
+is_dict_of = FlextGuards.is_dict_of  # Direct reference
+
+# Type aliases for backward compatibility
+type validated = Callable[[object], object]  # noqa: PYI001, PYI042
+type safe = Callable[[object], object]  # noqa: PYI001, PYI042
+immutable = FlextGuards.immutable  # Direct reference instead of type alias
+pure = FlextGuards.pure  # Direct reference instead of type alias
+type make_factory = Callable[[type[object]], Callable[[], object]]  # noqa: PYI001, PYI042
+type make_builder = Callable[[type[object]], Callable[[], object]]  # noqa: PYI001, PYI042
+type require_not_none = Callable[[object, str], object]  # noqa: PYI001, PYI042
+type require_positive = Callable[[object, str], object]  # noqa: PYI001, PYI042
+type require_in_range = Callable[[object, int, int, str | None], object]  # noqa: PYI001, PYI042
+type require_non_empty = Callable[[object, str], object]  # noqa: PYI001, PYI042
+
 ValidatedModel = FlextValidatedModel

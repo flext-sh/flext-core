@@ -27,7 +27,6 @@ import contextlib
 from collections.abc import Callable
 from decimal import Decimal
 from enum import StrEnum
-from typing import cast
 
 from flext_core import (
     FlextEntity,
@@ -135,7 +134,7 @@ class EmailAddress(FlextValueObject):
         """Validate email address business rules."""
         # Compute first failing reason to limit number of return statements
         reason: str | None = None
-        if not self.email or not isinstance(self.email, str):
+        if not self.email:
             reason = "Email must be a non-empty string"
         else:
             email = self.email.strip().lower()
@@ -213,7 +212,9 @@ class Money(FlextValueObject):
 
         validation = result.validate_business_rules()
         if validation.is_failure:
-            return FlextResult[Money].fail(validation.error or "Invalid money calculation")
+            return FlextResult[Money].fail(
+                validation.error or "Invalid money calculation"
+            )
 
         return FlextResult[Money].ok(result)
 
@@ -232,7 +233,9 @@ class Money(FlextValueObject):
 
         validation = result.validate_business_rules()
         if validation.is_failure:
-            return FlextResult[Money].fail(validation.error or "Invalid money calculation")
+            return FlextResult[Money].fail(
+                validation.error or "Invalid money calculation"
+            )
 
         return FlextResult[Money].ok(result)
 
@@ -323,7 +326,7 @@ class User(FlextEntity):
     def validate_domain_rules(self) -> FlextResult[None]:
         """Validate user business rules."""
         reason: str | None = None
-        name_stripped = self.name.strip() if isinstance(self.name, str) else ""
+        name_stripped = self.name.strip()
         if not name_stripped or len(name_stripped) < MIN_NAME_LENGTH:
             reason = f"Name must be at least {MIN_NAME_LENGTH} characters"
         elif len(name_stripped) > MAX_NAME_LENGTH:
@@ -357,7 +360,7 @@ class User(FlextEntity):
             return FlextResult[User].fail("User is already active")
 
         result = self.copy_with(status=UserStatus.ACTIVE)
-        if result.success and result.data is not None:
+        if result.success:
             activated_user = result.data
             # Add domain event
             try:
@@ -380,10 +383,12 @@ class User(FlextEntity):
             return FlextResult[User].fail("User is already suspended")
 
         if not reason or len(reason.strip()) < MIN_REASON_LENGTH:
-            return FlextResult[User].fail("Suspension reason must be at least 10 characters")
+            return FlextResult[User].fail(
+                "Suspension reason must be at least 10 characters"
+            )
 
         result = self.copy_with(status=UserStatus.SUSPENDED)
-        if result.success and result.data is not None:
+        if result.success:
             suspended_user = result.data
             # Add domain event
             try:
@@ -419,7 +424,9 @@ class User(FlextEntity):
             # Validate the new instance
             validation_result = new_user.validate_domain_rules()
             if validation_result.is_failure:
-                return FlextResult[User].fail(f"Validation failed: {validation_result.error}")
+                return FlextResult[User].fail(
+                    f"Validation failed: {validation_result.error}"
+                )
 
             return FlextResult[User].ok(new_user)
 
@@ -452,7 +459,9 @@ class Product(FlextEntity):
             )
 
         if not self.category or len(self.category.strip()) < MIN_NAME_LENGTH:
-            return FlextResult[None].fail("Product category must be at least 2 characters")
+            return FlextResult[None].fail(
+                "Product category must be at least 2 characters"
+            )
 
         # Validate embedded value objects
         price_validation = self.price.validate_business_rules()
@@ -462,7 +471,9 @@ class Product(FlextEntity):
             )
 
         if self.price.amount > Decimal(str(MAX_PRODUCT_PRICE)):
-            return FlextResult[None].fail(f"Product price cannot exceed {MAX_PRODUCT_PRICE}")
+            return FlextResult[None].fail(
+                f"Product price cannot exceed {MAX_PRODUCT_PRICE}"
+            )
 
         return FlextResult[None].ok(None)
 
@@ -473,7 +484,7 @@ class Product(FlextEntity):
             return FlextResult[Product].fail(f"Invalid price: {price_validation.error}")
 
         result = self.copy_with(price=new_price)
-        if result.success and result.data is not None:
+        if result.success:
             updated_product = result.data
             # Add domain event
             event_result = updated_product.add_domain_event(
@@ -597,8 +608,7 @@ class Order(FlextEntity):
                     f"Failed to calculate item total: {item_total_result.error}",
                 )
 
-            if item_total_result.data is not None:
-                total_amount += item_total_result.data.amount
+            total_amount += item_total_result.data.amount
 
         return FlextResult[Money].ok(Money(amount=total_amount, currency=base_currency))  # type: ignore[call-arg]
 
@@ -610,10 +620,12 @@ class Order(FlextEntity):
         # Validate order can be fulfilled
         total_result = self.calculate_total()
         if total_result.is_failure:
-            return FlextResult[Order].fail(f"Cannot confirm order: {total_result.error}")
+            return FlextResult[Order].fail(
+                f"Cannot confirm order: {total_result.error}"
+            )
 
         result = self.copy_with(status=OrderStatus.CONFIRMED)
-        if result.success and result.data is not None and total_result.data is not None:
+        if result.success and total_result.success:
             confirmed_order = result.data
             # Add domain event
             event_result = confirmed_order.add_domain_event(
@@ -667,14 +679,16 @@ class SharedDomainFactory:
             # Generate ID if not provided
             entity_id = str(kwargs.get("id", FlextUtilities.generate_entity_id()))
 
-            user = User(
-                id=entity_id,
-                name=name,
-                email_address=email_obj,
-                age=age_obj,
-                status=cast("UserStatus", kwargs.get("status", UserStatus.PENDING)),
-                phone=cast("PhoneNumber | None", kwargs.get("phone")),
-                address=cast("Address | None", kwargs.get("address")),
+            user = User.model_validate(
+                {
+                    "id": entity_id,
+                    "name": name,
+                    "email_address": email_obj,
+                    "age": age_obj,
+                    "status": kwargs.get("status", UserStatus.PENDING),
+                    "phone": kwargs.get("phone"),
+                    "address": kwargs.get("address"),
+                }
             )
 
             validation_result = user.validate_domain_rules()
@@ -713,13 +727,15 @@ class SharedDomainFactory:
             # Create product entity
             entity_id = str(kwargs.get("id", FlextUtilities.generate_entity_id()))
 
-            product = Product(
-                id=entity_id,
-                name=name,
-                description=description,
-                price=money_obj,
-                category=str(kwargs.get("category", "general")),
-                in_stock=bool(kwargs.get("in_stock", True)),
+            product = Product.model_validate(
+                {
+                    "id": entity_id,
+                    "name": name,
+                    "description": description,
+                    "price": money_obj,
+                    "category": str(kwargs.get("category", "general")),
+                    "in_stock": bool(kwargs.get("in_stock", True)),
+                }
             )
 
             validation_result = product.validate_domain_rules()
@@ -750,15 +766,19 @@ class SharedDomainFactory:
                 )
                 money_result = money_obj.validate_business_rules()
                 if money_result.is_failure:
-                    return FlextResult[Order].fail(f"Invalid item price: {money_result.error}")
+                    return FlextResult[Order].fail(
+                        f"Invalid item price: {money_result.error}"
+                    )
 
                 # OrderItem uses FlextValueObject base, use model_validate
-                order_item = OrderItem.model_validate({
-                    "product_id": str(item_data["product_id"]),
-                    "product_name": str(item_data["product_name"]),
-                    "quantity": int(str(item_data["quantity"])),
-                    "unit_price": money_obj,
-                })
+                order_item = OrderItem.model_validate(
+                    {
+                        "product_id": str(item_data["product_id"]),
+                        "product_name": str(item_data["product_name"]),
+                        "quantity": int(str(item_data["quantity"])),
+                        "unit_price": money_obj,
+                    }
+                )
 
                 item_validation = order_item.validate_business_rules()
                 if item_validation.is_failure:
@@ -790,13 +810,15 @@ class SharedDomainFactory:
             ):
                 shipping_address = None
 
-            order = Order(
-                id=entity_id,
-                customer_id=customer_id,
-                items=order_items,
-                status=status,
-                payment_method=payment_method,
-                shipping_address=shipping_address,
+            order = Order.model_validate(
+                {
+                    "id": entity_id,
+                    "customer_id": customer_id,
+                    "items": order_items,
+                    "status": status,
+                    "payment_method": payment_method,
+                    "shipping_address": shipping_address,
+                }
             )
 
             validation_result = order.validate_domain_rules()
@@ -927,7 +949,9 @@ class TestDomainFactory:
         """Create a concrete entity for testing."""
         try:
             entity_id = str(kwargs.get("id", FlextUtilities.generate_entity_id()))
-            entity = ConcreteFlextEntity(id=entity_id, name=name, status=status)
+            entity = ConcreteFlextEntity.model_validate(
+                {"id": entity_id, "name": name, "status": status}
+            )
             validation_result = entity.validate_domain_rules()
             if validation_result.is_failure:
                 return FlextResult[ConcreteFlextEntity].fail(
@@ -936,7 +960,9 @@ class TestDomainFactory:
             return FlextResult[ConcreteFlextEntity].ok(entity)
         # Test factory needs exceptions handling
         except (RuntimeError, ValueError, TypeError) as e:
-            return FlextResult[ConcreteFlextEntity].fail(f"Failed to create test entity: {e}")
+            return FlextResult[ConcreteFlextEntity].fail(
+                f"Failed to create test entity: {e}"
+            )
 
     @staticmethod
     def create_concrete_value_object(
@@ -948,11 +974,13 @@ class TestDomainFactory:
         try:
             description = str(kwargs.get("description", ""))
             # ConcreteValueObject uses the __init__ from FlextValueObject
-            vo = ConcreteValueObject.model_validate({
-                "amount": amount,
-                "currency": currency,
-                "description": description,
-            })
+            vo = ConcreteValueObject.model_validate(
+                {
+                    "amount": amount,
+                    "currency": currency,
+                    "description": description,
+                }
+            )
             validation_result = vo.validate_business_rules()
             if validation_result.is_failure:
                 return FlextResult[ConcreteValueObject].fail(
@@ -961,7 +989,9 @@ class TestDomainFactory:
             return FlextResult[ConcreteValueObject].ok(vo)
         # Test factory needs exceptions handling
         except (RuntimeError, ValueError, TypeError) as e:
-            return FlextResult[ConcreteValueObject].fail(f"Failed to create test value object: {e}")
+            return FlextResult[ConcreteValueObject].fail(
+                f"Failed to create test value object: {e}"
+            )
 
     @staticmethod
     def create_complex_value_object(
@@ -972,11 +1002,13 @@ class TestDomainFactory:
         """Create a complex value object for testing."""
         try:
             # ComplexValueObject uses the __init__ from FlextValueObject
-            vo = ComplexValueObject.model_validate({
-                "name": name,
-                "tags": tags,
-                "metadata": metadata,
-            })
+            vo = ComplexValueObject.model_validate(
+                {
+                    "name": name,
+                    "tags": tags,
+                    "metadata": metadata,
+                }
+            )
             validation_result = vo.validate_business_rules()
             if validation_result.is_failure:
                 return FlextResult[ComplexValueObject].fail(
@@ -985,7 +1017,9 @@ class TestDomainFactory:
             return FlextResult[ComplexValueObject].ok(vo)
         # Test factory needs exceptions handling
         except (RuntimeError, ValueError, TypeError) as e:
-            return FlextResult[ComplexValueObject].fail(f"Failed to create complex value object: {e}")
+            return FlextResult[ComplexValueObject].fail(
+                f"Failed to create complex value object: {e}"
+            )
 
 
 # =============================================================================

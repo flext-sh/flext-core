@@ -87,7 +87,7 @@ class FlextCommands:
         def get_metadata(self) -> TAnyDict: ...
 
     class Result(FlextResult[_TResult], Generic[_TResult]):
-        metadata: Incomplete
+        metadata: dict[str, object] | None
         def __init__(
             self,
             data: _TResult | None = None,
@@ -115,7 +115,7 @@ class FlextCommands:
         ABC,
         Generic[_TCommand, _TResult],
     ):
-        handler_id: Incomplete
+        handler_id: str | None
         def __init__(
             self,
             handler_name: TServiceName | None = None,
@@ -157,7 +157,7 @@ class FlextCommands:
         ) -> Callable[[Callable[[object], object]], Callable[[object], object]]: ...
 
     class Query(BaseModel, FlextSerializableMixin):
-        model_config: ClassVar[Incomplete]
+        model_config: ClassVar[dict[str, object]]
         query_id: str | None
         query_type: str | None
         page_size: int

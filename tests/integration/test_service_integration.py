@@ -60,7 +60,7 @@ class TestServiceIntegrationPatterns:
         """
         # Arrange
         large_dataset = benchmark_data["large_dataset"]
-        mock_external_service.process.return_value = FlextResult[str].ok(FlextResult[None].ok("processed"))
+        mock_external_service.process.return_value = FlextResult[str].ok("processed")
 
         def process_pipeline(
             data: list[int]
@@ -68,7 +68,7 @@ class TestServiceIntegrationPatterns:
             | dict[str, dict[str, dict[str, list[int]]]],
         ) -> FlextResult[str]:
             # Simulate service pipeline with realistic operations
-            result = FlextResult[None].ok(data)
+            result = FlextResult[object].ok(data)
             return result.flat_map(mock_external_service.process).map(
                 lambda _r: f"pipeline_result_{len(str(data))}",
             )
@@ -110,7 +110,7 @@ class TestServiceIntegrationPatterns:
 
         def failing_pipeline(data: str) -> FlextResult[str]:
             return (
-                FlextResult[None].ok(data)
+                FlextResult[str].ok(data)
                 .flat_map(mock_external_service.process)
                 .map(lambda _r: f"processed_{_r}")
             )
@@ -146,8 +146,8 @@ class TestServiceIntegrationPatterns:
         mock_notification_service = MagicMock()
 
         # Configure mock behavior
-        mock_user_service.get_user.return_value = FlextResult[None].ok(test_user_data)
-        mock_notification_service.send.return_value = FlextResult[str].ok(FlextResult[None].ok("sent"))
+        mock_user_service.get_user.return_value = FlextResult[dict[str, str | int | bool | list[str]]].ok(test_user_data)
+        mock_notification_service.send.return_value = FlextResult[str].ok("sent")
 
         # Register services in container
         clean_container.register("user_service", mock_user_service)
@@ -162,18 +162,18 @@ class TestServiceIntegrationPatterns:
                 not user_service_result.success
                 or not notification_service_result.success
             ):
-                return FlextResult[None].fail("Service unavailable")
+                return FlextResult[str].fail("Service unavailable")
 
             user_service = user_service_result.data
             notification_service = notification_service_result.data
 
             # Get user data first
-            user_result = user_service.get_user(user_id)
+            user_result = user_service.get_user(user_id)  # type: ignore[attr-defined]
             if not user_result.success:
-                return FlextResult[None].fail("User not found")
+                return FlextResult[str].fail("User not found")
 
             # Send notification
-            return notification_service.send(user_result.data["email"])
+            return notification_service.send(user_result.data["email"])  # type: ignore[attr-defined,no-any-return]
 
         # Act - Execute workflow
         user_id = str(test_user_data["id"])
@@ -208,9 +208,9 @@ class TestServiceIntegrationPatterns:
         """
         # Arrange - Create lifecycle-aware mock service
         mock_service = MagicMock()
-        mock_service.initialize.return_value = FlextResult[str].ok(FlextResult[None].ok("initialized"))
+        mock_service.initialize.return_value = FlextResult[str].ok("initialized")
         mock_service.is_healthy.return_value = True
-        mock_service.shutdown.return_value = FlextResult[str].ok(FlextResult[None].ok("shutdown"))
+        mock_service.shutdown.return_value = FlextResult[str].ok("shutdown")
 
         service_config = {
             "name": "test_service",
@@ -241,9 +241,9 @@ class TestServiceIntegrationPatterns:
         config = config_fetch_result.data
 
         # Act - Test service lifecycle
-        init_result = service.initialize(config)
-        health_status = service.is_healthy()
-        shutdown_result = service.shutdown()
+        init_result = service.initialize(config)  # type: ignore[attr-defined]
+        health_status = service.is_healthy()  # type: ignore[attr-defined]
+        shutdown_result = service.shutdown()  # type: ignore[attr-defined]
 
         # Assert - Lifecycle operations
         assert init_result.success is True
@@ -251,9 +251,9 @@ class TestServiceIntegrationPatterns:
         assert shutdown_result.success is True
 
         # Verify lifecycle method calls
-        service.initialize.assert_called_once_with(config)
-        service.is_healthy.assert_called_once()
-        service.shutdown.assert_called_once()
+        service.initialize.assert_called_once_with(config)  # type: ignore[attr-defined]
+        service.is_healthy.assert_called_once()  # type: ignore[attr-defined]
+        service.shutdown.assert_called_once()  # type: ignore[attr-defined]
 
         # Act - Clear container
         clean_container.clear()

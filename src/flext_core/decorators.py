@@ -107,6 +107,7 @@ class FlextValidationDecorators(FlextAbstractValidationDecorator):
 
     def apply_decoration(self, func: FlextCallable) -> FlextCallable:
         """Apply validation decoration to function."""
+
         def wrapped(*args: object, **kwargs: object) -> object:
             # Validate input
             input_validation = self.validate_input(args, kwargs)
@@ -134,7 +135,9 @@ class FlextValidationDecorators(FlextAbstractValidationDecorator):
         """Create input validation decorator."""
         return _flext_validate_input_decorator(validator)
 
-    def validate_input(self, args: tuple[object, ...], kwargs: dict[str, object]) -> FlextResult[None]:
+    def validate_input(
+        self, args: tuple[object, ...], kwargs: dict[str, object]
+    ) -> FlextResult[None]:
         """Validate input arguments."""
         if not args and not kwargs:
             return FlextResult[None].fail("No input to validate")
@@ -593,11 +596,15 @@ class FlextImmutabilityDecorators(FlextAbstractDecorator):
         return decorator(func)
 
     @staticmethod
-    def freeze_args_decorator() -> Callable[[FlextDecoratedFunction], FlextDecoratedFunction]:
+    def freeze_args_decorator() -> Callable[
+        [FlextDecoratedFunction], FlextDecoratedFunction
+    ]:
         """Create freeze args decorator (no-op compatibility)."""
+
         def decorator(func: FlextDecoratedFunction) -> FlextDecoratedFunction:
             """Freeze function arguments (no-op compatibility)."""
             return func
+
         return decorator
 
     @staticmethod

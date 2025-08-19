@@ -271,7 +271,7 @@ class FlextBaseConfigManager:
         return FlextResult[bool].ok(True)  # noqa: FBT003
 
 
-class FlextBaseSorter(Generic[EntryT]):
+class FlextBaseSorter[EntryT]:
     """Base sorter for entries with configurable sort key extraction."""
 
     def __init__(self, key_extractor: Callable[[object], object] | None = None) -> None:
@@ -316,7 +316,7 @@ class FlextBaseFileWriter(ABC):
             return FlextResult[None].fail(f"Failed to write entries: {e}")
 
 
-class FlextProcessingPipeline(Generic[InputT, OutputT]):
+class FlextProcessingPipeline[InputT, OutputT]:
     """Generic processing pipeline for chaining operations."""
 
     def __init__(self) -> None:
