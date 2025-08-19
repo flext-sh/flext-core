@@ -937,8 +937,12 @@ class FlextAbstractErrorFactory(ABC):
 class FlextExceptions(FlextAbstractErrorFactory):
     """Factory for creating FLEXT exceptions."""
 
-    @staticmethod
+    def create_error(self, message: str, **kwargs: object) -> FlextError:
+        """Create a generic error."""
+        return FlextError(message, context=kwargs)
+
     def create_validation_error(
+        self,
         message: str,
         **kwargs: object,
     ) -> FlextValidationError:
@@ -958,7 +962,7 @@ class FlextExceptions(FlextAbstractErrorFactory):
         validation_details_dict: dict[str, object] | None
         if isinstance(validation_details, dict):
             # Ensure keys are strings and values are objects
-            validation_details_dict = {str(k): v for k, v in validation_details.items()}
+            validation_details_dict = cast("dict[str, object]", validation_details)
         else:
             validation_details_dict = None
 
@@ -1024,8 +1028,8 @@ class FlextExceptions(FlextAbstractErrorFactory):
             context=filtered_kwargs,
         )
 
-    @staticmethod
     def create_configuration_error(
+        self,
         message: str,
         **kwargs: object,
     ) -> FlextConfigurationError:
@@ -1126,11 +1130,6 @@ def get_exception_metrics() -> dict[str, int]:
 def clear_exception_metrics() -> None:
     """Clear exception metrics."""
     _exception_metrics.clear_metrics()
-
-
-def _record_exception(exception_type: str) -> None:
-    """Record exception occurrence for metrics."""
-    _exception_metrics.record_exception(exception_type)
 
 
 # =============================================================================

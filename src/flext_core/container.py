@@ -1,18 +1,25 @@
-"""Dependency injection container."""
+"""Dependency injection container with FlextCommands integration."""
 
 from __future__ import annotations
 
 import inspect
 from collections import UserString
 from collections.abc import Callable
-from typing import Generic, cast
+from datetime import datetime
+from typing import Generic, TypeVar, cast
+from zoneinfo import ZoneInfo
 
+from flext_core.commands import FlextCommands
 from flext_core.constants import SERVICE_NAME_EMPTY
 from flext_core.exceptions import FlextError
 from flext_core.mixins import FlextLoggableMixin
 from flext_core.result import FlextResult
-from flext_core.typings import T, TService
+from flext_core.utilities import FlextGenerators
 from flext_core.validation import flext_validate_service_name
+
+# Define TypeVars locally
+T = TypeVar("T")
+TService = TypeVar("TService")
 
 
 class FlextServiceKey(UserString, Generic[TService]):  # noqa: UP046
@@ -52,6 +59,218 @@ class FlextServiceKey(UserString, Generic[TService]):  # noqa: UP046
     def __class_getitem__(cls, _item: object) -> type[FlextServiceKey[TService]]:
         """Support generic subscription without affecting runtime behavior."""
         return cls
+
+
+# =============================================================================
+# CONTAINER COMMANDS - Using FlextCommands pattern for operations
+# =============================================================================
+
+
+class RegisterServiceCommand(FlextCommands.Command):
+    """Command to register a service instance."""
+
+    service_name: str
+    service_instance: object
+
+    @classmethod
+    def create(
+        cls, service_name: str, service_instance: object
+    ) -> RegisterServiceCommand:
+        """Create command with default values."""
+        return cls(
+            service_name=service_name,
+            service_instance=service_instance,
+            command_type="register_service",
+            command_id=FlextGenerators.generate_uuid(),
+            timestamp=datetime.now(tz=ZoneInfo("UTC")),
+            user_id=None,
+            correlation_id=FlextGenerators.generate_uuid(),
+            legacy_mixin_setup=None,
+        )
+
+    def validate_command(self) -> FlextResult[None]:
+        """Validate service registration command."""
+        if not self.service_name or not self.service_name.strip():
+            return FlextResult[None].fail(SERVICE_NAME_EMPTY)
+        return FlextResult[None].ok(None)
+
+
+class RegisterFactoryCommand(FlextCommands.Command):
+    """Command to register a service factory."""
+
+    service_name: str
+    factory: object  # Callable[[], object] - using object for validation
+
+    @classmethod
+    def create(cls, service_name: str, factory: object) -> RegisterFactoryCommand:
+        """Create command with default values."""
+        return cls(
+            service_name=service_name,
+            factory=factory,
+            command_type="register_factory",
+            command_id=FlextGenerators.generate_uuid(),
+            timestamp=datetime.now(tz=ZoneInfo("UTC")),
+            user_id=None,
+            correlation_id=FlextGenerators.generate_uuid(),
+            legacy_mixin_setup=None,
+        )
+
+    def validate_command(self) -> FlextResult[None]:
+        """Validate factory registration command."""
+        if not self.service_name or not self.service_name.strip():
+            return FlextResult[None].fail(SERVICE_NAME_EMPTY)
+        if not callable(self.factory):
+            return FlextResult[None].fail("Factory must be callable")
+        return FlextResult[None].ok(None)
+
+
+class UnregisterServiceCommand(FlextCommands.Command):
+    """Command to unregister a service."""
+
+    service_name: str
+
+    @classmethod
+    def create(cls, service_name: str) -> UnregisterServiceCommand:
+        """Create command with default values."""
+        return cls(
+            service_name=service_name,
+            command_type="unregister_service",
+            command_id=FlextGenerators.generate_uuid(),
+            timestamp=datetime.now(tz=ZoneInfo("UTC")),
+            user_id=None,
+            correlation_id=FlextGenerators.generate_uuid(),
+            legacy_mixin_setup=None,
+        )
+
+    def validate_command(self) -> FlextResult[None]:
+        """Validate service unregistration command."""
+        if not self.service_name or not self.service_name.strip():
+            return FlextResult[None].fail(SERVICE_NAME_EMPTY)
+        return FlextResult[None].ok(None)
+
+
+class GetServiceQuery(FlextCommands.Query):
+    """Query to retrieve a service."""
+
+    service_name: str
+    expected_type: str | None = None  # Optional type validation
+
+    @classmethod
+    def create(
+        cls, service_name: str, expected_type: str | None = None
+    ) -> GetServiceQuery:
+        """Create query with default values."""
+        return cls(
+            service_name=service_name,
+            expected_type=expected_type,
+            query_type="get_service",
+            query_id=None,
+            page_size=100,
+            page_number=1,
+            sort_by=None,
+            sort_order="asc",
+        )
+
+    def validate_query(self) -> FlextResult[None]:
+        """Validate service retrieval query."""
+        if not self.service_name or not self.service_name.strip():
+            return FlextResult[None].fail(SERVICE_NAME_EMPTY)
+        return FlextResult[None].ok(None)
+
+
+class ListServicesQuery(FlextCommands.Query):
+    """Query to list all services."""
+
+    include_factories: bool = True
+    service_type_filter: str | None = None
+
+    @classmethod
+    def create(
+        cls, *, include_factories: bool = True, service_type_filter: str | None = None
+    ) -> ListServicesQuery:
+        """Create query with default values."""
+        return cls(
+            include_factories=include_factories,
+            service_type_filter=service_type_filter,
+            query_type="list_services",
+            query_id=None,
+            page_size=100,
+            page_number=1,
+            sort_by=None,
+            sort_order="asc",
+        )
+
+
+# =============================================================================
+# COMMAND HANDLERS - Handle container operations
+# =============================================================================
+
+
+class RegisterServiceHandler(FlextCommands.Handler[RegisterServiceCommand, None]):
+    """Handler for service registration commands."""
+
+    def __init__(self, registrar: FlextServiceRegistrar) -> None:
+        super().__init__("RegisterServiceHandler")
+        self._registrar = registrar
+
+    def handle(self, command: RegisterServiceCommand) -> FlextResult[None]:
+        """Handle service registration."""
+        return self._registrar.register_service(
+            command.service_name, command.service_instance
+        )
+
+
+class RegisterFactoryHandler(FlextCommands.Handler[RegisterFactoryCommand, None]):
+    """Handler for factory registration commands."""
+
+    def __init__(self, registrar: FlextServiceRegistrar) -> None:
+        super().__init__("RegisterFactoryHandler")
+        self._registrar = registrar
+
+    def handle(self, command: RegisterFactoryCommand) -> FlextResult[None]:
+        """Handle factory registration."""
+        return self._registrar.register_factory(command.service_name, command.factory)
+
+
+class UnregisterServiceHandler(FlextCommands.Handler[UnregisterServiceCommand, None]):
+    """Handler for service unregistration commands."""
+
+    def __init__(self, registrar: FlextServiceRegistrar) -> None:
+        super().__init__("UnregisterServiceHandler")
+        self._registrar = registrar
+
+    def handle(self, command: UnregisterServiceCommand) -> FlextResult[None]:
+        """Handle service unregistration."""
+        return self._registrar.unregister_service(command.service_name)
+
+
+class GetServiceQueryHandler(FlextCommands.QueryHandler[GetServiceQuery, object]):
+    """Handler for service retrieval queries."""
+
+    def __init__(self, retriever: FlextServiceRetriever) -> None:
+        super().__init__("GetServiceQueryHandler")
+        self._retriever = retriever
+
+    def handle(self, query: GetServiceQuery) -> FlextResult[object]:
+        """Handle service retrieval."""
+        return self._retriever.get_service(query.service_name)
+
+
+class ListServicesQueryHandler(
+    FlextCommands.QueryHandler[ListServicesQuery, dict[str, str]]
+):
+    """Handler for listing services."""
+
+    def __init__(self, retriever: FlextServiceRetriever) -> None:
+        super().__init__("ListServicesQueryHandler")
+        self._retriever = retriever
+
+    def handle(self, query: ListServicesQuery) -> FlextResult[dict[str, str]]:
+        """Handle service listing."""
+        # Use query parameters for filtering in future versions
+        _ = query  # Explicitly ignore query for now (will be used for filtering)
+        services = self._retriever.list_services()
+        return FlextResult[dict[str, str]].ok(services)
 
 
 # =============================================================================
@@ -385,10 +604,10 @@ class FlextServiceRetriever(FlextLoggableMixin):
 
 
 class FlextContainer(FlextLoggableMixin):
-    """Enterprise dependency injection container with SOLID principles."""
+    """Enterprise dependency injection container with SOLID principles and FlextCommands integration."""
 
     def __init__(self) -> None:
-        """Initialize container with internal components."""
+        """Initialize container with internal components and command bus."""
         # Call mixin setup first
         super().__init__()
         self.mixin_setup()
@@ -402,23 +621,53 @@ class FlextContainer(FlextLoggableMixin):
         factories_dict = self._registrar.get_factories_dict()
         self._retriever = FlextServiceRetriever(services_dict, factories_dict)
 
+        # FlextCommands integration
+        self._command_bus = FlextCommands.create_command_bus()
+        self._setup_command_handlers()
+
         self.logger.debug("FlextContainer initialized successfully")
 
-    # Registration API - Delegate to registrar
+    def _setup_command_handlers(self) -> None:
+        """Setup command handlers for container operations."""
+        # Register command handlers
+        self._command_bus.register_handler(
+            RegisterServiceCommand, RegisterServiceHandler(self._registrar)
+        )
+        self._command_bus.register_handler(
+            RegisterFactoryCommand, RegisterFactoryHandler(self._registrar)
+        )
+        self._command_bus.register_handler(
+            UnregisterServiceCommand, UnregisterServiceHandler(self._registrar)
+        )
+
+        # Register query handlers
+        # Note: FlextCommands.Bus currently handles commands, we'll add direct handlers for queries
+        self._get_service_handler = GetServiceQueryHandler(self._retriever)
+        self._list_services_handler = ListServicesQueryHandler(self._retriever)
+
+    # Registration API - Using FlextCommands pattern
     def register(self, name: str, service: object) -> FlextResult[None]:
-        """Register a service instance."""
-        return self._registrar.register_service(name, service)
+        """Register a service instance using FlextCommands."""
+        command = RegisterServiceCommand.create(name, service)
+        result = self._command_bus.execute(command)
+        if result.is_failure:
+            return FlextResult[None].fail(result.error or "Registration failed")
+        return FlextResult[None].ok(None)
 
     def register_factory(
         self,
         name: str,
         factory: Callable[[], object],
     ) -> FlextResult[None]:
-        """Register a service factory."""
-        return self._registrar.register_factory(name, factory)
+        """Register a service factory using FlextCommands."""
+        command = RegisterFactoryCommand.create(service_name=name, factory=factory)
+        result = self._command_bus.execute(command)
+        if result.is_failure:
+            return FlextResult[None].fail(result.error or "Factory registration failed")
+        return FlextResult[None].ok(None)
 
     def unregister(self, name: str) -> FlextResult[None]:
-        """Unregister service.
+        """Unregister service using FlextCommands.
 
         Args:
             name: Service identifier.
@@ -427,12 +676,17 @@ class FlextContainer(FlextLoggableMixin):
             Result indicating success or failure.
 
         """
-        return self._registrar.unregister_service(name)
+        command = UnregisterServiceCommand.create(service_name=name)
+        result = self._command_bus.execute(command)
+        if result.is_failure:
+            return FlextResult[None].fail(result.error or "Unregistration failed")
+        return FlextResult[None].ok(None)
 
-    # Retrieval API - Delegate to retriever
+    # Retrieval API - Using FlextCommands query pattern
     def get(self, name: str) -> FlextResult[object]:
-        """Get a service by name."""
-        return self._retriever.get_service(name)
+        """Get a service by name using FlextCommands query."""
+        query = GetServiceQuery.create(service_name=name)
+        return self._get_service_handler.handle(query)
 
     # Container management
     def clear(self) -> FlextResult[None]:
@@ -444,8 +698,12 @@ class FlextContainer(FlextLoggableMixin):
         return self._registrar.has_service(name)
 
     def list_services(self) -> dict[str, str]:
-        """List all services."""
-        return self._retriever.list_services()
+        """List all services using FlextCommands query."""
+        query = ListServicesQuery.create()
+        result = self._list_services_handler.handle(query)
+        if result.is_success:
+            return result.unwrap()
+        return {}
 
     def get_service_names(self) -> list[str]:
         """Get service names."""
@@ -454,6 +712,11 @@ class FlextContainer(FlextLoggableMixin):
     def get_service_count(self) -> int:
         """Get service count."""
         return self._registrar.get_service_count()
+
+    @property
+    def command_bus(self) -> FlextCommands.Bus:
+        """Access to the internal command bus for advanced operations."""
+        return self._command_bus
 
     # Type-safe retrieval methods
     def get_typed(self, name: str, expected_type: type[T]) -> FlextResult[T]:
@@ -754,7 +1017,7 @@ def configure_flext_container(container: FlextContainer | None) -> FlextContaine
     return FlextContainerUtils.configure_flext_container(container)
 
 
-def get_typed[T](
+def get_typed(
     key: FlextServiceKey[T] | str,
     expected_type: type[T],
 ) -> FlextResult[T]:
@@ -774,7 +1037,7 @@ def get_typed[T](
     return container.get_typed(key_str, expected_type)
 
 
-def register_typed[T](key: FlextServiceKey[T] | str, service: T) -> FlextResult[None]:
+def register_typed(key: FlextServiceKey[T] | str, service: T) -> FlextResult[None]:
     """Register service in global container.
 
     Args:

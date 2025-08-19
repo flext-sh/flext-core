@@ -33,10 +33,10 @@ class TestPerformanceBenchmarks:
         def create_and_chain_results() -> FlextResult[str]:
             """Create and chain multiple FlextResult operations."""
             return (
-                FlextResult.ok("initial")
+                FlextResult[str].ok("initial")
                 .map(lambda x: f"{x}_step1")
                 .map(lambda x: f"{x}_step2")
-                .flat_map(lambda x: FlextResult.ok(f"{x}_final"))
+                .flat_map(lambda x: FlextResult[str].ok(f"{x}_final"))
             )
 
         benchmark_func = cast("Callable[[object], object]", benchmark)
@@ -64,8 +64,8 @@ class TestPerformanceBenchmarks:
             container.get("service3")
 
             if result1.success and result2.success:
-                return FlextResult.ok("all_retrieved")
-            return FlextResult.fail("retrieval_failed")
+                return FlextResult[str].ok("all_retrieved")
+            return FlextResult[str].fail("retrieval_failed")
 
         benchmark_func = cast("Callable[[object], object]", benchmark)
         result = cast("FlextResult[bool]", benchmark_func(container_operations))
@@ -117,11 +117,11 @@ class TestPerformanceBenchmarks:
 
             def handle(self, message: object) -> FlextResult[object]:
                 """Handle message and return processed result."""
-                return FlextResult.ok(f"processed_{message}")
+                return FlextResult[object].ok(f"processed_{message}")
 
             def validate_request(self, _request: object) -> FlextResult[None]:
                 """Validate request."""
-                return FlextResult.ok(None)
+                return FlextResult[None].ok(None)
 
         # Create handler chain
         from flext_core.handlers import FlextHandlerChain  # noqa: PLC0415
@@ -178,7 +178,7 @@ class TestStressTests:
 
         def build_long_chain(length: int) -> FlextResult[int]:
             """Build a long chain of FlextResult operations."""
-            result = FlextResult.ok(0)
+            result = FlextResult[int].ok(0)
 
             for _ in range(length):
                 result = result.map(lambda x: x + 1)
@@ -255,7 +255,7 @@ class TestConcurrencyPerformance:
         def create_and_modify_result(thread_id: int) -> None:
             """Create and work with results in parallel."""
             try:
-                base_result = FlextResult.ok(f"thread_{thread_id}")
+                base_result = FlextResult[str].ok(f"thread_{thread_id}")
 
                 # Chain operations
                 final_result = base_result.map(lambda x: f"{x}_step1").map(

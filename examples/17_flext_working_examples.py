@@ -7,6 +7,7 @@ Comprehensive examples demonstrating all major FLEXT Core functionality.
 import contextlib
 from typing import cast
 
+from examples.shared_domain import SharedDomainFactory, User as SharedUser
 from flext_core import (
     FlextCommands,
     FlextFields,
@@ -14,16 +15,14 @@ from flext_core import (
     get_flext_container,
 )
 
-from .shared_domain import SharedDomainFactory, User as SharedUser
-
 
 def _print_header() -> None:
     pass
 
 
 def _demo_flext_result() -> None:
-    FlextResult.ok("Operation successful")
-    FlextResult.fail("Something went wrong")
+    FlextResult[None].ok("Operation successful")
+    FlextResult[None].fail("Something went wrong")
 
 
 def _demo_entity_shared_domain() -> SharedUser | None:
@@ -47,10 +46,10 @@ def _demo_commands() -> tuple[object, object]:
 
         def validate_command(self) -> FlextResult[None]:
             if not self.email or "@" not in self.email:
-                return FlextResult.fail("Invalid email")
+                return FlextResult[None].fail("Invalid email")
             if not self.name.strip():
-                return FlextResult.fail("Name required")
-            return FlextResult.ok(None)
+                return FlextResult[None].fail("Name required")
+            return FlextResult[None].ok(None)
 
     class CreateUserHandler(FlextCommands.Handler[CreateUserCommand, SharedUser]):
         def handle(self, command: CreateUserCommand) -> FlextResult[SharedUser]:

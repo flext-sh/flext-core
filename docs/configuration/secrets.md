@@ -305,9 +305,9 @@ class DatabaseConfig(FlextSettings):
         try:
             password = self.password.get_secret_value()
             conn_str = f"postgresql://user:{password}@localhost/db"
-            return FlextResult.ok(conn_str)
+            return FlextResult[None].ok(conn_str)
         except Exception as e:
-            return FlextResult.fail(f"Failed to build connection string: {e}")
+            return FlextResult[None].fail(f"Failed to build connection string: {e}")
 
 # Use with dependency injection
 def setup_database_service(container: FlextContainer) -> FlextResult[None]:
@@ -316,7 +316,7 @@ def setup_database_service(container: FlextContainer) -> FlextResult[None]:
 
     conn_result = config.get_connection_string()
     if conn_result.is_failure:
-        return FlextResult.fail(f"Config error: {conn_result.error}")
+        return FlextResult[None].fail(f"Config error: {conn_result.error}")
 
     db_service = DatabaseService(conn_result.data)
     return container.register("database", db_service)

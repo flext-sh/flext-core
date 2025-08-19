@@ -36,9 +36,9 @@ from flext_core import (
     FlextDomainEvent,
     FlextEventPublisher,
     FlextEventSubscriber,
-    FlextMessageHandler,
     FlextHandlers,
     FlextLoggerProtocol,
+    FlextMessageHandler,
     FlextMiddleware,
     FlextPlugin,
     FlextPluginContext,
@@ -225,25 +225,25 @@ class EmailValidator:
     def validate(self, value: object) -> FlextResult[object]:
         """Validate email format and normalize."""
         if not isinstance(value, str):
-            return FlextResult.fail("Email must be a string")
+            return FlextResult[object].fail("Email must be a string")
 
         email = value.strip().lower()
 
         if not email:
-            return FlextResult.fail("Email cannot be empty")
+            return FlextResult[object].fail("Email cannot be empty")
 
         if "@" not in email:
-            return FlextResult.fail("Email must contain @ symbol")
+            return FlextResult[object].fail("Email must contain @ symbol")
 
         local, domain = email.split("@", 1)
 
         if not local or not domain:
-            return FlextResult.fail("Email must have local and domain parts")
+            return FlextResult[object].fail("Email must have local and domain parts")
 
         if "." not in domain:
-            return FlextResult.fail("Domain must contain at least one dot")
+            return FlextResult[object].fail("Domain must contain at least one dot")
 
-        return FlextResult.ok(email)
+        return FlextResult[object].ok(email)
 
 
 class AgeRangeRule(FlextValidationRule):
@@ -263,12 +263,12 @@ class AgeRangeRule(FlextValidationRule):
     def apply(self, value: object, field_name: str) -> FlextResult[object]:
         """Apply rule and return value when valid."""
         if not isinstance(value, int):
-            return FlextResult.fail(f"{field_name} must be an integer")
+            return FlextResult[object].fail(f"{field_name} must be an integer")
         if not (self.min_age <= value <= self.max_age):
-            return FlextResult.fail(
+            return FlextResult[object].fail(
                 f"{field_name} must be between {self.min_age} and {self.max_age}",
             )
-        return FlextResult.ok(value)
+        return FlextResult[object].ok(value)
 
     def get_error_message(self, field_name: str, _value: object) -> str:
         """Provide rule error message."""
@@ -281,8 +281,8 @@ class NonEmptyStringRule(FlextValidationRule):
     def apply(self, value: object, field_name: str) -> FlextResult[object]:
         """Apply rule and return value when valid."""
         if not isinstance(value, str) or len(value.strip()) == 0:
-            return FlextResult.fail(f"{field_name} must be a non-empty string")
-        return FlextResult.ok(value)
+            return FlextResult[object].fail(f"{field_name} must be a non-empty string")
+        return FlextResult[object].ok(value)
 
     def get_error_message(self, field_name: str, _value: object) -> str:
         """Provide rule error message."""
@@ -295,8 +295,8 @@ class PositiveNumberRule(FlextValidationRule):
     def apply(self, value: object, field_name: str) -> FlextResult[object]:
         """Apply rule and return value when valid."""
         if not isinstance(value, (int, float)) or value <= 0:
-            return FlextResult.fail(f"{field_name} must be a positive number")
-        return FlextResult.ok(value)
+            return FlextResult[object].fail(f"{field_name} must be a positive number")
+        return FlextResult[object].ok(value)
 
     def get_error_message(self, field_name: str, _value: object) -> str:
         """Provide rule error message."""
@@ -320,18 +320,18 @@ class UserService(FlextService):
     def start(self) -> FlextResult[None]:
         """Start the user service."""
         if self._is_running:
-            return FlextResult.fail("Service is already running")
+            return FlextResult[object].fail("Service is already running")
 
         self._is_running = True
-        return FlextResult.ok(None)
+        return FlextResult[object].ok(None)
 
     def stop(self) -> FlextResult[None]:
         """Stop the user service."""
         if not self._is_running:
-            return FlextResult.fail("Service is not running")
+            return FlextResult[object].fail("Service is not running")
 
         self._is_running = False
-        return FlextResult.ok(None)
+        return FlextResult[object].ok(None)
 
     def health_check(self) -> FlextResult[TAnyDict]:
         """Check user service health."""
@@ -341,7 +341,7 @@ class UserService(FlextService):
             "total_users": len(self._users),
             "uptime_status": "running" if self._is_running else "stopped",
         }
-        return FlextResult.ok(health_status)
+        return FlextResult[object].ok(health_status)
 
     def create_user(
         self,
@@ -351,7 +351,7 @@ class UserService(FlextService):
     ) -> FlextResult[User]:
         """Create new user."""
         if not self._is_running:
-            return FlextResult.fail("Service is not running")
+            return FlextResult[object].fail("Service is not running")
 
         user_id = f"user_{self._next_id}"
         self._next_id += 1
@@ -359,17 +359,17 @@ class UserService(FlextService):
         user = User(id=user_id, name=name, email=email, age=age)
         self._users[user_id] = user
 
-        return FlextResult.ok(user)
+        return FlextResult[object].ok(user)
 
     def get_user(self, user_id: str) -> FlextResult[User]:
         """Get user by ID."""
         if not self._is_running:
-            return FlextResult.fail("Service is not running")
+            return FlextResult[object].fail("Service is not running")
 
         if user_id not in self._users:
-            return FlextResult.fail(f"User {user_id} not found")
+            return FlextResult[object].fail(f"User {user_id} not found")
 
-        return FlextResult.ok(self._users[user_id])
+        return FlextResult[object].ok(self._users[user_id])
 
 
 class ConfigurableEmailService:
@@ -394,7 +394,7 @@ class ConfigurableEmailService:
                 if isinstance(port, int) and 1 <= port <= MAX_TCP_PORT:
                     self._smtp_port = port
                 else:
-                    return FlextResult.fail("Invalid SMTP port")
+                    return FlextResult[object].fail("Invalid SMTP port")
 
             if "username" in settings:
                 self._username = str(settings["username"])
@@ -403,17 +403,17 @@ class ConfigurableEmailService:
                 self._from_email = str(settings["from_email"])
 
             self._configured = True
-            return FlextResult.ok(None)
+            return FlextResult[object].ok(None)
 
         except (ValueError, TypeError, KeyError) as e:
-            return FlextResult.fail(f"Configuration failed: {e}")
+            return FlextResult[object].fail(f"Configuration failed: {e}")
 
     def send_email(self, _to: str, _subject: str, _body: str) -> FlextResult[None]:
         """Send email (simulated)."""
         if not self._configured:
-            return FlextResult.fail("Service not configured")
+            return FlextResult[object].fail("Service not configured")
 
-        return FlextResult.ok(None)
+        return FlextResult[object].ok(None)
 
 
 # =============================================================================
@@ -442,7 +442,7 @@ class UserCommandHandler(FlextHandlers.CommandHandler):
     def handle(self, message: object) -> FlextResult[object]:
         """Handle user commands."""
         if not hasattr(message, "type"):
-            return FlextResult.fail("Message must have type attribute")
+            return FlextResult[object].fail("Message must have type attribute")
 
         message_type = message.type
 
@@ -459,7 +459,7 @@ class UserCommandHandler(FlextHandlers.CommandHandler):
             result = self._user_service.get_user(user_id)
             return result.map(lambda user: user)
 
-        return FlextResult.fail(f"Unknown user command: {message_type}")
+        return FlextResult[object].fail(f"Unknown user command: {message_type}")
 
 
 class LoggingMiddleware(FlextMiddleware):
@@ -506,13 +506,13 @@ class ValidationMiddleware(FlextMiddleware):
             # Validate name
             # Apply a simple non-empty validation inline to satisfy protocol
             if not isinstance(name, str) or not name.strip():
-                return FlextResult.fail(
+                return FlextResult[object].fail(
                     "Name validation failed: Value must be a non-empty string",
                 )
 
             # Validate email
             if not isinstance(email, str) or "@" not in email:
-                return FlextResult.fail(
+                return FlextResult[object].fail(
                     "Email validation failed: Email must contain @ symbol",
                 )
 
@@ -521,7 +521,7 @@ class ValidationMiddleware(FlextMiddleware):
             if age is not None and (
                 not isinstance(age, int) or not (min_age <= age <= max_age)
             ):
-                return FlextResult.fail(
+                return FlextResult[object].fail(
                     f"Age validation failed: Age must be between {min_age} and {max_age}",
                 )
 
@@ -545,27 +545,27 @@ class UserRepository(FlextRepository[User]):
     def find_by_id(self, entity_id: str) -> FlextResult[User]:
         """Find user by ID."""
         if entity_id in self._deleted_ids:
-            return FlextResult.fail(f"User {entity_id} was deleted")
+            return FlextResult[object].fail(f"User {entity_id} was deleted")
 
         if entity_id not in self._users:
-            return FlextResult.fail(f"User {entity_id} not found")
+            return FlextResult[object].fail(f"User {entity_id} not found")
 
-        return FlextResult.ok(self._users[entity_id])
+        return FlextResult[object].ok(self._users[entity_id])
 
     def save(self, entity: User) -> FlextResult[User]:
         """Save user entity."""
         if entity.id in self._deleted_ids:
-            return FlextResult.fail(f"Cannot save deleted user {entity.id}")
+            return FlextResult[object].fail(f"Cannot save deleted user {entity.id}")
 
         self._users[entity.id] = entity
-        return FlextResult.ok(entity)
+        return FlextResult[object].ok(entity)
 
     def get_by_id(self, entity_id: str) -> FlextResult[User | None]:
         """Get user by ID (implements abstract method)."""
         result = self.find_by_id(entity_id)
         if result.success:
-            return FlextResult.ok(result.data)
-        return FlextResult.ok(None)
+            return FlextResult[object].ok(result.data)
+        return FlextResult[object].ok(None)
 
     def find_all(self) -> FlextResult[list[User]]:
         """Find all users (implements abstract method)."""
@@ -574,16 +574,16 @@ class UserRepository(FlextRepository[User]):
             for user_id, user in self._users.items()
             if user_id not in self._deleted_ids
         ]
-        return FlextResult.ok(active_users)
+        return FlextResult[object].ok(active_users)
 
     def delete(self, entity_id: str) -> FlextResult[None]:
         """Delete user by ID."""
         if entity_id not in self._users:
-            return FlextResult.fail(f"User {entity_id} not found")
+            return FlextResult[object].fail(f"User {entity_id} not found")
 
         del self._users[entity_id]
         self._deleted_ids.add(entity_id)
-        return FlextResult.ok(None)
+        return FlextResult[object].ok(None)
 
 
 class DatabaseUnitOfWork(FlextUnitOfWork):
@@ -608,41 +608,41 @@ class DatabaseUnitOfWork(FlextUnitOfWork):
     def commit(self) -> FlextResult[None]:
         """Commit all changes."""
         if self._rolled_back:
-            return FlextResult.fail("Unit of work was rolled back")
+            return FlextResult[object].fail("Unit of work was rolled back")
 
         if self._committed:
-            return FlextResult.fail("Unit of work already committed")
+            return FlextResult[object].fail("Unit of work already committed")
 
         # Apply all changes
         for operation, data in self._changes:
             if operation == "save":
                 if not isinstance(data, User):
-                    return FlextResult.fail("Invalid data type for save")
+                    return FlextResult[object].fail("Invalid data type for save")
                 save_result = self._user_repo.save(data)
                 if save_result.is_failure:
-                    return FlextResult.fail(save_result.error or "save failed")
+                    return FlextResult[object].fail(save_result.error or "save failed")
             elif operation == "delete":
                 delete_result = self._user_repo.delete(str(data))
                 if delete_result.is_failure:
                     return delete_result
 
         self._committed = True
-        return FlextResult.ok(None)
+        return FlextResult[object].ok(None)
 
     def rollback(self) -> FlextResult[None]:
         """Rollback all changes."""
         if self._committed:
-            return FlextResult.fail("Cannot rollback committed unit of work")
+            return FlextResult[object].fail("Cannot rollback committed unit of work")
 
         self._changes.clear()
         self._rolled_back = True
-        return FlextResult.ok(None)
+        return FlextResult[object].ok(None)
 
     def begin(self) -> FlextResult[None]:
         """Begin transaction (no-op for in-memory demo)."""
         self._committed = False
         self._rolled_back = False
-        return FlextResult.ok(None)
+        return FlextResult[object].ok(None)
 
     def __enter__(self) -> FlextUnitOfWork:
         """Enter context manager."""
@@ -776,9 +776,9 @@ class SimplePluginContext:
     def get_service(self, service_name: str) -> FlextResult[object]:
         """Get service by name."""
         if service_name not in self._services:
-            return FlextResult.fail(f"Service {service_name} not found")
+            return FlextResult[object].fail(f"Service {service_name} not found")
 
-        return FlextResult.ok(self._services[service_name])
+        return FlextResult[object].ok(self._services[service_name])
 
     def register_service(self, service_name: str, service: object) -> None:
         """Register service (helper method)."""
@@ -809,13 +809,13 @@ class EmailNotificationPlugin(FlextPlugin):
             # Get email service from context
             email_service_result = context.get_service("email_service")
             if email_service_result.is_failure:
-                return FlextResult.fail("Email service not available")
+                return FlextResult[object].fail("Email service not available")
 
             service_data = email_service_result.data
             if isinstance(service_data, ConfigurableEmailService):
                 self._email_service = service_data
             else:
-                return FlextResult.fail("Invalid email service type")
+                return FlextResult[object].fail("Invalid email service type")
 
             # Configure email service from plugin config
             config = context.get_config()
@@ -830,10 +830,10 @@ class EmailNotificationPlugin(FlextPlugin):
                 plugin=self.name,
                 version=self.version,
             )
-            return FlextResult.ok(None)
+            return FlextResult[object].ok(None)
 
         except (ValueError, TypeError, ImportError) as e:
-            return FlextResult.fail(f"Plugin initialization failed: {e}")
+            return FlextResult[object].fail(f"Plugin initialization failed: {e}")
 
     def get_info(self) -> dict[str, object]:
         """Get plugin information (implements abstract method)."""
@@ -848,16 +848,16 @@ class EmailNotificationPlugin(FlextPlugin):
     def shutdown(self) -> FlextResult[None]:
         """Shutdown plugin cleanly."""
         if not self._initialized:
-            return FlextResult.fail("Plugin not initialized")
+            return FlextResult[object].fail("Plugin not initialized")
 
         self._email_service = None
         self._initialized = False
-        return FlextResult.ok(None)
+        return FlextResult[object].ok(None)
 
     def send_welcome_email(self, user: User) -> FlextResult[None]:
         """Send welcome email to user."""
         if not self._initialized or not self._email_service:
-            return FlextResult.fail("Plugin not properly initialized")
+            return FlextResult[object].fail("Plugin not properly initialized")
 
         return self._email_service.send_email(
             to=user.email,
@@ -892,7 +892,7 @@ class AuditLogPlugin(FlextPlugin):
             plugin=self.name,
             version=self.version,
         )
-        return FlextResult.ok(None)
+        return FlextResult[object].ok(None)
 
     def get_info(self) -> dict[str, object]:
         """Get plugin information (implements abstract method)."""
@@ -907,9 +907,9 @@ class AuditLogPlugin(FlextPlugin):
     def shutdown(self) -> FlextResult[None]:
         """Shutdown plugin cleanly."""
         if not self._initialized:
-            return FlextResult.fail("Plugin not initialized")
+            return FlextResult[object].fail("Plugin not initialized")
 
-        return FlextResult.ok(None)
+        return FlextResult[object].ok(None)
 
     def log_event(
         self,
@@ -918,7 +918,7 @@ class AuditLogPlugin(FlextPlugin):
     ) -> FlextResult[None]:
         """Log audit event."""
         if not self._initialized:
-            return FlextResult.fail("Plugin not initialized")
+            return FlextResult[object].fail("Plugin not initialized")
 
         audit_entry = {
             "timestamp": time.time(),
@@ -927,7 +927,7 @@ class AuditLogPlugin(FlextPlugin):
         }
 
         self._audit_log.append(audit_entry)
-        return FlextResult.ok(None)
+        return FlextResult[object].ok(None)
 
 
 # =============================================================================
@@ -947,7 +947,7 @@ class SimpleEventPublisher(FlextEventPublisher):
         event_type = type(event)
 
         if event_type not in self._subscribers:
-            return FlextResult.ok(None)
+            return FlextResult[object].ok(None)
 
         handlers = self._subscribers[event_type]
         failed_handlers = []
@@ -960,11 +960,11 @@ class SimpleEventPublisher(FlextEventPublisher):
                 )
 
         if failed_handlers:
-            return FlextResult.fail(
+            return FlextResult[object].fail(
                 f"Some handlers failed: {'; '.join(failed_handlers)}",
             )
 
-        return FlextResult.ok(None)
+        return FlextResult[object].ok(None)
 
     def publish_batch(self, events: list[FlextDomainEvent]) -> FlextResult[None]:
         """Publish a batch of events sequentially."""
@@ -972,7 +972,7 @@ class SimpleEventPublisher(FlextEventPublisher):
             result = self.publish(event)
             if result.is_failure:
                 return result
-        return FlextResult.ok(None)
+        return FlextResult[object].ok(None)
 
     def add_subscriber(
         self, event_type: type[object], handler: FlextMessageHandler
@@ -1004,10 +1004,10 @@ class SimpleEventSubscriber(FlextEventSubscriber):
                 self._subscriptions[event_type] = []
             self._subscriptions[event_type].append(handler)
 
-            return FlextResult.ok(None)
+            return FlextResult[object].ok(None)
 
         except (ValueError, TypeError, KeyError) as e:
-            return FlextResult.fail(f"Subscription failed: {e}")
+            return FlextResult[object].fail(f"Subscription failed: {e}")
 
     def unsubscribe(
         self,
@@ -1022,15 +1022,15 @@ class SimpleEventSubscriber(FlextEventSubscriber):
             ):
                 self._subscriptions[event_type].remove(handler)
 
-            return FlextResult.ok(None)
+            return FlextResult[object].ok(None)
 
         except (ValueError, TypeError, KeyError) as e:
-            return FlextResult.fail(f"Unsubscription failed: {e}")
+            return FlextResult[object].fail(f"Unsubscription failed: {e}")
 
     # Implement protocol-required methods
     def handle_event(self, event: FlextDomainEvent) -> FlextResult[None]:  # noqa: ARG002
         """Handle incoming event and return success when processed."""
-        return FlextResult.ok(None)
+        return FlextResult[object].ok(None)
 
     def can_handle(self, event_type: str) -> bool:
         """Return True when this subscriber can handle the given event type."""
@@ -1073,7 +1073,7 @@ class UserEventHandler(FlextHandlers.EventHandler):
             )
             return result.map(lambda _: None)
 
-        return FlextResult.fail(f"Unknown event type: {type(message)}")
+        return FlextResult[object].fail(f"Unknown event type: {type(message)}")
 
 
 # =============================================================================

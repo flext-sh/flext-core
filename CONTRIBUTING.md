@@ -124,10 +124,10 @@ def process_data(data: str) -> FlextResult[str]:
         ...     print(result.unwrap())
     """
     if not data:
-        return FlextResult.fail("Data cannot be empty")
+        return FlextResult[None].fail("Data cannot be empty")
 
     processed = data.strip().upper()
-    return FlextResult.ok(processed)
+    return FlextResult[None].ok(processed)
 ```
 
 #### Import Order
@@ -160,13 +160,13 @@ class TestFlextResult:
 
     def test_success_case(self):
         """Test successful result creation."""
-        result = FlextResult.ok("test")
+        result = FlextResult[None].ok("test")
         assert result.success
         assert result.data == "test"
 
     def test_failure_case(self):
         """Test failure result creation."""
-        result = FlextResult.fail("error")
+        result = FlextResult[None].fail("error")
         assert result.is_failure
         assert result.error == "error"
 
@@ -176,7 +176,7 @@ class TestFlextResult:
     ])
     def test_map_operation(self, value, expected):
         """Test map transformation."""
-        result = FlextResult.ok(value).map(str.upper)
+        result = FlextResult[None].ok(value).map(str.upper)
         assert result.unwrap() == expected
 ```
 
@@ -218,7 +218,7 @@ def complex_function(
         - key2: Description of key2
 
     Raises:
-        Never raises - returns FlextResult.fail() on error.
+        Never raises - returns FlextResult[None].fail() on error.
 
     Example:
         >>> result = complex_function("test", 42)

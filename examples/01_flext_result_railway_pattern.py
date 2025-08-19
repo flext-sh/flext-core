@@ -24,9 +24,8 @@ import json
 import secrets
 from typing import cast
 
+from examples.shared_domain import SharedDomainFactory, User as SharedUser
 from flext_core import FlextResult, FlextValidation, safe_call
-
-from .shared_domain import SharedDomainFactory, User as SharedUser
 
 # =============================================================================
 # TYPE DEFINITIONS - Centralized type aliases
@@ -138,7 +137,7 @@ def process_user_data_traditional(data: dict[str, object]) -> dict[str, object]:
 def validate_user_data(data: UserDataDict) -> FlextResult[UserDataDict]:
     """🚀 ZERO-BOILERPLATE validation using FlextValidation."""
     return (
-        FlextResult.ok(data)
+        FlextResult[UserDataDict].ok(data)
         .filter(
             lambda d: "name" in d and "email" in d and "age" in d,
             "Missing required fields",
@@ -163,7 +162,7 @@ def create_user(validated_data: UserDataDict) -> FlextResult[SharedUser]:
 def save_user_to_database(user: SharedUser) -> FlextResult[str]:
     """🚀 ZERO-BOILERPLATE database simulation using FlextResult."""
     return (
-        FlextResult.ok(user.id)
+        FlextResult[str].ok(user.id)
         .filter(
             lambda _: secrets.SystemRandom().random() >= FAILURE_RATE,
             "Database timeout",
@@ -175,7 +174,7 @@ def save_user_to_database(user: SharedUser) -> FlextResult[str]:
 def send_welcome_email(user: SharedUser) -> FlextResult[bool]:
     """🚀 ONE-LINE email sending with built-in validation."""
     return (
-        FlextResult.ok(data=True)
+        FlextResult[bool].ok(True)
         .filter(
             lambda _: "@invalid.com" not in user.email_address.email,
             "Invalid domain",

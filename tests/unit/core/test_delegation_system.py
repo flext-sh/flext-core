@@ -330,10 +330,10 @@ class TestFlextMixinDelegator:
         FlextMixinDelegator(host, SampleMixin1)
 
         # Test property setter using setattr/getattr to satisfy typing
-        host.writable_property = "new_value"
-        if host.writable_property != "new_value":
+        host.writable_property = "new_value"  # type: ignore[attr-defined]
+        if host.writable_property != "new_value":  # type: ignore[attr-defined]
             raise AssertionError(
-                f"Expected {'new_value'}, got {host.writable_property}",
+                f"Expected {'new_value'}, got {host.writable_property}",  # type: ignore[attr-defined]
             )
 
     def test_property_delegation_readonly(self) -> None:
@@ -342,7 +342,7 @@ class TestFlextMixinDelegator:
         FlextMixinDelegator(host, SampleMixin1)
 
         # Test readonly property via getattr
-        value = host.readonly_property
+        value = host.readonly_property  # type: ignore[attr-defined]
         if value != "readonly_value":
             raise AssertionError(f"Expected {'readonly_value'}, got {value}")
 
@@ -352,7 +352,7 @@ class TestFlextMixinDelegator:
             FlextOperationError,
             match="Property 'readonly_property' is read-only",
         ):
-            host.readonly_property = "new_value"
+            host.readonly_property = "new_value"  # type: ignore[attr-defined]
 
     def test_private_methods_not_delegated(self) -> None:
         """Test that private methods are not delegated."""
@@ -383,7 +383,7 @@ class TestFlextMixinDelegator:
             FlextOperationError,
             match="Delegation error in ErrorMixin.error_method",
         ):
-            host.error_method()
+            host.error_method()  # type: ignore[attr-defined]
 
     def test_method_signature_preservation(self) -> None:
         """Test that method signatures are preserved."""
@@ -649,8 +649,8 @@ class TestValidateDelegationSystem:
 
             def mock_create_delegator(host: object, *_mixins: type) -> Mock:
                 # Use dynamic attribute access in test mocking
-                host.delegator = mock_delegator
-                host.is_valid = "not_a_bool"
+                host.delegator = mock_delegator  # type: ignore[attr-defined]
+                host.is_valid = "not_a_bool"  # type: ignore[attr-defined]
                 return mock_delegator
 
             mock_create.side_effect = mock_create_delegator
@@ -738,7 +738,7 @@ class TestDelegationSystemEdgeCases:
         FlextMixinDelegator(host, Mixin1, Mixin2)
 
         # Should have the method from the last registered mixin - use cast for dynamic delegation
-        result = host.conflict_method()
+        result = host.conflict_method()  # type: ignore[attr-defined]
         # The actual behavior depends on the order of processing
         if result not in {"mixin1", "mixin2"}:
             msg: str = f"Expected {'mixin1', 'mixin2'}, got {result}"
@@ -826,7 +826,7 @@ class TestDelegationSystemEdgeCases:
                 f"Expected {'property_with_error'} in {type(host).__dict__}",
             )
         with pytest.raises(ValueError, match="Property getter error"):
-            _ = host.property_with_error
+            _ = host.property_with_error  # type: ignore[attr-defined]
 
     def test_mixin_registry_persistence(self) -> None:
         """Test that mixin registry persists across delegator instances."""

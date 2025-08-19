@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import cast
 
 from pydantic import ConfigDict
@@ -68,34 +68,11 @@ def _normalize_domain_event_list(raw: list[object]) -> list[dict[str, object]]:
     return normalized
 
 
-def _apply_entity_data(target: object, entity_data: dict[str, object]) -> None:
-    """Apply entity_data fields to target object using object.__setattr__ for known fields.
-
-    Kept as a helper to reduce complexity in `_initialize_parent`.
-    """
-    for key, value in entity_data.items():
-        # Use getattr on the class to avoid Pydantic deprecated instance access
-        model_fields = getattr(type(target), "model_fields", None)
-        if (
-            model_fields
-            and key in model_fields
-            and key
-            not in {
-                "id",
-                "version",
-                "created_at",
-                "updated_at",
-                "domain_events",
-                "metadata",
-            }
-        ):
-            object.__setattr__(target, key, value)
-
-
 class FlextAggregateRoot(FlextEntity):
     """DDD aggregate root with transactional boundaries and event management.
 
-    Extends FlextEntity com capacidades específicas de agregados para operações de negócio, eventos de domínio e consistência transacional.
+    Extends FlextEntity with specific aggregate capabilities for business operations,
+    domain events, and transactional consistency.
 
     """
 
@@ -224,25 +201,19 @@ class FlextAggregateRoot(FlextEntity):
             created_at=(
                 created_at_value
                 if created_at_value is not None
-                else FlextTimestamp.now()
+                else FlextTimestamp(datetime.now(UTC))
             ),
-            updated_at=FlextTimestamp.now(),
+            updated_at=FlextTimestamp(datetime.now(UTC)),
             domain_events=domain_events_value,
             metadata=(
-                metadata_value if metadata_value is not None else FlextMetadata({})
+                metadata_value
+                if metadata_value is not None
+                else FlextMetadata.model_construct(root={})
             ),
+            **entity_data,
         )
-
-        # Set optional fields via object.__setattr__ to avoid passing untyped objects to super
-        if created_at_value is not None:
-            object.__setattr__(self, "created_at", created_at_value)
-        if metadata_value is not None:
-            object.__setattr__(self, "metadata", metadata_value)
-
-        # Apply remaining entity data
-        _apply_entity_data(self, entity_data)
-
-        object.__setattr__(self, "domain_events", domain_events_value)
+        # The _apply_entity_data function was removed as data is now passed directly.
+        # _apply_entity_data(self, entity_data)
 
     def add_domain_event(
         self,
@@ -263,8 +234,8 @@ class FlextAggregateRoot(FlextEntity):
             event_result: FlextResult[FlextEvent] = FlextEvent.create_event(
                 event_type=event_type,
                 event_data=event_data,
-                aggregate_id=self.id.root,
-                version=self.version.root,
+                aggregate_id=str(self.id),
+                version=int(self.version),
             )
             if event_result.is_failure:
                 return FlextResult[None].fail(
@@ -308,8 +279,8 @@ class FlextAggregateRoot(FlextEntity):
             event_result: FlextResult[FlextEvent] = FlextEvent.create_event(
                 event_type=event_type,
                 event_data=event_data,
-                aggregate_id=self.id.root,
-                version=self.version.root,
+                aggregate_id=str(self.id),
+                version=int(self.version),
             )
             if event_result.is_failure:
                 return FlextResult[None].fail(

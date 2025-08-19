@@ -44,8 +44,8 @@ from flext_core import FlextResult
 # Type-safe error handling
 def divide(a: float, b: float) -> FlextResult[float]:
     if b == 0:
-        return FlextResult.fail("Division by zero")
-    return FlextResult.ok(a / b)
+        return FlextResult[None].fail("Division by zero")
+    return FlextResult[None].ok(a / b)
 
 result = divide(10, 2)
 if result.success:
@@ -105,13 +105,13 @@ from flext_core import FlextResult, FlextContainer
 # Railway pattern example
 def process_user(user_data: dict) -> FlextResult[dict]:
     if not user_data.get("email"):
-        return FlextResult.fail("Email required")
+        return FlextResult[None].fail("Email required")
 
     processed = {
         "email": user_data["email"].lower(),
         "processed": True
     }
-    return FlextResult.ok(processed)
+    return FlextResult[None].ok(processed)
 
 # DI example
 container = FlextContainer()

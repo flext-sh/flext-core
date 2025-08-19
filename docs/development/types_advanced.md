@@ -190,9 +190,9 @@ def safe_transform(data: T, func: Callable[[T], U]) -> FlextResult[U]:
     """Type-safe transformation with error handling."""
     try:
         result = func(data)
-        return FlextResult.ok(result)
+        return FlextResult[None].ok(result)
     except Exception as e:
-        return FlextResult.fail(f"Transform failed: {e}")
+        return FlextResult[None].fail(f"Transform failed: {e}")
 
 # Usage
 def double_number(x: int) -> int:
@@ -276,9 +276,9 @@ class DataProcessor:
     def process(self, data: T) -> FlextResult[T]:
         """Process data with type safety."""
         if not data:
-            return FlextResult.fail("Empty data provided")
+            return FlextResult[None].fail("Empty data provided")
 
-        return FlextResult.ok(data)
+        return FlextResult[None].ok(data)
 
     def validate_serializable(self, obj: FlextTypes.Protocols.Serializable) -> bool:
         """Validate object can be serialized."""

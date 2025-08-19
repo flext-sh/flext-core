@@ -5,10 +5,13 @@ from __future__ import annotations
 from abc import abstractmethod
 from collections.abc import Awaitable, Callable, Iterator
 from pathlib import Path
-from typing import Generic, Protocol, runtime_checkable
+from typing import Generic, Protocol, TypeVar, runtime_checkable
 
 from flext_core.result import FlextResult
-from flext_core.typings import T, TAnyDict, TFactory
+from flext_core.typings import TAnyDict, TFactory
+
+# Define TypeVars locally
+T = TypeVar("T")
 
 # =============================================================================
 # CORE ECOSYSTEM PROTOCOLS - Layer 1 foundational protocols

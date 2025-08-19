@@ -19,7 +19,7 @@ import re
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from datetime import UTC, datetime
-from typing import Annotated, TypeVar
+from typing import Annotated, TypeVar, cast
 from uuid import uuid4
 
 from pydantic import (
@@ -79,7 +79,7 @@ def ensure_string_list(v: object) -> list[str]:
     if isinstance(v, str):
         return [v]
     if isinstance(v, list):
-        return [str(item) for item in v]
+        return [str(item) for item in cast("list[object]", v)]
     return [str(v)]
 
 
@@ -188,9 +188,9 @@ def validate_entity_id_with_context(
 ) -> str:
     """WrapValidator: Enhanced entity ID validation with context."""
     # Get context for enhanced validation
-    context = info.context or {}
-    namespace = context.get("namespace", "flext")
-    auto_generate = context.get("auto_generate_id", True)
+    context = cast("dict[str, object]", info.context or {})
+    namespace = cast("str", context.get("namespace", "flext"))
+    auto_generate = cast("bool", context.get("auto_generate_id", True))
 
     # Auto-generate if missing and allowed
     if auto_generate and (not v or (isinstance(v, str) and not v.strip())):
@@ -208,9 +208,8 @@ def validate_entity_id_with_context(
             raise
 
     # Additional business logic validation
-    if isinstance(result, str):
-        if not result.startswith(namespace):
-            result = f"{namespace}_{result}"
+    if not result.startswith(str(namespace)):
+        result = f"{namespace}_{result}"
 
         # Validate format
         if not re.match(r"^[a-zA-Z0-9_-]+$", result):
@@ -227,8 +226,8 @@ def validate_timestamp_with_fallback(
 ) -> str:
     """WrapValidator: Timestamp validation with automatic fallback."""
     # Check if we should use current time as fallback
-    context = info.context or {}
-    use_current_fallback = context.get("use_current_time_fallback", True)
+    context = cast("dict[str, object]", info.context or {})
+    use_current_fallback = cast("bool", context.get("use_current_time_fallback", True))
 
     try:
         # Try normal validation first
@@ -248,15 +247,15 @@ def validate_list_with_deduplication(
 ) -> list[str]:
     """WrapValidator: List validation with automatic deduplication."""
     # Get context settings
-    context = info.context or {}
-    deduplicate = context.get("deduplicate_lists", True)
-    sort_lists = context.get("sort_lists", False)
+    context = cast("dict[str, object]", info.context or {})
+    deduplicate = cast("bool", context.get("deduplicate_lists", True))
+    sort_lists = cast("bool", context.get("sort_lists", False))
 
     # Let Pydantic handle basic validation
     result = handler(v)
 
     # Apply post-processing based on context
-    if deduplicate and isinstance(result, list):
+    if deduplicate:
         # Remove duplicates while preserving order
         seen: set[str] = set()
         deduped: list[str] = []
@@ -266,7 +265,7 @@ def validate_list_with_deduplication(
                 deduped.append(item)
         result = deduped
 
-    if sort_lists and isinstance(result, list):
+    if sort_lists:
         result = sorted(result)
 
     return result
@@ -683,8 +682,7 @@ class FlextValidation(FlextValidators):
     flext_validate_email_field = flext_validate_email_field
 
     @classmethod
-    @validate_call
-    def validate(cls, value: object) -> FlextResult[object]:
+    def validate(cls, value: object) -> FlextResult[bool]:
         """Modern validation with automatic type detection using validate_call."""
         try:
             if (
@@ -693,13 +691,13 @@ class FlextValidation(FlextValidators):
                 and "." in value
                 and not cls.is_email(value)
             ):
-                return FlextResult.fail("Invalid email format")
+                return FlextResult[bool].fail("Invalid email format")
             if isinstance(value, str) and not cls.is_non_empty_string(value):
-                return FlextResult.fail("String cannot be empty")
+                return FlextResult[bool].fail("String cannot be empty")
 
-            return FlextResult.ok(value)
-        except ValidationError as e:
-            return FlextResult.fail(f"Validation error: {e}")
+            return FlextResult[bool].ok(True)  # noqa: FBT003
+        except Exception as e:
+            return FlextResult[bool].fail(f"Validation failed: {e}")
 
     @staticmethod
     @validate_call
@@ -769,7 +767,7 @@ class FlextValidation(FlextValidators):
         cls,
         value: object,
         validator: Callable[[object], bool],
-    ) -> FlextResult[object]:
+    ) -> FlextResult[bool]:
         """Safely validate value with FlextResult error handling using modern patterns.
 
         Modern orchestration pattern combining validate_call decorated validation
@@ -786,8 +784,8 @@ class FlextValidation(FlextValidators):
         """
         try:
             if validator(value):
-                return FlextResult.ok(value)
-            return FlextResult.fail(f"Validation failed for value: {value}")
+                return FlextResult[bool].ok(True)  # noqa: FBT003
+            return FlextResult[bool].fail(f"Validation failed for value: {value}")
         except (
             TypeError,
             ValueError,
@@ -795,7 +793,7 @@ class FlextValidation(FlextValidators):
             RuntimeError,
             ValidationError,
         ) as e:
-            return FlextResult.fail(f"Validation error: {e}")
+            return FlextResult[bool].fail(f"Validation error: {e}")
 
 
 # =============================================================================
@@ -929,46 +927,46 @@ def validate_with_result(
     value: object,
     validator: Callable[[object], bool],
     error_message: str = "Validation failed",
-) -> FlextResult[object]:
+) -> FlextResult[bool]:
     """Modern validation function returning FlextResult."""
     try:
         if validator(value):
-            return FlextResult.ok(value)
-        return FlextResult.fail(error_message)
+            return FlextResult[bool].ok(True)  # noqa: FBT003
+        return FlextResult[bool].fail(error_message)
     except ValidationError as e:
-        return FlextResult.fail(f"Validation error: {e}")
+        return FlextResult[bool].fail(f"Validation error: {e}")
     except Exception as e:
-        return FlextResult.fail(f"Unexpected validation error: {e}")
+        return FlextResult[bool].fail(f"Unexpected validation error: {e}")
 
 
 @validate_call
 def validate_entity_id(entity_id: str) -> FlextResult[str]:
     """Modern entity ID validation returning FlextResult."""
     if not entity_id.strip():
-        return FlextResult.fail("Entity ID cannot be empty")
+        return FlextResult[str].fail("Entity ID cannot be empty")
 
     # Basic UUID format check
     if not _BaseValidators.is_uuid(entity_id):
-        return FlextResult.fail("Entity ID must be a valid UUID")
+        return FlextResult[str].fail("Entity ID must be a valid UUID")
 
-    return FlextResult.ok(entity_id)
+    return FlextResult[str].ok(entity_id)
 
 
 @validate_call
 def validate_service_name_with_result(name: str) -> FlextResult[str]:
     """Modern service name validation returning FlextResult."""
     if not name.strip():
-        return FlextResult.fail("Service name cannot be empty")
+        return FlextResult[str].fail("Service name cannot be empty")
 
     if len(name) < FlextConstants.Validation.MIN_SERVICE_NAME_LENGTH:
-        return FlextResult.fail("Service name must be at least 2 characters")
+        return FlextResult[str].fail("Service name must be at least 2 characters")
 
     if not re.match(r"^[a-zA-Z][a-zA-Z0-9_-]*$", name):
-        return FlextResult.fail(
+        return FlextResult[str].fail(
             "Service name must start with letter and contain only letters, numbers, hyphens, and underscores",
         )
 
-    return FlextResult.ok(name)
+    return FlextResult[str].ok(name)
 
 
 # =============================================================================
@@ -981,15 +979,15 @@ class FlextValidationPipeline:
 
     @validate_call
     def __init__(self) -> None:
-        self.validators: list[Callable[[object], FlextResult[object]]] = []
+        self.validators: list[Callable[[object], FlextResult[bool]]] = []
 
     @validate_call
-    def add_validator(self, validator: Callable[[object], FlextResult[object]]) -> None:
+    def add_validator(self, validator: Callable[[object], FlextResult[bool]]) -> None:
         """Add validator to the pipeline."""
         self.validators.append(validator)
 
     @validate_call
-    def validate(self, value: object) -> FlextResult[object]:
+    def validate(self, value: object) -> FlextResult[bool]:
         """Run all validators in the pipeline."""
         current_value = value
 
@@ -999,7 +997,7 @@ class FlextValidationPipeline:
                 return result
             current_value = result.data
 
-        return FlextResult.ok(current_value)
+        return FlextResult[bool].ok(True)  # noqa: FBT003
 
 
 # =============================================================================
@@ -1040,12 +1038,12 @@ class FlextDomainValidator[T](FlextAbstractValidator[T]):
         try:
             for rule in self.business_rules:
                 if not rule(value):
-                    return FlextResult.fail("Business rule validation failed")
-            return FlextResult.ok(value)
+                    return FlextResult[T].fail("Business rule validation failed")
+            return FlextResult[T].ok(value)
         except ValidationError as e:
-            return FlextResult.fail(f"Validation error: {e}")
+            return FlextResult[T].fail(f"Validation error: {e}")
         except Exception as e:
-            return FlextResult.fail(f"Business rule error: {e}")
+            return FlextResult[T].fail(f"Business rule error: {e}")
 
     def validate(self, value: T) -> FlextResult[T]:
         """Alias to validate_value for compatibility with legacy code."""

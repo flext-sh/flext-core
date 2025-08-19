@@ -24,9 +24,9 @@ def debug_flext_result(result: FlextResult[object], operation_name: str) -> None
 def safe_divide(a: float, b: float) -> FlextResult[float]:
     """Example operation with error handling."""
     if b == 0:
-        return FlextResult.fail("Division by zero not allowed")
+        return FlextResult[None].fail("Division by zero not allowed")
 
-    return FlextResult.ok(a / b)
+    return FlextResult[None].ok(a / b)
 
 # Usage with debugging
 result = safe_divide(10, 0)
@@ -136,22 +136,22 @@ def debug_chain_operations():
 
     def step1() -> FlextResult[str]:
         print("Executing step1")
-        result = FlextResult.ok("step1_data")
+        result = FlextResult[None].ok("step1_data")
         print(f"Step1 result: {result.success}")
         return result
 
     def step2(data: str) -> FlextResult[str]:
         print(f"Executing step2 with data: {data}")
         if len(data) > 50:  # Simulate failure condition
-            result = FlextResult.fail("Data too long in step2")
+            result = FlextResult[None].fail("Data too long in step2")
         else:
-            result = FlextResult.ok(f"{data}_processed")
+            result = FlextResult[None].ok(f"{data}_processed")
         print(f"Step2 result: {result.success}")
         return result
 
     def step3(data: str) -> FlextResult[str]:
         print(f"Executing step3 with data: {data}")
-        result = FlextResult.ok(f"{data}_final")
+        result = FlextResult[None].ok(f"{data}_final")
         print(f"Step3 result: {result.success}")
         return result
 
@@ -323,15 +323,15 @@ def debug_operation_chain():
     """Example of debugging operation chain."""
 
     def operation_a() -> FlextResult[str]:
-        return FlextResult.ok("data_a")
+        return FlextResult[None].ok("data_a")
 
     def operation_b(data: str) -> FlextResult[str]:
-        return FlextResult.ok(f"{data}_b")
+        return FlextResult[None].ok(f"{data}_b")
 
     def operation_c(data: str) -> FlextResult[str]:
         if len(data) > 10:
-            return FlextResult.fail("Data too long")
-        return FlextResult.ok(f"{data}_c")
+            return FlextResult[None].fail("Data too long")
+        return FlextResult[None].ok(f"{data}_c")
 
     # Debug each step
     result_a = operation_a()
@@ -398,10 +398,10 @@ class TimedUserService:
         time.sleep(0.01)  # 10ms simulation
 
         if not email or "@" not in email:
-            return FlextResult.fail("Invalid email")
+            return FlextResult[None].fail("Invalid email")
 
         user_data = {"name": name, "email": email, "created": True}
-        return FlextResult.ok(user_data)
+        return FlextResult[None].ok(user_data)
 
     @time_operation("validate_user")
     def validate_user(self, user_data: dict) -> FlextResult[bool]:
@@ -410,9 +410,9 @@ class TimedUserService:
         time.sleep(0.005)  # 5ms simulation
 
         if not user_data.get("name") or not user_data.get("email"):
-            return FlextResult.fail("Missing required fields")
+            return FlextResult[None].fail("Missing required fields")
 
-        return FlextResult.ok(True)
+        return FlextResult[None].ok(True)
 
 # Test timed operations
 service = TimedUserService()
@@ -442,19 +442,19 @@ class HealthChecker:
         """Check FlextResult functionality."""
         try:
             # Test success case
-            success_result = FlextResult.ok("test")
+            success_result = FlextResult[None].ok("test")
             if not success_result.success or success_result.data != "test":
-                return FlextResult.fail("FlextResult success case failed")
+                return FlextResult[None].fail("FlextResult success case failed")
 
             # Test failure case
-            failure_result = FlextResult.fail("test error")
+            failure_result = FlextResult[None].fail("test error")
             if failure_result.success or failure_result.error != "test error":
-                return FlextResult.fail("FlextResult failure case failed")
+                return FlextResult[None].fail("FlextResult failure case failed")
 
-            return FlextResult.ok("FlextResult health check passed")
+            return FlextResult[None].ok("FlextResult health check passed")
 
         except Exception as e:
-            return FlextResult.fail(f"FlextResult health check error: {e}")
+            return FlextResult[None].fail(f"FlextResult health check error: {e}")
 
     def check_flext_container(self) -> FlextResult[str]:
         """Check FlextContainer functionality."""
@@ -465,20 +465,20 @@ class HealthChecker:
             test_value = "health_check_value"
             reg_result = container.register("health_test", test_value)
             if reg_result.is_failure:
-                return FlextResult.fail(f"Container registration failed: {reg_result.error}")
+                return FlextResult[None].fail(f"Container registration failed: {reg_result.error}")
 
             # Test retrieval
             get_result = container.get("health_test")
             if get_result.is_failure:
-                return FlextResult.fail(f"Container retrieval failed: {get_result.error}")
+                return FlextResult[None].fail(f"Container retrieval failed: {get_result.error}")
 
             if get_result.data != test_value:
-                return FlextResult.fail("Container data mismatch")
+                return FlextResult[None].fail("Container data mismatch")
 
-            return FlextResult.ok("FlextContainer health check passed")
+            return FlextResult[None].ok("FlextContainer health check passed")
 
         except Exception as e:
-            return FlextResult.fail(f"FlextContainer health check error: {e}")
+            return FlextResult[None].fail(f"FlextContainer health check error: {e}")
 
     def check_flext_settings(self) -> FlextResult[str]:
         """Check FlextSettings functionality."""
@@ -491,12 +491,12 @@ class HealthChecker:
 
             settings = HealthSettings()
             if settings.test_field != "default_value":
-                return FlextResult.fail("Settings default value failed")
+                return FlextResult[None].fail("Settings default value failed")
 
-            return FlextResult.ok("FlextSettings health check passed")
+            return FlextResult[None].ok("FlextSettings health check passed")
 
         except Exception as e:
-            return FlextResult.fail(f"FlextSettings health check error: {e}")
+            return FlextResult[None].fail(f"FlextSettings health check error: {e}")
 
     def run_all_checks(self) -> FlextResult[dict]:
         """Run all health checks."""
@@ -523,9 +523,9 @@ class HealthChecker:
         results["overall_health"] = overall_health
 
         if overall_health:
-            return FlextResult.ok(results)
+            return FlextResult[None].ok(results)
         else:
-            return FlextResult.fail(f"Health check failures detected: {results}")
+            return FlextResult[None].fail(f"Health check failures detected: {results}")
 
 # Run health checks
 def run_health_check():

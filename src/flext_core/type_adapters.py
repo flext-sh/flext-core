@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import contextlib
 from datetime import datetime
-from typing import TypeVar
+from typing import TypeVar, cast
 
 from pydantic import ConfigDict, TypeAdapter
 from pydantic.dataclasses import dataclass
@@ -146,12 +146,12 @@ class ValidationAdapters:
         """
         try:
             if not value or (isinstance(value, str) and len(value.strip()) == 0):
-                return FlextResult.fail("Entity ID cannot be empty")
+                return FlextResult[str].fail("Entity ID cannot be empty")
 
             validated = cls.entity_id_adapter.validate_python(value)
-            return FlextResult.ok(validated)
+            return FlextResult[str].ok(validated)
         except Exception as e:
-            return FlextResult.fail(f"Invalid entity ID: {e}")
+            return FlextResult[str].fail(f"Invalid entity ID: {e}")
 
     @classmethod
     def validate_version(cls, value: object) -> FlextResult[int]:
@@ -167,10 +167,10 @@ class ValidationAdapters:
         try:
             validated = cls.version_adapter.validate_python(value)
             if validated < 1:
-                return FlextResult.fail("Version must be >= 1")
-            return FlextResult.ok(validated)
+                return FlextResult[int].fail("Version must be >= 1")
+            return FlextResult[int].ok(validated)
         except Exception as e:
-            return FlextResult.fail(f"Invalid version: {e}")
+            return FlextResult[int].fail(f"Invalid version: {e}")
 
     @classmethod
     def validate_email(cls, value: object) -> FlextResult[str]:
@@ -187,10 +187,10 @@ class ValidationAdapters:
             validated = cls.email_adapter.validate_python(value)
             # Basic email validation
             if "@" not in validated or "." not in validated.split("@")[1]:
-                return FlextResult.fail("Invalid email format")
-            return FlextResult.ok(validated)
+                return FlextResult[str].fail("Invalid email format")
+            return FlextResult[str].ok(validated)
         except Exception as e:
-            return FlextResult.fail(f"Invalid email: {e}")
+            return FlextResult[str].fail(f"Invalid email: {e}")
 
     @classmethod
     def validate_service_name(cls, value: object) -> FlextResult[str]:
@@ -243,13 +243,13 @@ class ValidationAdapters:
             min_port = 1
             max_port = 65535
             if not (min_port <= validated_port <= max_port):
-                return FlextResult.fail(
+                return FlextResult[tuple[str, int]].fail(
                     f"Port must be between {min_port} and {max_port}",
                 )
 
-            return FlextResult.ok((validated_host, validated_port))
+            return FlextResult[tuple[str, int]].ok((validated_host, validated_port))
         except Exception as e:
-            return FlextResult.fail(f"Invalid host/port: {e}")
+            return FlextResult[tuple[str, int]].fail(f"Invalid host/port: {e}")
 
     @classmethod
     def validate_percentage(cls, value: object) -> FlextResult[float]:
@@ -267,12 +267,12 @@ class ValidationAdapters:
             min_percentage = 0.0
             max_percentage = 100.0
             if not (min_percentage <= validated <= max_percentage):
-                return FlextResult.fail(
+                return FlextResult[float].fail(
                     f"Percentage must be between {min_percentage} and {max_percentage}",
                 )
-            return FlextResult.ok(validated)
+            return FlextResult[float].ok(validated)
         except Exception as e:
-            return FlextResult.fail(f"Invalid percentage: {e}")
+            return FlextResult[float].fail(f"Invalid percentage: {e}")
 
 
 # =============================================================================
@@ -297,12 +297,12 @@ class SerializationHelpers:
         """
         try:
             json_bytes = adapter.dump_json(value)
-            return FlextResult.ok(json_bytes.decode("utf-8"))
+            return FlextResult[str].ok(json_bytes.decode("utf-8"))
         except Exception as e:
-            return FlextResult.fail(f"Serialization failed: {e}")
+            return FlextResult[str].fail(f"Serialization failed: {e}")
 
     @staticmethod
-    def from_json[T](adapter: TypeAdapter[T], json_str: str) -> FlextResult[T]:
+    def from_json(adapter: TypeAdapter[T], json_str: str) -> FlextResult[T]:
         """Deserialize value from JSON string.
 
         Args:
@@ -315,9 +315,9 @@ class SerializationHelpers:
         """
         try:
             value = adapter.validate_json(json_str)
-            return FlextResult.ok(value)
+            return FlextResult[T].ok(value)
         except Exception as e:
-            return FlextResult.fail(f"Deserialization failed: {e}")
+            return FlextResult[T].fail(f"Deserialization failed: {e}")
 
     @staticmethod
     def to_dict[T](adapter: TypeAdapter[T], value: T) -> FlextResult[dict[str, object]]:
@@ -334,10 +334,15 @@ class SerializationHelpers:
         try:
             result = adapter.dump_python(value)
             if isinstance(result, dict):
-                return FlextResult.ok(result)
-            return FlextResult.fail("Value did not serialize to dictionary")
+                dict_result: dict[str, object] = cast("dict[str, object]", result)
+                return FlextResult[dict[str, object]].ok(dict_result)
+            return FlextResult[dict[str, object]].fail(
+                "Value did not serialize to dictionary"
+            )
         except Exception as e:
-            return FlextResult.fail(f"Dictionary serialization failed: {e}")
+            return FlextResult[dict[str, object]].fail(
+                f"Dictionary serialization failed: {e}"
+            )
 
     @staticmethod
     def from_dict[T](
@@ -356,9 +361,9 @@ class SerializationHelpers:
         """
         try:
             value = adapter.validate_python(data)
-            return FlextResult.ok(value)
+            return FlextResult[T].ok(value)
         except Exception as e:
-            return FlextResult.fail(f"Dictionary deserialization failed: {e}")
+            return FlextResult[T].fail(f"Dictionary deserialization failed: {e}")
 
 
 # =============================================================================
@@ -382,9 +387,9 @@ class SchemaHelpers:
         """
         try:
             schema = adapter.json_schema()
-            return FlextResult.ok(schema)
+            return FlextResult[dict[str, object]].ok(schema)
         except Exception as e:
-            return FlextResult.fail(f"Schema generation failed: {e}")
+            return FlextResult[dict[str, object]].fail(f"Schema generation failed: {e}")
 
     @staticmethod
     def generate_multiple_schemas(
@@ -400,17 +405,19 @@ class SchemaHelpers:
 
         """
         try:
-            schemas = {}
+            schemas: dict[str, dict[str, object]] = {}
             for name, adapter in adapters.items():
                 schema_result = SchemaHelpers.generate_schema(adapter)
                 if schema_result.is_failure:
-                    return FlextResult.fail(
+                    return FlextResult[dict[str, dict[str, object]]].fail(
                         f"Failed to generate schema for {name}: {schema_result.error}",
                     )
                 schemas[name] = schema_result.unwrap()
-            return FlextResult.ok(schemas)
+            return FlextResult[dict[str, dict[str, object]]].ok(schemas)
         except Exception as e:
-            return FlextResult.fail(f"Multiple schema generation failed: {e}")
+            return FlextResult[dict[str, dict[str, object]]].fail(
+                f"Multiple schema generation failed: {e}"
+            )
 
 
 # =============================================================================
@@ -450,6 +457,7 @@ class TypeAdapterExamples:
 
         # Create adapter
         user_adapter = TypeAdapter(User)
+        user: User | None = None
 
         # Validate from dictionary
         with contextlib.suppress(Exception):
@@ -463,7 +471,8 @@ class TypeAdapterExamples:
 
         # Serialize to JSON
         with contextlib.suppress(Exception):
-            user_adapter.dump_json(user)
+            if user is not None:
+                user_adapter.dump_json(user)
 
     @staticmethod
     def configuration_validation_example() -> None:

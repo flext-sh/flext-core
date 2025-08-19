@@ -28,10 +28,6 @@ from flext_core.payload import FlextPayload
 from flext_core.result import FlextResult
 from flext_core.typings import (
     TAnyDict,
-    TCommand,
-    TQuery,
-    TQueryResult,
-    TResult,
     TServiceName,
 )
 from flext_core.utilities import FlextGenerators, FlextTypeGuards
@@ -41,6 +37,7 @@ from flext_core.validation import FlextValidators
 CommandT = TypeVar("CommandT")
 ResultT = TypeVar("ResultT")
 QueryT = TypeVar("QueryT")
+QueryResultT = TypeVar("QueryResultT")
 
 
 class FlextAbstractCommand(ABC):
@@ -175,7 +172,7 @@ class FlextCommands:
         @classmethod
         def set_command_type(cls, values: dict[str, object]) -> dict[str, object]:
             """Auto-generate command_type from class name if not provided."""
-            if isinstance(values, dict) and not values.get("command_type"):
+            if not values.get("command_type"):
                 # Convert "SampleCommand" -> "sample"
                 class_name = cls.__name__
                 # Remove trailing 'Command' if present
@@ -212,7 +209,7 @@ class FlextCommands:
             # Extract dict data with explicit type handling for pyright compatibility
             raw_data = payload.data
             if raw_data is not None and isinstance(raw_data, dict):
-                # Explicit cast to satisfy pyright's type checking with generic constraints
+                # Explicit cast to satisfy pyright's type checking
                 payload_dict = {
                     str(k): v for k, v in cast("dict[object, object]", raw_data).items()
                 }
@@ -360,99 +357,37 @@ class FlextCommands:
             return FlextPayload.create(data=command_dict, **metadata).unwrap()
 
     # =============================================================================
-    # COMMAND RESULT - Result with metadata support
+    # COMMAND RESULT HELPERS - Use FlextResult directly as requested
     # =============================================================================
 
-    class Result[T](FlextResult[T]):
-        """Command result with metadata support."""
+    # Result type alias for backward compatibility
+    Result = FlextResult
 
-        @classmethod
-        def ok(
-            cls,
-            data: T,
-            /,
-            *,
-            metadata: TAnyDict | None = None,
-        ) -> FlextCommands.Result[T]:
-            """Create successful result with optional metadata."""
-            # Create base result and add metadata if provided
-            base_result = FlextResult.ok(data)
-            if metadata:
-                # Store metadata in error_data dict as it's the available metadata storage
-                base_result._error_data.update(metadata)
-            return cast("FlextCommands.Result[T]", base_result)
+    @staticmethod
+    def create_success(data: object) -> FlextResult[object]:
+        """Create successful result using FlextResult pattern."""
+        return FlextResult[object].ok(data)
 
-        @classmethod
-        def fail(
-            cls,
-            error: str,
-            error_code: str | None = None,
-            error_data: dict[str, object] | None = None,
-        ) -> FlextCommands.Result[TResult]:
-            """Create failed result with optional error code and metadata."""
-            # Ensure error_code is in metadata if provided
-            updated_error_data = dict(error_data or {})
-            if error_code is not None:
-                updated_error_data["error_code"] = error_code
-
-            return cast(
-                "FlextCommands.Result[TResult]",
-                FlextResult[TResult].fail(
-                    error, error_code=error_code, error_data=updated_error_data
-                ),
-            )
-
-        @classmethod
-        def create_success(cls, data: TResult, /) -> FlextCommands.Result[TResult]:
-            """Create successful result without extra metadata attachment."""
-            # Use FlextResult.ok() directly to create base result and cast to our type
-            base_result = FlextResult.ok(data)
-            return cast("FlextCommands.Result[TResult]", base_result)
-
-        @classmethod
-        def ok_with_metadata(
-            cls,
-            data: TResult,
-            metadata: TAnyDict | None = None,
-        ) -> FlextCommands.Result[TResult]:
-            """Create successful result with metadata (extended helper)."""
-            _ = metadata  # kept for API compatibility
-            return cast("FlextCommands.Result[TResult]", FlextResult.ok(data))
-
-        @classmethod
-        def fail_with_metadata(
-            cls,
-            error: str,
-            *,
-            error_code: str | None = None,
-            error_data: dict[str, object] | None = None,
-        ) -> FlextCommands.Result[TResult]:
-            """Create a failed result with optional error code and metadata."""
-            base: FlextResult[TResult] = FlextResult[TResult].fail(
-                error, error_code=error_code, error_data=error_data
-            )
-            metadata: TAnyDict | None = None
-            if error_data is not None:
-                metadata = {
-                    k: v
-                    for k, v in error_data.items()
-                    if isinstance(v, (str, int, float, bool, type(None)))
-                }
-            if error_code is not None:
-                if metadata is None:
-                    metadata = {}
-                metadata["error_code"] = error_code
-            return cast("FlextCommands.Result[TResult]", base)
+    @staticmethod
+    def create_failure(
+        error: str,
+        error_code: str | None = None,
+        error_data: dict[str, object] | None = None,
+    ) -> FlextResult[object]:
+        """Create failed result using FlextResult pattern."""
+        return FlextResult[object].fail(
+            error, error_code=error_code, error_data=error_data
+        )
 
     # =============================================================================
     # COMMAND HANDLER - Base handler interface
     # =============================================================================
 
     class Handler(
-        FlextAbstractCommandHandler[TCommand, TResult],
+        FlextAbstractCommandHandler[CommandT, ResultT],
         FlextLoggableMixin,
         FlextTimingMixin,
-        Generic[TCommand, TResult],
+        Generic[CommandT, ResultT],
     ):
         """Base command handler interface - implements FlextAbstractCommandHandler."""
 
@@ -473,7 +408,7 @@ class FlextCommands:
             """Get handler name - implements abstract method."""
             return self._handler_name
 
-        def validate_command(self, command: TCommand) -> FlextResult[None]:
+        def validate_command(self, command: object) -> FlextResult[None]:
             """Validate command before handling - implements abstract method."""
             # Default implementation delegates to command's validation
             validate_method = getattr(command, "validate_command", None)
@@ -486,7 +421,7 @@ class FlextCommands:
             return FlextResult[None].ok(None)
 
         @abstractmethod
-        def handle(self, command: TCommand) -> FlextResult[TResult]:
+        def handle(self, command: CommandT) -> FlextResult[ResultT]:
             """Handle the command and return result.
 
             Args:
@@ -505,7 +440,7 @@ class FlextCommands:
             """Get execution time in milliseconds rounded to 2 decimal places."""
             return round((time.perf_counter() - start_time) * 1000, 2)
 
-        def process_command(self, command: TCommand) -> FlextResult[TResult]:
+        def process_command(self, command: CommandT) -> FlextResult[ResultT]:
             """Process command with validation, execution, and metrics collection."""
             # Initialize metrics
             self._initialize_metrics()
@@ -513,14 +448,14 @@ class FlextCommands:
             # Validate command
             validation_result = self._validate_command(command)
             if validation_result.is_failure:
-                return FlextResult[TResult].fail(
+                return FlextResult[ResultT].fail(
                     validation_result.error or "Validation failed",
                 )
 
             # Check capability
             if not self.can_handle(command):
                 error = f"{self.handler_name} cannot process {type(command).__name__}"
-                return FlextResult[TResult].fail(error)
+                return FlextResult[ResultT].fail(error)
 
             # Execute command
             return self._execute_command(command)
@@ -533,7 +468,7 @@ class FlextCommands:
                 metrics_state = self._metrics_state
             metrics_state["total"] = int(metrics_state.get("total", 0)) + 1
 
-        def _validate_command(self, command: TCommand) -> FlextResult[None]:
+        def _validate_command(self, command: CommandT) -> FlextResult[None]:
             """Validate command using injected validator or command's own method."""
             validator = getattr(self, "_validator", None)
             if validator is not None:
@@ -580,16 +515,16 @@ class FlextCommands:
                     )
             return FlextResult[None].ok(None)
 
-        def _execute_command(self, command: TCommand) -> FlextResult[TResult]:
+        def _execute_command(self, command: CommandT) -> FlextResult[ResultT]:
             """Execute command and update metrics."""
             try:
-                result: FlextResult[TResult] = self.handle(command)
+                result: FlextResult[ResultT] = self.handle(command)
                 self._update_metrics(result)
                 return result
             except (RuntimeError, OSError) as e:
-                return FlextResult[TResult].fail(f"Command processing failed: {e}")
+                return FlextResult[ResultT].fail(f"Command processing failed: {e}")
 
-        def _update_metrics(self, result: FlextResult[TResult]) -> None:
+        def _update_metrics(self, result: FlextResult[ResultT]) -> None:
             """Update metrics after command execution."""
             # Simple metrics update when collector injected
             metrics_collector = getattr(self, "_metrics", None)
@@ -642,7 +577,7 @@ class FlextCommands:
             self.logger.warning("Could not determine handler type constraints")
             return True
 
-        def handle_command(self, command: TCommand) -> FlextResult[TResult]:
+        def handle_command(self, command: CommandT) -> FlextResult[ResultT]:
             """Alias for handle used by some tests/utilities."""
             return self.handle(command)
 
@@ -650,7 +585,7 @@ class FlextCommands:
             """Return command type name; subclasses typically override."""
             return self.__class__.__name__
 
-        def execute(self, command: TCommand) -> FlextResult[TResult]:
+        def execute(self, command: CommandT) -> FlextResult[ResultT]:
             """Execute command with full logging and error handling."""
             self.logger.info(
                 "Executing command",
@@ -664,7 +599,7 @@ class FlextCommands:
                     f"{self._handler_name} cannot handle {type(command).__name__}"
                 )
                 self.logger.error(error_msg)
-                return FlextResult[TResult].fail(error_msg)
+                return FlextResult[ResultT].fail(error_msg)
 
             # Validate the command's data
             validation_result = self.validate_command(command)
@@ -674,14 +609,14 @@ class FlextCommands:
                     command_type=type(command).__name__,
                     error=validation_result.error,
                 )
-                return FlextResult[TResult].fail(
+                return FlextResult[ResultT].fail(
                     validation_result.error or "Validation failed",
                 )
 
             start_time = self._start_timing()
 
             try:
-                result = self.handle(command)
+                result: FlextResult[ResultT] = self.handle(command)
 
                 self.logger.info(
                     "Command executed successfully",
@@ -796,8 +731,8 @@ class FlextCommands:
 
         def register_handler_flexible(
             self,
-            handler_or_command_type: object | type[TCommand],
-            handler: FlextCommands.Handler[TCommand, TResult] | None = None,
+            handler_or_command_type: object | type[CommandT],
+            handler: FlextCommands.Handler[CommandT, ResultT] | None = None,
         ) -> FlextResult[None]:
             """Register handler with flexible arguments (backward compatibility).
 
@@ -1102,8 +1037,8 @@ class FlextCommands:
         # - All serialization methods (from FlextSerializableMixin)
 
     class QueryHandler(
-        FlextAbstractQueryHandler[TQuery, TQueryResult],
-        Generic[TQuery, TQueryResult],
+        FlextAbstractQueryHandler[QueryT, QueryResultT],
+        Generic[QueryT, QueryResultT],
     ):
         """Base query handler built on abstract base.
 
@@ -1119,12 +1054,12 @@ class FlextCommands:
             """Get handler name for this query handler."""
             return self._handler_name
 
-        def can_handle(self, query: TQuery) -> bool:
+        def can_handle(self, query: QueryT) -> bool:
             """Return True for generic handler capability check."""
             _ = query
             return True
 
-        def validate_query(self, query: TQuery) -> FlextResult[None]:
+        def validate_query(self, query: QueryT) -> FlextResult[None]:
             """Validate a query object using its own validation method if available."""
             validate_method = getattr(query, "validate_query", None)
             if callable(validate_method):
@@ -1134,7 +1069,7 @@ class FlextCommands:
             return FlextResult[None].ok(None)
 
         @abstractmethod
-        def handle(self, query: TQuery) -> FlextResult[TQueryResult]:
+        def handle(self, query: QueryT) -> FlextResult[QueryResultT]:
             """Handle query and return result."""
 
     # =============================================================================

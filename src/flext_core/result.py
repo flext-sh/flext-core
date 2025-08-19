@@ -4,12 +4,14 @@ from __future__ import annotations
 
 import contextlib
 from collections.abc import Callable
-from typing import cast
+from typing import TypeVar, cast
 
 from flext_core.constants import ERROR_CODES
 from flext_core.exceptions import FlextOperationError
 from flext_core.loggings import FlextLoggerFactory
-from flext_core.typings import U
+
+# Define TypeVars locally to avoid import issues
+U = TypeVar("U")
 
 # =============================================================================
 # FLEXT RESULT - Simple implementation
@@ -38,14 +40,14 @@ class FlextResult[T]:
     Example:
       Basic usage with method chaining:
 
-      >>> result = FlextResult.ok(10)
+      >>> result = FlextResult[int].ok(10)
       >>> final = result.map(lambda x: x * 2).map(lambda x: str(x))
       >>> print(final.data)
       '20'
 
       Error handling without exceptions:
 
-      >>> error_result = FlextResult.fail("Division by zero")
+      >>> error_result = FlextResult[object].fail("Division by zero")
       >>> final = error_result.map(lambda x: x * 2)  # Skipped due to error
       >>> print(final.error)
       'Division by zero'
@@ -160,7 +162,7 @@ class FlextResult[T]:
             FlextResult[T]: A new successful result containing the provided data.
 
         Example:
-            >>> result = FlextResult.ok("Hello World")
+            >>> result = FlextResult[object].ok("Hello World")
             >>> print(result.data)
             'Hello World'
             >>> print(result.is_success)
@@ -208,7 +210,7 @@ class FlextResult[T]:
             FlextResult[T]: A new failed result containing the error information.
 
         Example:
-            >>> result = FlextResult.fail(
+            >>> result = FlextResult[object].fail(
             ...     "Invalid input", error_code="VALIDATION_ERROR"
             ... )
             >>> print(result.error)

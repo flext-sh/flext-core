@@ -37,8 +37,8 @@ class TestCleanArchitecturePatterns:
             def validate_business_rules(self) -> FlextResult[None]:
                 """Validate email business rules."""
                 if "@" not in self.email:
-                    return FlextResult.fail("Invalid email format")
-                return FlextResult.ok(None)
+                    return FlextResult[None].fail("Invalid email format")
+                return FlextResult[None].ok(None)
 
         class User(FlextEntity):
             """Domain entity."""
@@ -49,7 +49,7 @@ class TestCleanArchitecturePatterns:
             def validate_domain_rules(self) -> FlextResult[None]:
                 """Validate user domain rules."""
                 if not self.name.strip():
-                    return FlextResult.fail("Name cannot be empty")
+                    return FlextResult[None].fail("Name cannot be empty")
                 return self.email_obj.validate_business_rules()
 
         # Application Layer - Use Cases (Commands/Handlers)
@@ -65,18 +65,18 @@ class TestCleanArchitecturePatterns:
             def handle(self, command: object) -> FlextResult[object]:
                 """Handle user creation."""
                 if not isinstance(command, CreateUserCommand):
-                    return FlextResult.fail("Invalid command type")
+                    return FlextResult[None].fail("Invalid command type")
 
                 # Create domain objects
                 try:
-                    email_obj = UserEmail(email=command.email)
+                    email_obj = UserEmail.model_validate({"email": command.email})
                     email_validation = email_obj.validate_business_rules()
                     if email_validation.is_failure:
-                        return FlextResult.fail(
+                        return FlextResult[None].fail(
                             f"Email validation failed: {email_validation.error}",
                         )
                 except Exception as e:
-                    return FlextResult.fail(f"Email creation failed: {e}")
+                    return FlextResult[None].fail(f"Email creation failed: {e}")
 
                 # Create entity
                 user = User(
@@ -87,11 +87,11 @@ class TestCleanArchitecturePatterns:
                 user_result = user.validate_domain_rules()
 
                 if user_result.is_failure:
-                    return FlextResult.fail(
+                    return FlextResult[None].fail(
                         f"User validation failed: {user_result.error}",
                     )
 
-                return FlextResult.ok("User created successfully")
+                return FlextResult[str].ok(FlextResult[None].ok("User created successfully"))
 
         # Infrastructure Layer - Framework integration
         # Initialize core instance for framework integration
@@ -125,8 +125,8 @@ class TestCleanArchitecturePatterns:
             def validate_business_rules(self) -> FlextResult[None]:
                 """Validate order ID format."""
                 if not self.value.startswith("ORD-"):
-                    return FlextResult.fail("Order ID must start with ORD-")
-                return FlextResult.ok(None)
+                    return FlextResult[None].fail("Order ID must start with ORD-")
+                return FlextResult[None].ok(None)
 
         class Money(FlextValueObject):
             """Money value object."""
@@ -137,11 +137,11 @@ class TestCleanArchitecturePatterns:
             def validate_business_rules(self) -> FlextResult[None]:
                 """Validate money rules."""
                 if self.amount < 0:
-                    return FlextResult.fail("Amount cannot be negative")
-                return FlextResult.ok(None)
+                    return FlextResult[None].fail("Amount cannot be negative")
+                return FlextResult[None].ok(None)
 
-        order_id = OrderId(value="ORD-12345")
-        money = Money(amount=99.99, currency="USD")
+        order_id = OrderId.model_validate({"value": "ORD-12345"})
+        money = Money.model_validate({"amount": 99.99, "currency": "USD"})
         return order_id, money
 
     def _create_ddd_aggregate(self, order_id: object, money: object) -> object:
@@ -164,7 +164,7 @@ class TestCleanArchitecturePatterns:
                         hasattr(order_id_validation, "is_failure")
                         and order_id_validation.is_failure
                     ):
-                        return FlextResult.fail(str(order_id_validation.error))
+                        return FlextResult[None].fail(str(order_id_validation.error))
 
                 if hasattr(self.total, "validate_business_rules"):
                     total_validation = self.total.validate_business_rules()
@@ -172,25 +172,25 @@ class TestCleanArchitecturePatterns:
                         hasattr(total_validation, "is_failure")
                         and total_validation.is_failure
                     ):
-                        return FlextResult.fail(str(total_validation.error))
+                        return FlextResult[None].fail(str(total_validation.error))
 
                 # Business rules
                 if self.status not in {"pending", "confirmed", "shipped", "delivered"}:
-                    return FlextResult.fail("Invalid order status")
+                    return FlextResult[None].fail("Invalid order status")
 
-                return FlextResult.ok(None)
+                return FlextResult[None].ok(None)
 
             def confirm_order(self) -> FlextResult[None]:
                 """Domain behavior: confirm order."""
                 if self.status != "pending":
-                    return FlextResult.fail("Can only confirm pending orders")
+                    return FlextResult[None].fail("Can only confirm pending orders")
 
                 # Create new instance with updated status (immutable pattern)
                 result = self.copy_with(status="confirmed")
                 if result.is_failure:
-                    return FlextResult.fail(f"Failed to confirm order: {result.error}")
+                    return FlextResult[None].fail(f"Failed to confirm order: {result.error}")
 
-                return FlextResult.ok(None)
+                return FlextResult[None].ok(None)
 
         return Order(
             id="order_123",
@@ -229,13 +229,13 @@ class TestCleanArchitecturePatterns:
             def handle(self, command: object) -> FlextResult[object]:
                 """Handle user update command."""
                 if not isinstance(command, UpdateUserCommand):
-                    return FlextResult.fail("Invalid command type")
+                    return FlextResult[None].fail("Invalid command type")
 
                 # Simulate business logic
                 if not command.name.strip():
-                    return FlextResult.fail("Name cannot be empty")
+                    return FlextResult[None].fail("Name cannot be empty")
 
-                return FlextResult.ok(f"User {command.user_id} updated")
+                return FlextResult[None].ok(f"User {command.user_id} updated")
 
         # Queries (Read Operations)
         class GetUserQuery(BaseModel):
@@ -257,7 +257,7 @@ class TestCleanArchitecturePatterns:
                     "email": "john@example.com",
                 }
 
-                return FlextResult.ok(user_data)
+                return FlextResult[None].ok(user_data)
 
         # Test CQRS separation
         command = UpdateUserCommand(user_id="123", name="Jane Doe")
@@ -289,10 +289,10 @@ class TestEnterprisePatterns:
             def create_service(service_type: str) -> FlextResult[object]:
                 """Create service based on type."""
                 if service_type == "email":
-                    return FlextResult.ok({"type": "email", "provider": "smtp"})
+                    return FlextResult[None].ok({"type": "email", "provider": "smtp"})
                 if service_type == "sms":
-                    return FlextResult.ok({"type": "sms", "provider": "twilio"})
-                return FlextResult.fail(f"Unknown service type: {service_type}")
+                    return FlextResult[None].ok({"type": "sms", "provider": "twilio"})
+                return FlextResult[None].fail(f"Unknown service type: {service_type}")
 
         # Test factory usage
         email_service = ServiceFactory.create_service("email")
@@ -337,9 +337,9 @@ class TestEnterprisePatterns:
             def build(self) -> FlextResult[dict[str, object]]:
                 """Build the configuration."""
                 if not self._config:
-                    return FlextResult.fail("Configuration cannot be empty")
+                    return FlextResult[None].fail("Configuration cannot be empty")
 
-                return FlextResult.ok(self._config.copy())
+                return FlextResult[None].ok(self._config.copy())
 
         # Test builder usage
         config_result = (
@@ -377,16 +377,16 @@ class TestEnterprisePatterns:
             def save(self, entity_id: str, data: object) -> FlextResult[None]:
                 """Save entity to repository."""
                 self._data[entity_id] = data
-                return FlextResult.ok(None)
+                return FlextResult[None].ok(None)
 
             def find_by_id(self, entity_id: str) -> FlextResult[object]:
                 """Find entity by ID."""
                 self._query_count += 1
 
                 if entity_id in self._data:
-                    return FlextResult.ok(self._data[entity_id])
+                    return FlextResult[None].ok(self._data[entity_id])
 
-                return FlextResult.fail(f"Entity not found: {entity_id}")
+                return FlextResult[None].fail(f"Entity not found: {entity_id}")
 
             def get_query_count(self) -> int:
                 """Get number of queries executed."""
@@ -459,12 +459,12 @@ class TestEventDrivenPatterns:
             def handle_user_created(self, event: UserCreatedEvent) -> FlextResult[None]:
                 """Handle user created event."""
                 self.processed_events.append(event)
-                return FlextResult.ok(None)
+                return FlextResult[None].ok(None)
 
             def handle_user_updated(self, event: UserUpdatedEvent) -> FlextResult[None]:
                 """Handle user updated event."""
                 self.processed_events.append(event)
-                return FlextResult.ok(None)
+                return FlextResult[None].ok(None)
 
         # Test event processing
         handler = UserEventHandler()

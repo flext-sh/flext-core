@@ -10,6 +10,10 @@ from __future__ import annotations
 import contextlib
 from typing import Protocol, cast
 
+from examples.shared_domain import (
+    SharedDomainFactory,
+    log_domain_operation,
+)
 from flext_core import (
     FlextCommands,
     FlextResult,
@@ -18,11 +22,6 @@ from flext_core import (
     TEntityId,
     TErrorMessage,
     TUserData,
-)
-
-from .shared_domain import (
-    SharedDomainFactory,
-    log_domain_operation,
 )
 
 _types_ns = {
@@ -105,7 +104,7 @@ class EventStore:
     def append_event(self, event: DomainEvent) -> FlextResult[TEntityId]:
         """Append event to store using TEntityId return type."""
         self.events.append(event)
-        return FlextResult.ok(event.event_id)
+        return FlextResult[None].ok(event.event_id)
 
     def get_events_by_correlation(self, correlation_id: str) -> list[DomainEvent]:
         """Get events by correlation ID."""
@@ -183,7 +182,7 @@ class DemonstrationFlowHelper:
             if user_id and isinstance(result.data, dict):
                 state_dict[user_id] = result.data
             return result
-        return FlextResult.fail(
+        return FlextResult[None].fail(
             f"{success_message.split(' ', maxsplit=1)[0]} failed: {result.error}",
         )
 
@@ -204,20 +203,20 @@ class CreateUserCommand(FlextCommands.Command):
         """Validate create user command."""
         # Validate name
         if not self.name or len(self.name.strip()) == 0:
-            return FlextResult.fail("Name cannot be empty")
+            return FlextResult[None].fail("Name cannot be empty")
 
         # Validate email format
         if "@" not in self.email:
-            return FlextResult.fail(f"Invalid email format: {self.email}")
+            return FlextResult[None].fail(f"Invalid email format: {self.email}")
 
         # Validate age range
         if self.age < MIN_USER_AGE or self.age > MAX_USER_AGE:
             age_error: TErrorMessage = (
                 f"Age must be between {MIN_USER_AGE} and {MAX_USER_AGE}"
             )
-            return FlextResult.fail(age_error)
+            return FlextResult[None].fail(age_error)
 
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
 
 class UpdateUserCommand(FlextCommands.Command):
@@ -231,23 +230,23 @@ class UpdateUserCommand(FlextCommands.Command):
         """Validate update user command."""
         # Validate user ID
         if not self.target_user_id:
-            return FlextResult.fail("Target user ID cannot be empty")
+            return FlextResult[None].fail("Target user ID cannot be empty")
 
         # Validate at least one field to update
         if not self.name and not self.email:
-            return FlextResult.fail(
+            return FlextResult[None].fail(
                 "At least one field (name or email) must be provided",
             )
 
         # Validate name if provided
         if self.name is not None and len(self.name.strip()) == 0:
-            return FlextResult.fail("Name cannot be empty if provided")
+            return FlextResult[None].fail("Name cannot be empty if provided")
 
         # Validate email if provided
         if self.email is not None and "@" not in self.email:
-            return FlextResult.fail(f"Invalid email format: {self.email}")
+            return FlextResult[None].fail(f"Invalid email format: {self.email}")
 
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
 
 class DeleteUserCommand(FlextCommands.Command):
@@ -260,16 +259,16 @@ class DeleteUserCommand(FlextCommands.Command):
         """Validate delete user command."""
         # Validate user ID
         if not self.target_user_id:
-            return FlextResult.fail("Target user ID cannot be empty")
+            return FlextResult[None].fail("Target user ID cannot be empty")
 
         # Validate deletion reason
         if not self.reason or len(self.reason.strip()) < MIN_DELETION_REASON_LENGTH:
-            return FlextResult.fail(
+            return FlextResult[None].fail(
                 f"Deletion reason must be at least"
                 f" {MIN_DELETION_REASON_LENGTH} characters",
             )
 
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
 
 # Rebuild Pydantic models for local command classes
@@ -333,11 +332,11 @@ class CreateUserCommandHandler(
         )
 
         if user_result.is_failure:
-            return FlextResult.fail(f"User creation failed: {user_result.error}")
+            return FlextResult[None].fail(f"User creation failed: {user_result.error}")
 
         shared_user = user_result.data
         if shared_user is None:
-            return FlextResult.fail("User creation returned None data")
+            return FlextResult[None].fail("User creation returned None data")
 
         try:
             # Log domain operation using shared user
@@ -359,16 +358,16 @@ class CreateUserCommandHandler(
             # Use helper to store domain event - DRY principle
             event_result = self.store_domain_event("UserCreated", query_projection)
             if event_result.is_failure:
-                return FlextResult.fail(event_result.error or "Event storage failed")
+                return FlextResult[None].fail(event_result.error or "Event storage failed")
 
             # Persist projection in shared database for subsequent queries/updates
             user_id_str = str(shared_user.id)
             self.users_db[user_id_str] = cast("TUserData", query_projection)
 
-            return FlextResult.ok(cast("TAnyObject", query_projection))
+            return FlextResult[None].ok(cast("TAnyObject", query_projection))
 
         except (TypeError, ValueError) as e:
-            return FlextResult.fail(f"Failed to create shared user: {e}")
+            return FlextResult[None].fail(f"Failed to create shared user: {e}")
 
 
 class UpdateUserCommandHandler(
@@ -386,7 +385,7 @@ class UpdateUserCommandHandler(
         """Handle update user command - reduced complexity."""
         # Check if user exists
         if command.target_user_id not in self.users_db:
-            return FlextResult.fail(f"User not found: {command.target_user_id}")
+            return FlextResult[None].fail(f"User not found: {command.target_user_id}")
 
         user_data = self.users_db[command.target_user_id]
 
@@ -406,9 +405,9 @@ class UpdateUserCommandHandler(
         # Use helper to store domain event - DRY principle
         event_result = self.store_domain_event("UserUpdated", update_data)
         if event_result.is_failure:
-            return FlextResult.fail(event_result.error or "Event storage failed")
+            return FlextResult[None].fail(event_result.error or "Event storage failed")
 
-        return FlextResult.ok(cast("TAnyObject", user_data))
+        return FlextResult[None].ok(cast("TAnyObject", user_data))
 
 
 class DeleteUserCommandHandler(
@@ -426,7 +425,7 @@ class DeleteUserCommandHandler(
         """Handle delete user command - reduced complexity."""
         # Check if user exists
         if command.target_user_id not in self.users_db:
-            return FlextResult.fail(f"User not found: {command.target_user_id}")
+            return FlextResult[None].fail(f"User not found: {command.target_user_id}")
 
         user_data = self.users_db[command.target_user_id]
 
@@ -450,9 +449,9 @@ class DeleteUserCommandHandler(
         # Use helper to store domain event - DRY principle
         event_result = self.store_domain_event("UserDeleted", deletion_data)
         if event_result.is_failure:
-            return FlextResult.fail(event_result.error or "Event storage failed")
+            return FlextResult[None].fail(event_result.error or "Event storage failed")
 
-        return FlextResult.ok(cast("TAnyObject", user_data))
+        return FlextResult[None].ok(cast("TAnyObject", user_data))
 
 
 # =============================================================================
@@ -471,10 +470,10 @@ class GetUserQueryHandler(FlextCommands.QueryHandler[GetUserQuery, TAnyObject]):
         """Handle get user query using TAnyObject return type."""
         if query.target_user_id not in self.users_db:
             error_message: TErrorMessage = f"User not found: {query.target_user_id}"
-            return FlextResult.fail(error_message)
+            return FlextResult[None].fail(error_message)
 
         user_data = self.users_db[query.target_user_id]
-        return FlextResult.ok(cast("TAnyObject", user_data))
+        return FlextResult[None].ok(cast("TAnyObject", user_data))
 
 
 class ListUsersQueryHandler(
@@ -503,7 +502,7 @@ class ListUsersQueryHandler(
 
             users.append(cast("TAnyObject", user_data))
 
-        return FlextResult.ok(users)
+        return FlextResult[None].ok(users)
 
 
 class GetUserEventsQueryHandler(
@@ -518,7 +517,7 @@ class GetUserEventsQueryHandler(
             cast("TAnyObject", event.to_dict()) for event in events
         ]
 
-        return FlextResult.ok(event_data)
+        return FlextResult[None].ok(event_data)
 
 
 # =============================================================================
@@ -543,7 +542,7 @@ def setup_command_bus() -> FlextResult[FlextCommands.Bus]:
     command_bus.register_handler(UpdateUserCommand, update_handler)
     command_bus.register_handler(DeleteUserCommand, delete_handler)
 
-    return FlextResult.ok(command_bus)
+    return FlextResult[None].ok(command_bus)
 
 
 def setup_query_handlers(users_db: dict[TEntityId, TUserData]) -> dict[str, object]:
@@ -660,7 +659,7 @@ class CQRSDemonstrator:
         # Setup command bus
         command_bus_result = setup_command_bus()
         if command_bus_result.is_failure:
-            return FlextResult.fail(
+            return FlextResult[None].fail(
                 f"Command bus setup failed: {command_bus_result.error}",
             )
 
@@ -670,15 +669,15 @@ class CQRSDemonstrator:
         # Create application service
         command_bus = command_bus_result.data
         if command_bus is None:
-            return FlextResult.fail("Command bus setup returned None")
+            return FlextResult[None].fail("Command bus setup returned None")
 
         self.app_service = UserManagementApplicationService(command_bus, query_handlers)
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
     def demonstrate_user_creation(self) -> FlextResult[TEntityId]:
         """Demonstrate user creation command - reduced complexity."""
         if not self.app_service:
-            return FlextResult.fail("Application service not initialized")
+            return FlextResult[None].fail("Application service not initialized")
 
         # Use helper for standardized section header
         DemonstrationFlowHelper.print_section_header(2, "User Creation Commands")
@@ -701,14 +700,14 @@ class CQRSDemonstrator:
                     user_id,
                 )
                 self.created_user_id = user_id
-                return FlextResult.ok(user_id)
-            return FlextResult.ok("unknown_id")
-        return FlextResult.fail(f"User creation failed: {create_result.error}")
+                return FlextResult[None].ok(user_id)
+            return FlextResult[None].ok("unknown_id")
+        return FlextResult[None].fail(f"User creation failed: {create_result.error}")
 
     def demonstrate_user_update(self) -> FlextResult[None]:
         """Demonstrate user update command."""
         if not self.app_service or not self.created_user_id:
-            return FlextResult.fail("User not created or service not initialized")
+            return FlextResult[None].fail("User not created or service not initialized")
 
         update_result: FlextResult[object] = self.app_service.update_user(
             self.created_user_id,
@@ -718,13 +717,13 @@ class CQRSDemonstrator:
             # Update database
             if isinstance(update_result.data, dict):
                 self.users_db[self.created_user_id] = update_result.data
-            return FlextResult.ok(None)
-        return FlextResult.fail(f"User update failed: {update_result.error}")
+            return FlextResult[None].ok(None)
+        return FlextResult[None].fail(f"User update failed: {update_result.error}")
 
     def demonstrate_user_queries(self) -> FlextResult[None]:
         """Demonstrate user query operations."""
         if not self.app_service:
-            return FlextResult.fail("Application service not initialized")
+            return FlextResult[None].fail("Application service not initialized")
 
         list_result: FlextResult[list[object]] = self.app_service.list_users(
             active_only=True,
@@ -737,20 +736,20 @@ class CQRSDemonstrator:
                         user_dict = cast("dict[str, object]", user)
                         user_dict.get("name", "Unknown")
                         user_dict.get("email", "N/A")
-            return FlextResult.ok(None)
-        return FlextResult.fail(f"User listing failed: {list_result.error}")
+            return FlextResult[None].ok(None)
+        return FlextResult[None].fail(f"User listing failed: {list_result.error}")
 
     def demonstrate_event_sourcing(self) -> FlextResult[None]:
         """Demonstrate event sourcing functionality."""
         all_events = event_store.get_all_events()
         for _event in all_events:
             pass
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
     def demonstrate_user_deletion(self) -> FlextResult[None]:
         """Demonstrate user deletion command."""
         if not self.app_service or not self.created_user_id:
-            return FlextResult.fail("User not created or service not initialized")
+            return FlextResult[None].fail("User not created or service not initialized")
 
         delete_result: FlextResult[object] = self.app_service.delete_user(
             self.created_user_id,
@@ -760,13 +759,13 @@ class CQRSDemonstrator:
             # Update database
             if isinstance(delete_result.data, dict):
                 self.users_db[self.created_user_id] = delete_result.data
-            return FlextResult.ok(None)
-        return FlextResult.fail(f"User deletion failed: {delete_result.error}")
+            return FlextResult[None].ok(None)
+        return FlextResult[None].fail(f"User deletion failed: {delete_result.error}")
 
     def demonstrate_validation_failure(self) -> FlextResult[None]:
         """Demonstrate command validation with invalid data."""
         if not self.app_service:
-            return FlextResult.fail("Application service not initialized")
+            return FlextResult[None].fail("Application service not initialized")
 
         # Try to create user with invalid data
         invalid_result: FlextResult[object] = self.app_service.create_user(
@@ -775,8 +774,8 @@ class CQRSDemonstrator:
             15,
         )
         if invalid_result.is_failure:
-            return FlextResult.ok(None)
-        return FlextResult.fail("Validation should have failed")
+            return FlextResult[None].ok(None)
+        return FlextResult[None].fail("Validation should have failed")
 
 
 def main() -> None:

@@ -457,9 +457,9 @@ def validate_configuration(settings: FlextSettings) -> FlextResult[None]:
         errors.append("Cannot connect to Redis")
 
     if errors:
-        return FlextResult.fail("; ".join(errors))
+        return FlextResult[None].fail("; ".join(errors))
 
-    return FlextResult.ok(None)
+    return FlextResult[None].ok(None)
 ```
 
 ### 4. Configuration Documentation

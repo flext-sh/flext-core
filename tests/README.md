@@ -274,9 +274,9 @@ def test_user_activation():
 def test_railway_pattern():
     """Test railway-oriented error handling."""
     result = (
-        FlextResult.ok(10)
+        FlextResult[object].ok(10)
         .map(lambda x: x * 2)
-        .flat_map(lambda x: FlextResult.ok(x + 5))
+        .flat_map(lambda x: FlextResult[object].ok(x + 5))
         .map_error(lambda e: f"Error: {e}")
     )
 
@@ -286,8 +286,8 @@ def test_railway_pattern():
 def test_error_propagation():
     """Test error propagation in chain."""
     result = (
-        FlextResult.ok(10)
-        .flat_map(lambda x: FlextResult.fail("Division error"))
+        FlextResult[object].ok(10)
+        .flat_map(lambda x: FlextResult[object].fail("Division error"))
         .map(lambda x: x * 2)  # Should not execute
     )
 
@@ -375,9 +375,9 @@ All tests are self-contained:
 
 ```python
 @pytest.mark.parametrize("input,expected", [
-    (0, FlextResult.fail("Cannot divide by zero")),
-    (2, FlextResult.ok(5.0)),
-    (-2, FlextResult.ok(-5.0)),
+    (0, FlextResult[object].fail("Cannot divide by zero")),
+    (2, FlextResult[object].ok(5.0)),
+    (-2, FlextResult[object].ok(-5.0)),
 ])
 def test_division_scenarios(input, expected):
     """Test division with multiple scenarios."""

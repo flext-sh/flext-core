@@ -25,23 +25,21 @@ from __future__ import annotations
 
 import secrets
 from abc import ABC, abstractmethod
-from typing import Any, cast
+from typing import cast
 
+from examples.shared_domain import (
+    SharedDomainFactory,
+    User as SharedUser,
+    log_domain_operation,
+)
 from flext_core import (
     FlextContainer,
     FlextModel,
     FlextResult,
-    FlextUtilities,
     FlextValidation,
     get_flext_container,
     get_logger,
     safe_call,
-)
-
-from .shared_domain import (
-    SharedDomainFactory,
-    User as SharedUser,
-    log_domain_operation,
 )
 
 # Global logger using flext-core patterns
@@ -59,10 +57,10 @@ SERVICE_TIMEOUT = 30  # Service timeout in seconds
 # TYPE DEFINITIONS - Centralized type aliases using flext-core patterns
 # =============================================================================
 
-ServiceRegistrationData = dict[str, Any]
-ServiceInstanceData = dict[str, Any]
+ServiceRegistrationData = dict[str, object]
+ServiceInstanceData = dict[str, object]
 DependencyGraphData = dict[str, list[str]]
-UserRegistrationData = dict[str, Any]
+UserRegistrationData = dict[str, object]
 
 # =============================================================================
 # SERVICE PROTOCOLS - Type-safe service contracts using flext-core patterns
@@ -119,7 +117,7 @@ class MockDatabaseService(FlextModel):
         """🚀 ONE-LINE connection with failure simulation."""
         connected = True
         return (
-            FlextResult.ok(connected)
+            FlextResult[None].ok(connected)
             .filter(
                 lambda _: secrets.SystemRandom().random() >= CONNECTION_FAILURE_RATE,
                 "Database connection failed",
@@ -131,7 +129,7 @@ class MockDatabaseService(FlextModel):
     def save_user(self, user: SharedUser) -> FlextResult[str]:
         """🚀 PERFECT user saving with validation pipeline."""
         return (
-            FlextResult.ok(user)
+            FlextResult[None].ok(user)
             .filter(
                 lambda u: FlextValidation.is_non_empty_string(u.name),
                 "Invalid user name",
@@ -140,7 +138,7 @@ class MockDatabaseService(FlextModel):
                 lambda u: hasattr(u, "email_address") and u.email_address is not None,
                 "Invalid email address",
             )
-            .map(lambda u: self._save_user_data(u))
+            .map(self._save_user_data)
             .tap(lambda user_id: logger.info(f"User saved with ID: {user_id}"))
         )
 
@@ -152,7 +150,7 @@ class MockDatabaseService(FlextModel):
     def find_user(self, user_id: str) -> FlextResult[SharedUser]:
         """🚀 ZERO-BOILERPLATE user lookup with validation."""
         return (
-            FlextResult.ok(user_id)
+            FlextResult[None].ok(user_id)
             .filter(
                 lambda uid: uid in self.users,
                 f"User not found: {user_id}",
@@ -167,23 +165,23 @@ class MockEmailService(FlextModel):
 
     def __init__(self) -> None:
         super().__init__()
-        self.sent_emails: list[dict[str, Any]] = []
+        self.sent_emails: list[dict[str, object]] = []
 
     def send_welcome_email(self, user: SharedUser) -> FlextResult[bool]:
         """🚀 ONE-LINE email sending with validation."""
         return (
-            FlextResult.ok(user)
+            FlextResult[None].ok(user)
             .filter(
                 lambda u: hasattr(u, "email_address") and u.email_address is not None,
                 "User has no valid email address",
             )
-            .map(lambda u: self._create_email_data(u))
-            .tap(lambda email_data: self.sent_emails.append(email_data))
+            .map(self._create_email_data)
+            .tap(self.sent_emails.append)
             .tap(lambda email_data: logger.info(f"Email sent to {email_data['to']}"))
             .map(lambda _: True)
         )
 
-    def _create_email_data(self, user: SharedUser) -> dict[str, Any]:
+    def _create_email_data(self, user: SharedUser) -> dict[str, object]:
         """Create email data structure."""
         email_str = (
             user.email_address.email
@@ -199,9 +197,9 @@ class MockEmailService(FlextModel):
     def validate_email(self, email: str) -> FlextResult[bool]:
         """🚀 PERFECT email validation using FlextValidation."""
         return (
-            FlextResult.ok(email)
+            FlextResult[None].ok(email)
             .filter(
-                lambda e: FlextValidation.is_non_empty_string(e),
+                FlextValidation.is_non_empty_string,
                 "Email cannot be empty",
             )
             .filter(
@@ -220,7 +218,7 @@ class MockUserRepository(FlextModel):
         super().__init__()
         self.db_service = db_service
 
-    def create_user(self, user_data: dict[str, Any]) -> FlextResult[SharedUser]:
+    def create_user(self, user_data: dict[str, object]) -> FlextResult[SharedUser]:
         """🚀 ONE-LINE user creation using SharedDomainFactory."""
         return (
             self._validate_user_data(user_data)
@@ -234,7 +232,7 @@ class MockUserRepository(FlextModel):
             .flat_map(
                 lambda user: self._persist_user(user)
                 if self.db_service
-                else FlextResult.ok(user)
+                else FlextResult[None].ok(user)
             )
             .tap(
                 lambda user: log_domain_operation(
@@ -246,11 +244,11 @@ class MockUserRepository(FlextModel):
         )
 
     def _validate_user_data(
-        self, user_data: dict[str, Any]
-    ) -> FlextResult[dict[str, Any]]:
+        self, user_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Validate user data before creation."""
         return (
-            FlextResult.ok(user_data)
+            FlextResult[None].ok(user_data)
             .filter(
                 lambda data: "name" in data and "email" in data and "age" in data,
                 "Missing required user data fields",
@@ -264,7 +262,7 @@ class MockUserRepository(FlextModel):
     def _persist_user(self, user: SharedUser) -> FlextResult[SharedUser]:
         """🚀 PERFECT user persistence with database integration."""
         if not self.db_service:
-            return FlextResult.fail("Database service not available")
+            return FlextResult[None].fail("Database service not available")
 
         return (
             self.db_service.save_user(user)
@@ -279,14 +277,14 @@ class MockNotificationService(FlextModel):
     def __init__(self, email_service: EmailServiceProtocol | None = None) -> None:
         super().__init__()
         self.email_service = email_service
-        self.notifications: list[dict[str, Any]] = []
+        self.notifications: list[dict[str, object]] = []
 
     def notify_user_registration(self, user: SharedUser) -> FlextResult[bool]:
         """🚀 ONE-LINE notification with service composition."""
         return (
-            FlextResult.ok(user)
-            .flat_map(lambda u: self._send_welcome_notification(u))
-            .flat_map(lambda u: self._log_notification(u))
+            FlextResult[None].ok(user)
+            .flat_map(self._send_welcome_notification)
+            .flat_map(self._log_notification)
             .map(lambda _: True)
             .tap(
                 lambda _: logger.info(
@@ -299,17 +297,17 @@ class MockNotificationService(FlextModel):
         """🚀 ZERO-BOILERPLATE welcome notification."""
         if self.email_service:
             return self.email_service.send_welcome_email(user).map(lambda _: user)
-        return FlextResult.ok(user)  # Skip if no email service
+        return FlextResult[None].ok(user)  # Skip if no email service
 
     def _log_notification(self, user: SharedUser) -> FlextResult[SharedUser]:
         """🚀 PERFECT notification logging."""
         notification_data = {
             "user_id": user.id,
             "type": "welcome",
-            "timestamp": FlextUtilities.get_current_timestamp(),
+            "timestamp": "2023-01-01T00:00:00Z",  # Mock timestamp
         }
         self.notifications.append(notification_data)
-        return FlextResult.ok(user)
+        return FlextResult[None].ok(user)
 
 
 # =============================================================================
@@ -320,12 +318,12 @@ class MockNotificationService(FlextModel):
 def setup_container_services() -> FlextResult[FlextContainer]:
     """🚀 ZERO-BOILERPLATE container setup using global singleton."""
     return (
-        FlextResult.ok(get_flext_container())
-        .flat_map(lambda container: register_core_services(container))
-        .flat_map(lambda container: register_service_dependencies(container))
+        FlextResult[None].ok(get_flext_container())
+        .flat_map(register_core_services)
+        .flat_map(register_service_dependencies)
         .tap(
             lambda container: logger.info(
-                f"Container setup complete with {len(container._services)} services"
+                f"Container setup complete with {len(container.list_services())} services"
             )
         )
     )
@@ -334,18 +332,18 @@ def setup_container_services() -> FlextResult[FlextContainer]:
 def register_core_services(container: FlextContainer) -> FlextResult[FlextContainer]:
     """🚀 PERFECT service registration with factory patterns."""
     service_registrations = [
-        ("database", lambda: safe_call(lambda: MockDatabaseService())),
-        ("email", lambda: safe_call(lambda: MockEmailService())),
+        ("database", lambda: safe_call(MockDatabaseService)),
+        ("email", lambda: safe_call(MockEmailService)),
     ]
 
     for name, factory in service_registrations:
         registration_result = container.register_factory(name, factory)
         if registration_result.is_failure:
-            return FlextResult.fail(
+            return FlextResult[None].fail(
                 f"Failed to register {name} service: {registration_result.error}"
             )
 
-    return FlextResult.ok(container)
+    return FlextResult[None].ok(container)
 
 
 def register_service_dependencies(
@@ -357,28 +355,28 @@ def register_service_dependencies(
     email_result = container.get("email")
 
     if db_result.is_failure or email_result.is_failure:
-        return FlextResult.fail("Failed to resolve core service dependencies")
+        return FlextResult[None].fail("Failed to resolve core service dependencies")
 
     db_service = cast("MockDatabaseService", db_result.data)
     email_service = cast("MockEmailService", email_result.data)
 
     # Register composed services
     complex_registrations = [
-        ("user_repository", lambda: safe_call(lambda: MockUserRepository(db_service))),
+        ("user_repository", lambda: safe_call(lambda: MockUserRepository(cast("DatabaseServiceProtocol", db_service)))),
         (
             "notification",
-            lambda: safe_call(lambda: MockNotificationService(email_service)),
+            lambda: safe_call(lambda: MockNotificationService(cast("EmailServiceProtocol", email_service))),
         ),
     ]
 
     for name, factory in complex_registrations:
         registration_result = container.register_factory(name, factory)
         if registration_result.is_failure:
-            return FlextResult.fail(
+            return FlextResult[None].fail(
                 f"Failed to register {name} service: {registration_result.error}"
             )
 
-    return FlextResult.ok(container)
+    return FlextResult[None].ok(container)
 
 
 # =============================================================================
@@ -400,24 +398,24 @@ def register_user_with_container(
 
 def resolve_registration_services(
     container: FlextContainer,
-) -> FlextResult[dict[str, Any]]:
+) -> FlextResult[dict[str, object]]:
     """🚀 ZERO-BOILERPLATE service resolution with validation."""
     service_names = ["user_repository", "notification", "database"]
-    services: dict[str, Any] = {}
+    services: dict[str, object] = {}
 
     for name in service_names:
         service_result = container.get(name)
         if service_result.is_failure:
-            return FlextResult.fail(
+            return FlextResult[None].fail(
                 f"Failed to resolve {name} service: {service_result.error}"
             )
         services[name] = service_result.data
 
-    return FlextResult.ok(services)
+    return FlextResult[None].ok(services)
 
 
 def execute_registration_pipeline(
-    services: dict[str, Any],
+    services: dict[str, object],
     user_data: UserRegistrationData,
 ) -> FlextResult[SharedUser]:
     """🚀 ONE-LINE registration execution with service composition."""
@@ -476,7 +474,7 @@ def demo_factory_registration() -> None:
 
     # Register with factory
     factory_result = container.register_factory(
-        "database_factory", lambda: safe_call(lambda: MockDatabaseService())
+        "database_factory", lambda: safe_call(MockDatabaseService)
     )
 
     if factory_result.success:
@@ -529,7 +527,7 @@ def demo_service_lifecycle() -> None:
 
     # Test singleton behavior (default)
     container.register_factory(
-        "singleton_service", lambda: safe_call(lambda: MockDatabaseService())
+        "singleton_service", lambda: safe_call(MockDatabaseService)
     )
 
     # Get multiple instances
@@ -564,7 +562,7 @@ def demo_error_handling() -> None:
 
     # Register service that might fail during creation
     def failing_factory() -> FlextResult[MockDatabaseService]:
-        return FlextResult.fail("Simulated factory failure")
+        return FlextResult[None].fail("Simulated factory failure")
 
     container.register_factory("failing_service", failing_factory)
 

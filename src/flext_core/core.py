@@ -3,15 +3,14 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import ParamSpec, TypeVar
+from typing import ParamSpec, TypeVar, cast
 
 from flext_core.constants import FlextConstants
 from flext_core.container import (
     FlextContainer,
-    FlextServiceKey,
     get_flext_container,
 )
-from flext_core.guards import ValidatedModel, immutable, is_dict_of, pure
+from flext_core.guards import immutable, is_dict_of, pure
 from flext_core.loggings import FlextLogger, FlextLoggerFactory, FlextLogLevel
 from flext_core.result import FlextResult
 
@@ -57,10 +56,10 @@ class FlextCore:
         """Access dependency injection container."""
         return self._container
 
-    def register_service[S](
+    def register_service(
         self,
-        key: FlextServiceKey[S],
-        service: S,
+        key: str,
+        service: object,
     ) -> FlextResult[None]:
         """Register typed service in container.
 
@@ -77,7 +76,7 @@ class FlextCore:
             service,
         )
 
-    def get_service[S](self, key: FlextServiceKey[S]) -> FlextResult[S]:
+    def get_service(self, key: str) -> FlextResult[object]:
         """Get typed service from container.
 
         Args:
@@ -90,8 +89,8 @@ class FlextCore:
         key_str = str(key)
         result = self._container.get(key_str)
         if result.is_failure:
-            return FlextResult.fail(result.error or "Service not found")
-        return FlextResult[S].ok(result.data)  # type: ignore[arg-type]
+            return FlextResult[object].fail(result.error or "Service not found")
+        return FlextResult[object].ok(result.data)
 
     # =========================================================================
     # LOGGING ACCESS
@@ -148,7 +147,7 @@ class FlextCore:
     # =========================================================================
 
     @staticmethod
-    def ok[T](value: T) -> FlextResult[T]:
+    def ok(value: object) -> FlextResult[object]:
         """Create successful Result.
 
         Args:
@@ -158,7 +157,7 @@ class FlextCore:
             Success Result
 
         """
-        return FlextResult[T].ok(value)
+        return FlextResult[object].ok(value)
 
     @staticmethod
     def fail(error: str) -> FlextResult[object]:
@@ -201,31 +200,31 @@ class FlextCore:
         return FlextCore.pipe(*reversed(funcs))
 
     @staticmethod
-    def when[V](
-        predicate: Callable[[V], bool],
-        then_func: Callable[[V], FlextResult[V]],
-        else_func: Callable[[V], FlextResult[V]] | None = None,
-    ) -> Callable[[V], FlextResult[V]]:
+    def when(
+        predicate: Callable[[object], bool],
+        then_func: Callable[[object], FlextResult[object]],
+        else_func: Callable[[object], FlextResult[object]] | None = None,
+    ) -> Callable[[object], FlextResult[object]]:
         """Conditional Result execution."""
 
-        def conditional(value: V) -> FlextResult[V]:
+        def conditional(value: object) -> FlextResult[object]:
             if predicate(value):
                 return then_func(value)
             if else_func:
                 return else_func(value)
-            return FlextResult[V].ok(value)
+            return FlextResult[object].ok(value)
 
         return conditional
 
     @staticmethod
-    def tap[V](
-        side_effect: Callable[[V], None],
-    ) -> Callable[[V], FlextResult[V]]:
+    def tap(
+        side_effect: Callable[[object], None],
+    ) -> Callable[[object], FlextResult[object]]:
         """Execute side effect in pipeline."""
 
-        def side_effect_wrapper(value: V) -> FlextResult[V]:
+        def side_effect_wrapper(value: object) -> FlextResult[object]:
             side_effect(value)
-            return FlextResult[V].ok(value)
+            return FlextResult[object].ok(value)
 
         return side_effect_wrapper
 
@@ -261,10 +260,10 @@ class FlextCore:
     # =========================================================================
 
     @staticmethod
-    def validate_type[T](
+    def validate_type(
         obj: object,
-        expected_type: type[T],
-    ) -> FlextResult[T]:
+        expected_type: type,
+    ) -> FlextResult[object]:
         """Validate an object type using a dependency injection pattern.
 
         Args:
@@ -276,16 +275,16 @@ class FlextCore:
 
         """
         if not isinstance(obj, expected_type):
-            return FlextResult[T].fail(
+            return FlextResult[object].fail(
                 f"Expected {expected_type.__name__}, got {type(obj).__name__}",
             )
-        return FlextResult[T].ok(obj)
+        return FlextResult[object].ok(obj)
 
     @staticmethod
-    def validate_dict_structure[V](
+    def validate_dict_structure(
         obj: object,
-        value_type: type[V],
-    ) -> FlextResult[dict[str, V]]:
+        value_type: type,
+    ) -> FlextResult[dict[str, object]]:
         """Validate dictionary structure using guards module.
 
         Args:
@@ -298,23 +297,23 @@ class FlextCore:
         """
         # First check if obj is a dictionary at all
         if not isinstance(obj, dict):
-            return FlextResult[dict[str, V]].fail(
+            return FlextResult[dict[str, object]].fail(
                 "Expected dictionary",
             )
 
         # Then check if all values are of the expected type
         if not is_dict_of(obj, value_type):
-            return FlextResult[dict[str, V]].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"Dictionary values must be of type {value_type.__name__}",
             )
 
-        return FlextResult[dict[str, V]].ok(obj)
+        return FlextResult[dict[str, object]].ok(cast("dict[str, object]", obj))
 
     @staticmethod
-    def create_validated_model[T: ValidatedModel](
-        model_class: type[T],
+    def create_validated_model(
+        model_class: type,
         **data: object,
-    ) -> FlextResult[T]:
+    ) -> FlextResult[object]:
         """Create validated model using guards module integration.
 
         Args:
@@ -325,10 +324,20 @@ class FlextCore:
             FlextResult with validated model or error
 
         """
-        return model_class.create(**data)
+        try:
+            # Try Pydantic model validation first
+            model_validate_attr = getattr(model_class, "model_validate", None)
+            if callable(model_validate_attr):
+                    instance: object = model_validate_attr(data)
+                    return FlextResult[object].ok(instance)
+            # Fallback to direct instantiation
+            instance_fallback: object = model_class(**data)
+            return FlextResult[object].ok(instance_fallback)
+        except Exception as e:
+            return FlextResult[object].fail(f"Model validation failed: {e}")
 
     @staticmethod
-    def make_immutable[T](target_class: type[T]) -> type[T]:
+    def make_immutable(target_class: type) -> type:
         """Make class immutable using guards module.
 
         Args:
@@ -351,7 +360,8 @@ class FlextCore:
             Pure version of the function
 
         """
-        return pure(func)
+        # Type: ignore because pure() may change the signature slightly but maintains compatibility
+        return pure(func)  # type: ignore[return-value]
 
     # =========================================================================
     # UTILITY METHODS

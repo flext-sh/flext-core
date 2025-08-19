@@ -374,8 +374,8 @@ def mock_factory() -> Callable[[str], Mock]:
     def _create_mock(name: str, **kwargs: object) -> Mock:
         mock = MagicMock(name=name, **kwargs)
         mock.is_healthy.return_value = True
-        mock.validate.return_value = FlextResult.ok(None)
-        mock.process.return_value = FlextResult.ok("processed")
+        mock.validate.return_value = FlextResult[None].ok(None)
+        mock.process.return_value = FlextResult[str].ok("processed")
         return mock
 
     return _create_mock
@@ -388,7 +388,7 @@ def async_mock_factory() -> Callable[[str], AsyncMock]:
     def _create_async_mock(name: str, **kwargs: object) -> AsyncMock:
         mock = AsyncMock(name=name, **kwargs)
         mock.is_healthy.return_value = True
-        mock.process.return_value = FlextResult.ok("processed")
+        mock.process.return_value = FlextResult[str].ok("processed")
         return mock
 
     return _create_async_mock
@@ -408,7 +408,7 @@ def mock_external_service() -> Generator[MagicMock]:
     mock = MagicMock()
     mock.is_healthy.return_value = True
     mock.get_data.return_value = {"status": "success", "data": "test_data"}
-    mock.process.return_value = FlextResult.ok("processed")
+    mock.process.return_value = FlextResult[str].ok("processed")
 
     yield mock
 
@@ -431,8 +431,8 @@ def entity_factory() -> Callable[[str, dict[str, object]], FlextEntity]:
         name: str = "test"
         value: int = 0
 
-        def __init__(self, name: str = "test", value: int = 0) -> None:
-            super().__init__()
+        def __init__(self, entity_id: str = "test-entity", name: str = "test", value: int = 0) -> None:
+            super().__init__(id=entity_id)
             self.name = name
             self.value = value
 
@@ -456,8 +456,18 @@ def entity_factory() -> Callable[[str, dict[str, object]], FlextEntity]:
                 "id": str(self.id),
                 "name": self.name,
                 "value": self.value,
-                "status": self.status.value,
+                "status": getattr(self, "_status", "ACTIVE"),
             }
+
+    def _create_entity(entity_id: str, metadata: dict[str, object]) -> FlextEntity:
+        """Create test entity with given parameters."""
+        name_raw = metadata.get("name", "test")
+        name = str(name_raw) if name_raw is not None else "test"
+        value_raw = metadata.get("value", 0)
+        value = int(value_raw) if isinstance(value_raw, (int, str)) else 0
+        return TestEntity(entity_id=entity_id, name=name, value=value)
+
+    return _create_entity
 
 
 @pytest.fixture
@@ -470,8 +480,8 @@ def value_object_factory() -> Callable[[dict[str, object]], FlextValueObject]:
 
         def validate_business_rules(self) -> FlextResult[None]:
             if not self.value:
-                return FlextResult.fail("Value cannot be empty")
-            return FlextResult.ok(None)
+                return FlextResult[None].fail("Value cannot be empty")
+            return FlextResult[None].ok(None)
 
     def _create_vo(data: dict[str, object]) -> FlextValueObject:
         # Extract specific fields with type safety
@@ -479,7 +489,7 @@ def value_object_factory() -> Callable[[dict[str, object]], FlextValueObject]:
         metadata = data.get("metadata", {})
         if not isinstance(metadata, dict):
             metadata = {}
-        return TestValueObject(value=value, metadata=metadata)
+        return TestValueObject.model_validate({"value": value, "metadata": metadata})
 
     return _create_vo
 
@@ -494,10 +504,10 @@ def aggregate_factory() -> Callable[[str], FlextAggregateRoot]:
 
         def add_item(self, item: str) -> FlextResult[None]:
             if item in self.items:
-                return FlextResult.fail(f"Item {item} already exists")
+                return FlextResult[None].fail(f"Item {item} already exists")
             self.items.append(item)
-            self.add_domain_event({"type": "item_added", "item": item})
-            return FlextResult.ok(None)
+            self.add_domain_event("item_added", {"item": item})
+            return FlextResult[None].ok(None)
 
     def _create_aggregate(aggregate_id: str) -> FlextAggregateRoot:
         return TestAggregate(id=aggregate_id)
@@ -948,8 +958,8 @@ def command_factory() -> Callable[[str, dict[str, object]], FlextCommands.Comman
         def validate_command(self) -> FlextResult[None]:
             """Validate command - renamed to avoid Pydantic conflict."""
             if not self.name:
-                return FlextResult.fail("Command name is required")
-            return FlextResult.ok(None)
+                return FlextResult[None].fail("Command name is required")
+            return FlextResult[None].ok(None)
 
     def _create_command(
         name: str,
@@ -972,9 +982,9 @@ def handler_factory() -> Callable[[Callable[[object], object]], FlextBaseHandler
         def process_message(self, message: object) -> FlextResult[object]:
             try:
                 result = self.handler_func(message)
-                return FlextResult.ok(result)
+                return FlextResult[object].ok(result)
             except Exception as e:
-                return FlextResult.fail(str(e))
+                return FlextResult[object].fail(str(e))
 
     def _create_handler(handler_func: Callable[[object], object]) -> FlextBaseHandler:
         return TestHandler(handler_func)

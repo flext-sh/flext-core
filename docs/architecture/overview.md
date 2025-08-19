@@ -35,8 +35,8 @@ from flext_core import FlextResult
 # All operations return FlextResult for composability
 def divide(a: float, b: float) -> FlextResult[float]:
     if b == 0:
-        return FlextResult.fail("Division by zero")
-    return FlextResult.ok(a / b)
+        return FlextResult[None].fail("Division by zero")
+    return FlextResult[None].ok(a / b)
 
 # Chain operations without exception handling
 result = (
@@ -71,8 +71,8 @@ class Money(FlextValueObject):
 
     def add(self, other: Money) -> FlextResult[Money]:
         if self.currency != other.currency:
-            return FlextResult.fail("Currency mismatch")
-        return FlextResult.ok(Money(
+            return FlextResult[None].fail("Currency mismatch")
+        return FlextResult[None].ok(Money(
             amount=self.amount + other.amount,
             currency=self.currency
         ))
@@ -91,7 +91,7 @@ class Account(FlextEntity):
                 "account_id": self.id,
                 "amount": str(amount.amount)
             })
-            return FlextResult.ok(None)
+            return FlextResult[None].ok(None)
         return result.map(lambda _: None)
 
 class BankingContext(FlextAggregateRoot):
@@ -118,7 +118,7 @@ class BankingContext(FlextAggregateRoot):
             "to": to_id,
             "amount": str(amount.amount)
         })
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 ```
 
 ### 3. Application Layer
@@ -210,10 +210,10 @@ def connect_database(settings: DatabaseSettings) -> FlextResult[Connection]:
                 pool_size=settings.pool_size)
     try:
         conn = create_connection(settings.database_url)
-        return FlextResult.ok(conn)
+        return FlextResult[None].ok(conn)
     except Exception as e:
         logger.error("Database connection failed", error=str(e))
-        return FlextResult.fail(f"Connection failed: {e}")
+        return FlextResult[None].fail(f"Connection failed: {e}")
 ```
 
 ## Architectural Patterns
@@ -277,7 +277,7 @@ class Order(FlextAggregateRoot):
             total=self.total
         ))
 
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 ```
 
 ## Design Principles
@@ -390,8 +390,8 @@ def old_divide(a: float, b: float) -> float:
 # After: Railway-oriented
 def new_divide(a: float, b: float) -> FlextResult[float]:
     if b == 0:
-        return FlextResult.fail("Division by zero")
-    return FlextResult.ok(a / b)
+        return FlextResult[None].fail("Division by zero")
+    return FlextResult[None].ok(a / b)
 ```
 
 ### From Procedural to Domain-Driven

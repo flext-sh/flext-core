@@ -92,8 +92,8 @@ from flext_core import FlextResult
 def validate_user(data: dict) -> FlextResult[User]:
     """All operations return FlextResult for composability."""
     if not data.get("email"):
-        return FlextResult.fail("Email required")
-    return FlextResult.ok(User(**data))
+        return FlextResult[None].fail("Email required")
+    return FlextResult[None].ok(User(**data))
 
 # Railway-oriented composition
 result = (
@@ -142,10 +142,10 @@ class User(FlextEntity):
     def activate(self) -> FlextResult[None]:
         """Business logic returns FlextResult."""
         if self.is_active:
-            return FlextResult.fail("Already active")
+            return FlextResult[None].fail("Already active")
         self.is_active = True
         # Domain events automatically tracked
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
 class Email(FlextValueObject):
     """Value objects are immutable and compared by value."""
@@ -153,8 +153,8 @@ class Email(FlextValueObject):
 
     def validate(self) -> FlextResult[None]:
         if "@" not in self.address:
-            return FlextResult.fail("Invalid email")
-        return FlextResult.ok(None)
+            return FlextResult[None].fail("Invalid email")
+        return FlextResult[None].ok(None)
 ```
 
 ### Module Organization
@@ -236,7 +236,7 @@ from flext_core import FlextResult
 def business_operation(data: dict) -> FlextResult[ProcessedData]:
     """MANDATORY: All business operations must return FlextResult."""
     if not data:
-        return FlextResult.fail("Data required", error_code="VALIDATION_ERROR")
+        return FlextResult[None].fail("Data required", error_code="VALIDATION_ERROR")
     
     # Railway-oriented composition (PREFERRED)
     return (
@@ -270,7 +270,7 @@ container.register_factory("logger", lambda: create_logger())
 def service_operation() -> FlextResult[Data]:
     db_result = container.get("database")
     if db_result.failure:
-        return FlextResult.fail("Database service unavailable")
+        return FlextResult[None].fail("Database service unavailable")
     
     db = db_result.unwrap()
     return db.fetch_data()
@@ -289,8 +289,8 @@ class Email(FlextValueObject):
 
     def validate(self) -> FlextResult[None]:
         if "@" not in self.address:
-            return FlextResult.fail("Invalid email format")
-        return FlextResult.ok(None)
+            return FlextResult[None].fail("Invalid email format")
+        return FlextResult[None].ok(None)
 
 class User(FlextEntity):
     """Entities have identity and lifecycle."""
@@ -300,9 +300,9 @@ class User(FlextEntity):
     def activate(self) -> FlextResult[None]:
         """Business logic returns FlextResult."""
         if self.is_active:
-            return FlextResult.fail("User already active")
+            return FlextResult[None].fail("User already active")
         self.is_active = True
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
 class UserAggregate(FlextAggregateRoot):
     """Aggregate roots enforce consistency boundaries."""
@@ -661,11 +661,11 @@ class User(FlextEntity):
     def activate(self) -> FlextResult[None]:
         """Business operations return FlextResult."""
         if self.is_active:
-            return FlextResult.fail("User already active")
+            return FlextResult[None].fail("User already active")
         
         self.is_active = True
         # Domain events can be raised here
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 ```
 
 #### Value Object Pattern
@@ -686,8 +686,8 @@ class Email(FlextValueObject):
     
     def validate(self) -> FlextResult[None]:
         if "@" not in self.address:
-            return FlextResult.fail("Invalid email format")
-        return FlextResult.ok(None)
+            return FlextResult[None].fail("Invalid email format")
+        return FlextResult[None].ok(None)
 ```
 
 #### Aggregate Root Pattern
@@ -714,7 +714,7 @@ class UserAggregate(FlextAggregateRoot):
         # Raise domain event
         self.raise_event("EmailChanged", {"user_id": self.user.id, "new_email": new_email})
         
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 ```
 
 ### CQRS Implementation
@@ -745,10 +745,10 @@ class RegisterUserHandler:
     
     def _validate_command(self, command: RegisterUserCommand) -> FlextResult[None]:
         if not command.name:
-            return FlextResult.fail("Name required")
+            return FlextResult[None].fail("Name required")
         if not command.email:
-            return FlextResult.fail("Email required")
-        return FlextResult.ok(None)
+            return FlextResult[None].fail("Email required")
+        return FlextResult[None].ok(None)
     
     def _create_user(self, command: RegisterUserCommand) -> FlextResult[User]:
         user = User(

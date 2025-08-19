@@ -1,9 +1,9 @@
-"""Type guards and validation system."""
+"""Guards and validation utilities for FLEXT validation system."""
 
 from __future__ import annotations
 
-from functools import wraps
-from typing import Callable, Self, cast
+from collections.abc import Callable
+from typing import Self, cast
 
 from pydantic import BaseModel, ValidationError
 
@@ -13,9 +13,6 @@ from flext_core.exceptions import FlextValidationError
 from flext_core.mixins import FlextSerializableMixin
 from flext_core.result import FlextResult
 from flext_core.typings import (
-    P,
-    R,
-    TCallable,
     TFactory,
 )
 from flext_core.utilities import FlextTypeGuards, FlextUtilities
@@ -39,6 +36,36 @@ is_instance_of = FlextTypeGuards.is_instance_of
 # =============================================================================
 
 
+class _PureWrapper[R]:
+    """Wrapper class for pure functions with memoization."""
+
+    def __init__(self, func: Callable[[object], R] | Callable[[], R]) -> None:
+        self.func = func
+        self.cache: dict[object, R] = {}
+        self.__pure__ = True
+        # Copy function metadata safely
+        if hasattr(func, "__name__"):
+            self.__name__ = func.__name__
+        if hasattr(func, "__doc__"):
+            self.__doc__ = func.__doc__
+
+    def __call__(self, *args: object, **kwargs: object) -> R:
+        """Invoke the wrapped function with memoization."""
+        try:
+            cache_key = (args, tuple(sorted(kwargs.items())))
+            if cache_key in self.cache:
+                return self.cache[cache_key]
+            result = self.func(*args, **kwargs)
+            self.cache[cache_key] = result
+            return result
+        except TypeError:
+            return self.func(*args, **kwargs)
+
+    def __cache_size__(self) -> int:
+        """Return the size of the cache."""
+        return len(self.cache)
+
+
 class FlextGuards:
     """Static class for type guards, validation, and factory methods.
 
@@ -51,7 +78,10 @@ class FlextGuards:
         """Check if an object is a dict with values of a specific type."""
         if not isinstance(obj, dict):
             return False
-        return all(isinstance(value, value_type) for value in obj.values())
+        return all(
+            isinstance(value, value_type)
+            for value in cast("dict[object, object]", obj).values()
+        )
 
     @staticmethod
     def immutable(target_class: type) -> type:
@@ -68,7 +98,7 @@ class FlextGuards:
         def _init(self: object, *args: object, **kwargs: object) -> None:
             # Call the original class initializer directly to avoid super() pitfalls
             try:
-                target_class.__init__(self, *args, **kwargs)  # type: ignore[arg-type]
+                target_class.__init__(self, *args, **kwargs)  # type: ignore[misc]
             except Exception:
                 # If original init fails, attempt base object init as fallback
                 object.__init__(self)
@@ -109,7 +139,9 @@ class FlextGuards:
         )
 
     @staticmethod
-    def pure(func: Callable[P, R]) -> Callable[P, R]:
+    def pure[R](
+        func: Callable[[object], R] | Callable[[], R],
+    ) -> Callable[[object], R] | Callable[[], R]:
         """Mark function as pure with memoization caching.
 
         Args:
@@ -119,39 +151,7 @@ class FlextGuards:
             Pure version of the function with caching
 
         """
-        # Cache for memoization
-        cache: dict[tuple[object, ...], object] = {}
-
-        def pure_wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-            """Pure function wrapper with memoization."""
-            # Create a cache key from args and kwargs
-            try:
-                cache_key = (args, tuple(sorted(kwargs.items())))
-
-                # Return cached result if available
-                if cache_key in cache:
-                    return cast(R, cache[cache_key])
-
-                # Compute and cache result
-                result = func(*args, **kwargs)
-                cache[cache_key] = result
-            except TypeError:
-                # Arguments not hashable, can't cache - just call function
-                return func(*args, **kwargs)
-            else:
-                return result
-
-        # Use functools.wraps to properly preserve function metadata
-        wrapped = wraps(func)(pure_wrapper)
-        # Mark as pure and expose cache size for tests and tooling
-        setattr(wrapped, "__pure__", True)  # noqa: B010 - intentional test hint attribute
-
-        # Provide a lightweight cache size accessor expected by tests
-        def _cache_size() -> int:
-            return len(cache)
-
-        wrapped.__dict__["__cache_size__"] = _cache_size
-        return cast("Callable[P, R]", wrapped)
+        return _PureWrapper(func)
 
     @staticmethod
     def make_factory(target_class: type) -> TFactory:
@@ -190,7 +190,7 @@ class FlextValidatedModel(BaseModel, FlextSerializableMixin):
             super().__init__(**data)
         except ValidationError as e:
             # Convert Pydantic errors to user-friendly format
-            errors = []
+            errors: list[str] = []
             for error in e.errors():
                 loc = ".".join(str(x) for x in error["loc"]) if error.get("loc") else ""
                 msg = error.get("msg", "Validation error")
@@ -208,9 +208,25 @@ class FlextValidatedModel(BaseModel, FlextSerializableMixin):
                 validation_details={"errors": errors},
             ) from e
 
-    # Mixin functionality is now inherited properly:
-    # - Validation methods from FlextValidatableMixin
-    # - Serialization methods from FlextSerializableMixin
+    # Add FlextValidatable methods without conflicts
+    def validate_flext(self) -> FlextResult[None]:
+        """Validate the model using Pydantic validation (renamed to avoid conflicts)."""
+        try:
+            # Use Pydantic's validation
+            self.model_validate(self.model_dump())
+            return FlextResult[None].ok(None)
+        except ValidationError as e:
+            errors = [error["msg"] for error in e.errors()]
+            return FlextResult[None].fail(f"Validation failed: {'; '.join(errors)}")
+
+    @property
+    def is_valid(self) -> bool:
+        """Check if the model is valid."""
+        try:
+            self.model_validate(self.model_dump())
+            return True
+        except ValidationError:
+            return False
 
     @classmethod
     def create(cls, **data: object) -> FlextResult[Self]:
@@ -223,7 +239,7 @@ class FlextValidatedModel(BaseModel, FlextSerializableMixin):
             instance = cls(**data)
             return FlextResult[Self].ok(instance)
         except (ValidationError, FlextValidationError) as e:
-            errors = []
+            errors: list[str] = []
             if isinstance(e, ValidationError):
                 for error in e.errors():
                     loc = ".".join(str(x) for x in error.get("loc", []))

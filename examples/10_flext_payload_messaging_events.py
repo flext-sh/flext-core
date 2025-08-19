@@ -305,7 +305,7 @@ def _display_user_registration_event(
         if event is not None:
             pass
 
-    return FlextResult.ok(None)
+    return FlextResult[None].ok(None)
 
 
 def _demonstrate_order_lifecycle_events() -> FlextResult[None]:
@@ -381,7 +381,7 @@ def _display_order_lifecycle_events(
         ):
             pass
 
-    return FlextResult.ok(None)
+    return FlextResult[None].ok(None)
 
 
 def _demonstrate_inventory_management_events() -> FlextResult[None]:
@@ -432,7 +432,7 @@ def _handle_stock_updated_event(
             if isinstance(new_quantity, int) and new_quantity <= LOW_STOCK_THRESHOLD:
                 return _create_and_display_low_stock_alert(product_id, new_quantity)
 
-    return FlextResult.ok(None)
+    return FlextResult[None].ok(None)
 
 
 def _create_and_display_low_stock_alert(
@@ -465,7 +465,7 @@ def _create_and_display_low_stock_alert(
     ):
         pass
 
-    return FlextResult.ok(None)
+    return FlextResult[None].ok(None)
 
 
 def _demonstrate_event_correlation_and_tracing() -> FlextResult[None]:
@@ -528,7 +528,7 @@ def _display_correlated_events(
         ):
             pass
 
-    return FlextResult.ok(None)
+    return FlextResult[None].ok(None)
 
 
 def _demonstrate_event_validation_and_error_handling() -> FlextResult[None]:
@@ -554,7 +554,7 @@ def _display_validation_results(
         if invalid_event is not None:
             pass
 
-    return FlextResult.ok(None)
+    return FlextResult[None].ok(None)
 
 
 def demonstrate_payload_serialization() -> None:

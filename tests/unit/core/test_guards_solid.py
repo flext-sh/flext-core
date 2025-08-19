@@ -289,10 +289,10 @@ class TestGuardsSOLIDImplementation:
         def create_result(value: str) -> FlextResult[ImmutableResult]:
             """Pure function returning FlextResult."""
             if not value:
-                return FlextResult.fail("Value cannot be empty")
+                return FlextResult[None].fail("Value cannot be empty")
 
             result = ImmutableResult(value, "success")
-            return FlextResult.ok(result)
+            return FlextResult[None].ok(result)
 
         # Test successful creation
         success_result = create_result("test_value")
@@ -510,7 +510,7 @@ class TestSOLIDCompliance:
         @pure
         def create_success_result(value: str) -> FlextResult[str]:
             """Pure function creating FlextResult."""
-            return FlextResult.ok(value)
+            return FlextResult[None].ok(value)
 
         # Integration works smoothly
         result = create_success_result("test")
@@ -521,7 +521,7 @@ class TestSOLIDCompliance:
 
         # Container is immutable
         with pytest.raises(AttributeError):
-            container.result = FlextResult.fail("changed")
+            container.result = FlextResult[None].fail("changed")
 
         # Function is pure
         assert hasattr(create_success_result, "__pure__")

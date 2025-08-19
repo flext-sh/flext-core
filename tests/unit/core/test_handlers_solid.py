@@ -27,16 +27,16 @@ class TestSOLIDPrinciples:
 
             def validate_message(self, message: object) -> FlextResult[object]:
                 if isinstance(message, str) and len(message) > 100:
-                    return FlextResult.fail("Message too long")
-                return FlextResult.ok(message)
+                    return FlextResult[None].fail("Message too long")
+                return FlextResult[None].ok(message)
 
         class CustomAuthorizer:
             """Custom authorizer implementing only authorization protocol."""
 
             def authorize_query(self, query: object) -> FlextResult[None]:
                 if isinstance(query, dict) and query.get("REDACTED_LDAP_BIND_PASSWORD_only"):
-                    return FlextResult.fail("Admin access required")
-                return FlextResult.ok(None)
+                    return FlextResult[None].fail("Admin access required")
+                return FlextResult[None].ok(None)
 
         # Test that we can inject specific functionality
         validator = CustomValidator()
@@ -94,7 +94,7 @@ class TestSOLIDPrinciples:
             def handle(self, command: object) -> FlextResult[object]:
                 # Extended functionality without modifying base class
                 if isinstance(command, str) and command.startswith("SPECIAL_"):
-                    return FlextResult.ok(f"Special handling: {command}")
+                    return FlextResult[None].ok(f"Special handling: {command}")
                 return super().handle(command)
 
         # Original handler works as before
@@ -122,7 +122,7 @@ class TestSOLIDPrinciples:
             """Mock validator for testing DIP."""
 
             def validate_message(self, message: object) -> FlextResult[object]:  # noqa: ARG002
-                return FlextResult.fail("Mock validation failed")
+                return FlextResult[None].fail("Mock validation failed")
 
         class MockMetricsCollector:
             """Mock metrics collector for testing DIP."""
@@ -157,7 +157,7 @@ class TestSOLIDPrinciples:
             """Special command handler that substitutes base."""
 
             def handle(self, command: object) -> FlextResult[object]:
-                return FlextResult.ok(f"SPECIAL: {command}")
+                return FlextResult[None].ok(f"SPECIAL: {command}")
 
         def process_with_any_handler(
             handler: FlextHandlers.CommandHandler,
@@ -206,7 +206,7 @@ class TestSOLIDPrinciples:
         # Process failed command by creating failing handler
         class FailingHandler(FlextHandlers.CommandHandler):
             def handle(self, command: object) -> FlextResult[object]:  # noqa: ARG002
-                return FlextResult.fail("Intentional failure")
+                return FlextResult[None].fail("Intentional failure")
 
         failing_handler = FailingHandler("failing")
         fail_result = failing_handler.handle_with_hooks("fail_command")
@@ -259,18 +259,18 @@ class TestSOLIDIntegration:
 
             def validate_message(self, message: object) -> FlextResult[object]:
                 if message is None:
-                    return FlextResult.fail("Message cannot be None")
+                    return FlextResult[None].fail("Message cannot be None")
                 if isinstance(message, str) and len(message) == 0:
-                    return FlextResult.fail("Message cannot be empty")
-                return FlextResult.ok(message)
+                    return FlextResult[None].fail("Message cannot be empty")
+                return FlextResult[None].ok(message)
 
         class ProductionAuthorizer:
             """Production-grade authorizer."""
 
             def authorize_query(self, query: object) -> FlextResult[None]:
                 if isinstance(query, dict) and query.get("user_level", 0) < 1:
-                    return FlextResult.fail("Insufficient user level")
-                return FlextResult.ok(None)
+                    return FlextResult[None].fail("Insufficient user level")
+                return FlextResult[None].ok(None)
 
         class ProductionMetrics:
             """Production-grade metrics collector."""

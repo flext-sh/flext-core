@@ -133,7 +133,7 @@ def test_with_external_dependency(mocker):
     """Test component with mocked dependency."""
     # Mock external service
     mock_service = mocker.Mock(spec=ExternalService)
-    mock_service.fetch_data.return_value = FlextResult.ok({"data": "value"})
+    mock_service.fetch_data.return_value = FlextResult[object].ok({"data": "value"})
 
     # Inject mock
     component = Component(service=mock_service)
@@ -244,17 +244,17 @@ Tests for architectural patterns:
 def test_result_chaining():
     """Test FlextResult chaining operations."""
     result = (
-        FlextResult.ok(10)
+        FlextResult[object].ok(10)
         .map(lambda x: x * 2)
-        .flat_map(lambda x: FlextResult.ok(x + 5))
+        .flat_map(lambda x: FlextResult[object].ok(x + 5))
     )
     assert result.unwrap() == 25
 
 def test_result_error_propagation():
     """Test error propagation in chain."""
     result = (
-        FlextResult.ok(10)
-        .flat_map(lambda x: FlextResult.fail("Error"))
+        FlextResult[object].ok(10)
+        .flat_map(lambda x: FlextResult[object].fail("Error"))
         .map(lambda x: x * 2)  # Should not execute
     )
     assert result.is_failure

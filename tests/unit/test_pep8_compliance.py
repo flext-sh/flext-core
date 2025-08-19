@@ -10,19 +10,17 @@ import contextlib
 import io
 import subprocess
 from pathlib import Path
+from typing import Protocol
 
 import pytest
 
 
-def _raise_no_supported_runtime(message: str) -> None:
-    """Raise a RuntimeError; defined at module scope per lint guidance."""
-    raise RuntimeError(message)
+class ProcessResult(Protocol):
+    """Protocol for process result objects."""
 
-
-pytestmark = [pytest.mark.unit, pytest.mark.pep8]
-
-
-PKG_ROOT = Path(__file__).resolve().parents[2]
+    returncode: int
+    stdout: str
+    stderr: str
 
 
 def _raise_no_supported_runtime(message: str) -> None:
@@ -35,7 +33,13 @@ def _raise_no_supported_runtime(message: str) -> None:
     raise RuntimeError(err_msg)
 
 
-def _run_ruff_command(command_args: list[str]) -> object:
+pytestmark = [pytest.mark.unit, pytest.mark.pep8]
+
+
+PKG_ROOT = Path(__file__).resolve().parents[2]
+
+
+def _run_ruff_command(command_args: list[str]) -> ProcessResult:
     """Safely execute ruff commands with validated arguments.
 
     Args:
@@ -75,9 +79,16 @@ def _run_ruff_command(command_args: list[str]) -> object:
             validation_msg: str = f"Argument '{arg}' not in allowlist"
             raise ValueError(validation_msg)
 
+    # Define CompletedProcess class for consistent typing
+    class CompletedProcess:
+        def __init__(self, returncode: int, out: str, err: str) -> None:
+            self.returncode: int = returncode
+            self.stdout: str = out
+            self.stderr: str = err
+
     # Prefer in-process execution when available; otherwise, fallback to CLI
     try:
-        import ruff.__main__ as ruff_main  # type: ignore[import-not-found]  # noqa: PLC0415
+        import ruff.__main__ as ruff_main  # type: ignore[import-untyped]  # noqa: PLC0415
 
         if hasattr(ruff_main, "main"):
             stdout = io.StringIO()
@@ -89,12 +100,6 @@ def _run_ruff_command(command_args: list[str]) -> object:
                     ruff_main.main([*command_args])
                 except SystemExit as exc:  # ruff exits via SystemExit
                     exit_code = int(getattr(exc, "code", 0) or 0)
-
-            class CompletedProcess:
-                def __init__(self, returncode: int, out: str, err: str) -> None:
-                    self.returncode: int = returncode
-                    self.stdout: str = out
-                    self.stderr: str = err
 
             return CompletedProcess(exit_code, stdout.getvalue(), stderr.getvalue())
 
@@ -111,14 +116,9 @@ def _run_ruff_command(command_args: list[str]) -> object:
 
         # If neither API is present, raise via module-level helper
         _raise_no_supported_runtime("No supported Ruff invocation method available")
+        # This line is never reached due to the exception above, but satisfies MyPy
+        return CompletedProcess(1, "", "No supported Ruff method")  # pragma: no cover
     except Exception as exc:  # Robust fallback with error context
-
-        class CompletedProcess:
-            def __init__(self, returncode: int, out: str, err: str) -> None:
-                self.returncode: int = returncode
-                self.stdout: str = out
-                self.stderr: str = err
-
         return CompletedProcess(1, "", f"ruff execution failed: {exc}")
 
 

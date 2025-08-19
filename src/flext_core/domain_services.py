@@ -71,7 +71,7 @@ class FlextDomainService[TDomainResult](
 
         Default implementation returns success. Override to add custom validation.
         """
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
     def execute_operation(
         self,

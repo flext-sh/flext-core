@@ -9,9 +9,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from examples.utilities.validation_utilities import (
+    is_email,
+    is_int,
+    is_non_empty_string,
+)
 from flext_core import TErrorMessage, TUserData
-
-from .validation_utilities import is_email, is_int, is_non_empty_string
 
 # =============================================================================
 # COMPLEXITY REDUCTION HELPERS - SOLID SRP: Modular utility demonstrations

@@ -14,7 +14,7 @@ class TestAggregateRoot(FlextAggregateRoot):
 
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate domain rules."""
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
 
 class FailingEventAggregateRoot(FlextAggregateRoot):
@@ -49,9 +49,9 @@ class FailingEventAggregateRoot(FlextAggregateRoot):
     ) -> FlextResult[None]:
         """Handle type error event simulation."""
         try:
-            return super().add_domain_event(None, _event_data)
+            return super().add_domain_event("", _event_data)  # Empty string to trigger error
         except TypeError as e:
-            return FlextResult.fail(f"Failed to add domain event: {e}")
+            return FlextResult[None].fail(f"Failed to add domain event: {e}")
 
     def _handle_value_error_event(
         self,
@@ -59,10 +59,10 @@ class FailingEventAggregateRoot(FlextAggregateRoot):
     ) -> FlextResult[None]:
         """Handle value error event simulation."""
         try:
-            invalid_data = {"__invalid__": lambda x: x}  # Non-serializable
+            invalid_data: dict[str, object] = {"__invalid__": lambda x: x}  # Non-serializable
             return super().add_domain_event("valid_type", invalid_data)
         except (ValueError, TypeError):
-            return FlextResult.fail("Failed to add domain event: Invalid event data")
+            return FlextResult[None].fail("Failed to add domain event: Invalid event data")
 
     def _handle_attribute_error_event(
         self,
@@ -72,11 +72,11 @@ class FailingEventAggregateRoot(FlextAggregateRoot):
         try:
             # Since we can't delete attributes from frozen models,
             # we'll simulate an AttributeError by trying to access non-existent attribute
-            _ = self.some_missing_attribute  # This will raise AttributeError
+            _ = self.some_missing_attribute  # type: ignore[attr-defined] # Intentional AttributeError
             return super().add_domain_event("test", event_data)
         except (AttributeError, ValidationError):
             # Catch both AttributeError and ValidationError (from frozen model)
-            return FlextResult.fail("Failed to add domain event: Missing attribute")
+            return FlextResult[None].fail("Failed to add domain event: Missing attribute")
 
 
 class TestAggregateRootCoverage:

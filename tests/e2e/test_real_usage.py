@@ -53,8 +53,8 @@ class UserService:
         """Fetch user with type-safe error handling."""
         user = self.database.get_user(user_id)
         if user is None:
-            return FlextResult.fail(f"User {user_id} not found")
-        return FlextResult.ok(user)
+            return FlextResult[MockUser].fail(f"User {user_id} not found")
+        return FlextResult[MockUser].ok(user)
 
     def create_user(
         self,
@@ -63,11 +63,11 @@ class UserService:
     ) -> FlextResult[MockUser]:
         """Create a new user."""
         if self.database.get_user(user_id) is not None:
-            return FlextResult.fail(f"User {user_id} already exists")
+            return FlextResult[MockUser].fail(f"User {user_id} already exists")
 
         user = MockUser(user_id, name)
         self.database.save_user(user)
-        return FlextResult.ok(user)
+        return FlextResult[MockUser].ok(user)
 
 
 class TestRealUsagePatterns:

@@ -117,7 +117,7 @@ class TestFlextSemanticModel:
         """Test validate_with_business_rules with valid object."""
         # Mock object with valid business rules method
         mock_instance = Mock()
-        mock_instance.validate_business_rules.return_value = FlextResult.ok(None)
+        mock_instance.validate_business_rules.return_value = FlextResult[None].ok(None)
 
         result = FlextSemanticModel.Factory.validate_with_business_rules(mock_instance)
 
@@ -128,7 +128,7 @@ class TestFlextSemanticModel:
         """Test validate_with_business_rules with failing validation."""
         # Mock object with failing business rules
         mock_instance = Mock()
-        mock_instance.validate_business_rules.return_value = FlextResult.fail(
+        mock_instance.validate_business_rules.return_value = FlextResult[None].fail(
             "Validation failed",
         )
 

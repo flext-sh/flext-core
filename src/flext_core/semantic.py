@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import importlib
-from contextlib import AbstractContextManager
-from typing import Protocol, runtime_checkable
+from contextlib import AbstractContextManager, nullcontext
+from typing import Protocol, cast, runtime_checkable
 
 from flext_core.constants import FlextConstants
 from flext_core.result import FlextResult
@@ -69,10 +69,12 @@ class FlextSemanticModel:
         def validate_with_business_rules(instance: object) -> FlextResult[None]:
             """Validate instance using business rules."""
             if hasattr(instance, "validate_business_rules"):
-                result = instance.validate_business_rules()
-                if isinstance(result, FlextResult):
-                    return result
-            return FlextResult.ok(None)
+                validate_method = getattr(instance, "validate_business_rules", None)
+                if callable(validate_method):
+                    result = validate_method()
+                    if isinstance(result, FlextResult):
+                        return cast("FlextResult[None]", result)
+            return FlextResult[None].ok(None)
 
 
 # =============================================================================
@@ -144,20 +146,22 @@ class FlextSemanticObservability:
 
             def business_span(
                 self,
-                operation_name: str,
-                **context: object,
+                operation_name: str,  # noqa: ARG002
+                **context: object,  # noqa: ARG002
             ) -> AbstractContextManager[object]:
                 """Create business operation span using semantic span types."""
+                return nullcontext()
 
             def technical_span(
                 self,
-                operation_name: str,
+                operation_name: str,  # noqa: ARG002
                 *,
-                component: str | None = None,
-                resource: str | None = None,
-                **context: object,
+                component: str | None = None,  # noqa: ARG002
+                resource: str | None = None,  # noqa: ARG002
+                **context: object,  # noqa: ARG002
             ) -> AbstractContextManager[object]:
                 """Technical operation span using semantic span types."""
+                return nullcontext()
 
         @runtime_checkable
         class Metrics(Protocol):
@@ -194,14 +198,17 @@ class FlextSemanticObservability:
             @property
             def log(self) -> FlextSemanticObservability.Protocol.Logger:
                 """Access logging component."""
+                ...
 
             @property
             def trace(self) -> FlextSemanticObservability.Protocol.Tracer:
                 """Access tracing component."""
+                ...
 
             @property
             def metrics(self) -> FlextSemanticObservability.Protocol.Metrics:
                 """Access metrics component."""
+                ...
 
     # FACTORY FUNCTIONS - Instance creation
     class Factory:
@@ -271,7 +278,7 @@ class FlextSemanticError:
                 context_val = kwargs.pop("context", None)
                 cause_val = kwargs.pop("cause", None)
                 # Type-safe context and cause handling
-                context_dict = context_val if isinstance(context_val, dict) else None
+                context_dict = cast("dict[str, object]", context_val) if isinstance(context_val, dict) else None
                 cause_exception = (
                     cause_val if isinstance(cause_val, Exception) else None
                 )
@@ -288,7 +295,7 @@ class FlextSemanticError:
             def __init__(self, message: str, **kwargs: object) -> None:
                 context_val = kwargs.pop("context", None)
                 cause_val = kwargs.pop("cause", None)
-                context_dict = context_val if isinstance(context_val, dict) else None
+                context_dict = cast("dict[str, object]", context_val) if isinstance(context_val, dict) else None
                 cause_exception = (
                     cause_val if isinstance(cause_val, Exception) else None
                 )
@@ -305,7 +312,7 @@ class FlextSemanticError:
             def __init__(self, message: str, **kwargs: object) -> None:
                 context_val = kwargs.pop("context", None)
                 cause_val = kwargs.pop("cause", None)
-                context_dict = context_val if isinstance(context_val, dict) else None
+                context_dict = cast("dict[str, object]", context_val) if isinstance(context_val, dict) else None
                 cause_exception = (
                     cause_val if isinstance(cause_val, Exception) else None
                 )
@@ -322,7 +329,7 @@ class FlextSemanticError:
             def __init__(self, message: str, **kwargs: object) -> None:
                 context_val = kwargs.pop("context", None)
                 cause_val = kwargs.pop("cause", None)
-                context_dict = context_val if isinstance(context_val, dict) else None
+                context_dict = cast("dict[str, object]", context_val) if isinstance(context_val, dict) else None
                 cause_exception = (
                     cause_val if isinstance(cause_val, Exception) else None
                 )

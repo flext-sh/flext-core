@@ -237,7 +237,7 @@ class TestFlextCoreContainerIntegration:
         with patch.object(
             clean_flext_core._container,
             "register",
-            return_value=FlextResult.fail("Registration failed"),
+            return_value=FlextResult[None].fail("Registration failed"),
         ) as mock_register:
             service_key = FlextServiceKey[Mock]("test_service")
             result = clean_flext_core.register_service(service_key, Mock())
@@ -440,14 +440,14 @@ class TestFlextCoreRailwayProgramming:
 
         def add_one(x: object) -> FlextResult[object]:
             assert isinstance(x, int)
-            return FlextResult.ok(x + 1)
+            return FlextResult[None].ok(x + 1)
 
         def multiply_two(x: object) -> FlextResult[object]:
             assert isinstance(x, int)
-            return FlextResult.ok(x * 2)
+            return FlextResult[None].ok(x * 2)
 
         def to_string(x: object) -> FlextResult[object]:
-            return FlextResult.ok(str(x))
+            return FlextResult[None].ok(str(x))
 
         pipeline = clean_flext_core.pipe(add_one, multiply_two, to_string)
         result = pipeline(5)
@@ -460,13 +460,13 @@ class TestFlextCoreRailwayProgramming:
         """Test pipe with failure propagation."""
 
         def succeed(x: object) -> FlextResult[object]:
-            return FlextResult.ok(f"success_{x}")
+            return FlextResult[None].ok(f"success_{x}")
 
         def fail_step(x: object) -> FlextResult[object]:  # noqa: ARG001
-            return FlextResult.fail("Pipeline failed")
+            return FlextResult[None].fail("Pipeline failed")
 
         def never_reached(x: object) -> FlextResult[object]:  # noqa: ARG001
-            return FlextResult.ok("should_not_reach")
+            return FlextResult[str].ok(FlextResult[None].ok("should_not_reach"))
 
         pipeline = clean_flext_core.pipe(succeed, fail_step, never_reached)
         result = pipeline("input")
@@ -488,7 +488,7 @@ class TestFlextCoreRailwayProgramming:
         """Test pipe with single function."""
 
         def transform(x: object) -> FlextResult[object]:
-            return FlextResult.ok(f"transformed_{x}")
+            return FlextResult[None].ok(f"transformed_{x}")
 
         pipeline = clean_flext_core.pipe(transform)
         result = pipeline("input")
@@ -501,10 +501,10 @@ class TestFlextCoreRailwayProgramming:
         """Test compose function (right to left execution)."""
 
         def add_prefix(x: object) -> FlextResult[object]:
-            return FlextResult.ok(f"prefix_{x}")
+            return FlextResult[None].ok(f"prefix_{x}")
 
         def add_suffix(x: object) -> FlextResult[object]:
-            return FlextResult.ok(f"{x}_suffix")
+            return FlextResult[None].ok(f"{x}_suffix")
 
         # Compose should execute right to left
         composition = clean_flext_core.compose(add_prefix, add_suffix)
@@ -524,10 +524,10 @@ class TestFlextCoreRailwayProgramming:
             return x > 0
 
         def double_value(x: int) -> FlextResult[int]:
-            return FlextResult.ok(x * 2)
+            return FlextResult[None].ok(x * 2)
 
         def negate_value(x: int) -> FlextResult[int]:
-            return FlextResult.ok(-x)
+            return FlextResult[None].ok(-x)
 
         conditional = clean_flext_core.when(is_positive, double_value, negate_value)
         result = conditional(5)
@@ -543,10 +543,10 @@ class TestFlextCoreRailwayProgramming:
             return x > 0
 
         def double_value(x: int) -> FlextResult[int]:
-            return FlextResult.ok(x * 2)
+            return FlextResult[None].ok(x * 2)
 
         def negate_value(x: int) -> FlextResult[int]:
-            return FlextResult.ok(-x)
+            return FlextResult[None].ok(-x)
 
         conditional = clean_flext_core.when(is_positive, double_value, negate_value)
         result = conditional(-3)
@@ -562,7 +562,7 @@ class TestFlextCoreRailwayProgramming:
             return x > 0
 
         def double_value(x: int) -> FlextResult[int]:
-            return FlextResult.ok(x * 2)
+            return FlextResult[None].ok(x * 2)
 
         conditional = clean_flext_core.when(is_positive, double_value)
         result = conditional(-3)
@@ -579,7 +579,7 @@ class TestFlextCoreRailwayProgramming:
             return x > 0
 
         def double_value(x: int) -> FlextResult[int]:
-            return FlextResult.ok(x * 2)
+            return FlextResult[None].ok(x * 2)
 
         conditional = clean_flext_core.when(is_positive, double_value)
         result = conditional(-3)
@@ -602,7 +602,7 @@ class TestFlextCoreRailwayProgramming:
             raise ValueError(msg)
 
         def then_func(x: object) -> FlextResult[object]:  # noqa: ARG001
-            return FlextResult.ok("success")
+            return FlextResult[str].ok(FlextResult[None].ok("success"))
 
         conditional = clean_flext_core.when(failing_predicate, then_func)
 
@@ -638,11 +638,11 @@ class TestFlextCoreRailwayProgramming:
 
         def add_ten(x: object) -> FlextResult[object]:
             assert isinstance(x, int)
-            return FlextResult.ok(x + 10)
+            return FlextResult[None].ok(x + 10)
 
         def multiply_three(x: object) -> FlextResult[object]:
             assert isinstance(x, int)
-            return FlextResult.ok(x * 3)
+            return FlextResult[None].ok(x * 3)
 
         pipeline = clean_flext_core.pipe(
             log_step("start"),
@@ -675,13 +675,13 @@ class TestFlextCoreRailwayProgramming:
 
         def validate_positive(x: int) -> FlextResult[int]:
             if x <= 0:
-                return FlextResult.fail("Value must be positive")
-            return FlextResult.ok(x)
+                return FlextResult[None].fail("Value must be positive")
+            return FlextResult[None].ok(x)
 
         def double_if_even(x: int) -> FlextResult[int]:
             if x % 2 == 0:
-                return FlextResult.ok(x * 2)
-            return FlextResult.ok(x)
+                return FlextResult[None].ok(x * 2)
+            return FlextResult[None].ok(x)
 
         def log_value(x: object) -> None:
             logged_values.append(int(x) if isinstance(x, int) else x)
@@ -704,18 +704,18 @@ class TestFlextCoreRailwayProgramming:
             x_int = x if isinstance(x, int) else int(cast("int", x))
             result = validate_positive(x_int)
             return (
-                FlextResult.ok(cast("object", result.data))
+                FlextResult[None].ok(cast("object", result.data))
                 if result.success
-                else FlextResult.fail(cast("str", result.error))
+                else FlextResult[None].fail(cast("str", result.error))
             )
 
         def double_if_even_wrapper(x: object) -> FlextResult[object]:
             x_int = x if isinstance(x, int) else int(cast("int", x))
             result = double_if_even(x_int)
             return (
-                FlextResult.ok(cast("object", result.data))
+                FlextResult[None].ok(cast("object", result.data))
                 if result.success
-                else FlextResult.fail(cast("str", result.error))
+                else FlextResult[None].fail(cast("str", result.error))
             )
 
         return validate_positive_wrapper, double_if_even_wrapper
@@ -991,20 +991,20 @@ class TestFlextCoreIntegration:
         def get_user_data(user_id: object) -> FlextResult[object]:
             user_result: FlextResult[object] = clean_flext_core.get_service(user_key)
             if user_result.is_failure:
-                return FlextResult.fail("User service not available")
+                return FlextResult[None].fail("User service not available")
             user_service = user_result.data
             assert user_service is not None
             user_data = user_service.get_user(str(user_id))
-            return FlextResult.ok(user_data)
+            return FlextResult[None].ok(user_data)
 
         def save_user_data(user_data: object) -> FlextResult[object]:
             data_result: FlextResult[object] = clean_flext_core.get_service(data_key)
             if data_result.is_failure:
-                return FlextResult.fail("Data service not available")
+                return FlextResult[None].fail("Data service not available")
             data_service = data_result.data
             assert data_service is not None
             save_result = data_service.save_data(str(user_data))
-            return FlextResult.ok(save_result)
+            return FlextResult[None].ok(save_result)
 
         def log_step(step_name: str) -> Callable[[object], FlextResult[object]]:
             def logger_func(data: object) -> None:
@@ -1047,18 +1047,18 @@ class TestFlextCoreIntegration:
         def validate_input(x: object) -> FlextResult[object]:
             x_str = cast("str", x)
             if not x_str:
-                return FlextResult.fail("Empty input")
-            return FlextResult.ok(x_str)
+                return FlextResult[None].fail("Empty input")
+            return FlextResult[None].ok(x_str)
 
         def process_data(x: object) -> FlextResult[object]:
             x_str = cast("str", x)
             if x_str == "fail":
-                return FlextResult.fail("Processing failed")
-            return FlextResult.ok(f"processed_{x_str}")
+                return FlextResult[None].fail("Processing failed")
+            return FlextResult[None].ok(f"processed_{x_str}")
 
         def save_result(x: object) -> FlextResult[object]:
             x_str = cast("str", x)
-            return FlextResult.ok(f"saved_{x_str}")
+            return FlextResult[None].ok(f"saved_{x_str}")
 
         pipeline = clean_flext_core.pipe(validate_input, process_data, save_result)
 
@@ -1170,7 +1170,7 @@ class TestFlextCoreEdgeCases:
             return False
 
         def success_func(x: object) -> FlextResult[object]:
-            return FlextResult.ok(f"success_{x}")
+            return FlextResult[None].ok(f"success_{x}")
 
         # Always true
         true_condition = clean_flext_core.when(always_true, success_func)

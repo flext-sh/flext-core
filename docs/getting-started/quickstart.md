@@ -40,12 +40,12 @@ from flext_core import FlextResult
 def divide(a: float, b: float) -> FlextResult[float]:
     """Safe division without exceptions."""
     if b == 0:
-        return FlextResult.fail("Cannot divide by zero")
-    return FlextResult.ok(a / b)
+        return FlextResult[None].fail("Cannot divide by zero")
+    return FlextResult[None].ok(a / b)
 
 # Chain operations safely
 result = (
-    divide(10, 2)           # Returns FlextResult.ok(5.0)
+    divide(10, 2)           # Returns FlextResult[None].ok(5.0)
     .map(lambda x: x * 2)   # Transform: 10.0
     .flat_map(lambda x: divide(x, 4))  # Chain: 2.5
 )
@@ -94,7 +94,7 @@ class OrderService:
         # Use injected services
         self.db.connect()
         self.email.send(customer_email, "Order Confirmed")
-        return FlextResult.ok("Order created successfully")
+        return FlextResult[None].ok("Order created successfully")
 ```
 
 ### 3. Configuration Management
@@ -138,8 +138,8 @@ class Money(FlextValueObject):
 
     def add(self, other: 'Money') -> FlextResult['Money']:
         if self.currency != other.currency:
-            return FlextResult.fail("Currency mismatch")
-        return FlextResult.ok(Money(
+            return FlextResult[None].fail("Currency mismatch")
+        return FlextResult[None].ok(Money(
             amount=self.amount + other.amount,
             currency=self.currency
         ))
@@ -152,7 +152,7 @@ class Product(FlextEntity):
 
     def purchase(self, quantity: int) -> FlextResult[Money]:
         if quantity > self.stock:
-            return FlextResult.fail(f"Insufficient stock: {self.stock} available")
+            return FlextResult[None].fail(f"Insufficient stock: {self.stock} available")
 
         self.stock -= quantity
         total = Money(
@@ -167,7 +167,7 @@ class Product(FlextEntity):
             "total": str(total.amount)
         })
 
-        return FlextResult.ok(total)
+        return FlextResult[None].ok(total)
 
 # Aggregate Root - Consistency boundary
 class ShoppingCart(FlextAggregateRoot):
@@ -176,11 +176,11 @@ class ShoppingCart(FlextAggregateRoot):
 
     def add_product(self, product: Product, quantity: int) -> FlextResult[None]:
         if quantity <= 0:
-            return FlextResult.fail("Quantity must be positive")
+            return FlextResult[None].fail("Quantity must be positive")
 
         # Check stock availability
         if product.stock < quantity:
-            return FlextResult.fail(f"Only {product.stock} items available")
+            return FlextResult[None].fail(f"Only {product.stock} items available")
 
         self.items.append((product, quantity))
 
@@ -190,11 +190,11 @@ class ShoppingCart(FlextAggregateRoot):
             "quantity": quantity
         })
 
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
     def checkout(self) -> FlextResult[Money]:
         if not self.items:
-            return FlextResult.fail("Cart is empty")
+            return FlextResult[None].fail("Cart is empty")
 
         total = Money(amount=Decimal("0"), currency="USD")
 
@@ -214,7 +214,7 @@ class ShoppingCart(FlextAggregateRoot):
             "currency": total.currency
         })
 
-        return FlextResult.ok(total)
+        return FlextResult[None].ok(total)
 ```
 
 ## Complete Example: User Registration System
@@ -251,38 +251,38 @@ class User(FlextEntity):
 
     def verify_email(self) -> FlextResult[None]:
         if self.is_verified:
-            return FlextResult.fail("Email already verified")
+            return FlextResult[None].fail("Email already verified")
 
         self.is_verified = True
         self.add_domain_event("UserEmailVerified", {
             "user_id": self.id,
             "email": self.email
         })
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
     def change_password(self, old_hash: str, new_hash: str) -> FlextResult[None]:
         if self.password_hash != old_hash:
-            return FlextResult.fail("Invalid current password")
+            return FlextResult[None].fail("Invalid current password")
 
         self.password_hash = new_hash
         self.add_domain_event("UserPasswordChanged", {
             "user_id": self.id,
             "changed_at": datetime.now().isoformat()
         })
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
 # Services
 class PasswordService:
     def hash_password(self, password: str) -> FlextResult[str]:
         if len(password) < 8:
-            return FlextResult.fail("Password must be at least 8 characters")
+            return FlextResult[None].fail("Password must be at least 8 characters")
 
         hashed = hashlib.sha256(password.encode()).hexdigest()
-        return FlextResult.ok(hashed)
+        return FlextResult[None].ok(hashed)
 
     def verify_password(self, password: str, hash: str) -> FlextResult[bool]:
         check_hash = hashlib.sha256(password.encode()).hexdigest()
-        return FlextResult.ok(check_hash == hash)
+        return FlextResult[None].ok(check_hash == hash)
 
 class EmailService:
     def __init__(self, config: AppConfig):
@@ -290,11 +290,11 @@ class EmailService:
 
     def send_verification_email(self, user: User) -> FlextResult[None]:
         if not self.config.require_email_verification:
-            return FlextResult.ok(None)
+            return FlextResult[None].ok(None)
 
         # Simulate email sending
         print(f"📧 Verification email sent to {user.email}")
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
 class UserRepository:
     def __init__(self):
@@ -302,13 +302,13 @@ class UserRepository:
 
     def save(self, user: User) -> FlextResult[None]:
         self.users[user.id] = user
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
     def find_by_email(self, email: str) -> FlextResult[User]:
         for user in self.users.values():
             if user.email == email:
-                return FlextResult.ok(user)
-        return FlextResult.fail(f"User not found with email: {email}")
+                return FlextResult[None].ok(user)
+        return FlextResult[None].fail(f"User not found with email: {email}")
 
 # Use Case
 class UserRegistrationService:
@@ -331,7 +331,7 @@ class UserRegistrationService:
         # Check if user exists
         existing = self.repository.find_by_email(email)
         if existing.success:
-            return FlextResult.fail("Email already registered")
+            return FlextResult[None].fail("Email already registered")
 
         # Hash password
         hash_result = self.password_service.hash_password(password)
@@ -350,7 +350,7 @@ class UserRegistrationService:
         # Save user
         save_result = self.repository.save(user)
         if save_result.is_failure:
-            return FlextResult.fail(f"Failed to save user: {save_result.error}")
+            return FlextResult[None].fail(f"Failed to save user: {save_result.error}")
 
         # Send verification email
         email_result = self.email_service.send_verification_email(user)
@@ -358,21 +358,21 @@ class UserRegistrationService:
             # Log but don't fail registration
             print(f"Warning: Email failed: {email_result.error}")
 
-        return FlextResult.ok(user)
+        return FlextResult[None].ok(user)
 
     def _validate_registration(self, username: str, email: str,
                               password: str) -> FlextResult[None]:
         """Validate registration input."""
         if not username or len(username) < 3:
-            return FlextResult.fail("Username must be at least 3 characters")
+            return FlextResult[None].fail("Username must be at least 3 characters")
 
         if "@" not in email or "." not in email:
-            return FlextResult.fail("Invalid email format")
+            return FlextResult[None].fail("Invalid email format")
 
         if len(password) < 8:
-            return FlextResult.fail("Password must be at least 8 characters")
+            return FlextResult[None].fail("Password must be at least 8 characters")
 
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
 # Usage
 def main():

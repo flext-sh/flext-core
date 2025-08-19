@@ -184,7 +184,7 @@ class TestFlextValidatorsAdvanced:
 
             # Get validator method dynamically
             validator_method = getattr(FlextValidators, validator_name)
-            result = validator_method(value=value)
+            result = validator_method(value)
 
             assert result == expected, (
                 f"Test {test_case.id}: Expected {expected} for {validator_name}({value}), got {result}"
@@ -277,7 +277,7 @@ class TestFlextValidatorsAdvanced:
             email: str = cast("str", input_data["email"])
             expected: bool = cast("bool", test_case.expected_output)
 
-            result = FlextValidators.is_email(value=email)
+            result = FlextValidators.is_email(email)
             assert result == expected, (
                 f"Test {test_case.id}: Expected {expected} for email '{email}', got {result}"
             )
@@ -392,7 +392,7 @@ class TestFlextValidatorsAdvanced:
                         max_length=cast("int", input_data["max_length"]),
                     )
             else:
-                result = validator_method(value=value)
+                result = validator_method(value)
 
             assert result == expected, (
                 f"Test {test_case.id}: Expected {expected} for {validator_name}({value}), got {result}"

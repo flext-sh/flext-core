@@ -14,6 +14,11 @@ from examples.shared_domain import (
     Product as SharedProduct,
     User as SharedUser,
 )
+from examples.utilities.formatting_helpers import (
+    ADULT_AGE_THRESHOLD,
+    MIDDLE_AGED_THRESHOLD,
+    YOUNG_ADULT_AGE_THRESHOLD,
+)
 from flext_core import (
     FlextCacheableMixin,
     FlextComparableMixin,
@@ -21,12 +26,6 @@ from flext_core import (
     FlextSerializableMixin,
     FlextTimestampMixin,
     FlextUtilities,
-)
-
-from .formatting_helpers import (
-    ADULT_AGE_THRESHOLD,
-    MIDDLE_AGED_THRESHOLD,
-    YOUNG_ADULT_AGE_THRESHOLD,
 )
 
 # =============================================================================

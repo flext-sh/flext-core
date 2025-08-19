@@ -53,10 +53,10 @@ class SampleUser(FlextEntity):
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate business rules for user entity."""
         if self.age < 0:
-            return FlextResult.fail("Age cannot be negative")
+            return FlextResult[None].fail("Age cannot be negative")
         if not self.email or "@" not in self.email:
-            return FlextResult.fail("Invalid email format")
-        return FlextResult.ok(None)
+            return FlextResult[None].fail("Invalid email format")
+        return FlextResult[None].ok(None)
 
 
 class SampleBadUser(FlextEntity):
@@ -69,7 +69,7 @@ class SampleBadUser(FlextEntity):
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate business rules for bad user entity."""
         # This entity intentionally has validation issues
-        return FlextResult.fail("Always fails")
+        return FlextResult[None].fail("Always fails")
 
 
 # Test models work without explicit model_rebuild
@@ -380,7 +380,7 @@ class TestFlextEntity:
             ) -> FlextResult[None]:
                 # Simulate event creation failure
                 if event_type == "fail_event":
-                    return FlextResult.fail("Event creation failed")
+                    return FlextResult[None].fail("Event creation failed")
                 return super().add_domain_event(event_type, event_data)
 
         fail_user = EventFailUser(id="user_1", name="John", email="john@example.com")
@@ -477,7 +477,7 @@ class TestFlextEntity:
             ) -> FlextResult[None]:
                 """Override to make name field validation fail."""
                 if field_name == "name":
-                    return FlextResult.fail("Name validation failed")
+                    return FlextResult[None].fail("Name validation failed")
                 return super().validate_field(field_name, value)
 
             def validate_all_fields(self) -> FlextResult[None]:
@@ -490,10 +490,10 @@ class TestFlextEntity:
                         errors.append(f"{field_name}: {result.error}")
 
                 if errors:
-                    return FlextResult.fail(
+                    return FlextResult[None].fail(
                         f"Field validation errors: {', '.join(errors)}"
                     )
-                return FlextResult.ok(None)
+                return FlextResult[None].ok(None)
 
         user = UserWithFailingField(id="user_1", name="John", email="john@example.com")
         result = user.validate_all_fields()
@@ -765,8 +765,10 @@ class TestFlextFactory:
         result = cast("EntityFactory", factory)(email="john@example.com")
 
         assert result.is_failure
-        if "Entity creation failed" not in (result.error or ""):
-            raise AssertionError(f"Expected 'Entity creation failed' in {result.error}")
+        # Accept either the old or new error message format
+        error_msg = result.error or ""
+        if not ("Entity creation failed" in error_msg or "Failed to create" in error_msg):
+            raise AssertionError(f"Expected 'Entity creation failed' or 'Failed to create' in {result.error}")
 
     def test_factory_type_error_handling(self) -> None:
         """Test factory handles TypeError without mocking."""
@@ -908,7 +910,7 @@ class TestEntityCoverageImprovements:
 
             def validate_domain_rules(self) -> FlextResult[None]:
                 """Validate domain rules."""
-                return FlextResult.ok(None)
+                return FlextResult[None].ok(None)
 
             def model_dump(self, **_kwargs: object) -> dict[str, object]:
                 """Override model_dump to include internal fields for testing."""

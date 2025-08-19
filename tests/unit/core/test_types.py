@@ -134,12 +134,12 @@ class TestTypeAliases:
 
     def test_entity_id_basic_usage(self) -> None:
         """Test FlextEntityId type alias in typical usage."""
-        user_id: FlextEntityId = "user-123"
-        order_id: FlextEntityId = "order-456"
+        user_id = FlextEntityId("user-123")
+        order_id = FlextEntityId("order-456")
 
-        # FlextEntityId is just a string with better typing
-        assert isinstance(user_id, str)
-        assert isinstance(order_id, str)
+        # FlextEntityId is a RootModel with string root
+        assert isinstance(user_id, FlextEntityId)
+        assert isinstance(order_id, FlextEntityId)
         assert user_id == "user-123", f"Expected {'user-123'}, got {user_id}"
         assert order_id == "order-456"
 

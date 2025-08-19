@@ -520,7 +520,7 @@ class TestCompositeMixins:
                 return getattr(self, "service_name", "default-service")
 
             def initialize_service(self) -> FlextResult[None]:
-                return FlextResult.ok(None)
+                return FlextResult[None].ok(None)
 
             def mixin_setup(self) -> None:
                 pass

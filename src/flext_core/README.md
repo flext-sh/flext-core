@@ -128,11 +128,11 @@ class User(FlextEntity):
 
     def activate(self) -> FlextResult[None]:
         if self.is_active:
-            return FlextResult.fail("User already active")
+            return FlextResult[object].fail("User already active")
 
         self.is_active = True
         self.add_domain_event({"type": "UserActivated"})
-        return FlextResult.ok(None)
+        return FlextResult[object].ok(None)
 ```
 
 ### Configuration

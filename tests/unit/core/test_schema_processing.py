@@ -38,7 +38,7 @@ class MockEntry(FlextValueObject):
 
     def validate_business_rules(self) -> FlextResult[None]:
         """Mock business rules validation - always returns success."""
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
 
 class ConcreteRegexProcessor(RegexProcessor[MockEntry]):
@@ -59,9 +59,9 @@ class ConcreteRegexProcessor(RegexProcessor[MockEntry]):
                 original_content=original_content,
                 identifier=identifier,
             )
-            return FlextResult.ok(entry)
+            return FlextResult[None].ok(entry)
         except Exception as e:
-            return FlextResult.fail(f"Failed to create entry: {e}")
+            return FlextResult[None].fail(f"Failed to create entry: {e}")
 
 
 class ConcreteBaseProcessor(BaseProcessor[MockEntry]):
@@ -73,8 +73,8 @@ class ConcreteBaseProcessor(BaseProcessor[MockEntry]):
             parts = content.split("id:")
             if len(parts) > 1:
                 identifier = parts[1].split()[0] if parts[1].split() else "unknown"
-                return FlextResult.ok(identifier)
-        return FlextResult.fail("No identifier found")
+                return FlextResult[None].ok(identifier)
+        return FlextResult[None].fail("No identifier found")
 
     def _create_entry(
         self,
@@ -91,9 +91,9 @@ class ConcreteBaseProcessor(BaseProcessor[MockEntry]):
                 original_content=original_content,
                 identifier=identifier,
             )
-            return FlextResult.ok(entry)
+            return FlextResult[None].ok(entry)
         except Exception as e:
-            return FlextResult.fail(f"Failed to create entry: {e}")
+            return FlextResult[None].fail(f"Failed to create entry: {e}")
 
 
 class ConcreteBaseEntry(BaseEntry):
@@ -101,7 +101,7 @@ class ConcreteBaseEntry(BaseEntry):
 
     def validate_business_rules(self) -> FlextResult[None]:
         """Mock domain validation - always returns success."""
-        return FlextResult.ok(data=None)
+        return FlextResult[None].ok(None)
 
 
 class MockEntryValidator:
@@ -127,8 +127,8 @@ class MockProcessor(BaseProcessor[MockEntry]):
     def _extract_identifier(self, content: str) -> FlextResult[str]:
         """Extract mock identifier."""
         if "invalid" in content:
-            return FlextResult.fail("Invalid content")
-        return FlextResult.ok(f"id_{content.rsplit(maxsplit=1)[-1]}")
+            return FlextResult[None].fail("Invalid content")
+        return FlextResult[None].ok(f"id_{content.rsplit(maxsplit=1)[-1]}")
 
     def _create_entry(
         self,
@@ -139,8 +139,8 @@ class MockProcessor(BaseProcessor[MockEntry]):
     ) -> FlextResult[MockEntry]:
         """Create mock entry."""
         if "fail_create" in clean_content:
-            return FlextResult.fail("Creation failed")
-        return FlextResult.ok(
+            return FlextResult[None].fail("Creation failed")
+        return FlextResult[None].ok(
             MockEntry(
                 entry_type=entry_type,
                 clean_content=clean_content,
@@ -635,7 +635,7 @@ class TestProcessingPipeline:
         pipeline = ProcessingPipeline[str, str]()
 
         def step_func(data: str) -> FlextResult[str]:
-            return FlextResult.ok(data.upper())
+            return FlextResult[None].ok(data.upper())
 
         result_pipeline = pipeline.add_step(step_func)
         assert result_pipeline is pipeline
@@ -646,10 +646,10 @@ class TestProcessingPipeline:
         pipeline = ProcessingPipeline[str, str]()
 
         def step1(data: str) -> FlextResult[str]:
-            return FlextResult.ok(data.upper())
+            return FlextResult[None].ok(data.upper())
 
         def step2(data: str) -> FlextResult[str]:
-            return FlextResult.ok(f"processed_{data}")
+            return FlextResult[None].ok(f"processed_{data}")
 
         pipeline.add_step(step1).add_step(step2)
         result = pipeline.process("hello")
@@ -662,10 +662,10 @@ class TestProcessingPipeline:
         pipeline = ProcessingPipeline[str, str]()
 
         def step1(data: str) -> FlextResult[str]:
-            return FlextResult.ok(data.upper())
+            return FlextResult[None].ok(data.upper())
 
         def step2(_data: str) -> FlextResult[str]:
-            return FlextResult.fail("Processing failed")
+            return FlextResult[None].fail("Processing failed")
 
         pipeline.add_step(step1).add_step(step2)
         result = pipeline.process("hello")

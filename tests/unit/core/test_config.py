@@ -12,6 +12,7 @@ operations, validation, and integration patterns to achieve near 100% coverage.
 from __future__ import annotations
 
 import contextlib
+import json
 import os
 import tempfile
 from collections.abc import Generator
@@ -51,7 +52,7 @@ class FailingConfigOps(FlextConfigOps):
     ) -> FlextResult[dict[str, object]]:
         """Fail for specific test conditions."""
         if config.get("fail_load"):
-            return FlextResult.fail("Load failed")
+            return FlextResult[None].fail("Load failed")
         if config.get("raise_type_error"):
             error_msg = "Type error"
             raise TypeError(error_msg)
@@ -61,11 +62,11 @@ class FailingConfigOps(FlextConfigOps):
     def safe_load_json_file(cls, file_path: str) -> FlextResult[dict[str, object]]:
         """Fail for specific file paths."""
         if "fail_load" in file_path:
-            return FlextResult.fail("File load failed")
+            return FlextResult[None].fail("File load failed")
         if "none_value" in file_path:
-            return FlextResult.ok({"key": None})
+            return FlextResult[None].ok({"key": None})
         if "no_access" in file_path:
-            return FlextResult.fail("Access denied")
+            return FlextResult[None].fail("Access denied")
         return super().safe_load_json_file(file_path)
 
 
@@ -80,7 +81,7 @@ class FailingConfigDefaults(FlextConfigDefaults):
     ) -> FlextResult[dict[str, object]]:
         """Fail when specific flag is set."""
         if config.get("fail_defaults"):
-            return FlextResult.fail("Defaults failed")
+            return FlextResult[None].fail("Defaults failed")
         return super().apply_defaults(config, defaults)
 
 
@@ -91,9 +92,9 @@ class FailingConfigValidation(FlextConfigValidation):
     def validate_config(cls, config: dict[str, object]) -> FlextResult[None]:
         """Fail for specific validation scenarios."""
         if config.get("fail_validation"):
-            return FlextResult.fail("Validation failed")
+            return FlextResult[None].fail("Validation failed")
         if config.get("missing_required"):
-            return FlextResult.fail("Required fields missing")
+            return FlextResult[None].fail("Required fields missing")
         return super().validate_config(config)
 
     @classmethod
@@ -104,7 +105,7 @@ class FailingConfigValidation(FlextConfigValidation):
     ) -> FlextResult[None]:
         """Fail for specific required key scenarios."""
         if "fail_required" in required_keys:
-            return FlextResult.fail("Required key validation failed")
+            return FlextResult[None].fail("Required key validation failed")
         return super().validate_required_keys(config, required_keys)
 
 
@@ -124,29 +125,29 @@ class TestFlextConfig(FlextConfig):
         if config_data.get("fail_load") or config_data.get("raise_type_error"):
             result = FailingConfigOps.safe_load_from_dict(config_data)
             if result.is_failure:
-                return FlextResult.fail(f"Config load failed: {result.error}")
+                return FlextResult[None].fail(f"Config load failed: {result.error}")
         else:
             result = FlextConfigOps.safe_load_from_dict(config_data)
             if result.is_failure:
-                return FlextResult.fail(f"Config load failed: {result.error}")
+                return FlextResult[None].fail(f"Config load failed: {result.error}")
 
         config = result.unwrap()
 
         if apply_defaults and config_data.get("fail_defaults"):
             defaults_result = FailingConfigDefaults.apply_defaults(config, defaults)
             if defaults_result.is_failure:
-                return FlextResult.fail(
+                return FlextResult[None].fail(
                     f"Applying defaults failed: {defaults_result.error}",
                 )
         elif apply_defaults:
             defaults_result = FlextConfigDefaults.apply_defaults(config, defaults)
             if defaults_result.is_failure:
-                return FlextResult.fail(
+                return FlextResult[None].fail(
                     f"Applying defaults failed: {defaults_result.error}",
                 )
             config = defaults_result.unwrap()
 
-        return FlextResult.ok(config)
+        return FlextResult[None].ok(config)
 
 
 class TestFlextSettings(FlextSettings):
@@ -187,6 +188,32 @@ def sample_defaults() -> TAnyDict:
         "port": 8000,
         "max_connections": 100,
     }
+
+
+@pytest.fixture
+def temp_json_file() -> Generator[str]:
+    """Create a temporary valid JSON file for testing."""
+    test_config = {
+        "database_url": "sqlite:///test.db",
+        "secret_key": "test-secret-key",
+        "debug": True,
+        "port": 8080,
+    }
+
+    with tempfile.NamedTemporaryFile(
+        encoding="utf-8",
+        mode="w",
+        suffix=".json",
+        delete=False,
+    ) as f:
+        json.dump(test_config, f)
+        temp_path = f.name
+
+    yield temp_path
+
+    # Cleanup
+    with contextlib.suppress(OSError):
+        Path(temp_path).unlink()
 
 
 @pytest.fixture
@@ -375,10 +402,10 @@ class TestFlextConfigClass:
                     if required_keys:
                         for key in required_keys:
                             if key not in config or config[key] is None:
-                                return FlextResult.fail(
+                                return FlextResult[None].fail(
                                     f"Required config key '{key}' not found or is None",
                                 )
-                    return FlextResult.ok(config)
+                    return FlextResult[None].ok(config)
                 return super().load_and_validate_from_file(file_path, required_keys)
 
         result = NoneValueConfig.load_and_validate_from_file(
@@ -1124,18 +1151,18 @@ class TestConfigIntegration:
                 """Custom validation with complex rules."""
                 # Check interdependent fields
                 if config.get("use_ssl") and not config.get("ssl_cert"):
-                    return FlextResult.fail("SSL cert required when use_ssl is True")
+                    return FlextResult[None].fail("SSL cert required when use_ssl is True")
 
                 # Check value ranges
                 port = config.get("port")
                 if isinstance(port, int) and not (1 <= port <= 65535):
-                    return FlextResult.fail("Port must be between 1 and 65535")
+                    return FlextResult[None].fail("Port must be between 1 and 65535")
 
                 # Check mutually exclusive options
                 if config.get("use_memory_cache") and config.get("use_disk_cache"):
-                    return FlextResult.fail("Cannot use both memory and disk cache")
+                    return FlextResult[None].fail("Cannot use both memory and disk cache")
 
-                return FlextResult.ok(None)
+                return FlextResult[None].ok(None)
 
         # Test valid config
         valid_config = {

@@ -159,8 +159,8 @@ result.error_code() -> str | None
 result.error_data() -> dict[str, object]
 
 # Creation methods
-FlextResult.ok(data) -> FlextResult[T]
-FlextResult.fail(...) -> FlextResult[T]
+FlextResult[None].ok(data) -> FlextResult[T]
+FlextResult[None].fail(...) -> FlextResult[T]
 
 # Unwrapping
 result.unwrap() -> T  # May raise if failure

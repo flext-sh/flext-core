@@ -127,7 +127,6 @@ from flext_core.core import FlextCore, flext_core
 # Decorators
 from flext_core.decorators import (
     FlextAbstractDecorator,
-    FlextAbstractDecoratorFactory,
     FlextAbstractErrorHandlingDecorator,
     FlextAbstractLoggingDecorator,
     FlextAbstractPerformanceDecorator,
@@ -147,6 +146,12 @@ from flext_core.decorators import (
     _flext_safe_call_decorator,  # pyright: ignore[reportPrivateUsage]
     _flext_timing_decorator,  # pyright: ignore[reportPrivateUsage]
     _flext_validate_input_decorator,  # pyright: ignore[reportPrivateUsage]
+    # Aliases for backward compatibility
+    _validate_input_decorator,  # pyright: ignore[reportPrivateUsage]
+    _safe_call_decorator,  # pyright: ignore[reportPrivateUsage]
+    _decorators_base,  # pyright: ignore[reportPrivateUsage]
+    _BaseImmutabilityDecorators,  # pyright: ignore[reportPrivateUsage]
+    _BaseDecoratorFactory,  # pyright: ignore[reportPrivateUsage]
 )
 
 # Delegation System
@@ -1015,11 +1020,11 @@ __all__ += [
     "annotations",
     # Decorators adicionales
     "FlextAbstractDecorator",
-    "FlextAbstractDecoratorFactory",
-    "FlextAbstractValidationDecorator",
     "FlextAbstractErrorHandlingDecorator",
-    "FlextAbstractPerformanceDecorator",
     "FlextAbstractLoggingDecorator",
+    "FlextAbstractPerformanceDecorator",
+    "FlextAbstractValidationDecorator",
+    "FlextDecoratorFactory",
     "FlextDecoratorUtils",
     "FlextValidationDecorators",
     "FlextErrorHandlingDecorators",
@@ -1032,6 +1037,12 @@ __all__ += [
     "_flext_safe_call_decorator",
     "_flext_timing_decorator",
     "_flext_validate_input_decorator",
+    # Backward compatibility aliases
+    "_validate_input_decorator",
+    "_safe_call_decorator",
+    "_decorators_base",
+    "_BaseImmutabilityDecorators",
+    "_BaseDecoratorFactory",
     # Utilities adicionales
     "FlextConsole",
     "Console",

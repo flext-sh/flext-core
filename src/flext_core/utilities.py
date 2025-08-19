@@ -11,13 +11,16 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable
 from datetime import UTC, datetime
 from inspect import signature
-from typing import Generic, Protocol, cast
+from typing import Generic, Protocol, TypeVar, cast
 
 from flext_core.constants import FlextConstants
 from flext_core.loggings import FlextLoggerFactory
 from flext_core.result import FlextResult
-from flext_core.typings import T, TAnyDict
 from flext_core.validation import FlextValidators
+
+# Define TypeVars locally to avoid import issues
+T = TypeVar("T")
+TAnyDict = dict[str, object]
 
 logger = FlextLoggerFactory.get_logger(__name__)
 
@@ -56,7 +59,7 @@ class FlextConsole:
         Supports rich-style markup but ignores it,
         focusing on the text content only.
         """
-        text_parts = []
+        text_parts: list[str] = []
         for arg in args:
             text = str(arg)
             # Remove rich-style markup tags (e.g., [red]...[/red]) for plain output
@@ -194,7 +197,9 @@ class FlextUtilities:
         return isinstance(obj, target_type)
 
     @classmethod
-    def safe_call(cls, func: Callable[[], T] | Callable[[object], T]) -> FlextResult[T]:
+    def safe_call(
+        cls, func: Callable[[], object] | Callable[[object], object]
+    ) -> FlextResult[object]:
         """Safely call function using signature inspection."""
         try:
             # Use signature inspection to determine parameter count safely
@@ -205,29 +210,29 @@ class FlextUtilities:
                 # If signature inspection fails, fall back to try-catch approach
                 try:
                     # Try zero parameter call first
-                    zero_param_func = cast("Callable[[], T]", func)
+                    zero_param_func = cast("Callable[[], object]", func)
                     result = zero_param_func()
-                    return FlextResult.ok(result)
+                    return FlextResult[object].ok(result)
                 except TypeError:
                     # Try one parameter call
-                    one_param_func = cast("Callable[[object], T]", func)
+                    one_param_func = cast("Callable[[object], object]", func)
                     result = one_param_func(object())
-                    return FlextResult.ok(result)
+                    return FlextResult[object].ok(result)
 
             # Call based on actual parameter count with proper casting
             if param_count == 0:
-                zero_param_func = cast("Callable[[], T]", func)
+                zero_param_func = cast("Callable[[], object]", func)
                 result = zero_param_func()
             else:
-                one_param_func = cast("Callable[[object], T]", func)
+                one_param_func = cast("Callable[[object], object]", func)
                 result = one_param_func(object())
 
-            return FlextResult.ok(result)
+            return FlextResult[object].ok(result)
         except (TypeError, ValueError, AttributeError, RuntimeError) as e:
-            return FlextResult.fail(str(e))
+            return FlextResult[object].fail(str(e))
 
     @classmethod
-    def is_not_none_guard(cls, value: T | None) -> bool:
+    def is_not_none_guard(cls, value: object | None) -> bool:
         """Type guard for not None values."""
         return FlextValidators.is_not_none(value)
 
@@ -432,12 +437,14 @@ class FlextConversions:
     """
 
     @staticmethod
-    def safe_call(func: Callable[[], T] | Callable[[object], T]) -> FlextResult[T]:
+    def safe_call(
+        func: Callable[[], object] | Callable[[object], object],
+    ) -> FlextResult[object]:
         """Safely call function with FlextResult error handling."""
         return FlextUtilities.safe_call(func)
 
     @staticmethod
-    def is_not_none(value: T | None) -> bool:
+    def is_not_none(value: object | None) -> bool:
         """Type guard to check if value is not None."""
         return FlextUtilities.is_not_none_guard(value)
 
@@ -671,7 +678,9 @@ class FlextTypeGuards:
         """Check if an object is a list of specific type."""
         if not isinstance(obj, list):
             return False
-        return all(isinstance(item, item_type) for item in obj)
+        # Cast to list[object] after isinstance check to ensure type safety
+        typed_list = cast("list[object]", obj)
+        return all(isinstance(item, item_type) for item in typed_list)
 
     @staticmethod
     def is_not_none_guard(value: object | None) -> bool:
@@ -761,7 +770,7 @@ class FlextBaseFactory(ABC, Generic[T]):  # noqa: UP046
     """
 
     @abstractmethod
-    def create(self, **kwargs: object) -> FlextResult[T]:
+    def create(self, **kwargs: object) -> FlextResult[object]:
         """Abstract creation method - must be implemented by concrete factories."""
 
 
@@ -858,7 +867,9 @@ def is_not_none(value: object) -> bool:
     return FlextUtilities.is_not_none_guard(value)
 
 
-def safe_call(func: Callable[[], T] | Callable[[object], T]) -> FlextResult[T]:
+def safe_call(
+    func: Callable[[], object] | Callable[[object], object],
+) -> FlextResult[object]:
     """Safe function call wrapper."""
     return FlextUtilities.safe_call(func)
 

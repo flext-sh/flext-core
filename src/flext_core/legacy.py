@@ -18,7 +18,6 @@ Following user feedback: "use o legacy.py para o que foi removido de api como fa
 from __future__ import annotations
 
 import sys
-import warnings
 from collections.abc import Mapping
 
 from packaging import version
@@ -62,16 +61,6 @@ from flext_core.schema_processing import (
 )
 from flext_core.utilities import FlextUtilities
 from flext_core.validation import FlextValidators, flext_validate_non_empty_string
-
-
-def _deprecation_warning(old_name: str, new_name: str) -> None:
-    """Issue deprecation warning for legacy APIs."""
-    warnings.warn(
-        f"{old_name} is deprecated. Use {new_name} instead.",
-        DeprecationWarning,
-        stacklevel=3,
-    )
-
 
 # =============================================================================
 # LEGACY MODEL PATTERNS - Delegate to modern models.py
@@ -241,9 +230,9 @@ class _BaseConfigDefaults:
         try:
             # Merge defaults with config, config values take precedence
             result_config = {**dict(defaults), **dict(config)}
-            return FlextResult.ok(result_config)
+            return FlextResult[dict[str, object]].ok(result_config)
         except Exception as e:
-            return FlextResult.fail(f"Failed to apply defaults: {e}")
+            return FlextResult[dict[str, object]].fail(f"Failed to apply defaults: {e}")
 
     @staticmethod
     def filter_config_keys(
@@ -252,24 +241,26 @@ class _BaseConfigDefaults:
         """Filter configuration to only include allowed keys."""
         try:
             filtered = {k: v for k, v in dict(config).items() if k in allowed_keys}
-            return FlextResult.ok(filtered)
+            return FlextResult[dict[str, object]].ok(filtered)
         except Exception as e:
-            return FlextResult.fail(f"Failed to filter config keys: {e}")
+            return FlextResult[dict[str, object]].fail(
+                f"Failed to filter config keys: {e}"
+            )
 
     @staticmethod
     def merge_configs(*configs: Mapping[str, object]) -> FlextResult[dict[str, object]]:
         """Merge multiple configuration dictionaries."""
         try:
             if not configs:
-                return FlextResult.ok({})
+                return FlextResult[dict[str, object]].ok({})
 
             # Merge all configs, later ones override earlier ones
             merged: dict[str, object] = {}
             for config in configs:
                 merged.update(dict(config))
-            return FlextResult.ok(merged)
+            return FlextResult[dict[str, object]].ok(merged)
         except Exception as e:
-            return FlextResult.fail(f"Failed to merge configs: {e}")
+            return FlextResult[dict[str, object]].fail(f"Failed to merge configs: {e}")
 
 
 # Legacy config validation
@@ -280,8 +271,8 @@ class _BaseConfigValidation:
     def validate_config(config: dict[str, object]) -> FlextResult[bool]:
         """Legacy validation function."""
         if config:
-            return FlextResult.ok(True)  # noqa: FBT003
-        return FlextResult.fail("Configuration is empty")
+            return FlextResult[bool].ok(True)  # noqa: FBT003
+        return FlextResult[bool].fail("Configuration is empty")
 
     @staticmethod
     def validate_config_type(

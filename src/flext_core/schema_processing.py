@@ -6,11 +6,15 @@ import re
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from enum import Enum
-from typing import Generic, Protocol, cast
+from typing import Generic, Protocol, TypeVar, cast
 
 from flext_core.result import FlextResult
-from flext_core.typings import EntryT
 from flext_core.value_objects import FlextValueObject
+
+# Define TypeVar locally
+EntryT = TypeVar("EntryT")
+InputT = TypeVar("InputT")
+OutputT = TypeVar("OutputT")
 
 
 class FlextEntryType(Enum):
@@ -29,7 +33,7 @@ class FlextBaseEntry(FlextValueObject):
 class FlextEntryValidator(Protocol):
     """Protocol for entry validation."""
 
-    def is_valid(self, entry: EntryT) -> bool:
+    def is_valid(self, entry: object) -> bool:
         """Check if entry is valid."""
         ...
 
@@ -72,7 +76,7 @@ class FlextBaseProcessor(ABC, Generic[EntryT]):  # noqa: UP046
         # Step 1: Extract and validate identifier
         identifier_validation = self._validate_identifier_extraction(content)
         if identifier_validation.is_failure:
-            return FlextResult.fail(
+            return FlextResult[EntryT].fail(
                 identifier_validation.error or "Identifier validation failed",
             )
 
@@ -94,25 +98,25 @@ class FlextBaseProcessor(ABC, Generic[EntryT]):  # noqa: UP046
 
         entry = entry_validation.data
         if entry is None:
-            return FlextResult.fail("Entry validation returned None")
+            return FlextResult[EntryT].fail("Entry validation returned None")
 
         self._extracted_entries.append(entry)
-        return FlextResult.ok(entry)
+        return FlextResult[EntryT].ok(entry)
 
     def _validate_identifier_extraction(self, content: str) -> FlextResult[str]:
         """Validate identifier extraction step."""
         identifier_result = self._extract_identifier(content)
         if identifier_result.is_failure:
-            return FlextResult.fail(
+            return FlextResult[str].fail(
                 f"Failed to extract identifier: {identifier_result.error}",
             )
 
         identifier = identifier_result.data
 
         if self.validator and not self.validator.is_whitelisted(identifier):
-            return FlextResult.fail(f"Identifier {identifier} not whitelisted")
+            return FlextResult[str].fail(f"Identifier {identifier} not whitelisted")
 
-        return FlextResult.ok(identifier)
+        return FlextResult[str].ok(identifier)
 
     def _validate_entry_creation(
         self,
@@ -133,12 +137,12 @@ class FlextBaseProcessor(ABC, Generic[EntryT]):  # noqa: UP046
 
         entry = entry_result.data
         if entry is None:
-            return FlextResult.fail("Entry creation returned None")
+            return FlextResult[EntryT].fail("Entry creation returned None")
 
         if self.validator and not self.validator.is_valid(entry):
-            return FlextResult.fail(f"Entry validation failed for {identifier}")
+            return FlextResult[EntryT].fail(f"Entry validation failed for {identifier}")
 
-        return FlextResult.ok(entry)
+        return FlextResult[EntryT].ok(entry)
 
     def process_content_lines(
         self,
@@ -166,10 +170,12 @@ class FlextBaseProcessor(ABC, Generic[EntryT]):  # noqa: UP046
                 errors.append(f"Line '{line[:50]}...': {result.error}")
 
         if errors and not results:
-            return FlextResult.fail(f"All entries failed: {'; '.join(errors[:3])}")
+            return FlextResult[list[EntryT]].fail(
+                f"All entries failed: {'; '.join(errors[:3])}"
+            )
 
         # Return success even if some entries failed (partial success)
-        return FlextResult.ok(results)
+        return FlextResult[list[EntryT]].ok(results)
 
     def get_extracted_entries(self) -> list[EntryT]:
         """Get all successfully extracted entries."""
@@ -196,11 +202,11 @@ class FlextRegexProcessor(FlextBaseProcessor[EntryT], ABC):
         """Extract identifier using a regex pattern."""
         match = self.identifier_pattern.search(content)
         if not match:
-            return FlextResult.fail(
+            return FlextResult[str].fail(
                 f"No identifier found matching pattern in: {content[:50]}",
             )
 
-        return FlextResult.ok(match.group(1))
+        return FlextResult[str].ok(match.group(1))
 
 
 class FlextConfigAttributeValidator:
@@ -227,15 +233,15 @@ class FlextConfigAttributeValidator:
             # Convert an object to dict for schema validator compatibility
             config_dict = getattr(config, "__dict__", {})
         else:
-            config_dict = config
+            config_dict = cast("dict[str, object]", config)
 
         # Simple validation: check if all required keys are present
         missing = [field for field in required if field not in config_dict]
         if missing:
-            return FlextResult.fail(
+            return FlextResult[bool].fail(
                 f"Missing required attributes: {', '.join(missing)}",
             )
-        return FlextResult.ok(True)  # noqa: FBT003
+        return FlextResult[bool].ok(True)  # noqa: FBT003
 
 
 class FlextBaseConfigManager:
@@ -262,17 +268,17 @@ class FlextBaseConfigManager:
                 self.config,
                 required_attrs,
             )
-        return FlextResult.ok(True)  # noqa: FBT003
+        return FlextResult[bool].ok(True)  # noqa: FBT003
 
 
-class FlextBaseSorter[T]:
+class FlextBaseSorter(Generic[EntryT]):
     """Base sorter for entries with configurable sort key extraction."""
 
-    def __init__(self, key_extractor: Callable[[T], object] | None = None) -> None:
+    def __init__(self, key_extractor: Callable[[object], object] | None = None) -> None:
         """Initialize with optional key extractor function."""
-        self.key_extractor = key_extractor or (lambda x: x)
+        self.key_extractor: Callable[[object], object] = key_extractor or (lambda x: x)
 
-    def sort_entries(self, entries: list[T]) -> list[T]:
+    def sort_entries(self, entries: list[EntryT]) -> list[EntryT]:
         """Sort entries using the configured key extractor."""
         try:
             entries.sort(key=self.key_extractor)  # type: ignore[arg-type]
@@ -305,12 +311,12 @@ class FlextBaseFileWriter(ABC):
             self.write_header(output_file)
             for entry in entries:
                 self.write_entry(output_file, entry)
-            return FlextResult.ok(None)
+            return FlextResult[None].ok(None)
         except Exception as e:
-            return FlextResult.fail(f"Failed to write entries: {e}")
+            return FlextResult[None].fail(f"Failed to write entries: {e}")
 
 
-class FlextProcessingPipeline[T, U]:
+class FlextProcessingPipeline(Generic[InputT, OutputT]):
     """Generic processing pipeline for chaining operations."""
 
     def __init__(self) -> None:
@@ -319,21 +325,23 @@ class FlextProcessingPipeline[T, U]:
 
     def add_step(
         self,
-        step: Callable[[T], FlextResult[U]],
-    ) -> FlextProcessingPipeline[T, U]:
+        step: Callable[[object], FlextResult[object]],
+    ) -> FlextProcessingPipeline[InputT, OutputT]:
         """Add a processing step to a pipeline."""
-        self.steps.append(step)  # type: ignore[arg-type]
+        self.steps.append(step)
         return self
 
-    def process(self, input_data: T) -> FlextResult[U]:
+    def process(self, input_data: InputT) -> FlextResult[OutputT]:
         """Process input through all pipeline steps."""
         current_data: object = input_data
         for step in self.steps:
             result = step(current_data)
             if result.is_failure:
-                return FlextResult[U].fail(result.error or "Processing step failed")
+                return FlextResult[OutputT].fail(
+                    result.error or "Processing step failed"
+                )
             current_data = result.data
-        return FlextResult[U].ok(cast("U", current_data))
+        return FlextResult[OutputT].ok(cast("OutputT", current_data))
 
 
 # =============================================================================

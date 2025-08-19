@@ -39,15 +39,15 @@ from typing import Optional
 def parse_integer(value: str) -> FlextResult[int]:
     """Parse string to integer with error handling."""
     try:
-        return FlextResult.ok(int(value))
+        return FlextResult[None].ok(int(value))
     except ValueError:
-        return FlextResult.fail(f"'{value}' is not a valid integer")
+        return FlextResult[None].fail(f"'{value}' is not a valid integer")
 
 def divide_numbers(a: int, b: int) -> FlextResult[float]:
     """Safe division with error handling."""
     if b == 0:
-        return FlextResult.fail("Cannot divide by zero")
-    return FlextResult.ok(a / b)
+        return FlextResult[None].fail("Cannot divide by zero")
+    return FlextResult[None].ok(a / b)
 
 # Chain operations
 result = (
@@ -78,33 +78,33 @@ class Order:
 def validate_order(order: Order) -> FlextResult[Order]:
     """Validate order before processing."""
     if order.total <= 0:
-        return FlextResult.fail("Order total must be positive")
+        return FlextResult[None].fail("Order total must be positive")
     if order.status != "pending":
-        return FlextResult.fail(f"Cannot process {order.status} order")
-    return FlextResult.ok(order)
+        return FlextResult[None].fail(f"Cannot process {order.status} order")
+    return FlextResult[None].ok(order)
 
 def check_inventory(order: Order) -> FlextResult[Order]:
     """Check if items are in stock."""
     # Simulated inventory check
     in_stock = True
     if not in_stock:
-        return FlextResult.fail("Items out of stock")
-    return FlextResult.ok(order)
+        return FlextResult[None].fail("Items out of stock")
+    return FlextResult[None].ok(order)
 
 def charge_payment(order: Order) -> FlextResult[str]:
     """Process payment for order."""
     # Simulated payment processing
     if order.total > 10000:
-        return FlextResult.fail("Payment amount exceeds limit")
+        return FlextResult[None].fail("Payment amount exceeds limit")
 
     transaction_id = f"txn_{datetime.now().timestamp():.0f}"
-    return FlextResult.ok(transaction_id)
+    return FlextResult[None].ok(transaction_id)
 
 def ship_order(order: Order, transaction_id: str) -> FlextResult[dict]:
     """Ship the order after successful payment."""
     tracking_number = f"TRACK-{order.id}-{transaction_id[:8]}"
 
-    return FlextResult.ok({
+    return FlextResult[None].ok({
         "order_id": order.id,
         "transaction_id": transaction_id,
         "tracking_number": tracking_number,
@@ -151,7 +151,7 @@ class DatabaseService:
 
     def save(self, data: dict) -> FlextResult[str]:
         """Simulate database save."""
-        return FlextResult.ok(f"Saved {data} to {self.connection_string}")
+        return FlextResult[None].ok(f"Saved {data} to {self.connection_string}")
 
 class UserService:
     def __init__(self, db_service: DatabaseService):
@@ -163,9 +163,9 @@ class UserService:
 
         save_result = self.db_service.save(user_data)
         if save_result.is_failure:
-            return FlextResult.fail(f"Save failed: {save_result.error}")
+            return FlextResult[None].fail(f"Save failed: {save_result.error}")
 
-        return FlextResult.ok(user_data)
+        return FlextResult[None].ok(user_data)
 
 # Container setup and usage
 def setup_container() -> FlextContainer:
@@ -229,10 +229,10 @@ class Account(FlextEntity):
     def deposit(self, amount: float) -> FlextResult[float]:
         """Deposit money into account."""
         if amount <= 0:
-            return FlextResult.fail("Deposit amount must be positive")
+            return FlextResult[None].fail("Deposit amount must be positive")
 
         if not self.is_active:
-            return FlextResult.fail("Account is not active")
+            return FlextResult[None].fail("Account is not active")
 
         self.balance += amount
         self.add_domain_event("MoneyDeposited", {
@@ -241,21 +241,21 @@ class Account(FlextEntity):
             "new_balance": self.balance
         })
 
-        return FlextResult.ok(self.balance)
+        return FlextResult[None].ok(self.balance)
 
     def withdraw(self, amount: float) -> FlextResult[float]:
         """Withdraw money from account."""
         if amount <= 0:
-            return FlextResult.fail("Withdrawal amount must be positive")
+            return FlextResult[None].fail("Withdrawal amount must be positive")
 
         if not self.is_active:
-            return FlextResult.fail("Account is not active")
+            return FlextResult[None].fail("Account is not active")
 
         if amount > self.balance:
-            return FlextResult.fail("Insufficient funds")
+            return FlextResult[None].fail("Insufficient funds")
 
         if self.daily_withdrawn + amount > self.daily_withdrawal_limit:
-            return FlextResult.fail(f"Exceeds daily limit of {self.daily_withdrawal_limit}")
+            return FlextResult[None].fail(f"Exceeds daily limit of {self.daily_withdrawal_limit}")
 
         self.balance -= amount
         self.daily_withdrawn += amount
@@ -266,14 +266,14 @@ class Account(FlextEntity):
             "new_balance": self.balance
         })
 
-        return FlextResult.ok(self.balance)
+        return FlextResult[None].ok(self.balance)
 
     def transfer_to(self, target: 'Account', amount: float) -> FlextResult[None]:
         """Transfer money to another account."""
         # Withdraw from this account
         withdraw_result = self.withdraw(amount)
         if withdraw_result.is_failure:
-            return FlextResult.fail(f"Transfer failed: {withdraw_result.error}")
+            return FlextResult[None].fail(f"Transfer failed: {withdraw_result.error}")
 
         # Deposit to target account
         deposit_result = target.deposit(amount)
@@ -281,7 +281,7 @@ class Account(FlextEntity):
             # Rollback withdrawal
             self.balance += amount
             self.daily_withdrawn -= amount
-            return FlextResult.fail(f"Transfer failed: {deposit_result.error}")
+            return FlextResult[None].fail(f"Transfer failed: {deposit_result.error}")
 
         self.add_domain_event("MoneyTransferred", {
             "from": self.account_number,
@@ -289,7 +289,7 @@ class Account(FlextEntity):
             "amount": amount
         })
 
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
 # Usage
 account1 = Account(
@@ -335,9 +335,9 @@ class Money(FlextValueObject):
     def add(self, other: 'Money') -> FlextResult['Money']:
         """Add two money values."""
         if self.currency != other.currency:
-            return FlextResult.fail(f"Cannot add {self.currency} and {other.currency}")
+            return FlextResult[None].fail(f"Cannot add {self.currency} and {other.currency}")
 
-        return FlextResult.ok(Money(
+        return FlextResult[None].ok(Money(
             amount=self.amount + other.amount,
             currency=self.currency
         ))
@@ -407,13 +407,13 @@ class ShoppingCart(FlextAggregateRoot):
                  price: float, quantity: int) -> FlextResult[None]:
         """Add item to cart with validation."""
         if self.status != "active":
-            return FlextResult.fail("Cannot modify inactive cart")
+            return FlextResult[None].fail("Cannot modify inactive cart")
 
         if quantity <= 0:
-            return FlextResult.fail("Quantity must be positive")
+            return FlextResult[None].fail("Quantity must be positive")
 
         if price < 0:
-            return FlextResult.fail("Price cannot be negative")
+            return FlextResult[None].fail("Price cannot be negative")
 
         # Check if item already exists
         for item in self.items:
@@ -425,7 +425,7 @@ class ShoppingCart(FlextAggregateRoot):
                     "product_id": product_id,
                     "new_quantity": item["quantity"]
                 })
-                return FlextResult.ok(None)
+                return FlextResult[None].ok(None)
 
         # Add new item
         self.items.append({
@@ -442,12 +442,12 @@ class ShoppingCart(FlextAggregateRoot):
             "quantity": quantity
         })
 
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
     def remove_item(self, product_id: str) -> FlextResult[None]:
         """Remove item from cart."""
         if self.status != "active":
-            return FlextResult.fail("Cannot modify inactive cart")
+            return FlextResult[None].fail("Cannot modify inactive cart")
 
         for i, item in enumerate(self.items):
             if item["product_id"] == product_id:
@@ -457,9 +457,9 @@ class ShoppingCart(FlextAggregateRoot):
                     "cart_id": self.id,
                     "product_id": product_id
                 })
-                return FlextResult.ok(None)
+                return FlextResult[None].ok(None)
 
-        return FlextResult.fail(f"Item {product_id} not found in cart")
+        return FlextResult[None].fail(f"Item {product_id} not found in cart")
 
     def calculate_total(self) -> float:
         """Calculate cart total."""
@@ -468,10 +468,10 @@ class ShoppingCart(FlextAggregateRoot):
     def checkout(self) -> FlextResult[float]:
         """Checkout cart and return total."""
         if self.status != "active":
-            return FlextResult.fail("Cart already checked out")
+            return FlextResult[None].fail("Cart already checked out")
 
         if not self.items:
-            return FlextResult.fail("Cart is empty")
+            return FlextResult[None].fail("Cart is empty")
 
         total = self.calculate_total()
         self.status = "checked_out"
@@ -483,7 +483,7 @@ class ShoppingCart(FlextAggregateRoot):
             "items_count": len(self.items)
         })
 
-        return FlextResult.ok(total)
+        return FlextResult[None].ok(total)
 
 # Usage
 cart = ShoppingCart(
@@ -579,12 +579,12 @@ class CreateProductCommand:
     def validate(self) -> FlextResult[None]:
         """Validate command data."""
         if not self.name:
-            return FlextResult.fail("Product name is required")
+            return FlextResult[None].fail("Product name is required")
         if self.price < 0:
-            return FlextResult.fail("Price cannot be negative")
+            return FlextResult[None].fail("Price cannot be negative")
         if self.stock < 0:
-            return FlextResult.fail("Stock cannot be negative")
-        return FlextResult.ok(None)
+            return FlextResult[None].fail("Stock cannot be negative")
+        return FlextResult[None].ok(None)
 
 @dataclass
 class UpdateStockCommand:
@@ -595,10 +595,10 @@ class UpdateStockCommand:
     def validate(self) -> FlextResult[None]:
         """Validate command data."""
         if not self.product_id:
-            return FlextResult.fail("Product ID is required")
+            return FlextResult[None].fail("Product ID is required")
         if self.quantity_change == 0:
-            return FlextResult.fail("Quantity change cannot be zero")
-        return FlextResult.ok(None)
+            return FlextResult[None].fail("Quantity change cannot be zero")
+        return FlextResult[None].ok(None)
 
 class CommandHandler(Protocol):
     """Protocol for command handlers."""
@@ -618,7 +618,7 @@ class CreateProductHandler:
         # Validate command
         validation = command.validate()
         if validation.is_failure:
-            return FlextResult.fail(validation.error)
+            return FlextResult[None].fail(validation.error)
 
         # Create product
         product_id = f"prod_{hash(command.name) % 10000:04d}"
@@ -633,9 +633,9 @@ class CreateProductHandler:
         # Save to repository
         save_result = self.repository.save(product)
         if save_result.is_failure:
-            return FlextResult.fail(f"Failed to save: {save_result.error}")
+            return FlextResult[None].fail(f"Failed to save: {save_result.error}")
 
-        return FlextResult.ok(product_id)
+        return FlextResult[None].ok(product_id)
 
 # Usage
 command = CreateProductCommand(
@@ -678,13 +678,13 @@ class GetProductByIdHandler:
     def handle(self, query: GetProductByIdQuery) -> FlextResult[dict]:
         """Get product by ID."""
         if not query.product_id:
-            return FlextResult.fail("Product ID is required")
+            return FlextResult[None].fail("Product ID is required")
 
         product = self.repository.find_by_id(query.product_id)
         if not product:
-            return FlextResult.fail(f"Product {query.product_id} not found")
+            return FlextResult[None].fail(f"Product {query.product_id} not found")
 
-        return FlextResult.ok(product)
+        return FlextResult[None].ok(product)
 
 class SearchProductsHandler:
     """Handler for SearchProductsQuery."""
@@ -708,7 +708,7 @@ class SearchProductsHandler:
             offset=query.offset
         )
 
-        return FlextResult.ok(products)
+        return FlextResult[None].ok(products)
 
 # Usage
 query = SearchProductsQuery(
@@ -866,7 +866,7 @@ from flext_core import FlextEntity, FlextValueObject, FlextAggregateRoot
 def main():
     """Main example function."""
     # Your code here
-    result = FlextResult.ok("Success!")
+    result = FlextResult[None].ok("Success!")
     print(result.unwrap())
 
 if __name__ == "__main__":
@@ -881,8 +881,8 @@ if __name__ == "__main__":
 # Good: Explicit error handling
 def process_data(data: dict) -> FlextResult[dict]:
     if not data:
-        return FlextResult.fail("Empty data")
-    return FlextResult.ok(processed_data)
+        return FlextResult[None].fail("Empty data")
+    return FlextResult[None].ok(processed_data)
 
 # Bad: Using exceptions
 def process_data_bad(data: dict) -> dict:
@@ -937,9 +937,9 @@ class ServiceBad:
 class Order(FlextEntity):
     def apply_discount(self, percentage: float) -> FlextResult[None]:
         if percentage < 0 or percentage > 100:
-            return FlextResult.fail("Invalid discount percentage")
+            return FlextResult[None].fail("Invalid discount percentage")
         self.total *= (1 - percentage / 100)
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
 # Bad: Business logic scattered
 def apply_discount_to_order(order: dict, percentage: float) -> dict:

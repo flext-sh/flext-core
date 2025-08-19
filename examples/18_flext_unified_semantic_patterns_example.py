@@ -34,23 +34,23 @@ class FlextOracleConfig(FlextConfig):
     def validate_business_rules(self) -> FlextResult[None]:
         """Unified business rule validation pattern."""
         if not self.service_name and not self.sid:
-            return FlextResult.fail(
+            return FlextResult[None].fail(
                 "Missing identifiers: both service_name and sid are empty",
             )
 
         min_port = 1
         max_port = 65535
         if not (min_port <= self.port <= max_port):
-            return FlextResult.fail(
+            return FlextResult[None].fail(
                 f"Port out of range: {self.port} not between {min_port} and {max_port}",
             )
 
         if self.max_connections < 1:
-            return FlextResult.fail(
+            return FlextResult[None].fail(
                 f"Invalid max_connections: {self.max_connections} must be at least 1",
             )
 
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
 
 class FlextUserProfile(FlextValue):
@@ -64,15 +64,15 @@ class FlextUserProfile(FlextValue):
     def validate_business_rules(self) -> FlextResult[None]:
         """Unified validation with semantic business rules."""
         if "@" not in self.email or "." not in self.email.split("@")[1]:
-            return FlextResult.fail("Invalid email format")
+            return FlextResult[None].fail("Invalid email format")
 
         min_name_length = 2
         if len(self.full_name.strip()) < min_name_length:
-            return FlextResult.fail(
+            return FlextResult[None].fail(
                 f"Full name must be at least {min_name_length} characters",
             )
 
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
 
 class FlextDataPipeline(FlextEntity):
@@ -88,31 +88,31 @@ class FlextDataPipeline(FlextEntity):
         """Unified entity validation with domain logic."""
         min_pipeline_name_length = 3
         if len(self.name.strip()) < min_pipeline_name_length:
-            return FlextResult.fail(
+            return FlextResult[None].fail(
                 f"Pipeline name must be at least {min_pipeline_name_length} characters",
             )
 
         if self.processed_records < 0:
-            return FlextResult.fail("Processed records cannot be negative")
+            return FlextResult[None].fail("Processed records cannot be negative")
 
         # Validate nested objects using unified patterns
         source_result = self.source_config.validate_business_rules()
         if not source_result.is_success:
-            return FlextResult.fail(f"Invalid source config: {source_result.error}")
+            return FlextResult[None].fail(f"Invalid source config: {source_result.error}")
 
         owner_result = self.owner.validate_business_rules()
         if not owner_result.is_success:
-            return FlextResult.fail(f"Invalid owner: {owner_result.error}")
+            return FlextResult[None].fail(f"Invalid owner: {owner_result.error}")
 
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
     def activate(self) -> FlextResult[None]:
         """Business operation with unified error handling."""
         if self.status == "active":
-            return FlextResult.fail("Pipeline is already active")
+            return FlextResult[None].fail("Pipeline is already active")
 
         if self.status == "error":
-            return FlextResult.fail("Cannot activate pipeline in error state")
+            return FlextResult[None].fail("Cannot activate pipeline in error state")
 
         self.status = "active"
         self.increment_version()
@@ -124,7 +124,7 @@ class FlextDataPipeline(FlextEntity):
             },
         )
 
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
 
 # =============================================================================
@@ -201,9 +201,9 @@ class FlextPipelineService:
                     username=str(oracle_config.get("username", "flext")),
                     password=SecretStr(str(oracle_config.get("password", "password"))),
                 )
-                return FlextResult.ok(instance)
+                return FlextResult[None].ok(instance)
             except Exception as e:
-                return FlextResult.fail(str(e))
+                return FlextResult[None].fail(str(e))
 
         def _build_owner() -> FlextResult[FlextUserProfile]:
             try:
@@ -219,9 +219,9 @@ class FlextPipelineService:
                         owner_profile.get("preferences", {}),
                     ),
                 )
-                return FlextResult.ok(instance)
+                return FlextResult[None].ok(instance)
             except Exception as e:
-                return FlextResult.fail(str(e))
+                return FlextResult[None].fail(str(e))
 
         def _build_pipeline(
             cfg: FlextOracleConfig,
@@ -234,44 +234,44 @@ class FlextPipelineService:
                     source_config=cfg,
                     owner=owner,
                 )
-                return FlextResult.ok(instance)
+                return FlextResult[None].ok(instance)
             except Exception as e:
-                return FlextResult.fail(str(e))
+                return FlextResult[None].fail(str(e))
 
         config_result = _build_config()
         if config_result.is_failure or config_result.data is None:
-            return FlextResult.fail(
+            return FlextResult[None].fail(
                 f"Invalid Oracle config: {config_result.error or 'None'}",
             )
 
         owner_result = _build_owner()
         if owner_result.is_failure or owner_result.data is None:
-            return FlextResult.fail(
+            return FlextResult[None].fail(
                 f"Invalid owner profile: {owner_result.error or 'None'}",
             )
 
         pipeline_result = _build_pipeline(config_result.data, owner_result.data)
         if pipeline_result.is_failure or pipeline_result.data is None:
-            return FlextResult.fail(
+            return FlextResult[None].fail(
                 f"Pipeline creation failed: {pipeline_result.error or 'None'}",
             )
 
         pipeline = pipeline_result.data
         self._pipelines[pipeline.id] = pipeline
-        return FlextResult.ok(pipeline)
+        return FlextResult[None].ok(pipeline)
 
     def activate_pipeline(self, pipeline_id: str) -> FlextResult[str]:
         """Activate pipeline with unified error handling."""
         if pipeline_id not in self._pipelines:
-            return FlextResult.fail(f"Pipeline {pipeline_id} not found")
+            return FlextResult[None].fail(f"Pipeline {pipeline_id} not found")
 
         pipeline = self._pipelines[pipeline_id]
         activation_result = pipeline.activate()
 
         if activation_result.is_failure:
-            return FlextResult.fail(f"Activation failed: {activation_result.error}")
+            return FlextResult[None].fail(f"Activation failed: {activation_result.error}")
 
-        return FlextResult.ok(f"Pipeline {pipeline_id} activated successfully")
+        return FlextResult[None].ok(f"Pipeline {pipeline_id} activated successfully")
 
     def get_pipeline_stats(self) -> dict[str, object]:
         """Get pipeline statistics using unified types."""
@@ -307,7 +307,7 @@ class FlextUnifiedUtilities:
     ) -> FlextResult[dict[str, str]]:
         """Parse and validate Oracle connection strings."""
         if not connection_string.startswith("oracle://"):
-            return FlextResult.fail("Invalid Oracle connection string format")
+            return FlextResult[None].fail("Invalid Oracle connection string format")
 
         try:
             # Simple parsing for demonstration
@@ -320,9 +320,9 @@ class FlextUnifiedUtilities:
                 "service_name": parts[1] if len(parts) > 1 else "ORCL",
             }
 
-            return FlextResult.ok(parsed)
+            return FlextResult[None].ok(parsed)
         except Exception as e:
-            return FlextResult.fail(f"Connection string parsing failed: {e}")
+            return FlextResult[None].fail(f"Connection string parsing failed: {e}")
 
     @staticmethod
     def format_metric_display(metric: dict[str, object]) -> str:
@@ -341,9 +341,9 @@ class FlextUnifiedUtilities:
         """Safe data transformation with unified error handling."""
         try:
             result = transformer(data)
-            return FlextResult.ok(result)
+            return FlextResult[None].ok(result)
         except Exception as e:
-            return FlextResult.fail(f"Data transformation failed: {e}")
+            return FlextResult[None].fail(f"Data transformation failed: {e}")
 
 
 # =============================================================================
