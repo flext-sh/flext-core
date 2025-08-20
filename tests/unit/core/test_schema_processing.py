@@ -104,21 +104,31 @@ class ConcreteBaseEntry(BaseEntry):
         return FlextResult[None].ok(None)
 
 
-class MockEntryValidator:
-    """Mock validator for testing."""
+class RealEntryValidator:
+    """Real validator for testing actual validation logic."""
 
-    def __init__(self, *, is_valid: bool = True, is_whitelisted: bool = True) -> None:
-        """Initialize mock validator."""
-        self.is_valid_result = is_valid
-        self.is_whitelisted_result = is_whitelisted
+    def __init__(self, *, valid_ids: set[str] | None = None, invalid_ids: set[str] | None = None) -> None:
+        """Initialize real validator with configurable validation rules."""
+        self.valid_ids = valid_ids or {"id_123", "id_456", "id_789"}
+        self.invalid_ids = invalid_ids or {"invalid_id", "bad_id"}
 
-    def is_valid(self, entry: MockEntry) -> bool:  # noqa: ARG002
-        """Mock validation."""
-        return self.is_valid_result
+    def is_valid(self, entry: MockEntry) -> bool:
+        """Real validation logic based on entry content."""
+        # Validate based on actual entry properties
+        if not entry.clean_content or len(entry.clean_content.strip()) < 3:
+            return False
+        if "invalid" in entry.clean_content.lower():
+            return False
+        return True
 
-    def is_whitelisted(self, identifier: str) -> bool:  # noqa: ARG002
-        """Mock whitelist check."""
-        return self.is_whitelisted_result
+    def is_whitelisted(self, identifier: str) -> bool:
+        """Real whitelist check based on identifier patterns."""
+        if identifier in self.invalid_ids:
+            return False
+        if identifier.startswith("id_") and identifier in self.valid_ids:
+            return True
+        # Allow any id_ pattern for testing
+        return identifier.startswith("id_")
 
 
 class MockProcessor(BaseProcessor[MockEntry]):
@@ -381,7 +391,7 @@ class TestBaseProcessor:
 
     def test_init_with_validator(self) -> None:
         """Test processor initialization with validator."""
-        validator = MockEntryValidator()
+        validator = RealEntryValidator()
         processor = MockProcessor(validator)
         assert processor.validator is validator
 
@@ -426,7 +436,8 @@ class TestBaseProcessor:
 
     def test_extract_entry_info_validator_not_whitelisted(self) -> None:
         """Test entry extraction with validator rejection."""
-        validator = MockEntryValidator(is_whitelisted=False)
+        # Use real validator with restrictive whitelist
+        validator = RealEntryValidator(valid_ids={"allowed_id"}, invalid_ids={"id_123"})
         processor = MockProcessor(validator)
         result = processor.extract_entry_info("test content 123", "test_type")
 
@@ -435,9 +446,12 @@ class TestBaseProcessor:
 
     def test_extract_entry_info_validator_not_valid(self) -> None:
         """Test entry extraction with invalid entry."""
-        validator = MockEntryValidator(is_valid=False)
+        # Use real validator that will fail on content with "invalid"
+        validator = RealEntryValidator()
         processor = MockProcessor(validator)
-        result = processor.extract_entry_info("test content 123", "test_type")
+        # Use content that will pass identifier extraction but fail validation
+        # The validator fails on content containing "invalid" in clean_content
+        result = processor.extract_entry_info("INVALID test content 123", "test_type")
 
         assert not result.success
         assert "Entry validation failed" in (result.error or "")
@@ -686,20 +700,31 @@ class TestEntryValidatorProtocol:
     """Test entry validator protocol."""
 
     def test_protocol_implementation(self) -> None:
-        """Test that our mock implements the protocol correctly."""
-        validator = MockEntryValidator()
+        """Test that our real validator implements the protocol correctly."""
+        validator = RealEntryValidator()
 
         # Should be usable as EntryValidator
         assert callable(validator.is_valid)
         assert callable(validator.is_whitelisted)
 
-        # Test actual calls
-        mock_entry = MockEntry(
+        # Test actual calls with real validation logic
+        valid_entry = MockEntry(
             entry_type="test",
-            clean_content="clean",
+            clean_content="clean content",
             original_content="original",
             identifier="id_123",
         )
 
-        assert validator.is_valid(mock_entry) is True
-        assert validator.is_whitelisted("test_id") is True
+        assert validator.is_valid(valid_entry) is True
+        assert validator.is_whitelisted("id_123") is True
+
+        # Test invalid cases
+        invalid_entry = MockEntry(
+            entry_type="test",
+            clean_content="invalid",  # Contains "invalid" keyword
+            original_content="original",
+            identifier="id_456",
+        )
+
+        assert validator.is_valid(invalid_entry) is False
+        assert validator.is_whitelisted("bad_id") is False

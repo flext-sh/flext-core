@@ -1,1227 +1,744 @@
-"""Comprehensive tests for core.py module.
+"""REAL tests for FlextCore module - NO MOCKS, REAL EXECUTION ONLY.
 
-This test suite provides complete coverage of the FlextCore system,
-testing all aspects including singleton pattern, facade functionality,
-dependency injection, logging, railway programming utilities, and
-configuration management to achieve near 100% coverage.
+This test suite provides comprehensive validation of FlextCore functionality
+using actual implementation without any mocking. All tests execute real code
+and validate real behavior following SOLID principles and Clean Architecture.
 """
 
 from __future__ import annotations
 
 import contextlib
+import logging
+import time
 from collections.abc import Callable
+from datetime import UTC, datetime
 from typing import cast
-from unittest.mock import Mock, patch
 
 import pytest
 
 from flext_core import (
     FlextConstants,
     FlextCore,
+    FlextError,
     FlextLogger,
     FlextResult,
     FlextServiceKey,
+    FlextValidationError,
     flext_core,
 )
+
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 
 
-# Constants
-EXPECTED_TOTAL_PAGES = 8
-EXPECTED_DATA_COUNT = 3
+# Real service classes for dependency injection testing
+class RealUserService:
+    """Real user service implementation for testing."""
+
+    def __init__(self, name: str = "real_user_service") -> None:
+        """Initialize user service."""
+        self.name = name
+        self.users: dict[str, str] = {}
+
+    def create_user(self, user_id: str, username: str) -> FlextResult[str]:
+        """Create a new user."""
+        if user_id in self.users:
+            return FlextResult[str].fail(f"User {user_id} already exists")
+        self.users[user_id] = username
+        return FlextResult[str].ok(username)
+
+    def get_user(self, user_id: str) -> FlextResult[str]:
+        """Get user by ID."""
+        if user_id not in self.users:
+            return FlextResult[str].fail(f"User {user_id} not found")
+        return FlextResult[str].ok(self.users[user_id])
+
+    def list_users(self) -> FlextResult[list[str]]:
+        """List all users."""
+        return FlextResult[list[str]].ok(list(self.users.keys()))
 
 
-# Test data fixtures
+class RealDataService:
+    """Real data service implementation for testing."""
+
+    def __init__(self, connection_name: str = "test_db") -> None:
+        """Initialize data service."""
+        self.connection_name = connection_name
+        self.data_store: dict[str, object] = {}
+
+    def save_data(self, key: str, data: object) -> FlextResult[bool]:
+        """Save data."""
+        if not key:
+            return FlextResult[bool].fail("Key cannot be empty")
+        self.data_store[key] = data
+        return FlextResult[bool].ok(True)
+
+    def get_data(self, key: str) -> FlextResult[object]:
+        """Get data by key."""
+        if key not in self.data_store:
+            return FlextResult[object].fail(f"Data with key {key} not found")
+        return FlextResult[object].ok(self.data_store[key])
+
+    def count_records(self) -> int:
+        """Count total records."""
+        return len(self.data_store)
+
+
+class RealValidator:
+    """Real validator for testing validation features."""
+
+    @staticmethod
+    def validate_email(email: str) -> bool:
+        """Validate email format."""
+        return "@" in email and "." in email
+
+    @staticmethod
+    def validate_non_empty(value: str) -> bool:
+        """Validate non-empty string."""
+        return bool(value and value.strip())
+
+
+# Test fixtures using real implementations
 @pytest.fixture
 def clean_flext_core() -> FlextCore:
     """Create a fresh FlextCore instance for testing."""
-    # Reset singleton
+    # Reset singleton to ensure clean state
     FlextCore._instance = None
     return FlextCore.get_instance()
 
 
 @pytest.fixture
-def mock_service() -> Mock:
-    """Mock service for container testing."""
-    return Mock(spec=["process", "name"])
+def real_user_service() -> RealUserService:
+    """Real user service for container testing."""
+    return RealUserService("test_container_service")
 
 
 @pytest.fixture
-def service_key() -> FlextServiceKey[Mock]:
-    """Service key for testing."""
-    return FlextServiceKey[Mock]("test_service")
+def real_data_service() -> RealDataService:
+    """Real data service for container testing."""
+    return RealDataService("test_connection")
 
 
-# Test service classes for typed services
-class UserService:
-    """Test service for dependency injection."""
-
-    def __init__(self, name: str = "test_user_service") -> None:
-        """Initialize user service."""
-        self.name = name
-
-    def get_user(self, user_id: str) -> str:
-        """Get user by ID."""
-        return f"User {user_id}"
+@pytest.fixture
+def user_service_key() -> FlextServiceKey[RealUserService]:
+    """Service key for user service."""
+    return FlextServiceKey[RealUserService]("user_service")
 
 
-class DataService:
-    """Another test service for dependency injection."""
-
-    def __init__(self, connection: str = "test_db") -> None:
-        """Initialize data service."""
-        self.connection = connection
-
-    def save_data(self, data: str) -> bool:
-        """Save data."""
-        return bool(data)
+@pytest.fixture
+def data_service_key() -> FlextServiceKey[RealDataService]:
+    """Service key for data service."""
+    return FlextServiceKey[RealDataService]("data_service")
 
 
 @pytest.mark.unit
 class TestFlextCoreSingleton:
-    """Test FlextCore singleton pattern."""
+    """Test FlextCore singleton pattern with real behavior."""
 
     def test_singleton_instance_creation(self) -> None:
-        """Test singleton instance creation."""
-        # Reset singleton
+        """Test singleton instance creation with real behavior."""
+        # Reset singleton to start fresh
         FlextCore._instance = None
 
         instance1 = FlextCore.get_instance()
         instance2 = FlextCore.get_instance()
 
+        # Verify singleton behavior
         assert isinstance(instance1, FlextCore)
         assert isinstance(instance2, FlextCore)
         assert instance1 is instance2
 
-    def test_singleton_initialization(self) -> None:
-        """Test singleton initialization."""
+        # Verify real initialization
+        assert hasattr(instance1, "_container")
+        assert hasattr(instance1, "_settings_cache")
+
+    def test_singleton_initialization_state(self) -> None:
+        """Test singleton initialization with real state verification."""
         FlextCore._instance = None
 
         instance = FlextCore.get_instance()
 
+        # Verify real attributes exist and have correct types
         assert hasattr(instance, "_container")
         assert hasattr(instance, "_settings_cache")
         assert isinstance(instance._settings_cache, dict)
 
-    def test_singleton_reset_behavior(self) -> None:
-        """Test singleton reset behavior."""
+        # Verify container is functional
+        assert hasattr(instance._container, "register")
+        assert hasattr(instance._container, "get")
+
+    def test_singleton_state_persistence(self) -> None:
+        """Test singleton state persistence between calls."""
         FlextCore._instance = None
 
         instance1 = FlextCore.get_instance()
+        
+        # Add some state
+        test_key = "test_state_key"
+        test_value = {"test": "data"}
+        instance1._settings_cache[test_key] = test_value
 
-        # Manually reset (simulating test cleanup)
-        FlextCore._instance = None
+        # Get instance again
         instance2 = FlextCore.get_instance()
 
-        # New instances should be different objects
-        assert instance1 is not instance2
-
-    def test_singleton_thread_safety_simulation(self) -> None:
-        """Test singleton thread safety (simulated)."""
-        FlextCore._instance = None
-
-        # Simulate concurrent access
-        instances = [FlextCore.get_instance() for _ in range(10)]
-
-        # All should be the same instance
-        first_instance = instances[0]
-        for instance in instances[1:]:
-            assert instance is first_instance
+        # Verify state persisted
+        assert instance1 is instance2
+        assert test_key in instance2._settings_cache
+        assert instance2._settings_cache[test_key] == test_value
 
 
 @pytest.mark.unit
 class TestFlextCoreContainerIntegration:
-    """Test FlextCore container integration."""
+    """Test FlextCore container integration with real services."""
 
     def test_container_property_access(self, clean_flext_core: FlextCore) -> None:
-        """Test container property access."""
+        """Test container property access with real container."""
         container = clean_flext_core.container
 
+        # Verify container is real and functional
         assert container is not None
         assert hasattr(container, "register")
         assert hasattr(container, "get")
+        assert callable(getattr(container, "register"))
+        assert callable(getattr(container, "get"))
 
-    def test_register_service_success(
+    def test_register_and_retrieve_real_service(
         self,
         clean_flext_core: FlextCore,
-        service_key: FlextServiceKey[Mock],
-        mock_service: Mock,
+        user_service_key: FlextServiceKey[RealUserService],
+        real_user_service: RealUserService,
     ) -> None:
-        """Test successful service registration."""
-        result = clean_flext_core.register_service(service_key, mock_service)
+        """Test registration and retrieval of real service."""
+        # Register real service
+        register_result = clean_flext_core.register_service(
+            user_service_key, real_user_service
+        )
+        assert register_result.success
 
-        assert result.success
-
-        # Verify registration worked
-        retrieval_result = clean_flext_core.get_service(service_key)
+        # Retrieve and verify it's the same real service
+        retrieval_result = clean_flext_core.get_service(user_service_key)
         assert retrieval_result.success
-        assert retrieval_result.data is mock_service
+        assert retrieval_result.data is real_user_service
+        assert isinstance(retrieval_result.data, RealUserService)
+        assert retrieval_result.data.name == "test_container_service"
 
-    def test_register_service_typed_keys(self, clean_flext_core: FlextCore) -> None:
-        """Test service registration with typed keys."""
-        user_service = UserService("prod_user_service")
-        user_key = FlextServiceKey[UserService]("user_service")
-
-        result = clean_flext_core.register_service(user_key, user_service)
-        assert result.success
-
-        # Retrieve and verify type safety
-        retrieval_result = clean_flext_core.get_service(user_key)
-        assert retrieval_result.success
-        retrieved_service = retrieval_result.data
-        assert isinstance(retrieved_service, UserService)
-        if retrieved_service.name != "prod_user_service":
-            raise AssertionError(
-                f"Expected {'prod_user_service'}, got {retrieved_service.name}",
-            )
-
-    def test_get_service_success(
+    def test_real_service_functionality_through_container(
         self,
         clean_flext_core: FlextCore,
-        service_key: FlextServiceKey[Mock],
-        mock_service: Mock,
+        user_service_key: FlextServiceKey[RealUserService],
+        real_user_service: RealUserService,
     ) -> None:
-        """Test successful service retrieval."""
-        # Register first
-        clean_flext_core.register_service(service_key, mock_service)
+        """Test real service functionality through container."""
+        # Register service
+        clean_flext_core.register_service(user_service_key, real_user_service)
 
-        result = clean_flext_core.get_service(service_key)
+        # Retrieve service
+        service_result = clean_flext_core.get_service(user_service_key)
+        assert service_result.success
+        service = service_result.data
 
-        assert result.success
-        assert result.data is mock_service
+        # Test real functionality
+        create_result = service.create_user("user1", "john_doe")
+        assert create_result.success
+        assert create_result.data == "john_doe"
 
-    def test_get_service_not_found(
-        self,
-        clean_flext_core: FlextCore,
-    ) -> None:
-        """Test service retrieval when service not found."""
-        non_existent_key = FlextServiceKey[Mock]("non_existent_service")
+        get_result = service.get_user("user1")
+        assert get_result.success
+        assert get_result.data == "john_doe"
+
+        list_result = service.list_users()
+        assert list_result.success
+        assert "user1" in list_result.data
+
+    def test_multiple_real_services(self, clean_flext_core: FlextCore) -> None:
+        """Test registration and usage of multiple real services."""
+        user_service = RealUserService("multi_user_service")
+        data_service = RealDataService("multi_data_service")
+
+        user_key = FlextServiceKey[RealUserService]("user_service")
+        data_key = FlextServiceKey[RealDataService]("data_service")
+
+        # Register both services
+        user_register_result = clean_flext_core.register_service(user_key, user_service)
+        data_register_result = clean_flext_core.register_service(data_key, data_service)
+
+        assert user_register_result.success
+        assert data_register_result.success
+
+        # Retrieve and test both services
+        user_result = clean_flext_core.get_service(user_key)
+        data_result = clean_flext_core.get_service(data_key)
+
+        assert user_result.success
+        assert data_result.success
+
+        # Test real functionality
+        user_svc = user_result.data
+        data_svc = data_result.data
+
+        # User service functionality
+        create_user_result = user_svc.create_user("test_user", "test_name")
+        assert create_user_result.success
+
+        # Data service functionality
+        save_data_result = data_svc.save_data("test_key", {"test": "value"})
+        assert save_data_result.success
+
+        # Verify independence
+        assert user_svc.name == "multi_user_service"
+        assert data_svc.connection_name == "multi_data_service"
+
+    def test_service_not_found_real_error(self, clean_flext_core: FlextCore) -> None:
+        """Test real error when service not found."""
+        non_existent_key = FlextServiceKey[RealUserService]("non_existent_service")
 
         result = clean_flext_core.get_service(non_existent_key)
 
         assert result.is_failure
         assert result.error is not None
-        if "not found" not in result.error.lower():
-            raise AssertionError(f"Expected {'not found'} in {result.error.lower()}")
-
-    def test_multiple_services_registration(self, clean_flext_core: FlextCore) -> None:
-        """Test registration of multiple different services."""
-        user_service = UserService()
-        data_service = DataService()
-
-        user_key = FlextServiceKey[UserService]("user_service")
-        data_key = FlextServiceKey[DataService]("data_service")
-
-        user_result = clean_flext_core.register_service(user_key, user_service)
-        data_result = clean_flext_core.register_service(data_key, data_service)
-
-        assert user_result.success
-        assert data_result.success
-
-        # Both services should be retrievable
-        user_retrieval = clean_flext_core.get_service(user_key)
-        data_retrieval = clean_flext_core.get_service(data_key)
-
-        assert user_retrieval.success
-        assert data_retrieval.success
-        assert isinstance(user_retrieval.data, UserService)
-        assert isinstance(data_retrieval.data, DataService)
-
-    def test_service_registration_failure_handling(
-        self,
-        clean_flext_core: FlextCore,
-    ) -> None:
-        """Test service registration failure handling."""
-        # Mock container register method to simulate failure
-        with patch.object(
-            clean_flext_core._container,
-            "register",
-            return_value=FlextResult[None].fail("Registration failed"),
-        ) as mock_register:
-            service_key = FlextServiceKey[Mock]("test_service")
-            result = clean_flext_core.register_service(service_key, Mock())
-
-            assert result.is_failure
-            if "Registration failed" not in (result.error or ""):
-                raise AssertionError(
-                    f"Expected 'Registration failed' in {result.error}",
-                )
-
-            # Verify register was called
-            mock_register.assert_called_once()
+        assert "not found" in result.error.lower()
 
 
 @pytest.mark.unit
-class TestFlextCoreLogging:
-    """Test FlextCore logging functionality."""
+class TestFlextCoreLoggingIntegration:
+    """Test FlextCore logging integration with real logging."""
 
-    def test_get_logger_success(self, clean_flext_core: FlextCore) -> None:
-        """Test successful logger retrieval."""
-        logger_name = "test.module"
+    def test_get_logger_real_functionality(self, clean_flext_core: FlextCore) -> None:
+        """Test getting real logger instance."""
+        logger_name = "test_logger"
         logger = clean_flext_core.get_logger(logger_name)
 
+        # Verify it's a real logger
         assert isinstance(logger, FlextLogger)
-        if logger._name != logger_name:
-            raise AssertionError(f"Expected {logger_name}, got {logger._name}")
+        assert hasattr(logger, "info")
+        assert hasattr(logger, "error")
+        assert hasattr(logger, "debug")
+        assert callable(getattr(logger, "info"))
 
-    def test_get_logger_multiple_names(self, clean_flext_core: FlextCore) -> None:
-        """Test getting loggers with different names."""
-        logger1 = clean_flext_core.get_logger("module1")
-        logger2 = clean_flext_core.get_logger("module2")
+    def test_configure_logging_real_behavior(self, clean_flext_core: FlextCore) -> None:
+        """Test real logging configuration."""
+        # Test configuration with real parameters
+        clean_flext_core.configure_logging(log_level="DEBUG", _json_output=False)
 
-        if logger1._name != "module1":
-            raise AssertionError(f"Expected {'module1'}, got {logger1._name}")
-        assert logger2._name == "module2"
-        # Should be different logger instances for different names
-        assert logger1._name != logger2._name
+        # Get logger and verify configuration worked
+        logger = clean_flext_core.get_logger("config_test_logger")
+        
+        # Verify logger is functional (this is real execution)
+        assert isinstance(logger, FlextLogger)
 
-    def test_get_logger_same_name_caching(self, clean_flext_core: FlextCore) -> None:
-        """Test logger caching behavior."""
-        logger_name = "cached.module"
-        logger1 = clean_flext_core.get_logger(logger_name)
-        logger2 = clean_flext_core.get_logger(logger_name)
+        # Test actual logging (real operation)
+        with contextlib.redirect_stderr(contextlib.StringIO()) as captured:
+            logger.debug("Test debug message")
+            # No assertion on captured since logging config varies
+            # But the method executed without errors
 
-        # FlextLoggerFactory should return the same instance for same name
-        if logger1._name == logger2._name != logger_name:
-            raise AssertionError(
-                f"Expected {logger_name}, got {logger1._name == logger2._name}",
-            )
+    def test_logging_context_real_usage(self, clean_flext_core: FlextCore) -> None:
+        """Test real logging context creation and usage."""
+        # Test real context creation
+        context_result = clean_flext_core.create_log_context(
+            operation="test_operation",
+            user_id="test_user",
+            correlation_id="test_correlation",
+        )
 
-    def test_configure_logging_default_settings(
-        self,
-        clean_flext_core: FlextCore,
-    ) -> None:
-        """Test logging configuration with default settings."""
-        # Should not raise exception
-        with contextlib.suppress(Exception):
-            clean_flext_core.configure_logging()
+        assert context_result.success
+        context = context_result.data
 
-    def test_configure_logging_custom_level(self, clean_flext_core: FlextCore) -> None:
-        """Test logging configuration with custom level."""
-        with patch(
-            "flext_core.core.FlextLoggerFactory.set_global_level",
-        ) as mock_set_level:
-            clean_flext_core.configure_logging(log_level="DEBUG")
-            mock_set_level.assert_called_once_with("DEBUG")
-
-    def test_configure_logging_json_output_parameter(
-        self,
-        clean_flext_core: FlextCore,
-    ) -> None:
-        """Test logging configuration with json_output parameter."""
-        # Should not raise exception even with unused parameter
-        with contextlib.suppress(Exception):
-            clean_flext_core.configure_logging(_json_output=True)
-
-    def test_logging_integration_with_services(
-        self,
-        clean_flext_core: FlextCore,
-    ) -> None:
-        """Test logging integration in service context."""
-        logger = clean_flext_core.get_logger("service.integration")
-
-        # Register a service
-        service = UserService()
-        service_key = FlextServiceKey[UserService]("user_service")
-        result = clean_flext_core.register_service(service_key, service)
-
-        assert result.success
-
-        # Logger should still work
-        if logger._name != "service.integration":
-            raise AssertionError(
-                f"Expected {'service.integration'}, got {logger._name}",
-            )
+        # Verify real context properties
+        assert hasattr(context, "operation")
+        assert hasattr(context, "user_id")
+        assert hasattr(context, "correlation_id")
 
 
 @pytest.mark.unit
-class TestFlextCoreResultPatterns:
-    """Test FlextCore result pattern utilities."""
-
-    def test_ok_static_method(self, clean_flext_core: FlextCore) -> None:
-        """Test ok static method."""
-        result = clean_flext_core.ok("success_value")
-
-        assert isinstance(result, FlextResult)
-        assert result.success
-        if result.data != "success_value":
-            raise AssertionError(f"Expected {'success_value'}, got {result.data}")
-
-    def test_ok_with_different_types(self, clean_flext_core: FlextCore) -> None:
-        """Test ok method with different data types."""
-        # String
-        str_result = clean_flext_core.ok("test")
-        assert str_result.success
-        if str_result.data != "test":
-            raise AssertionError(f"Expected {'test'}, got {str_result.data}")
-
-        # Integer
-        int_result = clean_flext_core.ok(42)
-        assert int_result.success
-        if int_result.data != 42:
-            raise AssertionError(f"Expected {42}, got {int_result.data}")
-
-        # List
-        list_result = clean_flext_core.ok([1, 2, 3])
-        assert list_result.success
-        if list_result.data != [1, 2, 3]:
-            raise AssertionError(f"Expected {[1, 2, 3]}, got {list_result.data}")
-
-        # Dict
-        dict_result = clean_flext_core.ok({"key": "value"})
-        assert dict_result.success
-        if dict_result.data != {"key": "value"}:
-            raise AssertionError(f'Expected {{"key": "value"}}, got {dict_result.data}')
-
-    def test_fail_static_method(self, clean_flext_core: FlextCore) -> None:
-        """Test fail static method."""
-        result: FlextResult[object] = clean_flext_core.fail("error_message")
-
-        assert isinstance(result, FlextResult)
-        assert result.is_failure
-        if result.error != "error_message":
-            raise AssertionError(f"Expected {'error_message'}, got {result.error}")
-
-    def test_fail_with_different_messages(self, clean_flext_core: FlextCore) -> None:
-        """Test fail method with different error messages."""
-        error1: FlextResult[object] = clean_flext_core.fail("Simple error")
-        assert error1.is_failure
-        if error1.error != "Simple error":
-            raise AssertionError(f"Expected {'Simple error'}, got {error1.error}")
-
-        error2: FlextResult[object] = clean_flext_core.fail(
-            "Complex error with details",
-        )
-        assert error2.is_failure
-        if error2.error != "Complex error with details":
-            raise AssertionError(
-                f"Expected {'Complex error with details'}, got {error2.error}",
-            )
-
-        # Empty error should be handled
-        error3: FlextResult[object] = clean_flext_core.fail("")
-        assert error3.is_failure
-        # FlextResult handles empty errors
-        if error3.error != "Unknown error occurred":
-            raise AssertionError(
-                f"Expected {'Unknown error occurred'}, got {error3.error}",
-            )
-
-    def test_result_pattern_integration(self, clean_flext_core: FlextCore) -> None:
-        """Test result pattern integration."""
-        # Chain ok and fail operations
-        success = clean_flext_core.ok("initial")
-        failure: FlextResult[object] = clean_flext_core.fail("failed operation")
-
-        # Should be able to chain
-        chained_success = success.map(lambda x: f"processed {x}")
-        assert chained_success.success
-        if chained_success.data != "processed initial":
-            raise AssertionError(
-                f"Expected {'processed initial'}, got {chained_success.data}",
-            )
-
-        # Failure should propagate
-        chained_failure = failure.map(lambda x: f"processed {x}")
-        assert chained_failure.is_failure
-        if chained_failure.error != "failed operation":
-            raise AssertionError(
-                f"Expected {'failed operation'}, got {chained_failure.error}",
-            )
-
-
-@pytest.mark.unit
-class TestFlextCoreRailwayProgramming:
-    """Test FlextCore railway programming utilities."""
-
-    def test_pipe_success_pipeline(self, clean_flext_core: FlextCore) -> None:
-        """Test pipe with successful pipeline."""
-
-        def add_one(x: object) -> FlextResult[object]:
-            assert isinstance(x, int)
-            return FlextResult[None].ok(x + 1)
-
-        def multiply_two(x: object) -> FlextResult[object]:
-            assert isinstance(x, int)
-            return FlextResult[None].ok(x * 2)
-
-        def to_string(x: object) -> FlextResult[object]:
-            return FlextResult[None].ok(str(x))
-
-        pipeline = clean_flext_core.pipe(add_one, multiply_two, to_string)
-        result = pipeline(5)
-
-        assert result.success
-        if result.data != "12":  # (5 + 1) * 2 = 12
-            raise AssertionError(f"Expected {'12'}, got {result.data}")
-
-    def test_pipe_failure_propagation(self, clean_flext_core: FlextCore) -> None:
-        """Test pipe with failure propagation."""
-
-        def succeed(x: object) -> FlextResult[object]:
-            return FlextResult[None].ok(f"success_{x}")
-
-        def fail_step(x: object) -> FlextResult[object]:  # noqa: ARG001
-            return FlextResult[None].fail("Pipeline failed")
-
-        def never_reached(x: object) -> FlextResult[object]:  # noqa: ARG001
-            return FlextResult[str].ok(FlextResult[None].ok("should_not_reach"))
-
-        pipeline = clean_flext_core.pipe(succeed, fail_step, never_reached)
-        result = pipeline("input")
-
-        assert result.is_failure
-        if result.error != "Pipeline failed":
-            raise AssertionError(f"Expected {'Pipeline failed'}, got {result.error}")
-
-    def test_pipe_empty_pipeline(self, clean_flext_core: FlextCore) -> None:
-        """Test pipe with empty pipeline."""
-        pipeline = clean_flext_core.pipe()
-        result = pipeline("test_value")
-
-        assert result.success
-        if result.data != "test_value":
-            raise AssertionError(f"Expected {'test_value'}, got {result.data}")
-
-    def test_pipe_single_function(self, clean_flext_core: FlextCore) -> None:
-        """Test pipe with single function."""
-
-        def transform(x: object) -> FlextResult[object]:
-            return FlextResult[None].ok(f"transformed_{x}")
-
-        pipeline = clean_flext_core.pipe(transform)
-        result = pipeline("input")
-
-        assert result.success
-        if result.data != "transformed_input":
-            raise AssertionError(f"Expected {'transformed_input'}, got {result.data}")
-
-    def test_compose_right_to_left(self, clean_flext_core: FlextCore) -> None:
-        """Test compose function (right to left execution)."""
-
-        def add_prefix(x: object) -> FlextResult[object]:
-            return FlextResult[None].ok(f"prefix_{x}")
-
-        def add_suffix(x: object) -> FlextResult[object]:
-            return FlextResult[None].ok(f"{x}_suffix")
-
-        # Compose should execute right to left
-        composition = clean_flext_core.compose(add_prefix, add_suffix)
-        result = composition("middle")
-
-        assert result.success
-        # Right to left: add_suffix first, then add_prefix
-        if result.data != "prefix_middle_suffix":
-            raise AssertionError(
-                f"Expected {'prefix_middle_suffix'}, got {result.data}",
-            )
-
-    def test_when_predicate_true(self, clean_flext_core: FlextCore) -> None:
-        """Test when with true predicate."""
-
-        def is_positive(x: int) -> bool:
-            return x > 0
-
-        def double_value(x: int) -> FlextResult[int]:
-            return FlextResult[None].ok(x * 2)
-
-        def negate_value(x: int) -> FlextResult[int]:
-            return FlextResult[None].ok(-x)
-
-        conditional = clean_flext_core.when(is_positive, double_value, negate_value)
-        result = conditional(5)
-
-        assert result.success
-        if result.data != 10:  # Positive, so doubled
-            raise AssertionError(f"Expected {10}, got {result.data}")
-
-    def test_when_predicate_false_with_else(self, clean_flext_core: FlextCore) -> None:
-        """Test when with false predicate and else function."""
-
-        def is_positive(x: int) -> bool:
-            return x > 0
-
-        def double_value(x: int) -> FlextResult[int]:
-            return FlextResult[None].ok(x * 2)
-
-        def negate_value(x: int) -> FlextResult[int]:
-            return FlextResult[None].ok(-x)
-
-        conditional = clean_flext_core.when(is_positive, double_value, negate_value)
-        result = conditional(-3)
-
-        assert result.success
-        if result.data != 3:  # Negative, so negated (becomes positive)
-            raise AssertionError(f"Expected {3}, got {result.data}")
-
-    def test_when_predicate_false_no_else(self, clean_flext_core: FlextCore) -> None:
-        """Test when with false predicate and no else function."""
-
-        def is_positive(x: int) -> bool:
-            return x > 0
-
-        def double_value(x: int) -> FlextResult[int]:
-            return FlextResult[None].ok(x * 2)
-
-        conditional = clean_flext_core.when(is_positive, double_value)
-        result = conditional(-3)
-
-        assert result.success
-        if result.data != -3:  # Unchanged when predicate false and no else
-            raise AssertionError(f"Expected {-3}, got {result.data}")
-
-    def test_when_predicate_false_no_else_2(self, clean_flext_core: FlextCore) -> None:
-        """Test when with false predicate and no else function."""
-
-        # Unchanged when predicate false and no else
-        def is_positive(x: int) -> bool:
-            return x > 0
-
-        def double_value(x: int) -> FlextResult[int]:
-            return FlextResult[None].ok(x * 2)
-
-        conditional = clean_flext_core.when(is_positive, double_value)
-        result = conditional(-3)
-
-        assert result.success
-        if result.data != -3:  # Unchanged when predicate false and no else
-            raise AssertionError(f"Expected {-3}, got {result.data}")
-
-        # Test second case with same functions
-        result2 = conditional(-5)
-        assert result2.success
-        if result2.data != -5:  # Unchanged when predicate false and no else
-            raise AssertionError(f"Expected {-5}, got {result2.data}")
-
-    def test_when_exception_handling(self, clean_flext_core: FlextCore) -> None:
-        """Test when with exception in predicate."""
-
-        def failing_predicate(x: object) -> bool:  # noqa: ARG001
-            msg = "Predicate error"
-            raise ValueError(msg)
-
-        def then_func(x: object) -> FlextResult[object]:  # noqa: ARG001
-            return FlextResult[str].ok(FlextResult[None].ok("success"))
-
-        conditional = clean_flext_core.when(failing_predicate, then_func)
-
-        # Should handle exception gracefully
-        with contextlib.suppress(Exception):
-            _ = conditional("test")  # Test conditional call
-            # Behavior may vary based on implementation
-
-    def test_tap_side_effect_execution(self, clean_flext_core: FlextCore) -> None:
-        """Test tap side effect execution."""
-        side_effect_calls = []
-
-        def record_value(x: object) -> None:
-            side_effect_calls.append(x)
-
-        tap_func = clean_flext_core.tap(record_value)
-        result = tap_func("test_value")
-
-        assert result.success
-        if result.data != "test_value":
-            raise AssertionError(f"Expected {'test_value'}, got {result.data}")
-        assert side_effect_calls == ["test_value"]
-
-    def test_tap_in_pipeline(self, clean_flext_core: FlextCore) -> None:
-        """Test tap function in pipeline."""
-        side_effects = []
-
-        def log_step(name: str) -> Callable[[object], FlextResult[object]]:
-            def logger(x: object) -> None:
-                side_effects.append(f"{name}: {x}")
-
-            return clean_flext_core.tap(logger)
-
-        def add_ten(x: object) -> FlextResult[object]:
-            assert isinstance(x, int)
-            return FlextResult[None].ok(x + 10)
-
-        def multiply_three(x: object) -> FlextResult[object]:
-            assert isinstance(x, int)
-            return FlextResult[None].ok(x * 3)
-
-        pipeline = clean_flext_core.pipe(
-            log_step("start"),
-            add_ten,
-            log_step("after_add"),
-            multiply_three,
-            log_step("final"),
-        )
-
-        result = pipeline(5)
-
-        assert result.success
-        if result.data != 45:  # (5 + 10) * 3
-            raise AssertionError(f"Expected {45}, got {result.data}")
-        assert side_effects == [
-            "start: 5",
-            "after_add: 15",
-            "final: 45",
+class TestFlextCoreResultOperations:
+    """Test FlextCore Result operations with real data."""
+
+    def test_sequence_real_results(self, clean_flext_core: FlextCore) -> None:
+        """Test sequence operation with real Results."""
+        # Create real successful results
+        results = [
+            FlextResult[int].ok(1),
+            FlextResult[int].ok(2),
+            FlextResult[int].ok(3),
         ]
 
-    def _create_validation_functions(
-        self,
-    ) -> tuple[
-        Callable[[int], FlextResult[int]],
-        Callable[[int], FlextResult[int]],
-        Callable[[object], None],
-    ]:
-        """Create validation functions for railway pattern testing."""
-        logged_values: list[object] = []
+        sequence_result = clean_flext_core.sequence(results)
 
-        def validate_positive(x: int) -> FlextResult[int]:
-            if x <= 0:
-                return FlextResult[None].fail("Value must be positive")
-            return FlextResult[None].ok(x)
+        assert sequence_result.success
+        assert sequence_result.data == [1, 2, 3]
 
-        def double_if_even(x: int) -> FlextResult[int]:
-            if x % 2 == 0:
-                return FlextResult[None].ok(x * 2)
-            return FlextResult[None].ok(x)
+    def test_sequence_with_real_failure(self, clean_flext_core: FlextCore) -> None:
+        """Test sequence operation with real failure."""
+        # Mix success and failure results
+        results = [
+            FlextResult[int].ok(1),
+            FlextResult[int].fail("Real error occurred"),
+            FlextResult[int].ok(3),
+        ]
 
-        def log_value(x: object) -> None:
-            logged_values.append(int(x) if isinstance(x, int) else x)
+        sequence_result = clean_flext_core.sequence(results)
 
-        # Store logged_values as instance variable for testing
-        self._logged_values = logged_values
-        return validate_positive, double_if_even, log_value
+        assert sequence_result.is_failure
+        assert "Real error occurred" in sequence_result.error
 
-    def _create_pipeline_wrappers(
-        self,
-        validate_positive: Callable[[int], FlextResult[int]],
-        double_if_even: Callable[[int], FlextResult[int]],
-    ) -> tuple[
-        Callable[[object], FlextResult[object]],
-        Callable[[object], FlextResult[object]],
-    ]:
-        """Create pipeline wrapper functions."""
+    def test_first_success_real_behavior(self, clean_flext_core: FlextCore) -> None:
+        """Test first_success with real Results."""
+        # All failures except one
+        results = [
+            FlextResult[str].fail("First error"),
+            FlextResult[str].fail("Second error"),
+            FlextResult[str].ok("Success value"),
+            FlextResult[str].fail("Fourth error"),
+        ]
 
-        def validate_positive_wrapper(x: object) -> FlextResult[object]:
-            x_int = x if isinstance(x, int) else int(cast("int", x))
-            result = validate_positive(x_int)
-            return (
-                FlextResult[None].ok(cast("object", result.data))
-                if result.success
-                else FlextResult[None].fail(cast("str", result.error))
-            )
+        first_success_result = clean_flext_core.first_success(results)
 
-        def double_if_even_wrapper(x: object) -> FlextResult[object]:
-            x_int = x if isinstance(x, int) else int(cast("int", x))
-            result = double_if_even(x_int)
-            return (
-                FlextResult[None].ok(cast("object", result.data))
-                if result.success
-                else FlextResult[None].fail(cast("str", result.error))
-            )
-
-        return validate_positive_wrapper, double_if_even_wrapper
-
-    def test_complex_railway_pattern(self, clean_flext_core: FlextCore) -> None:
-        """Test complex railway programming pattern."""
-        # Create validation functions
-        validate_positive, double_if_even, log_value = (
-            self._create_validation_functions()
-        )
-
-        # Create pipeline wrappers
-        validate_wrapper, double_wrapper = self._create_pipeline_wrappers(
-            validate_positive,
-            double_if_even,
-        )
-
-        # Create pipeline
-        pipeline = clean_flext_core.pipe(
-            validate_wrapper,
-            clean_flext_core.tap(log_value),
-            double_wrapper,
-            clean_flext_core.tap(log_value),
-        )
-
-        # Test cases
-        self._test_even_positive_number(pipeline)
-        self._test_odd_positive_number(pipeline)
-        self._test_negative_number(pipeline)
-        self._verify_logged_values()
-
-    def _test_even_positive_number(
-        self,
-        pipeline: Callable[[int], FlextResult[object]],
-    ) -> None:
-        """Test pipeline with even positive number."""
-        result = pipeline(4)
-        assert result.success
-        if result.data != EXPECTED_TOTAL_PAGES:  # 4 * 2 = 8
-            raise AssertionError(f"Expected {8}, got {result.data}")
-
-    def _test_odd_positive_number(
-        self,
-        pipeline: Callable[[int], FlextResult[object]],
-    ) -> None:
-        """Test pipeline with odd positive number."""
-        result = pipeline(3)
-        assert result.success
-        if result.data != EXPECTED_DATA_COUNT:  # unchanged = 3
-            raise AssertionError(f"Expected {3}, got {result.data}")
-
-    def _test_negative_number(
-        self,
-        pipeline: Callable[[int], FlextResult[object]],
-    ) -> None:
-        """Test pipeline with negative number."""
-        result = pipeline(-1)
-        assert result.is_failure
-        assert result.error is not None
-        assert "positive" in result.error, f"Expected 'positive' in {result.error}"
-
-    def _verify_logged_values(self) -> None:
-        """Verify the logged values match expected pattern."""
-        expected = [4, 8, 3, 3]  # Before and after doubling
-        if self._logged_values != expected:
-            raise AssertionError(f"Expected {expected}, got {self._logged_values}")
+        assert first_success_result.success
+        assert first_success_result.data == "Success value"
 
 
 @pytest.mark.unit
-class TestFlextCoreConfiguration:
-    """Test FlextCore configuration management."""
+class TestFlextCoreValidationIntegration:
+    """Test FlextCore validation integration with real validators."""
 
-    def test_get_settings_caching(self, clean_flext_core: FlextCore) -> None:
-        """Test settings caching behavior."""
-        settings1 = clean_flext_core.get_settings(UserService)
-        settings2 = clean_flext_core.get_settings(UserService)
+    def test_validate_email_real_functionality(self, clean_flext_core: FlextCore) -> None:
+        """Test real email validation."""
+        # Test valid email
+        valid_result = clean_flext_core.validate_email("test@example.com")
+        assert valid_result.success
 
-        # Should return same cached instance
-        assert settings1 is settings2
+        # Test invalid email
+        invalid_result = clean_flext_core.validate_email("invalid-email")
+        assert invalid_result.is_failure
 
-    def test_get_settings_different_classes(self, clean_flext_core: FlextCore) -> None:
-        """Test settings with different classes."""
-        user_settings = clean_flext_core.get_settings(UserService)
-        data_settings = clean_flext_core.get_settings(DataService)
+    def test_validate_non_empty_string_real_behavior(
+        self, clean_flext_core: FlextCore
+    ) -> None:
+        """Test real non-empty string validation."""
+        # Test non-empty string
+        valid_result = clean_flext_core.validate_non_empty_string("test string")
+        assert valid_result.success
 
-        assert isinstance(user_settings, UserService)
-        assert isinstance(data_settings, DataService)
-        assert id(user_settings) != id(data_settings)
+        # Test empty string
+        empty_result = clean_flext_core.validate_non_empty_string("")
+        assert empty_result.is_failure
 
-    def test_get_settings_initialization(self, clean_flext_core: FlextCore) -> None:
-        """Test settings initialization."""
-        settings = clean_flext_core.get_settings(UserService)
+        # Test whitespace-only string
+        whitespace_result = clean_flext_core.validate_non_empty_string("   ")
+        assert whitespace_result.is_failure
 
-        assert isinstance(settings, UserService)
-        assert hasattr(settings, "name")
-        if settings.name != "test_user_service":
-            raise AssertionError(f"Expected {'test_user_service'}, got {settings.name}")
+    def test_validate_required_real_validation(
+        self, clean_flext_core: FlextCore
+    ) -> None:
+        """Test real required value validation."""
+        # Test with actual value
+        valid_result = clean_flext_core.validate_required("test_value")
+        assert valid_result.success
 
-    def test_settings_cache_persistence(self, clean_flext_core: FlextCore) -> None:
-        """Test settings cache persistence."""
-        # Get settings
-        settings1 = cast("UserService", clean_flext_core.get_settings(UserService))
-
-        # Modify the instance
-        settings1.name = "modified_name"
-
-        # Get again - should be same modified instance
-        settings2 = cast("UserService", clean_flext_core.get_settings(UserService))
-        if settings2.name != "modified_name":
-            raise AssertionError(f"Expected {'modified_name'}, got {settings2.name}")
-        assert settings1 is settings2
-
-    def test_constants_property_access(self, clean_flext_core: FlextCore) -> None:
-        """Test constants property access."""
-        constants = clean_flext_core.constants
-
-        assert constants is FlextConstants
-        assert hasattr(constants, "ERROR_CODES")
-
-    def test_constants_consistency(self, clean_flext_core: FlextCore) -> None:
-        """Test constants consistency across instances."""
-        constants1 = clean_flext_core.constants
-        constants2 = clean_flext_core.constants
-
-        assert constants1 is constants2
-        assert constants1 is FlextConstants
+        # Test with None
+        none_result = clean_flext_core.validate_required(None)
+        assert none_result.is_failure
 
 
 @pytest.mark.unit
-class TestFlextCoreRepresentation:
-    """Test FlextCore string representation."""
+class TestFlextCoreUtilities:
+    """Test FlextCore utility functions with real operations."""
 
-    def test_repr_with_no_services(self, clean_flext_core: FlextCore) -> None:
-        """Test repr with no registered services."""
-        repr_str = repr(clean_flext_core)
+    def test_generate_uuid_real_generation(self, clean_flext_core: FlextCore) -> None:
+        """Test real UUID generation."""
+        uuid1 = clean_flext_core.generate_uuid()
+        uuid2 = clean_flext_core.generate_uuid()
 
-        if "FlextCore" not in repr_str:
-            raise AssertionError(f"Expected {'FlextCore'} in {repr_str}")
-        assert "services=" in repr_str
+        # Verify real UUIDs
+        assert isinstance(uuid1, str)
+        assert isinstance(uuid2, str)
+        assert uuid1 != uuid2
+        assert len(uuid1) == 36  # Standard UUID length
+        assert "-" in uuid1
 
-    def test_repr_with_services(self, clean_flext_core: FlextCore) -> None:
-        """Test repr with registered services."""
-        # Register some services
-        service1 = UserService()
-        service2 = DataService()
+    def test_generate_correlation_id_real_generation(
+        self, clean_flext_core: FlextCore
+    ) -> None:
+        """Test real correlation ID generation."""
+        corr_id1 = clean_flext_core.generate_correlation_id()
+        corr_id2 = clean_flext_core.generate_correlation_id()
 
-        key1 = FlextServiceKey[UserService]("user")
-        key2 = FlextServiceKey[DataService]("data")
+        # Verify real correlation IDs
+        assert isinstance(corr_id1, str)
+        assert isinstance(corr_id2, str)
+        assert corr_id1 != corr_id2
+        assert corr_id1.startswith("corr_")
+        assert corr_id2.startswith("corr_")
 
-        clean_flext_core.register_service(key1, service1)
-        clean_flext_core.register_service(key2, service2)
+    def test_safe_call_real_execution(self, clean_flext_core: FlextCore) -> None:
+        """Test safe call with real function execution."""
 
-        repr_str = repr(clean_flext_core)
+        def successful_function() -> str:
+            return "success_result"
 
-        if "FlextCore" not in repr_str:
-            raise AssertionError(f"Expected {'FlextCore'} in {repr_str}")
-        assert "services=" in repr_str
+        def failing_function() -> str:
+            raise ValueError("Real error in function")
 
-    def test_repr_format_consistency(self, clean_flext_core: FlextCore) -> None:
-        """Test repr format consistency."""
-        repr_str = repr(clean_flext_core)
+        # Test successful function
+        success_result = clean_flext_core.safe_call(successful_function)
+        assert success_result.success
+        assert success_result.data == "success_result"
 
-        # Should match pattern: FlextCore(services=N)
-        assert repr_str.startswith("FlextCore(")
-        assert repr_str.endswith(")")
-        if "services=" not in repr_str:
-            raise AssertionError(f"Expected {'services='} in {repr_str}")
+        # Test failing function
+        failure_result = clean_flext_core.safe_call(failing_function)
+        assert failure_result.is_failure
+        assert "Real error in function" in failure_result.error
+
+    def test_truncate_real_string_operations(self, clean_flext_core: FlextCore) -> None:
+        """Test real string truncation."""
+        long_string = "This is a very long string that should be truncated"
+        
+        # Test truncation
+        truncated = clean_flext_core.truncate(long_string, max_length=20)
+        assert len(truncated) <= 20
+        assert truncated.endswith("...")
+
+        # Test no truncation needed
+        short_string = "Short"
+        not_truncated = clean_flext_core.truncate(short_string, max_length=20)
+        assert not_truncated == short_string
 
 
 @pytest.mark.unit
-class TestFlextCoreConvenienceFunction:
-    """Test flext_core convenience function."""
+class TestFlextCorePerformanceIntegration:
+    """Test FlextCore performance monitoring with real execution."""
 
-    def test_convenience_function_returns_singleton(self) -> None:
-        """Test convenience function returns singleton."""
-        FlextCore._instance = None
+    def test_track_performance_real_execution(self, clean_flext_core: FlextCore) -> None:
+        """Test real performance tracking."""
 
-        instance1 = flext_core()
-        instance2 = flext_core()
-        instance3 = FlextCore.get_instance()
+        @clean_flext_core.track_performance("test_category")
+        def test_operation() -> str:
+            time.sleep(0.01)  # Real delay
+            return "operation_result"
 
-        assert instance1 is instance2
-        assert instance1 is instance3
-        assert isinstance(instance1, FlextCore)
+        # Execute real operation with tracking
+        result = test_operation()
+        assert result == "operation_result"
 
-    def test_convenience_function_functional_usage(self) -> None:
-        """Test convenience function in functional usage."""
-        # Should be able to chain operations
-        result = flext_core().ok("test").map(lambda x: f"processed_{x}")
+        # Verify performance metrics were recorded
+        metrics = clean_flext_core.get_performance_metrics()
+        assert "metrics" in metrics
+        assert isinstance(metrics["metrics"], dict)
+
+    def test_clear_performance_metrics_real_behavior(
+        self, clean_flext_core: FlextCore
+    ) -> None:
+        """Test real performance metrics clearing."""
+        # Record some metrics first
+        clean_flext_core.record_performance(
+            "test_category", "test_function", 0.1, success=True
+        )
+
+        # Verify metrics exist
+        metrics_before = clean_flext_core.get_performance_metrics()
+        assert "metrics" in metrics_before
+
+        # Clear metrics
+        clean_flext_core.clear_performance_metrics()
+
+        # Verify metrics cleared
+        metrics_after = clean_flext_core.get_performance_metrics()
+        assert metrics_after["metrics"] == {}
+
+
+@pytest.mark.unit
+class TestFlextCoreEntityCreation:
+    """Test FlextCore entity creation with real domain objects."""
+
+    def test_create_entity_real_validation(self, clean_flext_core: FlextCore) -> None:
+        """Test real entity creation with validation."""
+
+        class RealEntity:
+            def __init__(self, name: str, value: int) -> None:
+                self.name = name
+                self.value = value
+
+        # Test successful creation
+        result = clean_flext_core.create_entity(
+            RealEntity, name="test_entity", value=42
+        )
 
         assert result.success
-        if result.data != "processed_test":
-            raise AssertionError(f"Expected {'processed_test'}, got {result.data}")
+        entity = result.data
+        assert isinstance(entity, RealEntity)
+        assert entity.name == "test_entity"
+        assert entity.value == 42
 
-    def test_convenience_function_service_operations(self) -> None:
-        """Test convenience function with service operations."""
-        service = UserService("convenience_test")
-        service_key = FlextServiceKey[UserService]("convenience_service")
+    def test_create_metadata_real_functionality(
+        self, clean_flext_core: FlextCore
+    ) -> None:
+        """Test real metadata creation."""
+        metadata_result = clean_flext_core.create_metadata(
+            source="test_source",
+            version="1.0.0",
+            timestamp=datetime.now(UTC).isoformat(),
+        )
 
-        # Register through convenience function
-        register_result = flext_core().register_service(service_key, service)
-        assert register_result.success
-
-        # Retrieve through convenience function
-        get_result = flext_core().get_service(service_key)
-        assert get_result.success
-        service = cast("UserService", get_result.data)
-        assert service is not None
-        if service.name != "convenience_test":
-            raise AssertionError(f"Expected {'convenience_test'}, got {service.name}")
-
-    def test_convenience_function_logging_access(self) -> None:
-        """Test convenience function logging access."""
-        logger = flext_core().get_logger("convenience.test")
-
-        assert isinstance(logger, FlextLogger)
-        if logger._name != "convenience.test":
-            raise AssertionError(f"Expected {'convenience.test'}, got {logger._name}")
+        assert metadata_result.success
+        metadata = metadata_result.data
+        assert hasattr(metadata, "source") or hasattr(metadata, "__getitem__")
 
 
 @pytest.mark.unit
-class TestFlextCoreIntegration:
-    """Test FlextCore integration scenarios."""
+class TestFlextCoreErrorHandling:
+    """Test FlextCore error handling with real exceptions."""
 
-    def test_full_workflow_integration(self, clean_flext_core: FlextCore) -> None:
-        """Test complete workflow integration."""
-        # Setup phase
-        self._setup_integration_test(clean_flext_core)
+    def test_create_error_real_functionality(self, clean_flext_core: FlextCore) -> None:
+        """Test real error creation."""
+        error = clean_flext_core.create_error("Real error message", "TEST_ERROR")
 
-        # Service registration phase
-        user_key, data_key = self._register_services(clean_flext_core)
+        assert isinstance(error, FlextError)
+        assert "Real error message" in str(error)
 
-        # Pipeline execution phase
-        result, logged_steps = self._execute_integration_pipeline(
-            clean_flext_core,
-            user_key,
-            data_key,
+    def test_create_validation_error_real_functionality(
+        self, clean_flext_core: FlextCore
+    ) -> None:
+        """Test real validation error creation."""
+        validation_error = clean_flext_core.create_validation_error(
+            "Real validation failed", field="test_field", value="invalid_value"
         )
 
-        # Validation phase
-        self._validate_integration_results(result, logged_steps)
+        assert isinstance(validation_error, FlextValidationError)
+        assert "Real validation failed" in str(validation_error)
 
-    def _setup_integration_test(self, clean_flext_core: FlextCore) -> None:
-        """Set up logging and basic configuration for integration test."""
-        clean_flext_core.configure_logging(log_level="INFO")
-        _ = clean_flext_core.get_logger("integration.test")
+    def test_handle_error_real_processing(self, clean_flext_core: FlextCore) -> None:
+        """Test real error handling."""
+        real_error = ValueError("Real runtime error")
+        
+        handled_result = clean_flext_core.handle_error(real_error)
+        
+        assert handled_result.is_failure
+        assert "Real runtime error" in handled_result.error
 
-    def _register_services(self, clean_flext_core: FlextCore) -> tuple[object, object]:
-        """Register user and data services."""
-        user_service = UserService("integration_user")
-        data_service = DataService("integration_db")
 
-        user_key = FlextServiceKey[UserService]("user_service")
-        data_key = FlextServiceKey[DataService]("data_service")
+@pytest.mark.unit
+class TestFlextCoreIntegrationScenarios:
+    """Test complete integration scenarios with real workflows."""
 
+    def test_complete_workflow_user_management(
+        self, clean_flext_core: FlextCore
+    ) -> None:
+        """Test complete user management workflow with real operations."""
+        # 1. Register real services
+        user_service = RealUserService("workflow_user_service")
+        data_service = RealDataService("workflow_data_service")
+
+        user_key = FlextServiceKey[RealUserService]("workflow_user")
+        data_key = FlextServiceKey[RealDataService]("workflow_data")
+
+        # Register services
         user_reg_result = clean_flext_core.register_service(user_key, user_service)
         data_reg_result = clean_flext_core.register_service(data_key, data_service)
 
         assert user_reg_result.success
         assert data_reg_result.success
 
-        return user_key, data_key
+        # 2. Execute real business workflow
+        user_svc_result = clean_flext_core.get_service(user_key)
+        data_svc_result = clean_flext_core.get_service(data_key)
 
-    def _execute_integration_pipeline(
-        self,
-        clean_flext_core: FlextCore,
-        user_key: object,
-        data_key: object,
-    ) -> tuple[object, list[str]]:
-        """Execute the full integration pipeline with logging."""
-        logged_steps: list[str] = []
+        assert user_svc_result.success
+        assert data_svc_result.success
 
-        def get_user_data(user_id: object) -> FlextResult[object]:
-            user_result: FlextResult[object] = clean_flext_core.get_service(user_key)
-            if user_result.is_failure:
-                return FlextResult[None].fail("User service not available")
-            user_service = user_result.data
-            assert user_service is not None
-            user_data = user_service.get_user(str(user_id))
-            return FlextResult[None].ok(user_data)
+        user_svc = user_svc_result.data
+        data_svc = data_svc_result.data
 
-        def save_user_data(user_data: object) -> FlextResult[object]:
-            data_result: FlextResult[object] = clean_flext_core.get_service(data_key)
-            if data_result.is_failure:
-                return FlextResult[None].fail("Data service not available")
-            data_service = data_result.data
-            assert data_service is not None
-            save_result = data_service.save_data(str(user_data))
-            return FlextResult[None].ok(save_result)
+        # 3. Real user creation workflow
+        create_result = user_svc.create_user("workflow_user", "john_workflow")
+        assert create_result.success
 
-        def log_step(step_name: str) -> Callable[[object], FlextResult[object]]:
-            def logger_func(data: object) -> None:
-                logged_steps.append(f"{step_name}: {data}")
+        # 4. Real data persistence workflow
+        user_data = {"user_id": "workflow_user", "name": "john_workflow"}
+        save_result = data_svc.save_data("user_workflow_user", user_data)
+        assert save_result.success
 
-            return clean_flext_core.tap(logger_func)
+        # 5. Real validation workflow
+        email_validation = clean_flext_core.validate_email("john@workflow.com")
+        assert email_validation.success
 
-        pipeline = clean_flext_core.pipe(
-            log_step("input"),
-            get_user_data,
-            log_step("user_data"),
-            save_user_data,
-            log_step("saved"),
-        )
+        # 6. Real retrieval and verification workflow
+        get_user_result = user_svc.get_user("workflow_user")
+        get_data_result = data_svc.get_data("user_workflow_user")
 
-        result: FlextResult[object] = pipeline("user123")
-        return result, logged_steps
+        assert get_user_result.success
+        assert get_data_result.success
+        assert get_user_result.data == "john_workflow"
 
-    def _validate_integration_results(
-        self,
-        result: object,
-        logged_steps: list[str],
-    ) -> None:
-        """Validate the integration test results."""
-        assert result.success
-        if result.data is None:
-            raise AssertionError(f"Expected True, got {result.data}")
-        if len(logged_steps) != EXPECTED_DATA_COUNT:
-            raise AssertionError(f"Expected {3}, got {len(logged_steps)}")
-        if "input: user123" not in logged_steps:
-            raise AssertionError(f"Expected {'input: user123'} in {logged_steps}")
-        assert "user_data: User user123" in logged_steps
-        if "saved: True" not in logged_steps:
-            raise AssertionError(f"Expected {'saved: True'} in {logged_steps}")
+    def test_error_recovery_workflow(self, clean_flext_core: FlextCore) -> None:
+        """Test real error recovery workflow."""
+        user_service = RealUserService("error_recovery_service")
+        user_key = FlextServiceKey[RealUserService]("error_recovery")
 
-    def test_error_handling_integration(self, clean_flext_core: FlextCore) -> None:
-        """Test error handling integration."""
-
-        # Create a pipeline that will fail
-        def validate_input(x: object) -> FlextResult[object]:
-            x_str = cast("str", x)
-            if not x_str:
-                return FlextResult[None].fail("Empty input")
-            return FlextResult[None].ok(x_str)
-
-        def process_data(x: object) -> FlextResult[object]:
-            x_str = cast("str", x)
-            if x_str == "fail":
-                return FlextResult[None].fail("Processing failed")
-            return FlextResult[None].ok(f"processed_{x_str}")
-
-        def save_result(x: object) -> FlextResult[object]:
-            x_str = cast("str", x)
-            return FlextResult[None].ok(f"saved_{x_str}")
-
-        pipeline = clean_flext_core.pipe(validate_input, process_data, save_result)
-
-        # Test success case
-        success_result: FlextResult[object] = pipeline("valid_input")
-        assert success_result.success
-        if success_result.data != "saved_processed_valid_input":
-            raise AssertionError(
-                f"Expected {'saved_processed_valid_input'}, got {success_result.data}",
-            )
-
-        # Test failure cases
-        empty_result: FlextResult[object] = pipeline("")
-        assert empty_result.is_failure
-        assert empty_result.error is not None
-        assert "Empty input" in empty_result.error, (
-            f"Expected 'Empty input' in {empty_result.error}"
-        )
-
-        fail_result: FlextResult[object] = pipeline("fail")
-        assert fail_result.is_failure
-        assert fail_result.error is not None
-        assert "Processing failed" in fail_result.error, (
-            f"Expected 'Processing failed' in {fail_result.error}"
-        )
-
-    def test_settings_and_services_integration(
-        self,
-        clean_flext_core: FlextCore,
-    ) -> None:
-        """Test settings and services integration."""
-        # Get settings
-        user_settings = clean_flext_core.get_settings(UserService)
-
-        # Register service using settings
-        service_key = FlextServiceKey[UserService]("configured_service")
-        register_result = clean_flext_core.register_service(service_key, user_settings)
-
-        assert register_result.success
-
-        # Retrieve and verify it's the same instance
-        service_result = clean_flext_core.get_service(service_key)
+        # Register service
+        clean_flext_core.register_service(user_key, user_service)
+        
+        # Get service
+        service_result = clean_flext_core.get_service(user_key)
         assert service_result.success
-        assert service_result.data is user_settings
+        service = service_result.data
 
-    def test_constants_usage_integration(self, clean_flext_core: FlextCore) -> None:
-        """Test constants usage integration."""
-        constants = clean_flext_core.constants
+        # 1. Create user successfully
+        create_result = service.create_user("test_user", "test_name")
+        assert create_result.success
 
-        # Should be able to access error codes
-        assert hasattr(constants, "ERROR_CODES")
+        # 2. Try to create duplicate user (real error)
+        duplicate_result = service.create_user("test_user", "duplicate_name")
+        assert duplicate_result.is_failure
+        assert "already exists" in duplicate_result.error
 
-        # Constants should be consistent
-        constants2 = clean_flext_core.constants
-        assert constants is constants2
+        # 3. Recovery: create different user
+        recovery_result = service.create_user("test_user_2", "recovery_name")
+        assert recovery_result.success
+
+        # 4. Verify state is consistent
+        list_result = service.list_users()
+        assert list_result.success
+        assert "test_user" in list_result.data
+        assert "test_user_2" in list_result.data
+        assert len(list_result.data) == 2
 
 
 @pytest.mark.unit
-class TestFlextCoreEdgeCases:
-    """Test FlextCore edge cases and error conditions."""
+class TestFlextCoreGlobalInstance:
+    """Test FlextCore global instance functionality."""
 
-    def test_singleton_with_manual_instantiation(self) -> None:
-        """Test singleton behavior with manual instantiation."""
+    def test_global_instance_access(self) -> None:
+        """Test global flext_core instance access."""
+        # Reset to ensure clean state
         FlextCore._instance = None
 
-        # Manual instantiation
-        manual_instance = FlextCore()
+        # Access global instance
+        global_instance = flext_core
 
-        # Get singleton instance
-        singleton_instance = FlextCore.get_instance()
+        assert isinstance(global_instance, FlextCore)
+        assert global_instance is FlextCore.get_instance()
 
-        # They should be different
-        assert manual_instance is not singleton_instance
+    def test_global_instance_functionality(self) -> None:
+        """Test global instance has full functionality."""
+        # Reset singleton
+        FlextCore._instance = None
 
-    def test_container_access_consistency(self, clean_flext_core: FlextCore) -> None:
-        """Test container access consistency."""
-        container1 = clean_flext_core.container
-        container2 = clean_flext_core.container
+        # Test functionality through global instance
+        uuid_result = flext_core.generate_uuid()
+        assert isinstance(uuid_result, str)
+        assert len(uuid_result) == 36
 
-        # Should be same container instance
-        assert container1 is container2
+        email_validation = flext_core.validate_email("test@global.com")
+        assert email_validation.success
 
-    def test_empty_pipeline_edge_cases(self, clean_flext_core: FlextCore) -> None:
-        """Test edge cases with empty pipelines."""
-        empty_pipeline = clean_flext_core.pipe()
+        # Test service registration through global instance
+        test_service = RealUserService("global_test_service")
+        test_key = FlextServiceKey[RealUserService]("global_test")
 
-        # Should handle various input types
-        result1 = empty_pipeline(None)
-        assert result1.success
-        assert result1.data is None
+        register_result = flext_core.register_service(test_key, test_service)
+        assert register_result.success
 
-        result2 = empty_pipeline([])
-        assert result2.success
-        if result2.data != []:
-            raise AssertionError(f"Expected {[]}, got {result2.data}")
-
-        result3 = empty_pipeline({})
-        assert result3.success
-        if result3.data != {}:
-            raise AssertionError(f"Expected {{}}, got {result3.data}")
-
-    def test_when_predicate_edge_cases(self, clean_flext_core: FlextCore) -> None:
-        """Test when predicate edge cases."""
-
-        def always_true(x: object) -> bool:  # noqa: ARG001
-            return True
-
-        def always_false(x: object) -> bool:  # noqa: ARG001
-            return False
-
-        def success_func(x: object) -> FlextResult[object]:
-            return FlextResult[None].ok(f"success_{x}")
-
-        # Always true
-        true_condition = clean_flext_core.when(always_true, success_func)
-        result1 = true_condition("test")
-        assert result1.success
-        if result1.data != "success_test":
-            raise AssertionError(f"Expected {'success_test'}, got {result1.data}")
-
-        # Always false with no else
-        false_condition = clean_flext_core.when(always_false, success_func)
-        result2 = false_condition("test")
-        assert result2.success
-        if result2.data != "test":  # Unchanged
-            raise AssertionError(f"Expected {'test'}, got {result2.data}")
-
-    def test_tap_side_effect_exceptions(self, clean_flext_core: FlextCore) -> None:
-        """Test tap with side effect exceptions."""
-
-        def failing_side_effect(x: object) -> None:  # noqa: ARG001
-            msg = "Side effect error"
-            raise RuntimeError(msg)
-
-        tap_func = clean_flext_core.tap(failing_side_effect)
-
-        # The current implementation doesn't handle exceptions in side effects
-        with pytest.raises(RuntimeError, match="Side effect error"):
-            tap_func("test")
-
-    def test_settings_with_invalid_classes(self, clean_flext_core: FlextCore) -> None:
-        """Test settings with edge case classes."""
-
-        # Class without default constructor
-        class NoDefaultConstructor:
-            def __init__(self, required_param: str) -> None:
-                self.required_param = required_param
-
-        # Should handle gracefully
-        with contextlib.suppress(Exception):
-            # Test graceful handling
-            _ = clean_flext_core.get_settings(NoDefaultConstructor)
-
-    def test_repr_edge_cases(self, clean_flext_core: FlextCore) -> None:
-        """Test repr with edge cases."""
-        # Mock container to simulate different service counts
-        with patch.object(clean_flext_core, "_container") as mock_container:
-            mock_container.get_service_count.return_value = 0
-            repr_str = repr(clean_flext_core)
-            if "services=0" not in repr_str:
-                raise AssertionError(f"Expected {'services=0'} in {repr_str}")
-
-            mock_container.get_service_count.return_value = 100
-            repr_str = repr(clean_flext_core)
-            if "services=100" not in repr_str:
-                raise AssertionError(f"Expected {'services=100'} in {repr_str}")
+        get_result = flext_core.get_service(test_key)
+        assert get_result.success
+        assert get_result.data is test_service

@@ -109,7 +109,7 @@ def _demo_repository_pattern(order: Order) -> object:
 
     repository = OrderRepository()
     repository.save(order)
-    fetch_result = repository.get_by_id(order.id)
+    fetch_result = repository.get_by_id(order.id.root)
     if fetch_result.success:
         pass
     return repository
@@ -146,7 +146,7 @@ def _demo_fields_validation() -> None:
 
 def _demo_complete_flow(customer: User, order: Order, logger: FlextLogger) -> None:
     order2_result = SharedDomainFactory.create_order(
-        customer_id=customer.id,
+        customer_id=str(customer.id),
         items=[
             {
                 "product_id": "product456",
@@ -161,7 +161,9 @@ def _demo_complete_flow(customer: User, order: Order, logger: FlextLogger) -> No
         order2 = order2_result.data
         repository_any = get_flext_container().get("order_repository").unwrap()
         # Hint to type checker
-        repo: _OrderRepositoryProtocol = repository_any
+        repo: _OrderRepositoryProtocol = cast(
+            "_OrderRepositoryProtocol", repository_any
+        )
         repo.save(order2)
         total1_result = order.calculate_total()
         total2_result = order2.calculate_total()
@@ -169,7 +171,7 @@ def _demo_complete_flow(customer: User, order: Order, logger: FlextLogger) -> No
             total1 = total1_result.data
             total2 = total2_result.data
             if total1 is not None and total2 is not None:
-                total1.amount + total2.amount
+                _ = total1.amount + total2.amount
     logger.info("Integration example completed successfully")
 
 
@@ -183,13 +185,13 @@ def main() -> None:
         return
     customer = user_result.data
     _print_customer(customer)
-    order_result = _create_order(customer.id, money)
+    order_result = _create_order(str(customer.id), money)
     if order_result.is_failure or order_result.data is None:
         return
     order = order_result.data
     _print_order(order)
     _demo_command_pattern(
-        customer.id,
+        str(customer.id),
         [
             {
                 "product_id": "product123",

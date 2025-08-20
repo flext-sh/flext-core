@@ -227,7 +227,7 @@ class FlextResult[T]:
         # Create a new instance with the correct type annotation
         return cls(error=actual_error, error_code=error_code, error_data=error_data)
 
-    # Operations expected by tests
+    # Operations
     @staticmethod
     def chain_results(*results: FlextResult[object]) -> FlextResult[list[object]]:
         """Chain multiple results into a list, failing on first failure.
@@ -255,7 +255,7 @@ class FlextResult[T]:
         """
         if self.is_failure:
             error_msg = self._error or "Unwrap failed"
-            # When unwrapping, tests expect any provided error_code to pass through
+            # When unwrapping,  any provided error_code to pass through
             # and context to equal error_data directly.
             # Pass through error_code; if none, set UNWRAP_ERROR and do not
             # override with OPERATION_ERROR default inside exception.
@@ -619,7 +619,7 @@ class FlextResult[T]:
 #   - compose() - Use FlextResult.chain() static method instead
 #   - safe_call() - Use FlextResult.from_callable() static method instead
 #
-# Import from legacy.py if needed for backward compatibility:
+# Import from legacy.py if needed for compatibility:
 #   from flext_core.legacy import chain, compose, safe_call
 
 

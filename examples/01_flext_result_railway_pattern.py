@@ -70,17 +70,13 @@ def process_multiple_users(users_data: list[UserData]) -> FlextResult[Processing
     results = [process_user_registration(data) for data in users_data]
     successful = [r.data for r in results if r.success]
 
-    return FlextResult[ProcessingResult].ok(
-        {
-            "total": len(users_data),
-            "successful": len(successful),
-            "failed": len(users_data) - len(successful),
-            "success_rate": len(successful) / len(users_data) * 100
-            if users_data
-            else 0,
-            "results": successful,
-        }
-    )
+    return FlextResult[ProcessingResult].ok({
+        "total": len(users_data),
+        "successful": len(successful),
+        "failed": len(users_data) - len(successful),
+        "success_rate": len(successful) / len(users_data) * 100 if users_data else 0,
+        "results": successful,
+    })
 
 
 def transform_and_process(json_data: str) -> FlextResult[ProcessingResult]:
@@ -88,7 +84,7 @@ def transform_and_process(json_data: str) -> FlextResult[ProcessingResult]:
     return (
         safe_call(lambda: json.loads(json_data) if json_data.startswith("{") else {})
         .filter(lambda d: isinstance(d, dict), "Invalid data")
-        .flat_map(process_user_registration)
+        .flat_map(lambda data: process_user_registration(cast("UserData", data)))
     )
 
 
@@ -113,13 +109,11 @@ def demo_successful_registration() -> None:
     """Show successful registration."""
     print("\n🧪 Testing successful registration...")
 
-    result = process_user_registration(
-        {
-            "name": "Alice Johnson",
-            "email": "alice@example.com",
-            "age": 28,
-        }
-    )
+    result = process_user_registration({
+        "name": "Alice Johnson",
+        "email": "alice@example.com",
+        "age": 28,
+    })
 
     print(f"✅ Result: {result.data if result.success else result.error}")
 

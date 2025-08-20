@@ -8,7 +8,8 @@ and enterprise service patterns using mixin combinations.
 from __future__ import annotations
 
 import time
-from typing import Protocol
+from collections.abc import Sized
+from typing import Protocol, cast
 
 from flext_core import (
     FlextCacheableMixin,
@@ -408,14 +409,14 @@ class AdvancedUser(
         log_domain_operation(
             "advanced_user_created",
             "AdvancedUser",
-            self._user.id,
+            self._user.id.root,
             role=role,
         )
 
     @property
     def id(self) -> str:
         """Get user ID from composed user."""
-        return self._user.id
+        return self._user.id.root
 
     @property
     def name(self) -> str:
@@ -572,7 +573,7 @@ class SmartDocument(
         self.cache_set(cache_key, view_data)
         self.view_count += 1
 
-        return view_data
+        return cast("dict[str, object]", view_data)
 
     def update_content(self, new_content: str) -> None:
         """Update content and clear cache."""
@@ -738,7 +739,7 @@ class EnterpriseService(
 # =============================================================================
 
 
-class DomainEntity(FlextEntityMixin):
+class DomainEntity(FlextEntityMixin):  # type: ignore[misc]
     """Domain entity using composite entity mixin."""
 
     def __init__(self, entity_type: str, data: dict[str, object]) -> None:
@@ -779,7 +780,7 @@ class DomainEntity(FlextEntityMixin):
         }
 
 
-class ValueObjectExample(FlextValueObjectMixin):
+class ValueObjectExample(FlextValueObjectMixin):  # type: ignore[misc]
     """Value object using composite value object mixin."""
 
     def __init__(self, name: str, value: object, unit: str | None = None) -> None:
@@ -966,7 +967,10 @@ def demonstrate_composite_mixins() -> None:
     )
     updated_info = entity.get_entity_info()
     data_field = updated_info["data"]
-    len(data_field) if hasattr(data_field, "__len__") else 0
+    data_length = (
+        len(cast("Sized", data_field)) if hasattr(data_field, "__len__") else 0
+    )
+    print(f"Data field length: {data_length}")
 
     # Value object using FlextValueObjectMixin
 
@@ -1031,7 +1035,7 @@ def demonstrate_method_resolution_order() -> None:
             }
 
             self.logger.info("Operation completed", name=self.name)
-            return result
+            return cast("dict[str, object]", result)
 
     # Demonstrate MRO
     complex_obj = ComplexClass("test_object")
@@ -1105,8 +1109,10 @@ def demonstrate_performance_characteristics() -> None:
     multiple_time = time.time() - start_time
 
     # Calculate overhead
-    ((single_time - simple_time) / simple_time) * 100
-    ((multiple_time - simple_time) / simple_time) * 100
+    single_overhead = ((single_time - simple_time) / simple_time) * 100
+    multiple_overhead = ((multiple_time - simple_time) / simple_time) * 100
+    print(f"Single mixin overhead: {single_overhead:.2f}%")
+    print(f"Multiple mixin overhead: {multiple_overhead:.2f}%")
 
 
 def demonstrate_enterprise_patterns() -> None:
@@ -1166,13 +1172,13 @@ def _create_enterprise_user_repository() -> UserRepositoryProtocol:
             _ = self._get_execution_time_seconds(start_time)
             if result.is_success:
                 self.logger.info("User saved", user_id=user_id)
-            else:
-                self.logger.error(
-                    "Failed to save user",
-                    user_id=user_id,
-                    error=result.error,
-                )
-            return result
+                return FlextResult[None].ok(None)
+            self.logger.error(
+                "Failed to save user",
+                user_id=user_id,
+                error=result.error,
+            )
+            return FlextResult[None].fail(result.error or "Save failed")
 
         def save_user(
             self,
@@ -1393,7 +1399,8 @@ def _demonstrate_service_pattern(order_service: OrderServiceProtocol) -> None:
     if order_result.is_success and order_result.data:
         order = order_result.data
         items = order["items"]
-        len(items) if hasattr(items, "__len__") else 0
+        items_count = len(cast("Sized", items)) if hasattr(items, "__len__") else 0
+        print(f"Order has {items_count} items")
 
     # Try invalid order with FlextResult pattern
     invalid_order_result = order_service.create_order("user_999", [])

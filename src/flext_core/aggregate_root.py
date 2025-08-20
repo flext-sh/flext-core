@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import cast
+from typing import cast, override
 
 from pydantic import ConfigDict
 
@@ -215,6 +215,7 @@ class FlextAggregateRoot(FlextEntity):
         # The _apply_entity_data function was removed as data is now passed directly.
         # _apply_entity_data(self, entity_data)
 
+    @override
     def add_domain_event(
         self,
         event_type_or_dict: str | dict[str, object],

@@ -221,7 +221,7 @@ class FlextPayload[T](
         cls,
         data_dict: dict[str, object] | Mapping[str, object] | object,
     ) -> FlextResult[FlextPayload[object]]:
-        """Convenience wrapper expected by tests; returns FlextResult.
+        """Convenience wrapper ; returns FlextResult.
 
         Accepts dict-like inputs to satisfy broader call sites and delegates
         to ``create_from_dict`` after minimal normalization.

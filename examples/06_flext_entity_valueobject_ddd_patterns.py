@@ -14,8 +14,16 @@ Key Patterns:
 from __future__ import annotations
 
 from decimal import Decimal
+from typing import Any, cast
 
 from flext_core import FlextEntity, FlextResult, FlextValueObject
+from flext_core.entities import (
+    FlextEntityId,
+    FlextEventList,
+    FlextMetadata,
+    FlextTimestamp,
+    FlextVersion,
+)
 from flext_core.utilities import FlextGenerators
 
 from .shared_domain import Address
@@ -38,9 +46,9 @@ class ProductCode(FlextValueObject):
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate product code format."""
         if not self.code or len(self.code) < MIN_PRODUCT_CODE_LENGTH:
-            return FlextResult[str].fail("Product code must be at least 3 characters")
+            return FlextResult[None].fail("Product code must be at least 3 characters")
         if not self.code.isalnum():
-            return FlextResult[str].fail("Product code must be alphanumeric")
+            return FlextResult[None].fail("Product code must be alphanumeric")
         return FlextResult[None].ok(None)
 
 
@@ -53,16 +61,18 @@ class Price(FlextValueObject):
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate price rules."""
         if self.amount < 0:
-            return FlextResult[str].fail("Price cannot be negative")
+            return FlextResult[None].fail("Price cannot be negative")
         if len(self.currency) != CURRENCY_CODE_LENGTH:
-            return FlextResult[str].fail("Currency must be 3 characters")
+            return FlextResult[None].fail("Currency must be 3 characters")
         return FlextResult[None].ok(None)
 
     def add(self, other: Price) -> FlextResult[Price]:
         """Add two prices with currency validation."""
         if self.currency != other.currency:
-            return FlextResult[str].fail("Cannot add prices with different currencies")
-        return FlextResult.ok(
+            return FlextResult[Price].fail(
+                "Cannot add prices with different currencies"
+            )
+        return FlextResult[Price].ok(
             Price(amount=self.amount + other.amount, currency=self.currency)
         )
 
@@ -83,19 +93,19 @@ class Product(FlextEntity):
     def activate(self) -> FlextResult[Product]:
         """Activate product and raise domain event."""
         if self.active:
-            return FlextResult[str].fail("Product already active")
+            return FlextResult[Product].fail("Product already active")
 
         self.active = True
         self.add_domain_event(
             "ProductActivated",
             {"product_id": self.id, "code": self.code.code, "timestamp": "now"},
         )
-        return FlextResult.ok(self)
+        return FlextResult[Product].ok(self)
 
     def update_price(self, new_price: Price) -> FlextResult[Product]:
         """Update product price."""
         if not self.active:
-            return FlextResult[str].fail("Cannot update price of inactive product")
+            return FlextResult[Product].fail("Cannot update price of inactive product")
 
         old_price = self.price
         self.price = new_price
@@ -108,7 +118,7 @@ class Product(FlextEntity):
                 "currency": new_price.currency,
             },
         )
-        return FlextResult.ok(self)
+        return FlextResult[Product].ok(self)
 
 
 class Customer(FlextEntity):
@@ -122,9 +132,9 @@ class Customer(FlextEntity):
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate customer business rules."""
         if not self.name.strip():
-            return FlextResult[str].fail("Customer name required")
+            return FlextResult[None].fail("Customer name required")
         if "@" not in self.email:
-            return FlextResult[str].fail("Valid email required")
+            return FlextResult[None].fail("Valid email required")
         return FlextResult[None].ok(None)
 
     def update_address(self, new_address: Address) -> FlextResult[Customer]:
@@ -152,9 +162,10 @@ class ShoppingCart(FlextEntity):
     customer_id: str
     total: Price = Price(amount=Decimal("0.00"))
 
-    def __init__(self, **kwargs: object) -> None:
+    def __init__(self, customer_id: str, **kwargs: Any) -> None:
         """Initialize shopping cart with empty items."""
         super().__init__(**kwargs)
+        self.customer_id = customer_id
         self.items: list[dict[str, object]] = []
 
     def add_item(
@@ -162,9 +173,9 @@ class ShoppingCart(FlextEntity):
     ) -> FlextResult[ShoppingCart]:
         """Add item to cart with business rules."""
         if not product.active:
-            return FlextResult[str].fail("Cannot add inactive product")
+            return FlextResult[ShoppingCart].fail("Cannot add inactive product")
         if quantity <= 0:
-            return FlextResult[str].fail("Quantity must be positive")
+            return FlextResult[ShoppingCart].fail("Quantity must be positive")
 
         # Add item
         item = {
@@ -174,7 +185,7 @@ class ShoppingCart(FlextEntity):
             "price": str(product.price.amount),
             "quantity": quantity,
         }
-        self.items.append(item)
+        self.items.append(cast("dict[str, object]", item))
 
         # Update total
         item_total = Price(
@@ -194,12 +205,12 @@ class ShoppingCart(FlextEntity):
             },
         )
 
-        return FlextResult.ok(self)
+        return FlextResult[ShoppingCart].ok(self)
 
     def checkout(self) -> FlextResult[dict[str, object]]:
         """Convert cart to order."""
         if not self.items:
-            return FlextResult[str].fail("Cannot checkout empty cart")
+            return FlextResult[dict[str, object]].fail("Cannot checkout empty cart")
 
         order_data = {
             "customer_id": self.customer_id,
@@ -238,7 +249,7 @@ class PricingService:
     ) -> FlextResult[Price]:
         """Calculate discounted price."""
         if discount_percent < 0 or discount_percent > MAX_DISCOUNT_PERCENT:
-            return FlextResult[str].fail("Discount must be between 0 and 100")
+            return FlextResult[Price].fail("Discount must be between 0 and 100")
 
         discount_amount = price.amount * (discount_percent / 100)
         final_amount = price.amount - discount_amount
@@ -280,19 +291,29 @@ class DomainObjectFactory:
     ) -> FlextResult[Product]:
         """Create product with validation."""
         return (
-            FlextResult.ok(
-                {
-                    "code": code,
-                    "name": name,
-                    "amount": price_amount,
-                    "currency": currency,
-                }
-            )
+            FlextResult.ok({
+                "code": code,
+                "name": name,
+                "amount": price_amount,
+                "currency": currency,
+            })
             .flat_map(lambda data: ProductCode.create(code=data["code"]))
             .flat_map(
                 lambda product_code: Price.create(
                     amount=Decimal(str(price_amount)), currency=currency
-                ).map(lambda price: Product(code=product_code, name=name, price=price))
+                ).map(
+                    lambda price: Product(
+                        code=product_code,
+                        name=name,
+                        price=price,
+                        id=FlextEntityId(),
+                        version=FlextVersion(),
+                        created_at=FlextTimestamp(),
+                        updated_at=FlextTimestamp(),
+                        domain_events=FlextEventList(),
+                        metadata=FlextMetadata(),
+                    )
+                )
             )
             .flat_map(
                 lambda product: product.validate_business_rules().map(lambda _: product)
@@ -308,7 +329,17 @@ class DomainObjectFactory:
             street="123 Main St", city=city, postal_code="12345", country=country
         )
 
-        customer = Customer(name=name, email=email, address=address)
+        customer = Customer(
+            name=name,
+            email=email,
+            address=address,
+            id=FlextEntityId(),
+            version=FlextVersion(),
+            created_at=FlextTimestamp(),
+            updated_at=FlextTimestamp(),
+            domain_events=FlextEventList(),
+            metadata=FlextMetadata(),
+        )
         return customer.validate_business_rules().map(lambda _: customer)
 
     @staticmethod

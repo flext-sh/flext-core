@@ -583,7 +583,7 @@ class FlextImmutabilityDecorators(FlextAbstractDecorator):
 
     @staticmethod
     def immutable_decorator(func: FlextCallable) -> FlextCallable:
-        """Enforce immutability in function (static method for backward compatibility).
+        """Enforce immutability in function (static method for compatibility).
 
         Args:
             func: FlextCallableunction to make immutable.
@@ -657,7 +657,7 @@ class FlextFunctionalDecorators(FlextAbstractDecorator):
 
     @staticmethod
     def curry_decorator(func: FlextCallable) -> FlextCallable:
-        """Add currying to function (static method for backward compatibility).
+        """Add currying to function (static method for compatibility).
 
         Args:
             func: FlextCallableunction to curry.
@@ -1036,7 +1036,7 @@ class FlextDecorators:
         # Preserve metadata and return the wrapper
         return FlextDecoratorUtils.preserve_metadata(func, wrapper)
 
-    # Additional composite decorators expected by tests
+    # Additional composite decorators
     @staticmethod
     def cached_with_timing(
         max_size: int = 128,
@@ -1159,7 +1159,7 @@ __all__: list[str] = [
     "FlextLoggingDecorators",
     "FlextPerformanceDecorators",
     "FlextValidationDecorators",
-    # Class aliases for backward compatibility
+    # Class aliases for compatibility
     "_BaseDecoratorFactory",
     "_BaseImmutabilityDecorators",
     # Back-compat names referenced by tests
@@ -1179,7 +1179,7 @@ class _DecoratedFunction(Protocol):
 
 
 class _BaseDecoratorUtils:
-    """Legacy utilities holder used by tests for presence checks."""
+    """Legacy utilities holder  for presence checks."""
 
 
 _decorators_base = type(

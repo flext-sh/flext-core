@@ -755,7 +755,7 @@ class FlextHandlerRegistry(
         ]
 
     # ------------------------------------------------------------------
-    # Convenience helpers expected by tests
+    # Convenience helpers
     # ------------------------------------------------------------------
     def register_for_type(
         self,
@@ -902,7 +902,7 @@ class FlextHandlerChain(FlextBaseHandler, FlextAbstractHandlerChain[object, obje
 
     def handle(self, request: object) -> FlextResult[object]:
         """Handle a message through chain (convenience method)."""
-        message = request  # Alias for backward compatibility
+        message = request  # Alias for compatibility
         for handler in self.handlers:
             try:
                 if handler.can_handle(message):
@@ -924,7 +924,7 @@ class FlextHandlerChain(FlextBaseHandler, FlextAbstractHandlerChain[object, obje
             return True
 
     # ------------------------------------------------------------------
-    # Convenience helpers expected by tests
+    # Convenience helpers
     # ------------------------------------------------------------------
     def process(self, message: object) -> FlextResult[object]:
         """Convenience alias for processing a single message."""
@@ -978,7 +978,7 @@ class FlextHandlerChain(FlextBaseHandler, FlextAbstractHandlerChain[object, obje
 
 __all__: list[str] = [
     # Clean Handler Implementations Only (alphabetically sorted)
-    "FlextAbstractHandler",  # Export base for tests
+    "FlextAbstractHandler",  # Export base
     "FlextAbstractHandlerChain",
     "FlextAbstractHandlerRegistry",
     "FlextAbstractMetricsHandler",
@@ -988,7 +988,7 @@ __all__: list[str] = [
     "FlextEventHandler",
     "FlextHandlerChain",
     "FlextHandlerRegistry",
-    "FlextHandlers",  # Convenience alias expected by tests
+    "FlextHandlers",  # Convenience alias
     "FlextMetricsHandler",
     "FlextQueryHandler",  # Convenience alias
     "FlextValidatingHandler",
@@ -1113,7 +1113,7 @@ class FlextCommandHandler(ABC, Generic[TInput, TOutput]):  # noqa: UP046
 
         return result
 
-    # Convenience API used by tests
+    # Convenience API
     def process_request(self, command: TInput) -> FlextResult[TOutput]:
         """Convenience alias that delegates to handle_command."""
         return self.handle_command(command)
@@ -1139,7 +1139,7 @@ class FlextCommandHandler(ABC, Generic[TInput, TOutput]):  # noqa: UP046
             "success_rate": 0.0,
         }
 
-        # Get environment info expected by tests
+        # Get environment info
 
         metrics["environment"] = environ.get("ENVIRONMENT", "production")
         metrics["version"] = "1.0"
@@ -1281,7 +1281,7 @@ class FlextQueryHandler(ABC, Generic[TInput, TOutput]):  # noqa: UP046
         """Pre-handle query."""
         return self.authorize_query(query)
 
-    # Convenience API used by tests
+    # Convenience API
     def process_request(self, query: TInput) -> FlextResult[TOutput]:
         """Convenience alias delegating to handle_query."""
         return self.handle_query(query)
@@ -1298,7 +1298,7 @@ class FlextQueryHandler(ABC, Generic[TInput, TOutput]):  # noqa: UP046
 
 
 class HandlersFacade:
-    """Convenience facade exposing command/query handler classes for tests."""
+    """Convenience facade exposing command/query handler classes ."""
 
     class CommandHandler(FlextCommandHandler[object, object]):
         """Concrete alias class to satisfy type usage in tests."""
@@ -1368,7 +1368,7 @@ class HandlersFacade:
     class EventHandler(FlextEventHandler):
         """Concrete alias for event handler used in tests."""
 
-    # Utility construction helpers expected by tests
+    # Utility construction helpers
     @staticmethod
     def flext_create_chain(
         handlers: list[FlextAbstractHandler[object, object]] | None = None,
@@ -1541,7 +1541,7 @@ class HandlersFacade:
 # 2) And expect nested CommandHandler/QueryHandler types accessible via FlextHandlers
 # We alias FlextHandlers to FlextBaseHandler and attach nested types onto it.
 class _ConcreteCommandHandler(FlextCommandHandler[object, object]):
-    """Concrete CommandHandler used by tests via FlextHandlers facade."""
+    """Concrete CommandHandler  via FlextHandlers facade."""
 
     def handle_command(self, command: object) -> FlextResult[object]:
         return FlextResult[object].ok(command)
@@ -1552,7 +1552,7 @@ class _ConcreteCommandHandler(FlextCommandHandler[object, object]):
 
 
 class _ConcreteQueryHandler(FlextQueryHandler[TQuery, TQueryResult]):
-    """Concrete QueryHandler used by tests via FlextHandlers facade."""
+    """Concrete QueryHandler  via FlextHandlers facade."""
 
     def handle_query(self, query: TQuery) -> FlextResult[TQueryResult]:
         return cast(

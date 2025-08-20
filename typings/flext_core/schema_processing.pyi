@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from enum import Enum
-from typing import Protocol
+from typing import Protocol, override
 
 from _typeshed import Incomplete
 
@@ -33,6 +33,7 @@ class FlextBaseEntry(FlextValueObject, ABC):
     clean_content: str
     original_content: str
     identifier: str
+    @override
     @abstractmethod
     def validate_business_rules(self) -> FlextResult[None]: ...
 

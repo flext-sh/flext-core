@@ -28,6 +28,7 @@ import operator
 import os
 import time
 import traceback
+from collections.abc import Mapping
 from typing import cast
 
 from flext_core import (
@@ -119,14 +120,17 @@ class DatabaseConnection:
             error_msg = "Database connection failed"
             raise FlextConnectionError(
                 error_msg,
-                host=self.host,
-                port=self.port,
-                database=self.database,
-                timeout_seconds=30,
+                service=f"database://{self.host}:{self.port}/{self.database}",
+                context={
+                    "host": self.host,
+                    "port": self.port,
+                    "database": self.database,
+                    "timeout_seconds": 30,
+                },
             )
 
         self.connected = True
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
     def authenticate(self, username: str, password: str) -> FlextResult[None]:
         """Authenticate with database."""
@@ -146,10 +150,10 @@ class DatabaseConnection:
             raise FlextAuthenticationError(
                 msg,
                 service=f"database://{self.database}",
-                endpoint=f"auth://{username}",
+                context={"endpoint": f"auth://{username}"},
             )
 
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
 
 # =============================================================================
@@ -169,7 +173,7 @@ class UserValidationService:
         return value
 
     @staticmethod
-    def _validate_name_required(data: dict[str, object]) -> None:
+    def _validate_name_required(data: Mapping[str, object]) -> None:
         """Validate that name field is provided."""
         if "name" not in data:
             msg = "Name is required"
@@ -197,7 +201,7 @@ class UserValidationService:
             )
 
     @staticmethod
-    def _validate_email_required(data: dict[str, object]) -> None:
+    def _validate_email_required(data: Mapping[str, object]) -> None:
         """Validate that email field is provided."""
         if "email" not in data:
             msg = "Email is required"
@@ -249,7 +253,7 @@ class UserValidationService:
                 },
             )
 
-    def validate_user_data(self, data: dict[str, object]) -> FlextResult[User]:
+    def validate_user_data(self, data: Mapping[str, object]) -> FlextResult[User]:
         """Validate user data and create a User instance.
 
         Raises validation and type errors for invalid input.
@@ -290,18 +294,20 @@ class UserValidationService:
                 age,
             )
 
-            return FlextResult.ok(user)
+            return FlextResult[User].ok(user)
 
         except (FlextValidationError, FlextTypeError) as e:
-            return FlextResult.fail(str(e))
+            return FlextResult[User].fail(str(e))
         except (ValueError, TypeError, KeyError, AttributeError) as e:
             # Wrap unexpected exceptions
             msg = "Unexpected error during user validation"
             raise FlextProcessingError(
                 msg,
                 operation="user_validation",
-                stage="data_processing",
-                original_error=str(e),
+                context={
+                    "stage": "data_processing",
+                    "original_error": str(e),
+                },
             ) from e
 
 
@@ -314,7 +320,7 @@ class UserManagementService:
         self._deleted_users: set[str] = set()
         self._validation_service = UserValidationService()
 
-    def create_user(self, user_data: dict[str, object]) -> FlextResult[User]:
+    def create_user(self, user_data: Mapping[str, object]) -> FlextResult[User]:
         """Create new user with comprehensive error handling."""
 
         def _raise_validation_error(validation_result: FlextResult[User]) -> None:
@@ -329,7 +335,7 @@ class UserManagementService:
                 msg,
                 resource_id=user.user_id,
                 resource_type="User",
-                conflicting_field="user_id",
+                context={"conflicting_field": "user_id"},
             )
 
         def _raise_email_exists_error(user: User, existing_user: User) -> None:
@@ -341,8 +347,10 @@ class UserManagementService:
                 msg,
                 resource_id=user.user_id,
                 resource_type="User",
-                conflicting_field="email",
-                conflicting_value=user.email,
+                context={
+                    "conflicting_field": "email",
+                    "conflicting_value": user.email,
+                },
             )
 
         def _raise_none_user_error() -> None:
@@ -376,10 +384,10 @@ class UserManagementService:
 
             # Save user
             self._users[user.user_id] = user
-            return FlextResult.ok(user)
+            return FlextResult[User].ok(user)
 
         except (FlextValidationError, FlextAlreadyExistsError) as e:
-            return FlextResult.fail(str(e))
+            return FlextResult[User].fail(str(e))
         except (ValueError, TypeError, KeyError, AttributeError) as e:
             # Wrap unexpected exceptions
             msg = "User creation failed unexpectedly"
@@ -399,7 +407,7 @@ class UserManagementService:
                 msg,
                 resource_id=user_id,
                 resource_type="User",
-                status="deleted",
+                context={"status": "deleted"},
             )
 
         def _raise_user_not_found_error(user_id: str) -> None:
@@ -409,7 +417,7 @@ class UserManagementService:
                 msg,
                 resource_id=user_id,
                 resource_type="User",
-                searched_in="active_users",
+                context={"searched_in": "active_users"},
             )
 
         try:
@@ -419,10 +427,10 @@ class UserManagementService:
             if user_id not in self._users:
                 _raise_user_not_found_error(user_id)
 
-            return FlextResult.ok(self._users[user_id])
+            return FlextResult[User].ok(self._users[user_id])
 
         except FlextNotFoundError as e:
-            return FlextResult.fail(str(e))
+            return FlextResult[User].fail(str(e))
         except (ValueError, TypeError, KeyError, AttributeError) as e:
             msg = "User retrieval failed unexpectedly"
             raise FlextOperationError(
@@ -439,10 +447,13 @@ class UserManagementService:
             msg = "Insufficient permissions to delete user"
             raise FlextPermissionError(
                 msg,
-                requester_id=requester_id,
-                target_resource=user_id,
+                service="user_management",
                 required_permission="user_delete",
-                action="delete_user",
+                context={
+                    "requester_id": requester_id,
+                    "target_resource": user_id,
+                    "action": "delete_user",
+                },
             )
 
         def _raise_user_not_found_for_delete(user_id: str) -> None:
@@ -467,10 +478,10 @@ class UserManagementService:
             del self._users[user_id]
             self._deleted_users.add(user_id)
 
-            return FlextResult.ok(None)
+            return FlextResult[None].ok(None)
 
         except (FlextPermissionError, FlextNotFoundError) as e:
-            return FlextResult.fail(str(e))
+            return FlextResult[None].fail(str(e))
         except (ValueError, TypeError, KeyError, AttributeError) as e:
             msg = "User deletion failed unexpectedly"
             raise FlextOperationError(
@@ -487,21 +498,26 @@ class ConfigurationService:
         """Initialize ConfigurationService."""
         self._config: dict[str, object] = {}
 
-    def load_configuration(self, config_data: dict[str, object]) -> FlextResult[None]:
+    def load_configuration(
+        self, config_data: Mapping[str, object]
+    ) -> FlextResult[None]:
         """Load and validate configuration."""
 
         def _raise_missing_config_error(
             key: str,
             required_keys: list[str],
-            config_data: dict[str, object],
+            config_data: Mapping[str, object],
         ) -> None:
             """Raise error for missing configuration key."""
             msg: str = f"Missing required configuration: {key}"
             raise FlextConfigurationError(
                 msg,
-                missing_key=key,
-                required_keys=required_keys,
-                provided_keys=list(config_data.keys()),
+                config_key=key,
+                context={
+                    "missing_key": key,
+                    "required_keys": required_keys,
+                    "provided_keys": list(config_data.keys()),
+                },
             )
 
         def _raise_invalid_db_url_error(db_url: object) -> None:
@@ -510,8 +526,10 @@ class ConfigurationService:
             raise FlextConfigurationError(
                 msg,
                 config_key="database_url",
-                config_value=db_url,
-                expected_format="protocol://[user:pass@]host[:port]/database",
+                context={
+                    "config_value": db_url,
+                    "expected_format": "protocol://[user:pass@]host[:port]/database",
+                },
             )
 
         def _raise_invalid_log_level_error(
@@ -523,8 +541,10 @@ class ConfigurationService:
             raise FlextConfigurationError(
                 msg,
                 config_key="log_level",
-                config_value=log_level,
-                valid_values=valid_levels,
+                context={
+                    "config_value": log_level,
+                    "valid_values": valid_levels,
+                },
             )
 
         try:
@@ -550,16 +570,19 @@ class ConfigurationService:
 
             # Save configuration
             self._config = dict(config_data)
-            return FlextResult.ok(None)
+            return FlextResult[None].ok(None)
 
         except FlextConfigurationError as e:
-            return FlextResult.fail(str(e))
+            return FlextResult[None].fail(str(e))
         except (ValueError, TypeError, KeyError, AttributeError) as e:
             msg = "Critical configuration loading failure"
             raise FlextCriticalError(
                 msg,
-                operation="config_loading",
-                component="configuration_service",
+                service="configuration_service",
+                context={
+                    "operation": "config_loading",
+                    "component": "configuration_service",
+                },
             ) from e
 
 
@@ -585,9 +608,13 @@ class ExternalAPIService:
             msg = "Cannot connect to external API"
             raise FlextConnectionError(
                 msg,
-                api_url=self.api_url,
-                connection_timeout=self.timeout_seconds,
-                error_type="connection_refused",
+                service="external_api",
+                endpoint=self.api_url,
+                context={
+                    "api_url": self.api_url,
+                    "connection_timeout": self.timeout_seconds,
+                    "error_type": "connection_refused",
+                },
             )
 
         def _raise_timeout_error() -> None:
@@ -595,9 +622,12 @@ class ExternalAPIService:
             msg = "API request timed out"
             raise FlextTimeoutError(
                 msg,
-                api_url=self.api_url,
+                service="external_api",
                 timeout_seconds=self.timeout_seconds,
-                operation="fetch_user_profile",
+                context={
+                    "api_url": self.api_url,
+                    "operation": "fetch_user_profile",
+                },
             )
 
         def _raise_authentication_error() -> None:
@@ -605,9 +635,12 @@ class ExternalAPIService:
             msg = "API authentication failed"
             raise FlextAuthenticationError(
                 msg,
-                api_url=self.api_url,
-                authentication_method="bearer_token",
-                token_type=os.environ.get("API_TOKEN_TYPE", "invalid_token"),
+                service="external_api",
+                context={
+                    "api_url": self.api_url,
+                    "authentication_method": "bearer_token",
+                    "token_type": os.environ.get("API_TOKEN_TYPE", "invalid_token"),
+                },
             )
 
         try:
@@ -634,17 +667,19 @@ class ExternalAPIService:
                 },
             }
 
-            return FlextResult.ok(profile_data)
+            return FlextResult[dict[str, object]].ok(profile_data)
 
         except (FlextConnectionError, FlextTimeoutError, FlextAuthenticationError) as e:
-            return FlextResult.fail(str(e))
+            return FlextResult[dict[str, object]].fail(str(e))
         except (ValueError, TypeError, KeyError, AttributeError) as e:
             msg = "External API call failed unexpectedly"
             raise FlextProcessingError(
                 msg,
                 operation="external_api_call",
-                stage="response_processing",
-                api_url=self.api_url,
+                context={
+                    "stage": "response_processing",
+                    "api_url": self.api_url,
+                },
             ) from e
 
 
@@ -700,20 +735,34 @@ def demonstrate_base_exceptions() -> None:
             stage="validation",
         ),
         FlextConfigurationError("Missing API key", config_key="api_key"),
-        FlextConnectionError("Database unreachable", host="db.example.com", port=5432),
-        FlextAuthenticationError(
-            "Invalid credentials", service="auth", endpoint="testuser"
+        FlextConnectionError(
+            "Database unreachable",
+            service="database",
+            context={"host": "db.example.com", "port": 5432},
         ),
-        FlextPermissionError("Access denied", resource="user_data", action="read"),
+        FlextAuthenticationError(
+            "Invalid credentials",
+            service="auth",
+            context={"endpoint": "testuser"},
+        ),
+        FlextPermissionError(
+            "Access denied",
+            service="access_control",
+            context={"resource": "user_data", "action": "read"},
+        ),
         FlextNotFoundError("User not found", resource_id="user_123"),
         FlextAlreadyExistsError("User already exists", resource_id="user_123"),
         FlextTimeoutError(
             "Operation timed out",
-            operation="data_sync",
+            service="data_sync",
             timeout_seconds=30,
         ),
         FlextProcessingError("Data processing failed", operation="data_transform"),
-        FlextCriticalError("System overload", component="database", severity="high"),
+        FlextCriticalError(
+            "System overload",
+            service="database",
+            context={"component": "database", "severity": "high"},
+        ),
     ]
 
     for exc in exceptions_to_create:
@@ -779,10 +828,10 @@ def demonstrate_validation_exceptions() -> None:
 
     for test_case in test_cases:
         data = test_case["data"]
-        if isinstance(data, dict):
+        if isinstance(data, Mapping):
             result = validation_service.validate_user_data(data)
         else:
-            result = FlextResult.fail("Invalid data type")
+            result = FlextResult[User].fail("Invalid data type")
 
         if (result.success and test_case["should_pass"]) or (
             result.is_failure and not test_case["should_pass"]
@@ -996,7 +1045,7 @@ def demonstrate_connection_exceptions() -> None:
 def _complex_operation() -> FlextResult[str]:
     """Complex operation that can fail at multiple stages."""
 
-    def _raise_config_error(_: FlextResult[str]) -> None:
+    def _raise_config_error(_: FlextResult[None]) -> None:
         msg = "Complex operation failed at configuration stage"
         raise FlextOperationError(
             msg,
@@ -1044,18 +1093,21 @@ def _complex_operation() -> FlextResult[str]:
         if api_result.is_failure:
             _raise_api_error(api_result)
 
-        return FlextResult.ok("Complex operation completed successfully")
+        return FlextResult[str].ok("Complex operation completed successfully")
 
     except FlextOperationError as e:
-        return FlextResult.fail(str(e))
+        return FlextResult[str].fail(str(e))
     except (ValueError, TypeError, KeyError, AttributeError) as e:
         msg = "Critical failure in complex operation"
         raise FlextCriticalError(
             msg,
-            operation="complex_operation",
-            component="enterprise_service",
-            exception_type=type(e).__name__,
-            exception_message=str(e),
+            service="enterprise_service",
+            context={
+                "operation": "complex_operation",
+                "component": "enterprise_service",
+                "exception_type": type(e).__name__,
+                "exception_message": str(e),
+            },
         ) from e
 
 
@@ -1066,8 +1118,11 @@ def _operation_with_retry(max_retries: int = 3) -> FlextResult[str]:
         msg: str = f"Simulated failure on attempt {attempt + 1}"
         raise FlextConnectionError(
             msg,
-            attempt=attempt + 1,
-            max_retries=max_retries,
+            service="retry_operation",
+            context={
+                "attempt": attempt + 1,
+                "max_retries": max_retries,
+            },
         )
 
     last_exception: Exception | None = None
@@ -1075,12 +1130,12 @@ def _operation_with_retry(max_retries: int = 3) -> FlextResult[str]:
         try:
             if attempt < MAX_RETRY_ATTEMPTS:
                 _simulate_operation_failure(attempt, max_retries)
-            return FlextResult.ok(f"Operation succeeded on attempt {attempt + 1}")
+            return FlextResult[str].ok(f"Operation succeeded on attempt {attempt + 1}")
         except FlextConnectionError as e:
             last_exception = e
             if attempt < max_retries:
                 time.sleep(0.01)
-    return FlextResult.fail(
+    return FlextResult[str].fail(
         f"Operation failed after {max_retries + 1} attempts: {last_exception}",
     )
 

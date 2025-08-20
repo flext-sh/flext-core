@@ -1049,7 +1049,7 @@ class FlextExceptions(FlextAbstractErrorFactory):
             context=filtered_kwargs,
         )
 
-    # Additional factories used by tests
+    # Additional factories
     @staticmethod
     def create_connection_error(message: str, **kwargs: object) -> FlextConnectionError:
         """Create connection error for network/service connectivity issues."""

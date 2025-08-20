@@ -139,13 +139,23 @@ class TestBaseConfigOps:
             )
 
     def test_safe_get_env_var_exists(self) -> None:
-        """Test safe_get_env_var with existing variable."""
-        with patch.dict(os.environ, {"TEST_VAR": "test_value"}):
-            result = _BaseConfigOps.safe_get_env_var("TEST_VAR")
+        """Test safe_get_env_var with existing variable - REAL execution."""
+        # Set real environment variable
+        original_value = os.environ.get("FLEXT_TEST_VAR")
+        os.environ["FLEXT_TEST_VAR"] = "test_value"
+
+        try:
+            result = _BaseConfigOps.safe_get_env_var("FLEXT_TEST_VAR")
 
             assert result.success
             if result.data != "test_value":
                 raise AssertionError(f"Expected {'test_value'}, got {result.data}")
+        finally:
+            # Clean up real environment
+            if original_value is not None:
+                os.environ["FLEXT_TEST_VAR"] = original_value
+            else:
+                os.environ.pop("FLEXT_TEST_VAR", None)
 
     def test_safe_get_env_var_not_exists_with_default(self) -> None:
         """Test safe_get_env_var with non-existing variable and default."""

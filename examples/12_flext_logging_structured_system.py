@@ -548,7 +548,7 @@ def _performance_monitoring_demo() -> None:
         if not isinstance(op_config, dict):
             msg = "op_config deve ser um dicionário"
             raise TypeError(msg)
-        operation = op_config.pop("op")
+        operation = str(op_config.pop("op"))
         with PerformanceMonitor(perf_logger, operation, **op_config):
             if operation == "database_query":
                 time.sleep(0.005)

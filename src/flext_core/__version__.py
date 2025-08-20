@@ -148,8 +148,10 @@ def check_python_compatibility() -> FlextCompatibilityResult:
                 f"Maximum supported: {'.'.join(map(str, MAX_PYTHON_VERSION))}"
             ),
             recommendations=[
-                f"Use Python {'.'.join(map(str, MIN_PYTHON_VERSION))}"
-                f" to {'.'.join(map(str, MAX_PYTHON_VERSION))}",
+                (
+                    f"Use Python {'.'.join(map(str, MIN_PYTHON_VERSION))} "
+                    f"to {'.'.join(map(str, MAX_PYTHON_VERSION))}"
+                ),
                 "Check for newer FLEXT Core version with broader Python support",
                 "Use pyenv or conda to install compatible Python version",
             ],

@@ -7,7 +7,7 @@ import time
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from datetime import datetime
-from typing import Generic, Self, TypeVar, cast
+from typing import Generic, Self, TypeVar, cast, override
 from zoneinfo import ZoneInfo
 
 from pydantic import (
@@ -363,7 +363,7 @@ class FlextCommands:
     # COMMAND RESULT HELPERS - Use FlextResult directly as requested
     # =============================================================================
 
-    # Result type alias for backward compatibility
+    # Result type alias for compatibility
     Result = FlextResult
 
     @staticmethod
@@ -542,6 +542,7 @@ class FlextCommands:
                     int(self._metrics_state.get("success", 0)) + 1
                 )
 
+        @override
         def can_handle(self, command: object) -> bool:
             """Check if handler can process this command - implements abstract method.
 
@@ -737,7 +738,7 @@ class FlextCommands:
             handler_or_command_type: object | type[CommandT],
             handler: FlextCommands.Handler[CommandT, ResultT] | None = None,
         ) -> FlextResult[None]:
-            """Register handler with flexible arguments (backward compatibility).
+            """Register handler with flexible arguments (compatibility).
 
             Args:
                 handler_or_command_type: Handler instance or command type
@@ -924,6 +925,7 @@ class FlextCommands:
                     return handler
             return None
 
+        @override
         def unregister_handler(self, command_type: str) -> bool:
             """Unregister command handler - implements abstract method."""
             # Find handler by command type string
@@ -936,10 +938,12 @@ class FlextCommands:
                     return True
             return False
 
+        @override
         def send_command(self, command: FlextAbstractCommand) -> FlextResult[object]:
             """Send command - implements abstract method."""
             return self.execute(command)
 
+        @override
         def get_registered_handlers(self) -> dict[str, object]:
             """Get registered handlers - implements abstract method."""
             return {str(k): v for k, v in self._handlers.items()}
@@ -970,6 +974,7 @@ class FlextCommands:
             ) -> Callable[[object], object]:
                 # Create handler class from function
                 class FunctionHandler(FlextCommands.Handler[object, object]):
+                    @override
                     def handle(self, command: object) -> FlextResult[object]:
                         result = func(command)
                         if isinstance(result, FlextResult):
@@ -1099,6 +1104,7 @@ class FlextCommands:
         """
 
         class SimpleHandler(FlextCommands.Handler[object, object]):
+            @override
             def handle(self, command: object) -> FlextResult[object]:
                 result = handler_func(command)
                 if isinstance(result, FlextResult):

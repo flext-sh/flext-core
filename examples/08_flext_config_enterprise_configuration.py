@@ -28,7 +28,7 @@ import pathlib
 import tempfile
 from typing import cast
 
-from pydantic import ConfigDict
+from pydantic_settings import SettingsConfigDict
 
 from flext_core import (
     FlextConstants,
@@ -52,7 +52,8 @@ def demonstrate_basic_configuration() -> None:
 
     Using flext_core.typings for type safety.
     """
-    "\n" + "=" * 80
+    separator = "\n" + "=" * 80
+    print(separator)
 
     # 1. Basic configuration creation
     config_data: TConfigDict = {
@@ -98,7 +99,8 @@ def demonstrate_basic_configuration() -> None:
 
 def demonstrate_environment_integration() -> None:
     """Demonstrate environment variable integration using flext_core.typings."""
-    "\n" + "=" * 80
+    separator = "\n" + "=" * 80
+    print(separator)
 
     # 1. Environment-based settings
 
@@ -111,7 +113,7 @@ def demonstrate_environment_integration() -> None:
         api_key: str = "default-key"
         timeout: float = 30.0
 
-        model_config = ConfigDict(
+        model_config = SettingsConfigDict(
             env_prefix="MYAPP_",
             case_sensitive=False,
             env_file=".env",
@@ -153,7 +155,8 @@ def demonstrate_environment_integration() -> None:
 
 def demonstrate_configuration_merging() -> None:
     """Demonstrate configuration merging patterns using flext_core.typings."""
-    "\n" + "=" * 80
+    separator = "\n" + "=" * 80
+    print(separator)
 
     # 1. Basic configuration merging
 
@@ -234,7 +237,8 @@ def demonstrate_file_configuration() -> None:
 
 def _print_file_config_section_header(_title: str) -> None:
     """Print formatted file configuration section header."""
-    "\n" + "=" * 80
+    separator = "\n" + "=" * 80
+    print(separator)
 
 
 def _create_configuration_file() -> FlextResult[str]:
@@ -356,8 +360,16 @@ def demonstrate_configuration_hierarchies() -> None:
     prod_config = _build_prod_hierarchy_config()
 
     _print_config_hierarchy_overview()
-    _print_merged_config("Development", merge_configs(base_config, dev_config))
-    _print_merged_config("Production", merge_configs(base_config, prod_config))
+    dev_merged = merge_configs(base_config, dev_config)
+    _print_merged_config(
+        "Development",
+        dev_merged.unwrap() if isinstance(dev_merged, FlextResult) else dev_merged,
+    )
+    prod_merged = merge_configs(base_config, prod_config)
+    _print_merged_config(
+        "Production",
+        prod_merged.unwrap() if isinstance(prod_merged, FlextResult) else prod_merged,
+    )
     _print_feature_hierarchy_demo()
 
 
@@ -445,7 +457,7 @@ def demonstrate_advanced_configuration_patterns() -> None:
 
 def _print_config_section_header(_title: str) -> None:
     """Print formatted configuration section header."""
-    "\n" + "=" * 80
+    _separator = "\n" + "=" * 80
 
 
 def _demonstrate_configuration_validation() -> FlextResult[None]:
@@ -701,7 +713,7 @@ def demonstrate_domain_configuration_integration() -> None:
 
 def _print_domain_config_section_header(_title: str) -> None:
     """Print formatted domain configuration section header."""
-    "\n" + "=" * 80
+    _separator = "\n" + "=" * 80
 
 
 def _demonstrate_domain_model_validation() -> FlextResult[TAnyDict]:
@@ -771,7 +783,7 @@ def _validate_single_REDACTED_LDAP_BIND_PASSWORD_user(user_data: object) -> Flex
             log_domain_operation(
                 "REDACTED_LDAP_BIND_PASSWORD_user_configured",
                 "SharedUser",
-                user.id,
+                user.id.root,
                 service="user_management",
                 config_role="REDACTED_LDAP_BIND_PASSWORD",
             )

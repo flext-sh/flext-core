@@ -198,13 +198,13 @@ class ListUsersQueryHandler(FlextCommands.QueryHandler[ListUsersQuery, list[User
         return FlextResult[list[User]].ok(users)
 
 
-class GetEventsQueryHandler(FlextCommands.QueryHandler[GetEventsQuery, list[dict]]):
+class GetEventsQueryHandler(FlextCommands.QueryHandler[GetEventsQuery, list[dict[str, object]]]):
     """Handler for event listing."""
 
-    def handle(self, query: GetEventsQuery) -> FlextResult[list[dict]]:  # noqa: ARG002
+    def handle(self, query: GetEventsQuery) -> FlextResult[list[dict[str, object]]]:  # noqa: ARG002
         """Get all events."""
         events = event_store.get_events()
-        return FlextResult[list[dict]].ok(events)
+        return FlextResult[list[dict[str, object]]].ok(cast(list[dict[str, object]], events))
 
 
 # =============================================================================
@@ -229,7 +229,7 @@ def setup_cqrs() -> tuple[FlextCommands.Bus, dict[str, object]]:
         "get_events": GetEventsQueryHandler(),
     }
 
-    return bus, query_handlers
+    return bus, cast(dict[str, object], query_handlers)
 
 
 # =============================================================================
@@ -256,8 +256,7 @@ class UserService:
             command_type="",
             timestamp=datetime.now(),
             user_id=None,
-            correlation_id="",
-            legacy_mixin_setup=None
+            correlation_id=""
         )
         result = self.bus.execute(command)
         return result.map(lambda data: cast(User, data))
@@ -274,8 +273,7 @@ class UserService:
             command_type="",
             timestamp=datetime.now(),
             user_id=None,
-            correlation_id="",
-            legacy_mixin_setup=None
+            correlation_id=""
         )
         result = self.bus.execute(command)
         return result.map(lambda data: cast(User, data))
@@ -288,8 +286,7 @@ class UserService:
             command_type="",
             timestamp=datetime.now(),
             user_id=None,
-            correlation_id="",
-            legacy_mixin_setup=None
+            correlation_id=""
         )
         result = self.bus.execute(command)
         return result.map(lambda data: cast(bool, data))
@@ -321,7 +318,7 @@ class UserService:
         handler = self.queries["list_users"]
         return handler.handle(query)
 
-    def get_events(self) -> FlextResult[list[dict]]:
+    def get_events(self) -> FlextResult[list[dict[str, object]]]:
         """Get all events."""
         query = GetEventsQuery(
             query_id=None,

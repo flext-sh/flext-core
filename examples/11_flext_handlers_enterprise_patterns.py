@@ -223,18 +223,19 @@ class CreateUserHandler(FlextBaseHandler):
     def validate_command(self, command: object) -> FlextResult[None]:
         """Additional command validation."""
         if not isinstance(command, CreateUserCommand):
-            return FlextResult.fail("Invalid command type")
+            return FlextResult[None].fail("Invalid command type")
         # Check if email already exists
         for user in self.users.values():
             if user.email == command.email:
-                return FlextResult.fail(f"Email {command.email} already exists")
-        return FlextResult.ok(None)
+                return FlextResult[None].fail(f"Email {command.email} already exists")
+        return FlextResult[None].ok(None)
 
-    def handle(self, command: object) -> FlextResult[object]:
+    def handle(self, request: object) -> FlextResult[object]:
         """Create new user."""
         if not isinstance(command, CreateUserCommand):
-            return FlextResult.fail("Invalid command type")
+            return FlextResult[object].fail("Invalid command type")
 
+        command = cast("CreateUserCommand", request)
         user_id = f"user_{self._next_id}"
         self._next_id += 1
 
@@ -254,7 +255,7 @@ class CreateUserHandler(FlextBaseHandler):
             email=command.email,
         )
 
-        return FlextResult.ok(user)
+        return FlextResult[object].ok(user)
 
 
 class UpdateUserHandler(FlextBaseHandler):
@@ -287,19 +288,23 @@ class UpdateUserHandler(FlextBaseHandler):
     def validate_command(self, command: object) -> FlextResult[None]:
         """Validate update command."""
         if not isinstance(command, UpdateUserCommand):
-            return FlextResult.fail("Invalid command type")
+            return FlextResult[None].fail("Invalid command type")
         if not command.user_id:
-            return FlextResult.fail("User ID is required")
+            return FlextResult[None].fail("User ID is required")
         if command.name is None and command.email is None:
-            return FlextResult.fail("At least one field must be provided for update")
-        return FlextResult.ok(None)
+            return FlextResult[None].fail(
+                "At least one field must be provided for update"
+            )
+        return FlextResult[None].ok(None)
 
-    def handle(self, command: object) -> FlextResult[object]:
+    def handle(self, request: object) -> FlextResult[object]:
         """Update user information."""
         if not isinstance(command, UpdateUserCommand):
-            return FlextResult.fail("Invalid command type")
+            return FlextResult[object].fail("Invalid command type")
+
+        command = cast("UpdateUserCommand", request)
         if command.user_id not in self.users:
-            return FlextResult.fail(f"User {command.user_id} not found")
+            return FlextResult[object].fail(f"User {command.user_id} not found")
 
         user = self.users[command.user_id]
         changes = {}
@@ -318,7 +323,7 @@ class UpdateUserHandler(FlextBaseHandler):
             changes=changes,
         )
 
-        return FlextResult.ok(user)
+        return FlextResult[object].ok(user)
 
 
 # =============================================================================
@@ -356,33 +361,35 @@ class GetUserHandler(FlextBaseHandler):
     def validate_command(self, query: object) -> FlextResult[None]:
         """Validate query (renamed from validate_command for consistency)."""
         if not isinstance(query, GetUserQuery):
-            return FlextResult.fail("Invalid query type")
+            return FlextResult[None].fail("Invalid query type")
         # Simple query validation
         if not query.user_id:
-            return FlextResult.fail("User ID is required")
-        return FlextResult.ok(None)
+            return FlextResult[None].fail("User ID is required")
+        return FlextResult[None].ok(None)
 
     def authorize_query(self, query: object) -> FlextResult[None]:
         """Check query authorization."""
         if not isinstance(query, GetUserQuery):
-            return FlextResult.fail("Invalid query type")
+            return FlextResult[None].fail("Invalid query type")
         # Simple authorization check
         if not query.user_id:
-            return FlextResult.fail("User ID is required for authorization")
-        return FlextResult.ok(None)
+            return FlextResult[None].fail("User ID is required for authorization")
+        return FlextResult[None].ok(None)
 
-    def handle(self, query: object) -> FlextResult[object]:
+    def handle(self, request: object) -> FlextResult[object]:
         """Retrieve user by ID."""
         if not isinstance(query, GetUserQuery):
-            return FlextResult.fail("Invalid query type")
+            return FlextResult[object].fail("Invalid query type")
+
+        query = cast("GetUserQuery", request)
         if query.user_id not in self.users:
-            return FlextResult.fail(f"User {query.user_id} not found")
+            return FlextResult[object].fail(f"User {query.user_id} not found")
 
         user = self.users[query.user_id]
 
         # Check if we should include inactive users
         if not query.include_inactive and not user.is_active:
-            return FlextResult.fail(f"User {query.user_id} is inactive")
+            return FlextResult[object].fail(f"User {query.user_id} is inactive")
 
         self.logger.debug(
             "User retrieved successfully",
@@ -390,7 +397,7 @@ class GetUserHandler(FlextBaseHandler):
             user_name=user.name,
         )
 
-        return FlextResult.ok(user)
+        return FlextResult[object].ok(user)
 
 
 class ListUsersHandler(FlextBaseHandler):
@@ -416,10 +423,12 @@ class ListUsersHandler(FlextBaseHandler):
         """Access logger."""
         return self._logger
 
-    def handle(self, query: object) -> FlextResult[object]:
+    def handle(self, request: object) -> FlextResult[object]:
         """List users with filtering and pagination."""
         if not isinstance(query, ListUsersQuery):
-            return FlextResult.fail("Invalid query type")
+            return FlextResult[object].fail("Invalid query type")
+
+        query = cast("ListUsersQuery", request)
         users = list(self.users.values())
 
         # Filter by active status
@@ -438,7 +447,7 @@ class ListUsersHandler(FlextBaseHandler):
             active_only=query.active_only,
         )
 
-        return FlextResult.ok(paginated_users)
+        return FlextResult[object].ok(paginated_users)
 
 
 # =============================================================================
@@ -467,7 +476,7 @@ class UserCreatedEventHandler(FlextEventHandler):
     def process_event(self, event: object) -> FlextResult[None]:
         """Process user created event."""
         if not isinstance(event, UserCreatedEvent):
-            return FlextResult.fail("Invalid event type")
+            return FlextResult[None].fail("Invalid event type")
         # Send welcome email (simulated)
         self.logger.info(
             "Sending welcome email",
@@ -491,7 +500,7 @@ class UserCreatedEventHandler(FlextEventHandler):
             total_notifications=self._notifications_sent,
         )
 
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
 
 class UserUpdatedEventHandler(FlextEventHandler):
@@ -514,7 +523,7 @@ class UserUpdatedEventHandler(FlextEventHandler):
     def process_event(self, event: object) -> FlextResult[None]:
         """Process user updated event."""
         if not isinstance(event, UserUpdatedEvent):
-            return FlextResult.fail("Invalid event type")
+            return FlextResult[None].fail("Invalid event type")
         # Log audit trail (simulated)
         self.logger.info(
             "Recording audit trail for user update",
@@ -535,7 +544,7 @@ class UserUpdatedEventHandler(FlextEventHandler):
             change_count=len(event.changes),
         )
 
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
 
 class OrderCreatedEventHandler(FlextEventHandler):
@@ -560,7 +569,7 @@ class OrderCreatedEventHandler(FlextEventHandler):
         """Process order created event."""
         # Type guard
         if not isinstance(event, OrderCreatedEvent):
-            return FlextResult.fail("Invalid event type")
+            return FlextResult[None].fail("Invalid event type")
 
         # Send order confirmation (simulated)
         self.logger.info(
@@ -585,7 +594,7 @@ class OrderCreatedEventHandler(FlextEventHandler):
             total_orders_processed=self._orders_processed,
         )
 
-        return FlextResult.ok(None)
+        return FlextResult[None].ok(None)
 
 
 # =============================================================================

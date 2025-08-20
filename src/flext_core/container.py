@@ -6,7 +6,7 @@ import inspect
 from collections import UserString
 from collections.abc import Callable
 from datetime import datetime
-from typing import Generic, TypeVar, cast
+from typing import Generic, TypeVar, cast, override
 from zoneinfo import ZoneInfo
 
 from flext_core.commands import FlextCommands
@@ -49,7 +49,7 @@ class FlextServiceKey(UserString, Generic[TService]):  # noqa: UP046
 
     __slots__ = ()
 
-    # Convenience: test access key.name
+    # Convenience property
     @property
     def name(self) -> str:
         """Return the service key name (string value)."""
@@ -77,7 +77,7 @@ class RegisterServiceCommand(FlextCommands.Command):
         cls, service_name: str, service_instance: object
     ) -> RegisterServiceCommand:
         """Create command with default values."""
-        return cls(  # pyright: ignore[reportCallIssue]
+        return cls(
             service_name=service_name,
             service_instance=service_instance,
             command_type="register_service",
@@ -87,6 +87,7 @@ class RegisterServiceCommand(FlextCommands.Command):
             correlation_id=FlextGenerators.generate_uuid(),
         )
 
+    @override
     def validate_command(self) -> FlextResult[None]:
         """Validate service registration command."""
         if not self.service_name or not self.service_name.strip():
@@ -103,7 +104,7 @@ class RegisterFactoryCommand(FlextCommands.Command):
     @classmethod
     def create(cls, service_name: str, factory: object) -> RegisterFactoryCommand:
         """Create command with default values."""
-        return cls(  # pyright: ignore[reportCallIssue]
+        return cls(
             service_name=service_name,
             factory=factory,
             command_type="register_factory",
@@ -113,6 +114,7 @@ class RegisterFactoryCommand(FlextCommands.Command):
             correlation_id=FlextGenerators.generate_uuid(),
         )
 
+    @override
     def validate_command(self) -> FlextResult[None]:
         """Validate factory registration command."""
         if not self.service_name or not self.service_name.strip():
@@ -130,7 +132,7 @@ class UnregisterServiceCommand(FlextCommands.Command):
     @classmethod
     def create(cls, service_name: str) -> UnregisterServiceCommand:
         """Create command with default values."""
-        return cls(  # pyright: ignore[reportCallIssue]
+        return cls(
             service_name=service_name,
             command_type="unregister_service",
             command_id=FlextGenerators.generate_uuid(),
@@ -139,6 +141,7 @@ class UnregisterServiceCommand(FlextCommands.Command):
             correlation_id=FlextGenerators.generate_uuid(),
         )
 
+    @override
     def validate_command(self) -> FlextResult[None]:
         """Validate service unregistration command."""
         if not self.service_name or not self.service_name.strip():
@@ -168,6 +171,7 @@ class GetServiceQuery(FlextCommands.Query):
             sort_order="asc",
         )
 
+    @override
     def validate_query(self) -> FlextResult[None]:
         """Validate service retrieval query."""
         if not self.service_name or not self.service_name.strip():
@@ -210,6 +214,7 @@ class RegisterServiceHandler(FlextCommands.Handler[RegisterServiceCommand, None]
         super().__init__("RegisterServiceHandler")
         self._registrar = registrar
 
+    @override
     def handle(self, command: RegisterServiceCommand) -> FlextResult[None]:
         """Handle service registration."""
         return self._registrar.register_service(
@@ -224,6 +229,7 @@ class RegisterFactoryHandler(FlextCommands.Handler[RegisterFactoryCommand, None]
         super().__init__("RegisterFactoryHandler")
         self._registrar = registrar
 
+    @override
     def handle(self, command: RegisterFactoryCommand) -> FlextResult[None]:
         """Handle factory registration."""
         return self._registrar.register_factory(command.service_name, command.factory)
@@ -236,6 +242,7 @@ class UnregisterServiceHandler(FlextCommands.Handler[UnregisterServiceCommand, N
         super().__init__("UnregisterServiceHandler")
         self._registrar = registrar
 
+    @override
     def handle(self, command: UnregisterServiceCommand) -> FlextResult[None]:
         """Handle service unregistration."""
         return self._registrar.unregister_service(command.service_name)
@@ -248,6 +255,7 @@ class GetServiceQueryHandler(FlextCommands.QueryHandler[GetServiceQuery, object]
         super().__init__("GetServiceQueryHandler")
         self._retriever = retriever
 
+    @override
     def handle(self, query: GetServiceQuery) -> FlextResult[object]:
         """Handle service retrieval."""
         return self._retriever.get_service(query.service_name)
@@ -262,6 +270,7 @@ class ListServicesQueryHandler(
         super().__init__("ListServicesQueryHandler")
         self._retriever = retriever
 
+    @override
     def handle(self, query: ListServicesQuery) -> FlextResult[dict[str, str]]:
         """Handle service listing."""
         # Use query parameters for filtering in future versions
@@ -735,13 +744,14 @@ class FlextContainer(FlextLoggableMixin):
         # MyPy sabe que service é T após isinstance
         return FlextResult[T].ok(service)
 
+    @override
     def __repr__(self) -> str:
         """Return string representation of container."""
         count = self.get_service_count()
         return f"FlextContainer(services: {count})"
 
     # -----------------------------------------------------------------
-    # Convenience methods expected by tests and other projects
+    # Convenience methods
     # -----------------------------------------------------------------
 
     def get_info(self, name: str) -> FlextResult[dict[str, object]]:
@@ -839,7 +849,7 @@ class FlextContainer(FlextLoggableMixin):
                 if dependency_result.is_failure:
                     return FlextResult[T].fail(
                         f"Required dependency '{param.name}' not found for "
-                        f"{service_class.__name__}",
+                        f"{service_class.__name__}"
                     )
 
                 # dependency_result is FlextResult[object]; cast explicitly
