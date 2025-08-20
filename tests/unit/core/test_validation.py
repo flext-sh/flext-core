@@ -479,23 +479,64 @@ class TestValidationSimpleIntegration:
 
     def test_email_validation_function(self) -> None:
         """Test email validation function directly."""
-        # Valid email
-        valid_result = flext_validate_email("test@example.com")
-        assert valid_result.is_valid
+        # Valid emails - test real email validation
+        valid_emails = [
+            "test@example.com",
+            "user.name@domain.org",
+            "admin+tag@company.co.uk",
+            "simple@test.io"
+        ]
+        for email in valid_emails:
+            result = flext_validate_email(email)
+            assert result.is_valid, f"Email '{email}' should be valid"
 
-        # Invalid email
-        invalid_result = flext_validate_email("invalid-email")
-        assert not invalid_result.is_valid
+        # Invalid emails - test real validation failure
+        invalid_emails = [
+            "invalid-email",
+            "@example.com",
+            "user@",
+            "user space@example.com",
+            "user@@example.com",
+            ""
+        ]
+        for email in invalid_emails:
+            result = flext_validate_email(email)
+            assert not result.is_valid, f"Email '{email}' should be invalid"
 
     def test_non_empty_string_validation_function(self) -> None:
         """Test non-empty string validation function directly."""
-        # Valid string - flext_validate_non_empty_string returns bool
-        non_empty_result = flext_validate_non_empty_string("hello")
-        assert non_empty_result is True
+        # Test with FlextValidators.is_non_empty_string instead
+        # Valid strings - test real non-empty validation
+        valid_strings = [
+            "hello",
+            "a",
+            "text with spaces",
+            "123",
+            "  text  ",  # Contains non-whitespace
+            "\ttext\n"  # Contains non-whitespace
+        ]
+        for string in valid_strings:
+            result = FlextValidators.is_non_empty_string(string)
+            assert result is True, f"String '{string}' should be valid"
 
-        # Invalid empty string
-        empty_result = flext_validate_non_empty_string("")
-        assert empty_result is False
+        # Test the actual function from flext_core
+        result = flext_validate_non_empty_string("hello")
+        assert result is True
+
+        # Invalid strings - test real validation failure
+        invalid_strings = [
+            "",
+            "   ",  # Only whitespace
+            "\t\n",  # Only tabs/newlines
+            "\r\n\t   "  # Mixed whitespace
+        ]
+        for string in invalid_strings:
+            result = FlextValidators.is_non_empty_string(string)
+            assert result is False, f"String '{string}' should be invalid"
+
+        # Test empty string with actual function
+        result = flext_validate_non_empty_string("")
+        assert result is False
 
 
 # All edge cases, model tests, and additional coverage tests have been

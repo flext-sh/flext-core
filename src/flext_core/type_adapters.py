@@ -81,7 +81,7 @@ class TypeAdapterFactory:
             TypeAdapter for List[T]
 
         """
-        return TypeAdapter(list[item_type])  # type: ignore[valid-type]
+        return TypeAdapter(list[item_type])
 
     @staticmethod
     def create_dict_adapter(value_type: type) -> TypeAdapter[dict[str, object]]:
@@ -94,7 +94,7 @@ class TypeAdapterFactory:
             TypeAdapter for Dict[str, T]
 
         """
-        return TypeAdapter(dict[str, value_type])  # type: ignore[valid-type]
+        return TypeAdapter(dict[str, value_type])
 
 
 # =============================================================================

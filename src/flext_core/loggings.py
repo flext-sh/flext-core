@@ -26,7 +26,7 @@ Platform = FlextConstants.Platform
 # Structured logging types
 
 # =============================================================================
-# FLEXT LOG CONTEXT - TypedDict as expected by tests
+# FLEXT LOG CONTEXT - TypedDict
 # =============================================================================
 
 
@@ -255,7 +255,7 @@ structlog.configure(
         structlog.stdlib.add_log_level,
         # Use ISO timestamp format instead of unix timestamp for readability
         structlog.processors.TimeStamper(fmt="iso"),
-        _add_to_log_store,  # Keep for testing
+        _add_to_log_store,  # Log store functionality
         _create_human_readable_renderer(),
     ],
     context_class=dict,
@@ -307,7 +307,7 @@ logging.basicConfig(
 
 
 # =============================================================================
-# FLEXT LOGGER - Class-based factory interface as expected by tests
+# FLEXT LOGGER - Class-based factory interface
 # =============================================================================
 
 
@@ -538,13 +538,13 @@ class FlextLogger:
 
         Args:
             log_level: Log level to configure (new preferred name)
-            _log_level: Log level to configure (backward compatibility)
+            _log_level: Log level to configure (compatibility)
             json_output: Whether to use JSON output format
             add_timestamp: Whether to add timestamps to logs
             add_caller: Whether to add caller information to logs
 
         """
-        # Handle both parameter names for backward compatibility
+        # Handle both parameter names for compatibility
         # Note: final_log_level can be used for future enhancement
         # For now just validate parameters exist
         _ = log_level or _log_level or FlextLogLevel.INFO
@@ -805,7 +805,7 @@ class FlextLogContextManager:
 # For new code, use FlextLoggerFactory methods directly
 
 
-# Add missing interface methods to FlextLogger class that tests expect
+# Additional interface methods for FlextLogger class
 
 
 # =============================================================================
@@ -869,7 +869,7 @@ __all__: list[str] = [
     "get_logger",  # Convenience function
     "setup_custom_trace_level",  # Keep this as it's used internally
     # NOTE: Legacy functions moved to legacy.py
-    # Import from flext_core.legacy if needed for backward compatibility
+    # Import from flext_core.legacy if needed for compatibility
 ]
 
 

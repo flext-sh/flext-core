@@ -186,15 +186,15 @@ class FlextFieldCore(
 
         return True, None
 
-    # Backwards-compatible method expected by tests: returns FlextResult
+    # Backwards-compatible method returning FlextResult
     def validate_value(self, value: object) -> FlextResult[object]:
-        """Compatibility wrapper returning FlextResult for legacy tests."""
+        """Compatibility wrapper returning FlextResult."""
         is_valid, err = self.validate_field_value(value)
         if is_valid:
             return FlextResult[object].ok(value)
         return FlextResult[object].fail(err or "Validation failed")
 
-    # Backwards-compat convenience methods expected by tests
+    # Backwards-compatibility convenience methods
     def get_default_value(self) -> str | int | float | bool | None:
         """Return the configured default value for this field."""
         return self.default_value
@@ -214,7 +214,7 @@ class FlextFieldCore(
     def get_field_info(self) -> TFieldInfo:
         """Return a dictionary with field information for compatibility."""
         info = self.get_field_schema()
-        # Attach metadata as a plain dict (tests accept dict or object)
+        # Attach metadata as a plain dict
         info["metadata"] = (
             self.metadata.to_dict()
             if hasattr(self.metadata, "to_dict")
@@ -377,7 +377,7 @@ class FlextFieldCore(
     @property
     def metadata(self) -> FlextFieldMetadata:
         """Get field metadata as dictionary."""
-        # Return metadata object for backward-compatibility (tests expect an object)
+        # Return metadata object for backward-compatibility
         return FlextFieldMetadata(
             field_id=self.field_id,
             field_name=self.field_name,
@@ -413,7 +413,7 @@ class FlextFieldMetadata(BaseModel):
         extra="forbid",
     )
 
-    # Core identification (provide defaults for easy instantiation in tests)
+    # Core identification (with default values)
     field_id: FlextFieldId = ""
     field_name: FlextFieldName = ""
     field_type: FlextFieldTypeStr = FlextFieldType.STRING.value
@@ -443,7 +443,7 @@ class FlextFieldMetadata(BaseModel):
     # Custom validator function for field validation
     validator: FlextValidator | None = None
 
-    # Back-compat extra fields used by tests
+    # Additional compatibility fields
     internal: bool = False
     unique: bool = False
     custom_properties: dict[str, object] | None = Field(
@@ -544,7 +544,7 @@ class FlextFieldMetadata(BaseModel):
             "validator": self.validator is not None,
         }
 
-    # Provide a compatibility alias used by some tests
+    # Provide a compatibility alias
     def to_dict_basic(self) -> JsonDict:
         return self.to_dict()
 
@@ -637,9 +637,8 @@ class FlextFieldRegistry:
         return matching_fields
 
     def get_field(self, field_id: str) -> FlextFieldCore | None:
-        # Backwards compatible variant expected in older tests: return the raw
-        # field object or None. Keep a thin wrapper method `get_field_by_id`
-        # that returns FlextResult.
+        # Backwards compatible variant: return the raw field object or None.
+        # Keep a thin wrapper method `get_field_by_id` that returns FlextResult.
         return self._fields.get(field_id)
 
     def get_all_fields(self) -> dict[str, FlextFieldCore]:
@@ -936,7 +935,7 @@ class FlextFields:
         """Clear all registered fields."""
         cls._registry.clear_registry()
 
-    # Convenience wrappers expected by tests
+    # Convenience wrapper methods
     @classmethod
     def string_field(cls, name: str, **kwargs: object) -> FlextFieldCore:
         """Create string field with name (convenience method)."""
@@ -985,7 +984,7 @@ class FlextFields:
 
 
 # =============================================================================
-# BACKWARD COMPATIBILITY ALIASES - Essential for existing tests
+# BACKWARD COMPATIBILITY ALIASES
 # =============================================================================
 
 # Backward compatibility for renamed classes

@@ -53,7 +53,7 @@ def demonstrate_generic_payloads() -> None:
 
 
 def _print_generic_header() -> None:
-    "\n" + "=" * 80
+    _separator = "\n" + "=" * 80
 
 
 def _demo_basic_payloads() -> None:
@@ -132,7 +132,7 @@ def demonstrate_message_payloads() -> None:
 
 
 def _print_message_header() -> None:
-    "\n" + "=" * 80
+    _separator = "\n" + "=" * 80
 
 
 def _create_basic_messages() -> tuple[
@@ -272,7 +272,7 @@ def demonstrate_domain_events() -> None:
 
 def _print_domain_events_section_header(title: str) -> None:  # noqa: ARG001
     """Print formatted domain events section header."""
-    "\n" + "=" * 80
+    _separator = "\n" + "=" * 80
 
 
 def _demonstrate_basic_domain_event_creation() -> FlextResult[None]:
@@ -571,7 +571,7 @@ def demonstrate_payload_serialization() -> None:
 
 
 def _print_serialization_header() -> None:
-    "\n" + "=" * 80
+    _separator = "\n" + "=" * 80
 
 
 def _basic_serialization_demo() -> TUserData:
@@ -669,7 +669,7 @@ def demonstrate_enterprise_messaging_patterns() -> None:
 
 
 def _print_enterprise_header() -> None:
-    "\n" + "=" * 80
+    _separator = "\n" + "=" * 80
 
 
 def _request_response_pattern_demo() -> None:

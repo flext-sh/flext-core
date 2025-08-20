@@ -15,8 +15,11 @@ from __future__ import annotations
 
 import time
 from collections.abc import Callable
+from typing import TypeVar, cast
 
 from flext_core import safe_call
+
+T = TypeVar("T")
 
 from .shared_domain import SharedDomainFactory, User as SharedUser
 
@@ -123,7 +126,7 @@ def process_user_batch(users_data: list[dict[str, object]]) -> list[SharedUser]:
 # =============================================================================
 
 
-def safe_decorator(func: Callable[..., object]) -> Callable[..., object]:
+def safe_decorator(func: Callable[..., T]) -> Callable[..., object]:
     """Convert function to return FlextResult."""
 
     def wrapper(*args: object, **kwargs: object) -> object:
@@ -133,7 +136,7 @@ def safe_decorator(func: Callable[..., object]) -> Callable[..., object]:
 
 
 @safe_decorator
-def safe_user_creation(name: str, email: str, age: int) -> SharedUser:
+def safe_user_creation(name: str, email: str, age: int) -> object:
     """Safe user creation that returns FlextResult."""
     return create_validated_user(name, email, age)
 
@@ -220,7 +223,7 @@ def demo_batch_processing() -> None:
         {"name": "David Wilson", "email": "david@example.com", "age": 35},
     ]
 
-    users = process_user_batch(users_data)
+    users = cast("list[SharedUser]", process_user_batch(users_data))
     print(f"✅ Processed {len(users)} valid users")
 
 

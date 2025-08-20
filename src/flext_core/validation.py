@@ -1112,5 +1112,5 @@ FlextValidationRule = _FlextValidationRuleProtocol
 # =============================================================================
 # LEGACY VALIDATION FUNCTIONS - Backward compatibility
 # Note: These functions are already defined above. This section is for
-# backward compatibility imports only.
+# compatibility imports only.
 # =============================================================================

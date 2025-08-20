@@ -11,6 +11,9 @@ Key Patterns:
 • Type-safe utility composition
 """
 
+from collections.abc import Callable
+from typing import Any, cast
+
 from flext_core import FlextResult, FlextUtilities
 
 from .shared_domain import SharedDomainFactory, User
@@ -92,19 +95,33 @@ class ValidationHelpers:
         """Validate all user data fields."""
         name_result = ValidationHelpers.validate_name(str(data["name"]))
         email_result = ValidationHelpers.validate_email(str(data["email"]))
-        age_result = ValidationHelpers.validate_age(int(data["age"]))
+
+        # Safe conversion to int
+        try:
+            age_obj = data["age"]
+            if age_obj is not None and isinstance(age_obj, (int, str)):
+                age_value = int(age_obj)
+            else:
+                age_value = 0
+        except (ValueError, TypeError):
+            age_value = 0
+        age_result = ValidationHelpers.validate_age(age_value)
 
         if all(r.success for r in [name_result, email_result, age_result]):
-            return FlextResult[dict[str, object]].ok(
-                {
-                    "name": name_result.unwrap(),
-                    "email": email_result.unwrap(),
-                    "age": age_result.unwrap(),
-                }
-            )
+            return FlextResult[dict[str, object]].ok({
+                "name": name_result.unwrap(),
+                "email": email_result.unwrap(),
+                "age": age_result.unwrap(),
+            })
 
-        errors = [r.error for r in [name_result, email_result, age_result] if r.failure]
-        return FlextResult[str].fail(f"Validation failed: {'; '.join(errors)}")
+        errors = [
+            r.error or "Unknown error"
+            for r in [name_result, email_result, age_result]
+            if r.failure
+        ]
+        return FlextResult[dict[str, object]].fail(
+            f"Validation failed: {'; '.join(errors)}"
+        )
 
 
 # =============================================================================
@@ -116,10 +133,13 @@ class BatchProcessor:
     """Simple batch processing utilities."""
 
     @staticmethod
-    def process_batch(items: list[dict], processor_fn: object) -> FlextResult[dict]:
+    def process_batch(
+        items: list[dict[str, Any]],
+        processor_fn: Callable[[dict[str, Any]], FlextResult[Any]],
+    ) -> FlextResult[dict[str, Any]]:
         """Process a batch of items with a function."""
         if not items:
-            return FlextResult[str].fail("No items to process")
+            return FlextResult[dict[str, Any]].fail("No items to process")
 
         results = []
         errors = []
@@ -134,16 +154,14 @@ class BatchProcessor:
             except Exception as e:
                 errors.append(f"Item {i}: {e!s}")
 
-        return FlextResult.ok(
-            {
-                "total": len(items),
-                "successful": len(results),
-                "failed": len(errors),
-                "results": results,
-                "errors": errors,
-                "success_rate": (len(results) / len(items)) * 100 if items else 0,
-            }
-        )
+        return FlextResult[dict[str, Any]].ok({
+            "total": len(items),
+            "successful": len(results),
+            "failed": len(errors),
+            "results": results,
+            "errors": errors,
+            "success_rate": (len(results) / len(items)) * 100 if items else 0,
+        })
 
 
 # =============================================================================
@@ -166,7 +184,9 @@ class UserService:
             self.validator.validate_user_data(user_data)
             .flat_map(
                 lambda data: SharedDomainFactory.create_user(
-                    data["name"], data["email"], data["age"]
+                    str(data["name"]),
+                    str(data["email"]),
+                    int(data["age"]) if isinstance(data["age"], int) else 0,
                 )
             )
             .flat_map(lambda user: self._assign_id_and_save(user))
@@ -178,32 +198,32 @@ class UserService:
         if user_id_result.success:
             user.id = user_id_result.unwrap()
             self.users[user.id] = user
-            return FlextResult[str].ok(user)
-        return FlextResult[str].fail(
+            return FlextResult[User].ok(user)
+        return FlextResult[User].fail(
             f"Failed to generate user ID: {user_id_result.error}"
         )
 
-    def create_user_session(self, user_id: str) -> FlextResult[dict]:
+    def create_user_session(self, user_id: str) -> FlextResult[dict[str, Any]]:
         """Create session for user."""
         if user_id not in self.users:
-            return FlextResult[str].fail(f"User not found: {user_id}")
+            return FlextResult[dict[str, Any]].fail(f"User not found: {user_id}")
 
         session_result = self.id_generator.generate_session_token()
         corr_result = self.id_generator.generate_correlation_id()
 
         if session_result.success and corr_result.success:
-            return FlextResult.ok(
-                {
-                    "user_id": user_id,
-                    "session_token": session_result.unwrap(),
-                    "correlation_id": corr_result.unwrap(),
-                    "created_at": "2024-01-01T00:00:00Z",
-                }
-            )
+            return FlextResult[dict[str, Any]].ok({
+                "user_id": user_id,
+                "session_token": session_result.unwrap(),
+                "correlation_id": corr_result.unwrap(),
+                "created_at": "2024-01-01T00:00:00Z",
+            })
 
-        return FlextResult[str].fail("Failed to generate session data")
+        return FlextResult[dict[str, Any]].fail("Failed to generate session data")
 
-    def batch_create_users(self, user_data_list: list[dict]) -> FlextResult[dict]:
+    def batch_create_users(
+        self, user_data_list: list[dict[str, Any]]
+    ) -> FlextResult[dict[str, Any]]:
         """Create multiple users in batch."""
         return self.batch_processor.process_batch(user_data_list, self.create_user)
 
@@ -257,7 +277,9 @@ def demo_validation_helpers() -> None:
     # Test complete user data validation
     user_data = {"name": "Bob Smith", "email": "bob@example.com", "age": 30}
 
-    validation_result = validator.validate_user_data(user_data)
+    validation_result = validator.validate_user_data(
+        cast("dict[str, object]", user_data)
+    )
     if validation_result.success:
         validated = validation_result.unwrap()
         print(f"✅ User data validated: {validated['name']}")
@@ -297,14 +319,14 @@ def demo_user_service() -> None:
 
     # Create user
     user_data = {"name": "Frank Miller", "email": "frank@example.com", "age": 45}
-    user_result = service.create_user(user_data)
+    user_result = service.create_user(cast("dict[str, object]", user_data))
 
     if user_result.success:
         user = user_result.unwrap()
         print(f"✅ User created: {user.name} (ID: {user.id})")
 
         # Create session for user
-        session_result = service.create_user_session(user.id)
+        session_result = service.create_user_session(user.id.root)
         if session_result.success:
             session = session_result.unwrap()
             print(f"✅ Session created: {session['session_token'][:20]}...")
@@ -316,12 +338,14 @@ def demo_functional_composition() -> None:
 
     # Chain multiple utility operations
     result = (
-        FlextResult[str]
+        FlextResult[dict[str, Any]]
         .ok({"name": "Grace Lee", "email": "grace@example.com", "age": 33})
         .flat_map(lambda data: ValidationHelpers.validate_user_data(data))
         .flat_map(
             lambda data: SharedDomainFactory.create_user(
-                data["name"], data["email"], data["age"]
+                str(data["name"]),
+                str(data["email"]),
+                int(data["age"]) if isinstance(data["age"], int) else 0,
             )
         )
         .map(lambda user: {"user": user, "status": "created"})

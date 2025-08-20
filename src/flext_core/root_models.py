@@ -228,7 +228,7 @@ class FlextEventList(RootModel[list[dict[str, object]]]):
         """Initialize with optional internal event storage."""
         if root is None:
             root = []
-        super().__init__(root)  # type: ignore[misc]
+        super().__init__(root)
         # Internal storage for Flext Event objects - this satisfies MyPy
         object.__setattr__(self, "_flext_events", [])
 
@@ -275,7 +275,7 @@ class FlextEventList(RootModel[list[dict[str, object]]]):
             return event_dict
 
         # For legacy compatibility, convert dict to FlextEvent object if needed
-        # This handles the case where tests expect FlextEvent properties
+        # This handles the case where  FlextEvent properties
         if hasattr(event_dict, "get") and "type" in event_dict:
             # Extract event information from dictionary
             event_type = event_dict.get("type", "")
@@ -298,7 +298,7 @@ class FlextEventList(RootModel[list[dict[str, object]]]):
                     version=int(version) if isinstance(version, (int, str)) else None,
                 )
                 if event_result.is_success:
-                    # Return the FlextEvent object directly for tests
+                    # Return the FlextEvent object directly
                     return event_result.unwrap()
 
         return event_dict

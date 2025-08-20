@@ -1,6 +1,6 @@
 """Legacy compatibility module for FLEXT Core.
 
-This module provides backward compatibility facades for APIs that have been
+This module provides compatibility facades for APIs that have been
 modernized or refactored. Use this for maintaining compatibility during
 ecosystem transitions without duplicating implementation code.
 
@@ -66,15 +66,15 @@ from flext_core.validation import FlextValidators, flext_validate_non_empty_stri
 # LEGACY MODEL PATTERNS - Delegate to modern models.py
 # =============================================================================
 
-# Legacy model aliases - maintain backward compatibility
+# Legacy model aliases - maintain compatibility
 
 # =============================================================================
-# LEGACY MIXIN ALIASES - Maintain test compatibility
+# LEGACY MIXIN ALIASES
 # =============================================================================
 
 # All legacy mixins delegate to modern mixins
 
-# Legacy mixin aliases for test compatibility
+# Legacy mixin aliases
 LegacyCompatibleCommandMixin = FlextCommandMixin
 LegacyCompatibleComparableMixin = FlextComparableMixin
 LegacyCompatibleDataMixin = FlextValidatableMixin  # Closest match
@@ -184,7 +184,7 @@ FlextMutableModel = FlextEntity
 FlextBaseSettings = FlextSettings
 FlextConfiguration = FlextSettings
 
-# Legacy config operations for test compatibility
+# Legacy config operations
 _BaseConfigOps = FlextConfigOps
 
 # =============================================================================
@@ -207,7 +207,7 @@ FlextHelpers = FlextUtilities
 # LEGACY COMPATIBILITY EXPORTS - Delegate to modern implementations
 # =============================================================================
 
-# Legacy compatibility for test imports
+# Legacy compatibility imports
 ConsoleLogger = FlextConsoleLogger
 BaseConfigManager = FlextBaseConfigManager
 LegacyCompatibleCacheableMixin = FlextCacheableMixin
@@ -216,7 +216,7 @@ FlextValueObjectFactory = FlextFactory
 
 # Legacy config defaults
 class _BaseConfigDefaults:
-    """Legacy compatibility for test config defaults."""
+    """Legacy compatibility config defaults."""
 
     TIMEOUT = FlextConstants.Defaults.TIMEOUT
     RETRIES = FlextConstants.Defaults.MAX_RETRIES
@@ -271,7 +271,7 @@ class _BaseConfigDefaults:
 
 # Legacy config validation
 class _BaseConfigValidation:
-    """Legacy compatibility for test config validation."""
+    """Legacy compatibility config validation."""
 
     @staticmethod
     def validate_config(config: dict[str, object]) -> FlextResult[bool]:
@@ -341,7 +341,7 @@ class _BaseConfigValidation:
 
 # Legacy performance config
 class _PerformanceConfig:
-    """Legacy compatibility for test performance config."""
+    """Legacy compatibility performance config."""
 
     TIMEOUT = FlextConstants.Performance.SLOW_REQUEST_THRESHOLD
     BATCH_SIZE = FlextConstants.Performance.DEFAULT_BATCH_SIZE
@@ -352,7 +352,7 @@ class _PerformanceConfig:
 # Note: flext_validate_non_empty_string is already imported above
 
 # =============================================================================
-# LEGACY EXPORTS - Maintain backward compatibility
+# LEGACY EXPORTS - Maintain compatibility
 # =============================================================================
 
 __all__: list[str] = [

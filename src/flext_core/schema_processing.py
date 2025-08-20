@@ -349,7 +349,7 @@ class FlextProcessingPipeline[InputT, OutputT]:
 # =============================================================================
 
 __all__: list[str] = [
-    # Backward-compatible export names expected by tests
+    # Backward-compatible export names
     "BaseEntry",
     "BaseFileWriter",
     "BaseProcessor",

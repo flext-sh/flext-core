@@ -23,7 +23,7 @@ Platform = FlextConstants.Platform
 
 
 # =============================================================================
-# TYPE GUARDS - Re-exported from FlextUtilities for backward compatibility
+# TYPE GUARDS - Re-exported from FlextUtilities for compatibility
 # =============================================================================
 
 # All type guards are now in FlextTypeGuards class
@@ -108,7 +108,7 @@ class FlextGuards:
         def _init(self: object, *args: object, **kwargs: object) -> None:
             # Call the original class initializer directly to avoid super() pitfalls
             try:
-                target_class.__init__(self, *args, **kwargs)  # type: ignore[misc]
+                target_class.__init__(self, *args, **kwargs)
             except Exception:
                 # If original init fails, attempt base object init as fallback
                 object.__init__(self)
@@ -183,7 +183,7 @@ class FlextGuards:
 
 
 # =============================================================================
-# AUTOMATIC VALIDATION - Custom validated model for backward compatibility
+# AUTOMATIC VALIDATION - Custom validated model for compatibility
 # =============================================================================
 
 
@@ -191,7 +191,7 @@ class FlextValidatedModel(BaseModel, FlextSerializableMixin):
     """Automatic validation model with Pydantic and FLEXT integration.
 
     Provides validated object construction with enhanced error handling
-    and backward compatibility for existing FLEXT patterns.
+    and compatibility for existing FLEXT patterns.
     """
 
     def __init__(self, **data: object) -> None:
@@ -204,7 +204,7 @@ class FlextValidatedModel(BaseModel, FlextSerializableMixin):
             for error in e.errors():
                 loc = ".".join(str(x) for x in error["loc"]) if error.get("loc") else ""
                 msg = error.get("msg", "Validation error")
-                # Some tests expect messages without 'Input should be' prefix
+                # Some  messages without 'Input should be' prefix
                 normalized = (
                     msg.replace("Input should be ", "")
                     .replace("Input should be a ", "a ")
@@ -243,7 +243,7 @@ class FlextValidatedModel(BaseModel, FlextSerializableMixin):
         """Create instance using centralized factory.
 
         On failure, return FlextResult with normalized 'Invalid data' message
-        instead of raising, to align with tests expecting failure results.
+        instead of raising, to align with ing failure results.
         """
         try:
             instance = cls(**data)
@@ -338,7 +338,7 @@ class FlextValidationUtils:
 # Duplicate function removed - methods already exist in FlextGuards class
 
 # =============================================================================
-# COMPATIBILITY ALIASES - For backward compatibility
+# COMPATIBILITY ALIASES - For compatibility
 # =============================================================================
 
 # Re-export FlextValidationDecorators methods as module-level functions

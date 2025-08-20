@@ -12,7 +12,7 @@ class FlextConstants:
     Organizes constants into logical categories with type safety.
     """
 
-    # Class-level placeholder kept for backward compatibility;
+    # Class-level placeholder kept for compatibility;
     # the authoritative flat ERROR_CODES mapping is built at module level
     # after this class is fully defined.
     ERROR_CODES: ClassVar[dict[str, str]] = {}
@@ -698,7 +698,7 @@ class FlextLogLevel(Enum):
         return hash(self.value)
 
     def __eq__(self, other: object) -> bool:
-        """Support comparison with string values for test compatibility."""
+        """Support comparison with string values."""
         if isinstance(other, str):
             return self.value == other
         return super().__eq__(other)
@@ -793,7 +793,7 @@ class FlextEntityStatus(Enum):
 #   from flext_core.legacy import ERROR_CODES, DEFAULT_TIMEOUT, EMAIL_PATTERN
 
 # =============================================================================
-# EXPORTS - Semantic constants + backward compatibility
+# EXPORTS - Semantic constants + compatibility
 # =============================================================================
 
 # Build legacy flat ERROR_CODES mapping with mixed strategy:
@@ -836,5 +836,5 @@ __all__: list[str] = [
     "FlextLogLevel",
     "FlextOperationStatus",
     # Note: Legacy constants moved to legacy.py
-    # Import from flext_core.legacy if needed for backward compatibility
+    # Import from flext_core.legacy if needed for compatibility
 ]

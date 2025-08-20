@@ -34,13 +34,7 @@ __version_info__ = tuple(int(x) for x in __version__.split(".") if x.isdigit())
 # =============================================================================
 
 # Core APIs and utilities
-# Provide abstract handler shims for top-level exports to satisfy tests that
-# assert abstractness while keeping flext_core.handlers module concrete for
-# direct-instantiation tests.
-# NOTE: Avoid TYPE_CHECKING usage here to keep Pydantic runtime stable.
-
-# Utilities - Back-compat module namespace for tests
-from flext_core import interfaces  # Back-compat module namespace for tests
+from flext_core import interfaces
 
 # Aggregate root
 from flext_core.aggregate_root import FlextAggregateRoot
@@ -94,7 +88,7 @@ from flext_core.constants import (
     FlextOperationStatus,
 )
 
-# Performance constants needed by tests
+# Performance constants
 BYTES_PER_KB = FlextConstants.Performance.BYTES_PER_KB
 SECONDS_PER_MINUTE = FlextConstants.Performance.SECONDS_PER_MINUTE
 SECONDS_PER_HOUR = FlextConstants.Performance.SECONDS_PER_HOUR
@@ -140,13 +134,12 @@ from flext_core.decorators import (
     FlextLoggingDecorators,
     FlextPerformanceDecorators,
     FlextValidationDecorators,
-    # Internal decorators for testing
-    # Individual decorator functions
+    # Internal decorator functions
     _flext_cache_decorator,
     _flext_safe_call_decorator,
     _flext_timing_decorator,
     _flext_validate_input_decorator,
-    # Aliases for backward compatibility
+    # Compatibility aliases
     _validate_input_decorator,
     _safe_call_decorator,
     _decorators_base,
@@ -224,6 +217,7 @@ from flext_core.typings import (
 # Protocols
 from flext_core.protocols import (
     FlextValidator,
+    FlextValidationRule,
 )
 
 # Type-only imports were previously used here. Avoiding empty TYPE_CHECKING
@@ -279,7 +273,7 @@ from flext_core.mixins import (
     FlextTimestampMixin,
     FlextTimingMixin,
     FlextValidatableMixin,
-    # Legacy compatibility aliases for tests
+    # Legacy compatibility aliases
     LegacyCompatibleTimestampMixin,
     LegacyCompatibleIdentifiableMixin,
     LegacyCompatibleValidatableMixin,
@@ -349,14 +343,14 @@ from flext_core.observability import (
     get_observability,
     get_simple_observability,
     reset_global_observability,
-    # Legacy compatibility aliases
+    # Legacy aliases
     InMemoryMetrics,
     MinimalObservability,
     NoOpTracer,
     SimpleAlerts,
 )
 
-# Legacy compatibility imports needed by tests
+# Legacy compatibility imports
 from flext_core.legacy import (
     BaseConfigManager,
     ConsoleLogger,
@@ -450,26 +444,6 @@ from flext_core.semantic import (
     FlextSemanticObservability,
 )
 
-# Testing Utilities
-from flext_core.testing_utilities import (
-    FlextTestAssertion,
-    FlextTestFactory,
-    FlextTestMocker,
-    FlextTestModel,
-    FlextTestUtilities,
-    FlextTestConfig,
-    ITestAssertion,
-    ITestFactory,
-    ITestMocker,
-    create_api_test_response,
-    create_ldap_test_config,
-    create_oud_connection_config,
-)
-
-# Explicit runtime exposure for testing type variables to avoid circular
-# resolution issues in static analyzers and to keep runtime behavior stable.
-__all__ += ["TTestConfig", "TTestData"]
-
 
 # Type definitions - complete set
 from flext_core.typings import (
@@ -549,9 +523,6 @@ from flext_core.typings import (
     # Field ids and names used at runtime
     U,
     V,
-    # Test type variables (exposed for testing helpers)
-    TTestData,
-    TTestConfig,
     # Domain-level TypeVars
 )
 
@@ -594,6 +565,7 @@ from flext_core.validation import (
     FlextValidation,
     FlextValidators,
     flext_validate_email,
+    flext_validate_non_empty_string,
     flext_validate_numeric,
     flext_validate_required,
     flext_validate_service_name,
@@ -632,20 +604,8 @@ constants = _constants_module  # runtime alias to module
 
 with suppress(
     Exception,
-):  # pragma: no cover - compatibility shim for dynamic import tests
-    # Attach a 'constants' attribute on the flext_core function object
-    # Note: This is a compatibility shim for tests, not for production use
+):  # pragma: no cover
     pass
-
-
-# Provide a minimal _config_base module-like object for tests that patch it
-class _config_base:  # noqa: N801 - keep snake_case to match tests  # pyright: ignore[reportUnusedClass]
-    @staticmethod
-    def dict(
-        *_args: object,
-        **_kwargs: object,
-    ) -> dict[str, object]:  # pragma: no cover
-        return {}
 
 
 # NOTE: Command/Query handler abstract classes are provided by
@@ -874,6 +834,7 @@ __all__ += [
     "flext_validate_string",
     "flext_validate_numeric",
     "flext_validate_email",
+    "flext_validate_non_empty_string",
     "flext_validate_service_name",
     "FlextDecorators",
     "FlextHandlers",
@@ -1034,7 +995,7 @@ __all__ += [
     "_flext_safe_call_decorator",
     "_flext_timing_decorator",
     "_flext_validate_input_decorator",
-    # Backward compatibility aliases
+    # Compatibility aliases
     "_validate_input_decorator",
     "_safe_call_decorator",
     "_decorators_base",
@@ -1065,7 +1026,7 @@ __all__ += [
     "flext_record_performance",
     "flext_track_performance",
     "generate_iso_timestamp",
-    # Constants needed by tests
+    # Performance constants
     "BYTES_PER_KB",
     "SECONDS_PER_MINUTE",
     "SECONDS_PER_HOUR",
@@ -1074,7 +1035,7 @@ __all__ += [
     "BaseConfigManager",
     "LegacyCompatibleCacheableMixin",
     "FlextValueObjectFactory",
-    # Additional legacy mixin aliases for test compatibility
+    # Additional legacy mixin aliases
     "LegacyCompatibleCommandMixin",
     "LegacyCompatibleComparableMixin",
     "LegacyCompatibleDataMixin",
@@ -1109,29 +1070,12 @@ __all__ += [
     "FlextMixinDelegator",
     "create_mixin_delegator",
     "validate_delegation_system",
-    # Testing Utilities
-    "FlextTestUtilities",
-    "FlextTestFactory",
-    "FlextTestAssertion",
-    "FlextTestMocker",
-    "FlextTestModel",
-    "create_oud_connection_config",
-    "create_ldap_test_config",
-    "create_api_test_response",
-    "ITestFactory",
-    "ITestAssertion",
-    "ITestMocker",
-    "TTestData",
-    "TTestConfig",
-    "FlextTestConfig",
-    # Additional back-compatibility exports that tests need
+    # Additional compatibility exports
     "FlextAbstractConfig",
     # Modern aliases that match the updated pattern
     "FlextValue",
 ]
 
-# Public re-exports for compatibility. Use the concrete classes from
-# flext_core.handlers to ensure a single type identity across runtime and
-# typings to avoid mypy/pyright incompatible method override errors.
+# Public re-exports for compatibility
 FlextCommandHandler = _FlextCommandHandler
 FlextQueryHandler = _FlextQueryHandler

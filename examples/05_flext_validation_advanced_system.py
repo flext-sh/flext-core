@@ -11,6 +11,8 @@ Key Patterns:
 • Chain validation patterns
 """
 
+from typing import cast
+
 from flext_core import FlextResult
 
 from .shared_domain import SharedDomainFactory, User
@@ -31,22 +33,22 @@ class BasicValidators:
     def required(value: str, field_name: str = "Field") -> FlextResult[str]:
         """Validate that field is not empty."""
         if value and value.strip():
-            return FlextResult.ok(value.strip())
+            return FlextResult[str].ok(value.strip())
         return FlextResult[str].fail(f"{field_name} is required")
 
     @staticmethod
     def email_format(email: str) -> FlextResult[str]:
         """Validate email format."""
         if "@" in email and "." in email.split("@")[1]:
-            return FlextResult.ok(email)
+            return FlextResult[str].ok(email)
         return FlextResult[str].fail("Invalid email format")
 
     @staticmethod
     def age_range(age: int, min_age: int = 0, max_age: int = 150) -> FlextResult[int]:
         """Validate age is in valid range."""
         if min_age <= age <= max_age:
-            return FlextResult.ok(age)
-        return FlextResult[str].fail(f"Age must be between {min_age} and {max_age}")
+            return FlextResult[int].ok(age)
+        return FlextResult[int].fail(f"Age must be between {min_age} and {max_age}")
 
     @staticmethod
     def min_length(
@@ -54,7 +56,7 @@ class BasicValidators:
     ) -> FlextResult[str]:
         """Validate minimum string length."""
         if len(value) >= min_len:
-            return FlextResult.ok(value)
+            return FlextResult[str].ok(value)
         return FlextResult[str].fail(
             f"{field_name} must be at least {min_len} characters"
         )
@@ -63,8 +65,8 @@ class BasicValidators:
     def positive_number(value: float, field_name: str = "Value") -> FlextResult[float]:
         """Validate number is positive."""
         if value > 0:
-            return FlextResult.ok(value)
-        return FlextResult[str].fail(f"{field_name} must be positive")
+            return FlextResult[float].ok(value)
+        return FlextResult[float].fail(f"{field_name} must be positive")
 
 
 # =============================================================================
@@ -117,7 +119,8 @@ class FormValidator:
         # Extract fields
         name = str(data.get("name", ""))
         email = str(data.get("email", ""))
-        age = int(data.get("age", 0))
+        age_obj = data.get("age", 0)
+        age = int(age_obj) if isinstance(age_obj, (int, str)) else 0
 
         # Validate each field
         name_result = ValidationChains.validate_name(name)
@@ -126,13 +129,11 @@ class FormValidator:
 
         # Combine results
         if all(r.success for r in [name_result, email_result, age_result]):
-            return FlextResult.ok(
-                {
-                    "name": name_result.unwrap(),
-                    "email": email_result.unwrap(),
-                    "age": age_result.unwrap(),
-                }
-            )
+            return FlextResult[dict[str, object]].ok({
+                "name": name_result.unwrap(),
+                "email": email_result.unwrap(),
+                "age": age_result.unwrap(),
+            })
 
         # Collect all errors
         errors = [
@@ -140,7 +141,9 @@ class FormValidator:
             for r in [name_result, email_result, age_result]
             if r.failure
         ]
-        return FlextResult[str].fail(f"Validation failed: {'; '.join(errors)}")
+        return FlextResult[dict[str, object]].fail(
+            f"Validation failed: {'; '.join(errors)}"
+        )
 
     @staticmethod
     def validate_product_data(
@@ -148,7 +151,8 @@ class FormValidator:
     ) -> FlextResult[dict[str, object]]:
         """Validate product form."""
         name = str(data.get("name", ""))
-        price = float(data.get("price", 0))
+        price_obj = data.get("price", 0)
+        price = float(price_obj) if isinstance(price_obj, (int, float, str)) else 0.0
         category = str(data.get("category", ""))
 
         # Chain validations
@@ -162,20 +166,20 @@ class FormValidator:
 
         # Combine results
         if all(r.success for r in [name_result, price_result, category_result]):
-            return FlextResult.ok(
-                {
-                    "name": name_result.unwrap(),
-                    "price": price_result.unwrap(),
-                    "category": category_result.unwrap(),
-                }
-            )
+            return FlextResult[dict[str, object]].ok({
+                "name": name_result.unwrap(),
+                "price": price_result.unwrap(),
+                "category": category_result.unwrap(),
+            })
 
         errors = [
             r.error or "Unknown error"
             for r in [name_result, price_result, category_result]
             if r.failure
         ]
-        return FlextResult[str].fail(f"Product validation failed: {'; '.join(errors)}")
+        return FlextResult[dict[str, object]].fail(
+            f"Product validation failed: {'; '.join(errors)}"
+        )
 
 
 # =============================================================================
@@ -193,7 +197,9 @@ class BusinessRules:
             FormValidator.validate_user_data(user_data)
             .flat_map(
                 lambda data: SharedDomainFactory.create_user(
-                    data["name"], data["email"], data["age"]
+                    str(data["name"]),
+                    str(data["email"]),
+                    int(data["age"]) if isinstance(data["age"], int) else 0,
                 )
             )
             .flat_map(lambda user: BusinessRules._check_user_eligibility(user))
@@ -204,14 +210,14 @@ class BusinessRules:
         """Check if user meets business eligibility requirements."""
         # Business rule: Users under 18 need parental consent
         if user.age.value < MIN_AGE_ADULT:
-            return FlextResult[str].fail("Users under 18 require parental consent")
+            return FlextResult[User].fail("Users under 18 require parental consent")
 
         # Business rule: Email domain validation
         email = user.email_address.email
         if email.endswith("@blacklisted.com"):
-            return FlextResult[str].fail("Email domain not allowed")
+            return FlextResult[User].fail("Email domain not allowed")
 
-        return FlextResult.ok(user)
+        return FlextResult[User].ok(user)
 
 
 # =============================================================================
@@ -223,10 +229,12 @@ class BatchValidator:
     """Validate batches of data."""
 
     @staticmethod
-    def validate_user_batch(user_list: list[dict]) -> FlextResult[dict]:
+    def validate_user_batch(
+        user_list: list[dict[str, object]],
+    ) -> FlextResult[dict[str, object]]:
         """Validate multiple users in batch."""
         if not user_list:
-            return FlextResult[str].fail("No users to validate")
+            return FlextResult[dict[str, object]].fail("No users to validate")
 
         results = []
         errors = []
@@ -238,16 +246,14 @@ class BatchValidator:
             else:
                 errors.append(f"User {i}: {validation_result.error}")
 
-        return FlextResult.ok(
-            {
-                "total": len(user_list),
-                "valid": len(results),
-                "invalid": len(errors),
-                "users": results,
-                "errors": errors,
-                "success_rate": (len(results) / len(user_list)) * 100,
-            }
-        )
+        return FlextResult[dict[str, object]].ok({
+            "total": len(user_list),
+            "valid": len(results),
+            "invalid": len(errors),
+            "users": results,
+            "errors": errors,
+            "success_rate": (len(results) / len(user_list)) * 100,
+        })
 
 
 # =============================================================================
@@ -310,7 +316,9 @@ def demo_form_validation() -> None:
     # Valid user form
     valid_user_data = {"name": "Carol Davis", "email": "carol@example.com", "age": 28}
 
-    user_result = FormValidator.validate_user_data(valid_user_data)
+    user_result = FormValidator.validate_user_data(
+        cast("dict[str, object]", valid_user_data)
+    )
     if user_result.success:
         validated = user_result.unwrap()
         print(f"✅ User form validated: {validated['name']}")
@@ -322,7 +330,9 @@ def demo_form_validation() -> None:
         "category": "Electronics",
     }
 
-    product_result = FormValidator.validate_product_data(valid_product_data)
+    product_result = FormValidator.validate_product_data(
+        cast("dict[str, object]", valid_product_data)
+    )
     if product_result.success:
         validated_product = product_result.unwrap()
         print(f"✅ Product form validated: {validated_product['name']}")
@@ -335,7 +345,9 @@ def demo_business_rules() -> None:
     # Valid registration
     valid_data = {"name": "David Wilson", "email": "david@example.com", "age": 25}
 
-    registration_result = BusinessRules.validate_user_registration(valid_data)
+    registration_result = BusinessRules.validate_user_registration(
+        cast("dict[str, object]", valid_data)
+    )
     if registration_result.success:
         user = registration_result.unwrap()
         print(f"✅ User registration approved: {user.name}")
@@ -343,7 +355,9 @@ def demo_business_rules() -> None:
     # Invalid registration - underage
     underage_data = {"name": "Young User", "email": "young@example.com", "age": 16}
 
-    underage_result = BusinessRules.validate_user_registration(underage_data)
+    underage_result = BusinessRules.validate_user_registration(
+        cast("dict[str, object]", underage_data)
+    )
     if underage_result.failure:
         print(f"✅ Underage user rejected: {underage_result.error}")
 
@@ -359,14 +373,18 @@ def demo_batch_validation() -> None:
         {"name": "Grace Lee", "email": "grace@example.com", "age": 35},
     ]
 
-    batch_result = BatchValidator.validate_user_batch(user_batch)
+    batch_result = BatchValidator.validate_user_batch(
+        cast("list[dict[str, object]]", user_batch)
+    )
     if batch_result.success:
         result = batch_result.unwrap()
         print(f"✅ Batch validation: {result['valid']}/{result['total']} valid")
         print(f"   Success rate: {result['success_rate']:.1f}%")
 
         if result["errors"]:
-            print(f"   Errors: {len(result['errors'])} failed validations")
+            print(
+                f"   Errors: {len(cast('Sized', result['errors']))} failed validations"
+            )
 
 
 def demo_functional_composition() -> None:
@@ -375,13 +393,17 @@ def demo_functional_composition() -> None:
 
     # Chain multiple validation operations
     result = (
-        FlextResult.ok(
-            {"name": "Helen Taylor", "email": "helen@example.com", "age": 29}
-        )
+        FlextResult.ok({
+            "name": "Helen Taylor",
+            "email": "helen@example.com",
+            "age": 29,
+        })
         .flat_map(lambda data: FormValidator.validate_user_data(data))
         .flat_map(
             lambda data: SharedDomainFactory.create_user(
-                data["name"], data["email"], data["age"]
+                str(data["name"]),
+                str(data["email"]),
+                int(data["age"]) if isinstance(data["age"], int) else 0,
             )
         )
         .map(lambda user: {"user": user, "status": "validated"})

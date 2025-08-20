@@ -541,7 +541,7 @@ class FlextConfig(FlextModel):
     ) -> dict[str, object]:
         """Get model configuration parameters as a dictionary.
 
-        This static method returns model configuration parameters that tests expect.
+        This static method returns model configuration parameters that .
         """
         return {
             "description": description,
@@ -880,7 +880,7 @@ class FlextLDAPConfig(FlextModel):
     # Compatibility property for existing code
     @property
     def host(self) -> str:
-        """Alias for server for backward compatibility."""
+        """Alias for server for compatibility."""
         return self.server
 
 
@@ -1108,7 +1108,7 @@ class FlextObservabilityConfig(FlextModel):
     log_format: str = Field(default="json", description="Logging format")
     logging_enabled: bool = Field(default=True, description="Enable logging")
 
-    # Alternative field names for backward compatibility
+    # Alternative field names for compatibility
     logging_level: str = Field(default="INFO", description="Logging level (alias)")
     logging_format: str = Field(
         default="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -1157,7 +1157,7 @@ class FlextObservabilityConfig(FlextModel):
             "service_name": self.service_name,
         }
 
-    # Constants for backward compatibility
+    # Constants for compatibility
     ENABLE_METRICS: ClassVar[bool] = True
     TRACE_ENABLED: ClassVar[bool] = True
     TRACE_SAMPLE_RATE: ClassVar[float] = 0.1
@@ -1486,7 +1486,7 @@ def load_config_from_file(
     return FlextConfigFactory.create_from_file_typed(config_type, file_path)
 
 
-# Additional utility functions expected by tests
+# Additional utility functions
 def safe_get_env_var(
     var_name: str,
     default: str | None = None,
@@ -1608,7 +1608,7 @@ def validate_config(
         return FlextResult[None].fail(f"Configuration validation failed: {e}")
 
 
-# Namespace classes for test compatibility
+# Namespace classes
 class FlextConfigOps:
     """Configuration operations namespace."""
 
@@ -1824,13 +1824,13 @@ class FlextConfigValidation:
 # Base configuration validation alias
 _BaseConfigValidation = FlextConfigValidation
 
-# Abstract config alias for backward compatibility
+# Abstract config alias for compatibility
 FlextAbstractConfig = FlextConfig
 
 # Backward-compatibility handled by the explicit subclass above.
 
 
-# Constants expected by tests
+# Constants
 DEFAULT_TIMEOUT = 30
 DEFAULT_RETRIES = 3
 DEFAULT_PAGE_SIZE = 100

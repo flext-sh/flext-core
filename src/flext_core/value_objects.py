@@ -1,6 +1,6 @@
 """LEGACY: Value objects - Use FlextValue from models.py instead.
 
-This module provides backward compatibility for projects that import
+This module provides compatibility for projects that import
 FlextValueObject directly. All new development should use FlextValue
 from flext_core.models which provides modern Pydantic patterns.
 """
@@ -14,5 +14,5 @@ from flext_core.models import FlextFactory, FlextValue
 FlextValueObject = FlextValue
 FlextValueObjectFactory = FlextFactory
 
-# Export API for backward compatibility
+# Export API for compatibility
 __all__: list[str] = ["FlextValueObject", "FlextValueObjectFactory"]

@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod as _abstractmethod
+from typing import override
 
 from flext_core import interfaces as interfaces
 from flext_core.__version__ import (
@@ -953,9 +954,11 @@ class _ConfigBase:
 class FlextCommandHandler(FlextAbstractHandler[object, object], ABC):
     @_abstractmethod
     def handle_command(self, command: object) -> FlextResult[object]: ...
+    @override
     def handle(self, request: object) -> FlextResult[object]: ...
 
 class FlextQueryHandler(FlextAbstractHandler[object, object], ABC):
     @_abstractmethod
     def handle_query(self, query: object) -> FlextResult[object]: ...
+    @override
     def handle(self, request: object) -> FlextResult[object]: ...

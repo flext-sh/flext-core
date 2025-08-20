@@ -1,3 +1,0 @@
-from .shared_domain import SharedDomainFactory as SharedDomainFactory
-
-def main() -> None: ...

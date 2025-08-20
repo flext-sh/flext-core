@@ -51,10 +51,10 @@ TService = TypeVar("TService")  # Service type
 TOptional = TypeVar("TOptional")  # Optional value type
 
 # Backwards compatibility aliases for old names - create new TypeVars with same names
-TCommand = TypeVar("TCommand")  # Recreated for backward compatibility
-TQuery = TypeVar("TQuery")  # Recreated for backward compatibility
-TQueryResult = TypeVar("TQueryResult")  # Recreated for backward compatibility
-TResult = TypeVar("TResult")  # Recreated for backward compatibility
+TCommand = TypeVar("TCommand")  # Recreated for compatibility
+TQuery = TypeVar("TQuery")  # Recreated for compatibility
+TQueryResult = TypeVar("TQueryResult")  # Recreated for compatibility
+TResult = TypeVar("TResult")  # Recreated for compatibility
 
 # Schema processing type variables
 EntryT = TypeVar("EntryT")  # Generic entry type for schema processing
@@ -433,7 +433,7 @@ class FlextTypes:
             except Exception:
                 return False
 
-        # Extra guards used by tests
+        # Extra guards
         @staticmethod
         def is_callable(obj: object) -> bool:
             """Check if an object is callable."""

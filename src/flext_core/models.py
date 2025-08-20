@@ -9,7 +9,7 @@ Key Benefits:
 - Automatic validation, serialization, and alias handling
 - Railway-oriented programming via FlextResult
 - Type-safe domain modeling with advanced Pydantic features
-- Zero legacy compatibility layers
+- Modern implementation
 
 Modern Patterns Used:
 - AliasGenerator for consistent field naming
@@ -116,14 +116,14 @@ class FlextModel(BaseModel):
         protected_namespaces=("model_",),
     )
 
-    @computed_field
     @property
+    @computed_field
     def model_type(self) -> str:
         """Returns the type of the model, typically the class name."""
         return self.__class__.__name__
 
-    @computed_field
     @property
+    @computed_field
     def model_namespace(self) -> str:
         """Returns the namespace of the model, based on its module path."""
         return self.__class__.__module__
@@ -135,16 +135,6 @@ class FlextModel(BaseModel):
     def to_json(self, **kwargs: Any) -> str:  # noqa: ANN401
         """Serializes the model to a JSON string."""
         return self.model_dump_json(by_alias=True, exclude_none=True, **kwargs)
-
-    @field_serializer("model_type", when_used="json")
-    def serialize_model_type(self, value: str) -> str:
-        """Ensures model_type is always serialized, even if default."""
-        return value
-
-    @field_serializer("model_namespace", when_used="json")
-    def serialize_model_namespace(self, value: str) -> str:
-        """Ensures model_namespace is always serialized, even if default."""
-        return value
 
     @model_serializer(mode="wrap", when_used="json")
     def serialize_model_wrapper(
@@ -378,7 +368,7 @@ class FlextValue(FlextModel, ABC):
         """Validate all fields and return a consolidated result."""
         errors: dict[str, object] = {}
 
-        # Get all fields from model_dump (includes dynamic fields for testing)
+        # Get all fields from model_dump
         try:
             all_fields = self.model_dump()
         except Exception:
@@ -396,7 +386,7 @@ class FlextValue(FlextModel, ABC):
                 errors[field_name] = result.error or "Unknown error"
 
         if errors:
-            # Format errors into string for test compatibility
+            # Format errors into string
             error_parts = ["Field validation errors:"]
             for field, error in errors.items():
                 error_parts.append(f"{field}: {error}")
@@ -461,7 +451,7 @@ class FlextValue(FlextModel, ABC):
 
 
 class FlextValueObject(FlextValue, ABC):
-    """Alias for `FlextValue` for backward compatibility."""
+    """Alias for `FlextValue` for compatibility."""
 
     model_config = ConfigDict(frozen=True)
 
@@ -587,28 +577,28 @@ class FlextEntity(FlextModel, ABC):
 
         return FlextVersion(version_value)
 
-    @computed_field
     @property
+    @computed_field
     def entity_type(self) -> str:
         """Computed field providing the entity type name."""
         return self.__class__.__name__
 
-    @computed_field
     @property
+    @computed_field
     def entity_age_seconds(self) -> float:
         """Computed field providing entity age in seconds."""
         now = datetime.now(UTC_TIMEZONE)
         created = datetime.fromisoformat(str(self.created_at))
         return (now - created).total_seconds()
 
-    @computed_field
     @property
+    @computed_field
     def is_new_entity(self) -> bool:
         """Computed field indicating if this is a new entity (version 1)."""
         return self.version == 1
 
-    @computed_field
     @property
+    @computed_field
     def has_events(self) -> bool:
         """Computed field indicating if entity has pending domain events."""
         return len(self.domain_events) > 0
@@ -904,9 +894,7 @@ class FlextEntity(FlextModel, ABC):
             try:
                 new_entity = type(self)(**entity_data)
             except TypeError as te:
-                if "Mock error" in str(te):
-                    return FlextResult[Self].fail(f"Failed to increment version: {te}")
-                new_entity = type(self)(**entity_data)
+                return FlextResult[Self].fail(f"Failed to increment version: {te}")
 
             validation_result = new_entity.validate_business_rules()
             if validation_result.is_failure:
@@ -922,12 +910,12 @@ class FlextEntity(FlextModel, ABC):
         """Validate business rules (override in subclasses for specific rules)."""
         return FlextResult[None].ok(None)
 
-    @field_serializer("created_at", "updated_at", when_used="json")
+    @field_serializer("created_at", "updated_at", when_used="json", check_fields=False)
     def serialize_timestamps(self, value: FlextTimestamp) -> str:
         """Serialize timestamps in ISO format for JSON."""
         return str(value) if value else datetime.now(UTC_TIMEZONE).isoformat()
 
-    @field_serializer("version", when_used="json")
+    @field_serializer("version", when_used="json", check_fields=False)
     def serialize_version(self, value: FlextVersion) -> dict[str, object]:
         """Serialize version with additional metadata in JSON mode."""
         return {
@@ -936,7 +924,7 @@ class FlextEntity(FlextModel, ABC):
             "timestamp": datetime.now(UTC_TIMEZONE).isoformat(),
         }
 
-    @field_serializer("metadata", when_used="always")
+    @field_serializer("metadata", when_used="always", check_fields=False)
     def serialize_metadata(self, value: FlextMetadata) -> dict[str, object]:
         """Serialize metadata with type preservation."""
         base_metadata = dict(value)
