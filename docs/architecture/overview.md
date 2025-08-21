@@ -53,7 +53,7 @@ Business logic and domain models, independent of frameworks:
 ```python
 # src/flext_core/
 ├── entities.py         # FlextEntity - Entities with identity
-├── value_objects.py    # FlextValueObject - Immutable values
+├── value_objects.py    # FlextValue - Immutable values
 ├── aggregate_root.py   # FlextAggregateRoot - Consistency boundaries
 └── domain_services.py  # FlextDomainService - Domain operations
 ```
@@ -61,10 +61,10 @@ Business logic and domain models, independent of frameworks:
 **Domain Modeling Example:**
 
 ```python
-from flext_core import FlextEntity, FlextValueObject, FlextAggregateRoot
+from flext_core import FlextEntity, FlextValue, FlextAggregateRoot
 from decimal import Decimal
 
-class Money(FlextValueObject):
+class Money(FlextValue):
     """Value object - compared by value, immutable."""
     amount: Decimal
     currency: str
@@ -293,7 +293,7 @@ class Order(FlextAggregateRoot):
 ### DDD Tactical Patterns
 
 - **Entities**: Objects with identity (`FlextEntity`)
-- **Value Objects**: Immutable values (`FlextValueObject`)
+- **Value Objects**: Immutable values (`FlextValue`)
 - **Aggregates**: Consistency boundaries (`FlextAggregateRoot`)
 - **Domain Services**: Stateless operations (`FlextDomainService`)
 - **Domain Events**: State change notifications

@@ -5,8 +5,7 @@ from dataclasses import dataclass
 from importlib.metadata import version as _pkg_version
 from typing import NamedTuple
 
-from flext_core.loggings import FlextLoggerFactory
-from flext_core.typings import TAnyList
+from flext_core.typings import FlextTypes
 
 __version__: str = _pkg_version("flext-core")
 
@@ -182,7 +181,7 @@ def is_feature_available(feature_name: str) -> bool:
     return AVAILABLE_FEATURES.get(feature_name, False)
 
 
-def get_available_features() -> TAnyList:
+def get_available_features() -> FlextTypes.Core.List:
     """Get a list of available features in the current version.
 
     Returns a list of feature names available in the current version enabling
@@ -247,10 +246,8 @@ def validate_version_format(version: str) -> bool:
                 return False
             if int(part) < 0:
                 return False
-    except (ValueError, AttributeError) as e:
-        # Log validation error but maintain API contract
-        logger = FlextLoggerFactory.get_logger(__name__)
-        logger.warning(f"Version validation failed for '{version}': {e}")
+    except (ValueError, AttributeError):
+        # Validation failed but maintain API contract
         return False
     else:
         return True

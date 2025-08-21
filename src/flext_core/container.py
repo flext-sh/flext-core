@@ -6,7 +6,7 @@ import inspect
 from collections import UserString
 from collections.abc import Callable
 from datetime import datetime
-from typing import Generic, TypeVar, cast, override
+from typing import Generic, cast, override
 from zoneinfo import ZoneInfo
 
 from flext_core.commands import FlextCommands
@@ -14,15 +14,17 @@ from flext_core.constants import SERVICE_NAME_EMPTY
 from flext_core.exceptions import FlextError
 from flext_core.mixins import FlextLoggableMixin
 from flext_core.result import FlextResult
+from flext_core.typings import FlextTypes, T
 from flext_core.utilities import FlextGenerators
 from flext_core.validation import flext_validate_service_name
 
-# Define TypeVars locally
-T = TypeVar("T")
-TService = TypeVar("TService")
+# Use centralized specific types from FlextTypes where appropriate
+ServiceInstance = FlextTypes.Service.ServiceInstance
+# ServiceName moved to validation.py with proper validation
+ServiceKey = FlextTypes.Service.ServiceKey
 
 
-class FlextServiceKey(UserString, Generic[TService]):  # noqa: UP046
+class FlextServiceKey(UserString, Generic[T]):  # noqa: UP046
     """Typed service key for type-safe service resolution.
 
     A specialized string that acts as a plain string at runtime but provides type safety
@@ -56,7 +58,7 @@ class FlextServiceKey(UserString, Generic[TService]):  # noqa: UP046
         return str(self)
 
     @classmethod
-    def __class_getitem__(cls, _item: object) -> type[FlextServiceKey[TService]]:
+    def __class_getitem__(cls, _item: object) -> type[FlextServiceKey[T]]:
         """Support generic subscription without affecting runtime behavior."""
         return cls
 
@@ -70,11 +72,11 @@ class RegisterServiceCommand(FlextCommands.Command):
     """Command to register a service instance."""
 
     service_name: str = ""
-    service_instance: object
+    service_instance: ServiceInstance
 
     @classmethod
     def create(
-        cls, service_name: str, service_instance: object
+        cls, service_name: str, service_instance: ServiceInstance
     ) -> RegisterServiceCommand:
         """Create command with default values."""
         return cls(
@@ -99,10 +101,12 @@ class RegisterFactoryCommand(FlextCommands.Command):
     """Command to register a service factory."""
 
     service_name: str = ""
-    factory: object  # Callable[[], object] - using object for validation
+    factory: ServiceInstance  # Using ServiceInstance for validation
 
     @classmethod
-    def create(cls, service_name: str, factory: object) -> RegisterFactoryCommand:
+    def create(
+        cls, service_name: str, factory: ServiceInstance
+    ) -> RegisterFactoryCommand:
         """Create command with default values."""
         return cls(
             service_name=service_name,
@@ -248,7 +252,9 @@ class UnregisterServiceHandler(FlextCommands.Handler[UnregisterServiceCommand, N
         return self._registrar.unregister_service(command.service_name)
 
 
-class GetServiceQueryHandler(FlextCommands.QueryHandler[GetServiceQuery, object]):
+class GetServiceQueryHandler(
+    FlextCommands.QueryHandler[GetServiceQuery, FlextTypes.Service.ServiceInstance]
+):
     """Handler for service retrieval queries."""
 
     def __init__(self, retriever: FlextServiceRetriever) -> None:
@@ -256,13 +262,15 @@ class GetServiceQueryHandler(FlextCommands.QueryHandler[GetServiceQuery, object]
         self._retriever = retriever
 
     @override
-    def handle(self, query: GetServiceQuery) -> FlextResult[object]:
+    def handle(
+        self, query: GetServiceQuery
+    ) -> FlextResult[FlextTypes.Service.ServiceInstance]:
         """Handle service retrieval."""
         return self._retriever.get_service(query.service_name)
 
 
 class ListServicesQueryHandler(
-    FlextCommands.QueryHandler[ListServicesQuery, dict[str, str]]
+    FlextCommands.QueryHandler[ListServicesQuery, FlextTypes.Service.ServiceListDict]
 ):
     """Handler for listing services."""
 
@@ -271,12 +279,14 @@ class ListServicesQueryHandler(
         self._retriever = retriever
 
     @override
-    def handle(self, query: ListServicesQuery) -> FlextResult[dict[str, str]]:
+    def handle(
+        self, query: ListServicesQuery
+    ) -> FlextResult[FlextTypes.Service.ServiceListDict]:
         """Handle service listing."""
         # Use query parameters for filtering in future versions
         _ = query  # Explicitly ignore query for now (will be used for filtering)
         services = self._retriever.list_services()
-        return FlextResult[dict[str, str]].ok(services)
+        return FlextResult[FlextTypes.Service.ServiceListDict].ok(services)
 
 
 # =============================================================================
@@ -316,8 +326,8 @@ class FlextServiceRegistrar(FlextLoggableMixin):
     def __init__(self) -> None:
         """Initialize service registrar with empty registry."""
         # T is now global, no need to redefine it here
-        self._services: dict[str, object] = {}
-        self._factories: dict[str, Callable[[], object]] = {}
+        self._services: FlextTypes.Service.ServiceDict = {}
+        self._factories: FlextTypes.Service.FactoryDict = {}
 
     @staticmethod
     def _validate_service_name(name: str) -> FlextResult[str]:
@@ -334,7 +344,9 @@ class FlextServiceRegistrar(FlextLoggableMixin):
             return FlextResult[str].fail(SERVICE_NAME_EMPTY)
         return FlextResult[str].ok(name)
 
-    def register_service(self, name: str, service: object) -> FlextResult[None]:
+    def register_service(
+        self, name: str, service: FlextTypes.Service.ServiceInstance
+    ) -> FlextResult[None]:
         """Register service instance.
 
         Args:
@@ -373,7 +385,7 @@ class FlextServiceRegistrar(FlextLoggableMixin):
     def register_factory(
         self,
         name: str,
-        factory: object,
+        factory: FlextTypes.Service.ServiceInstance,
     ) -> FlextResult[None]:
         """Register service factory.
 
@@ -420,7 +432,9 @@ class FlextServiceRegistrar(FlextLoggableMixin):
 
         # Safe assignment after signature verification. Cast to the expected
         # callable type so static typing understands the stored value.
-        factory_callable = cast("Callable[[], object]", factory)
+        factory_callable = cast(
+            "Callable[[], ServiceInstance]", factory
+        )
         self._factories[validated_name] = factory_callable
         self.logger.debug(
             "Factory registered",
@@ -467,11 +481,11 @@ class FlextServiceRegistrar(FlextLoggableMixin):
         """Check if a service exists."""
         return name in self._services or name in self._factories
 
-    def get_services_dict(self) -> dict[str, object]:
+    def get_services_dict(self) -> FlextTypes.Service.ServiceDict:
         """Get services dictionary (internal use)."""
         return self._services
 
-    def get_factories_dict(self) -> dict[str, Callable[[], object]]:
+    def get_factories_dict(self) -> FlextTypes.Service.FactoryDict:
         """Get factories dictionary (internal use)."""
         return self._factories
 
@@ -486,8 +500,8 @@ class FlextServiceRetriever(FlextLoggableMixin):
 
     def __init__(
         self,
-        services: dict[str, object],
-        factories: dict[str, Callable[[], object]],
+        services: FlextTypes.Service.ServiceDict,
+        factories: FlextTypes.Service.FactoryDict,
     ) -> None:
         """Initialize service retriever with references."""
         super().__init__()
@@ -509,16 +523,20 @@ class FlextServiceRetriever(FlextLoggableMixin):
             return FlextResult[str].fail(SERVICE_NAME_EMPTY)
         return FlextResult[str].ok(name)
 
-    def get_service(self, name: str) -> FlextResult[object]:
+    def get_service(self, name: str) -> FlextResult[FlextTypes.Service.ServiceInstance]:
         """Retrieve a registered service - Performance optimized."""
         if not name or not name.strip():
-            return FlextResult[object].fail(SERVICE_NAME_EMPTY)
+            return FlextResult[FlextTypes.Service.ServiceInstance].fail(
+                SERVICE_NAME_EMPTY
+            )
 
         validated_name = name.strip()
 
         # Check direct service registration first (the most common case)
         if validated_name in self._services:
-            return FlextResult[object].ok(self._services[validated_name])
+            return FlextResult[FlextTypes.Service.ServiceInstance].ok(
+                self._services[validated_name]
+            )
 
         # Check factory registration
         if validated_name in self._factories:
@@ -531,7 +549,7 @@ class FlextServiceRetriever(FlextLoggableMixin):
                 # Remove from factories since it's now cached as a service
                 del self._factories[validated_name]
 
-                return FlextResult[object].ok(service)
+                return FlextResult[FlextTypes.Service.ServiceInstance].ok(service)
             except (
                 TypeError,
                 ValueError,
@@ -591,9 +609,9 @@ class FlextServiceRetriever(FlextLoggableMixin):
             f"Service '{validated_name}' not found",
         )
 
-    def list_services(self) -> dict[str, str]:
+    def list_services(self) -> FlextTypes.Service.ServiceListDict:
         """List all services with their types."""
-        services_info: dict[str, str] = {}
+        services_info: FlextTypes.Service.ServiceListDict = {}
 
         for name in self._services:
             services_info[name] = "instance"
@@ -703,7 +721,7 @@ class FlextContainer(FlextLoggableMixin):
         """Check if a service exists."""
         return self._registrar.has_service(name)
 
-    def list_services(self) -> dict[str, str]:
+    def list_services(self) -> FlextTypes.Service.ServiceListDict:
         """List all services using FlextCommands query."""
         query = ListServicesQuery.create()
         result = self._list_services_handler.handle(query)

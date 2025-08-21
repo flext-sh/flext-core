@@ -84,6 +84,8 @@ __all__: list[str] = [
     "ConcreteFlextEntity",
     "ConcreteValueObject",
     "TestDomainFactory",
+    "TestMoney",
+    "TestUser",
     "TestUserStatus",
     "create_complex_test_value_object_safe",
     "create_test_entity_safe",

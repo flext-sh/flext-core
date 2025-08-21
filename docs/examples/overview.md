@@ -18,7 +18,7 @@ from flext_core import FlextResult
 from flext_core import FlextContainer, get_flext_container
 
 # Domain patterns
-from flext_core import FlextEntity, FlextValueObject, FlextAggregateRoot
+from flext_core import FlextEntity, FlextValue, FlextAggregateRoot
 
 # Configuration management
 from flext_core import FlextSettings
@@ -323,10 +323,10 @@ if transfer_result.success:
 ### Value Objects for Domain Concepts
 
 ```python
-from flext_core import FlextValueObject, FlextResult
+from flext_core import FlextValue, FlextResult
 from decimal import Decimal
 
-class Money(FlextValueObject):
+class Money(FlextValue):
     """Immutable money value object."""
 
     amount: Decimal
@@ -352,7 +352,7 @@ class Money(FlextValueObject):
     def __str__(self) -> str:
         return f"{self.currency} {self.amount:.2f}"
 
-class Address(FlextValueObject):
+class Address(FlextValue):
     """Immutable address value object."""
 
     street: str
@@ -861,7 +861,7 @@ python example_events.py
 """Template for FLEXT Core examples."""
 
 from flext_core import FlextResult, FlextContainer, FlextSettings
-from flext_core import FlextEntity, FlextValueObject, FlextAggregateRoot
+from flext_core import FlextEntity, FlextValue, FlextAggregateRoot
 
 def main():
     """Main example function."""

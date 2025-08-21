@@ -1,5 +1,5 @@
 site_name: FLEXT Core Documentation
-site_description: Enterprise Foundation Framework - Modern Python 3.13 + Clean Architecture
+site_description: FLEXT Core - Enterprise Foundation Framework
 site_author: FLEXT Team
 site_url: https://docs.flext.sh/core
 
@@ -64,7 +64,7 @@ markdown_extensions:
       custom_fences:
         - name: mermaid
           class: mermaid
-          format: !!python/name:pymdownx.superfences.fence_code_format
+          format: pymdownx.superfences.fence_code_format
   - pymdownx.highlight:
       anchor_linenums: true
       line_spans: __span
@@ -81,8 +81,8 @@ markdown_extensions:
   - pymdownx.tilde
   - pymdownx.smartsymbols
   - pymdownx.emoji:
-      emoji_index: !!python/name:materialx.emoji.twemoji
-      emoji_generator: !!python/name:materialx.emoji.to_svg
+      emoji_index: materialx.emoji.twemoji
+      emoji_generator: materialx.emoji.to_svg
   - pymdownx.tasklist:
       custom_checkbox: true
   - def_list

@@ -7,13 +7,14 @@ import logging
 from collections.abc import Generator
 from contextlib import contextmanager
 
-from flext_core.protocols import (
-    FlextLoggerProtocol,
-    FlextMetricsProtocol,
-    FlextSpanProtocol,
-    FlextTracerProtocol,
-)
+from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
+from flext_core.typings import FlextLoggerProtocol
+
+# Type aliases for unified approach with FlextProtocols integration - Python 3.13+ syntax
+type ObservabilityProtocol = FlextProtocols.Infrastructure.Configurable
+type MetricsCollectorProtocol = FlextProtocols.Extensions.Observability
+type LoggerServiceProtocol = FlextProtocols.Infrastructure.LoggerProtocol
 
 GeneratorT = Generator
 
@@ -113,7 +114,7 @@ class FlextNoOpSpan:
 class FlextNoOpTracer:
     """No-operation tracer implementing FlextTracerProtocol."""
 
-    def start_span(self, operation_name: str) -> FlextSpanProtocol:
+    def start_span(self, operation_name: str) -> FlextNoOpSpan:
         """Start no-op span."""
         del operation_name  # Unused argument
         return FlextNoOpSpan()
@@ -122,7 +123,7 @@ class FlextNoOpTracer:
         """No-op inject context."""
 
     @contextmanager
-    def trace_operation(self, operation_name: str) -> Generator[FlextSpanProtocol]:
+    def trace_operation(self, operation_name: str) -> Generator[FlextNoOpSpan]:
         """Trace operation with no-op span."""
         span = self.start_span(operation_name)
         try:
@@ -264,8 +265,8 @@ class FlextSimpleObservability:
     def __init__(
         self,
         logger: FlextLoggerProtocol | None = None,
-        tracer: FlextTracerProtocol | None = None,
-        metrics: FlextMetricsProtocol | None = None,
+        tracer: FlextNoOpTracer | None = None,
+        metrics: FlextInMemoryMetrics | None = None,
     ) -> None:
         """Initialize with optional components."""
         self.logger = logger or FlextConsoleLogger()

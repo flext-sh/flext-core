@@ -33,7 +33,7 @@ this repository today.
 
 - `models.py` — Shared model primitives
 - `entities.py` — FlextEntity
-- `value_objects.py` — FlextValueObject
+- `value_objects.py` — FlextValue
 - `aggregate_root.py` — FlextAggregateRoot
 - `domain_services.py` — Domain service patterns
 

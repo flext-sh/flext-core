@@ -22,7 +22,7 @@ from flext_core import FlextConfig, FlextEntity, FlextEntityId, FlextResult, Fle
 
 class DatabaseConfig(FlextConfig):
     """Example database configuration using unified patterns.
-    
+
     NOTE: This is a demonstration pattern only. Production database
     configurations should be in domain-specific libraries (e.g., flext-db-oracle).
     """
@@ -200,9 +200,13 @@ class FlextPipelineService:
                 instance = DatabaseConfig(
                     host=str(database_config.get("host", "localhost")),
                     port=port_int,
-                    database_name=str(database_config.get("database_name", "example_db")),
+                    database_name=str(
+                        database_config.get("database_name", "example_db")
+                    ),
                     username=str(database_config.get("username", "user")),
-                    password=SecretStr(str(database_config.get("password", "password"))),
+                    password=SecretStr(
+                        str(database_config.get("password", "password"))
+                    ),
                 )
                 return FlextResult.ok(instance)
             except Exception as e:

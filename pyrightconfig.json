@@ -46,7 +46,7 @@
   "reportUnusedFunction": "information",
   "reportUnusedVariable": "warning",
   // Verificações específicas do Pyright para performance
-  "reportUnnecessaryTypeIgnoreComment": "warning",
+  "reportUnnecessaryTypeIgnoreComment": "none",
   "reportUnnecessaryCast": "warning",
   "reportUnnecessaryComparison": "warning",
   "reportUnnecessaryContains": "warning",

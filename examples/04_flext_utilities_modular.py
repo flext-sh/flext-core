@@ -14,7 +14,6 @@ Key Patterns:
 from collections.abc import Callable
 from typing import Any, cast
 
-# use .shared_domain with dot to access local module
 from shared_domain import SharedDomainFactory, User
 
 from flext_core import FlextResult, FlextUtilities
@@ -94,8 +93,12 @@ class ValidationHelpers:
     @staticmethod
     def _validate_all_fields(data: dict[str, object]) -> FlextResult[dict[str, object]]:
         """Validate all user data fields."""
-        name_result = ValidationHelpers.validate_name(str(data["name"]))
-        email_result = ValidationHelpers.validate_email(str(data["email"]))
+        name_result: FlextResult[str] = ValidationHelpers.validate_name(
+            str(data["name"])
+        )
+        email_result: FlextResult[str] = ValidationHelpers.validate_email(
+            str(data["email"])
+        )
 
         # Safe conversion to int
         try:
@@ -106,7 +109,7 @@ class ValidationHelpers:
                 age_value = 0
         except (ValueError, TypeError):
             age_value = 0
-        age_result = ValidationHelpers.validate_age(age_value)
+        age_result: FlextResult[int] = ValidationHelpers.validate_age(age_value)
 
         if all(r.success for r in [name_result, email_result, age_result]):
             return FlextResult[dict[str, object]].ok(
@@ -181,7 +184,7 @@ class UserService:
         self.id_generator = IdGenerator()
         self.validator = ValidationHelpers()
         self.batch_processor = BatchProcessor()
-        self.users = {}
+        self.users: dict[str, User] = {}
 
     def create_user(self, user_data: dict[str, object]) -> FlextResult[User]:
         """Create user with validation and ID generation."""
@@ -333,7 +336,7 @@ def demo_user_service() -> None:
         print(f"✅ User created: {user.name} (ID: {user.id})")
 
         # Create session for user
-        session_result = service.create_user_session(user.id.root)
+        session_result = service.create_user_session(str(user.id))
         if session_result.success:
             session = session_result.value
             print(f"✅ Session created: {session['session_token'][:20]}...")

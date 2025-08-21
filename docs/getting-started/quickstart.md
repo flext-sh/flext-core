@@ -128,11 +128,11 @@ if settings.debug:
 Build rich domain models with business logic:
 
 ```python
-from flext_core import FlextEntity, FlextValueObject, FlextAggregateRoot
+from flext_core import FlextEntity, FlextValue, FlextAggregateRoot
 from decimal import Decimal
 
 # Value Object - Immutable, no identity
-class Money(FlextValueObject):
+class Money(FlextValue):
     amount: Decimal
     currency: str
 

@@ -24,7 +24,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from datetime import UTC, datetime, timezone
-from typing import Annotated, ClassVar, ParamSpec, Self, TypeVar, cast
+from typing import Annotated, ClassVar, Self, cast
 
 from pydantic import (
     AliasChoices,
@@ -54,11 +54,13 @@ from flext_core.root_models import (
     FlextTimestamp,
     FlextVersion,
 )
+from flext_core.typings import (
+    FlextTypes,
+)
 from flext_core.utilities import FlextGenerators
 
-# Type variables for generic functions
-P = ParamSpec("P")
-T = TypeVar("T")
+# Use centralized types from FlextTypes
+SerializerCallable = FlextTypes.Core.Serializer
 
 # =============================================================================
 # Constants
@@ -130,7 +132,7 @@ class FlextModel(BaseModel):
         """Returns the namespace of the model, based on its module path."""
         return self.__class__.__module__
 
-    def to_dict(self) -> dict[str, object]:
+    def to_dict(self) -> FlextTypes.Core.Dict:
         """Serializes the model to a dictionary."""
         return self.model_dump(by_alias=True, exclude_none=True)
 
@@ -141,7 +143,7 @@ class FlextModel(BaseModel):
 
     @model_serializer(mode="wrap", when_used="json")
     def serialize_model_wrapper(
-        self, serializer: Callable[[object], dict[str, object]]
+        self, serializer: SerializerCallable
     ) -> dict[str, object]:
         """Wraps the serialized model with metadata."""
         data = serializer(self)
@@ -461,10 +463,7 @@ class FlextValue(FlextModel, ABC):
             return repr(attr_value)
 
 
-class FlextValueObject(FlextValue, ABC):
-    """Alias for `FlextValue` for compatibility."""
-
-    model_config = ConfigDict(frozen=True)
+# FlextValue is already defined above - no need for duplicate alias
 
 
 class FlextEntity(FlextModel, ABC):
@@ -592,7 +591,9 @@ class FlextEntity(FlextModel, ABC):
                 raise ValueError(error_message) from e
         elif hasattr(v, "__int__"):
             try:
-                version_value = int(v.__int__())
+                # Cast to support int conversion for objects with __int__ method
+                int_convertible = cast("int | str", v)
+                version_value = int(int_convertible)
             except (ValueError, TypeError) as e:
                 error_message = f"Invalid version format: {v}"
                 raise ValueError(error_message) from e
@@ -988,23 +989,38 @@ class FlextEntity(FlextModel, ABC):
         return data
 
 
+def _get_default_registry() -> dict[str, type[FlextModel] | object]:
+    """Get default registry for FlextFactory."""
+    return {}
+
+
 class FlextFactory:
     """Factory for model creation across the ecosystem."""
 
-    _registry: ClassVar[dict[str, type[FlextModel] | object]] = {}
+    _registry: ClassVar[dict[str, type[FlextModel] | object] | None] = None
+
+    @classmethod
+    def _ensure_registry(cls) -> None:
+        """Ensure registry is initialized."""
+        if cls._registry is None:
+            cls._registry = _get_default_registry()
 
     @classmethod
     def register(cls, name: str, factory_or_class: type[FlextModel] | object) -> None:
         """Register a model class or factory function with a name."""
-        cls._registry[name] = factory_or_class
+        cls._ensure_registry()
+        registry = cast("dict[str, type[FlextModel] | object]", cls._registry)
+        registry[name] = factory_or_class
 
     @classmethod
     def create(cls, name: str, **kwargs: object) -> FlextResult[object]:
         """Create model instance using registered factory."""
-        if name not in cls._registry:
+        cls._ensure_registry()
+        registry = cast("dict[str, type[FlextModel] | object]", cls._registry)
+        if name not in registry:
             return FlextResult[object].fail(f"No factory registered for '{name}'")
 
-        factory = cls._registry[name]
+        factory = registry[name]
 
         try:
             return cls._create_with_factory(name, factory, kwargs)
@@ -1237,19 +1253,6 @@ class FlextFactory:
             )
 
 
-# Namespace classes for project extensions
-class FlextData:
-    """Namespace for data-related models (project extensions)."""
-
-
-class FlextAuth:
-    """Namespace for authentication-related models (project extensions)."""
-
-
-class FlextObs:
-    """Namespace for observability-related models (project extensions)."""
-
-
 # Type aliases for convenience (no self-assignment to avoid lint warnings)
 # Expose canonical names via __all__ below instead.
 # Legacy compatibility aliases removed to satisfy linting rules.
@@ -1366,20 +1369,18 @@ def model_to_dict_safe(model: object) -> dict[str, object]:
 # Exports
 __all__: list[str] = [
     "DomainEventDict",
-    "FlextAuth",
+    # "FlextAuth", - moved to typings.py as protocol alias to avoid conflicts
     "FlextBaseModel",
     "FlextConnectionDict",
-    "FlextData",
     "FlextDatabaseModel",
     "FlextEntity",
     "FlextEntityDict",
     "FlextEntityFactory",
-    "FlextFactory",
+    # "FlextFactory", - moved to typings.py as protocol alias to avoid conflicts
     "FlextFieldValidationInfo",
     "FlextLegacyConfig",
     "FlextModel",
     "FlextModelDict",
-    "FlextObs",
     "FlextOperationDict",
     "FlextOperationModel",
     "FlextOracleModel",

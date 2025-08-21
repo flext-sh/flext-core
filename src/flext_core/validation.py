@@ -19,7 +19,7 @@ import re
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from datetime import UTC, datetime
-from typing import Annotated, TypeVar, cast, override
+from typing import Annotated, cast, override
 from uuid import uuid4
 
 from pydantic import (
@@ -37,10 +37,15 @@ from pydantic import (
 )
 
 from flext_core.constants import FlextConstants
-from flext_core.protocols import FlextValidationRule as _FlextValidationRuleProtocol
+from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
+from flext_core.typings import FlextTypes
 
-T = TypeVar("T")
+# Type aliases for unified approach with FlextProtocols integration - Python 3.13+ syntax
+type ValidatorProtocol = FlextProtocols.Foundation.Validator[object]
+type ValidationServiceProtocol = FlextProtocols.Domain.Service
+
+# Note: ServiceName and EmailAddress are defined as Pydantic Annotated types below for validation
 
 
 class FlextAbstractValidator[T](ABC):
@@ -188,7 +193,7 @@ def validate_entity_id_with_context(
 ) -> str:
     """WrapValidator: entity ID validation with context."""
     # Get context for validation
-    context = cast("dict[str, object]", info.context or {})
+    context = cast("FlextTypes.Core.Dict", info.context or {})
     namespace = cast("str", context.get("namespace", "flext"))
     auto_generate = cast("bool", context.get("auto_generate_id", True))
 
@@ -226,7 +231,7 @@ def validate_timestamp_with_fallback(
 ) -> str:
     """WrapValidator: Timestamp validation with automatic fallback."""
     # Check if we should use current time as fallback
-    context = cast("dict[str, object]", info.context or {})
+    context = cast("FlextTypes.Core.Dict", info.context or {})
     use_current_fallback = cast("bool", context.get("use_current_time_fallback", True))
 
     try:
@@ -247,7 +252,7 @@ def validate_list_with_deduplication(
 ) -> list[str]:
     """WrapValidator: List validation with automatic deduplication."""
     # Get context settings
-    context = cast("dict[str, object]", info.context or {})
+    context = cast("FlextTypes.Core.Dict", info.context or {})
     deduplicate = cast("bool", context.get("deduplicate_lists", True))
     sort_lists = cast("bool", context.get("sort_lists", False))
 
@@ -1106,8 +1111,8 @@ __all__: list[str] = [
 # Backward-compatibility alias: prefer FlextAbstractValidator
 FlextBaseValidator = FlextAbstractValidator
 
-# Re-export protocol name for convenience
-FlextValidationRule = _FlextValidationRuleProtocol
+# Use unified protocols from FlextProtocols hierarchy
+FlextValidationRule = FlextProtocols.Foundation.Validator
 
 
 # =============================================================================

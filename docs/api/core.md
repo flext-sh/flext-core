@@ -286,15 +286,15 @@ class User(FlextEntity):
         return FlextResult[None].ok(None)
 ```
 
-### FlextValueObject - Immutable Values
+### FlextValue - Immutable Values
 
 Value objects for domain concepts.
 
 ```python
-from flext_core import FlextValueObject
+from flext_core import FlextValue
 from decimal import Decimal
 
-class Money(FlextValueObject):
+class Money(FlextValue):
     """Immutable money value object."""
     amount: Decimal
     currency: str
@@ -319,7 +319,7 @@ class Money(FlextValueObject):
     def __str__(self) -> str:
         return f"{self.currency} {self.amount:.2f}"
 
-class Email(FlextValueObject):
+class Email(FlextValue):
     """Email value object with validation."""
     address: str
 

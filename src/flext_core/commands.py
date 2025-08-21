@@ -7,7 +7,7 @@ import time
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from datetime import datetime
-from typing import Generic, Self, TypeVar, cast, override
+from typing import Generic, Self, cast, override
 from zoneinfo import ZoneInfo
 
 from pydantic import (
@@ -27,17 +27,16 @@ from flext_core.mixins import (
 from flext_core.payload import FlextPayload
 from flext_core.result import FlextResult
 from flext_core.typings import (
-    TAnyDict,
-    TServiceName,
+    CommandT,
+    FlextTypes,
+    QueryResultT,
+    QueryT,
+    ResultT,
 )
 from flext_core.utilities import FlextGenerators, FlextTypeGuards
 from flext_core.validation import FlextValidators
 
-# Local TypeVars for generic classes
-CommandT = TypeVar("CommandT")
-ResultT = TypeVar("ResultT")
-QueryT = TypeVar("QueryT")
-QueryResultT = TypeVar("QueryResultT")
+# TypeVars are now properly imported from typings.py
 
 
 class FlextAbstractCommand(ABC):
@@ -186,7 +185,7 @@ class FlextCommands:
         @classmethod
         def from_payload(
             cls,
-            payload: FlextPayload[TAnyDict],
+            payload: FlextPayload[FlextTypes.Core.Dict],
         ) -> FlextResult[Self]:
             """Create command from FlextPayload with validation."""
             logger = FlextLoggerFactory.get_logger(f"{cls.__module__}.{cls.__name__}")
@@ -222,7 +221,7 @@ class FlextCommands:
             )
             command_type = str(payload_dict.get("command_type", cls.__name__))
 
-            # Handle timestamp (TAnyDict only allows primitive types, não datetime)
+            # Handle timestamp (FlextTypes.Core.Dict only allows primitive types, não datetime)
             timestamp_raw = payload_dict.get("timestamp")
             if isinstance(timestamp_raw, str):
                 timestamp = datetime.fromisoformat(timestamp_raw)
@@ -396,8 +395,8 @@ class FlextCommands:
 
         def __init__(
             self,
-            handler_name: TServiceName | None = None,
-            handler_id: TServiceName | None = None,
+            handler_name: FlextTypes.Service.ServiceName | None = None,
+            handler_id: FlextTypes.Service.ServiceName | None = None,
         ) -> None:
             """Initialize handler with logging."""
             super().__init__()
@@ -1121,11 +1120,11 @@ class FlextCommands:
 # Rebuild nested models to resolve forward references after import
 try:  # Defensive: avoid failing import-time on environments without Pydantic
     _types_ns = {
-        "TServiceName": str,
+        "FlextTypes.Service.ServiceName": str,
         "TUserId": str,
         "TCorrelationId": str,
-        "TEntityId": str,
-        "TAnyDict": dict[str, object],
+        "FlextTypes.Domain.EntityId": str,
+        "FlextTypes.Core.Dict": dict[str, object],
     }
     # Pydantic v2 expects _types_namespace keyword
     FlextCommands.Command.model_rebuild(_types_namespace=_types_ns)

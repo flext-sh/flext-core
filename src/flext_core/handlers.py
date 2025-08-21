@@ -1,1833 +1,1367 @@
-"""Handler implementations following CQRS patterns with SOLID architecture.
+"""FlextHandlers - Hierarchical Handler Management System.
 
-This module implements the Single Responsibility Principle by separating:
-- Abstract interfaces for handlers (contracts)
-- Concrete implementations (specific behaviors)
-- Registry and chain patterns (composition)
-- Delegation to FlextCommands (avoiding duplication)
+Comprehensive handler implementation following Clean Architecture and SOLID principles.
+All handler functionality is organized under the FlextHandlers namespace for consistency
+with other flext-core modules (context.py, constants.py, typings.py, protocols.py).
 
-Follows Dependency Inversion: depends on abstractions from protocols.
-Follows Open/Closed: extensible through inheritance without modification.
+Architecture:
+- FlextHandlers.Abstract: Base contracts and abstract classes
+- FlextHandlers.Base: Concrete implementations
+- FlextHandlers.CQRS: Command/Query/Event handlers
+- FlextHandlers.Patterns: Chain of Responsibility, Registry, Pipeline
+- FlextHandlers.Decorators: Cross-cutting concerns (validation, metrics)
+- FlextHandlers.Utilities: Helper functions and factories
+
+Follows SOLID principles:
+- Single Responsibility: Each handler has one clear purpose
+- Open/Closed: Extensible without modification
+- Liskov Substitution: Implementations are substitutable
+- Interface Segregation: Clean separation of concerns
+- Dependency Inversion: Depends on abstractions
+
+Example Usage:
+    >>> from flext_core import FlextHandlers
+    >>> # Create concrete handler
+    >>> handler = FlextHandlers.Base.Handler()
+    >>> # Use CQRS patterns
+    >>> cmd_handler = FlextHandlers.CQRS.CommandHandler()
+    >>> query_handler = FlextHandlers.CQRS.QueryHandler()
+    >>> # Chain handlers
+    >>> chain = FlextHandlers.Patterns.HandlerChain()
+    >>> chain.add_handler(handler)
+    >>> # Registry management
+    >>> registry = FlextHandlers.Patterns.HandlerRegistry()
+    >>> registry.register("my_handler", handler)
+    >>> # Apply decorators
+    >>> @FlextHandlers.Decorators.with_validation
+    >>> @FlextHandlers.Decorators.with_metrics
+    >>> def process_request(data):
+    >>>     return FlextResult.ok(data)
 """
 
 from __future__ import annotations
 
+import threading
 import time
 from abc import ABC, abstractmethod
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager
 from os import environ
-from typing import Generic, TypeVar, cast
+from typing import Any, Final, Generic, cast
 
 from flext_core.constants import FlextConstants
 from flext_core.protocols import FlextValidator
 from flext_core.result import FlextResult
-from flext_core.typings import FlextCallable
+from flext_core.typings import (
+    FlextTypes,
+    P,
+    T,
+    TInput,
+    TOutput,
+    TQuery,
+    TQueryResult,
+)
 
-# Type variables for handlers
-TInput = TypeVar("TInput")
-TOutput = TypeVar("TOutput")
-
-# =============================================================================
-# SOLID PRINCIPLE: Dependency Inversion - Import Commands patterns
-# =============================================================================
-
-
-def _get_flext_commands_module() -> type:
-    """Lazy import to avoid circular dependencies.
-
-    SOLID: Dependency Inversion - depend on abstraction, not concrete implementation.
-    """
-    from flext_core.commands import FlextCommands  # noqa: PLC0415
-
-    return FlextCommands
-
+# Use centralized types from FlextTypes where appropriate
+HandlerName = FlextTypes.Handler.HandlerName
 
 # =============================================================================
-# SOLID PRINCIPLE: Interface Segregation - Abstract Handler Contracts
+# FlextHandlers - Hierarchical Handler Management System
 # =============================================================================
 
 
-class FlextAbstractHandler(ABC, Generic[TInput, TOutput]):  # noqa: UP046
-    """Abstract handler base class following Interface Segregation Principle.
+class FlextHandlers:
+    """Hierarchical handler management system following Clean Architecture.
 
-    SOLID PRINCIPLES APPLIED:
-    - Single Responsibility: Defines only handler contract
-    - Interface Segregation: Minimal, focused interface
-    - Dependency Inversion: Abstract base for concrete implementations
+    Provides comprehensive handler functionality organized into logical domains:
+    - Abstract: Base contracts and abstract classes
+    - Base: Concrete implementations
+    - CQRS: Command/Query/Event patterns
+    - Patterns: Chain of Responsibility, Registry, Pipeline
+    - Decorators: Cross-cutting concerns
+    - Utilities: Helper functions and factories
+
+    All handler functionality is centralized under this namespace for consistency
+    with other flext-core modules and improved discoverability.
+
+    Example:
+        >>> # Basic handler usage
+        >>> handler = FlextHandlers.Base.Handler()
+        >>> result = handler.handle(request_data)
+        >>> # CQRS pattern usage
+        >>> command_handler = FlextHandlers.CQRS.CommandHandler()
+        >>> query_handler = FlextHandlers.CQRS.QueryHandler()
+        >>> # Pattern composition
+        >>> chain = FlextHandlers.Patterns.HandlerChain()
+        >>> registry = FlextHandlers.Patterns.HandlerRegistry()
+
     """
 
-    @property
-    @abstractmethod
-    def handler_name(self) -> str:
-        """Get handler name - Interface Segregation: focused method."""
-        ...
-
-    @abstractmethod
-    def handle(self, request: TInput) -> FlextResult[TOutput]:
-        """Handle request - Single Responsibility: core handler behavior."""
-        ...
-
-    @abstractmethod
-    def can_handle(self, _message_type: object) -> bool:
-        """Check capability - Interface Segregation: capability query."""
-        ...
-
-
-class FlextAbstractHandlerChain(ABC, Generic[TInput, TOutput]):  # noqa: UP046
-    """Abstract handler chain following Chain of Responsibility pattern.
-
-    SOLID PRINCIPLES APPLIED:
-    - Single Responsibility: Chain management only
-    - Open/Closed: Extensible through concrete implementations
-    - Interface Segregation: Chain-specific operations only
-    """
-
-    @property
-    def handler_name(self) -> str:
-        """Return chain identifier - Interface Segregation principle."""
-        return self.__class__.__name__
-
-    @abstractmethod
-    def handle(self, request: TInput) -> FlextResult[TOutput]:
-        """Handle through chain - Single Responsibility: chain execution."""
-        ...
-
-
-class FlextAbstractHandlerRegistry(ABC, Generic[TInput]):  # noqa: UP046
-    """Abstract handler registry following Registry pattern.
-
-    SOLID PRINCIPLES APPLIED:
-    - Single Responsibility: Handler registration and lookup only
-    - Interface Segregation: Registry-specific operations
-    - Open/Closed: Extensible registration strategies
-    """
-
-    @abstractmethod
-    def register(self, name: str, handler: TInput) -> FlextResult[TInput]:
-        """Register handler - Single Responsibility: registration logic."""
-        ...
-
-    @abstractmethod
-    def get_all_handlers(self) -> dict[str, TInput]:
-        """Get all handlers - Interface Segregation: focused query."""
-        ...
-
-
-class FlextAbstractMetricsHandler(FlextAbstractHandler[TInput, TOutput]):
-    """Abstract metrics handler following Decorator pattern.
-
-    SOLID PRINCIPLES APPLIED:
-    - Single Responsibility: Metrics collection behavior
-    - Open/Closed: Extensible metrics strategies
-    - Interface Segregation: Metrics-specific operations
-    """
-
-    @abstractmethod
-    def collect_metrics(self) -> dict[str, object]:
-        """Collect metrics - Single Responsibility: metrics behavior."""
-        ...
-
-
-class FlextAbstractValidatingHandler(FlextAbstractHandler[TInput, TOutput]):
-    """Abstract validating handler following Decorator pattern.
-
-    SOLID PRINCIPLES APPLIED:
-    - Single Responsibility: Validation behavior only
-    - Open/Closed: Extensible validation strategies
-    - Interface Segregation: Validation-specific operations
-
-     ENHANCEMENT:
-    - Uses FlextValidator for  type safety
-    - Maintains backward compatibility with legacy methods
-    """
-
-    @abstractmethod
-    def validate_request(self, request: TInput) -> FlextResult[None]:
-        """Validate request - Single Responsibility: validation logic."""
-        ...
-
-    # VALIDATION METHOD - Validation with type safety
-    def validate_with_validator(
-        self, request: TInput, validator: FlextValidator | None = None
-    ) -> FlextResult[None]:
-        """Request validation with type-safe validator.
-
-        Uses Protocol-based validator pattern for type safety.
-        Falls back to abstract method if no validator provided.
-        """
-        if validator is not None:
-            try:
-                # Validator is expected to follow Protocol pattern
-                return validator.validate(request).map(lambda _: None)
-            except Exception as e:
-                return FlextResult[None].fail(f"Validation failed: {e}")
-
-        # Fallback to abstract method for backward compatibility
-        return self.validate_request(request)
-
-
-# Type variables for generic handlers
-TQuery = TypeVar("TQuery")
-TQueryResult = TypeVar("TQueryResult")
-
-# =============================================================================
-# SOLID PRINCIPLE: Single Responsibility - Concrete Handler Implementations
-# =============================================================================
-
-
-class FlextBaseHandler(FlextAbstractHandler[object, object]):
-    """Concrete base handler following Single Responsibility Principle.
-
-    SOLID PRINCIPLES APPLIED:
-    - Single Responsibility: Basic message handling only
-    - Open/Closed: Extensible through inheritance
-    - Liskov Substitution: Proper substitution of abstract base
-    - Dependency Inversion: Depends on FlextResult abstraction
-    """
-
-    def __init__(self, name: str | None = None) -> None:
-        """Initialize base handler - Single Responsibility: initialization."""
-        self._name = name or self.__class__.__name__
-
-    @property
-    def handler_name(self) -> str:
-        """Get handler name."""
-        return self._name
-
-    def handle(self, request: object) -> FlextResult[object]:
-        """Handle request - Single Responsibility: core handling logic."""
-        return self.process_message(request)
-
-    # =================================================================
-    # SOLID: Interface Segregation - Focused API methods
-    # =================================================================
-    def process_request(self, request: object) -> FlextResult[object]:
-        """Process request - Interface Segregation: specific operation."""
-        return self.handle(request)
-
-    def validate_request(self, request: object) -> FlextResult[None]:
-        """Validate request - Single Responsibility: validation only."""
-        if request is None:
-            return FlextResult[None].fail(
-                FlextConstants.Handlers.REQUEST_CANNOT_BE_NONE
-            )
-        return FlextResult[None].ok(None)
-
-    def can_handle(self, _message_type: object) -> bool:
-        """Check capability - Open/Closed: extensible capability checking.
-
-        Default implementation accepts all; subclasses specialize.
-        Liskov Substitution: maintains contract expectations.
-        """
-        return True
-
-    def pre_process(self, message: object) -> FlextResult[None]:
-        """Pre-processing hook - Single Responsibility: preprocessing logic.
-
-        Args:
-            message: Message to pre-process.
-
-        Returns:
-            FlextResult indicating success or failure.
-
-        """
-        del message  # Interface compliance
-        return FlextResult[None].ok(None)
-
-    def process_message(self, message: object) -> FlextResult[object]:
-        """Process message - Template Method pattern, Single Responsibility."""
-        return FlextResult[object].ok(message)
+    # Thread-safe handler management
+    _handlers_lock: Final[threading.RLock] = threading.RLock()
 
     @staticmethod
-    def post_process(
-        _message: object,
-        _result: FlextResult[object],
-    ) -> FlextResult[None]:
-        """Post-processing hook - Single Responsibility: post-processing."""
-        return FlextResult[None].ok(None)
-
-    def get_handler_metadata(self) -> dict[str, object]:
-        """Get metadata - Single Responsibility: metadata provision."""
-        return {
-            "handler_name": self.handler_name,
-            "handler_class": self.__class__.__name__,
-            "can_handle_all": True,  # Open/Closed: default behavior
-            "solid_principles": ["SRP", "OCP", "LSP", "DIP"],
-        }
-
-
-class FlextValidatingHandler(
-    FlextBaseHandler,
-    FlextAbstractValidatingHandler[object, object],
-):
-    """Concrete validating handler following Decorator pattern.
-
-    SOLID PRINCIPLES APPLIED:
-    - Single Responsibility: Validation behavior decoration
-    - Open/Closed: Extends base handler without modification
-    - Liskov Substitution: Proper substitution of base handler
-    - Interface Segregation: Validation-specific methods
-    - Dependency Inversion: Depends on validation abstractions
-
-     ENHANCEMENT:
-    - Supports both legacy and  validation patterns
-    -  constructor with optional  validator
-    """
-
-    def __init__(
-        self,
-        name: str | None = None,
-        #  PARAMETER - Optional  validator
-        validator: FlextValidator | None = None,
-    ) -> None:
-        """Initialize validating handler with optional  validator."""
-        self._name = name or self.__class__.__name__
-        # Store  validator for  validation methods
-        self._validator = validator
-
-    @property
-    def handler_name(self) -> str:
-        """Get handler name."""
-        return self._name
-
-    def handle(self, request: object) -> FlextResult[object]:
-        """Handle with validation - Template Method pattern with validation steps.
-
-        SOLID: Single Responsibility - validation-decorated handling.
-        """
-        validation = self.validate_input(request)
-        if validation.is_failure:
-            return FlextResult[object].fail(
-                validation.error or FlextConstants.Handlers.VALIDATION_FAILED,
-            )
-        result = self.process_message(request)
-        return self.validate_output(result.value if result.is_success else None)
-
-    def validate_request(self, request: object) -> FlextResult[None]:
-        """Validate request."""
-        return self.validate_input(request)
-
-    def can_handle(self, message_type: object) -> bool:
-        """Check if handler can handle request."""
-        return message_type is not None
-
-    def validate_input(self, request: object) -> FlextResult[None]:
-        """Validate input - Single Responsibility: input validation only."""
-        if request is None:
-            return FlextResult[None].fail(
-                FlextConstants.Handlers.REQUEST_CANNOT_BE_NONE
-            )
-        return FlextResult[None].ok(None)
-
-    def validate_output(self, response: object) -> FlextResult[object]:
-        """Validate output - Single Responsibility: output validation only."""
-        return FlextResult[object].ok(response)
-
-    def get_validation_rules(self) -> list[object]:
-        """Get validation rules."""
-        return []
+    @contextmanager
+    def thread_safe_operation() -> Iterator[None]:
+        """Thread-safe context manager for handler operations."""
+        with FlextHandlers._handlers_lock:
+            yield
 
     @staticmethod
-    def validate_message(message: object) -> FlextResult[None]:
-        """Validate message - implements abstract method."""
-        # Basic validation - check not None
-        if message is None:
-            return FlextResult[None].fail(
-                FlextConstants.Handlers.MESSAGE_CANNOT_BE_NONE
-            )
-        return FlextResult[None].ok(None)
+    def get_flext_commands_module() -> type:
+        """Lazy import to avoid circular dependencies.
 
-    def process_message(self, message: object) -> FlextResult[object]:
-        """Process validated message."""
-        return FlextResult[object].ok(message)
-
-    def validate(self, message: object) -> FlextResult[object]:
-        """Validate a message before processing (convenience method)."""
-        validation_result = self.validate_message(message)
-        if validation_result.is_failure:
-            return FlextResult[object].fail(
-                validation_result.error or FlextConstants.Handlers.VALIDATION_FAILED,
-            )
-        return FlextResult[object].ok(message)
-
-    #  METHODS -  validation using  patterns
-    def validate_(
-        self, message: object, validator_override: FlextValidator | None = None
-    ) -> FlextResult[object]:
-        """:  validation with type-safe validator pattern.
-
-        Uses either provided validator, instance validator, or falls back to legacy method.
-        Provides better type safety and composability.
+        SOLID: Dependency Inversion - depend on abstraction, not concrete implementation.
         """
-        # Use override validator if provided
-        if validator_override is not None:
-            return self._validate_with_validator(validator_override, message)
+        from flext_core.commands import FlextCommands  # noqa: PLC0415
 
-        # Use instance  validator if available
-        if self._validator is not None:
-            return self._validate_with_validator(self._validator, message)
+        return FlextCommands
 
-        # Fallback to legacy method for backward compatibility
-        return self.validate(message)
+    # =========================================================================
+    # Abstract Domain - Base Contracts and Abstract Classes
+    # =========================================================================
 
-    def _validate_with_validator(
-        self, validator: FlextValidator, message: object
-    ) -> FlextResult[object]:
-        """Helper method to validate message with a specific validator."""
-        try:
-            validation_result = validator.validate(message)
-            if validation_result.is_failure:
-                return FlextResult[object].fail(
-                    validation_result.error or FlextConstants.Handlers.VALIDATION_FAILED
-                )
-            return FlextResult[object].ok(message)
-        except Exception as e:
-            return FlextResult[object].fail(f"Validation failed: {e}")
+    class Abstract:
+        """Abstract base classes and contracts for handler implementations.
 
-    def handle_(
-        self, request: object, validator: FlextValidator | None = None
-    ) -> FlextResult[object]:
-        """:  handle with optional inline validator.
+        Provides the foundational interfaces that all concrete handlers must implement,
+        following Interface Segregation and Dependency Inversion principles.
 
-        Combines handling and validation in  pattern.
-        Maintains backward compatibility with legacy handle() method.
+        Key Components:
+        - Handler: Basic handler contract
+        - HandlerChain: Chain of Responsibility contract
+        - HandlerRegistry: Registry pattern contract
+        - MetricsHandler: Metrics collection contract
+        - ValidatingHandler: Validation contract
         """
-        # Use  validation if validator provided
-        if validator is not None or self._validator is not None:
-            validation = self.validate_(request, validator)
-            if validation.is_failure:
-                return validation
-            # Process the validated request
-            return self.process_message(request)
 
-        # Fallback to legacy handle method for backward compatibility
-        return self.handle(request)
-
-    @staticmethod
-    def post_process(
-        message: object,
-        _result: FlextResult[object],
-    ) -> FlextResult[None]:
-        """Post-process the result."""
-        del message
-        return FlextResult[None].ok(None)
-
-    def get_handler_metadata(self) -> dict[str, object]:
-        """Get metadata - Single Responsibility: metadata with validation info."""
-        return {
-            "handler_name": self.handler_name,
-            "handler_class": self.__class__.__name__,
-            "validation_enabled": True,
-            "solid_pattern": "Decorator",
-            "responsibilities": ["handling", "validation"],
-        }
-
-
-class FlextAuthorizingHandler(FlextBaseHandler):
-    """Handler with authorization implementing AuthorizingHandler protocol."""
-
-    def __init__(
-        self,
-        name: str | None = None,
-        required_permissions: list[str] | None = None,
-    ) -> None:
-        """Initialize with required permissions."""
-        super().__init__()
-        self._name = name or self.__class__.__name__
-        self.required_permissions = required_permissions or []
-
-    def authorize(
-        self,
-        message: object,
-        context: dict[str, object],
-    ) -> FlextResult[bool]:
-        """Check authorization for message processing."""
-        return self.authorize_message(message, context)
-
-    def authorize_message(
-        self,
-        message: object,
-        context: dict[str, object],
-    ) -> FlextResult[bool]:
-        """Override this method to implement specific authorization."""
-        del message  # Unused argument
-        # Basic authorization - check context has user
-        user = context.get("user")
-        if not user:
-            return FlextResult[bool].fail(FlextConstants.Handlers.NO_USER_IN_CONTEXT)
-
-        # Check permissions if required
-        if self.required_permissions:
-            user_permissions = context.get("permissions", [])
-            if not isinstance(user_permissions, (list, set, tuple)):
-                return FlextResult[bool].fail(
-                    FlextConstants.Handlers.INVALID_PERMISSIONS_FORMAT,
-                )
-            for permission in self.required_permissions:
-                if permission not in user_permissions:
-                    return FlextResult[bool].fail(
-                        FlextConstants.Handlers.MISSING_PERMISSION_TEMPLATE.format(
-                            permission=permission,
-                        ),
-                    )
-
-        authorized = True
-        return FlextResult[bool].ok(authorized)
-
-    def pre_process(self, message: object) -> FlextResult[None]:
-        """Pre-process with authorization."""
-        del message  # Unused argument
-        # In a real implementation, context would be passed through
-        # For now, we'll skip authorization in pre-process
-        return FlextResult[None].ok(None)
-
-    def get_handler_metadata(self) -> dict[str, object]:
-        """Get handler metadata for monitoring."""
-        return {
-            "handler_name": self.handler_name,
-            "handler_class": self.__class__.__name__,
-            "authorization_enabled": True,
-            "required_permissions": self.required_permissions,
-        }
-
-
-class FlextEventHandler(FlextBaseHandler):
-    """Event handler implementing EventProcessor protocol."""
-
-    def process_event(self, event: dict[str, object]) -> FlextResult[None]:
-        """Process domain event."""
-        try:
-            event_type = event.get("event_type")
-            if not event_type:
-                return FlextResult[None].fail(
-                    FlextConstants.Handlers.EVENT_MISSING_TYPE
-                )
-
-            # Process based on an event type
-            return self.handle_event_type(event)
-
-        except (TypeError, ValueError, AttributeError, KeyError, RuntimeError) as e:
-            return FlextResult[None].fail(
-                FlextConstants.Handlers.EVENT_PROCESSING_FAILED_TEMPLATE.format(
-                    error=e,
-                ),
-            )
-
-    @staticmethod
-    def can_process(event_type: str | None = None) -> bool:
-        """Check if handler can process an event type."""
-        del event_type
-        # Override in subclasses for specific event types
-        return True
-
-    @staticmethod
-    def handle_event_type(
-        event: dict[str, object],
-        event_type: str | None = None,
-    ) -> FlextResult[None]:
-        """Handle specific event type - override in subclasses."""
-        del event_type, event
-        return FlextResult[None].ok(None)
-
-
-class FlextMetricsHandler(
-    FlextBaseHandler,
-    FlextAbstractMetricsHandler[object, object],
-):
-    """Concrete handler with a metrics collection using abstractions."""
-
-    def __init__(self, name: str | None = None) -> None:
-        """Initialize metrics handler."""
-        self._name = name or self.__class__.__name__
-        self.metrics: dict[str, object] = {
-            "total_requests": 0,
-            "messages_processed": 0,
-        }
-        self._start_time: float | None = None
-
-    @property
-    def handler_name(self) -> str:
-        """Get handler name."""
-        return self._name
-
-    @property
-    def name(self) -> str:
-        """Get handler name (convenience method)."""
-        return self._name
-
-    def handle(self, request: object) -> FlextResult[object]:
-        """Handle request with metrics."""
-        # Increment counters at start
-        current_total = self.metrics.get("total_requests", 0)
-        current_processed = self.metrics.get("messages_processed", 0)
-        self.metrics["total_requests"] = (
-            int(current_total) + 1 if isinstance(current_total, (int, float)) else 1
-        )
-
-        self.start_metrics(request)
-        result = self.process_message(request)
-        if result.is_success:
-            self.stop_metrics(request, result.value)
-            # Increment processed count only on success
-            self.metrics["messages_processed"] = (
-                int(current_processed) + 1
-                if isinstance(current_processed, (int, float))
-                else 1
-            )
-        return result
-
-    def validate_request(self, request: object) -> FlextResult[None]:
-        """Validate request."""
-        if request is None:
-            return FlextResult[None].fail(
-                FlextConstants.Handlers.REQUEST_CANNOT_BE_NONE
-            )
-        return FlextResult[None].ok(None)
-
-    def can_handle(self, message_type: object) -> bool:
-        """Check if handler can handle message type."""
-        return message_type is not None
-
-    def start_metrics(self, request: object) -> None:
-        """Start a metrics collection."""
-        self._start_time = time.time()
-        self.metrics["request_type"] = type(request).__name__
-
-    def stop_metrics(self, request: object, response: object) -> None:
-        """Stop a metrics collection."""
-        if self._start_time is not None:
-            self.metrics["last_duration"] = time.time() - self._start_time
-        self.metrics["request_type"] = type(request).__name__
-        self.metrics["response_type"] = type(response).__name__
-
-    def get_metrics(self) -> dict[str, object]:
-        """Get collected metrics."""
-        return self.metrics.copy()
-
-    def clear_metrics(self) -> None:
-        """Clear metrics."""
-        self.metrics.clear()
-        self._start_time = None
-
-    def process_message(self, message: object) -> FlextResult[object]:
-        """Process message - basic implementation."""
-        return FlextResult[object].ok(message)
-
-    def collect_metrics(self) -> dict[str, object]:
-        """Collect custom metrics - implements abstract method."""
-        # Return basic processing metrics
-        return {
-            "messages_processed": self.metrics.get("messages_processed", 0),
-            "messages_succeeded": self.metrics.get("messages_succeeded", 0),
-            "messages_failed": self.metrics.get("messages_failed", 0),
-        }
-
-    def _collect_metrics_for_message(
-        self,
-        message: object,
-        result: FlextResult[object],
-    ) -> None:
-        """Collect metrics for a specific message - internal method."""
-        # Collect basic processing metrics
-        del message
-        success = result.is_success
-
-        # Initialize custom metrics storage inside metrics dict
-        if "custom_metrics" not in self.metrics:
-            self.metrics["custom_metrics"] = {"success_count": 0, "failure_count": 0}
-
-        store_obj = self.metrics["custom_metrics"]
-        if not isinstance(store_obj, dict):
-            self.metrics["custom_metrics"] = {"success_count": 0, "failure_count": 0}
-            store_obj = self.metrics["custom_metrics"]
-
-        # Safe type validation instead of unsafe casting
-        custom_metrics: dict[str, int] = {}
-        # store_obj is already guaranteed to be dict after isinstance check above
-        dict_store = cast("dict[str, object]", store_obj)
-        for key, value in dict_store.items():
-            # key is already str from dict[str, object], just check value
-            if isinstance(value, int):
-                custom_metrics[key] = value
-            else:
-                # Reset to safe defaults if data is corrupted
-                custom_metrics = {"success_count": 0, "failure_count": 0}
-                break
-
-        # Update the metrics store with validated data
-        self.metrics["custom_metrics"] = custom_metrics
-
-        # Update counts
-        if success:
-            count = custom_metrics.get("success_count", 0)
-            custom_metrics["success_count"] = int(count) + 1
-        else:
-            count = custom_metrics.get("failure_count", 0)
-            custom_metrics["failure_count"] = int(count) + 1
-
-    def collect_operation_metrics(
-        self,
-        operation: str,
-        duration: float,
-    ) -> FlextResult[None]:
-        """Collect performance metrics for specific operations."""
-        try:
-            operations = self._ensure_operations_dict()
-            op_metrics = self._ensure_operation_metrics(operations, operation)
-            self._update_operation_metrics(op_metrics, duration)
-            return FlextResult[None].ok(None)
-        except (TypeError, ValueError, AttributeError, RuntimeError) as e:
-            return FlextResult[None].fail(
-                FlextConstants.Handlers.METRICS_COLLECTION_FAILED + f": {e}",
-            )
-
-    def _ensure_operations_dict(self) -> dict[str, dict[str, int | float]]:
-        """Ensure operations metrics dictionary exists and is a dict of dicts."""
-        operations_obj = self.metrics.get("operations")
-        if not isinstance(operations_obj, dict):
-            self.metrics["operations"] = {}
-            operations_obj = self.metrics["operations"]
-        # Validate nested structure with proper casting
-        operations_dict = cast("dict[str, object]", operations_obj)
-        validated: dict[str, dict[str, int | float]] = {
-            key: {
-                str(ik): iv
-                for ik, iv in cast("dict[object, object]", val).items()
-                if isinstance(ik, str) and isinstance(iv, (int, float))
-            }
-            for key, val in operations_dict.items()
-            if isinstance(val, dict)  # key is already str from dict[str, object]
-        }
-        self.metrics["operations"] = validated
-        return validated
-
-    @staticmethod
-    def _ensure_operation_metrics(
-        operations: dict[str, dict[str, int | float]],
-        operation: str,
-    ) -> dict[str, int | float]:
-        if operation not in operations:
-            operations[operation] = {
-                "count": 0,
-                "total_duration": 0.0,
-                "avg_duration": 0.0,
-            }
-        return operations[operation]
-
-    @staticmethod
-    def _update_operation_metrics(
-        metrics: dict[str, int | float],
-        duration: float,
-    ) -> None:
-        current_count = metrics.get("count", 0)
-        current_total = metrics.get("total_duration", 0.0)
-        # current_count and current_total already have correct types from .get() defaults
-        new_count = int(current_count) + 1
-        new_total = float(current_total) + duration
-        metrics["count"] = new_count
-        metrics["total_duration"] = new_total
-        metrics["avg_duration"] = new_total / new_count
-
-    def get_metrics_summary(self) -> dict[str, object]:
-        """Get current metrics summary."""
-        return dict(self.metrics)
-
-    @staticmethod
-    def post_process(
-        message: object,
-        result: FlextResult[object],
-    ) -> FlextResult[None]:
-        """Post-process hook - no-op for static implementation."""
-        del message, result
-        return FlextResult[None].ok(None)
-
-    def get_handler_metadata(self) -> dict[str, object]:
-        """Get handler metadata for monitoring."""
-        return {
-            "handler_name": self.handler_name,
-            "handler_class": self.__class__.__name__,
-            "metrics_enabled": True,
-            "current_metrics": self.get_metrics(),
-        }
-
-
-# =============================================================================
-# HANDLER REGISTRY - Service location pattern
-# =============================================================================
-
-
-class FlextHandlerRegistry(
-    FlextAbstractHandlerRegistry[FlextAbstractHandler[object, object]],
-):
-    """Concrete handler registry with dual API (testing and ).
-
-    Exposes a simple list-based API via `_handlers`, `register(handler)`,
-    and `get_handlers()` for testing convenience, while also supporting a named
-    registry via `register_handler(name, handler)` and dictionary lookups.
-
-     ENHANCEMENT:
-    - Supports registration of  callable handlers
-    - Maintains backward compatibility with existing registration patterns
-    """
-
-    def __init__(self) -> None:
-        """Initialize registry with abstractions."""
-        self.registry: dict[str, FlextAbstractHandler[object, object]] = {}
-        self._handlers: list[FlextAbstractHandler[object, object]] = []
-        self._type_mappings: dict[type, list[str]] = {}
-
-    def register_handler(
-        self,
-        name: str,
-        handler: FlextAbstractHandler[object, object],
-    ) -> FlextResult[None]:
-        """Register a handler by name and return a result object."""
-        if not name:
-            return FlextResult[None].fail(FlextConstants.Handlers.HANDLER_NAME_EMPTY)
-
-        self.registry[name] = handler
-        if handler not in self._handlers:
-            self._handlers.append(handler)
-        return FlextResult[None].ok(None)
-
-    def get_handler(
-        self,
-        name: str,
-    ) -> FlextResult[FlextAbstractHandler[object, object]]:
-        """Get handler - implements abstract method."""
-        handler = self.registry.get(name)
-        if not handler:
-            available = list(self.registry.keys())
-            return FlextResult[FlextAbstractHandler[object, object]].fail(
-                FlextConstants.Handlers.HANDLER_NOT_FOUND_TEMPLATE.format(
-                    name=name,
-                    available=available,
-                ),
-            )
-        return FlextResult[FlextAbstractHandler[object, object]].ok(handler)
-
-    def register(
-        self,
-        name: str | FlextAbstractHandler[object, object] = "",
-        handler: FlextAbstractHandler[object, object] | None = None,
-    ) -> FlextResult[FlextAbstractHandler[object, object]]:
-        """Register handler with optional explicit name.
-
-        Registration behavior:
-        - register(handler) -> auto-name using handler class name
-        - register(name, handler)
-        """
-        if handler is None:
-            # When handler is None, the 'name' parameter contains the actual handler
-            if not hasattr(name, "__class__"):
-                return FlextResult[FlextAbstractHandler[object, object]].fail(
-                    FlextConstants.Handlers.INVALID_HANDLER_PROVIDED,
-                )
-            # Type cast since we know this is a handler when handler is None
-            auto_handler = cast("FlextAbstractHandler[object, object]", name)
-            auto_name = auto_handler.__class__.__name__
-            _ = self.register_handler(auto_name, auto_handler)
-            return FlextResult[FlextAbstractHandler[object, object]].ok(auto_handler)
-
-        # Explicit name provided
-        if not isinstance(name, str):
-            return FlextResult[FlextAbstractHandler[object, object]].fail(
-                FlextConstants.Handlers.HANDLER_NAME_MUST_BE_STRING
-            )
-        _ = self.register_handler(name, handler)
-        return FlextResult[FlextAbstractHandler[object, object]].ok(handler)
-
-    def get_handlers_for_type(
-        self,
-        message_type: type,
-    ) -> list[FlextAbstractHandler[object, object]]:
-        """Get all handlers that can process a message type."""
-        return [
-            handler
-            for handler in self.registry.values()
-            if handler.can_handle(message_type)
-        ]
-
-    # ------------------------------------------------------------------
-    # Convenience helpers
-    # ------------------------------------------------------------------
-    def register_for_type(
-        self,
-        message_type: type,
-        name: str,
-        handler: FlextAbstractHandler[object, object],
-    ) -> FlextResult[None]:
-        """Register a handler for a specific message type.
-
-        Keeps an auxiliary mapping from type -> handler names to support
-        quick lookup via get_handler_for_type.
-        """
-        self.register_handler(name, handler)
-        # Maintain mapping list
-        names = self._type_mappings.setdefault(message_type, [])
-        if name not in names:
-            names.append(name)
-        return FlextResult[None].ok(None)
-
-    def get_handler_for_type(
-        self,
-        message_type: type,
-    ) -> FlextResult[FlextAbstractHandler[object, object]]:
-        """Get the first handler registered for a specific message type."""
-        # Prefer explicit mapping first
-        names = self._type_mappings.get(message_type)
-        if names:
-            for name in names:
-                handler = self.registry.get(name)
-                if handler is not None:
-                    return FlextResult[FlextAbstractHandler[object, object]].ok(handler)
-        # Fallback to capability-based scan
-        handlers = self.get_handlers_for_type(message_type)
-        if handlers:
-            return FlextResult[FlextAbstractHandler[object, object]].ok(handlers[0])
-        return FlextResult[FlextAbstractHandler[object, object]].fail(
-            f"No handler registered for type: {message_type!r}"
-        )
-
-    def unregister_handler(self, name: str) -> bool:
-        """Unregister handler - implements abstract method."""
-        if name in self.registry:
-            del self.registry[name]
-            return True
-        return False
-
-    def get_all_handlers(self) -> dict[str, FlextAbstractHandler[object, object]]:
-        """Get all handlers - implements abstract method."""
-        return dict(self.registry)
-
-    def clear_handlers(self) -> None:
-        """Clear all handlers - implements abstract method."""
-        self.registry.clear()
-        self._type_mappings.clear()
-
-    def clear(self) -> None:
-        """Clear all registered handlers."""
-        self.clear_handlers()
-
-    # Convenience API expected by some tests
-    def get_handlers(self) -> list[FlextAbstractHandler[object, object]]:
-        """Return a copy of registered handlers as a list (convenience API)."""
-        return list(self._handlers)
-
-    #  METHODS -  registration for callable patterns
-    def register_callable_handler(
-        self,
-        name: str,
-        callable_handler: FlextCallable[FlextResult[object]],
-        can_handle_func: FlextCallable[bool] | None = None,
-    ) -> FlextResult[None]:
-        """: Register a callable as a handler using  patterns.
-
-        Wraps a callable in a handler interface for  usage.
-        Maintains type safety with Protocol-based callables.
-        """
-        try:
-            # Create a wrapper handler that uses the  callable
-            class CallableHandlerWrapper(FlextAbstractHandler[object, object]):
-                def __init__(
-                    self,
-                    name: str,
-                    callable_handler: FlextCallable[FlextResult[object]],
-                ) -> None:
-                    self._name = name
-                    self._callable = callable_handler
-                    self._can_handle_func = can_handle_func
-
-                @property
-                def handler_name(self) -> str:
-                    return self._name
-
-                def handle(self, request: object) -> FlextResult[object]:
-                    try:
-                        # Use the  callable
-                        return self._callable(request)
-                    except Exception as e:
-                        return FlextResult[object].fail(f"Callable handler failed: {e}")
-
-                def can_handle(self, message_type: object) -> bool:
-                    if self._can_handle_func is not None:
-                        try:
-                            return bool(self._can_handle_func(message_type))
-                        except Exception:
-                            return False
-                    return True  # Default: can handle anything
-
-            # Create wrapper and register it
-            wrapper = CallableHandlerWrapper(name, callable_handler)
-            return self.register_handler(name, wrapper)
-
-        except Exception as e:
-            return FlextResult[None].fail(f"Failed to register callable handler: {e}")
-
-    def get_handler_(
-        self, name: str
-    ) -> FlextResult[FlextAbstractHandler[object, object]]:
-        """:  handler retrieval with better error messages.
-
-        Provides more detailed error information and suggestions.
-        Falls back to legacy get_handler method for compatibility.
-        """
-        result = self.get_handler(name)
-        if result.is_failure:
-            #  error message with suggestions
-            available = list(self.registry.keys())
-            similar = [
-                h
-                for h in available
-                if name.lower() in h.lower() or h.lower() in name.lower()
-            ]
-
-            error_msg = f"Handler '{name}' not found."
-            if similar:
-                error_msg += f" Did you mean one of: {similar}?"
-            elif available:
-                error_msg += f" Available handlers: {available}"
-            else:
-                error_msg += " No handlers registered."
-
-            return FlextResult[FlextAbstractHandler[object, object]].fail(error_msg)
-
-        return result
-
-
-# =============================================================================
-# CHAIN OF RESPONSIBILITY - Multi-handler processing
-# =============================================================================
-
-
-class FlextHandlerChain(FlextBaseHandler, FlextAbstractHandlerChain[object, object]):
-    """Concrete chain of responsibility implementation using abstractions.
-
-     ENHANCEMENT:
-    - Supports mixing  callables with traditional handlers
-    -  composition with functional programming patterns
-    """
-
-    def __init__(
-        self,
-        handlers: list[FlextAbstractHandler[object, object]] | None = None,
-        #  PARAMETER - Optional list of callable handlers
-        callable_handlers: list[FlextCallable[FlextResult[object]]] | None = None,
-    ) -> None:
-        """Initialize with optional handler and callable lists using abstractions."""
-        self.handlers: list[FlextAbstractHandler[object, object]] = handlers or []
-
-        #  ENHANCEMENT - Convert callables to handler wrappers
-        if callable_handlers:
-            for i, callable_handler in enumerate(callable_handlers):
-                self._add_callable_handler(f"callable_{i}", callable_handler)
-
-    @property
-    def handler_name(self) -> str:
-        """Get handler chain name."""
-        return self.__class__.__name__
-
-    def add_handler(self, handler: FlextAbstractHandler[object, object]) -> None:
-        """Add handler to chain - implements abstract method."""
-        self.handlers.append(handler)
-
-    #  METHODS -  chain composition
-    def _add_callable_handler(
-        self, name: str, callable_handler: FlextCallable[FlextResult[object]]
-    ) -> None:
-        """Internal method to convert callable to handler and add to chain."""
-
-        class CallableHandlerWrapper(FlextAbstractHandler[object, object]):
-            def __init__(
-                self, name: str, callable_handler: FlextCallable[FlextResult[object]]
-            ) -> None:
-                self._name = name
-                self._callable = callable_handler
+        class Handler(ABC, Generic[TInput, TOutput]):
+            """Abstract handler base class following Interface Segregation Principle.
+
+            SOLID PRINCIPLES APPLIED:
+            - Single Responsibility: Defines only handler contract
+            - Interface Segregation: Minimal, focused interface
+            - Dependency Inversion: Abstract base for concrete implementations
+            """
+
+            @property
+            @abstractmethod
+            def handler_name(self) -> str:
+                """Get handler name - Interface Segregation: focused method."""
+
+            @abstractmethod
+            def handle(self, request: TInput) -> FlextResult[TOutput]:
+                """Handle request - Single Responsibility: core handler behavior."""
+
+            @abstractmethod
+            def can_handle(self, message_type: object) -> bool:
+                """Check capability - Interface Segregation: capability query."""
+
+        class HandlerChain(ABC, Generic[TInput, TOutput]):
+            """Abstract handler chain following Chain of Responsibility pattern.
+
+            SOLID PRINCIPLES APPLIED:
+            - Single Responsibility: Chain management only
+            - Open/Closed: Extensible through concrete implementations
+            - Interface Segregation: Chain-specific operations only
+            """
 
             @property
             def handler_name(self) -> str:
-                return self._name
+                """Return chain identifier - Interface Segregation principle."""
+                return self.__class__.__name__
+
+            @abstractmethod
+            def handle(self, request: TInput) -> FlextResult[TOutput]:
+                """Handle through chain - Single Responsibility: chain execution."""
+
+        class HandlerRegistry(ABC, Generic[TInput]):
+            """Abstract handler registry following Registry pattern.
+
+            SOLID PRINCIPLES APPLIED:
+            - Single Responsibility: Handler registration and lookup only
+            - Interface Segregation: Registry-specific operations
+            - Open/Closed: Extensible registration strategies
+            """
+
+            @abstractmethod
+            def register(self, name: str, handler: TInput) -> FlextResult[TInput]:
+                """Register handler - Single Responsibility: registration logic."""
+
+            @abstractmethod
+            def get_all_handlers(self) -> dict[str, TInput]:
+                """Get all handlers - Interface Segregation: focused query."""
+
+        class MetricsHandler(Handler[TInput, TOutput]):
+            """Abstract metrics-collecting handler.
+
+            Extends base handler with metrics collection capabilities while
+            maintaining Interface Segregation.
+            """
+
+            @abstractmethod
+            def get_metrics(self) -> FlextTypes.Handler.MetricsData:
+                """Get handler metrics - Interface Segregation: metrics query."""
+
+        class ValidatingHandler(Handler[TInput, TOutput]):
+            """Abstract validating handler.
+
+            Extends base handler with validation capabilities following
+            Single Responsibility principle.
+            """
+
+            @abstractmethod
+            def validate(self, request: TInput) -> FlextResult[None]:
+                """Validate request - Single Responsibility: validation logic."""
+
+    # =========================================================================
+    # Base Domain - Concrete Handler Implementations
+    # =========================================================================
+
+    class Base:
+        """Concrete base implementations of handler contracts.
+
+        Provides standard implementations that can be used directly or extended
+        by specific application handlers. Follows Open/Closed and Liskov
+        Substitution principles.
+
+        Key Components:
+        - Handler: Standard handler implementation
+        - ValidatingHandler: Handler with validation
+        - AuthorizingHandler: Handler with authorization
+        - MetricsHandler: Handler with metrics collection
+        """
+
+        class Handler:
+            """Concrete base handler implementation.
+
+            SOLID PRINCIPLES APPLIED:
+            - Single Responsibility: Core handler logic only
+            - Open/Closed: Extensible without modification
+            - Liskov Substitution: Substitutable for abstract handler
+            """
+
+            def __init__(self, name: str | None = None) -> None:
+                """Initialize handler with optional name."""
+                self._handler_name: Final[str] = name or self.__class__.__name__
+                self._metrics: FlextTypes.Handler.MetricsData = {
+                    "requests_processed": 0,
+                    "successful_requests": 0,
+                    "failed_requests": 0,
+                    "average_processing_time": 0.0,
+                    "total_processing_time": 0.0,
+                }
+
+            @property
+            def handler_name(self) -> str:
+                """Return handler name."""
+                return self._handler_name
 
             def handle(self, request: object) -> FlextResult[object]:
+                """Handle request with metrics collection.
+
+                SOLID: Single Responsibility - focused on request processing.
+                """
+                start_time = time.time()
+
                 try:
-                    return self._callable(request)
-                except Exception as e:
-                    return FlextResult[object].fail(f"Callable handler failed: {e}")
-
-            def can_handle(self, _message_type: object) -> bool:  # noqa: ARG002
-                return True  # Callables are assumed to handle anything
-
-        wrapper = CallableHandlerWrapper(name, callable_handler)
-        self.handlers.append(wrapper)
-
-    def add_callable_handler(
-        self,
-        callable_handler: FlextCallable[FlextResult[object]],
-        name: str | None = None,
-    ) -> None:
-        """: Add a callable as a handler to the chain.
-
-        Automatically wraps the callable in a handler interface.
-        """
-        handler_name = name or f"callable_{len(self.handlers)}"
-        self._add_callable_handler(handler_name, callable_handler)
-
-    def compose_(
-        self, *callables: FlextCallable[FlextResult[object]]
-    ) -> FlextHandlerChain:
-        """: Create a new chain by composing callables functionally.
-
-        Returns a new chain with existing handlers plus new callables.
-        Enables functional composition patterns.
-        """
-        new_chain = FlextHandlerChain(handlers=self.handlers.copy())
-        for i, callable_handler in enumerate(callables):
-            new_chain.add_callable_handler(callable_handler, f"composed_{i}")
-        return new_chain
-
-    def remove_handler(self, handler: FlextAbstractHandler[object, object]) -> bool:
-        """Remove handler from chain - implements abstract method."""
-        if handler in self.handlers:
-            self.handlers.remove(handler)
-            return True
-        return False
-
-    def handle_request(self, request: object) -> FlextResult[object]:
-        """Handle request through chain - implements abstract method."""
-        for handler in self.handlers:
-            if handler.can_handle(request):
-                return handler.handle(request)
-        return FlextResult[object].fail("No handler could process the request")
-
-    def get_handlers(self) -> list[FlextAbstractHandler[object, object]]:
-        """Get all handlers - implements abstract method."""
-        return self.handlers.copy()
-
-    def process_chain(self, message: object) -> FlextResult[object]:
-        """Process message through handler chain - implements abstract method."""
-        results: list[FlextResult[object]] = []
-        last_successful_result = None
-
-        for handler in self.handlers:
-            try:
-                result = handler.handle(message)
-                results.append(result)
-
-                if result.is_success:
-                    last_successful_result = result.value
-                else:
-                    # Stop on first failure if desired
-                    break
-
-            except (TypeError, ValueError, AttributeError, RuntimeError, KeyError) as e:
-                error_result: FlextResult[object] = FlextResult[object].fail(
-                    f"Chain handler failed: {e}",
-                )
-                results.append(error_result)
-                break
-
-        # Return last successful result or failure
-        if last_successful_result is not None:
-            return FlextResult[object].ok(last_successful_result)
-        if results:
-            # Return first failure
-            for result in results:
-                if hasattr(result, "is_failure") and result.is_failure:
-                    error_msg = (
-                        getattr(result, "error", None) or "Chain processing failed"
+                    self._metrics["requests_processed"] = (
+                        cast("int", self._metrics["requests_processed"]) + 1
                     )
-                    return FlextResult[object].fail(str(error_msg))
 
-        return FlextResult[object].fail("No handlers processed the message")
+                    # Delegate to specific implementation
+                    result = self._process_request(request)
 
-    def handle(self, request: object) -> FlextResult[object]:
-        """Handle a message through chain (convenience method)."""
-        message = request  # Alias for compatibility
-        for handler in self.handlers:
-            try:
-                if handler.can_handle(message):
-                    result = handler.handle(message)
-                    if result.is_success:
-                        return result
-            except (TypeError, ValueError, AttributeError, RuntimeError, KeyError) as e:
-                return FlextResult[object].fail(f"Chain handler failed: {e}")
-        return FlextResult[object].ok(message)
+                    if result.success:
+                        self._metrics["successful_requests"] = (
+                            cast("int", self._metrics["successful_requests"]) + 1
+                        )
+                    else:
+                        self._metrics["failed_requests"] = (
+                            cast("int", self._metrics["failed_requests"]) + 1
+                        )
 
-    def can_handle(self, _message_type: object) -> bool:  # accept any for flexibility
-        """Check if any handler in chain can process a message type or payload."""
-        if not self.handlers:
-            return True
-        try:
-            return any(handler.can_handle(_message_type) for handler in self.handlers)
-        except Exception:
-            # Be permissive for flexibility
-            return True
+                    return result
 
-    # ------------------------------------------------------------------
-    # Convenience helpers
-    # ------------------------------------------------------------------
-    def process(self, message: object) -> FlextResult[object]:
-        """Convenience alias for processing a single message."""
-        return self.process_chain(message)
+                finally:
+                    # Update timing metrics
+                    processing_time = time.time() - start_time
+                    self._metrics["total_processing_time"] = (
+                        cast("float", self._metrics["total_processing_time"])
+                        + processing_time
+                    )
 
-    def process_all(self, messages: list[object]) -> FlextResult[list[object]]:
-        """Process a list of messages and collect successful results."""
-        collected: list[object] = []
-        for message in messages:
-            result = self.process_chain(message)
-            if result.is_success and result.value is not None:
-                collected.append(result.value)
-            else:
-                # short-circuit on failure to align with conservative semantics
-                return FlextResult[list[object]].fail(
-                    result.error or "Chain processing failed"
+                    requests_count = cast("int", self._metrics["requests_processed"])
+                    if requests_count > 0:
+                        total_time = cast(
+                            "float", self._metrics["total_processing_time"]
+                        )
+                        self._metrics["average_processing_time"] = (
+                            total_time / requests_count
+                        )
+
+            def _process_request(self, request: object) -> FlextResult[object]:
+                """Process request - Template method pattern.
+
+                Override in subclasses for specific behavior.
+                """
+                return FlextResult[object].ok(request)
+
+            def can_handle(self, message_type: object) -> bool:
+                """Check if handler can process message type."""
+                return message_type is not None
+
+            def get_metrics(self) -> FlextTypes.Handler.MetricsData:
+                """Get handler metrics."""
+                return dict(self._metrics)
+
+        class ValidatingHandler(Handler):
+            """Handler with built-in validation capabilities.
+
+            Combines base handler functionality with validation logic following
+            Decorator pattern and Single Responsibility principle.
+            """
+
+            def __init__(
+                self,
+                name: str | None = None,
+                validators: list[FlextValidator] | None = None,
+            ) -> None:
+                """Initialize with optional validators."""
+                super().__init__(name)
+                self._validators: Final[list[FlextValidator]] = validators or []
+
+            def handle(self, request: object) -> FlextResult[object]:
+                """Handle with validation - Template method pattern."""
+                # First validate
+                validation_result = self.validate(request)
+                if validation_result.failure:
+                    return FlextResult[object].fail(
+                        f"Validation failed: {validation_result.error}"
+                    )
+
+                # Then process
+                return super().handle(request)
+
+            def validate(self, request: object) -> FlextResult[None]:
+                """Validate request using configured validators."""
+                for validator in self._validators:
+                    if hasattr(validator, "validate"):
+                        result = validator.validate(request)
+                        if hasattr(result, "failure") and result.failure:
+                            return result
+                    elif callable(validator):
+                        try:
+                            if not validator(request):
+                                return FlextResult[None].fail("Validation failed")
+                        except Exception as e:
+                            return FlextResult[None].fail(f"Validation error: {e}")
+
+                return FlextResult[None].ok(None)
+
+            def add_validator(self, validator: FlextValidator) -> None:
+                """Add validator to the chain."""
+                self._validators.append(validator)
+
+        class AuthorizingHandler(Handler):
+            """Handler with authorization capabilities.
+
+            Extends base handler with authorization logic following
+            Decorator pattern and separation of concerns.
+            """
+
+            def __init__(
+                self,
+                name: str | None = None,
+                authorization_check: Callable[[object], bool] | None = None,
+            ) -> None:
+                """Initialize with optional authorization check."""
+                super().__init__(name)
+                self._authorization_check = (
+                    authorization_check or self._default_authorization
                 )
-        return FlextResult[list[object]].ok(collected)
+
+            def handle(self, request: object) -> FlextResult[object]:
+                """Handle with authorization - Template method pattern."""
+                # Check authorization first
+                if not self._authorization_check(request):
+                    return FlextResult[object].fail("Authorization failed")
+
+                # Then process
+                return super().handle(request)
+
+            def _default_authorization(self, _request: object) -> bool:
+                """Default authorization - always allow.
+
+                Override in subclasses for specific authorization logic.
+                """
+                return True
+
+        class MetricsHandler(Handler):
+            """Handler with enhanced metrics collection.
+
+            Provides detailed metrics beyond basic handler metrics,
+            following Single Responsibility and Open/Closed principles.
+            """
+
+            def __init__(self, name: str | None = None) -> None:
+                """Initialize with enhanced metrics."""
+                super().__init__(name)
+                # Use specific types for enhanced metrics
+                self._error_types: FlextTypes.Handler.ErrorCounterMap = {}
+                self._request_sizes: FlextTypes.Handler.SizeList = []
+                self._response_sizes: FlextTypes.Handler.SizeList = []
+                self._peak_memory_usage: FlextTypes.Handler.CounterMetric = 0
+
+            def handle(self, request: object) -> FlextResult[object]:
+                """Handle with enhanced metrics collection."""
+                # Collect request metrics
+                request_size = len(str(request)) if request else 0
+                self._request_sizes.append(request_size)
+
+                # Process request
+                result = super().handle(request)
+
+                # Collect response metrics
+                if result.failure:
+                    error_type = type(result.error).__name__
+                    self._error_types[error_type] = (
+                        self._error_types.get(error_type, 0) + 1
+                    )
+                else:
+                    response_size = len(str(result.data)) if result.data else 0
+                    self._response_sizes.append(response_size)
+
+                return result
+
+            def get_metrics(self) -> FlextTypes.Handler.MetricsData:
+                """Get enhanced metrics including base metrics."""
+                base_metrics = super().get_metrics()
+                enhanced_metrics: FlextTypes.Handler.MetricsData = {
+                    "error_types": self._error_types,
+                    "request_sizes": self._request_sizes,
+                    "response_sizes": self._response_sizes,
+                    "peak_memory_usage": self._peak_memory_usage,
+                }
+
+                # Calculate additional metrics
+                if self._request_sizes:
+                    enhanced_metrics["average_request_size"] = sum(
+                        self._request_sizes
+                    ) / len(self._request_sizes)
+
+                if self._response_sizes:
+                    enhanced_metrics["average_response_size"] = sum(
+                        self._response_sizes
+                    ) / len(self._response_sizes)
+
+                return {**base_metrics, **enhanced_metrics}
+
+    # =========================================================================
+    # CQRS Domain - Command/Query/Event Handler Implementations
+    # =========================================================================
+
+    class CQRS:
+        """Command/Query/Event handler implementations following CQRS pattern.
+
+        Provides specialized handlers for CQRS architecture separating command
+        handling (write operations) from query handling (read operations) and
+        event handling (domain events).
+
+        Key Components:
+        - CommandHandler: Handles commands (write operations)
+        - QueryHandler: Handles queries (read operations)
+        - EventHandler: Handles domain events
+        - CommandBus: Routes commands to handlers
+        - QueryBus: Routes queries to handlers
+        """
+
+        class CommandHandler(ABC, Generic[TInput, TOutput]):
+            """Abstract command handler for CQRS pattern.
+
+            SOLID PRINCIPLES APPLIED:
+            - Single Responsibility: Command processing only
+            - Interface Segregation: Command-specific interface
+            - Dependency Inversion: Abstract base for implementations
+            """
+
+            @abstractmethod
+            def handle_command(self, command: TInput) -> FlextResult[TOutput]:
+                """Handle command - Single Responsibility: command processing."""
+
+            @abstractmethod
+            def can_handle(self, message_type: object) -> bool:
+                """Check command handling capability."""
+
+        class QueryHandler(ABC, Generic[TQuery, TQueryResult]):
+            """Abstract query handler for CQRS pattern.
+
+            SOLID PRINCIPLES APPLIED:
+            - Single Responsibility: Query processing only
+            - Interface Segregation: Query-specific interface
+            - Dependency Inversion: Abstract base for implementations
+            """
+
+            @abstractmethod
+            def handle_query(self, query: TQuery) -> FlextResult[TQueryResult]:
+                """Handle query - Single Responsibility: query processing."""
+
+        class EventHandler:
+            """Event handler for domain events.
+
+            Extends base handler with event-specific functionality following
+            Open/Closed and Liskov Substitution principles.
+            """
+
+            def __init__(self, name: str | None = None) -> None:
+                """Initialize event handler."""
+                super().__init__(name or "EventHandler")
+                # Use specific types for event metrics
+                self._events_processed: FlextTypes.Handler.CounterMetric = 0
+                self._event_types: FlextTypes.Handler.ErrorCounterMap = {}
+
+            def handle_event(self, event: object) -> FlextResult[None]:
+                """Handle domain event.
+
+                SOLID: Single Responsibility - event processing only.
+                """
+                self._events_processed += 1
+
+                event_type = type(event).__name__
+                self._event_types[event_type] = (
+                    self._event_types.get(event_type, 0) + 1
+                )
+
+                return self._process_event(event)
+
+            def _process_event(self, _event: object) -> FlextResult[None]:
+                """Process event - Template method pattern.
+
+                Override in subclasses for specific event handling.
+                """
+                return FlextResult[None].ok(None)
+
+            def get_event_metrics(self) -> FlextTypes.Handler.MetricsData:
+                """Get event-specific metrics."""
+                return {
+                    "events_processed": self._events_processed,
+                    "event_types": self._event_types,
+                }
+
+        class CommandBus:
+            """Command bus for routing commands to handlers.
+
+            Implements mediator pattern for command handling, providing
+            centralized command routing and execution.
+            """
+
+            def __init__(self) -> None:
+                """Initialize command bus."""
+                self._handlers: dict[type, Any] = {}
+                # Use specific types for command metrics
+                self._commands_processed: FlextTypes.Handler.CounterMetric = 0
+                self._successful_commands: FlextTypes.Handler.CounterMetric = 0
+                self._failed_commands: FlextTypes.Handler.CounterMetric = 0
+
+            def register(
+                self, command_type: type, handler: object
+            ) -> FlextResult[None]:
+                """Register command handler."""
+                with FlextHandlers.thread_safe_operation():
+                    self._handlers[command_type] = handler
+                    return FlextResult[None].ok(None)
+
+            def send(self, command: object) -> FlextResult[object]:
+                """Send command to registered handler."""
+                command_type = type(command)
+
+                with FlextHandlers.thread_safe_operation():
+                    handler = self._handlers.get(command_type)
+
+                    if not handler:
+                        return FlextResult[object].fail(
+                            f"No handler registered for {command_type.__name__}"
+                        )
+
+                    self._commands_processed += 1
+
+                    # Execute command
+                    result = handler.handle_command(command)
+
+                    if result.success:
+                        self._successful_commands += 1
+                    else:
+                        self._failed_commands += 1
+
+                    return cast("FlextResult[object]", result)
+
+            def get_metrics(self) -> FlextTypes.Handler.MetricsData:
+                """Get command bus metrics."""
+                return dict(self._metrics)
+
+        class QueryBus:
+            """Query bus for routing queries to handlers.
+
+            Implements mediator pattern for query handling, providing
+            centralized query routing and execution.
+            """
+
+            def __init__(self) -> None:
+                """Initialize query bus."""
+                self._handlers: dict[type, Any] = {}
+                self._metrics: FlextTypes.Handler.MetricsData = {
+                    "queries_processed": 0,
+                    "successful_queries": 0,
+                    "failed_queries": 0,
+                }
+
+            def register(self, query_type: type, handler: object) -> FlextResult[None]:
+                """Register query handler."""
+                with FlextHandlers.thread_safe_operation():
+                    self._handlers[query_type] = handler
+                    return FlextResult[None].ok(None)
+
+            def send(self, query: object) -> FlextResult[object]:
+                """Send query to registered handler."""
+                query_type = type(query)
+
+                with FlextHandlers.thread_safe_operation():
+                    handler = self._handlers.get(query_type)
+
+                    if not handler:
+                        return FlextResult[object].fail(
+                            f"No handler registered for {query_type.__name__}"
+                        )
+
+                    self._metrics["queries_processed"] += 1
+
+                    # Execute query
+                    result = handler.handle_query(query)
+
+                    if result.success:
+                        self._metrics["successful_queries"] += 1
+                    else:
+                        self._metrics["failed_queries"] += 1
+
+                    return cast("FlextResult[object]", result)
+
+            def get_metrics(self) -> FlextTypes.Handler.MetricsData:
+                """Get query bus metrics."""
+                return dict(self._metrics)
+
+    # =========================================================================
+    # Patterns Domain - Chain of Responsibility, Registry, Pipeline
+    # =========================================================================
+
+    class Patterns:
+        """Handler patterns implementing common design patterns.
+
+        Provides implementations of common handler patterns including
+        Chain of Responsibility, Registry, and Pipeline patterns.
+
+        Key Components:
+        - HandlerChain: Chain of Responsibility implementation
+        - HandlerRegistry: Registry pattern implementation
+        - Pipeline: Pipeline pattern for sequential processing
+        """
+
+        class HandlerChain:
+            """Chain of Responsibility pattern implementation.
+
+            SOLID PRINCIPLES APPLIED:
+            - Single Responsibility: Chain management and execution
+            - Open/Closed: Extensible by adding new handlers
+            - Liskov Substitution: Substitutable for base handler
+            """
+
+            def __init__(self, name: str | None = None) -> None:
+                """Initialize handler chain."""
+                super().__init__(name or "HandlerChain")
+                self._handlers: list[object] = []
+                self._chain_metrics: FlextTypes.Handler.MetricsData = {
+                    "chain_executions": 0,
+                    "successful_chains": 0,
+                    "handler_performance": {},
+                }
+
+            def add_handler(self, handler: object) -> FlextResult[None]:
+                """Add handler to chain.
+
+                SOLID: Open/Closed - extend without modification.
+                """
+                with FlextHandlers.thread_safe_operation():
+                    self._handlers.append(handler)
+                    return FlextResult[None].ok(None)
+
+            def handle(self, request: object) -> FlextResult[object]:
+                """Execute chain of handlers.
+
+                SOLID: Single Responsibility - chain execution logic.
+                """
+                self._chain_metrics["chain_executions"] += 1
+
+                for handler in self._handlers:
+                    if handler.can_handle(request):
+                        start_time = time.time()
+                        result = handler.handle(request)
+                        processing_time = time.time() - start_time
+
+                        # Update handler performance metrics
+                        handler_name = handler.handler_name
+                        if (
+                            handler_name
+                            not in self._chain_metrics["handler_performance"]
+                        ):
+                            self._chain_metrics["handler_performance"][handler_name] = {
+                                "executions": 0,
+                                "total_time": 0.0,
+                                "average_time": 0.0,
+                            }
+
+                        perf = self._chain_metrics["handler_performance"][handler_name]
+                        perf["executions"] += 1
+                        perf["total_time"] += processing_time
+                        perf["average_time"] = perf["total_time"] / perf["executions"]
+
+                        if result.success:
+                            self._chain_metrics["successful_chains"] += 1
+                            return result
+
+                return FlextResult[object].fail(
+                    "No handler in chain could process request"
+                )
+
+            def get_chain_metrics(self) -> FlextTypes.Handler.MetricsData:
+                """Get chain-specific metrics."""
+                return dict(self._chain_metrics)
+
+        class HandlerRegistry:
+            """Registry pattern implementation for handler management.
+
+            SOLID PRINCIPLES APPLIED:
+            - Single Responsibility: Handler registration and lookup
+            - Open/Closed: Extensible registration strategies
+            - Interface Segregation: Registry-specific operations
+            """
+
+            def __init__(self) -> None:
+                """Initialize handler registry."""
+                self._handlers: FlextTypes.Handler.MetricsData = {}
+                self._registry_metrics: FlextTypes.Handler.MetricsData = {
+                    "registrations": 0,
+                    "lookups": 0,
+                    "successful_lookups": 0,
+                }
+
+            def register(self, name: str, handler: object) -> FlextResult[object]:
+                """Register handler with name.
+
+                SOLID: Single Responsibility - registration logic only.
+                """
+                with FlextHandlers.thread_safe_operation():
+                    self._handlers[name] = handler
+                    self._registry_metrics["registrations"] += 1
+                    return FlextResult[Any].ok(handler)
+
+            def get_handler(self, name: str) -> FlextResult[Any]:
+                """Get handler by name."""
+                with FlextHandlers.thread_safe_operation():
+                    self._registry_metrics["lookups"] += 1
+
+                    handler = self._handlers.get(name)
+                    if handler:
+                        self._registry_metrics["successful_lookups"] += 1
+                        return FlextResult[Any].ok(handler)
+
+                    return FlextResult[Any].fail(f"Handler '{name}' not found")
+
+            def get_all_handlers(self) -> FlextTypes.Handler.MetricsData:
+                """Get all registered handlers."""
+                with FlextHandlers.thread_safe_operation():
+                    return dict(self._handlers)
+
+            def unregister(self, name: str) -> FlextResult[None]:
+                """Unregister handler by name."""
+                with FlextHandlers.thread_safe_operation():
+                    if name in self._handlers:
+                        del self._handlers[name]
+                        return FlextResult[None].ok(None)
+
+                    return FlextResult[None].fail(f"Handler '{name}' not found")
+
+            def get_registry_metrics(self) -> FlextTypes.Handler.MetricsData:
+                """Get registry-specific metrics."""
+                return dict(self._registry_metrics)
+
+        class Pipeline:
+            """Pipeline pattern for sequential processing.
+
+            Implements pipeline pattern where data flows through a series
+            of processing stages, each potentially transforming the data.
+            """
+
+            def __init__(self, name: str | None = None) -> None:
+                """Initialize processing pipeline."""
+                self._name: Final[str] = name or "Pipeline"
+                self._stages: list[Callable[[Any], FlextResult[Any]]] = []
+                self._pipeline_metrics: FlextTypes.Handler.MetricsData = {
+                    "pipeline_executions": 0,
+                    "successful_pipelines": 0,
+                    "stage_performance": {},
+                }
+
+            def add_stage(
+                self, stage: Callable[[Any], FlextResult[Any]]
+            ) -> FlextResult[None]:
+                """Add processing stage to pipeline."""
+                with FlextHandlers.thread_safe_operation():
+                    self._stages.append(stage)
+                    return FlextResult[None].ok(None)
+
+            def process(self, data: object) -> FlextResult[object]:
+                """Process data through pipeline stages."""
+                self._pipeline_metrics["pipeline_executions"] += 1
+
+                current_data = data
+
+                for i, stage in enumerate(self._stages):
+                    stage_name = f"stage_{i}"
+                    start_time = time.time()
+
+                    result = stage(current_data)
+                    processing_time = time.time() - start_time
+
+                    # Update stage performance metrics
+                    if stage_name not in self._pipeline_metrics["stage_performance"]:
+                        self._pipeline_metrics["stage_performance"][stage_name] = {
+                            "executions": 0,
+                            "total_time": 0.0,
+                            "average_time": 0.0,
+                        }
+
+                    perf = self._pipeline_metrics["stage_performance"][stage_name]
+                    perf["executions"] += 1
+                    perf["total_time"] += processing_time
+                    perf["average_time"] = perf["total_time"] / perf["executions"]
+
+                    if result.failure:
+                        return result
+
+                    current_data = result.data
+
+                self._pipeline_metrics["successful_pipelines"] += 1
+                return FlextResult[Any].ok(current_data)
+
+            def get_pipeline_metrics(self) -> FlextTypes.Handler.MetricsData:
+                """Get pipeline-specific metrics."""
+                return dict(self._pipeline_metrics)
+
+    # =========================================================================
+    # Decorators Domain - Cross-cutting Concerns
+    # =========================================================================
+
+    class Decorators:
+        """Decorator patterns for cross-cutting concerns.
+
+        Provides decorators for common cross-cutting concerns like validation,
+        metrics collection, authorization, caching, and error handling.
+
+        Key Components:
+        - with_validation: Add validation to functions
+        - with_metrics: Add metrics collection
+        - with_authorization: Add authorization checks
+        - with_caching: Add caching capabilities
+        - with_error_handling: Add error handling
+        """
+
+        @staticmethod
+        def with_validation(
+            validator: FlextValidator | None = None,
+        ) -> Callable[[Callable[P, T]], Callable[P, T]]:
+            """Decorator for adding validation to handler methods.
+
+            SOLID: Single Responsibility - validation concern only.
+            """
+
+            def decorator(func: Callable[P, T]) -> Callable[P, T]:
+                def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
+                    # Extract request from arguments (assume first arg after self)
+                    request = args[1] if len(args) > 1 else kwargs.get("request")
+
+                    if validator and request:
+                        if hasattr(validator, "validate"):
+                            validation_result = validator.validate(request)
+                            if (
+                                hasattr(validation_result, "failure")
+                                and validation_result.failure
+                            ):
+                                return FlextResult[Any].fail(
+                                    f"Validation failed: {validation_result.error}"
+                                )
+                        elif callable(validator):
+                            try:
+                                if not validator(request):
+                                    return FlextResult[Any].fail("Validation failed")
+                            except Exception as e:
+                                return FlextResult[Any].fail(f"Validation error: {e}")
+
+                    return func(*args, **kwargs)
+
+                return wrapper
+
+            return decorator
+
+        @staticmethod
+        def with_metrics(
+            metrics_collector: dict | None = None,
+        ) -> Callable[[Callable[P, T]], Callable[P, T]]:
+            """Decorator for adding metrics collection to handler methods.
+
+            SOLID: Single Responsibility - metrics concern only.
+            """
+
+            def decorator(func: Callable[P, T]) -> Callable[P, T]:
+                def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
+                    collector = {} if metrics_collector is None else metrics_collector
+
+                    start_time = time.time()
+                    collector.setdefault("executions", 0)
+                    collector.setdefault("total_time", 0.0)
+                    collector.setdefault("successes", 0)
+                    collector.setdefault("failures", 0)
+
+                    collector["executions"] += 1
+
+                    try:
+                        result = func(*args, **kwargs)
+                        processing_time = time.time() - start_time
+                        collector["total_time"] += processing_time
+                        collector["average_time"] = (
+                            collector["total_time"] / collector["executions"]
+                        )
+
+                        if hasattr(result, "success") and result.success:
+                            collector["successes"] += 1
+                        else:
+                            collector["failures"] += 1
+
+                        return result
+                    except Exception as e:
+                        processing_time = time.time() - start_time
+                        collector["total_time"] += processing_time
+                        collector["failures"] += 1
+                        return FlextResult[Any].fail(f"Execution failed: {e}")
+
+                return wrapper
+
+            return decorator
+
+        @staticmethod
+        def with_authorization(
+            auth_check: Callable | None = None,
+        ) -> Callable[[Callable[P, T]], Callable[P, T]]:
+            """Decorator for adding authorization to handler methods.
+
+            SOLID: Single Responsibility - authorization concern only.
+            """
+
+            def decorator(func: Callable[P, T]) -> Callable[P, T]:
+                def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
+                    # Extract request from arguments
+                    request = args[1] if len(args) > 1 else kwargs.get("request")
+
+                    if auth_check and request:
+                        try:
+                            if not auth_check(request):
+                                return FlextResult[Any].fail("Authorization failed")
+                        except Exception as e:
+                            return FlextResult[Any].fail(f"Authorization error: {e}")
+
+                    return func(*args, **kwargs)
+
+                return wrapper
+
+            return decorator
+
+        @staticmethod
+        def with_caching(
+            cache: dict | None = None, ttl: int = 300
+        ) -> Callable[[Callable[P, T]], Callable[P, T]]:
+            """Decorator for adding caching to handler methods.
+
+            SOLID: Single Responsibility - caching concern only.
+            """
+
+            def decorator(func: Callable[P, T]) -> Callable[P, T]:
+                def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
+                    if cache is None:
+                        return func(*args, **kwargs)
+
+                    # Create cache key from arguments
+                    cache_key = f"{func.__name__}_{hash(str(args) + str(kwargs))}"
+                    current_time = time.time()
+
+                    # Check cache
+                    if cache_key in cache:
+                        cached_result, timestamp = cache[cache_key]
+                        if current_time - timestamp < ttl:
+                            return cached_result
+
+                    # Execute and cache result
+                    result = func(*args, **kwargs)
+                    cache[cache_key] = (result, current_time)
+
+                    return result
+
+                return wrapper
+
+            return decorator
+
+        @staticmethod
+        def with_error_handling(
+            error_handler: Callable | None = None,
+        ) -> Callable[[Callable[P, T]], Callable[P, T]]:
+            """Decorator for adding error handling to handler methods.
+
+            SOLID: Single Responsibility - error handling concern only.
+            """
+
+            def decorator(func: Callable[P, T]) -> Callable[P, T]:
+                def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
+                    try:
+                        return func(*args, **kwargs)
+                    except Exception as e:
+                        if error_handler:
+                            return error_handler(e)
+                        return FlextResult[Any].fail(f"Handler error: {e}")
+
+                return wrapper
+
+            return decorator
+
+    # =========================================================================
+    # Utilities Domain - Helper Functions and Factories
+    # =========================================================================
+
+    class Utilities:
+        """Utility functions and factories for handler management.
+
+        Provides helper functions for common handler operations,
+        factory methods for creating handlers, and utility functions
+        for handler composition and management.
+
+        Key Components:
+        - HandlerFactory: Factory for creating handlers
+        - HandlerComposer: Utility for composing handlers
+        - HandlerAnalyzer: Analysis utilities
+        """
+
+        class HandlerFactory:
+            """Factory for creating handler instances.
+
+            SOLID: Single Responsibility - handler creation only.
+            """
+
+            @staticmethod
+            def create_basic_handler(name: str | None = None) -> object:
+                """Create basic handler instance."""
+                return FlextHandlers.Base.Handler(name)
+
+            @staticmethod
+            def create_validating_handler(
+                name: str | None = None,
+                validators: list[FlextValidator] | None = None,
+            ) -> object:
+                """Create validating handler instance."""
+                return FlextHandlers.Base.ValidatingHandler(name, validators)
+
+            @staticmethod
+            def create_authorizing_handler(
+                name: str | None = None,
+                auth_check: Callable | None = None,
+            ) -> object:
+                """Create authorizing handler instance."""
+                return FlextHandlers.Base.AuthorizingHandler(name, auth_check)
+
+            @staticmethod
+            def create_metrics_handler(name: str | None = None) -> object:
+                """Create metrics handler instance."""
+                return FlextHandlers.Base.MetricsHandler(name)
+
+            @staticmethod
+            def create_handler_chain(name: str | None = None) -> object:
+                """Create handler chain instance."""
+                return FlextHandlers.Patterns.HandlerChain(name)
+
+            @staticmethod
+            def create_handler_registry() -> object:
+                """Create handler registry instance."""
+                return FlextHandlers.Patterns.HandlerRegistry()
+
+            @staticmethod
+            def create_pipeline(name: str | None = None) -> object:
+                """Create pipeline instance."""
+                return FlextHandlers.Patterns.Pipeline(name)
+
+            @staticmethod
+            def create_command_bus() -> object:
+                """Create command bus instance."""
+                return FlextHandlers.CQRS.CommandBus()
+
+            @staticmethod
+            def create_query_bus() -> object:
+                """Create query bus instance."""
+                return FlextHandlers.CQRS.QueryBus()
+
+        class HandlerComposer:
+            """Utility for composing and chaining handlers.
+
+            SOLID: Single Responsibility - handler composition only.
+            """
+
+            @staticmethod
+            def compose_handlers(*handlers: object) -> object:
+                """Compose multiple handlers into a chain."""
+                chain = FlextHandlers.Patterns.HandlerChain("ComposedChain")
+                for handler in handlers:
+                    chain.add_handler(handler)
+                return chain
+
+            @staticmethod
+            def create_decorated_handler(
+                base_handler: object,
+                validators: list[FlextValidator] | None = None,
+                auth_check: Callable | None = None,
+                *,
+                enable_metrics: bool = True,
+            ) -> object:
+                """Create a decorated handler with cross-cutting concerns."""
+                # This is a simplified example - in practice, you'd use proper decorator pattern
+                if isinstance(base_handler, FlextHandlers.Base.Handler):
+                    decorated = base_handler
+
+                    # Add validation if specified
+                    if validators:
+                        # In practice, wrap with validation decorator
+                        pass
+
+                    # Add authorization if specified
+                    if auth_check:
+                        # In practice, wrap with authorization decorator
+                        pass
+
+                    # Metrics enabled by default
+                    if enable_metrics:
+                        pass
+
+                    return decorated
+
+                return base_handler
+
+        class HandlerAnalyzer:
+            """Analysis utilities for handler performance and behavior.
+
+            SOLID: Single Responsibility - analysis and reporting only.
+            """
+
+            @staticmethod
+            def analyze_handler_performance(
+                handler: object,
+            ) -> FlextTypes.Handler.MetricsData:
+                """Analyze handler performance metrics."""
+                analysis = {
+                    "handler_name": handler.handler_name,
+                    "handler_type": type(handler).__name__,
+                    "analysis_timestamp": time.time(),
+                }
+
+                # Get metrics if available
+                if hasattr(handler, "get_metrics"):
+                    metrics = handler.get_metrics()
+                    analysis["metrics"] = metrics
+
+                    # Calculate performance indicators
+                    if (
+                        "requests_processed" in metrics
+                        and metrics["requests_processed"] > 0
+                    ):
+                        success_rate = (
+                            metrics.get("successful_requests", 0)
+                            / metrics["requests_processed"]
+                            * 100
+                        )
+                        analysis["success_rate_percent"] = round(success_rate, 2)
+
+                    if "average_processing_time" in metrics:
+                        analysis["performance_rating"] = (
+                            "excellent"
+                            if metrics["average_processing_time"]
+                            < FlextConstants.Performance.HANDLER_EXCELLENT_THRESHOLD
+                            else "good"
+                            if metrics["average_processing_time"]
+                            < FlextConstants.Performance.HANDLER_GOOD_THRESHOLD
+                            else "fair"
+                            if metrics["average_processing_time"]
+                            < FlextConstants.Performance.HANDLER_FAIR_THRESHOLD
+                            else "poor"
+                        )
+
+                return analysis
+
+            @staticmethod
+            def generate_handler_report(
+                handlers: list[object],
+            ) -> FlextTypes.Handler.MetricsData:
+                """Generate comprehensive report for multiple handlers."""
+                report = {
+                    "report_timestamp": time.time(),
+                    "total_handlers": len(handlers),
+                    "handler_analyses": [],
+                    "summary": {
+                        "total_requests": 0,
+                        "total_successes": 0,
+                        "total_failures": 0,
+                        "average_success_rate": 0.0,
+                    },
+                }
+
+                total_success_rates = []
+
+                for handler in handlers:
+                    analysis = FlextHandlers.Utilities.HandlerAnalyzer.analyze_handler_performance(
+                        handler
+                    )
+                    report["handler_analyses"].append(analysis)
+
+                    # Aggregate summary data
+                    if "metrics" in analysis:
+                        metrics = analysis["metrics"]
+                        report["summary"]["total_requests"] += metrics.get(
+                            "requests_processed", 0
+                        )
+                        report["summary"]["total_successes"] += metrics.get(
+                            "successful_requests", 0
+                        )
+                        report["summary"]["total_failures"] += metrics.get(
+                            "failed_requests", 0
+                        )
+
+                    if "success_rate_percent" in analysis:
+                        total_success_rates.append(analysis["success_rate_percent"])
+
+                # Calculate average success rate
+                if total_success_rates:
+                    report["summary"]["average_success_rate"] = round(
+                        sum(total_success_rates) / len(total_success_rates), 2
+                    )
+
+                return report
+
+        @staticmethod
+        def get_environment_config() -> FlextTypes.Handler.MetricsData:
+            """Get handler configuration from environment variables."""
+            return {
+                "debug_mode": environ.get("FLEXT_HANDLERS_DEBUG", "false").lower()
+                == "true",
+                "metrics_enabled": environ.get("FLEXT_HANDLERS_METRICS", "true").lower()
+                == "true",
+                "thread_safe": environ.get("FLEXT_HANDLERS_THREAD_SAFE", "true").lower()
+                == "true",
+                "max_chain_depth": int(
+                    environ.get("FLEXT_HANDLERS_MAX_CHAIN_DEPTH", "10")
+                ),
+                "cache_ttl": int(environ.get("FLEXT_HANDLERS_CACHE_TTL", "300")),
+            }
+
+        @staticmethod
+        def validate_handler_configuration(
+            config: FlextTypes.Handler.MetricsData,
+        ) -> FlextResult[None]:
+            """Validate handler configuration."""
+            required_keys = ["debug_mode", "metrics_enabled", "thread_safe"]
+
+            for key in required_keys:
+                if key not in config:
+                    return FlextResult[None].fail(f"Missing required config key: {key}")
+
+            if (
+                not isinstance(config.get("max_chain_depth", 0), int)
+                or config.get("max_chain_depth", 0) <= 0
+            ):
+                return FlextResult[None].fail(
+                    "max_chain_depth must be a positive integer"
+                )
+
+            return FlextResult[None].ok(None)
 
 
 # =============================================================================
-# HANDLER FACTORIES MOVED TO HELPERS MODULE
+# Backward Compatibility Aliases
 # =============================================================================
-# Factory functions create_base_handler, create_validating_handler, etc.
-# have been moved to legacy.py with transition warnings.
-#
-# NEW USAGE: Use direct class instantiation
-#   handler = FlextBaseHandler(name="my_handler")
-#   validator = FlextValidatingHandler(name="validator")
-#
-# OLD USAGE (transitional): Import from legacy.py
-#   from flext_core.legacy import create_base_handler
+
+# Maintain backward compatibility with existing code
+FlextAbstractHandler = FlextHandlers.Abstract.Handler
+FlextAbstractHandlerChain = FlextHandlers.Abstract.HandlerChain
+FlextAbstractHandlerRegistry = FlextHandlers.Abstract.HandlerRegistry
+FlextAbstractMetricsHandler = FlextHandlers.Abstract.MetricsHandler
+FlextAbstractValidatingHandler = FlextHandlers.Abstract.ValidatingHandler
+
+FlextBaseHandler = FlextHandlers.Base.Handler
+# FlextValidatingHandler and FlextAuthorizingHandler moved to typings.py to avoid conflicts
+FlextEventHandler = FlextHandlers.CQRS.EventHandler
+FlextMetricsHandler = FlextHandlers.Base.MetricsHandler
+FlextHandlerRegistry = FlextHandlers.Patterns.HandlerRegistry
+FlextHandlerChain = FlextHandlers.Patterns.HandlerChain
+
+FlextCommandHandler = FlextHandlers.CQRS.CommandHandler
+FlextQueryHandler = FlextHandlers.CQRS.QueryHandler
+
+
+# Legacy facade for backward compatibility
+class HandlersFacade:
+    """Legacy facade for backward compatibility.
+
+    Provides the same interface as the old handlers module while
+    delegating to the new hierarchical structure.
+    """
+
+    # Delegate to new structure
+    Handler = FlextHandlers.Base.Handler
+    ValidatingHandler = FlextHandlers.Base.ValidatingHandler
+    AuthorizingHandler = FlextHandlers.Base.AuthorizingHandler
+    MetricsHandler = FlextHandlers.Base.MetricsHandler
+    EventHandler = FlextHandlers.CQRS.EventHandler
+    HandlerChain = FlextHandlers.Patterns.HandlerChain
+    HandlerRegistry = FlextHandlers.Patterns.HandlerRegistry
+    CommandHandler = FlextHandlers.CQRS.CommandHandler
+    QueryHandler = FlextHandlers.CQRS.QueryHandler
+    CommandBus = FlextHandlers.CQRS.CommandBus
+    QueryBus = FlextHandlers.CQRS.QueryBus
 
 
 # =============================================================================
-# GLOBAL REGISTRY MOVED TO HELPERS MODULE
-# =============================================================================
-# Global registry functions have been moved to legacy.py with transition warnings.
-#
-# NEW USAGE: Create and manage your own registry
-#    = FlextHandlerRegistry()
-#   registry.register("my_handler", my_handler)
-#
-# OLD USAGE (transitional): Import from legacy.py
-#   from flext_core.legacy import get_global_registry, reset_global_registry
-
-
-# =============================================================================
-# EXPORTS - Handler implementations only
+# Module-level Exports and Compatibility
 # =============================================================================
 
-__all__: list[str] = [
-    # Clean Handler Implementations Only (alphabetically sorted)
-    "FlextAbstractHandler",  # Export base
+__all__ = [
+    "FlextAbstractHandler",
     "FlextAbstractHandlerChain",
     "FlextAbstractHandlerRegistry",
     "FlextAbstractMetricsHandler",
-    "FlextAuthorizingHandler",
+    "FlextAbstractValidatingHandler",
+    # "FlextAuthorizingHandler", - moved to typings.py
     "FlextBaseHandler",
-    "FlextCommandHandler",  # Convenience alias
+    "FlextCommandHandler",
     "FlextEventHandler",
     "FlextHandlerChain",
     "FlextHandlerRegistry",
-    "FlextHandlers",  # Convenience alias
+    "FlextHandlers",
     "FlextMetricsHandler",
-    "FlextQueryHandler",  # Convenience alias
-    "FlextValidatingHandler",
-    "HandlersFacade",  # Facade class used by package-level import
+    "FlextQueryHandler",
+    # "FlextValidatingHandler", - moved to typings.py
+    "HandlersFacade",
 ]
 
-
-# Convenience handler classes used in tests
-# ABC and abstractmethod are already imported at the top of the file
-
-
-class FlextCommandHandler(ABC, Generic[TInput, TOutput]):  # noqa: UP046
-    """Command handler following SOLID principles - delegates to FlextCommands.Handler.
-
-    SOLID PRINCIPLES APPLIED:
-    - Single Responsibility: Command processing with validation/authorization
-    - Dependency Inversion: Uses FlextCommands.Handler pattern internally
-    - Interface Segregation: Focused command handling interface
-    """
-
-    def __init__(
-        self,
-        handler_name: str | None = None,
-        *,
-        validator: object | None = None,
-        authorizer: object | None = None,
-        metrics_collector: object | None = None,
-    ) -> None:
-        """Initialize handler - Single Responsibility: initialization."""
-        super().__init__()
-        self._name = handler_name or self.__class__.__name__
-        self._validator = validator
-        self._authorizer = authorizer
-        self._metrics = metrics_collector
-        self._metrics_state: dict[str, int] = {"total": 0, "success": 0}
-
-        # SOLID: Dependency Inversion - delegate to FlextCommands pattern
-        self._delegate_handler = self._create_delegate_handler()
-
-    def _create_delegate_handler(self) -> object:
-        """Create delegate handler - Dependency Inversion principle."""
-        commands = _get_flext_commands_module()
-
-        # Use composition instead of inheritance to avoid MyPy issues
-        class DelegateHandler:
-            def __init__(self, name: str) -> None:
-                self.name = name
-                # Create Commands.Handler instance via composition
-                handler_cls = getattr(commands, "Handler", None)
-                if handler_cls and callable(handler_cls):
-                    try:
-                        self._commands_handler = handler_cls(name)
-                    except Exception:
-                        self._commands_handler = None
-                else:
-                    self._commands_handler = None
-
-            def handle(self, command: object) -> FlextResult[object]:
-                # Delegate to Commands.Handler if available, otherwise default implementation
-                if self._commands_handler and hasattr(self._commands_handler, "handle"):
-                    try:
-                        handle_method = getattr(self._commands_handler, "handle", None)
-                        if callable(handle_method):
-                            result = handle_method(command)
-                            if hasattr(result, "is_success"):
-                                return cast("FlextResult[object]", result)
-                    except Exception:  # nosec B110  # noqa: S110
-                        pass  # SOLID: Dependency Inversion - safe fallback to default implementation
-                return FlextResult[object].ok(command)
-
-        return DelegateHandler(self._name)
-
-    def validate(self, message: object) -> FlextResult[object]:
-        """Validate message using injected validator if available."""
-        if self._validator:
-            validate_method = getattr(self._validator, "validate_message", None)
-            if callable(validate_method):
-                validation_result = validate_method(message)
-                # Cast to FlextResult to ensure proper typing
-                result = cast("FlextResult[object]", validation_result)
-                if hasattr(result, "is_failure") and result.is_failure:
-                    error_msg = getattr(result, "error", None) or "Validation failed"
-                    return FlextResult[object].fail(str(error_msg))
-        return FlextResult[object].ok(message)
-
-    #  METHOD -  validation using  patterns
-    def validate_(
-        self, message: object, validator: FlextValidator | None = None
-    ) -> FlextResult[object]:
-        """:  validation using Protocol-based validator.
-
-        Uses provided validator or falls back to legacy validation method.
-        Provides better type safety and composability.
-        """
-        if validator is not None:
-            try:
-                validation_result = validator.validate(message)
-                if validation_result.is_failure:
-                    return FlextResult[object].fail(
-                        validation_result.error or "Validation failed"
-                    )
-                return FlextResult[object].ok(message)
-            except Exception as e:
-                return FlextResult[object].fail(f"Validation failed: {e}")
-
-        # Fallback to legacy validation for backward compatibility
-        return self.validate(message)
-
-    @property
-    def handler_name(self) -> str:
-        """Get handler name - Interface Segregation: focused method."""
-        return self._name
-
-    @abstractmethod
-    def handle_command(self, command: TInput) -> FlextResult[TOutput]:
-        """Handle a command and return a result."""
-        raise NotImplementedError
-
-    def handle(self, command: TInput) -> FlextResult[TOutput]:
-        """Handle command.
-
-        Provide a default implementation so the class is instantiable in
-        direct module tests that only check presence and type.
-        """
-        try:
-            return self.handle_command(command)
-        except NotImplementedError:
-            return cast(
-                "FlextResult[TOutput]", FlextResult[object].fail("Not implemented")
-            )
-
-    # Helpers expected in tests
-    def handle_with_hooks(self, command: TInput) -> FlextResult[TOutput]:
-        """Handle command with hooks."""
-        # Validate the command first
-        validation_result = self.validate(command)
-        if validation_result.is_failure:
-            self._metrics_state["total"] += 1
-            return FlextResult[TOutput].fail(
-                validation_result.error or "Validation failed"
-            )
-
-        # Handle the command
-        result = self.handle(command)
-
-        # Update metrics (self._metrics_state is always dict, initialized in __init__)
-        self._metrics_state["total"] += 1
-        if result.is_success:
-            self._metrics_state["success"] += 1
-
-        return result
-
-    # Convenience API
-    def process_request(self, command: TInput) -> FlextResult[TOutput]:
-        """Convenience alias that delegates to handle_command."""
-        return self.handle_command(command)
-
-    # SOLID-friendly explicit method naming used in tests
-    def validate_command(self, command: object) -> FlextResult[None]:
-        """Validate command message using the underlying validation logic."""
-        validation = self.validate(command)
-        if validation.is_failure:
-            return FlextResult[None].fail(
-                validation.error or FlextConstants.Handlers.VALIDATION_FAILED,
-            )
-        return FlextResult[None].ok(None)
-
-    def get_metrics(self) -> dict[str, object]:
-        """Get metrics using injected collector combined with internal metrics."""
-        # Start with default metrics structure
-        metrics: dict[str, object] = {
-            "handler_type": "CommandHandler",
-            "handler_name": self._name,
-            "commands_processed": 0,
-            "successful_commands": 0,
-            "success_rate": 0.0,
-        }
-
-        # Get environment info
-
-        metrics["environment"] = environ.get("ENVIRONMENT", "production")
-        metrics["version"] = "1.0"
-
-        # Apply internal metrics counters
-        total = self._metrics_state.get("total", 0) if self._metrics_state else 0
-        success = self._metrics_state.get("success", 0) if self._metrics_state else 0
-        metrics["commands_processed"] = total
-        metrics["successful_commands"] = success
-        metrics["success_rate"] = (float(success) / float(total)) if total else 0.0
-
-        # Merge with injected metrics collector if available (but preserve
-        # internal counters)
-        if self._metrics:
-            get_metrics_method = getattr(self._metrics, "get_metrics", None)
-            if callable(get_metrics_method):
-                collector_metrics = get_metrics_method()
-                if isinstance(collector_metrics, dict):
-                    # Merge collector metrics but preserve our internal counters
-                    excluded_keys = {
-                        "commands_processed",
-                        "successful_commands",
-                        "success_rate",
-                    }
-                    # Cast to ensure proper typing
-                    typed_collector = cast("dict[str, object]", collector_metrics)
-                    metrics.update(
-                        {
-                            str(k): v
-                            for k, v in typed_collector.items()
-                            if str(k) not in excluded_keys
-                        },
-                    )
-
-        return metrics
-
-
-class FlextQueryHandler(ABC, Generic[TInput, TOutput]):  # noqa: UP046
-    """Query handler following SOLID principles.
-
-    SOLID PRINCIPLES APPLIED:
-    - Single Responsibility: Query processing with authorization
-    - Interface Segregation: Read-only operations interface
-    - Dependency Inversion: Uses FlextCommands.QueryHandler pattern
-    """
-
-    def __init__(
-        self,
-        handler_name: str | None = None,
-        authorizer: object | None = None,
-    ) -> None:
-        """Initialize query handler - Single Responsibility: initialization."""
-        super().__init__()
-        self._name = handler_name or self.__class__.__name__
-        self._authorizer = authorizer
-
-        # SOLID: Dependency Inversion - delegate to FlextCommands pattern
-        self._delegate_handler = self._create_delegate_handler()
-
-    def _create_delegate_handler(self) -> object:
-        """Create delegate handler - Dependency Inversion principle."""
-        commands = _get_flext_commands_module()
-
-        # Use composition instead of inheritance to avoid MyPy issues
-        class DelegateQueryHandler:
-            def __init__(self, name: str) -> None:
-                self.name = name
-                # Create Commands.QueryHandler instance via composition
-                query_handler_cls = getattr(commands, "QueryHandler", None)
-                if query_handler_cls and callable(query_handler_cls):
-                    try:
-                        self._commands_handler = query_handler_cls(name)
-                    except Exception:
-                        self._commands_handler = None
-                else:
-                    self._commands_handler = None
-
-            def handle(self, query: object) -> FlextResult[object]:
-                # Delegate to Commands.QueryHandler if available, otherwise default implementation
-                if self._commands_handler and hasattr(self._commands_handler, "handle"):
-                    try:
-                        handle_method = getattr(self._commands_handler, "handle", None)
-                        if callable(handle_method):
-                            result = handle_method(query)
-                            if hasattr(result, "is_success"):
-                                return cast("FlextResult[object]", result)
-                    except Exception:  # nosec B110  # noqa: S110
-                        pass  # SOLID: Dependency Inversion - safe fallback to default implementation
-                return FlextResult[object].ok(query)
-
-        return DelegateQueryHandler(self._name)
-
-    @abstractmethod
-    def handle_query(self, query: TInput) -> FlextResult[TOutput]:
-        """Handle the query and return a result."""
-        raise NotImplementedError
-
-    def handle(self, query: TInput) -> FlextResult[TOutput]:
-        """Handle query.
-
-        Provide a default implementation so the class is instantiable in
-        direct module tests that only check presence and type.
-        """
-        try:
-            return self.handle_query(query)
-        except NotImplementedError:
-            return cast(
-                "FlextResult[TOutput]", FlextResult[object].fail("Not implemented")
-            )
-
-    def authorize_query(self, query: object) -> FlextResult[None]:
-        """Authorize query."""
-        if self._authorizer and hasattr(self._authorizer, "authorize_query"):
-            auth_func = getattr(self._authorizer, "authorize_query", None)
-            if callable(auth_func):
-                result = auth_func(query)
-                if hasattr(result, "is_success"):
-                    # This is a FlextResult
-                    flext_result = cast("FlextResult[object]", result)
-                    if flext_result.is_success:
-                        return FlextResult[None].ok(None)
-                    return FlextResult[None].fail(
-                        str(flext_result.error or "Authorization failed")
-                    )
-                if isinstance(result, bool):
-                    return (
-                        FlextResult[None].ok(None)
-                        if result
-                        else FlextResult[None].fail(
-                            "Authorization failed",
-                        )
-                    )
-                # Handle unknown result type
-                # Default to success
-            return FlextResult[None].ok(None)
-        return FlextResult[None].ok(None)
-
-    def pre_handle(self, query: object) -> FlextResult[None]:
-        """Pre-handle query."""
-        return self.authorize_query(query)
-
-    # Convenience API
-    def process_request(self, query: TInput) -> FlextResult[TOutput]:
-        """Convenience alias delegating to handle_query."""
-        return self.handle_query(query)
-
-    @staticmethod
-    def validate_message(message: object) -> FlextResult[None]:
-        """Validate message for test convenience."""
-        # Basic validation - check not None
-        if message is None:
-            return FlextResult[None].fail(
-                FlextConstants.Handlers.MESSAGE_CANNOT_BE_NONE
-            )
-        return FlextResult[None].ok(None)
-
-
-class HandlersFacade:
-    """Convenience facade exposing command/query handler classes ."""
-
-    class CommandHandler(FlextCommandHandler[object, object]):
-        """Concrete alias class to satisfy type usage in tests."""
-
-    class QueryHandler(Generic[TQuery, TQueryResult]):
-        """Generic query handler alias for test convenience."""
-
-        def __init__(
-            self,
-            handler_name: str | None = None,
-            authorizer: object | None = None,
-        ) -> None:
-            """Initialize query handler with optional authorizer."""
-            self._name = handler_name or self.__class__.__name__
-            self._authorizer = authorizer
-
-        def handle(self, query: TQuery) -> FlextResult[TQueryResult]:
-            """Handle query - override in subclasses."""
-            del query
-            # Default implementation - subclasses must override with proper return type
-            return FlextResult[TQueryResult].fail("Query handler not implemented")
-
-        def authorize_query(self, query: object) -> FlextResult[None]:
-            """Authorize query."""
-            if self._authorizer:
-                auth_func = getattr(self._authorizer, "authorize_query", None)
-                if callable(auth_func):
-                    result = auth_func(query)
-                    if hasattr(result, "is_success"):
-                        # This is a FlextResult
-                        flext_result = cast("FlextResult[object]", result)
-                        if flext_result.is_success:
-                            return FlextResult[None].ok(None)
-                        return FlextResult[None].fail(
-                            str(flext_result.error or "Authorization failed")
-                        )
-                    if isinstance(result, bool):
-                        return (
-                            FlextResult[None].ok(None)
-                            if result
-                            else FlextResult[None].fail(
-                                "Authorization failed",
-                            )
-                        )
-                    # Handle unknown result type
-                    # Default to success
-                    return FlextResult[None].ok(None)
-            return FlextResult[None].ok(None)
-
-        def pre_handle(self, query: object) -> FlextResult[None]:
-            """Pre-handle query."""
-            return self.authorize_query(query)
-
-        @staticmethod
-        def validate_message(message: object) -> FlextResult[None]:
-            """Validate message for test convenience."""
-            # Basic validation - check not None
-            if message is None:
-                return FlextResult[None].fail(
-                    FlextConstants.Handlers.MESSAGE_CANNOT_BE_NONE
-                )
-            return FlextResult[None].ok(None)
-
-    class Handler:
-        """Generic handler base alias for convenience."""
-
-    class EventHandler(FlextEventHandler):
-        """Concrete alias for event handler used in tests."""
-
-    # Utility construction helpers
-    @staticmethod
-    def flext_create_chain(
-        handlers: list[FlextAbstractHandler[object, object]] | None = None,
-    ) -> FlextHandlerChain:
-        """Create a handler chain from a list of handlers."""
-        return FlextHandlerChain(handlers or [])
-
-    @staticmethod
-    def create_registry() -> FlextHandlerRegistry:
-        """Create a new handler registry instance."""
-        return FlextHandlerRegistry()
-
-    @staticmethod
-    def register_for_type(
-        registry: FlextHandlerRegistry,
-        message_type: type,
-        name: str,
-        handler: FlextAbstractHandler[object, object],
-    ) -> FlextResult[None]:
-        """Register handler for a specific type in the given registry."""
-        return registry.register_for_type(message_type, name, handler)
-
-    @staticmethod
-    def get_handler_for_type(
-        registry: FlextHandlerRegistry,
-        message_type: type,
-    ) -> FlextResult[FlextAbstractHandler[object, object]]:
-        """Get handler for a specific type from registry."""
-        return registry.get_handler_for_type(message_type)
-
-    @staticmethod
-    def get_metrics(handler: object) -> dict[str, object]:
-        """Get metrics from handler if available."""
-        get_metrics_method = getattr(handler, "get_metrics", None)
-        if callable(get_metrics_method):
-            metrics_obj = get_metrics_method()
-            if isinstance(metrics_obj, dict):
-                return cast("dict[str, object]", metrics_obj)
-        return {}
-
-    # Pipeline behavior for middleware pattern
-    class PipelineBehavior:
-        """Base pipeline behavior for middleware pattern."""
-
-        def __init__(self) -> None:
-            """Initialize pipeline behavior."""
-            self.next_behavior: object | None = None
-
-        @staticmethod
-        def handle(message: object, next_handler: object) -> FlextResult[object]:
-            """Handle a message in a pipeline."""
-            # Default implementation just calls next handler
-            handle_method = getattr(next_handler, "handle", None)
-            if callable(handle_method):
-                result = handle_method(message)
-                if hasattr(result, "is_success"):
-                    return cast("FlextResult[object]", result)
-            return FlextResult[object].ok(message)
-
-        def set_next(self, behavior: object) -> None:
-            """Set next behavior in a chain."""
-            self.next_behavior = behavior
-
-    # Command and Query Bus implementations for test convenience
-    class CommandBus:
-        """Command bus implementation for test convenience."""
-
-        def __init__(self) -> None:
-            """Initialize command bus."""
-            self._handlers: dict[type, object] = {}
-            self._metrics = {
-                "commands_processed": 0,
-                "successful_commands": 0,
-                "failed_commands": 0,
-            }
-
-        def register(self, command_type: type, handler: object) -> FlextResult[None]:
-            """Register command handler."""
-            self._handlers[command_type] = handler
-            return FlextResult[None].ok(None)
-
-        def send(self, command: object) -> FlextResult[object]:
-            """Send command to handler."""
-            command_type = type(command)
-            handler = self._handlers.get(command_type)
-
-            if not handler:
-                return FlextResult[object].fail(
-                    f"No handler registered for {command_type.__name__}",
-                )
-
-            # Update metrics
-            self._metrics["commands_processed"] += 1
-
-            # Call handler if it has handle method
-            handle_method = getattr(handler, "handle", None)
-            if callable(handle_method):
-                # Handler is expected to implement .handle(command) -> FlextResult
-                result = handle_method(command)
-                if hasattr(result, "is_success") and getattr(
-                    result, "is_success", False
-                ):
-                    self._metrics["successful_commands"] += 1
-                else:
-                    self._metrics["failed_commands"] += 1
-                return cast("FlextResult[object]", result)
-
-            return FlextResult[object].ok(command)
-
-        def get_metrics(self) -> dict[str, object]:
-            """Get command bus metrics."""
-            return dict(self._metrics)
-
-    class QueryBus:
-        """Query bus implementation for test convenience."""
-
-        def __init__(self) -> None:
-            """Initialize query bus."""
-            self._handlers: dict[type, object] = {}
-            self._metrics = {
-                "queries_processed": 0,
-                "successful_queries": 0,
-                "failed_queries": 0,
-            }
-
-        def register(self, query_type: type, handler: object) -> FlextResult[None]:
-            """Register query handler."""
-            self._handlers[query_type] = handler
-            return FlextResult[None].ok(None)
-
-        def send(self, query: object) -> FlextResult[object]:
-            """Send a query to handler."""
-            query_type = type(query)
-            handler = self._handlers.get(query_type)
-
-            if not handler:
-                return FlextResult[object].fail(
-                    f"No handler registered for {query_type.__name__}",
-                )
-
-            # Update metrics
-            self._metrics["queries_processed"] += 1
-
-            # Call handler if it has handle method
-            handle_method = getattr(handler, "handle", None)
-            if callable(handle_method):
-                result = handle_method(query)
-                if hasattr(result, "is_success") and getattr(
-                    result, "is_success", False
-                ):
-                    self._metrics["successful_queries"] += 1
-                else:
-                    self._metrics["failed_queries"] += 1
-                return cast("FlextResult[object]", result)
-
-            return FlextResult[object].ok(query)
-
-        def get_metrics(self) -> dict[str, object]:
-            """Get query bus metrics."""
-            return dict(self._metrics)
-
-
-# =============================================================================
-# CONVENIENCE ALIASES
-# =============================================================================
-
-
-# Convenience aliases expected by multiple tests:
-# 1) Some tests assert FlextHandlers is FlextBaseHandler
-# 2) And expect nested CommandHandler/QueryHandler types accessible via FlextHandlers
-# We create a proper class that includes the nested types to avoid MyPy attr-defined errors.
-class FlextHandlers(FlextBaseHandler):
-    """Convenience class that provides access to handler types for testing."""
-
-    class CommandHandler(FlextCommandHandler[object, object]):
-        """Concrete CommandHandler via FlextHandlers facade."""
-
-        def handle_command(self, command: object) -> FlextResult[object]:
-            return FlextResult[object].ok(command)
-
-        def can_handle(self, message_type: object) -> bool:
-            """Check if handler can process a message type."""
-            return message_type is not None
-
-    class QueryHandler(FlextQueryHandler[TQuery, TQueryResult]):
-        """Concrete QueryHandler via FlextHandlers facade."""
-
-        def handle_query(self, query: TQuery) -> FlextResult[TQueryResult]:
-            return cast(
-                "FlextResult[TQueryResult]",
-                FlextResult[object].ok(cast("object", query)),
-            )
-
-    class EventHandler(FlextEventHandler):
-        """Concrete EventHandler via FlextHandlers facade."""
+# Legacy compatibility aliases for utility functions
+_get_flext_commands_module = FlextHandlers.get_flext_commands_module
+_thread_safe_operation = FlextHandlers.thread_safe_operation

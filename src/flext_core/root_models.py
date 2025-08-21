@@ -22,6 +22,9 @@ from flext_core.exceptions import FlextValidationError
 from flext_core.payload import FlextEvent
 from flext_core.result import FlextResult
 
+# Type aliases for unified approach with FlextProtocols integration - Python 3.13+ syntax
+# Note: These reference the FlextProtocols hierarchy for architectural consistency
+
 
 # Delayed import function to avoid circular imports
 def _get_flext_event_class() -> type[FlextEvent]:
@@ -565,14 +568,11 @@ ErrorMessage = FlextErrorMessage
 # =============================================================================
 
 __all__ = [
-    "EmailAddress",
-    # Type aliases for migration
-    "EntityId",
-    "ErrorCode",
-    "ErrorMessage",
+    # Removed conflicting types that exist in other modules with validation:
+    # EmailAddress, EntityId, ErrorCode, ErrorMessage, Host, Port, Metadata, Timestamp, Version
+    # FlextEmailAddress, FlextServiceName moved to validation.py with proper validation
     "FlextConnectionString",
-    "FlextEmailAddress",
-    # Core RootModel types
+    # Core RootModel types - keeping only non-conflicting ones
     "FlextEntityId",
     "FlextErrorCode",
     "FlextErrorMessage",
@@ -581,15 +581,10 @@ __all__ = [
     "FlextMetadata",
     "FlextPercentage",
     "FlextPort",
-    "FlextServiceName",
     "FlextTimestamp",
     "FlextVersion",
-    "Host",
-    "Metadata",
-    "Port",
-    "ServiceName",
-    "Timestamp",
-    "Version",
+    # Removed conflicting aliases that exist in validation.py with proper validation:
+    # Metadata, Port, ServiceName, Timestamp, Version
     "create_email",
     # Factory functions
     "create_entity_id",

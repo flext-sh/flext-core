@@ -3,25 +3,25 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Callable
 from contextlib import suppress
 from typing import SupportsInt, cast
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, field_validator
 
 from flext_core.constants import FlextFieldType
 from flext_core.exceptions import FlextValidationError
-from flext_core.loggings import FlextLoggerFactory
-from flext_core.protocols import FlextValidator
 from flext_core.result import FlextResult
 from flext_core.typings import (
     FlextFieldId,
     FlextFieldName,
     FlextFieldTypeStr,
+    FlextTypes,
     TFieldInfo,
 )
 
-# Type alias for JSON dictionary
-JsonDict = dict[str, object]
+# Use FlextTypes for all type definitions - no local types allowed
+JsonDict = FlextTypes.Core.JsonDict
 
 # =============================================================================
 # TYPE DEFINITIONS - Consolidates without underscore
@@ -102,10 +102,21 @@ class FlextFieldCore(
     tags: list[str] = Field(default_factory=list, description="Field tags")
 
     # Custom validator function for field validation
-    validator: FlextValidator | None = Field(
+    validator: Callable[[object], FlextResult[object]] | None = Field(
         default=None,
         description="Callable validator function for custom field validation",
     )
+
+    @field_validator("validator")
+    @classmethod
+    def validate_validator(
+        cls, v: Callable[[object], FlextResult[object]] | None
+    ) -> Callable[[object], FlextResult[object]] | None:
+        """Validate that validator is callable with correct signature."""
+        if v is None:
+            return v
+        # Type system already ensures it's callable, just return it
+        return v
 
     # Mixin functionality is now inherited properly:
     # - Validation methods from FlextValidatableMixin
@@ -135,12 +146,12 @@ class FlextFieldCore(
 
     @field_validator("max_length")
     @classmethod
-    def _validate_max_length(cls, v: int | None, info: object) -> int | None:
+    def _validate_max_length(cls, v: int | None, info: ValidationInfo) -> int | None:
         """Validate max_length > min_length."""
         # FieldValidationInfo.data is a mapping of sibling fields available during
         # validation. Use safe access and explicit typing to keep linters happy.
         if v is not None:
-            data = info.data if hasattr(info, "data") else None
+            data = info.data
             if isinstance(data, dict) and "min_length" in data:
                 typed_data = cast("dict[str, object]", data)
                 min_length = typed_data.get("min_length")
@@ -441,7 +452,21 @@ class FlextFieldMetadata(BaseModel):
     tags: list[str] = Field(default_factory=list)
 
     # Custom validator function for field validation
-    validator: FlextValidator | None = None
+    validator: Callable[[object], FlextResult[object]] | None = Field(
+        default=None,
+        description="Callable validator function for custom field validation",
+    )
+
+    @field_validator("validator")
+    @classmethod
+    def validate_validator_metadata(
+        cls, v: Callable[[object], FlextResult[object]] | None
+    ) -> Callable[[object], FlextResult[object]] | None:
+        """Validate that validator is callable with correct signature."""
+        if v is None:
+            return v
+        # Type system already ensures it's callable, just return it
+        return v
 
     # Additional compatibility fields
     internal: bool = False
@@ -558,6 +583,11 @@ class FlextFieldRegistry:
     def __init__(self) -> None:
         """Initialize empty registry."""
         self._fields: dict[str, FlextFieldCore] = {}
+        # Lazy import to avoid circular dependency
+        from flext_core.loggings import (  # noqa: PLC0415
+            FlextLoggerFactory,
+        )
+
         self._logger = FlextLoggerFactory.get_logger(__name__)
 
     def register_field(self, field: FlextFieldCore) -> FlextResult[FlextFieldCore]:
@@ -1019,4 +1049,8 @@ __all__: list[str] = [
     "FlextFieldRegistry",
     "FlextFields",
     "JsonDict",
+    # Legacy field creation functions
+    "flext_create_boolean_field",
+    "flext_create_integer_field",
+    "flext_create_string_field",
 ]

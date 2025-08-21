@@ -6,22 +6,18 @@ import re
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from enum import Enum
-from typing import Generic, Protocol, TypeGuard, TypeVar, override
+from typing import Generic, Protocol, TypeGuard, override
 
+from flext_core.models import FlextValue
 from flext_core.result import FlextResult
-from flext_core.value_objects import FlextValueObject
-
-# Define TypeVar locally
-EntryT = TypeVar("EntryT")
-InputT = TypeVar("InputT")
-OutputT = TypeVar("OutputT")
+from flext_core.typings import EntryT
 
 
 class FlextEntryType(Enum):
     """Base enumeration for entry types."""
 
 
-class FlextBaseEntry(FlextValueObject):
+class FlextBaseEntry(FlextValue):
     """Base entry value object for schema/ACL processing."""
 
     entry_type: str
@@ -386,19 +382,27 @@ class FlextProcessingPipeline[InputT, OutputT]:
 
 __all__: list[str] = [
     # Backward-compatible export names
+    "BaseConfigManager",
     "BaseEntry",
     "BaseFileWriter",
     "BaseProcessor",
+    "BaseSorter",
+    "ConfigAttributeValidator",
     "EntryType",
     "EntryValidator",
     # New names
+    "FlextBaseConfigManager",
     "FlextBaseEntry",
+    "FlextBaseFileWriter",
     "FlextBaseProcessor",
+    "FlextBaseSorter",
+    "FlextConfigAttributeValidator",
     "FlextEntryType",
     "FlextEntryValidator",
     "FlextProcessingPipeline",
     "FlextRegexProcessor",
     "ProcessingPipeline",
+    "RegexProcessor",
 ]
 
 # Backward-compatible aliases
