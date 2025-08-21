@@ -44,8 +44,8 @@ if TYPE_CHECKING:
 # =============================================================================
 
 # Define FlextDecoratedFunction early since it's used in class definitions
-# Must be compatible with FlextCallable which uses Callable[..., T]
-FlextDecoratedFunction = TypeVar("FlextDecoratedFunction", bound=Callable[..., object])
+# Use explicit parameter/return types to avoid Any
+type FlextDecoratedFunction[T] = Callable[[object], T]
 
 # =============================================================================
 # FLEXT HIERARCHICAL TYPE SYSTEM - Organized by domain
@@ -209,7 +209,9 @@ class FlextTypes:
 
         # Validator callable types
         type Validator = Callable[[object], bool]
-        type DecoratorFunction[T] = Callable[[FlextDecoratedFunction[T]], FlextDecoratedFunction[T]]
+        type DecoratorFunction[T] = Callable[
+            [FlextDecoratedFunction[T]], FlextDecoratedFunction[T]
+        ]
 
         # Serializer callable types
         type Serializer = Callable[[object], dict[str, object]]
@@ -288,17 +290,13 @@ class FlextTypes:
 
         # Metrics value types - specific and type-safe
         type CounterMetric = int
-        type TimeMetric = float  
+        type TimeMetric = float
         type ErrorCounterMap = dict[str, int]
         type SizeList = list[int]
         type PerformanceMap = dict[str, dict[str, int | float]]
-        
+
         type MetricsValue = (
-            CounterMetric 
-            | TimeMetric 
-            | ErrorCounterMap 
-            | SizeList 
-            | PerformanceMap
+            CounterMetric | TimeMetric | ErrorCounterMap | SizeList | PerformanceMap
         )
         type MetricsData = dict[str, MetricsValue]
         type NumericMetrics = dict[str, int | float]

@@ -690,7 +690,7 @@ class FlextCore:
         result = safe_call(func)
         if result.is_failure:
             return default
-        return cast("T", result.value)
+        return result.value
 
     @staticmethod
     def truncate(text: str, max_length: int = 100) -> str:

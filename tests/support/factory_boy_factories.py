@@ -11,12 +11,19 @@ from datetime import UTC, datetime
 from typing import Any
 
 import factory  # type: ignore[import-untyped]
-from factory import Faker, LazyAttribute, Sequence  # type: ignore[import-untyped,attr-defined]
+from factory import (  # type: ignore[import-untyped,attr-defined]
+    Faker,
+    LazyAttribute,
+    Sequence,
+)
 from pydantic import BaseModel
 
 from flext_core import FlextResult
 from flext_core.constants import FlextFieldType
-from flext_core.models import FlextEntityId, FlextTimestamp  # type: ignore[attr-defined]
+from flext_core.models import (  # type: ignore[attr-defined]
+    FlextEntityId,
+    FlextTimestamp,
+)
 
 
 # Base models for testing (these would typically come from domain models)
