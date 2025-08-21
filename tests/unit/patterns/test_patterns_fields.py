@@ -213,7 +213,7 @@ class TestFlextFieldCoreInteger:
             "custom_properties": {"key": "value"},
         }
 
-        metadata = FlextFieldCoreMetadata.from_dict(data)
+        metadata = FlextFieldCoreMetadata.from_dict(data)  # pyright: ignore[reportArgumentType]
 
         if metadata.description != "Test field":
             raise AssertionError(f"Expected Test field, got {metadata.description}")
@@ -276,7 +276,9 @@ class ConcreteFlextFieldCore(FlextFieldCore):
         if self.required and value is None:
             return FlextResult[object].fail(f"Field '{self.field_name}' is required")
         if value is not None and not isinstance(value, str):
-            return FlextResult[object].fail(f"Field '{self.field_name}' must be a string")
+            return FlextResult[object].fail(
+                f"Field '{self.field_name}' must be a string"
+            )
         return FlextResult[object].ok(str(value) if value is not None else "")
 
     def serialize_value(self, value: object) -> str:
@@ -809,8 +811,8 @@ class TestFlextFieldCoreRegistry:
     def test_registry_creation(self) -> None:
         """Test registry creation."""
         registry = FlextFieldRegistry()
-        if registry._fields != {}:
-            raise AssertionError(f"Expected {{}}, got {registry._fields}")
+        if registry._fields != {}:  # pyright: ignore[reportPrivateUsage]
+            raise AssertionError(f"Expected {{}}, got {registry._fields}")  # pyright: ignore[reportPrivateUsage]
 
     def test_register_field(self) -> None:
         """Test registering a field."""
@@ -822,7 +824,7 @@ class TestFlextFieldCoreRegistry:
         )
 
         registry.register_field(field)
-        assert registry._fields["test_id"] is field
+        assert registry._fields["test_id"] is field  # pyright: ignore[reportPrivateUsage]
 
     def test_get_field_existing(self) -> None:
         """Test getting an existing field."""

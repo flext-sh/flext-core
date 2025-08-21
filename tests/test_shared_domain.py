@@ -16,7 +16,13 @@ from enum import StrEnum
 
 from pydantic import ConfigDict, Field, field_validator
 
-from flext_core import FlextEntity, FlextResult, FlextValueObject, TEntityId
+from flext_core import (
+    FlextEntity,
+    FlextEntityId,
+    FlextResult,
+    FlextValueObject,
+    TEntityId,
+)
 
 # =============================================================================
 # TEST DOMAIN CONSTANTS
@@ -296,7 +302,7 @@ class TestDomainFactory:
             balance = Decimal(str(balance_value))
 
             user = TestUser(
-                id=str(kwargs.get("id", f"user_{len(name)}")),
+                id=FlextEntityId(str(kwargs.get("id", f"user_{len(name)}"))),
                 name=name,
                 email=email,
                 age=age,
@@ -339,7 +345,7 @@ class TestDomainFactory:
             )
 
             order = TestOrder(
-                id=str(kwargs.get("id", f"order_{user_id}")),
+                id=FlextEntityId(str(kwargs.get("id", f"order_{user_id}"))),
                 user_id=user_id,
                 total_amount=amount,
                 status=status,
@@ -372,7 +378,7 @@ class TestDomainFactory:
             category = str(kwargs.get("category", "general"))
 
             product = TestProduct(
-                id=str(kwargs.get("id", f"product_{len(name)}")),
+                id=FlextEntityId(str(kwargs.get("id", f"product_{len(name)}"))),
                 name=name,
                 price=product_price,
                 description=description,
@@ -513,7 +519,7 @@ def create_test_user_safe(
     result = TestDomainFactory.create_test_user(name, email, **kwargs)
     if result.is_failure:
         raise ValueError(f"Failed to create test user: {result.error}")
-    return result.data
+    return result.value
 
 
 def create_test_order_safe(
@@ -525,7 +531,7 @@ def create_test_order_safe(
     result = TestDomainFactory.create_test_order(user_id, total_amount, **kwargs)
     if result.is_failure:
         raise ValueError(f"Failed to create test order: {result.error}")
-    return result.data
+    return result.value
 
 
 def create_test_product_safe(
@@ -547,7 +553,7 @@ def create_test_product_safe(
     )
     if result.is_failure:
         raise ValueError(f"Failed to create test product: {result.error}")
-    return result.data
+    return result.value
 
 
 def log_test_operation(operation: str, entity_type: str, entity_id: str) -> None:

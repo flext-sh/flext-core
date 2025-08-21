@@ -20,8 +20,8 @@ from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
 from typing import Generic, TypedDict, TypeVar
-from unittest.mock import AsyncMock, MagicMock, Mock
 
+# Remove mock imports - tests should use real implementations
 import pytest
 import structlog
 from _pytest.fixtures import SubRequest
@@ -33,6 +33,7 @@ from flext_core import (
     FlextCommands,
     FlextContainer,
     FlextEntity,
+    FlextEntityId,
     FlextEntityStatus,
     FlextEvent,
     FlextLoggerFactory,
@@ -368,52 +369,86 @@ def test_user_data() -> dict[str, str | int | bool | list[str] | None]:
 
 
 @pytest.fixture
-def mock_factory() -> Callable[[str], Mock]:
-    """Advanced mock factory with automatic cleanup."""
+def service_factory() -> Callable[[str], object]:
+    """Service factory for testing."""
 
-    def _create_mock(name: str, **kwargs: object) -> Mock:
-        mock = MagicMock(name=name, **kwargs)
-        mock.is_healthy.return_value = True
-        mock.validate.return_value = FlextResult[None].ok(None)
-        mock.process.return_value = FlextResult[str].ok("processed")
-        return mock
+    def _create_service(name: str, **kwargs: object) -> object:  # noqa: ARG001
+        class TestService:
+            def __init__(self, service_name: str) -> None:
+                self.name = service_name
 
-    return _create_mock
+            def is_healthy(self) -> bool:
+                return True
+
+            def validate(self) -> FlextResult[None]:
+                return FlextResult[None].ok(None)
+
+            def process(self) -> FlextResult[str]:
+                return FlextResult[str].ok("processed")
+
+            def process_id(self, input_id: str) -> FlextResult[str]:
+                return FlextResult[str].ok(f"processed_{input_id}")
+
+        return TestService(name)
+
+    return _create_service
 
 
 @pytest.fixture
-def async_mock_factory() -> Callable[[str], AsyncMock]:
-    """Async mock factory for testing async patterns."""
+def async_service_factory() -> Callable[[str], object]:
+    """Async service factory for testing."""
 
-    def _create_async_mock(name: str, **kwargs: object) -> AsyncMock:
-        mock = AsyncMock(name=name, **kwargs)
-        mock.is_healthy.return_value = True
-        mock.process.return_value = FlextResult[str].ok("processed")
-        return mock
+    def _create_async_service(name: str, **kwargs: object) -> object:  # noqa: ARG001
+        class AsyncService:
+            def __init__(self, service_name: str) -> None:
+                self.name = service_name
 
-    return _create_async_mock
+            async def is_healthy(self) -> bool:
+                return True
+
+            async def process(self) -> FlextResult[str]:
+                return FlextResult[str].ok("processed")
+
+        return AsyncService(name)
+
+    return _create_async_service
+
+
+class ExternalService:
+    """Test service implementation for functional testing."""
+
+    def __init__(self) -> None:
+        """Initialize with default test state."""
+        self._healthy = True
+        self._data = {"status": "success", "data": "test_data"}
+
+    def is_healthy(self) -> bool:
+        """Check service health."""
+        return self._healthy
+
+    def get_data(self) -> dict[str, object]:
+        """Get test data."""
+        return self._data.copy()
+
+    def process(self, data: object = None) -> FlextResult[str]:  # noqa: ARG002
+        """Process data and return FlextResult."""
+        if not self._healthy:
+            return FlextResult[str].fail("Service unhealthy")
+        return FlextResult[str].ok("processed")
 
 
 @pytest.fixture
-def mock_external_service() -> Generator[MagicMock]:
-    """Provide isolated mock for external service testing.
+def external_service() -> Generator[ExternalService]:
+    """Provide external service for testing.
 
-    Mock factory for testing service integration patterns
-    without external dependencies.
+    Implementation for testing service integration patterns
+    and validates functionality.
 
     Yields:
-      MagicMock configured for external service simulation
+      ExternalService instance for functional testing
 
     """
-    mock = MagicMock()
-    mock.is_healthy.return_value = True
-    mock.get_data.return_value = {"status": "success", "data": "test_data"}
-    mock.process.return_value = FlextResult[str].ok("processed")
-
-    yield mock
-
-    # Cleanup
-    mock.reset_mock()
+    return ExternalService()
 
 
 # ============================================================================
@@ -434,7 +469,7 @@ def entity_factory() -> Callable[[str, dict[str, object]], FlextEntity]:
         def __init__(
             self, entity_id: str = "test-entity", name: str = "test", value: int = 0
         ) -> None:
-            super().__init__(id=entity_id)
+            super().__init__(id=FlextEntityId(entity_id))
             self.name = name
             self.value = value
 
@@ -512,7 +547,7 @@ def aggregate_factory() -> Callable[[str], FlextAggregateRoot]:
             return FlextResult[None].ok(None)
 
     def _create_aggregate(aggregate_id: str) -> FlextAggregateRoot:
-        return TestAggregate(id=aggregate_id)
+        return TestAggregate(id=FlextEntityId(aggregate_id), _domain_event_objects=[])
 
     return _create_aggregate
 
@@ -539,7 +574,7 @@ def clean_container() -> Generator[FlextContainer]:
 @pytest.fixture
 def configured_container(
     clean_container: FlextContainer,
-    mock_external_service: MagicMock,
+    external_service: ExternalService,
 ) -> FlextContainer:
     """Provide pre-configured container for integration testing.
 
@@ -548,14 +583,13 @@ def configured_container(
 
     Args:
       clean_container: Fresh container instance
-      mock_external_service: Mock external service
+      external_service: External service for functional testing
 
     Returns:
       FlextContainer with standard test services registered
 
     """
-    # Register common test services
-    clean_container.register("external_service", mock_external_service)
+    clean_container.register("external_service", external_service)
     clean_container.register("config", {"test_mode": True})
     clean_container.register("logger", "test_logger")
 
@@ -591,7 +625,7 @@ def temp_directory() -> Generator[Path]:
 
 
 @pytest.fixture
-def isolation_context() -> Generator[dict[str, object]]:
+def isolation_context() -> Generator[dict[str, dict[str, str] | list[str] | float]]:
     """Provide complete test isolation context."""
     context = {
         "original_env": os.environ.copy(),
@@ -874,7 +908,7 @@ def assert_helpers() -> object:
             """Assert result is successful with optional data check."""
             assert result.success, f"Expected success but got error: {result.error}"
             if expected_data is not None:
-                assert result.data == expected_data
+                assert result.value == expected_data
 
         @staticmethod
         def assert_result_fail(
@@ -1007,7 +1041,7 @@ def event_factory() -> Callable[[str, dict[str, object]], FlextEvent]:
             event_data=data or {},
         )
         if result.is_success:
-            return result.unwrap()
+            return result.value
         raise ValueError(f"Failed to create event: {result.error}")
 
     return _create_event
@@ -1026,17 +1060,36 @@ def integration_setup() -> None:
     # Teardown code here
 
 
+class TestDatabase:
+    """Test database implementation for functional testing."""
+
+    def __init__(self) -> None:
+        """Initialize with in-memory test state."""
+        self._data: list[dict[str, object]] = [{"id": 1, "name": "test"}]
+        self._connected = True
+
+    def execute(self, query: str) -> dict[str, object]:
+        """Execute query and return result."""
+        if not self._connected:
+            return {"status": "error", "message": "Not connected"}
+        return {"status": "success", "query": query}
+
+    def fetch(self) -> list[dict[str, object]]:
+        """Fetch data from test database."""
+        return self._data.copy()
+
+    def close(self) -> None:
+        """Close database connection."""
+        self._connected = False
+
+
 @pytest.fixture
-def database_connection() -> Generator[MagicMock]:
-    """Provide database connection for integration tests."""
-    # Mock database connection for testing
-    connection = MagicMock()
-    connection.execute.return_value = {"status": "success"}
-    connection.fetch.return_value = [{"id": 1, "name": "test"}]
+def database_connection() -> Generator[TestDatabase]:
+    """Provide test database for integration tests."""
+    connection = TestDatabase()
 
     yield connection
 
-    # Cleanup
     connection.close()
 
 
@@ -1113,7 +1166,7 @@ class AssertHelpers:
     @staticmethod
     def assert_result_failure(result: FlextResult[object]) -> None:
         """Assert that a result is a failure."""
-        assert result.is_failure, f"Expected failure but got: {result.data}"
+        assert result.is_failure, f"Expected failure but got: {result.value}"
 
     # Backward-compatible aliases used in some tests
     @staticmethod
@@ -1127,13 +1180,13 @@ class AssertHelpers:
         AssertHelpers.assert_result_failure(result)
 
 
-class MockFactory:
-    """Factory for creating mock objects."""
+class ConfigFactory:
+    """Factory for creating configuration objects."""
 
     @staticmethod
-    def create_mock_config(**kwargs: object) -> object:
-        """Create a mock configuration."""
-        return type("MockConfig", (), kwargs)()
+    def create_config(**kwargs: object) -> object:
+        """Create a configuration object."""
+        return type("TestConfig", (), kwargs)()
 
 
 class PerformanceMonitor:

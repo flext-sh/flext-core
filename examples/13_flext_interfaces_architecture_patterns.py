@@ -33,24 +33,18 @@ from typing import cast
 from structlog.stdlib import BoundLogger
 
 from flext_core import (
-    FlextResult,
-    TAnyDict,
-)
-from flext_core.handlers import (
     FlextCommandHandler,
-)
-
-# FlextLoggerProtocol will be imported from protocols below
-from flext_core.protocols import (
     FlextDomainEvent,
     FlextLoggerProtocol,
     FlextMessageHandler,
     FlextPlugin,
     FlextPluginContext,
     FlextRepository,
+    FlextResult,
     FlextService,
     FlextUnitOfWork,
     FlextValidationRule,
+    TAnyDict,
 )
 
 # =============================================================================
@@ -273,7 +267,7 @@ class AgeRangeRule(FlextValidationRule):
             )
         return FlextResult[object].ok(value)
 
-    def get_error_message(self, field_name: str, value: object) -> str:
+    def get_error_message(self, field_name: str, _value: object) -> str:
         """Provide rule error message."""
         return f"{field_name} must be between {self.min_age} and {self.max_age}"
 
@@ -287,7 +281,7 @@ class NonEmptyStringRule(FlextValidationRule):
             return FlextResult[object].fail(f"{field_name} must be a non-empty string")
         return FlextResult[object].ok(value)
 
-    def get_error_message(self, field_name: str, value: object) -> str:
+    def get_error_message(self, field_name: str, _value: object) -> str:
         """Provide rule error message."""
         return f"{field_name} must be a non-empty string"
 
@@ -301,7 +295,7 @@ class PositiveNumberRule(FlextValidationRule):
             return FlextResult[object].fail(f"{field_name} must be a positive number")
         return FlextResult[object].ok(value)
 
-    def get_error_message(self, field_name: str, value: object) -> str:
+    def get_error_message(self, field_name: str, _value: object) -> str:
         """Provide rule error message."""
         return f"{field_name} must be a positive number"
 
@@ -576,7 +570,7 @@ class UserRepository(FlextRepository[User]):
         """Get user by ID (implements abstract method)."""
         result = self.find_by_id(entity_id)
         if result.success:
-            return FlextResult[User | None].ok(result.data)
+            return FlextResult[User | None].ok(result.value)
         return FlextResult[User | None].ok(None)
 
     def find_all(self) -> FlextResult[list[User]]:
@@ -823,7 +817,7 @@ class EmailNotificationPlugin(FlextPlugin):
             if email_service_result.is_failure:
                 return FlextResult[None].fail("Email service not available")
 
-            service_data = email_service_result.data
+            service_data = email_service_result.value
             if isinstance(service_data, ConfigurableEmailService):
                 self._email_service = service_data
             else:
@@ -1168,7 +1162,7 @@ def demonstrate_service_interfaces() -> None:
     # Use service
     user_result = user_service.create_user("Alice Johnson", "alice@example.com", 28)
     if user_result.success:
-        user = user_result.data
+        user = user_result.value
         if user is not None:
             pass
 
@@ -1238,7 +1232,7 @@ def demonstrate_handler_interfaces() -> None:
     if can_handle:
         result = handler.handle(create_message)
         if result.success:
-            user = result.data
+            user = result.value
             if hasattr(user, "name") and hasattr(user, "id"):
                 pass
 
@@ -1261,7 +1255,7 @@ def demonstrate_handler_interfaces() -> None:
     if result.success:
         result = logging_middleware.process(valid_message, handler.handle)
         if result.success:
-            user = result.data
+            user = result.value
             if hasattr(user, "name") and hasattr(user, "id"):
                 pass
 
@@ -1307,7 +1301,7 @@ def _basic_repo_operations(user_repo: UserRepository) -> None:
     for user_id in ["user_1", "user_999", "user_2"]:
         result = user_repo.find_by_id(user_id)
         if result.success:
-            user_data = result.data
+            user_data = result.value
             if (
                 user_data is not None
                 and hasattr(user_data, "name")
@@ -1330,7 +1324,7 @@ def _unit_of_work_success_flow(fresh_repo: UserRepository) -> None:
         if commit_result.success:
             pass
     result = fresh_repo.find_by_id("user_100")
-    if result.success and result.data is not None:
+    if result.success and result.value is not None:
         pass
 
 
@@ -1495,7 +1489,7 @@ def demonstrate_event_interfaces() -> None:
                 "aggregate_id": self.aggregate_id,
                 "event_version": self.event_version,
                 "timestamp": self.timestamp,
-                "data": self.data,
+                "data": self.value,
             }
 
         @classmethod

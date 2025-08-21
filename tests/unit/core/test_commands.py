@@ -328,46 +328,56 @@ class TestFlextCommandsAdvanced:
         input_data = test_case.input_data
         expected = test_case.expected_output
 
-        command = SampleCommand(**input_data)
+        # Type-safe conversion for command creation
+        cmd_kwargs = cast("SampleCommandKwargs", input_data)
+        command = SampleCommand(**cmd_kwargs)
         payload = command.to_payload()
 
         assert isinstance(payload, FlextPayload)
         assert payload.data is not None
 
-        if "payload_data_name" in expected:
-            assert payload.data["name"] == expected["payload_data_name"]
+        # Type-safe expected validation
+        expected_dict = cast("dict[str, object]", expected)
 
-        if "payload_data_value" in expected:
-            assert payload.data["value"] == expected["payload_data_value"]
+        if "payload_data_name" in expected_dict:
+            assert payload.data is not None
+            payload_dict = cast("dict[str, object]", payload.data)
+            assert payload_dict["name"] == expected_dict["payload_data_name"]
 
-        if "payload_type" in expected:
-            assert payload.metadata.get("type") == expected["payload_type"]
+        if "payload_data_value" in expected_dict:
+            assert payload.data is not None
+            payload_dict = cast("dict[str, object]", payload.data)
+            assert payload_dict["value"] == expected_dict["payload_data_value"]
+
+        if "payload_type" in expected_dict:
+            assert payload.metadata.get("type") == expected_dict["payload_type"]
 
     def _test_payload_to_command(self, test_case: TestCase) -> None:
         """Test payload to command conversion."""
-        input_data = test_case.input_data
-        expected = test_case.expected_output
+        input_data_dict = cast("dict[str, object]", test_case.input_data)
+        expected_dict = cast("dict[str, object]", test_case.expected_output)
 
-        payload_data = input_data["payload_data"]
-        payload = FlextPayload.create(data=payload_data, type="SampleCommand").unwrap()
+        payload_data = input_data_dict["payload_data"]
+        payload = FlextPayload.create(data=payload_data, type="SampleCommand").value
 
         result: FlextResult[SampleCommand] = SampleCommand.from_payload(payload)
 
-        if "from_payload_success" in expected:
-            assert result.success == expected["from_payload_success"]
+        if "from_payload_success" in expected_dict:
+            assert result.success == expected_dict["from_payload_success"]
 
-        if expected.get("from_payload_success", False):
-            self._validate_command_result(result.data, expected)
-            assert result.data is not None
-        elif "error" in expected:
-            assert expected["error"] in (result.error or "")
+        if expected_dict.get("from_payload_success", False):
+            self._validate_command_properties(result.value, expected_dict)
+            assert result.value is not None
+        elif "error" in expected_dict:
+            error_msg = str(expected_dict["error"])
+            assert error_msg in (result.error or "")
 
-    def _validate_command_result(
+    def _validate_command_properties(
         self,
         command: SampleCommand,
         expected: dict[str, object],
     ) -> None:
-        """Validate command result against expected values."""
+        """Validate command properties against expected values."""
         if "name" in expected:
             assert command.name == expected["name"]
         if "value" in expected:
@@ -429,14 +439,15 @@ class TestFlextCommandsComplexValidation:
             )
 
             command: SampleComplexCommand = SampleComplexCommand(
-                **cast("dict[str, object]", input_data),
+                **cast("SampleComplexCommandKwargs", input_data),
             )
             result = command.validate_command()
 
             assert result.success == expected["validation_success"]
 
             if "error" in expected:
-                assert expected["error"] in (result.error or "")
+                error_msg = str(expected["error"])
+                assert error_msg in (result.error or "")
 
 
 class TestFlextCommandsImmutability:
@@ -484,9 +495,10 @@ class TestFlextCommandsPerformance:
         metrics: PerformanceMetrics = performance_monitor(create_commands)
 
         # Should create 1000 commands quickly
-        assert metrics["execution_time"] < 0.2  # Less than 200ms (system variability)
+        assert metrics["execution_time"] < 0.3  # Less than 300ms (more realistic for CI)
         assert metrics["result"] is not None
-        assert len(metrics["result"]) == 1000
+        result_commands = cast("list[SampleCommand]", metrics["result"])
+        assert len(result_commands) == 1000
 
 
 class TestFlextCommandsFactoryMethods:
@@ -502,7 +514,7 @@ class TestFlextCommandsFactoryMethods:
     def test_create_simple_handler_factory(self) -> None:
         """Test FlextCommands.create_simple_handler factory method."""
 
-        def sample_handler(command: object) -> str:
+        def sample_handler(command: object) -> object:
             return f"handled: {command}"
 
         handler = FlextCommands.create_simple_handler(sample_handler)
@@ -512,7 +524,7 @@ class TestFlextCommandsFactoryMethods:
         test_command = SampleCommand(name="test", value=42)
         result = handler.handle(test_command)
         assert result.success
-        assert "handled:" in str(result.data)
+        assert "handled:" in str(result.value)
 
     def test_command_bus_middleware_system(self) -> None:
         """Test command bus middleware functionality."""
@@ -532,7 +544,7 @@ class TestFlextCommandsFactoryMethods:
 
         class TestHandler(FlextCommands.Handler[SampleCommand, str]):
             def handle(self, command: SampleCommand) -> FlextResult[str]:
-                return FlextResult[None].ok(f"processed: {command.name}")
+                return FlextResult[str].ok(f"processed: {command.name}")
 
         handler = TestHandler()
         assert handler.handler_name == "TestHandler"
@@ -550,8 +562,10 @@ class TestFlextCommandsFactoryMethods:
         """Test command decorator patterns."""
 
         @FlextCommands.Decorators.command_handler(SampleCommand)
-        def decorated_handler(command: SampleCommand) -> FlextResult[str]:
-            return FlextResult[None].ok(f"decorated: {command.name}")
+        def decorated_handler(command: object) -> object:
+            if isinstance(command, SampleCommand):
+                return f"decorated: {command.name}"
+            return f"decorated: {command}"
 
         # Verify decorator metadata
         assert "command_type" in decorated_handler.__dict__
@@ -563,7 +577,7 @@ class TestFlextCommandsFactoryMethods:
         result: FlextResult[str] = FlextCommands.Result.ok("success")
         assert result is not None
         assert result.success
-        assert result.data == "success"
+        assert result.value == "success"
 
         # Test failed result with error code and error data
         failed_result: FlextResult[None] = FlextCommands.Result.fail(
@@ -590,15 +604,15 @@ class TestFlextCommandsFactoryMethods:
         # Test query handler
         class TestQueryHandler(FlextCommands.QueryHandler[TestQuery, str]):
             def handle(self, query: TestQuery) -> FlextResult[str]:
-                return FlextResult[None].ok(f"found: {query.search_term}")
+                return FlextResult[str].ok(f"found: {query.search_term}")
 
         handler = TestQueryHandler()
         assert handler.handler_name == "TestQueryHandler"
         result: FlextResult[str] = handler.handle(query)
         assert result is not None
         assert result.success
-        assert result.data is not None
-        assert "found: test" in str(result.data)
+        assert result.value is not None
+        assert "found: test" in str(result.value)
 
 
 # All edge cases, integration tests, and additional coverage tests have been

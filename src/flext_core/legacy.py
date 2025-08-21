@@ -1,15 +1,15 @@
 """Legacy compatibility module for FLEXT Core.
 
 This module provides compatibility facades for APIs that have been
-modernized or refactored. Use this for maintaining compatibility during
+standardized or refactored. Use this for maintaining compatibility during
 ecosystem transitions without duplicating implementation code.
 
-All legacy imports should delegate to modern implementations in:
+All legacy imports should delegate to standard implementations in:
 - exceptions.py (for Pydantic-style error patterns)
 - models.py (for Pydantic BaseModel patterns)
 - result.py (for FlextResult patterns)
 - container.py (for dependency injection)
-- Other modern modules
+- Other standard modules
 
 DO NOT implement new functionality here - only compatibility facades.
 Following user feedback: "use o legacy.py para o que foi removido de api como fachada"
@@ -63,7 +63,7 @@ from flext_core.utilities import FlextUtilities
 from flext_core.validation import FlextValidators, flext_validate_non_empty_string
 
 # =============================================================================
-# LEGACY MODEL PATTERNS - Delegate to modern models.py
+# LEGACY MODEL PATTERNS - Delegate to standard models.py
 # =============================================================================
 
 # Legacy model aliases - maintain compatibility
@@ -72,7 +72,7 @@ from flext_core.validation import FlextValidators, flext_validate_non_empty_stri
 # LEGACY MIXIN ALIASES
 # =============================================================================
 
-# All legacy mixins delegate to modern mixins
+# All legacy mixins delegate to standard mixins
 
 # Legacy mixin aliases
 LegacyCompatibleCommandMixin = FlextCommandMixin
@@ -177,7 +177,7 @@ FlextImmutableModel = FlextValue
 FlextMutableModel = FlextEntity
 
 # =============================================================================
-# LEGACY CONFIGURATION PATTERNS - Delegate to modern config.py
+# LEGACY CONFIGURATION PATTERNS - Delegate to standard config.py
 # =============================================================================
 
 # Legacy config aliases
@@ -188,7 +188,7 @@ FlextConfiguration = FlextSettings
 _BaseConfigOps = FlextConfigOps
 
 # =============================================================================
-# LEGACY VALIDATION PATTERNS - Delegate to modern validation.py
+# LEGACY VALIDATION PATTERNS - Delegate to standard validation.py
 # =============================================================================
 
 # Legacy validator aliases
@@ -196,7 +196,7 @@ FlextBaseValidators = FlextValidators
 FlextValidationUtils = FlextValidators
 
 # =============================================================================
-# LEGACY UTILITY PATTERNS - Delegate to modern utilities.py
+# LEGACY UTILITY PATTERNS - Delegate to standard utilities.py
 # =============================================================================
 
 # Legacy utility aliases
@@ -204,7 +204,7 @@ FlextBaseUtilities = FlextUtilities
 FlextHelpers = FlextUtilities
 
 # =============================================================================
-# LEGACY COMPATIBILITY EXPORTS - Delegate to modern implementations
+# LEGACY COMPATIBILITY EXPORTS - Delegate to standard implementations
 # =============================================================================
 
 # Legacy compatibility imports

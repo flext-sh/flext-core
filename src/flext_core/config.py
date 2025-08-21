@@ -32,13 +32,69 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from flext_core.models import FlextModel
 from flext_core.result import FlextResult
 
-# Constants for magic values
-MIN_PASSWORD_LENGTH_HIGH_SECURITY = 12
-MIN_PASSWORD_LENGTH_MEDIUM_SECURITY = 8
-MAX_PASSWORD_LENGTH = 64
-MAX_USERNAME_LENGTH = 32
-MIN_SECRET_KEY_LENGTH_STRONG = 64
-MIN_SECRET_KEY_LENGTH_ADEQUATE = 32
+# =============================================================================
+# CONFIGURATION DEFAULTS AND CONSTANTS
+# =============================================================================
+
+# Constants to avoid FBT (boolean trap) violations
+_VALIDATION_SUCCESS = True
+"""Centralized configuration defaults for all FLEXT core components.
+
+This section provides sensible defaults that work out-of-the-box while
+remaining customizable for different environments and use cases.
+"""
+
+
+class FlextSystemDefaults:
+    """Centralized system defaults for the FLEXT ecosystem."""
+
+    class Security:
+        """Security-related configuration defaults."""
+
+        MIN_PASSWORD_LENGTH_HIGH_SECURITY = 12
+        MIN_PASSWORD_LENGTH_MEDIUM_SECURITY = 8
+        MAX_PASSWORD_LENGTH = 64
+        MAX_USERNAME_LENGTH = 32
+        MIN_SECRET_KEY_LENGTH_STRONG = 64
+        MIN_SECRET_KEY_LENGTH_ADEQUATE = 32
+
+    class Network:
+        """Network and service defaults."""
+
+        TIMEOUT = 30
+        RETRIES = 3
+        CONNECTION_TIMEOUT = 10
+
+    class Pagination:
+        """Pagination defaults."""
+
+        PAGE_SIZE = 100
+        MAX_PAGE_SIZE = 1000
+
+    class Logging:
+        """Logging configuration defaults."""
+
+        LOG_LEVEL = "INFO"
+
+    class Environment:
+        """Environment defaults."""
+
+        DEFAULT_ENV = "development"
+
+
+# Backward compatibility constants (used throughout the codebase)
+MIN_PASSWORD_LENGTH_HIGH_SECURITY = (
+    FlextSystemDefaults.Security.MIN_PASSWORD_LENGTH_HIGH_SECURITY
+)
+MIN_PASSWORD_LENGTH_MEDIUM_SECURITY = (
+    FlextSystemDefaults.Security.MIN_PASSWORD_LENGTH_MEDIUM_SECURITY
+)
+MAX_PASSWORD_LENGTH = FlextSystemDefaults.Security.MAX_PASSWORD_LENGTH
+MAX_USERNAME_LENGTH = FlextSystemDefaults.Security.MAX_USERNAME_LENGTH
+MIN_SECRET_KEY_LENGTH_STRONG = FlextSystemDefaults.Security.MIN_SECRET_KEY_LENGTH_STRONG
+MIN_SECRET_KEY_LENGTH_ADEQUATE = (
+    FlextSystemDefaults.Security.MIN_SECRET_KEY_LENGTH_ADEQUATE
+)
 
 
 class FlextSettings(BaseSettings):
@@ -229,8 +285,9 @@ class FlextConfig(FlextModel):
             if field in extra_data and extra_data[field] is None
         }
         if critical_none_fields:
+            fields_str = ", ".join(sorted(critical_none_fields))
             return FlextResult[None].fail(
-                f"Config validation failed for {', '.join(sorted(critical_none_fields))}",
+                f"Config validation failed for {fields_str}",
             )
 
         return FlextResult[None].ok(None)
@@ -341,8 +398,8 @@ class FlextConfig(FlextModel):
                     file_result.error or "Failed to load file"
                 )
 
-            # file_result.data is typed as dict[str, object] on success
-            data = file_result.data
+            # file_result.value is typed as dict[str, object] on success
+            data = file_result.value
             # safe_load_json_file already ensures data is dict[str, object] on success
 
             # Check for required keys if specified
@@ -435,7 +492,7 @@ class FlextConfig(FlextModel):
 
             # Get value from result or use default
             if env_result.is_success:
-                value: str = env_result.unwrap()
+                value: str = env_result.value
             else:
                 value = str(default) if default is not None else ""
             if value == "" and default is not None:
@@ -448,8 +505,8 @@ class FlextConfig(FlextModel):
             # Type-specific validation using helper method
             result = cls._validate_type_value(value=value, validate_type=validate_type)
             if result.success:
-                # result.data may be of various types; coerce to str for env API
-                return FlextResult[str].ok(str(result.unwrap()))
+                # result.value may be of various types; coerce to str for env API
+                return FlextResult[str].ok(str(result.value))
             return FlextResult[str].fail(result.error or "Type validation failed")
         except Exception as e:
             return FlextResult[str].fail(f"Failed to get env with validation: {e}")
@@ -521,7 +578,7 @@ class FlextConfig(FlextModel):
                 result = validator(value)
                 if not result:
                     return FlextResult[bool].fail(error_message)
-                return FlextResult[bool].ok(True)  # noqa: FBT003
+                return FlextResult[bool].ok(_VALIDATION_SUCCESS)
             except Exception as e:
                 return FlextResult[bool].fail(f"Validation error: {e}")
         except Exception as e:
@@ -1305,7 +1362,7 @@ class FlextConfigFactory:
                     file_data_result.error or "Failed to load file"
                 )
 
-            config_data = file_data_result.data
+            config_data = file_data_result.value
 
             # Validate required keys if specified
             if required_keys:
@@ -1341,7 +1398,7 @@ class FlextConfigFactory:
                 )
 
             config_class = cls._config_registry[config_type]
-            instance = config_class.model_validate(file_data_result.data)
+            instance = config_class.model_validate(file_data_result.value)
             validation_result = instance.validate_business_rules()
             if validation_result.is_failure:
                 return FlextResult[FlextModel].fail(
@@ -1414,11 +1471,11 @@ class FlextConfigFactory:
                 else:
                     continue
 
-                if result.is_success and result.data:
+                if result.is_success and result.value:
                     # Merge with existing config
-                    merge_result = merge_configs(final_config, result.data)
-                    if merge_result.is_success and merge_result.data:
-                        final_config = merge_result.data
+                    merge_result = merge_configs(final_config, result.value)
+                    if merge_result.is_success and merge_result.value:
+                        final_config = merge_result.value
 
             return FlextResult[dict[str, object]].ok(final_config)
         except Exception as e:
@@ -1443,8 +1500,6 @@ class FlextConfigFactory:
     @staticmethod
     def _load_from_file(file_path: str | Path) -> FlextResult[dict[str, object]]:
         """Load configuration from JSON file."""
-        import json  # noqa: PLC0415
-
         path = Path(file_path)
         if not path.exists():
             return FlextResult[dict[str, object]].fail("Configuration file not found")
@@ -1719,6 +1774,39 @@ class FlextConfigDefaults:
                 f"Failed to get default config: {e}"
             )
 
+    @staticmethod
+    def merge_configs(*configs: object) -> FlextResult[dict[str, object]]:
+        """Merge multiple configurations with later configs taking precedence."""
+        try:
+            result: dict[str, object] = {}
+            for config in configs:
+                if not isinstance(config, dict):
+                    return FlextResult[dict[str, object]].fail(
+                        "Failed to merge configs: All configs must be dictionaries"
+                    )
+                result.update(config)
+            return FlextResult[dict[str, object]].ok(result)
+        except Exception as e:
+            return FlextResult[dict[str, object]].fail(f"Failed to merge configs: {e}")
+
+    @staticmethod
+    def filter_config_keys(
+        config: object, allowed_keys: list[str]
+    ) -> FlextResult[dict[str, object]]:
+        """Filter configuration to only include allowed keys."""
+        try:
+            if not isinstance(config, dict):
+                return FlextResult[dict[str, object]].fail(
+                    "Configuration must be a dictionary"
+                )
+
+            filtered = {k: v for k, v in config.items() if k in allowed_keys}
+            return FlextResult[dict[str, object]].ok(filtered)
+        except Exception as e:
+            return FlextResult[dict[str, object]].fail(
+                f"Failed to filter config keys: {e}"
+            )
+
 
 class FlextConfigValidation:
     """Configuration validation utilities."""
@@ -1727,53 +1815,61 @@ class FlextConfigValidation:
     def validate_config_value(
         value: object,
         validator: object,
-        key: str = "field",
+        error_message: str = "Validation failed",
     ) -> FlextResult[bool]:
         """Validate a configuration value."""
         try:
-            if callable(validator):
-                result = validator(value)
-                return FlextResult[bool].ok(bool(result))
-            validation_success = True
-            return FlextResult[bool].ok(validation_success)
+            if not callable(validator):
+                return FlextResult[bool].fail("Validator must be callable")
+
+            result = validator(value)
+            if result:
+                return FlextResult[bool].ok(_VALIDATION_SUCCESS)
+            return FlextResult[bool].fail(error_message)
         except Exception as e:
-            return FlextResult[bool].fail(f"Validation failed for {key}: {e}")
+            return FlextResult[bool].fail(f"Validation failed: {e}")
 
     @staticmethod
     def validate_config_type(
         value: object,
-        expected_type: type,
-        key_name: str = "field",
+        expected_type: type[object],
+        key_name: str = "value",
     ) -> FlextResult[bool]:
         """Validate configuration value type."""
         try:
             if isinstance(value, expected_type):
-                return FlextResult[bool].ok(True)  # noqa: FBT003
+                return FlextResult[bool].ok(_VALIDATION_SUCCESS)
             expected_name = expected_type.__name__
             actual_name = type(value).__name__
             return FlextResult[bool].fail(
-                f"Expected {expected_name} for {key_name}, got {actual_name}",
+                f"Configuration '{key_name}' must be {expected_name}, got {actual_name}",
             )
         except Exception as e:
-            return FlextResult[bool].fail(f"Type validation failed for {key_name}: {e}")
+            return FlextResult[bool].fail(
+                f"Type validation error for '{key_name}': {e}"
+            )
 
     @staticmethod
     def validate_config_range(
         value: float,
-        min_val: float | None = None,
-        max_val: float | None = None,
-        key_name: str = "field",
+        min_value: float | None = None,
+        max_value: float | None = None,
+        key_name: str = "value",
     ) -> FlextResult[bool]:
         """Validate numeric configuration value range."""
         try:
-            if min_val is not None and value < min_val:
-                return FlextResult[bool].fail(f"{key_name} must be at least {min_val}")
-            if max_val is not None and value > max_val:
-                return FlextResult[bool].fail(f"{key_name} must be at most {max_val}")
-            return FlextResult[bool].ok(True)  # noqa: FBT003
+            if min_value is not None and value < min_value:
+                return FlextResult[bool].fail(
+                    f"Configuration '{key_name}' must be >= {min_value}, got {value}"
+                )
+            if max_value is not None and value > max_value:
+                return FlextResult[bool].fail(
+                    f"Configuration '{key_name}' must be <= {max_value}, got {value}"
+                )
+            return FlextResult[bool].ok(_VALIDATION_SUCCESS)
         except Exception as e:
             return FlextResult[bool].fail(
-                f"Range validation failed for {key_name}: {e}"
+                f"Range validation error for '{key_name}': {e}"
             )
 
     @staticmethod
@@ -1831,11 +1927,12 @@ FlextAbstractConfig = FlextConfig
 
 
 # Constants
-DEFAULT_TIMEOUT = 30
-DEFAULT_RETRIES = 3
-DEFAULT_PAGE_SIZE = 100
-DEFAULT_LOG_LEVEL = "INFO"
-DEFAULT_ENVIRONMENT = "development"
+# Export centralized defaults for easy import throughout the ecosystem
+DEFAULT_TIMEOUT = FlextSystemDefaults.Network.TIMEOUT
+DEFAULT_RETRIES = FlextSystemDefaults.Network.RETRIES
+DEFAULT_PAGE_SIZE = FlextSystemDefaults.Pagination.PAGE_SIZE
+DEFAULT_LOG_LEVEL = FlextSystemDefaults.Logging.LOG_LEVEL
+DEFAULT_ENVIRONMENT = FlextSystemDefaults.Environment.DEFAULT_ENV
 CONFIG_VALIDATION_MESSAGES = {
     "required": "Field is required",
     "invalid": "Invalid value",

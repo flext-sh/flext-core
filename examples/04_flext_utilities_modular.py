@@ -14,9 +14,10 @@ Key Patterns:
 from collections.abc import Callable
 from typing import Any, cast
 
-from flext_core import FlextResult, FlextUtilities
+# use .shared_domain with dot to access local module
+from shared_domain import SharedDomainFactory, User
 
-from .shared_domain import SharedDomainFactory, User
+from flext_core import FlextResult, FlextUtilities
 
 # =============================================================================
 # ID GENERATION - Simple and clean
@@ -87,7 +88,7 @@ class ValidationHelpers:
             .filter(lambda d: "name" in d, "Name is required")
             .filter(lambda d: "email" in d, "Email is required")
             .filter(lambda d: "age" in d, "Age is required")
-            .flat_map(lambda d: ValidationHelpers._validate_all_fields(d))
+            .flat_map(ValidationHelpers._validate_all_fields)
         )
 
     @staticmethod
@@ -108,11 +109,13 @@ class ValidationHelpers:
         age_result = ValidationHelpers.validate_age(age_value)
 
         if all(r.success for r in [name_result, email_result, age_result]):
-            return FlextResult[dict[str, object]].ok({
-                "name": name_result.unwrap(),
-                "email": email_result.unwrap(),
-                "age": age_result.unwrap(),
-            })
+            return FlextResult[dict[str, object]].ok(
+                {
+                    "name": name_result.value,
+                    "email": email_result.value,
+                    "age": age_result.value,
+                }
+            )
 
         errors = [
             r.error or "Unknown error"
@@ -148,20 +151,22 @@ class BatchProcessor:
             try:
                 result = processor_fn(item)
                 if result.success:
-                    results.append(result.unwrap())
+                    results.append(result.value)
                 else:
                     errors.append(f"Item {i}: {result.error}")
             except Exception as e:
                 errors.append(f"Item {i}: {e!s}")
 
-        return FlextResult[dict[str, Any]].ok({
-            "total": len(items),
-            "successful": len(results),
-            "failed": len(errors),
-            "results": results,
-            "errors": errors,
-            "success_rate": (len(results) / len(items)) * 100 if items else 0,
-        })
+        return FlextResult[dict[str, Any]].ok(
+            {
+                "total": len(items),
+                "successful": len(results),
+                "failed": len(errors),
+                "results": results,
+                "errors": errors,
+                "success_rate": (len(results) / len(items)) * 100 if items else 0,
+            }
+        )
 
 
 # =============================================================================
@@ -189,14 +194,14 @@ class UserService:
                     int(data["age"]) if isinstance(data["age"], int) else 0,
                 )
             )
-            .flat_map(lambda user: self._assign_id_and_save(user))
+            .flat_map(self._assign_id_and_save)
         )
 
     def _assign_id_and_save(self, user: User) -> FlextResult[User]:
         """Assign ID and save user."""
         user_id_result = self.id_generator.generate_user_id()
         if user_id_result.success:
-            user.id = user_id_result.unwrap()
+            user.id = user_id_result.value
             self.users[user.id] = user
             return FlextResult[User].ok(user)
         return FlextResult[User].fail(
@@ -212,12 +217,14 @@ class UserService:
         corr_result = self.id_generator.generate_correlation_id()
 
         if session_result.success and corr_result.success:
-            return FlextResult[dict[str, Any]].ok({
-                "user_id": user_id,
-                "session_token": session_result.unwrap(),
-                "correlation_id": corr_result.unwrap(),
-                "created_at": "2024-01-01T00:00:00Z",
-            })
+            return FlextResult[dict[str, Any]].ok(
+                {
+                    "user_id": user_id,
+                    "session_token": session_result.value,
+                    "correlation_id": corr_result.value,
+                    "created_at": "2024-01-01T00:00:00Z",
+                }
+            )
 
         return FlextResult[dict[str, Any]].fail("Failed to generate session data")
 
@@ -245,13 +252,13 @@ def demo_id_generation() -> None:
     correlation_id = generator.generate_correlation_id()
 
     if user_id.success:
-        print(f"✅ User ID: {user_id.unwrap()}")
+        print(f"✅ User ID: {user_id.value}")
 
     if session_token.success:
-        print(f"✅ Session token: {session_token.unwrap()}")
+        print(f"✅ Session token: {session_token.value}")
 
     if correlation_id.success:
-        print(f"✅ Correlation ID: {correlation_id.unwrap()}")
+        print(f"✅ Correlation ID: {correlation_id.value}")
 
 
 def demo_validation_helpers() -> None:
@@ -266,13 +273,13 @@ def demo_validation_helpers() -> None:
     name_result = validator.validate_name("Alice Johnson")
 
     if email_result.success:
-        print(f"✅ Valid email: {email_result.unwrap()}")
+        print(f"✅ Valid email: {email_result.value}")
 
     if age_result.success:
-        print(f"✅ Valid age: {age_result.unwrap()}")
+        print(f"✅ Valid age: {age_result.value}")
 
     if name_result.success:
-        print(f"✅ Valid name: {name_result.unwrap()}")
+        print(f"✅ Valid name: {name_result.value}")
 
     # Test complete user data validation
     user_data = {"name": "Bob Smith", "email": "bob@example.com", "age": 30}
@@ -281,7 +288,7 @@ def demo_validation_helpers() -> None:
         cast("dict[str, object]", user_data)
     )
     if validation_result.success:
-        validated = validation_result.unwrap()
+        validated = validation_result.value
         print(f"✅ User data validated: {validated['name']}")
 
 
@@ -301,7 +308,7 @@ def demo_batch_processing() -> None:
 
     batch_result = service.batch_create_users(user_data_list)
     if batch_result.success:
-        result = batch_result.unwrap()
+        result = batch_result.value
         print(
             f"✅ Batch processing: {result['successful']}/{result['total']} successful"
         )
@@ -322,13 +329,13 @@ def demo_user_service() -> None:
     user_result = service.create_user(cast("dict[str, object]", user_data))
 
     if user_result.success:
-        user = user_result.unwrap()
+        user = user_result.value
         print(f"✅ User created: {user.name} (ID: {user.id})")
 
         # Create session for user
         session_result = service.create_user_session(user.id.root)
         if session_result.success:
-            session = session_result.unwrap()
+            session = session_result.value
             print(f"✅ Session created: {session['session_token'][:20]}...")
 
 
@@ -340,7 +347,7 @@ def demo_functional_composition() -> None:
     result = (
         FlextResult[dict[str, Any]]
         .ok({"name": "Grace Lee", "email": "grace@example.com", "age": 33})
-        .flat_map(lambda data: ValidationHelpers.validate_user_data(data))
+        .flat_map(ValidationHelpers.validate_user_data)
         .flat_map(
             lambda data: SharedDomainFactory.create_user(
                 str(data["name"]),
@@ -352,7 +359,7 @@ def demo_functional_composition() -> None:
     )
 
     if result.success:
-        response = result.unwrap()
+        response = result.value
         user = response["user"]
         print(f"✅ Functional composition: {user.name} {response['status']}")
 

@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
+import pytest
+
 from flext_core import FlextResult, FlextValidation
 
 # =============================================================================
@@ -211,7 +213,7 @@ class TestFlextResultValidation:
 
         if not result.success:
             raise AssertionError(f"Expected True, got {result.success}")
-        assert result.data is True
+        assert result.value is True
 
     def test_failure_result_creation(self) -> None:
         """Test creating failed validation result."""
@@ -221,7 +223,11 @@ class TestFlextResultValidation:
             raise AssertionError(f"Expected False, got {result.success}")
         if not (result.is_failure):
             raise AssertionError(f"Expected True, got {result.is_failure}")
-        assert result.data is None
+        # Cannot access .data on failed result - should raise TypeError
+        with pytest.raises(
+            TypeError, match="Attempted to access value on failed result"
+        ):
+            _ = result.value
         if result.error != "Validation failed":
             raise AssertionError(f"Expected {'Validation failed'}, got {result.error}")
 
@@ -239,8 +245,8 @@ class TestFlextResultValidation:
         # Test successful validation
         result = validate_email("test@example.com")
         assert result.success
-        if result.data != "test@example.com":
-            raise AssertionError(f"Expected {'test@example.com'}, got {result.data}")
+        if result.value != "test@example.com":
+            raise AssertionError(f"Expected {'test@example.com'}, got {result.value}")
 
         # Test validation failure - empty
         result = validate_email("")
@@ -309,8 +315,8 @@ class TestValidationIntegration:
         }
         result = validate_func(valid_data)
         assert result.success
-        if result.data != valid_data:
-            raise AssertionError(f"Expected {valid_data}, got {result.data}")
+        if result.value != valid_data:
+            raise AssertionError(f"Expected {valid_data}, got {result.value}")
 
     def _test_invalid_user_data(
         self,
@@ -318,7 +324,7 @@ class TestValidationIntegration:
     ) -> None:
         """Test validation with various invalid user data scenarios."""
         # Test invalid data - not a dict
-        result = validate_func("not a dict")  # type: ignore[arg-type]
+        result = validate_func("not a dict")
         assert result.is_failure
         assert result.error is not None
         if "dictionary" not in (result.error or ""):
@@ -382,7 +388,9 @@ class TestValidationIntegration:
         def validate_step2(value: str) -> FlextResult[str]:
             """Second validation step."""
             if len(value) < 3:
-                return FlextResult[str].fail("Step 2: Value must be at least 3 characters")
+                return FlextResult[str].fail(
+                    "Step 2: Value must be at least 3 characters"
+                )
             return FlextResult[str].ok(value)
 
         def validate_step3(value: str) -> FlextResult[str]:
@@ -399,14 +407,14 @@ class TestValidationIntegration:
                 return result
 
             # Step 2
-            assert result.data is not None
-            result = validate_step2(result.data)
+            assert result.value is not None
+            result = validate_step2(result.value)
             if result.is_failure:
                 return result
 
             # Step 3
-            assert result.data is not None
-            return validate_step3(result.data)
+            assert result.value is not None
+            return validate_step3(result.value)
 
         return validate_all_steps
 
@@ -417,8 +425,8 @@ class TestValidationIntegration:
         """Test successful validation scenario."""
         result = validation_chain("test123")
         assert result.success
-        if result.data != "TEST123":
-            raise AssertionError(f"Expected {'TEST123'}, got {result.data}")
+        if result.value != "TEST123":
+            raise AssertionError(f"Expected {'TEST123'}, got {result.value}")
 
     def _test_validation_failures(
         self,

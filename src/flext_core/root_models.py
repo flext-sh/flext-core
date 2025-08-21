@@ -13,9 +13,8 @@ Key Benefits:
 
 from __future__ import annotations
 
-from collections.abc import Iterator
 from datetime import UTC, datetime
-from typing import cast
+from typing import cast, override
 
 from pydantic import Field, RootModel, field_validator
 
@@ -43,8 +42,13 @@ class FlextEntityId(RootModel[str]):
 
     @field_validator("root", mode="before")
     @classmethod
-    def validate_id(cls, v: str) -> str:
+    def validate_id(cls, v: object) -> str:
         """Validate and clean entity ID."""
+        # Convert to string if needed
+        if isinstance(v, FlextEntityId):
+            return v.root
+        if not isinstance(v, str):
+            v = str(v)
         # Strip whitespace
         v = v.strip()
         if not v:
@@ -52,14 +56,17 @@ class FlextEntityId(RootModel[str]):
             raise FlextValidationError(msg)
         return v
 
+    @override
     def __str__(self) -> str:
         """Return string representation."""
         return self.root
 
+    @override
     def __hash__(self) -> int:
         """Return hash value."""
         return hash(self.root)
 
+    @override
     def __eq__(self, other: object) -> bool:
         """Compare with string or other FlextEntityId."""
         if isinstance(other, str):
@@ -73,6 +80,27 @@ class FlextVersion(RootModel[int]):
     """Entity version with validation."""
 
     root: int = Field(ge=1, description="Version number starting from 1")
+
+    @field_validator("root", mode="before")
+    @classmethod
+    def validate_version(cls, v: object) -> int:
+        """Validate and convert version number."""
+        # Convert to int if needed
+        if isinstance(v, FlextVersion):
+            return v.root
+        if isinstance(v, str):
+            try:
+                v = int(v)
+            except ValueError as e:
+                msg = f"Invalid version number: {v}"
+                raise FlextValidationError(msg) from e
+        if not isinstance(v, int):
+            msg = f"Version must be an integer, got {type(v).__name__}"
+            raise FlextValidationError(msg)
+        if v < 1:
+            msg = "Version must be >= 1"
+            raise FlextValidationError(msg)
+        return v
 
     def __int__(self) -> int:
         """Return integer representation."""
@@ -102,6 +130,7 @@ class FlextVersion(RootModel[int]):
             return FlextVersion(root=result)
         return NotImplemented
 
+    @override
     def __eq__(self, other: object) -> bool:
         """Equality comparison with int or FlextVersion."""
         if isinstance(other, int):
@@ -110,6 +139,7 @@ class FlextVersion(RootModel[int]):
             return self.root == other.root
         return False
 
+    @override
     def __ne__(self, other: object) -> bool:
         """Inequality comparison."""
         return not self.__eq__(other)
@@ -146,6 +176,7 @@ class FlextVersion(RootModel[int]):
             return self.root >= other.root
         return NotImplemented
 
+    @override
     def __hash__(self) -> int:
         """Hash for dictionary usage."""
         return hash(self.root)
@@ -160,6 +191,25 @@ class FlextTimestamp(RootModel[datetime]):
 
     root: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
+    @field_validator("root", mode="before")
+    @classmethod
+    def validate_timestamp(cls, v: object) -> datetime:
+        """Validate and convert timestamp."""
+        # Convert to datetime if needed
+        if isinstance(v, FlextTimestamp):
+            return v.root
+        if isinstance(v, datetime):
+            return v
+        if isinstance(v, str):
+            try:
+                return datetime.fromisoformat(v)
+            except ValueError as e:
+                msg = f"Invalid timestamp format: {v}"
+                raise FlextValidationError(msg) from e
+        msg = f"Timestamp must be datetime or ISO string, got {type(v).__name__}"
+        raise FlextValidationError(msg)
+
+    @override
     def __str__(self) -> str:
         """Return ISO format timestamp string."""
         return self.root.isoformat()
@@ -180,6 +230,7 @@ class FlextTimestamp(RootModel[datetime]):
         """Greater than or equal comparison."""
         return self.root >= other.root
 
+    @override
     def __eq__(self, other: object) -> bool:
         """Equality comparison."""
         if isinstance(other, FlextTimestamp):
@@ -188,6 +239,7 @@ class FlextTimestamp(RootModel[datetime]):
             return self.root == other
         return False
 
+    @override
     def __hash__(self) -> int:
         """Hash for dictionary usage."""
         return hash(self.root)
@@ -299,15 +351,12 @@ class FlextEventList(RootModel[list[dict[str, object]]]):
                 )
                 if event_result.is_success:
                     # Return the FlextEvent object directly
-                    return event_result.unwrap()
+                    return event_result.value
 
         return event_dict
 
-    def __iter__(self) -> Iterator[tuple[str, object]]:  # type: ignore[override]
-        """Iterate over events - compatibility override."""
-        # Convert dict iteration to tuple pairs for compatibility
-        for event_dict in self.root:
-            yield from event_dict.items()
+    # Removed custom __iter__ method to use RootModel's default implementation
+    # which returns the correct Generator type
 
 
 # =============================================================================
@@ -320,6 +369,7 @@ class FlextHost(RootModel[str]):
 
     root: str = Field(min_length=1, description="Non-empty host")
 
+    @override
     def __str__(self) -> str:
         """Return string representation."""
         return self.root
@@ -340,6 +390,7 @@ class FlextConnectionString(RootModel[str]):
 
     root: str = Field(min_length=1, description="Non-empty connection string")
 
+    @override
     def __str__(self) -> str:
         """Return string representation."""
         return self.root
@@ -358,6 +409,7 @@ class FlextEmailAddress(RootModel[str]):
         description="Valid email address",
     )
 
+    @override
     def __str__(self) -> str:
         """Return string representation."""
         return self.root
@@ -378,6 +430,7 @@ class FlextServiceName(RootModel[str]):
         description="Valid service name (alphanumeric, underscore, hyphen)",
     )
 
+    @override
     def __str__(self) -> str:
         """Return string representation."""
         return self.root
@@ -412,6 +465,7 @@ class FlextErrorCode(RootModel[str]):
         description="Error code in UPPER_CASE format",
     )
 
+    @override
     def __str__(self) -> str:
         """Return string representation."""
         return self.root
@@ -422,6 +476,7 @@ class FlextErrorMessage(RootModel[str]):
 
     root: str = Field(min_length=1, max_length=512, description="Error message")
 
+    @override
     def __str__(self) -> str:
         """Return string representation."""
         return self.root

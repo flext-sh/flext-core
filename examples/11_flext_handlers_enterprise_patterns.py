@@ -232,7 +232,7 @@ class CreateUserHandler(FlextBaseHandler):
 
     def handle(self, request: object) -> FlextResult[object]:
         """Create new user."""
-        if not isinstance(command, CreateUserCommand):
+        if not isinstance(request, CreateUserCommand):
             return FlextResult[object].fail("Invalid command type")
 
         command = cast("CreateUserCommand", request)
@@ -299,7 +299,7 @@ class UpdateUserHandler(FlextBaseHandler):
 
     def handle(self, request: object) -> FlextResult[object]:
         """Update user information."""
-        if not isinstance(command, UpdateUserCommand):
+        if not isinstance(request, UpdateUserCommand):
             return FlextResult[object].fail("Invalid command type")
 
         command = cast("UpdateUserCommand", request)
@@ -378,7 +378,7 @@ class GetUserHandler(FlextBaseHandler):
 
     def handle(self, request: object) -> FlextResult[object]:
         """Retrieve user by ID."""
-        if not isinstance(query, GetUserQuery):
+        if not isinstance(request, GetUserQuery):
             return FlextResult[object].fail("Invalid query type")
 
         query = cast("GetUserQuery", request)
@@ -425,7 +425,7 @@ class ListUsersHandler(FlextBaseHandler):
 
     def handle(self, request: object) -> FlextResult[object]:
         """List users with filtering and pagination."""
-        if not isinstance(query, ListUsersQuery):
+        if not isinstance(request, ListUsersQuery):
             return FlextResult[object].fail("Invalid query type")
 
         query = cast("ListUsersQuery", request)
@@ -619,7 +619,7 @@ def _test_create_user_handler(create_handler: CreateUserHandler) -> None:
     valid_command = CreateUserCommand(name="John Doe", email="john@example.com")
     result = create_handler.handle(valid_command)
     if result.success:
-        user_data = result.data
+        user_data = result.value
         if user_data is None:
             return
         if isinstance(user_data, User):
@@ -628,7 +628,7 @@ def _test_create_user_handler(create_handler: CreateUserHandler) -> None:
     duplicate_command = CreateUserCommand(name="Jane Doe", email="john@example.com")
     result = create_handler.handle(duplicate_command)
     if result.success:
-        user_data = result.data
+        user_data = result.value
         if user_data is None:
             return
         if isinstance(user_data, User):
@@ -645,7 +645,7 @@ def _test_update_user_handler(create_handler: CreateUserHandler) -> UpdateUserHa
     )
     result = update_handler.handle(update_command)
     if result.success:
-        updated_user_data = result.data
+        updated_user_data = result.value
         if updated_user_data is None:
             return update_handler
         if isinstance(updated_user_data, User):
@@ -699,7 +699,7 @@ def _single_user_query(get_handler: GetUserHandler) -> None:
     query = GetUserQuery(user_id="user_1", include_inactive=False)
     result = get_handler.handle(query)
     if result.success:
-        user_data = result.data
+        user_data = result.value
         if user_data is None:
             return
         if isinstance(user_data, User):
@@ -710,7 +710,7 @@ def _inactive_user_without_permission(get_handler: GetUserHandler) -> None:
     inactive_query = GetUserQuery(user_id="user_3", include_inactive=False)
     result = get_handler.handle(inactive_query)
     if result.success:
-        user_data = result.data
+        user_data = result.value
         if user_data is None:
             return
         if isinstance(user_data, User):
@@ -721,7 +721,7 @@ def _inactive_user_with_permission(get_handler: GetUserHandler) -> None:
     inactive_query_allowed = GetUserQuery(user_id="user_3", include_inactive=True)
     result = get_handler.handle(inactive_query_allowed)
     if result.success:
-        user_data = result.data
+        user_data = result.value
         if user_data is None:
             return
         if isinstance(user_data, User):
@@ -732,7 +732,7 @@ def _list_active_users(list_handler: ListUsersHandler) -> None:
     list_query = ListUsersQuery(active_only=True, limit=5, offset=0)
     result = list_handler.handle(list_query)
     if result.success:
-        users_data = result.data
+        users_data = result.value
         if users_data is None:
             return
         if isinstance(users_data, list):
@@ -745,7 +745,7 @@ def _list_all_users(list_handler: ListUsersHandler) -> None:
     all_query = ListUsersQuery(active_only=False, limit=10, offset=0)
     result = list_handler.handle(all_query)
     if result.success:
-        users_data = result.data
+        users_data = result.value
         if users_data is None:
             return
         if isinstance(users_data, list):
@@ -880,12 +880,12 @@ def _process_with_registry(registry: FlextHandlerRegistry) -> None:
     command = CreateUserCommand(name="Registry User", email="registry@example.com")
     handler_result = registry.get_handler_for_type(CreateUserCommand)
     if handler_result.success:
-        handler = handler_result.data
+        handler = handler_result.value
         if handler is None:
             return
         command_result = handler.handle(command)
         if command_result.success:
-            user_data = command_result.data
+            user_data = command_result.value
             if user_data is None:
                 return
             if isinstance(user_data, User):
@@ -915,11 +915,11 @@ def _create_handler_chain() -> tuple[FlextHandlerChain, dict[str, User], str | N
 
     user_id = None
     if result.success:
-        user = result.data
+        user = result.value
         if user is not None and hasattr(user, "name"):
             pass
-        if hasattr(result.data, "id"):
-            user_id = result.data.id
+        if hasattr(result.value, "id"):
+            user_id = result.value.id
 
     return chain, user_storage, user_id
 
@@ -933,7 +933,7 @@ def _process_get_query(chain: FlextHandlerChain, user_id: str | None) -> None:
     result = chain.process(get_query)
 
     if result.success:
-        user = result.data
+        user = result.value
         if hasattr(user, "name"):
             pass
 
@@ -950,7 +950,7 @@ def _process_update_command(chain: FlextHandlerChain, user_id: str | None) -> No
     result = chain.process(update_command)
 
     if result.success:
-        user_data = result.data
+        user_data = result.value
         if isinstance(user_data, User):
             pass
 

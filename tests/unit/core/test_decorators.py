@@ -66,8 +66,8 @@ class TestFlextDecorators:
 
         assert isinstance(result, FlextResult)
         assert result.success
-        if result.data != 5:
-            raise AssertionError(f"Expected {5}, got {result.data}")
+        if result.value != 5:
+            raise AssertionError(f"Expected {5}, got {result.value}")
 
     def test_safe_result_decorator_failure(self) -> None:
         """Test safe_result decorator with failing function."""
@@ -94,7 +94,7 @@ class TestFlextDecorators:
         result = void_function()
 
         assert isinstance(result, FlextResult)
-        # result.data is None is guaranteed by the decorator, no need to assert
+        # result.value is None is guaranteed by the decorator, no need to assert
 
     def test_validated_with_result_decorator_success(self) -> None:
         """Test validated_with_result decorator with valid data."""
@@ -107,8 +107,8 @@ class TestFlextDecorators:
 
         assert isinstance(result, FlextResult)
         assert result.success
-        if "Created user: Alice" not in (result.data or ""):
-            raise AssertionError(f"Expected {'Created user: Alice'} in {result.data}")
+        if "Created user: Alice" not in (result.value or ""):
+            raise AssertionError(f"Expected {'Created user: Alice'} in {result.value}")
 
     def test_validated_with_result_decorator_validation_failure(self) -> None:
         """Test validated_with_result decorator with invalid data."""
@@ -241,9 +241,9 @@ class TestFlextDecorators:
 
         assert isinstance(result, FlextResult)
         assert result.success
-        if "Complex operation for: Charlie" not in (result.data or ""):
+        if "Complex operation for: Charlie" not in (result.value or ""):
             raise AssertionError(
-                f"Expected {'Complex operation for: Charlie'} in {result.data}",
+                f"Expected {'Complex operation for: Charlie'} in {result.value}",
             )
 
     def test_complete_decorator_minimal(self) -> None:
@@ -274,8 +274,8 @@ class TestStandaloneDecorators:
         # flext_safe_call returns FlextResult
         assert isinstance(result, FlextResult)
         assert result.success
-        if result.data != 42:
-            raise AssertionError(f"Expected {42}, got {result.data}")
+        if result.value != 42:
+            raise AssertionError(f"Expected {42}, got {result.value}")
 
     def test_flext_safe_call_failure(self) -> None:
         """Test flext_safe_call with failing function."""
@@ -372,8 +372,8 @@ class TestDecoratorComposition:
 
         assert isinstance(result, FlextResult)
         assert result.success
-        if result.data != 30:
-            raise AssertionError(f"Expected {30}, got {result.data}")
+        if result.value != 30:
+            raise AssertionError(f"Expected {30}, got {result.value}")
 
     def test_decorator_with_validation_and_caching(self) -> None:
         """Test decorator combining validation and caching."""
@@ -833,9 +833,9 @@ class TestDecoratorCoverageImprovements:
     def test_immutability_decorators_coverage(self) -> None:
         """Test immutability decorator methods (lines 161, 276, 281)."""
         from flext_core import (  # noqa: PLC0415
+            FlextImmutabilityDecorators,  # noqa: PLC0415
             _BaseImmutabilityDecorators,
         )
-        from flext_core.decorators import FlextImmutabilityDecorators  # noqa: PLC0415
 
         def sample_function(x: int) -> int:
             return x * 2

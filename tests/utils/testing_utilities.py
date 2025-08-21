@@ -5,13 +5,12 @@ from __future__ import annotations
 import os
 from collections.abc import Callable
 from typing import ClassVar, Protocol, TypeVar, runtime_checkable
-from unittest.mock import MagicMock, Mock, patch
 
-from flext_core.constants import (
+from flext_core import (
     FlextConstants as _FlextConstants,  # local import to avoid cycles
+    FlextModel,
+    FlextResult,
 )
-from flext_core.models import FlextModel
-from flext_core.result import FlextResult
 
 T = TypeVar("T")
 
@@ -53,14 +52,14 @@ class ITestAssertion(Protocol):
 
 @runtime_checkable
 class ITestMocker(Protocol):
-    """Protocol for test mockers."""
+    """Protocol for test mockers - now supports functional implementations."""
 
-    def mock(self, spec: type | None = None) -> Mock:
-        """Create mock object."""
+    def create_functional_service(self, service_type: str, **config: object) -> object:
+        """Create functional service implementation."""
         ...
 
-    def patch(self, target: str) -> object:
-        """Create patch context manager."""
+    def create_test_context(self, **options: object) -> object:
+        """Create test context manager."""
         ...
 
 
@@ -114,7 +113,7 @@ class FlextTestUtilities:
         if not result.is_success:
             msg = f"Expected success but got failure: {result.error}"
             raise AssertionError(msg)
-        return result.unwrap()
+        return result.value
 
     @staticmethod
     def assert_result_failure(result: FlextResult[T]) -> str:
@@ -131,7 +130,7 @@ class FlextTestUtilities:
 
         """
         if not result.is_failure:
-            msg = f"Expected failure but got success: {result.unwrap()}"
+            msg = f"Expected failure but got success: {result.value}"
             raise AssertionError(msg)
         return result.error or "Unknown error"
 
@@ -409,135 +408,251 @@ class FlextTestAssertion:
 
 
 # =============================================================================
-# TEST MOCKER - Dependency Inversion Principle (DIP)
+# FUNCTIONAL TEST IMPLEMENTATIONS - Dependency Inversion Principle (DIP)
 # =============================================================================
 
 
-class FlextTestMocker:
-    """Mock object creation utilities.
+class FunctionalTestService:
+    """Functional test service for realistic testing behavior."""
 
-    Follows DIP by depending on Mock abstraction, not concrete implementations.
+    def __init__(self, service_type: str = "generic", **config: object) -> None:
+        """Initialize functional test service."""
+        self.service_type = service_type
+        self.config = config
+        self.call_history: list[tuple[str, tuple[object, ...], dict[str, object]]] = []
+        self.return_values: dict[str, object] = {}
+        self.side_effects: dict[str, list[object]] = {}
+        self.should_fail: dict[str, bool] = {}
+        self.failure_messages: dict[str, str] = {}
+
+    def configure_method(
+        self,
+        method_name: str,
+        return_value: object = None,
+        side_effect: list[object] | None = None,
+        *,
+        should_fail: bool = False,
+        failure_message: str = "Method failed",
+    ) -> None:
+        """Configure method behavior for testing.
+
+        Args:
+            method_name: Name of the method to configure.
+            return_value: Value to return when method is called.
+            side_effect: List of values to return on successive calls.
+            should_fail: Whether the method should fail.
+            failure_message: Message to use when method fails.
+
+        """
+        if return_value is not None:
+            self.return_values[method_name] = return_value
+        if side_effect is not None:
+            self.side_effects[method_name] = side_effect
+        self.should_fail[method_name] = should_fail
+        self.failure_messages[method_name] = failure_message
+
+    def call_method(self, method_name: str, *args: object, **kwargs: object) -> object:
+        """Call a method with functional behavior tracking.
+
+        Args:
+            method_name: Name of the method to call.
+            *args: Positional arguments to pass to the method.
+            **kwargs: Keyword arguments to pass to the method.
+
+        Returns:
+            The configured return value or default result.
+
+        """
+        # Record the call
+        self.call_history.append((method_name, args, kwargs))
+
+        # Check if should fail
+        if (
+            self.should_fail.get(method_name, False)
+            and method_name in self.failure_messages
+        ):
+            if "Result" in str(type(self.return_values.get(method_name, FlextResult))):
+                return FlextResult[object].fail(self.failure_messages[method_name])
+            raise ValueError(self.failure_messages[method_name])
+
+        # Handle side effects
+        if self.side_effects.get(method_name):
+            return self.side_effects[method_name].pop(0)
+
+        # Return configured value or default
+        return self.return_values.get(method_name, f"{method_name}_result")
+
+    def get_call_count(self, method_name: str | None = None) -> int:
+        """Get number of times a method was called."""
+        if method_name is None:
+            return len(self.call_history)
+        return sum(1 for call in self.call_history if call[0] == method_name)
+
+    def was_called_with(
+        self, method_name: str, *args: object, **kwargs: object
+    ) -> bool:
+        """Check if method was called with specific arguments.
+
+        Args:
+            method_name: Name of the method to check.
+            *args: Positional arguments to match.
+            **kwargs: Keyword arguments to match.
+
+        Returns:
+            True if method was called with these arguments.
+
+        """
+        for call in self.call_history:
+            if call[0] == method_name and call[1] == args and call[2] == kwargs:
+                return True
+        return False
+
+    def get_calls_for_method(
+        self, method_name: str
+    ) -> list[tuple[tuple[object, ...], dict[str, object]]]:
+        """Get all calls for a specific method.
+
+        Args:
+            method_name: Name of the method to get calls for.
+
+        Returns:
+            List of (args, kwargs) tuples for all calls to the method.
+
+        """
+        return [
+            (call[1], call[2]) for call in self.call_history if call[0] == method_name
+        ]
+
+
+class FunctionalTestContext:
+    """Functional context manager for test scenarios."""
+
+    def __init__(
+        self,
+        target: object,
+        attribute: str,
+        new_value: object = None,
+        **options: object,
+    ) -> None:
+        """Initialize functional test context.
+
+        Args:
+            target: Object to patch.
+            attribute: Name of attribute to patch.
+            new_value: New value to set for the attribute.
+            **options: Additional options (new, create, etc.).
+
+        """
+        self.target = target
+        self.attribute = attribute
+        # Handle new parameter correctly - check if it was explicitly passed
+        options_dict = dict(options)  # Convert to dict for easier handling
+        if "new" in options_dict:
+            self.new_value = options_dict.pop("new")
+            self.has_new = True
+        else:
+            self.new_value = new_value
+            self.has_new = new_value is not None
+        self.options = options_dict
+        self.original_value: object = None
+        self.create = bool(options_dict.get("create"))
+        self.had_attribute = False
+
+    def __enter__(self) -> object:
+        """Enter context - set up test scenario."""
+        self.had_attribute = hasattr(self.target, self.attribute)
+        if self.had_attribute:
+            self.original_value = getattr(self.target, self.attribute)
+        elif not self.create:
+            # If attribute doesn't exist and create=False, this would be an error in patch
+            raise AttributeError(
+                f"'{type(self.target).__name__}' object has no attribute '{self.attribute}'"
+            )
+
+        # Check if new value was explicitly provided (including None)
+        if self.has_new:
+            # Use the explicitly provided value (even if None)
+            setattr(self.target, self.attribute, self.new_value)
+            return self.new_value
+        # Create a functional service instead of a mock when no new= is provided
+        functional_service = FunctionalTestService()
+        setattr(self.target, self.attribute, functional_service)
+        return functional_service
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: object,
+    ) -> None:
+        """Exit context - restore original state."""
+        if self.had_attribute:
+            setattr(self.target, self.attribute, self.original_value)
+        elif self.create and hasattr(self.target, self.attribute):
+            delattr(self.target, self.attribute)
+
+
+class FlextTestMocker:
+    """Functional test object creation utilities.
+
+    Follows DIP by depending on functional implementations, not mock objects.
     """
 
     @staticmethod
-    def mock(
-        spec: type | None = None,
-        **kwargs: object,  # noqa: ARG004
-    ) -> Mock:
-        """Create a mock object.
+    def create_functional_service(
+        service_type: str = "generic", **config: object
+    ) -> FunctionalTestService:
+        """Create a functional service implementation.
 
         Args:
-            spec: Optional spec for the mock.
-            **kwargs: Additional mock configuration.
+            service_type: Type of service to create.
+            **config: Additional service configuration.
 
         Returns:
-            Configured mock object.
+            Configured functional service.
 
         """
-        # Create basic Mock without additional arguments to avoid type issues
-        return Mock(spec=spec)
-
-    @staticmethod
-    def magic_mock(
-        spec: type | None = None,
-        **kwargs: object,
-    ) -> MagicMock:
-        """Create a magic mock object.
-
-        Args:
-            spec: Optional spec for the mock.
-            **kwargs: Additional mock configuration.
-
-        Returns:
-            Configured magic mock object.
-
-        """
-        # Filter kwargs to ensure compatibility with MagicMock constructor
-        valid_kwargs = {}
-        if kwargs:
-            for k, v in kwargs.items():
-                if isinstance(v, (str, int, bool, type(None))):
-                    valid_kwargs[str(k)] = v
-        return MagicMock(spec=spec, **valid_kwargs)
-
-    @staticmethod
-    def patch(
-        target: str,
-        **kwargs: object,
-    ) -> object:
-        """Create a patch context manager.
-
-        Args:
-            target: Import path to patch.
-            **kwargs: Additional patch configuration.
-
-        Returns:
-            Patch context manager.
-
-        """
-        # Handle common patch configurations with type safety
-        # Detect whether "new" was explicitly provided (so new=None is honored)
-        if "new" in kwargs:
-            new_value = kwargs.pop("new")
-            patch_context = patch(target, new=new_value)
-        else:
-            patch_context = patch(target)  # type: ignore[assignment]
-        return patch_context
+        return FunctionalTestService(service_type=service_type, **config)
 
     @staticmethod
     def patch_object(
         target: object,
         attribute: str,
-        **kwargs: object,
-    ) -> object:
-        """Create a patch.object context manager.
+        **options: object,
+    ) -> FunctionalTestContext:
+        """Create a functional patch context manager.
 
         Args:
             target: Object to patch.
             attribute: Attribute name to patch.
-            **kwargs: Additional patch configuration (new, create, spec, etc.).
+            **options: Additional patch configuration (new, create, etc.).
 
         Returns:
-            Patch context manager.
+            Functional test context manager.
 
         """
-        # patch.object overload complexity - suppress typing for mock compatibility
-        return patch.object(target, attribute, **kwargs)  # type: ignore[call-overload]
+        return FunctionalTestContext(target, attribute, **options)
 
     @staticmethod
-    def create_async_mock(
-        return_value: object = None,
-        side_effect: object = None,
-        **kwargs: object,
-    ) -> MagicMock:
-        """Create an async mock object.
+    def create_test_context(
+        target: object,
+        attribute: str,
+        new_value: object = None,
+        **options: object,
+    ) -> FunctionalTestContext:
+        """Create a test context manager for attribute replacement.
 
         Args:
-            return_value: Return value for the mock.
-            side_effect: Side effect for the mock.
-            **kwargs: Additional mock configuration.
+            target: Object to modify.
+            attribute: Attribute name to replace.
+            new_value: New value to set.
+            **options: Additional context configuration.
 
         Returns:
-            Configured an async mock object.
+            Functional test context manager.
 
         """
-        # Filter kwargs for MagicMock compatibility
-        mock_kwargs: dict[str, object] = {}
-        if kwargs:
-            filtered_kwargs = {
-                str(k): v
-                for k, v in kwargs.items()
-                if isinstance(v, (str, int, bool, type(None)))
-            }
-            mock_kwargs.update(filtered_kwargs)
-        # Create MagicMock without additional kwargs to avoid type issues
-        mock = MagicMock()
-        async_mock = MagicMock(
-            return_value=return_value,
-            side_effect=side_effect,
-        )
-        mock.return_value = async_mock
-        return mock
+        return FunctionalTestContext(target, attribute, new_value, **options)
 
 
 # =============================================================================

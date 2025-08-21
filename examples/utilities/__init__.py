@@ -6,4 +6,5 @@ with focused modules for formatting, validation, and domain modeling.
 
 Copyright (c) 2025 FLEXT Contributors
 SPDX-License-Identifier: MIT
+
 """

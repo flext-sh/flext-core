@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-import functools
+import contextlib
 from collections.abc import Callable
-from typing import Self, cast
+from typing import Self, TypeVar
 
 from pydantic import BaseModel, ValidationError
 
@@ -18,6 +18,9 @@ from flext_core.typings import (
 )
 from flext_core.utilities import FlextTypeGuards, FlextUtilities
 from flext_core.validation import FlextValidators
+
+# Type variables for guards
+R = TypeVar("R")
 
 Platform = FlextConstants.Platform
 
@@ -70,9 +73,14 @@ class _PureWrapper[R]:
         """Descriptor protocol to handle method binding."""
         if instance is None:
             return self
+
         # Create a bound method-like callable that preserves __pure__ attribute
-        bound_method = functools.partial(self, instance)
-        bound_method.__pure__ = True  # type: ignore[attr-defined]
+        def bound_method(*args: object, **kwargs: object) -> R:
+            return self(instance, *args, **kwargs)
+
+        # Safely add the __pure__ attribute to the function using contextlib.suppress
+        with contextlib.suppress(AttributeError, TypeError):
+            bound_method.__pure__ = True  # type: ignore[attr-defined]
         return bound_method
 
 
@@ -88,10 +96,8 @@ class FlextGuards:
         """Check if an object is a dict with values of a specific type."""
         if not isinstance(obj, dict):
             return False
-        return all(
-            isinstance(value, value_type)
-            for value in cast("dict[object, object]", obj).values()
-        )
+        # After isinstance check, obj is narrowed to dict type
+        return all(isinstance(value, value_type) for value in obj.values())
 
     @staticmethod
     def immutable(target_class: type) -> type:
@@ -106,12 +112,19 @@ class FlextGuards:
         """
 
         def _init(self: object, *args: object, **kwargs: object) -> None:
-            # Call the original class initializer directly to avoid super() pitfalls
+            # Call original class initialization first
             try:
-                target_class.__init__(self, *args, **kwargs)
+                # Call the target class's __init__ method directly from the class
+                # Use getattr to safely access __init__ method from the class
+                init_method = getattr(target_class, "__init__", None)
+                if init_method is not None:
+                    init_method(self, *args, **kwargs)
+                else:
+                    object.__init__(self)
             except Exception:
-                # If original init fails, attempt base object init as fallback
+                # Fallback to basic initialization if original fails
                 object.__init__(self)
+            # Mark as initialized to prevent further modifications
             object.__setattr__(self, "_initialized", True)
 
         def _setattr(self: object, name: str, value: object) -> None:
@@ -190,12 +203,12 @@ class FlextGuards:
 class FlextValidatedModel(BaseModel, FlextSerializableMixin):
     """Automatic validation model with Pydantic and FLEXT integration.
 
-    Provides validated object construction with enhanced error handling
+    Provides validated object construction with error handling
     and compatibility for existing FLEXT patterns.
     """
 
     def __init__(self, **data: object) -> None:
-        """Initialize with proper mixin inheritance and enhanced error handling."""
+        """Initialize with proper mixin inheritance and error handling."""
         try:
             super().__init__(**data)
         except ValidationError as e:
@@ -237,6 +250,20 @@ class FlextValidatedModel(BaseModel, FlextSerializableMixin):
             return True
         except ValidationError:
             return False
+
+    @property
+    def validation_errors(self) -> list[str]:
+        """Return validation errors for the model."""
+        try:
+            self.model_validate(self.model_dump())
+            return []  # No errors if validation passes
+        except ValidationError as e:
+            errors: list[str] = []
+            for error in e.errors():
+                loc = ".".join(str(x) for x in error.get("loc", []))
+                msg = error.get("msg", "Validation error")
+                errors.append(f"{loc}: {msg}" if loc else msg)
+            return errors
 
     @classmethod
     def create(cls, **data: object) -> FlextResult[Self]:

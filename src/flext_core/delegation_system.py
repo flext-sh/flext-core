@@ -197,7 +197,7 @@ class FlextMixinDelegator:
             try:
                 return method(*args, **kwargs)
             except (AttributeError, TypeError, ValueError) as e1:
-                # Enhanced error with delegation context
+                #  error with delegation context
                 error_msg = (
                     f"Delegation error in {type(mixin_instance).__name__}."
                     f"{method_name}: {e1}"
@@ -214,8 +214,16 @@ class FlextMixinDelegator:
             delegated_method.__doc__ = method.__doc__
 
             # Use setattr for dynamic signature assignment to avoid MyPy attr-defined error
-            with contextlib.suppress(ValueError, TypeError):
-                delegated_method.__signature__ = inspect.signature(method)  # type: ignore[attr-defined]
+            # Note: __signature__ is a special attribute that may not be available on all callables
+            try:
+                # Try to get the signature first to ensure it's available
+                sig = inspect.signature(method)
+                # Only set __signature__ if the method supports it
+                if hasattr(delegated_method, "__signature__"):
+                    delegated_method.__signature__ = sig
+            except (ValueError, TypeError):
+                # Signature not available, skip it
+                pass
         except (AttributeError, ValueError) as e:
             logger = FlextLoggerFactory.get_logger(__name__)
             logger.warning(

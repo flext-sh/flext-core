@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from flext_core import (
+import pytest
+
+from ...utils.testing_utilities import (
     FlextTestMocker,
     create_api_test_response,
     create_ldap_test_config,
@@ -290,8 +292,8 @@ class TestUtilitiesIntegration:
         assert ldap_config2["host"] == "localhost"  # Should be unchanged
 
 
-class TestFlextTestMockerPatchObject:
-    """Test FlextTestMocker.patch_object method."""
+class TestFlextTestMockerFunctional:
+    """Test FlextTestMocker functional implementations."""
 
     def test_patch_object_with_new_none(self) -> None:
         """Test that patch_object honors new=None and sets attribute to None."""
@@ -303,11 +305,11 @@ class TestFlextTestMockerPatchObject:
         assert target.attr == "original_value"
 
         # Test that new=None is properly handled
-        with FlextTestMocker.patch_object(target, "attr", new=None):  # type: ignore[attr-defined]
+        with FlextTestMocker.patch_object(target, "attr", new=None):
             assert target.attr is None
 
-        # After context, should be restored (if implementation works correctly)
-        # assert target.attr == "original_value"  # May be unreachable due to implementation
+        # After context, should be restored
+        assert target.attr == "original_value"
 
     def test_patch_object_with_new_value(self) -> None:
         """Test that patch_object works with new values."""
@@ -317,7 +319,7 @@ class TestFlextTestMockerPatchObject:
 
         target = TestTarget()
 
-        with FlextTestMocker.patch_object(target, "attr", new="new_value"):  # type: ignore[attr-defined]
+        with FlextTestMocker.patch_object(target, "attr", new="new_value"):
             assert target.attr == "new_value"
 
         assert target.attr == "original_value"
@@ -332,50 +334,85 @@ class TestFlextTestMockerPatchObject:
         assert not hasattr(target, "attr")
 
         # Test create=True is honored
-        with FlextTestMocker.patch_object(  # type: ignore[attr-defined]
+        with FlextTestMocker.patch_object(
             target,
             "attr",
             new="test_value",
             create=True,
         ):
-            assert target.attr == "test_value"  # type: ignore[attr-defined]  # Dynamically created by patch_object
+            assert target.attr == "test_value"
 
         # After context, attribute should be removed since it was created
         assert not hasattr(target, "attr")
 
-    def test_patch_object_with_spec(self) -> None:
-        """Test that patch_object honors spec parameter."""
+    def test_patch_object_with_functional_service(self) -> None:
+        """Test that patch_object works with functional services."""
 
         class TestTarget:
             def attr(self) -> str:
                 return "original"
 
-        class MockSpec:
-            def mock_method(self) -> str:
-                return "mocked"
-
         target = TestTarget()
 
-        # Test spec is honored
-        with FlextTestMocker.patch_object(target, "attr", spec=MockSpec) as mock:  # type: ignore[attr-defined]
-            assert hasattr(mock, "mock_method")
-            # The mock should have spec methods but not others
-            assert hasattr(mock, "mock_method")
+        # Test functional service creation when no new= is provided
+        with FlextTestMocker.patch_object(target, "attr") as functional_service:
+            # Should be a functional service, not the original
+            assert functional_service != "original"
+            assert target.attr is functional_service
+            # Should have functional service methods
+            assert hasattr(functional_service, "call_method")
+            assert hasattr(functional_service, "get_call_count")
 
         # Original should be restored
         assert callable(target.attr)
+        assert target.attr() == "original"
 
-    def test_patch_object_no_kwargs(self) -> None:
-        """Test patch_object with no additional kwargs (creates MagicMock)."""
+    def test_functional_service_creation(self) -> None:
+        """Test functional service creation and behavior."""
+        service = FlextTestMocker.create_functional_service("test_service")
+
+        assert service.service_type == "test_service"
+        assert service.get_call_count() == 0
+
+        # Test method call tracking
+        result = service.call_method("test_method", "arg1", key="value")
+        assert result == "test_method_result"
+        assert service.get_call_count("test_method") == 1
+        assert service.was_called_with("test_method", "arg1", key="value")
+
+    def test_functional_service_configuration(self) -> None:
+        """Test functional service method configuration."""
+        service = FlextTestMocker.create_functional_service("test_service")
+
+        # Configure method behavior
+        service.configure_method("get_data", return_value="configured_result")
+        service.configure_method(
+            "fail_method", should_fail=True, failure_message="Test failure"
+        )
+
+        # Test configured return value
+        result1 = service.call_method("get_data")
+        assert result1 == "configured_result"
+
+        # Test failure behavior
+        with pytest.raises(ValueError, match="Test failure"):
+            service.call_method("fail_method")
+
+        # Check call counts
+        assert service.get_call_count("get_data") == 1
+        assert service.get_call_count("fail_method") == 1
+
+    def test_create_test_context(self) -> None:
+        """Test creating test context manager."""
 
         class TestTarget:
             attr = "original"
 
         target = TestTarget()
 
-        with FlextTestMocker.patch_object(target, "attr") as mock:  # type: ignore[attr-defined]
-            # Should be a mock when no new= is provided
-            assert mock != "original"
-            assert target.attr is mock
+        context = FlextTestMocker.create_test_context(target, "attr", "new_value")
+
+        with context:
+            assert target.attr == "new_value"
 
         assert target.attr == "original"

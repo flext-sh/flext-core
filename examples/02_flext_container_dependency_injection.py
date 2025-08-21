@@ -16,9 +16,10 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import cast
 
-from flext_core import FlextContainer, FlextResult, get_flext_container
+# use .shared_domain with dot to access local module
+from shared_domain import SharedDomainFactory, User as SharedUser
 
-from .shared_domain import SharedDomainFactory, User as SharedUser
+from flext_core import FlextContainer, FlextResult, get_flext_container
 
 # =============================================================================
 # SERVICE CONTRACTS - Minimal protocols
@@ -121,12 +122,13 @@ class UserRegistrationService:
 
     def register_user(self, name: str, email: str, age: int) -> FlextResult[str]:
         """Complete user registration pipeline."""
-        def send_email_side_effect(user_id: str) -> None:
+
+        def send_email_side_effect(_user_id: str) -> None:
             """Side effect to send welcome email."""
             user_result = SharedDomainFactory.create_user(name, email, age)
             if user_result.success:
-                self.email.send_welcome_email(user_result.unwrap())
-        
+                self.email.send_welcome_email(user_result.value)
+
         return (
             SharedDomainFactory.create_user(name, email, age)
             .flat_map(lambda user: user.activate())
@@ -152,8 +154,8 @@ def setup_services() -> FlextContainer:
     container.register_factory(
         "user_service",
         lambda: UserRegistrationService(
-            database=cast(DatabaseService, container.get("database").unwrap()),
-            email=cast(EmailService, container.get("email").unwrap()),
+            database=cast("DatabaseService", container.get("database").value),
+            email=cast("EmailService", container.get("email").value),
         ),
     )
 
@@ -162,7 +164,11 @@ def setup_services() -> FlextContainer:
 
 def get_user_service() -> FlextResult[UserRegistrationService]:
     """Get user service from global container."""
-    return get_flext_container().get("user_service").map(lambda s: cast(UserRegistrationService, s))
+    return (
+        get_flext_container()
+        .get("user_service")
+        .map(lambda s: cast("UserRegistrationService", s))
+    )
 
 
 # =============================================================================
@@ -180,9 +186,12 @@ def demo_basic_registration() -> None:
     user_service_result = get_user_service()
 
     if user_service_result.success:
-        user_service = user_service_result.unwrap()
+        user_service = user_service_result.value
         result = user_service.register_user("Alice Johnson", "alice@example.com", 28)
-        print(f"✅ User registered: {result.data if result.success else result.error}")
+        # Use FlextResult's unwrap_or method for cleaner code
+        print(
+            f"✅ User registered: {result.unwrap_or(result.error or 'Unknown error')}"
+        )
 
 
 def demo_service_replacement() -> None:
@@ -203,10 +212,11 @@ def demo_service_replacement() -> None:
     # Use replaced service
     user_service_result = get_user_service()
     if user_service_result.success:
-        user_service = user_service_result.unwrap()
+        user_service = user_service_result.value
         result = user_service.register_user("Bob Smith", "bob@example.com", 35)
         print(
-            f"✅ Registration with mock: {result.data if result.success else result.error}"
+            # Use FlextResult's unwrap_or method for cleaner code
+            f"✅ Registration with mock: {result.unwrap_or(result.error or 'Unknown error')}"
         )
 
 
@@ -221,13 +231,18 @@ def demo_auto_wiring() -> None:
     container.register("email", SMTPEmailService())
 
     # Auto-wire service
-    result: FlextResult[UserRegistrationService] = container.auto_wire(UserRegistrationService)
+    result: FlextResult[UserRegistrationService] = container.auto_wire(
+        UserRegistrationService
+    )
 
     if result.success:
-        service: UserRegistrationService = result.unwrap()
-        reg_result: FlextResult[str] = service.register_user("Carol Davis", "carol@example.com", 42)
+        service: UserRegistrationService = result.value
+        reg_result: FlextResult[str] = service.register_user(
+            "Carol Davis", "carol@example.com", 42
+        )
         print(
-            f"✅ Auto-wired registration: {reg_result.data if reg_result.success else reg_result.error}"
+            # Use FlextResult's unwrap_or method for cleaner code
+            f"✅ Auto-wired registration: {reg_result.unwrap_or(reg_result.error or 'Unknown error')}"
         )
 
 

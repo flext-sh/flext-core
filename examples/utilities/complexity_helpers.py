@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from flext_core import TErrorMessage, TUserData
 
+# use .shared_domain with dot to access local module
 from .validation_utilities import (
     is_email,
     is_int,

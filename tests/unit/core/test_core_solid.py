@@ -23,7 +23,7 @@ class TestCoreSOLIDImplementation:
         # Valid type validation
         result = self.core.validate_type("test_string", str)
         assert result.success
-        assert result.data == "test_string"
+        assert result.value == "test_string"
 
         # Invalid type validation
         result = self.core.validate_type(123, str)
@@ -37,7 +37,7 @@ class TestCoreSOLIDImplementation:
         test_dict = {"key1": "value1", "key2": "value2"}
         result = self.core.validate_dict_structure(test_dict, str)
         assert result.success
-        assert result.data == test_dict
+        assert result.value == test_dict
 
         # Non-dictionary object
         result = self.core.validate_dict_structure("not_a_dict", str)
@@ -63,9 +63,9 @@ class TestCoreSOLIDImplementation:
         # Valid model creation
         result = self.core.create_validated_model(TestModel, name="John", age=30)
         assert result.success
-        assert isinstance(result.data, TestModel)
-        assert result.data.name == "John"
-        assert result.data.age == 30
+        assert isinstance(result.value, TestModel)
+        assert result.value.name == "John"
+        assert result.value.age == 30
 
         # Invalid model creation (missing required field)
         result = self.core.create_validated_model(
@@ -240,7 +240,7 @@ class TestCoreSOLIDImplementation:
     def test_integration_with_guards_module(self) -> None:
         """Test integration with guards module functions."""
         # Test that core methods use guards module functionality
-        from flext_core.guards import immutable, is_dict_of, pure  # noqa: PLC0415
+        from flext_core import immutable, is_dict_of, pure  # noqa: PLC0415
 
         # Verify functions are imported and available
         assert callable(is_dict_of)

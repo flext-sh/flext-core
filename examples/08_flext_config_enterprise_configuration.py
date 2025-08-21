@@ -30,6 +30,13 @@ from typing import cast
 
 from pydantic_settings import SettingsConfigDict
 
+# use .shared_domain with dot to access local module
+from shared_domain import (
+    SharedDemonstrationPattern,
+    SharedDomainFactory,
+    log_domain_operation,
+)
+
 from flext_core import (
     FlextConstants,
     FlextResult,
@@ -38,12 +45,6 @@ from flext_core import (
     TConfigDict,
     TErrorMessage,
     merge_configs,
-)
-
-from .shared_domain import (
-    SharedDemonstrationPattern,
-    SharedDomainFactory,
-    log_domain_operation,
 )
 
 
@@ -67,7 +68,7 @@ def demonstrate_basic_configuration() -> None:
     # Create basic configuration using available methods
     config_result = FlextResult.ok(dict(config_data))  # Simplified for demonstration
     if config_result.success:
-        config = config_result.data
+        config = config_result.value
         if config is not None:
             f"   App name: {config.get('app_name')}"
             f"   Debug mode: {config.get('debug')}"
@@ -363,12 +364,12 @@ def demonstrate_configuration_hierarchies() -> None:
     dev_merged = merge_configs(base_config, dev_config)
     _print_merged_config(
         "Development",
-        dev_merged.unwrap() if isinstance(dev_merged, FlextResult) else dev_merged,
+        dev_merged.value if isinstance(dev_merged, FlextResult) else dev_merged,
     )
     prod_merged = merge_configs(base_config, prod_config)
     _print_merged_config(
         "Production",
-        prod_merged.unwrap() if isinstance(prod_merged, FlextResult) else prod_merged,
+        prod_merged.value if isinstance(prod_merged, FlextResult) else prod_merged,
     )
     _print_feature_hierarchy_demo()
 
@@ -595,15 +596,15 @@ def _transform_to_connection_strings(config: TAnyDict) -> FlextResult[TAnyDict]:
     db_config = config.get("database", {})
     if isinstance(db_config, dict):
         db_result = _transform_database_config(db_config)
-        if db_result.is_success and db_result.data:
-            transformed_config["database_url"] = db_result.data
+        if db_result.is_success and db_result.value:
+            transformed_config["database_url"] = db_result.value
 
     # Transform Redis configuration
     redis_config = config.get("redis", {})
     if isinstance(redis_config, dict):
         redis_result = _transform_redis_config(redis_config)
-        if redis_result.is_success and redis_result.data:
-            transformed_config["redis_url"] = redis_result.data
+        if redis_result.is_success and redis_result.value:
+            transformed_config["redis_url"] = redis_result.value
 
     return FlextResult.ok(transformed_config)
 
@@ -758,8 +759,8 @@ def _demonstrate_admin_user_validation(
     if isinstance(admin_users, list):
         for user_data in admin_users:
             validation_result = _validate_single_admin_user(user_data)
-            if validation_result.is_success and validation_result.data:
-                validated_users.append(validation_result.data)
+            if validation_result.is_success and validation_result.value:
+                validated_users.append(validation_result.value)
 
     len(admin_users) if isinstance(admin_users, list) else 0
     return FlextResult.ok((config, validated_users))
@@ -777,7 +778,7 @@ def _validate_single_admin_user(user_data: object) -> FlextResult[object]:
     # Use SharedDomainFactory for validation
     user_result = SharedDomainFactory.create_user(name, email, age)
     if user_result.success:
-        user = user_result.data
+        user = user_result.value
         if user is not None:
             # Log domain operation
             log_domain_operation(
@@ -809,8 +810,8 @@ def _demonstrate_user_creation_from_config(
 
     for user_config in test_user_configs:
         creation_result = _create_user_from_config(user_config)
-        if creation_result.is_success and creation_result.data:
-            created_users.append(creation_result.data)
+        if creation_result.is_success and creation_result.value:
+            created_users.append(creation_result.value)
 
     return FlextResult.ok((config, validated_users, created_users))
 
@@ -827,7 +828,7 @@ def _create_user_from_config(config: object) -> FlextResult[object]:
     )
 
     if user_result.success:
-        user = user_result.data
+        user = user_result.value
         if user is not None:
             return FlextResult.ok(user)
 

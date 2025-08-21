@@ -11,8 +11,8 @@ from flext_core import (
     FlextEvent,
     FlextMessage,
     FlextPayload,
+    FlextResult,
 )
-from flext_core.result import FlextResult
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 
@@ -36,7 +36,7 @@ class TestFlextPayload:
         """Test payload creation using factory method."""
         result = FlextPayload.create({"user_id": 123}, source="api")
         assert result.success is True
-        payload = result.data
+        payload = result.value
         assert payload is not None
         assert payload.data == {"user_id": 123}
         assert payload.metadata.get("source") == "api"
@@ -81,7 +81,7 @@ class TestFlextPayload:
         data_dict = {"data": {"key": "value"}, "metadata": {"source": "test"}}
         result = FlextPayload.from_dict(data_dict)
         assert result.success is True
-        payload = result.data
+        payload = result.value
         assert payload is not None
         assert payload.data == {"key": "value"}
         assert payload.metadata == {"source": "test"}
@@ -105,7 +105,7 @@ class TestFlextPayload:
         payload: FlextPayload[object] = FlextPayload(data="test")
         result = payload.get_data()
         assert result.success is True
-        assert result.data == "test"
+        assert result.value == "test"
 
         empty_payload: FlextPayload[object] = FlextPayload(data=None)
         result = empty_payload.get_data()
@@ -124,7 +124,7 @@ class TestFlextPayload:
         payload: FlextPayload[object] = FlextPayload(data="hello")
         result = payload.transform_data(lambda x: str(x).upper())
         assert result.success is True
-        new_payload = result.data
+        new_payload = result.value
         assert new_payload is not None
         assert new_payload.data == "HELLO"
 
@@ -160,7 +160,7 @@ class TestFlextMessage:
         """Test basic message creation."""
         result = FlextMessage.create_message("Hello world")
         assert result.success is True
-        message = result.data
+        message = result.value
         assert message is not None
         assert message.data == "Hello world"
         assert message.level == "info"
@@ -169,7 +169,7 @@ class TestFlextMessage:
         """Test message creation with level."""
         result = FlextMessage.create_message("Error occurred", level="error")
         assert result.success is True
-        message = result.data
+        message = result.value
         assert message is not None
         assert message.level == "error"
 
@@ -177,7 +177,7 @@ class TestFlextMessage:
         """Test message creation with source."""
         result = FlextMessage.create_message("Info", source="test-service")
         assert result.success is True
-        message = result.data
+        message = result.value
         assert message is not None
         assert message.source == "test-service"
 
@@ -191,14 +191,14 @@ class TestFlextMessage:
         """Test message with invalid level falls back to info."""
         result = FlextMessage.create_message("Test", level="invalid")
         assert result.success is True
-        message = result.data
+        message = result.value
         assert message is not None
         assert message.level == "info"
 
     def test_message_properties(self) -> None:
         """Test message properties."""
         result = FlextMessage.create_message("Test", level="warning", source="app")
-        message = result.data
+        message = result.value
         assert message is not None
 
         assert message.level == "warning"
@@ -209,7 +209,7 @@ class TestFlextMessage:
     def test_message_cross_service_dict(self) -> None:
         """Test message cross-service serialization."""
         result = FlextMessage.create_message("Test message", level="info", source="api")
-        message = result.data
+        message = result.value
         assert message is not None
 
         cross_dict = message.to_cross_service_dict()
@@ -225,7 +225,7 @@ class TestFlextEvent:
         """Test basic event creation."""
         result = FlextEvent.create_event("UserCreated", {"user_id": "123"})
         assert result.success is True
-        event = result.data
+        event = result.value
         assert event is not None
         assert event.event_type == "UserCreated"
         assert event.data == {"user_id": "123"}
@@ -238,7 +238,7 @@ class TestFlextEvent:
             aggregate_id="order_456",
         )
         assert result.success is True
-        event = result.data
+        event = result.value
         assert event is not None
         assert event.aggregate_id == "order_456"
 
@@ -250,7 +250,7 @@ class TestFlextEvent:
             version=2,
         )
         assert result.success is True
-        event = result.data
+        event = result.value
         assert event is not None
         assert event.version == 2
 
@@ -280,7 +280,7 @@ class TestFlextEvent:
             aggregate_id="cart_456",
             version=3,
         )
-        event = result.data
+        event = result.value
         assert event is not None
 
         assert event.event_type == "ItemAdded"
@@ -296,7 +296,7 @@ class TestFlextEvent:
             aggregate_id="payment_789",
             version=1,
         )
-        event = result.data
+        event = result.value
         assert event is not None
 
         cross_dict = event.to_cross_service_dict()
@@ -326,7 +326,7 @@ class TestEdgeCases:
             result = FlextPayload.create(complex_data, test_metadata="success")
             # This should succeed, just testing error handling path exists
             assert result.success is True
-            payload = result.data
+            payload = result.value
             assert payload is not None
             assert payload.metadata.get("test_metadata") == "success"
         except Exception:
@@ -392,13 +392,13 @@ class TestEdgeCases:
         assert json_result.success is True
 
         # Deserialize from JSON
-        assert json_result.data is not None
+        assert json_result.value is not None
         restored_result: FlextResult[FlextPayload[object]] = (
-            FlextPayload.from_json_string(json_result.data)
+            FlextPayload.from_json_string(json_result.value)
         )
         assert restored_result.success is True
 
-        restored_payload = restored_result.data
+        restored_payload = restored_result.value
         assert restored_payload is not None
         # Basic checks - exact equality might not work due to serialization details
         assert isinstance(restored_payload.data, dict)

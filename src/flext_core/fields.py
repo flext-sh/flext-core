@@ -11,12 +11,12 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 from flext_core.constants import FlextFieldType
 from flext_core.exceptions import FlextValidationError
 from flext_core.loggings import FlextLoggerFactory
+from flext_core.protocols import FlextValidator
 from flext_core.result import FlextResult
 from flext_core.typings import (
     FlextFieldId,
     FlextFieldName,
     FlextFieldTypeStr,
-    FlextValidator,
     TFieldInfo,
 )
 
@@ -50,6 +50,7 @@ class FlextFieldCore(
         validate_assignment=True,
         str_strip_whitespace=True,
         extra="forbid",
+        arbitrary_types_allowed=True,  # Allow protocol types like FlextValidator
     )
 
     # Core identification
@@ -85,7 +86,7 @@ class FlextFieldCore(
         description="Regex pattern for validation",
     )
     allowed_values: list[object] = Field(
-        default_factory=lambda: cast("list[object]", []),
+        default_factory=list,
         description="Allowed value list",
     )
 
@@ -411,6 +412,7 @@ class FlextFieldMetadata(BaseModel):
         validate_assignment=True,
         str_strip_whitespace=True,
         extra="forbid",
+        arbitrary_types_allowed=True,  # Allow protocol types like FlextValidator
     )
 
     # Core identification (with default values)
@@ -428,9 +430,7 @@ class FlextFieldMetadata(BaseModel):
     min_length: int | None = None
     max_length: int | None = None
     pattern: str | None = None
-    allowed_values: list[object] = Field(
-        default_factory=lambda: cast("list[object]", [])
-    )
+    allowed_values: list[object] = Field(default_factory=list)
 
     # Metadata
     description: str | None = None
@@ -446,9 +446,7 @@ class FlextFieldMetadata(BaseModel):
     # Additional compatibility fields
     internal: bool = False
     unique: bool = False
-    custom_properties: dict[str, object] | None = Field(
-        default_factory=lambda: cast("dict[str, object]", {}),
-    )
+    custom_properties: dict[str, object] | None = Field(default_factory=dict)
 
     def to_dict(self) -> JsonDict:
         """Convert metadata to dictionary."""
@@ -694,8 +692,8 @@ def _safe_cast_string_list(value: object) -> list[str]:
     if value is None:
         return []
     if isinstance(value, list):
-        as_objects: list[object] = cast("list[object]", value)
-        result: list[str] = [str(item) for item in as_objects if item is not None]
+        # After isinstance check, value is narrowed to list type
+        result: list[str] = [str(item) for item in value if item is not None]
         return result
     if isinstance(value, (str, int, float, bool)):
         return [str(value)]
@@ -724,8 +722,8 @@ def _safe_cast_list(value: object) -> list[object]:
     if value is None:
         return []
     if isinstance(value, (list, tuple)):
-        result: list[object] = list(cast("list[object] | tuple[object, ...]", value))
-        return result
+        # After isinstance check, value is narrowed to list or tuple
+        return list(value)
     return [value]
 
 

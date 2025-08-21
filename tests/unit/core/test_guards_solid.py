@@ -178,8 +178,8 @@ class TestGuardsSOLIDImplementation:
         # Valid model creation
         result = UserProfile.create(name="John", age=30, email="john@example.com")
         assert result.success
-        assert isinstance(result.data, UserProfile)
-        assert result.data.name == "John"
+        assert isinstance(result.value, UserProfile)
+        assert result.value.name == "John"
 
         # Test creation with potentially invalid data
         # Note: Pydantic may allow some values that seem invalid
@@ -297,13 +297,13 @@ class TestGuardsSOLIDImplementation:
         # Test successful creation
         success_result = create_result("test_value")
         assert success_result.success
-        assert success_result.data is not None
-        assert success_result.data.value == "test_value"
-        assert success_result.data.status == "success"
+        assert success_result.value is not None
+        assert success_result.value.value == "test_value"
+        assert success_result.value.status == "success"
 
         # Result is immutable
         with pytest.raises(AttributeError):
-            success_result.data.value = "changed"
+            success_result.value.value = "changed"
 
         # Test failure case
         fail_result = create_result("")
@@ -498,7 +498,7 @@ class TestSOLIDCompliance:
 
     def test_integration_with_flext_ecosystem(self) -> None:
         """Test integration with other FLEXT components."""
-        from flext_core.result import FlextResult  # noqa: PLC0415
+        from flext_core import FlextResult  # noqa: PLC0415
 
         @immutable
         class ResultContainer:
@@ -517,7 +517,7 @@ class TestSOLIDCompliance:
         container = ResultContainer(result)
 
         assert container.result.success
-        assert container.result.data == "test"
+        assert container.result.value == "test"
 
         # Container is immutable
         with pytest.raises(AttributeError):

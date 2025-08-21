@@ -33,10 +33,10 @@ def create_test_entity_safe(name: str, **kwargs: object) -> TestUser:
     if result.is_failure:
         error_msg: str = f"Failed to create test entity: {result.error}"
         raise ValueError(error_msg)
-    # if result.data is None:  # Unreachable - FlextResult success implies data is not None
+    # if result.value is None:  # Unreachable - FlextResult success implies data is not None
     #     error_msg = "Failed to create test entity: result data is None"
     #     raise ValueError(error_msg)
-    return result.data
+    return result.value
 
 
 def create_test_value_object_safe(
@@ -53,10 +53,10 @@ def create_test_value_object_safe(
     if result.is_failure:
         error_msg: str = f"Failed to create test value object: {result.error}"
         raise ValueError(error_msg)
-    # if result.data is None:  # Unreachable - FlextResult success implies data is not None
+    # if result.value is None:  # Unreachable - FlextResult success implies data is not None
     #     error_msg = "Failed to create test value object: result data is None"
     #     raise ValueError(error_msg)
-    return result.data
+    return result.value
 
 
 def create_complex_test_value_object_safe(
@@ -73,10 +73,10 @@ def create_complex_test_value_object_safe(
     if result.is_failure:
         error_msg: str = f"Failed to create complex test value object: {result.error}"
         raise ValueError(error_msg)
-    # if result.data is None:  # Unreachable - FlextResult success implies data is not None
+    # if result.value is None:  # Unreachable - FlextResult success implies data is not None
     #     error_msg = "Failed to create complex test value object: result data is None"
     #     raise ValueError(error_msg)
-    return result.data
+    return result.value
 
 
 __all__: list[str] = [

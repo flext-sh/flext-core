@@ -276,6 +276,8 @@ class FlextConstants:
 
         DEFAULT_BATCH_SIZE = 1000
         MAX_BATCH_SIZE = 10000
+        BATCH_SIZE = 1000  # Alias for compatibility
+        TIMEOUT = 30  # Default timeout for performance operations
         CACHE_TTL = 300  # 5 minutes
         CACHE_MAX_SIZE = 1000
         POOL_SIZE = 10

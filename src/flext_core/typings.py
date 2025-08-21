@@ -12,6 +12,10 @@ from collections.abc import Callable, Mapping
 from datetime import datetime
 from typing import TYPE_CHECKING, ParamSpec, TypeVar
 
+# Import FlextResult for type definitions
+if TYPE_CHECKING:
+    from flext_core.result import FlextResult
+
 # Test TypeVars para uso global
 TTestData = TypeVar("TTestData")
 TTestConfig = TypeVar("TTestConfig")
@@ -28,6 +32,100 @@ R = TypeVar("R")  # Result type
 E = TypeVar("E")  # Error type
 F = TypeVar("F")  # Function type
 P = ParamSpec("P")  # Parameter specification for callables
+
+# =============================================================================
+# CALLABLE PATTERNS - Python 3.13+ with type safety
+# =============================================================================
+if TYPE_CHECKING:
+    # MyPy-compatible generic callable types avoiding explicit Any/... usage
+    from typing import Protocol
+
+    class FlextCallableProtocol[T](Protocol):
+        """Generic callable protocol with return type safety."""
+
+        def __call__(self, *args: object, **kwargs: object) -> T: ...
+
+    class FlextDecoratedFunctionProtocol[T](Protocol):
+        """Decorated function protocol returning FlextResult."""
+
+        def __call__(self, *args: object, **kwargs: object) -> FlextResult[T]: ...
+
+    class FlextHandlerProtocol[TInput, TOutput](Protocol):
+        """Handler protocol for single input/output operations."""
+
+        def __call__(self, input_data: TInput) -> FlextResult[TOutput]: ...
+
+    class FlextProcessorProtocol[T](Protocol):
+        """Processor protocol for transform operations."""
+
+        def __call__(self, data: T) -> FlextResult[T]: ...
+
+    class FlextValidatorProtocol[T](Protocol):
+        """Validator protocol for validation operations."""
+
+        def __call__(self, data: T) -> FlextResult[None]: ...
+
+    class FlextFactoryProtocol[T](Protocol):
+        """Factory protocol for creation operations."""
+
+        def __call__(self, *args: object) -> FlextResult[T]: ...
+
+    # Type aliases for callable protocols
+    type FlextCallable[T] = FlextCallableProtocol[
+        T
+    ]  # Generic callable with type safety
+    type FlextDecoratedFunction[T] = FlextDecoratedFunctionProtocol[
+        T
+    ]  # Returns FlextResult
+    type FlextHandler[TInput, TOutput] = FlextHandlerProtocol[
+        TInput, TOutput
+    ]  # Handler interface
+    type FlextProcessor[T] = FlextProcessorProtocol[T]  # Transform operations
+    type FlextValidator[T] = FlextValidatorProtocol[T]  # Validation interface
+    type FlextFactory[T] = FlextFactoryProtocol[T]  # Factory pattern
+
+    # UTILITY TYPES - Specialized protocols for common patterns
+    type SafeCallable[T] = FlextCallableProtocol[
+        FlextResult[T]
+    ]  # Exception-safe callable
+    type ValidatedCallable[T] = FlextDecoratedFunctionProtocol[T]  # Returns FlextResult
+    type AsyncSafeCallable[T] = FlextDecoratedFunctionProtocol[T]  # Async handler
+    type TransformCallable[TIn, TOut] = FlextHandlerProtocol[
+        TIn, TOut
+    ]  # Data transformation
+    type PredicateCallable[T] = Callable[[T], FlextResult[bool]]  # Boolean validation
+    type CreationCallable[T] = Callable[[], FlextResult[T]]  # Factory creation
+else:
+    # Runtime fallbacks for callable types (Python 3.13 type syntax not yet fully supported at runtime)
+    FlextCallable = Callable  # Runtime fallback to standard Callable
+    FlextDecoratedFunction = Callable  # Runtime fallback with FlextResult annotation
+    FlextHandler = Callable  # Runtime fallback for handlers
+    FlextProcessor = Callable  # Runtime fallback for processors
+    FlextValidator = Callable  # Runtime fallback for validators
+    FlextFactory = Callable  # Runtime fallback for factories
+
+    # UTILITY TYPES - Runtime fallbacks
+    SafeCallable = Callable  # Runtime fallback for exception-safe
+    ValidatedCallable = Callable  # Runtime fallback for validated
+    AsyncSafeCallable = Callable  # Runtime fallback for async
+    TransformCallable = Callable  # Runtime fallback for transformers
+    PredicateCallable = Callable  # Runtime fallback for predicates
+    CreationCallable = Callable  # Runtime fallback for creation
+
+# LEGACY COMPATIBILITY - Maintain exact same signatures for backward compatibility
+type FlextCallableLegacy = Callable[
+    [object], object
+]  # LEGACY METHOD: Original simple callable
+type FlextDecoratedFunctionLegacy = Callable[
+    [object], object
+]  # LEGACY METHOD: Original decorated function
+
+# BACKWARD COMPATIBILITY ALIASES - Keep existing code working unchanged
+# These maintain the exact original signatures that legacy code expects
+FlextCallableOriginal = FlextCallableLegacy  # LEGACY: Original FlextCallable signature
+FlextDecoratedFunctionOriginal = (
+    FlextDecoratedFunctionLegacy  # LEGACY: Original FlextDecoratedFunction signature
+)
 
 # Domain-level result type used by domain services
 TDomainResult = TypeVar("TDomainResult")
@@ -607,7 +705,9 @@ Configurable = FlextTypes.Protocols.Configurable
 # Convenience protocol aliases with transition support
 FlextSerializable = Serializable
 FlextValidatable = Validatable
-FlextValidator = FlextTypes.Protocols.Validator[object]
+FlextProtocolValidator = FlextTypes.Protocols.Validator[
+    object
+]  # RENAMED: Avoid conflict with standard type
 
 # Entity identifier alias for convenience
 # FlextEntityId is imported from root_models module - remove local alias
@@ -620,8 +720,7 @@ FlextValidator = FlextTypes.Protocols.Validator[object]
 def _emit_transition_warning(old_name: str, new_name: str) -> None:
     """Emit transition warning for historical usage."""
     warnings.warn(
-        f"'{old_name}' is transitional. "
-        f"Use 'from flext_core.core_types import FlextTypes.{new_name}' instead.",
+        f"'{old_name}' is transitional. Use 'from flext_core.core_types import FlextTypes.{new_name}' instead.",
         DeprecationWarning,
         stacklevel=3,
     )

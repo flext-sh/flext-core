@@ -35,7 +35,7 @@ AVAILABLE_FEATURES: dict[str, bool] = {
     "railway_programming": True,
     "enterprise_logging": True,
     "performance_tracking": True,
-    "advanced_decorators": True,
+    "decorators": True,
     "type_safety": True,
     "configuration_management": True,
     "plugin_architecture": False,  # Future release

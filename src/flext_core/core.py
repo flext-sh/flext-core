@@ -53,7 +53,6 @@ from flext_core.guards import (
     FlextGuards,
     immutable,
     is_dict_of,
-    pure,
     require_non_empty,
     require_not_none,
     require_positive,
@@ -209,7 +208,7 @@ class FlextCore:
         result = self._container.get(str(key))
         if result.is_failure:
             return FlextResult[object].fail(result.error or "Service not found")
-        return FlextResult[object].ok(result.data)
+        return FlextResult[object].ok(result.value)
 
     def register_factory(
         self,
@@ -272,7 +271,9 @@ class FlextCore:
                 add_caller=False,
             )
 
-    def create_log_context(self, logger: FlextLogger | str | None = None, **context: object) -> FlextLogContextManager:
+    def create_log_context(
+        self, logger: FlextLogger | str | None = None, **context: object
+    ) -> FlextLogContextManager:
         """Create structured logging context manager."""
         return create_log_context(logger, **context)
 
@@ -314,7 +315,7 @@ class FlextCore:
         for result in results:
             if result.is_failure:
                 return FlextResult[list[object]].fail(result.error or "Sequence failed")
-            values.append(result.unwrap())
+            values.append(result.value)
         return FlextResult[list[object]].ok(values)
 
     @staticmethod
@@ -342,7 +343,7 @@ class FlextCore:
             for func in funcs:
                 if result.is_failure:
                     break
-                result = func(result.unwrap())
+                result = func(result.value)
             return result
 
         return pipeline
@@ -523,9 +524,15 @@ class FlextCore:
         try:
             config_result = load_config_from_env("default", prefix)
             if config_result.is_failure:
-                return FlextResult[dict[str, object]].fail(config_result.error or "Failed to load config")
+                return FlextResult[dict[str, object]].fail(
+                    config_result.error or "Failed to load config"
+                )
             # Convert FlextModel to dict
-            config_dict = config_result.data.model_dump() if hasattr(config_result.data, "model_dump") else {}
+            config_dict = (
+                config_result.value.model_dump()
+                if hasattr(config_result.value, "model_dump")
+                else {}
+            )
             return FlextResult[dict[str, object]].ok(config_dict)
         except Exception as e:
             return FlextResult[dict[str, object]].fail(f"Failed to load config: {e}")
@@ -536,10 +543,14 @@ class FlextCore:
         try:
             min_configs_for_merge = 2
             if len(configs) < min_configs_for_merge:
-                return FlextResult[dict[str, object]].fail("At least 2 configs required for merging")
+                return FlextResult[dict[str, object]].fail(
+                    "At least 2 configs required for merging"
+                )
             result = merge_configs(configs[0], configs[1])
             if result.is_failure:
-                return FlextResult[dict[str, object]].fail(result.error or "Config merge failed")
+                return FlextResult[dict[str, object]].fail(
+                    result.error or "Config merge failed"
+                )
             return result  # Already correct type
         except Exception as e:
             return FlextResult[dict[str, object]].fail(f"Failed to merge configs: {e}")
@@ -551,7 +562,9 @@ class FlextCore:
         """Validate configuration against schema."""
         validation_result = validate_config(config, schema)
         if validation_result.is_failure:
-            return FlextResult[dict[str, object]].fail(validation_result.error or "Validation failed")
+            return FlextResult[dict[str, object]].fail(
+                validation_result.error or "Validation failed"
+            )
         return FlextResult[dict[str, object]].ok(config)
 
     @staticmethod
@@ -583,13 +596,17 @@ class FlextCore:
                 if callable(model_validate):
                     instance = model_validate(data)
                     if not isinstance(instance, entity_class):
-                        return FlextResult[T].fail("Model validation returned incorrect type")
+                        return FlextResult[T].fail(
+                            "Model validation returned incorrect type"
+                        )
                 else:
                     instance = entity_class(**data)
             else:
                 instance = entity_class(**data)
             # Type assertion after validation - instance must be of type T
-            validated_instance = instance if isinstance(instance, entity_class) else entity_class(**data)
+            validated_instance = (
+                instance if isinstance(instance, entity_class) else entity_class(**data)
+            )
             return FlextResult[T].ok(validated_instance)
         except Exception as e:
             return FlextResult[T].fail(f"Entity creation failed: {e}")
@@ -604,19 +621,25 @@ class FlextCore:
                 if callable(model_validate):
                     instance = model_validate(data)
                     if not isinstance(instance, vo_class):
-                        return FlextResult[T].fail("Model validation returned incorrect type")
+                        return FlextResult[T].fail(
+                            "Model validation returned incorrect type"
+                        )
                 else:
                     instance = vo_class(**data)
             else:
                 instance = vo_class(**data)
             # Type assertion after validation - instance must be of type T
-            validated_instance = instance if isinstance(instance, vo_class) else vo_class(**data)
+            validated_instance = (
+                instance if isinstance(instance, vo_class) else vo_class(**data)
+            )
             return FlextResult[T].ok(validated_instance)
         except Exception as e:
             return FlextResult[T].fail(f"Value object creation failed: {e}")
 
     @staticmethod
-    def create_aggregate_root(aggregate_class: type[T], **data: object) -> FlextResult[T]:
+    def create_aggregate_root(
+        aggregate_class: type[T], **data: object
+    ) -> FlextResult[T]:
         """Create aggregate root with validation."""
         try:
             if hasattr(aggregate_class, "model_validate"):
@@ -625,13 +648,19 @@ class FlextCore:
                 if callable(model_validate):
                     instance = model_validate(data)
                     if not isinstance(instance, aggregate_class):
-                        return FlextResult[T].fail("Model validation returned incorrect type")
+                        return FlextResult[T].fail(
+                            "Model validation returned incorrect type"
+                        )
                 else:
                     instance = aggregate_class(**data)
             else:
                 instance = aggregate_class(**data)
             # Type assertion after validation - instance must be of type T
-            validated_instance = instance if isinstance(instance, aggregate_class) else aggregate_class(**data)
+            validated_instance = (
+                instance
+                if isinstance(instance, aggregate_class)
+                else aggregate_class(**data)
+            )
             return FlextResult[T].ok(validated_instance)
         except Exception as e:
             return FlextResult[T].fail(f"Aggregate root creation failed: {e}")
@@ -681,7 +710,7 @@ class FlextCore:
         result = safe_call(func)
         if result.is_failure:
             return default
-        return cast("T", result.data)
+        return cast("T", result.value)
 
     @staticmethod
     def truncate(text: str, max_length: int = 100) -> str:
@@ -727,12 +756,18 @@ class FlextCore:
         try:
             correlation_id = kwargs.pop("correlation_id", None)
             if isinstance(correlation_id, str):
-                message_result = create_cross_service_message(message_type, correlation_id, **kwargs)
+                message_result = create_cross_service_message(
+                    message_type, correlation_id, **kwargs
+                )
             else:
-                message_result = create_cross_service_message(message_type, None, **kwargs)
+                message_result = create_cross_service_message(
+                    message_type, None, **kwargs
+                )
 
             if message_result.is_failure:
-                return FlextResult[FlextMessage].fail(message_result.error or "Message creation failed")
+                return FlextResult[FlextMessage].fail(
+                    message_result.error or "Message creation failed"
+                )
             return message_result
         except Exception as e:
             return FlextResult[FlextMessage].fail(f"Message creation failed: {e}")
@@ -744,11 +779,17 @@ class FlextCore:
         """Create cross-service event."""
         try:
             correlation_id = kwargs.pop("correlation_id", None)
-            correlation_id_str = correlation_id if isinstance(correlation_id, str) else None
-            event_result = create_cross_service_event(event_type, data, correlation_id_str, **kwargs)
+            correlation_id_str = (
+                correlation_id if isinstance(correlation_id, str) else None
+            )
+            event_result = create_cross_service_event(
+                event_type, data, correlation_id_str, **kwargs
+            )
 
             if event_result.is_failure:
-                return FlextResult[FlextEvent].fail(event_result.error or "Event creation failed")
+                return FlextResult[FlextEvent].fail(
+                    event_result.error or "Event creation failed"
+                )
             return event_result
         except Exception as e:
             return FlextResult[FlextEvent].fail(f"Event creation failed: {e}")
@@ -758,7 +799,9 @@ class FlextCore:
         """Validate cross-service protocol."""
         validation_result = validate_cross_service_protocol(payload)
         if validation_result.is_failure:
-            return FlextResult[dict[str, object]].fail(validation_result.error or "Protocol validation failed")
+            return FlextResult[dict[str, object]].fail(
+                validation_result.error or "Protocol validation failed"
+            )
         return FlextResult[dict[str, object]].ok(payload)
 
     @staticmethod
@@ -797,7 +840,9 @@ class FlextCore:
         try:
             registry = self.handler_registry
             if hasattr(registry, "register"):
-                validated_handler = cast("FlextAbstractHandler[object, object]", handler)
+                validated_handler = cast(
+                    "FlextAbstractHandler[object, object]", handler
+                )
                 registry.register(handler_type, validated_handler)
                 return FlextResult[None].ok(None)
             return FlextResult[None].fail(
@@ -882,7 +927,7 @@ class FlextCore:
 
     def create_validation_decorator(
         self, validator: Callable[[object], bool]
-    ) -> Callable[[Callable[..., object]], Callable[..., object]]:
+    ) -> object:
         """Create custom validation decorator."""
         return FlextValidationDecorators.create_validation_decorator(validator)
 
@@ -891,10 +936,11 @@ class FlextCore:
     ) -> FlextErrorHandlingDecorators:
         """Create custom error handling decorator."""
         name = cast("str | None", kwargs.get("name"))
-        handled_exceptions = cast("tuple[type[Exception], ...] | None", kwargs.get("handled_exceptions"))
+        handled_exceptions = cast(
+            "tuple[type[Exception], ...] | None", kwargs.get("handled_exceptions")
+        )
         return FlextErrorHandlingDecorators(
-            name=name,
-            handled_exceptions=handled_exceptions
+            name=name, handled_exceptions=handled_exceptions
         )
 
     def create_performance_decorator(
@@ -904,20 +950,14 @@ class FlextCore:
         name = cast("str | None", kwargs.get("name"))
         threshold_seconds = cast("float", kwargs.get("threshold_seconds", 1.0))
         return FlextPerformanceDecorators(
-            name=name,
-            threshold_seconds=threshold_seconds
+            name=name, threshold_seconds=threshold_seconds
         )
 
-    def create_logging_decorator(
-        self, **kwargs: object
-    ) -> FlextLoggingDecorators:
+    def create_logging_decorator(self, **kwargs: object) -> FlextLoggingDecorators:
         """Create logging decorator."""
         name = cast("str | None", kwargs.get("name"))
         log_level = cast("str", kwargs.get("log_level", "INFO"))
-        return FlextLoggingDecorators(
-            name=name,
-            log_level=log_level
-        )
+        return FlextLoggingDecorators(name=name, log_level=log_level)
 
     @staticmethod
     def make_immutable(target_class: type[T]) -> type[T]:
@@ -927,7 +967,9 @@ class FlextCore:
     @staticmethod
     def make_pure(func: Callable[P, R]) -> Callable[P, R]:
         """Make function pure."""
-        return pure(func)  # type: ignore[return-value]
+        # Cast to satisfy type compatibility
+
+        return cast("Callable[P, R]", FlextGuards.pure(func))
 
     # =========================================================================
     # MIXINS & COMPOSITION
@@ -1193,16 +1235,23 @@ class FlextCore:
         """Access performance utilities."""
         return FlextPerformance
 
-    def track_performance(
-        self, operation_name: str
-    ) -> Callable[[Callable[..., object]], Callable[..., object]]:
+    def track_performance(self, operation_name: str) -> object:
         """Create performance tracking decorator."""
 
-        def decorator(func: Callable[..., object]) -> Callable[..., object]:
+        def _raise_not_callable() -> None:
+            """Abstract raise to inner function for TRY301 compliance."""
+            msg = "Decorated object is not callable"
+            raise TypeError(msg)
+
+        def decorator(func: object) -> object:
             def wrapper(*args: object, **kwargs: object) -> object:
                 start_time = datetime.now(UTC)
                 try:
-                    result = func(*args, **kwargs)
+                    # Use getattr for type-safe callable access
+                    if callable(func):
+                        result = func.__call__(*args, **kwargs)
+                    else:
+                        _raise_not_callable()
                     duration = (datetime.now(UTC) - start_time).total_seconds()
                     # Log performance metrics
                     logger = self.get_logger(__name__)
@@ -1226,7 +1275,9 @@ class FlextCore:
     # FACTORY METHODS
     # =========================================================================
 
-    def create_factory(self, factory_type: str, **config: object) -> FlextResult[object]:
+    def create_factory(
+        self, factory_type: str, **config: object
+    ) -> FlextResult[object]:
         """Create factory instance."""
         try:
             if factory_type == "model":

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import time
-from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -147,13 +146,13 @@ class TestFlextLogger:
     def test_logger_auto_configuration(self) -> None:
         """Test that logger auto-configures on first use."""
         # Clear any existing configuration
-        FlextLogger._configured = False
+        FlextLogger._configured = False  # pyright: ignore[reportPrivateUsage]  # pyright: ignore[reportPrivateUsage]
 
         # Getting a logger should auto-configure
         logger = FlextLogger.get_logger("test")
 
-        if not (FlextLogger._configured):
-            raise AssertionError(f"Expected True, got {FlextLogger._configured}")
+        if not (FlextLogger._configured):  # pyright: ignore[reportPrivateUsage]
+            raise AssertionError(f"Expected True, got {FlextLogger._configured}")  # pyright: ignore[reportPrivateUsage]
         assert logger is not None
 
     def test_get_logger_creates_instance(self) -> None:
@@ -189,17 +188,17 @@ class TestFlextLogger:
     def test_configure_with_defaults(self) -> None:
         """Test configuring logger with default settings."""
         # Reset configuration
-        FlextLogger._configured = False
+        FlextLogger._configured = False  # pyright: ignore[reportPrivateUsage]
 
         FlextLogger.configure()
 
-        if not (FlextLogger._configured):
-            raise AssertionError(f"Expected True, got {FlextLogger._configured}")
+        if not (FlextLogger._configured):  # pyright: ignore[reportPrivateUsage]
+            raise AssertionError(f"Expected True, got {FlextLogger._configured}")  # pyright: ignore[reportPrivateUsage]
 
     def test_configure_with_custom_settings(self) -> None:
         """Test configuring logger with custom settings."""
         # Reset configuration
-        FlextLogger._configured = False
+        FlextLogger._configured = False  # pyright: ignore[reportPrivateUsage]
 
         FlextLogger.configure(
             log_level=FlextLogLevel.DEBUG,
@@ -208,20 +207,20 @@ class TestFlextLogger:
             add_caller=False,
         )
 
-        if not (FlextLogger._configured):
-            raise AssertionError(f"Expected True, got {FlextLogger._configured}")
+        if not (FlextLogger._configured):  # pyright: ignore[reportPrivateUsage]
+            raise AssertionError(f"Expected True, got {FlextLogger._configured}")  # pyright: ignore[reportPrivateUsage]
 
     def test_configure_idempotent(self) -> None:
         """Test that configure is idempotent."""
         # Configure once
         FlextLogger.configure()
-        if not (FlextLogger._configured):
-            raise AssertionError(f"Expected True, got {FlextLogger._configured}")
+        if not (FlextLogger._configured):  # pyright: ignore[reportPrivateUsage]
+            raise AssertionError(f"Expected True, got {FlextLogger._configured}")  # pyright: ignore[reportPrivateUsage]
 
         # Configure again should not raise error
         FlextLogger.configure()
-        if not (FlextLogger._configured):
-            raise AssertionError(f"Expected True, got {FlextLogger._configured}")
+        if not (FlextLogger._configured):  # pyright: ignore[reportPrivateUsage]
+            raise AssertionError(f"Expected True, got {FlextLogger._configured}")  # pyright: ignore[reportPrivateUsage]
 
     def test_get_base_logger(self) -> None:
         """Test getting base logger instance."""
@@ -329,20 +328,31 @@ class TestFlextLoggerUsage:
         assert hasattr(perf_logger, "info")
         perf_logger.info("Performance test message")
 
-    def test_logger_factory_called(self) -> None:
-        """Test that structlog.get_logger is called appropriately."""
-        with patch("structlog.get_logger") as mock_get_logger:
-            mock_logger = MagicMock()
-            mock_get_logger.return_value = mock_logger
+    def test_logger_factory_real_execution(self) -> None:
+        """Test logger factory with real execution instead of mocks."""
+        # Clear cache to ensure fresh logger creation
+        FlextLogger._loggers.clear()  # pyright: ignore[reportPrivateUsage]
 
-            # Clear cache to force new logger creation
-            FlextLogger._loggers.clear()
+        # Test real logger creation
+        logger1 = FlextLogger.get_logger("factory_test")
+        logger2 = FlextLogger.get_logger("factory_test")
 
-            logger = FlextLogger.get_logger("factory_test")
+        # Same name should return same cached instance
+        assert logger1 is logger2
 
-            mock_get_logger.assert_called_once_with("factory_test")
-        if logger != mock_logger:
-            raise AssertionError(f"Expected {mock_logger}, got {logger}")
+        # Different name should return different instance
+        logger3 = FlextLogger.get_logger("different_test")
+        assert logger1 is not logger3
+
+        # Test that loggers have the expected methods
+        assert hasattr(logger1, "info")
+        assert hasattr(logger1, "error")
+        assert hasattr(logger1, "debug")
+        assert hasattr(logger1, "warning")
+
+        # Test actual logging (should not raise exceptions)
+        logger1.info("Test message")
+        logger3.error("Test error message")
 
 
 class TestFlextLoggerIntegration:

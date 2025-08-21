@@ -717,7 +717,9 @@ class TestAdditionalExceptions:
 
     def test_flext_not_found_error(self) -> None:
         """Test FlextNotFoundError functionality."""
-        error = FlextNotFoundError("Resource not found", resource_id="123", resource_type="user")
+        error = FlextNotFoundError(
+            "Resource not found", resource_id="123", resource_type="user"
+        )
 
         assert "Resource not found" in str(error)
         assert "FLEXT_" in str(error)  # Should have FLEXT_ prefix
@@ -735,13 +737,18 @@ class TestAdditionalExceptions:
 
         assert "Resource exists" in str(error)
         assert "FLEXT_" in str(error)  # Should have FLEXT_ prefix
-        assert "ALREADY_EXISTS" in error.error_code or "FLEXT_ALREADY_EXISTS" in error.error_code
+        assert (
+            "ALREADY_EXISTS" in error.error_code
+            or "FLEXT_ALREADY_EXISTS" in error.error_code
+        )
         assert error.context["resource_id"] == "456"
         assert error.context["resource_type"] == "email"
 
     def test_flext_timeout_error(self) -> None:
         """Test FlextTimeoutError functionality."""
-        error = FlextTimeoutError("Operation timed out", timeout_seconds=30.0, context={"duration": 45})
+        error = FlextTimeoutError(
+            "Operation timed out", timeout_seconds=30.0, context={"duration": 45}
+        )
 
         assert "Operation timed out" in str(error)
         assert "FLEXT_" in str(error)  # Should have FLEXT_ prefix
@@ -874,7 +881,7 @@ class TestExceptionsCoverageImprovements:
 
     def test_record_exception_function(self) -> None:
         """Test exception recording through metrics system."""
-        from flext_core.exceptions import (  # noqa: PLC0415
+        from flext_core import (  # noqa: PLC0415
             FlextExceptionMetrics,
             clear_exception_metrics,
             get_exception_metrics,

@@ -117,7 +117,7 @@ class TestFlextEventCoverage:
         )
         # Should succeed in this case, but tests the error path structure
         if result.success:
-            assert isinstance(result.data, FlextEvent)
+            assert isinstance(result.value, FlextEvent)
         else:
             assert "Failed to create event" in (result.error or "")
 
@@ -126,7 +126,7 @@ class TestFlextEventCoverage:
         # Create event and test version property handling
         result = FlextEvent.create_event("TestEvent", {"data": "test"})
         if result.success:
-            event = result.data
+            event = result.value
             assert event is not None
             # Test the version property getter with valid data
             assert isinstance(event.version, (int, type(None)))
@@ -153,7 +153,7 @@ class TestFlextMessageCoverage:
         # Should succeed but use default level
         assert result.success
         if result.success:
-            message = result.data
+            message = result.value
             assert message is not None
             assert message.level == "info"  # Default level
 
@@ -163,7 +163,7 @@ class TestFlextMessageCoverage:
         # Should succeed in normal case
         assert result.success
         if result.success:
-            assert isinstance(result.data, FlextMessage)
+            assert isinstance(result.value, FlextMessage)
 
 
 class TestFlextPayloadCoverage:
@@ -178,7 +178,7 @@ class TestFlextPayloadCoverage:
         # Should succeed but metadata should be reset to empty dict
         assert result.success
         if result.success:
-            payload = result.data
+            payload = result.value
             assert payload is not None
             assert payload.metadata == {}
 
@@ -187,8 +187,8 @@ class TestFlextPayloadCoverage:
         payload = FlextPayload(data="test")
 
         # Force some mixin attributes to exist using dynamic setattr to satisfy typing
-        payload._validation_errors = ["error"]  # type: ignore[attr-defined]  # dynamic attribute for test
-        payload._is_valid = False  # type: ignore[attr-defined]  # dynamic attribute for test
+        payload._validation_errors = ["error"]
+        payload._is_valid = False
 
         result = payload.to_dict_basic()
 
@@ -261,7 +261,7 @@ class TestFlextPayloadEdgeCases:
         """Test from_dict with various invalid metadata types."""
         result: FlextResult[FlextPayload[object]] = FlextPayload.from_dict(invalid_data)
         assert result.success
-        payload = result.data
+        payload = result.value
         assert payload is not None
         assert payload.data == "test"
         assert payload.metadata == expected_metadata
@@ -273,6 +273,6 @@ class TestFlextPayloadEdgeCases:
 
         # Should handle gracefully
         if result.success:
-            assert isinstance(result.data, FlextPayload)
+            assert isinstance(result.value, FlextPayload)
         else:
             assert "Failed to create payload" in (result.error or "")

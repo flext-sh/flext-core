@@ -222,7 +222,7 @@ class TestFlextFieldRegistry:
 
         retrieved_result = registry.get_field_by_id("test_id")
         assert retrieved_result.success
-        assert retrieved_result.data is field
+        assert retrieved_result.value is field
 
     def test_get_field_existing(self) -> None:
         """Test getting an existing field."""
@@ -235,7 +235,7 @@ class TestFlextFieldRegistry:
 
         result = registry.get_field_by_id("test_id")
         assert result.success
-        assert result.data is field
+        assert result.value is field
 
     def test_get_field_non_existing(self) -> None:
         """Test getting a non-existing field."""

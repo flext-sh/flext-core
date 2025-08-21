@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Protocol
 
 import pytest
+import ruff.__main__ as ruff_main
 
 
 class ProcessResult(Protocol):
@@ -88,8 +89,6 @@ def _run_ruff_command(command_args: list[str]) -> ProcessResult:
 
     # Prefer in-process execution when available; otherwise, fallback to CLI
     try:
-        import ruff.__main__ as ruff_main  # type: ignore[import-untyped]  # noqa: PLC0415
-
         if hasattr(ruff_main, "main"):
             stdout = io.StringIO()
             stderr = io.StringIO()
@@ -97,7 +96,7 @@ def _run_ruff_command(command_args: list[str]) -> ProcessResult:
                 exit_code = 0
                 try:
                     # Execute only with the validated, explicit arguments
-                    ruff_main.main([*command_args])
+                    ruff_main.main([*command_args])  # pyright: ignore[reportAttributeAccessIssue]
                 except SystemExit as exc:  # ruff exits via SystemExit
                     exit_code = int(getattr(exc, "code", 0) or 0)
 

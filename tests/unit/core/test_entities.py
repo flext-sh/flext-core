@@ -12,10 +12,13 @@ from typing import Protocol, cast
 import pytest
 from pydantic import ValidationError
 
-from flext_core import FlextEntity, FlextFactory
-from flext_core.exceptions import FlextValidationError
-from flext_core.result import FlextResult
-from flext_core.root_models import FlextTimestamp
+from flext_core import (
+    FlextEntity,
+    FlextFactory,
+    FlextResult,
+    FlextTimestamp,
+    FlextValidationError,
+)
 
 
 class EntityFactory(Protocol):
@@ -215,7 +218,7 @@ class TestFlextEntity:
         result = user.increment_version()
 
         assert result.success
-        new_user = cast("SampleUser", result.data)
+        new_user = cast("SampleUser", result.value)
         assert new_user is not None
         if new_user.version != user.version + 1:
             raise AssertionError(f"Expected {user.version + 1}, got {new_user.version}")
@@ -265,7 +268,7 @@ class TestFlextEntity:
         result = user.copy_with(name="Jane", age=30)
 
         assert result.success
-        new_user = cast("SampleUser", result.data)
+        new_user = cast("SampleUser", result.value)
         assert new_user is not None
         if new_user.name != "Jane":
             raise AssertionError(f"Expected {'Jane'}, got {new_user.name}")
@@ -287,7 +290,7 @@ class TestFlextEntity:
         result = user.copy_with(name="Jane", version=10)
 
         assert result.success
-        new_user = cast("SampleUser", result.data)
+        new_user = cast("SampleUser", result.value)
         assert new_user is not None
         if new_user.version != 10:  # Explicit version used:
             msg: str = f"Expected {10}, got {new_user.version}"
@@ -301,7 +304,7 @@ class TestFlextEntity:
         result = user.copy_with()
 
         assert result.success
-        new_user = cast("SampleUser", result.data)
+        new_user = cast("SampleUser", result.value)
         assert new_user is not None
         if new_user.version != 5:  # Version not incremented when no changes:
             msg: str = f"Expected {5}, got {new_user.version}"
@@ -621,7 +624,7 @@ class TestFlextFactory:
         )
 
         assert result.success
-        user = cast("SampleUser", result.data)
+        user = cast("SampleUser", result.value)
         assert isinstance(user, SampleUser)
         if user.name != "John":
             raise AssertionError(f"Expected {'John'}, got {user.name}")
@@ -645,7 +648,7 @@ class TestFlextFactory:
         result = cast("EntityFactory", factory)(name="John", email="john@example.com")
 
         assert result.success
-        user = cast("SampleUser", result.data)
+        user = cast("SampleUser", result.value)
         if user.age != 18:  # From defaults:
             msg: str = f"Expected {18}, got {user.age}"
             raise AssertionError(msg)
@@ -667,7 +670,7 @@ class TestFlextFactory:
         )
 
         assert result.success
-        user = cast("SampleUser", result.data)
+        user = cast("SampleUser", result.value)
         if user.age != 25:  # Overridden:
             msg: str = f"Expected {25}, got {user.age}"
             raise AssertionError(msg)
@@ -680,7 +683,7 @@ class TestFlextFactory:
         result = cast("EntityFactory", factory)(name="John", email="john@example.com")
 
         assert result.success
-        user = cast("SampleUser", result.data)
+        user = cast("SampleUser", result.value)
         assert user.id
         id_value = user.id.root if hasattr(user.id, "root") else str(user.id)
         assert len(id_value) > 0
@@ -696,7 +699,7 @@ class TestFlextFactory:
         )
 
         assert result.success
-        user = cast("SampleUser", result.data)
+        user = cast("SampleUser", result.value)
         if user.id != "custom_id":
             raise AssertionError(f"Expected {'custom_id'}, got {user.id}")
 
@@ -711,7 +714,7 @@ class TestFlextFactory:
         )
 
         assert result.success
-        user = cast("SampleUser", result.data)
+        user = cast("SampleUser", result.value)
         assert user.id
         assert user.id != ""
 
@@ -722,7 +725,7 @@ class TestFlextFactory:
         result = cast("EntityFactory", factory)(name="John", email="john@example.com")
 
         assert result.success
-        user = cast("SampleUser", result.data)
+        user = cast("SampleUser", result.value)
         version_value = (
             user.version.root if hasattr(user.version, "root") else user.version
         )
@@ -740,7 +743,7 @@ class TestFlextFactory:
         )
 
         assert result.success
-        user = cast("SampleUser", result.data)
+        user = cast("SampleUser", result.value)
         version_value = (
             user.version.root if hasattr(user.version, "root") else user.version
         )
@@ -767,8 +770,12 @@ class TestFlextFactory:
         assert result.is_failure
         # Accept either the old or new error message format
         error_msg = result.error or ""
-        if not ("Entity creation failed" in error_msg or "Failed to create" in error_msg):
-            raise AssertionError(f"Expected 'Entity creation failed' or 'Failed to create' in {result.error}")
+        if not (
+            "Entity creation failed" in error_msg or "Failed to create" in error_msg
+        ):
+            raise AssertionError(
+                f"Expected 'Entity creation failed' or 'Failed to create' in {result.error}"
+            )
 
     def test_factory_type_error_handling(self) -> None:
         """Test factory handles TypeError without mocking."""
@@ -828,7 +835,7 @@ class TestEntityIntegration:
         result = user.copy_with(name="John Doe")
         assert result.success
 
-        updated_user = cast("SampleUser", result.data)
+        updated_user = cast("SampleUser", result.value)
         assert updated_user is not None
         if updated_user.name != "John Doe":
             raise AssertionError(f"Expected {'John Doe'}, got {updated_user.name}")
@@ -873,7 +880,7 @@ class TestEntityIntegration:
             msg = f"Expected {all(result.success for result in results)} in {results}"
             raise AssertionError(msg)
 
-        users = [cast("SampleUser", result.data) for result in results]
+        users = [cast("SampleUser", result.value) for result in results]
 
         # Check Alice (uses defaults)
         if users[0].name != "Alice":

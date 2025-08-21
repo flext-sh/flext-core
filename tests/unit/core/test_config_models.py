@@ -196,7 +196,7 @@ class TestConfigUtilities:
 
         result = merge_configs(config1.model_dump(), config2.model_dump())
         assert result.is_success
-        merged_data = result.unwrap()
+        merged_data = result.value
         assert isinstance(merged_data, dict)
         assert "host" in merged_data
 
@@ -205,7 +205,8 @@ class TestConfigUtilities:
         config = FlextDatabaseConfig(host="test-db")
         result = validate_config(config.model_dump())
         assert result.is_success
-        assert result.unwrap() is None
+        # FlextResult[None].ok(None) is valid - represents "success without data"
+        assert result.value is None
 
     def test_safe_load_json_file(self) -> None:
         """Test safe_load_json_file function."""
@@ -221,7 +222,7 @@ class TestConfigUtilities:
 
             result = safe_load_json_file(f.name)
             assert result.is_success
-            assert result.unwrap()["test"] == "value"
+            assert result.value["test"] == "value"
 
 
 class TestConfigEdgeCases:
@@ -274,7 +275,7 @@ class TestConfigEdgeCases:
         # Convert to dictionaries for merge_configs function
         result = merge_configs(db_config.model_dump(), redis_config.model_dump())
         assert result.is_success
-        merged_data = result.unwrap()
+        merged_data = result.value
         assert isinstance(merged_data, dict)
         assert len(merged_data) > 0
         # Verify merge contains data from both configs
@@ -409,7 +410,7 @@ class TestFlextSettings:
         """Test Settings create_with_validation method."""
         result = FlextSettings.create_with_validation()
         assert result.is_success
-        settings = result.unwrap()
+        settings = result.value
         assert isinstance(settings, FlextSettings)
 
 
@@ -550,5 +551,5 @@ class TestConfigFactoryFunctions:
         # load_config_from_env expects a config_type string, not a class
         result = load_config_from_env("database")
         assert result.is_success
-        config = result.unwrap()
+        config = result.value
         assert config is not None

@@ -357,7 +357,7 @@ class FlextCommands:
             result = FlextPayload[dict[str, object]].create(
                 data=command_dict, **metadata
             )
-            return cast("FlextPayload[dict[str, str | None]]", result.unwrap())
+            return cast("FlextPayload[dict[str, str | None]]", result.value)
 
     # =============================================================================
     # COMMAND RESULT HELPERS - Use FlextResult directly as requested

@@ -1,4 +1,4 @@
-"""Modern Pydantic TypeAdapter patterns for FLEXT Core."""
+"""Pydantic TypeAdapter patterns for FLEXT Core."""
 
 from __future__ import annotations
 
@@ -71,7 +71,7 @@ class TypeAdapterFactory:
         return TypeAdapter(type_)
 
     @staticmethod
-    def create_list_adapter(item_type: type) -> TypeAdapter[list[object]]:
+    def create_list_adapter(_item_type: type) -> TypeAdapter[list[object]]:
         """Create TypeAdapter for lists.
 
         Args:
@@ -81,10 +81,11 @@ class TypeAdapterFactory:
             TypeAdapter for List[T]
 
         """
-        return TypeAdapter(list[item_type])
+        # Use list[object] as the runtime type since we can't use variables as types
+        return TypeAdapter(list[object])
 
     @staticmethod
-    def create_dict_adapter(value_type: type) -> TypeAdapter[dict[str, object]]:
+    def create_dict_adapter(_value_type: type) -> TypeAdapter[dict[str, object]]:
         """Create TypeAdapter for dictionaries.
 
         Args:
@@ -94,7 +95,8 @@ class TypeAdapterFactory:
             TypeAdapter for Dict[str, T]
 
         """
-        return TypeAdapter(dict[str, value_type])
+        # Use dict[str, object] as the runtime type since we can't use variables as types
+        return TypeAdapter(dict[str, object])
 
 
 # =============================================================================
@@ -412,7 +414,7 @@ class SchemaHelpers:
                     return FlextResult[dict[str, dict[str, object]]].fail(
                         f"Failed to generate schema for {name}: {schema_result.error}",
                     )
-                schemas[name] = schema_result.unwrap()
+                schemas[name] = schema_result.value
             return FlextResult[dict[str, dict[str, object]]].ok(schemas)
         except Exception as e:
             return FlextResult[dict[str, dict[str, object]]].fail(

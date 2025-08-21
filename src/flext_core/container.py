@@ -389,9 +389,9 @@ class FlextServiceRegistrar(FlextLoggableMixin):
         if validation_result.is_failure:
             return FlextResult[None].fail(validation_result.error or SERVICE_NAME_EMPTY)
 
-        # unwrap() returns T where T is the success type for the FlextResult[str]
+        # value returns T where T is the success type for the FlextResult[str]
         # Cast explicitly to str so static analyzers infer the correct type.
-        validated_name: str = validation_result.unwrap()
+        validated_name: str = validation_result.value
 
         # We accept a generic object here so we can runtime-check callability.
         # Using Callable[...] in the signature makes the `if not callable(...)`
@@ -436,8 +436,8 @@ class FlextServiceRegistrar(FlextLoggableMixin):
         if validation_result.is_failure:
             return FlextResult[None].fail(validation_result.error or SERVICE_NAME_EMPTY)
 
-        # Unwrap returns the validated name (str) on success.
-        validated_name: str = validation_result.unwrap()
+        # Value returns the validated name (str) on success.
+        validated_name: str = validation_result.value
 
         if validated_name in self._services:
             del self._services[validated_name]
@@ -708,7 +708,7 @@ class FlextContainer(FlextLoggableMixin):
         query = ListServicesQuery.create()
         result = self._list_services_handler.handle(query)
         if result.is_success:
-            return result.unwrap()
+            return result.value
         return {}
 
     def get_service_names(self) -> list[str]:
@@ -721,7 +721,7 @@ class FlextContainer(FlextLoggableMixin):
 
     @property
     def command_bus(self) -> FlextCommands.Bus:
-        """Access to the internal command bus for advanced operations."""
+        """Access to the internal command bus for operations."""
         return self._command_bus
 
     # Type-safe retrieval methods
@@ -732,7 +732,7 @@ class FlextContainer(FlextLoggableMixin):
             return FlextResult[T].fail(result.error or "Service not found")
 
         # result is FlextResult[object] -> explicit cast to object for analyzers
-        service: object = result.unwrap()
+        service: object = result.value
 
         # Simple isinstance check instead of complex FlextTypes.TypeGuards
         if not isinstance(service, expected_type):
@@ -848,12 +848,11 @@ class FlextContainer(FlextLoggableMixin):
                 dependency_result = self.get(param.name)
                 if dependency_result.is_failure:
                     return FlextResult[T].fail(
-                        f"Required dependency '{param.name}' not found for "
-                        f"{service_class.__name__}"
+                        f"Required dependency '{param.name}' not found for {service_class.__name__}"
                     )
 
                 # dependency_result is FlextResult[object]; cast explicitly
-                kwargs[param.name] = dependency_result.unwrap()
+                kwargs[param.name] = dependency_result.value
 
             # Instantiate service with resolved dependencies
             service_instance = service_class(*args, **kwargs)

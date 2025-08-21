@@ -8,6 +8,9 @@ domain models.
 from decimal import Decimal
 from typing import cast
 
+# use .shared_domain with dot to access local module
+from shared_domain import EmailAddress, Money, Order, SharedDomainFactory, User
+
 from flext_core import (
     FlextFields,
     FlextLogger,
@@ -15,8 +18,6 @@ from flext_core import (
     get_flext_container,
     get_logger,
 )
-
-from .shared_domain import EmailAddress, Money, Order, SharedDomainFactory, User
 
 # =============================================================================
 # VALIDATION CONSTANTS - Integration example constraints
@@ -126,7 +127,7 @@ def _demo_container(customer: User, repository: object) -> None:
     repo_result = container.get("order_repository")
     customer_result = container.get("current_customer")
     if repo_result.success and customer_result.success:
-        retrieved_customer = customer_result.data
+        retrieved_customer = customer_result.value
         if hasattr(retrieved_customer, "name"):
             pass
 
@@ -157,9 +158,9 @@ def _demo_complete_flow(customer: User, order: Order, logger: FlextLogger) -> No
             },
         ],
     )
-    if order2_result.success and order2_result.data is not None:
-        order2 = order2_result.data
-        repository_any = get_flext_container().get("order_repository").unwrap()
+    if order2_result.success and order2_result.value is not None:
+        order2 = order2_result.value
+        repository_any = get_flext_container().get("order_repository").value
         # Hint to type checker
         repo: _OrderRepositoryProtocol = cast(
             "_OrderRepositoryProtocol", repository_any
@@ -168,8 +169,8 @@ def _demo_complete_flow(customer: User, order: Order, logger: FlextLogger) -> No
         total1_result = order.calculate_total()
         total2_result = order2.calculate_total()
         if total1_result.success and total2_result.success:
-            total1 = total1_result.data
-            total2 = total2_result.data
+            total1 = total1_result.value
+            total2 = total2_result.value
             if total1 is not None and total2 is not None:
                 _ = total1.amount + total2.amount
     logger.info("Integration example completed successfully")
@@ -181,14 +182,14 @@ def main() -> None:
     logger = _setup_logger()
     email, money = _shared_domain_vo_demo()
     user_result = _create_customer(email)
-    if user_result.is_failure or user_result.data is None:
+    if user_result.is_failure or user_result.value is None:
         return
-    customer = user_result.data
+    customer = user_result.value
     _print_customer(customer)
     order_result = _create_order(str(customer.id), money)
-    if order_result.is_failure or order_result.data is None:
+    if order_result.is_failure or order_result.value is None:
         return
-    order = order_result.data
+    order = order_result.value
     _print_order(order)
     _demo_command_pattern(
         str(customer.id),

@@ -393,14 +393,14 @@ class TestFlextCommandHandler:
 
         if not result.success:
             raise AssertionError(f"Expected True, got {result.success}")
-        assert result.data is not None
-        if (result.data or {})["username"] != "john":
+        assert result.value is not None
+        if (result.value or {})["username"] != "john":
             raise AssertionError(
-                f"Expected {'john'}, got {(result.data or {})['username']}",
+                f"Expected {'john'}, got {(result.value or {})['username']}",
             )
-        assert (result.data or {})["email"] == "john@example.com"
-        if "id" not in result.data:
-            raise AssertionError(f"Expected {'id'} in {result.data}")
+        assert (result.value or {})["email"] == "john@example.com"
+        if "id" not in result.value:
+            raise AssertionError(f"Expected {'id'} in {result.value}")
 
     def test_process_command_success(self) -> None:
         """Test complete command processing flow."""
@@ -527,8 +527,8 @@ class TestFlextCommandBus:
 
         if not result.success:
             raise AssertionError(f"Expected True, got {result.success}")
-        assert result.data is not None
-        user_data = cast("dict[str, object]", result.data)
+        assert result.value is not None
+        user_data = cast("dict[str, object]", result.value)
         if user_data["username"] != "alice":
             raise AssertionError(f"Expected {'alice'}, got {user_data['username']}")
 
@@ -615,8 +615,8 @@ class TestFlextCommandResult:
 
         if not command_result.success:
             raise AssertionError(f"Expected True, got {command_result.success}")
-        if command_result.data != result_data:
-            raise AssertionError(f"Expected {result_data}, got {command_result.data}")
+        if command_result.value != result_data:
+            raise AssertionError(f"Expected {result_data}, got {command_result.value}")
         assert command_result.error is None
 
     def test_failure_result_creation(self) -> None:
@@ -627,7 +627,11 @@ class TestFlextCommandResult:
 
         if command_result.success:
             raise AssertionError(f"Expected False, got {command_result.success}")
-        assert command_result.data is None
+        # Cannot access .data on failed result - should raise TypeError
+        with pytest.raises(
+            TypeError, match="Attempted to access value on failed result"
+        ):
+            _ = command_result.value
         if command_result.error != error_message:
             raise AssertionError(
                 f"Expected {error_message}, got {command_result.error}",
@@ -675,8 +679,8 @@ class TestCommandPatternIntegration:
 
         if not create_result.success:
             raise AssertionError(f"Expected True, got {create_result.success}")
-        assert create_result.data is not None
-        user_data = cast("dict[str, object]", create_result.data)
+        assert create_result.value is not None
+        user_data = cast("dict[str, object]", create_result.value)
         assert user_data is not None
         user_id = cast("str", user_data["id"])
 
@@ -689,8 +693,8 @@ class TestCommandPatternIntegration:
 
         if not update_result.success:
             raise AssertionError(f"Expected True, got {update_result.success}")
-        assert update_result.data is not None
-        update_data = cast("dict[str, object]", update_result.data)
+        assert update_result.value is not None
+        update_data = cast("dict[str, object]", update_result.value)
         if update_data["user_id"] != user_id:
             raise AssertionError(f"Expected {user_id}, got {update_data['user_id']}")
 

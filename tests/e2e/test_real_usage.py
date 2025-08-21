@@ -13,30 +13,30 @@ from flext_core import FlextContainer, FlextResult, TEntityId, get_flext_contain
 pytestmark = [pytest.mark.e2e]
 
 
-class MockUser:
-    """Mock user for testing."""
+class TestUser:
+    """Test user for testing."""
 
     def __init__(self, user_id: TEntityId, name: str) -> None:
-        """Initialize mock user."""
+        """Initialize test user."""
         self.id = user_id
         self.name = name
 
 
-class MockDatabase:
-    """Mock database service for testing."""
+class TestDatabase:
+    """Test database service for testing."""
 
     def __init__(self) -> None:
-        """Initialize mock database with test data."""
+        """Initialize test database with test data."""
         self.users = {
-            "user-123": MockUser("user-123", "John Doe"),
-            "user-456": MockUser("user-456", "Jane Smith"),
+            "user-123": TestUser("user-123", "John Doe"),
+            "user-456": TestUser("user-456", "Jane Smith"),
         }
 
-    def get_user(self, user_id: TEntityId) -> MockUser | None:
+    def get_user(self, user_id: TEntityId) -> TestUser | None:
         """Get user by ID."""
         return self.users.get(user_id)
 
-    def save_user(self, user: MockUser) -> MockUser:
+    def save_user(self, user: TestUser) -> TestUser:
         """Save user to database."""
         self.users[user.id] = user
         return user
@@ -45,45 +45,45 @@ class MockDatabase:
 class UserService:
     """User service demonstrating real service patterns."""
 
-    def __init__(self, database: MockDatabase) -> None:
+    def __init__(self, database: TestDatabase) -> None:
         """Initialize user service with database dependency."""
         self.database = database
 
-    def fetch_user(self, user_id: TEntityId) -> FlextResult[MockUser]:
+    def fetch_user(self, user_id: TEntityId) -> FlextResult[TestUser]:
         """Fetch user with type-safe error handling."""
         user = self.database.get_user(user_id)
         if user is None:
-            return FlextResult[MockUser].fail(f"User {user_id} not found")
-        return FlextResult[MockUser].ok(user)
+            return FlextResult[TestUser].fail(f"User {user_id} not found")
+        return FlextResult[TestUser].ok(user)
 
     def create_user(
         self,
         user_id: TEntityId,
         name: str,
-    ) -> FlextResult[MockUser]:
+    ) -> FlextResult[TestUser]:
         """Create a new user."""
         if self.database.get_user(user_id) is not None:
-            return FlextResult[MockUser].fail(f"User {user_id} already exists")
+            return FlextResult[TestUser].fail(f"User {user_id} already exists")
 
-        user = MockUser(user_id, name)
+        user = TestUser(user_id, name)
         self.database.save_user(user)
-        return FlextResult[MockUser].ok(user)
+        return FlextResult[TestUser].ok(user)
 
 
-class TestRealUsagePatterns:
+class TestUsagePatterns:
     """Tests that mirror actual production usage patterns."""
 
     def test_flext_result_success_flow(self) -> None:
         """Test typical successful FlextResult flow."""
         # Common pattern: service operation that succeeds
-        database = MockDatabase()
+        database = TestDatabase()
         service = UserService(database)
 
         result = service.fetch_user("user-123")
 
         # Production code checks success first
         assert result.success
-        user = result.data
+        user = result.value
         assert user is not None
         if user.name != "John Doe":
             msg: str = f"Expected {'John Doe'}, got {user.name}"
@@ -93,7 +93,7 @@ class TestRealUsagePatterns:
     def test_flext_result_failure_flow(self) -> None:
         """Test typical failure FlextResult flow."""
         # Common pattern: service operation that fails
-        database = MockDatabase()
+        database = TestDatabase()
         service = UserService(database)
 
         result = service.fetch_user("nonexistent")
@@ -108,7 +108,7 @@ class TestRealUsagePatterns:
 
     def test_chained_operations(self) -> None:
         """Test chaining operations with FlextResult."""
-        database = MockDatabase()
+        database = TestDatabase()
         service = UserService(database)
 
         # Chain of operations that can fail at any step
@@ -120,14 +120,14 @@ class TestRealUsagePatterns:
 
         fetch_result = service.fetch_user("new-user")
         assert fetch_result.success
-        assert fetch_result.data is not None
-        if fetch_result.data.name != "New User":
-            msg: str = f"Expected {'New User'}, got {fetch_result.data.name}"
+        assert fetch_result.value is not None
+        if fetch_result.value.name != "New User":
+            msg: str = f"Expected {'New User'}, got {fetch_result.value.name}"
             raise AssertionError(msg)
 
     def test_error_handling_patterns(self) -> None:
         """Test common error handling patterns."""
-        database = MockDatabase()
+        database = TestDatabase()
         service = UserService(database)
 
         # Try to create duplicate user
@@ -146,10 +146,10 @@ class TestRealUsagePatterns:
         # Original user should be unchanged
         original_result = service.fetch_user("user-123")
         assert original_result.success
-        assert original_result.data is not None
-        if original_result.data.name != "John Doe":
+        assert original_result.value is not None
+        if original_result.value.name != "John Doe":
             original_msg: str = (
-                f"Expected {'John Doe'}, got {original_result.data.name}"
+                f"Expected {'John Doe'}, got {original_result.value.name}"
             )
             raise AssertionError(original_msg)
 
@@ -161,7 +161,7 @@ class TestRealUsagePatterns:
         container = FlextContainer()
 
         # Register dependencies (application startup pattern)
-        database = MockDatabase()
+        database = TestDatabase()
         register_db_result = container.register("database", database)
         assert register_db_result.success
 
@@ -169,8 +169,8 @@ class TestRealUsagePatterns:
         def create_user_service() -> UserService:
             db_result = container.get("database")
             assert db_result.success
-            assert isinstance(db_result.data, MockDatabase)
-            return UserService(db_result.data)
+            assert isinstance(db_result.value, TestDatabase)
+            return UserService(db_result.value)
 
         register_service_result = container.register_factory(
             "user_service",
@@ -182,13 +182,13 @@ class TestRealUsagePatterns:
         service_result = container.get("user_service")
         assert service_result.success
 
-        service = service_result.data
+        service = service_result.value
         assert isinstance(service, UserService)
         user_result = service.fetch_user("user-123")
         assert user_result.success
-        assert user_result.data is not None
-        if user_result.data.name != "John Doe":
-            msg: str = f"Expected {'John Doe'}, got {user_result.data.name}"
+        assert user_result.value is not None
+        if user_result.value.name != "John Doe":
+            msg: str = f"Expected {'John Doe'}, got {user_result.value.name}"
             raise AssertionError(msg)
 
     def test_global_container_usage(self) -> None:
@@ -196,7 +196,7 @@ class TestRealUsagePatterns:
         # Setup global services (application startup)
         container = get_flext_container()
 
-        database = MockDatabase()
+        database = TestDatabase()
         register_result = container.register("global_database", database)
         assert register_result.success
 
@@ -206,14 +206,14 @@ class TestRealUsagePatterns:
 
         db_result = container2.get("global_database")
         assert db_result.success
-        assert db_result.data is database
+        assert db_result.value is database
 
     def test_entity_id_type_safety(self) -> None:
         """Test FlextEntityId type safety in real usage."""
         # Type-safe entity ID usage
         user_id: TEntityId = "typed-user-123"
 
-        database = MockDatabase()
+        database = TestDatabase()
         service = UserService(database)
 
         # FlextEntityId works seamlessly with services
@@ -222,14 +222,14 @@ class TestRealUsagePatterns:
 
         fetch_result = service.fetch_user(user_id)
         assert fetch_result.success
-        assert fetch_result.data is not None
-        if fetch_result.data.id != user_id:
-            msg: str = f"Expected {user_id}, got {fetch_result.data.id}"
+        assert fetch_result.value is not None
+        if fetch_result.value.id != user_id:
+            msg: str = f"Expected {user_id}, got {fetch_result.value.id}"
             raise AssertionError(msg)
 
     def test_validation_patterns(self) -> None:
         """Test validation patterns used in production."""
-        database = MockDatabase()
+        database = TestDatabase()
         service = UserService(database)
 
         # Empty name validation would typically happen at service level
@@ -247,7 +247,7 @@ class TestRealUsagePatterns:
 
         # Factory pattern for complex service creation
         def create_complex_service() -> UserService:
-            database = MockDatabase()
+            database = TestDatabase()
             # In real code, this might involve configuration, logging
             # setup, etc.
             return UserService(database)
@@ -264,4 +264,4 @@ class TestRealUsagePatterns:
 
         assert service1_result.success
         assert service2_result.success
-        assert service1_result.data is service2_result.data  # Same instance
+        assert service1_result.value is service2_result.value  # Same instance

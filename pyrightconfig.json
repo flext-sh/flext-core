@@ -22,6 +22,16 @@
         "src",
         "typings"
       ]
+    },
+    {
+      "root": "tests",
+      "pythonVersion": "3.13",
+      "pythonPlatform": "Linux",
+      "extraPaths": [
+        "src",
+        "typings"
+      ],
+      "reportPrivateUsage": "none"
     }
   ],
   // Modo de verificação otimizado para complementar Mypy strict

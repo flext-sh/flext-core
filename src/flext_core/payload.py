@@ -320,7 +320,7 @@ class FlextPayload[T](
         """Custom field serializer for data in JSON mode."""
         if value is None:
             return None
-        # Enhanced JSON serialization with type information
+        #  JSON serialization with type information
         return {
             "value": value,
             "type": type(value).__name__,
@@ -328,15 +328,15 @@ class FlextPayload[T](
         }
 
     @field_serializer("metadata", when_used="always")
-    def serialize_metadata_enhanced(
+    def serialize_metadata(
         self,
         value: dict[str, object],
     ) -> dict[str, object]:
-        """Enhanced metadata serialization with payload context."""
-        enhanced_metadata = dict(value)
-        enhanced_metadata["_payload_type"] = self.__class__.__name__
-        enhanced_metadata["_serialization_timestamp"] = time.time()
-        return enhanced_metadata
+        """Metadata serialization with payload context."""
+        metadata = dict(value)
+        metadata["_payload_type"] = self.__class__.__name__
+        metadata["_serialization_timestamp"] = time.time()
+        return metadata
 
     @model_serializer(mode="wrap", when_used="json")
     def serialize_payload_for_api(
@@ -469,7 +469,7 @@ class FlextPayload[T](
     ) -> dict[str, object]:
         """Convert payload to cross-service dictionary with type information.
 
-        Enhanced serialization for Go bridge integration with comprehensive type
+         serialization for Go bridge integration with comprehensive type
         information preservation and protocol versioning for cross-service communication.
 
         Args:
@@ -982,16 +982,16 @@ class FlextPayload[T](
         # JSON serialization size
         json_result = self.to_json_string(compressed=False)
         json_size = (
-            len(json_result.data.encode())
-            if json_result.is_success and json_result.data
+            len(json_result.value.encode())
+            if json_result.is_success and json_result.value
             else 0
         )
 
         # Compressed size
         compressed_result = self.to_json_string(compressed=True)
         compressed_size = (
-            len(compressed_result.data.encode())
-            if compressed_result.is_success and compressed_result.data
+            len(compressed_result.value.encode())
+            if compressed_result.is_success and compressed_result.value
             else 0
         )
 
@@ -1257,7 +1257,7 @@ class FlextMessage(FlextPayload[str]):
     ) -> dict[str, object]:
         """Convert a message to cross-service dictionary.
 
-        Enhanced for FlextMessage with message-specific metadata.
+         for FlextMessage with message-specific metadata.
 
         Args:
             include_type_info: Whether to include type information
@@ -1431,7 +1431,7 @@ class FlextEvent(FlextPayload[Mapping[str, object]]):
     ) -> dict[str, object]:
         """Convert event to cross-service dictionary.
 
-        Enhanced for FlextEvent with event sourcing metadata.
+         for FlextEvent with event sourcing metadata.
 
         Args:
             include_type_info: Whether to include type information
@@ -1565,10 +1565,10 @@ def create_cross_service_event(
             version=version_int,
         )
 
-        if result.is_success and correlation_id and result.data:
+        if result.is_success and correlation_id and result.value:
             # Add correlation_id to metadata (correlation_id is a property that
             # reads from metadata)
-            event = result.data
+            event = result.value
             new_event = event.with_metadata(correlation_id=correlation_id)
             return FlextResult[FlextEvent].ok(cast("FlextEvent", new_event))
 
@@ -1599,10 +1599,10 @@ def create_cross_service_message(
             source=source_str,
         )
 
-        if result.is_success and correlation_id and result.data:
+        if result.is_success and correlation_id and result.value:
             # Add correlation_id to metadata (correlation_id is a property that
             # reads from metadata)
-            message = result.data
+            message = result.value
             new_message = message.with_metadata(correlation_id=correlation_id)
             return FlextResult[FlextMessage].ok(cast("FlextMessage", new_message))
 
