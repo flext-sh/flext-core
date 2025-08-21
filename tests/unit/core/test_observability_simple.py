@@ -8,16 +8,16 @@ from __future__ import annotations
 import pytest
 
 from flext_core import (
-    ConsoleLogger,
     FlextAlertsProtocol,
+    FlextConsoleLogger as ConsoleLogger,  # Modern equivalent
+    FlextInMemoryMetrics as InMemoryMetrics,  # Modern equivalent
     FlextLoggerProtocol,
     FlextMetricsProtocol,
+    FlextMinimalObservability as MinimalObservability,  # Modern equivalent
+    FlextNoOpTracer as NoOpTracer,  # Modern equivalent
     FlextObservabilityProtocol,
+    FlextSimpleAlerts as SimpleAlerts,  # Modern equivalent
     FlextTracerProtocol,
-    InMemoryMetrics,
-    MinimalObservability,
-    NoOpTracer,
-    SimpleAlerts,
     get_observability,
 )
 

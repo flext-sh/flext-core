@@ -41,10 +41,12 @@ from flext_core import (
     FlextPluginContext,
     FlextRepository,
     FlextResult,
+    TAnyDict,
+)
+from flext_core.protocols import (
     FlextService,
     FlextUnitOfWork,
     FlextValidationRule,
-    TAnyDict,
 )
 
 # =============================================================================
@@ -267,8 +269,9 @@ class AgeRangeRule(FlextValidationRule):
             )
         return FlextResult[object].ok(value)
 
-    def get_error_message(self, field_name: str, _value: object) -> str:
+    def get_error_message(self, field_name: str, value: object) -> str:
         """Provide rule error message."""
+        del value  # Unused parameter
         return f"{field_name} must be between {self.min_age} and {self.max_age}"
 
 
@@ -281,8 +284,9 @@ class NonEmptyStringRule(FlextValidationRule):
             return FlextResult[object].fail(f"{field_name} must be a non-empty string")
         return FlextResult[object].ok(value)
 
-    def get_error_message(self, field_name: str, _value: object) -> str:
+    def get_error_message(self, field_name: str, value: object) -> str:
         """Provide rule error message."""
+        del value  # Unused parameter
         return f"{field_name} must be a non-empty string"
 
 
@@ -295,8 +299,9 @@ class PositiveNumberRule(FlextValidationRule):
             return FlextResult[object].fail(f"{field_name} must be a positive number")
         return FlextResult[object].ok(value)
 
-    def get_error_message(self, field_name: str, _value: object) -> str:
+    def get_error_message(self, field_name: str, value: object) -> str:
         """Provide rule error message."""
+        del value  # Unused parameter
         return f"{field_name} must be a positive number"
 
 
@@ -418,7 +423,7 @@ class ConfigurableEmailService:
 # =============================================================================
 
 
-class UserCommandHandler(FlextCommandHandler[object, object]):
+class UserCommandHandler(FlextCommandHandler):
     """User command handler demonstrating FlextMessageHandler."""
 
     def __init__(self, user_service: UserService) -> None:
@@ -445,23 +450,23 @@ class UserCommandHandler(FlextCommandHandler[object, object]):
         """Handle command (abstract method implementation)."""
         return self.handle(command)
 
-    def handle(self, command: object) -> FlextResult[object]:
+    def handle(self, request: object) -> FlextResult[object]:
         """Handle user commands."""
-        if not hasattr(command, "type"):
+        if not hasattr(request, "type"):
             return FlextResult[object].fail("Message must have type attribute")
 
-        message_type = command.type
+        message_type = request.type
 
         if message_type == "user_create":
-            name = getattr(command, "name", "")
-            email = getattr(command, "email", "")
-            age = getattr(command, "age", None)
+            name = getattr(request, "name", "")
+            email = getattr(request, "email", "")
+            age = getattr(request, "age", None)
 
             result = self._user_service.create_user(name, email, age)
             return result.map(lambda user: user)
 
         if message_type == "user_get":
-            user_id = getattr(command, "user_id", "")
+            user_id = getattr(request, "user_id", "")
             result = self._user_service.get_user(user_id)
             return result.map(lambda user: user)
 

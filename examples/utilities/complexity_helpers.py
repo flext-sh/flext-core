@@ -35,8 +35,8 @@ class DemonstrationSectionHelper:
             _title: Section title (for display only).
 
         """
-        # Acknowledge params for Ruff ARG00*
-        "\n" + "=" * 60
+        # Acknowledge params for Ruff ARG00* - create separator
+        _ = "\n" + "=" * 60
 
     @staticmethod
     def log_operation(operation: str, result: object) -> None:

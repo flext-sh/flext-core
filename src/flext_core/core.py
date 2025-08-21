@@ -2,23 +2,17 @@
 
 from __future__ import annotations
 
+import os
 from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import ParamSpec, TypeVar, cast, override
 
-# All functionality imports
 from flext_core.aggregate_root import FlextAggregateRoot
 from flext_core.commands import FlextCommands
 from flext_core.config import (
-    FlextConfigFactory,
-    FlextConfigOps,
-    load_config_from_env,
     merge_configs,
     safe_get_env_var,
-    validate_config,
 )
-
-# Core foundation imports
 from flext_core.constants import FlextConstants
 from flext_core.container import (
     FlextContainer,
@@ -520,20 +514,18 @@ class FlextCore:
 
     @staticmethod
     def load_config_from_env(prefix: str = "FLEXT_") -> FlextResult[dict[str, object]]:
-        """Load configuration from environment variables."""
+        """Load configuration from environment variables (foundation pattern)."""
         try:
-            config_result = load_config_from_env("default", prefix)
-            if config_result.is_failure:
-                return FlextResult[dict[str, object]].fail(
-                    config_result.error or "Failed to load config"
-                )
-            # Convert FlextModel to dict
-            config_dict = (
-                config_result.value.model_dump()
-                if hasattr(config_result.value, "model_dump")
-                else {}
-            )
-            return FlextResult[dict[str, object]].ok(config_dict)
+            env_data: dict[str, object] = {}
+            prefix_with_sep = f"{prefix.rstrip('_')}_"
+
+            for key, value in os.environ.items():
+                if key.startswith(prefix_with_sep):
+                    # Remove prefix and convert to lowercase
+                    config_key = key[len(prefix_with_sep) :].lower()
+                    env_data[config_key] = value
+
+            return FlextResult[dict[str, object]].ok(env_data)
         except Exception as e:
             return FlextResult[dict[str, object]].fail(f"Failed to load config: {e}")
 
@@ -560,27 +552,21 @@ class FlextCore:
         config: dict[str, object], schema: dict[str, object]
     ) -> FlextResult[dict[str, object]]:
         """Validate configuration against schema."""
-        validation_result = validate_config(config, schema)
-        if validation_result.is_failure:
-            return FlextResult[dict[str, object]].fail(
-                validation_result.error or "Validation failed"
-            )
-        return FlextResult[dict[str, object]].ok(config)
+        try:
+            # Simple validation - check that all schema keys are present
+            for key in schema:
+                if key not in config:
+                    return FlextResult[dict[str, object]].fail(
+                        f"Missing required config key: {key}"
+                    )
+            return FlextResult[dict[str, object]].ok(config)
+        except Exception as e:
+            return FlextResult[dict[str, object]].fail(f"Config validation error: {e}")
 
     @staticmethod
     def safe_get_env_var(name: str, default: str | None = None) -> FlextResult[str]:
         """Safely get environment variable."""
         return safe_get_env_var(name, default)
-
-    @property
-    def config_factory(self) -> type[FlextConfigFactory]:
-        """Access configuration factory."""
-        return FlextConfigFactory
-
-    @property
-    def config_ops(self) -> type[FlextConfigOps]:
-        """Access configuration operations."""
-        return FlextConfigOps
 
     # =========================================================================
     # DOMAIN MODELING & DDD PATTERNS
@@ -1313,9 +1299,10 @@ class FlextCore:
             "validators": self.validators,
             "predicates": self.predicates,
             "guards": self.guards,
-            # Configuration
-            "config_factory": self.config_factory,
-            "config_ops": self.config_ops,
+            # Configuration utilities
+            "safe_get_env_var": self.safe_get_env_var,
+            "merge_configs": self.merge_configs,
+            "validate_config": self.validate_config,
             # Utilities
             "utilities": self.utilities,
             "generators": self.generators,

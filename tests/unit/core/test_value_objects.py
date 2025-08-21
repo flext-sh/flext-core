@@ -18,10 +18,10 @@ import pytest
 from pydantic import ValidationError
 
 from flext_core import (
+    FlextFactory,
     FlextPayload,
     FlextResult,
     FlextValueObject,
-    FlextValueObjectFactory,
 )
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
@@ -515,12 +515,12 @@ class TestValueObjectSubclassing:
 # =============================================================================
 
 
-class TestFlextValueObjectFactory:
+class TestFlextFactory:
     """Test FlextValueObjectFactory functionality."""
 
     def test_create_value_object_factory_basic(self) -> None:
         """Test basic factory creation."""
-        factory = FlextValueObjectFactory.create_value_object_factory(
+        factory = FlextFactory.create_value_object_factory(
             SimpleValueObject, defaults={}
         )
 
@@ -535,7 +535,7 @@ class TestFlextValueObjectFactory:
     def test_create_value_object_factory_with_defaults(self) -> None:
         """Test factory creation with defaults."""
         defaults: dict[str, object] = {"currency": "EUR"}
-        factory = FlextValueObjectFactory.create_value_object_factory(
+        factory = FlextFactory.create_value_object_factory(
             MoneyAmount,
             defaults=defaults,
         )
@@ -552,7 +552,7 @@ class TestFlextValueObjectFactory:
 
     def test_factory_validation_failure(self) -> None:
         """Test factory with validation failure."""
-        factory = FlextValueObjectFactory.create_value_object_factory(
+        factory = FlextFactory.create_value_object_factory(
             SimpleValueObject, defaults={}
         )
 
@@ -562,7 +562,7 @@ class TestFlextValueObjectFactory:
 
     def test_factory_creation_failure(self) -> None:
         """Test factory with creation failure."""
-        factory = FlextValueObjectFactory.create_value_object_factory(
+        factory = FlextFactory.create_value_object_factory(
             SimpleValueObject, defaults={}
         )
 
@@ -573,7 +573,7 @@ class TestFlextValueObjectFactory:
 
     def test_factory_without_defaults(self) -> None:
         """Test factory creation without defaults."""
-        factory = FlextValueObjectFactory.create_value_object_factory(
+        factory = FlextFactory.create_value_object_factory(
             SimpleValueObject,
             defaults={},
         )
@@ -655,7 +655,7 @@ class TestValueObjectIntegration:
     def test_factory_integration_scenario(self) -> None:
         """Test complete factory integration scenario."""
         # Create factory with defaults
-        email_factory = FlextValueObjectFactory.create_value_object_factory(
+        email_factory = FlextFactory.create_value_object_factory(
             EmailAddress,
             defaults={},
         )

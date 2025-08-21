@@ -154,8 +154,8 @@ def setup_services() -> FlextContainer:
     container.register_factory(
         "user_service",
         lambda: UserRegistrationService(
-            database=cast("DatabaseService", container.get("database").value),
-            email=cast("EmailService", container.get("email").value),
+            database=cast("DatabaseService", container.get("database").unwrap_or(None)),
+            email=cast("EmailService", container.get("email").unwrap_or(None)),
         ),
     )
 
